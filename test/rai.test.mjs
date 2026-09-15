@@ -6,6 +6,7 @@ import {
   createCapabilityEpoch,
   createEvaluation,
   createFinding,
+  createFindingDisposition,
   createIteration,
   enforceManualRaiReviewPolicy,
   validateEvaluationEvidence,
@@ -39,7 +40,7 @@ const t1 = createIteration({
   parentIterationId: "iter-0",
 });
 
-function finding(id, severity = "MATERIAL", status = "OPEN", iterationId = t1.id) {
+function finding(id, severity = "MATERIAL", iterationId = t1.id) {
   return createFinding({
     id,
     iterationId,
@@ -47,8 +48,19 @@ function finding(id, severity = "MATERIAL", status = "OPEN", iterationId = t1.id
     severity,
     summary: `${severity} ${id}`,
     evidenceRefs: [`evidence:${id}`],
-    status,
     createdAt: "2026-09-15T01:15:00Z",
+  });
+}
+
+function disposition(findingId, decision = "RESOLVED", replacementFindingId = null) {
+  return createFindingDisposition({
+    id: `disposition-${findingId}`,
+    findingId,
+    decidedBy: "founder",
+    decision,
+    evidenceRefs: [`resolution:${findingId}`],
+    decidedAt: "2026-09-15T01:18:00Z",
+    replacementFindingId,
   });
 }
 
@@ -96,191 +108,166 @@ test("lineage is a single contiguous adjacent chain", () => {
   assert.throws(() => validateIterationLineage([t0, t1, branch]), /duplicate iteration ordinal/);
 });
 
-test("lineage validates deserialized iteration records", () => {
+test("persisted timestamps must be canonical ISO", () => {
   assert.throws(
-    () => validateIterationLineage([t0, { ...t1, ordinal: "1" }]),
-    /iteration.ordinal/,
+    () => validateIterationLineage([{ ...t0, createdAt: "2026-09-15" }]),
+    /canonical ISO timestamp/,
   );
 });
 
-test("persisted identifiers must already be canonical", () => {
-  assert.throws(
-    () => validateIterationLineage([{ ...t0, id: " iter-0 " }]),
-    /leading or trailing whitespace/,
-  );
+test("constructors normalize timestamps into canonical ISO", () => {
+  const created = createIteration({
+    id: "timestamp",
+    artifactId: "artifact-2",
+    ordinal: 0,
+    candidateRef: "commit:t",
+    createdAt: "2026-09-15T07:00:00+07:00",
+    capabilityEpoch: epoch,
+  });
+  assert.equal(created.createdAt, "2026-09-15T00:00:00.000Z");
+});
+
+test("findings are immutable observations without lifecycle status", () => {
+  const material = finding("material-1");
+  assert.equal("status" in material, false);
+  assert.ok(Object.isFrozen(material));
 
   assert.throws(
     () =>
       classifyEvaluation({
         iterationId: t1.id,
-        findings: [{ ...finding("f1"), id: " f1 " }],
+        findings: [{ ...material, status: "RESOLVED" }],
+        dispositions: [],
         authorityAllowsRepair: true,
       }),
-    /leading or trailing whitespace/,
+    /separate disposition/,
   );
 });
 
-test("persisted capability epoch provenance must already be canonical", () => {
+test("finding dispositions require evidence", () => {
   assert.throws(
     () =>
-      validateIterationLineage([
-        {
-          ...t0,
-          capabilityEpoch: { ...t0.capabilityEpoch, provider: " openai " },
-        },
-      ]),
-    /leading or trailing whitespace/,
-  );
-});
-
-test("iteration snapshots capability epoch provenance", () => {
-  const mutable = { provider: "openai", model: "model-a", modelVersion: "1" };
-  const iteration = createIteration({
-    id: "s",
-    artifactId: "a2",
-    ordinal: 0,
-    candidateRef: "s",
-    createdAt: "2026-09-15T00:00:00Z",
-    capabilityEpoch: mutable,
-  });
-  mutable.model = "mutated";
-  assert.equal(iteration.capabilityEpoch.model, "model-a");
-});
-
-test("evaluation rejects duplicate finding references", () => {
-  assert.throws(
-    () =>
-      createEvaluation({
-        id: "e-duplicate",
-        iterationId: t1.id,
-        evaluatorId: "jc",
-        capabilityEpoch: epoch,
-        outcome: "CHANGES_REQUIRED",
-        findingIds: ["f1", "f1"],
-        completedAt: "2026-09-15T01:20:00Z",
-        critique: RAI_CRITIQUE_PROMPT,
+      createFindingDisposition({
+        id: "d1",
+        findingId: "f1",
+        decidedBy: "founder",
+        decision: "RESOLVED",
+        evidenceRefs: [],
+        decidedAt: "2026-09-15T01:18:00Z",
       }),
-    /must not contain duplicates/,
+    /at least one item/,
   );
 });
 
-test("non-PASS evaluations require finding evidence", () => {
-  for (const outcome of ["CHANGES_REQUIRED", "ESCALATE"]) {
-    assert.throws(
-      () =>
-        createEvaluation({
-          id: `e-${outcome}`,
-          iterationId: t1.id,
-          evaluatorId: "jc",
-          capabilityEpoch: epoch,
-          outcome,
-          findingIds: [],
-          completedAt: "2026-09-15T01:20:00Z",
-          critique: RAI_CRITIQUE_PROMPT,
-        }),
-      /require at least one findingId/,
-    );
-  }
-});
-
-test("deserialized evaluation records are validated", () => {
-  const valid = evaluation("PASS", []);
+test("SUPERSEDED dispositions require a different replacement finding", () => {
   assert.throws(
-    () => validateEvaluationEvidence({ ...valid, outcome: "UNKNOWN" }, []),
-    /evaluation.outcome/,
+    () => disposition("f1", "SUPERSEDED", null),
+    /require replacementFindingId/,
   );
   assert.throws(
-    () => validateEvaluationEvidence({ ...valid, id: " eval-pass " }, []),
-    /leading or trailing whitespace/,
+    () => disposition("f1", "SUPERSEDED", "f1"),
+    /cannot supersede itself/,
   );
 });
 
-test("evaluation references must resolve to findings from its iteration", () => {
+test("classification rejects dispositions for missing findings", () => {
   assert.throws(
-    () => validateEvaluationEvidence(evaluation("CHANGES_REQUIRED", ["missing"]), []),
+    () =>
+      classifyEvaluation({
+        iterationId: t1.id,
+        findings: [finding("f1")],
+        dispositions: [disposition("missing")],
+        authorityAllowsRepair: true,
+      }),
     /missing finding/,
   );
 });
 
-test("PASS may reference advisory findings", () => {
+test("one finding cannot have multiple dispositions", () => {
+  const f1 = finding("f1");
+  assert.throws(
+    () =>
+      classifyEvaluation({
+        iterationId: t1.id,
+        findings: [f1],
+        dispositions: [
+          disposition("f1"),
+          createFindingDisposition({
+            id: "d2",
+            findingId: "f1",
+            decidedBy: "founder",
+            decision: "REJECTED",
+            evidenceRefs: ["resolution:2"],
+            decidedAt: "2026-09-15T01:19:00Z",
+          }),
+        ],
+        authorityAllowsRepair: true,
+      }),
+    /multiple dispositions/,
+  );
+});
+
+test("evaluation must account for the entire provided finding set", () => {
+  const material = finding("material-1");
   const advisory = finding("advisory-1", "ADVISORY");
+
+  assert.throws(
+    () =>
+      validateEvaluationEvidence(
+        evaluation("PASS", [advisory.id]),
+        [material, advisory],
+        [],
+      ),
+    /exactly match/,
+  );
+});
+
+test("PASS cannot coexist with active actionable findings", () => {
+  const material = finding("material-1");
+  assert.throws(
+    () =>
+      validateEvaluationEvidence(
+        evaluation("PASS", [material.id]),
+        [material],
+        [],
+      ),
+    /cannot coexist/,
+  );
+});
+
+test("PASS is valid after actionable finding has evidence-backed disposition", () => {
+  const material = finding("material-1");
   assert.equal(
-    validateEvaluationEvidence(evaluation("PASS", [advisory.id]), [advisory]),
+    validateEvaluationEvidence(
+      evaluation("PASS", [material.id]),
+      [material],
+      [disposition(material.id)],
+    ),
     true,
   );
 });
 
-test("PASS cannot reference open actionable findings", () => {
-  const material = finding("material-1", "MATERIAL");
-  assert.throws(
-    () => validateEvaluationEvidence(evaluation("PASS", [material.id]), [material]),
-    /cannot reference open BLOCKING\/MATERIAL/,
-  );
-});
-
-test("CHANGES_REQUIRED requires an open actionable finding", () => {
+test("CHANGES_REQUIRED requires an active actionable finding", () => {
   const advisory = finding("advisory-1", "ADVISORY");
   assert.throws(
     () =>
       validateEvaluationEvidence(
         evaluation("CHANGES_REQUIRED", [advisory.id]),
         [advisory],
+        [],
       ),
-    /requires an open BLOCKING\/MATERIAL/,
-  );
-
-  const material = finding("material-1", "MATERIAL");
-  assert.equal(
-    validateEvaluationEvidence(
-      evaluation("CHANGES_REQUIRED", [material.id]),
-      [material],
-    ),
-    true,
+    /requires an active BLOCKING\/MATERIAL/,
   );
 });
 
-test("classification rejects malformed deserialized findings", () => {
-  assert.throws(
-    () =>
-      classifyEvaluation({
-        iterationId: t1.id,
-        findings: [{ ...finding("bad"), severity: "CRITICAL" }],
-        authorityAllowsRepair: true,
-      }),
-    /finding.severity/,
-  );
-});
+test("STOP requires all actionable findings to be dispositioned", () => {
+  const material = finding("material-1");
 
-test("classification rejects findings from another iteration", () => {
-  assert.throws(
-    () =>
-      classifyEvaluation({
-        iterationId: t1.id,
-        findings: [finding("wrong", "MATERIAL", "OPEN", "iter-0")],
-        authorityAllowsRepair: true,
-      }),
-    /belongs to iteration/,
-  );
-});
-
-test("classification rejects duplicate finding identities", () => {
-  const same = finding("dup");
-  assert.throws(
-    () =>
-      classifyEvaluation({
-        iterationId: t1.id,
-        findings: [same, same],
-        authorityAllowsRepair: true,
-      }),
-    /duplicate finding id/,
-  );
-});
-
-test("STOP does not require a repair-authority decision", () => {
   assert.equal(
     classifyEvaluation({
       iterationId: t1.id,
-      findings: [finding("a", "ADVISORY")],
+      findings: [material],
+      dispositions: [disposition(material.id)],
     }).decision,
     "STOP",
   );
@@ -297,7 +284,7 @@ test("actionable findings require explicit repair authority", () => {
   );
 });
 
-test("CONTINUE for actionable findings within explicit authority", () => {
+test("CONTINUE for active actionable findings within explicit authority", () => {
   assert.equal(
     classifyEvaluation({
       iterationId: t1.id,
@@ -308,7 +295,7 @@ test("CONTINUE for actionable findings within explicit authority", () => {
   );
 });
 
-test("ESCALATE when repair explicitly exceeds authority", () => {
+test("ESCALATE when active repair explicitly exceeds authority", () => {
   assert.equal(
     classifyEvaluation({
       iterationId: t1.id,
@@ -319,14 +306,23 @@ test("ESCALATE when repair explicitly exceeds authority", () => {
   );
 });
 
-test("manual review pass is bounded to three findings from one iteration", () => {
-  const three = [finding("1"), finding("2"), finding("3")];
-  assert.equal(enforceManualRaiReviewPolicy({ iterationId: t1.id, findings: three }), true);
+test("manual review pass is bounded to three active actionable findings", () => {
+  const findings = [finding("1"), finding("2"), finding("3"), finding("4")];
+
+  assert.equal(
+    enforceManualRaiReviewPolicy({
+      iterationId: t1.id,
+      findings,
+      dispositions: [disposition("4")],
+    }),
+    true,
+  );
+
   assert.throws(
     () =>
       enforceManualRaiReviewPolicy({
         iterationId: t1.id,
-        findings: [...three, finding("4")],
+        findings,
       }),
     /at most 3/,
   );

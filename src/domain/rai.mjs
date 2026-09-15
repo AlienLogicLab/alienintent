@@ -1,5 +1,5 @@
 const SEVERITIES = new Set(["BLOCKING", "MATERIAL", "ADVISORY"]);
-const FINDING_STATUSES = new Set(["OPEN", "RESOLVED", "REJECTED", "SUPERSEDED"]);
+const DISPOSITIONS = new Set(["RESOLVED", "REJECTED", "SUPERSEDED"]);
 const EVALUATION_OUTCOMES = new Set(["PASS", "CHANGES_REQUIRED", "ESCALATE"]);
 
 function requiredString(value, name) {
@@ -39,13 +39,21 @@ function boolean(value, name) {
   return value;
 }
 
-function isoTimestamp(value, name) {
+function normalizedIsoTimestamp(value, name) {
   requiredString(value, name);
   const parsed = Date.parse(value);
   if (!Number.isFinite(parsed)) {
     throw new TypeError(`${name} must be a valid timestamp`);
   }
   return new Date(parsed).toISOString();
+}
+
+function canonicalIsoTimestamp(value, name) {
+  const normalized = normalizedIsoTimestamp(value, name);
+  if (value !== normalized) {
+    throw new TypeError(`${name} must be a canonical ISO timestamp`);
+  }
+  return value;
 }
 
 function enumValue(value, allowed, name) {
@@ -55,12 +63,15 @@ function enumValue(value, allowed, name) {
   return value;
 }
 
-function uniqueStringArray(value, name) {
+function uniqueStringArray(value, name, { allowEmpty = true } = {}) {
   if (!Array.isArray(value) || value.some(item => typeof item !== "string" || !item.trim())) {
     throw new TypeError(`${name} must be an array of non-empty strings`);
   }
 
   const normalized = value.map(item => item.trim());
+  if (!allowEmpty && normalized.length === 0) {
+    throw new TypeError(`${name} must contain at least one item`);
+  }
   if (new Set(normalized).size !== normalized.length) {
     throw new TypeError(`${name} must not contain duplicates`);
   }
@@ -68,9 +79,12 @@ function uniqueStringArray(value, name) {
   return Object.freeze(normalized);
 }
 
-function validateUniqueCanonicalStringArray(value, name) {
+function validateUniqueCanonicalStringArray(value, name, { allowEmpty = true } = {}) {
   if (!Array.isArray(value)) {
     throw new TypeError(`${name} must be an array`);
+  }
+  if (!allowEmpty && value.length === 0) {
+    throw new TypeError(`${name} must contain at least one item`);
   }
 
   const seen = new Set();
@@ -124,7 +138,7 @@ function validateIterationRecord(iteration) {
   canonicalString(iteration.artifactId, "iteration.artifactId");
   integer(iteration.ordinal, "iteration.ordinal", 0);
   canonicalString(iteration.candidateRef, "iteration.candidateRef");
-  isoTimestamp(iteration.createdAt, "iteration.createdAt");
+  canonicalIsoTimestamp(iteration.createdAt, "iteration.createdAt");
   validateCapabilityEpochRecord(iteration.capabilityEpoch);
 
   if (iteration.ordinal === 0) {
@@ -148,10 +162,14 @@ function validateFindingRecord(finding) {
   canonicalString(finding.evaluatorId, "finding.evaluatorId");
   enumValue(finding.severity, SEVERITIES, "finding.severity");
   requiredString(finding.summary, "finding.summary");
-  validateUniqueCanonicalStringArray(finding.evidenceRefs, "finding.evidenceRefs");
-  enumValue(finding.status, FINDING_STATUSES, "finding.status");
-  isoTimestamp(finding.createdAt, "finding.createdAt");
-  optionalCanonicalString(finding.supersedesFindingId, "finding.supersedesFindingId");
+  validateUniqueCanonicalStringArray(finding.evidenceRefs, "finding.evidenceRefs", {
+    allowEmpty: false,
+  });
+  canonicalIsoTimestamp(finding.createdAt, "finding.createdAt");
+
+  if ("status" in finding || "supersedesFindingId" in finding) {
+    throw new TypeError("finding lifecycle state must be recorded as a separate disposition");
+  }
 
   return finding;
 }
@@ -181,6 +199,76 @@ function validateFindingSet(iterationId, findings) {
   return findings;
 }
 
+function validateDispositionRecord(disposition) {
+  if (!disposition || typeof disposition !== "object" || Array.isArray(disposition)) {
+    throw new TypeError("each disposition must be an object");
+  }
+
+  canonicalString(disposition.id, "disposition.id");
+  canonicalString(disposition.findingId, "disposition.findingId");
+  canonicalString(disposition.decidedBy, "disposition.decidedBy");
+  enumValue(disposition.decision, DISPOSITIONS, "disposition.decision");
+  validateUniqueCanonicalStringArray(disposition.evidenceRefs, "disposition.evidenceRefs", {
+    allowEmpty: false,
+  });
+  canonicalIsoTimestamp(disposition.decidedAt, "disposition.decidedAt");
+
+  if (disposition.decision === "SUPERSEDED") {
+    canonicalString(disposition.replacementFindingId, "disposition.replacementFindingId");
+    if (disposition.replacementFindingId === disposition.findingId) {
+      throw new TypeError("a finding cannot supersede itself");
+    }
+  } else if (disposition.replacementFindingId != null) {
+    throw new TypeError("replacementFindingId is only valid for SUPERSEDED dispositions");
+  }
+
+  return disposition;
+}
+
+function validateDispositionSet(findings, dispositions) {
+  if (!Array.isArray(dispositions)) {
+    throw new TypeError("dispositions must be an array");
+  }
+
+  const findingsById = new Map(findings.map(finding => [finding.id, finding]));
+  const ids = new Set();
+  const disposedFindingIds = new Set();
+
+  for (const disposition of dispositions) {
+    validateDispositionRecord(disposition);
+
+    if (ids.has(disposition.id)) {
+      throw new Error(`duplicate disposition id: ${disposition.id}`);
+    }
+    ids.add(disposition.id);
+
+    if (disposedFindingIds.has(disposition.findingId)) {
+      throw new Error(`finding ${disposition.findingId} has multiple dispositions`);
+    }
+    disposedFindingIds.add(disposition.findingId);
+
+    if (!findingsById.has(disposition.findingId)) {
+      throw new Error(`disposition references missing finding: ${disposition.findingId}`);
+    }
+
+    if (
+      disposition.decision === "SUPERSEDED" &&
+      !findingsById.has(disposition.replacementFindingId)
+    ) {
+      throw new Error(
+        `SUPERSEDED disposition references missing replacement finding: ${disposition.replacementFindingId}`,
+      );
+    }
+  }
+
+  return dispositions;
+}
+
+function activeFindings(findings, dispositions) {
+  const disposed = new Set(dispositions.map(disposition => disposition.findingId));
+  return findings.filter(finding => !disposed.has(finding.id));
+}
+
 function validateEvaluationRecord(evaluation) {
   if (!evaluation || typeof evaluation !== "object" || Array.isArray(evaluation)) {
     throw new TypeError("evaluation must be an object");
@@ -192,7 +280,7 @@ function validateEvaluationRecord(evaluation) {
   validateCapabilityEpochRecord(evaluation.capabilityEpoch);
   enumValue(evaluation.outcome, EVALUATION_OUTCOMES, "evaluation.outcome");
   validateUniqueCanonicalStringArray(evaluation.findingIds, "evaluation.findingIds");
-  isoTimestamp(evaluation.completedAt, "evaluation.completedAt");
+  canonicalIsoTimestamp(evaluation.completedAt, "evaluation.completedAt");
   requiredString(evaluation.critique, "evaluation.critique");
 
   if (
@@ -245,7 +333,7 @@ export function createIteration({
     artifactId: requiredString(artifactId, "artifactId"),
     ordinal: normalizedOrdinal,
     candidateRef: requiredString(candidateRef, "candidateRef"),
-    createdAt: isoTimestamp(createdAt, "createdAt"),
+    createdAt: normalizedIsoTimestamp(createdAt, "createdAt"),
     capabilityEpoch: snapshotCapabilityEpoch(capabilityEpoch),
     parentIterationId: normalizedParent,
   });
@@ -258,9 +346,7 @@ export function createFinding({
   severity,
   summary,
   evidenceRefs,
-  status = "OPEN",
   createdAt,
-  supersedesFindingId = null,
 }) {
   return immutable({
     id: requiredString(id, "id"),
@@ -268,10 +354,43 @@ export function createFinding({
     evaluatorId: requiredString(evaluatorId, "evaluatorId"),
     severity: enumValue(severity, SEVERITIES, "severity"),
     summary: requiredString(summary, "summary"),
-    evidenceRefs: uniqueStringArray(evidenceRefs, "evidenceRefs"),
-    status: enumValue(status, FINDING_STATUSES, "status"),
-    createdAt: isoTimestamp(createdAt, "createdAt"),
-    supersedesFindingId: optionalString(supersedesFindingId, "supersedesFindingId"),
+    evidenceRefs: uniqueStringArray(evidenceRefs, "evidenceRefs", { allowEmpty: false }),
+    createdAt: normalizedIsoTimestamp(createdAt, "createdAt"),
+  });
+}
+
+export function createFindingDisposition({
+  id,
+  findingId,
+  decidedBy,
+  decision,
+  evidenceRefs,
+  decidedAt,
+  replacementFindingId = null,
+}) {
+  const normalizedDecision = enumValue(decision, DISPOSITIONS, "decision");
+  const normalizedFindingId = requiredString(findingId, "findingId");
+  const normalizedReplacement = optionalString(replacementFindingId, "replacementFindingId");
+
+  if (normalizedDecision === "SUPERSEDED") {
+    if (normalizedReplacement == null) {
+      throw new TypeError("SUPERSEDED dispositions require replacementFindingId");
+    }
+    if (normalizedReplacement === normalizedFindingId) {
+      throw new TypeError("a finding cannot supersede itself");
+    }
+  } else if (normalizedReplacement != null) {
+    throw new TypeError("replacementFindingId is only valid for SUPERSEDED dispositions");
+  }
+
+  return immutable({
+    id: requiredString(id, "id"),
+    findingId: normalizedFindingId,
+    decidedBy: requiredString(decidedBy, "decidedBy"),
+    decision: normalizedDecision,
+    evidenceRefs: uniqueStringArray(evidenceRefs, "evidenceRefs", { allowEmpty: false }),
+    decidedAt: normalizedIsoTimestamp(decidedAt, "decidedAt"),
+    replacementFindingId: normalizedReplacement,
   });
 }
 
@@ -302,7 +421,7 @@ export function createEvaluation({
     capabilityEpoch: snapshotCapabilityEpoch(capabilityEpoch),
     outcome: normalizedOutcome,
     findingIds: normalizedFindingIds,
-    completedAt: isoTimestamp(completedAt, "completedAt"),
+    completedAt: normalizedIsoTimestamp(completedAt, "completedAt"),
     critique: requiredString(critique, "critique"),
   });
 }
@@ -362,34 +481,35 @@ export function validateIterationLineage(iterations) {
   return true;
 }
 
-export function validateEvaluationEvidence(evaluation, findings) {
+export function validateEvaluationEvidence(evaluation, findings, dispositions = []) {
   validateEvaluationRecord(evaluation);
   validateFindingSet(evaluation.iterationId, findings);
+  validateDispositionSet(findings, dispositions);
 
-  const findingsById = new Map(findings.map(finding => [finding.id, finding]));
-  const referenced = evaluation.findingIds.map(id => {
-    const finding = findingsById.get(id);
-    if (!finding) {
-      throw new Error(`evaluation references missing finding: ${id}`);
-    }
-    return finding;
-  });
+  const providedFindingIds = new Set(findings.map(finding => finding.id));
+  const referencedFindingIds = new Set(evaluation.findingIds);
 
-  const openActionable = referenced.filter(
-    finding =>
-      finding.status === "OPEN" &&
-      (finding.severity === "BLOCKING" || finding.severity === "MATERIAL"),
+  if (
+    providedFindingIds.size !== referencedFindingIds.size ||
+    [...providedFindingIds].some(id => !referencedFindingIds.has(id))
+  ) {
+    throw new Error("evaluation findingIds must exactly match the provided finding set");
+  }
+
+  const active = activeFindings(findings, dispositions);
+  const openActionable = active.filter(
+    finding => finding.severity === "BLOCKING" || finding.severity === "MATERIAL",
   );
 
   if (evaluation.outcome === "PASS" && openActionable.length > 0) {
-    throw new Error("PASS evaluation cannot reference open BLOCKING/MATERIAL findings");
+    throw new Error("PASS evaluation cannot coexist with active BLOCKING/MATERIAL findings");
   }
 
   if (
     (evaluation.outcome === "CHANGES_REQUIRED" || evaluation.outcome === "ESCALATE") &&
     openActionable.length === 0
   ) {
-    throw new Error(`${evaluation.outcome} evaluation requires an open BLOCKING/MATERIAL finding`);
+    throw new Error(`${evaluation.outcome} evaluation requires an active BLOCKING/MATERIAL finding`);
   }
 
   return true;
@@ -398,20 +518,20 @@ export function validateEvaluationEvidence(evaluation, findings) {
 export function classifyEvaluation({
   iterationId,
   findings,
+  dispositions = [],
   authorityAllowsRepair,
 }) {
   validateFindingSet(iterationId, findings);
+  validateDispositionSet(findings, dispositions);
 
-  const actionable = findings.filter(
-    finding =>
-      finding.status === "OPEN" &&
-      (finding.severity === "BLOCKING" || finding.severity === "MATERIAL"),
+  const actionable = activeFindings(findings, dispositions).filter(
+    finding => finding.severity === "BLOCKING" || finding.severity === "MATERIAL",
   );
 
   if (actionable.length === 0) {
     return immutable({
       decision: "STOP",
-      reason: "NO_OPEN_BLOCKING_OR_MATERIAL_FINDINGS",
+      reason: "NO_ACTIVE_BLOCKING_OR_MATERIAL_FINDINGS",
       actionableFindingIds: Object.freeze([]),
     });
   }
@@ -428,7 +548,7 @@ export function classifyEvaluation({
 
   return immutable({
     decision: "CONTINUE",
-    reason: "OPEN_BLOCKING_OR_MATERIAL_FINDINGS",
+    reason: "ACTIVE_BLOCKING_OR_MATERIAL_FINDINGS",
     actionableFindingIds: Object.freeze(actionable.map(finding => finding.id)),
   });
 }
@@ -436,20 +556,20 @@ export function classifyEvaluation({
 export function enforceManualRaiReviewPolicy({
   iterationId,
   findings,
+  dispositions = [],
   maxActionableFindings = 3,
 }) {
   integer(maxActionableFindings, "maxActionableFindings", 1);
   validateFindingSet(iterationId, findings);
+  validateDispositionSet(findings, dispositions);
 
-  const actionable = findings.filter(
-    finding =>
-      finding.status === "OPEN" &&
-      (finding.severity === "BLOCKING" || finding.severity === "MATERIAL"),
+  const actionable = activeFindings(findings, dispositions).filter(
+    finding => finding.severity === "BLOCKING" || finding.severity === "MATERIAL",
   );
 
   if (actionable.length > maxActionableFindings) {
     throw new Error(
-      `manual RAI review may surface at most ${maxActionableFindings} open BLOCKING/MATERIAL findings per pass`,
+      `manual RAI review may surface at most ${maxActionableFindings} active BLOCKING/MATERIAL findings per pass`,
     );
   }
 
