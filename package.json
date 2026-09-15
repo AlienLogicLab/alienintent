@@ -1,0 +1,7 @@
+{
+  "name": "b-disp",
+  "version": "0.0.1",
+  "private": false,
+  "type": "module",
+  "scripts": {"test": "node --test"}
+}
