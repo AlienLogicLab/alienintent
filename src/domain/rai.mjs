@@ -9,13 +9,32 @@ function requiredString(value, name) {
   return value.trim();
 }
 
+function canonicalString(value, name) {
+  const normalized = requiredString(value, name);
+  if (value !== normalized) {
+    throw new TypeError(`${name} must not contain leading or trailing whitespace`);
+  }
+  return value;
+}
+
 function optionalString(value, name) {
   return value == null ? null : requiredString(value, name);
+}
+
+function optionalCanonicalString(value, name) {
+  return value == null ? null : canonicalString(value, name);
 }
 
 function integer(value, name, minimum = 0) {
   if (!Number.isInteger(value) || value < minimum) {
     throw new TypeError(`${name} must be an integer >= ${minimum}`);
+  }
+  return value;
+}
+
+function boolean(value, name) {
+  if (typeof value !== "boolean") {
+    throw new TypeError(`${name} must be a boolean`);
   }
   return value;
 }
@@ -49,6 +68,21 @@ function uniqueStringArray(value, name) {
   return Object.freeze(normalized);
 }
 
+function validateUniqueCanonicalStringArray(value, name) {
+  if (!Array.isArray(value)) {
+    throw new TypeError(`${name} must be an array`);
+  }
+  const seen = new Set();
+  for (const item of value) {
+    const canonical = canonicalString(item, `${name} item`);
+    if (seen.has(canonical)) {
+      throw new TypeError(`${name} must not contain duplicates`);
+    }
+    seen.add(canonical);
+  }
+  return value;
+}
+
 const immutable = record => Object.freeze(record);
 
 function snapshotCapabilityEpoch(epoch) {
@@ -70,10 +104,10 @@ function validateIterationRecord(iteration) {
     throw new TypeError("each iteration must be an object");
   }
 
-  requiredString(iteration.id, "iteration.id");
-  requiredString(iteration.artifactId, "iteration.artifactId");
+  canonicalString(iteration.id, "iteration.id");
+  canonicalString(iteration.artifactId, "iteration.artifactId");
   integer(iteration.ordinal, "iteration.ordinal", 0);
-  requiredString(iteration.candidateRef, "iteration.candidateRef");
+  canonicalString(iteration.candidateRef, "iteration.candidateRef");
   isoTimestamp(iteration.createdAt, "iteration.createdAt");
   snapshotCapabilityEpoch(iteration.capabilityEpoch);
 
@@ -82,7 +116,7 @@ function validateIterationRecord(iteration) {
       throw new TypeError("iteration 0 cannot have a parentIterationId");
     }
   } else {
-    requiredString(iteration.parentIterationId, "iteration.parentIterationId");
+    canonicalString(iteration.parentIterationId, "iteration.parentIterationId");
   }
 
   return iteration;
@@ -93,21 +127,21 @@ function validateFindingRecord(finding) {
     throw new TypeError("each finding must be an object");
   }
 
-  requiredString(finding.id, "finding.id");
-  requiredString(finding.iterationId, "finding.iterationId");
-  requiredString(finding.evaluatorId, "finding.evaluatorId");
+  canonicalString(finding.id, "finding.id");
+  canonicalString(finding.iterationId, "finding.iterationId");
+  canonicalString(finding.evaluatorId, "finding.evaluatorId");
   enumValue(finding.severity, SEVERITIES, "finding.severity");
   requiredString(finding.summary, "finding.summary");
-  uniqueStringArray(finding.evidenceRefs, "finding.evidenceRefs");
+  validateUniqueCanonicalStringArray(finding.evidenceRefs, "finding.evidenceRefs");
   enumValue(finding.status, FINDING_STATUSES, "finding.status");
   isoTimestamp(finding.createdAt, "finding.createdAt");
-  optionalString(finding.supersedesFindingId, "finding.supersedesFindingId");
+  optionalCanonicalString(finding.supersedesFindingId, "finding.supersedesFindingId");
 
   return finding;
 }
 
 function validateFindingSet(iterationId, findings) {
-  const target = requiredString(iterationId, "iterationId");
+  const target = canonicalString(iterationId, "iterationId");
   if (!Array.isArray(findings)) {
     throw new TypeError("findings must be an array");
   }
@@ -210,13 +244,23 @@ export function createEvaluation({
   completedAt,
   critique,
 }) {
+  const normalizedOutcome = enumValue(outcome, EVALUATION_OUTCOMES, "outcome");
+  const normalizedFindingIds = uniqueStringArray(findingIds, "findingIds");
+
+  if (
+    (normalizedOutcome === "CHANGES_REQUIRED" || normalizedOutcome === "ESCALATE") &&
+    normalizedFindingIds.length === 0
+  ) {
+    throw new TypeError(`${normalizedOutcome} evaluations require at least one findingId`);
+  }
+
   return immutable({
     id: requiredString(id, "id"),
     iterationId: requiredString(iterationId, "iterationId"),
     evaluatorId: requiredString(evaluatorId, "evaluatorId"),
     capabilityEpoch: snapshotCapabilityEpoch(capabilityEpoch),
-    outcome: enumValue(outcome, EVALUATION_OUTCOMES, "outcome"),
-    findingIds: uniqueStringArray(findingIds, "findingIds"),
+    outcome: normalizedOutcome,
+    findingIds: normalizedFindingIds,
     completedAt: isoTimestamp(completedAt, "completedAt"),
     critique: requiredString(critique, "critique"),
   });
@@ -280,7 +324,7 @@ export function validateIterationLineage(iterations) {
 export function classifyEvaluation({
   iterationId,
   findings,
-  authorityAllowsRepair = true,
+  authorityAllowsRepair,
 }) {
   validateFindingSet(iterationId, findings);
 
@@ -298,7 +342,9 @@ export function classifyEvaluation({
     });
   }
 
-  if (!authorityAllowsRepair) {
+  const authorized = boolean(authorityAllowsRepair, "authorityAllowsRepair");
+
+  if (!authorized) {
     return immutable({
       decision: "ESCALATE",
       reason: "REPAIR_EXCEEDS_CURRENT_AUTHORITY",

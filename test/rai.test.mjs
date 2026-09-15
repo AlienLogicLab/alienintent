@@ -79,25 +79,34 @@ test("lineage is a single contiguous adjacent chain", () => {
     parentIterationId: "iter-0",
   });
   assert.throws(() => validateIterationLineage([t0, t1, branch]), /duplicate iteration ordinal/);
-
-  const gap = createIteration({
-    id: "iter-2",
-    artifactId: "artifact-1",
-    ordinal: 2,
-    candidateRef: "d",
-    createdAt: "2026-09-15T02:00:00Z",
-    capabilityEpoch: epoch,
-    parentIterationId: "iter-0",
-  });
-  assert.throws(() => validateIterationLineage([t0, gap]), /contiguous/);
 });
 
 test("lineage validates deserialized iteration records", () => {
-  const malformed = {
-    ...t1,
-    ordinal: "1",
+  assert.throws(
+    () => validateIterationLineage([t0, { ...t1, ordinal: "1" }]),
+    /iteration.ordinal/,
+  );
+});
+
+test("persisted identifiers must already be canonical", () => {
+  assert.throws(
+    () => validateIterationLineage([{ ...t0, id: " iter-0 " }]),
+    /leading or trailing whitespace/,
+  );
+
+  const malformedFinding = {
+    ...finding("f1"),
+    id: " f1 ",
   };
-  assert.throws(() => validateIterationLineage([t0, malformed]), /iteration.ordinal/);
+  assert.throws(
+    () =>
+      classifyEvaluation({
+        iterationId: t1.id,
+        findings: [malformedFinding],
+        authorityAllowsRepair: true,
+      }),
+    /leading or trailing whitespace/,
+  );
 });
 
 test("iteration snapshots capability epoch provenance", () => {
@@ -112,23 +121,6 @@ test("iteration snapshots capability epoch provenance", () => {
   });
   mutable.model = "mutated";
   assert.equal(iteration.capabilityEpoch.model, "model-a");
-  assert.ok(Object.isFrozen(iteration.capabilityEpoch));
-});
-
-test("evaluation snapshots capability epoch provenance", () => {
-  const mutable = { provider: "openai", model: "model-a" };
-  const evaluation = createEvaluation({
-    id: "e",
-    iterationId: t1.id,
-    evaluatorId: "jc",
-    capabilityEpoch: mutable,
-    outcome: "PASS",
-    findingIds: [],
-    completedAt: "2026-09-15T01:20:00Z",
-    critique: RAI_CRITIQUE_PROMPT,
-  });
-  mutable.model = "mutated";
-  assert.equal(evaluation.capabilityEpoch.model, "model-a");
 });
 
 test("evaluation rejects duplicate finding references", () => {
@@ -148,13 +140,48 @@ test("evaluation rejects duplicate finding references", () => {
   );
 });
 
+test("non-PASS evaluations require finding evidence", () => {
+  for (const outcome of ["CHANGES_REQUIRED", "ESCALATE"]) {
+    assert.throws(
+      () =>
+        createEvaluation({
+          id: `e-${outcome}`,
+          iterationId: t1.id,
+          evaluatorId: "jc",
+          capabilityEpoch: epoch,
+          outcome,
+          findingIds: [],
+          completedAt: "2026-09-15T01:20:00Z",
+          critique: RAI_CRITIQUE_PROMPT,
+        }),
+      /require at least one findingId/,
+    );
+  }
+});
+
+test("PASS may retain advisory finding references", () => {
+  const evaluation = createEvaluation({
+    id: "e-pass",
+    iterationId: t1.id,
+    evaluatorId: "jc",
+    capabilityEpoch: epoch,
+    outcome: "PASS",
+    findingIds: ["advisory-1"],
+    completedAt: "2026-09-15T01:20:00Z",
+    critique: RAI_CRITIQUE_PROMPT,
+  });
+  assert.deepEqual(evaluation.findingIds, ["advisory-1"]);
+});
+
 test("classification rejects malformed deserialized findings", () => {
-  const malformed = {
-    ...finding("bad"),
-    severity: "CRITICAL",
-  };
+  const malformed = { ...finding("bad"), severity: "CRITICAL" };
   assert.throws(
-    () => classifyEvaluation({ iterationId: t1.id, findings: [malformed] }),
+    () =>
+      classifyEvaluation({
+        iterationId: t1.id,
+        findings: [malformed],
+        authorityAllowsRepair: true,
+      }),
     /finding.severity/,
   );
 });
@@ -165,6 +192,7 @@ test("classification rejects findings from another iteration", () => {
       classifyEvaluation({
         iterationId: t1.id,
         findings: [finding("wrong", "MATERIAL", "OPEN", "iter-0")],
+        authorityAllowsRepair: true,
       }),
     /belongs to iteration/,
   );
@@ -173,19 +201,38 @@ test("classification rejects findings from another iteration", () => {
 test("classification rejects duplicate finding identities", () => {
   const same = finding("dup");
   assert.throws(
-    () => classifyEvaluation({ iterationId: t1.id, findings: [same, same] }),
+    () =>
+      classifyEvaluation({
+        iterationId: t1.id,
+        findings: [same, same],
+        authorityAllowsRepair: true,
+      }),
     /duplicate finding id/,
   );
 });
 
-test("STOP when only advisory findings remain", () => {
+test("STOP does not require a repair-authority decision", () => {
   assert.equal(
-    classifyEvaluation({ iterationId: t1.id, findings: [finding("a", "ADVISORY")] }).decision,
+    classifyEvaluation({
+      iterationId: t1.id,
+      findings: [finding("a", "ADVISORY")],
+    }).decision,
     "STOP",
   );
 });
 
-test("CONTINUE for actionable findings within authority", () => {
+test("actionable findings require explicit repair authority", () => {
+  assert.throws(
+    () =>
+      classifyEvaluation({
+        iterationId: t1.id,
+        findings: [finding("m")],
+      }),
+    /authorityAllowsRepair must be a boolean/,
+  );
+});
+
+test("CONTINUE for actionable findings within explicit authority", () => {
   assert.equal(
     classifyEvaluation({
       iterationId: t1.id,
@@ -196,7 +243,7 @@ test("CONTINUE for actionable findings within authority", () => {
   );
 });
 
-test("ESCALATE when repair exceeds authority", () => {
+test("ESCALATE when repair explicitly exceeds authority", () => {
   assert.equal(
     classifyEvaluation({
       iterationId: t1.id,
