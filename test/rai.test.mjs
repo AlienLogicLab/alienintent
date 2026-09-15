@@ -8,6 +8,7 @@ import {
   createFinding,
   createIteration,
   enforceManualRaiReviewPolicy,
+  validateEvaluationEvidence,
   validateIterationLineage,
 } from "../src/domain/rai.mjs";
 
@@ -48,6 +49,20 @@ function finding(id, severity = "MATERIAL", status = "OPEN", iterationId = t1.id
     evidenceRefs: [`evidence:${id}`],
     status,
     createdAt: "2026-09-15T01:15:00Z",
+  });
+}
+
+function evaluation(outcome, findingIds, overrides = {}) {
+  return createEvaluation({
+    id: `eval-${outcome.toLowerCase()}`,
+    iterationId: t1.id,
+    evaluatorId: "jc",
+    capabilityEpoch: epoch,
+    outcome,
+    findingIds,
+    completedAt: "2026-09-15T01:20:00Z",
+    critique: RAI_CRITIQUE_PROMPT,
+    ...overrides,
   });
 }
 
@@ -94,17 +109,26 @@ test("persisted identifiers must already be canonical", () => {
     /leading or trailing whitespace/,
   );
 
-  const malformedFinding = {
-    ...finding("f1"),
-    id: " f1 ",
-  };
   assert.throws(
     () =>
       classifyEvaluation({
         iterationId: t1.id,
-        findings: [malformedFinding],
+        findings: [{ ...finding("f1"), id: " f1 " }],
         authorityAllowsRepair: true,
       }),
+    /leading or trailing whitespace/,
+  );
+});
+
+test("persisted capability epoch provenance must already be canonical", () => {
+  assert.throws(
+    () =>
+      validateIterationLineage([
+        {
+          ...t0,
+          capabilityEpoch: { ...t0.capabilityEpoch, provider: " openai " },
+        },
+      ]),
     /leading or trailing whitespace/,
   );
 });
@@ -159,27 +183,68 @@ test("non-PASS evaluations require finding evidence", () => {
   }
 });
 
-test("PASS may retain advisory finding references", () => {
-  const evaluation = createEvaluation({
-    id: "e-pass",
-    iterationId: t1.id,
-    evaluatorId: "jc",
-    capabilityEpoch: epoch,
-    outcome: "PASS",
-    findingIds: ["advisory-1"],
-    completedAt: "2026-09-15T01:20:00Z",
-    critique: RAI_CRITIQUE_PROMPT,
-  });
-  assert.deepEqual(evaluation.findingIds, ["advisory-1"]);
+test("deserialized evaluation records are validated", () => {
+  const valid = evaluation("PASS", []);
+  assert.throws(
+    () => validateEvaluationEvidence({ ...valid, outcome: "UNKNOWN" }, []),
+    /evaluation.outcome/,
+  );
+  assert.throws(
+    () => validateEvaluationEvidence({ ...valid, id: " eval-pass " }, []),
+    /leading or trailing whitespace/,
+  );
+});
+
+test("evaluation references must resolve to findings from its iteration", () => {
+  assert.throws(
+    () => validateEvaluationEvidence(evaluation("CHANGES_REQUIRED", ["missing"]), []),
+    /missing finding/,
+  );
+});
+
+test("PASS may reference advisory findings", () => {
+  const advisory = finding("advisory-1", "ADVISORY");
+  assert.equal(
+    validateEvaluationEvidence(evaluation("PASS", [advisory.id]), [advisory]),
+    true,
+  );
+});
+
+test("PASS cannot reference open actionable findings", () => {
+  const material = finding("material-1", "MATERIAL");
+  assert.throws(
+    () => validateEvaluationEvidence(evaluation("PASS", [material.id]), [material]),
+    /cannot reference open BLOCKING\/MATERIAL/,
+  );
+});
+
+test("CHANGES_REQUIRED requires an open actionable finding", () => {
+  const advisory = finding("advisory-1", "ADVISORY");
+  assert.throws(
+    () =>
+      validateEvaluationEvidence(
+        evaluation("CHANGES_REQUIRED", [advisory.id]),
+        [advisory],
+      ),
+    /requires an open BLOCKING\/MATERIAL/,
+  );
+
+  const material = finding("material-1", "MATERIAL");
+  assert.equal(
+    validateEvaluationEvidence(
+      evaluation("CHANGES_REQUIRED", [material.id]),
+      [material],
+    ),
+    true,
+  );
 });
 
 test("classification rejects malformed deserialized findings", () => {
-  const malformed = { ...finding("bad"), severity: "CRITICAL" };
   assert.throws(
     () =>
       classifyEvaluation({
         iterationId: t1.id,
-        findings: [malformed],
+        findings: [{ ...finding("bad"), severity: "CRITICAL" }],
         authorityAllowsRepair: true,
       }),
     /finding.severity/,

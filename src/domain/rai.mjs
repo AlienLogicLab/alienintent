@@ -72,6 +72,7 @@ function validateUniqueCanonicalStringArray(value, name) {
   if (!Array.isArray(value)) {
     throw new TypeError(`${name} must be an array`);
   }
+
   const seen = new Set();
   for (const item of value) {
     const canonical = canonicalString(item, `${name} item`);
@@ -80,6 +81,7 @@ function validateUniqueCanonicalStringArray(value, name) {
     }
     seen.add(canonical);
   }
+
   return value;
 }
 
@@ -99,6 +101,20 @@ function snapshotCapabilityEpoch(epoch) {
   });
 }
 
+function validateCapabilityEpochRecord(epoch) {
+  if (!epoch || typeof epoch !== "object" || Array.isArray(epoch)) {
+    throw new TypeError("capabilityEpoch is required");
+  }
+
+  canonicalString(epoch.provider, "capabilityEpoch.provider");
+  canonicalString(epoch.model, "capabilityEpoch.model");
+  optionalCanonicalString(epoch.modelVersion, "capabilityEpoch.modelVersion");
+  optionalCanonicalString(epoch.harnessVersion, "capabilityEpoch.harnessVersion");
+  optionalCanonicalString(epoch.promptSetVersion, "capabilityEpoch.promptSetVersion");
+
+  return epoch;
+}
+
 function validateIterationRecord(iteration) {
   if (!iteration || typeof iteration !== "object" || Array.isArray(iteration)) {
     throw new TypeError("each iteration must be an object");
@@ -109,7 +125,7 @@ function validateIterationRecord(iteration) {
   integer(iteration.ordinal, "iteration.ordinal", 0);
   canonicalString(iteration.candidateRef, "iteration.candidateRef");
   isoTimestamp(iteration.createdAt, "iteration.createdAt");
-  snapshotCapabilityEpoch(iteration.capabilityEpoch);
+  validateCapabilityEpochRecord(iteration.capabilityEpoch);
 
   if (iteration.ordinal === 0) {
     if (iteration.parentIterationId != null) {
@@ -149,6 +165,7 @@ function validateFindingSet(iterationId, findings) {
   const ids = new Set();
   for (const finding of findings) {
     validateFindingRecord(finding);
+
     if (ids.has(finding.id)) {
       throw new Error(`duplicate finding id: ${finding.id}`);
     }
@@ -162,6 +179,30 @@ function validateFindingSet(iterationId, findings) {
   }
 
   return findings;
+}
+
+function validateEvaluationRecord(evaluation) {
+  if (!evaluation || typeof evaluation !== "object" || Array.isArray(evaluation)) {
+    throw new TypeError("evaluation must be an object");
+  }
+
+  canonicalString(evaluation.id, "evaluation.id");
+  canonicalString(evaluation.iterationId, "evaluation.iterationId");
+  canonicalString(evaluation.evaluatorId, "evaluation.evaluatorId");
+  validateCapabilityEpochRecord(evaluation.capabilityEpoch);
+  enumValue(evaluation.outcome, EVALUATION_OUTCOMES, "evaluation.outcome");
+  validateUniqueCanonicalStringArray(evaluation.findingIds, "evaluation.findingIds");
+  isoTimestamp(evaluation.completedAt, "evaluation.completedAt");
+  requiredString(evaluation.critique, "evaluation.critique");
+
+  if (
+    (evaluation.outcome === "CHANGES_REQUIRED" || evaluation.outcome === "ESCALATE") &&
+    evaluation.findingIds.length === 0
+  ) {
+    throw new TypeError(`${evaluation.outcome} evaluations require at least one findingId`);
+  }
+
+  return evaluation;
 }
 
 export function createCapabilityEpoch({
@@ -316,6 +357,39 @@ export function validateIterationLineage(iterations) {
     if (parent.id !== ordered[index - 1].id) {
       throw new Error("each iteration must directly follow the previous iteration");
     }
+  }
+
+  return true;
+}
+
+export function validateEvaluationEvidence(evaluation, findings) {
+  validateEvaluationRecord(evaluation);
+  validateFindingSet(evaluation.iterationId, findings);
+
+  const findingsById = new Map(findings.map(finding => [finding.id, finding]));
+  const referenced = evaluation.findingIds.map(id => {
+    const finding = findingsById.get(id);
+    if (!finding) {
+      throw new Error(`evaluation references missing finding: ${id}`);
+    }
+    return finding;
+  });
+
+  const openActionable = referenced.filter(
+    finding =>
+      finding.status === "OPEN" &&
+      (finding.severity === "BLOCKING" || finding.severity === "MATERIAL"),
+  );
+
+  if (evaluation.outcome === "PASS" && openActionable.length > 0) {
+    throw new Error("PASS evaluation cannot reference open BLOCKING/MATERIAL findings");
+  }
+
+  if (
+    (evaluation.outcome === "CHANGES_REQUIRED" || evaluation.outcome === "ESCALATE") &&
+    openActionable.length === 0
+  ) {
+    throw new Error(`${evaluation.outcome} evaluation requires an open BLOCKING/MATERIAL finding`);
   }
 
   return true;
