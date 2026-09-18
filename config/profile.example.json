@@ -1,0 +1,29 @@
+{
+  "repository": {"owner": "ExampleOrg", "name": "sample-project", "baselineRef": "refs/remotes/origin/main"},
+  "project": {"owner": "ExampleOrg", "number": 1, "statusFieldName": "Status", "statusNames": {"IMPLEMENT": "Implement", "VERIFY": "Verify", "REVIEW": "Review", "ACCEPT": "Accept", "DONE": "Done"}},
+  "githubApp": {"applicationId": 1, "installationId": 2, "privateKeyPath": "/srv/alienintent/secrets/app.pem"},
+  "webhook": {"listenAddress": "127.0.0.1", "listenPort": 8787, "secretFile": "/srv/alienintent/secrets/webhook"},
+  "execution": {"enabled": false, "inspectionIntervalMilliseconds": 60000},
+  "operator": {"authorizedGithubLogins": ["project-operator"]},
+  "paths": {"stateFile": "/srv/alienintent/state/state.json", "workerLogDirectory": "/srv/alienintent/logs", "worktreeRoot": "/srv/alienintent/worktrees", "repositoryStore": "/srv/alienintent/repository.git"},
+  "executables": {"node": "/usr/bin/node", "githubCli": "/usr/bin/gh", "curl": "/usr/bin/curl", "processInspector": "/usr/bin/ps"},
+  "environment": {"executableSearchPath": "/usr/local/bin:/usr/bin:/bin"},
+  "workers": {
+    "PRODUCER": {
+      "displayName": "Producer", "githubLogin": "producer-bot",
+      "gitIdentity": {"name": "Example Producer", "email": "producer@example.invalid"},
+      "provider": {"adapter": "codex", "executablePath": "/usr/local/bin/codex", "arguments": [], "permissionMode": "danger-full-access", "authenticationProfile": {"name": "producer-login", "homeDirectory": "/srv/alienintent/auth/producer-home"}, "fundingProfile": "provider-default"},
+      "githubAuthentication": {"configDirectory": "/srv/alienintent/auth/producer-gh", "shimDirectory": "/srv/alienintent/shims/producer"},
+      "environment": {"inheritNames": ["USER", "LOGNAME", "LANG", "SHELL", "TERM"], "values": {}},
+      "compatibility": {"persistedRoleValue": "PRODUCER"}, "knownChanges": []
+    },
+    "VERIFIER": {
+      "displayName": "Verifier", "githubLogin": "verifier-bot",
+      "gitIdentity": {"name": "Example Verifier", "email": "verifier@example.invalid"},
+      "provider": {"adapter": "claude", "executablePath": "/usr/local/bin/claude", "arguments": [], "permissionMode": "manual", "authenticationProfile": {"name": "verifier-login", "homeDirectory": "/srv/alienintent/auth/verifier-home"}, "fundingProfile": "claude-subscription"},
+      "githubAuthentication": {"configDirectory": "/srv/alienintent/auth/verifier-gh", "shimDirectory": "/srv/alienintent/shims/verifier"},
+      "environment": {"inheritNames": ["USER", "LOGNAME", "LANG", "SHELL", "TERM"], "values": {}},
+      "compatibility": {"persistedRoleValue": "VERIFIER"}, "knownChanges": []
+    }
+  }
+}

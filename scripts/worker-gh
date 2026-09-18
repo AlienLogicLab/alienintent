@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+set -euo pipefail
+unset GH_TOKEN GITHUB_TOKEN GH_ENTERPRISE_TOKEN GITHUB_ENTERPRISE_TOKEN
+: "${B_DISP_GH_CONFIG_DIR:?worker GitHub configuration is required}"
+: "${B_DISP_GH_EXECUTABLE:?GitHub executable is required}"
+export GH_CONFIG_DIR="$B_DISP_GH_CONFIG_DIR"
+exec "$B_DISP_GH_EXECUTABLE" "$@"

@@ -1,0 +1,87 @@
+#!/usr/bin/env node
+import { execFileSync } from 'node:child_process';
+import { readFileSync, realpathSync } from 'node:fs';
+import { classifyRepositoryState } from '../src/config/repository-state.mjs';
+
+let worker, repository = '', issue = '', json = false;
+try {
+  worker = JSON.parse(readFileSync(0, 'utf8'));
+  for (let i = 2; i < process.argv.length; i++) {
+    const arg = process.argv[i];
+    if (arg === '--json') json = true;
+    else if (arg === '--repository') repository = process.argv[++i];
+    else if (arg === '--issue') issue = process.argv[++i];
+    else throw new Error('unknown argument');
+  }
+  for (const key of ['worktree', 'gitName', 'gitEmail', 'githubLogin', 'ghConfigDir']) if (!worker[key]) throw new Error(`missing ${key}`);
+} catch (error) { console.error(`Invalid worker preflight input: ${error.message}`); process.exit(2); }
+const result = { worker: worker.role ?? '', expected_worktree: worker.worktree, actual_worktree: realpathSync('.'), branch: '', head: '', upstream: '', ahead: '', behind: '', git_name: '', git_email: '', gh_path: worker.executables?.githubCli ?? '', github: 'UNVERIFIABLE', github_login: '', repository_access: 'NOT_REQUESTED', issue_comment_write: 'NOT_REQUESTED', token_override: 'NONE', classification: 'SYNCED', safe_to_start: true };
+const fail = (classification) => { result.classification = classification; result.safe_to_start = false; };
+const git = (...args) => execFileSync(worker.executables?.git ?? 'git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+const gh = (...args) => {
+  try { return execFileSync(result.gh_path, args, { encoding: 'utf8', timeout: 10000, stdio: ['ignore', 'pipe', 'pipe'], env: { ...process.env, GH_CONFIG_DIR: worker.ghConfigDir } }).trim(); }
+  catch { return ''; }
+};
+try {
+  if (result.actual_worktree !== worker.worktree || git('rev-parse', '--is-inside-work-tree') !== 'true') fail('WRONG_WORKTREE');
+  else {
+    result.branch = git('branch', '--show-current'); result.head = git('rev-parse', 'HEAD');
+    try { result.git_name = git('config', 'user.name'); } catch {}
+    try { result.git_email = git('config', 'user.email'); } catch {}
+    const state = classifyRepositoryState('.', worker.knownChanges);
+    if (!['SYNCED', 'KNOWN_AUTHORIZED'].includes(state)) fail(state);
+    else if (result.git_name !== worker.gitName || result.git_email !== worker.gitEmail) fail('WRONG_IDENTITY');
+    else {
+      if (worker.resource) {
+        const resource = worker.resource;
+        const common = git('rev-parse', '--path-format=absolute', '--git-common-dir');
+        const canonicalCommon = execFileSync(worker.executables?.git ?? 'git', ['-C', resource.repositoryStore, 'rev-parse', '--path-format=absolute', '--git-common-dir'], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+        const origin = git('remote', 'get-url', 'origin');
+        const originRepository = origin.match(/^(?:https:\/\/github\.com\/|git@github\.com:|ssh:\/\/git@github\.com\/)([^/]+\/[^/]+?)(?:\.git)?\/?$/)?.[1];
+        if (resource.path !== worker.worktree || resource.invocationId !== worker.invocationId || resource.role !== worker.role || resource.repository !== repository || String(resource.issue) !== issue
+            || realpathSync(common) !== realpathSync(canonicalCommon) || realpathSync(resource.repositoryStore) === result.actual_worktree
+            || originRepository !== repository) fail('WRONG_REPOSITORY');
+        else if (result.head !== resource.baselineCommit) fail('WRONG_BASELINE');
+        else {
+          result.upstream = resource.baselineRef;
+          const baseline = git('rev-parse', '--verify', `${resource.baselineRef}^{commit}`);
+          if (baseline !== resource.baselineCommit) fail('WRONG_BASELINE');
+          else { result.ahead = '0'; result.behind = '0'; result.classification = state; }
+        }
+      } else {
+      try { result.upstream = git('rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}'); } catch { fail('NO_UPSTREAM'); }
+      if (result.upstream) {
+        [result.behind, result.ahead] = git('rev-list', '--left-right', '--count', '@{u}...HEAD').split(/\s+/);
+        if (result.ahead !== '0' && result.behind !== '0') fail('DIVERGED');
+        else if (result.ahead !== '0') fail('LOCAL_AHEAD');
+        else if (result.behind !== '0') fail('REMOTE_AHEAD');
+        else result.classification = state;
+      }
+      }
+    }
+  }
+} catch (error) { console.error(error.message); fail('WRONG_WORKTREE'); }
+if (['GH_TOKEN', 'GITHUB_TOKEN', 'GH_ENTERPRISE_TOKEN', 'GITHUB_ENTERPRISE_TOKEN'].some((key) => process.env[key])) {
+  result.token_override = 'PRESENT'; fail('GITHUB_TOKEN_OVERRIDE');
+} else {
+  result.github_login = gh('api', 'user', '--jq', '.login');
+  if (result.github_login) {
+    result.github = result.github_login === worker.githubLogin ? 'VERIFIED' : 'WRONG_IDENTITY';
+    if (result.github !== 'VERIFIED') { result.safe_to_start = false; if (['SYNCED', 'KNOWN_AUTHORIZED'].includes(result.classification)) fail('WRONG_IDENTITY'); }
+  }
+}
+if (result.github === 'UNVERIFIABLE') { result.safe_to_start = false; if (['SYNCED', 'KNOWN_AUTHORIZED'].includes(result.classification)) fail('GITHUB_UNVERIFIABLE'); }
+if (repository || issue) {
+  if (!/^[^/\s]+\/[^/\s]+$/.test(repository) || !/^[1-9][0-9]*$/.test(issue)) fail('INVALID_GITHUB_TARGET');
+  else if (result.github === 'VERIFIED') {
+    result.repository_access = gh('api', `repos/${repository}`, '--jq', '.full_name') === repository ? 'VERIFIED' : 'UNVERIFIABLE';
+    if (result.repository_access !== 'VERIFIED') fail('REPOSITORY_UNVERIFIABLE');
+    const [owner, name] = repository.split('/');
+    const permission = gh('api', 'graphql', '-f', 'query=query($owner:String!,$name:String!){repository(owner:$owner,name:$name){viewerPermission}}', '-f', `owner=${owner}`, '-f', `name=${name}`, '--jq', '.data.repository.viewerPermission');
+    const writable = gh('api', 'graphql', '-f', 'query=query($owner:String!,$name:String!,$number:Int!){repository(owner:$owner,name:$name){issue(number:$number){viewerCanUpdate}}}', '-f', `owner=${owner}`, '-f', `name=${name}`, '-F', `number=${issue}`, '--jq', '.data.repository.issue.viewerCanUpdate');
+    result.issue_comment_write = ['WRITE', 'MAINTAIN', 'ADMIN'].includes(permission) && writable === 'true' ? 'VERIFIED' : 'UNVERIFIABLE';
+    if (result.issue_comment_write !== 'VERIFIED') fail('ISSUE_COMMENT_WRITE_UNVERIFIABLE');
+  }
+}
+console.log(json ? JSON.stringify(result) : `worker=${result.worker} classification=${result.classification} safe_to_start=${result.safe_to_start} github=${result.github}`);
+process.exitCode = result.safe_to_start ? 0 : 1;

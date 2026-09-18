@@ -1,4 +1,7 @@
-# B-DISP Interface Contracts
+# AlienIntent Interface Contracts
+
+> Design target, not a statement of shipped commands or completed capabilities.
+> Current runtime usage and limits are in [operations](../operations.md).
 
 ## 1. Spec Kit → Agent Ready / BIU
 
@@ -44,10 +47,10 @@ Agent Ready / BIU must not:
 
 ---
 
-## 2. Agent Ready / BIU → B-DISP
+## 2. Agent Ready / BIU → AlienIntent
 
 ### Entry condition
-B-DISP admission requires a bounded GitHub Issue containing:
+AlienIntent admission requires a bounded GitHub Issue containing:
 - task;
 - rationale;
 - allowed scope;
@@ -79,7 +82,7 @@ execution:
     current_phase
 ```
 
-### B-DISP owns
+### AlienIntent owns
 - current execution authority;
 - admission;
 - worker identity;
@@ -92,7 +95,7 @@ execution:
 - operational closure.
 
 ### Must NOT cross boundary
-B-DISP must not:
+AlienIntent must not:
 - regenerate feature requirements;
 - alter Spec Kit planning semantics;
 - split features as a general planning function;
@@ -101,11 +104,11 @@ B-DISP must not:
 
 ---
 
-## 3. B-DISP → Spec Kit converge
+## 3. AlienIntent → Spec Kit converge
 
-### B-DISP output condition
+### AlienIntent output condition
 
-B-DISP returns a bounded work unit only after DONE.
+AlienIntent returns a bounded work unit only after DONE.
 
 DONE means:
 - independently verified;
@@ -134,11 +137,11 @@ work_unit:
 - creation of missing work;
 - feature/specification convergence.
 
-B-DISP DONE must never be interpreted as feature complete.
+AlienIntent DONE must never be interpreted as feature complete.
 
 ---
 
-## 4. Operator → B-DISP
+## 4. Operator → AlienIntent
 
 ### Operator expresses semantic intent
 

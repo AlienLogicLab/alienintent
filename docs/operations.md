@@ -1,0 +1,110 @@
+# AlienIntent operations
+
+## Install and configure
+
+Use Node 24.15.0 on Linux. The public executable is `alienintent`; `b-disp` remains
+a temporary compatibility alias. From a source checkout, run
+`node bin/alienintent.mjs --help` without credentials.
+
+Copy `config/profile.example.json` into a private installation directory and replace
+its synthetic values. Keep the private profile, App key, webhook secret, runtime
+state and worker logs outside the repository. Never publish credentials.
+
+The supported installation has one organization-owned repository and Project V2,
+one organization-owned GitHub App installed on that same organization, and one
+running profile. Configure the Status field with IMPLEMENT, VERIFY, REVIEW, ACCEPT
+and DONE semantics. App access is restricted to the configured repository and the
+permissions and webhook events enforced by App preflight. Worker and authorized
+operator GitHub identities must be separate from the App identity.
+
+Each worker needs its Git identity, GitHub login/configuration directory, GitHub
+shim directory, provider executable, provider authentication HOME, permission mode
+and funding profile. Codex and Claude adapters are supported. `claude-subscription`
+checks subscription authentication; `provider-default` does not impose that policy.
+Install `scripts/worker-gh` as executable `gh` in each configured shim directory.
+The launcher filters ambient App/provider secrets and uses explicit executable paths.
+
+Execution-enabled profiles require a canonical `paths.repositoryStore`, a separate
+`paths.worktreeRoot`, and `repository.baselineRef`. Provision and update the canonical
+store separately: the dispatcher does not fetch or clone. Its origin must exactly
+match the configured repository. Both ordinary and bare canonical stores are supported;
+a linked worker checkout cannot serve as the store. Permanent role worktree paths
+are rejected. Keep log/evidence directories outside disposable worktrees.
+
+## Start and reconcile
+
+Run `node bin/alienintent.mjs --config <private-profile.json>` within the installation's
+authorized live scope. `--preflight-only` validates App access and exits before
+workflow-state creation. `--once` reconciles startup state and exits.
+
+With execution disabled the runtime does not run worker preflight or launch workers.
+It can still handle durable results and mutate Project/local state during
+reconciliation. Execution disabled is not a globally read-only mode.
+
+The signed webhook path admits only configured repository/Project events. Normal
+progression uses authenticated Issue results and dispatcher Project transitions;
+the operator is not a message relay.
+
+## Result protocol and lifecycle
+
+The compatibility marker remains:
+`<!-- B-DISP: INVOCATION=<exact-id> RESULT=VERIFY -->`.
+Producer IMPLEMENT work posts exactly one permitted terminal Issue result.
+Verifier `ACCEPT` routes to the Project's `Accept` option, not `Review`.
+Verifier REJECT returns to IMPLEMENT. REVIEW is not a dispatched lane and MERGE is
+not a workflow state. The author, repository, Issue, invocation, allowed result and
+timestamp must match. stdout, chat and process exit do not supply workflow authority.
+
+Before a fresh result changes workflow state, the current Project status must match
+the admitted phase. Mismatches record `STALE_RESULT` without transitioning the item.
+Previously persisted exact transition intents can confirm a target already reached
+after interruption. Startup settles pending transitions before admitting the next phase.
+
+The producer handles closure in ACCEPT, including all authorized landing,
+publication/deployment and operational obligations. Only completion permits
+`RESULT=DONE`. An authority block uses `RESULT=FOUNDER_EXCEPTION` and retains the
+phase. Material implementation changes require `CONTROL=RETURN_TO_IMPLEMENT` and
+fresh independent verification. Markers use the same exact invocation grammar.
+
+Human exception recovery requires `operator.authorizedGithubLogins`. The event must
+also follow the exception timestamp, change from a different status and match the
+current remote status. Worker/App identities cannot act as operators.
+
+## Worktrees and recovery
+
+Each invocation pins the configured baseline commit and allocates a fresh UUID
+worktree and branch. Git identity is isolated through per-worktree configuration.
+Preflight verifies the assigned checkout, invocation, canonical store, origin,
+baseline, Git/GitHub identity, Issue write access and repository-state evidence.
+
+Follow the [governing directive](migration/agent-packages/GOVERNING_AGENT_DIRECTIVE.md)
+and [repository-state guidance](operations/forward-momentum.md). Known authorized
+changes require exact path/status/content evidence in `knownChanges`, including
+staged content and task authority. Unexpected changes and conflicts still block.
+
+Ownership metadata records each invocation's resource and lifecycle. Cleanup waits
+for process exit and terminal handling, removes only the exact registered clean
+owned worktree, and retains its branch, ownership marker and logs. Dirty/ignored
+content, switched branches, ownership mismatches and uncertain process liveness
+retain resources for diagnosis. Cleanup never forces removal or adopts unknown
+worktrees. Worktrees share Git objects and the host account; they are not OS sandboxes.
+
+The `b-disp-ownership` metadata directory and `b-disp/<uuid>` resource branches remain
+compatibility identifiers. Do not rename them or rewrite state for naming purity.
+Private state validation checks unresolved lane repository/role identities and
+recorded worker identities before App access. Preserve persisted aliases and exact
+invocation IDs. Legacy invocations without recorded identity require explicit
+operator-authorized `compatibility.legacyInvocationIdentities` attribution; it cannot
+reassign an old result to a new worker. Completed history remains unchanged.
+
+## Verification and limits
+
+Run `npm test` for Node regression, preflight and policy checks. Provider adapter tests
+use bounded fixtures; they do not prove a specific live installation. Record live
+App, signed-event, worker, verification, closure and restart evidence separately.
+
+Project item/field reads remain bounded to the first 100 entries and require explicit
+`hasNextPage=false`; incomplete and GraphQL-error responses fail closed. There is no
+arbitrary status mapping or comprehensive recovery engine. Restart liveness uses
+PIDs without durable process-start identity, so PID reuse can retain resources
+conservatively. RAI remains unwired.

@@ -1,12 +1,15 @@
-# B-DISP Canonical Architecture
+# AlienIntent Canonical Architecture
+
+> Design target, not a statement of shipped commands or completed capabilities.
+> Current runtime usage and limits are in [operations](../operations.md).
 
 **Status:** Canonical design baseline
 
 ## Canonical mission
 
-> **B-DISP preserves current execution intent and authority across discontinuous agent work, constrains execution, independently verifies outcomes, recovers deterministically, and makes the process operable without requiring reconstruction of conversational history.**
+> **AlienIntent preserves current execution intent and authority across discontinuous agent work, constrains execution, independently verifies outcomes, recovers deterministically, and makes the process operable without requiring reconstruction of conversational history.**
 
-B-DISP is not the feature-specification system, planning engine, task decomposer, or general workflow engine.
+AlienIntent is not the feature-specification system, planning engine, task decomposer, or general workflow engine.
 
 ```text
 GitHub Spec Kit
@@ -22,7 +25,7 @@ Agent Ready + BIU Builder
           ↓
 GitHub Issue
           ↓
-B-DISP
+AlienIntent
     execution authority
     intent continuity
     role-specific context
@@ -41,11 +44,11 @@ Spec Kit converge
 Feature CONVERGED
 ```
 
-> **Spec Kit owns what should be built. B-DISP owns the reliable conversion of an approved bounded work unit into verified, operationally complete software.**
+> **Spec Kit owns what should be built. AlienIntent owns the reliable conversion of an approved bounded work unit into verified, operationally complete software.**
 
 ## Explicit non-responsibilities
 
-B-DISP MUST NOT become:
+AlienIntent MUST NOT become:
 - a replacement for Spec Kit constitution;
 - a requirements-authoring system;
 - a feature-specification system;
@@ -91,17 +94,17 @@ Every persistent instruction should eventually be classified:
 ## Four canonical interfaces
 
 1. Spec Kit → Agent Ready / BIU
-2. Agent Ready / BIU → B-DISP
-3. B-DISP → Spec Kit converge
-4. Operator → B-DISP
+2. Agent Ready / BIU → AlienIntent
+3. AlienIntent → Spec Kit converge
+4. Operator → AlienIntent
 
-See `b-disp-interface-contracts.md`.
+See `interface-contracts.md`.
 
-## B-DISP responsibilities
+## AlienIntent responsibilities
 
 ### Current execution authority
 
-B-DISP owns the answer to:
+AlienIntent owns the answer to:
 - what bounded Issue is being executed;
 - what current Project phase applies;
 - what Founder decisions apply;
@@ -111,11 +114,11 @@ B-DISP owns the answer to:
 - what execution constraints remain;
 - what actions are authorized at this phase.
 
-B-DISP references Spec Kit artifacts. It does not duplicate them as a second requirements store.
+AlienIntent references Spec Kit artifacts. It does not duplicate them as a second requirements store.
 
 ### Intent continuity
 
-B-DISP distinguishes:
+AlienIntent distinguishes:
 - ACTIVE authority;
 - SUPERSEDED authority;
 - SATISFIED obligations;
@@ -174,7 +177,7 @@ Operator:
 
 ### Deterministic workflow control
 
-B-DISP owns:
+AlienIntent owns:
 - invocation correlation;
 - worker identity;
 - admission;
@@ -200,24 +203,24 @@ This is deterministic mutual exclusion, not a generalized queue.
 
 ### Operator control surface
 
-B-DISP must answer:
+AlienIntent must answer:
 1. Where am I?
 2. Why am I here?
 3. What is currently authoritative?
 4. What blocks advancement?
 5. What is the safest valid next action?
-6. Can B-DISP perform it?
+6. Can AlienIntent perform it?
 
 ### ACCEPT → DONE
 
-B-DISP owns work-unit operational closure.
+AlienIntent owns work-unit operational closure.
 
 DONE means the bounded work unit is landed, deployed/published when required, operationally verified when required, and free of known required work.
 
 ## Work-unit DONE versus feature CONVERGED
 
 ```text
-B-DISP DONE
+AlienIntent DONE
     =
 bounded work unit operationally complete
 
@@ -226,7 +229,7 @@ Spec Kit CONVERGED
 feature/specification complete
 ```
 
-B-DISP must not determine global feature completeness.
+AlienIntent must not determine global feature completeness.
 
 ## Advisory evidence and stopping condition
 
@@ -263,37 +266,37 @@ For each ask:
 Read-only first:
 
 ```text
-b-disp status <issue>
-b-disp explain <issue>
-b-disp doctor
-b-disp logs <issue>
-b-disp version
-b-disp resources
+alienintent status <issue>
+alienintent explain <issue>
+alienintent doctor
+alienintent logs <issue>
+alienintent version
+alienintent resources
 ```
 
 Later deterministic actions:
 
 ```text
-b-disp continue <issue>
-b-disp reconcile <issue>
-b-disp install
-b-disp upgrade
-b-disp cleanup-owned
+alienintent continue <issue>
+alienintent reconcile <issue>
+alienintent install
+alienintent upgrade
+alienintent cleanup-owned
 ```
 
 Expert/debug-only:
 
 ```text
-b-disp emit ...
+alienintent emit ...
 ```
 
 `emit` must feed EventRelay and never mutate lifecycle state directly.
 
 ## Branch/worktree ownership boundary
 
-B-DISP does not own general repository branch strategy.
+AlienIntent does not own general repository branch strategy.
 
-B-DISP may clean up only resources it explicitly owns.
+AlienIntent may clean up only resources it explicitly owns.
 
 > **Merge is not lifecycle completion. DONE is lifecycle completion.**
 

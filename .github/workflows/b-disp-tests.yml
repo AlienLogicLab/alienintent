@@ -1,0 +1,22 @@
+name: AlienIntent offline verification
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  offline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.15.0'
+      - name: Record toolchain
+        run: node --version
+      - name: Required extracted runtime and compatibility suites
+        run: node scripts/check.mjs runtime
+      - name: Required worker preflight suite
+        run: node scripts/check.mjs preflight
+      - name: Separate existing RAI suite (unwired)
+        run: node scripts/check.mjs rai
+      - name: Governing instruction checks
+        run: node scripts/check.mjs policy

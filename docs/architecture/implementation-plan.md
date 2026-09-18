@@ -1,4 +1,7 @@
-# B-DISP Implementation Plan
+# AlienIntent Implementation Plan
+
+> Design target, not a statement of shipped commands or completed capabilities.
+> Current runtime usage and limits are in [operations](../operations.md).
 
 **Constraint:** Do not implement functionality owned by GitHub Spec Kit or Agent Ready.
 
@@ -23,7 +26,7 @@ Classify:
 - REMOVE
 
 Deliverable:
-`docs/architecture/b-disp-scaffolding-audit.md`
+`docs/architecture/alienintent-scaffolding-audit.md` (planned artifact; not yet created)
 
 Gate:
 Every KEEP item names a demonstrated failure it prevents.
@@ -33,12 +36,12 @@ Every KEEP item names a demonstrated failure it prevents.
 Commands:
 
 ```text
-b-disp status <issue>
-b-disp explain <issue>
-b-disp doctor
-b-disp logs <issue>
-b-disp version
-b-disp resources
+alienintent status <issue>
+alienintent explain <issue>
+alienintent doctor
+alienintent logs <issue>
+alienintent version
+alienintent resources
 ```
 
 Must show:
@@ -83,8 +86,8 @@ Compare current bootstrap versus compiled context on at least one real or replay
 Commands:
 
 ```text
-b-disp reconcile <issue> --dry-run
-b-disp reconcile <issue>
+alienintent reconcile <issue> --dry-run
+alienintent reconcile <issue>
 ```
 
 Prove:
@@ -100,8 +103,8 @@ No LLM.
 Commands:
 
 ```text
-b-disp continue <issue> --dry-run
-b-disp continue <issue>
+alienintent continue <issue> --dry-run
+alienintent continue <issue>
 ```
 
 Rules:
@@ -132,17 +135,17 @@ No generalized queue.
 Commands:
 
 ```text
-b-disp version
-b-disp install
-b-disp upgrade
-b-disp cleanup-owned
+alienintent version
+alienintent install
+alienintent upgrade
+alienintent cleanup-owned
 ```
 
 Rules:
 - preserve evidence;
 - install only reviewed/accepted revision;
-- never delete B-DISP-owned execution branch before DONE;
-- clean only B-DISP-owned resources.
+- never delete AlienIntent-owned execution branch before DONE;
+- clean only AlienIntent-owned resources.
 
 ## Phase 7 — Spec Kit integration
 
@@ -156,7 +159,7 @@ Evaluate Spec Kit extension/hook surfaces such as:
 Expected division:
 Spec Kit owns outer feature workflow.
 Agent Ready/BIU gates readiness.
-B-DISP executes bounded Issue.
+AlienIntent executes bounded Issue.
 Spec Kit converge owns feature completeness.
 
 Deliverable:
@@ -164,13 +167,13 @@ one documented integration path with no duplicated Spec Kit semantics.
 
 ## Phase 8 — Portability proof
 
-Configure B-DISP against a second sandbox repository without source changes.
+Configure AlienIntent against a second sandbox repository without source changes.
 
 Prove:
 - Spec Kit refs discoverable/configurable;
 - roles/resources configurable;
 - bounded status mapping configurable;
 - operator commands work;
-- B-DISP core unchanged.
+- AlienIntent core unchanged.
 
-Only then call B-DISP reusable infrastructure.
+Only then call AlienIntent reusable infrastructure.

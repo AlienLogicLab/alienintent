@@ -1,0 +1,32 @@
+{
+  "name": "alienintent",
+  "version": "0.0.1",
+  "private": false,
+  "type": "module",
+  "bin": {
+    "alienintent": "bin/alienintent.mjs",
+    "b-disp": "bin/b-disp.mjs"
+  },
+  "engines": {
+    "node": "24.15.0"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "scripts/worker-preflight",
+    "scripts/worker-gh",
+    "config/profile.example.json"
+  ],
+  "scripts": {
+    "test": "node scripts/check.mjs all",
+    "test:runtime": "node scripts/check.mjs runtime",
+    "test:preflight": "node scripts/check.mjs preflight",
+    "test:rai": "node scripts/check.mjs rai",
+    "test:policy": "node scripts/check.mjs policy"
+  },
+  "description": "AlienIntent keeps autonomous software engineering aligned with intent, evidence, and outcomes.",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlienLogicLab/alienintent.git"
+  }
+}
