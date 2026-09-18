@@ -12,8 +12,16 @@ state and worker logs outside the repository. Never publish credentials.
 
 The supported installation has one organization-owned repository and Project V2,
 one organization-owned GitHub App installed on that same organization, and one
-running profile. Configure the Status field with IMPLEMENT, VERIFY, REVIEW, ACCEPT
-and DONE semantics. App access is restricted to the configured repository and the
+running profile. Configure the existing Status field with this exact ordered lifecycle:
+CAPTURE → SPECIFY → PLAN → TASKS → READY → IMPLEMENT → VERIFY → REVIEW → ACCEPT → DONE.
+All ten names are required in `project.statusNames`; the App preflight verifies one
+Status field, the complete ordered option set and complete field pagination. Missing,
+ambiguous or unsupported options fail closed. Display-name casing is normalized.
+Do not create a competing Status field. Preserve existing option IDs when updating it.
+The Project lifecycle is broader than the execution engine: only IMPLEMENT, VERIFY
+and ACCEPT dispatch workers. The other states do not implicitly launch or promote work.
+
+App access is restricted to the configured repository and the
 permissions and webhook events enforced by App preflight. Worker and authorized
 operator GitHub identities must be separate from the App identity.
 
@@ -44,6 +52,28 @@ reconciliation. Execution disabled is not a globally read-only mode.
 The signed webhook path admits only configured repository/Project events. Normal
 progression uses authenticated Issue results and dispatcher Project transitions;
 the operator is not a message relay.
+
+## Lifecycle semantics
+
+| State | Meaning |
+|---|---|
+| CAPTURE | Initial product, problem or work intent |
+| SPECIFY | Requirements, constraints and acceptance criteria |
+| PLAN | Approach and decomposition |
+| TASKS | Materialize bounded work units |
+| READY | Sufficiently specified, dependency-resolved, Agent-Ready assessed, eligible for explicit release |
+| IMPLEMENT | Producer execution |
+| VERIFY | Deterministic/mechanical verification |
+| REVIEW | Qualitative engineering judgment; not necessarily a separately dispatched lane |
+| ACCEPT | Accepted engineering result / authority decision |
+| DONE | Operational closure complete |
+
+READY describes the readiness contract; this correction does not wire a new
+Agent-Ready assessment or automatic release mechanism into the Node dispatcher.
+There is no MERGE state. Merge/landing is a repository operation performed during
+closure after ACCEPT on the path to DONE, when authorized by the work packet.
+The bootstrap's existing VERIFY worker and result routing are unchanged; the full
+board vocabulary does not introduce a separate REVIEW worker or new handoff.
 
 ## Result protocol and lifecycle
 

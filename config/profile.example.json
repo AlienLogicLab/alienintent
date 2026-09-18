@@ -1,6 +1,6 @@
 {
   "repository": {"owner": "ExampleOrg", "name": "sample-project", "baselineRef": "refs/remotes/origin/main"},
-  "project": {"owner": "ExampleOrg", "number": 1, "statusFieldName": "Status", "statusNames": {"IMPLEMENT": "Implement", "VERIFY": "Verify", "REVIEW": "Review", "ACCEPT": "Accept", "DONE": "Done"}},
+  "project": {"owner": "ExampleOrg", "number": 1, "statusFieldName": "Status", "statusNames": {"CAPTURE": "Capture", "SPECIFY": "Specify", "PLAN": "Plan", "TASKS": "Tasks", "READY": "Ready", "IMPLEMENT": "Implement", "VERIFY": "Verify", "REVIEW": "Review", "ACCEPT": "Accept", "DONE": "Done"}},
   "githubApp": {"applicationId": 1, "installationId": 2, "privateKeyPath": "/srv/alienintent/secrets/app.pem"},
   "webhook": {"listenAddress": "127.0.0.1", "listenPort": 8787, "secretFile": "/srv/alienintent/secrets/webhook"},
   "execution": {"enabled": false, "inspectionIntervalMilliseconds": 60000},

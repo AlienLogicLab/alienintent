@@ -2,6 +2,7 @@ import { execFileSync } from "node:child_process";
 import { createPrivateKey, createSign } from "node:crypto";
 import { readFileSync, statSync } from "node:fs";
 import { isAbsolute } from "node:path";
+import { lifecycleStatuses } from "../domain/lifecycle.mjs";
 
 const permissions = { issues: "read", metadata: "read", organization_projects: "write" };
 const events = ["issue_comment", "projects_v2_item"];
@@ -186,11 +187,14 @@ export function createGitHubAppClient(config, {
     const query = "query($owner: String!, $name: String!, $number: Int!) { viewer { login } organization(login: $owner) { projectV2(number: $number) { id viewerCanUpdate fields(first: 100) { pageInfo { hasNextPage } nodes { ... on ProjectV2SingleSelectField { name options { name } } } } } } repository(owner: $owner, name: $name) { nameWithOwner issues(first: 1) { nodes { number comments(first: 1) { nodes { id } } } } } }";
     const response = JSON.parse(gh(["api", "graphql", "-f", `query=${query}`, "-F", `owner=${config.projectOwner}`, "-F", `name=${parts[1]}`, "-F", `number=${config.projectNumber}`]));
     const project = response.data?.organization?.projectV2;
-    const status = Array.isArray(project?.fields?.nodes) ? project.fields.nodes.find((field) => field.name === "Status") : null;
+    const statusFields = Array.isArray(project?.fields?.nodes) ? project.fields.nodes.filter((field) => field?.name === "Status") : [];
+    const status = statusFields.length === 1 ? statusFields[0] : null;
     if (response.data?.viewer?.login !== `${registration.slug}[bot]` || !project?.id || project.viewerCanUpdate !== true
       || response.data?.repository?.nameWithOwner !== repository || !Array.isArray(response.data?.repository?.issues?.nodes)
       || project?.fields?.pageInfo?.hasNextPage !== false
-      || !["IMPLEMENT", "VERIFY", "ACCEPT", "DONE"].every((name) => status?.options?.some((option) => option.name.toUpperCase() === name))) {
+      || !Array.isArray(status?.options) || status.options.length !== lifecycleStatuses.length
+      || !lifecycleStatuses.every((name, index) => typeof status.options[index]?.name === "string"
+        && status.options[index].name.toUpperCase() === name)) {
       throw new Error("AlienIntent: App Project/Issue read or transition capability preflight failed");
     }
     return { identity: `${registration.slug}[bot]`, appId: app.appId, installationId: app.installationId,

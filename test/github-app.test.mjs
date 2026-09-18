@@ -16,13 +16,35 @@ const initialTime = Date.parse('2026-09-08T00:00:00Z');
 const permissions = { issues: 'read', metadata: 'read', organization_projects: 'write' };
 const config = () => ({ repository: 'ExampleOrg/sample-project', projectOwner: 'ExampleOrg', projectNumber: 1, githubApp: { appId: 10101, installationId: 20202, privateKeyPath: '/outside/repo/key.pem' } });
 
-test('preflight requires DONE and complete Project fields without requiring REVIEW or MERGE', () => {
+const fullLifecycle = ['CAPTURE', 'SPECIFY', 'PLAN', 'TASKS', 'READY', 'IMPLEMENT', 'VERIFY', 'REVIEW', 'ACCEPT', 'DONE'];
+test('preflight accepts a complete lifecycle independently of dispatch lanes', () => {
   const fixtures = preflightFixture();
-  const fields = fixtures.graphql.data.organization.projectV2.fields;
   const { client } = harness({ response: ({ endpoint }) => fixtures[endpoint] });
   assert.equal(client.preflight().projectCanUpdate, true);
-  fields.nodes[0].options = fields.nodes[0].options.filter(option => option.name !== 'DONE');
+  fixtures.graphql.data.organization.projectV2.fields.nodes[0].options.forEach(option => { option.name = option.name.toLowerCase(); });
+  assert.equal(client.preflight().projectCanUpdate, true);
+});
+for (const missing of fullLifecycle) test(`preflight rejects lifecycle missing ${missing}`, () => {
+  const fixtures = preflightFixture();
+  const fields = fixtures.graphql.data.organization.projectV2.fields;
+  fields.nodes[0].options = fields.nodes[0].options.filter(option => option.name !== missing);
+  const { client } = harness({ response: ({ endpoint }) => fixtures[endpoint] });
   assert.throws(() => client.preflight(), /preflight failed/);
+});
+test('preflight rejects ambiguous or unsupported lifecycle options', () => {
+  for (const mutate of [
+    fields => fields.nodes.push(structuredClone(fields.nodes[0])),
+    fields => fields.nodes[0].options.push({ name: 'MERGE' }),
+    fields => fields.nodes[0].options.reverse(),
+    fields => { fields.nodes[0].options = null; },
+    fields => fields.nodes[0].options.push({ name: 'IMPLEMENT' }),
+    fields => { fields.nodes[0].options[0] = { name: null }; },
+  ]) {
+    const fixtures = preflightFixture();
+    mutate(fixtures.graphql.data.organization.projectV2.fields);
+    const { client } = harness({ response: ({ endpoint }) => fixtures[endpoint] });
+    assert.throws(() => client.preflight(), /preflight failed/);
+  }
 });
 
 for (const pageInfo of [{ hasNextPage: true }, undefined, { hasNextPage: null }]) {
@@ -201,7 +223,7 @@ function preflightFixture() {
     '/app': { id: 10101, slug: 'b-disp-example', owner: { login: 'ExampleOrg' }, permissions: { ...permissions }, events: ['projects_v2_item', 'issue_comment'] },
     '/app/installations/20202': { id: 20202, app_id: 10101, app_slug: 'b-disp-example', account: { login: 'ExampleOrg' }, target_type: 'Organization', repository_selection: 'selected', suspended_at: null, permissions: { ...permissions }, events: ['projects_v2_item', 'issue_comment'] },
     '/installation/repositories': { total_count: 1, repositories: [{ full_name: 'ExampleOrg/sample-project' }] },
-    graphql: { data: { viewer: { login: 'b-disp-example[bot]' }, organization: { projectV2: { id: 'PVT_project', viewerCanUpdate: true, fields: { pageInfo: { hasNextPage: false }, nodes: [{ name: 'Status', options: [{ name: 'IMPLEMENT' }, { name: 'VERIFY' }, { name: 'ACCEPT' }, { name: 'DONE' }] }] } } }, repository: { nameWithOwner: 'ExampleOrg/sample-project', issues: { nodes: [{ number: 302, comments: { nodes: [] } }] } } } },
+    graphql: { data: { viewer: { login: 'b-disp-example[bot]' }, organization: { projectV2: { id: 'PVT_project', viewerCanUpdate: true, fields: { pageInfo: { hasNextPage: false }, nodes: [{ name: 'Status', options: fullLifecycle.map(name => ({ name })) }] } } }, repository: { nameWithOwner: 'ExampleOrg/sample-project', issues: { nodes: [{ number: 302, comments: { nodes: [] } }] } } } },
   };
 }
 

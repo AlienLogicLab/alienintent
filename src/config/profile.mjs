@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { verifyStateCompatibility } from "./state-compatibility.mjs";
 
 const roles = ["PRODUCER", "VERIFIER"];
-const statuses = ["IMPLEMENT", "VERIFY", "REVIEW", "ACCEPT", "DONE"];
+import { lifecycleStatuses as statuses } from "../domain/lifecycle.mjs";
 const inherited = ["HOME", "USER", "LOGNAME", "LANG", "SHELL", "TERM"];
 const fail = field => { throw new Error(`AlienIntent: invalid config.${field}`); };
 function object(value, field, keys) {

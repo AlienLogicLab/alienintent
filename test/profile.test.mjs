@@ -142,3 +142,15 @@ test("execution profile requires canonical repository store and baseline without
   delete f.value.repository.baselineRef;
   assert.throws(() => f.load(), /baselineRef/);
 });
+
+const fullLifecycle = ["CAPTURE", "SPECIFY", "PLAN", "TASKS", "READY", "IMPLEMENT", "VERIFY", "REVIEW", "ACCEPT", "DONE"];
+test("profile accepts the full lifecycle without changing worker roles", () => {
+  const f = fixture();
+  f.value.project.statusNames = Object.fromEntries(fullLifecycle.map(name => [name, name]));
+  assert.deepEqual(f.load().roleNames, { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" });
+});
+for (const missing of fullLifecycle) test(`profile rejects lifecycle missing ${missing}`, () => {
+  const f = fixture();
+  f.value.project.statusNames = Object.fromEntries(fullLifecycle.filter(name => name !== missing).map(name => [name, name]));
+  assert.throws(() => f.load(), /invalid config.project.statusNames/);
+});

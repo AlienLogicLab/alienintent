@@ -28,7 +28,7 @@ const read=()=>JSON.parse(readFileSync(database,'utf8'));
 const save=value=>{const path=database+'.'+process.pid;writeFileSync(path,JSON.stringify(value));renameSync(path,database)};
 const project={number:1,owner:{login:'ExampleOrg'}};
 const membership={nodes:[{id:'PVTI_selfhost',databaseId:1,project}],pageInfo:{hasNextPage:false}};
-const fields={pageInfo:{hasNextPage:false},nodes:[{id:'status-field',name:'Status',options:['IMPLEMENT','VERIFY','REVIEW','ACCEPT','DONE'].map(name=>({id:name,name}))}]};
+const fields={pageInfo:{hasNextPage:false},nodes:[{id:'status-field',name:'Status',options:['CAPTURE','SPECIFY','PLAN','TASKS','READY','IMPLEMENT','VERIFY','REVIEW','ACCEPT','DONE'].map(name=>({id:name,name}))}]};
 `;
   const transport = join(directory, 'transport.mjs');
   writeFileSync(transport, common + `

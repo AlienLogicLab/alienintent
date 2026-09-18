@@ -11,7 +11,9 @@ AlienIntent was previously developed under the working name B-DISP.
 The standalone runtime admits bounded GitHub Project work, launches independent
 producer and verifier identities in disposable Git worktrees, correlates authenticated
 Issue results with exact invocations, and handles acceptance and closure. The lifecycle
-is IMPLEMENT → VERIFY → ACCEPT → DONE; REVIEW provides context and is not a worker lane.
+is CAPTURE → SPECIFY → PLAN → TASKS → READY → IMPLEMENT → VERIFY → REVIEW →
+ACCEPT → DONE. The Node execution engine dispatches only IMPLEMENT, VERIFY and ACCEPT.
+Merge/landing is a repository operation during closure after ACCEPT, not a lifecycle state.
 
 ## Run and verify
 

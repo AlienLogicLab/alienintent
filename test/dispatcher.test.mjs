@@ -1113,3 +1113,21 @@ test("later operator re-admission received before stopped worker exit needs no s
   assert.equal(f.launches.length, 2);
   assert.notEqual(f.requests[1].invocationId, claim.invocationId);
 });
+
+for (const status of ["CAPTURE", "SPECIFY", "PLAN", "TASKS", "READY", "REVIEW", "DONE", "MERGE"]) {
+  test(`lifecycle ${status} never dispatches through webhook or startup`, async () => {
+    let preflights = 0, enrichments = 0;
+    const { relay, launches, transitions } = subject({ preflight: async () => { preflights++; return { ok: true }; } });
+    relay.options.authority.enrichContentNode = async () => { enrichments++; return null; };
+    relay.options.authority.listItems = async () => [{ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVTI_1", status }];
+    try {
+      assert.equal((await relay.acceptEvent(event(status))).reason, "IRRELEVANT");
+      await relay.startupReconcile();
+      assert.deepEqual(launches, []);
+      assert.deepEqual(transitions, []);
+      assert.deepEqual(relay.state().active, {});
+      assert.equal(preflights, 0);
+      assert.equal(enrichments, 0);
+    } finally { relay.stop(); }
+  });
+}

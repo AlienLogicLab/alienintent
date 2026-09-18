@@ -52,7 +52,7 @@ test("production CLI dry-run reports actionable item without worker/preflight or
           const query = args.find(arg => arg.startsWith("query="));
           if (query.includes("viewerCanUpdate")) return JSON.stringify({ data: {
             viewer: { login: "test-app[bot]" }, repository: { nameWithOwner: "ExampleOrg/sample-project", issues: { nodes: [] } },
-            organization: { projectV2: { id: "project", viewerCanUpdate: true, fields: { pageInfo: { hasNextPage: false }, nodes: [{ name: "Status", options: ["Implement", "Verify", "Accept", "Done"].map(name => ({ name })) }] } } }
+            organization: { projectV2: { id: "project", viewerCanUpdate: true, fields: { pageInfo: { hasNextPage: false }, nodes: [{ name: "Status", options: ["Capture", "Specify", "Plan", "Tasks", "Ready", "Implement", "Verify", "Review", "Accept", "Done"].map(name => ({ name })) }] } } }
           } });
           if (query.includes("items(first:")) return JSON.stringify({data:{organization:{projectV2:{items:{pageInfo:{hasNextPage:false},nodes:[{id:"item",content:{__typename:"Issue",number:1041,repository:{nameWithOwner:"ExampleOrg/sample-project"}},fieldValues:{pageInfo:{hasNextPage:false},nodes:[{name:"Implement",field:{name:"Status"}}]}}]}}}}});
         }
