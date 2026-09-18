@@ -24,11 +24,11 @@ export BDISP_PREFLIGHT="$preflight"
 
 make_repo() {
   local path="$1" name="$2" email="$3"
-  git init -q "$path"
+  git init -q --initial-branch=main "$path"
   git -C "$path" config user.name "$name"
   git -C "$path" config user.email "$email"
   git -C "$path" commit --allow-empty -qm baseline
-  git init -q --bare "$path-origin"
+  git init -q --bare --initial-branch=main "$path-origin"
   git -C "$path" remote add origin "$path-origin"
   git -C "$path" branch -M main
   git -C "$path" push -qu origin main
