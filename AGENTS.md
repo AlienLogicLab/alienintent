@@ -15,10 +15,12 @@ baseline, destructive action or unavailable external prerequisite. A local commi
 does not authorize publication or live operation.
 
 **Candidate publication is required before VERIFY.** A PRODUCER must push its
-candidate branch to the configured remote before signalling `RESULT=VERIFY`. A
-verifier is a fresh, independent invocation in its own worktree: it can only
-review what it can retrieve. A candidate that exists solely as a local commit is
-not verifiable and must not be advanced.
+candidate branch to the configured remote before signalling `RESULT=VERIFY`, and
+must state the exact branch and commit SHA in its result comment. A verifier is a
+fresh, independent invocation in its own worktree: it can only review what it can
+both identify and retrieve. A candidate that exists solely as a local commit, or
+whose identity is not recorded on the Issue, is not verifiable and must not be
+advanced.
 
 Publishing a candidate branch is part of completing IMPLEMENT. It is not
 publication in the release sense and does not authorize merge, deployment, live
