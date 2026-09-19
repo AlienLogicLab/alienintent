@@ -1,29 +1,28 @@
 {
   "disposition": "READY",
-  "governing_intent": "Establish the first canonical Python implementation skeleton under src/ for the FD-02 AlienIntent Execution modules, conforming to the approved architecture layering rules, while preserving Node as the untouched operational bootstrap and adding executable architecture fitness checks as evidence.",
-  "summary": "The work is a cohesive architecture-enablement vertical: create the Python package structure, add executable conformance checks, prove those checks fail on deliberate violations and pass on the intended skeleton, and verify Node coexistence without runtime coupling or Node changes. The supplied authority states that the relevant Founder/architecture decisions are closed and that this task must not implement domain/runtime behavior or consume unresolved design decisions.",
+  "governing_intent": "Implement the first canonical Python package skeleton for AlienIntent under the Founder-fixed src/alienintent layout while preserving the existing Node bootstrap unchanged, and add executable architecture fitness checks that prove the intended structural boundaries before any runtime capability is introduced.",
+  "summary": "The proposed work has a clear bounded outcome: create the approved Python repository/package structure, add enforceable architecture fitness checks, demonstrate those checks failing on deliberate violations and passing on the skeleton, retain evidence, and verify Node still coexists unchanged. The supplied text states the relevant architecture authority, fixed layout, exclusions, and acceptance criteria, with no unresolved Founder-level decisions remaining.",
   "owner_clarifications": [],
   "implementation_unknowns": [
-    "Exact repository tooling for Python packaging, tests, linting, and evidence capture must be identified from the repo during implementation.",
-    "The concrete implementation mechanism for architecture fitness checks must be selected, including how to inspect imports, type signatures, port declarations, and configuration reads without overfitting to fixtures.",
-    "The existing Node test command and any environment requirements for proving the bootstrap suite still passes must be located during implementation.",
-    "The precise names and contents of FD-02 module packages, layer directories, and placeholder files must be mapped from the supplied architectural constraints without inventing business contracts.",
-    "The format and storage location for retained evidence must be chosen consistently with existing repository conventions, if any."
+    "Exact contents and formatting of docs/work-units/python/PY-01.md are not independently verified here and must be followed by the implementation agent if available in the repository.",
+    "The implementation mechanism for the fitness checks remains an engineering choice: for example AST inspection, import graph analysis, custom pytest checks, or another local executable checker.",
+    "The precise definition of 'vendor types in domain or port signatures' must be encoded conservatively from existing repository conventions and approved architecture language without inventing new product contracts.",
+    "The method for preserving evidence, including filenames, location, and captured exit statuses, is an implementation detail unless the BIU specifies it.",
+    "The existing Node test command and Python test/build commands must be discovered from repository tooling rather than assumed."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "Acceptance is observable with one meaningful independent verdict: inspect the diff to confirm only in-scope Python skeleton, tests/checks, and evidence were added; run the Python architecture checks against both deliberate violating fixtures and the compliant skeleton and preserve real exit statuses; run the existing Node suite to demonstrate the bootstrap remains unchanged and passing; confirm no Python-to-Node invocation, runtime coupling, FactoryChecks changes, credentials, providers, deployment, or runtime capability were introduced.",
+  "verification_assessment": "Acceptance is observable through filesystem layout checks, executable architecture fitness checks with intentional failing fixtures and passing skeleton cases, preserved command outputs or logs showing real exit statuses, and a Node suite run demonstrating the bootstrap remains unchanged. One independent verification verdict is meaningful because the work is a cohesive structural/conformance vertical with explicit exclusions and no runtime behavior to validate beyond coexistence and boundary enforcement.",
   "expected_rework_locality": "HIGH",
   "material_risks": [
-    "Architecture checks could become too weak, proving only the fixture rather than enforcing the stated architectural invariants.",
-    "Architecture checks could become too broad and block legitimate future implementation choices not actually prohibited by the governing authority.",
-    "A skeleton may accidentally imply contracts, ports, lifecycle behavior, or bounded-context promotions that this step is explicitly forbidden to decide.",
-    "Evidence retention may be incomplete if real failing and passing exit statuses are not captured reproducibly.",
-    "The Node suite may require local prerequisites not mentioned in the task; if unavailable during execution, that would become an execution blocker rather than an intent ambiguity.",
-    "Accidental changes to Node source, runtime configuration, FactoryChecks, credentials, providers, or deployment files would violate the stated scope."
+    "Fitness checks may accidentally overreach by enforcing contracts or bounded contexts not required for this step, which would consume excluded design work.",
+    "Fitness checks may be too weak or fixture-specific if they only detect the deliberate violations and do not generalize to real future code.",
+    "Creating or editing pyproject.toml could affect repository packaging or tooling if the existing project already has Node-oriented assumptions; changes must remain compatible with Node coexistence.",
+    "Node must remain operationally authoritative and untouched except for unavoidable coexistence-neutral repository metadata; accidental Node source, test, runtime, or bootstrap edits would violate scope.",
+    "Evidence retention must include real executable outcomes rather than static descriptions, or the EOS requirement for executable proof would not be met."
   ],
-  "next_action": "Proceed with implementation on the reported clean main baseline: add the minimal FD-02/\u00a741 Python src-layout skeleton, implement executable architecture fitness checks with violating fixtures, run and record the required failing/passing Python check outputs and the existing Node suite, then review the diff for excluded changes before handoff.",
-  "rationale": "READY is the controlling disposition because the supplied task defines a single coherent vertical with clear governing authority, explicit exclusions, observable acceptance criteria, and no material owner decision left open. The remaining uncertainty is normal engineering discovery about repository conventions and check implementation, not a product or architecture clarification need. The work should not be split because the skeleton and fitness checks validate the same architectural baseline and are most meaningfully accepted or rejected together.",
+  "next_action": "Hand off for implementation of PY-01 exactly within the fixed Python skeleton, tools/fitness, tests, and evidence scope; discover existing commands locally, add the minimum executable checks and fixtures, run the relevant Python checks and Node suite, preserve real outputs, and avoid all Node source/runtime/config changes.",
+  "rationale": "READY is the controlling disposition because the owner intent, architecture authority, repository layout, exclusions, and acceptance criteria are specific and coherent. Remaining uncertainties are normal engineering research about how to implement and run the checks, not unresolved owner decisions. The work is one cohesive vertical: the skeleton and fitness checks mutually validate the same architectural boundary baseline, so splitting would add coordination overhead without isolating independent product decisions. No external prerequisite is established as unavailable by the supplied text.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
