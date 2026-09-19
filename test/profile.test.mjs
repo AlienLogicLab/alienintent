@@ -154,3 +154,36 @@ for (const missing of fullLifecycle) test(`profile rejects lifecycle missing ${m
   f.value.project.statusNames = Object.fromEntries(fullLifecycle.filter(name => name !== missing).map(name => [name, name]));
   assert.throws(() => f.load(), /invalid config.project.statusNames/);
 });
+
+// Guards the critical Node bootstrap compatibility fix that added "bypassPermissions"
+// to the claude permission-mode allowlist. A claude worker restricted to "manual"
+// cannot execute a single tool call when launched non-interactively, which made the
+// VERIFIER role inoperable. See docs/evidence/node-bootstrap-verifier-permission-fix.md.
+// This protects the frozen bootstrap until Python Sovereignty. It is not the canonical
+// Python capability/authority design, which remains governed by binding FD-03.
+test("worker permission modes stay adapter-scoped after the claude bootstrap fix", () => {
+  const accepted = { claude: ["manual", "bypassPermissions"], codex: ["read-only", "workspace-write", "danger-full-access"] };
+  const rejected = {
+    claude: ["read-only", "workspace-write", "danger-full-access", "acceptEdits", "dontAsk", "auto", "plan", "", "MANUAL"],
+    codex: ["manual", "bypassPermissions", "full-access", "", "READ-ONLY"],
+  };
+  const worker = { claude: "VERIFIER", codex: "PRODUCER" };
+  for (const [adapter, modes] of Object.entries(accepted)) {
+    for (const mode of modes) {
+      const f = fixture();
+      assert.equal(f.value.workers[worker[adapter]].provider.adapter, adapter);
+      f.value.workers[worker[adapter]].provider.permissionMode = mode;
+      const c = f.load();
+      const role = f.value.workers[worker[adapter]].compatibility.persistedRoleValue;
+      assert.equal(c.workers[role].permissionMode, mode, `${adapter} must accept ${mode}`);
+    }
+  }
+  for (const [adapter, modes] of Object.entries(rejected)) {
+    for (const mode of modes) {
+      const f = fixture();
+      f.value.workers[worker[adapter]].provider.permissionMode = mode;
+      assert.throws(() => f.load(), /invalid config\.worker\.provider\.permissionMode/,
+        `${adapter} must reject ${JSON.stringify(mode)}`);
+    }
+  }
+});
