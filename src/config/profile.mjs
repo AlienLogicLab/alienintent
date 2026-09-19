@@ -92,7 +92,7 @@ export function loadProfile(profilePath) {
     if (!["codex", "claude"].includes(w.provider.adapter)) fail("worker.provider.adapter");
     const command = path(w.provider.executablePath, "worker.provider.executablePath");
     const args = strings(w.provider.arguments, "worker.provider.arguments");
-    const modes = w.provider.adapter === "codex" ? ["read-only", "workspace-write", "danger-full-access"] : ["manual"];
+    const modes = w.provider.adapter === "codex" ? ["read-only", "workspace-write", "danger-full-access"] : ["manual", "bypassPermissions"];
     if (!modes.includes(w.provider.permissionMode)) fail("worker.provider.permissionMode");
     object(w.provider.authenticationProfile, "worker.provider.authenticationProfile", ["name", "homeDirectory"]);
     const home = path(w.provider.authenticationProfile.homeDirectory, "worker.provider.authenticationProfile.homeDirectory");
