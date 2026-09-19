@@ -41,7 +41,7 @@ This resolves FD-01 by rejecting the earlier whole-lifecycle alternatives and re
 
 Architecture Authority §10 remains in force: release may be issued by an authorized human when automatic release is OFF or explicitly generated under an authorized policy when ON. Explicit release is an attributable boundary event/command, not a new mandatory-human-only rule. READY by itself does not release work.
 
-The ownership decision is approved; detailed handoff, conflict, projection and transaction mechanisms in the linked candidate contracts remain refinements subject to the gate and unresolved FD-02–FD-06. The Node bootstrap remains unchanged operational authority until an independently approved migration/cutover. Its current external-Project execution authority is a protected bootstrap mechanism, not the canonical target ownership model.
+The ownership decision is approved. FD-02–FD-05 are now binding in [the related Founder decision record](2026-09-19-pre-python-gate-founder-decisions-fd02-fd06.md); FD-06 remains blocked pending EOS normalization. Detailed handoff, conflict, projection and transaction mechanisms remain subject to contract completion and the gate. The Node bootstrap remains unchanged operational authority until an independently approved migration/cutover. Its current external-Project execution authority is a protected bootstrap mechanism, not the canonical target ownership model.
 
 ## Refined contract and verification pointers
 

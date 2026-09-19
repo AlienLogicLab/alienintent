@@ -7,16 +7,16 @@ Binding inputs: [Architecture Authority](../alienintent-architecture-authority-2
 ## Required independence
 VERIFIER uses a separate invocation, owned isolated worktree, independently assembled authoritative requirements and immutable candidate/evidence, and separate provenance. Producer private reasoning/session state is unavailable by default. Acceptance cannot be the producer approving its own output. Separate provider/model/account/machine can strengthen assurance but are not mandatory. REVIEW remains qualitative even when performed by the same independent verifier invocation after mechanical checks.
 
-## Candidate authority envelope (FD-03)
+## Binding authority envelope direction (FD-03)
 A grant binds profile, BIU version, invocation/role, issuer/authority reference, target repository/environment, allowed operation/resources, expiry/termination condition, budget and policy version. Launch and capability use check that envelope; revocation fences new actions, cancels owned work safely and records any already-completed effects. External credentials are implementation bindings, not authority by themselves. Deploy/DB migration/config rotation/service restart/cloud changes are allowed when explicitly needed and granted; each records action/result and post-change verification.
 
-The proposed default verifier grant allows assigned evidence/source reads, specified verification commands, generated output in its evidence/workspace area and attributable result publication. Implementation-source edits, arbitrary pushes, unrelated repositories and deployment access are not implicit verifier capabilities. A BIU requiring a stronger operation must carry an explicit purpose/target grant and preserve immutable reviewed candidate semantics. This proposed canonical envelope is not derived from JC's shared-Claude bootstrap exception; that exception was retired.
+Use sensible capability profiles/conventions plus explicit BIU-specific additions, avoiding needless per-operation permission bureaucracy. The default verifier profile allows assigned evidence/source reads, specified verification commands, generated output in its evidence/workspace area and attributable result publication. A BIU requiring shell, network, cloud API, database migration, service-control, live deployment or other powerful authority carries an explicit purpose/target addition and preserves immutable reviewed-candidate semantics. Credentials remain implementation bindings, not authority by themselves.
 
 ## Optional isolation
 Trusted unsandboxed execution is valid if configured. Linux-native containers are preferred when isolation is enabled, with Docker-compatible backends supported. Backend unavailability cannot silently lower configured assurance. Credential delivery is scoped and evidence redacted whether sandboxed or not. Container choice cannot substitute for spend controls.
 
 ## Failure cases
-A grant for staging cannot mutate production. A verifier receiving changed candidate bytes cannot publish ACCEPT for the old digest. Revoked publication authority denies the comment/result operation, preserving local evidence and a truthful blocker. Stronger policies may require an additional human decision; no LOW/NORMAL/HIGH bureaucracy or mandatory separate GitHub accounts is introduced. Founder approval is required for the proposed default grants and release defaults before adoption.
+A grant for staging cannot mutate production. A verifier receiving changed candidate bytes cannot publish ACCEPT for the old digest. Revoked publication authority denies the comment/result operation, preserving local evidence and a truthful blocker. Stronger policies may require an additional human decision; no LOW/NORMAL/HIGH bureaucracy or mandatory separate GitHub accounts is introduced. FD-03 approves this direction; exact profile catalogues and enforcement mechanisms remain design work.
 
 ## Traceability and acceptance
 

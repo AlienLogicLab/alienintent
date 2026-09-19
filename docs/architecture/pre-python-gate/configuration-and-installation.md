@@ -9,6 +9,12 @@ Ownership refinement: [binding FD-01](../../decisions/2026-09-19-alienintent-wor
 ## Configuration contract
 One service may manage N profiles with N=1 conventions. Each typed profile names isolated operational/evidence namespaces, repositories/work-management mappings, transport, providers, release/assurance/budget policies and workspace/resource limits. Reject ambiguous profile routing, overlapping mutable resources and unknown critical fields. Defaults reduce IDs and paths users must enter; discovery reads and validates immutable IDs instead of guessing. Secrets are references resolved by SecretProvider, not embedded values.
 
+Automatic release defaults ON and is configurable OFF per deployment/profile.
+Configuration preserves readiness checks in either mode and rejects an execution
+path requiring a hard budget limit when its provider cannot enforce or measure
+that limit. Relay configuration selects transport only; an upstream lacking
+end-to-end envelope authentication requires a deployer-controlled gateway.
+
 Protected local file references are the simple self-hosted default; environment references, keyrings, Vault/cloud/Kubernetes/enterprise systems are replaceable adapters. Consumers receive only authorized handles/material at the last needed boundary. Diagnostics, generated config and evidence redact values. Rotation records versions and must not silently rebind an active invocation's authority.
 
 ## Init/install flow

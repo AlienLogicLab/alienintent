@@ -1,6 +1,6 @@
 # Domain Model — Pre-Python candidate
 
-Date: 2026-09-19. Status: CANDIDATE DESIGN; not Founder-approved or implementation authority.
+Date: 2026-09-19. Status: CANDIDATE DESIGN with FD-02-approved module boundary; not implementation authority.
 BIU: [PG-02](../../work-units/pre-python-gate/PG-02.md), Agent-Ready READY before drafting.
 Binding inputs: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md).
 
@@ -35,17 +35,17 @@ PRODUCER creates the candidate; VERIFIER independently verifies/reviews it. Mort
 
 This is an architectural split, not an installation/profile choice. A Work Item may have multiple released BIUs; completing one BIU does not rewrite upstream product ownership or declare the entire product intent complete. External display of downstream status does not make the provider a second execution authority.
 
-## Candidate internal decomposition (FD-02 remains open)
+## Approved internal module decomposition (FD-02)
 
-Within the approved AlienIntent Execution boundary, the earlier Work Coordination proposal is narrowed to **Execution Coordination**: released BIU versions, execution dependencies, release acceptance and execution lifecycle/closure guards, never canonical upstream backlog. **Invocation Runtime** covers worker/resource ownership and cancellation. **Context Assembly** and **Evidence and Learning** provide separate context/evidence models; **Installation** is supporting profile/adapter/secret configuration. These are candidate internal submodels/modules, not a claim that the Founder approved five additional bounded contexts or services.
+Within the approved AlienIntent Execution boundary, the earlier Work Coordination proposal is narrowed to **Execution Coordination**: released BIU versions, execution dependencies, release acceptance and execution lifecycle/closure guards, never canonical upstream backlog. **Invocation Runtime** covers worker/resource ownership and cancellation. **Context Assembly** and **Evidence and Learning** provide separate context/evidence models; **Installation** is supporting profile/adapter/secret configuration. These are approved initial modules, not five additional bounded contexts or services.
 
-The Control Plane coordinates those application services without becoming another state owner. Cross-model references use IDs and versioned contracts. FD-02 now concerns internal decomposition and aggregate ownership inside these fixed authority limits; it cannot reopen whole-lifecycle or configurable ownership. Exact package names remain unset.
+The Control Plane coordinates those application services without becoming another state owner. Cross-model references use IDs and versioned contracts. Promote a module only when domain evidence establishes a distinct language, invariant boundary or ownership model. Exact package names remain unset.
 
 ## EOS translation
 BIU maps to the bounded execution/acceptance aspects of an EOS Work Order, without claiming every BIU is an organizational Work Order. AlienIntent Profile is not EOS Project. Trajectory facts are Evidence; an interpretation is a Claim with uncertainty; accepted learning is a reviewed Knowledge Claim. A proposed policy change maps to a Decision/proposal, never automatic adoption. ADR-0004 preserves both vocabularies.
 
 ## Checks
-Producer invocation I1 cannot approve candidate C1 as an independent verifier. A new candidate C2 cannot reuse acceptance of C1. Every state-changing invariant above has one owner; an adapter translating Issue42 cannot manufacture a Work Item identity by repository number alone. FD-01 fixes the two authority contexts; FD-02 still requires approval of the internal decomposition. Package names are deliberately not established.
+Producer invocation I1 cannot approve candidate C1 as an independent verifier. A new candidate C2 cannot reuse acceptance of C1. Every state-changing invariant above has one owner; an adapter translating Issue42 cannot manufacture a Work Item identity by repository number alone. FD-01 fixes the two authority contexts and FD-02 fixes the initial module decomposition. Package names are deliberately not established.
 
 ## Traceability and acceptance
 

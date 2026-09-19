@@ -22,4 +22,5 @@ No implementation plan or first Python implementation BIU is authorized by this 
 - [x] Refine release/import/projection/persistence/control/conformance contracts and narrow FD-02.
 - [x] Independently review the PG-17 delta, repair the context-version inconsistency and finish its documentation checks.
 
-FD-02–FD-06 remain pending. No Python implementation is authorized.
+PG-18 applies FD-02–FD-05 as binding design direction and records FD-06 as
+BLOCKED pending EOS normalization. No Python implementation is authorized.

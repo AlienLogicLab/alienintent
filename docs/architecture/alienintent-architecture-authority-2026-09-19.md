@@ -135,10 +135,10 @@ External workflow states map to AlienIntent semantics.
 READY means prepared for execution.
 
 AlienIntent supports an execution-release policy switch:
-- automatic release ON
+- automatic release ON (default)
 - automatic release OFF
 
-ON: work satisfying release policy may transition to IMPLEMENT automatically.
+ON: a READY BIU satisfying release policy transitions to IMPLEMENT through an attributable policy release.
 OFF: a human explicitly authorizes release.
 
 This is policy, not a hard-coded human-approval requirement.
@@ -181,8 +181,9 @@ Examples:
 - deployment BIU: may additionally receive deployment credentials, cloud API access, DB migration authority, service-control authority
 
 Capabilities should be explicit, attributable, and revocable where practical.
-
 AlienIntent must be capable of granting dangerous/powerful capabilities when required.
+Use sensible capability profiles/conventions plus explicit BIU-specific additions;
+do not require needless per-operation permission bureaucracy.
 
 ## 14. Deployment authority
 
@@ -537,9 +538,12 @@ Examples:
 
 ## 40. EOS inheritance/contribution
 
-AlienIntent inherits from Alien Logic Lab EOS.
+AlienIntent is intended to inherit from Alien Logic Lab EOS after EOS
+normalization establishes one internally consistent approved version.
 
-AlienIntent records the EOS version/commit it conforms to.
+AlienIntent records one internally consistent, approved EOS version/commit before
+claiming conformance. Mixed per-document maturity states are not a conformance
+baseline; maturity inconsistencies must be reconciled in EOS itself first.
 
 Generalizable improvements return to EOS through explicit proposals/PRs or another deliberate governance mechanism.
 

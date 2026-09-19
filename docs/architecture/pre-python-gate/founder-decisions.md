@@ -1,6 +1,6 @@
 # Founder decisions required before gate admission
 
-Status: FD-01 is resolved by binding Founder decision; FD-02–FD-06 remain proposals, not adopted decisions. The user authorized inventory and candidate design work, not silent decisions under Authority §45. Existing 45 Founder-resolved directions remain binding; these questions fill gaps in concrete contracts rather than reopen those directions.
+Status: FD-01–FD-05 are resolved by binding Founder decisions. FD-06 is explicitly blocked pending EOS normalization; it is not deferred or resolved. The binding record for FD-02–FD-06 is [Founder decisions FD-02 through FD-06](../../decisions/2026-09-19-pre-python-gate-founder-decisions-fd02-fd06.md). Historical proposal text below is retained for provenance only and is superseded where it conflicts with that record.
 
 ## FD-01 — RESOLVED: Work Management / Execution ownership split
 
@@ -10,7 +10,7 @@ The external Work Management Provider owns canonical product/work state through 
 
 The earlier recommendation for AlienIntent-owned whole-lifecycle state, and both whole-lifecycle/configurable alternatives, are superseded. Historical text remains at commit 7b16e0ba1acc2a20b959476bbac0a36f0342d22d. This is the Founder's ownership split, not adoption of the earlier option 1 or option 2. No Python implementation or live Node change is authorized. Detailed mechanisms remain candidate where not decided.
 
-## FD-02 — Domain boundary proposal
+## FD-02 — RESOLVED: internal Execution decomposition
 
 **Required decision:** refine/approve the internal decomposition under the now-fixed Work Management versus AlienIntent Execution boundary. Candidate responsibilities are Execution Coordination (released BIU/lifecycle), Invocation Runtime, Context Assembly, Evidence and Learning, and supporting Installation; Control Plane remains application orchestration. These are not five already-approved bounded contexts.
 
@@ -24,7 +24,7 @@ The earlier recommendation for AlienIntent-owned whole-lifecycle state, and both
 
 **If approved:** complete the concrete aggregate/port contracts against this partition and finalize UL v1 for review. Not permission to scaffold Python packages. Existing domain/lifecycle terms remain unchanged.
 
-## FD-03 — Default release/capability/budget policy
+## FD-03 — RESOLVED: release/capability/budget policy
 
 **Required decision:** approve the candidate per-BIU authority envelope and the initial release default. Confirm fail-closed budget admission when required hard limits cannot be enforced or consumption is unknown.
 
@@ -38,7 +38,7 @@ The earlier recommendation for AlienIntent-owned whole-lifecycle state, and both
 
 **If approved:** refine capability use/revocation, budget reservation/settlement and init policy contracts, then reassess those design BIUs. No actual worker permissions, credentials, services or provider spending change.
 
-## FD-04 — Relay trust/custody contract
+## FD-04 — RESOLVED: relay trust/custody contract
 
 **Required decision:** whether the first-class outbound relay may be a trusted authentication/custody adapter, or must be an opaque transport beneath deployment-controlled end-to-end event authentication.
 
@@ -52,7 +52,7 @@ The earlier recommendation for AlienIntent-owned whole-lifecycle state, and both
 
 **If approved:** complete the direct/relay adapter contract and installation sequence for review. No relay deployment, external service commitment, gateway creation or web deployment is authorized.
 
-## FD-05 — Durable effects and multi-instance coordination
+## FD-05 — RESOLVED: durable effects and multi-instance coordination
 
 **Required decision:** approve the candidate inbox/effect-intent-outbox, expected-version writes and reservation fencing model for SQLite/PostgreSQL conformance, or choose a different consistency model.
 
@@ -66,7 +66,7 @@ The earlier recommendation for AlienIntent-owned whole-lifecycle state, and both
 
 **If approved:** refine transaction tables/invariants, effect reconciliation and backend conformance scenarios as design. No schema or Python implementation is authorized.
 
-## FD-06 — EOS conformance baseline
+## FD-06 — BLOCKED: EOS conformance baseline
 
 **Required decision:** approve the observed EOS commit 79d769228c266064e71b7ab7f556ea831cfc9537 as the inheritance reference with explicit per-document maturity, including treatment of directed engineering policy whose post-edit review remains pending.
 

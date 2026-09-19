@@ -9,10 +9,20 @@ Ownership refinement: [binding FD-01](../../decisions/2026-09-19-alienintent-wor
 ## Common ingress contract
 Both direct webhook and outbound relay yield a neutral envelope with event ID, schema version, profile/work/BIU references, invocation/causation/correlation when applicable, occurrence/receipt time, authenticated source provenance, expected state/version and payload reference. Unknown profile, ambiguous routing, invalid authenticity or unsupported required version reject before domain action. Vendor headers/signatures remain adapter responsibilities.
 
-Direct ingress validates raw-body authenticity and routes to the exact configured profile. Node's HMAC raw-byte check and public valid202/invalid401/tampered401 are behavioral evidence; HTTP path/header conventions are adapter-specific. Outbound relay uses authenticated outbound connection, durable event identities and resume cursor/acknowledgment. No hosted ALL dependency and no normal polling loop. Relay ownership/authentication/custody details require the FD-04 deployment decision before an operational adapter contract is final.
+Direct ingress validates raw-body authenticity and routes to the exact configured profile. Node's HMAC raw-byte check and public valid202/invalid401/tampered401 are behavioral evidence; HTTP path/header conventions are adapter-specific. Outbound relay uses authenticated outbound connection, durable event identities and resume cursor/acknowledgment. No hosted ALL dependency and no normal polling loop. FD-04 fixes relay as transport beneath the required end-to-end authenticated envelope; exact operational adapter detail remains design work.
 
 ## Durable processing design
 Candidate design: persist authenticated receipt and payload reference before acknowledging durable custody; process with idempotency key and expected aggregate version; persist resulting domain change plus an effect intent; effect adapter executes/reconciles with the same identity and records confirmed receipt. Duplicate event returns prior receipt. Reordered stale-version event does not roll work backward; it is rejected or retained for bounded reconciliation using authoritative evidence. FD-01 fixes ownership: internal transactions affect execution control; upstream snapshots retain external provenance and are not canonical product state. FD-05 still determines the concrete transaction/fencing implementation.
+
+## Binding FD-04/FD-05 refinement
+
+Direct ingress validates its authenticated envelope. An outbound relay is
+transport only and cannot become a trusted domain/security authority; where an
+upstream cannot originate the required end-to-end authenticated envelope, a
+deployer-controlled gateway must do so. Receipt, effect-intent/outbox,
+expected-version and reservation-fencing contracts are required design direction.
+Unknown effect outcomes require read-back/reconciliation and block conflicting
+work rather than blind retry.
 
 ## Crash/replay cases
 Crash before receipt persistence: no positive custody acknowledgment; sender may retry. Crash after persistence/before action: replay same ID, no duplicate admission. Crash after external effect/before recording its receipt: inspect exact external effect identity/readback, do not blindly repeat. Unknown effect outcome remains unresolved and blocks a conflicting mutation. Missing or forged invocation/role cannot advance lifecycle. Physically exactly-once network delivery is not promised.

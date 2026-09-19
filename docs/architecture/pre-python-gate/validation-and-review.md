@@ -19,3 +19,14 @@ PG-17 was assessed READY through the actual Agent-Ready MCP before documentation
 Independent delta reviewer pre_python_gate_review found one P2 inconsistency: an old Context Engineering sentence could treat a refreshed upstream source as invalidating released execution authority. Repaired it to preserve the pinned execution and require explicit authorized revision/supersession; upstream refresh remains separately versioned evidence. The reviewer found the other ownership, release ON/OFF, projection/recovery, gate-status and Node-protection distinctions consistent. This is documentation review, not broader architectural approval or runtime proof.
 
 Targeted documentation checks validate all 34 exact gate rows, the PG-17 READY receipt, relative links, unchanged hashes for the 159 original artifacts, absence of stale unresolved-FD-01 phrasing in the refined contracts, documentation-only changed paths and whitespace. Node tests are not rerun for this documentation-only delta. FD-01 is closed; FD-02–FD-06 and complete gate adoption remain unresolved. No canonical Python implementation is authorized.
+
+## PG-18 — FD-02 through FD-06 application
+
+PG-18 received Agent-Ready disposition READY through the shared local
+assessment engine: `codex-cli 0.155.1`, `COMPATIBLE_UNVERIFIED`, capability
+probe PASSED. This revision applies FD-02–FD-05 only to documentation/design
+contracts. FD-06 is a blocking EOS-normalization prerequisite, not a mixed
+maturity conformance claim. Independent delta review found stale FD-02–FD-06
+status statements in the gate, reconciliation, execution and FD-01 records;
+they were corrected. Targeted checks confirmed documentation-only scope and
+clean whitespace. No Python implementation is authorized.

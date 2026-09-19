@@ -1,4 +1,4 @@
-# Pre-Python Gate Report — BLOCKED pending Founder decisions
+# Pre-Python Gate Report — BLOCKED pending contract completion and EOS normalization
 
 Date: 2026-09-19. This is a completed inventory and candidate-design checkpoint, not a passed architecture gate or authorization to implement Python.
 
@@ -53,7 +53,7 @@ PASS below means the already-approved policy artifact is sufficiently explicit f
 
 **FD-01 is resolved and applied.** The [binding decision](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md) fixes external Work Management authority through READY and AlienIntent execution authority after explicit release. PG-17 was assessed READY before applying the document refinement. Imports are not a canonical product backlog; downstream external state is a projection; ownership is not configurable.
 
-FD-02–FD-06 remain unresolved. FD-02 is narrowed to internal decomposition within the approved boundary. Ownership-related portions of G01–G05, G07–G09, G15–G16, G19–G22, G25–G30 and G33–G34 now have this Founder authority; this is not blanket adoption of their entire candidate contracts. No complete gate row is promoted solely because FD-01 was resolved. Counts remain 2 PASS / 0 DEFERRED BY FOUNDER / 32 BLOCKED pending remaining contract completeness/adoption. The next architecture decision is FD-02; no new decision or deferral is inferred here.
+FD-02–FD-05 are resolved and applied by PG-18; FD-06 remains BLOCKED pending EOS normalization. Their decisions authorize contract refinement, not blanket gate-row adoption. The gate remains blocked pending contract completeness/adoption and one coherent approved EOS version; no Python implementation is authorized.
 
 ## Protected baseline and limitations
 
@@ -68,3 +68,16 @@ Independent review found no blocking findings and one minor cross-reference erro
 ## FD-01 revision evidence
 
 PG-17 refines the approved split across release, imports/projections, persistence, operator actions and conformance. Its scenarios include duplicate release, automatic policy release, external downstream edit/echo, upstream edit after release, projection outage/order and fixed ownership across profiles. Existing Node runtime and original gate inputs/assessments remain unchanged.
+
+## PG-18 Founder-decision application
+
+PG-18 was assessed READY with `codex-cli 0.155.1`,
+`COMPATIBLE_UNVERIFIED`, and capability probe `PASSED`. FD-02 through FD-05
+are now binding design direction: initial Execution modules; sensible per-BIU
+capability profiles with explicit additions; fail-closed required budgets;
+**automatic release default ON and configurable OFF**; end-to-end authenticated
+events with relay as transport; and inbox/effect-intent/outbox with versions,
+fencing, idempotency and reconciliation. They authorize contract refinement,
+not Python implementation. FD-06 remains BLOCKED: AlienIntent has no EOS
+conformance baseline until EOS is normalized to one internally consistent,
+approved version.

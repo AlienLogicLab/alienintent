@@ -4,8 +4,8 @@ Date: 2026-09-19. Status: CANDIDATE DESIGN; not Founder-approved or implementati
 BIU: [PG-15](../../work-units/pre-python-gate/PG-15.md), Agent-Ready READY before drafting.
 Binding inputs: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md).
 
-## Candidate baseline pin
-Observed read-only EOS repository: /home/netmarine/projects/alienlogiclab/P000-all-eos at 79d769228c266064e71b7ab7f556ea831cfc9537, clean when inventoried. This is a proposed conformance baseline (FD-06), not a blanket assertion that every file is ratified. Constitution requires epistemic integrity, architecture before implementation, knowledge preservation and evidence-linked organizational learning.
+## FD-06 blocker: EOS normalization required
+Observed read-only EOS repository: /home/netmarine/projects/alienlogiclab/P000-all-eos at 79d769228c266064e71b7ab7f556ea831cfc9537, clean when inventoried. This is observation only, not an AlienIntent conformance baseline. EOS is one coherent system/version: audit this revision, identify maturity/status inconsistencies, reconcile them in EOS, establish one internally consistent approved EOS version, and only then record AlienIntent inheritance/conformance. Constitution remains relevant for epistemic integrity, architecture before implementation, knowledge preservation and evidence-linked organizational learning.
 
 ADR-0004 is Accepted: preserve project domain language and map organizational meanings. Knowledge Lifecycle v0.1 and Capability Evidence Chains v0.1 are Accepted: provenance, supporting/contradicting evidence, owner, qualitative confidence, review cadence and supersession remain traceable. Ontology v0.1 establishes Work Order/Claim/Evidence/Decision distinctions; do not flatten them into AlienIntent operational state. Engineering Principles v0.2 identifies directed organizational policy with post-edit Rick/Chief Architect review pending. Its separately marked candidate-principle table is not automatically promoted. Decision Principles is scaffold, not authoritative adopted rules.
 
@@ -16,7 +16,7 @@ Maintain an explicit conformance manifest: source repository/commit/path/section
 An AlienIntent finding links exact source/commit/verification and limits, creates a local candidate organizational lesson/CIR proposal, receives engineering and governance review, then is submitted through explicit EOS proposal/PR or authorized mechanism. Acceptance records EOS decision/version and feeds back into the conformance manifest. This task neither edits EOS nor authorizes submission/publication. Organizational learning must not obstruct bounded product learning or invent a new product/program.
 
 ## Scenarios
-A Node bootstrap lesson about exact result correlation may be proposed with Issue1 evidence, but is not instantly an organizational law. An EOS vocabulary difference produces a translation entry rather than renaming BIU. A pending-review engineering policy retains its status in the manifest. FD-06 selects the actual inherited baseline and treatment of directed-but-review-pending material before a conformance claim is made.
+A Node bootstrap lesson about exact result correlation may be proposed with Issue1 evidence, but is not instantly an organizational law. An EOS vocabulary difference produces a translation entry rather than renaming BIU. A pending-review engineering policy is EOS-normalization evidence, not a per-document exception AlienIntent may carry as its baseline. FD-06 blocks inheritance/conformance claims until EOS establishes its coherent canonical version.
 
 ## Traceability and acceptance
 
