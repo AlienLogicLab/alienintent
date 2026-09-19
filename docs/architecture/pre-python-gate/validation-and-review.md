@@ -131,3 +131,17 @@ The review covered every commit in the unpushed range, not only the most recent 
 because publication applies to all of them. Semantic content, provenance, commit
 references, statuses and findings are unchanged; only infrastructure detail was
 redacted.
+
+## Gate reclassification
+
+Following FD-06 closure and EOS v1.0 ratification, the Founder directed that the
+34-row matrix no longer be treated as 34 independent blockers, and that the
+remaining rows be classified by whether they hold a genuinely unresolved
+Founder-level decision.
+
+Result recorded in [gate-reclassification.md](gate-reclassification.md): 22
+category A, 9 category B, **0 category C**. The classification cites the specific
+Authority section or binding Founder decision that resolves each category A row,
+and the constraint each category B row is completed under. No acceptance criterion
+was invented, weakened or removed, and no row was reclassified by changing what it
+requires. The matrix itself is unmodified.

@@ -1,6 +1,13 @@
-# Pre-Python Gate Report — BLOCKED pending contract completion
+# Pre-Python Gate Report — architecture decision gate SATISFIED
 
-Date: 2026-09-19. This is a completed inventory and candidate-design checkpoint, not a passed architecture gate or authorization to implement Python.
+Date: 2026-09-19. **The Pre-Python architecture decision gate is satisfied.** No
+unresolved Founder-level product or architecture decision remains. The 34-row
+matrix below is preserved as a design and traceability backlog, not as 34
+independent blockers; see [gate-reclassification.md](gate-reclassification.md).
+
+The per-row statuses in the table are retained as the original design-completeness
+inventory. They record whether a candidate design document is finished, which is
+documentation status. They do not record whether an architecture decision exists.
 
 Binding authority: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md). See [34-item acceptance matrix](gate-matrix.md), [inventory](inventory.md), [authority reconciliation](authority-reconciliation.md), and [Founder decision packet](founder-decisions.md).
 
@@ -47,7 +54,13 @@ PASS below means the already-approved policy artifact is sufficiently explicit f
 | G33 | Node→Python coexistence/conformance strategy | BLOCKED | [conformance-and-sovereignty.md](conformance-and-sovereignty.md) |
 | G34 | Python Sovereignty acceptance criteria | BLOCKED | [conformance-and-sovereignty.md](conformance-and-sovereignty.md) |
 
-**Totals:** 3 PASS, 0 DEFERRED BY FOUNDER, 31 BLOCKED. The PASS rows are the no-polling/async rule (Authority §21), cheapest-capable/local preference (Authority §23), and EOS inheritance/contribution (G31), which passed once EOS v1.0 was ratified and AlienIntent's conformance manifest was written against it. Other rows have candidate documents but lack the required adoption evidence. Initial inventory classifications (PASS/PARTIAL/MISSING/FOUNDER DECISION REQUIRED) remain separate from these final admission statuses.
+**Totals as design-completeness statuses:** 3 PASS, 0 DEFERRED BY FOUNDER, 31 with
+design work outstanding.
+
+**Totals as decision status, which is what gates Python:** 22 rows category A,
+already resolved by approved authority; 9 rows category B, implementation detail
+under fixed constraints; **0 rows category C, genuinely unresolved Founder
+decisions.** See [gate-reclassification.md](gate-reclassification.md). The PASS rows are the no-polling/async rule (Authority §21), cheapest-capable/local preference (Authority §23), and EOS inheritance/contribution (G31), which passed once EOS v1.0 was ratified and AlienIntent's conformance manifest was written against it. Other rows have candidate documents but lack the required adoption evidence. Initial inventory classifications (PASS/PARTIAL/MISSING/FOUNDER DECISION REQUIRED) remain separate from these final admission statuses.
 
 ## Decision dependency and next authorized work
 
@@ -149,3 +162,30 @@ entries for the `readiness`/`READY` and `vertical`/`BIU` word collisions.
 / 31 BLOCKED. The earlier candidate baseline pin is withdrawn; its text remains at
 `727de90685ebdd6cca48f61fd9b1948efc8bbc33`. Node, FactoryChecks and Python status
 are unchanged, and nothing was pushed in either repository.
+
+## Gate disposition — architecture decisions satisfied
+
+Under Founder direction of 2026-09-19, every row still carrying outstanding design
+work was classified by one test: would starting the first Python implementation BIU
+require an agent to decide something the Founder has not decided?
+
+**It would not.** 22 rows are already resolved by the Architecture Authority,
+binding FD-01 through FD-05, or EOS v1.0. 9 are lower-level design detail
+completable during normal implementation inside constraints already approved. **None
+is a genuinely unresolved Founder-level product or architecture decision.**
+
+FD-01 through FD-06 are all closed. EOS v1.0 is the ratified conformance baseline
+and carries a Chief Architect PASS. The remaining work is implementation and
+documentation, not decision.
+
+**The first Python implementation BIU is therefore authorized to be created and
+assessed.** The prohibition in "No implied deferral or implementation authorization"
+below was conditioned on mandatory items being unresolved; that condition is
+discharged by this classification, not waived.
+
+What has not changed: Node remains the bootstrap implementation and operational
+authority under Authority §42, frozen except for critical fixes. FactoryChecks is
+untouched. No row's acceptance criteria were invented, weakened or removed to reach
+this result. The 34-row matrix is preserved intact as a design and traceability
+backlog, and its acceptance criteria remain the standard against which the category
+B design work is checked.
