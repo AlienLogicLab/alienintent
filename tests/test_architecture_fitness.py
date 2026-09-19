@@ -58,7 +58,12 @@ class ArchitectureFitnessTests(unittest.TestCase):
 
     def test_vendor_signature_rejects_quoted_annotations_and_vendor_bases(self) -> None:
         """Vendor types leak through forward references and inheritance as well as names."""
-        for fixture in ("quoted-annotation", "vendor-base-domain", "vendor-base-port"):
+        for fixture in (
+            "quoted-annotation",
+            "nested-quoted-annotation",
+            "vendor-base-domain",
+            "vendor-base-port",
+        ):
             with self.subTest(fixture=fixture):
                 result = run_check(FIXTURES / "vendor-signature" / fixture, "vendor-signature")
                 self.assertNotEqual(result.returncode, 0)

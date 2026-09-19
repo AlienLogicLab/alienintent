@@ -69,6 +69,18 @@ adapters/uncontracted.py:1: adapter class has no declared port contract
 EXIT=1
 ```
 
+## Nested quoted vendor annotation
+
+The second independent verifier found that a quoted reference nested in a
+subscript annotation was not inspected. The checker now parses every quoted
+fragment while walking an annotation.
+
+```text
+$ python3 tools/fitness/check_architecture.py --root tests/fixtures/fitness/vendor-signature/nested-quoted-annotation --check vendor-signature
+domain/value.py:7: third-party type in domain signature
+EXIT=1
+```
+
 ## Skeleton
 
 ```text
@@ -97,6 +109,14 @@ vendor annotations, vendor base classes in domain and ports, and a checked root
 whose ancestor is named after an architecture layer. A `uuid.UUID` domain
 signature continues to pass, preventing a false positive on a standard-library
 value type.
+
+## CI enforcement
+
+`.github/workflows/python-architecture-fitness.yml` runs on every push and
+pull request in a separate Python-specific job. It invokes the checker against
+the skeleton and runs the regression suite; each command retains its native
+nonzero failure status, so an architecture violation fails CI. The existing
+Node workflow remains unchanged.
 
 `git diff --name-only 2288cef..HEAD -- src/config src/domain src/github
 src/providers src/runtime test scripts package.json` produced no paths before

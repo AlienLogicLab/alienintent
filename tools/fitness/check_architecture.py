@@ -62,12 +62,16 @@ def annotations(node: ast.AST) -> Iterable[ast.expr]:
 
 
 def expression_names(expression: ast.expr) -> set[str]:
-    if isinstance(expression, ast.Constant) and isinstance(expression.value, str):
+    names = {item.id for item in ast.walk(expression) if isinstance(item, ast.Name)}
+    for item in ast.walk(expression):
+        if not isinstance(item, ast.Constant) or not isinstance(item.value, str):
+            continue
         try:
-            expression = ast.parse(expression.value, mode="eval").body
+            parsed = ast.parse(item.value, mode="eval").body
         except SyntaxError:
-            return set()
-    return {item.id for item in ast.walk(expression) if isinstance(item, ast.Name)}
+            continue
+        names.update(candidate.id for candidate in ast.walk(parsed) if isinstance(candidate, ast.Name))
+    return names
 
 
 def check_layering(path: Path, tree: ast.Module, root: Path) -> list[Violation]:
