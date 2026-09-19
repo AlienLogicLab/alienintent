@@ -30,3 +30,76 @@ maturity conformance claim. Independent delta review found stale FD-02–FD-06
 status statements in the gate, reconciliation, execution and FD-01 records;
 they were corrected. Targeted checks confirmed documentation-only scope and
 clean whitespace. No Python implementation is authorized.
+
+## PG-19 — FD-06 EOS normalization audit
+
+PG-19 received Agent-Ready disposition READY through the shared local assessment
+engine before any edit: `codex-cli 0.155.1`, `COMPATIBLE_UNVERIFIED`, capability
+probe PASSED. Method note: PG-00 through PG-17 were assessed through the
+Agent-Ready MCP; PG-18 and PG-19 were assessed through the Agent-Ready CLI,
+which the tool documents as sharing one assessment engine with the MCP. The
+unmodified JSON response is stored as `PG-19.assessment.json`.
+
+This revision is documentation-only across two repositories. In AlienIntent it
+revises the EOS inheritance contract, the FD-06 entry, the G31 gate row, the gate
+report and this record, and adds the EOS normalization plan. In ALL-EOS it adds
+`REVIEW-000003` and applies five editorial corrections authorized by existing
+accepted EOS authority: the ratified record convention's self-contradictory draft
+clause, the unmarked supersession of the horizon baseline vision v0.1, the
+inaccurate documentation index, the missing `WO-000012` index entry, and the
+missing ADR owner fields. No EOS record was promoted, no status was strengthened,
+no governance rule was relaxed, and no EOS version identity was created.
+
+Independent delta review: recorded below. Mechanical checks cover the exact
+34-row gate matrix, the PG-19 READY receipt, relative document links, unchanged
+hashes for the 159 originally inventoried artifacts, documentation-only changed
+paths in both repositories, absence of any conformance claim, and whitespace.
+Node tests were not rerun for this documentation-only delta. Nothing was pushed
+in either repository.
+
+## PG-19 part two — EOS v1.0 normalization
+
+The Founder resolved FD-06 on 2026-09-19 with a hybrid direction and authorized
+EOS `WO-000013`, assessed READY through the shared local Agent-Ready engine
+(`codex-cli 0.155.1`, `COMPATIBLE_UNVERIFIED`, probe PASSED) before any edit. The
+request and unmodified response are retained under
+`docs/work-units/eos-normalization/`.
+
+Scope was governance documentation in two repositories. In ALL-EOS: four new
+governing records (`ADR-0006`, `ADR-0007`, `DR-000007`, `DR-000008`), the
+substantive admission review `REVIEW-000004`, the version register
+`docs/00-foundation/all_eos_versions.md`, the Work Order, the missing
+`strategic-initiatives/README.md`, the ontology amendment to v0.2, and status
+normalization across the playbook layer, the Strategic Initiatives, the project
+registry and the previously unstatused foundation documents. In AlienIntent: the
+new conformance manifest, the revised inheritance contract, the resolved FD-06
+entry, the G31 row, the gate report and this record.
+
+**Promotion discipline.** Exactly one class of promotion occurred and it is
+recorded as such: `DR-000007` confers `Accepted v1.0` on seven previously
+unstatused foundation documents, because admitting the Constitution to a version
+while leaving it formally undeclared would be incoherent. No Draft, Scaffold or
+Proposed artifact was promoted. The three v0.2 documents changed status through
+substantive review recorded in `REVIEW-000004`, not by assertion. Status changes
+on the seven placeholders and on `deployment_discipline.md` are vocabulary
+corrections into the ratified `Draft` state, not promotions, and each carries a
+note saying so.
+
+**Rick / Chief Architect review state.** Every new EOS record is Codex-authored.
+The Chief Architect reviewed the normalization cohort on 2026-09-19 and returned
+**PASS**: EOS `docs/05-artifacts/reviews/REVIEW-000005-chief-architect-eos-v1-normalization.md`.
+That review closes the `REVIEW-000001` review requirement for this cohort,
+approves EOS v1.0 as AlienIntent's canonical baseline, records FD-06 as complete,
+and requires the EOS coherence checker to be maintained as a permanent control
+(now `tools/check_eos_version.py` in the EOS repository). Founder ratification of
+the Decision Records is recorded separately and does not substitute for that
+review. Out of cohort and still review-pending on their own merits: `ER-000002`,
+`cir-000009`…`cir-000019`, `deployment_discipline.md`, and the six playbook
+placeholders.
+
+Mechanical checks: 34 gate rows intact, counts 3 PASS / 0 DEFERRED / 31 BLOCKED,
+relative links resolve, documentation-only changed paths in both repositories,
+every artifact included in EOS v1.0 carries a status inside a ratified lifecycle,
+no non-ratified status string remains outside a provenance note, and whitespace is
+clean. Node tests were not rerun for this documentation-only delta. Nothing was
+pushed in either repository.

@@ -66,19 +66,63 @@ The earlier recommendation for AlienIntent-owned whole-lifecycle state, and both
 
 **If approved:** refine transaction tables/invariants, effect reconciliation and backend conformance scenarios as design. No schema or Python implementation is authorized.
 
-## FD-06 — BLOCKED: EOS conformance baseline
+## FD-06 — RESOLVED: EOS conformance normalization
 
-**Required decision:** approve the observed EOS commit 79d769228c266064e71b7ab7f556ea831cfc9537 as the inheritance reference with explicit per-document maturity, including treatment of directed engineering policy whose post-edit review remains pending.
+Binding records: [Founder decisions FD-02 through FD-06](../../decisions/2026-09-19-pre-python-gate-founder-decisions-fd02-fd06.md)
+and the Founder FD-06 normalization decision of 2026-09-19 selecting a hybrid of
+the audit's Option A and Option B.
 
-**Why now:** Authority §40 requires an exact conformance version. Observing a checkout does not itself authorize claiming conformance to every file at that commit.
+**Decision.** Establish `EOS v1.0` on the minimal approved core, and additionally
+perform substantive review of Engineering Principles v0.2, Playbook Registry v0.2
+and Organizational Learning v0.2, which are intended to govern AlienIntent and all
+engineering if they survive review and must not be excluded merely to unblock the
+gate. Do not require review of the seven playbook scaffolds or of `cir-000009`
+through `cir-000019`; leave them honestly Draft or Proposed and explicitly
+excluded. Add the Playbook ontology entity. Ratify the project registry. Register
+AlienIntent as `P007` with the repository unchanged. Record the intentional
+public-repository deviation. Normalize Strategic Initiatives and register the `SI`
+class. Dispose of `deployment_discipline.md` explicitly. Version label `v1.0`.
 
-**Options/tradeoffs:** pin this commit and inherit accepted records plus explicitly directed engineering discipline with its pending-review label; inherit accepted-only records until organizational review resolves directed material; nominate another reviewed EOS revision. First option preserves current operating discipline and provenance; second is stricter on ratification but needs an explicit deviation/disposition for directed rules.
+**Execution.** EOS `WO-000013`, Agent-Ready READY before execution. Outcome:
 
-**Recommendation:** pin this commit with per-record statuses, inherit accepted records and the explicitly directed discipline without promoting its candidate table or scaffolds. Review future EOS deltas explicitly.
+- **EOS v1.0 ratified** by `DR-000007`, with a durable version register naming
+  inclusions and exclusions. The version scheme itself is new EOS machinery.
+- **All three v0.2 documents survived substantive review** (`REVIEW-000004`) and
+  were adopted. The ten Agentic Development Discipline rules are Adopted policy
+  and bind AlienIntent. Their Candidate Principles table was *not* adopted: two of
+  its seven entries carry no evidence and fail the document's own inclusion
+  criterion.
+- **`deployment_discipline.md` excluded.** Reviewed on merit and found not
+  required as authority for AlienIntent; its subject is manual-versus-CI
+  deployment gates, not AlienIntent's per-BIU capability model. The G31
+  "engineering discipline" citation is withdrawn.
+- **`ADR-0006`** adds Playbook and Playbook Entry to the ontology, with a bounded
+  `Directed (review pending)` provisional state that cannot enter an approved EOS
+  version while unresolved — closing the root cause rather than the symptom.
+- **`ADR-0007`** registers the public-repository exception. ADR-0001 is superseded
+  in part on visibility only; the private-substrate rule stands.
+- **`DR-000008`** registers the `SI` record class and normalizes initiative
+  statuses to ontology vocabulary.
+- **AlienIntent registered as `P007`** in the ratified project registry.
+- **Nothing unreviewed was promoted.** Seven placeholders remain `Draft`, eleven
+  CIRs remain `Proposed`, all excluded by name.
 
-**Consequences:** publish a precise local conformance manifest, not a blanket 'EOS compliant' claim. Contribution remains proposal/review, with no automatic upstream changes.
+**AlienIntent conformance.** Recorded in
+[eos-conformance-manifest.md](eos-conformance-manifest.md) against EOS v1.0,
+including per-rule conformance against the ten Adopted discipline rules — all ten
+conform — and two ADR-0004 translation entries for the word collisions on
+`readiness`/`READY` and `vertical`/`BIU`.
 
-**If approved:** complete the inheritance manifest and review gate claims against it. No EOS edit, PR, submission or public release is authorized.
+**Chief Architect review: PASS.** EOS `REVIEW-000005-chief-architect-eos-v1-normalization.md`,
+2026-09-19, approves the normalization architecture, accepts EOS v1.0 as
+AlienIntent's canonical baseline, confirms no architectural conflict with FD-03
+automatic-release-ON, and records **FD-06 as complete**.
+
+**G31 is PASS.** Gate counts move to 3 PASS / 0 DEFERRED BY FOUNDER / 31 BLOCKED.
+
+**Not authorized by this decision:** any Python implementation or implementation
+BIU, any Node or FactoryChecks change, promotion of any excluded EOS material, or
+any push or publication.
 
 ## No implied deferral or implementation authorization
 
