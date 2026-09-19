@@ -1,0 +1,1 @@
+from alienintent.context_assembly import adapters

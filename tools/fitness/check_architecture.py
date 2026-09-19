@@ -30,8 +30,8 @@ def python_files(root: Path) -> Iterable[Path]:
     return sorted(root.rglob("*.py"))
 
 
-def layer_for(path: Path) -> str | None:
-    for part in path.parts:
+def layer_for(path: Path, root: Path) -> str | None:
+    for part in path.relative_to(root).parts:
         if part in {"domain", "application", "ports", "adapters", "composition"}:
             return part
     return None
@@ -61,8 +61,18 @@ def annotations(node: ast.AST) -> Iterable[ast.expr]:
         yield node.annotation
 
 
-def check_layering(path: Path, tree: ast.Module, _: Path) -> list[Violation]:
-    if layer_for(path) not in INNER_LAYERS:
+def expression_names(expression: ast.expr) -> set[str]:
+    if isinstance(expression, ast.Constant) and isinstance(expression.value, str):
+        try:
+            expression = ast.parse(expression.value, mode="eval").body
+        except SyntaxError:
+            return set()
+    return {item.id for item in ast.walk(expression) if isinstance(item, ast.Name)}
+
+
+def check_layering(path: Path, tree: ast.Module, root: Path) -> list[Violation]:
+    layer = layer_for(path, root)
+    if layer not in INNER_LAYERS:
         return []
     violations = []
     for node in ast.walk(tree):
@@ -70,14 +80,15 @@ def check_layering(path: Path, tree: ast.Module, _: Path) -> list[Violation]:
         if isinstance(node, ast.Import):
             module = ",".join(alias.name for alias in node.names)
         elif isinstance(node, ast.ImportFrom):
-            module = node.module or ""
+            module = ".".join(filter(None, (node.module, *(alias.name for alias in node.names))))
         if module and "adapters" in module.split("."):
-            violations.append(Violation(path, node.lineno, "domain imports adapters"))
+            violations.append(Violation(path, node.lineno, f"{layer} imports adapters"))
     return violations
 
 
-def check_vendor_signature(path: Path, tree: ast.Module, _: Path) -> list[Violation]:
-    if layer_for(path) not in SIGNATURE_LAYERS:
+def check_vendor_signature(path: Path, tree: ast.Module, root: Path) -> list[Violation]:
+    layer = layer_for(path, root)
+    if layer not in SIGNATURE_LAYERS:
         return []
     imported_vendor_names: set[str] = set()
     for node in ast.walk(tree):
@@ -91,14 +102,18 @@ def check_vendor_signature(path: Path, tree: ast.Module, _: Path) -> list[Violat
     violations = []
     for node in ast.walk(tree):
         for annotation in annotations(node):
-            names = {item.id for item in ast.walk(annotation) if isinstance(item, ast.Name)}
+            names = expression_names(annotation)
             if names & imported_vendor_names:
-                violations.append(Violation(path, annotation.lineno, "third-party type in domain signature"))
+                violations.append(Violation(path, annotation.lineno, f"third-party type in {layer} signature"))
+        if isinstance(node, ast.ClassDef):
+            names = set().union(*(expression_names(base) for base in node.bases))
+            if names & imported_vendor_names:
+                violations.append(Violation(path, node.lineno, f"third-party type in {layer} signature"))
     return violations
 
 
-def check_port_contract(path: Path, tree: ast.Module, _: Path) -> list[Violation]:
-    if layer_for(path) != "adapters":
+def check_port_contract(path: Path, tree: ast.Module, root: Path) -> list[Violation]:
+    if layer_for(path, root) != "adapters":
         return []
     imported_port_names: set[str] = set()
     for node in tree.body:
@@ -113,8 +128,8 @@ def check_port_contract(path: Path, tree: ast.Module, _: Path) -> list[Violation
     return violations
 
 
-def check_configuration(path: Path, tree: ast.Module, _: Path) -> list[Violation]:
-    if layer_for(path) == "composition":
+def check_configuration(path: Path, tree: ast.Module, root: Path) -> list[Violation]:
+    if layer_for(path, root) == "composition":
         return []
     os_aliases = {"os"}
     environ_aliases: set[str] = set()
