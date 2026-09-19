@@ -14,3 +14,12 @@ Documentation-only plan; canonical Python implementation prohibited.
 - [ ] Reach PASS or explicitly Founder-deferred for every mandatory item.
 
 No implementation plan or first Python implementation BIU is authorized by this record.
+
+## FD-01 continuation
+
+- [x] Record the binding upstream/execution ownership split and supersede the whole-lifecycle proposal.
+- [x] Obtain Agent-Ready READY for PG-17 before editing candidate contracts.
+- [x] Refine release/import/projection/persistence/control/conformance contracts and narrow FD-02.
+- [x] Independently review the PG-17 delta, repair the context-version inconsistency and finish its documentation checks.
+
+FD-02–FD-06 remain pending. No Python implementation is authorized.

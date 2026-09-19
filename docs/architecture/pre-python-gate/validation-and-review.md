@@ -8,6 +8,14 @@ Independent reviewer: pre_python_gate_review, separate review context, read-only
 
 Mechanical checks: exact 34-row label coverage, 16 READY design receipts, all relative document links, 159 inventoried source-artifact SHA-256 values unchanged, no tracked baseline changes, new files only under the two gate documentation directories, and no private-key/GitHub-token patterns. Final whitespace check covers the staged document delta. No runtime regression suite was rerun: the change is documentation-only and the accepted live Node proof is preserved as historical evidence.
 
-Gate status remains 2 PASS / 0 DEFERRED BY FOUNDER / 32 BLOCKED. The two PASS rows are existing approved rules, not completed implementation. Next action is the concrete Founder decisions in founder-decisions.md, beginning with FD-01; approved decisions authorize assessed design refinements only.
+Gate status remains 2 PASS / 0 DEFERRED BY FOUNDER / 32 BLOCKED. The two PASS rows are existing approved rules, not completed implementation. At the initial checkpoint, the next action was FD-01. It is now resolved; see the PG-17 revision below. Remaining Founder decisions authorize assessed design refinements only.
 
 Stored Markdown assessment-input copies have trailing whitespace normalized for repository hygiene; original submitted text is retained in the session tool evidence. JSON assessment responses are unmodified tool results.
+
+## PG-17 — binding FD-01 refinement
+
+PG-17 was assessed READY through the actual Agent-Ready MCP before documentation edits (codex-cli 0.154.0, COMPATIBLE_UNVERIFIED, probe PASSED). Its complete request and unmodified response are retained under docs/work-units/pre-python-gate/assessments. The new binding decision records the external Work Management versus released AlienIntent Execution authority split. Historical original authority, corpus manifest and PG-00–PG-16 assessment receipts remain unchanged.
+
+Independent delta reviewer pre_python_gate_review found one P2 inconsistency: an old Context Engineering sentence could treat a refreshed upstream source as invalidating released execution authority. Repaired it to preserve the pinned execution and require explicit authorized revision/supersession; upstream refresh remains separately versioned evidence. The reviewer found the other ownership, release ON/OFF, projection/recovery, gate-status and Node-protection distinctions consistent. This is documentation review, not broader architectural approval or runtime proof.
+
+Targeted documentation checks validate all 34 exact gate rows, the PG-17 READY receipt, relative links, unchanged hashes for the 159 original artifacts, absence of stale unresolved-FD-01 phrasing in the refined contracts, documentation-only changed paths and whitespace. Node tests are not rerun for this documentation-only delta. FD-01 is closed; FD-02–FD-06 and complete gate adoption remain unresolved. No canonical Python implementation is authorized.

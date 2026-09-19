@@ -4,6 +4,8 @@ Date: 2026-09-19. Status: CANDIDATE DESIGN; not Founder-approved or implementati
 BIU: [PG-13](../../work-units/pre-python-gate/PG-13.md), Agent-Ready READY before drafting.
 Binding inputs: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md).
 
+Ownership refinement: [binding FD-01](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md), applied through [PG-17](../../work-units/pre-python-gate/PG-17.md). FD-01 is approved; other design choices remain candidate.
+
 ## Application model
 Recover the existing status/explain/doctor/logs/version/resources projection and continue/reconcile design from canonical-architecture and implementation-plan. Add Authority §36's legitimate event generation, replay, resume, cancel/abort and inspection of BIUs, workers, queued events, routing, cost, grants and adapter/transport health. These are application services over the same domain contracts, not a second orchestration engine.
 
@@ -15,7 +17,13 @@ CLI is required, with human and structured machine-readable outcomes and nonzero
 Structured events/logs correlate profile, BIU, invocation, event, candidate and policy versions. Health distinguishes live process from ready dependencies; diagnostics expose sanitized causes, not keys/tokens/provider stderr. Timelines, metrics and optional traces include lifecycle, provider/model, token/cost/latency, grants and adapter/transport health. Operator projections can link immutable evidence without replaying a private reasoning transcript.
 
 ## Scenarios
-Replay of a processed event returns prior custody/effects without duplicate work. Resume with stale authority cannot release a new worker. Cancel enters the same cancellation protocol, not deletion of a state row. A missing Project read is UNAVAILABLE, not a fabricated DONE or wrong-account diagnosis. FD-01 determines which external/internal evidence is authoritative when projections disagree.
+Replay of a processed event returns prior custody/effects without duplicate work. Resume with stale authority cannot release a new worker. Cancel enters the same cancellation protocol, not deletion of a state row. A missing Project read is UNAVAILABLE, not a fabricated DONE or wrong-account diagnosis. FD-01 fixes the answer: upstream product/work state comes from the Work Management Provider; released execution comes from AlienIntent; the external downstream display is a projection and cannot overrule it.
+
+## Ownership-aware operator views and actions
+
+Status/explain report upstream provider state/version/availability separately from canonical execution state/version and projection delivery health. A coherent lifecycle view must label those sources, not collapse them into two competing execution authorities. An unavailable upstream read does not make existing internal execution state unknown if its own store is valid; it can block new release validation or a specifically required upstream-dependent action.
+
+Release, execution revision, cancel and reconcile act through their proper validated commands. Reconcile may refresh an imported upstream view or repair a downstream projection from the current execution revision; it cannot import external ACCEPT/DONE as execution truth. Operator changes to priority/business ownership belong in the provider through any separately authorized Work Management operation, not by writing a canonical AlienIntent backlog. Synthetic-event generation follows the same distinction.
 
 ## Traceability and acceptance
 

@@ -1,34 +1,24 @@
 # Founder decisions required before gate admission
 
-Status: proposals, not decisions. No choice below has been adopted. The user authorized inventory and candidate design work, not silent decisions under Authority §45. Existing 45 Founder-resolved directions remain binding; these questions fill gaps in concrete contracts rather than reopen those directions.
+Status: FD-01 is resolved by binding Founder decision; FD-02–FD-06 remain proposals, not adopted decisions. The user authorized inventory and candidate design work, not silent decisions under Authority §45. Existing 45 Founder-resolved directions remain binding; these questions fill gaps in concrete contracts rather than reopen those directions.
 
-## FD-01 — Canonical work/lifecycle authority
+## FD-01 — RESOLVED: Work Management / Execution ownership split
 
-**Required decision:** where authoritative Work Item/BIU lifecycle state resides in the canonical system, and how external work-management changes become authorized transitions.
+Binding record: [Founder FD-01](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md). Applied by PG-17 after Agent-Ready READY.
 
-**Why now:** neutral domain concepts alone do not settle source-of-truth. Current Node uses exact GitHub Project status as operational authority; older interface contracts require external Issues. This choice affects persistence, event concurrency, recovery, Control Plane, offline behavior and migration. G03/G04/G05/G07–G09/G15/G21/G25/G33 cannot be adopted coherently without it.
+The external Work Management Provider owns canonical product/work state through READY, prioritization, product ownership and business context. Explicit release of a READY BIU crosses into AlienIntent-owned execution authorization and IMPLEMENT/VERIFY/REVIEW/ACCEPT/closure/DONE, invocation/worker/retry/recovery, Engineering Trajectory, Quality Evidence, capabilities and cost/routing evidence. Imported upstream views are not a canonical local backlog. External downstream fields are projections only. Ownership is architectural, not configurable; vendors and lifecycle mappings remain configurable.
 
-**Options/tradeoffs:**
-
-1. External work-management lifecycle remains authoritative; AlienIntent holds execution state and validated projections. Closer to Node and existing operator workflow, but repository-free/multiple-vendor concepts and offline recovery must live with vendor limitations and external availability.
-2. AlienIntent owns canonical Work Item/BIU lifecycle; external systems submit intents and display projections. Strong domain autonomy and consistent N-adapter behavior, but introduces synchronization/conflict/migration obligations and changes operational authority.
-3. Configurable authority per profile. Accommodates both but doubles important consistency and recovery cases before the first Python implementation; not recommended as the initial model.
-
-**Recommendation:** option 2 for the canonical Python design, with explicit expected-version/authorized-command reconciliation and preservation of Node's external authority until cutover. This is a recommendation, not an inference from 'AlienIntent owns concepts.'
-
-**Consequences:** external UI edits may be rejected/reconciled rather than directly becoming authoritative lifecycle truth. Migration must import identities/versions and prevent two writers. A conflict policy must be completed after selection.
-
-**If approved:** revise the candidate work, ACL, persistence, event and Control Plane contracts consistently and assess the bounded revision BIUs before execution. No Python implementation, live cutover or external synchronization is authorized. If option 1 is chosen, refine projection/current-authority readback instead.
+The earlier recommendation for AlienIntent-owned whole-lifecycle state, and both whole-lifecycle/configurable alternatives, are superseded. Historical text remains at commit 7b16e0ba1acc2a20b959476bbac0a36f0342d22d. This is the Founder's ownership split, not adoption of the earlier option 1 or option 2. No Python implementation or live Node change is authorized. Detailed mechanisms remain candidate where not decided.
 
 ## FD-02 — Domain boundary proposal
 
-**Required decision:** accept or revise the five logical contexts proposed in domain-model.md: Work Coordination, Execution, Context Assembly, Evidence and Learning, Installation; Control Plane remains application orchestration over them.
+**Required decision:** refine/approve the internal decomposition under the now-fixed Work Management versus AlienIntent Execution boundary. Candidate responsibilities are Execution Coordination (released BIU/lifecycle), Invocation Runtime, Context Assembly, Evidence and Learning, and supporting Installation; Control Plane remains application orchestration. These are not five already-approved bounded contexts.
 
-**Why now:** Authority §41 explicitly requires an approved bounded-context model before package structure. No approved AlienIntent context map was found.
+**Why now:** FD-01 approves the two authority contexts; Authority §41 still requires concrete internal model/aggregate ownership before package structure. This decision cannot reopen upstream backlog ownership or make the split configurable.
 
-**Options/tradeoffs:** proposed five logical boundaries localize invariants without services; a coarser Work/Execution + supporting services model is simpler initially but risks mixing authority/context/evidence lifetimes; a separate Learning context now adds an explicit seam but additional cross-context contracts before real learning implementations.
+**Options/tradeoffs:** keep the candidate internal responsibilities as modules within the Execution context, minimizing boundaries while preserving distinct models; or promote proven independently evolving submodels to bounded contexts, adding explicit contracts. A separate Learning context now adds a seam but also coordination overhead before real learning implementations. All options preserve FD-01.
 
-**Recommendation:** five logical contexts, keeping trajectory/measurement/learned-policy models separate within Evidence and Learning; split Learning only when independent behavior justifies it. No microservices or package names are implied.
+**Recommendation:** use the named internal responsibilities as a candidate module decomposition, keeping trajectory/measurement/learned-policy models separate; promote a new bounded context only with a demonstrated language/invariant boundary. No microservices or package names are implied. This revised recommendation follows FD-01 but is not yet adopted.
 
 **Consequences:** invariant owners and dependency directions become binding once approved; ports and fitness rules must conform.
 
@@ -72,7 +62,7 @@ Status: proposals, not decisions. No choice below has been adopted. The user aut
 
 **Recommendation:** inbox/outbox plus versions/fencing, without full event sourcing. External effects require idempotency/readback; unknown outcomes block conflicting work instead of blind repeat.
 
-**Consequences:** state changes and effect intents must commit atomically within their authority boundary; multi-instance reservations cannot rely on process-local locks. FD-01 determines where lifecycle truth participates.
+**Consequences:** state changes and effect intents must commit atomically within their authority boundary; multi-instance reservations cannot rely on process-local locks. Resolved FD-01 limits authoritative lifecycle transactions to AlienIntent execution after release; upstream product snapshots and downstream projection receipts remain distinct and cannot overwrite that truth.
 
 **If approved:** refine transaction tables/invariants, effect reconciliation and backend conformance scenarios as design. No schema or Python implementation is authorized.
 

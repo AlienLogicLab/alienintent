@@ -4,6 +4,8 @@ Date: 2026-09-19. Status: CANDIDATE DESIGN; not Founder-approved or implementati
 BIU: [PG-16](../../work-units/pre-python-gate/PG-16.md), Agent-Ready READY before drafting.
 Binding inputs: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md).
 
+Ownership refinement: [binding FD-01](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md), applied through [PG-17](../../work-units/pre-python-gate/PG-17.md). FD-01 is approved; other design choices remain candidate.
+
 ## Coexistence and behavior inventory
 Node remains frozen except critical bootstrap fixes and remains operational authority. Python will coexist in this repository after this gate is released. No Python scaffold or implementation BIU exists in this work. Shared conformance cases should express neutral inputs/expected effects, exercised separately against Node adapters and Python adapters; do not port Node's incidental internal structure.
 
@@ -15,7 +17,15 @@ S1: neutral behavior suite includes valid/forged/stale/wrong-role/multiple resul
 Each proof records revision/config/policy/provider versions, inputs, actual commands/events, outputs and independent verification. Mocks alone cannot establish live sovereignty. Instrument process/dependency paths to prove no Node invocation is required. Test-suite existence, parity percentage or local commit alone cannot justify retirement.
 
 ## Cutover and rollback
-Before cutover, quiesce/settle owned work, checkpoint Node state/evidence, validate migration and exact profile ownership; activate only the approved Python writer and verify. On failed required proof retain/restore the Node authority from compatible checkpoint without replaying already-confirmed external effects. Founder approves cutover/Node retirement only after all sovereignty evidence passes. Issue1 demonstrates the Node reference path, not any of S1–S7 for Python. FD-01/FD-05 must settle canonical authority and persistence migration semantics before an implementation BIU can be prepared.
+Before cutover, quiesce/settle owned work, checkpoint Node state/evidence, validate migration and exact profile ownership; activate only the approved Python writer and verify. On failed required proof retain/restore the Node authority from compatible checkpoint without replaying already-confirmed external effects. Founder approves cutover/Node retirement only after all sovereignty evidence passes. Issue1 demonstrates the Node reference path, not any of S1–S7 for Python. FD-01 has settled the architectural authority split; FD-05 and the remaining gate work still govern persistence/migration mechanisms before any implementation BIU can be prepared.
+
+## Intentional authority change and shared conformance limits
+
+Node currently uses external Project execution state and exact GitHub readback. Preserve that behavior operationally until approved cutover; do not call it the target canonical ownership model. Python conformance must preserve authenticated/correlated authority and no-duplicate-effect invariants while intentionally changing the execution-state owner under FD-01. Whole-lifecycle external authority is not a parity requirement. Upstream Work Management remains canonical in both target design and migration scope; importing historical released work never makes AlienIntent the product-backlog owner.
+
+Add canonical-target scenarios: (1) READY without release starts no execution; (2) duplicate valid release returns one execution identity; (3) automatic ON generates the same explicit release boundary as human OFF; (4) external ACCEPT/DONE edits and projection echoes do not advance/duplicate execution; (5) post-release upstream edits do not rewrite pinned execution scope; (6) external outage/stale projection preserves committed execution truth and truthful delivery diagnostics; (7) reordered projection writes cannot overwrite a newer displayed execution revision; (8) profiles/vendors cannot select another ownership mode. These are future design/conformance obligations, not newly passed runtime tests.
+
+Before any cutover, identify each active/released BIU and its exact authority/candidate/result lineage; settle or explicitly migrate it with one execution writer. Do not backfill an internal ACCEPT/DONE solely from a board label. Rollback must account for accepted external effects and new internal authoritative execution evidence; never resume Node on a stale snapshot that would duplicate effects or regress authority.
 
 ## Traceability and acceptance
 

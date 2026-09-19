@@ -4,8 +4,10 @@ Date: 2026-09-19. Status: CANDIDATE DESIGN; not Founder-approved or implementati
 BIU: [PG-11](../../work-units/pre-python-gate/PG-11.md), Agent-Ready READY before drafting.
 Binding inputs: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md).
 
+Ownership refinement: [binding FD-01](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md), applied through [PG-17](../../work-units/pre-python-gate/PG-17.md). FD-01 is approved; other design choices remain candidate.
+
 ## Logical stores and identity
-Operational records: profile/work/BIU versions, ingress receipt, invocation/reservation/fencing, retry/cancellation, pending effect/readback and resource ownership. Trajectory records: immutable observable event identity, BIU/invocation/repository/role/provider/model/version/context-policy/policy IDs, occurrence/order, authorized inputs, commands/results, artifact lineage, verification/review and cost/time. Quality Evidence records: measurement definition/version and raw dimensions; finding; intervention; outcome; supporting/contradicting trajectory references and uncertainty. Learned policy remains a separately reviewed versioned decision.
+Operational records: profile and released BIU execution versions, release/authorization receipt, execution lifecycle, ingress receipt, invocation/reservation/fencing, retry/cancellation, pending effect/readback and resource ownership. External Work Item snapshots/cache entries are separately identified noncanonical imports with provider/work identity, source version/digest and provenance; they do not become canonical prioritization, product ownership, business context or CAPTURE–READY state. Trajectory records: immutable observable event identity, BIU/invocation/repository/role/provider/model/version/context-policy/policy IDs, occurrence/order, authorized inputs, commands/results, artifact lineage, verification/review and cost/time. Quality Evidence records: measurement definition/version and raw dimensions; finding; intervention; outcome; supporting/contradicting trajectory references and uncertainty. Learned policy remains a separately reviewed versioned decision.
 
 SQLite is the approved default for a simple single service; PostgreSQL supports multiple instances. Physical schema choices must preserve the same profile-scoped keys, uniqueness, expected-version updates, reservation/budget atomicity and recoverable effect intents. This candidate proposes an inbox/outbox plus optimistic version/fence approach (FD-05), not a published schema or implemented event-sourcing framework.
 
@@ -16,6 +18,12 @@ Migrations require schema version, preflight, active-work quiescence or proven c
 
 ## Proof scenarios
 Crash between admission and launch preserves recoverable ownership. Replayed result does not duplicate transition/evidence. SQLite/PostgreSQL run identical transaction/conformance scenarios. Evidence exports cannot contain secret sentinels; deleting an expired raw payload does not misrepresent a retained measurement as fully reproducible. Conflicting usage reports preserve uncertainty. Node JSON state/logs are behavior and migration inputs, not the canonical persistence model.
+
+## Execution truth versus upstream view and downstream projection
+
+FD-01 makes AlienIntent the authority for released execution control, Engineering Trajectory, Quality Evidence and execution capability/cost/routing evidence. Keep released input snapshots immutable for evidence without claiming ownership of the live upstream Work Item. Updating an import cannot update an execution aggregate or change its released authority envelope.
+
+Projection delivery records carry internal execution revision, external target, attempted/confirmed receipt and retry/diagnostic state. They are operational delivery evidence, never a second execution lifecycle. A committed internal DONE with a failed later projection remains DONE plus a visible projection failure. Persist accepted release identity and execution version so recovery can return the same admission result after a lost response; never recover execution state by blindly copying the current external board label. Concrete inbox/outbox/fencing and budget transactions remain pending FD-05.
 
 ## Traceability and acceptance
 

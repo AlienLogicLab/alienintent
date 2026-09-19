@@ -2,6 +2,8 @@
 
 All 34 binding rows are preserved verbatim. Initial classification records the inventory result; candidate documents do not retroactively become approved artifacts. PASS here is design-authority coverage, not Python implementation proof. Final admission status is in gate-report.md.
 
+FD-01 update: the upstream Work Management / released AlienIntent Execution split is now [binding](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md). Initial classifications below remain the historical inventory result; ownership is no longer an unanswered choice. Candidate completeness and remaining approvals still govern each whole gate row.
+
 ## G01 — Product Intent
 
 - Initial classification: **PARTIAL**.
@@ -10,6 +12,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Purpose, users, outcomes and non-goals are explicit; repository-neutral early intent and N-repository work are represented; upstream planning is not reimplemented.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-01](../../work-units/pre-python-gate/PG-01.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Product intent stays canonical upstream; execution outcomes and evidence become canonical in AlienIntent only after explicit READY-BIU release.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G02 — Ubiquitous Language v1
 
@@ -19,6 +24,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Terms have one definition, examples/non-examples and ownership; BIU remains; domain roles are not external users; EOS mapping preserves project language.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-02](../../work-units/pre-python-gate/PG-02.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Work Item imports are noncanonical views; released BIU, execution identity and downstream projection are distinct terms.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G03 — bounded-context model
 
@@ -28,6 +36,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Each business invariant has exactly one owning context, aggregates and identities are explicit, dependencies and integration seams form a coherent context map with Founder-approved boundaries.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-02](../../work-units/pre-python-gate/PG-02.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: The two ownership contexts are approved and not configurable. FD-02 concerns internal decomposition/aggregates only.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G04 — Hexagonal Architecture / ports-and-adapters specification
 
@@ -37,6 +48,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Core/domain dependency direction and named input/output port contracts include success, rejection and unavailable evidence; no vendor types leak inward.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-03](../../work-units/pre-python-gate/PG-03.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Ports must distinguish upstream imports, explicit release and downstream projections from execution commands.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G05 — Anti-Corruption Layer rules
 
@@ -46,6 +60,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: GitHub and a non-GitHub example map external IDs/status/events/errors to domain concepts and fail closed on ambiguous or incomplete translations.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-03](../../work-units/pre-python-gate/PG-03.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Vendor downstream edits/projection echoes never acquire execution authority; configurable mappings preserve the fixed split.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G06 — Python engineering standard
 
@@ -64,6 +81,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: BIU binds authority, immutable requirements/baseline/candidate, bounded scope, dependencies, capabilities, budget, required evidence and terminal/rework outcomes.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-05](../../work-units/pre-python-gate/PG-05.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Release binds exact upstream READY BIU version and authority; post-release edits cannot silently replace it.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G08 — lifecycle semantics and external mapping rules
 
@@ -73,6 +93,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: All ten semantic states are defined, mapping is explicit and unambiguous, dispatch is distinct from lifecycle, merge belongs to closure, accepted-result-changing rework invalidates acceptance.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-05](../../work-units/pre-python-gate/PG-05.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: CAPTURE–READY remain upstream; IMPLEMENT–DONE/closure are AlienIntent execution; external downstream fields are projections.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G09 — automatic-release policy model
 
@@ -82,6 +105,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: READY is insufficient authorization; ON and OFF have observable guards, authority provenance and deterministic denial; duplicate release cannot double-launch.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-05](../../work-units/pre-python-gate/PG-05.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Automatic ON and human OFF both emit an explicit authorized release; explicit does not mean mandatory human-only.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G10 — verifier-independence / assurance-policy model
 
@@ -136,6 +162,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Domain events include identity/schema/profile/causation/invocation/version; duplicates/delay/reorder/crash scenarios yield effectively once-only effects with durable evidence.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-07](../../work-units/pre-python-gate/PG-07.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Separate upstream notifications/release commands/internal execution events/projection receipts; duplicates and echoes cannot double-admit.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G16 — concurrency/cancellation/retry policy
 
@@ -145,6 +174,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Global/profile/repository bounds, atomic reservations, cancellation and finite retry budgets prevent double mutation and preserve live/ambiguous resources on recovery.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-08](../../work-units/pre-python-gate/PG-08.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Admission/recovery use internal accepted release/ownership evidence; stale external display cannot re-admit work.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G17 — provider capability/routing contract
 
@@ -172,6 +204,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Six context kinds, static/dynamic split, role/phase selection, versions/provenance, budgets, skills and measurements are carried forward with independent verifier inputs.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-10](../../work-units/pre-python-gate/PG-10.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Context manifests distinguish upstream source versions from pinned released authority; a refreshed import does not supersede execution.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G20 — memory/state/evidence separation carried forward
 
@@ -181,6 +216,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Operational state, task context, engineering knowledge, organizational knowledge, trajectory, Quality Evidence and learned policy have separate ownership/lifetimes/retrieval.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-10](../../work-units/pre-python-gate/PG-10.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Imported upstream context is not canonical product state; execution state/trajectory/evidence remain separately owned.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G21 — operational-state persistence design
 
@@ -190,6 +228,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: SQLite and PostgreSQL honor the same transaction/identity/recovery semantics, namespace profiles and separate durable evidence lifetimes from operational cleanup.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-11](../../work-units/pre-python-gate/PG-11.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Execution store is authoritative for released control state; imports/cache and projection receipts cannot overwrite it.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G22 — Engineering Trajectory / Quality Evidence persistence design
 
@@ -199,6 +240,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Trajectory facts and derived multidimensional measurements/findings/interventions/outcomes have stable lineage, immutable accepted evidence, configurable retention/redaction and no private reasoning requirement.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-11](../../work-units/pre-python-gate/PG-11.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Engineering Trajectory and Quality Evidence are canonical AlienIntent execution evidence, not provider projections.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G23 — community-learning contribution model
 
@@ -226,6 +270,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Operator status/explain/emit/replay/resume/reconcile/cancel/doctor act through normal application/domain services and authorization; no state-edit backdoor.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-13](../../work-units/pre-python-gate/PG-13.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Status/explain label upstream truth, internal execution truth and projection health; reconcile cannot import external ACCEPT/DONE as truth.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G26 — control-plane presentation adapters (CLI/web as approved)
 
@@ -235,6 +282,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: CLI exposes approved operations and machine-readable diagnostics; any web surface uses same services/policies, with explicit approval status and no hidden permissions.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-13](../../work-units/pre-python-gate/PG-13.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: CLI/web adapters expose the same ownership distinction and validated execution commands; no presentation becomes authority.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G27 — adapter versioning/extensibility model
 
@@ -253,6 +303,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Typed profiles isolate state/queues/workspaces/evidence/secrets; secrets referenced through a port; discovery validates rather than guesses provider IDs.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-14](../../work-units/pre-python-gate/PG-14.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: No profile setting can choose lifecycle ownership; vendor/release-source/lifecycle/projection mappings remain configurable.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G29 — installer/bootstrap design
 
@@ -262,6 +315,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Init/install lifecycle covers discovery/authorization/providers/transport/lifecycle/health, resumable steps and rollback, automation and active-work-safe upgrades.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-14](../../work-units/pre-python-gate/PG-14.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Init validates the fixed split and rejects adapters/mappings that use downstream display edits as execution authorization.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G30 — observability model
 
@@ -271,6 +327,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Structured logs/readiness/health/timelines/metrics/provider cost/lifecycle and sanitized diagnostics correlate to BIU/invocation without exposing credentials or private reasoning.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-13](../../work-units/pre-python-gate/PG-13.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Diagnostics distinguish upstream availability from valid internal execution state and projection delivery failure.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G31 — EOS inheritance/contribution mechanism
 
@@ -298,6 +357,9 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Node/Python coexistence has per-invariant parity/adapt/deviation mapping, isolated environments, one operational writer, migration backups and rollback; Node remains authority.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-16](../../work-units/pre-python-gate/PG-16.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Node external-Project execution authority is preserved bootstrap behavior but intentionally not the canonical target ownership model.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.
+
 
 ## G34 — Python Sovereignty acceptance criteria
 
@@ -307,3 +369,5 @@ All 34 binding rows are preserved verbatim. Initial classification records the i
 - Acceptance: Python-only live self-hosting, behavioral conformance, recovery, operator actions, evidence and learning all have named required proofs; no Node invocation and explicit retirement approval.
 - Agent-Ready verification: Agent-Ready checks a self-contained packet containing binding authority, gate row, relevant EOS constraints, cited Node scenarios and this acceptance criterion; author checks source links and scenario completeness. READY is task readiness, not Founder approval or executable Python proof.
 - Design BIU: [PG-16](../../work-units/pre-python-gate/PG-16.md), assessed READY before drafting.
+- FD-01 acceptance/refinement: Sovereignty cases require READY-release handoff and resistance to projection echoes/drift without duplicate execution.
+- PG-17 verification: check the corresponding explicit release/projection/authority scenario in the refined candidate against the binding FD-01 record; no runtime proof or complete artifact approval is implied.

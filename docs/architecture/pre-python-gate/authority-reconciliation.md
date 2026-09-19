@@ -21,6 +21,10 @@ Precedence: this user's bounded gate instruction; 2026-09-19 Founder-resolved Au
 | shared Claude proof permission supplement | BOOTSTRAP-ONLY, retired; explicitly excluded from canonical verifier model. |
 | EOS ADR0004 and accepted evidence/knowledge records | KEEP inheritance through translation and provenance. Directed policy pending review retains that label; scaffolds/candidates are not silently ratified. |
 
-## Conflicts that cannot be silently reconciled
+## FD-01 reconciliation — resolved
 
-FD-01 resolves authoritative work/lifecycle storage: owning neutral concepts does not itself decide external projection versus internal canonical state. FD-02 reviews the new bounded-context partition. FD-03 reviews candidate authority-envelope/release/budget defaults. FD-04 resolves trust/custody contracts for the first-class relay. CLI is mandatory; no web deployment is adopted. FD-05 reviews durable effects/fencing transaction design. FD-06 selects the EOS conformance baseline and statuses. Candidate text records recommendations only; it changes no system.
+The [binding Founder decision](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md) supersedes the earlier whole-lifecycle ownership framing. External Work Management owns product/work-management state through READY and business ownership/priorities; explicit READY-BIU release crosses into AlienIntent's canonical execution-control authority. Upstream imports are noncanonical views; downstream external fields are execution projections. There is no configurable ownership mode. Node's current external-Project execution mechanism is retained operationally, but is an intentional migration difference rather than permanent conformance authority.
+
+## Remaining decisions
+
+FD-02 now covers internal model decomposition within the approved ownership boundary, not the boundary itself. FD-03 covers candidate grant/release-default/budget policy. FD-04 covers relay trust/custody; CLI remains mandatory and no web deployment is adopted. FD-05 covers execution transaction/fencing mechanics with upstream snapshots and projections separated. FD-06 covers EOS conformance baseline/statuses. These remain proposals. FD-01 refinement changes no live system and authorizes no Python implementation.

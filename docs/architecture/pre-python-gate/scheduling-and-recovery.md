@@ -4,6 +4,8 @@ Date: 2026-09-19. Status: CANDIDATE DESIGN; not Founder-approved or implementati
 BIU: [PG-08](../../work-units/pre-python-gate/PG-08.md), Agent-Ready READY before drafting.
 Binding inputs: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md).
 
+Ownership refinement: [binding FD-01](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md), applied through [PG-17](../../work-units/pre-python-gate/PG-17.md). FD-01 is approved; other design choices remain candidate.
+
 ## Candidate admission protocol
 Admission checks BIU release/version, dependency satisfaction, profile/repository authorization, capability and budget readiness before mutation. Reserve capacity atomically for global, profile and repository scopes before awaiting worker preparation. A reservation names invocation, owner, version/fence and workspace. Default architectural convention is one active mutating worker per repository; numerical global/profile limits are explicit deployment configuration, not invented here. N profiles never share unscoped ownership keys.
 
@@ -16,6 +18,10 @@ Retry policy carries finite attempts, timeout, exponential backoff, jitter and h
 
 ## Recovery scenarios
 Two concurrent events competing for one repository yield one reservation and one pending/rejected outcome. Crash after allocation before process identity leaves the resource held for diagnosis until ownership/liveness is established. Durable correlated result precedes a successor; evidence-read failure retains ownership. Repeated cancel is idempotent. A stale child exit cannot release a newer invocation's reservation. These retain Node D17/D18/D31 behavior while the multi-instance fencing implementation remains a candidate persistence contract (FD-05).
+
+## Release-bound execution admission
+
+Execution admission uses the accepted explicit READY release and pinned BIU authority. Scheduling reservations/retries/recovery are canonical AlienIntent execution state; source-provider reprioritization alone cannot rewrite an active invocation or grant. New scheduling policy inputs from upstream retain their source and must be applied through authorized execution policy, not silent authority transfer. Recovery resumes from internal release/result/ownership evidence. A stale downstream Project status or projection callback cannot launch a successor. This is the canonical target design, not a change to the protected Node bootstrap.
 
 ## Traceability and acceptance
 

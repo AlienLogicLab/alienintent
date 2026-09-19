@@ -4,6 +4,8 @@ Date: 2026-09-19. Status: CANDIDATE DESIGN; not Founder-approved or implementati
 BIU: [PG-01](../../work-units/pre-python-gate/PG-01.md), Agent-Ready READY before drafting.
 Binding inputs: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md).
 
+Ownership refinement: [binding FD-01](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md), applied through [PG-17](../../work-units/pre-python-gate/PG-17.md). FD-01 is approved; other design choices remain candidate.
+
 ## Intent
 AlienIntent turns product intent into bounded, authorized engineering work, coordinates interchangeable workers, verifies outcomes and completes operational obligations while preserving usable engineering evidence. Its users are self-hosting operators, engineering teams and agents acting under their authority. Success means accepted useful outcomes with fewer interventions and attributable cost, not more tasks or tokens.
 
@@ -15,7 +17,7 @@ Work-unit DONE proves its bounded obligations, not whole-feature convergence, bu
 A repository-free supplier-workflow intent remains CAPTURE until upstream clarification/decomposition produces bounded BIUs. Two repository BIUs may complete separately; a dependent BIU cannot run before its declared predecessor evidence is satisfied. Issue #1 delivered a reviewed document branch without merge because its authority expressly excluded merge: that is valid bounded DONE, not permission to skip another BIU's deployment.
 
 ## Approval boundary
-This consolidates reset §§2–13,26–40 and Authority §§2,6–9,22–28. It does not settle whether an external work system or AlienIntent stores authoritative lifecycle state (FD-01). Market success thresholds and release claims require evidence from field/external installation work; none are fabricated here.
+This consolidates reset §§2–13,26–40 and Authority §§2,6–9,22–28, refined by binding FD-01. The external Work Management Provider owns canonical product/work-management state through READY, including priority, ownership and business context. AlienIntent owns canonical execution-control state after explicit release of that READY BIU, through IMPLEMENT/VERIFY/REVIEW/ACCEPT/closure/DONE and its trajectory/evidence. Imported Work Items are noncanonical views of upstream work; downstream external fields are projections of AlienIntent execution. This architectural split cannot be configured away. Market success thresholds and release claims require evidence from field/external installation work; none are fabricated here.
 
 ## Traceability and acceptance
 

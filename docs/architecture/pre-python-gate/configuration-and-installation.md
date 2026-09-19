@@ -4,6 +4,8 @@ Date: 2026-09-19. Status: CANDIDATE DESIGN; not Founder-approved or implementati
 BIU: [PG-14](../../work-units/pre-python-gate/PG-14.md), Agent-Ready READY before drafting.
 Binding inputs: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md).
 
+Ownership refinement: [binding FD-01](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md), applied through [PG-17](../../work-units/pre-python-gate/PG-17.md). FD-01 is approved; other design choices remain candidate.
+
 ## Configuration contract
 One service may manage N profiles with N=1 conventions. Each typed profile names isolated operational/evidence namespaces, repositories/work-management mappings, transport, providers, release/assurance/budget policies and workspace/resource limits. Reject ambiguous profile routing, overlapping mutable resources and unknown critical fields. Defaults reduce IDs and paths users must enter; discovery reads and validates immutable IDs instead of guessing. Secrets are references resolved by SecretProvider, not embedded values.
 
@@ -16,6 +18,10 @@ A step records owned resources, preconditions, result and reversible compensatio
 
 ## Bootstrap evidence
 Issue1 required manual App/Project IDs, separate ingress and explicit worker/result permissions. These are real installation pain points, not permanent user requirements. A failed signature or wrong profile cannot become ready merely because HTTP responds. Init completion does not mean Python Sovereignty. FD-03/FD-04 resolve release/security defaults and relay trust before adopting the installation contract. CLI is required; no web deployment is approved or required by this candidate installation flow.
+
+## Fixed ownership, configurable integration
+
+FD-01 is not a profile option: there is no external-versus-internal lifecycle authority switch. Configure vendor, upstream references, mapping of CAPTURE–READY, explicit release source/authorization and mapping of AlienIntent execution projections. Init must reject a mapping/adapter capability that treats downstream external field edits as execution authority. Discover provider IDs without converting imported data into a canonical local product backlog; multiple profiles preserve the same split.
 
 ## Traceability and acceptance
 

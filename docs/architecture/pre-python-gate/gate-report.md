@@ -51,7 +51,9 @@ PASS below means the already-approved policy artifact is sufficiently explicit f
 
 ## Decision dependency and next authorized work
 
-FD-01 is the first blocking choice: canonical lifecycle authority (external projection versus internal canonical state). It influences the context, work, event, persistence, Control Plane and migration contracts. FD-02–FD-06 isolate additional concrete boundary/default/custody/persistence/EOS choices with options, tradeoffs, recommendations, consequences and exact authorization. Founder may approve/revise these individually; no blanket approval is inferred from this report. Routine wording/traceability repairs remain authorized. Once decisions are supplied, prepare bounded revision BIUs, assess through Agent-Ready, repair any NOT READY deficiencies, complete concrete contracts and update every gate row with adoption evidence.
+**FD-01 is resolved and applied.** The [binding decision](../../decisions/2026-09-19-alienintent-work-management-execution-authority.md) fixes external Work Management authority through READY and AlienIntent execution authority after explicit release. PG-17 was assessed READY before applying the document refinement. Imports are not a canonical product backlog; downstream external state is a projection; ownership is not configurable.
+
+FD-02–FD-06 remain unresolved. FD-02 is narrowed to internal decomposition within the approved boundary. Ownership-related portions of G01–G05, G07–G09, G15–G16, G19–G22, G25–G30 and G33–G34 now have this Founder authority; this is not blanket adoption of their entire candidate contracts. No complete gate row is promoted solely because FD-01 was resolved. Counts remain 2 PASS / 0 DEFERRED BY FOUNDER / 32 BLOCKED pending remaining contract completeness/adoption. The next architecture decision is FD-02; no new decision or deferral is inferred here.
 
 ## Protected baseline and limitations
 
@@ -62,3 +64,7 @@ This packet is local review material. Later public publication must review the l
 ## Independent review and validation
 
 Independent review found no blocking findings and one minor cross-reference error, corrected. The final inventory contains 159 source artifacts. See [validation and review](validation-and-review.md). This review does not ratify candidate architecture.
+
+## FD-01 revision evidence
+
+PG-17 refines the approved split across release, imports/projections, persistence, operator actions and conformance. Its scenarios include duplicate release, automatic policy release, external downstream edit/echo, upstream edit after release, projection outage/order and fixed ownership across profiles. Existing Node runtime and original gate inputs/assessments remain unchanged.
