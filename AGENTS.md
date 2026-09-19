@@ -14,6 +14,17 @@ commits without routine confirmation. Stop at a concrete authority gap, conflict
 baseline, destructive action or unavailable external prerequisite. A local commit
 does not authorize publication or live operation.
 
+**Candidate publication is required before VERIFY.** A PRODUCER must push its
+candidate branch to the configured remote before signalling `RESULT=VERIFY`. A
+verifier is a fresh, independent invocation in its own worktree: it can only
+review what it can retrieve. A candidate that exists solely as a local commit is
+not verifiable and must not be advanced.
+
+Publishing a candidate branch is part of completing IMPLEMENT. It is not
+publication in the release sense and does not authorize merge, deployment, live
+operation, or any change to a protected branch. Those remain separately
+authorized.
+
 Prefix shell commands with `rtk`; use `rtk proxy` for unfiltered output.
 RAI remains unwired. Keep installation secrets and operational state outside the
 repository. Preserve compatibility markers and persisted resource identities.
