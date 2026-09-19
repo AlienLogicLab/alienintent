@@ -91,8 +91,8 @@ capability profiles with explicit additions; fail-closed required budgets;
 **automatic release default ON and configurable OFF**; end-to-end authenticated
 events with relay as transport; and inbox/effect-intent/outbox with versions,
 fencing, idempotency and reconciliation. They authorize contract refinement,
-not Python implementation. FD-06 remains BLOCKED: AlienIntent has no EOS
-conformance baseline until EOS is normalized to one internally consistent,
+not Python implementation. At PG-18, FD-06 remained BLOCKED (since resolved: EOS v1.0, see below): AlienIntent had no EOS
+conformance baseline until EOS was normalized to one internally consistent,
 approved version.
 
 ## PG-19 FD-06 EOS normalization audit — SUPERSEDED, retained for provenance

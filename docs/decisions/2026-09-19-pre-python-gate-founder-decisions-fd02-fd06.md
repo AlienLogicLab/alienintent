@@ -46,7 +46,9 @@ fencing, idempotent external effects, and read-back/reconciliation for uncertain
 outcomes. Do not adopt full event sourcing merely for this problem. An unknown
 external outcome blocks conflicting work; it does not cause blind retry.
 
-## FD-06 — blocked pending EOS normalization
+## FD-06 — RESOLVED (originally blocked pending EOS normalization)
+
+Status: RESOLVED 2026-09-19: EOS v1.0 (`DR-000007`) is ratified and AlienIntent conformance is recorded in the EOS conformance manifest ([manifest](../architecture/pre-python-gate/eos-conformance-manifest.md); [Wave 1 Founder decisions SWF-06](2026-09-19-software-factory-wave1-founder-decisions.md)). The decision text below is retained as the condition that EOS v1.0 satisfied.
 
 Do not pin the observed revision or use mixed per-document maturity states as
 AlienIntent's conformance baseline. EOS is one coherent system/version.

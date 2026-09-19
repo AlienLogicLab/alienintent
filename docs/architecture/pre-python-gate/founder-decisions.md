@@ -1,6 +1,6 @@
 # Founder decisions required before gate admission
 
-Status: FD-01–FD-05 are resolved by binding Founder decisions. FD-06 is explicitly blocked pending EOS normalization; it is not deferred or resolved. The binding record for FD-02–FD-06 is [Founder decisions FD-02 through FD-06](../../decisions/2026-09-19-pre-python-gate-founder-decisions-fd02-fd06.md). Historical proposal text below is retained for provenance only and is superseded where it conflicts with that record.
+Status: FD-01–FD-05 are resolved by binding Founder decisions. FD-06 is resolved: EOS v1.0 (`DR-000007`) is ratified and AlienIntent conformance is recorded (see the FD-06 section below and [eos-conformance-manifest.md](eos-conformance-manifest.md)). The binding record for FD-02–FD-06 is [Founder decisions FD-02 through FD-06](../../decisions/2026-09-19-pre-python-gate-founder-decisions-fd02-fd06.md). Historical proposal text below is retained for provenance only and is superseded where it conflicts with that record.
 
 ## FD-01 — RESOLVED: Work Management / Execution ownership split
 
