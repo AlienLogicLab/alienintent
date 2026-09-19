@@ -103,3 +103,31 @@ every artifact included in EOS v1.0 carries a status inside a ratified lifecycle
 no non-ratified status string remains outside a provenance note, and whitespace is
 clean. Node tests were not rerun for this documentation-only delta. Nothing was
 pushed in either repository.
+
+## Publication-boundary review
+
+Before first publication to the public `AlienLogicLab/alienintent` repository, the
+unpushed gate documentation was reviewed against EOS `ADR-0007`, which requires that
+organizational records not intended for publication stay in the private substrate and
+are referenced rather than copied, and that publication be a deliberate act.
+
+Result: **BLOCKED on first pass, repaired, then PASS.** No credentials, tokens, keys
+or secrets were present anywhere. The EOS governance discussion in these documents is
+legitimate architectural rationale for AlienIntent's own conformance decision and was
+deliberately left intact; references to EOS records are references, not copies, which
+`ADR-0007` permits.
+
+Findings repaired, all of one class — internal filesystem and infrastructure detail:
+
+- Local working-copy paths for this repository, the private EOS repository and the
+  B-DISP archive, replaced with repository references.
+- A private proof-custody path under a local user state directory, replaced with a
+  description of the evidence store. The evidence itself was already private and was
+  never copied into this repository.
+- The private EOS repository's SSH clone URL, removed. The repository is still
+  referenced by name, which `ADR-0007` allows.
+
+The review covered every commit in the unpushed range, not only the most recent one,
+because publication applies to all of them. Semantic content, provenance, commit
+references, statuses and findings are unchanged; only infrastructure detail was
+redacted.

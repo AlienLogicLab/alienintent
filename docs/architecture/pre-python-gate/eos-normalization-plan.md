@@ -15,7 +15,7 @@ a commit and annotating documents. EOS was audited instead.
 ## Canonical EOS repository and revision audited
 
 Repository `AlienLogicLab/P000-all-eos`, working copy
-`/home/netmarine/projects/alienlogiclab/P000-all-eos`, branch `main`, revision
+`AlienLogicLab/P000-all-eos` (private repository), branch `main`, revision
 `79d769228c266064e71b7ab7f556ea831cfc9537`, clean at entry. This is the canonical
 Alien Logic Lab EOS repository. It is a revision, not an approved version; EOS
 has no version identity (N-01).

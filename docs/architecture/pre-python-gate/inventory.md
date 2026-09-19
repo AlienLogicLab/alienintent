@@ -6,7 +6,7 @@ Date: 2026-09-19. Inventory is evidence, not adoption of every document.
 
 The requested docs/decisions/2026-09-19-alienintent-architecture-authority.md and docs/decisions/2026-09-19-alienintent-pre-python-implementation-gate.md do not exist at the inspected baseline. The matching binding documents are docs/architecture/alienintent-architecture-authority-2026-09-19.md and docs/work-units/alienintent-pre-python-implementation-gate.md. Both were introduced in AlienIntent a30252d1291c60290577e6d02ee69d53a976404a (docs: architecture decisions). Those contents govern this gate; no duplicate authority files were created. Root /docs/work-units does not exist; repository docs/work-units was inspected in full.
 
-AlienIntent baseline: a30252d1291c60290577e6d02ee69d53a976404a, clean at entry. Node behavior baseline: 2288cef3f49453a28d1c389964f5671ed90705d4. B-DISP archive: /mnt/d/Projects/b-disp at f0e2c0db61129c02fa25582a5c1665da3e17c9a6 (read-only). EOS source: /home/netmarine/projects/alienlogiclab/P000-all-eos at 79d769228c266064e71b7ab7f556ea831cfc9537, clean, candidate pin with per-document maturity retained. No FactoryChecks repository/config/service/route changes.
+AlienIntent baseline: a30252d1291c60290577e6d02ee69d53a976404a, clean at entry. Node behavior baseline: 2288cef3f49453a28d1c389964f5671ed90705d4. B-DISP archive: the B-DISP archive (local, read-only) at f0e2c0db61129c02fa25582a5c1665da3e17c9a6 (read-only). EOS source: AlienLogicLab/P000-all-eos (private repository) at 79d769228c266064e71b7ab7f556ea831cfc9537, clean, candidate pin with per-document maturity retained. No FactoryChecks repository/config/service/route changes.
 
 ## Corpus and evidence layers
 
@@ -15,7 +15,7 @@ AlienIntent baseline: a30252d1291c60290577e6d02ee69d53a976404a, clean at entry. 
 | Node implementation | bin entrypoints; src/config, runtime, domain, github, providers; scripts/worker-preflight and worker-gh; config example | Shipped bootstrap behavior, not permanent architecture |
 | Tests/checks | all test files/helpers, scripts/check.mjs and workflow checks | Historical full regression: 309 runtime, preflight PASS, 18 RAI, 2 policy; not rerun for this docs-only gate; RAI remains unwired |
 | Live proof | Issue1 producer SHA ffa3c5f32de12d579dc5372207bfb10790c6bea8; JC ACCEPT5734903116; Morty DONE5734928982 | Node only; no proof of Python, multi-instance or learned policy |
-| Proof custody | /home/netmarine/.local/state/alienintent/proof-issue-1-20260919/REPORT.md plus before/after state, delivery receipts, Project readbacks, protected-file hashes and effective JC settings | Private evidence retained locally; no secrets or raw private logs copied to repository |
+| Proof custody | a private local evidence store outside this repository plus before/after state, delivery receipts, Project readbacks, protected-file hashes and effective JC settings | Private evidence retained locally; no secrets or raw private logs copied to repository |
 | AlienIntent active architecture | binding Authority, gate in work-units, reset decision, current strategy, canonical-architecture/interface-contracts/implementation-plan, 40 recommendations | Newer Founder authority supersedes conflicting older sketches; recommendations are not extra decisions |
 | Context Engineering | B-DISP near-term-scope §§4–6; canonical role/phase compiler; north-star quality amendment | Existing decisions, not implemented full context compiler |
 | Trajectory/Quality Evidence | B-DISP Zed Delta design source §§4–17, north-star amendment §§8–13, community decisions, model cost/quality decision | Observable trajectory distinct from derived measurements; no private reasoning |
@@ -45,7 +45,7 @@ The following register is exhaustive for the inspected categories; hashes and si
 
 ### AlienIntent
 
-Root: `/mnt/d/Projects/alienintent`.
+Root: this repository.
 
 - `README.md`
 - `package.json`
@@ -106,7 +106,7 @@ Root: `/mnt/d/Projects/alienintent`.
 - `docs/work-units/alienintent-pre-python-implementation-gate.md`
 ### B-DISP
 
-Root: `/mnt/d/Projects/b-disp`.
+Root: `the B-DISP archive (local, read-only)`.
 
 - `docs/architecture/canonical-architecture.md`
 - `docs/architecture/implementation-plan.md`
@@ -158,7 +158,7 @@ Root: `/mnt/d/Projects/b-disp`.
 - `docs/history/factorychecks-issue-index.md`
 ### EOS
 
-Root: `/home/netmarine/projects/alienlogiclab/P000-all-eos`.
+Root: `AlienLogicLab/P000-all-eos` (private repository).
 
 - `docs/00-foundation/ontology.md`
 - `docs/00-foundation/ontology_graph.md`
