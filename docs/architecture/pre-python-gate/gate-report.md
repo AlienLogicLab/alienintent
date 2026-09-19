@@ -1,0 +1,64 @@
+# Pre-Python Gate Report — BLOCKED pending Founder decisions
+
+Date: 2026-09-19. This is a completed inventory and candidate-design checkpoint, not a passed architecture gate or authorization to implement Python.
+
+Binding authority: [Architecture Authority](../alienintent-architecture-authority-2026-09-19.md) and [Pre-Python Gate](../../work-units/alienintent-pre-python-implementation-gate.md). See [34-item acceptance matrix](gate-matrix.md), [inventory](inventory.md), [authority reconciliation](authority-reconciliation.md), and [Founder decision packet](founder-decisions.md).
+
+PG-00 inventory and PG-01–PG-16 candidate-design BIUs were assessed READY through the actual Agent-Ready MCP before execution. Provider evidence: codex-cli 0.154.0, COMPATIBLE_UNVERIFIED, capability probe PASSED. Exact design assessment receipts and shared supplied authority/EOS/Node context are under docs/work-units/pre-python-gate/assessments. READY concerns readiness to write candidate design documents; it neither ratifies the design nor proves a Python capability. No candidate returned NOT READY in pre-execution assessment, so no deficiency-repair loop was required at that stage.
+
+## Admission statuses
+
+PASS below means the already-approved policy artifact is sufficiently explicit for that design gate item. It does not mean implementation exists. BLOCKED means the candidate artifact is not yet approved or explicitly delegated for adoption, or depends on an unresolved material choice. No Founder deferrals have been invented. Full criteria and supporting evidence are recorded per row in gate-matrix.md.
+
+| ID | Binding gate item | Final admission status | Artifact |
+|---|---|---|---|
+| G01 | Product Intent | BLOCKED | [product-intent.md](product-intent.md) |
+| G02 | Ubiquitous Language v1 | BLOCKED | [domain-model.md](domain-model.md) |
+| G03 | bounded-context model | BLOCKED | [domain-model.md](domain-model.md) |
+| G04 | Hexagonal Architecture / ports-and-adapters specification | BLOCKED | [hexagonal-contracts.md](hexagonal-contracts.md) |
+| G05 | Anti-Corruption Layer rules | BLOCKED | [hexagonal-contracts.md](hexagonal-contracts.md) |
+| G06 | Python engineering standard | BLOCKED | [python-engineering.md](python-engineering.md) |
+| G07 | BIU/domain execution model | BLOCKED | [work-and-release.md](work-and-release.md) |
+| G08 | lifecycle semantics and external mapping rules | BLOCKED | [work-and-release.md](work-and-release.md) |
+| G09 | automatic-release policy model | BLOCKED | [work-and-release.md](work-and-release.md) |
+| G10 | verifier-independence / assurance-policy model | BLOCKED | [capabilities-and-assurance.md](capabilities-and-assurance.md) |
+| G11 | capability/authority model, including live deployment authority | BLOCKED | [capabilities-and-assurance.md](capabilities-and-assurance.md) |
+| G12 | optional sandbox/container model | BLOCKED | [capabilities-and-assurance.md](capabilities-and-assurance.md) |
+| G13 | event-ingress port and direct-webhook/outbound-relay adapters | BLOCKED | [event-ingress.md](event-ingress.md) |
+| G14 | no-polling / async integration rule | PASS | [event-ingress.md](event-ingress.md) |
+| G15 | internal event model and once-only processing semantics | BLOCKED | [event-ingress.md](event-ingress.md) |
+| G16 | concurrency/cancellation/retry policy | BLOCKED | [scheduling-and-recovery.md](scheduling-and-recovery.md) |
+| G17 | provider capability/routing contract | BLOCKED | [providers-and-budgets.md](providers-and-budgets.md) |
+| G18 | cheapest-capable / local-first routing policy | PASS | [providers-and-budgets.md](providers-and-budgets.md) |
+| G19 | Context Engineering v1 carried forward | BLOCKED | [context-and-memory.md](context-and-memory.md) |
+| G20 | memory/state/evidence separation carried forward | BLOCKED | [context-and-memory.md](context-and-memory.md) |
+| G21 | operational-state persistence design | BLOCKED | [persistence-and-evidence.md](persistence-and-evidence.md) |
+| G22 | Engineering Trajectory / Quality Evidence persistence design | BLOCKED | [persistence-and-evidence.md](persistence-and-evidence.md) |
+| G23 | community-learning contribution model | BLOCKED | [community-learning.md](community-learning.md) |
+| G24 | cost/token governance | BLOCKED | [providers-and-budgets.md](providers-and-budgets.md) |
+| G25 | operator Control Plane application model | BLOCKED | [control-plane.md](control-plane.md) |
+| G26 | control-plane presentation adapters (CLI/web as approved) | BLOCKED | [control-plane.md](control-plane.md) |
+| G27 | adapter versioning/extensibility model | BLOCKED | [hexagonal-contracts.md](hexagonal-contracts.md) |
+| G28 | configuration and SecretProvider model | BLOCKED | [configuration-and-installation.md](configuration-and-installation.md) |
+| G29 | installer/bootstrap design | BLOCKED | [configuration-and-installation.md](configuration-and-installation.md) |
+| G30 | observability model | BLOCKED | [control-plane.md](control-plane.md) |
+| G31 | EOS inheritance/contribution mechanism | BLOCKED | [eos-inheritance.md](eos-inheritance.md) |
+| G32 | architecture fitness rules | BLOCKED | [python-engineering.md](python-engineering.md) |
+| G33 | Node→Python coexistence/conformance strategy | BLOCKED | [conformance-and-sovereignty.md](conformance-and-sovereignty.md) |
+| G34 | Python Sovereignty acceptance criteria | BLOCKED | [conformance-and-sovereignty.md](conformance-and-sovereignty.md) |
+
+**Totals:** 2 PASS, 0 DEFERRED BY FOUNDER, 32 BLOCKED. The two PASS rows are the no-polling/async rule (Authority §21) and cheapest-capable/local preference (Authority §23). Other rows have candidate documents but lack the required adoption evidence. Initial inventory classifications (PASS/PARTIAL/MISSING/FOUNDER DECISION REQUIRED) remain separate from these final admission statuses.
+
+## Decision dependency and next authorized work
+
+FD-01 is the first blocking choice: canonical lifecycle authority (external projection versus internal canonical state). It influences the context, work, event, persistence, Control Plane and migration contracts. FD-02–FD-06 isolate additional concrete boundary/default/custody/persistence/EOS choices with options, tradeoffs, recommendations, consequences and exact authorization. Founder may approve/revise these individually; no blanket approval is inferred from this report. Routine wording/traceability repairs remain authorized. Once decisions are supplied, prepare bounded revision BIUs, assess through Agent-Ready, repair any NOT READY deficiencies, complete concrete contracts and update every gate row with adoption evidence.
+
+## Protected baseline and limitations
+
+Node source, tests, configuration and live services were not changed. FactoryChecks was not modified. Existing Issue1 Node self-hosting and restart/replay evidence remains historical accepted evidence; it was read, not rerun. No canonical Python code, scaffold, dependency install or first implementation BIU was created. No GitHub mutation or publication was performed. Private proof records remain local; documentation carries references and bounded summaries only. Existing strategy/history/decisions were preserved.
+
+This packet is local review material. Later public publication must review the local cross-repository references and any organizational/private material against publication authority. The 16 candidate documents are not implementation-complete contracts while the Founder decisions remain open. No runtime regression suite was rerun for documentation-only work; validation targets scope, links, exact 34-row coverage, assessment receipts and authority consistency.
+
+## Independent review and validation
+
+Independent review found no blocking findings and one minor cross-reference error, corrected. The final inventory contains 159 source artifacts. See [validation and review](validation-and-review.md). This review does not ratify candidate architecture.

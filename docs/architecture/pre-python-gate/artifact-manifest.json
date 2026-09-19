@@ -1,0 +1,956 @@
+[
+  {
+    "root": "AlienIntent",
+    "path": "src/config/profile.mjs",
+    "sha256": "fd554a319e7203fd9cf5aa958478b993c7308e1832679775c07a734c20e0c193",
+    "bytes": 10730
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/config/repository-state.mjs",
+    "sha256": "d160f9c42c9f491a3dce94b56be548ae04f5ae770bffd4a0892e3baba942019d",
+    "bytes": 1988
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/config/state-compatibility.mjs",
+    "sha256": "8aaffe6c5e8ee02e731038d0d0583f3750783052dec1086878f163697bfe2fcb",
+    "bytes": 2153
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/domain/lifecycle.mjs",
+    "sha256": "73f857c2b080b0cecb5661019b9fdbd07ef6ba9f1cd84d526b26c5f69ba7aa8b",
+    "bytes": 243
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/domain/rai.mjs",
+    "sha256": "dd162bcc90c997d703fd582cccc78d3bc84fe7a72d0f12407c8b4905201de32b",
+    "bytes": 18799
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/github/app-client.mjs",
+    "sha256": "2e622ff16d15f0020dabf6ebb7357a2bd2528597860e54bd9533bd80ce19eddd",
+    "bytes": 13282
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/github/authority.mjs",
+    "sha256": "0d2bab382b9a0502426db3af68f3757500412abc5dbdd1d8e391797698973f33",
+    "bytes": 10763
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/providers/claude.mjs",
+    "sha256": "d492f12e03ca017a0b37f10370dbd36e4ca1d0cc55fa5d078eec84a21a0fb695",
+    "bytes": 726
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/providers/codex.mjs",
+    "sha256": "5f0765c08438f87786163dd487794fc1d5a713a4e51c13406b2b6e0ed472ce74",
+    "bytes": 712
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/runtime/dispatcher.mjs",
+    "sha256": "0b4f4670acf2a20e6a309fca74cc3c7dc0e7b53fcdeecee5bb3cb8bc4a360227",
+    "bytes": 39506
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/runtime/worker-runner.mjs",
+    "sha256": "f3841811c80c4b45f0058843ef45e3b08abe772e4d89208e42c0075a256cbc2e",
+    "bytes": 3927
+  },
+  {
+    "root": "AlienIntent",
+    "path": "src/runtime/worktree-manager.mjs",
+    "sha256": "802739fcf82c5cad0783461254b4e4225a276f704da8b1806eabf9a1a5c52980",
+    "bytes": 7743
+  },
+  {
+    "root": "AlienIntent",
+    "path": "bin/alienintent.mjs",
+    "sha256": "1cbd719661b338ebe8295572339faf000bb2a51fe5410c615038a6461897d17f",
+    "bytes": 4384
+  },
+  {
+    "root": "AlienIntent",
+    "path": "bin/b-disp.mjs",
+    "sha256": "5e228a764aa8d7b512b9804f937dadfc6ed4da14b12c61e146b481040df7f812",
+    "bytes": 123
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/app-cli.test.mjs",
+    "sha256": "dd9cd797dee1ad86087b2674082fd6ed40984376b3c27e5d67fbaeba5c84389e",
+    "bytes": 1705
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/check.test.mjs",
+    "sha256": "d2611f99edf934ebbd3249a42337bf1822db2971748a5adf9802145b7d282be0",
+    "bytes": 859
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/cli.test.mjs",
+    "sha256": "4a4a1a40277d38ad09a34f70d63c0ecd2f858b8edbbe7a1877e557e86b429d22",
+    "bytes": 6698
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/dispatcher.test.mjs",
+    "sha256": "2c69830729446a7266861d0362ee72d843e9c8b8a687cfea401a5fce41b378b0",
+    "bytes": 75522
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/github-app.test.mjs",
+    "sha256": "a84b642257709e53ad255087ac6864f48d897ef09b214ac6cc5eb09a03de349c",
+    "bytes": 34607
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/github-authority.test.mjs",
+    "sha256": "3802b1b75a4913e6728f66952258f62c6f48d94a64bf48afee092427fe3ceedd",
+    "bytes": 27502
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/governing-instructions.test.mjs",
+    "sha256": "2a0a8d429a53a8691401eed5f8344c7259bd8749ca165630f113fb3c43146aee",
+    "bytes": 1205
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/helpers/profile.mjs",
+    "sha256": "2c5f88c02781fba321098087fc3ab455a1616fbd46c24610a923a87e9fc4d3b1",
+    "bytes": 604
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/helpers/self-hosting.mjs",
+    "sha256": "03dd264e6221015bde8079a12d1f6a1f853c7a6e0437df277958624269287c3b",
+    "bytes": 10354
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/legacy-state.test.mjs",
+    "sha256": "e29ef52a2f8049c38b5bb8025256b08680e507f7add205a754ef374aef9338cc",
+    "bytes": 10649
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/profile.test.mjs",
+    "sha256": "a5627b57f780f5e9a6dc3905d99f2dba1d259a7142b89e6d3216a5a8439396f7",
+    "bytes": 8527
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/rai.test.mjs",
+    "sha256": "e7fd577dd886b67c80abc56b30dfd610572d4c5e5de5ed6e65929f8651723eaa",
+    "bytes": 8042
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/repository-state.test.mjs",
+    "sha256": "6f8134c58b6c29669c3642694a635e1a07ee0e703c2eac8f2384b1a130301bcd",
+    "bytes": 5270
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/self-hosting.test.mjs",
+    "sha256": "23cd4746af683788dc9780b3ea43a79211591ebe8c8e91141349082537865994",
+    "bytes": 9051
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/worker-preflight.test.sh",
+    "sha256": "229e75876d78e2450cfee414ee519ea46f909ab5d0022d9284952a59a625355a",
+    "bytes": 9206
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/worker-runner.test.mjs",
+    "sha256": "a9d591efc8ea1e228989166adabc599920076d5e1ff42ff234869f66219113d5",
+    "bytes": 15349
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/worktree-lifecycle.test.mjs",
+    "sha256": "c3019616952e918f393b8cf643d93454863940dcddb5c312519bea0d9c780ed3",
+    "bytes": 7053
+  },
+  {
+    "root": "AlienIntent",
+    "path": "test/worktree-manager.test.mjs",
+    "sha256": "40eccdcad6d1aace8e6336fb7bb527992f7c498947180338515b1758ddd68f64",
+    "bytes": 6662
+  },
+  {
+    "root": "AlienIntent",
+    "path": "scripts/check.mjs",
+    "sha256": "ddf6fa3cf7510bb200f0c1004f7b00863315a62619208e799c589209e694bdbb",
+    "bytes": 1734
+  },
+  {
+    "root": "AlienIntent",
+    "path": "scripts/worker-gh",
+    "sha256": "19ab171c325f654c7d575a8ab94bb368ba8cb1bc7431aa254ff3c72eb1336229",
+    "bytes": 317
+  },
+  {
+    "root": "AlienIntent",
+    "path": "scripts/worker-preflight",
+    "sha256": "846fbfd088e67699cf1b2abf0914d3441ab45ea666b322018de4cf18f71f705f",
+    "bytes": 6669
+  },
+  {
+    "root": "AlienIntent",
+    "path": "config/profile.example.json",
+    "sha256": "08d2529a30b64dc12434b3f09e1c99be4687b564029be0d74207966d3e5301c9",
+    "bytes": 2764
+  },
+  {
+    "root": "AlienIntent",
+    "path": ".github/workflows/b-disp-tests.yml",
+    "sha256": "45b65e9b531280c4e76231bfb7fec275eb604efcbb7caf2131ad8126a729b9c3",
+    "bytes": 706
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/README.md",
+    "sha256": "feb5e03eea4e44f5ba30d07d122199fa7f8ef53dfa61d458e886541a9b08c27c",
+    "bytes": 797
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/architecture/alienintent-40-architecture-recommendations.md",
+    "sha256": "9f14f097f6df89a9d37b97bb7a301eaab256d8fbf2390da93b298b513fc91f15",
+    "bytes": 19217
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/architecture/alienintent-architecture-authority-2026-09-19.md",
+    "sha256": "0687cea2a1f9ac4002dd39ccc2e30fea8f27aca66f194eaa6ccdd4b0a4bf0488",
+    "bytes": 18603
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/architecture/canonical-architecture.md",
+    "sha256": "d1a8277fecdd49ffc0c942683bd3e1f265c5d64c167257bac70cd595b760515d",
+    "bytes": 8037
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/architecture/implementation-plan.md",
+    "sha256": "6f02ed817cb8989ed8a0a9324b63508c86f05be8c5caeb77fb8a062b9239451e",
+    "bytes": 3798
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/architecture/interface-contracts.md",
+    "sha256": "946a356400a7247257731ce8093291dcdc9182ccf096533a5c4a805e4507a187",
+    "bytes": 5203
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/decisions/2026-09-18-alienintent-name-and-organization.md",
+    "sha256": "0b2eb4870faddd5feee70fd86feaf970dd3fb53d6f9b2399815a4146b96e236e",
+    "bytes": 1404
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/decisions/alienintent-architectural-reset-and-separation.md",
+    "sha256": "2f068c9cb43a6836bffb6888c5db37b8f47b56de6a1edbf9bee7be73ee57051a",
+    "bytes": 31703
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/migration/2026-09-18-complete-project-lifecycle.md",
+    "sha256": "81a238e592f765527e954c0b2fe2d2993e3e33aab208fca73510456f763c612d",
+    "bytes": 4292
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/migration/agent-packages/GOVERNING_AGENT_DIRECTIVE.md",
+    "sha256": "431c189ca49dad156e92fb30f8fa209125033330b0aca49b7b73823a40cffee7",
+    "bytes": 1723
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/operations/forward-momentum.md",
+    "sha256": "7ee937b56f1ba54268193305c8a8eadb6c950e0ec163875f7d9b8aaa72ebdb9f",
+    "bytes": 985
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/operations.md",
+    "sha256": "465867a57971e25483728590c12c1394f8a2ee89ced7f867d5caf7ee38d1b65e",
+    "bytes": 8270
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/strategy/alienintent-current-strategy.md",
+    "sha256": "bccfd320d9d103ce782026b89792cb41eb786d82220c103beca29a0bb67bdfe2",
+    "bytes": 1632
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/templates/work-packet.md",
+    "sha256": "12a302e99dace2e67be92db82ebcfb9679d2470ac27f466aa94fa4ee27c16e8c",
+    "bytes": 1153
+  },
+  {
+    "root": "AlienIntent",
+    "path": "docs/work-units/alienintent-pre-python-implementation-gate.md",
+    "sha256": "db047f07121ec5d69dad911a689a1bdec3b027618a36532e115a644a00e7c18f",
+    "bytes": 2750
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/architecture/canonical-architecture.md",
+    "sha256": "0d38ce999e1ee1cb7a774d559e9df0f7fc396eeab70a4e3d2e21ab3d55403c72",
+    "bytes": 8212
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/architecture/implementation-plan.md",
+    "sha256": "227428566f15b289f6e564dbd8f17f4fb16505ccc44b51eb23019d7a0beb455a",
+    "bytes": 3943
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/architecture/interface-contracts.md",
+    "sha256": "957e06a2d9d77a67083e6cf8d2a436b9dbb96c1135cd6ce7631652c32bcd9884",
+    "bytes": 5348
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/design/2026-09-11-recursive-artifact-improvement-v0.1.md",
+    "sha256": "91f290702b47d28017e78712c411ef4f6529e31c47797d69b9155ba25a872dd3",
+    "bytes": 9055
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/design/recursive-artifact-improvement.md",
+    "sha256": "2ca33f4d338b8551c468c4ef73a8763455b2060e8c3a71fd35a707b93bd5a332",
+    "bytes": 2283
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/decisions/2026-09-16-b-disp-capability-based-provider-compatibility-decision.md",
+    "sha256": "e896ecdaa7acf2fc832b3f65abc465dcb390710f826e4c6b20ad7b4b75857d8f",
+    "bytes": 6461
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/decisions/2026-09-16-b-disp-community-evidence-commons-decisions.md",
+    "sha256": "ddc2f6eb07f466ef68da7a57781a7247c4f4b4681440f0049aecacb1ad10810f",
+    "bytes": 16311
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/decisions/2026-09-16-b-disp-community-evidence-service-architecture-decision.md",
+    "sha256": "5ebc15e8956a9ff956774e83b13ff753f63e772a03c4d3142a9125e57efd73d7",
+    "bytes": 13140
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/decisions/2026-09-16-b-disp-field-proving-and-public-release-strategy-decision.md",
+    "sha256": "4626e4443f7ed5d72d5ac65212f222020bbe9ec7a71509027140573ed6612f70",
+    "bytes": 9151
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/decisions/2026-09-16-b-disp-model-selection-cost-quality-decision.md",
+    "sha256": "d8bbf5ea4e81d5c85dc9f1f0436a3221613d409a8d663dcad02b84a0b7c602eb",
+    "bytes": 6643
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/decisions/2026-09-16-b-disp-north-star-and-learning-design-amendment.md",
+    "sha256": "1d02b3c9ed8d8e2d8e29727442ddf933c095f883a682555acb5d9c6a4a445158",
+    "bytes": 16422
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/decisions/2026-09-18-alienintent-name-and-organization.md",
+    "sha256": "a981d6daafcce61daf4f7a16b1f7481d84a72a3520c43b5cd25b8a706478b38c",
+    "bytes": 1833
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/strategy/2026-09-17-b-disp-near-term-scope-google-new-sdlc-compliance.md",
+    "sha256": "edb895aac16a7e3367bd636671acd86d50c1344d75e3bb6f89eda1c02b8db897",
+    "bytes": 28990
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/strategy/2026-09-17-b-disp-strategic-evolution-and-causal-evidence-thesis.md",
+    "sha256": "05f214ee989fd7e8fc017e3061fe32d5c61ed7048be19f563a0d3c1f19089968",
+    "bytes": 30008
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/strategy/2026-09-17-b-disp-zed-delta-trajectory-evidence-design-source.md",
+    "sha256": "0217e49ed5dbe2e23e264dfceedc51d8914e0f43c167f8dbc72bfc9067e81eec",
+    "bytes": 14404
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/strategy/alienintent-current-strategy.md",
+    "sha256": "bccfd320d9d103ce782026b89792cb41eb786d82220c103beca29a0bb67bdfe2",
+    "bytes": 1632
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/2026-09-15-b-disp-extraction-and-canonicalization-assessment.md",
+    "sha256": "579b67f75f9c481e0c34469cd33b5ce681e4afd607a59f23b0c1d682a2b29137",
+    "bytes": 32686
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/2026-09-15-b-disp-extraction-implementation-plan.md",
+    "sha256": "8d44c0d279705756a7ddb67f7409f4335179047ec78d7d4f94b6cfb9728a758b",
+    "bytes": 99023
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/2026-09-15-b-disp-migration-design-decisions.md",
+    "sha256": "fb82b08f17cf9ab13cb6b4b200a54fc78465182d5cb89a1827ee3e4875133c4c",
+    "bytes": 20126
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/agent-packages/GOVERNING_AGENT_DIRECTIVE.md",
+    "sha256": "6e13fe8ad4ad629558c0b72e5ea1450ca3ba0ed1dd122cb7388b5fd8539280e8",
+    "bytes": 6289
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/agent-packages/PROPAGATE_TO_CODEX_AND_FUTURE_AGENTS.md",
+    "sha256": "4173dadd4e34a817cc4ec5a18e29b900df92aa3ca8162277341b739a49c8f19f",
+    "bytes": 2658
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/agent-packages/README.md",
+    "sha256": "db152a59849304f6d50a30f1681acaadac630c99074d0b19094bcbd9d48d04dd",
+    "bytes": 422
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/alienintent-rename-transfer-and-live-self-hosting-verification.md",
+    "sha256": "dbbc632f46238ac1734137e0b7512a7e2cf0e087d9e35e81b0bdd928f2ce20db",
+    "bytes": 10265
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/archive/2026-09-15-proposed-migration-design-decisions.md",
+    "sha256": "a46389bdedb3979f358f8e8ec25910112cd38a9965e0bf5b18be37d24a4d7656",
+    "bytes": 26016
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/b-disp-authoritative-regression-baseline.md",
+    "sha256": "f7a4732e20ac8c266d66862b3e893234a4bedd517463f8550435aeb532662eb4",
+    "bytes": 15972
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/b-disp-disposable-worktree-and-runtime-isolation-verification.md",
+    "sha256": "a14dd175fc2d4daeeda42f40800c4a558f42ea8b6e1eea5b79832f8107d0d78a",
+    "bytes": 6821
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/b-disp-extraction-boundary-and-configuration-contract.md",
+    "sha256": "597754cc42e5ed233b1a3ca56d4ab7971eb7835f19d9f06015e714155f307464",
+    "bytes": 45443
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/b-disp-mechanical-extraction-verification.md",
+    "sha256": "81d0f3f7ab700791c1a6f2f2a87aa625e466e02f4c4a92b0f9c36c1ca55ff27a",
+    "bytes": 6584
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/b-disp-self-hosting-proof-verification.md",
+    "sha256": "5d92dcc37a19c35864719c671c6fc3375e907a23fc652b770187f55b670bff2b",
+    "bytes": 5877
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/b-disp-stale-result-and-admission-gap-verification.md",
+    "sha256": "6396fd53ffb5ee14afcf0878432141dc4f792dce29fc2fb5ba17389ddf211d7a",
+    "bytes": 6798
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/forward-momentum-propagation-verification.md",
+    "sha256": "a6e21984be790d7ebecee6dde14ae88c4d26994e9138358ffd5f84ccbd88cc4e",
+    "bytes": 5062
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/mechanical-extraction-execution-plan.md",
+    "sha256": "f6739f47917e918c20050f6f890021104c02f289ab01572e3bf9055f0d5fb046",
+    "bytes": 2811
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/planning-inputs/2026-09-15-extraction-plan-prompt.md",
+    "sha256": "500a5a13b132e6b14e346b5771f21d6ea7f814e5f6a47b7a48c215786936baa8",
+    "bytes": 15314
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/work-units/Codex_FactoryChecks_Backlog_Reconciliation_Prompt.md",
+    "sha256": "6d86e2628ef2e2451874ca5bd03e1d55046b22425585e24871f58382959146be",
+    "bytes": 3541
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/work-units/alienintent-rename-transfer-self-hosting-work-packet.md",
+    "sha256": "620d450be0abe33035fa49d132e8bc89a2f08768a31eabe13586578be3ec8eed",
+    "bytes": 12317
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/work-units/define-b-disp-extraction-boundary-and-generic-configuration-contract.md",
+    "sha256": "c8dd86616228044b5a869c75eafbe235443e7fa5712655132b3d0fd0cd55f573",
+    "bytes": 13275
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/work-units/establish-canonical-b-disp-ci-and-begin-mechanical-extraction.md",
+    "sha256": "0b861a4c2a796d5bb3e21dddcb92d89af3a4b95fd87ac1404747f1c359dd1151",
+    "bytes": 14908
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/work-units/freeze-and-diagnose-authoritative-regression-baseline.md",
+    "sha256": "02d3b854e962e3ce1d1504a1a419d5d1980a2a1142a5903be3e0f581b17b22ff",
+    "bytes": 7744
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/work-units/implement-disposable-per-invocation-worktrees-and-runtime-isolation.md",
+    "sha256": "c57acb759e30c2957b3a30510601589a48bbdaf8080524b50e6b79221d7486c2",
+    "bytes": 11021
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/work-units/prove-standalone-b-disp-self-hosting.md",
+    "sha256": "25867d0b48a8dfba12385cf32d51c694cc0f3f792c6a710b2832247a52a99aae",
+    "bytes": 4065
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/work-units/reconcile-factorychecks-product-backlog-and-capture-fabspace-improvements.md",
+    "sha256": "9c4481ece9c8fe917c4880588da18b353dc1904091e999d6efe76d6df49924c1",
+    "bytes": 25675
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/migration/work-units/repair-stale-result-and-github-admission-gaps.md",
+    "sha256": "9b9f9bc6987078f7c56c996eb48c5a090535a05693af1ea1285a367dae850d65",
+    "bytes": 8746
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/history/b-disp-decision-history.md",
+    "sha256": "31a7ed01a8e3669c81384f6a5f4c34c44d264d231139c293a8ca8a63c5699d33",
+    "bytes": 41133
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/history/b-disp-failure-lessons.md",
+    "sha256": "72aa7ed280cc739efaf85641e205dba2b75d683bf15502dfb1371766b60c0edb",
+    "bytes": 35828
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/history/b-disp-milestone-reconstruction.md",
+    "sha256": "33cd70f0b2063c1d58d2a40011f8a682bff80d5779e334c4139df6f4bdfe92b4",
+    "bytes": 24093
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/history/biu-and-agent-workflow-history.md",
+    "sha256": "8c5e471e12e5ae7c92bb222474626a6cf452adbf046fb9fc466aed8a28427aca",
+    "bytes": 20118
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/history/current-b-disp-baseline-candidate.md",
+    "sha256": "fd3502dc35ff3294e33973ab9b000cd13cbb861d273f3293342d1a1ffdc2e4f9",
+    "bytes": 43546
+  },
+  {
+    "root": "B-DISP",
+    "path": "docs/history/factorychecks-issue-index.md",
+    "sha256": "755e49f0179992379c0a9e64f2af74ba8cec8d53ffd719c933f6e47546c8a214",
+    "bytes": 104695
+  },
+  {
+    "root": "EOS",
+    "path": "docs/00-foundation/ontology.md",
+    "sha256": "aab9a14e1bef54967a36aa8171f04f93eed86abea66b46b4e4589618a47eb8e9",
+    "bytes": 37304
+  },
+  {
+    "root": "EOS",
+    "path": "docs/00-foundation/ontology_graph.md",
+    "sha256": "795ce09ad6bb5f283332e5d444a76824d2897dba9a1ff6f462cb48ada9f75c86",
+    "bytes": 5402
+  },
+  {
+    "root": "EOS",
+    "path": "docs/09-decision-making/records/DR-000001-ratify-record-governance-conventions.md",
+    "sha256": "8e3a33153912b8b045b3d9b238e2a3748020cf60fcd4c008e1f8ead19260a0f9",
+    "bytes": 2343
+  },
+  {
+    "root": "EOS",
+    "path": "docs/09-decision-making/records/DR-000002-adopt-living-due-diligence-system.md",
+    "sha256": "201596cb140e612a9707f62c059f762970a4522e0b1fa1084e28695b14d7434e",
+    "bytes": 2552
+  },
+  {
+    "root": "EOS",
+    "path": "docs/09-decision-making/records/DR-000003-factorychecks-reasoning-centered-ems-intelligence.md",
+    "sha256": "9ae12f07ad0705ef22a603fa19c5b226b6e0bf30aa973c5cd904933d7eb769d8",
+    "bytes": 3615
+  },
+  {
+    "root": "EOS",
+    "path": "docs/09-decision-making/records/DR-000004-factorychecks-ems-intelligence-begins-with-reasoning-loop.md",
+    "sha256": "a931a64e7e7bc8c423ffdd22608c95e10008b577088dc43679f8ea468dc8878f",
+    "bytes": 4247
+  },
+  {
+    "root": "EOS",
+    "path": "docs/09-decision-making/records/DR-000005-factorychecks-ems-intelligence-uses-recipe-routed-micro-agent-execution.md",
+    "sha256": "ea781a4b8d77f467f3335d797cfefb6ba98d4853ce77c6d24cc73ce39e21d2d2",
+    "bytes": 3940
+  },
+  {
+    "root": "EOS",
+    "path": "docs/09-decision-making/records/DR-000006-factorychecks-mdp-added-to-ubiquitous-language.md",
+    "sha256": "fa4295eaf6fa7aa952050903704daaf3a63efe49255d06814637c614f2527f5d",
+    "bytes": 2103
+  },
+  {
+    "root": "EOS",
+    "path": "docs/09-decision-making/records/README.md",
+    "sha256": "742aef4609d5500083447b914cd816d05ad231270236f446a772e5637ae8296d",
+    "bytes": 1154
+  },
+  {
+    "root": "EOS",
+    "path": "docs/08-learning-loops/README.md",
+    "sha256": "65c6319a015e99ebad79b2a58fc3875f66992f148eaa5d049c75aa3668d710c8",
+    "bytes": 803
+  },
+  {
+    "root": "EOS",
+    "path": "docs/08-learning-loops/organizational_learning_system.md",
+    "sha256": "c6eb0453fefbc72fd65ebb0d3c449e8b63226b882d4fe912d15c48e2635d4efa",
+    "bytes": 5694
+  },
+  {
+    "root": "EOS",
+    "path": "docs/08-learning-loops/postmortems/PM-000001-all-eos-factorychecks-organizational-history.md",
+    "sha256": "10dd04c735715469e977f8c106dee883c0eba339322119a9e0b60b729bd08971",
+    "bytes": 21600
+  },
+  {
+    "root": "EOS",
+    "path": "docs/08-learning-loops/postmortems/README.md",
+    "sha256": "4cc3b1802b4a26cd6e905c90ce38490a1130facca9ed2d70969c77ae153aaca6",
+    "bytes": 971
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/README.md",
+    "sha256": "ab08d3868ab58eb446bcb95b8154918a0ab006ed6589b5da753fcc62717fd2f4",
+    "bytes": 1400
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/capability_assessment_template.md",
+    "sha256": "5eb70b45217748a5166e46968e972fdd825a5159a9029da3f29597008f5e1cf1",
+    "bytes": 940
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/capability_lifecycle.md",
+    "sha256": "a401dfda558dc44b53dd1db0c692a062d943688e2b0722fe767513fc0c942420",
+    "bytes": 2107
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/capability_map.md",
+    "sha256": "6a14109cb848fd1ca15d4a97c260ffee31adef297ce7f93f9fb101255fc89705",
+    "bytes": 3552
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/capability_model.md",
+    "sha256": "76f2f5727bee67dccb59665e7683d49651f8cd98cb15c843489caca9e42481f4",
+    "bytes": 2502
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/capability_registry.md",
+    "sha256": "56959ec31d9475e6c7a84bda798e4c28aa644dec478080e0c43bb37718c4d7df",
+    "bytes": 2516
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/evidence_chains.md",
+    "sha256": "13ec371290e5346780007d416c6f9d3838a920034a05a4b7c1e5bd29d8ef1fa7",
+    "bytes": 2273
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/README.md",
+    "sha256": "d375870aa3b5b01c6ff1fbedbdfe9857f54649adab039ec838f87ca9bffa4ad0",
+    "bytes": 2621
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000001-assimilation-learning-checkpoint.md",
+    "sha256": "491797e1e06181ec97b2bfda78fc78d786d1dc87e207c8e1b9cf1cc2890f329f",
+    "bytes": 1252
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000002-enterprise-context-before-implementation-context.md",
+    "sha256": "b0c6561de49f0431f76664e80a8e22aaa4c3b2e835cf736211d4aeb3a8c7bea0",
+    "bytes": 1284
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000003-evidence-transformation-as-organizational-capability.md",
+    "sha256": "56aae562ce943dd76644a5c2387b4305103473f9cf828638d12f33734ed0c650",
+    "bytes": 1297
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000004-separate-record-truth-and-decision-classifications.md",
+    "sha256": "b85d70e3ad94de44fb371f02284171f3799767b176e6791b0c3d46b5f4d55e27",
+    "bytes": 1471
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000005-domain-language-translation-artifacts.md",
+    "sha256": "4d4034892a6dbf2c46bb67ff2347a92ccf070adc5a75082422b75025f383563f",
+    "bytes": 1257
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000006-strategic-pivots-as-knowledge-assets.md",
+    "sha256": "9c17ddec34394b39c849cca8c15203d70068a158650786d2956c8e1bd32854ec",
+    "bytes": 1193
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000007-confidence-travels-with-assimilation-claims.md",
+    "sha256": "f146f303548e5ffed25892135a2f545932d4526bab0706a701dfe7b4356e5e73",
+    "bytes": 1132
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000008-projects-teach-the-organization.md",
+    "sha256": "6ac8a85f9573d5a477339f6b1171bc9564be69478f36e8a3789d5900955df8a8",
+    "bytes": 1076
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000009-validate-measurement-instruments.md",
+    "sha256": "96da1791e3d7f27fabb89c9c938ed9bab6f0b4cb2bcf00ab75ecb279450a3340",
+    "bytes": 2221
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000010-preserve-functioning-capability-until-production-replacement.md",
+    "sha256": "9d30f0772ccb00d71726ebf98210c2f97215a62fb60d34b032e765f4383f945b",
+    "bytes": 1910
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000011-require-owner-capability-and-caller-for-new-implementation.md",
+    "sha256": "62ffecbb51fdecb043db489c7808df6f199c4736f01378d57a6ea11fc253394b",
+    "bytes": 1677
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000012-control-scope-expansion-from-nearby-defects.md",
+    "sha256": "ccef380d229ea569605c07d54bd25b5d03ae66892041c029398cf0e3f040bac5",
+    "bytes": 1560
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000013-reconcile-intended-and-observed-architecture.md",
+    "sha256": "f535f21d9eef465732252b19e5e607e9f491289dbde275becc19a7c93fdac7df",
+    "bytes": 1564
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000014-reconstruct-agent-context-from-durable-state.md",
+    "sha256": "490056445ef96184de0a66ebbca4c52264ebaffcf4f807de8114973d8c40cc69",
+    "bytes": 1744
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000015-separate-production-proof-from-delivery-states.md",
+    "sha256": "86454e6ecf7b31a1cd252fcc1c31b13b37cff250e7045d7efa938c3d1ce53fa2",
+    "bytes": 1564
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000016-separate-authorization-envelope-and-orchestration-state.md",
+    "sha256": "6e228c129f512469c7018dc03c95e8f781030594161df2b14795c98d1dbcf350",
+    "bytes": 1938
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000017-preserve-provenance-for-architecture-claims.md",
+    "sha256": "5aac444f9972dd38ac77588a40d7b15b3df53a87853fc9e71433b57e0d92993c",
+    "bytes": 1711
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000018-translation-artifacts-preserve-project-language.md",
+    "sha256": "5abdebc6b67d0bcd33a30d2134c0b3b3bda1820c793142dd7afe3d4bee40977e",
+    "bytes": 1751
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir-000019-use-archframe-as-a-falsifiable-organizational-experiment.md",
+    "sha256": "04624829d4b813decdaf909c06ff7f4af94b5457b2ecea08ed464075f14cd81e",
+    "bytes": 1763
+  },
+  {
+    "root": "EOS",
+    "path": "docs/11-capabilities/improvement-records/cir_template.md",
+    "sha256": "0f798c6e37bcb081aa6e788dca97727ef6e2f4177314febf0537d3392bb76a7f",
+    "bytes": 368
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/README.md",
+    "sha256": "4a1e761a88b0ffb586fc0ddaeaf0098b2000112706bed6fc931b4ba6e268a105",
+    "bytes": 1467
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/agentic_engineering.md",
+    "sha256": "9c5da93c6c1c605ab720de9851d42a584bd47c105db56034c1138c917b2c4bd2",
+    "bytes": 788
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/context_management.md",
+    "sha256": "dadbb5b7db97b6f4b9b9d28171844c3d54575457b3858a919afd8f2f1d17453a",
+    "bytes": 830
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/decision_principles.md",
+    "sha256": "07d0ddd148c2b4c0dee169861a2270066c3478f9d1201d152166d71f652e3c4a",
+    "bytes": 794
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/engineering_principles.md",
+    "sha256": "c28f9c08f7007ee7c70a9b93f764caa75de3e18465ddcb5406e600b0e9b846e1",
+    "bytes": 5564
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/experiment_design.md",
+    "sha256": "e4fa1ee381360c8d441e7ce8fa24ff9b8bb8344ad24be86fe409a0cf64771da2",
+    "bytes": 876
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/organizational_learning.md",
+    "sha256": "dc5f6594103800c7dc27ee0dfb7e8a3cd0d97e5c362b30ca89b139b4e929c12c",
+    "bytes": 2452
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/playbook_registry.md",
+    "sha256": "72b509086fb62125aed31218670e08b7b872c8f3bfa83b0db0b447f95bd7746c",
+    "bytes": 2044
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/repository_management.md",
+    "sha256": "b464874cbcd2c5463f7c3d2dbcced4d124030d9820be9cd46b8b98a6b199f6d0",
+    "bytes": 1073
+  },
+  {
+    "root": "EOS",
+    "path": "docs/15-playbook/research_principles.md",
+    "sha256": "f8b740ab12ec986000359bb5b594d0e2b043a88414d712a5edc18a08b120d866",
+    "bytes": 739
+  },
+  {
+    "root": "EOS",
+    "path": "CONSTITUTION.md",
+    "sha256": "24d748e7d85b0086fd247a695a810c9736d72bbd1609b08141e34025a09ad367",
+    "bytes": 1302
+  },
+  {
+    "root": "EOS",
+    "path": "docs/adr/ADR-0004-domain-language-translation-layers.md",
+    "sha256": "7b3194e57c522e59474560586c9b571afce476452538736808ba689b03ac8c8b",
+    "bytes": 1799
+  },
+  {
+    "root": "EOS",
+    "path": "docs/06-knowledge/knowledge_lifecycle.md",
+    "sha256": "f4952ca54612ccb69b91f947eeb6ce53bca8d5a93491ff3a0dbeb75ceb2d00d5",
+    "bytes": 2397
+  },
+  {
+    "root": "AlienIntent",
+    "path": "README.md",
+    "sha256": "2f34bb217ff5c72ae046d170a41ca59b6bb58bdae3228efbffa55d57b0ddf353",
+    "bytes": 2208
+  },
+  {
+    "root": "AlienIntent",
+    "path": "package.json",
+    "sha256": "703694a7fafbb18235beb1686005c806403d1bee4f521c61ce7366cca4100833",
+    "bytes": 844
+  },
+  {
+    "root": "AlienIntent",
+    "path": "LICENSE",
+    "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4",
+    "bytes": 11357
+  },
+  {
+    "root": "AlienIntent",
+    "path": ".gitignore",
+    "sha256": "fe07aeae2cfd1ff2ce4c0c5911dfbb550a3f1065e213175039abadfc3a5a15bb",
+    "bytes": 4628
+  },
+  {
+    "root": "AlienIntent",
+    "path": "AGENTS.md",
+    "sha256": "73b9a68696bfd5dd8036652239e29620773de9e5d4a84e54b701211dc7e27dc2",
+    "bytes": 1149
+  }
+]
