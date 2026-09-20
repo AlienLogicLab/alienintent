@@ -174,32 +174,28 @@ def test_decision_inbox_is_implemented_in_the_control_plane_application() -> Non
 
 
 def test_retry_applies_a_decision_persisted_before_an_interrupted_re_admission(tmp_path: Path) -> None:
+    class InterruptedDecisionProjectionStore(SQLiteOperationalStore):
+        fail_work_projection = True
+
+        def commit(self, profile, aggregate, expected_version, state):
+            if aggregate == "decision:blocked" and self.fail_work_projection:
+                self.fail_work_projection = False
+                raise RuntimeError("simulated interruption between decision writes")
+            return super().commit(profile, aggregate, expected_version, state)
+
     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
-    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    store = InterruptedDecisionProjectionStore(tmp_path / "operational.sqlite")
     worker = EscalatingWorker(artifacts, {"blocked": ["authority-block", "success"]}, _escalation())
     coordinator = FactoryCoordinator(store, MemoryWorkManagement([_item("blocked", 0, 1)]), worker, artifacts, "offline")
     coordinator.start()
     command = DecisionSubmission("morty", "SWF-21", "blocked", 0, 0, "interrupted-decision", "reconcile")
 
-    class InterruptedAdmission:
-        interrupted = True
+    with pytest.raises(RuntimeError, match="simulated interruption between decision writes"):
+        DecisionInbox(store, coordinator, "offline").submit(command)
 
-        def validate_decision(self, record):
-            coordinator.validate_decision(record)
-
-        def record_decision(self, record):
-            if self.interrupted:
-                self.interrupted = False
-                raise RuntimeError("simulated interruption after durable decision record")
-            coordinator.record_decision(record)
-
-        def resume_after_decision(self):
-            coordinator.resume_after_decision()
-
-    with pytest.raises(RuntimeError, match="simulated interruption"):
-        DecisionInbox(store, InterruptedAdmission(), "offline").submit(command)
-
-    assert DecisionInbox(store, coordinator, "offline").submit(command).submission == command
+    recovered = DecisionInbox(store, coordinator, "offline")
+    assert recovered.submit(command).submission == command
+    assert recovered.show("blocked").submission == command
     assert coordinator.state("blocked").stage is LifecycleStage.DONE
 
 

@@ -59,6 +59,7 @@ class DecisionInbox:
             open_request = next((entry for entry in self.list_open() if entry.work_item == submission.work_item), None)
             if open_request is not None and open_request.biu_version != existing.submission.biu_version:
                 return existing
+            self._commit_new(existing)
             self._admission.record_decision(existing)
             self._close_open(submission.work_item)
             self._admission.resume_after_decision()
@@ -90,11 +91,16 @@ class DecisionInbox:
             prior = _decode_record(existing)
             if prior.submission != record.submission:
                 raise DecisionConflict("idempotency key already records a different decision")
-            return
         try:
-            self._store.commit(self._profile, key, version, payload)
-            work_version, _ = self._store.read_state(self._profile, f"decision:{record.event.work_item}")
-            self._store.commit(self._profile, f"decision:{record.event.work_item}", work_version, payload)
+            if not existing:
+                self._store.commit(self._profile, key, version, payload)
+            work_key = f"decision:{record.event.work_item}"
+            work_version, work_record = self._store.read_state(self._profile, work_key)
+            if work_record:
+                if _decode_record(work_record) != record:
+                    raise DecisionConflict("work item already records a different decision")
+            else:
+                self._store.commit(self._profile, work_key, work_version, payload)
         except VersionConflict as error:
             raise DecisionConflict("concurrent decision submission") from error
 
