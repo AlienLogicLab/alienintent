@@ -54,13 +54,15 @@ class SQLiteOperationalStore(OperationalStore):
 
     @classmethod
     def preflight(cls, path: Path) -> SchemaPreflight:
-        connection = sqlite3.connect(path)
+        connection: sqlite3.Connection | None = None
         try:
+            connection = sqlite3.connect(path)
             return cls._preflight(connection)
         except sqlite3.Error as error:
             raise StoreUnavailable(str(error)) from error
         finally:
-            connection.close()
+            if connection is not None:
+                connection.close()
 
     @staticmethod
     def _preflight(connection: sqlite3.Connection) -> SchemaPreflight:
@@ -91,21 +93,21 @@ class SQLiteOperationalStore(OperationalStore):
 
     def receive(self, profile: str, event_id: str, digest: str, aggregate: str, expected_version: int, state: Mapping[str, object]) -> Receipt:
         with self._transaction() as connection:
-            prior = connection.execute("SELECT aggregate, version FROM receipts WHERE profile=? AND event_id=?", (profile, event_id)).fetchone()
+            prior = connection.execute("SELECT aggregate, version, status FROM receipts WHERE profile=? AND event_id=?", (profile, event_id)).fetchone()
             if prior:
-                return Receipt(event_id, prior["aggregate"], prior["version"])
+                return Receipt(event_id, prior["aggregate"], prior["version"], prior["status"])
             self._ensure_unblocked(connection, profile, aggregate)
             version = self._commit(connection, profile, aggregate, expected_version, state)
             connection.execute("INSERT INTO receipts VALUES (?, ?, ?, ?, ?, 'applied')", (profile, event_id, digest, aggregate, version))
-            return Receipt(event_id, aggregate, version)
+            return Receipt(event_id, aggregate, version, "applied")
 
     def record_receipt(self, profile: str, event_id: str, digest: str, aggregate: str) -> Receipt:
         with self._transaction() as connection:
-            prior = connection.execute("SELECT aggregate, version FROM receipts WHERE profile=? AND event_id=?", (profile, event_id)).fetchone()
+            prior = connection.execute("SELECT aggregate, version, status FROM receipts WHERE profile=? AND event_id=?", (profile, event_id)).fetchone()
             if prior:
-                return Receipt(event_id, prior["aggregate"], prior["version"])
+                return Receipt(event_id, prior["aggregate"], prior["version"], prior["status"])
             connection.execute("INSERT INTO receipts VALUES (?, ?, ?, ?, 0, 'received')", (profile, event_id, digest, aggregate))
-            return Receipt(event_id, aggregate, 0)
+            return Receipt(event_id, aggregate, 0, "received")
 
     def apply_receipt(self, profile: str, event_id: str, expected_version: int, state: Mapping[str, object], effect_id: str, payload: Mapping[str, object]) -> int:
         with self._transaction() as connection:
@@ -138,7 +140,7 @@ class SQLiteOperationalStore(OperationalStore):
         return version
 
     def read_state(self, profile: str, aggregate: str) -> tuple[int, dict[str, object]]:
-        with self._connect() as connection:
+        with self._read() as connection:
             row = connection.execute("SELECT version, state FROM aggregates WHERE profile=? AND identity=?", (profile, aggregate)).fetchone()
             if not row:
                 return (0, {})
@@ -172,7 +174,7 @@ class SQLiteOperationalStore(OperationalStore):
                 raise ReservationRejected("effect is not pending reconciliation")
 
     def _effects(self, profile: str, status: str) -> tuple[Effect, ...]:
-        with self._connect() as connection:
+        with self._read() as connection:
             rows = connection.execute("SELECT identity, aggregate, payload FROM effects WHERE profile=? AND status=? ORDER BY identity", (profile, status)).fetchall()
             return tuple(Effect(row["identity"], row["aggregate"], json.loads(row["payload"])) for row in rows)
 
@@ -181,6 +183,11 @@ class SQLiteOperationalStore(OperationalStore):
 
     def unresolved_effects(self, profile: str) -> tuple[Effect, ...]:
         return self._effects(profile, "unknown")
+
+    def recovery_receipts(self, profile: str) -> tuple[Receipt, ...]:
+        with self._read() as connection:
+            rows = connection.execute("SELECT event_id, aggregate, version, status FROM receipts WHERE profile=? AND status='received' ORDER BY event_id", (profile,)).fetchall()
+            return tuple(Receipt(row["event_id"], row["aggregate"], row["version"], row["status"]) for row in rows)
 
     def acquire(self, profile: str, scope: str, key: str, owner: str) -> Reservation:
         with self._transaction() as connection:
@@ -200,19 +207,52 @@ class SQLiteOperationalStore(OperationalStore):
             connection.execute("DELETE FROM reservations WHERE profile=? AND scope=? AND resource_key=?", (profile, scope, key))
 
     def recovery_reservations(self, profile: str) -> tuple[Reservation, ...]:
-        with self._connect() as connection:
+        with self._read() as connection:
             rows = connection.execute("SELECT scope, resource_key, owner, fence FROM reservations WHERE profile=? ORDER BY scope, resource_key", (profile,)).fetchall()
             return tuple(Reservation(row["scope"], row["resource_key"], row["owner"], row["fence"]) for row in rows)
 
     class _Transaction:
         def __init__(self, store: "SQLiteOperationalStore") -> None:
-            self.connection = store._connect()
+            self.store = store
+            self.connection: sqlite3.Connection | None = None
         def __enter__(self) -> sqlite3.Connection:
-            self.connection.execute("BEGIN IMMEDIATE")
-            return self.connection
+            try:
+                self.connection = self.store._connect()
+                self.connection.execute("BEGIN IMMEDIATE")
+                return self.connection
+            except sqlite3.Error as error:
+                if self.connection is not None:
+                    self.connection.close()
+                raise StoreUnavailable(str(error)) from error
         def __exit__(self, kind: object, value: object, trace: object) -> None:
-            self.connection.execute("ROLLBACK" if kind else "COMMIT")
+            assert self.connection is not None
+            try:
+                self.connection.execute("ROLLBACK" if kind else "COMMIT")
+            except sqlite3.Error as error:
+                raise StoreUnavailable(str(error)) from error
+            finally:
+                self.connection.close()
+            if isinstance(value, sqlite3.Error):
+                raise StoreUnavailable(str(value)) from value
+
+    class _Read:
+        def __init__(self, store: "SQLiteOperationalStore") -> None:
+            self.store = store
+            self.connection: sqlite3.Connection | None = None
+        def __enter__(self) -> sqlite3.Connection:
+            try:
+                self.connection = self.store._connect()
+                return self.connection
+            except sqlite3.Error as error:
+                raise StoreUnavailable(str(error)) from error
+        def __exit__(self, kind: object, value: object, trace: object) -> None:
+            assert self.connection is not None
             self.connection.close()
+            if isinstance(value, sqlite3.Error):
+                raise StoreUnavailable(str(value)) from value
 
     def _transaction(self) -> "SQLiteOperationalStore._Transaction":
         return self._Transaction(self)
+
+    def _read(self) -> "SQLiteOperationalStore._Read":
+        return self._Read(self)

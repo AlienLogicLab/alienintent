@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
+from dataclasses import dataclass
 from pathlib import Path
 import os
 import sqlite3
@@ -17,16 +19,32 @@ from alienintent.execution_coordination.ports.operational_store import (
     ReservationRejected,
     SchemaIncompatible,
     StaleFence,
+    StoreUnavailable,
     VersionConflict,
 )
 
 
+@dataclass(frozen=True)
+class StoreAdapter:
+    name: str
+    create: Callable[[Path], OperationalStore]
+
+
+ADAPTERS = (StoreAdapter("sqlite", lambda root: SQLiteOperationalStore(root / "operational.sqlite")),)
+
+
+@pytest.fixture(params=ADAPTERS, ids=lambda adapter: adapter.name)
+def store_adapter(request: pytest.FixtureRequest) -> StoreAdapter:
+    """Adapter composition for the port conformance suite."""
+    return request.param
+
+
 @pytest.fixture
-def store(tmp_path: Path) -> OperationalStore:
-    return SQLiteOperationalStore(tmp_path / "operational.sqlite")
+def store(tmp_path: Path, store_adapter: StoreAdapter) -> OperationalStore:
+    return store_adapter.create(tmp_path)
 
 
-def test_duplicate_receipt_returns_original_without_second_domain_change(store: SQLiteOperationalStore) -> None:
+def test_duplicate_receipt_returns_original_without_second_domain_change(store: OperationalStore) -> None:
     """Removing receipt uniqueness would apply one event twice."""
     first = store.receive("alpha", "event-1", "digest-a", "job-1", 0, {"state": "queued"})
     duplicate = store.receive("alpha", "event-1", "digest-b", "job-1", 0, {"state": "changed"})
@@ -35,7 +53,27 @@ def test_duplicate_receipt_returns_original_without_second_domain_change(store: 
     assert store.read_state("alpha", "job-1") == (1, {"state": "queued"})
 
 
-def test_expected_version_rejects_reordered_write(store: SQLiteOperationalStore) -> None:
+def test_redelivery_after_custody_reports_recovery_work_without_bypassing_outbox(store: OperationalStore) -> None:
+    """Completing custody without the effect intent would permanently lose external work."""
+    receipt = store.record_receipt("alpha", "event-1", "digest", "job-1")
+
+    assert store.receive("alpha", "event-1", "digest", "job-1", 0, {"state": "queued"}) == receipt
+    assert receipt.status == "received"
+    assert store.recovery_receipts("alpha") == (receipt,)
+
+    assert store.apply_receipt("alpha", "event-1", 0, {"state": "queued"}, "effect-1", {"kind": "publish"}) == 1
+    assert store.read_state("alpha", "job-1") == (1, {"state": "queued"})
+    assert store.pending_effects("alpha")[0].identity == "effect-1"
+
+
+def test_recovery_lists_custody_taken_receipts(store: OperationalStore) -> None:
+    """Omitting received receipts would leave a restart unable to finish accepted work."""
+    store.record_receipt("alpha", "event-1", "digest", "job-1")
+
+    assert store.recovery_receipts("alpha") == (store.record_receipt("alpha", "event-1", "digest", "job-1"),)
+
+
+def test_expected_version_rejects_reordered_write(store: OperationalStore) -> None:
     """Removing the version guard would roll a later state backward."""
     store.commit("alpha", "job-1", 0, {"state": "one"})
     with pytest.raises(VersionConflict):
@@ -44,7 +82,7 @@ def test_expected_version_rejects_reordered_write(store: SQLiteOperationalStore)
     assert store.read_state("alpha", "job-1") == (1, {"state": "one"})
 
 
-def test_reservations_are_profile_scoped_and_stale_fences_cannot_release(store: SQLiteOperationalStore) -> None:
+def test_reservations_are_profile_scoped_and_stale_fences_cannot_release(store: OperationalStore) -> None:
     """Dropping profile keys or fence checks could release another owner's resource."""
     alpha = store.acquire("alpha", "repository", "repo-x", "owner-a")
     beta = store.acquire("beta", "repository", "repo-x", "owner-b")
@@ -60,7 +98,7 @@ def test_reservations_are_profile_scoped_and_stale_fences_cannot_release(store: 
     assert successor.fence == 2
 
 
-def test_unresolved_effect_blocks_conflicting_mutation_until_reconciled(store: SQLiteOperationalStore) -> None:
+def test_unresolved_effect_blocks_conflicting_mutation_until_reconciled(store: OperationalStore) -> None:
     """Treating an uncertain effect as retryable would duplicate external work."""
     store.commit_with_effect("alpha", "job-1", 0, {"state": "prepared"}, "effect-1", {"kind": "publish"})
     store.mark_effect_unknown("alpha", "effect-1")
@@ -82,14 +120,58 @@ def test_unresolved_effect_also_blocks_receipt_and_new_effect_paths(store: Opera
         store.commit_with_effect("alpha", "job-1", 1, {"state": "effect-bypass"}, "effect-2", {"kind": "publish"})
 
 
-def test_restart_recovers_pending_effects_and_unknown_outcomes(store: SQLiteOperationalStore, tmp_path: Path) -> None:
+def test_restart_recovers_pending_effects_and_unknown_outcomes(store: OperationalStore, store_adapter: StoreAdapter, tmp_path: Path) -> None:
     """Keeping recovery only in memory would lose a pending or unknown effect on restart."""
     store.commit_with_effect("alpha", "job-1", 0, {"state": "prepared"}, "effect-1", {"kind": "publish"})
     store.mark_effect_unknown("alpha", "effect-1")
-    restarted = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    restarted = store_adapter.create(tmp_path)
 
     assert restarted.pending_effects("alpha") == ()
     assert restarted.unresolved_effects("alpha")[0].identity == "effect-1"
+
+
+def test_runtime_sqlite_lock_is_a_port_unavailable_outcome(tmp_path: Path) -> None:
+    """Leaking sqlite errors forces a port caller to import the adapter vendor."""
+    path = tmp_path / "operational.sqlite"
+    store = SQLiteOperationalStore(path)
+    store.commit("alpha", "job-1", 0, {"state": "one"})
+    lock = sqlite3.connect(path, timeout=0)
+    lock.execute("BEGIN EXCLUSIVE")
+    try:
+        with pytest.raises(StoreUnavailable):
+            store.commit("alpha", "job-1", 1, {"state": "two"})
+    finally:
+        lock.rollback()
+        lock.close()
+
+
+def test_preflight_connection_failure_is_a_port_unavailable_outcome(tmp_path: Path) -> None:
+    """Leaking a preflight connection error would expose SQLite beyond the adapter."""
+    directory = tmp_path / "not-a-database"
+    directory.mkdir()
+
+    with pytest.raises(StoreUnavailable):
+        SQLiteOperationalStore.preflight(directory)
+
+
+def test_process_termination_preserves_owner_for_recovery(tmp_path: Path) -> None:
+    """Dropping reservations at restart would let a second owner duplicate work."""
+    path = tmp_path / "owner.sqlite"
+    child = subprocess.run(
+        [sys.executable, "-c", "\n".join((
+            "import os, signal, sys",
+            "from pathlib import Path",
+            "from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore",
+            "store = SQLiteOperationalStore(Path(sys.argv[1]))",
+            "store.acquire('alpha', 'repository', 'repo-1', 'owner-1')",
+            "os.kill(os.getpid(), signal.SIGKILL)",
+        )), str(path)],
+        check=False,
+        env={**os.environ, "PYTHONPATH": str(Path(__file__).resolve().parents[2] / "src")},
+    )
+
+    assert child.returncode == -9
+    assert SQLiteOperationalStore(path).recovery_reservations("alpha")[0].owner == "owner-1"
 
 
 def test_process_termination_after_durable_effect_intent_recovers_without_execution(tmp_path: Path) -> None:
@@ -191,6 +273,7 @@ def test_real_sigkill_boundaries_recover_without_repeating_effect(tmp_path: Path
         "from alienintent.execution_coordination.application.effect_execution import EffectExecutor",
         "path, marker, boundary = Path(sys.argv[1]), Path(sys.argv[2]), sys.argv[3]",
         "store = SQLiteOperationalStore(path)",
+        "store.acquire('alpha', 'repository', 'repo-1', 'owner-1')",
         "if boundary == 'before-receipt': os.kill(os.getpid(), signal.SIGKILL)",
         "receipt = store.record_receipt('alpha', 'event-1', 'digest', 'job-1')",
         "if boundary == 'after-receipt': os.kill(os.getpid(), signal.SIGKILL)",
@@ -205,6 +288,7 @@ def test_real_sigkill_boundaries_recover_without_repeating_effect(tmp_path: Path
         child = subprocess.run([sys.executable, "-c", script, str(path), str(marker), boundary], check=False, env={**os.environ, "PYTHONPATH": str(source_root)})
         assert child.returncode == -9
         restarted = SQLiteOperationalStore(path)
+        assert restarted.recovery_reservations("alpha")[0].owner == "owner-1"
         def send(effect: object) -> str:
             marker.write_text(str(int(marker.read_text()) + 1) if marker.exists() else "1")
             return "confirmed"
