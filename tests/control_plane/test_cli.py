@@ -88,3 +88,29 @@ def test_cli_sanitizes_subcommand_parse_errors() -> None:
 
     assert result.returncode != 0
     assert "SENTINEL-SUBPARSER" not in result.stdout + result.stderr
+
+
+def test_cli_accepts_a_distinct_biu_version_for_decisions() -> None:
+    from alienintent.control_plane.adapters.cli import _parser
+
+    args = _parser().parse_args([
+        "decisions", "decide", "PY-08", "--choice", "authorize", "--biu-version", "0",
+        "--actor", "morty", "--authority", "operator", "--intent", "authorize",
+        "--expected-version", "1", "--reason", "approved", "--idempotency-key", "decision-1",
+    ])
+    assert args.biu_version == 0
+
+
+def test_cli_sanitizes_realistic_secret_shapes(tmp_path: Path) -> None:
+    factory = tmp_path / "broken_factory.py"
+    sentinel = "SENTINELSECRET"
+    factory.write_text(
+        "def make(): raise RuntimeError('AKIAIOSFODNN" + sentinel + " xoxb-1-" + sentinel
+        + " postgres://factory:" + sentinel + "@db /home/a/.ssh/config Authorization=Basic " + sentinel + "')"
+    )
+    result = subprocess.run(
+        [sys.executable, "-m", "alienintent", "--profile-factory", "broken_factory:make", "status", "--json"],
+        text=True, capture_output=True, env=os.environ | {"PYTHONPATH": f"src:{tmp_path}"}, check=False,
+    )
+    assert result.returncode != 0
+    assert sentinel not in result.stdout + result.stderr

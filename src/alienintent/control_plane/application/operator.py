@@ -40,18 +40,25 @@ class OperatorControlPlane:
     def _coalesce_diagnostic(self, condition: str, message: str) -> dict[str, object]:
         """Persist changed-condition evidence without emitting duplicate diagnostics."""
         identity = f"control-plane-diagnostic:{condition}"
-        version, prior = self._store.read_state(self._profile, identity)
-        now = self._clock()
-        transition = not prior or prior.get("message") != message
-        state = {
-            "condition": condition,
-            "message": message,
-            "first_seen": now if transition else prior.get("first_seen"),
-            "last_seen": now,
-            "repeat_count": 1 if transition else int(prior.get("repeat_count", 0)) + 1,
-        }
-        self._store.commit(self._profile, identity, version, state)
-        return state | {"transition": transition}
+        # Status must remain available during an outage even when another
+        # operator records the same persistent condition concurrently.
+        for _ in range(4):
+            version, prior = self._store.read_state(self._profile, identity)
+            now = self._clock()
+            transition = not prior or prior.get("message") != message
+            state = {
+                "condition": condition, "message": message,
+                "first_seen": now if transition else prior.get("first_seen"), "last_seen": now,
+                "repeat_count": 1 if transition else int(prior.get("repeat_count", 0)) + 1,
+            }
+            try:
+                self._store.commit(self._profile, identity, version, state)
+                return state | {"transition": transition}
+            except Exception as error:
+                from alienintent.execution_coordination.ports.operational_store import VersionConflict
+                if not isinstance(error, VersionConflict):
+                    raise
+        return {"condition": condition, "message": "work-management unavailable", "transition": False, "coalescing": "contended"}
 
     def explain(self, target: str) -> dict[str, object]:
         account = self._coordinator.guard_account(target)
@@ -66,7 +73,11 @@ class OperatorControlPlane:
         return self._coordinator.start()
 
     def resume(self, **fields: object) -> object:
-        return self.run(**fields)
+        self._admit(fields)
+        self._coordinator.reconcile(str(fields["target"]))
+        if not self._readiness():
+            raise OperatorDenied("readiness gate failed; autonomous work was not started")
+        return self._coordinator.start()
 
     def cancel(self, **fields: object) -> object:
         self._admit(fields)
@@ -89,7 +100,10 @@ class OperatorControlPlane:
 
     def decisions_decide(self, identity: str, **fields: object) -> dict[str, object]:
         self._admit(fields)
-        record = DecisionInbox(self._store, self._coordinator, self._profile).submit(DecisionSubmission(str(fields["actor"]), str(fields["authority"]), identity, int(fields["expected_version"]), int(fields["expected_version"]), str(fields["idempotency_key"]), str(fields["choice"])))
+        biu_version = fields.get("biu_version")
+        if not isinstance(biu_version, int) or biu_version < 0:
+            raise OperatorDenied("BIU version is required")
+        record = DecisionInbox(self._store, self._coordinator, self._profile).submit(DecisionSubmission(str(fields["actor"]), str(fields["authority"]), identity, biu_version, int(fields["expected_version"]), str(fields["idempotency_key"]), str(fields["choice"])))
         return asdict(record)
 
     def _admit(self, fields: dict[str, object]) -> None:

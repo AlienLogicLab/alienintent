@@ -12,7 +12,7 @@ from alienintent.execution_coordination.domain.escalation import DecisionRecord,
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
 from alienintent.execution_coordination.domain.release import ReleaseRequest, ReleaseSource, admit_release
 from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, evaluate_verdict
-from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected
+from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
@@ -120,6 +120,8 @@ class FactoryCoordinator:
         prior = raw.get("cancellation")
         if isinstance(prior, dict) and prior.get("idempotency_key") == idempotency_key:
             return {"status": "cancelled", "target": identity, "idempotent": True}
+        if raw.get("stage") == LifecycleStage.DONE.value or raw.get("accepted"):
+            raise ValueError("terminal or accepted work cannot be cancelled")
         if version != expected_version:
             raise VersionConflict("stale expected version")
         cancellation = {"actor": actor, "authority": authority, "reason": reason, "idempotency_key": idempotency_key}
@@ -129,15 +131,16 @@ class FactoryCoordinator:
 
     def stop_owned(self, actor: str, authority: str, expected_version: int, reason: str, idempotency_key: str) -> dict[str, object]:
         """Quiesce durable, nonterminal work instead of reporting a false service stop."""
-        candidates = []
-        for identity, _, raw in self._store.list_states(self._profile, "factory:"):
+        candidates: list[tuple[str, int]] = []
+        for identity, version, raw in self._store.list_states(self._profile, "factory:"):
             if raw.get("stage") == LifecycleStage.DONE.value or raw.get("accepted") or raw.get("outcome") in {"cancelled-by-operator", "cancelled-by-decision"}:
                 continue
-            candidates.append(identity)
-        versions = {self._store.read_state(self._profile, identity)[0] for identity in candidates}
-        if versions and versions != {expected_version}:
-            raise VersionConflict("stale expected version")
-        stopped = [self.cancel(identity.removeprefix("factory:"), actor, authority, expected_version, reason, f"{idempotency_key}:{identity}") for identity in candidates]
+            candidates.append((identity, version))
+        # A profile may legitimately contain independent in-flight aggregates
+        # at different revisions.  Apply each cancellation against the exact
+        # snapshot revision it was enumerated with; cancel() remains the guard
+        # that rejects a concurrent change rather than making stop impossible.
+        stopped = [self.cancel(identity.removeprefix("factory:"), actor, authority, version, reason, f"{idempotency_key}:{identity}") for identity, version in candidates]
         return {"stopped": stopped}
 
     def _next_item(self, items: Iterable[ReadyWorkItem]) -> ReadyWorkItem | None:

@@ -62,6 +62,43 @@ def test_stop_leaves_accepted_done_work_untouched(tmp_path: Path) -> None:
     assert state == {"stage": "DONE", "accepted": True, "outcome": "success"}
 
 
+def test_cancel_rejects_terminal_accepted_work_without_mutating_its_evidence(tmp_path: Path) -> None:
+    from alienintent.composition.offline_profile import OfflineProfile
+
+    class Work:
+        def import_ready_snapshot(self): return ()
+    class Worker:
+        def cancel(self, *_): raise AssertionError("terminal work must not reach the worker")
+
+    profile = OfflineProfile(tmp_path / "state.db", Work(), Worker(), tmp_path / "artifacts")
+    accepted = {"stage": "DONE", "accepted": True, "outcome": "success", "closure": []}
+    profile.store.commit("offline", "factory:PY-07", 0, accepted)
+
+    with pytest.raises(ValueError, match="terminal"):
+        profile.coordinator.cancel("PY-07", "morty", "operator", 1, "quiesce", "cancel-1")
+    assert profile.store.read_state("offline", "factory:PY-07")[1] == accepted
+
+
+def test_stop_quiesces_each_nonterminal_item_at_its_own_revision(tmp_path: Path) -> None:
+    from alienintent.composition.offline_profile import OfflineProfile
+
+    class Work:
+        def import_ready_snapshot(self): return ()
+    class Worker:
+        def __init__(self): self.cancelled = []
+        def cancel(self, identity, _): self.cancelled.append(identity); return "cancelled"
+
+    worker = Worker()
+    profile = OfflineProfile(tmp_path / "state.db", Work(), worker, tmp_path / "artifacts")
+    profile.store.commit("offline", "factory:PY-08", 0, {"stage": "IMPLEMENT", "accepted": False, "closure": []})
+    profile.store.commit("offline", "factory:PY-09", 0, {"stage": "IMPLEMENT", "accepted": False, "closure": []})
+    profile.store.commit("offline", "factory:PY-09", 1, {"stage": "IMPLEMENT", "accepted": False, "closure": [], "note": "newer"})
+
+    result = profile.coordinator.stop_owned("morty", "operator", 0, "quiesce", "stop-1")
+    assert {entry["target"] for entry in result["stopped"]} == {"PY-08", "PY-09"}
+    assert worker.cancelled == ["PY-08", "PY-09"]
+
+
 def test_cancelled_work_is_not_dispatched_again(tmp_path: Path) -> None:
     """Replacing the kernel cancellation outcome with an unrecognised sidecar breaks this."""
     from alienintent.composition.offline_profile import OfflineProfile
@@ -150,6 +187,25 @@ def test_reconcile_calls_the_coordinator_recovery_boundary() -> None:
         target="PY-08", actor="morty", authority="operator", intent="repair projection", expected_version=0, reason="repair", idempotency_key="r1"
     )
     assert result["recovered"] is True
+
+
+def test_resume_recovers_before_starting_the_loop() -> None:
+    from alienintent.control_plane.application.operator import OperatorControlPlane
+
+    class Store:
+        def read_state(self, *_): return 0, {"stage": "IMPLEMENT"}
+    class Coordinator:
+        def __init__(self): self.calls = []
+        def reconcile(self, target): self.calls.append(("reconcile", target)); return {"target": target}
+        def start(self): self.calls.append(("start",)); return "started"
+
+    coordinator = Coordinator()
+    result = OperatorControlPlane("p", Store(), None, coordinator, lambda: True).resume(
+        target="PY-08", actor="morty", authority="operator", intent="resume", expected_version=0,
+        reason="restart", idempotency_key="resume-1",
+    )
+    assert result == "started"
+    assert coordinator.calls == [("reconcile", "PY-08"), ("start",)]
 
 
 def test_repeated_unavailable_upstream_is_coalesced_durably(tmp_path: Path) -> None:

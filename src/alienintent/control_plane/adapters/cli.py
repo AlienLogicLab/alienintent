@@ -5,7 +5,6 @@ import argparse
 from datetime import UTC, datetime
 import importlib
 import json
-import re
 import sys
 from dataclasses import asdict, is_dataclass
 from typing import Any
@@ -14,12 +13,11 @@ from alienintent.control_plane.application.operator import OperatorControlPlane
 
 
 def _sanitize(value: object) -> str:
-    message = str(value)
-    if re.search(r"(?i)provider stderr", message):
-        return "upstream diagnostic redacted"
-    message = re.sub(r"(?i)\bBearer\s+[^\s,;]+", "Bearer [REDACTED]", message)
-    message = re.sub(r"\b(?:ghp_|github_pat_|sk-[A-Za-z0-9_-]*)[A-Za-z0-9_-]+", "[REDACTED]", message)
-    return re.sub(r"(?i)(token|secret|key)\s*[=:]\s*[^\s,;]+", r"\1=[REDACTED]", message)
+    # Errors cross a provider boundary and are therefore untrusted diagnostic
+    # material.  A stable public summary is safer than a deny-list of secret
+    # formats (which would eventually miss a provider's next token shape).
+    del value
+    return "operation failed; diagnostic redacted"
 
 
 def _argument_error(_: str) -> None:
@@ -51,7 +49,7 @@ def _parser() -> argparse.ArgumentParser:
     decisions = _sanitized(sub.add_parser("decisions")).add_subparsers(dest="decision_command", required=True)
     _sanitized(decisions.add_parser("list"))
     show = _sanitized(decisions.add_parser("show")); show.add_argument("identity")
-    decide = _sanitized(decisions.add_parser("decide")); decide.add_argument("identity"); decide.add_argument("--choice", required=True); _mutation(decide)
+    decide = _sanitized(decisions.add_parser("decide")); decide.add_argument("identity"); decide.add_argument("--choice", required=True); decide.add_argument("--biu-version", type=int, required=True); _mutation(decide)
     return parser
 
 
