@@ -17,5 +17,5 @@ jobs:
         run: python -m pip install pytest
       - name: Enforce architecture fitness
         run: python tools/fitness/check_architecture.py --root src/alienintent --check all
-      - name: Run architecture fitness regression tests
-        run: python -m pytest tests/test_architecture_fitness.py -q
+      - name: Run Python test suite
+        run: python -m pytest -q

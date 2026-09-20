@@ -10,7 +10,7 @@ from sys import stdlib_module_names
 from typing import Callable, Iterable
 
 
-CHECKS = ("layering", "vendor-signature", "port-contract", "configuration")
+CHECKS = ("layering", "vendor-signature", "port-contract", "configuration", "determinism")
 INNER_LAYERS = {"domain", "application"}
 SIGNATURE_LAYERS = {"domain", "ports"}
 STDLIB_MODULES = set(stdlib_module_names)
@@ -162,11 +162,29 @@ def check_configuration(path: Path, tree: ast.Module, root: Path) -> list[Violat
     return violations
 
 
+def check_determinism(path: Path, tree: ast.Module, root: Path) -> list[Violation]:
+    """Keep direct clock, randomness, and identifier generation outside pure layers."""
+    if layer_for(path, root) not in INNER_LAYERS:
+        return []
+    forbidden = {"datetime", "time", "random", "secrets", "uuid"}
+    violations = []
+    for node in ast.walk(tree):
+        imported: set[str] = set()
+        if isinstance(node, ast.Import):
+            imported = {alias.name.split(".")[0] for alias in node.names}
+        elif isinstance(node, ast.ImportFrom) and node.module:
+            imported = {node.module.split(".")[0]}
+        if imported & forbidden:
+            violations.append(Violation(path, node.lineno, "direct nondeterministic facility import"))
+    return violations
+
+
 CHECK_FUNCTIONS: dict[str, Callable[[Path, ast.Module, Path], list[Violation]]] = {
     "layering": check_layering,
     "vendor-signature": check_vendor_signature,
     "port-contract": check_port_contract,
     "configuration": check_configuration,
+    "determinism": check_determinism,
 }
 
 
