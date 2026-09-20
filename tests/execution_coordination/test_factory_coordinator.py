@@ -416,3 +416,31 @@ def test_offline_profile_can_disable_automatic_release(tmp_path: Path) -> None:
     assert worker.dispatched == []
     assert profile.coordinator.release_and_start("held").stop_reason.value == "eligible-backlog-exhausted"
     assert worker.dispatched == ["held"]
+
+
+def test_profile_policy_alone_withholds_automatic_release(tmp_path: Path) -> None:
+    """AC 6 / FD-03: the profile switch, not the imported view, gates release."""
+    from alienintent.composition.offline_profile import OfflineProfile
+
+    _, custody, _, _ = _api()
+    item = _item("auto", 1, 1)
+    for name, automatic_release, expected_dispatched in (
+        ("off", False, []),
+        ("on", True, ["auto"]),
+    ):
+        root = tmp_path / name
+        root.mkdir()
+        artifacts = custody.LocalArtifactStore(root / "producer", root / "verifier")
+        worker = ScriptedWorker(artifacts, {"auto": ["success"]})
+        profile = OfflineProfile(
+            root / "run.sqlite",
+            MemoryWorkManagement([item]),
+            worker,
+            root / "producer",
+            root / "verifier",
+            automatic_release=automatic_release,
+        )
+
+        profile.coordinator.start()
+
+        assert worker.dispatched == expected_dispatched
