@@ -148,15 +148,16 @@ class FactoryCoordinator:
             if outcome is None:
                 return False
             try:
-                self._store.confirm_effect(self._profile, reservation.owner, f"recovered:{outcome.kind}")
+                self._store.confirm_effect(self._profile, reservation.owner, f"outcome:{outcome.kind}")
             except ReservationRejected:
                 return False
             version, raw = self._store.read_state(self._profile, self._aggregate(identity))
             current = self._decode(raw) if raw else ExecutionState.for_contract(item.contract)
             current = replace(current, contract=item.contract)
-            if outcome.kind != "success" or outcome.candidate is None:
-                return False
-            completed = self._complete_success(item, current, outcome.candidate)
+            if outcome.kind == "success" and outcome.candidate is not None:
+                completed = self._complete_success(item, current, outcome.candidate)
+            else:
+                completed = current
             if not self._record_result(item, completed, reservation.owner, outcome.kind):
                 return False
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)

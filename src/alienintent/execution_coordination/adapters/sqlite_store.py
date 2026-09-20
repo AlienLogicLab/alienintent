@@ -169,6 +169,9 @@ class SQLiteOperationalStore(OperationalStore):
 
     def _set_effect(self, profile: str, effect_id: str, status: str, receipt: str | None) -> None:
         with self._transaction() as connection:
+            current = connection.execute("SELECT status, receipt FROM effects WHERE profile=? AND identity=?", (profile, effect_id)).fetchone()
+            if current and current["status"] == status and current["receipt"] == receipt:
+                return
             changed = connection.execute("UPDATE effects SET status=?, receipt=? WHERE profile=? AND identity=? AND status IN ('pending', 'unknown')", (status, receipt, profile, effect_id)).rowcount
             if changed != 1:
                 raise ReservationRejected("effect is not pending reconciliation")

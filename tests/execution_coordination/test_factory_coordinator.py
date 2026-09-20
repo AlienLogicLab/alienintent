@@ -211,6 +211,7 @@ def test_restart_reconciles_an_uncertain_launch_before_releasing_its_reservation
     store.acquire("offline", "repository", "repo", "launch:crashed:0")
     store.commit_with_effect("offline", "factory:crashed", 0, {"stage": "IMPLEMENT", "version": 0, "accepted": False, "closure": [], "candidate": None}, "launch:crashed:0", {"correlation": "launch:crashed:0", "work": "crashed"})
     store.claim_effect("offline", "launch:crashed:0")
+    store.confirm_effect("offline", "launch:crashed:0", "outcome:success")
     worker.observed["launch:crashed:0"] = WorkerOutcome.success(candidate)
 
     summary = FactoryCoordinator(store, work, worker, artifacts, "offline").start()
