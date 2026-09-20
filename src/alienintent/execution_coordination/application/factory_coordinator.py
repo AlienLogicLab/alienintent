@@ -95,9 +95,15 @@ class FactoryCoordinator:
     def _run(self, item: ReadyWorkItem) -> StopReason | None:
         source = ReleaseSource.AUTOMATIC_POLICY if self._is_automatic(item) else ReleaseSource.EXPLICIT_HUMAN
         try:
-            admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset({"python", "filesystem", "process-control"}), {dimension: 1 for dimension in item.contract.budget_policy.required_dimensions}, "offline-profile", source))
+            capabilities = {"python", "filesystem", "process-control"}
+            if self._has_authorizing_decision(item.identity):
+                capabilities.update(item.contract.required_capabilities)
+            admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset(capabilities), {dimension: 1 for dimension in item.contract.budget_policy.required_dimensions}, "offline-profile", source))
         except ValueError:
-            self._record_result(item, ExecutionState.for_contract(item.contract), "release", "authority-block")
+            state = ExecutionState.for_contract(item.contract)
+            self._record_result(item, state, "release", "authority-block")
+            self._register_escalation(self._authority_request(item, state.version, "Release admission requires authority not present in this profile."))
+            self._block_dependents(item, self._work.import_ready_snapshot())
             return StopReason.BLOCKED
         self._work.propose_release(item)
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
@@ -120,6 +126,9 @@ class FactoryCoordinator:
                 self._register_escalation(outcome.escalation)
                 self._block_dependents(item, self._work.import_ready_snapshot())
             self._work.project_execution_state(item.identity, completed.stage, completed.version)
+            if any(effect.aggregate == self._aggregate(item.identity) or effect.payload.get("work") == item.identity for effect in self._store.unresolved_effects(self._profile)):
+                self._register_escalation(self._authority_request(item, completed.version, "The external effect outcome is unknown and requires reconciliation authority."))
+                self._block_dependents(item, self._work.import_ready_snapshot())
             return None
         finally:
             if read_back and not self._store.unresolved_effects(self._profile):
@@ -214,6 +223,20 @@ class FactoryCoordinator:
 
     def _is_automatic(self, item: ReadyWorkItem) -> bool:
         return self._automatic_release and item.automatic_release
+
+    def _has_authorizing_decision(self, identity: str) -> bool:
+        _, raw = self._store.read_state(self._profile, self._aggregate(identity))
+        return raw.get("decision_choice") == "authorize"
+
+    def _authority_request(self, item: ReadyWorkItem, version: int, reason: str) -> HumanDecisionRequired:
+        return HumanDecisionRequired(
+            profile=self._profile, project=item.repository, work_item=item.identity, biu_version=version,
+            decision="Authorize the blocked execution to continue through normal admission guards.", reason=reason,
+            options=("authorize", "defer"), tradeoffs=("authorize permits the bounded work to resume", "defer retains the scoped authority block"),
+            recommendation="defer", affected_requirements=tuple(item.contract.satisfied_requirement_ids) or ("authority-required",),
+            affected_architecture=("FD-05",), cost_of_waiting="The affected work and transitive dependents remain blocked.",
+            authorizations=("authorize permits one normal guarded re-admission", "defer authorizes continued blocking"),
+        )
 
     @staticmethod
     def _aggregate(identity: str) -> str: return f"factory:{identity}"

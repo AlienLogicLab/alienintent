@@ -2,10 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
-
 from alienintent.control_plane.ports.decision_notifier import DeliveryHealth, DecisionNotifier
 from alienintent.execution_coordination.domain.escalation import HumanDecisionRequired
+from alienintent.execution_coordination.ports.work_management import WorkManagement
 
 
 class NoOpDecisionNotifier(DecisionNotifier):
@@ -16,12 +15,12 @@ class NoOpDecisionNotifier(DecisionNotifier):
 class WorkManagementDecisionNotifier(DecisionNotifier):
     """Adapter around the PY-05 attributable-comment projection callback."""
 
-    def __init__(self, comment: Callable[[HumanDecisionRequired], str]) -> None:
-        self._comment = comment
+    def __init__(self, work: WorkManagement) -> None:
+        self._work = work
 
     def notify(self, escalation: HumanDecisionRequired) -> DeliveryHealth:
         try:
-            receipt = self._comment(escalation)
+            receipt = self._work.project_decision_request(escalation)
         except Exception:
             return DeliveryHealth(False, "decision notification projection unavailable")
-        return DeliveryHealth(bool(receipt), "confirmed" if receipt else "decision notification projection unconfirmed")
+        return DeliveryHealth(receipt.confirmed, receipt.detail)
