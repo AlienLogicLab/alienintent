@@ -39,6 +39,11 @@ match the configured repository. Both ordinary and bare canonical stores are sup
 a linked worker checkout cannot serve as the store. Permanent role worktree paths
 are rejected. Keep log/evidence directories outside disposable worktrees.
 
+The **PY-10 live-proof sandbox** is a separate installation with its own repository, Project,
+profile, tunnel, port and (pending) App identity. Its provisioned resource identities are recorded in
+[operations/py10-sandbox.md](operations/py10-sandbox.md). Nothing in this installation may reference it,
+and it may not reference anything here.
+
 ## Start and reconcile
 
 Run `node bin/alienintent.mjs --config <private-profile.json>` within the installation's
@@ -203,6 +208,38 @@ and every attempt records `delivered` with its channel or its error.
 
 Tests: `python3 -m pytest ~/.local/share/alienintent-bootstrap/ -q` — attention queue, notification channel,
 liveness suppression and release admission.
+
+### Attention waiter — the wake-up bridge (temporary Wave 1 bootstrap)
+
+Externalizing monitoring to systemd kept detection and lost the **callback**. Before PY-06, watchers
+ran as Claude-tracked background tasks, and a tracked task's *exit* makes the harness deliver a
+completion event into the session — that event was the wake-up. A systemd process is invisible to the
+harness, so durable attention items accumulated with nobody woken: PY-06's DONE sat 45 minutes, PY-07's
+`FOUNDER_EXCEPTION` was never seen, PY-08 never left TASKS for 1h45m.
+
+> While the Wave 1 bootstrap coordinator episode is resident, a session-bound attention waiter bridges
+> durable attention events into the Claude harness. Persistent monitoring remains externalized and
+> independent of coordinator lifetime.
+
+The bridge is one process, owned by the coordinator session, launched as a **tracked** background task
+(never with `&`, which detaches it and restores the original defect):
+
+```
+python3 ~/.local/share/alienintent-bootstrap/attention_wait.py
+```
+
+It waits on the attention queue with `inotify`, and when an unhandled item appears it prints the
+outstanding items and **exits** — the exit is the point. It decides nothing, mutates nothing, and
+launches nothing. Exit 0 = something needs judgment; exit 1 = the window closed quietly.
+
+Duplicate protection is by durable item identity: on arming it snapshots the ids already outstanding
+and never wakes on those again, so re-arming while items remain open cannot loop. Acknowledged items
+never wake anything. Several unhandled items produce one wake-up listing all of them. **Re-arm after
+acknowledging**, and the bridge stays live.
+
+The observer and liveness services are untouched by this and remain authoritative for detection. The
+bridge expires with the Wave 1 bootstrap, or when canonical coordinator activation (SF-REQ-053)
+replaces it.
 
 ### Release admission gate
 

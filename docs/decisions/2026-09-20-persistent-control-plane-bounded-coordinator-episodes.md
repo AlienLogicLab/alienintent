@@ -128,6 +128,36 @@ The attention queue is the activation boundary either way: whatever eventually c
 notification, a Founder, or a policy-controlled episode launcher — reads durable observation identity,
 never conversational state.
 
+### The wake-up bridge, restored (2026-09-21)
+
+The activation gap above had a concrete, recoverable cause. Before PY-06 the coordinator *was* woken —
+not by design, but as a side effect: watchers ran as **Claude-tracked background tasks**, and the
+harness delivers a completion event into the session when such a task exits. `watch_biu.sh` polled
+durable state and called `exit 0` the moment it saw a reject, an authority block or a terminal state;
+that exit was the wake-up. The same mechanism is visible in ordinary use — every background
+Agent-Ready run in this episode announced itself the same way. The known failure mode confirms the
+mechanism from the other side: a watcher launched with `&` inside a foreground command detached,
+became untracked, and notifications stopped.
+
+Moving monitoring to `systemd --user` was correct and is not reversed — but a systemd process is
+invisible to the harness, so **detection survived and the callback died**. The cost is measured:
+PY-06's DONE waited 45 minutes for a manual prompt, PY-07's `FOUNDER_EXCEPTION` was never seen at all,
+and PY-08 sat in TASKS for 1h45m after its predecessor finished.
+
+> While the Wave 1 bootstrap coordinator episode is resident, a session-bound attention waiter bridges
+> durable attention events into the Claude harness. Persistent monitoring remains externalized and
+> independent of coordinator lifetime.
+
+The bridge is deliberately the smallest thing that restores the callback: one session-owned process
+that waits on the durable queue and exits when something needs judgment. It takes no decision, mutates
+no state and launches nothing — the exit *is* the signal. Detection stays in the systemd services,
+which were not modified. Duplicate wake-ups are prevented by durable item identity rather than
+timestamps, and acknowledgement plus re-arm closes the loop.
+
+This does **not** wire unattended `claude -p` activation, which remains available and unauthorized for
+the reasons above. It restores waking an episode that is already resident — which is exactly what the
+Wave 1 tenure decision makes sufficient.
+
 ### Relationship to the Decision Inbox
 
 These are two different queues and must not be merged. The **Decision Inbox** (SF-REQ-035, built by
