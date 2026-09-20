@@ -56,7 +56,8 @@ class DecisionInbox:
         if existing is not None:
             if existing.submission != submission:
                 raise DecisionConflict("idempotency key already records a different decision")
-            if any(entry.work_item == submission.work_item for entry in self.list_open()):
+            open_request = next((entry for entry in self.list_open() if entry.work_item == submission.work_item), None)
+            if open_request is not None and open_request.biu_version != existing.submission.biu_version:
                 return existing
             self._admission.record_decision(existing)
             self._close_open(submission.work_item)

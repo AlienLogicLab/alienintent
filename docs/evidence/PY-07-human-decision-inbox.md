@@ -8,6 +8,7 @@ It contains no credentials, live Issue mutations, or provider secrets.
 - Findings repaired: admission-path and unresolved-effect escalation registration
   and recovery (including the distinct authority-block outcome, reservation
   release, scoped dependent blocking, and normal guarded re-admission);
+  interrupted decision application recovery;
   PY-05 Work Management decision projection wiring; no-op notifier coverage;
   subprocess restart proof; retained PY-07 evidence.
 - Previously satisfied proof retained: worker-raised escalation, scoped dependent
@@ -23,6 +24,8 @@ It contains no credentials, live Issue mutations, or provider secrets.
   resumes through normal guards; an unknown effect produces an authority block,
   releases its reservation, blocks only its dependency closure, and is decidable
   through the same normal guards;
+  a retry applies a decision that was durably recorded before an interrupted
+  re-admission;
   the GitHub Projects adapter delivers a recorded decision-comment fixture; the
   offline notifier leaves the inbox usable; a fresh subprocess submits a stored
   decision and reaches DONE.
