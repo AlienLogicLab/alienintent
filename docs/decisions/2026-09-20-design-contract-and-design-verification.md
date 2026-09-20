@@ -1,8 +1,11 @@
 # Design Contract and Design Verification — SWF-25
 
-Date: 2026-09-20. Status: **Founder decision — binding workflow/architecture semantics**, with one open scope decision recorded below.
+Date: 2026-09-20. Status: **Founder decision — binding workflow/architecture semantics**.
 Source: [PROP-2026-0002](../proposals/PROP-2026-0002-design-contract-and-design-verification.md), submitted by the Founder 2026-09-20 (`authority_level: founder`, `proposal_type: workflow_architecture`).
 Canonical requirement: **SF-REQ-051**.
+
+**Founder assignment (2026-09-20):** Priority **P0**; Wave **2**. This
+assignment does not create a BIU or authorize implementation.
 
 ## Principle
 
@@ -57,10 +60,19 @@ Agent-Ready should eventually confirm not only BIU completeness but that require
 - **SF-REQ-048 minimum necessary work** and **SF-REQ-049 convergent repair** — bounded freedom and preserved proof.
 - Plan §ZhangHanDong/agent-spec borrowings — "contract linting before implementation" and fixed technical decisions are the same lineage.
 
-## Open decisions — not decided here
+## Founder clarifications recorded 2026-09-20
 
-1. **Effective scope.** Whether the Design Contract / Design Verification gate applies to the remaining Wave 1 BIUs (PY-05 through PY-10, already authored and Agent-Ready assessed), or only from Wave 2 onward. Applying it to Wave 1 would require design contracts for six existing BIUs before release and would slow the current sequence; deferring it leaves Wave 1 on its approved plan. **Founder input required.** Until decided, Wave 1 proceeds unchanged under its approved contracts.
-2. **Visible lifecycle states.** Whether DESIGN and DESIGN VERIFY eventually become visible Project lifecycle states rather than sub-stages. Explicitly deferred by the proposal; not blocking.
+1. **Effective scope.** Design Contract and Design Verification are mandatory
+   for newly planned work after Wave 1. Existing Wave 1 BIUs PY-05 through
+   PY-10 are not retrofitted; they proceed under their already-approved
+   contracts.
+2. **Lifecycle visibility.** DESIGN and DESIGN VERIFICATION remain semantic
+   sub-stages/gates inside SPECIFY/PLAN. They are not visible Project lifecycle
+   states unless later evidence justifies a change through the applicable
+   authority path.
+
+These are clarifications of this existing SWF-25 authority, not new Product
+Requirements. No Project Status or lifecycle vocabulary changes by this record.
 
 ## Scope
 

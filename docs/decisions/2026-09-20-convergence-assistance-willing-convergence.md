@@ -5,6 +5,10 @@
 **Canonical path:** this file. Renamed from `alienintent-convergence-assistance-willing-convergence.md` under documentation normalization; content unchanged.
 **Purpose:** Define and test a factory capability that helps agents finish bounded work willingly and efficiently rather than relying primarily on repeated rejection or increasingly coercive prompting.
 
+**Founder assignment (2026-09-20):** Canonical requirement **SF-REQ-052** has
+Priority **P1** and Wave **3**. This assignment does not create a BIU or
+authorize implementation.
+
 ## 1. Core principle
 
 AlienIntent should optimize for:

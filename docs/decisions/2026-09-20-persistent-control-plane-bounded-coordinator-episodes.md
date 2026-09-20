@@ -4,6 +4,9 @@ Date: 2026-09-20. Status: **Founder decision — binding workflow/architecture s
 Source: [PROP-2026-0003](../proposals/PROP-2026-0003-persistent-control-plane-bounded-coordinator-episodes.md), submitted by the Founder 2026-09-20 (`authority_level: founder`, `proposal_type: workflow_architecture`).
 Canonical requirement: **SF-REQ-053**.
 
+**Founder assignment (2026-09-20):** Priority **P0**; Wave **2**. This
+assignment does not create a BIU or authorize implementation.
+
 ## Principle
 
 > **Durable project cognition + durable authority + durable evidence + replaceable model reasoning.**
