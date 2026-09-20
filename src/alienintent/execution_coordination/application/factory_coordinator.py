@@ -22,6 +22,7 @@ class StopReason(StrEnum):
     CAPACITY_UNAVAILABLE = "capacity-unavailable"
     AWAITING_RELEASE = "awaiting-explicit-release"
     AUTHORITY_BLOCKED = "authority-blocked"
+    TERMINAL_OUTCOMES_BLOCKED = "terminal-outcomes-blocked"
 
 
 @dataclass(frozen=True)
@@ -171,6 +172,8 @@ class FactoryCoordinator:
             return StopReason.AWAITING_RELEASE
         if any(self._outcome(item.identity) == "authority-block" for item in pending):
             return StopReason.AUTHORITY_BLOCKED
+        if any(self._outcome(item.identity) in {"failure", "timeout"} for item in pending):
+            return StopReason.TERMINAL_OUTCOMES_BLOCKED
         return StopReason.BLOCKED
 
     def _outcome(self, identity: str) -> str | None:

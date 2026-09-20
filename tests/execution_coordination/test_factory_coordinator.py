@@ -101,7 +101,7 @@ def test_loop_drains_priority_backlog_and_skips_failure_and_timeout(tmp_path: Pa
     coordinator, worker, _ = _coordinator(tmp_path, [_item("bad", 0, 1), _item("slow", 1, 2), _item("good", 2, 3)], {"bad": ["failure"], "slow": ["timeout"], "good": ["success"]})
     summary = coordinator.start()
     assert worker.dispatched == ["bad", "slow", "good"]
-    assert summary.stop_reason.value == "dependencies-or-authority-blocked"
+    assert summary.stop_reason.value == "terminal-outcomes-blocked"
     assert coordinator.state("good").stage is LifecycleStage.DONE
     assert coordinator.state("bad").stage is LifecycleStage.IMPLEMENT
     assert coordinator.state("bad").outcome == "failure"
@@ -185,3 +185,43 @@ def test_recovery_accepts_an_effect_already_confirmed_before_producer_crash(tmp_
     summary = coordinator_module.FactoryCoordinator(store, MemoryWorkManagement([item]), worker, artifacts, "offline").start()
     assert summary.stop_reason.value == "eligible-backlog-exhausted"
     assert store.recovery_reservations("offline") == ()
+
+
+def test_all_scripted_outcomes_drain_independent_work_and_remain_distinct(tmp_path: Path) -> None:
+    """Scope item 5: every declared fixture outcome is executable together."""
+    items = [_item("failed", 0, 1), _item("timed", 1, 2), _item("reworked", 2, 3), _item("blocked", 3, 4), _item("good", 4, 5)]
+    coordinator, worker, _ = _coordinator(tmp_path, items, {"failed": ["failure"], "timed": ["timeout"], "reworked": ["rework", "success"], "blocked": ["authority-block"], "good": ["success"]})
+    summary = coordinator.start()
+    assert worker.dispatched == ["failed", "timed", "reworked", "reworked", "blocked", "good"]
+    assert coordinator.state("failed").outcome == "failure"
+    assert coordinator.state("timed").outcome == "timeout"
+    assert coordinator.state("blocked").outcome == "authority-block"
+    assert coordinator.state("reworked").stage is LifecycleStage.DONE
+    assert coordinator.state("good").stage is LifecycleStage.DONE
+    assert summary.stop_reason.value == "authority-blocked"
+    (tmp_path / "terminal").mkdir()
+    terminal, _, _ = _coordinator(tmp_path / "terminal", [_item("failed-only", 0, 1), _item("timed-only", 1, 2)], {"failed-only": ["failure"], "timed-only": ["timeout"]})
+    assert terminal.start().stop_reason.value == "terminal-outcomes-blocked"
+
+
+def test_explicit_release_runs_the_same_boundary_as_automatic_release(tmp_path: Path) -> None:
+    (tmp_path / "automatic").mkdir()
+    (tmp_path / "explicit").mkdir()
+    automatic, worker, _ = _coordinator(tmp_path / "automatic", [_item("auto", 1, 1)], {"auto": ["success"]})
+    assert automatic.start().stop_reason.value == "eligible-backlog-exhausted"
+    held = _item("held", 1, 1, automatic=False)
+    explicit, explicit_worker, _ = _coordinator(tmp_path / "explicit", [held], {"held": ["success"]})
+    assert explicit.start().stop_reason.value == "awaiting-explicit-release"
+    assert explicit.release_and_start("held").stop_reason.value == "eligible-backlog-exhausted"
+    assert worker.dispatched == ["auto"]
+    assert explicit_worker.dispatched == ["held"]
+
+
+def test_content_addressed_path_rejects_mutation_under_the_same_digest(tmp_path: Path) -> None:
+    _, custody, _, _ = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    candidate = artifacts.write(b"original")
+    Path(candidate.locator).chmod(0o644)
+    Path(candidate.locator).write_bytes(b"mutated")
+    with pytest.raises(ValueError, match="immutable"):
+        artifacts.write(b"original")
