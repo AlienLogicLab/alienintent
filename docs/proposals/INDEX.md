@@ -25,3 +25,16 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 | Source decision | Product Requirement | Issue |
 |---|---|---|
 | [Convergence Assistance / Willing Convergence](../decisions/2026-09-20-convergence-assistance-willing-convergence.md) | SF-REQ-052 | [#63](https://github.com/AlienLogicLab/alienintent/issues/63) |
+
+## Intake verification notes (2026-09-20)
+
+- **PROP-2026-0004 and PROP-2026-0005** carry `submitted_by: durability-gap audit` and `authority_level: unresolved`. Their canonical requirements exist in CAPTURE as **candidate** requirements; ratification of the requirements themselves is open, separately from Priority/Wave assignment.
+- **SF-REQ-054 overlaps SF-REQ-030.** The commit that added SF-REQ-054 also amended SF-REQ-030 to carry substantially the same reconciliation obligation; the material difference is SF-REQ-054's additional discriminating negative-control requirement. Intake recorded the overlap on both Issues and did not choose between them.
+- Issue #45 was synced to the Founder-amended SF-REQ-030 text.
+
+## Open Founder decisions
+
+- **Priority and wave** for SF-REQ-048, SF-REQ-049, SF-REQ-054 and SF-REQ-055. SF-REQ-050–053 were assigned 2026-09-20.
+- **SF-REQ-054 versus SF-REQ-030 boundary** — fold together, or keep both with an explicit stated boundary.
+- **Ratification** of SF-REQ-054 and SF-REQ-055, whose proposals carry `authority_level: unresolved`.
+
