@@ -49,3 +49,17 @@ authoritative and is not replaced by this rule. Runtime-managed `b-disp/<uuid>`
 resources and their ownership metadata continue to follow the separate cleanup
 and retention rules in [operations](../operations.md#worktrees-and-recovery); do
 not treat them as manually owned temporary task branches.
+
+### PARKED — `origin/feat/rai-foundations`
+
+- **Owner:** `netmarine` (commit author; no separate task owner is recorded).
+- **Unique content:** commits `c8a676b` through `3c0b5f6`; RAI iteration/evidence
+  primitives, tests, review records, and the RAI development-discipline document.
+- **Reason:** this unique implementation is not in `main`; the branch's own design
+  defers product automation, and current `main` says RAI remains unwired.
+- **Missing authority/dependency:** no canonical Product Requirement, BIU, or
+  work packet authorizing this source change was found in the repository. GitHub
+  PR status could not be verified in this audit.
+- **Next action:** the owner must identify or obtain the canonical authority and
+  confirm any remote review state before deciding to land or discard. Do not
+  create a requirement or BIU as part of this parked record.
