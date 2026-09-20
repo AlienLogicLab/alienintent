@@ -102,6 +102,12 @@ current remote status. Worker/App identities cannot act as operators.
 
 ## Worktrees and recovery
 
+Repository-changing tasks outside the BIU lifecycle also require explicit
+closure. Follow [Repository change closure](operations/forward-momentum.md#repository-change-closure):
+LANDED, DISCARDED, or PARKED with a durable owner/content/blocker/next-action
+record. This task-level rule does not replace the runtime-managed invocation
+resource retention and cleanup rules below.
+
 Each invocation pins the configured baseline commit and allocates a fresh UUID
 worktree and branch. Git identity is isolated through per-worktree configuration.
 Preflight verifies the assigned checkout, invocation, canonical store, origin,

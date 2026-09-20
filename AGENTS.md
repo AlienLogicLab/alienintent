@@ -27,6 +27,17 @@ publication in the release sense and does not authorize merge, deployment, live
 operation, or any change to a protected branch. Those remain separately
 authorized.
 
+Every repository-changing task also has a closure obligation, including work
+outside the BIU lifecycle. Before declaring such a task complete, validate and
+disposition its temporary branch/worktree as LANDED, DISCARDED, or PARKED with a
+durable blocker record. The actor who creates it owns closure; “commit created,
+not pushed” is not a stopping point. For bounded non-BIU docs/evidence/research/
+maintenance tasks, continue through authorized disposition and remove temporary
+worktrees/branches after landing or discard. Create isolation only when needed,
+and reconcile temporary branches/worktrees from the same actor before starting
+another isolated non-BIU task. Existing BIU closure policy and runtime-managed
+`b-disp/<uuid>` ownership/retention rules remain authoritative.
+
 Prefix shell commands with `rtk`; use `rtk proxy` for unfiltered output.
 RAI remains unwired. Keep installation secrets and operational state outside the
 repository. Preserve compatibility markers and persisted resource identities.
