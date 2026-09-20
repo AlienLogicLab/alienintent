@@ -20,7 +20,7 @@ No secret value appears here or anywhere in this repository.
 | Tunnel config / unit | `~/.config/alienintent-sandbox/tunnel.yml` · `alienintent-sandbox-tunnel.service` (`systemd --user`) |
 | Local ingress port | **8789** |
 | Webhook secret | reference `py10-sandbox-webhook` → `~/.config/alienintent-sandbox/secrets/webhook` (mode 600, 64 hex chars, never committed) |
-| GitHub App | **PENDING** — see below |
+| GitHub App | `alienintent-py-10-sandbox` — **App id 5014629**, **installation id 163346526**, installed on the sandbox repository only; private key at `~/.config/alienintent-sandbox/secrets/…private-key.pem` (mode 600) |
 
 The profile maps one-to-one onto `alienintent.installation.domain.github_profile.GitHubProfile`;
 constructing that type from the recorded values succeeds, and the secret reference resolves through
@@ -41,66 +41,88 @@ or FactoryChecks application/runtime infrastructure.
 Everything above is separate: own tunnel id, own credentials file, own config, own hostname, own
 port, own user-level unit, own webhook secret, and (once created) its own App identity.
 
-## Remaining prerequisite — the GitHub App
+## GitHub App — provisioned 2026-09-21
 
-**A GitHub App cannot be created through the API.** Creation requires either the web UI or the App
-Manifest flow, which needs a browser redirect to obtain the conversion `code`. This is the one step
-that needs the Founder.
+Created and installed by the Founder (App creation has no API path; it requires the browser).
+Identities were then discovered from `GET /orgs/AlienLogicLab/installations` and verified against the
+private key, not taken on trust:
 
-Create it at **Organization settings → Developer settings → GitHub Apps → New GitHub App**, with
-exactly:
-
-| Field | Value |
+| | |
 |---|---|
-| Name | `AlienIntent PY-10 Sandbox` |
-| Homepage | `https://github.com/AlienLogicLab/alienintent` |
-| Webhook URL | `https://alienintent-py10-sandbox.factorychecks.com/` |
-| Webhook secret | the contents of `~/.config/alienintent-sandbox/secrets/webhook` |
-| Repository permissions | **Issues: Read-only**, **Metadata: Read-only** |
-| Organization permissions | **Projects: Read and write** |
-| Subscribe to events | **Issue comment**, **Project v2 item** |
-| Where can this be installed | Only on this account |
+| App | `alienintent-py-10-sandbox`, id **5014629** |
+| Installation | **163346526**, account `AlienLogicLab`, `repository_selection: selected` |
+| Repositories | exactly `AlienLogicLab/alienintent-sandbox` |
+| Permissions | `issues: read`, `metadata: read`, `organization_projects: write` — **exactly** the set the App preflight enforces |
+| Events | `issue_comment`, `projects_v2_item` — exactly |
+| Private key | `~/.config/alienintent-sandbox/secrets/alienintent-py-10-sandbox.2026-09-20.private-key.pem`, mode 600, outside every working tree |
 
-The permission set is **exact, not a minimum**: the App preflight compares the installed permissions
-by key count as well as value (`src/github/app-client.mjs`), so an extra grant fails closed just as a
-missing one does.
+The production App (4990774 / installation 162769625) is untouched and appears nowhere in the
+sandbox profile.
 
-Then **install it on `AlienLogicLab/alienintent-sandbox` only**, generate a private key, and store the
-`.pem` outside every working tree (`~/.config/alienintent-sandbox/secrets/` alongside the webhook
-secret, mode 600). Finally record `applicationId`, `installationId` and `privateKeyPath` in
-`profile.json`, whose `githubApp` block is already stubbed with `status: PENDING`.
+## Residual risk — organization-scoped Projects permission
 
-A ready-made manifest with these exact values is at `~/.config/alienintent-sandbox/app-manifest.json`
-if the manifest flow is preferred — it guarantees the permission set rather than relying on the form
-being filled in correctly.
+`organization_projects` is an **organization** permission. GitHub provides no way to scope a Projects
+grant to a single project, so the sandbox installation token **can reach every org Project, including
+production Project #1**. This was verified read-only rather than assumed: the sandbox token returns
+`PVT_kwDOEcrpC84Bj5i_` ("AlienIntent") when asked.
+
+Repository isolation is genuine — the installation grants exactly the sandbox repository, and no
+production repository access exists beyond what any reader of a public repository has. Project
+isolation, however, **cannot be enforced by the token**. The compensating controls are:
+
+1. the sandbox profile names `PVT_kwDOEcrpC84BkIEX` (Project 2) and nothing else;
+2. PY-10 acceptance criterion 16 already requires evidence that the live AlienIntent Project and the
+   Node bootstrap were demonstrably unaffected — no Python-originated event, projection or dispatch.
+
+If that is judged insufficient, the only stronger isolation GitHub offers is a **separate
+organization** for the sandbox, which would mean a new org, App and Project. That is a Founder
+decision and is not taken here.
 
 ## Validation performed
 
+Full preflight: `python3 ~/.local/share/alienintent-bootstrap/py10_preflight.py` — **17/17 checks
+pass**, exit 0. It reads and changes nothing, and prints no secret value.
+
 | Check | Result |
 |---|---|
-| Public hostname reaches the sandbox port | **Proven** — a token served on `127.0.0.1:8789` was returned by `https://alienintent-py10-sandbox.factorychecks.com/` |
-| Production ingress unaffected | `https://alienintent.factorychecks.com/` still answers `401` (signature required) from port 8788 |
-| Production tunnel untouched | `/etc/cloudflared/config.yml` unmodified (root-owned, no write access held); root `cloudflared` service never restarted |
-| Repository identity unambiguous | private repo, linked to Project 2, distinct name and remote from `alienintent` |
-| Project identity unambiguous | distinct node id and number; ten lifecycle Status options plus Priority |
-| Profile resolves | `GitHubProfile` constructs from the recorded values; secret reference resolves to 64 bytes |
-| Secrets outside the repository | profile, tunnel credentials, webhook secret all under `~/.config/alienintent-sandbox/` or `~/.cloudflared/`, mode 600 |
-| Sandbox content runs | `python3 -m pytest -q` → 3 passed in the sandbox repository |
-| No production resource referenced | profile records an explicit `must_not_touch` list; no production id appears in the sandbox profile |
+| Profile records App identity; key present and mode 600 | PASS |
+| Profile loads as `GitHubProfile`; webhook secret resolves (64 bytes) | PASS |
+| App authenticates with the private key | PASS — `HTTP 200`, slug `alienintent-py-10-sandbox` |
+| App permissions / events exactly least privilege | PASS — extra or missing grants both fail closed |
+| Installation belongs to this App, repository-scoped | PASS — `repository_selection: selected` |
+| Installation token mints; reaches only the sandbox repository | PASS — `['AlienLogicLab/alienintent-sandbox']` |
+| Installation scope excludes the production repository | PASS |
+| Sandbox issues readable with the installation token | PASS |
+| No production identifier in the sandbox profile | PASS |
+| Sandbox tunnel active | PASS |
+| Organization Projects permission is org-wide | **NOTE** — recorded above, not a pass disguising a limitation |
 
-One correction worth recording: the first `cloudflared tunnel route dns alienintent-sandbox …` bound
-the new hostname to the **production** tunnel id, because the command resolved against the root
-config rather than the tunnel named on the command line. It was re-routed immediately with an
-explicit tunnel id and `--overwrite-dns`, and the end-to-end probe above confirms the hostname now
-terminates on the sandbox tunnel. The production tunnel's own ingress rules never contained the
-sandbox hostname, so no traffic could have reached a production handler.
+**Live webhook delivery, end to end.** A comment on sandbox issue #1 produced delivery
+`07400e60-b547-11f1-9366-b6eebd3f7f46`:
+
+| | |
+|---|---|
+| Event | `issue_comment` |
+| Hook target | `5014629` (`integration`) — the sandbox App, not the production one |
+| Installation in payload | `163346526` |
+| Repository | `AlienLogicLab/alienintent-sandbox` |
+| Ingress | arrived on `127.0.0.1:8789` through `alienintent-py10-sandbox.factorychecks.com` |
+| Signature | **valid** under the sandbox webhook secret |
+| Negative control | the same body and signature verified against a wrong secret is **rejected** |
+
+Earlier, before the App existed, a token served on `127.0.0.1:8789` was returned by the public
+hostname, proving the route itself. During both probes `https://alienintent.factorychecks.com/`
+continued to answer `401` from port 8788, `/etc/cloudflared/config.yml` stayed unmodified, the root
+`cloudflared` service was never restarted, and PY-08 kept running.
+
+Sandbox issue #1 was closed after the probe; it is not part of the PY-10 proof backlog.
 
 ## Can PY-10 reach Agent-Ready once PY-09 is DONE?
 
-Yes, once the App exists. Everything else PY-10's readiness depends on is now real and identified:
-repository, Project with the required fields, profile, isolated ingress, and a documented environment
-a verifier can reproduce. The remaining dependencies are the ordinary BIU ones — PY-05, PY-06, PY-08
-and PY-09 accepted.
+**Yes.** The App exists, the environment is verified end to end, and everything PY-10's readiness depends on is real and identified:
+repository, Project with the required fields, profile, App identity, isolated and proven ingress, and
+a documented environment a verifier can reproduce with one command. The remaining dependencies are the
+ordinary BIU ones — PY-05, PY-06 accepted, PY-08 and PY-09 to follow.
 
 The sandbox is **not** seeded with the proof backlog: seeding at least three READY BIUs with
 priorities, a dependency and one escalation-raising BIU is PY-10's own scope, not provisioning.
