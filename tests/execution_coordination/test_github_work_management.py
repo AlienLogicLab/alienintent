@@ -99,6 +99,28 @@ def test_projection_requires_provider_readback_of_the_requested_revision() -> No
     assert receipt.detail == "projection read-back mismatch"
 
 
+def test_decision_projection_uses_a_recorded_issue_comment_fixture() -> None:
+    from alienintent.control_plane.adapters.decision_notifier import WorkManagementDecisionNotifier
+    from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
+    from alienintent.execution_coordination.domain.escalation import HumanDecisionRequired
+    requests: list[HumanDecisionRequired] = []
+    request = HumanDecisionRequired(
+        "alpha", "AlienLogicLab/alienintent", "PY-07", 3, "Approve reconciliation", "effect unknown",
+        ("reconcile",), ("reconciliation is bounded",), "reconcile", ("SF-REQ-006",), ("FD-05",),
+        "blocked work waits", ("reconcile authorizes read-back",),
+    )
+    work = GitHubProjectsWorkManagement(
+        "alpha", "AlienLogicLab/alienintent", {"READY": "READY"}, {"IMPLEMENT": "Execution"},
+        lambda: (item(),), contract(), decision_projection_write=lambda escalation: requests.append(escalation) or "issue-comment:fixture-55",
+    )
+
+    health = WorkManagementDecisionNotifier(work).notify(request)
+
+    assert health.delivered
+    assert health.detail == "confirmed"
+    assert requests == [request]
+
+
 def test_webhook_verifies_raw_body_and_deduplicates_before_domain_notification(tmp_path: Path) -> None:
     from alienintent.execution_coordination.adapters.github_webhook import GitHubWebhookIngress
     from alienintent.execution_coordination.ports.event_ingress import IngressRejected
