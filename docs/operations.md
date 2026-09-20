@@ -120,7 +120,7 @@ The Node bootstrap advances a BIU only on event delivery. A dropped delivery the
 
 **Hard rules.**
 
-- Never create a duplicate invocation merely because a webhook appears late.
+- Never create a duplicate invocation merely because a webhook appears late. **The watcher's evidence check alone does not guarantee this**: it re-verifies the lane claim immediately before transitioning and verifies afterwards that exactly one claim exists, but prevention rests on the dispatcher's lane claim (`repository#issue:ROLE`, synchronous check-and-reserve). Delivery-id dedupe does **not** cover a re-emission, which carries a new delivery id, and the guarantee is single-process. See [SWF-29](decisions/2026-09-20-liveness-reconciliation.md) for the full limitations.
 - Never interfere with an invocation that is active, pending or correlated.
 - Never poll the backlog for new work.
 - Never alter Node/B-DISP product semantics.

@@ -19,6 +19,25 @@ Summary: IMPLEMENT expects a PRODUCER, VERIFY expects a VERIFIER, ACCEPT expects
 
 For PY-06 specifically, the running verifier/worker is not disturbed; the motivating incident was already recovered before this rule took effect.
 
+### Duplicate prevention: what actually guarantees it, and what does not
+
+The watcher's evidence check (no active invocation, no lane claim, no live worker, nothing newer than the grace window) **reduces unnecessary re-emissions; it does not by itself prevent duplicates.** A delayed original delivery can still arrive after the check and before the re-emission is processed.
+
+**What does prevent duplication** is the Node bootstrap's own claim identity — the **lane** `repository#issue:ROLE`:
+
+- the fresh-claim path performs a **synchronous check-and-reserve**, carrying the invariant *"no await may separate the lane guard and save"* (`src/runtime/dispatcher.mjs`), so two deliveries cannot both pass the guard;
+- the FOUNDER_EXCEPTION recovery path **re-reads durable state after its awaits**, explicitly so that *"competing operator deliveries cannot reserve two workers"*;
+- a second event for an already-claimed lane is rejected with `ACTIVE_INVOCATION_EXISTS`.
+
+**Known limitations, recorded rather than implied away:**
+
+1. **Delivery-id dedupe does not cover re-emission.** `state.deliveries` is keyed on `x-github-delivery`; a re-emitted transition carries a *new* delivery id, so the original and the re-emission are distinct deliveries. Only the lane claim collapses them.
+2. **Prevention is single-process.** The lane guard consults an in-memory map alongside durable state; a second dispatcher instance would not share it, and the state file is not fenced across processes. This bootstrap runs exactly one dispatcher, which is what makes the guarantee hold.
+3. **The watcher cannot close the window itself.** It re-verifies the lane claim immediately before transitioning to narrow it, and verifies afterwards that exactly one claim exists, logging `DUPLICATE_SUSPECTED` if not — detection, not prevention.
+4. **Status re-emission is not idempotent in its own right.** It is idempotent only because the dispatcher refuses a second claim for a claimed lane.
+
+SF-REQ-056 requires the canonical Python capability to make recovery idempotent and fenced by durable correlation/effect identity, which is what closes this properly. Until then the guarantee is the bootstrap's, not the watcher's.
+
 ## Part 2 — PROP-2026-0006 canonicalized as SF-REQ-056
 
 ### Overlap analysis
