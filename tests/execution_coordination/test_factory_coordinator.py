@@ -43,14 +43,21 @@ class ScriptedWorker:
         self.artifact_store = artifact_store
         self.outcomes = outcomes
         self.dispatched: list[str] = []
+        self.observed: dict[str, WorkerOutcome] = {}
 
     def start(self, invocation: object, context: object, grants: frozenset[str], budget: object) -> WorkerOutcome:
         identity = getattr(invocation, "work_identity")
         self.dispatched.append(identity)
         outcome = self.outcomes[identity].pop(0)
         if outcome == "success":
-            return WorkerOutcome.success(self.artifact_store.write(f"artifact:{identity}".encode()))
-        return WorkerOutcome(kind=outcome)
+            result = WorkerOutcome.success(self.artifact_store.write(f"artifact:{identity}".encode()))
+        else:
+            result = WorkerOutcome(kind=outcome)
+        self.observed[getattr(invocation, "correlation_id")] = result
+        return result
+
+    def read_back(self, invocation: object) -> WorkerOutcome | None:
+        return self.observed.get(getattr(invocation, "correlation_id"))
 
 
 def _item(identity: str, fifo: int, priority: int | None, dependencies: tuple[str, ...] = ()) -> ReadyWorkItem:
@@ -191,3 +198,42 @@ def test_content_addressed_artifact_changes_identity_when_contents_change(tmp_pa
     assert first.identity != changed.identity
     assert verify_in_fresh_process(first).content_digest == first.content_digest
     assert verify_in_fresh_process(changed).content_digest == changed.content_digest
+
+
+def test_restart_reconciles_an_uncertain_launch_before_releasing_its_reservation(tmp_path: Path) -> None:
+    """Stopping forever after an uncertain launch loses a known worker outcome and prevents safe refill."""
+    item = _item("crashed", 1, 1)
+    work = MemoryWorkManagement([item])
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    worker = ScriptedWorker(artifacts, {"crashed": ["success"]})
+    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    candidate = artifacts.write(b"artifact:crashed")
+    store.acquire("offline", "repository", "repo", "launch:crashed:0")
+    store.commit_with_effect("offline", "factory:crashed", 0, {"stage": "IMPLEMENT", "version": 0, "accepted": False, "closure": [], "candidate": None}, "launch:crashed:0", {"correlation": "launch:crashed:0", "work": "crashed"})
+    store.claim_effect("offline", "launch:crashed:0")
+    worker.observed["launch:crashed:0"] = WorkerOutcome.success(candidate)
+
+    summary = FactoryCoordinator(store, work, worker, artifacts, "offline").start()
+
+    assert summary.stop_reason is StopReason.EXHAUSTED
+    assert worker.dispatched == []
+    assert FactoryCoordinator(store, work, worker, artifacts, "offline").state("crashed").stage is LifecycleStage.DONE
+    assert store.recovery_reservations("offline") == ()
+
+
+def test_explicit_release_survives_restart_as_the_same_release_boundary(tmp_path: Path) -> None:
+    """Keeping AUTO-OFF release only in memory makes a restart silently forget a valid authorization."""
+    item = _item("durable-release", 1, 1)
+    contract = replace(item.contract, release_policy=EXPLICIT_HUMAN_OFF)
+    item = replace(item, automatic_release=False, contract=contract, readiness_digest=contract.content_digest)
+    work = MemoryWorkManagement([item])
+    artifacts = LocalArtifactStore(tmp_path / "artifacts")
+    worker = ScriptedWorker(artifacts, {"durable-release": ["authority-block", "authority-block"]})
+    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    first = FactoryCoordinator(store, work, worker, artifacts, "offline")
+
+    assert first.release_and_start("durable-release").stop_reason is StopReason.AUTHORITY_BLOCKED
+    restarted = FactoryCoordinator(store, work, worker, artifacts, "offline")
+
+    assert restarted.start().stop_reason is StopReason.AUTHORITY_BLOCKED
+    assert store.read_state("offline", "release:durable-release")[1]["identity"] == "durable-release"

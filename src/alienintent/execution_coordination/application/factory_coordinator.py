@@ -40,7 +40,7 @@ class FactoryCoordinator:
 
     def start(self, *, limit: int | None = None) -> RunSummary:
         items = self._work.import_ready_snapshot()  # the only backlog read in a run
-        if self._store.recovery_reservations(self._profile):
+        if not self._recover(items):
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
         dispatched: list[str] = []
         while limit is None or len(dispatched) < limit:
@@ -54,6 +54,9 @@ class FactoryCoordinator:
         return RunSummary(StopReason.CAPACITY_UNAVAILABLE, tuple(dispatched))
 
     def release_and_start(self, identity: str) -> RunSummary:
+        version, existing = self._store.read_state(self._profile, self._release_aggregate(identity))
+        if not existing:
+            self._store.commit(self._profile, self._release_aggregate(identity), version, {"identity": identity, "source": ReleaseSource.EXPLICIT_HUMAN})
         self._released.add(identity)
         return self.start()
 
@@ -75,7 +78,7 @@ class FactoryCoordinator:
             dependencies_done = all(self._is_done(dependency) for dependency in item.dependencies)
             if dependencies_done:
                 candidates.append(item)
-        eligible = [item for item in candidates if item.automatic_release or item.identity in self._released]
+        eligible = [item for item in candidates if item.automatic_release or self._is_released(item.identity)]
         return min(eligible, key=lambda item: (item.priority is None, item.priority if item.priority is not None else 0, item.fifo), default=None)
 
     def _run(self, item: ReadyWorkItem) -> StopReason | None:
@@ -113,12 +116,7 @@ class FactoryCoordinator:
                 result_read_back = self._record_result(item, current, effect_id, outcome.kind)
                 self._work.project_execution_state(item.identity, "failure")
                 return StopReason.FAILURE
-            candidate = verify_in_fresh_process(outcome.candidate)
-            current = transition(current, current.version, "verify", candidate=candidate)
-            current = transition(current, current.version, "review")
-            verdict = evaluate_verdict(EvidenceDefinition(frozenset(item.contract.required_evidence)), (Observation("artifact-verified", True, True),), worker_claimed_success=True)
-            current = transition(current, current.version, "accept", verdict=verdict)
-            current = transition(current, current.version, "close", completed_closure_actions=frozenset(item.contract.required_closure_actions))
+            current = self._complete_success(item, current, outcome.candidate)
             result_read_back = self._record_result(item, current, effect_id, outcome.kind)
             self._work.project_execution_state(item.identity, current.stage)
             return None
@@ -136,6 +134,44 @@ class FactoryCoordinator:
         _, read_back = self._store.read_state(self._profile, self._aggregate(item.identity))
         return read_back.get("correlation") == correlation and read_back.get("outcome") == outcome
 
+    def _recover(self, items: Iterable[ReadyWorkItem]) -> bool:
+        by_identity = {item.identity: item for item in items}
+        for reservation in self._store.recovery_reservations(self._profile):
+            if reservation.scope != "repository" or not reservation.owner.startswith("launch:"):
+                return False
+            _, identity, _ = reservation.owner.rsplit(":", 2)
+            item = by_identity.get(identity)
+            if item is None:
+                return False
+            invocation = WorkerInvocation(identity, reservation.owner)
+            outcome = self._worker.read_back(invocation)
+            if outcome is None:
+                return False
+            try:
+                self._store.confirm_effect(self._profile, reservation.owner, f"recovered:{outcome.kind}")
+            except ReservationRejected:
+                return False
+            version, raw = self._store.read_state(self._profile, self._aggregate(identity))
+            current = self._decode(raw) if raw else ExecutionState.for_contract(item.contract)
+            current = replace(current, contract=item.contract)
+            if outcome.kind != "success" or outcome.candidate is None:
+                return False
+            completed = self._complete_success(item, current, outcome.candidate)
+            if not self._record_result(item, completed, reservation.owner, outcome.kind):
+                return False
+            self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+            self._work.project_execution_state(identity, completed.stage)
+        return True
+
+    @staticmethod
+    def _complete_success(item: ReadyWorkItem, state: ExecutionState, candidate: CandidateRef) -> ExecutionState:
+        verified = verify_in_fresh_process(candidate)
+        verified_state = transition(state, state.version, "verify", candidate=verified)
+        reviewed = transition(verified_state, verified_state.version, "review")
+        verdict = evaluate_verdict(EvidenceDefinition(frozenset(item.contract.required_evidence)), (Observation("artifact-verified", True, True),), worker_claimed_success=True)
+        accepted = transition(reviewed, reviewed.version, "accept", verdict=verdict)
+        return transition(accepted, accepted.version, "close", completed_closure_actions=frozenset(item.contract.required_closure_actions))
+
     def _is_done(self, identity: str) -> bool:
         try:
             return self.state(identity).stage is LifecycleStage.DONE
@@ -146,13 +182,23 @@ class FactoryCoordinator:
         pending = [item for item in items if not self._is_done(item.identity)]
         if not pending:
             return StopReason.EXHAUSTED
-        if any(not item.automatic_release and item.identity not in self._released for item in pending):
+        if any(not item.automatic_release and not self._is_released(item.identity) for item in pending):
             return StopReason.AWAITING_RELEASE
         return StopReason.BLOCKED
 
     @staticmethod
     def _aggregate(identity: str) -> str:
         return f"factory:{identity}"
+
+    @staticmethod
+    def _release_aggregate(identity: str) -> str:
+        return f"release:{identity}"
+
+    def _is_released(self, identity: str) -> bool:
+        if identity in self._released:
+            return True
+        _, release = self._store.read_state(self._profile, self._release_aggregate(identity))
+        return release.get("identity") == identity and release.get("source") == ReleaseSource.EXPLICIT_HUMAN
 
     @staticmethod
     def _encode(state: ExecutionState) -> dict[str, object]:
