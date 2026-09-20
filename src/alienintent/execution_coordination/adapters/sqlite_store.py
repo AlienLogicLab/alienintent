@@ -101,13 +101,21 @@ class SQLiteOperationalStore(OperationalStore):
             connection.execute("INSERT INTO receipts VALUES (?, ?, ?, ?, ?, 'applied')", (profile, event_id, digest, aggregate, version))
             return Receipt(event_id, aggregate, version, "applied")
 
+    def receipt(self, profile: str, event_id: str) -> Receipt | None:
+        with self._read() as connection:
+            row = connection.execute("SELECT aggregate, version, status FROM receipts WHERE profile=? AND event_id=?", (profile, event_id)).fetchone()
+            return None if row is None else Receipt(event_id, row["aggregate"], row["version"], row["status"])
+
     def record_receipt(self, profile: str, event_id: str, digest: str, aggregate: str) -> Receipt:
+        return self.record_receipt_if_new(profile, event_id, digest, aggregate)[0]
+
+    def record_receipt_if_new(self, profile: str, event_id: str, digest: str, aggregate: str) -> tuple[Receipt, bool]:
         with self._transaction() as connection:
             prior = connection.execute("SELECT aggregate, version, status FROM receipts WHERE profile=? AND event_id=?", (profile, event_id)).fetchone()
             if prior:
-                return Receipt(event_id, prior["aggregate"], prior["version"], prior["status"])
+                return Receipt(event_id, prior["aggregate"], prior["version"], prior["status"]), False
             connection.execute("INSERT INTO receipts VALUES (?, ?, ?, ?, 0, 'received')", (profile, event_id, digest, aggregate))
-            return Receipt(event_id, aggregate, 0, "received")
+            return Receipt(event_id, aggregate, 0, "received"), True
 
     def apply_receipt(self, profile: str, event_id: str, expected_version: int, state: Mapping[str, object], effect_id: str, payload: Mapping[str, object]) -> int:
         with self._transaction() as connection:
