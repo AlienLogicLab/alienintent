@@ -1,6 +1,6 @@
 # PY-04 execution trajectory
 
-PY-04 ran from release at 06:27:42Z to DONE at 12:31:12Z. It retained an initial unpublished safety-reviewed candidate, then accumulated nine Issue-recorded verifier rejections before `03896f62` was accepted. The one measured genuine Founder wait was the SWF-22 custody decision: 7,074 seconds. The initial exception was later classified by the coordinator as unfinished contracted work, not missing authority.
+PY-04 ran from release at 06:27:42Z to DONE at 12:31:12Z. It retained one initial unpublished producer/self-review safety rejection, then accumulated nine formal Issue-recorded verifier rejections before `03896f62` was accepted. The one measured genuine Founder wait was the SWF-22 custody decision: 7,074 seconds. The initial exception was later classified by the coordinator as unfinished contracted work, not missing authority. `recorded_at` in this first PY-04 JSONL batch is a known invalid placeholder for later events; it is not event time.
 
 The accepted candidate `03896f62` is the second parent of normal merge `0170af0`; Git confirms ancestry and a scoped accepted-parent-to-merge diff is empty. Closure cited SWF-19 and reported post-merge 65 Python tests, architecture fitness, Node suite, and required Actions. Those local test claims are worker/coordinator observations; the cited Actions records are the independently retrievable CI evidence.
 
