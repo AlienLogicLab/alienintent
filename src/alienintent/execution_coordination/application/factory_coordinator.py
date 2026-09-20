@@ -20,8 +20,6 @@ class StopReason(StrEnum):
     EXHAUSTED = "eligible-backlog-exhausted"
     BLOCKED = "dependencies-or-authority-blocked"
     CAPACITY_UNAVAILABLE = "capacity-unavailable"
-    AWAITING_RELEASE = "awaiting-explicit-release"
-    AUTHORITY_BLOCKED = "authority-blocked"
 
 
 @dataclass(frozen=True)
@@ -40,8 +38,9 @@ class ProjectedState:
 
 
 class FactoryCoordinator:
-    def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str) -> None:
+    def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True) -> None:
         self._store, self._work, self._worker, self._artifacts, self._profile = store, work, worker, artifacts, profile
+        self._automatic_release = automatic_release
         self._released: set[str] = set()
 
     def start(self) -> RunSummary:
@@ -80,15 +79,15 @@ class FactoryCoordinator:
                 return False
         except KeyError:
             pass
-        return (item.automatic_release or self._is_released(item.identity)) and all(self._is_done(dep) for dep in item.dependencies)
+        return (self._is_automatic(item) or self._is_released(item.identity)) and all(self._is_done(dep) for dep in item.dependencies)
 
     def _run(self, item: ReadyWorkItem) -> StopReason | None:
-        source = ReleaseSource.AUTOMATIC_POLICY if item.automatic_release else ReleaseSource.EXPLICIT_HUMAN
+        source = ReleaseSource.AUTOMATIC_POLICY if self._is_automatic(item) else ReleaseSource.EXPLICIT_HUMAN
         try:
             admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset({"python", "filesystem", "process-control"}), {dimension: 1 for dimension in item.contract.budget_policy.required_dimensions}, "offline-profile", source))
         except ValueError:
             self._record_result(item, ExecutionState.for_contract(item.contract), "release", "authority-block")
-            return StopReason.AUTHORITY_BLOCKED
+            return StopReason.BLOCKED
         self._work.propose_release(item)
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
         current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
@@ -151,6 +150,9 @@ class FactoryCoordinator:
                 # reservation and worker read-back still make reconciliation safe.
                 pass
             _, raw = self._store.read_state(self._profile, self._aggregate(identity))
+            if raw.get("correlation") == reservation.owner and raw.get("outcome") == outcome.kind:
+                self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+                continue
             current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
             if not self._record_result(item, self._completed_for_outcome(item, current, outcome), reservation.owner, outcome.kind):
                 return False
@@ -172,10 +174,10 @@ class FactoryCoordinator:
         ]
         if not pending:
             return StopReason.EXHAUSTED
-        if any(not item.automatic_release and not self._is_released(item.identity) for item in pending):
-            return StopReason.AWAITING_RELEASE
+        if any(not self._is_automatic(item) and not self._is_released(item.identity) for item in pending):
+            return StopReason.BLOCKED
         if any(self._outcome(item.identity) == "authority-block" for item in pending):
-            return StopReason.AUTHORITY_BLOCKED
+            return StopReason.BLOCKED
         return StopReason.BLOCKED
 
     def _outcome(self, identity: str) -> str | None:
@@ -189,6 +191,9 @@ class FactoryCoordinator:
             return True
         _, raw = self._store.read_state(self._profile, self._release_aggregate(identity))
         return raw.get("identity") == identity and raw.get("source") == ReleaseSource.EXPLICIT_HUMAN
+
+    def _is_automatic(self, item: ReadyWorkItem) -> bool:
+        return self._automatic_release and item.automatic_release
 
     @staticmethod
     def _aggregate(identity: str) -> str: return f"factory:{identity}"
