@@ -4,6 +4,9 @@ Date: 2026-09-20. Status: **Founder decision — binding engineering principle**
 Source: [PROP-2026-0001](../proposals/PROP-2026-0001-deterministic-failure-class-promotion.md), submitted by the Founder 2026-09-20 (`authority_level: founder`).
 Canonical requirement: **SF-REQ-050**.
 
+**Founder assignment (2026-09-20):** Priority **P1**; Wave **3**. This
+assignment does not create a BIU or authorize implementation.
+
 ## Durable principle
 
 > **Model intelligence discovers failure classes; deterministic verification makes known failure classes cheap, repeatable, and boring.**

@@ -4,9 +4,9 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 
 | proposal_id | Title | Classification | Canonical decision record | Product Requirement | Issue | Status |
 |---|---|---|---|---|---|---|
-| PROP-2026-0001 | Deterministic Failure-Class Promotion / Proven-Red Verification | Product Requirement + binding engineering principle | [SWF-24](../decisions/2026-09-20-deterministic-failure-class-promotion.md) | SF-REQ-050 | [#61](https://github.com/AlienLogicLab/alienintent/issues/61) | canonicalized 2026-09-20 |
-| PROP-2026-0002 | Design Contract and Design Verification before BIU execution | Workflow/architecture semantics + Product Requirement | [SWF-25](../decisions/2026-09-20-design-contract-and-design-verification.md) | SF-REQ-051 | [#62](https://github.com/AlienLogicLab/alienintent/issues/62) | canonicalized 2026-09-20, two open Founder decisions |
-| PROP-2026-0003 | Persistent Control Plane with Bounded Coordinator Episodes | Workflow/architecture semantics + Product Requirement | [SWF-27](../decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md) | SF-REQ-053 | [#64](https://github.com/AlienLogicLab/alienintent/issues/64) | canonicalized 2026-09-20 |
+| PROP-2026-0001 | Deterministic Failure-Class Promotion / Proven-Red Verification | Product Requirement + binding engineering principle | [SWF-24](../decisions/2026-09-20-deterministic-failure-class-promotion.md) | SF-REQ-050 | [#61](https://github.com/AlienLogicLab/alienintent/issues/61) | canonicalized 2026-09-20; P1 / Wave 3 assigned |
+| PROP-2026-0002 | Design Contract and Design Verification before BIU execution | Workflow/architecture semantics + Product Requirement | [SWF-25](../decisions/2026-09-20-design-contract-and-design-verification.md) | SF-REQ-051 | [#62](https://github.com/AlienLogicLab/alienintent/issues/62) | canonicalized 2026-09-20; P0 / Wave 2 assigned; scope/visibility clarified |
+| PROP-2026-0003 | Persistent Control Plane with Bounded Coordinator Episodes | Workflow/architecture semantics + Product Requirement | [SWF-27](../decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md) | SF-REQ-053 | [#64](https://github.com/AlienLogicLab/alienintent/issues/64) | canonicalized 2026-09-20; P0 / Wave 2 assigned |
 
 ## Intake rules
 
@@ -23,9 +23,3 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 | Source decision | Product Requirement | Issue |
 |---|---|---|
 | [Convergence Assistance / Willing Convergence](../decisions/2026-09-20-convergence-assistance-willing-convergence.md) | SF-REQ-052 | [#63](https://github.com/AlienLogicLab/alienintent/issues/63) |
-
-## Open Founder decisions arising from intake
-
-- **PROP-2026-0002 / SWF-25 effective scope** — does the Design Contract / Design Verification gate apply to the remaining Wave 1 BIUs (PY-05..PY-10), or only from Wave 2 onward? Wave 1 proceeds unchanged until decided.
-- **PROP-2026-0002 / SWF-25 visible lifecycle states** — whether DESIGN / DESIGN VERIFY later become visible Project states. Deferred by the proposal; not blocking.
-- **Priority and wave** for SF-REQ-050, SF-REQ-051, SF-REQ-052 and SF-REQ-053.
