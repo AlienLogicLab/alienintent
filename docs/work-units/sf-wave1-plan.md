@@ -1,9 +1,10 @@
 # Wave 1 PLAN — proposed dependency DAG and BIU decomposition
 
-Date: 2026-09-19. Status: **PROPOSED — for Founder review.** No BIU is created, TASKS/READY, or implemented by this document.
+Date: 2026-09-19; updated 2026-09-20. Status: **APPROVED** by [SWF-08–11](../decisions/2026-09-20-wave1-plan-approval-d1-d2.md), subject to the decisions recorded there. Contracts are written as `docs/work-units/python/PY-0N.md`. No BIU is implemented by this document.
 Authority:
 - [Software-factory plan](../decisions/alienintent-software-factory-plan.md)
 - [Wave 1 Founder decisions SWF-01–07](../decisions/2026-09-19-software-factory-wave1-founder-decisions.md)
+- [Wave 1 PLAN approval SWF-08–11](../decisions/2026-09-20-wave1-plan-approval-d1-d2.md)
 - [Architecture Authority](../architecture/alienintent-architecture-authority-2026-09-19.md) (AA)
 - FD-01–FD-06
 - EOS v1.0
@@ -25,7 +26,7 @@ Build the shortest coherent path to this outcome: a prioritized READY backlog is
    - Capacity refill is driven by internal events (reservation released, result recorded).
    - One reconcile snapshot at startup is recovery, not a periodic listing.
 5. **Durability (FD-05).** Inbox/effect-intent/outbox, expected versions, reservation fencing, idempotent effects and read-back for unknown outcomes. SQLite is the default (AA §16).
-6. **One writer per profile (conformance-and-sovereignty).** Python and Node never both mutate one profile. Node dispatches on IMPLEMENT/VERIFY/ACCEPT in the AlienIntent Project, so a Python-projected IMPLEMENT there would also launch Node. The Wave 1 live proof therefore needs an isolated profile (decision D-1 below). Running AlienIntent's own backlog on Python is a cutover and is outside Wave 1.
+6. **One writer per profile (conformance-and-sovereignty).** Python and Node never both mutate one profile. Node dispatches on IMPLEMENT/VERIFY/ACCEPT in the AlienIntent Project, so a Python-projected IMPLEMENT there would also launch Node. The Wave 1 live proof therefore runs on the isolated sandbox environment approved in SWF-08. Running AlienIntent's own backlog on Python is a cutover and is outside Wave 1.
 7. **Priority is input (SWF-03).**
    - Scheduling reads the Project **Priority** field.
    - Items with no priority are FIFO among equals.
@@ -51,8 +52,8 @@ graph TD
   PY05 --> PY09
   PY09 --> PY10[PY-10 Wave 1 live proof]
   PY06 --> PY10
-  D1{{D-1 isolated proof profile}} -.-> PY10
-  D2{{D-2 default budget policy}} -.-> PY06
+  D1{{SWF-08 sandbox environment}} -.-> PY10
+  D2{{SWF-09 budget policy}} -.-> PY06
 ```
 
 Critical path: PY-02 → PY-03 → PY-04 → PY-06 → PY-09 → PY-10, with PY-07 → PY-08 joining at PY-09.
@@ -122,7 +123,7 @@ Standing non-goals for every BIU: no Node change, no FactoryChecks change, no in
   - Rolling refill on capacity-release events.
   - Explicit stop conditions: backlog exhausted, all remaining work blocked, or authority required.
   - WorkManagement and WorkerProvider **ports**, each with an in-memory/scripted **test adapter**.
-- **Non-goals:** real GitHub, real workers. The scripted worker is a test adapter, not SF-REQ-039 (Wave 2).
+- **Non-goals:** real GitHub, real workers. Per SWF-10 the scripted worker is the minimum deterministic test double needed to prove the loop without provider spend. It is Wave 1 test infrastructure and does **not** implement SF-REQ-039, which remains Wave 2.
 - **Acceptance:** from one start command, a seeded backlog of ≥5 BIUs is consumed to exhaustion.
   - Order honors priority, FIFO, blocked-by and WIP.
   - A restart mid-run on SQLite resumes without duplicate dispatch or lost results.
@@ -160,7 +161,7 @@ Standing non-goals for every BIU: no Node change, no FactoryChecks change, no in
   - Cancel preserves evidence and releases the reservation.
   - Budget exhaustion blocks, never overruns.
   - A path that cannot measure a required hard limit is ineligible.
-- **Blocked on D-2.**
+- **Budget policy:** SWF-09 (hard: wall-clock, attempts, retries, concurrency, cancellation; token/cost measured, never assumed zero).
 
 ### PY-07 — HumanDecisionRequired and Decision Inbox
 - **Satisfies:** 006, 035.
@@ -205,29 +206,30 @@ Standing non-goals for every BIU: no Node change, no FactoryChecks change, no in
 
 ### PY-10 — Wave 1 live proof
 - **Satisfies:** the Wave 1 outcome for all cohort requirements.
-- **Scope:** on the isolated profile from D-1, a prioritized READY backlog of at least three small BIUs is consumed from one `run` through DONE with no per-BIU trigger. The backlog includes:
-  - different priorities
-  - one blocked-by dependency
-  - one deliberate HumanDecisionRequired
-- The run also includes a mid-run service restart and exact candidate/verification evidence per BIU.
-- **Non-goals:** running AlienIntent's own backlog on Python (that is cutover/Sovereignty and needs separate Founder approval); Node retirement.
-- **Acceptance:** retained evidence of ordering, refill, restart without duplicate effects, escalation and automatic resumption, and independent verification. Doctor passes before start.
+- **Environment:** the dedicated sandbox of SWF-08.
+- **Acceptance (SWF-11).** One coherent run demonstrates all of:
+  1. at least 3 READY BIUs;
+  2. different priorities;
+  3. at least two equal-priority BIUs proving FIFO ordering;
+  4. at least one dependency;
+  5. WIP = 1;
+  6. automatic slot refill;
+  7. one HumanDecisionRequired event;
+  8. only the affected BIU blocks while independent eligible work continues;
+  9. a durable human decision automatically unblocks/resumes affected work;
+  10. a Python process restart during the run;
+  11. no duplicate execution/effects after restart;
+  12. exact candidate custody before VERIFY;
+  13. eventual DONE for all executable work;
+  14. no human manually moves individual BIUs into IMPLEMENT.
+- The run evidences the product-level statement: given a prioritized backlog, sufficient execution authority and no unresolved blockers, AlienIntent continuously consumes eligible READY BIUs until the executable backlog is exhausted.
+- **Non-goals:** running AlienIntent's own backlog on Python (that is cutover/Sovereignty and needs separate Founder approval); Node retirement; stopping the Node bootstrap.
 
-## Decisions surfaced (not blocking PY-02 to PY-05)
+## Decisions resolved
 
-**D-1 — Isolated execution target for the Python factory.**
-- **Why it matters:** PY-10 needs real GitHub execution without two writers on one profile. Node's App installation is scoped to exactly one repository, and it dispatches on the AlienIntent Project. The choice touches operational authority, identity and the trust boundary (AA §45).
-- **Options:**
-  - (a) a dedicated sandbox repository plus its own Project, with a separate Python GitHub App installation and webhook route;
-  - (b) run PY-10 against the AlienIntent Project with Node stopped (this is effectively a cutover rehearsal);
-  - (c) keep PY-10 local only, with a real git remote and a recorded GitHub fixture.
-- **Recommendation:** (a). It proves the real path (EOS rule 6) without touching Node authority.
-- **Needed before:** PY-10 reaches READY.
+**D-1 — isolated execution target (approved, SWF-08).** PY-10 runs on a dedicated AlienIntent sandbox environment: a minimal sandbox repository, its own GitHub Project, its own Python profile, and its own GitHub App installation / webhook identity. Content is deliberately minimal but sufficient to exercise the factory. This is test/integration infrastructure, not a second product deployment. The Node bootstrap is not stopped to enable the proof, and the two control planes never share a profile that could dispatch the same work.
 
-**D-2 — Default Wave 1 budget policy for CLI worker providers.**
-- **Why it matters:** FD-03 makes a path ineligible if policy requires a hard limit the provider cannot enforce or measure. The provider CLIs enforce wall-clock time and attempts, but not token ceilings. A default that requires token hard limits would make every current worker path ineligible. Cost policy is Founder-reviewed (AA §45).
-- **Recommendation:** hard limits on wall-clock time, attempts and retries per BIU and per profile. Measure token spend and record it where the provider reports it (unknown ≠ zero). Token ceilings apply only where a provider can enforce them.
-- **Needed before:** PY-06 reaches READY.
+**D-2 — budget policy (approved, SWF-09).** Providers advertise the budget dimensions they can enforce. For current CLI worker providers the hard-enforced dimensions are wall-clock duration, attempts, retries, concurrent invocation limits and cancellation. Token and monetary cost are measured where reported, and missing data is never zero. A provider is eligible for a BIU only if it can enforce every dimension that BIU or deployment policy marks hard-required; a hard-required dimension is never silently downgraded to telemetry.
 
 Nothing else found requires Founder authority. Remaining gaps are category-B design detail completed inside the BIUs above:
 - port signatures
@@ -238,8 +240,10 @@ Nothing else found requires Founder authority. Remaining gaps are category-B des
 
 ## Next steps after review
 
-1. Write PY-02–PY-10 as BIU contracts in `docs/work-units/python/`.
-2. Assess each with Agent-Ready.
-3. Materialize them as BIU Issues linked to their SF-REQ Issues (sub-issue or blocked-by, native only).
-4. Move them through TASKS → READY in dependency order.
-5. Record D-1 and D-2 when decided.
+Authorized by SWF-08–11 and in progress:
+
+1. PY-02–PY-10 contracts written to `docs/work-units/python/`.
+2. Agent-Ready assessment per BIU (`PY-0N.request.md` → `PY-0N.assessment.json`).
+3. BIU Issues created, each listing the SF-REQ Issues it satisfies, with the DAG as native blocked-by links.
+4. TASKS → READY only as dependencies and readiness permit.
+5. Implementation remains unauthorized.
