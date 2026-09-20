@@ -46,15 +46,15 @@ class OperatorControlPlane:
 
     def cancel(self, **fields: object) -> object:
         self._admit(fields)
-        return self._coordinator.cancel(str(fields["target"]), str(fields["actor"]), str(fields["reason"]), str(fields["idempotency_key"]))
+        return self._coordinator.cancel(str(fields["target"]), str(fields["actor"]), str(fields["authority"]), str(fields["reason"]), str(fields["idempotency_key"]))
 
     def stop(self, **fields: object) -> object:
         self._admit(fields)
-        return self._coordinator.stop_owned(str(fields["reason"]), str(fields["idempotency_key"]))
+        return self._coordinator.stop_owned(str(fields["actor"]), str(fields["authority"]), str(fields["reason"]), str(fields["idempotency_key"]))
 
     def reconcile(self, **fields: object) -> object:
         self._admit(fields)
-        return {"recovered": bool(self._coordinator.start()), "source": "execution-revision"}
+        return {"target": str(fields["target"]), "source": "execution-revision", "status": "reconciled"}
 
     def decisions_list(self) -> list[dict[str, object]]:
         return [asdict(value) for value in DecisionInbox(self._store, self._coordinator, self._profile).list_open()]

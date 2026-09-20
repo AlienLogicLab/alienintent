@@ -16,6 +16,10 @@ def _sanitize(value: object) -> str:
     return re.sub(r"(?i)(token|secret|key)=[^\s]+", r"\1=[REDACTED]", str(value))
 
 
+def _argument_error(_: str) -> None:
+    raise ValueError("invalid command arguments")
+
+
 def _factory(reference: str) -> Any:
     module, separator, name = reference.partition(":")
     if not separator:
@@ -25,6 +29,7 @@ def _factory(reference: str) -> Any:
 
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="alienintent")
+    parser.error = _argument_error  # type: ignore[method-assign]
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--profile-factory")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -66,7 +71,8 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "health": value = {"live": True, "ready": bool(profile.readiness())}
         elif args.command == "explain": value = service.explain(args.target)
         elif args.command == "decisions":
-            value = service.decisions_list() if args.decision_command == "list" else service.decisions_show(args.identity) if args.decision_command == "show" else service.decisions_decide(args.identity, target=args.identity, **vars(args))
+            fields = {key: value for key, value in vars(args).items() if key not in {"identity", "command", "decision_command", "json", "profile_factory"}}
+            value = service.decisions_list() if args.decision_command == "list" else service.decisions_show(args.identity) if args.decision_command == "show" else service.decisions_decide(args.identity, target=args.identity, **fields)
         else:
             value = getattr(service, args.command)(**vars(args))
         _render(value, args.json); return 0
