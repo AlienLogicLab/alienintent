@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import os
 from pathlib import Path
+import subprocess
+import sys
 
 import pytest
 
@@ -19,6 +22,8 @@ from alienintent.execution_coordination.domain.escalation import (
 )
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.control_plane.adapters.decision_notifier import WorkManagementDecisionNotifier
+from alienintent.control_plane.adapters.decision_notifier import NoOpDecisionNotifier
+from alienintent.execution_coordination.ports.operational_store import Effect
 from tests.execution_coordination.test_factory_coordinator import MemoryWorkManagement, ScriptedWorker, _item
 
 
@@ -109,3 +114,97 @@ def test_notification_failure_is_delivery_health_not_an_execution_failure(tmp_pa
     assert summary.authority_blocked == ("blocked",)
     assert coordinator.state("blocked").outcome == "authority-block"
     assert coordinator.delivery_health["blocked"].delivered is False
+
+
+def test_admission_authority_block_opens_a_decidable_request_and_resumes(tmp_path: Path) -> None:
+    """Scope §2: admission refusal is a durable, recoverable authority escalation."""
+    item = _item("needs-authority", 0, 1)
+    contract = replace(item.contract, required_capabilities=("network",))
+    item = replace(item, contract=contract, readiness_digest=contract.content_digest)
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    worker = ScriptedWorker(artifacts, {"needs-authority": ["success"]})
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement([item]), worker, artifacts, "offline")
+
+    assert coordinator.start().authority_blocked == ("needs-authority",)
+    inbox = DecisionInbox(store, coordinator, "offline")
+    request = inbox.show("needs-authority")
+    assert isinstance(request, HumanDecisionRequired)
+    assert request.work_item == "needs-authority"
+    assert request.options == ("authorize", "defer")
+
+    inbox.submit(DecisionSubmission("morty", "SWF-21", "needs-authority", request.biu_version, request.biu_version, "grant-network", "authorize"))
+
+    assert coordinator.state("needs-authority").stage is LifecycleStage.DONE
+
+
+def test_noop_notifier_leaves_the_decision_inbox_usable(tmp_path: Path) -> None:
+    item = _item("blocked", 0, 1)
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement([item]), EscalatingWorker(artifacts, {"blocked": ["authority-block"]}, _escalation()), artifacts, "offline", notifier=NoOpDecisionNotifier())
+
+    coordinator.start()
+
+    assert DecisionInbox(store, coordinator, "offline").show("blocked") == _escalation()
+    assert coordinator.delivery_health["blocked"].delivered is True
+
+
+def test_work_management_notifier_projects_a_recorded_decision_fixture() -> None:
+    projected: list[HumanDecisionRequired] = []
+
+    class RecordedProjection:
+        def project_decision_request(self, escalation: HumanDecisionRequired):
+            from alienintent.execution_coordination.ports.work_management import ProjectionReceipt
+            projected.append(escalation)
+            return ProjectionReceipt(escalation.work_item, escalation.biu_version, True, "recorded-fixture comment read back")
+
+    notifier = WorkManagementDecisionNotifier(RecordedProjection())
+
+    assert notifier.notify(_escalation()).delivered
+    assert projected == [_escalation()]
+
+
+def test_unresolved_effect_registers_a_human_decision_request(tmp_path: Path) -> None:
+    class UnknownEffectStore(SQLiteOperationalStore):
+        def unresolved_effects(self, profile: str):
+            return (Effect("unknown-launch", "factory:blocked", {"work": "blocked"}),)
+
+    item = _item("blocked", 0, 1)
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = UnknownEffectStore(tmp_path / "operational.sqlite")
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement([item]), ScriptedWorker(artifacts, {"blocked": ["success"]}), artifacts, "offline")
+
+    coordinator.start()
+
+    request = DecisionInbox(store, coordinator, "offline").show("blocked")
+    assert isinstance(request, HumanDecisionRequired)
+    assert "unknown" in request.reason
+
+
+def test_recorded_decision_re_admits_after_a_real_process_restart(tmp_path: Path) -> None:
+    """AC 8: a fresh process reads the decision and resumes through normal guards."""
+    items = [_item("blocked", 0, 1)]
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    coordinator = FactoryCoordinator(
+        store, MemoryWorkManagement(items),
+        EscalatingWorker(artifacts, {"blocked": ["authority-block"]}, _escalation()), artifacts, "offline",
+    )
+    coordinator.start()
+    script = """from pathlib import Path
+from alienintent.control_plane.application.decision_inbox import DecisionInbox
+from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator
+from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+from alienintent.execution_coordination.domain.escalation import DecisionSubmission
+from tests.execution_coordination.test_decision_inbox import _item
+from tests.execution_coordination.test_factory_coordinator import MemoryWorkManagement, ScriptedWorker
+p=Path(__import__('sys').argv[1]); a=LocalArtifactStore(p/'producer', p/'verifier'); c=FactoryCoordinator(SQLiteOperationalStore(p/'operational.sqlite'), MemoryWorkManagement([_item('blocked', 0, 1)]), ScriptedWorker(a, {'blocked':['success']}, durable=True), a, 'offline'); inbox=DecisionInbox(c._store, c, 'offline'); request=inbox.show('blocked'); inbox.submit(DecisionSubmission('morty','SWF-21','blocked',request.biu_version,request.biu_version,'restart-decision','reconcile')); assert c.state('blocked').stage.value == 'DONE'; assert inbox.show('blocked').event.idempotency_key == 'restart-decision'
+"""
+    completed = subprocess.run(
+        [sys.executable, "-c", script, str(tmp_path)], capture_output=True, text=True,
+        env={**os.environ, "PYTHONPATH": f"{Path.cwd() / 'src'}:{Path.cwd()}"},
+    )
+
+    assert completed.returncode == 0, completed.stderr
