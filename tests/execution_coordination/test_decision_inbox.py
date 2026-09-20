@@ -103,10 +103,14 @@ def test_authority_decision_is_durable_scoped_and_re_admits_through_the_loop(tmp
 
 def test_notification_failure_is_delivery_health_not_an_execution_failure(tmp_path: Path) -> None:
     """PY-07 AC 9: the notifier is an adapter and cannot change execution truth."""
+    class FailingProjection:
+        def project_decision_request(self, escalation: HumanDecisionRequired):
+            raise RuntimeError("fixture delivery failure")
+
     item = _item("blocked", 0, 1)
     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
     worker = EscalatingWorker(artifacts, {"blocked": ["authority-block"]}, _escalation())
-    notifier = WorkManagementDecisionNotifier(lambda _: (_ for _ in ()).throw(RuntimeError("fixture delivery failure")))
+    notifier = WorkManagementDecisionNotifier(FailingProjection())
     coordinator = FactoryCoordinator(SQLiteOperationalStore(tmp_path / "operational.sqlite"), MemoryWorkManagement([item]), worker, artifacts, "offline", notifier=notifier)
 
     summary = coordinator.start()
@@ -165,21 +169,47 @@ def test_work_management_notifier_projects_a_recorded_decision_fixture() -> None
     assert projected == [_escalation()]
 
 
-def test_unresolved_effect_registers_a_human_decision_request(tmp_path: Path) -> None:
-    class UnknownEffectStore(SQLiteOperationalStore):
-        def unresolved_effects(self, profile: str):
-            return (Effect("unknown-launch", "factory:blocked", {"work": "blocked"}),)
+def test_decision_inbox_is_implemented_in_the_control_plane_application() -> None:
+    assert DecisionInbox.__module__ == "alienintent.control_plane.application.decision_inbox"
 
-    item = _item("blocked", 0, 1)
+
+def test_unresolved_effect_is_decidable_and_re_admits_its_scoped_closure(tmp_path: Path) -> None:
+    class UnknownEffectStore(SQLiteOperationalStore):
+        unresolved = True
+
+        def unresolved_effects(self, profile: str):
+            if self.unresolved:
+                return (Effect("unknown-launch", "factory:blocked", {"work": "blocked"}),)
+            return ()
+
+    items = [_item("blocked", 0, 1), _item("dependent", 1, 2, ("blocked",)), _item("independent", 2, 3)]
     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
     store = UnknownEffectStore(tmp_path / "operational.sqlite")
-    coordinator = FactoryCoordinator(store, MemoryWorkManagement([item]), ScriptedWorker(artifacts, {"blocked": ["success"]}), artifacts, "offline")
+    store.unresolved = True
+    assert store.unresolved_effects("offline")
+    coordinator = FactoryCoordinator(
+        store, MemoryWorkManagement(items),
+        ScriptedWorker(artifacts, {"blocked": ["success", "success"], "dependent": ["success"], "independent": ["success"]}),
+        artifacts, "offline",
+    )
 
-    coordinator.start()
+    summary = coordinator.start()
 
-    request = DecisionInbox(store, coordinator, "offline").show("blocked")
+    assert summary.authority_blocked == ("blocked",)
+    assert coordinator.state("blocked").outcome == "authority-block"
+    assert coordinator.state("dependent").outcome == "blocked-by-authority"
+    assert coordinator.state("independent").stage is LifecycleStage.DONE
+    assert store.recovery_reservations("offline") == ()
+    inbox = DecisionInbox(store, coordinator, "offline")
+    request = inbox.show("blocked")
     assert isinstance(request, HumanDecisionRequired)
     assert "unknown" in request.reason
+
+    store.unresolved = False
+    inbox.submit(DecisionSubmission("morty", "SWF-21", "blocked", request.biu_version, request.biu_version, "reconcile-unknown", "authorize"))
+
+    assert coordinator.state("blocked").stage is LifecycleStage.DONE
+    assert coordinator.state("dependent").stage is LifecycleStage.DONE
 
 
 def test_recorded_decision_re_admits_after_a_real_process_restart(tmp_path: Path) -> None:
