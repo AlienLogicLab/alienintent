@@ -116,6 +116,8 @@ class FactoryCoordinator:
             return current
         if outcome.kind != "success" or outcome.candidate is None:
             return current
+        # The custody gate is control-plane enforcement: it always rechecks
+        # candidate retrieval rather than trusting a producer-set assertion.
         verified = verify_in_fresh_process(outcome.candidate, self._artifacts.verifier_root)
         verified_state = transition(current, current.version, "verify", candidate=verified)
         reviewed = transition(verified_state, verified_state.version, "review")
