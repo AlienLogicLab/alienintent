@@ -8,12 +8,12 @@ import sqlite3
 from typing import Mapping
 
 from alienintent.execution_coordination.ports.operational_store import (
-    Effect, OperationalStore, Receipt, Reservation, ReservationRejected, SchemaIncompatible,
+    Effect, OperationalStore, Receipt, Reservation, ReservationRejected, SchemaIncompatible, SchemaPreflight,
     StaleFence, StoreUnavailable, VersionConflict,
 )
 
 
-SCHEMA_VERSION = 1
+SCHEMA_VERSION = 2
 
 
 class SQLiteOperationalStore(OperationalStore):
@@ -33,25 +33,61 @@ class SQLiteOperationalStore(OperationalStore):
 
     def _initialize(self) -> None:
         with self._connect() as connection:
-            exists = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='operational_schema'").fetchone()
-            if exists:
-                version = connection.execute("SELECT version FROM operational_schema").fetchone()[0]
-                if version > SCHEMA_VERSION:
-                    raise SchemaIncompatible(f"database schema {version} is newer than supported {SCHEMA_VERSION}")
-                if version != SCHEMA_VERSION:
-                    raise SchemaIncompatible(f"database schema {version} requires an explicit migration")
+            preflight = self._preflight(connection)
+            if preflight.current_version == SCHEMA_VERSION:
+                return
+            if preflight.migration:
+                self._migrate(connection, *preflight.migration)
                 return
             connection.executescript("""
                 BEGIN IMMEDIATE;
                 CREATE TABLE operational_schema (version INTEGER NOT NULL);
                 CREATE TABLE aggregates (profile TEXT NOT NULL, identity TEXT NOT NULL, version INTEGER NOT NULL, state TEXT NOT NULL, PRIMARY KEY(profile, identity));
-                CREATE TABLE receipts (profile TEXT NOT NULL, event_id TEXT NOT NULL, digest TEXT NOT NULL, aggregate TEXT NOT NULL, version INTEGER NOT NULL, PRIMARY KEY(profile, event_id));
+                CREATE TABLE receipts (profile TEXT NOT NULL, event_id TEXT NOT NULL, digest TEXT NOT NULL, aggregate TEXT NOT NULL, version INTEGER NOT NULL, status TEXT NOT NULL, PRIMARY KEY(profile, event_id));
                 CREATE TABLE reservations (profile TEXT NOT NULL, scope TEXT NOT NULL, resource_key TEXT NOT NULL, owner TEXT NOT NULL, fence INTEGER NOT NULL, PRIMARY KEY(profile, scope, resource_key));
                 CREATE TABLE fences (profile TEXT NOT NULL, scope TEXT NOT NULL, resource_key TEXT NOT NULL, fence INTEGER NOT NULL, PRIMARY KEY(profile, scope, resource_key));
                 CREATE TABLE effects (profile TEXT NOT NULL, identity TEXT NOT NULL, aggregate TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL, receipt TEXT, PRIMARY KEY(profile, identity));
-                INSERT INTO operational_schema VALUES (1);
+                CREATE TABLE schema_migrations (from_version INTEGER NOT NULL, to_version INTEGER NOT NULL, reversible INTEGER NOT NULL, PRIMARY KEY(from_version, to_version));
+                INSERT INTO operational_schema VALUES (2);
                 COMMIT;
             """)
+
+    @classmethod
+    def preflight(cls, path: Path) -> SchemaPreflight:
+        connection = sqlite3.connect(path)
+        try:
+            return cls._preflight(connection)
+        except sqlite3.Error as error:
+            raise StoreUnavailable(str(error)) from error
+        finally:
+            connection.close()
+
+    @staticmethod
+    def _preflight(connection: sqlite3.Connection) -> SchemaPreflight:
+        exists = connection.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='operational_schema'").fetchone()
+        if not exists:
+            return SchemaPreflight(None, None)
+        version = connection.execute("SELECT version FROM operational_schema").fetchone()[0]
+        if version > SCHEMA_VERSION:
+            raise SchemaIncompatible(f"database schema {version} is newer than supported {SCHEMA_VERSION}")
+        if version == SCHEMA_VERSION:
+            return SchemaPreflight(version, None)
+        if version == 1:
+            return SchemaPreflight(version, (1, 2))
+        raise SchemaIncompatible(f"database schema {version} has no safe migration to {SCHEMA_VERSION}")
+
+    @staticmethod
+    def _migrate(connection: sqlite3.Connection, from_version: int, to_version: int) -> None:
+        if (from_version, to_version) != (1, 2):
+            raise SchemaIncompatible(f"database schema {from_version} has no safe migration to {to_version}")
+        connection.executescript("""
+            BEGIN IMMEDIATE;
+            ALTER TABLE receipts ADD COLUMN status TEXT NOT NULL DEFAULT 'applied';
+            CREATE TABLE schema_migrations (from_version INTEGER NOT NULL, to_version INTEGER NOT NULL, reversible INTEGER NOT NULL, PRIMARY KEY(from_version, to_version));
+            INSERT INTO schema_migrations VALUES (1, 2, 0);
+            UPDATE operational_schema SET version=2;
+            COMMIT;
+        """)
 
     def receive(self, profile: str, event_id: str, digest: str, aggregate: str, expected_version: int, state: Mapping[str, object]) -> Receipt:
         with self._transaction() as connection:
@@ -60,8 +96,28 @@ class SQLiteOperationalStore(OperationalStore):
                 return Receipt(event_id, prior["aggregate"], prior["version"])
             self._ensure_unblocked(connection, profile, aggregate)
             version = self._commit(connection, profile, aggregate, expected_version, state)
-            connection.execute("INSERT INTO receipts VALUES (?, ?, ?, ?, ?)", (profile, event_id, digest, aggregate, version))
+            connection.execute("INSERT INTO receipts VALUES (?, ?, ?, ?, ?, 'applied')", (profile, event_id, digest, aggregate, version))
             return Receipt(event_id, aggregate, version)
+
+    def record_receipt(self, profile: str, event_id: str, digest: str, aggregate: str) -> Receipt:
+        with self._transaction() as connection:
+            prior = connection.execute("SELECT aggregate, version FROM receipts WHERE profile=? AND event_id=?", (profile, event_id)).fetchone()
+            if prior:
+                return Receipt(event_id, prior["aggregate"], prior["version"])
+            connection.execute("INSERT INTO receipts VALUES (?, ?, ?, ?, 0, 'received')", (profile, event_id, digest, aggregate))
+            return Receipt(event_id, aggregate, 0)
+
+    def apply_receipt(self, profile: str, event_id: str, expected_version: int, state: Mapping[str, object], effect_id: str, payload: Mapping[str, object]) -> int:
+        with self._transaction() as connection:
+            receipt = connection.execute("SELECT aggregate, status FROM receipts WHERE profile=? AND event_id=?", (profile, event_id)).fetchone()
+            if not receipt or receipt["status"] != "received":
+                raise ReservationRejected("receipt is not awaiting domain application")
+            aggregate = receipt["aggregate"]
+            self._ensure_unblocked(connection, profile, aggregate)
+            version = self._commit(connection, profile, aggregate, expected_version, state)
+            connection.execute("INSERT INTO effects VALUES (?, ?, ?, ?, 'pending', NULL)", (profile, effect_id, aggregate, json.dumps(payload, sort_keys=True)))
+            connection.execute("UPDATE receipts SET version=?, status='applied' WHERE profile=? AND event_id=?", (version, profile, event_id))
+            return version
 
     def commit(self, profile: str, aggregate: str, expected_version: int, state: Mapping[str, object]) -> int:
         with self._transaction() as connection:
@@ -96,7 +152,15 @@ class SQLiteOperationalStore(OperationalStore):
             return version
 
     def mark_effect_unknown(self, profile: str, effect_id: str) -> None:
-        self._set_effect(profile, effect_id, "unknown", None)
+        self.claim_effect(profile, effect_id)
+
+    def claim_effect(self, profile: str, effect_id: str) -> Effect:
+        with self._transaction() as connection:
+            row = connection.execute("SELECT identity, aggregate, payload FROM effects WHERE profile=? AND identity=? AND status='pending'", (profile, effect_id)).fetchone()
+            if not row:
+                raise ReservationRejected("effect is not pending execution")
+            connection.execute("UPDATE effects SET status='unknown' WHERE profile=? AND identity=?", (profile, effect_id))
+            return Effect(row["identity"], row["aggregate"], json.loads(row["payload"]))
 
     def confirm_effect(self, profile: str, effect_id: str, receipt: str) -> None:
         self._set_effect(profile, effect_id, "confirmed", receipt)
