@@ -25,7 +25,7 @@ class GitWorktreeAdapter(WorkspaceManager):
     def _git(self, *args: str, cwd: Path | None = None) -> None:
         result = subprocess.run(["git", *args], cwd=cwd or self._repository, capture_output=True, text=True, check=False)
         if result.returncode:
-            raise CandidateUnavailable(result.stderr.strip() or "git worktree operation failed")
+            raise CandidateUnavailable("git worktree operation failed")
 
     def allocate(self, invocation_id: str, owner: str, baseline: str) -> GitWorkspace:
         if not invocation_id or not owner or any(part in invocation_id for part in ("/", "\\", "..", "\x00")):

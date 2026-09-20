@@ -12,13 +12,16 @@ from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOpera
 from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.installation.domain.github_profile import GitHubProfile
 from alienintent.installation.ports.secret_provider import SecretProvider
+from alienintent.execution_coordination.ports.worker_provider import WorkerProvider
 
 
 class GitHubProfileComposition:
     """Wire configuration-owned references at the outer boundary only."""
 
-    def __init__(self, profile: GitHubProfile, secrets: SecretProvider, database: Path, snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, notify: Callable[[str], None], projection_write: Callable[[str, str, str, int], int] | None = None) -> None:
+    def __init__(self, profile: GitHubProfile, secrets: SecretProvider, database: Path, snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, notify: Callable[[str], None], projection_write: Callable[[str, str, str, int], int] | None = None, worker: WorkerProvider | None = None) -> None:
         self.store = SQLiteOperationalStore(database)
         writer = projection_write or (lambda identity, field, state, revision: -1)
         self.work = GitHubProjectsWorkManagement(profile.profile, profile.repository, profile.lifecycle_statuses, profile.projection_fields, snapshot, contract, writer)
         self.ingress = GitHubWebhookIngress(profile.profile, profile.repository, secrets.resolve(profile.webhook_secret_reference), self.store, notify)
+        # Production composition supplies RealWorkerProvider; offline tests retain their double.
+        self.worker = worker
