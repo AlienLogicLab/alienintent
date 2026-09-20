@@ -1,0 +1,74 @@
+"""Sanitized command-line presentation adapter for the operator control plane."""
+from __future__ import annotations
+
+import argparse
+import importlib
+import json
+import re
+import sys
+from dataclasses import asdict, is_dataclass
+from typing import Any
+
+from alienintent.control_plane.application.operator import OperatorControlPlane
+
+
+def _sanitize(value: object) -> str:
+    return re.sub(r"(?i)(token|secret|key)=[^\s]+", r"\1=[REDACTED]", str(value))
+
+
+def _factory(reference: str) -> Any:
+    module, separator, name = reference.partition(":")
+    if not separator:
+        raise ValueError("profile factory must be module:callable")
+    return getattr(importlib.import_module(module), name)()
+
+
+def _parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(prog="alienintent")
+    parser.add_argument("--json", action="store_true")
+    parser.add_argument("--profile-factory")
+    sub = parser.add_subparsers(dest="command", required=True)
+    sub.add_parser("version"); sub.add_parser("status"); sub.add_parser("health")
+    explain = sub.add_parser("explain"); explain.add_argument("target")
+    for command in ("run", "resume", "stop", "cancel", "reconcile"):
+        item = sub.add_parser(command); item.add_argument("target", nargs="?", default="service")
+        _mutation(item)
+    decisions = sub.add_parser("decisions").add_subparsers(dest="decision_command", required=True)
+    decisions.add_parser("list")
+    show = decisions.add_parser("show"); show.add_argument("identity")
+    decide = decisions.add_parser("decide"); decide.add_argument("identity"); decide.add_argument("--choice", required=True); _mutation(decide)
+    return parser
+
+
+def _mutation(parser: argparse.ArgumentParser) -> None:
+    parser.add_argument("--actor", required=True); parser.add_argument("--authority", required=True)
+    parser.add_argument("--expected-version", type=int, required=True); parser.add_argument("--reason", required=True); parser.add_argument("--idempotency-key", required=True)
+
+
+def _render(value: object, machine: bool) -> None:
+    if is_dataclass(value): value = asdict(value)
+    print(json.dumps(value, default=str, sort_keys=True, indent=None if machine else 2))
+
+
+def main(argv: list[str] | None = None) -> int:
+    args = None
+    try:
+        raw = list(sys.argv[1:] if argv is None else argv)
+        for flag in ("--json", "--profile-factory"):
+            if flag in raw and raw.index(flag) > 0:
+                index = raw.index(flag); values = raw[index:index + (2 if flag == "--profile-factory" else 1)]; del raw[index:index + len(values)]; raw[0:0] = values
+        args = _parser().parse_args(raw)
+        if args.command == "version": _render({"version": "0.0.0", "install": "python-package"}, args.json); return 0
+        if not args.profile_factory: raise ValueError("--profile-factory is required")
+        profile = _factory(args.profile_factory)
+        service = OperatorControlPlane(profile.name, profile.store, profile.work, profile.coordinator, profile.readiness)
+        if args.command == "status": value = service.status()
+        elif args.command == "health": value = {"live": True, "ready": bool(profile.readiness())}
+        elif args.command == "explain": value = service.explain(args.target)
+        elif args.command == "decisions":
+            value = service.decisions_list() if args.decision_command == "list" else service.decisions_show(args.identity) if args.decision_command == "show" else service.decisions_decide(args.identity, target=args.identity, **vars(args))
+        else:
+            value = getattr(service, args.command)(**vars(args))
+        _render(value, args.json); return 0
+    except Exception as error:
+        _render({"error": _sanitize(error)}, bool(getattr(args, "json", False))); return 2
