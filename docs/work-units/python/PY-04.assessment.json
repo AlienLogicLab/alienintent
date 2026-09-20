@@ -1,38 +1,35 @@
 {
-  "disposition": "NEEDS_CLARIFICATION",
-  "governing_intent": "Prove an offline, event-driven continuous-factory walking skeleton using deterministic test doubles, durable restart recovery, priority/dependency/WIP scheduling, rolling refill, and no provider spend or Node change.",
-  "summary": "The loop\u2019s scope, exclusions, requirement extents, and most executable acceptance evidence are well bounded. One Founder-level custody decision remains: the contract introduces a local content-addressed artifact path as the candidate for VERIFY while expressly deferring the fresh independent verifier invocation and its provenance to PY-06.",
-  "owner_clarifications": [
-    "Approve the stated offline custody interpretation as a bounded PY-04 exception/equivalence: a digest-identified durable local artifact retrieved and verified by a fresh independent process may satisfy SF-REQ-007 for deterministic test infrastructure; or require PY-04 to stop before VERIFY and defer VERIFY through DONE to PY-06."
-  ],
+  "disposition": "READY",
+  "governing_intent": "Prove an offline, event-driven continuous-factory walking skeleton with deterministic test doubles, durable restart recovery, priority/dependency/WIP scheduling, automatic refill, custody enforcement, and no provider spend or Node change.",
+  "summary": "PY-04 is bounded and executable without inventing Founder or architecture decisions. SWF-12 resolves the previously material local-artifact custody question; PY-03 implementation remains a sequencing dependency, not a readiness gap.",
+  "owner_clarifications": [],
   "implementation_unknowns": [
-    "Concrete WorkManagement and WorkerProvider port signatures and typed outcomes.",
-    "Fixture/event harness, restart-process entrypoint, run-summary schema, and SQLite transaction sequencing through PY-03.",
-    "Exact mechanical assertions for release provenance, ordering, event-triggered refill, no-repeat reconcile reads, and stop reasons.",
-    "How the approved offline verifier process will demonstrate independence and record its observations, if the owner approves that path."
+    "Concrete WorkManagement and WorkerProvider port signatures and typed outcome shapes.",
+    "Fixture format, coordinator process entrypoint, run-summary schema, and SQLite transaction sequencing through PY-03.",
+    "Implementation of the fresh-process artifact retrieval, digest read-back, and deterministic verifier observation path within SWF-12.",
+    "Concrete retention-policy injection and test fixture behavior without inventing a new retention policy."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "The required tests are substantive executable proof for the coordinator: real deterministic doubles, a real process restart over SQLite, custody-negative and evidence-negative cases, ordering/WIP/dependency/refill assertions, no-polling observation, and retained run evidence. It is not yet complete proof for the full lifecycle because the contract does not yet have owner-approved equivalence between its local-artifact verifier path and SF-REQ-007\u2019s fresh independent verifier requirement.",
+  "verification_assessment": "The acceptance criteria require real executable proof: coordinator-path tests using deterministic doubles, an actual SQLite-backed process restart, custody positive and negative cases, policy-evidence negative cases, priority/FIFO/dependency/WIP/refill assertions, and a no-repeated-read assertion. These tests exercise the real application boundary rather than mocked coordinator internals.",
   "expected_rework_locality": "LOW",
   "material_risks": [
-    "Treating a separate artifact-retrieval process as a fresh independent verifier without an explicit authorized equivalence.",
-    "Bypassing or weakening PY-02\u2019s VERIFY-entry guard to reach DONE.",
-    "Accidentally implementing PY-06 production custody mechanics in PY-04.",
-    "Allowing scripted success to become ACCEPT without policy evaluation over required evidence.",
-    "Injecting OFF-policy execution directly rather than crossing the same attributable release boundary as ON."
+    "The current checkout is on main but is not clean and is ahead of origin/main; implementation must begin from the contract-required released clean baseline.",
+    "PY-02's custody guard must remain active; a scripted success or missing/failed independent read-back must not reach VERIFY or ACCEPT.",
+    "PY-04 must not absorb PY-06 production worktree, remote-publication, or source-control custody mechanics.",
+    "The scripted worker must remain test infrastructure and not be represented as SF-REQ-039 capability."
   ],
-  "next_action": "Obtain the bounded offline-custody decision, then amend PY-04 to state the authorized verifier/custody path precisely or limit its lifecycle proof before VERIFY.",
-  "rationale": "Priority ownership, release policy, WIP, recovery, layering, no-polling, and scripted-worker status are resolved by binding authority; their concrete implementation is delegated. However, SF-REQ-007 requires retrieval by a fresh independent verifier, Architecture Authority \u00a75 defines verifier independence, and PY-04 explicitly labels its alternative local-artifact interpretation as surfaced for Founder confirmation while deferring the separately invoked verifier and provenance to PY-06. That is an authority boundary, not ordinary engineering detail.",
+  "next_action": "After PY-03 is accepted and a clean released main baseline is available, release PY-04 for implementation and execute its acceptance suite.",
+  "rationale": "Priority ownership, release ON/OFF semantics, lifecycle ownership, no-polling, WIP, recovery, port direction, budget constraints, and offline local-artifact custody are all fixed by binding authority. SWF-12 explicitly authorizes the local content-addressed artifact path and requires its fresh-process digest verification before VERIFY. Remaining choices are normal implementation detail inside those constraints, and the coordinator plus its necessary offline proof infrastructure form one coherent decision center.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
     "compatibility": "COMPATIBLE_UNVERIFIED",
     "capability_probe": "PASSED",
     "invocation": "codex exec --ephemeral --json --sandbox read-only",
-    "baseline": "c32830b",
+    "baseline": "b809bb3",
     "assessed": "2026-09-20",
     "request": "PY-04.request.md",
-    "note": "reassessment after applying first-pass Agent-Ready findings"
+    "note": "reassessment after SWF-12 candidate-custody decision"
   }
 }

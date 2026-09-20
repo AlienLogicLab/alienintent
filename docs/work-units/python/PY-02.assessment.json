@@ -1,32 +1,34 @@
 {
   "disposition": "READY",
   "governing_intent": "Implement the deterministic, I/O-free Execution Coordination domain kernel that owns released-BIU admission, lifecycle policy, scheduling, custody gating, verdict admissibility, and the BIU contract model.",
-  "summary": "PY-02 is bounded, coherent, and executable within approved authority. It deliberately implements pure policy only; durability, adapters, runtime invocation, and operational integration remain assigned to later BIUs.",
+  "summary": "PY-02 is bounded, coherent, and executable within approved authority. It implements pure policy only; persistence, adapters, runtime invocation, and operational integration remain assigned to later BIUs.",
   "owner_clarifications": [],
   "implementation_unknowns": [
-    "Choose concrete immutable Python value types, typed error/result shapes, canonical serialization, and digest algorithm.",
-    "Define precise pure-function APIs and table-driven fixtures for contract validation, admission, lifecycle transitions, scheduling, and verdict evaluation.",
-    "Extend the existing AST fitness checker with an appropriately scoped detection set for direct clock, randomness, and identifier-generation imports."
+    "Choose immutable Python value types, typed errors/results, canonical serialization, and a cryptographic digest algorithm.",
+    "Define pure-function APIs and table-driven fixtures for contract validation, admission, lifecycle transitions, scheduling, and verdict evaluation.",
+    "Represent trusted independent-read-back evidence as a domain input without performing retrieval in the pure domain.",
+    "Extend the existing AST fitness checker with a scoped detection set for direct clock, randomness, and identifier-generation imports."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "Real executable proof is specified: deterministic unit/table tests cover each acceptance rule; fitness must fail on deliberate violating fixtures and pass on the actual tree with preserved nonzero status; existing PY-01 fitness checks and the Node suite must also pass. The current PY-01 fitness harness already demonstrates the required fixture-versus-tree pattern and is a suitable extension point.",
+  "verification_assessment": "The contract requires real executable proof: deterministic unit and table-driven tests for every acceptance rule; fitness checks that fail on deliberate violating fixtures and pass on the actual tree while retaining real exit status; continued PY-01 fitness coverage; and a passing Node suite. The existing PY-01 fitness harness already demonstrates the required fixture-versus-tree pattern and is a suitable extension point.",
   "expected_rework_locality": "LOW",
   "material_risks": [
-    "The contract\u2019s readiness link points to PY-02.assessment.json, while the Wave 1 plan describes a PY-0N.request.md to PY-0N.assessment.json flow; this is documentation-path hygiene, not an implementation or authority blocker.",
-    "The exact Python representation and canonical digest serialization must be selected deterministically, but those are delegated engineering details constrained by the immutable, content-addressed contract requirement.",
-    "Lifecycle closure actions must remain contract-provided data and policy evaluation, without prematurely implementing persistence, external publication, or worker/runtime mechanics assigned to later BIUs."
+    "The precise canonical serialization and digest representation must be chosen deterministically; this is constrained implementation detail, not an owner decision.",
+    "Closure actions must remain contract-provided policy data; PY-02 must not pre-implement persistence, publication, worker invocation, or runtime custody mechanics assigned to later BIUs.",
+    "The inspected checkout is on main but has unrelated untracked files and is one commit ahead of origin/main; this does not alter contract readiness, but implementation must establish its authoritative baseline before editing."
   ],
-  "next_action": "Record this READY assessment, then move PY-02 through the authorized TASKS-to-READY workflow; do not begin implementation until separately authorized.",
-  "rationale": "Founder-approved authority fixes the ownership boundary, lifecycle vocabulary, release ON/OFF policy, budget fail-closed behavior, concurrency direction, candidate-custody invariant, Python module boundary, and Node coexistence constraints. The pre-Python reclassification explicitly identifies remaining API, schema, and fitness-rule detail as normal implementation work and found zero unresolved Founder-level decisions. PY-02\u2019s scope, non-goals, requirement extents, dependency, and mechanical acceptance criteria align with the approved Wave 1 DAG without creating a second decision center.",
+  "next_action": "Record READY, then advance PY-02 through the authorized TASKS-to-READY workflow; do not implement until separately authorized.",
+  "rationale": "Founder-approved authority fixes the ownership boundary, lifecycle vocabulary, release ON/OFF policy, budget fail-closed behavior, concurrency direction, candidate-custody invariant, Python module boundary, and Node coexistence constraints. SWF-12 additionally resolves provider-neutral candidate custody. The pre-Python gate found zero unresolved Founder-level decisions, while remaining API, schema, and fitness-rule detail is normal engineering work. PY-02's scope, non-goals, requirement extents, dependency, and mechanical acceptance criteria align with the approved Wave 1 DAG without creating a second decision center.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
     "compatibility": "COMPATIBLE_UNVERIFIED",
     "capability_probe": "PASSED",
     "invocation": "codex exec --ephemeral --json --sandbox read-only",
-    "baseline": "e25da1f",
+    "baseline": "b809bb3",
     "assessed": "2026-09-20",
-    "request": "PY-02.request.md"
+    "request": "PY-02.request.md",
+    "note": "reassessment after SWF-12 candidate-custody decision"
   }
 }
