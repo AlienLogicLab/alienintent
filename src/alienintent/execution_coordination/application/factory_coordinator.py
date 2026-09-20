@@ -132,8 +132,10 @@ class FactoryCoordinator:
                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
                 return StopReason.BLOCKED
             read_back = self._record_result(item, completed, correlation, outcome.kind)
-            if outcome.kind == "authority-block" and outcome.escalation is not None:
-                self._register_escalation(outcome.escalation)
+            if outcome.kind == "authority-block":
+                self._register_escalation(outcome.escalation or self._authority_request(
+                    item, current.version, "The worker raised an authority block that requires a durable decision."
+                ))
                 self._block_dependents(item, self._work.import_ready_snapshot())
                 self._finalize_workspace(item.identity, correlation, retain=True)
             elif read_back:
@@ -192,13 +194,26 @@ class FactoryCoordinator:
                 pass
             _, raw = self._store.read_state(self._profile, self._aggregate(identity))
             if raw.get("correlation") == reservation.owner and raw.get("outcome") == outcome.kind:
+                if outcome.kind == "authority-block":
+                    self._restore_authority_block(
+                        item, replace(self._decode(raw), contract=item.contract), outcome, reservation.owner, items
+                    )
                 self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
                 continue
             current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
             if not self._record_result(item, self._completed_for_outcome(item, current, outcome), reservation.owner, outcome.kind):
                 return False
+            if outcome.kind == "authority-block":
+                self._restore_authority_block(item, current, outcome, reservation.owner, items)
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
         return True
+
+    def _restore_authority_block(self, item: ReadyWorkItem, state: ExecutionState, outcome: WorkerOutcome, correlation: str, items: Iterable[ReadyWorkItem]) -> None:
+        self._register_escalation(outcome.escalation or self._authority_request(
+            item, state.version, "The worker raised an authority block that requires a durable decision."
+        ))
+        self._block_dependents(item, items)
+        self._finalize_workspace(item.identity, correlation, retain=True)
 
     def _park_unknown_effect(self, item: ReadyWorkItem, reservation) -> bool:
         """Turn an unreadable FD-05 effect into a scoped, durable authority block."""
@@ -330,14 +345,20 @@ class FactoryCoordinator:
         state = self._decode(raw)
         items = self._work.import_ready_snapshot()
         if not already_recorded:
-            decision_state = self._encode(state) | {"outcome": "decision-recorded", "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice}
-            authorized = (
-                record.submission.choice == "authorize"
-                and isinstance(raw.get("correlation"), str)
-                and self._store.authorize_unknown_effect(self._profile, raw["correlation"], self._aggregate(record.event.work_item), version, decision_state)
-            )
-            if not authorized:
+            outcome = "cancelled-by-decision" if record.submission.choice == "cancel" else "decision-recorded"
+            decision_state = self._encode(state) | {"outcome": outcome, "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice}
+            if record.submission.choice == "cancel":
                 self._store.commit(self._profile, self._aggregate(record.event.work_item), version, decision_state)
+            else:
+                authorized = (
+                    record.submission.choice == "authorize"
+                    and isinstance(raw.get("correlation"), str)
+                    and self._store.authorize_unknown_effect(self._profile, raw["correlation"], self._aggregate(record.event.work_item), version, decision_state)
+                )
+                if not authorized:
+                    self._store.commit(self._profile, self._aggregate(record.event.work_item), version, decision_state)
+        if record.submission.choice == "cancel":
+            return
         descendants = {record.event.work_item}
         changed = True
         while changed:

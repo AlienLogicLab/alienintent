@@ -24,6 +24,7 @@ from alienintent.execution_coordination.domain.lifecycle import ExecutionState, 
 from alienintent.control_plane.adapters.decision_notifier import WorkManagementDecisionNotifier
 from alienintent.control_plane.adapters.decision_notifier import NoOpDecisionNotifier
 from alienintent.execution_coordination.ports.operational_store import Effect, ReservationRejected
+from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
 from tests.execution_coordination.test_factory_coordinator import MemoryWorkManagement, ScriptedWorker, _item
 
 
@@ -140,6 +141,134 @@ def test_admission_authority_block_opens_a_decidable_request_and_resumes(tmp_pat
     inbox.submit(DecisionSubmission("morty", "SWF-21", "needs-authority", request.biu_version, request.biu_version, "grant-network", "authorize"))
 
     assert coordinator.state("needs-authority").stage is LifecycleStage.DONE
+
+
+def test_bare_worker_authority_block_is_escalated_scoped_and_decidable(tmp_path: Path) -> None:
+    """The production provider shape carries only an authority-block outcome."""
+    items = [_item("blocked", 0, 1), _item("dependent", 1, 2, ("blocked",)), _item("independent", 2, 3)]
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    worker = ScriptedWorker(artifacts, {"blocked": ["authority-block", "success"], "dependent": ["success"], "independent": ["success"]})
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement(items), worker, artifacts, "offline")
+
+    summary = coordinator.start()
+
+    assert summary.authority_blocked == ("blocked",)
+    assert coordinator.state("dependent").outcome == "blocked-by-authority"
+    request = DecisionInbox(store, coordinator, "offline").show("blocked")
+    assert isinstance(request, HumanDecisionRequired)
+    DecisionInbox(store, coordinator, "offline").submit(
+        DecisionSubmission("morty", "SWF-21", "blocked", request.biu_version, request.biu_version, "bare-worker-authorize", "authorize")
+    )
+    assert coordinator.state("blocked").stage is LifecycleStage.DONE
+    assert coordinator.state("dependent").stage is LifecycleStage.DONE
+
+
+def test_recovery_reconstructs_a_bare_worker_authority_escalation(tmp_path: Path) -> None:
+    items = [_item("blocked", 0, 1), _item("dependent", 1, 2, ("blocked",))]
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    correlation = "launch:blocked:0"
+    store.acquire("offline", "repository", "repo", correlation)
+    state = FactoryCoordinator._encode(ExecutionState.for_contract(items[0].contract))
+    store.commit_with_effect("offline", "factory:blocked", 0, state, correlation, {"correlation": correlation, "work": "blocked"})
+    worker = ScriptedWorker(artifacts, {"blocked": ["authority-block", "success"], "dependent": ["success"]}, durable=True)
+    worker.start(WorkerInvocation("blocked", correlation), items[0].contract, frozenset(), items[0].contract.budget_policy)
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement(items), worker, artifacts, "offline")
+
+    coordinator.start()
+
+    request = DecisionInbox(store, coordinator, "offline").show("blocked")
+    assert isinstance(request, HumanDecisionRequired)
+    assert coordinator.state("dependent").outcome == "blocked-by-authority"
+    DecisionInbox(store, coordinator, "offline").submit(
+        DecisionSubmission("morty", "SWF-21", "blocked", request.biu_version, request.biu_version, "recover-bare-authorize", "authorize")
+    )
+    assert coordinator.state("blocked").stage is LifecycleStage.DONE
+    assert coordinator.state("dependent").stage is LifecycleStage.DONE
+
+
+def test_recovery_reconstructs_an_authority_escalation_recorded_before_a_crash(tmp_path: Path) -> None:
+    items = [_item("blocked", 0, 1), _item("dependent", 1, 2, ("blocked",))]
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    correlation = "launch:blocked:0"
+    store.acquire("offline", "repository", "repo", correlation)
+    state = ExecutionState.for_contract(items[0].contract)
+    store.commit_with_effect("offline", "factory:blocked", 0, FactoryCoordinator._encode(state), correlation, {"correlation": correlation, "work": "blocked"})
+    store.claim_effect("offline", correlation)
+    worker = ScriptedWorker(artifacts, {"blocked": ["authority-block", "success"], "dependent": ["success"]}, durable=True)
+    worker.start(WorkerInvocation("blocked", correlation), items[0].contract, frozenset(), items[0].contract.budget_policy)
+    store.confirm_effect("offline", correlation, "outcome:authority-block")
+    interrupted = FactoryCoordinator(store, MemoryWorkManagement(items), worker, artifacts, "offline")
+    assert interrupted._record_result(items[0], state, correlation, "authority-block")
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement(items), worker, artifacts, "offline")
+
+    coordinator.start()
+
+    assert isinstance(DecisionInbox(store, coordinator, "offline").show("blocked"), HumanDecisionRequired)
+    assert coordinator.state("dependent").outcome == "blocked-by-authority"
+
+
+def test_defer_keeps_an_admission_escalation_open_for_later_authorization(tmp_path: Path) -> None:
+    item = _item("needs-authority", 0, 1)
+    contract = replace(item.contract, required_capabilities=("network",))
+    item = replace(item, contract=contract, readiness_digest=contract.content_digest)
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement([item]), ScriptedWorker(artifacts, {"needs-authority": ["success"]}), artifacts, "offline")
+    coordinator.start()
+    inbox = DecisionInbox(store, coordinator, "offline")
+    request = inbox.show("needs-authority")
+    assert isinstance(request, HumanDecisionRequired)
+
+    deferred = inbox.submit(DecisionSubmission("morty", "SWF-21", "needs-authority", 0, 0, "defer-admission", "defer"))
+
+    assert deferred.submission.choice == "defer"
+    assert inbox.show("needs-authority") == request
+    inbox.submit(DecisionSubmission("morty", "SWF-21", "needs-authority", 0, 0, "authorize-admission", "authorize"))
+    assert coordinator.state("needs-authority").stage is LifecycleStage.DONE
+
+
+def test_defer_keeps_a_real_unknown_effect_open_for_later_authorization(tmp_path: Path) -> None:
+    item = _item("blocked", 0, 1)
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    correlation = "launch:blocked:0"
+    store.acquire("offline", "repository", "repo", correlation)
+    state = FactoryCoordinator._encode(ExecutionState.for_contract(item.contract))
+    store.commit_with_effect("offline", "factory:blocked", 0, state, correlation, {"correlation": correlation, "work": "blocked"})
+    store.claim_effect("offline", correlation)
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement([item]), ScriptedWorker(artifacts, {"blocked": ["success"]}), artifacts, "offline")
+    coordinator.start()
+    inbox = DecisionInbox(store, coordinator, "offline")
+    request = inbox.show("blocked")
+    assert isinstance(request, HumanDecisionRequired)
+
+    inbox.submit(DecisionSubmission("morty", "SWF-21", "blocked", 0, 0, "defer-unknown", "defer"))
+
+    assert inbox.show("blocked") == request
+    inbox.submit(DecisionSubmission("morty", "SWF-21", "blocked", 0, 0, "authorize-unknown", "authorize"))
+    assert coordinator.state("blocked").stage is LifecycleStage.DONE
+
+
+def test_cancelled_worker_escalation_does_not_re_admit_the_worker_or_dependents(tmp_path: Path) -> None:
+    items = [_item("blocked", 0, 1), _item("dependent", 1, 2, ("blocked",))]
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    worker = EscalatingWorker(artifacts, {"blocked": ["authority-block", "success"], "dependent": ["success"]}, _escalation())
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement(items), worker, artifacts, "offline")
+    coordinator.start()
+    request = DecisionInbox(store, coordinator, "offline").show("blocked")
+    assert isinstance(request, HumanDecisionRequired)
+
+    DecisionInbox(store, coordinator, "offline").submit(
+        DecisionSubmission("morty", "SWF-21", "blocked", 0, 0, "cancel-worker", "cancel")
+    )
+
+    assert worker.dispatched == ["blocked"]
+    assert coordinator.state("blocked").outcome == "cancelled-by-decision"
+    assert coordinator.state("dependent").outcome == "blocked-by-authority"
 
 
 def test_noop_notifier_leaves_the_decision_inbox_usable(tmp_path: Path) -> None:

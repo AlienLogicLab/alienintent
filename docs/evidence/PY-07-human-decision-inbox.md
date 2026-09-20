@@ -7,14 +7,16 @@ It contains no credentials, live Issue mutations, or provider secrets.
 
 - Findings repaired: admission-path and unresolved-effect escalation registration
   and recovery (including the distinct authority-block outcome, reservation
-  release, scoped dependent blocking, and normal guarded re-admission). The
-  real SQLite unknown-effect path atomically records the authority block while
-  retaining the effect's `unknown` guard. Only a durable `authorize` decision
-  changes that guard to its explicitly authorized state; both crash recovery
-  and a lost live confirmation use that path.
-  interrupted decision application recovery;
-  PY-05 Work Management decision projection wiring; no-op notifier coverage;
-  subprocess restart proof; retained PY-07 evidence.
+  release, scoped dependent blocking, and normal guarded re-admission); bare
+  production-shaped `WorkerOutcome("authority-block")` escalation; non-terminal
+  `defer` handling on admission and real SQLite unknown-effect paths; and
+  non-resuming `cancel` handling. The real SQLite unknown-effect path atomically
+  records the authority block while retaining the effect's `unknown` guard.
+  `authorize` changes that guard to its explicitly authorized state; `defer`
+  leaves the request open for a later durable authorization. Crash recovery and a lost live
+  confirmation use the same authority-block path. PY-05 Work Management decision
+  projection wiring, no-op notifier coverage, subprocess restart proof, and
+  retained PY-07 evidence remain in scope.
 - Previously satisfied proof retained: worker-raised escalation, scoped dependent
   blocking, idempotent decision submission, stale-version rejection, reservation
   release, independent-work continuation, and delivery-failure isolation remain
@@ -34,11 +36,15 @@ It contains no credentials, live Issue mutations, or provider secrets.
   offline notifier leaves the inbox usable; a fresh subprocess submits a stored
   decision and reaches DONE.
   A real-worker authority-block result retains its allocated workspace while its
-  mutating reservation is released.
+  mutating reservation is released. A bare production-shaped worker authority
+  block now produces the same scoped, decidable behavior, including recovery
+  both before and after its authority-block result is recorded; `defer` remains
+  open and can be followed by `authorize` for admission and a real unknown
+  effect; `cancel` does not re-dispatch its blocked worker or dependent.
 
 ## Local executable checks
 
-- `python3 -m pytest -q` — exit 0; 123 passed.
+- `python3 -m pytest -q` — exit 0; 129 passed.
 - `python3 tools/fitness/check_architecture.py --root src/alienintent --check all`
   — exit 0; `PASS: all architecture fitness checks`.
 - `node scripts/check.mjs all` — exit 0; runtime 310/310 passed, preflight

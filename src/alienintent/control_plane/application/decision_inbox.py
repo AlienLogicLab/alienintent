@@ -22,6 +22,8 @@ class DecisionInbox:
     """Lists unresolved authority requests and records attributable decisions."""
 
     _INDEX = "decision-inbox"
+    _DEFERRED_CHOICES = frozenset({"defer"})
+    _CANCELLED_CHOICES = frozenset({"cancel"})
 
     def __init__(self, store: OperationalStore, admission: DecisionAdmission, profile: str) -> None:
         self._store, self._admission, self._profile = store, admission, profile
@@ -59,10 +61,13 @@ class DecisionInbox:
             open_request = next((entry for entry in self.list_open() if entry.work_item == submission.work_item), None)
             if open_request is not None and open_request.biu_version != existing.submission.biu_version:
                 return existing
+            if existing.submission.choice in self._DEFERRED_CHOICES:
+                return existing
             self._commit_new(existing)
             self._admission.record_decision(existing)
             self._close_open(submission.work_item)
-            self._admission.resume_after_decision()
+            if existing.submission.choice not in self._CANCELLED_CHOICES:
+                self._admission.resume_after_decision()
             return existing
         escalation = next((entry for entry in self.list_open() if entry.work_item == submission.work_item), None)
         if escalation is None or escalation.biu_version != submission.biu_version:
@@ -71,10 +76,13 @@ class DecisionInbox:
             raise ValueError("decision choice is not one of the escalated options")
         record = DecisionRecord(submission, DecisionRecorded(submission.work_item, submission.biu_version, submission.idempotency_key, submission.actor))
         self._admission.validate_decision(record)
-        self._commit_new(record)
+        self._commit_new(record, final=record.submission.choice not in self._DEFERRED_CHOICES)
+        if record.submission.choice in self._DEFERRED_CHOICES:
+            return record
         self._admission.record_decision(record)
         self._close_open(submission.work_item)
-        self._admission.resume_after_decision()
+        if record.submission.choice not in self._CANCELLED_CHOICES:
+            self._admission.resume_after_decision()
         return record
 
     def _record_for_key(self, key: str) -> DecisionRecord:
@@ -83,7 +91,7 @@ class DecisionInbox:
             raise KeyError(key)
         return _decode_record(raw)
 
-    def _commit_new(self, record: DecisionRecord) -> None:
+    def _commit_new(self, record: DecisionRecord, *, final: bool = True) -> None:
         payload = _encode_record(record)
         key = f"decision-key:{record.submission.idempotency_key}"
         version, existing = self._store.read_state(self._profile, key)
@@ -94,6 +102,8 @@ class DecisionInbox:
         try:
             if not existing:
                 self._store.commit(self._profile, key, version, payload)
+            if not final:
+                return
             work_key = f"decision:{record.event.work_item}"
             work_version, work_record = self._store.read_state(self._profile, work_key)
             if work_record:
