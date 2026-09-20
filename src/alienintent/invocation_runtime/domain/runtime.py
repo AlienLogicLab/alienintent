@@ -68,6 +68,12 @@ class RetrySchedule:
 
 
 @dataclass(frozen=True)
+class RetryEvidence:
+    attempts: int
+    next_eligible_at: float | None
+
+
+@dataclass(frozen=True)
 class CapabilityGrant:
     identifier: str
     biu_version: str

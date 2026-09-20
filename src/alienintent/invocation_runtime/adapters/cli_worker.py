@@ -17,7 +17,7 @@ class CliWorkerProvider(WorkerProcess):
         if permission_mode not in self._SAFE_MODES or not executable or any("\x00" in part for part in (executable, *arguments)):
             raise ValueError("explicit safe permission mode and safe arguments are required")
         self.capabilities = ProviderCapabilities(provider, dimensions)
-        self._executable, self._arguments, self._active = executable, arguments, {}
+        self._executable, self._arguments, self._active, self._completed = executable, arguments, {}, set()
 
     def run(self, invocation_id: str, role: InvocationRole, workspace: Path, wall_clock_seconds: float) -> ProcessResult:
         require_eligible(self.capabilities, frozenset({"wall-clock", "cancellation"}))
@@ -37,11 +37,14 @@ class CliWorkerProvider(WorkerProcess):
                 return ProcessResult("timeout", process.returncode, True, BudgetRecord.unknown())
         finally:
             self._active.pop(invocation_id, None)
+            self._completed.add(invocation_id)
 
     def cancel(self, invocation_id: str, reason: str) -> ProcessResult:
         process = self._active.get(invocation_id)
         if process is None:
-            return ProcessResult("already-finished", None, True, BudgetRecord.unknown())
+            if invocation_id in self._completed:
+                return ProcessResult("already-finished", None, True, BudgetRecord.unknown())
+            return ProcessResult("unresolved-recovery", None, False, BudgetRecord.unknown())
         process.terminate()
         try:
             process.wait(timeout=1)
@@ -49,4 +52,5 @@ class CliWorkerProvider(WorkerProcess):
             process.kill()
             process.wait()
         self._active.pop(invocation_id, None)
+        self._completed.add(invocation_id)
         return ProcessResult("cancelled", process.returncode, True, BudgetRecord.unknown())

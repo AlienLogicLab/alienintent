@@ -39,6 +39,60 @@ def test_retry_schedule_is_finite_and_records_next_eligible_event() -> None:
     assert schedule.next_after_failure(2, 11) is None
 
 
+def test_real_worker_retries_a_failed_process_and_records_next_eligible_event(tmp_path: Path) -> None:
+    """A disconnected retry value object cannot enforce the invocation budget."""
+    from alienintent.execution_coordination.domain.contract import BudgetPolicy
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import BudgetRecord, CapabilityGrant, InvocationRole, ProcessResult, ReservationBook
+
+    class Process:
+        capabilities = type("Caps", (), {"enforceable_dimensions": frozenset({"wall-clock", "cancellation"})})()
+        def __init__(self): self.calls = 0
+        def run(self, *_):
+            self.calls += 1
+            return ProcessResult("failure", 1, True, BudgetRecord.unknown())
+        def cancel(self, *_): return ProcessResult("cancelled", 0, True, BudgetRecord.unknown())
+    class Workspaces:
+        def allocate(self, invocation_id, owner, baseline): return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
+        def cleanup(self, *_): pass
+    class Source:
+        def revision(self, _): return "a" * 40
+        def publish_and_read_back(self, *_): raise AssertionError("not reached")
+
+    process = Process()
+    grant = CapabilityGrant("g", "PY-06@1", "p", InvocationRole.PRODUCER, "issue", "target", frozenset({"process-control", "git-write"}), 100)
+    worker = RealWorkerProvider(process, Source(), tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", Workspaces(), ReservationBook(1, 2), now=lambda: 1)
+    result = worker.start(WorkerInvocation("PY-06", "p"), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1, cancellation_limit=1, maximum_attempts=2, retry_limit=1))
+
+    assert process.calls == 2
+    assert result.kind == "failure"
+    assert worker.retry_evidence["p"].attempts == 2
+    assert worker.retry_evidence["p"].next_eligible_at is None
+
+
+def test_verifier_invocation_owns_a_workspace_and_counts_global_capacity(tmp_path: Path) -> None:
+    """Returning the producer outcome directly would make VERIFY self-approval-adjacent."""
+    from alienintent.execution_coordination.ports.worker_provider import WorkerOutcome
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import CapabilityGrant, InvocationRole, ReservationBook
+
+    class Workspaces:
+        def __init__(self): self.allocated = []; self.cleaned = []
+        def allocate(self, invocation_id, owner, baseline):
+            self.allocated.append((invocation_id, owner)); return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
+        def cleanup(self, workspace, _): self.cleaned.append(workspace.invocation_id)
+    spaces = Workspaces()
+    grant = CapabilityGrant("g", "PY-06@1", "producer", InvocationRole.PRODUCER, "issue", "target", frozenset(), 100)
+    worker = RealWorkerProvider(None, None, tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", spaces, ReservationBook(1, 1), now=lambda: 1)
+    worker._outcomes["producer"] = WorkerOutcome("success")
+
+    assert worker.verify("producer", "producer").kind == "self-approval-rejected"
+    assert worker.verify("producer", "verifier").kind == "success"
+    assert spaces.allocated == [("verifier", "verifier")]
+    assert spaces.cleaned == ["verifier"]
+
+
 def test_source_candidate_must_be_published_and_read_back_from_a_fresh_clone(tmp_path: Path) -> None:
     """Removing publication or fresh-clone verification must reject VERIFY entry."""
     from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
@@ -83,6 +137,12 @@ def test_grant_denies_cross_target_and_revocation_fences_new_actions() -> None:
         grant.revoke("operator").require("git-write", "AlienLogicLab/alienintent", 99)
 
 
+def test_source_candidate_evidence_redacts_remote_credentials() -> None:
+    from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
+
+    assert GitSourceControl._evidence_remote("https://user:sentinel-token@example.invalid/repo.git") == "https://example.invalid/repo.git"
+
+
 def test_hard_required_unenforceable_budget_is_ineligible_and_unknown_cost_is_not_zero() -> None:
     """Dropping hard dimensions or defaulting missing spend to zero must fail this test."""
     from alienintent.invocation_runtime.domain.runtime import BudgetIneligible, BudgetRecord, ProviderCapabilities, require_eligible
@@ -121,6 +181,13 @@ def test_cli_adapter_cancels_a_live_child_process(tmp_path: Path) -> None:
     result = provider.cancel("live", "operator")
     thread.join(2)
     assert result.kind == "cancelled" and result.quiescent and not thread.is_alive()
+
+
+def test_cli_adapter_does_not_assert_quiescence_for_an_unknown_process(tmp_path: Path) -> None:
+    from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
+
+    result = CliWorkerProvider("python", sys.executable, ("-c", "pass"), "explicit", frozenset({"wall-clock", "cancellation"})).cancel("unknown", "operator")
+    assert result.kind == "unresolved-recovery" and not result.quiescent
 
 
 def test_workspace_cleanup_retains_a_plausibly_live_owned_workspace(tmp_path: Path) -> None:
