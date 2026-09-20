@@ -238,6 +238,21 @@ def test_github_composition_wires_profile_secret_store_and_acl_without_live_api(
     assert composed.work.import_ready_snapshot()[0].identity == "PY-05"
 
 
+def test_github_composition_wires_a_supplied_worker_through_the_factory_boundary(tmp_path: Path) -> None:
+    """Removing the real-profile worker path must make this integration fail."""
+    from alienintent.composition.github_profile import GitHubProfileComposition
+    from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
+    from alienintent.installation.domain.github_profile import GitHubProfile
+
+    secret = tmp_path / "webhook"
+    secret.write_text("sentinel-secret")
+    profile = GitHubProfile("alpha", "AlienLogicLab/alienintent", "PVT_1", {"READY": "READY"}, {"IMPLEMENT": "Execution"}, "webhook", automatic_release=True)
+    composed = GitHubProfileComposition(profile, ProtectedLocalFileSecretProvider({"webhook": secret}), tmp_path / "state.sqlite", lambda: (item(),), contract(), lambda _: None, worker=object())
+
+    assert composed.coordinator is not None
+    assert composed.coordinator._artifacts.verifier_root == tmp_path / "candidate-artifacts" / "verifier-evidence"
+
+
 def test_github_imported_unsatisfied_dependency_is_ineligible_to_the_factory(tmp_path: Path) -> None:
     from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
     from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator, StopReason

@@ -8,6 +8,7 @@ import subprocess
 import sys
 
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
+from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
 
 
 class LocalArtifactStore:
@@ -31,6 +32,8 @@ def candidate_from_record(record: dict[str, object]) -> CandidateRef:
 
 def verify_in_fresh_process(candidate: CandidateRef, verifier_root: Path) -> CandidateRef:
     """Transfer bytes in a fresh verifier process and bind verification to its copy."""
+    if candidate.kind is CandidateKind.SOURCE_REVISION:
+        return _verify_source_revision_in_fresh_clone(candidate, verifier_root)
     destination = verifier_root / candidate.content_digest.removeprefix("sha256:")
     code = (
         "from hashlib import sha256; from pathlib import Path; import shutil,sys; "
@@ -43,3 +46,26 @@ def verify_in_fresh_process(candidate: CandidateRef, verifier_root: Path) -> Can
         raise ValueError("independent candidate read-back did not prove identity")
     return CandidateRef(candidate.kind, candidate.identity, candidate.content_digest, str(destination), candidate.provenance, True)
 
+
+def _verify_source_revision_in_fresh_clone(candidate: CandidateRef, verifier_root: Path) -> CandidateRef:
+    """Control-plane custody check; a producer's read-back flag is never trusted."""
+    try:
+        prefix, reference = candidate.locator.rsplit("#", 1)
+        remote = prefix.removeprefix("git:")
+        branch, revision = reference.rsplit("@", 1)
+        if not remote or prefix == remote or not branch or len(revision) != 40:
+            raise ValueError
+    except ValueError:
+        raise ValueError("independent candidate read-back did not prove identity") from None
+    destination = verifier_root / revision
+    if destination.exists():
+        raise ValueError("independent candidate read-back requires a fresh clone")
+    advertised = subprocess.run(["git", "ls-remote", remote, f"refs/heads/{branch}"], check=False, capture_output=True, text=True)
+    if advertised.returncode or advertised.stdout.split()[:1] != [revision]:
+        raise CandidateUnavailable("candidate revision is not published at the requested branch")
+    result = subprocess.run(["git", "clone", "--no-checkout", remote, str(destination)], check=False, capture_output=True, text=True)
+    resolved = subprocess.run(["git", "rev-parse", f"{revision}^{{commit}}"], cwd=destination, check=False, capture_output=True, text=True) if result.returncode == 0 else result
+    expected_digest = f"sha256:{sha256(revision.encode()).hexdigest()}"
+    if resolved.returncode or resolved.stdout.strip() != revision or candidate.content_digest != expected_digest:
+        raise ValueError("independent candidate read-back did not prove identity")
+    return CandidateRef(candidate.kind, candidate.identity, candidate.content_digest, candidate.locator, candidate.provenance, True)
