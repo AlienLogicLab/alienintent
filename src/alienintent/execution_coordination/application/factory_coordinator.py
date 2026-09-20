@@ -8,12 +8,14 @@ from typing import Iterable
 
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore, verify_in_fresh_process
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
+from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired, SupersededDecision
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
 from alienintent.execution_coordination.domain.release import ReleaseRequest, ReleaseSource, admit_release
 from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, evaluate_verdict
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
 
 
 class StopReason(StrEnum):
@@ -26,6 +28,8 @@ class StopReason(StrEnum):
 class RunSummary:
     stop_reason: StopReason
     dispatched: tuple[str, ...]
+    authority_blocked: tuple[str, ...] = ()
+    failed: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -38,10 +42,12 @@ class ProjectedState:
 
 
 class FactoryCoordinator:
-    def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True) -> None:
+    def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True, notifier: DecisionNotifier | None = None) -> None:
         self._store, self._work, self._worker, self._artifacts, self._profile = store, work, worker, artifacts, profile
         self._automatic_release = automatic_release
         self._released: set[str] = set()
+        self._notifier = notifier
+        self.delivery_health: dict[str, DeliveryHealth] = {}
 
     def start(self) -> RunSummary:
         items = self._work.import_ready_snapshot()
@@ -54,7 +60,11 @@ class FactoryCoordinator:
                 return RunSummary(result, tuple(dispatched))
             if result is None:
                 dispatched.append(item.identity)
-        return RunSummary(self._stop_reason(items), tuple(dispatched))
+        return RunSummary(
+            self._stop_reason(items), tuple(dispatched),
+            tuple(item.identity for item in items if self._outcome(item.identity) == "authority-block"),
+            tuple(item.identity for item in items if self._outcome(item.identity) in {"failure", "timeout"}),
+        )
 
     def release_and_start(self, identity: str) -> RunSummary:
         version, existing = self._store.read_state(self._profile, self._release_aggregate(identity))
@@ -76,7 +86,7 @@ class FactoryCoordinator:
     def _eligible(self, item: ReadyWorkItem) -> bool:
         try:
             projected = self.state(item.identity)
-            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "failure", "timeout"}:
+            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "failure", "timeout"}:
                 return False
         except KeyError:
             pass
@@ -99,12 +109,16 @@ class FactoryCoordinator:
             return StopReason.CAPACITY_UNAVAILABLE
         read_back = False
         try:
-            self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, self._encode(current), correlation, {"correlation": correlation, "work": item.identity})
+            prepared = self._encode(current) | {key: raw[key] for key in ("decision_key", "decision_choice") if key in raw}
+            self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, prepared, correlation, {"correlation": correlation, "work": item.identity})
             self._store.claim_effect(self._profile, correlation)
             outcome = self._worker.start(WorkerInvocation(item.identity, correlation), item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
             self._store.confirm_effect(self._profile, correlation, f"outcome:{outcome.kind}")
             completed = self._completed_for_outcome(item, current, outcome)
             read_back = self._record_result(item, completed, correlation, outcome.kind)
+            if outcome.kind == "authority-block" and outcome.escalation is not None:
+                self._register_escalation(outcome.escalation)
+                self._block_dependents(item, self._work.import_ready_snapshot())
             self._work.project_execution_state(item.identity, completed.stage, completed.version)
             return None
         finally:
@@ -126,8 +140,11 @@ class FactoryCoordinator:
         return transition(accepted, accepted.version, "close", completed_closure_actions=frozenset(item.contract.required_closure_actions))
 
     def _record_result(self, item: ReadyWorkItem, state: ExecutionState, correlation: str, outcome: str) -> bool:
-        version, _ = self._store.read_state(self._profile, self._aggregate(item.identity))
+        version, prior = self._store.read_state(self._profile, self._aggregate(item.identity))
         persisted = self._encode(state) | {"correlation": correlation, "outcome": outcome}
+        for key in ("decision_key", "decision_choice"):
+            if key in prior:
+                persisted[key] = prior[key]
         self._store.commit(self._profile, self._aggregate(item.identity), version, persisted)
         _, read_back = self._store.read_state(self._profile, self._aggregate(item.identity))
         return read_back.get("correlation") == correlation and read_back.get("outcome") == outcome
@@ -214,3 +231,67 @@ class FactoryCoordinator:
         record = raw.get("candidate")
         candidate = CandidateRef(CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]), str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"])) if isinstance(record, dict) else None
         return ExecutionState(LifecycleStage(str(raw["stage"])), int(raw["version"]), candidate, bool(raw["accepted"]), frozenset(raw["closure"]), None)
+
+    def _register_escalation(self, escalation: HumanDecisionRequired) -> None:
+        version, raw = self._store.read_state(self._profile, "decision-inbox")
+        open_items = dict(raw.get("open", {}))
+        open_items.setdefault(escalation.work_item, {
+            "profile": escalation.profile, "project": escalation.project, "work_item": escalation.work_item,
+            "biu_version": escalation.biu_version, "decision": escalation.decision, "reason": escalation.reason,
+            "options": list(escalation.options), "tradeoffs": list(escalation.tradeoffs), "recommendation": escalation.recommendation,
+            "affected_requirements": list(escalation.affected_requirements), "affected_architecture": list(escalation.affected_architecture),
+            "cost_of_waiting": escalation.cost_of_waiting, "authorizations": list(escalation.authorizations),
+        })
+        self._store.commit(self._profile, "decision-inbox", version, {"open": open_items})
+        if self._notifier is not None:
+            self.delivery_health[escalation.work_item] = self._notifier.notify(escalation)
+
+    def _block_dependents(self, root: ReadyWorkItem, items: Iterable[ReadyWorkItem]) -> None:
+        pending = {root.identity}
+        all_items = tuple(items)
+        while pending:
+            parent = pending.pop()
+            for item in all_items:
+                if parent not in item.dependencies:
+                    continue
+                pending.add(item.identity)
+                version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
+                if raw.get("outcome") in {"authority-block", "blocked-by-authority"}:
+                    continue
+                state = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+                self._store.commit(self._profile, self._aggregate(item.identity), version, self._encode(state) | {"outcome": "blocked-by-authority", "blocked_by": root.identity})
+
+    def record_decision(self, record: DecisionRecord) -> None:
+        version, raw = self._store.read_state(self._profile, self._aggregate(record.event.work_item))
+        already_recorded = raw.get("decision_key") == record.event.idempotency_key
+        if not already_recorded:
+            self.validate_decision(record)
+        state = self._decode(raw)
+        items = self._work.import_ready_snapshot()
+        if not already_recorded:
+            self._store.commit(self._profile, self._aggregate(record.event.work_item), version, self._encode(state) | {"outcome": "decision-recorded", "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice})
+        descendants = {record.event.work_item}
+        changed = True
+        while changed:
+            changed = False
+            for item in items:
+                if item.identity not in descendants and any(parent in descendants for parent in item.dependencies):
+                    descendants.add(item.identity)
+                    changed = True
+        for item in items:
+            if item.identity not in descendants or item.identity == record.event.work_item:
+                continue
+            dependent_version, dependent = self._store.read_state(self._profile, self._aggregate(item.identity))
+            if dependent.get("outcome") == "blocked-by-authority":
+                self._store.commit(self._profile, self._aggregate(item.identity), dependent_version, dependent | {"outcome": "decision-recorded"})
+
+    def resume_after_decision(self) -> None:
+        self.start()
+
+    def validate_decision(self, record: DecisionRecord) -> None:
+        _, raw = self._store.read_state(self._profile, self._aggregate(record.event.work_item))
+        if not raw or raw.get("outcome") != "authority-block":
+            raise SupersededDecision("decision target is not authority blocked")
+        state = self._decode(raw)
+        if state.version != record.submission.expected_version or record.submission.biu_version != state.version:
+            raise SupersededDecision("decision target version is superseded")
