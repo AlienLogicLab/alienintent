@@ -9,6 +9,7 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 | PROP-2026-0003 | Persistent Control Plane with Bounded Coordinator Episodes | Workflow/architecture semantics + Product Requirement | [SWF-27](../decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md) | SF-REQ-053 | [#64](https://github.com/AlienLogicLab/alienintent/issues/64) | canonicalized 2026-09-20; P0 / Wave 2 assigned |
 | PROP-2026-0004 | Execution Evidence Derivation and Consistency Verification | Capability ratified; folded into an existing requirement | [SWF-28](../decisions/2026-09-20-evidence-and-intake-ratification.md) | **SF-REQ-030** (amendment) | [#45](https://github.com/AlienLogicLab/alienintent/issues/45) | ratified 2026-09-20; SF-REQ-054 retired, [#65](https://github.com/AlienLogicLab/alienintent/issues/65) closed as duplicate/superseded |
 | PROP-2026-0005 | Proposal Intake as a Product Capability | Product Requirement | [SWF-28](../decisions/2026-09-20-evidence-and-intake-ratification.md) | SF-REQ-055 | [#66](https://github.com/AlienLogicLab/alienintent/issues/66) | ratified 2026-09-20; CAPTURE; P1 / Wave 3 |
+| PROP-2026-0006 | Deterministic Actor-Launch Liveness Reconciliation | Product Requirement | [SWF-29](../decisions/2026-09-20-liveness-reconciliation.md) | SF-REQ-056 | [#67](https://github.com/AlienLogicLab/alienintent/issues/67) | canonicalized 2026-09-20; CAPTURE; P0 / Wave 2 |
 
 ## Intake rules
 
@@ -33,4 +34,6 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 
 ## Open Founder decisions
 
-None outstanding from proposal intake. SF-REQ-048, 049, 050, 051, 052, 053 and 055 all carry an assigned Priority and Wave.
+None outstanding from proposal intake.
+
+**PROP-2026-0006 note:** amendment to SF-REQ-001 or SF-REQ-008 was assessed first and rejected — both are Wave 1 and partly implemented, so folding a Wave 2 obligation into them would create the retrofit ambiguity the proposal forbids. Neither is amended; SF-REQ-056 is the single canonical owner. SF-REQ-048, 049, 050, 051, 052, 053 and 055 all carry an assigned Priority and Wave.

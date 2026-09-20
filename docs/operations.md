@@ -100,6 +100,36 @@ Human exception recovery requires `operator.authorizedGithubLogins`. The event m
 also follow the exception timestamp, change from a different status and match the
 current remote status. Worker/App identities cannot act as operators.
 
+## Bootstrap liveness reconciliation (temporary)
+
+**Status: temporary bootstrap responsibility, Founder-authorized 2026-09-20 ([SWF-29](decisions/2026-09-20-liveness-reconciliation.md)). It expires when the canonical Python liveness capability (SF-REQ-056) replaces it.**
+
+The Node bootstrap advances a BIU only on event delivery. A dropped delivery therefore leaves durable lifecycle state that requires an actor with no actor running, no error, and no retry. Until the canonical capability exists, the bootstrap coordinator enforces this rule.
+
+**Rule.** When an active BIU enters a lifecycle state that requires an actor or effect, the expected invocation/effect must appear within **5 minutes**.
+
+| Lifecycle state | Expected |
+|---|---|
+| IMPLEMENT | PRODUCER invocation |
+| VERIFY | VERIFIER invocation |
+| ACCEPT | required closure action, where the BIU contract requires closure work |
+
+**This is liveness reconciliation, not backlog polling.** Every 5 minutes the coordinator inspects **only active, nonterminal BIUs it already knows**. It never queries Work Management to discover new READY work.
+
+**Procedure**, per applicable BIU: identify current lifecycle state; determine the expected actor/effect; check for an active invocation; check pending claim, reservation, effect or outbox evidence where available; check for a recently completed correlated invocation or effect that may be awaiting projection; if matching evidence exists, do nothing; if none exists and the state is less than 5 minutes old, do nothing; if none exists and the state is at least 5 minutes old, classify **`LIVENESS_GAP`**, recover through the narrowest already-authorized idempotent mechanism, and record the detection, the evidence checked, the recovery and its result durably.
+
+**Hard rules.**
+
+- Never create a duplicate invocation merely because a webhook appears late.
+- Never interfere with an invocation that is active, pending or correlated.
+- Never poll the backlog for new work.
+- Never alter Node/B-DISP product semantics.
+- Never let this bootstrap rule silently become permanent architecture.
+
+**Recovery in the bootstrap is an authorized operator status re-emission.** That is evidence of the required outcome, not the canonical mechanism; SF-REQ-056 explicitly forbids status toggling as the permanent design.
+
+**Evidence.** Each detection appends a durable record to `~/.local/state/alienintent/coordinator-liveness.jsonl` and posts an attributable comment on the affected Issue, carrying BIU identity, lifecycle state, expected actor, state age, evidence checked, duplicate-prevention evidence, recovery action and result.
+
 ## Worktrees and recovery
 
 Repository-changing tasks outside the BIU lifecycle also require explicit
