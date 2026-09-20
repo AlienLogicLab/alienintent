@@ -52,10 +52,15 @@ def test_lifecycle_requires_readback_and_policy_verdict_then_rework_invalidates_
     state = transition(state, 1, "review")
     verdict = evaluate_verdict(EvidenceDefinition(frozenset({"tests"})), (Observation("tests", True, True),), worker_claimed_success=True)
     state = transition(state, 2, "accept", verdict=verdict)
-    reworked = transition(state, 3, "rework")
+    accepted = state
+    reworked = transition(accepted, 3, "rework")
 
     assert reworked.stage is LifecycleStage.IMPLEMENT
     assert not reworked.accepted
+    state = transition(reworked, 4, "verify", candidate=candidate)
+    state = transition(state, 5, "review")
+    state = transition(state, 6, "accept", verdict=verdict)
+    assert transition(state, 7, "close", completed_closure_actions=frozenset({"publish candidate"})).stage is LifecycleStage.DONE
     with pytest.raises(LifecycleError):
         transition(ExecutionState(), 0, "verify")
     with pytest.raises(AuthorityBlocked):
@@ -65,8 +70,8 @@ def test_lifecycle_requires_readback_and_policy_verdict_then_rework_invalidates_
     with pytest.raises(LifecycleError):
         transition(state, 99, "close")
     with pytest.raises(LifecycleError, match="closure"):
-        transition(state, 3, "close")
-    assert transition(state, 3, "close", completed_closure_actions=frozenset({"publish candidate"})).stage is LifecycleStage.DONE
+        transition(accepted, 3, "close")
+    assert transition(accepted, 3, "close", completed_closure_actions=frozenset({"publish candidate"})).stage is LifecycleStage.DONE
 
 
 def test_scheduling_honours_priority_fifo_and_capacity_without_blocking_independent_work() -> None:
@@ -80,6 +85,35 @@ def test_scheduling_honours_priority_fifo_and_capacity_without_blocking_independ
     assert [item.identity for item in selected] == ["first", "later"]
 
 
+def test_scheduling_honours_fifo_for_admissible_equal_and_absent_priorities() -> None:
+    items = (
+        ScheduledItem("equal-later", 2, "repo-a", "profile-a", 1, True),
+        ScheduledItem("absent-later", 4, "repo-b", "profile-b", None, True),
+        ScheduledItem("equal-first", 1, "repo-c", "profile-c", 1, True),
+        ScheduledItem("absent-first", 3, "repo-d", "profile-d", None, True),
+    )
+
+    selected = select_admissible(items, (), Capacity(global_limit=4, profile_mutating_limit=1))
+
+    assert [item.identity for item in selected] == ["equal-first", "equal-later", "absent-first", "absent-later"]
+
+
+def test_scheduling_withholds_mutating_work_at_profile_and_repository_limits() -> None:
+    active = (
+        ScheduledItem("profile-active", 0, "repo-a", "profile-a", None, True),
+        ScheduledItem("repository-active", 0, "repo-b", "profile-b", None, True),
+    )
+    items = (
+        ScheduledItem("profile-blocked", 1, "repo-c", "profile-a", None, True),
+        ScheduledItem("repository-blocked", 2, "repo-b", "profile-c", None, True),
+        ScheduledItem("independent", 3, "repo-d", "profile-d", None, True),
+    )
+
+    selected = select_admissible(items, active, Capacity(global_limit=5, profile_mutating_limit=1, repository_mutating_limit=1))
+
+    assert [item.identity for item in selected] == ["independent"]
+
+
 def test_verifier_counts_globally_but_not_against_mutating_repository_slot() -> None:
     verifier = ScheduledItem("verify", 1, "repo", "profile", None, True, mutating=False)
     producer = ScheduledItem("implement", 2, "repo", "profile", None, True)
@@ -89,4 +123,13 @@ def test_verifier_counts_globally_but_not_against_mutating_repository_slot() -> 
 
 def test_worker_claim_without_required_trusted_evidence_cannot_accept() -> None:
     verdict = evaluate_verdict(EvidenceDefinition(frozenset({"tests"})), (), worker_claimed_success=True)
+    assert verdict.kind is VerdictKind.REJECT
+
+
+def test_untrusted_observation_cannot_satisfy_required_evidence() -> None:
+    verdict = evaluate_verdict(
+        EvidenceDefinition(frozenset({"tests"})),
+        (Observation("tests", satisfied=True, trusted=False),),
+        worker_claimed_success=True,
+    )
     assert verdict.kind is VerdictKind.REJECT

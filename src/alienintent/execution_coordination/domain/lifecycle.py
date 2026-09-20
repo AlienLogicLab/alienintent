@@ -58,7 +58,14 @@ def transition(state: ExecutionState, expected_version: int, action: str, *, can
     if action == "rework":
         if state.stage not in {LifecycleStage.VERIFY, LifecycleStage.REVIEW, LifecycleStage.ACCEPT}:
             raise LifecycleError("rework is not permitted from this stage")
-        return ExecutionState(version=state.version + 1)
+        return replace(
+            state,
+            stage=LifecycleStage.IMPLEMENT,
+            version=state.version + 1,
+            candidate=None,
+            accepted=False,
+            completed_closure_actions=frozenset(),
+        )
     if action == "verify" and state.stage is LifecycleStage.IMPLEMENT:
         if candidate is None or not candidate.verify_admissible:
             raise LifecycleError("VERIFY requires a CandidateRef with independent read-back")

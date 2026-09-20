@@ -22,6 +22,8 @@ class BudgetPolicy:
     cancellation_limit: int | None = None
 
     def __post_init__(self) -> None:
+        if any(not dimension for dimension in self.hard_required_dimensions):
+            raise ContractValidationError("budget dimensions must be non-empty")
         if self.maximum_attempts < 1:
             raise ContractValidationError("maximum_attempts must be positive")
         if self.retry_limit < 0:
@@ -41,8 +43,6 @@ class BudgetPolicy:
         if self.cancellation_limit is not None:
             configured.append("cancellation")
         return tuple(dict.fromkeys(configured))
-        if any(not dimension for dimension in self.hard_required_dimensions):
-            raise ContractValidationError("budget dimensions must be non-empty")
 
 
 @dataclass(frozen=True)

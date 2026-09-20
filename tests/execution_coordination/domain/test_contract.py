@@ -49,3 +49,8 @@ def test_contract_has_stable_digest_and_changed_payload_changes_it() -> None:
 def test_contract_rejects_an_incomplete_required_field() -> None:
     with pytest.raises(ContractValidationError, match="intent"):
         valid_contract(intent="")
+
+
+def test_budget_policy_rejects_a_blank_hard_required_dimension() -> None:
+    with pytest.raises(ContractValidationError, match="budget dimensions"):
+        BudgetPolicy(hard_required_dimensions=("", "attempts"))
