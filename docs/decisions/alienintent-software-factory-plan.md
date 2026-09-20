@@ -849,6 +849,17 @@ Given a populated backlog with eligible READY BIUs, AlienIntent continuously exe
 
 Select next eligible READY BIU by external priority, then FIFO among equals/unprioritized, subject to dependencies and WIP. AlienIntent never invents product priority.
 
+**Amendment (2026-09-21, [SWF-21 release admission](2026-09-20-wave1-release-coordinator.md)) — admission preconditions.** Eligibility selects *which* BIU is next; admission decides whether it may enter IMPLEMENT at all. Before any READY/TASKS → IMPLEMENT release, and **before any worker is launched**, all of the following must hold, mechanically where possible:
+
+1. implementation is **explicitly authorized** by a durable release record;
+2. that record identifies the **exact baseline** revision;
+3. the baseline **resolves to a real repository revision**;
+4. the baseline is **compatible with — reachable from — the intended release point** as policy requires;
+5. **stale Issue wording stating that implementation is unauthorized cannot coexist with an authorized release** without an explicit superseding record;
+6. no worker is launched until these checks pass.
+
+A failed check is a refusal to transition, not a warning. This does not replace Agent-Ready or the dependency/WIP conditions; it is the record-completeness gate in front of them.
+
 ## SF-REQ-003 — Solve for N
 **Priority:** P0
 

@@ -118,6 +118,16 @@ The Node bootstrap advances a BIU only on event delivery. A dropped delivery the
 
 **Procedure**, per applicable BIU: identify current lifecycle state; determine the expected actor/effect; check for an active invocation; check pending claim, reservation, effect or outbox evidence where available; check for a recently completed correlated invocation or effect that may be awaiting projection; if matching evidence exists, do nothing; if none exists and the state is less than 5 minutes old, do nothing; if none exists and the state is at least 5 minutes old, classify **`LIVENESS_GAP`**, recover through the narrowest already-authorized idempotent mechanism, and record the detection, the evidence checked, the recovery and its result durably.
 
+**Judgment-required outcomes suppress recovery ([SWF-29 amendment](decisions/2026-09-20-liveness-reconciliation.md)).**
+A completed correlated outcome is evidence the actor **did** launch. If that outcome is
+`FOUNDER_EXCEPTION`, `HumanDecisionRequired` or another judgment-required blocking result, the watch
+records `LIVENESS_SUPPRESSED`, ensures a durable attention item exists, and **does not re-emit the
+lifecycle trigger** — no matter how long no actor has been running. Recovery resumes only after the
+item is acknowledged or a newer non-judgment outcome supersedes it.
+
+> Liveness reconciliation repairs missing effects; it must not retry completed effects whose result
+> requires judgment.
+
 **Hard rules.**
 
 - Never create a duplicate invocation merely because a webhook appears late. **The watcher's evidence check alone does not guarantee this**: it re-verifies the lane claim immediately before transitioning and verifies afterwards that exactly one claim exists, but prevention rests on the dispatcher's lane claim (`repository#issue:ROLE`, synchronous check-and-reserve). Delivery-id dedupe does **not** cover a re-emission, which carries a new delivery id, and the guarantee is single-process. See [SWF-29](decisions/2026-09-20-liveness-reconciliation.md) for the full limitations.
@@ -191,7 +201,23 @@ GitHub does not notify an author of their own comment or self-mention** — it w
 reach nobody. Delivery is best-effort and never silent: the durable item is written before the attempt,
 and every attempt records `delivered` with its channel or its error.
 
-Tests: `python3 -m pytest ~/.local/share/alienintent-bootstrap/test_attention.py test_notify_founder.py -q`.
+Tests: `python3 -m pytest ~/.local/share/alienintent-bootstrap/ -q` — attention queue, notification channel,
+liveness suppression and release admission.
+
+### Release admission gate
+
+Before every READY → IMPLEMENT release, and before any worker is launched:
+
+```
+python3 ~/.local/share/alienintent-bootstrap/release_admission.py <issue>
+```
+
+It checks the six preconditions of the [SF-REQ-002 admission amendment](decisions/alienintent-software-factory-plan.md)
+— implementation explicitly authorized, exact baseline named, baseline resolves, baseline reachable
+from the release point, no stale "not authorized" wording without a superseding record — prints each
+failure with its reason, and exits non-zero. **A failed check is a refusal to transition, not a
+warning.** The checklist is in [SWF-21](decisions/2026-09-20-wave1-release-coordinator.md); the
+incident that produced it is in [evidence](evidence/2026-09-21-liveness-retry-and-release-admission.md).
 
 This queue is bootstrap tooling, not the Decision Inbox. The Decision Inbox (SF-REQ-035, PY-07) owns
 durable authority decisions; this owns making a coordinator aware that judgment is needed. It expires

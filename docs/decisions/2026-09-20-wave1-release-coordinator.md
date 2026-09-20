@@ -37,6 +37,41 @@ When all hold: move the BIU from READY to IMPLEMENT, launch no worker, and let t
 
 When a condition fails: leave the BIU in READY or its current state, and report the blocking reason only if it needs human attention.
 
+## Release admission preconditions (amendment, 2026-09-21)
+
+The nine conditions decide *whether* a BIU may be released. They said nothing about the **record** of
+the release, and that omission produced a real failure: PY-07 was moved READY → IMPLEMENT with no
+release record naming a baseline, while its Issue body still said implementation was not authorized.
+Two producers read that, correctly refused with `FOUNDER_EXCEPTION`, and work proceeded only once an
+explicit release record with a resolvable baseline existed.
+
+Before the transition, and **before any worker is launched**, all six must hold:
+
+| # | Precondition | Mechanically checkable |
+|---|---|---|
+| 1 | Implementation is explicitly authorized by a durable release record | yes — record present and authorizing IMPLEMENT |
+| 2 | The record identifies the exact baseline revision | yes — a baseline SHA is named |
+| 3 | The baseline resolves to a real repository revision | yes — `git cat-file -e <sha>^{commit}` |
+| 4 | The baseline is reachable from the intended release point | yes — `git merge-base --is-ancestor <sha> origin/main` |
+| 5 | No stale "implementation is not authorized" wording without an explicit superseding record | yes — Issue body text |
+| 6 | No worker is launched until 1–5 pass | yes — refusal blocks the transition |
+
+Condition 3 is not hypothetical: a coordinator once published a baseline SHA that did not exist, and
+the producer refused to select one for itself. **A failed check is a refusal, not a warning.**
+
+Implemented as `release_admission.py` in the bootstrap tooling; run it before every release:
+
+```
+python3 ~/.local/share/alienintent-bootstrap/release_admission.py <issue>
+```
+
+It prints each failed check with its reason and exits non-zero. Covered by
+`test_release_admission.py` (14 tests). Replayed against the PY-07 incident as it actually stood, it
+refuses on exactly the two grounds the producers cited.
+
+The durable form of this rule is the **SF-REQ-002 admission amendment**; this section is the bootstrap
+coordinator's operational checklist for it. No new Product Requirement was created.
+
 ## Continuous operation
 
 When a BIU reaches DONE, evaluate the next dependency-eligible Wave 1 BIU. Re-run Agent-Ready if its contract or baseline has changed. If it is READY and all nine conditions hold, release it without waiting for the Founder to reconvene.

@@ -38,6 +38,43 @@ The watcher's evidence check (no active invocation, no lane claim, no live worke
 
 SF-REQ-056 requires the canonical Python capability to make recovery idempotent and fenced by durable correlation/effect identity, which is what closes this properly. Until then the guarantee is the bootstrap's, not the watcher's.
 
+### Amendment (2026-09-21) — liveness must not retry a completed effect awaiting judgment
+
+> **Liveness reconciliation repairs missing effects; it must not retry completed effects whose result
+> requires judgment.**
+
+**Motivating incident.** PY-07's producer raised `FOUNDER_EXCEPTION` at `16:56:35Z` and exited. The
+watch saw a nonterminal state with no running actor beyond the grace period, classified a
+`LIVENESS_GAP` at `17:04:41Z`, re-emitted the trigger, and a second producer refused identically at
+`17:05:55Z`. Nothing was broken: the rule as written could not tell *"the actor never launched"* from
+*"the actor ran, finished, and returned a result only a human can act on"*. Left alone it would have
+relaunched a producer every grace period.
+
+**Binding rule.**
+
+1. **A completed correlated actor outcome is evidence that the actor did launch.** It is not a missing
+   effect, whatever the outcome was.
+2. If that outcome is `FOUNDER_EXCEPTION`, `HumanDecisionRequired`, or another judgment-required
+   terminal/blocking result, it **suppresses actor-launch liveness recovery for that lane**.
+3. Liveness reconciliation **must not re-emit the lifecycle trigger** merely because no actor is
+   currently running after such an outcome.
+4. Instead it **creates or retains a durable attention item** and waits for judgment.
+5. Recovery **may resume only after the blocking outcome is explicitly resolved or superseded** —
+   the attention item acknowledged by a coordinator, or a newer non-judgment outcome recorded for the
+   same lane.
+
+**Deterministic check, implemented.** `judgment_suppression()` in the bootstrap watch:
+`FOUNDER_EXCEPTION` recorded + no active actor + age > 5 min now yields `LIVENESS_SUPPRESSED` with a
+durable attention item, **never another producer invocation**. The newest correlated outcome per lane
+decides; the suppression names the same attention item the observer already created, so a coordinator
+sees one item rather than two views of it. Covered by `test_liveness_suppression.py` (8 tests),
+including that an older judgment outcome does not block after newer progress and that acknowledgement
+lifts suppression.
+
+This narrows the SF-REQ-056 requirement it anticipates: the canonical Python capability must
+distinguish a missing effect from a completed effect awaiting judgment, or it will rediscover this
+defect with better machinery.
+
 ## Part 2 — PROP-2026-0006 canonicalized as SF-REQ-056
 
 ### Overlap analysis
