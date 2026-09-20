@@ -50,6 +50,15 @@ resources and their ownership metadata continue to follow the separate cleanup
 and retention rules in [operations](../operations.md#worktrees-and-recovery); do
 not treat them as manually owned temporary task branches.
 
+### Post-cleanup validation follow-up — 2026-09-20
+
+The post-cleanup validation concern was investigated and did not reproduce as a
+product regression. The initial subprocess-test anomalies were transient or
+environmental; no implementation or test-runner changes were made. Bounded
+confirmation: `rtk proxy timeout 60s node scripts/check.mjs all` exited 0 in
+17.4 seconds (runtime 310/310, preflight PASS, RAI 18/18, policy 2/2). No
+remediation was required.
+
 ### PARKED — `origin/feat/rai-foundations`
 
 - **Owner:** `netmarine` (commit author; no separate task owner is recorded).
