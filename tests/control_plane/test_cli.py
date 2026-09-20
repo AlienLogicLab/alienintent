@@ -54,3 +54,13 @@ def test_cli_returns_json_error_without_traceback_when_factory_leaks_secret(tmp_
     assert json.loads(result.stdout)["error"]
     assert "SENTINEL-LEAK" not in result.stdout + result.stderr
     assert "Traceback" not in result.stderr
+
+
+def test_cli_sanitizes_invalid_arguments(tmp_path: Path) -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "alienintent", "status", "--bad=secret=SENTINEL-ARG"],
+        text=True, capture_output=True, env=os.environ | {"PYTHONPATH": "src"}, check=False,
+    )
+
+    assert result.returncode != 0
+    assert "SENTINEL-ARG" not in result.stdout + result.stderr
