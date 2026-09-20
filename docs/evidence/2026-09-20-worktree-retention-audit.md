@@ -88,6 +88,25 @@ Node is frozen under Architecture Authority §42, so neither is changed there. O
 
 **PY-06 is in flight and is not amended.** Debt A is recorded here as planning input for the work that follows its acceptance; expanding a released BIU mid-cycle would violate SWF-20. Debt B is recorded in the PY-08 contract, which has not been released.
 
+### Debt A — resolved on landing (2026-09-20)
+
+PY-06 reached DONE and landed as merge `896c0fe`. The canonical Python cleanup does **not** reproduce
+the defect: `GitWorktreeAdapter.cleanup` in `src/alienintent/invocation_runtime/adapters/git_worktree.py`
+tests quiescence with
+
+```python
+status = subprocess.run(["git", "status", "--porcelain"], cwd=workspace.path, ...)
+```
+
+— **no `--ignored`**. Gitignored build and test artifacts therefore cannot by themselves mark a
+workspace as evidence-bearing, while real tracked or untracked content still retains it, which is
+exactly what debt A asked for. Ownership scoping (`is_relative_to` the managed root) and the liveness
+check (`/proc/<pid>`) are also present, and removal uses `git worktree remove`, so records deregister.
+**Debt A is closed in canonical Python; no follow-up work is owned.** The defect remains in the frozen
+Node bootstrap (Architecture Authority §42) and is not fixed there.
+
+Debt B remains open and is carried in the PY-08 contract.
+
 Neither requires a new Product Requirement: existing requirement and BIU authority owns both.
 
 ## Application of SWF-30 — final dispositions (2026-09-20)
