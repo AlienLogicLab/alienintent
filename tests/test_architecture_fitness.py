@@ -37,6 +37,7 @@ class ArchitectureFitnessTests(unittest.TestCase):
             "vendor-signature": "third-party type in domain signature",
             "port-contract": "adapter class has no declared port contract",
             "configuration": "configuration read outside composition",
+            "determinism": "direct nondeterministic facility import",
         }
         for check, expected in cases.items():
             with self.subTest(check=check):
