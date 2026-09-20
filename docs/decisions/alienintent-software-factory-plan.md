@@ -984,10 +984,30 @@ Record token/cost/time per attempt and accepted BIU, including retries. Cheap fa
 
 Record observable engineering trajectory independent of Git commits: actions, artifacts, checks, findings, repairs, policy/context versions, cost, outcomes. No private chain-of-thought required.
 
+Trajectory observations may carry versioned, evidence-backed failure classifications where supported: behavioral defect, evidence/proof defect, custody/identity defect, tooling/publication defect, process-instruction adherence, genuine authority required, false/escalated authority request, and provider-capacity interruption. Classification describes observed evidence and does not itself declare a verdict.
+
 ## SF-REQ-030 — Quality Evidence
 **Priority:** P4
 
 Derive durable Quality Evidence from trajectories; raw observation and learned hypothesis remain distinct.
+
+Derived evidence identifies its source trajectory/schema version and explicit evidence inputs. Where facts permit, aggregate metrics reconcile against those sources, including verifier cycles, RETURN_TO_IMPLEMENT, classified rejections, authority decisions, attributable human-blocked duration, candidate/merge identity, final verdict/landed/DONE and timestamp relationships. UNKNOWN or partial telemetry is never silently converted to zero. Contradictory derived evidence fails deterministic consistency verification.
+
+## SF-REQ-054 — Execution Evidence Derivation and Consistency Verification
+**Priority:** unset — Founder input required
+**Wave:** unset — Founder input required
+
+ExecutionTrajectory is factual evidence. QualityEvidence must be mechanically reconcilable against cited trajectory events and other explicitly referenced evidence wherever the underlying facts make reconciliation possible. Inconsistency fails verification. The requirement includes discriminating negative-control/proven-red checks where practical, including altered derived counts, unsupported UNKNOWN-to-zero substitution and impossible timestamp relations. No storage or runtime implementation is prescribed.
+
+Canonical Product Requirement: [Issue #65](https://github.com/AlienLogicLab/alienintent/issues/65), CAPTURE. Origin: PROP-2026-0004.
+
+## SF-REQ-055 — Proposal Intake as a Product Capability
+**Priority:** unset — Founder input required
+**Wave:** unset — Founder input required
+
+AlienIntent accepts proposals as immutable, noncanonical provenance until admitted through applicable authority; validates, classifies, deduplicates, resolves authority, canonicalizes into the appropriate artifact and durably maps proposal to canonical work. `proposal_id` provides idempotency, duplicate delivery creates no duplicate canonical work, and canonical artifacts own current state. Intake is provider-neutral; repository-backed `docs/proposals/` is an adapter. Intake cannot invent priority, Wave, product/architecture authority or create a BIU by receipt.
+
+Canonical Product Requirement: [Issue #66](https://github.com/AlienLogicLab/alienintent/issues/66), CAPTURE. Origin: PROP-2026-0005.
 
 ## SF-REQ-031 — Evidence-derived routing learning
 **Priority:** P4

@@ -6,6 +6,9 @@ This audit treats canonical Product Requirements and binding decision records as
 authority. Proposals and execution evidence identify gaps but do not create
 authority. It is documentation/intake work only: no BIU, implementation,
 runtime, worker, service, Project Status or live Wave 1 action was changed.
+Proposal Intake and the amendments recommended below were subsequently
+processed under explicit Founder instruction; see the dated disposition at the
+end of this report.
 
 ## Traceability matrix
 
@@ -20,7 +23,7 @@ runtime, worker, service, Project Status or live Wave 1 action was changed.
 | Coordinator local tooling/watchers | **IMPLEMENTATION DEBT** | SWF-27 / SF-REQ-053; SF-REQ-009; SF-REQ-048; PY-04 evidence | Copy-derived watcher misfires are local tooling reliability evidence, not a new product capability by themselves. | Retain as evidence for bounded coordinator episodes and add deterministic tooling checks only when the relevant implementation/design work is authorized. | SWF-27 / SF-REQ-053; no new requirement |
 | Temporary/bootstrap controls | **ALREADY COVERED** | SWF-26; SWF-27 / SF-REQ-053 | SWF-26 records authority, scope, expiry, provenance and replacement target for the historical gate. SWF-27 makes the general no-silent-promotion rule durable. | Preserve SWF-26 as expired evidence; apply standing rule through SF-REQ-053. | SWF-26 and SWF-27 |
 
-## Proposed amendments (not applied by this audit)
+## Amendments recommended by the audit
 
 ### SF-REQ-050 / SWF-24 — deterministic mutation semantics
 
@@ -98,6 +101,21 @@ architecture.
 - [Candidate-publication invariant](../evidence/candidate-publication-invariant.md),
   [PY-04 contract](../work-units/python/PY-04.md), [PY-06 contract](../work-units/python/PY-06.md),
   and [scheduling/recovery design](../architecture/pre-python-gate/scheduling-and-recovery.md).
+
+## Post-audit disposition — 2026-09-20
+
+The Founder directed Proposal Intake for PROP-2026-0004 and PROP-2026-0005,
+then directed materialization of both amendments above. The records now map to:
+
+- PROP-2026-0004 → **SF-REQ-054**, Issue [#65](https://github.com/AlienLogicLab/alienintent/issues/65), CAPTURE, Priority/Wave unset.
+- PROP-2026-0005 → **SF-REQ-055**, Issue [#66](https://github.com/AlienLogicLab/alienintent/issues/66), CAPTURE, Priority/Wave unset.
+- SF-REQ-050 / SWF-24 semantic mutation requirements are recorded in the
+  canonical decision and Issue [#61](https://github.com/AlienLogicLab/alienintent/issues/61).
+- SF-REQ-029 / SF-REQ-030 taxonomy and reconciliation semantics are recorded
+  in the canonical backlog plan and Issues [#44](https://github.com/AlienLogicLab/alienintent/issues/44) / [#45](https://github.com/AlienLogicLab/alienintent/issues/45).
+
+Proposal provenance files remain unchanged. The two implementation-debt items
+remain debt; no new Product Requirement was created for them.
 
 ## Non-actions
 

@@ -36,6 +36,21 @@ Acceptable proof techniques include proven-red tests, mutation testing, negative
 
 Failure-class identifier; originating findings; rule definition; deterministic check reference; proven-red / negative-control evidence; promotion authority; effective version/date; known limitations; supersession history.
 
+For each promoted mutation, proven-red or negative-control check, retain:
+
+- the governing binding rule;
+- the semantic violation intentionally introduced;
+- applicability conditions;
+- expected failing evidence and actual result;
+- one result: `KILLED`, `SURVIVED`, or `NOT_APPLIED`;
+- for `NOT_APPLIED`, why the mutation could not be applied; and
+- implementation/reference and provenance/version of the mutation/check.
+
+`NOT_APPLIED` must never count as `KILLED`. A source-code patch alone is not a
+mutation definition: the semantic rule violation being tested must be stated.
+The evidence must let a reviewer determine what rule was exercised and why the
+observed result follows.
+
 ## Effective scope
 
 This states what already counts as sufficient evidence under existing contract language — Architecture Authority §39, SF-REQ-018's requirement that fitness checks have negative controls proving they can fail, and each Wave 1 BIU's "executable proof" verification requirement. It is **not** a new obligation retroactively imposed on accepted evidence, and it does not reopen accepted BIUs.
