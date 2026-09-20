@@ -5,7 +5,9 @@ It contains no credentials, live Issue mutations, or provider secrets.
 
 ## Repair-cycle continuity
 
-- Findings repaired: admission-path and unresolved-effect escalation registration;
+- Findings repaired: admission-path and unresolved-effect escalation registration
+  and recovery (including the distinct authority-block outcome, reservation
+  release, scoped dependent blocking, and normal guarded re-admission);
   PY-05 Work Management decision projection wiring; no-op notifier coverage;
   subprocess restart proof; retained PY-07 evidence.
 - Previously satisfied proof retained: worker-raised escalation, scoped dependent
@@ -18,7 +20,9 @@ It contains no credentials, live Issue mutations, or provider secrets.
   cycle rule (SWF-23); the verifier's 2026-09-20 REJECT findings identify the
   bounded repair target.
 - Replacement proof: an admission refusal opens a complete decision request and
-  resumes through normal guards; unknown-effect handling registers a request;
+  resumes through normal guards; an unknown effect produces an authority block,
+  releases its reservation, blocks only its dependency closure, and is decidable
+  through the same normal guards;
   the GitHub Projects adapter delivers a recorded decision-comment fixture; the
   offline notifier leaves the inbox usable; a fresh subprocess submits a stored
   decision and reaches DONE.
@@ -44,6 +48,11 @@ The notifier tests use only recorded local fixtures. The GitHub Projects
 projection receives a `HumanDecisionRequired` and returns the fixture receipt
 `issue-comment:fixture-55`; no GitHub credential or live Issue comment is used
 by the product proof.
+
+The Decision Inbox implementation is in
+`control_plane/application/decision_inbox.py`, as required by Scope §4. The
+former execution-coordination import path is retained only as a compatibility
+import; no scope supersession is claimed.
 
 ## Closure accounting
 

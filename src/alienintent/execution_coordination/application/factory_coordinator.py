@@ -121,17 +121,21 @@ class FactoryCoordinator:
             outcome = self._worker.start(WorkerInvocation(item.identity, correlation), item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
             self._store.confirm_effect(self._profile, correlation, f"outcome:{outcome.kind}")
             completed = self._completed_for_outcome(item, current, outcome)
+            unresolved = self._has_unresolved_effect(item.identity)
+            if unresolved:
+                self._record_result(item, current, correlation, "authority-block")
+                self._register_escalation(self._authority_request(item, current.version, "The external effect outcome is unknown and requires reconciliation authority."))
+                self._block_dependents(item, self._work.import_ready_snapshot())
+                self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
+                return StopReason.BLOCKED
             read_back = self._record_result(item, completed, correlation, outcome.kind)
             if outcome.kind == "authority-block" and outcome.escalation is not None:
                 self._register_escalation(outcome.escalation)
                 self._block_dependents(item, self._work.import_ready_snapshot())
             self._work.project_execution_state(item.identity, completed.stage, completed.version)
-            if any(effect.aggregate == self._aggregate(item.identity) or effect.payload.get("work") == item.identity for effect in self._store.unresolved_effects(self._profile)):
-                self._register_escalation(self._authority_request(item, completed.version, "The external effect outcome is unknown and requires reconciliation authority."))
-                self._block_dependents(item, self._work.import_ready_snapshot())
             return None
         finally:
-            if read_back and not self._store.unresolved_effects(self._profile):
+            if read_back and not self._has_unresolved_effect(item.identity):
                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
 
     def _completed_for_outcome(self, item: ReadyWorkItem, current: ExecutionState, outcome: WorkerOutcome) -> ExecutionState:
@@ -214,6 +218,12 @@ class FactoryCoordinator:
             return self.state(identity).outcome
         except KeyError:
             return None
+
+    def _has_unresolved_effect(self, identity: str) -> bool:
+        return any(
+            effect.aggregate == self._aggregate(identity) or effect.payload.get("work") == identity
+            for effect in self._store.unresolved_effects(self._profile)
+        )
 
     def _is_released(self, identity: str) -> bool:
         if identity in self._released:
