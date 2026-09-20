@@ -52,7 +52,8 @@ class FactoryCoordinator:
             result = self._run(item)
             if result is StopReason.CAPACITY_UNAVAILABLE:
                 return RunSummary(result, tuple(dispatched))
-            dispatched.append(item.identity)
+            if result is None:
+                dispatched.append(item.identity)
         return RunSummary(self._stop_reason(items), tuple(dispatched))
 
     def release_and_start(self, identity: str) -> RunSummary:
