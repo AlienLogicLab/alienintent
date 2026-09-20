@@ -1,36 +1,36 @@
 {
   "disposition": "READY",
-  "governing_intent": "Implement the Python invocation runtime that executes real CLI workers under explicit grants and fail-closed budgets, while enforcing control-plane candidate custody: VERIFY requires an exact published revision independently read back in a fresh verifier checkout.",
-  "summary": "PY-06 is a coherent, bounded vertical slice. Its custody, workspace, provider, capability, budget, cancellation, retry, and verifier-independence rules are constrained by approved authority; its non-goals preserve the Node boundary and defer routing, sandbox backends, deployment, and live GitHub proof. PY-04 and PY-05 are sequencing dependencies, not unresolved ownership decisions.",
+  "governing_intent": "Implement the Python invocation runtime for real CLI workers under explicit grants and fail-closed budgets, enforcing candidate custody so VERIFY requires an exact published revision independently read back from a fresh checkout.",
+  "summary": "PY-06 is a bounded, coherent vertical slice. Its custody, workspace, provider, capability, budget, cancellation, retry, and verifier-independence rules are constrained by approved authority. PY-04 and PY-05 are sequencing dependencies, not unresolved owner decisions.",
   "owner_clarifications": [],
   "implementation_unknowns": [
-    "Select the existing CLI provider adapter(s) that can satisfy the BIU's declared hard budget dimensions, using a bounded compatibility probe.",
-    "Define typed port records, error/rejection shapes, process-supervision mechanics, Git command mechanics, and grant/profile representations within the approved hexagonal constraints.",
-    "Choose deterministic local Git fixtures, including an independently reachable local remote, for publication and fresh-checkout read-back proof.",
-    "Determine the least-cost configured provider CLI invocation that can evidence the real adapter path; unavailable credentials or an ineligible provider are external/runtime blockers with typed outcomes, not product decisions."
+    "Select eligible existing CLI provider adapter(s) through bounded capability probes.",
+    "Define typed port records, rejection shapes, process supervision, Git mechanics, and grant representations within the approved architecture.",
+    "Choose deterministic local Git fixtures, including an independently reachable remote, for publication and fresh-checkout proof.",
+    "Determine the minimum-cost real provider invocation that evidences the adapter path."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "Real executable proof is required and observable: real Git worktrees, publication and fresh-checkout read-back; separate producer/verifier invocations and provenance; negative custody and self-approval tests; real child-process timeout and cancellation; at least one bounded real provider CLI invocation; deterministic fakes only for remaining cases; retained evidence and Node-suite/fitness results. This is stronger than descriptive verification.",
+  "verification_assessment": "Verification is real executable proof: actual Git worktrees, publication and fresh-checkout read-back; independent producer/verifier invocations; negative custody and self-approval cases; real child-process timeout and cancellation; one bounded real provider CLI invocation; deterministic fakes only for remaining cases; retained evidence plus Node-suite and fitness results.",
   "expected_rework_locality": "MEDIUM",
   "material_risks": [
-    "A configured CLI provider may be unavailable or unable to enforce a BIU-marked hard budget dimension; the contract correctly requires ineligibility rather than downgrade.",
-    "Candidate publication/read-back must use an independently reachable repository path, not a mutable branch name or producer workspace artifact.",
-    "Cancellation must prove ownership and quiescence before cleanup; ambiguous or recycled process identity must remain an unresolved recovery condition.",
-    "Integration must preserve PY-02's custody guard and PY-04's coordinator semantics without allowing a scripted or provider success alone to create a verdict.",
-    "Provider diagnostics, grant records, and retained evidence require deliberate redaction to meet the no-secret criterion."
+    "A configured CLI provider may be unavailable or unable to enforce a hard-required budget dimension; it must be ineligible rather than downgraded.",
+    "Publication/read-back must use an independently reachable repository path, not a mutable branch name or producer workspace.",
+    "Cancellation cleanup requires proven ownership and quiescence; ambiguous process identity remains an unresolved recovery condition.",
+    "Integration must preserve PY-02 custody admission and PY-04 loop semantics without treating worker success as a verdict.",
+    "Provider diagnostics, grants, and retained evidence require redaction to meet the no-secret criterion."
   ],
-  "next_action": "When PY-04 and PY-05 are accepted, release PY-06 for implementation against their accepted interfaces; begin with executable negative custody, process-cancellation, and provider-eligibility tests.",
-  "rationale": "The contract fixes the relevant product and architecture choices through SF-REQ-003/007/009, FD-03, SWF-09, the approved Wave 1 DAG, and Architecture Authority rules for role independence, authority, concurrency, cancellation, retries, cost governance, privacy, fitness, and Node/Python coexistence. Remaining details are explicitly category-B engineering design, not Founder decisions, and the scope forms one invariant-centered runtime/custody slice rather than independent decision centers.",
+  "next_action": "After PY-04 and PY-05 are accepted, release PY-06 for implementation and begin with executable negative custody, cancellation, and provider-eligibility tests.",
+  "rationale": "SF-REQ-003/007/009, FD-03, SWF-09, the approved Wave 1 DAG, and the Architecture Authority fix the relevant product and architecture decisions. Remaining choices are normal category-B implementation design inside those constraints; the contract contains no independent decision center requiring a split.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
     "compatibility": "COMPATIBLE_UNVERIFIED",
     "capability_probe": "PASSED",
     "invocation": "codex exec --ephemeral --json --sandbox read-only",
-    "baseline": "c32830b",
+    "baseline": "5b617a3",
     "assessed": "2026-09-20",
     "request": "PY-06.request.md",
-    "note": "reassessment after applying first-pass Agent-Ready findings"
+    "note": "reassessment at PY-05-landed baseline, after SWF-23 repair-cycle contract section"
   }
 }
