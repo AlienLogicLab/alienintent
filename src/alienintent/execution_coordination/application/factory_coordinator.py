@@ -86,7 +86,7 @@ class FactoryCoordinator:
     def _eligible(self, item: ReadyWorkItem) -> bool:
         try:
             projected = self.state(item.identity)
-            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "failure", "timeout"}:
+            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "cancelled-by-decision", "failure", "timeout"}:
                 return False
         except KeyError:
             pass
@@ -246,7 +246,7 @@ class FactoryCoordinator:
             item
             for item in items
             if not self._is_done(item.identity)
-            and self._outcome(item.identity) not in {"failure", "timeout"}
+            and self._outcome(item.identity) not in {"cancelled-by-decision", "failure", "timeout"}
         ]
         if not pending:
             return StopReason.EXHAUSTED
@@ -337,6 +337,28 @@ class FactoryCoordinator:
                 state = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
                 self._store.commit(self._profile, self._aggregate(item.identity), version, self._encode(state) | {"outcome": "blocked-by-authority", "blocked_by": root.identity})
 
+    def _cancel_blocked_dependents(self, root: str, items: Iterable[ReadyWorkItem]) -> None:
+        descendants = {root}
+        all_items = tuple(items)
+        while True:
+            expanded = descendants | {
+                item.identity for item in all_items
+                if any(parent in descendants for parent in item.dependencies)
+            }
+            if expanded == descendants:
+                break
+            descendants = expanded
+        for item in all_items:
+            if item.identity == root or item.identity not in descendants:
+                continue
+            version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
+            if raw.get("outcome") != "blocked-by-authority":
+                continue
+            self._store.commit(
+                self._profile, self._aggregate(item.identity), version,
+                raw | {"outcome": "cancelled-by-decision", "cancelled_by": root},
+            )
+
     def record_decision(self, record: DecisionRecord) -> None:
         version, raw = self._store.read_state(self._profile, self._aggregate(record.event.work_item))
         already_recorded = raw.get("decision_key") == record.event.idempotency_key
@@ -358,6 +380,7 @@ class FactoryCoordinator:
                 if not authorized:
                     self._store.commit(self._profile, self._aggregate(record.event.work_item), version, decision_state)
         if record.submission.choice == "cancel":
+            self._cancel_blocked_dependents(record.event.work_item, items)
             return
         descendants = {record.event.work_item}
         changed = True

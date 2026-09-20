@@ -38,7 +38,7 @@ class EscalatingWorker(ScriptedWorker):
             self.outcomes[invocation.work_identity].pop(0)
             from alienintent.execution_coordination.ports.worker_provider import WorkerOutcome
             self.dispatched.append(invocation.work_identity)
-            outcome = WorkerOutcome.authority_block(self.escalation)
+            outcome = WorkerOutcome.authority_block(replace(self.escalation, work_item=invocation.work_identity))
             self.observed[invocation.correlation_id] = outcome
             return outcome
         return super().start(invocation, context, grants, budget)
@@ -252,23 +252,39 @@ def test_defer_keeps_a_real_unknown_effect_open_for_later_authorization(tmp_path
     assert coordinator.state("blocked").stage is LifecycleStage.DONE
 
 
-def test_cancelled_worker_escalation_does_not_re_admit_the_worker_or_dependents(tmp_path: Path) -> None:
-    items = [_item("blocked", 0, 1), _item("dependent", 1, 2, ("blocked",))]
+def test_cancelled_escalation_and_its_closure_stay_terminal_when_another_decision_re_admits_the_loop(tmp_path: Path) -> None:
+    """A later decision must not revive cancellation or strand its closure."""
+    items = [
+        _item("blocked", 0, 1),
+        _item("dependent", 1, 2, ("blocked",)),
+        _item("other", 2, 3),
+    ]
     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
     store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
-    worker = EscalatingWorker(artifacts, {"blocked": ["authority-block", "success"], "dependent": ["success"]}, _escalation())
+    worker = EscalatingWorker(
+        artifacts,
+        {"blocked": ["authority-block", "success"], "dependent": ["success"], "other": ["authority-block", "success"]},
+        _escalation(),
+    )
     coordinator = FactoryCoordinator(store, MemoryWorkManagement(items), worker, artifacts, "offline")
     coordinator.start()
-    request = DecisionInbox(store, coordinator, "offline").show("blocked")
-    assert isinstance(request, HumanDecisionRequired)
+    inbox = DecisionInbox(store, coordinator, "offline")
+    blocked = inbox.show("blocked")
+    other = inbox.show("other")
+    assert isinstance(blocked, HumanDecisionRequired)
+    assert isinstance(other, HumanDecisionRequired)
 
-    DecisionInbox(store, coordinator, "offline").submit(
-        DecisionSubmission("morty", "SWF-21", "blocked", 0, 0, "cancel-worker", "cancel")
+    inbox.submit(
+        DecisionSubmission("morty", "SWF-21", "blocked", blocked.biu_version, blocked.biu_version, "cancel-worker", "cancel")
+    )
+    inbox.submit(
+        DecisionSubmission("morty", "SWF-21", "other", other.biu_version, other.biu_version, "reconcile-other", "reconcile")
     )
 
-    assert worker.dispatched == ["blocked"]
     assert coordinator.state("blocked").outcome == "cancelled-by-decision"
-    assert coordinator.state("dependent").outcome == "blocked-by-authority"
+    assert coordinator.state("dependent").outcome == "cancelled-by-decision"
+    assert coordinator.state("other").stage is LifecycleStage.DONE
+    assert worker.dispatched == ["blocked", "other", "other"]
 
 
 def test_noop_notifier_leaves_the_decision_inbox_usable(tmp_path: Path) -> None:

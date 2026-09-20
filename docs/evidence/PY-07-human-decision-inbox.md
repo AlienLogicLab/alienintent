@@ -40,7 +40,10 @@ It contains no credentials, live Issue mutations, or provider secrets.
   block now produces the same scoped, decidable behavior, including recovery
   both before and after its authority-block result is recorded; `defer` remains
   open and can be followed by `authorize` for admission and a real unknown
-  effect; `cancel` does not re-dispatch its blocked worker or dependent.
+  effect; `cancel` gives the blocked item and its already-blocked transitive
+  closure the terminal `cancelled-by-decision` outcome. A decision on an
+  unrelated escalation then re-admits only that unrelated work; it cannot
+  re-dispatch the cancelled closure.
 
 ## Local executable checks
 
