@@ -3,10 +3,14 @@ from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import asdict, is_dataclass
+import logging
 from typing import Any
 
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
 from alienintent.execution_coordination.domain.escalation import DecisionSubmission
+
+
+logger = logging.getLogger(__name__)
 
 
 class OperatorDenied(ValueError):
@@ -14,26 +18,46 @@ class OperatorDenied(ValueError):
 
 
 class OperatorControlPlane:
-    def __init__(self, profile: str, store: Any, work: Any, coordinator: Any, readiness: Callable[[], bool]) -> None:
-        self._profile, self._store, self._work, self._coordinator, self._readiness = profile, store, work, coordinator, readiness
+    def __init__(self, profile: str, store: Any, work: Any, coordinator: Any, readiness: Callable[[], bool], clock: Callable[[], str] = lambda: "not-recorded") -> None:
+        self._profile, self._store, self._work, self._coordinator, self._readiness, self._clock = profile, store, work, coordinator, readiness, clock
 
     def status(self) -> dict[str, object]:
+        diagnostics: list[dict[str, object]] = []
         try:
             upstream = {"source": "work-management", "status": "available", "items": [item.identity for item in self._work.import_ready_snapshot()]}
         except Exception:
             upstream = {"source": "work-management", "status": "unavailable"}
+            diagnostics.append(self._coalesce_diagnostic("upstream-unavailable", "work-management unavailable"))
         items = [
             {"identity": identity.removeprefix("factory:"), "revision": version, "lifecycle": state.get("stage"), "outcome": state.get("outcome")}
             for identity, version, state in self._store.list_states(self._profile, "factory:")
         ]
         delivery = getattr(self._coordinator, "delivery_health", {})
-        return {"profile": self._profile, "upstream": upstream, "execution": {"source": "operational-store", "status": "known", "items": items, "wip": len(items)}, "projection": {"source": "decision-notifier", "status": "healthy" if all(value.delivered for value in delivery.values()) else "unknown"}}
+        projection = "healthy" if delivery and all(value.delivered for value in delivery.values()) else "unknown"
+        logger.info("operator_status", extra={"profile": self._profile, "upstream": upstream["status"], "projection": projection})
+        return {"profile": self._profile, "upstream": upstream, "execution": {"source": "operational-store", "status": "known", "items": items, "wip": len(items)}, "projection": {"source": "decision-notifier", "status": projection}, "diagnostics": diagnostics}
+
+    def _coalesce_diagnostic(self, condition: str, message: str) -> dict[str, object]:
+        """Persist changed-condition evidence without emitting duplicate diagnostics."""
+        identity = f"control-plane-diagnostic:{condition}"
+        version, prior = self._store.read_state(self._profile, identity)
+        now = self._clock()
+        transition = not prior or prior.get("message") != message
+        state = {
+            "condition": condition,
+            "message": message,
+            "first_seen": now if transition else prior.get("first_seen"),
+            "last_seen": now,
+            "repeat_count": 1 if transition else int(prior.get("repeat_count", 0)) + 1,
+        }
+        self._store.commit(self._profile, identity, version, state)
+        return state | {"transition": transition}
 
     def explain(self, target: str) -> dict[str, object]:
-        version, state = self._store.read_state(self._profile, f"factory:{target}")
-        if not state:
-            raise OperatorDenied(f"unknown work item: {target}")
-        return {"target": target, "guard_outcomes": {"lifecycle": state.get("stage"), "outcome": state.get("outcome"), "decision": state.get("decision_choice")}, "evidence": {"execution_revision": version}}
+        account = self._coordinator.guard_account(target)
+        evidence = account.pop("evidence")
+        account.pop("target", None)
+        return {"target": target, "guard_outcomes": account, "evidence": evidence}
 
     def run(self, **fields: object) -> object:
         self._admit(fields)
@@ -46,15 +70,15 @@ class OperatorControlPlane:
 
     def cancel(self, **fields: object) -> object:
         self._admit(fields)
-        return self._coordinator.cancel(str(fields["target"]), str(fields["actor"]), str(fields["authority"]), str(fields["reason"]), str(fields["idempotency_key"]))
+        return self._coordinator.cancel(str(fields["target"]), str(fields["actor"]), str(fields["authority"]), int(fields["expected_version"]), str(fields["reason"]), str(fields["idempotency_key"]))
 
     def stop(self, **fields: object) -> object:
         self._admit(fields)
-        return self._coordinator.stop_owned(str(fields["actor"]), str(fields["authority"]), str(fields["reason"]), str(fields["idempotency_key"]))
+        return self._coordinator.stop_owned(str(fields["actor"]), str(fields["authority"]), int(fields["expected_version"]), str(fields["reason"]), str(fields["idempotency_key"]))
 
     def reconcile(self, **fields: object) -> object:
         self._admit(fields)
-        return {"target": str(fields["target"]), "source": "execution-revision", "status": "reconciled"}
+        return self._coordinator.reconcile(str(fields["target"]))
 
     def decisions_list(self) -> list[dict[str, object]]:
         return [asdict(value) for value in DecisionInbox(self._store, self._coordinator, self._profile).list_open()]
@@ -69,12 +93,15 @@ class OperatorControlPlane:
         return asdict(record)
 
     def _admit(self, fields: dict[str, object]) -> None:
-        required = ("actor", "authority", "target", "reason", "idempotency_key")
+        required = ("actor", "authority", "target", "intent", "reason", "idempotency_key")
         if any(not isinstance(fields.get(key), str) or not fields[key] for key in required):
-            raise OperatorDenied("actor, authority, target, reason and idempotency key are required")
+            raise OperatorDenied("actor, authority, target, intent, reason and idempotency key are required")
         expected = fields.get("expected_version")
         if not isinstance(expected, int) or expected < 0:
             raise OperatorDenied("expected version is required")
-        _, state = self._store.read_state(self._profile, f"factory:{fields['target']}")
-        if state and state.get("version") != expected:
+        revision, state = self._store.read_state(self._profile, f"factory:{fields['target']}")
+        prior = state.get("cancellation") if state else None
+        if isinstance(prior, dict) and prior.get("idempotency_key") == fields["idempotency_key"]:
+            return
+        if state and revision != expected:
             raise OperatorDenied("stale expected version")

@@ -64,3 +64,27 @@ def test_cli_sanitizes_invalid_arguments(tmp_path: Path) -> None:
 
     assert result.returncode != 0
     assert "SENTINEL-ARG" not in result.stdout + result.stderr
+
+
+def test_cli_redacts_bearer_and_provider_diagnostics(tmp_path: Path) -> None:
+    factory = tmp_path / "broken_factory.py"
+    factory.write_text("def make(): raise RuntimeError('Authorization: Bearer SENTINEL-BEARER provider stderr: ghp_SENTINEL-PAT')")
+    result = subprocess.run(
+        [sys.executable, "-m", "alienintent", "--profile-factory", "broken_factory:make", "status", "--json"],
+        text=True, capture_output=True, env=os.environ | {"PYTHONPATH": f"src:{tmp_path}"}, check=False,
+    )
+
+    assert result.returncode != 0
+    assert "SENTINEL-BEARER" not in result.stdout + result.stderr
+    assert "SENTINEL-PAT" not in result.stdout + result.stderr
+    assert "provider stderr" not in result.stdout.lower() + result.stderr.lower()
+
+
+def test_cli_sanitizes_subcommand_parse_errors() -> None:
+    result = subprocess.run(
+        [sys.executable, "-m", "alienintent", "decisions", "secret=SENTINEL-SUBPARSER"],
+        text=True, capture_output=True, env=os.environ | {"PYTHONPATH": "src"}, check=False,
+    )
+
+    assert result.returncode != 0
+    assert "SENTINEL-SUBPARSER" not in result.stdout + result.stderr

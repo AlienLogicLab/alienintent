@@ -79,7 +79,40 @@ class FactoryCoordinator:
             raise KeyError(identity)
         return ProjectedState(self._decode(raw), raw.get("outcome") if isinstance(raw.get("outcome"), str) else None)
 
-    def cancel(self, identity: str, actor: str, authority: str, reason: str, idempotency_key: str) -> dict[str, object]:
+    def guard_account(self, identity: str) -> dict[str, object]:
+        """Expose the same eligibility decision the scheduler applies, read-only."""
+        version, raw = self._store.read_state(self._profile, self._aggregate(identity))
+        if not raw:
+            raise KeyError(f"unknown work item: {identity}")
+        item = next((candidate for candidate in self._work.import_ready_snapshot() if candidate.identity == identity), None)
+        outcome = raw.get("outcome")
+        terminal = raw.get("stage") == LifecycleStage.DONE.value or outcome in {"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"}
+        eligible = bool(item is not None and self._eligible(item))
+        if terminal:
+            reason = "terminal"
+        elif outcome in {"authority-block", "blocked-by-authority"}:
+            reason = "authority-block"
+        elif item is None:
+            reason = "not-in-upstream-ready-snapshot"
+        elif not all(self._is_done(dependency) for dependency in item.dependencies):
+            reason = "dependencies-incomplete"
+        elif not eligible:
+            reason = "release-not-admitted"
+        else:
+            reason = "eligible"
+        return {"target": identity, "eligible": eligible, "reason": reason, "lifecycle": raw.get("stage"), "outcome": outcome, "evidence": {"execution_revision": version}}
+
+    def reconcile(self, identity: str) -> dict[str, object]:
+        """Recover durable effects without importing upstream terminal truth."""
+        items = self._work.import_ready_snapshot()
+        if not self._recover(items):
+            raise ReservationRejected("recovery could not establish durable execution truth")
+        version, raw = self._store.read_state(self._profile, self._aggregate(identity))
+        if not raw:
+            raise KeyError(f"unknown work item: {identity}")
+        return {"target": identity, "source": "execution-revision", "status": "reconciled", "execution_revision": version}
+
+    def cancel(self, identity: str, actor: str, authority: str, expected_version: int, reason: str, idempotency_key: str) -> dict[str, object]:
         """Apply an attributable operator cancellation through the coordinator boundary."""
         version, raw = self._store.read_state(self._profile, self._aggregate(identity))
         if not raw:
@@ -87,18 +120,24 @@ class FactoryCoordinator:
         prior = raw.get("cancellation")
         if isinstance(prior, dict) and prior.get("idempotency_key") == idempotency_key:
             return {"status": "cancelled", "target": identity, "idempotent": True}
+        if version != expected_version:
+            raise VersionConflict("stale expected version")
         cancellation = {"actor": actor, "authority": authority, "reason": reason, "idempotency_key": idempotency_key}
         self._worker.cancel(identity, reason)
         self._store.commit(self._profile, self._aggregate(identity), version, raw | {"outcome": "cancelled-by-operator", "cancellation": cancellation})
         return {"status": "cancelled", "target": identity, "idempotent": False}
 
-    def stop_owned(self, actor: str, authority: str, reason: str, idempotency_key: str) -> dict[str, object]:
+    def stop_owned(self, actor: str, authority: str, expected_version: int, reason: str, idempotency_key: str) -> dict[str, object]:
         """Quiesce durable, nonterminal work instead of reporting a false service stop."""
-        stopped = []
+        candidates = []
         for identity, _, raw in self._store.list_states(self._profile, "factory:"):
-            if raw.get("outcome") in {"cancelled-by-operator", "cancelled-by-decision"}:
+            if raw.get("stage") == LifecycleStage.DONE.value or raw.get("accepted") or raw.get("outcome") in {"cancelled-by-operator", "cancelled-by-decision"}:
                 continue
-            stopped.append(self.cancel(identity.removeprefix("factory:"), actor, authority, reason, f"{idempotency_key}:{identity}"))
+            candidates.append(identity)
+        versions = {self._store.read_state(self._profile, identity)[0] for identity in candidates}
+        if versions and versions != {expected_version}:
+            raise VersionConflict("stale expected version")
+        stopped = [self.cancel(identity.removeprefix("factory:"), actor, authority, expected_version, reason, f"{idempotency_key}:{identity}") for identity in candidates]
         return {"stopped": stopped}
 
     def _next_item(self, items: Iterable[ReadyWorkItem]) -> ReadyWorkItem | None:
@@ -108,7 +147,7 @@ class FactoryCoordinator:
     def _eligible(self, item: ReadyWorkItem) -> bool:
         try:
             projected = self.state(item.identity)
-            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "cancelled-by-decision", "failure", "timeout"}:
+            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"}:
                 return False
         except KeyError:
             pass

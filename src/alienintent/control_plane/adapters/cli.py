@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import argparse
+from datetime import UTC, datetime
 import importlib
 import json
 import re
@@ -13,11 +14,21 @@ from alienintent.control_plane.application.operator import OperatorControlPlane
 
 
 def _sanitize(value: object) -> str:
-    return re.sub(r"(?i)(token|secret|key)=[^\s]+", r"\1=[REDACTED]", str(value))
+    message = str(value)
+    if re.search(r"(?i)provider stderr", message):
+        return "upstream diagnostic redacted"
+    message = re.sub(r"(?i)\bBearer\s+[^\s,;]+", "Bearer [REDACTED]", message)
+    message = re.sub(r"\b(?:ghp_|github_pat_|sk-[A-Za-z0-9_-]*)[A-Za-z0-9_-]+", "[REDACTED]", message)
+    return re.sub(r"(?i)(token|secret|key)\s*[=:]\s*[^\s,;]+", r"\1=[REDACTED]", message)
 
 
 def _argument_error(_: str) -> None:
     raise ValueError("invalid command arguments")
+
+
+def _sanitized(parser: argparse.ArgumentParser) -> argparse.ArgumentParser:
+    parser.error = _argument_error  # type: ignore[method-assign]
+    return parser
 
 
 def _factory(reference: str) -> Any:
@@ -28,26 +39,25 @@ def _factory(reference: str) -> Any:
 
 
 def _parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="alienintent")
-    parser.error = _argument_error  # type: ignore[method-assign]
+    parser = _sanitized(argparse.ArgumentParser(prog="alienintent"))
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--profile-factory")
     sub = parser.add_subparsers(dest="command", required=True)
-    sub.add_parser("version"); sub.add_parser("status"); sub.add_parser("health")
-    explain = sub.add_parser("explain"); explain.add_argument("target")
+    _sanitized(sub.add_parser("version")); _sanitized(sub.add_parser("status")); _sanitized(sub.add_parser("health"))
+    explain = _sanitized(sub.add_parser("explain")); explain.add_argument("target")
     for command in ("run", "resume", "stop", "cancel", "reconcile"):
-        item = sub.add_parser(command); item.add_argument("target", nargs="?", default="service")
+        item = _sanitized(sub.add_parser(command)); item.add_argument("target", nargs="?", default="service")
         _mutation(item)
-    decisions = sub.add_parser("decisions").add_subparsers(dest="decision_command", required=True)
-    decisions.add_parser("list")
-    show = decisions.add_parser("show"); show.add_argument("identity")
-    decide = decisions.add_parser("decide"); decide.add_argument("identity"); decide.add_argument("--choice", required=True); _mutation(decide)
+    decisions = _sanitized(sub.add_parser("decisions")).add_subparsers(dest="decision_command", required=True)
+    _sanitized(decisions.add_parser("list"))
+    show = _sanitized(decisions.add_parser("show")); show.add_argument("identity")
+    decide = _sanitized(decisions.add_parser("decide")); decide.add_argument("identity"); decide.add_argument("--choice", required=True); _mutation(decide)
     return parser
 
 
 def _mutation(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--actor", required=True); parser.add_argument("--authority", required=True)
-    parser.add_argument("--expected-version", type=int, required=True); parser.add_argument("--reason", required=True); parser.add_argument("--idempotency-key", required=True)
+    parser.add_argument("--intent", required=True); parser.add_argument("--expected-version", type=int, required=True); parser.add_argument("--reason", required=True); parser.add_argument("--idempotency-key", required=True)
 
 
 def _render(value: object, machine: bool) -> None:
@@ -66,7 +76,7 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "version": _render({"version": "0.0.0", "install": "python-package"}, args.json); return 0
         if not args.profile_factory: raise ValueError("--profile-factory is required")
         profile = _factory(args.profile_factory)
-        service = OperatorControlPlane(profile.name, profile.store, profile.work, profile.coordinator, profile.readiness)
+        service = OperatorControlPlane(profile.name, profile.store, profile.work, profile.coordinator, profile.readiness, lambda: datetime.now(UTC).isoformat())
         if args.command == "status": value = service.status()
         elif args.command == "health": value = {"live": True, "ready": bool(profile.readiness())}
         elif args.command == "explain": value = service.explain(args.target)
