@@ -41,7 +41,13 @@ The documented exit-code distinctions are preserved. No further Founder decision
 This work must not delay Wave 1. The intended durable split is:
 
 - `docs/research/…prior-art…` — research/evidence;
-- `docs/decisions/alienintent-software-cognitive-intelligence-factory-record.md` — strategic interpretation.
+- `docs/strategy/alienintent-software-cognitive-intelligence-factory.md` — strategic interpretation.
+  (**Path amendment, Founder-approved 2026-09-20.** SWF-14 originally named
+  `docs/decisions/alienintent-software-cognitive-intelligence-factory-record.md`. Documentation normalization
+  relocated the strategic interpretation to the canonical strategy location, because `docs/decisions/` holds
+  canonical decision records only. The original path is retained here as historical provenance and all inbound
+  references resolve to the normalized path. This amends the path and taxonomy only — not the substance,
+  authority or intent of SWF-14, and it is not a new product or architecture decision.)
 
 The strategic record is committed only once it is verified to be the research-backed revision rather than the earlier provisional version. If it is not, it stays uncommitted and the discrepancy is reported rather than reconciled during execution.
 
