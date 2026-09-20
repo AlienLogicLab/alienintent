@@ -119,6 +119,17 @@ def test_custody_transfer_binds_verifier_copy_and_rejects_tampering(tmp_path: Pa
     assert Path(verified.locator).read_bytes() == b"candidate"
     with pytest.raises(ValueError, match="read-back"):
         custody.verify_in_fresh_process(replace(candidate, content_digest="sha256:" + "0" * 64, identity=candidate.identity.replace(candidate.content_digest, "sha256:" + "0" * 64)), artifacts.verifier_root)
+    assert Path(verified.locator).read_bytes() == b"candidate"
+
+
+def test_existing_verifier_copy_is_retained_when_producer_artifact_changes(tmp_path: Path) -> None:
+    _, custody, _, _ = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    candidate = artifacts.write(b"candidate")
+    verified = custody.verify_in_fresh_process(candidate, artifacts.verifier_root)
+    Path(candidate.locator).write_bytes(b"replacement")
+    assert custody.verify_in_fresh_process(candidate, artifacts.verifier_root).verify_admissible
+    assert Path(verified.locator).read_bytes() == b"candidate"
 
 
 def test_wip_refusal_and_explicit_release_are_reported(tmp_path: Path) -> None:
@@ -156,3 +167,21 @@ def test_real_process_restart_reconciles_durable_outcome(tmp_path: Path) -> None
     script = """from pathlib import Path\nfrom tests.execution_coordination.test_factory_coordinator import _item, MemoryWorkManagement, ScriptedWorker\nfrom alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore\nfrom alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator\nfrom alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore\np=Path(__import__('sys').argv[1]); a=LocalArtifactStore(p/'producer',p/'verifier'); w=ScriptedWorker(a, {'crashed':['success']}, durable=True); s=FactoryCoordinator(SQLiteOperationalStore(p/'run.sqlite'),MemoryWorkManagement([_item('crashed',1,1)]),w,a,'offline').start(); assert s.stop_reason.value=='eligible-backlog-exhausted'; assert not w.dispatched\n"""
     completed = subprocess.run([sys.executable, "-c", script, str(tmp_path)], capture_output=True, text=True, env={**os.environ, "PYTHONPATH": f"{Path.cwd() / 'src'}:{Path.cwd()}"})
     assert completed.returncode == 0, completed.stderr
+
+
+def test_recovery_accepts_an_effect_already_confirmed_before_producer_crash(tmp_path: Path) -> None:
+    coordinator_module, custody, _, provider = _api()
+    item = _item("confirmed", 1, 1)
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    correlation = "launch:confirmed:0"
+    reservation = store.acquire("offline", "repository", "repo", correlation)
+    state = coordinator_module.ExecutionState.for_contract(item.contract)
+    store.commit_with_effect("offline", "factory:confirmed", 0, coordinator_module.FactoryCoordinator._encode(state), correlation, {"correlation": correlation})
+    store.claim_effect("offline", correlation)
+    store.confirm_effect("offline", correlation, "outcome:success")
+    worker = ScriptedWorker(artifacts, {"confirmed": ["success"]}, durable=True)
+    worker.start(provider.WorkerInvocation("confirmed", correlation), item.contract, frozenset(), item.contract.budget_policy)
+    summary = coordinator_module.FactoryCoordinator(store, MemoryWorkManagement([item]), worker, artifacts, "offline").start()
+    assert summary.stop_reason.value == "eligible-backlog-exhausted"
+    assert store.recovery_reservations("offline") == ()
