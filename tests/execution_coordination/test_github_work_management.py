@@ -78,7 +78,9 @@ def test_stale_projection_never_overwrites_newer_revision_and_unavailable_is_vis
     work = adapter([item()], write)
 
     assert work.project_execution_state("PY-05", "IMPLEMENT", 2).confirmed
-    assert not work.project_execution_state("PY-05", "VERIFY", 1).confirmed
+    stale = work.project_execution_state("PY-05", "IMPLEMENT", 1)
+    assert not stale.confirmed
+    assert stale.detail == "stale projection fenced"
     assert updates == [("IMPLEMENT", "Execution", 2)]
 
 
