@@ -182,13 +182,23 @@ class SQLiteOperationalStore(OperationalStore):
             version = self._commit(connection, profile, effect["aggregate"], expected_version, state)
             return version
 
-    def authorize_unknown_effect(self, profile: str, effect_id: str) -> bool:
-        """Lift an FD-05 guard only after the decision flow authorizes it."""
+    def authorize_unknown_effect(self, profile: str, effect_id: str, aggregate: str, expected_version: int, state: Mapping[str, object]) -> bool:
+        """Atomically persist an authorize decision and lift its FD-05 guard."""
         with self._transaction() as connection:
-            return connection.execute(
-                "UPDATE effects SET status='authority-authorized' WHERE profile=? AND identity=? AND status='unknown'",
+            effect = connection.execute(
+                "SELECT aggregate FROM effects WHERE profile=? AND identity=? AND status='unknown'",
                 (profile, effect_id),
-            ).rowcount == 1
+            ).fetchone()
+            if not effect:
+                return False
+            if effect["aggregate"] != aggregate:
+                raise ReservationRejected("unknown effect does not match decision aggregate")
+            self._commit(connection, profile, aggregate, expected_version, state)
+            connection.execute(
+                "UPDATE effects SET status='authority-authorized' WHERE profile=? AND identity=?",
+                (profile, effect_id),
+            )
+            return True
 
     def claim_effect(self, profile: str, effect_id: str) -> Effect:
         with self._transaction() as connection:

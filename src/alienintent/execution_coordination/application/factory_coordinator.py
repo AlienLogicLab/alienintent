@@ -330,9 +330,14 @@ class FactoryCoordinator:
         state = self._decode(raw)
         items = self._work.import_ready_snapshot()
         if not already_recorded:
-            if record.submission.choice == "authorize" and isinstance(raw.get("correlation"), str):
-                self._store.authorize_unknown_effect(self._profile, raw["correlation"])
-            self._store.commit(self._profile, self._aggregate(record.event.work_item), version, self._encode(state) | {"outcome": "decision-recorded", "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice})
+            decision_state = self._encode(state) | {"outcome": "decision-recorded", "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice}
+            authorized = (
+                record.submission.choice == "authorize"
+                and isinstance(raw.get("correlation"), str)
+                and self._store.authorize_unknown_effect(self._profile, raw["correlation"], self._aggregate(record.event.work_item), version, decision_state)
+            )
+            if not authorized:
+                self._store.commit(self._profile, self._aggregate(record.event.work_item), version, decision_state)
         descendants = {record.event.work_item}
         changed = True
         while changed:
