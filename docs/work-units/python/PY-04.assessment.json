@@ -1,35 +1,34 @@
 {
   "disposition": "READY",
-  "governing_intent": "Prove an offline, event-driven continuous-factory walking skeleton with deterministic test doubles, durable restart recovery, priority/dependency/WIP scheduling, automatic refill, custody enforcement, and no provider spend or Node change.",
-  "summary": "PY-04 is bounded and executable without inventing Founder or architecture decisions. SWF-12 resolves the previously material local-artifact custody question; PY-03 implementation remains a sequencing dependency, not a readiness gap.",
+  "governing_intent": "Prove an event-driven, offline continuous factory loop with deterministic doubles, durable restart recovery, and enforced local-artifact custody before any vendor adapter or real worker exists.",
+  "summary": "The contract is bounded, sequenced after PY-03, and supplies enough authority to implement without inventing Founder or architecture decisions. Its acceptance criteria require executable end-to-end proof rather than coordinator-internal mocks.",
   "owner_clarifications": [],
   "implementation_unknowns": [
-    "Concrete WorkManagement and WorkerProvider port signatures and typed outcome shapes.",
-    "Fixture format, coordinator process entrypoint, run-summary schema, and SQLite transaction sequencing through PY-03.",
-    "Implementation of the fresh-process artifact retrieval, digest read-back, and deterministic verifier observation path within SWF-12.",
-    "Concrete retention-policy injection and test fixture behavior without inventing a new retention policy."
+    "Concrete port signatures and fixture schema for WorkManagement, WorkerProvider, candidate store, and verifier observations.",
+    "Local content-addressed artifact layout and retention-policy adapter mechanics.",
+    "Exact subprocess harness and deterministic check used to prove fresh-process retrieval and real restart.",
+    "Selection of existing Python and Node test commands from repository tooling."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "The acceptance criteria require real executable proof: coordinator-path tests using deterministic doubles, an actual SQLite-backed process restart, custody positive and negative cases, policy-evidence negative cases, priority/FIFO/dependency/WIP/refill assertions, and a no-repeated-read assertion. These tests exercise the real application boundary rather than mocked coordinator internals.",
+  "verification_assessment": "Strong: it requires deterministic real-loop tests, a real process restart on SQLite, separate-process digest read-back before VERIFY, negative custody and evidence tests, ordering/WIP/no-polling assertions, retained run evidence, fitness checks, and the Node suite. The coordinator itself may not be mocked.",
   "expected_rework_locality": "LOW",
   "material_risks": [
-    "The current checkout is on main but is not clean and is ahead of origin/main; implementation must begin from the contract-required released clean baseline.",
-    "PY-02's custody guard must remain active; a scripted success or missing/failed independent read-back must not reach VERIFY or ACCEPT.",
-    "PY-04 must not absorb PY-06 production worktree, remote-publication, or source-control custody mechanics.",
-    "The scripted worker must remain test infrastructure and not be represented as SF-REQ-039 capability."
+    "PY-03 acceptance remains a sequencing prerequisite and must be reverified at release.",
+    "The Satisfies table should eventually add SF-REQ-007 as a bounded contributing extent for the SWF-12 local-artifact proof; PY-06 remains primary for production custody.",
+    "The actual checkout contains unrelated untracked documentation, so implementation must establish and record its clean released baseline before edits."
   ],
-  "next_action": "After PY-03 is accepted and a clean released main baseline is available, release PY-04 for implementation and execute its acceptance suite.",
-  "rationale": "Priority ownership, release ON/OFF semantics, lifecycle ownership, no-polling, WIP, recovery, port direction, budget constraints, and offline local-artifact custody are all fixed by binding authority. SWF-12 explicitly authorizes the local content-addressed artifact path and requires its fresh-process digest verification before VERIFY. Remaining choices are normal implementation detail inside those constraints, and the coordinator plus its necessary offline proof infrastructure form one coherent decision center.",
+  "next_action": "After PY-03 is accepted, create or advance PY-04 to READY using the released clean-main baseline and retain the SF-REQ-007 traceability correction as a non-authority contract hygiene item.",
+  "rationale": "Founder decisions fix release policy, ownership, budgets, offline scripted-worker limits, and local-artifact custody; the approved architecture constrains event-driven coordination, reservation/WIP behavior, lifecycle, and adapter boundaries. Remaining choices are ordinary implementation details, not owner decisions, and the single coordinator loop is one coherent execution vertical rather than multiple independent decision centers.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
     "compatibility": "COMPATIBLE_UNVERIFIED",
     "capability_probe": "PASSED",
     "invocation": "codex exec --ephemeral --json --sandbox read-only",
-    "baseline": "b809bb3",
+    "baseline": "d8f80e1",
     "assessed": "2026-09-20",
     "request": "PY-04.request.md",
-    "note": "reassessment after SWF-12 candidate-custody decision"
+    "note": "reassessment at PY-03-landed baseline after closure-policy normalization"
   }
 }
