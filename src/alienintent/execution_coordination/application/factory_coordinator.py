@@ -79,6 +79,28 @@ class FactoryCoordinator:
             raise KeyError(identity)
         return ProjectedState(self._decode(raw), raw.get("outcome") if isinstance(raw.get("outcome"), str) else None)
 
+    def cancel(self, identity: str, actor: str, reason: str, idempotency_key: str) -> dict[str, object]:
+        """Apply an attributable operator cancellation through the coordinator boundary."""
+        version, raw = self._store.read_state(self._profile, self._aggregate(identity))
+        if not raw:
+            raise KeyError(identity)
+        prior = raw.get("cancellation")
+        if isinstance(prior, dict) and prior.get("idempotency_key") == idempotency_key:
+            return {"status": "cancelled", "target": identity, "idempotent": True}
+        cancellation = {"actor": actor, "reason": reason, "idempotency_key": idempotency_key}
+        self._worker.cancel(identity, reason)
+        self._store.commit(self._profile, self._aggregate(identity), version, raw | {"outcome": "cancelled-by-operator", "cancellation": cancellation})
+        return {"status": "cancelled", "target": identity, "idempotent": False}
+
+    def stop_owned(self, reason: str, idempotency_key: str) -> dict[str, object]:
+        """Quiesce durable, nonterminal work instead of reporting a false service stop."""
+        stopped = []
+        for identity, _, raw in self._store.list_states(self._profile, "factory:"):
+            if raw.get("outcome") in {"cancelled-by-operator", "cancelled-by-decision"}:
+                continue
+            stopped.append(self.cancel(identity.removeprefix("factory:"), "operator", reason, f"{idempotency_key}:{identity}"))
+        return {"stopped": stopped}
+
     def _next_item(self, items: Iterable[ReadyWorkItem]) -> ReadyWorkItem | None:
         eligible = [item for item in items if self._eligible(item)]
         return min(eligible, key=lambda item: (item.priority is None, item.priority if item.priority is not None else 0, item.fifo), default=None)
