@@ -1,9 +1,20 @@
 # PY-04 coordinator mutation gate — SWF-26 (temporary)
 
-Date: 2026-09-20. Status: **Founder decision — binding, temporary PY-04 bootstrap procedure**.
+Date: 2026-09-20. Status: **EXPIRED 2026-09-20** — retained as historical evidence only, not a standing gate.
+Originally: Founder decision, binding, temporary PY-04 bootstrap procedure.
 Source: direct Founder instruction after the PY-04 candidate `1b372c2a` reported one mutation while five of the verifier's twenty-three survived.
 
-## Procedure
+## Expiry (Founder decision, 2026-09-20)
+
+This procedure **expired when PY-04 reached DONE** at 12:27:21Z. It is retained as historical evidence and is **not** applied to PY-05 or any later BIU.
+
+> A successful bootstrap exception must not silently become architecture.
+
+Generalizing a mutation gate into standing verification belongs to **SF-REQ-050** (deterministic failure-class promotion, [SWF-24](2026-09-20-deterministic-failure-class-promotion.md)), through the normal requirement, design and BIU path — not by extending a temporary exception. The coordinator does not run the battery as a gate on subsequent BIUs.
+
+**Evidence it produced:** on candidate `1b372c2a` the battery reproduced the verifier's five survivors and found a sixth (M1) the verifier's variant could not reach; on the accepted candidate `03896f62` it reported 23 killed / 0 survived / 0 not applied, independently agreeing with the verifier's own red-green check. That evidence is the input to SF-REQ-050, not a licence to keep the gate.
+
+## Procedure (as executed, historical)
 
 For the next PY-04 producer candidate, the producer's claim that mutation proof is complete is **not** relied upon. After the candidate is published, the coordinator independently executes the verifier-defined 23-mutation battery against **that exact candidate**, before another independent VERIFY cycle is allowed to stand.
 

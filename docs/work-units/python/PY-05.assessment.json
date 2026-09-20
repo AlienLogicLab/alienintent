@@ -1,33 +1,34 @@
 {
   "disposition": "READY",
   "governing_intent": "Implement a GitHub Projects Anti-Corruption Layer and authenticated direct-webhook ingress that maintain a noncanonical READY view while preserving the fixed upstream-to-execution authority boundary.",
-  "summary": "PY-05 is bounded, vertically coherent, and executable without inventing Founder or architecture decisions. Its requirement extents are honest: primary for SF-REQ-005, contributing only event freshness for SF-REQ-001 and ingress custody for SF-REQ-008.",
+  "summary": "PY-05 is bounded, vertically coherent, and executable without inventing Founder or architecture decisions. Its requirement extents are honest: primary for SF-REQ-005, contributing event freshness for SF-REQ-001 and ingress custody for SF-REQ-008.",
   "owner_clarifications": [],
   "implementation_unknowns": [
-    "Concrete GitHub API/event-schema and pagination handling compatible with the recorded fixtures.",
-    "Exact typed port, profile-schema, receipt, rejection, and unavailable outcome representations constrained by PY-04 and PY-03.",
+    "Concrete GitHub API, webhook-schema, pagination, and source-version handling compatible with recorded fixtures.",
+    "Exact typed port, profile-schema, receipt, rejection, and unavailable-outcome representations constrained by PY-03 and PY-04.",
     "Adapter-local conditional-write or serialized projection-fencing mechanism.",
-    "Recorded fixture coverage for GitHub payload variants and local webhook-server test harness."
+    "Recorded-fixture coverage and local webhook-server harness design."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "Real executable proof is specified: recorded-payload contract tests, a locally served endpoint with real raw-body HMAC verification, durable duplicate/stale-event behavior through PY-03, projection-fencing and outage tests, sentinel secret-leak testing, architecture fitness checks, and the Node suite. Fixture/API research is normal implementation work, not a verification gap.",
+  "verification_assessment": "Real executable proof is specified: recorded-payload contract tests, a locally served endpoint with real raw-body HMAC verification, durable duplicate/stale-event behavior through PY-03, projection-fencing and outage tests, sentinel secret-leak testing, architecture fitness checks, and the Node suite. Fixture/API research is ordinary implementation work, not a verification gap.",
   "expected_rework_locality": "LOW",
   "material_risks": [
-    "GitHub API and webhook capabilities must be verified against supported schemas; unsupported, ambiguous, missing-membership, incomplete-page, or unsafe-ordering cases must remain typed fail-closed outcomes.",
-    "The implementation must preserve the PY-03 receipt-before-acknowledgment and expected-version semantics rather than introducing an adapter-local durability path.",
-    "Projection echoes and externally edited execution display fields must remain drift observations and never become lifecycle commands."
+    "Unsupported, ambiguous, missing-membership, incomplete-page, or unsafe-ordering cases must remain typed fail-closed outcomes.",
+    "Implementation must preserve PY-03 receipt-before-acknowledgment and expected-version semantics rather than introduce adapter-local durability.",
+    "Projection echoes and external execution-display edits must remain drift observations, never lifecycle commands."
   ],
-  "next_action": "When PY-03 and PY-04 are accepted, release PY-05 for implementation on its declared clean-main baseline; resolve the listed implementation details through adapter research and recorded-fixture tests.",
-  "rationale": "Binding authority fixes ownership, release, transport, authentication, durability, no-polling, configuration, secret handling, and Python/Node coexistence. The remaining details are explicitly gate-classified category-B implementation work. The adapter, ingress, minimal profile/secret adapter, and composition wiring form one integration vertical around the same profile-scoped Work Management boundary, so splitting would increase seam risk without resolving an independent decision.",
+  "next_action": "When PY-03 and PY-04 are accepted, release PY-05 against its declared clean-main baseline and resolve the listed implementation details through adapter research and recorded-fixture tests.",
+  "rationale": "Binding authority fixes ownership, release, transport, authentication, durability, no-polling, configuration, secret handling, and Python/Node coexistence. The remaining details are delegated implementation design. The adapter, ingress, minimal profile/secret adapter, and composition wiring form one profile-scoped integration vertical; splitting would add seams without resolving an independent decision.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
     "compatibility": "COMPATIBLE_UNVERIFIED",
     "capability_probe": "PASSED",
     "invocation": "codex exec --ephemeral --json --sandbox read-only",
-    "baseline": "e25da1f",
+    "baseline": "0170af0",
     "assessed": "2026-09-20",
-    "request": "PY-05.request.md"
+    "request": "PY-05.request.md",
+    "note": "reassessment at PY-04-landed baseline, after SWF-23 repair-cycle contract section"
   }
 }
