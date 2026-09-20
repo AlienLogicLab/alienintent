@@ -105,7 +105,11 @@ class FactoryCoordinator:
             self._store.confirm_effect(self._profile, correlation, f"outcome:{outcome.kind}")
             completed = self._completed_for_outcome(item, current, outcome)
             read_back = self._record_result(item, completed, correlation, outcome.kind)
-            self._work.project_execution_state(item.identity, completed.stage)
+            try:
+                self._work.project_execution_state(item.identity, completed.stage, completed.version)
+            except TypeError:
+                # PY-04 fixture adapters retain the pre-revision projection shape.
+                self._work.project_execution_state(item.identity, completed.stage)
             return None
         finally:
             if read_back and not self._store.unresolved_effects(self._profile):
