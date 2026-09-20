@@ -1,36 +1,38 @@
 {
   "disposition": "NEEDS_CLARIFICATION",
-  "governing_intent": "Prove an offline, event-driven continuous-factory walking skeleton with deterministic doubles, durable restart recovery, priority/dependency/WIP scheduling, and rolling refill, without vendor access, provider spend, Node changes, or a Python-Sovereignty claim.",
-  "summary": "The BIU is tightly bounded, its requirement extents are candid, and most acceptance criteria are observable through executable deterministic integration tests. It has one material authority conflict: it requires lifecycle progress through VERIFY, REVIEW, ACCEPT, and DONE while excluding candidate-custody mechanics, real workers, network access, and PY-06; the approved candidate-custody invariant requires a durably retrievable exact candidate for a fresh independent verifier before VERIFY.",
+  "governing_intent": "Prove an offline, event-driven continuous-factory walking skeleton using deterministic test doubles, durable restart recovery, priority/dependency/WIP scheduling, rolling refill, and no provider spend or Node change.",
+  "summary": "The loop\u2019s scope, exclusions, requirement extents, and most executable acceptance evidence are well bounded. One Founder-level custody decision remains: the contract introduces a local content-addressed artifact path as the candidate for VERIFY while expressly deferring the fresh independent verifier invocation and its provenance to PY-06.",
   "owner_clarifications": [
-    "Must PY-04 receive an explicit, bounded test-only exception to the candidate-publication and independent-verifier requirements for its offline scripted-worker path, or must its scope be changed so it does not cross VERIFY/ACCEPT/DONE until PY-06 supplies real candidate custody and verifier invocation? The current authorities do not authorize treating an unverified scripted outcome as a substitute for that invariant."
+    "Approve the stated offline custody interpretation as a bounded PY-04 exception/equivalence: a digest-identified durable local artifact retrieved and verified by a fresh independent process may satisfy SF-REQ-007 for deterministic test infrastructure; or require PY-04 to stop before VERIFY and defer VERIFY through DONE to PY-06."
   ],
   "implementation_unknowns": [
-    "Concrete WorkManagement and WorkerProvider port signatures, outcome/event payloads, and typed rejection shapes.",
-    "The deterministic fixture format, event-delivery harness, process entrypoint used only by the restart test, and run-summary schema.",
-    "The exact SQLite recovery transaction sequencing using the PY-03 OperationalStore.",
-    "The mechanical assertions for release provenance, ordering traces, no-repeat reconcile reads, and stop reasons."
+    "Concrete WorkManagement and WorkerProvider port signatures and typed outcomes.",
+    "Fixture/event harness, restart-process entrypoint, run-summary schema, and SQLite transaction sequencing through PY-03.",
+    "Exact mechanical assertions for release provenance, ordering, event-triggered refill, no-repeat reconcile reads, and stop reasons.",
+    "How the approved offline verifier process will demonstrate independence and record its observations, if the owner approves that path."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "The specified proof is real and mechanically testable for loop behavior: deterministic doubles exercise the coordinator rather than mocked coordinator internals; restart must be a real process restart; and ordering, WIP, refill, blocked-dependency, no-polling, release-policy, and stop-reason assertions are observable. It is not presently valid proof of the claimed full lifecycle because the contract supplies neither an authorized test-only custody/verifier exception nor PY-06 candidate custody and independent verification.",
+  "verification_assessment": "The required tests are substantive executable proof for the coordinator: real deterministic doubles, a real process restart over SQLite, custody-negative and evidence-negative cases, ordering/WIP/dependency/refill assertions, no-polling observation, and retained run evidence. It is not yet complete proof for the full lifecycle because the contract does not yet have owner-approved equivalence between its local-artifact verifier path and SF-REQ-007\u2019s fresh independent verifier requirement.",
   "expected_rework_locality": "LOW",
   "material_risks": [
-    "An implementer may bypass PY-02's VERIFY-entry custody guard to make the scripted loop reach DONE.",
-    "An implementer may accidentally build a partial PY-06 custody/verifier system inside PY-04, broadening scope and duplicating later work.",
-    "A scripted success could be recorded as verification or acceptance despite the definition/observation/verdict boundary.",
-    "The OFF release-policy test could accidentally inject execution directly rather than exercising the same attributable release boundary as automatic ON."
+    "Treating a separate artifact-retrieval process as a fresh independent verifier without an explicit authorized equivalence.",
+    "Bypassing or weakening PY-02\u2019s VERIFY-entry guard to reach DONE.",
+    "Accidentally implementing PY-06 production custody mechanics in PY-04.",
+    "Allowing scripted success to become ACCEPT without policy evaluation over required evidence.",
+    "Injecting OFF-policy execution directly rather than crossing the same attributable release boundary as ON."
   ],
-  "next_action": "Obtain the single custody/VERIFY boundary decision, then amend PY-04's lifecycle scope and acceptance criteria to state the approved offline test path precisely before implementation readiness is granted.",
-  "rationale": "Approved authority resolves priority ownership, release ON/OFF policy, event-driven refill, WIP defaults, durable recovery, port layering, and the test-only status of the scripted worker; their lower-level realization is delegated engineering work. But SF-REQ-007 and PY-02 explicitly prohibit entering VERIFY without a durably retrievable candidate, and the architecture requires independent verifier inputs. PY-04 currently mandates VERIFY-to-DONE while expressly excluding the capabilities that establish those conditions, creating an owner-level authorization gap rather than a normal implementation unknown.",
+  "next_action": "Obtain the bounded offline-custody decision, then amend PY-04 to state the authorized verifier/custody path precisely or limit its lifecycle proof before VERIFY.",
+  "rationale": "Priority ownership, release policy, WIP, recovery, layering, no-polling, and scripted-worker status are resolved by binding authority; their concrete implementation is delegated. However, SF-REQ-007 requires retrieval by a fresh independent verifier, Architecture Authority \u00a75 defines verifier independence, and PY-04 explicitly labels its alternative local-artifact interpretation as surfaced for Founder confirmation while deferring the separately invoked verifier and provenance to PY-06. That is an authority boundary, not ordinary engineering detail.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
     "compatibility": "COMPATIBLE_UNVERIFIED",
     "capability_probe": "PASSED",
     "invocation": "codex exec --ephemeral --json --sandbox read-only",
-    "baseline": "e25da1f",
+    "baseline": "c32830b",
     "assessed": "2026-09-20",
-    "request": "PY-04.request.md"
+    "request": "PY-04.request.md",
+    "note": "reassessment after applying first-pass Agent-Ready findings"
   }
 }

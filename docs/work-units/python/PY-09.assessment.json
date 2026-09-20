@@ -1,35 +1,34 @@
 {
-  "disposition": "NEEDS_CLARIFICATION",
-  "governing_intent": "SF-REQ-038 requires a non-mutating, sanitized doctor that positively validates every dependency needed for unattended execution and prevents autonomous `run` when required readiness is not established.",
-  "summary": "The BIU is bounded, coherent, and has credible executable CLI-level verification, but it leaves the operational policy that determines which outcomes block autonomous execution unspecified. An implementation agent would need to invent the hard-required versus warning/unavailable classification and its effect on the overall disposition and exit status.",
-  "owner_clarifications": [
-    "For each listed doctor check, define whether FAIL and UNAVAILABLE are hard blockers for autonomous `run`, warnings, or profile/policy-configurable outcomes; define the resulting overall disposition and exit-code mapping.",
-    "Define whether an unavailable live dependency is always equivalent to a failed required dependency for autonomous start, or whether any explicitly approved degraded-autonomy mode exists."
-  ],
+  "disposition": "READY",
+  "governing_intent": "Provide a fail-closed, read-only doctor gate that refuses autonomous work unless the configured profile has positively evidenced configuration, integration, persistence, and execution readiness.",
+  "summary": "PY-09 is bounded around one coherent pre-autonomy validation capability. It specifies hard-required checks, outcome semantics, exit codes, sanitization, non-mutation, integration with run, and executable CLI-level proof without requiring unresolved Founder or architecture decisions.",
+  "owner_clarifications": [],
   "implementation_unknowns": [
-    "Exact typed result schema, stable JSON field names, and numeric exit-code values once the approved outcome policy is supplied.",
-    "How adapters positively evidence non-mutating write/publication capability (for example capability negotiation, authenticated dry-run, or an adapter-specific safe probe).",
-    "Fixture shapes, local doubles, subprocess harness, and per-adapter diagnostic redaction implementation."
+    "Define adapter-level error classification that consistently distinguishes FAIL from UNAVAILABLE while preserving sanitized causes.",
+    "Choose check-provider interfaces and fixture/double arrangements for each predecessor-owned capability.",
+    "Use a temporary owned local probe or equivalent non-mutating Git capability evidence for worktree and publication readiness.",
+    "Exercise the reserved WARNING aggregation path in a test-only result fixture, since Wave 1 defines no advisory doctor checks."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "Strong: it requires real CLI subprocess invocation with retained exit statuses, passing and failing cases for every check, specified negative-evidence cases, a real refused `run` attempt, mutation assertions against fixtures/doubles, JSON stability, and sentinel-secret leakage coverage. Recorded fixtures and local doubles are appropriate for PY-09; PY-10 is explicitly assigned real-target evidence. The missing outcome-policy matrix prevents these otherwise executable checks from proving the intended gate semantics deterministically.",
+  "verification_assessment": "Strong and mechanically observable: real CLI subprocess invocation, retained exit statuses, pass/fail coverage for every check, explicit negative evidence cases, real run-refusal proof for FAIL and UNAVAILABLE, stable JSON output, sentinel-secret leakage testing, non-mutation assertions, fitness checks, and Node-suite preservation. Recorded fixtures and local doubles are appropriate for this BIU; PY-10 owns real-target evidence.",
   "expected_rework_locality": "LOW",
   "material_risks": [
-    "Different implementers could classify the same unavailable dependency differently, producing unsafe autonomous starts or needless total blockage.",
-    "An arbitrary exit-code/disposition mapping could make automation treat warning, failure, and unavailability inconsistently.",
-    "A capability probe chosen without an approved policy could accidentally perform an external mutation or provide only reachability rather than authenticated readiness."
+    "The doctor spans several adapters, so its result model and error classifier must remain uniform across predecessor interfaces.",
+    "A capability probe must not accidentally become a product mutation; local temporary-resource handling must be owned and cleaned up.",
+    "The current checkout is not a clean release baseline: main is ahead of origin by two commits and has one untracked document. This affects any claim about the exact current baseline, not the contract's readiness."
   ],
-  "next_action": "Obtain a short Founder/owner-approved doctor outcome matrix covering each check category, FAIL versus UNAVAILABLE treatment, autonomous-start eligibility, and the corresponding overall disposition/exit code; then reassess or incorporate it into PY-09.",
-  "rationale": "The BIU honestly maps SF-REQ-038 as its primary requirement, keeps installation creation, repair, Node changes, sovereignty, and later-wave work out of scope, and forms one cohesive doctor-and-gate capability rather than multiple independent products. Approved architecture and predecessor contracts constrain normal design detail. However, the binding rule only says a hard-required failure blocks `run` while the contract never identifies which checks or unavailable states are hard-required; this is an operational-authority and product-semantics choice, not routine implementation detail.",
+  "next_action": "Create or advance the PY-09 BIU through the authorized work-management flow once PY-05, PY-06, and PY-08 are accepted; implementation may then use the stated contracts and verification requirements without new owner decisions.",
+  "rationale": "SF-REQ-038 directly requires validation of installation, Work Management, provider, source-control, transport, lifecycle mapping, persistence, and execution capability before autonomous work. PY-09 covers each required extent, constrains it with FD-03-compatible fail-closed semantics and the established ownership boundary, explicitly excludes installer and broader product work, and leaves only normal adapter and test-design choices to implementation.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
     "compatibility": "COMPATIBLE_UNVERIFIED",
     "capability_probe": "PASSED",
     "invocation": "codex exec --ephemeral --json --sandbox read-only",
-    "baseline": "e25da1f",
+    "baseline": "c32830b",
     "assessed": "2026-09-20",
-    "request": "PY-09.request.md"
+    "request": "PY-09.request.md",
+    "note": "reassessment after applying first-pass Agent-Ready findings"
   }
 }

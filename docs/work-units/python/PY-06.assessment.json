@@ -1,34 +1,36 @@
 {
-  "disposition": "NEEDS_CLARIFICATION",
-  "governing_intent": "Implement the Invocation Runtime so real producer and verifier invocations run with isolated ownership, explicit grants and fail-closed budgets, while the control plane admits VERIFY only for an immutable, published candidate independently read back from a fresh checkout.",
-  "summary": "The scope is cohesive, bounded by clear non-goals, and materially constrained by approved authority. Acceptance and verification are predominantly executable and require real Git worktrees, child processes, cancellation, and a real provider-CLI path. However, the BIU states inconsistent predecessors: its header names PY-04 and PY-03, its baseline requires the accepted PY-05 tree, its readiness line calls PY-05 only a proposed-order dependency, while the governing request identifies PY-04 and PY-05 as dependencies. Normalize this before implementation so admission and baseline are unambiguous.",
+  "disposition": "READY",
+  "governing_intent": "Implement the Python invocation runtime that executes real CLI workers under explicit grants and fail-closed budgets, while enforcing control-plane candidate custody: VERIFY requires an exact published revision independently read back in a fresh verifier checkout.",
+  "summary": "PY-06 is a coherent, bounded vertical slice. Its custody, workspace, provider, capability, budget, cancellation, retry, and verifier-independence rules are constrained by approved authority; its non-goals preserve the Node boundary and defer routing, sandbox backends, deployment, and live GitHub proof. PY-04 and PY-05 are sequencing dependencies, not unresolved ownership decisions.",
   "owner_clarifications": [],
   "implementation_unknowns": [
-    "Select the minimum existing CLI adapter to implement first from the documented Node behavioural evidence (Codex and/or Claude), while keeping provider types outside port and domain signatures.",
-    "Define the local bare Git remote and fresh-clone test fixture used to prove publication and independent read-back without live GitHub mutation.",
-    "Specify typed operational records and error taxonomy for grants, budget eligibility, cancellation, ambiguous process identity, candidate read-back, and late-result retention within the approved PY-03 persistence constraints.",
-    "Choose safe process-group, timeout, signal, and liveness-probe mechanics that satisfy the required cancellation and PID-reuse protections."
+    "Select the existing CLI provider adapter(s) that can satisfy the BIU's declared hard budget dimensions, using a bounded compatibility probe.",
+    "Define typed port records, error/rejection shapes, process-supervision mechanics, Git command mechanics, and grant/profile representations within the approved hexagonal constraints.",
+    "Choose deterministic local Git fixtures, including an independently reachable local remote, for publication and fresh-checkout read-back proof.",
+    "Determine the least-cost configured provider CLI invocation that can evidence the real adapter path; unavailable credentials or an ineligible provider are external/runtime blockers with typed outcomes, not product decisions."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "Real executable proof is required rather than descriptive claims: local Git worktrees and a fresh independent checkout prove custody; real child processes prove timeout and cancellation; at least one bounded real provider-CLI invocation proves the adapter boundary; deterministic fakes cover remaining edge cases. The contract also requires negative custody, self-approval, cross-target grant, revocation, hard-budget-ineligibility, concurrency, secret-redaction, fitness, and Node-suite tests. These are mechanically observable, provided retained evidence records the stated revisions, read-back result, grants/budgets, process outcomes, and exit statuses.",
-  "expected_rework_locality": "LOW",
+  "verification_assessment": "Real executable proof is required and observable: real Git worktrees, publication and fresh-checkout read-back; separate producer/verifier invocations and provenance; negative custody and self-approval tests; real child-process timeout and cancellation; at least one bounded real provider CLI invocation; deterministic fakes only for remaining cases; retained evidence and Node-suite/fitness results. This is stronger than descriptive verification.",
+  "expected_rework_locality": "MEDIUM",
   "material_risks": [
-    "The contradictory PY-05 dependency/baseline wording can cause an implementation agent to build against an unaccepted or absent integration surface.",
-    "A real CLI proof depends on an installed, authenticated provider CLI and must remain narrowly bounded; unavailable authentication is an external prerequisite, not a reason to substitute a fake.",
-    "Cancellation recovery must treat an unknown or recycled process identity as unresolved and retain the workspace rather than infer safe cleanup.",
-    "Publication must be to a retrievable Git remote and proven by a fresh checkout; a local-only commit or mutable branch name cannot satisfy custody."
+    "A configured CLI provider may be unavailable or unable to enforce a BIU-marked hard budget dimension; the contract correctly requires ineligibility rather than downgrade.",
+    "Candidate publication/read-back must use an independently reachable repository path, not a mutable branch name or producer workspace artifact.",
+    "Cancellation must prove ownership and quiescence before cleanup; ambiguous or recycled process identity must remain an unresolved recovery condition.",
+    "Integration must preserve PY-02's custody guard and PY-04's coordinator semantics without allowing a scripted or provider success alone to create a verdict.",
+    "Provider diagnostics, grant records, and retained evidence require deliberate redaction to meet the no-secret criterion."
   ],
-  "next_action": "Amend PY-06 to name PY-04 and PY-05 consistently as predecessors, define the accepted-baseline condition consistently, and retain PY-03 as transitive through those predecessors; then reassess or proceed under the corrected contract.",
-  "rationale": "No unresolved Founder or architecture decision remains: FD-01 through FD-06, Architecture Authority, SWF-08 through SWF-11, and the pre-Python contracts already determine ownership, role independence, capability authority, budget policy, cancellation safety, custody, and the sandbox/live-proof boundary. The remaining design choices are ordinary implementation research. The sole readiness defect is a contract-internal dependency and baseline contradiction, not a product, architecture, or split concern.",
+  "next_action": "When PY-04 and PY-05 are accepted, release PY-06 for implementation against their accepted interfaces; begin with executable negative custody, process-cancellation, and provider-eligibility tests.",
+  "rationale": "The contract fixes the relevant product and architecture choices through SF-REQ-003/007/009, FD-03, SWF-09, the approved Wave 1 DAG, and Architecture Authority rules for role independence, authority, concurrency, cancellation, retries, cost governance, privacy, fitness, and Node/Python coexistence. Remaining details are explicitly category-B engineering design, not Founder decisions, and the scope forms one invariant-centered runtime/custody slice rather than independent decision centers.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
     "compatibility": "COMPATIBLE_UNVERIFIED",
     "capability_probe": "PASSED",
     "invocation": "codex exec --ephemeral --json --sandbox read-only",
-    "baseline": "e25da1f",
+    "baseline": "c32830b",
     "assessed": "2026-09-20",
-    "request": "PY-06.request.md"
+    "request": "PY-06.request.md",
+    "note": "reassessment after applying first-pass Agent-Ready findings"
   }
 }
