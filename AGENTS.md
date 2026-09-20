@@ -32,11 +32,16 @@ outside the BIU lifecycle. Before declaring such a task complete, validate and
 disposition its temporary branch/worktree as LANDED, DISCARDED, or PARKED with a
 durable blocker record. The actor who creates it owns closure; “commit created,
 not pushed” is not a stopping point. For bounded non-BIU docs/evidence/research/
-maintenance tasks, continue through authorized disposition and remove temporary
-worktrees/branches after landing or discard. Create isolation only when needed,
-and reconcile temporary branches/worktrees from the same actor before starting
-another isolated non-BIU task. Existing BIU closure policy and runtime-managed
-`b-disp/<uuid>` ownership/retention rules remain authoritative.
+maintenance tasks whose authorized disposition is LAND, continue through
+validate → integrate to the canonical target → push remote → verify remote →
+clean temporary state. Do not stop at “committed locally, not pushed”; if push
+authority is genuinely missing, PARK the work with that blocker recorded.
+Factory implementation/verifier candidate workers remain governed by BIU
+candidate/closure policy and must not bypass it by pushing directly to `main`.
+After landing or discard, remove temporary worktrees/branches. Create isolation
+only when needed, and reconcile temporary branches/worktrees from the same actor
+before starting another isolated non-BIU task. Existing BIU closure policy and
+runtime-managed `b-disp/<uuid>` ownership/retention rules remain authoritative.
 
 Prefix shell commands with `rtk`; use `rtk proxy` for unfiltered output.
 RAI remains unwired. Keep installation secrets and operational state outside the

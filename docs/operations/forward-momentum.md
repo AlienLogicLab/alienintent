@@ -21,9 +21,12 @@ Every task that creates repository state has a disposition obligation, whether o
 not it is a BIU. Creating a temporary branch or worktree creates a closure
 obligation. A repository-changing task is not complete until its state is:
 
-- **LANDED** — authorized content is validated and integrated into its target
-  branch; its temporary worktree is removed, and its temporary branch is deleted
-  when no longer needed.
+- **LANDED** — authorized content is validated, integrated into its canonical
+  target branch, pushed to the remote, and read back to verify the remote ref;
+  temporary worktrees are removed and temporary branches deleted when no longer
+  needed. For non-BIU work, an already-authorized LAND disposition includes this
+  push and remote verification. If push authority is genuinely missing, record
+  the work as PARKED with the missing authority and next action.
 - **DISCARDED** — no useful unique content remains; its temporary worktree and
   branch are removed.
 - **PARKED** — only when missing authority or an unresolved dependency prevents
@@ -33,10 +36,14 @@ obligation. A repository-changing task is not complete until its state is:
 The actor who creates a temporary branch/worktree owns its disposition before
 declaring the task complete. For bounded documentation, evidence, research,
 proposal, audit, or maintenance work, use **validate → land → remove worktree →
-delete temporary branch**, unless a genuine authority/dependency blocker requires
-PARKED. “Task analysis complete” is not completion while an unowned temporary
-branch/worktree remains. Already-merged temporary branches are routine
-housekeeping and should be deleted.
+push → verify remote → remove worktree → delete temporary branch**, unless a
+genuine authority/dependency blocker requires PARKED. “Task analysis complete”
+is not completion while an unowned temporary branch/worktree remains.
+Already-merged temporary branches are routine housekeeping and should be deleted.
+
+This non-BIU push rule does not replace BIU candidate publication or closure
+policy. Factory PRODUCER/VERIFIER workers must not push directly to `main` or
+bypass the BIU's authorized candidate/closure path.
 
 Create isolation only when concurrency, risk, or independent review requires it;
 do not create branches/worktrees by habit. Before beginning another isolated
