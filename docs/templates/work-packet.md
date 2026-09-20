@@ -25,3 +25,7 @@ Identify concrete authority gaps, conflicts, destructive operations and unavaila
 external prerequisites. State the next authorized step and continue when its actual
 prerequisites are satisfied. Keep private history, installation credentials and
 operational state out of public artifacts.
+
+## Repair cycles
+
+Repairs must converge monotonically unless authority explicitly changes the target ([SWF-23](../decisions/2026-09-20-convergent-repair-monotonic-progress.md)). A repair records the findings it fixes, the previously satisfied acceptance criteria, the evidence that must be preserved, any evidence explicitly superseded with its authorizing decision, and the replacement proof obligations. Previously verified behavior stays correct; previously valid evidence stays valid or is explicitly superseded. Evidence disappearance without supersession is a regression.
