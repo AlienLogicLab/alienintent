@@ -5,6 +5,7 @@ from __future__ import annotations
 from hashlib import sha256
 from pathlib import Path
 import subprocess
+from urllib.parse import urlsplit, urlunsplit
 
 from alienintent.execution_coordination.domain.custody import CandidateRef
 from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
@@ -12,6 +13,17 @@ from alienintent.invocation_runtime.ports.source_control import SourceControl
 
 
 class GitSourceControl(SourceControl):
+    @staticmethod
+    def _evidence_remote(remote: str) -> str:
+        """Keep candidate evidence usable without retaining URL userinfo."""
+        parsed = urlsplit(remote)
+        if not parsed.scheme:
+            return remote
+        host = parsed.hostname or ""
+        if parsed.port:
+            host = f"{host}:{parsed.port}"
+        return urlunsplit((parsed.scheme, host, parsed.path, parsed.query, parsed.fragment))
+
     def _git(self, *args: str, cwd: Path | None = None) -> str:
         result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True, check=False)
         if result.returncode:
@@ -36,7 +48,8 @@ class GitSourceControl(SourceControl):
         if fetched != revision:
             raise CandidateUnavailable("fresh clone cannot retrieve exact candidate revision")
         digest = f"sha256:{sha256(revision.encode()).hexdigest()}"
-        return CandidateRef.source_revision(digest, f"git:{remote_url}#{branch}@{revision}", identity=f"revision:{remote_url}@{branch}@{revision}@{digest}").with_independent_read_back()
+        evidence_remote = self._evidence_remote(remote_url)
+        return CandidateRef.source_revision(digest, f"git:{evidence_remote}#{branch}@{revision}", identity=f"revision:{evidence_remote}@{branch}@{revision}@{digest}").with_independent_read_back()
 
     def publish_and_read_back(self, workspace: Path, remote: str, branch: str, revision: str, verifier_workspace: Path) -> CandidateRef:
         if self.revision(workspace) != revision:

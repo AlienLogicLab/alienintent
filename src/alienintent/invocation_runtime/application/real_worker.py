@@ -7,7 +7,7 @@ from collections.abc import Callable
 
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
-from alienintent.invocation_runtime.domain.runtime import BudgetIneligible, CapabilityGrant, InvocationRole, ReservationBook, VerifierIndependence, require_eligible
+from alienintent.invocation_runtime.domain.runtime import BudgetIneligible, CapabilityGrant, InvocationRole, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
 from alienintent.invocation_runtime.ports.source_control import SourceControl
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 from alienintent.invocation_runtime.ports.workspace import WorkspaceManager
@@ -20,6 +20,8 @@ class RealWorkerProvider(WorkerProvider):
         self._outcomes: dict[str, WorkerOutcome] = {}
         self._reservations = reservations
         self.cleanup_diagnostics: dict[str, str] = {}
+        self.retry_evidence: dict[str, RetryEvidence] = {}
+        self.verifier_provenance: dict[str, str] = {}
         self._now = now
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
@@ -44,7 +46,17 @@ class RealWorkerProvider(WorkerProvider):
         workspace = self._workspaces.allocate(invocation.correlation_id, invocation.work_identity, "HEAD")
         outcome = WorkerOutcome("failure")
         try:
-            result = self._process.run(invocation.correlation_id, InvocationRole.PRODUCER, workspace.path, budget.hard_wall_clock_seconds)
+            schedule = RetrySchedule(budget.maximum_attempts, budget.retry_limit, 1, 0)
+            attempts, next_eligible = 0, None
+            while True:
+                attempts += 1
+                result = self._process.run(invocation.correlation_id, InvocationRole.PRODUCER, workspace.path, budget.hard_wall_clock_seconds)
+                if result.kind == "success":
+                    break
+                next_eligible = schedule.next_after_failure(attempts, float(self._now()))
+                if next_eligible is None:
+                    break
+            self.retry_evidence[invocation.correlation_id] = RetryEvidence(attempts, next_eligible)
             if result.kind != "success" or ("token" in budget.required_dimensions and result.budget.token_cost is None) or ("monetary" in budget.required_dimensions and result.budget.monetary_cost is None):
                 outcome = WorkerOutcome(result.kind)
             else:
@@ -69,4 +81,21 @@ class RealWorkerProvider(WorkerProvider):
             VerifierIndependence(producer_invocation_id, verifier_invocation_id).require(InvocationRole.VERIFIER)
         except PermissionError:
             return WorkerOutcome("self-approval-rejected")
-        return self._outcomes.get(producer_invocation_id, WorkerOutcome("candidate-unavailable"))
+        outcome = self._outcomes.get(producer_invocation_id, WorkerOutcome("candidate-unavailable"))
+        if outcome.kind != "success":
+            return outcome
+        if self._reservations is not None:
+            try:
+                self._reservations.reserve(verifier_invocation_id, InvocationRole.VERIFIER)
+            except RuntimeError:
+                return WorkerOutcome("ineligible")
+        workspace = self._workspaces.allocate(verifier_invocation_id, verifier_invocation_id, "HEAD")
+        try:
+            self.verifier_provenance[verifier_invocation_id] = workspace.path.as_posix()
+            return outcome
+        finally:
+            try:
+                self._workspaces.cleanup(workspace, None)
+            finally:
+                if self._reservations is not None:
+                    self._reservations.release(verifier_invocation_id)
