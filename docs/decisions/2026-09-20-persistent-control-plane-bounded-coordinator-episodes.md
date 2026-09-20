@@ -59,6 +59,85 @@ Applied: deterministic monitoring moved to `systemd --user` (`alienintent-livene
 
 This is bootstrap evidence for SF-REQ-053, not a new requirement: the existing authority already contains it.
 
+## Bootstrap evidence — the activation boundary (2026-09-21)
+
+Monitoring survived the coordinator episode (previous section). Attention did not.
+
+**Observed failure.** PY-06 reached DONE. The observer recorded it correctly and on time —
+`OUTCOME_RECORDED / DONE_TO_DONE`, issue 54, `2026-09-20T15:59:06Z`, with the note *"closure complete
+— next BIU release is coordinator work"*. It carried `requires_model_judgment: false`, because the
+classifier treated DONE as a healthy outcome rather than as the one transition that **requires** a
+coordinator to act. Nothing notified anyone and nothing activated. The factory sat idle until the
+Founder manually told the coordinator that PY-06 was DONE, roughly 45 minutes later; only then were
+closure verified, `main` reconciled, PY-07 re-assessed and released.
+
+**The same gap immediately produced a worse instance.** At `16:56:38Z` PY-07's producer raised
+`FOUNDER_EXCEPTION` — observed, flagged `requires_model_judgment: true`, and seen by no one. The
+SWF-29 liveness watch then did its job at `17:04:41Z`, re-emitted the status, a second producer
+started and refused identically at `17:06:09Z`. Deterministic recovery was working perfectly against
+a condition only judgment could resolve, so it would have kept relaunching workers indefinitely. No
+mechanism escalated, because no mechanism could.
+
+> **Persistent observation and bounded coordinator cognition require an activation boundary. An
+> observation requiring model judgment must become a durable attention item capable of activating, or
+> at minimum notifying for activation of, a bounded coordinator episode.**
+
+A corollary the second incident makes explicit:
+
+> **Deterministic recovery must yield to attention. A recovery mechanism that cannot resolve a
+> condition must stop repeating and raise it, rather than re-attempting on a timer.**
+
+### Coordinator tenure during Wave 1 bootstrap (Founder decision, 2026-09-21)
+
+> During Wave 1 bootstrap, coordinator tenure may span multiple BIUs for continuity, provided
+> monitoring, authority, and recoverability remain externalized and durable. This does not change the
+> canonical target of bounded, policy-controlled coordinator episodes.
+
+This is an explicit, scoped departure from rule 2's one-BIU default, permitted by rule 5 (tenure is
+policy) and bounded by rules 3, 8 and 9: it holds only while everything needed for correct
+continuation stays outside the session. It is not evidence that long tenure is the target model.
+
+### Applied
+
+- **Durable attention queue** — `~/.local/state/alienintent/coordinator-attention.jsonl`, append-only,
+  with a CLI (`attention.py list|show|ack`). A coordinator with no prior conversation can ask what
+  needs judgment, see the BIU, event, timestamp, required authority and handled state, and acknowledge
+  items with an attributable note. Attention outlives both the daemon and the episode.
+- **Classification** — DONE (next release is coordinator work), `FOUNDER_EXCEPTION`, unrecovered
+  `LIVENESS_GAP`, repeated verifier rejections on one BIU, and anything already flagged
+  `requires_model_judgment`. Healthy IMPLEMENT/VERIFY/ACCEPT churn and a single rejection do not
+  notify. Identity is the dispatcher's own outcome, not the moment of observation, so a daemon restart
+  cannot re-alarm.
+- **Notification, not activation** — a Windows toast through the WSL host, the only channel verified
+  to work here. It is best-effort and loud on failure: the durable item is written first, and the
+  attempt and its result are recorded beside it, so a dead channel can never look like a delivered one.
+
+### Automatic model activation: available, deliberately not wired
+
+Programmatic activation **is** technically supported in this environment — the dispatcher already
+launches `claude -p` workers, so a daemon could start a coordinator episode the same way. It is not
+wired, for two reasons that are decisions rather than limitations:
+
+1. an unattended episode started by a daemon would perform authority-bearing acts (releases, Issue
+   edits, commits) with no human present — the autonomy question is the Founder's, not the
+   coordinator's, and rule 10 forbids a temporary control from becoming architecture by default;
+2. under the tenure decision above, a coordinator episode is resident through Wave 1, so notification
+   suffices; nothing currently needs waking.
+
+The attention queue is the activation boundary either way: whatever eventually consumes it — a
+notification, a Founder, or a policy-controlled episode launcher — reads durable observation identity,
+never conversational state.
+
+### Relationship to the Decision Inbox
+
+These are two different queues and must not be merged. The **Decision Inbox** (SF-REQ-035, built by
+PY-07) is a *product* capability: durable, attributable authority decisions that re-admit blocked work
+through normal guards. This attention queue is *bootstrap operational tooling* that makes a coordinator
+aware that something needs judgment at all — including that a `HumanDecisionRequired` exists. When the
+Decision Inbox and SF-REQ-053 activation land, the durable attention items become inputs to them and
+this file-based queue expires with the rest of the bootstrap. **No new Product Requirement is created:**
+SF-REQ-053 owns the activation boundary and SF-REQ-035 owns human decisions.
+
 ## Scope and non-goals
 
 No change to the current Wave 1 coordinator, worker or verifier behaviour, and no change to Node/B-DISP bootstrap behaviour. No coordinator-lifecycle experiment is started. No visible lifecycle state is created — existing authority does not require one. No fixed context-size or time thresholds are selected. No implementation, and no BIU is created from this record.

@@ -153,6 +153,50 @@ SF-REQ-056 lands, and the observer expires when the canonical control plane reco
 
 Control: `systemctl --user {status,restart,stop} alienintent-liveness alienintent-observer`.
 
+### Attention queue — observation to coordinator attention (temporary bootstrap)
+
+Observation alone does not reach anyone. PY-06 reached DONE, was observed correctly, and nothing
+notified or activated a coordinator; the factory idled until the Founder said so by hand
+([SWF-27 activation boundary](decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md)).
+
+Both services now route attention-worthy observations through
+`~/.local/share/alienintent-bootstrap/attention.py` into an append-only queue at
+`~/.local/state/alienintent/coordinator-attention.jsonl`:
+
+```
+python3 ~/.local/share/alienintent-bootstrap/attention.py list         # outstanding items
+python3 ~/.local/share/alienintent-bootstrap/attention.py show <id>
+python3 ~/.local/share/alienintent-bootstrap/attention.py ack <id> --by coordinator --note "..."
+```
+
+**A coordinator starting cold reads this first** — it answers what needs judgment, for which BIU, when,
+which authority is required, and whether it was handled, without the previous conversation.
+
+| Notifies | Does not notify |
+|---|---|
+| BIU reaches DONE (next release is coordinator work) | `INVOCATION_ACTIVE` / `INVOCATION_ENDED` churn |
+| `FOUNDER_EXCEPTION` | a single verifier rejection — normal repair |
+| `LIVENESS_GAP` that recovery did not close | a `LIVENESS_GAP` that recovery closed |
+| 3+ verifier rejections on one BIU (convergence doubt, SWF-23) | `VERIFY_TO_VERIFY`, `ACCEPT_TO_ACCEPT` |
+| any observation carrying `requires_model_judgment: true` | |
+
+Item identity is the dispatcher's own outcome (invocation plus outcome timestamp), not the moment of
+observation, so restarting a daemon cannot re-raise a handled item.
+
+**Notification channel: Windows toast via the WSL host** (`notify_founder.py`, PowerShell). Chosen after
+eliminating the alternatives in this environment: `notify-send`/zenity/kdialog and mail/sendmail are not
+installed; `wall`/`write` cannot reach a tty at mode 600; and **a GitHub Issue comment does not work as a
+Founder notification here, because the only credential authenticates as the Founder's own account and
+GitHub does not notify an author of their own comment or self-mention** — it would look delivered and
+reach nobody. Delivery is best-effort and never silent: the durable item is written before the attempt,
+and every attempt records `delivered` with its channel or its error.
+
+Tests: `python3 -m pytest ~/.local/share/alienintent-bootstrap/test_attention.py test_notify_founder.py -q`.
+
+This queue is bootstrap tooling, not the Decision Inbox. The Decision Inbox (SF-REQ-035, PY-07) owns
+durable authority decisions; this owns making a coordinator aware that judgment is needed. It expires
+when SF-REQ-053 activation and the Decision Inbox land.
+
 ## Worktrees and recovery
 
 Repository-changing tasks outside the BIU lifecycle also require explicit
