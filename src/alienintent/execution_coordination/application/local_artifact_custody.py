@@ -35,7 +35,8 @@ def verify_in_fresh_process(candidate: CandidateRef, verifier_root: Path) -> Can
     code = (
         "from hashlib import sha256; from pathlib import Path; import shutil,sys; "
         "source,destination=map(Path,sys.argv[1:3]); destination.parent.mkdir(parents=True,exist_ok=True); "
-        "shutil.copyfile(source,destination); print('sha256:'+sha256(destination.read_bytes()).hexdigest())"
+        "(None if destination.exists() else shutil.copyfile(source,destination)); "
+        "print('sha256:'+sha256(destination.read_bytes()).hexdigest())"
     )
     result = subprocess.run([sys.executable, "-c", code, candidate.locator, str(destination)], check=False, capture_output=True, text=True)
     if result.returncode or result.stdout.strip() != candidate.content_digest:

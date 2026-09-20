@@ -146,7 +146,10 @@ class FactoryCoordinator:
             try:
                 self._store.confirm_effect(self._profile, reservation.owner, f"outcome:{outcome.kind}")
             except ReservationRejected:
-                return False
+                # A crash may occur after the durable worker outcome was confirmed
+                # but before the correlated domain result was recorded.  The held
+                # reservation and worker read-back still make reconciliation safe.
+                pass
             _, raw = self._store.read_state(self._profile, self._aggregate(identity))
             current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
             if not self._record_result(item, self._completed_for_outcome(item, current, outcome), reservation.owner, outcome.kind):
