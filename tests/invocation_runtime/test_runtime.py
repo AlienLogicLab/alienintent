@@ -93,6 +93,7 @@ def test_real_worker_retains_an_authority_blocked_workspace_while_releasing_capa
     worker = RealWorkerProvider(Process(), Source(), tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", spaces, slots, now=lambda: 1, sleep=lambda _: None)
 
     result = worker.start(WorkerInvocation("blocked", "p"), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1, cancellation_limit=1, maximum_attempts=1, retry_limit=0))
+    worker.finalize(WorkerInvocation("blocked", "p"), retain=True)
 
     assert result.kind == "authority-block"
     assert spaces.cleaned == []

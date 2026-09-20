@@ -262,6 +262,9 @@ def test_real_unknown_effect_recovers_as_a_scoped_decidable_authority_block(tmp_
     assert store.recovery_reservations("offline") == ()
     request = DecisionInbox(store, coordinator, "offline").show("blocked")
     assert isinstance(request, HumanDecisionRequired)
+    version, blocked = store.read_state("offline", "factory:blocked")
+    with pytest.raises(ReservationRejected, match="unresolved effect"):
+        store.commit("offline", "factory:blocked", version, blocked)
 
     DecisionInbox(store, coordinator, "offline").submit(
         DecisionSubmission("morty", "SWF-21", "blocked", request.biu_version, request.biu_version, "reconcile-real-unknown", "authorize")
@@ -282,14 +285,19 @@ def test_lost_effect_confirmation_parks_the_running_item_without_stopping_the_fa
                 raise ReservationRejected("durable confirmation lost")
             super().confirm_effect(profile, effect_id, receipt)
 
+    class RetainingWorker(ScriptedWorker):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+            self.finalized: list[tuple[str, bool]] = []
+
+        def finalize(self, invocation, retain: bool) -> None:
+            self.finalized.append((invocation.correlation_id, retain))
+
     items = [_item("blocked", 0, 1), _item("dependent", 1, 2, ("blocked",)), _item("independent", 2, 3)]
     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
     store = LostConfirmationStore(tmp_path / "operational.sqlite")
-    coordinator = FactoryCoordinator(
-        store, MemoryWorkManagement(items),
-        ScriptedWorker(artifacts, {"blocked": ["success", "success"], "dependent": ["success"], "independent": ["success"]}),
-        artifacts, "offline",
-    )
+    worker = RetainingWorker(artifacts, {"blocked": ["success", "success"], "dependent": ["success"], "independent": ["success"]})
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement(items), worker, artifacts, "offline")
 
     summary = coordinator.start()
 
@@ -298,6 +306,7 @@ def test_lost_effect_confirmation_parks_the_running_item_without_stopping_the_fa
     assert coordinator.state("blocked").outcome == "authority-block"
     assert coordinator.state("independent").stage is LifecycleStage.DONE
     assert store.recovery_reservations("offline") == ()
+    assert worker.finalized[0] == ("launch:blocked:0", True)
 
 
 def test_recorded_decision_re_admits_after_a_real_process_restart(tmp_path: Path) -> None:

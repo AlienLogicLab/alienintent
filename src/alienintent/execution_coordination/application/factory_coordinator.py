@@ -135,6 +135,9 @@ class FactoryCoordinator:
             if outcome.kind == "authority-block" and outcome.escalation is not None:
                 self._register_escalation(outcome.escalation)
                 self._block_dependents(item, self._work.import_ready_snapshot())
+                self._finalize_workspace(item.identity, correlation, retain=True)
+            elif read_back:
+                self._finalize_workspace(item.identity, correlation, retain=False)
             self._work.project_execution_state(item.identity, completed.stage, completed.version)
             return None
         finally:
@@ -209,7 +212,13 @@ class FactoryCoordinator:
             return False
         self._register_escalation(self._authority_request(item, current.version, "The external effect outcome is unknown and requires reconciliation authority."))
         self._block_dependents(item, self._work.import_ready_snapshot())
+        self._finalize_workspace(item.identity, reservation.owner, retain=True)
         return True
+
+    def _finalize_workspace(self, identity: str, correlation: str, *, retain: bool) -> None:
+        finalize = getattr(self._worker, "finalize", None)
+        if callable(finalize):
+            finalize(WorkerInvocation(identity, correlation), retain)
 
     def _is_done(self, identity: str) -> bool:
         try:
@@ -321,6 +330,8 @@ class FactoryCoordinator:
         state = self._decode(raw)
         items = self._work.import_ready_snapshot()
         if not already_recorded:
+            if record.submission.choice == "authorize" and isinstance(raw.get("correlation"), str):
+                self._store.authorize_unknown_effect(self._profile, raw["correlation"])
             self._store.commit(self._profile, self._aggregate(record.event.work_item), version, self._encode(state) | {"outcome": "decision-recorded", "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice})
         descendants = {record.event.work_item}
         changed = True

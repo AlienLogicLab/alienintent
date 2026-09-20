@@ -167,9 +167,10 @@ class SQLiteOperationalStore(OperationalStore):
     def park_unknown_effect(self, profile: str, effect_id: str, expected_version: int, state: Mapping[str, object]) -> int:
         """Atomically preserve an unknown effect and record its authority block.
 
-        An unknown effect normally rejects mutations to its aggregate.  Parking
-        it is the explicit FD-05 reconciliation boundary: it changes no
-        external outcome, but makes the block durable and decidable.
+        An unknown effect normally rejects mutations to its aggregate. Parking
+        bypasses that guard only for the atomic recording of the authority
+        block; the effect remains unknown until an attributable decision
+        explicitly authorizes resumption.
         """
         with self._transaction() as connection:
             effect = connection.execute(
@@ -179,11 +180,15 @@ class SQLiteOperationalStore(OperationalStore):
             if not effect:
                 raise ReservationRejected("effect is not awaiting authority reconciliation")
             version = self._commit(connection, profile, effect["aggregate"], expected_version, state)
-            connection.execute(
-                "UPDATE effects SET status='authority-blocked' WHERE profile=? AND identity=?",
-                (profile, effect_id),
-            )
             return version
+
+    def authorize_unknown_effect(self, profile: str, effect_id: str) -> bool:
+        """Lift an FD-05 guard only after the decision flow authorizes it."""
+        with self._transaction() as connection:
+            return connection.execute(
+                "UPDATE effects SET status='authority-authorized' WHERE profile=? AND identity=? AND status='unknown'",
+                (profile, effect_id),
+            ).rowcount == 1
 
     def claim_effect(self, profile: str, effect_id: str) -> Effect:
         with self._transaction() as connection:

@@ -19,6 +19,7 @@ class RealWorkerProvider(WorkerProvider):
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
         self._active_workspaces: dict[str, object] = {}
+        self._finished_workspaces: dict[str, object] = {}
         self.retained_workspaces: dict[str, Path] = {}
         self._reservations = reservations
         self.cleanup_diagnostics: dict[str, str] = {}
@@ -69,8 +70,8 @@ class RealWorkerProvider(WorkerProvider):
                 candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._branch, revision, self._verifier_root)
                 outcome = WorkerOutcome.success(candidate)
         finally:
-            if outcome.kind == "authority-block":
-                self.retained_workspaces[invocation.correlation_id] = workspace.path
+            if outcome.kind in {"success", "authority-block"}:
+                self._finished_workspaces[invocation.correlation_id] = workspace
             else:
                 try:
                     self._workspaces.cleanup(workspace, None)
@@ -81,6 +82,19 @@ class RealWorkerProvider(WorkerProvider):
             self._active_workspaces.pop(invocation.correlation_id, None)
         self._outcomes[invocation.correlation_id] = outcome
         return outcome
+
+    def finalize(self, invocation: WorkerInvocation, retain: bool) -> None:
+        """Complete workspace disposition after the coordinator durably records truth."""
+        workspace = self._finished_workspaces.pop(invocation.correlation_id, None)
+        if workspace is None:
+            return
+        if retain:
+            self.retained_workspaces[invocation.correlation_id] = workspace.path
+            return
+        try:
+            self._workspaces.cleanup(workspace, None)
+        except Exception as error:
+            self.cleanup_diagnostics[invocation.correlation_id] = type(error).__name__
 
     def cancel(self, invocation_id: str, reason: str):
         """Fence a live owned invocation; its runner performs quiescent cleanup."""

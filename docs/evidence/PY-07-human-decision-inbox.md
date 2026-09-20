@@ -8,9 +8,10 @@ It contains no credentials, live Issue mutations, or provider secrets.
 - Findings repaired: admission-path and unresolved-effect escalation registration
   and recovery (including the distinct authority-block outcome, reservation
   release, scoped dependent blocking, and normal guarded re-admission). The
-  real SQLite unknown-effect path now atomically parks the unknown effect before
-  recording the authority block, so the FD-05 write guard remains intact; both
-  crash recovery and a lost live confirmation use that path.
+  real SQLite unknown-effect path atomically records the authority block while
+  retaining the effect's `unknown` guard. Only a durable `authorize` decision
+  changes that guard to its explicitly authorized state; both crash recovery
+  and a lost live confirmation use that path.
   interrupted decision application recovery;
   PY-05 Work Management decision projection wiring; no-op notifier coverage;
   subprocess restart proof; retained PY-07 evidence.
@@ -70,6 +71,8 @@ reservation, then starts a fresh coordinator whose worker cannot read the
 outcome. It proves the block is durable and decidable, the dependent is scoped,
 the unrelated work reaches DONE, and the reservation is released.  The paired
 lost-confirmation test exercises the same authority parking during a live run.
+`test_lost_effect_confirmation_parks_the_running_item_without_stopping_the_factory`
+proves coordinator-to-worker retention for the unknown-effect path, and
 `test_real_worker_retains_an_authority_blocked_workspace_while_releasing_capacity`
 proves the retained-workspace half of AC 3 at the runtime ownership boundary.
 
