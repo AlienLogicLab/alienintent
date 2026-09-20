@@ -874,6 +874,10 @@ When authority is missing, emit a structured HumanDecisionRequired event and blo
 
 Never enter VERIFY until the exact candidate is durably identifiable and retrievable by a fresh independent verifier. Enforce in the control plane, not worker instructions.
 
+**Amendment (2026-09-20, [SWF-30](2026-09-20-candidate-worktree-retention.md)) — local working copy as operational cache.** Custody is satisfied by the durable published identity, not by the local working copy that produced it. A local candidate worktree is therefore **not itself required evidence** once all of: (1) the exact candidate identity is known; (2) the candidate commit/artifact is durably published; (3) that identity is independently retrievable; (4) read-back confirms the published identity/content; (5) no active invocation uses the worktree; (6) no uncommitted unique content exists; (7) no explicit BIU or evidence policy requires local retention. When all seven hold, the worktree is operational cache and may be removed as routine cleanup.
+
+"Durably published" means the candidate remains reachable through a remote reference or other repository object whose **retention is at least as strong as the applicable evidence-retention obligation**; a transient remote branch about to be deleted does not qualify merely because the commit currently exists on the remote. Failing any condition means retention. This amendment does not weaken conditions 1–4 — it consumes that proof — and it never authorizes deleting the only durable copy of anything, nor any evidence object, trajectory or accepted result. Architecture Authority §26 evidence retention is cross-referenced and unchanged.
+
 ## SF-REQ-008 — Crash-safe execution
 **Priority:** P0
 

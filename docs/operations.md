@@ -178,6 +178,22 @@ content, switched branches, ownership mismatches and uncertain process liveness
 retain resources for diagnosis. Cleanup never forces removal or adopts unknown
 worktrees. Worktrees share Git objects and the host account; they are not OS sandboxes.
 
+### Candidate worktree retention (SWF-30)
+
+A local candidate worktree is **operational cache, not evidence**, once all seven conditions of the
+[SF-REQ-007 amendment](decisions/2026-09-20-candidate-worktree-retention.md) hold: known identity,
+durably published candidate, independently retrievable, read-back confirmed, no active invocation,
+no uncommitted unique content, no BIU/evidence policy requiring local retention. Then it may be
+removed as routine cleanup.
+
+Durably published means **continuing** reachability — a remote reference whose retention is at least
+as strong as the evidence obligation. A branch about to be deleted does not qualify. So: **never
+delete the `b-disp/<uuid>` remote branch that keeps a removed worktree's candidate retrievable**,
+and never remove a worktree whose candidate is reachable from no remote ref. Failing any condition
+means retention. Removal uses `git worktree remove`, which deregisters; `rm -rf` leaves the
+registration behind and converts finite noise into a permanent `registered worktree missing`
+diagnostic.
+
 The `b-disp-ownership` metadata directory and `b-disp/<uuid>` resource branches remain
 compatibility identifiers. Do not rename them or rewrite state for naming purity.
 Private state validation checks unresolved lane repository/role identities and
