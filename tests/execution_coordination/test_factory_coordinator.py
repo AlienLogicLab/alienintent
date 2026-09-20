@@ -292,11 +292,11 @@ def test_start_drains_five_items_in_priority_fifo_order_and_refills_dependencies
     """AC 1-3: a single event drains the ordered ready view to exhaustion."""
     items = [
         _item("blocked", 0, 1, ("first",)),
-        _item("first", 1, 1),
         _item("equal", 2, 1),
+        _item("first", 1, 1),
         _item("later", 3, 2),
-        _item("none", 4, None),
         _item("none-later", 5, None),
+        _item("none", 4, None),
     ]
     coordinator, worker, _ = _coordinator(
         tmp_path,
