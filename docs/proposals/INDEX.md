@@ -10,6 +10,7 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 | PROP-2026-0004 | Execution Evidence Derivation and Consistency Verification | Capability ratified; folded into an existing requirement | [SWF-28](../decisions/2026-09-20-evidence-and-intake-ratification.md) | **SF-REQ-030** (amendment) | [#45](https://github.com/AlienLogicLab/alienintent/issues/45) | ratified 2026-09-20; SF-REQ-054 retired, [#65](https://github.com/AlienLogicLab/alienintent/issues/65) closed as duplicate/superseded |
 | PROP-2026-0005 | Proposal Intake as a Product Capability | Product Requirement | [SWF-28](../decisions/2026-09-20-evidence-and-intake-ratification.md) | SF-REQ-055 | [#66](https://github.com/AlienLogicLab/alienintent/issues/66) | ratified 2026-09-20; CAPTURE; P1 / Wave 3 |
 | PROP-2026-0006 | Deterministic Actor-Launch Liveness Reconciliation | Product Requirement | [SWF-29](../decisions/2026-09-20-liveness-reconciliation.md) | SF-REQ-056 | [#67](https://github.com/AlienLogicLab/alienintent/issues/67) | canonicalized 2026-09-20; CAPTURE; P0 / Wave 2 |
+| PROP-2026-0007 | Candidate Worktree Retention — local worktree as operational cache | Operational policy | — | — | — | **submitted 2026-09-20; awaiting Founder approval**; 17 worktrees retained pending it |
 
 ## Intake rules
 
@@ -33,6 +34,8 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 - **The SF-REQ-054 / SF-REQ-030 overlap is resolved.** SF-REQ-030 is the canonical owner; SF-REQ-054 is retired and #65 closed as duplicate/superseded, with the ID not reused and provenance preserved.
 
 ## Open Founder decisions
+
+- **PROP-2026-0007** — does remote publication with confirmed read-back satisfy retention for a local candidate worktree? 17 published-but-unlanded worktrees are retained pending the answer. The 2 sole-copy PY-04 worktrees remain retained regardless.
 
 None outstanding from proposal intake.
 
