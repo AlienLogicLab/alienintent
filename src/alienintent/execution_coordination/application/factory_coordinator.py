@@ -8,12 +8,14 @@ from typing import Iterable
 
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore, verify_in_fresh_process
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
+from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired, SupersededDecision
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
 from alienintent.execution_coordination.domain.release import ReleaseRequest, ReleaseSource, admit_release
 from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, evaluate_verdict
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
 
 
 class StopReason(StrEnum):
@@ -26,6 +28,8 @@ class StopReason(StrEnum):
 class RunSummary:
     stop_reason: StopReason
     dispatched: tuple[str, ...]
+    authority_blocked: tuple[str, ...] = ()
+    failed: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -38,10 +42,12 @@ class ProjectedState:
 
 
 class FactoryCoordinator:
-    def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True) -> None:
+    def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True, notifier: DecisionNotifier | None = None) -> None:
         self._store, self._work, self._worker, self._artifacts, self._profile = store, work, worker, artifacts, profile
         self._automatic_release = automatic_release
         self._released: set[str] = set()
+        self._notifier = notifier
+        self.delivery_health: dict[str, DeliveryHealth] = {}
 
     def start(self) -> RunSummary:
         items = self._work.import_ready_snapshot()
@@ -54,7 +60,11 @@ class FactoryCoordinator:
                 return RunSummary(result, tuple(dispatched))
             if result is None:
                 dispatched.append(item.identity)
-        return RunSummary(self._stop_reason(items), tuple(dispatched))
+        return RunSummary(
+            self._stop_reason(items), tuple(dispatched),
+            tuple(item.identity for item in items if self._outcome(item.identity) == "authority-block"),
+            tuple(item.identity for item in items if self._outcome(item.identity) in {"failure", "timeout"}),
+        )
 
     def release_and_start(self, identity: str) -> RunSummary:
         version, existing = self._store.read_state(self._profile, self._release_aggregate(identity))
@@ -76,7 +86,7 @@ class FactoryCoordinator:
     def _eligible(self, item: ReadyWorkItem) -> bool:
         try:
             projected = self.state(item.identity)
-            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "failure", "timeout"}:
+            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "failure", "timeout"}:
                 return False
         except KeyError:
             pass
@@ -85,9 +95,15 @@ class FactoryCoordinator:
     def _run(self, item: ReadyWorkItem) -> StopReason | None:
         source = ReleaseSource.AUTOMATIC_POLICY if self._is_automatic(item) else ReleaseSource.EXPLICIT_HUMAN
         try:
-            admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset({"python", "filesystem", "process-control"}), {dimension: 1 for dimension in item.contract.budget_policy.required_dimensions}, "offline-profile", source))
+            capabilities = {"python", "filesystem", "process-control"}
+            if self._has_authorizing_decision(item.identity):
+                capabilities.update(item.contract.required_capabilities)
+            admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset(capabilities), {dimension: 1 for dimension in item.contract.budget_policy.required_dimensions}, "offline-profile", source))
         except ValueError:
-            self._record_result(item, ExecutionState.for_contract(item.contract), "release", "authority-block")
+            state = ExecutionState.for_contract(item.contract)
+            self._record_result(item, state, "release", "authority-block")
+            self._register_escalation(self._authority_request(item, state.version, "Release admission requires authority not present in this profile."))
+            self._block_dependents(item, self._work.import_ready_snapshot())
             return StopReason.BLOCKED
         self._work.propose_release(item)
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
@@ -99,16 +115,33 @@ class FactoryCoordinator:
             return StopReason.CAPACITY_UNAVAILABLE
         read_back = False
         try:
-            self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, self._encode(current), correlation, {"correlation": correlation, "work": item.identity})
+            prepared = self._encode(current) | {key: raw[key] for key in ("decision_key", "decision_choice") if key in raw}
+            self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, prepared, correlation, {"correlation": correlation, "work": item.identity})
             self._store.claim_effect(self._profile, correlation)
             outcome = self._worker.start(WorkerInvocation(item.identity, correlation), item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
-            self._store.confirm_effect(self._profile, correlation, f"outcome:{outcome.kind}")
+            try:
+                self._store.confirm_effect(self._profile, correlation, f"outcome:{outcome.kind}")
+            except ReservationRejected:
+                return StopReason.BLOCKED if self._park_unknown_effect(item, reservation) else StopReason.CAPACITY_UNAVAILABLE
             completed = self._completed_for_outcome(item, current, outcome)
+            unresolved = self._has_unresolved_effect(item.identity)
+            if unresolved:
+                self._record_result(item, current, correlation, "authority-block")
+                self._register_escalation(self._authority_request(item, current.version, "The external effect outcome is unknown and requires reconciliation authority."))
+                self._block_dependents(item, self._work.import_ready_snapshot())
+                self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
+                return StopReason.BLOCKED
             read_back = self._record_result(item, completed, correlation, outcome.kind)
+            if outcome.kind == "authority-block" and outcome.escalation is not None:
+                self._register_escalation(outcome.escalation)
+                self._block_dependents(item, self._work.import_ready_snapshot())
+                self._finalize_workspace(item.identity, correlation, retain=True)
+            elif read_back:
+                self._finalize_workspace(item.identity, correlation, retain=False)
             self._work.project_execution_state(item.identity, completed.stage, completed.version)
             return None
         finally:
-            if read_back and not self._store.unresolved_effects(self._profile):
+            if read_back and not self._has_unresolved_effect(item.identity):
                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
 
     def _completed_for_outcome(self, item: ReadyWorkItem, current: ExecutionState, outcome: WorkerOutcome) -> ExecutionState:
@@ -126,8 +159,11 @@ class FactoryCoordinator:
         return transition(accepted, accepted.version, "close", completed_closure_actions=frozenset(item.contract.required_closure_actions))
 
     def _record_result(self, item: ReadyWorkItem, state: ExecutionState, correlation: str, outcome: str) -> bool:
-        version, _ = self._store.read_state(self._profile, self._aggregate(item.identity))
+        version, prior = self._store.read_state(self._profile, self._aggregate(item.identity))
         persisted = self._encode(state) | {"correlation": correlation, "outcome": outcome}
+        for key in ("decision_key", "decision_choice"):
+            if key in prior:
+                persisted[key] = prior[key]
         self._store.commit(self._profile, self._aggregate(item.identity), version, persisted)
         _, read_back = self._store.read_state(self._profile, self._aggregate(item.identity))
         return read_back.get("correlation") == correlation and read_back.get("outcome") == outcome
@@ -144,7 +180,9 @@ class FactoryCoordinator:
                 return False
             outcome = self._worker.read_back(WorkerInvocation(identity, reservation.owner))
             if outcome is None:
-                return False
+                if not self._park_unknown_effect(item, reservation):
+                    return False
+                continue
             try:
                 self._store.confirm_effect(self._profile, reservation.owner, f"outcome:{outcome.kind}")
             except ReservationRejected:
@@ -161,6 +199,26 @@ class FactoryCoordinator:
                 return False
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
         return True
+
+    def _park_unknown_effect(self, item: ReadyWorkItem, reservation) -> bool:
+        """Turn an unreadable FD-05 effect into a scoped, durable authority block."""
+        version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
+        current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+        blocked = self._encode(current) | {"correlation": reservation.owner, "outcome": "authority-block"}
+        try:
+            self._store.park_unknown_effect(self._profile, reservation.owner, version, blocked)
+            self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+        except ReservationRejected:
+            return False
+        self._register_escalation(self._authority_request(item, current.version, "The external effect outcome is unknown and requires reconciliation authority."))
+        self._block_dependents(item, self._work.import_ready_snapshot())
+        self._finalize_workspace(item.identity, reservation.owner, retain=True)
+        return True
+
+    def _finalize_workspace(self, identity: str, correlation: str, *, retain: bool) -> None:
+        finalize = getattr(self._worker, "finalize", None)
+        if callable(finalize):
+            finalize(WorkerInvocation(identity, correlation), retain)
 
     def _is_done(self, identity: str) -> bool:
         try:
@@ -189,6 +247,12 @@ class FactoryCoordinator:
         except KeyError:
             return None
 
+    def _has_unresolved_effect(self, identity: str) -> bool:
+        return any(
+            effect.aggregate == self._aggregate(identity) or effect.payload.get("work") == identity
+            for effect in self._store.unresolved_effects(self._profile)
+        )
+
     def _is_released(self, identity: str) -> bool:
         if identity in self._released:
             return True
@@ -197,6 +261,20 @@ class FactoryCoordinator:
 
     def _is_automatic(self, item: ReadyWorkItem) -> bool:
         return self._automatic_release and item.automatic_release
+
+    def _has_authorizing_decision(self, identity: str) -> bool:
+        _, raw = self._store.read_state(self._profile, self._aggregate(identity))
+        return raw.get("decision_choice") == "authorize"
+
+    def _authority_request(self, item: ReadyWorkItem, version: int, reason: str) -> HumanDecisionRequired:
+        return HumanDecisionRequired(
+            profile=self._profile, project=item.repository, work_item=item.identity, biu_version=version,
+            decision="Authorize the blocked execution to continue through normal admission guards.", reason=reason,
+            options=("authorize", "defer"), tradeoffs=("authorize permits the bounded work to resume", "defer retains the scoped authority block"),
+            recommendation="defer", affected_requirements=tuple(item.contract.satisfied_requirement_ids) or ("authority-required",),
+            affected_architecture=("FD-05",), cost_of_waiting="The affected work and transitive dependents remain blocked.",
+            authorizations=("authorize permits one normal guarded re-admission", "defer authorizes continued blocking"),
+        )
 
     @staticmethod
     def _aggregate(identity: str) -> str: return f"factory:{identity}"
@@ -214,3 +292,74 @@ class FactoryCoordinator:
         record = raw.get("candidate")
         candidate = CandidateRef(CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]), str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"])) if isinstance(record, dict) else None
         return ExecutionState(LifecycleStage(str(raw["stage"])), int(raw["version"]), candidate, bool(raw["accepted"]), frozenset(raw["closure"]), None)
+
+    def _register_escalation(self, escalation: HumanDecisionRequired) -> None:
+        version, raw = self._store.read_state(self._profile, "decision-inbox")
+        open_items = dict(raw.get("open", {}))
+        open_items.setdefault(escalation.work_item, {
+            "profile": escalation.profile, "project": escalation.project, "work_item": escalation.work_item,
+            "biu_version": escalation.biu_version, "decision": escalation.decision, "reason": escalation.reason,
+            "options": list(escalation.options), "tradeoffs": list(escalation.tradeoffs), "recommendation": escalation.recommendation,
+            "affected_requirements": list(escalation.affected_requirements), "affected_architecture": list(escalation.affected_architecture),
+            "cost_of_waiting": escalation.cost_of_waiting, "authorizations": list(escalation.authorizations),
+        })
+        self._store.commit(self._profile, "decision-inbox", version, {"open": open_items})
+        if self._notifier is not None:
+            self.delivery_health[escalation.work_item] = self._notifier.notify(escalation)
+
+    def _block_dependents(self, root: ReadyWorkItem, items: Iterable[ReadyWorkItem]) -> None:
+        pending = {root.identity}
+        all_items = tuple(items)
+        while pending:
+            parent = pending.pop()
+            for item in all_items:
+                if parent not in item.dependencies:
+                    continue
+                pending.add(item.identity)
+                version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
+                if raw.get("outcome") in {"authority-block", "blocked-by-authority"}:
+                    continue
+                state = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+                self._store.commit(self._profile, self._aggregate(item.identity), version, self._encode(state) | {"outcome": "blocked-by-authority", "blocked_by": root.identity})
+
+    def record_decision(self, record: DecisionRecord) -> None:
+        version, raw = self._store.read_state(self._profile, self._aggregate(record.event.work_item))
+        already_recorded = raw.get("decision_key") == record.event.idempotency_key
+        if not already_recorded:
+            self.validate_decision(record)
+        state = self._decode(raw)
+        items = self._work.import_ready_snapshot()
+        if not already_recorded:
+            decision_state = self._encode(state) | {"outcome": "decision-recorded", "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice}
+            authorized = (
+                record.submission.choice == "authorize"
+                and isinstance(raw.get("correlation"), str)
+                and self._store.authorize_unknown_effect(self._profile, raw["correlation"], self._aggregate(record.event.work_item), version, decision_state)
+            )
+            if not authorized:
+                self._store.commit(self._profile, self._aggregate(record.event.work_item), version, decision_state)
+        descendants = {record.event.work_item}
+        changed = True
+        while changed:
+            changed = False
+            for item in items:
+                if item.identity not in descendants and any(parent in descendants for parent in item.dependencies):
+                    descendants.add(item.identity)
+                    changed = True
+        for item in items:
+            if item.identity not in descendants or item.identity == record.event.work_item:
+                continue
+            dependent_version, dependent = self._store.read_state(self._profile, self._aggregate(item.identity))
+            if dependent.get("outcome") == "blocked-by-authority":
+                self._store.commit(self._profile, self._aggregate(item.identity), dependent_version, dependent | {"outcome": "decision-recorded"})
+
+    def resume_after_decision(self) -> None:
+        self.start()
+
+    def validate_decision(self, record: DecisionRecord) -> None:
+        _, raw = self._store.read_state(self._profile, self._aggregate(record.event.work_item))
+        if not raw or raw.get("outcome") != "authority-block":
+            raise SupersededDecision("decision target is not authority blocked")
+        state = self._decode(raw)
+        if state.version != record.submission.expected_version or record.submission.biu_version != state.version:
+            raise SupersededDecision("decision target version is superseded")

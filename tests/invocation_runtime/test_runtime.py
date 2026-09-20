@@ -71,6 +71,36 @@ def test_real_worker_retries_a_failed_process_and_records_next_eligible_event(tm
     assert worker.retry_evidence["p"].next_eligible_at is None
 
 
+def test_real_worker_retains_an_authority_blocked_workspace_while_releasing_capacity(tmp_path: Path) -> None:
+    """PY-07 AC 3: diagnostic custody survives an authority block, not its reservation."""
+    from alienintent.execution_coordination.domain.contract import BudgetPolicy
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import BudgetRecord, CapabilityGrant, InvocationRole, ProcessResult, ReservationBook
+
+    class Process:
+        capabilities = type("Caps", (), {"enforceable_dimensions": frozenset({"wall-clock", "cancellation"})})()
+        def run(self, *_): return ProcessResult("authority-block", 0, True, BudgetRecord.unknown())
+        def cancel(self, *_): raise AssertionError("not reached")
+    class Workspaces:
+        def __init__(self): self.cleaned = []
+        def allocate(self, invocation_id, owner, baseline): return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
+        def cleanup(self, workspace, _): self.cleaned.append(workspace.invocation_id)
+    class Source: pass
+
+    spaces, slots = Workspaces(), ReservationBook(1, 1)
+    grant = CapabilityGrant("g", "PY-07@1", "p", InvocationRole.PRODUCER, "issue", "target", frozenset({"process-control", "git-write"}), 100)
+    worker = RealWorkerProvider(Process(), Source(), tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", spaces, slots, now=lambda: 1, sleep=lambda _: None)
+
+    result = worker.start(WorkerInvocation("blocked", "p"), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1, cancellation_limit=1, maximum_attempts=1, retry_limit=0))
+    worker.finalize(WorkerInvocation("blocked", "p"), retain=True)
+
+    assert result.kind == "authority-block"
+    assert spaces.cleaned == []
+    assert worker.retained_workspaces["p"] == tmp_path
+    assert slots._held == {}
+
+
 def test_real_worker_waits_for_each_exponential_jittered_retry_eligibility(tmp_path: Path) -> None:
     """Computing retry evidence without waiting must fail this production-path test."""
     from alienintent.execution_coordination.domain.contract import BudgetPolicy
