@@ -5,12 +5,13 @@ It contains no provider credentials, private reasoning, or raw remote URLs.
 
 ## Local executable checks
 
-- `python3 -m pytest -q`: 103 passed.
+- `python3 -m pytest -q`: 107 passed.
 - `python3 tools/fitness/check_architecture.py --root src/alienintent`: PASS.
 - `npm test`: 310 Node tests passed, exit 0.
-- `codex exec --ephemeral --json --sandbox read-only 'Reply with exactly
-  PY06_PROVIDER_SMOKE.'`: exit 0; response `PY06_PROVIDER_SMOKE`; provider
-  reported 21,039 input tokens, 9,984 cached input tokens, and 48 output tokens.
+- The `CliWorkerProvider` adapter invoked `codex exec --ephemeral --json
+  --sandbox read-only 'Reply exactly PY06_PROVIDER_SMOKE'`: adapter outcome
+  `success`, exit status 0, and confirmed quiescence. The adapter did not
+  report token or monetary cost, so both are retained as unknown, never zero.
 
 ## Runtime proof retained by tests
 
@@ -20,9 +21,11 @@ It contains no provider credentials, private reasoning, or raw remote URLs.
   dimensions are ineligible and unreported token/monetary cost stays unknown.
 - Timeout and live cancellation use real child processes. Unknown process
   identity is `unresolved-recovery`, not asserted quiescence.
-- Producer retries record attempts and next eligibility. Verifiers reserve only
-  global capacity, own a separate workspace and provenance record, then clean
-  and release their reservation.
+- Producer retries wait for exponential, jittered eligibility and record the
+  next event. Verifiers retrieve immutable candidates into their own fresh
+  workspace, reserve only global capacity, and retain separate provenance.
+- Cancellation fences the live child, releases its reservation after quiescence,
+  and leaves owned-workspace cleanup to the invocation runner.
 - Git diagnostics and candidate evidence redact remote URL userinfo.
 
 Candidate branch, immutable commit, and remote read-back evidence are recorded

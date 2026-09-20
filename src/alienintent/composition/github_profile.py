@@ -30,6 +30,6 @@ class GitHubProfileComposition:
         # plane as the offline double; no provider type crosses that boundary.
         self.coordinator = None if worker is None else FactoryCoordinator(
             self.store, self.work, worker,
-            LocalArtifactStore(database.parent / "candidate-artifacts"), profile.profile,
+            LocalArtifactStore(database.parent / "candidate-artifacts", database.parent / "candidate-artifacts" / "verifier-evidence"), profile.profile,
             automatic_release=profile.automatic_release,
         )

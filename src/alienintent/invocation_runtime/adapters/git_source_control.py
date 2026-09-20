@@ -56,3 +56,24 @@ class GitSourceControl(SourceControl):
             raise CandidateUnavailable("workspace HEAD differs from requested candidate revision")
         self._git("push", remote, f"{revision}:refs/heads/{branch}", cwd=workspace)
         return self.read_back_candidate(workspace, remote, branch, revision, verifier_workspace)
+
+    def retrieve_for_verification(self, candidate: CandidateRef, verifier_workspace: Path) -> CandidateRef:
+        """Independently assemble verifier inputs from the immutable source reference."""
+        try:
+            prefix, reference = candidate.locator.rsplit("#", 1)
+            remote = prefix.removeprefix("git:")
+            branch, revision = reference.rsplit("@", 1)
+            if not remote or prefix == remote or not branch or len(revision) != 40 or verifier_workspace.exists():
+                raise ValueError
+        except ValueError:
+            raise CandidateUnavailable("candidate cannot be independently retrieved") from None
+        advertised = self._git("ls-remote", remote, f"refs/heads/{branch}")
+        if not advertised or advertised.split()[0] != revision:
+            raise CandidateUnavailable("candidate revision is not retrievable for verifier")
+        self._git("clone", "--no-checkout", remote, str(verifier_workspace))
+        if self._git("rev-parse", f"{revision}^{{commit}}", cwd=verifier_workspace) != revision:
+            raise CandidateUnavailable("verifier clone cannot retrieve exact candidate revision")
+        expected_digest = f"sha256:{sha256(revision.encode()).hexdigest()}"
+        if candidate.content_digest != expected_digest:
+            raise CandidateUnavailable("candidate digest does not match immutable revision")
+        return candidate.with_independent_read_back()

@@ -6,7 +6,7 @@ from pathlib import Path
 import subprocess
 import sys
 import time
-from threading import Thread
+from threading import Event, Thread
 
 import pytest
 
@@ -62,7 +62,7 @@ def test_real_worker_retries_a_failed_process_and_records_next_eligible_event(tm
 
     process = Process()
     grant = CapabilityGrant("g", "PY-06@1", "p", InvocationRole.PRODUCER, "issue", "target", frozenset({"process-control", "git-write"}), 100)
-    worker = RealWorkerProvider(process, Source(), tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", Workspaces(), ReservationBook(1, 2), now=lambda: 1)
+    worker = RealWorkerProvider(process, Source(), tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", Workspaces(), ReservationBook(1, 2), now=lambda: 1, sleep=lambda _: None)
     result = worker.start(WorkerInvocation("PY-06", "p"), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1, cancellation_limit=1, maximum_attempts=2, retry_limit=1))
 
     assert process.calls == 2
@@ -71,26 +71,113 @@ def test_real_worker_retries_a_failed_process_and_records_next_eligible_event(tm
     assert worker.retry_evidence["p"].next_eligible_at is None
 
 
+def test_real_worker_waits_for_each_exponential_jittered_retry_eligibility(tmp_path: Path) -> None:
+    """Computing retry evidence without waiting must fail this production-path test."""
+    from alienintent.execution_coordination.domain.contract import BudgetPolicy
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import BudgetRecord, CapabilityGrant, InvocationRole, ProcessResult
+
+    class Process:
+        capabilities = type("Caps", (), {"enforceable_dimensions": frozenset({"wall-clock", "cancellation"})})()
+        def run(self, *_): return ProcessResult("failure", 1, True, BudgetRecord.unknown())
+        def cancel(self, *_): return ProcessResult("cancelled", 0, True, BudgetRecord.unknown())
+    class Workspaces:
+        def allocate(self, invocation_id, owner, baseline): return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
+        def cleanup(self, *_): pass
+    class Source: pass
+
+    sleeps: list[float] = []
+    grant = CapabilityGrant("g", "PY-06@1", "p", InvocationRole.PRODUCER, "issue", "target", frozenset({"process-control", "git-write"}), 100)
+    worker = RealWorkerProvider(Process(), Source(), tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", Workspaces(), now=lambda: 0, sleep=sleeps.append)
+    result = worker.start(WorkerInvocation("PY-06", "p"), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1, cancellation_limit=1, maximum_attempts=3, retry_limit=2))
+
+    assert result.kind == "failure"
+    assert sleeps == [0.011, 0.021]
+
+
+def test_real_worker_cancel_fences_the_live_process_releases_reservation_and_cleans_owned_workspace(tmp_path: Path) -> None:
+    """A cancellation path that only signals a child leaves capacity and resources unsafe."""
+    from alienintent.execution_coordination.domain.contract import BudgetPolicy
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import BudgetRecord, CapabilityGrant, InvocationRole, ProcessResult, ReservationBook
+
+    running, cancelled = Event(), Event()
+    class Process:
+        capabilities = type("Caps", (), {"enforceable_dimensions": frozenset({"wall-clock", "cancellation"})})()
+        def run(self, *_):
+            running.set()
+            cancelled.wait(2)
+            return ProcessResult("cancelled", 0, True, BudgetRecord.unknown())
+        def cancel(self, *_):
+            cancelled.set()
+            return ProcessResult("cancelled", 0, True, BudgetRecord.unknown())
+    class Workspaces:
+        def __init__(self): self.cleaned = []
+        def allocate(self, invocation_id, owner, baseline): return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
+        def cleanup(self, workspace, _): self.cleaned.append(workspace.invocation_id)
+    class Source: pass
+
+    spaces, slots = Workspaces(), ReservationBook(1, 1)
+    grant = CapabilityGrant("g", "PY-06@1", "p", InvocationRole.PRODUCER, "issue", "target", frozenset({"process-control", "git-write"}), 100)
+    worker = RealWorkerProvider(Process(), Source(), tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", spaces, slots, now=lambda: 1, sleep=lambda _: None)
+    thread = Thread(target=lambda: worker.start(WorkerInvocation("PY-06", "p"), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1, cancellation_limit=1)))
+    thread.start()
+    assert running.wait(1)
+
+    assert worker.cancel("p", "operator").kind == "cancelled"
+    thread.join(2)
+    assert not thread.is_alive()
+    assert slots._held == {}
+    assert spaces.cleaned == ["p"]
+
+
 def test_verifier_invocation_owns_a_workspace_and_counts_global_capacity(tmp_path: Path) -> None:
-    """Returning the producer outcome directly would make VERIFY self-approval-adjacent."""
-    from alienintent.execution_coordination.ports.worker_provider import WorkerOutcome
+    """VERIFY owns a fresh retrieval location and releases its global reservation."""
+    from alienintent.execution_coordination.domain.custody import CandidateRef
     from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
     from alienintent.invocation_runtime.domain.runtime import CapabilityGrant, InvocationRole, ReservationBook
 
-    class Workspaces:
-        def __init__(self): self.allocated = []; self.cleaned = []
-        def allocate(self, invocation_id, owner, baseline):
-            self.allocated.append((invocation_id, owner)); return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
-        def cleanup(self, workspace, _): self.cleaned.append(workspace.invocation_id)
-    spaces = Workspaces()
+    digest = "sha256:" + "c" * 64
+    candidate = CandidateRef.source_revision(digest, "git:https://example.invalid/repo.git#candidate/p@" + "a" * 40, identity="revision:" + digest)
+    class Source:
+        def __init__(self): self.paths = []
+        def retrieve_for_verification(self, value, path): self.paths.append(path); return value.with_independent_read_back()
+    source = Source()
     grant = CapabilityGrant("g", "PY-06@1", "producer", InvocationRole.PRODUCER, "issue", "target", frozenset(), 100)
-    worker = RealWorkerProvider(None, None, tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", spaces, ReservationBook(1, 1), now=lambda: 1)
-    worker._outcomes["producer"] = WorkerOutcome("success")
+    worker = RealWorkerProvider(None, source, tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", None, ReservationBook(1, 1), now=lambda: 1, sleep=lambda _: None)
 
-    assert worker.verify("producer", "producer").kind == "self-approval-rejected"
-    assert worker.verify("producer", "verifier").kind == "success"
-    assert spaces.allocated == [("verifier", "verifier")]
-    assert spaces.cleaned == ["verifier"]
+    assert worker.verify(candidate, "producer", "producer").kind == "self-approval-rejected"
+    assert worker.verify(candidate, "producer", "verifier").kind == "success"
+    assert source.paths == [tmp_path / "verify" / "verifier"]
+    assert worker._reservations._held == {}
+
+
+def test_verifier_retrieves_the_candidate_independently_not_from_producer_outcome(tmp_path: Path) -> None:
+    """Returning the producer object would expose producer-private state to VERIFY."""
+    from alienintent.execution_coordination.domain.custody import CandidateRef
+    from alienintent.execution_coordination.ports.worker_provider import WorkerOutcome
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import CapabilityGrant, InvocationRole
+
+    digest = "sha256:" + "b" * 64
+    candidate = CandidateRef.source_revision(digest, "git:https://example.invalid/repo.git#candidate/p@" + "a" * 40, identity="revision:" + digest)
+    retrieved = candidate.with_independent_read_back()
+    class Source:
+        def __init__(self): self.calls: list[tuple[CandidateRef, Path]] = []
+        def retrieve_for_verification(self, value, workspace):
+            self.calls.append((value, workspace))
+            return retrieved
+    source = Source()
+    grant = CapabilityGrant("g", "PY-06@1", "producer", InvocationRole.PRODUCER, "issue", "target", frozenset(), 100)
+    worker = RealWorkerProvider(None, source, tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", None, now=lambda: 1, sleep=lambda _: None)
+
+    verified = worker.verify(candidate, "producer", "verifier")
+
+    assert verified == WorkerOutcome.success(retrieved)
+    assert verified is not WorkerOutcome.success(candidate)
+    assert source.calls == [(candidate, tmp_path / "verify" / "verifier")]
 
 
 def test_source_candidate_must_be_published_and_read_back_from_a_fresh_clone(tmp_path: Path) -> None:
@@ -237,7 +324,7 @@ def test_real_worker_returns_only_a_published_independently_read_back_source_can
     subprocess.run(["git", "-C", str(source), "remote", "add", "origin", str(remote)], check=True)
     cli = CliWorkerProvider("python", sys.executable, ("-c", "pass"), "explicit", frozenset({"wall-clock", "cancellation"}))
     grant = CapabilityGrant("grant", "PY-06@1", "producer-1", InvocationRole.PRODUCER, "issue-54", "AlienLogicLab/alienintent", frozenset({"process-control", "git-write"}), int(time.time()) + 100)
-    worker = RealWorkerProvider(cli, GitSourceControl(), source, "origin", "candidate/producer-1", tmp_path / "verifier", grant, "AlienLogicLab/alienintent", GitWorktreeAdapter(source, tmp_path / "worktrees"), now=lambda: int(time.time()))
+    worker = RealWorkerProvider(cli, GitSourceControl(), source, "origin", "candidate/producer-1", tmp_path / "verifier", grant, "AlienLogicLab/alienintent", GitWorktreeAdapter(source, tmp_path / "worktrees"), now=lambda: int(time.time()), sleep=time.sleep)
 
     outcome = worker.start(WorkerInvocation("PY-06", "producer-1"), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=5, cancellation_limit=1))
 
@@ -254,7 +341,7 @@ def test_real_worker_rejects_expired_grant_in_production_path(tmp_path: Path) ->
 
     class Unused: pass
     grant = CapabilityGrant("g", "PY-06@1", "p", InvocationRole.PRODUCER, "issue", "target", frozenset({"process-control", "git-write"}), 1)
-    worker = RealWorkerProvider(CliWorkerProvider("python", sys.executable, ("-c", "pass"), "explicit", frozenset({"wall-clock", "cancellation"})), Unused(), tmp_path, "origin", "candidate/p", tmp_path / "v", grant, "target", Unused(), now=lambda: int(time.time()))
+    worker = RealWorkerProvider(CliWorkerProvider("python", sys.executable, ("-c", "pass"), "explicit", frozenset({"wall-clock", "cancellation"})), Unused(), tmp_path, "origin", "candidate/p", tmp_path / "v", grant, "target", Unused(), now=lambda: int(time.time()), sleep=time.sleep)
     assert worker.start(WorkerInvocation("PY-06", "p"), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1, cancellation_limit=1)).kind == "ineligible"
 
 

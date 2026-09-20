@@ -14,20 +14,20 @@ from alienintent.invocation_runtime.ports.workspace import WorkspaceManager
 
 
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str, verifier_root: Path, grant: CapabilityGrant, target: str, workspaces: WorkspaceManager, reservations: ReservationBook | None = None, now: Callable[[], int] | None = None) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str, verifier_root: Path, grant: CapabilityGrant, target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None]) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
+        self._active_workspaces: dict[str, object] = {}
         self._reservations = reservations
         self.cleanup_diagnostics: dict[str, str] = {}
         self.retry_evidence: dict[str, RetryEvidence] = {}
         self.verifier_provenance: dict[str, str] = {}
         self._now = now
+        self._sleep = sleep
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         if budget.hard_wall_clock_seconds is None or budget.cancellation_limit is None or self._grant.invocation_id != invocation.correlation_id:
-            return WorkerOutcome("ineligible")
-        if self._now is None:
             return WorkerOutcome("ineligible")
         try:
             self._grant.require("process-control", self._target, self._now())
@@ -43,10 +43,13 @@ class RealWorkerProvider(WorkerProvider):
                 self._reservations.reserve(invocation.correlation_id, InvocationRole.PRODUCER)
             except RuntimeError:
                 return WorkerOutcome("ineligible")
+        if self._workspaces is None:
+            return WorkerOutcome("ineligible")
         workspace = self._workspaces.allocate(invocation.correlation_id, invocation.work_identity, "HEAD")
+        self._active_workspaces[invocation.correlation_id] = workspace
         outcome = WorkerOutcome("failure")
         try:
-            schedule = RetrySchedule(budget.maximum_attempts, budget.retry_limit, 1, 0)
+            schedule = RetrySchedule(budget.maximum_attempts, budget.retry_limit, .01, .001)
             attempts, next_eligible = 0, None
             while True:
                 attempts += 1
@@ -56,6 +59,7 @@ class RealWorkerProvider(WorkerProvider):
                 next_eligible = schedule.next_after_failure(attempts, float(self._now()))
                 if next_eligible is None:
                     break
+                self._sleep(max(0, next_eligible - float(self._now())))
             self.retry_evidence[invocation.correlation_id] = RetryEvidence(attempts, next_eligible)
             if result.kind != "success" or ("token" in budget.required_dimensions and result.budget.token_cost is None) or ("monetary" in budget.required_dimensions and result.budget.monetary_cost is None):
                 outcome = WorkerOutcome(result.kind)
@@ -70,32 +74,39 @@ class RealWorkerProvider(WorkerProvider):
                 self.cleanup_diagnostics[invocation.correlation_id] = type(error).__name__
             if self._reservations is not None:
                 self._reservations.release(invocation.correlation_id)
+            self._active_workspaces.pop(invocation.correlation_id, None)
         self._outcomes[invocation.correlation_id] = outcome
         return outcome
+
+    def cancel(self, invocation_id: str, reason: str):
+        """Fence a live owned invocation; its runner performs quiescent cleanup."""
+        if invocation_id not in self._active_workspaces:
+            return self._process.cancel(invocation_id, reason)
+        result = self._process.cancel(invocation_id, reason)
+        if result.quiescent and self._reservations is not None:
+            self._reservations.release(invocation_id)
+        return result
 
     def read_back(self, invocation: WorkerInvocation) -> WorkerOutcome | None:
         return self._outcomes.get(invocation.correlation_id)
 
-    def verify(self, producer_invocation_id: str, verifier_invocation_id: str) -> WorkerOutcome:
+    def verify(self, candidate, producer_invocation_id: str, verifier_invocation_id: str) -> WorkerOutcome:
         try:
             VerifierIndependence(producer_invocation_id, verifier_invocation_id).require(InvocationRole.VERIFIER)
         except PermissionError:
             return WorkerOutcome("self-approval-rejected")
-        outcome = self._outcomes.get(producer_invocation_id, WorkerOutcome("candidate-unavailable"))
-        if outcome.kind != "success":
-            return outcome
         if self._reservations is not None:
             try:
                 self._reservations.reserve(verifier_invocation_id, InvocationRole.VERIFIER)
             except RuntimeError:
                 return WorkerOutcome("ineligible")
-        workspace = self._workspaces.allocate(verifier_invocation_id, verifier_invocation_id, "HEAD")
         try:
-            self.verifier_provenance[verifier_invocation_id] = workspace.path.as_posix()
-            return outcome
+            workspace = self._verifier_root / verifier_invocation_id
+            verified = self._source.retrieve_for_verification(candidate, workspace)
+            self.verifier_provenance[verifier_invocation_id] = workspace.as_posix()
+            return WorkerOutcome.success(verified)
+        except CandidateUnavailable:
+            return WorkerOutcome("candidate-unavailable")
         finally:
-            try:
-                self._workspaces.cleanup(workspace, None)
-            finally:
-                if self._reservations is not None:
-                    self._reservations.release(verifier_invocation_id)
+            if self._reservations is not None:
+                self._reservations.release(verifier_invocation_id)
