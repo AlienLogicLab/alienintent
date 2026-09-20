@@ -15,7 +15,7 @@ class GitSourceControl(SourceControl):
     def _git(self, *args: str, cwd: Path | None = None) -> str:
         result = subprocess.run(["git", *args], cwd=cwd, text=True, capture_output=True, check=False)
         if result.returncode:
-            raise CandidateUnavailable(result.stderr.strip() or "git operation failed")
+            raise CandidateUnavailable("git operation failed")
         return result.stdout.strip()
 
     def revision(self, workspace: Path) -> str:

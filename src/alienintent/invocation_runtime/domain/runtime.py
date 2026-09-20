@@ -24,6 +24,50 @@ class CandidateUnavailable(ValueError):
 
 
 @dataclass(frozen=True)
+class VerifierIndependence:
+    producer_invocation_id: str
+    verifier_invocation_id: str
+
+    def require(self, role: InvocationRole) -> None:
+        if role is not InvocationRole.VERIFIER or self.producer_invocation_id == self.verifier_invocation_id:
+            raise PermissionError("self-approval is prohibited")
+
+
+class ReservationBook:
+    """In-memory invocation reservations; callers release only their own id."""
+    def __init__(self, mutating_limit: int, global_limit: int) -> None:
+        self._mutating_limit = mutating_limit
+        self._global_limit = global_limit
+        self._held: dict[str, InvocationRole] = {}
+
+    def reserve(self, invocation_id: str, role: InvocationRole) -> None:
+        if invocation_id in self._held:
+            return
+        if len(self._held) >= self._global_limit:
+            raise RuntimeError("global capacity is exhausted")
+        if role is InvocationRole.PRODUCER and sum(r is InvocationRole.PRODUCER for r in self._held.values()) >= self._mutating_limit:
+            raise RuntimeError("mutating capacity is exhausted")
+        self._held[invocation_id] = role
+
+    def release(self, invocation_id: str) -> None:
+        self._held.pop(invocation_id, None)
+
+
+@dataclass(frozen=True)
+class RetrySchedule:
+    maximum_attempts: int
+    retry_limit: int
+    base_delay_seconds: float
+    jitter_seconds: float
+
+    def next_after_failure(self, attempt: int, now: float) -> float | None:
+        if attempt >= self.maximum_attempts or attempt > self.retry_limit:
+            return None
+        # Deterministic bounded jitter avoids hidden random state in evidence.
+        return now + self.base_delay_seconds * (2 ** (attempt - 1)) + self.jitter_seconds
+
+
+@dataclass(frozen=True)
 class CapabilityGrant:
     identifier: str
     biu_version: str
