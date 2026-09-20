@@ -296,6 +296,7 @@ def test_start_drains_five_items_in_priority_fifo_order_and_refills_dependencies
         _item("equal", 2, 1),
         _item("later", 3, 2),
         _item("none", 4, None),
+        _item("none-later", 5, None),
     ]
     coordinator, worker, _ = _coordinator(
         tmp_path,
@@ -306,8 +307,28 @@ def test_start_drains_five_items_in_priority_fifo_order_and_refills_dependencies
     summary = coordinator.start()
 
     assert summary.stop_reason.value == "eligible-backlog-exhausted"
-    assert worker.dispatched == ["first", "blocked", "equal", "later", "none"]
+    assert worker.dispatched == ["first", "blocked", "equal", "later", "none", "none-later"]
+    assert summary.dispatched == tuple(worker.dispatched)
     assert all(coordinator.state(item.identity).stage is LifecycleStage.DONE for item in items)
+
+
+def test_summary_excludes_a_missing_capability_rejection_from_dispatched(tmp_path: Path) -> None:
+    """A rejected release is reported as blocked, not as a worker dispatch."""
+    needs_network = _item("needs-network", 0, 1)
+    contract = replace(needs_network.contract, required_capabilities=("network",))
+    needs_network = replace(needs_network, contract=contract, readiness_digest=contract.content_digest)
+    plain = _item("plain", 1, 2)
+    coordinator, worker, _ = _coordinator(
+        tmp_path,
+        [needs_network, plain],
+        {"needs-network": ["success"], "plain": ["success"]},
+    )
+
+    summary = coordinator.start()
+
+    assert summary.stop_reason.value == "dependencies-or-authority-blocked"
+    assert worker.dispatched == ["plain"]
+    assert summary.dispatched == ("plain",)
 
 
 def test_no_events_after_startup_do_not_reimport_the_ready_view(tmp_path: Path) -> None:
