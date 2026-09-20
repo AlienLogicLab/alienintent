@@ -10,6 +10,5 @@ from alienintent.execution_coordination.ports.worker_provider import WorkerProvi
 
 
 class OfflineProfile:
-    def __init__(self, database: Path, work: WorkManagement, worker: WorkerProvider, artifact_root: Path, verifier_root: Path | None = None, *, name: str = "offline") -> None:
-        self.coordinator = FactoryCoordinator(SQLiteOperationalStore(database), work, worker, LocalArtifactStore(artifact_root, verifier_root or artifact_root / "verifier-evidence"), name)
-
+    def __init__(self, database: Path, work: WorkManagement, worker: WorkerProvider, artifact_root: Path, verifier_root: Path | None = None, *, name: str = "offline", automatic_release: bool = True) -> None:
+        self.coordinator = FactoryCoordinator(SQLiteOperationalStore(database), work, worker, LocalArtifactStore(artifact_root, verifier_root or artifact_root / "verifier-evidence"), name, automatic_release=automatic_release)

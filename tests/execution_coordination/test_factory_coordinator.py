@@ -132,6 +132,30 @@ def test_existing_verifier_copy_is_retained_when_producer_artifact_changes(tmp_p
     assert Path(verified.locator).read_bytes() == b"candidate"
 
 
+def test_independent_verifier_retrieves_artifact_after_producer_process_exits(tmp_path: Path) -> None:
+    """SWF-12 conditions 4, 5, 6 and 9 use distinct producer/verifier processes."""
+    _, custody, _, _ = _api()
+    producer_root, verifier_root = tmp_path / "producer", tmp_path / "verifier"
+    writer = (
+        "from pathlib import Path; import json,sys; "
+        "from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore; "
+        "print(json.dumps(LocalArtifactStore(Path(sys.argv[1]), Path(sys.argv[2])).write(b'process-artifact').__dict__))"
+    )
+    produced = subprocess.run(
+        [sys.executable, "-c", writer, str(producer_root), str(verifier_root)],
+        capture_output=True,
+        text=True,
+        env={**os.environ, "PYTHONPATH": f"{Path.cwd() / 'src'}:{Path.cwd()}"},
+        check=True,
+    )
+    candidate = custody.candidate_from_record(json.loads(produced.stdout))
+
+    verified = custody.verify_in_fresh_process(candidate, verifier_root)
+
+    assert Path(verified.locator).read_bytes() == b"process-artifact"
+    assert verified.verify_admissible
+
+
 def test_wip_refusal_and_explicit_release_are_reported(tmp_path: Path) -> None:
     coordinator_module, custody, _, _ = _api()
     held = _item("held", 1, 1, automatic=False)
@@ -139,7 +163,7 @@ def test_wip_refusal_and_explicit_release_are_reported(tmp_path: Path) -> None:
     store = SQLiteOperationalStore(tmp_path / "run.sqlite")
     worker = ScriptedWorker(artifacts, {"held": ["success"]})
     coordinator = coordinator_module.FactoryCoordinator(store, MemoryWorkManagement([held]), worker, artifacts, "offline")
-    assert coordinator.start().stop_reason.value == "awaiting-explicit-release"
+    assert coordinator.start().stop_reason.value == "dependencies-or-authority-blocked"
     store.acquire("offline", "repository", "repo", "other")
     assert coordinator.release_and_start("held").stop_reason.value == "capacity-unavailable"
 
@@ -187,6 +211,43 @@ def test_recovery_accepts_an_effect_already_confirmed_before_producer_crash(tmp_
     assert store.recovery_reservations("offline") == ()
 
 
+def test_recovery_does_not_reapply_an_already_recorded_outcome(tmp_path: Path) -> None:
+    """A crash after result read-back leaves only reservation release to recover."""
+    coordinator_module, custody, _, _ = _api()
+    item = _item("recorded", 1, 1)
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+
+    class ReleaseFailsOnceStore(SQLiteOperationalStore):
+        fail_release = True
+
+        def release(self, *args):
+            if self.fail_release:
+                self.fail_release = False
+                raise RuntimeError("simulated crash before reservation release")
+            return super().release(*args)
+
+    first_store = ReleaseFailsOnceStore(tmp_path / "run.sqlite")
+    with pytest.raises(RuntimeError, match="before reservation release"):
+        coordinator_module.FactoryCoordinator(
+            first_store,
+            MemoryWorkManagement([item]),
+            ScriptedWorker(artifacts, {"recorded": ["success"]}, durable=True),
+            artifacts,
+            "offline",
+        ).start()
+
+    resumed_worker = ScriptedWorker(artifacts, {"recorded": ["success"]}, durable=True)
+    summary = coordinator_module.FactoryCoordinator(
+        SQLiteOperationalStore(tmp_path / "run.sqlite"),
+        MemoryWorkManagement([item]),
+        resumed_worker,
+        artifacts,
+        "offline",
+    ).start()
+    assert summary.stop_reason.value == "eligible-backlog-exhausted"
+    assert resumed_worker.dispatched == []
+
+
 def test_all_scripted_outcomes_drain_independent_work_and_remain_distinct(tmp_path: Path) -> None:
     """Scope item 5: every declared fixture outcome is executable together."""
     items = [_item("failed", 0, 1), _item("timed", 1, 2), _item("reworked", 2, 3), _item("blocked", 3, 4), _item("good", 4, 5)]
@@ -198,7 +259,7 @@ def test_all_scripted_outcomes_drain_independent_work_and_remain_distinct(tmp_pa
     assert coordinator.state("blocked").outcome == "authority-block"
     assert coordinator.state("reworked").stage is LifecycleStage.DONE
     assert coordinator.state("good").stage is LifecycleStage.DONE
-    assert summary.stop_reason.value == "authority-blocked"
+    assert summary.stop_reason.value == "dependencies-or-authority-blocked"
     (tmp_path / "terminal").mkdir()
     terminal, _, _ = _coordinator(tmp_path / "terminal", [_item("failed-only", 0, 1), _item("timed-only", 1, 2)], {"failed-only": ["failure"], "timed-only": ["timeout"]})
     assert terminal.start().stop_reason.value == "eligible-backlog-exhausted"
@@ -211,7 +272,7 @@ def test_explicit_release_runs_the_same_boundary_as_automatic_release(tmp_path: 
     assert automatic.start().stop_reason.value == "eligible-backlog-exhausted"
     held = _item("held", 1, 1, automatic=False)
     explicit, explicit_worker, _ = _coordinator(tmp_path / "explicit", [held], {"held": ["success"]})
-    assert explicit.start().stop_reason.value == "awaiting-explicit-release"
+    assert explicit.start().stop_reason.value == "dependencies-or-authority-blocked"
     assert explicit.release_and_start("held").stop_reason.value == "eligible-backlog-exhausted"
     assert worker.dispatched == ["auto"]
     assert explicit_worker.dispatched == ["held"]
@@ -312,3 +373,25 @@ def test_offline_profile_composes_the_py03_sqlite_store_and_drains(tmp_path: Pat
     assert isinstance(profile.coordinator._store, SQLiteOperationalStore)
     assert profile.coordinator.start().stop_reason.value == "eligible-backlog-exhausted"
     assert worker.dispatched == ["wired"]
+
+
+def test_offline_profile_can_disable_automatic_release(tmp_path: Path) -> None:
+    """AC 6: profile policy, rather than the imported view, controls auto-release."""
+    from alienintent.composition.offline_profile import OfflineProfile
+
+    _, custody, _, _ = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    worker = ScriptedWorker(artifacts, {"held": ["success"]})
+    profile = OfflineProfile(
+        tmp_path / "run.sqlite",
+        MemoryWorkManagement([_item("held", 1, 1, automatic=False)]),
+        worker,
+        tmp_path / "producer",
+        tmp_path / "verifier",
+        automatic_release=False,
+    )
+
+    assert profile.coordinator.start().stop_reason.value == "dependencies-or-authority-blocked"
+    assert worker.dispatched == []
+    assert profile.coordinator.release_and_start("held").stop_reason.value == "eligible-backlog-exhausted"
+    assert worker.dispatched == ["held"]
