@@ -8,6 +8,8 @@ from typing import Mapping
 
 from alienintent.execution_coordination.adapters.github_webhook import GitHubWebhookIngress
 from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
+from alienintent.control_plane.adapters.decision_notifier import WorkManagementDecisionNotifier
+from alienintent.execution_coordination.domain.escalation import HumanDecisionRequired
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator
@@ -20,10 +22,10 @@ from alienintent.execution_coordination.ports.worker_provider import WorkerProvi
 class GitHubProfileComposition:
     """Wire configuration-owned references at the outer boundary only."""
 
-    def __init__(self, profile: GitHubProfile, secrets: SecretProvider, database: Path, snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, notify: Callable[[str], None], projection_write: Callable[[str, str, str, int], int] | None = None, worker: WorkerProvider | None = None) -> None:
+    def __init__(self, profile: GitHubProfile, secrets: SecretProvider, database: Path, snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, notify: Callable[[str], None], projection_write: Callable[[str, str, str, int], int] | None = None, worker: WorkerProvider | None = None, decision_projection_write: Callable[[HumanDecisionRequired], str] | None = None) -> None:
         self.store = SQLiteOperationalStore(database)
         writer = projection_write or (lambda identity, field, state, revision: -1)
-        self.work = GitHubProjectsWorkManagement(profile.profile, profile.repository, profile.lifecycle_statuses, profile.projection_fields, snapshot, contract, writer)
+        self.work = GitHubProjectsWorkManagement(profile.profile, profile.repository, profile.lifecycle_statuses, profile.projection_fields, snapshot, contract, writer, decision_projection_write)
         self.ingress = GitHubWebhookIngress(profile.profile, profile.repository, secrets.resolve(profile.webhook_secret_reference), self.store, notify)
         self.worker = worker
         # A real profile reaches the supplied real worker through the same control
@@ -32,4 +34,5 @@ class GitHubProfileComposition:
             self.store, self.work, worker,
             LocalArtifactStore(database.parent / "candidate-artifacts", database.parent / "candidate-artifacts" / "verifier-evidence"), profile.profile,
             automatic_release=profile.automatic_release,
+            notifier=WorkManagementDecisionNotifier(self.work),
         )

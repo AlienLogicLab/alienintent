@@ -6,17 +6,19 @@ from collections.abc import Callable
 from typing import Mapping
 
 from alienintent.execution_coordination.domain.contract import BiuContract
+from alienintent.execution_coordination.domain.escalation import HumanDecisionRequired
 from alienintent.execution_coordination.ports.work_management import ProjectionReceipt, ReadyWorkItem, WorkManagement, WorkRejected, WorkUnavailable
 
 
 class GitHubProjectsWorkManagement(WorkManagement):
     """Translate complete recorded provider pages into neutral imported work."""
 
-    def __init__(self, profile: str, repository: str, status_mapping: Mapping[str, str], projection_fields: Mapping[str, str], snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, projection_write: Callable[[str, str, str, int], int] | None = None) -> None:
+    def __init__(self, profile: str, repository: str, status_mapping: Mapping[str, str], projection_fields: Mapping[str, str], snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, projection_write: Callable[[str, str, str, int], int] | None = None, decision_projection_write: Callable[[HumanDecisionRequired], str] | None = None) -> None:
         if not status_mapping or any(not isinstance(upstream, str) or not upstream or not isinstance(neutral, str) or not neutral for upstream, neutral in status_mapping.items()):
             raise WorkRejected("ambiguous status mapping")
         self._profile, self._repository = profile, repository
         self._status_mapping, self._projection_fields, self._snapshot, self._contract, self._projection_write = dict(status_mapping), dict(projection_fields), snapshot, contract, projection_write
+        self._decision_projection_write = decision_projection_write
         self._projected_revisions: dict[str, int] = {}
 
     def import_ready_snapshot(self) -> tuple[ReadyWorkItem, ...]:
@@ -71,3 +73,12 @@ class GitHubProjectsWorkManagement(WorkManagement):
             return ProjectionReceipt(identity, revision, False, "projection read-back mismatch")
         self._projected_revisions[identity] = revision
         return ProjectionReceipt(identity, revision, True, "confirmed")
+
+    def project_decision_request(self, escalation: HumanDecisionRequired) -> ProjectionReceipt:
+        if self._decision_projection_write is None:
+            return ProjectionReceipt(escalation.work_item, escalation.biu_version, False, "decision notification projection unavailable")
+        try:
+            receipt = self._decision_projection_write(escalation)
+        except Exception:
+            return ProjectionReceipt(escalation.work_item, escalation.biu_version, False, "decision notification projection unavailable")
+        return ProjectionReceipt(escalation.work_item, escalation.biu_version, bool(receipt), "confirmed" if receipt else "decision notification projection unconfirmed")
