@@ -180,6 +180,23 @@ def test_verifier_retrieves_the_candidate_independently_not_from_producer_outcom
     assert source.calls == [(candidate, tmp_path / "verify" / "verifier")]
 
 
+def test_verifier_returns_typed_unavailable_outcome_when_candidate_cannot_be_retrieved(tmp_path: Path) -> None:
+    """An unavailable candidate must not turn VERIFY's typed outcome into a crash."""
+    from alienintent.execution_coordination.domain.custody import CandidateRef
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable, CapabilityGrant, InvocationRole
+
+    digest = "sha256:" + "d" * 64
+    candidate = CandidateRef.source_revision(digest, "git:https://example.invalid/repo.git#candidate/p@" + "a" * 40, identity="revision:" + digest)
+    class Source:
+        def retrieve_for_verification(self, _value, _workspace):
+            raise CandidateUnavailable("candidate revision is not retrievable for verifier")
+    grant = CapabilityGrant("g", "PY-06@1", "producer", InvocationRole.PRODUCER, "issue", "target", frozenset(), 100)
+    worker = RealWorkerProvider(None, Source(), tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target", None, now=lambda: 1, sleep=lambda _: None)
+
+    assert worker.verify(candidate, "producer", "verifier").kind == "candidate-unavailable"
+
+
 def test_source_candidate_must_be_published_and_read_back_from_a_fresh_clone(tmp_path: Path) -> None:
     """Removing publication or fresh-clone verification must reject VERIFY entry."""
     from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
@@ -356,3 +373,30 @@ def test_control_plane_rechecks_a_source_candidate_even_when_worker_claims_read_
 
     with pytest.raises(ValueError, match="read-back"):
         verify_in_fresh_process(claimed, tmp_path / "verifier")
+
+
+@pytest.mark.parametrize("branch, published_revision", [("unpublished", None), ("mismatched", "different")])
+def test_control_plane_rejects_reachable_remote_without_the_exact_advertised_revision(tmp_path: Path, branch: str, published_revision: str | None) -> None:
+    """An empty successful ls-remote response must be a typed custody rejection, not a clone-path crash."""
+    from alienintent.execution_coordination.application.local_artifact_custody import verify_in_fresh_process
+    from alienintent.execution_coordination.domain.custody import CandidateRef
+    from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
+
+    remote, source = tmp_path / "remote.git", tmp_path / "source"
+    subprocess.run(["git", "init", "--bare", str(remote)], check=True, capture_output=True)
+    subprocess.run(["git", "init", str(source)], check=True, capture_output=True)
+    for key, value in (("user.email", "test@example.invalid"), ("user.name", "Test")):
+        subprocess.run(["git", "-C", str(source), "config", key, value], check=True)
+    (source / "candidate").write_text("first")
+    subprocess.run(["git", "-C", str(source), "add", "candidate"], check=True)
+    subprocess.run(["git", "-C", str(source), "commit", "-m", "first"], check=True, capture_output=True)
+    revision = subprocess.run(["git", "-C", str(source), "rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip()
+    if published_revision:
+        (source / "candidate").write_text("second")
+        subprocess.run(["git", "-C", str(source), "commit", "-am", "second"], check=True, capture_output=True)
+        subprocess.run(["git", "-C", str(source), "push", str(remote), f"HEAD:refs/heads/{branch}"], check=True, capture_output=True)
+    digest = "sha256:" + __import__("hashlib").sha256(revision.encode()).hexdigest()
+    candidate = CandidateRef.source_revision(digest, f"git:{remote}#{branch}@{revision}", identity=f"revision:{branch}@{revision}@{digest}")
+
+    with pytest.raises(CandidateUnavailable, match="not published"):
+        verify_in_fresh_process(candidate, tmp_path / "verifier")

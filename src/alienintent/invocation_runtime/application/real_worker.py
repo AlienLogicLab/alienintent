@@ -7,7 +7,7 @@ from collections.abc import Callable
 
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
-from alienintent.invocation_runtime.domain.runtime import BudgetIneligible, CapabilityGrant, InvocationRole, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
+from alienintent.invocation_runtime.domain.runtime import BudgetIneligible, CandidateUnavailable, CapabilityGrant, InvocationRole, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
 from alienintent.invocation_runtime.ports.source_control import SourceControl
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 from alienintent.invocation_runtime.ports.workspace import WorkspaceManager
