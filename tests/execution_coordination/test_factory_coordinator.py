@@ -43,7 +43,7 @@ class MemoryWorkManagement:
     def propose_release(self, item) -> None:
         self.projected.append((item.identity, "released"))
 
-    def project_execution_state(self, identity: str, state: str) -> None:
+    def project_execution_state(self, identity: str, state: str, revision: int = 0) -> None:
         self.projected.append((identity, str(state)))
 
 
@@ -106,6 +106,49 @@ def test_loop_drains_priority_backlog_and_skips_failure_and_timeout(tmp_path: Pa
     assert coordinator.state("bad").stage is LifecycleStage.IMPLEMENT
     assert coordinator.state("bad").outcome == "failure"
     assert coordinator.state("slow").outcome == "timeout"
+
+
+def test_projection_type_error_does_not_retry_without_the_execution_revision(tmp_path: Path) -> None:
+    coordinator_module, custody, ports, _ = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+
+    class TypeErrorProjectionWork(MemoryWorkManagement):
+        def __init__(self, items):
+            super().__init__(items)
+            self.revisions: list[int] = []
+
+        def project_execution_state(self, identity: str, state: str, revision: int = 0):
+            self.revisions.append(revision)
+            if revision == 4:
+                raise TypeError("provider implementation fault")
+            return ports.ProjectionReceipt(identity, revision, True, "confirmed")
+
+    work = TypeErrorProjectionWork([_item("revisioned", 0, 1)])
+    coordinator = coordinator_module.FactoryCoordinator(
+        SQLiteOperationalStore(tmp_path / "run.sqlite"), work,
+        ScriptedWorker(artifacts, {"revisioned": ["success"]}), artifacts, "offline",
+    )
+
+    with pytest.raises(TypeError, match="provider implementation fault"):
+        coordinator.start()
+    assert work.revisions == [4]
+
+
+def test_unavailable_projection_does_not_change_internal_execution_truth(tmp_path: Path) -> None:
+    coordinator_module, custody, ports, _ = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+
+    class UnavailableProjectionWork(MemoryWorkManagement):
+        def project_execution_state(self, identity: str, state: str, revision: int = 0):
+            return ports.ProjectionReceipt(identity, revision, False, "projection provider unavailable")
+
+    coordinator = coordinator_module.FactoryCoordinator(
+        SQLiteOperationalStore(tmp_path / "run.sqlite"), UnavailableProjectionWork([_item("projected", 0, 1)]),
+        ScriptedWorker(artifacts, {"projected": ["success"]}), artifacts, "offline",
+    )
+
+    coordinator.start()
+    assert coordinator.state("projected").stage is LifecycleStage.DONE
 
 
 def test_custody_transfer_binds_verifier_copy_and_rejects_tampering(tmp_path: Path) -> None:

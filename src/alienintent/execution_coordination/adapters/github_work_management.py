@@ -13,7 +13,7 @@ class GitHubProjectsWorkManagement(WorkManagement):
     """Translate complete recorded provider pages into neutral imported work."""
 
     def __init__(self, profile: str, repository: str, status_mapping: Mapping[str, str], projection_fields: Mapping[str, str], snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, projection_write: Callable[[str, str, str, int], int] | None = None) -> None:
-        if not status_mapping or len(set(status_mapping.values())) != len(status_mapping):
+        if not status_mapping or any(not isinstance(upstream, str) or not upstream or not isinstance(neutral, str) or not neutral for upstream, neutral in status_mapping.items()):
             raise WorkRejected("ambiguous status mapping")
         self._profile, self._repository = profile, repository
         self._status_mapping, self._projection_fields, self._snapshot, self._contract, self._projection_write = dict(status_mapping), dict(projection_fields), snapshot, contract, projection_write

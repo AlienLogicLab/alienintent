@@ -11,12 +11,12 @@ from threading import Thread
 from typing import Callable, Iterator
 
 from alienintent.execution_coordination.ports.event_ingress import EventIngress, IngressReceipt, IngressRejected
-from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
+from alienintent.execution_coordination.ports.operational_store import OperationalStore, Receipt, ReservationRejected, VersionConflict
 
 
 class GitHubWebhookIngress(EventIngress):
-    def __init__(self, profile: str, secret: bytes, store: OperationalStore, notify: Callable[[str], None]) -> None:
-        self._profile, self._secret, self._store, self._notify = profile, secret, store, notify
+    def __init__(self, profile: str, repository: str, secret: bytes, store: OperationalStore, notify: Callable[[str], None]) -> None:
+        self._profile, self._repository, self._secret, self._store, self._notify = profile, repository, secret, store, notify
 
     def receive(self, delivery_id: str, category: str, authenticity: str, raw_body: bytes) -> IngressReceipt:
         expected = "sha256=" + hmac.new(self._secret, raw_body, sha256).hexdigest()
@@ -30,6 +30,15 @@ class GitHubWebhookIngress(EventIngress):
             raise IngressRejected("unsupported payload") from error
         if not isinstance(work, str) or not work or not isinstance(version, int):
             raise IngressRejected("ambiguous profile or work reference")
+        repository_ref = payload.get("repository")
+        repository = repository_ref.get("full_name") if isinstance(repository_ref, dict) else None
+        if repository != self._repository:
+            raise IngressRejected("ambiguous profile or work reference")
+        notification = self._notification(payload, category, work)
+        prior = self._store.receipt(self._profile, delivery_id)
+        if prior is not None:
+            self._deliver(f"ingress:{delivery_id}", notification)
+            return self._ingress_receipt(delivery_id, prior)
         aggregate = f"ingress:{work}"
         current, state = self._store.read_state(self._profile, aggregate)
         prior_version = state.get("source_version", -1)
@@ -37,13 +46,12 @@ class GitHubWebhookIngress(EventIngress):
             raise IngressRejected("invalid stored source version")
         if version < prior_version:
             raise IngressRejected("stale source version held for reconciliation")
-        notification = self._notification(payload, category, work)
         receipt, fresh = self._store.record_receipt_if_new(self._profile, delivery_id, sha256(raw_body).hexdigest(), aggregate)
         effect_id = f"ingress:{delivery_id}"
         if fresh:
-            self._store.apply_receipt(self._profile, delivery_id, current, {"source_version": version, "category": category}, effect_id, {"notification": notification})
+            version = self._store.apply_receipt(self._profile, delivery_id, current, {"source_version": version, "category": category}, effect_id, {"notification": notification})
         self._deliver(effect_id, notification)
-        return IngressReceipt(delivery_id, self._profile, True, "applied")
+        return self._ingress_receipt(delivery_id, Receipt(delivery_id, aggregate, version, "applied") if fresh else receipt)
 
     def _notification(self, payload: object, category: str, work: str) -> str:
         if isinstance(payload, dict) and payload.get("execution_field_edit") is True:
@@ -54,7 +62,12 @@ class GitHubWebhookIngress(EventIngress):
             return f"explicit-release-command:{work}"
         if category == "internal_execution":
             return f"internal-execution-event:{work}"
-        return f"downstream-projection-receipt:{work}"
+        if category == "downstream_projection":
+            return f"downstream-projection-receipt:{work}"
+        raise IngressRejected("unsupported event category")
+
+    def _ingress_receipt(self, delivery_id: str, receipt: Receipt) -> IngressReceipt:
+        return IngressReceipt(delivery_id, self._profile, receipt.status == "applied", f"{receipt.status}:{receipt.version}")
 
     def _deliver(self, effect_id: str, notification: str) -> None:
         pending = {effect.identity for effect in self._store.pending_effects(self._profile)}

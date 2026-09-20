@@ -21,4 +21,4 @@ class GitHubProfileComposition:
         self.store = SQLiteOperationalStore(database)
         writer = projection_write or (lambda identity, field, state, revision: -1)
         self.work = GitHubProjectsWorkManagement(profile.profile, profile.repository, profile.lifecycle_statuses, profile.projection_fields, snapshot, contract, writer)
-        self.ingress = GitHubWebhookIngress(profile.profile, secrets.resolve(profile.webhook_secret_reference), self.store, notify)
+        self.ingress = GitHubWebhookIngress(profile.profile, profile.repository, secrets.resolve(profile.webhook_secret_reference), self.store, notify)

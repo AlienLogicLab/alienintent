@@ -101,6 +101,11 @@ class SQLiteOperationalStore(OperationalStore):
             connection.execute("INSERT INTO receipts VALUES (?, ?, ?, ?, ?, 'applied')", (profile, event_id, digest, aggregate, version))
             return Receipt(event_id, aggregate, version, "applied")
 
+    def receipt(self, profile: str, event_id: str) -> Receipt | None:
+        with self._read() as connection:
+            row = connection.execute("SELECT aggregate, version, status FROM receipts WHERE profile=? AND event_id=?", (profile, event_id)).fetchone()
+            return None if row is None else Receipt(event_id, row["aggregate"], row["version"], row["status"])
+
     def record_receipt(self, profile: str, event_id: str, digest: str, aggregate: str) -> Receipt:
         return self.record_receipt_if_new(profile, event_id, digest, aggregate)[0]
 
