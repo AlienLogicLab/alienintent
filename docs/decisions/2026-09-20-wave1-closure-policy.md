@@ -40,6 +40,36 @@ Closure **must not** perform: opportunistic refactoring; unrelated cleanup; spec
 
 > **Objective: the minimum necessary closure work required to transform an accepted candidate into an operationally complete DONE BIU.**
 
+## SWF-31 — Issue closure as routine closure (2026-09-21)
+
+The coordinator is authorized to close a BIU GitHub Issue as **routine closure** once all of:
+
+- Project Status is `DONE`;
+- the accepted candidate is landed and reachable from `main`;
+- required closure checks are satisfied;
+- no unresolved closure obligation remains.
+
+This is bookkeeping inside closure, not a new lifecycle state and not a new authority. Applied to
+PY-06 (#54) and PY-07 (#55) on 2026-09-21, each verified against all four conditions before closing.
+
+### Architectural clarification — Issue closure is a projection
+
+> GitHub Issue closure is a closure/bookkeeping projection, not canonical lifecycle authority. Project
+> DONE is the authoritative lifecycle state. The current bootstrap may require Issue closure for
+> dependency admission, but the canonical Python design should not make dependency satisfaction depend
+> on that secondary projection.
+
+**Why it mattered.** PY-06 and PY-07 were `DONE` in the Project while their Issues stayed open, because
+nothing in the dispatcher closes Issues. GitHub's native blocked-by links read Issue state, so PY-08's
+admission check saw an unsatisfied dependency for a BIU that had been complete for hours. The bootstrap
+resolved it by closing the Issues — the correct fix at this layer, since the projection was simply
+stale. The canonical design must not inherit the coupling: **dependency satisfaction is a question
+about lifecycle state, which the control plane owns, not about a Work Management projection it
+writes to.** The admission gate was **not** weakened to work around it.
+
+Recorded against the [SF-REQ-002 admission amendment](alienintent-software-factory-plan.md) and
+[SWF-21](2026-09-20-wave1-release-coordinator.md); no new Product Requirement.
+
 ## SWF-18 — Closure-efficiency measurement
 
 Record closure-efficiency evidence wherever current infrastructure allows, without delaying Wave 1:
