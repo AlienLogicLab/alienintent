@@ -993,17 +993,18 @@ Derive durable Quality Evidence from trajectories; raw observation and learned h
 
 Derived evidence identifies its source trajectory/schema version and explicit evidence inputs. Where facts permit, aggregate metrics reconcile against those sources, including verifier cycles, RETURN_TO_IMPLEMENT, classified rejections, authority decisions, attributable human-blocked duration, candidate/merge identity, final verdict/landed/DONE and timestamp relationships. UNKNOWN or partial telemetry is never silently converted to zero. Contradictory derived evidence fails deterministic consistency verification.
 
-## SF-REQ-054 — Execution Evidence Derivation and Consistency Verification
-**Priority:** unset — Founder input required
-**Wave:** unset — Founder input required
+The deterministic consistency verification must itself carry discriminating negative-control / proven-red evidence where practical: altering a derived count, substituting zero for UNKNOWN telemetry without evidence, or introducing an impossible timestamp relation must cause the applicable check to fail. A consistency check that cannot fail is not evidence (SWF-24). Folded from PROP-2026-0004 by Founder decision of 2026-09-20; SF-REQ-030 is the canonical owner of Execution Evidence Derivation and Consistency Verification.
 
-ExecutionTrajectory is factual evidence. QualityEvidence must be mechanically reconcilable against cited trajectory events and other explicitly referenced evidence wherever the underlying facts make reconciliation possible. Inconsistency fails verification. The requirement includes discriminating negative-control/proven-red checks where practical, including altered derived counts, unsupported UNKNOWN-to-zero substitution and impossible timestamp relations. No storage or runtime implementation is prescribed.
+## SF-REQ-054 — retired: folded into SF-REQ-030
 
-Canonical Product Requirement: [Issue #65](https://github.com/AlienLogicLab/alienintent/issues/65), CAPTURE. Origin: PROP-2026-0004.
+**Status:** retired 2026-09-20 by Founder decision. Not an active requirement; the ID is not reused.
+
+Execution Evidence Derivation and Consistency Verification is owned canonically by **SF-REQ-030** above, which was amended to carry this capability including the discriminating negative-control obligation. Origin [PROP-2026-0004](../proposals/PROP-2026-0004-execution-evidence-derivation-and-consistency-verification.md) is preserved unchanged as provenance; [Issue #65](https://github.com/AlienLogicLab/alienintent/issues/65) is closed as duplicate/superseded.
 
 ## SF-REQ-055 — Proposal Intake as a Product Capability
-**Priority:** unset — Founder input required
-**Wave:** unset — Founder input required
+**Priority:** P1
+**Wave:** 3
+**Authority:** ratified as product authority by Founder decision of 2026-09-20.
 
 AlienIntent accepts proposals as immutable, noncanonical provenance until admitted through applicable authority; validates, classifies, deduplicates, resolves authority, canonicalizes into the appropriate artifact and durably maps proposal to canonical work. `proposal_id` provides idempotency, duplicate delivery creates no duplicate canonical work, and canonical artifacts own current state. Intake is provider-neutral; repository-backed `docs/proposals/` is an adapter. Intake cannot invent priority, Wave, product/architecture authority or create a BIU by receipt.
 
