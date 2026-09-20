@@ -349,6 +349,23 @@ def test_no_events_after_startup_do_not_reimport_the_ready_view(tmp_path: Path) 
     assert work.reads == 1
 
 
+def test_a_drain_that_iterates_never_reimports_the_ready_view(tmp_path: Path) -> None:
+    """AC 11: dispatching work still uses only the startup READY snapshot."""
+    coordinator_module, custody, _, _ = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    items = [_item("a", 0, 1), _item("b", 1, 2), _item("c", 2, 3)]
+    work = MemoryWorkManagement(items)
+    worker = ScriptedWorker(artifacts, {item.identity: ["success"] for item in items})
+
+    summary = coordinator_module.FactoryCoordinator(
+        SQLiteOperationalStore(tmp_path / "run.sqlite"), work, worker, artifacts, "offline"
+    ).start()
+
+    assert worker.dispatched == ["a", "b", "c"]
+    assert summary.stop_reason.value == "eligible-backlog-exhausted"
+    assert work.reads == 1
+
+
 def test_wip_refusal_is_enforced_during_an_active_invocation(tmp_path: Path) -> None:
     """AC 4: a competing admission hits the reservation guard, not recovery."""
     coordinator_module, custody, _, _ = _api()
