@@ -130,6 +130,29 @@ The Node bootstrap advances a BIU only on event delivery. A dropped delivery the
 
 **Evidence.** Each detection appends a durable record to `~/.local/state/alienintent/coordinator-liveness.jsonl` and posts an attributable comment on the affected Issue, carrying BIU identity, lifecycle state, expected actor, state age, evidence checked, duplicate-prevention evidence, recovery action and result.
 
+## Coordinator-independent monitoring (temporary bootstrap)
+
+Deterministic monitoring must not depend on a model coordinator session being alive
+([SWF-27 bootstrap evidence](decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md)).
+
+| `systemd --user` unit | Role | Decides? | Durable output |
+|---|---|---|---|
+| `alienintent-liveness.service` | 5-minute actor-launch reconciliation (SWF-29) | acts only under the SWF-29 rule | `~/.local/state/alienintent/coordinator-liveness.jsonl` |
+| `alienintent-observer.service` | lifecycle observation | no — observes only | `~/.local/state/alienintent/coordinator-observations.jsonl` |
+
+Scripts live in `~/.local/share/alienintent-bootstrap/` and are owned by the bootstrap operator, not by
+any session. Each service is a single instance (`flock` on a lock file under the state directory) and
+restarts on failure. Observations carry BIU identity, observed lifecycle state, timestamp, expected
+actor, the transition or anomaly, any recovery already taken, and `requires_model_judgment` — so a new
+coordinator filters on that flag rather than replaying history. A coordinator checkpoint is kept at
+`~/.local/state/alienintent/coordinator-checkpoint.md`.
+
+Both services are temporary bootstrap infrastructure: the liveness service expires with SWF-29 when
+SF-REQ-056 lands, and the observer expires when the canonical control plane records its own trajectory
+(SF-REQ-029). Neither changes Node/B-DISP semantics.
+
+Control: `systemctl --user {status,restart,stop} alienintent-liveness alienintent-observer`.
+
 ## Worktrees and recovery
 
 Repository-changing tasks outside the BIU lifecycle also require explicit

@@ -45,6 +45,20 @@ A coordinator episode operates on explicitly assembled context — bounded objec
 - **SWF-21 / SWF-26** — rule 10 is already practised: SWF-21 is explicitly temporary and expiring, and SWF-26 was expired at PY-04 DONE rather than allowed to become architecture.
 - **SF-REQ-051 Design Contract and Design Verification** (#62) — the boundary between deterministic and judgment work is design-verified, not assumed.
 
+## Bootstrap evidence — monitoring decoupled from coordinator tenure (2026-09-20)
+
+Rule 9 says no model session may be the sole durable holder of information required for safe continuation. A weaker form of the same coupling was found in the bootstrap itself: the liveness watch and the lifecycle watchers ran as **child processes of the Claude coordinator session**, and their scripts lived in that session's scratch directory. Ending the episode would have stopped monitoring and deleted the monitors. That made the episode model in rule 2 unexercisable — the coordinator could not end an episode without degrading the factory.
+
+Two durable statements follow, and are recorded here as binding bootstrap interpretation of this decision:
+
+> **Persistent monitoring is operational infrastructure and must not determine the tenure of a model-based coordinator episode.**
+
+> **A coordinator episode may end while deterministic monitoring continues.**
+
+Applied: deterministic monitoring moved to `systemd --user` (`alienintent-liveness.service`, `alienintent-observer.service`), parented by the user manager rather than any Claude session, single-instance via `flock`, writing durable observations a successor reconstructs state from. Model judgment was **not** moved into a daemon: the observer takes no decision and performs no recovery, and the liveness watch acts only under the already-authorized SWF-29 rule. See `docs/operations.md`.
+
+This is bootstrap evidence for SF-REQ-053, not a new requirement: the existing authority already contains it.
+
 ## Scope and non-goals
 
 No change to the current Wave 1 coordinator, worker or verifier behaviour, and no change to Node/B-DISP bootstrap behaviour. No coordinator-lifecycle experiment is started. No visible lifecycle state is created — existing authority does not require one. No fixed context-size or time thresholds are selected. No implementation, and no BIU is created from this record.
