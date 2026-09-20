@@ -20,10 +20,10 @@ from alienintent.execution_coordination.domain.escalation import (
     HumanDecisionRequired,
     SupersededDecision,
 )
-from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
+from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage
 from alienintent.control_plane.adapters.decision_notifier import WorkManagementDecisionNotifier
 from alienintent.control_plane.adapters.decision_notifier import NoOpDecisionNotifier
-from alienintent.execution_coordination.ports.operational_store import Effect
+from alienintent.execution_coordination.ports.operational_store import Effect, ReservationRejected
 from tests.execution_coordination.test_factory_coordinator import MemoryWorkManagement, ScriptedWorker, _item
 
 
@@ -236,6 +236,68 @@ def test_unresolved_effect_is_decidable_and_re_admits_its_scoped_closure(tmp_pat
 
     assert coordinator.state("blocked").stage is LifecycleStage.DONE
     assert coordinator.state("dependent").stage is LifecycleStage.DONE
+
+
+def test_real_unknown_effect_recovers_as_a_scoped_decidable_authority_block(tmp_path: Path) -> None:
+    """FD-05: a real unknown effect parks its closure without stopping unrelated work."""
+    items = [_item("blocked", 0, 1), _item("dependent", 1, 2, ("blocked",)), _item("independent", 2, 3)]
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "operational.sqlite")
+    correlation = "launch:blocked:0"
+    store.acquire("offline", "repository", "repo", correlation)
+    state = FactoryCoordinator._encode(ExecutionState.for_contract(items[0].contract))
+    store.commit_with_effect("offline", "factory:blocked", 0, state, correlation, {"correlation": correlation, "work": "blocked"})
+    store.claim_effect("offline", correlation)
+    assert store.unresolved_effects("offline")
+    worker = ScriptedWorker(artifacts, {"blocked": ["success"], "dependent": ["success"], "independent": ["success"]})
+    coordinator = FactoryCoordinator(store, MemoryWorkManagement(items), worker, artifacts, "offline")
+
+    summary = coordinator.start()
+
+    assert summary.authority_blocked == ("blocked",)
+    assert summary.dispatched == ("independent",)
+    assert coordinator.state("blocked").outcome == "authority-block"
+    assert coordinator.state("dependent").outcome == "blocked-by-authority"
+    assert coordinator.state("independent").stage is LifecycleStage.DONE
+    assert store.recovery_reservations("offline") == ()
+    request = DecisionInbox(store, coordinator, "offline").show("blocked")
+    assert isinstance(request, HumanDecisionRequired)
+
+    DecisionInbox(store, coordinator, "offline").submit(
+        DecisionSubmission("morty", "SWF-21", "blocked", request.biu_version, request.biu_version, "reconcile-real-unknown", "authorize")
+    )
+
+    assert coordinator.state("blocked").stage is LifecycleStage.DONE
+    assert coordinator.state("dependent").stage is LifecycleStage.DONE
+
+
+def test_lost_effect_confirmation_parks_the_running_item_without_stopping_the_factory(tmp_path: Path) -> None:
+    """FD-05: uncertainty during a live run uses the same scoped escalation path."""
+    class LostConfirmationStore(SQLiteOperationalStore):
+        lose_confirmation = True
+
+        def confirm_effect(self, profile: str, effect_id: str, receipt: str) -> None:
+            if self.lose_confirmation:
+                self.lose_confirmation = False
+                raise ReservationRejected("durable confirmation lost")
+            super().confirm_effect(profile, effect_id, receipt)
+
+    items = [_item("blocked", 0, 1), _item("dependent", 1, 2, ("blocked",)), _item("independent", 2, 3)]
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = LostConfirmationStore(tmp_path / "operational.sqlite")
+    coordinator = FactoryCoordinator(
+        store, MemoryWorkManagement(items),
+        ScriptedWorker(artifacts, {"blocked": ["success", "success"], "dependent": ["success"], "independent": ["success"]}),
+        artifacts, "offline",
+    )
+
+    summary = coordinator.start()
+
+    assert summary.authority_blocked == ("blocked",)
+    assert summary.dispatched == ("independent",)
+    assert coordinator.state("blocked").outcome == "authority-block"
+    assert coordinator.state("independent").stage is LifecycleStage.DONE
+    assert store.recovery_reservations("offline") == ()
 
 
 def test_recorded_decision_re_admits_after_a_real_process_restart(tmp_path: Path) -> None:

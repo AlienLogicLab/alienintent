@@ -7,7 +7,10 @@ It contains no credentials, live Issue mutations, or provider secrets.
 
 - Findings repaired: admission-path and unresolved-effect escalation registration
   and recovery (including the distinct authority-block outcome, reservation
-  release, scoped dependent blocking, and normal guarded re-admission);
+  release, scoped dependent blocking, and normal guarded re-admission). The
+  real SQLite unknown-effect path now atomically parks the unknown effect before
+  recording the authority block, so the FD-05 write guard remains intact; both
+  crash recovery and a lost live confirmation use that path.
   interrupted decision application recovery;
   PY-05 Work Management decision projection wiring; no-op notifier coverage;
   subprocess restart proof; retained PY-07 evidence.
@@ -29,10 +32,12 @@ It contains no credentials, live Issue mutations, or provider secrets.
   the GitHub Projects adapter delivers a recorded decision-comment fixture; the
   offline notifier leaves the inbox usable; a fresh subprocess submits a stored
   decision and reaches DONE.
+  A real-worker authority-block result retains its allocated workspace while its
+  mutating reservation is released.
 
 ## Local executable checks
 
-- `python3 -m pytest -q` — exit 0; 118 passed.
+- `python3 -m pytest -q` — exit 0; 123 passed.
 - `python3 tools/fitness/check_architecture.py --root src/alienintent --check all`
   — exit 0; `PASS: all architecture fitness checks`.
 - `node scripts/check.mjs all` — exit 0; runtime 310/310 passed, preflight
@@ -56,6 +61,17 @@ The Decision Inbox implementation is in
 `control_plane/application/decision_inbox.py`, as required by Scope §4. The
 former execution-coordination import path is retained only as a compatibility
 import; no scope supersession is claimed.
+
+## FD-05 repair evidence
+
+`test_real_unknown_effect_recovers_as_a_scoped_decidable_authority_block`
+creates an actual SQLite `effects.status='unknown'` row and its held
+reservation, then starts a fresh coordinator whose worker cannot read the
+outcome. It proves the block is durable and decidable, the dependent is scoped,
+the unrelated work reaches DONE, and the reservation is released.  The paired
+lost-confirmation test exercises the same authority parking during a live run.
+`test_real_worker_retains_an_authority_blocked_workspace_while_releasing_capacity`
+proves the retained-workspace half of AC 3 at the runtime ownership boundary.
 
 ## Closure accounting
 

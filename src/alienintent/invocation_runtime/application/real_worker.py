@@ -19,6 +19,7 @@ class RealWorkerProvider(WorkerProvider):
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
         self._active_workspaces: dict[str, object] = {}
+        self.retained_workspaces: dict[str, Path] = {}
         self._reservations = reservations
         self.cleanup_diagnostics: dict[str, str] = {}
         self.retry_evidence: dict[str, RetryEvidence] = {}
@@ -68,10 +69,13 @@ class RealWorkerProvider(WorkerProvider):
                 candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._branch, revision, self._verifier_root)
                 outcome = WorkerOutcome.success(candidate)
         finally:
-            try:
-                self._workspaces.cleanup(workspace, None)
-            except Exception as error:
-                self.cleanup_diagnostics[invocation.correlation_id] = type(error).__name__
+            if outcome.kind == "authority-block":
+                self.retained_workspaces[invocation.correlation_id] = workspace.path
+            else:
+                try:
+                    self._workspaces.cleanup(workspace, None)
+                except Exception as error:
+                    self.cleanup_diagnostics[invocation.correlation_id] = type(error).__name__
             if self._reservations is not None:
                 self._reservations.release(invocation.correlation_id)
             self._active_workspaces.pop(invocation.correlation_id, None)

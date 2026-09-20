@@ -547,8 +547,8 @@ def test_run_summary_reports_capacity_unavailable_from_the_loop(tmp_path: Path) 
     assert summary.stop_reason.value == "capacity-unavailable"
 
 
-def test_reconcile_refuses_to_proceed_when_the_outcome_cannot_be_read_back(tmp_path: Path) -> None:
-    """AC 5: an unreadable in-flight outcome remains held and blocks dispatch."""
+def test_reconcile_parks_an_unreadable_outcome_without_stopping_unrelated_work(tmp_path: Path) -> None:
+    """PY-07 FD-05: an unreadable outcome blocks only its scoped authority closure."""
     coordinator_module, custody, _, _ = _api()
     artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
     store = SQLiteOperationalStore(tmp_path / "run.sqlite")
@@ -559,11 +559,13 @@ def test_reconcile_refuses_to_proceed_when_the_outcome_cannot_be_read_back(tmp_p
     store.commit_with_effect("offline", "factory:stale", 0, coordinator_module.FactoryCoordinator._encode(state), correlation, {"correlation": correlation})
     store.claim_effect("offline", correlation)
     worker = ScriptedWorker(artifacts, {"ready": ["success"], "stale": ["success"]})
-    summary = coordinator_module.FactoryCoordinator(store, MemoryWorkManagement([ready, stale]), worker, artifacts, "offline").start()
-    assert summary.stop_reason.value == "capacity-unavailable"
-    assert summary.dispatched == ()
-    assert worker.dispatched == []
-    assert store.recovery_reservations("offline") != ()
+    coordinator = coordinator_module.FactoryCoordinator(store, MemoryWorkManagement([ready, stale]), worker, artifacts, "offline")
+    summary = coordinator.start()
+    assert summary.stop_reason.value == "dependencies-or-authority-blocked"
+    assert summary.dispatched == ("ready",)
+    assert worker.dispatched == ["ready"]
+    assert store.recovery_reservations("offline") == ()
+    assert coordinator.state("stale").outcome == "authority-block"
 
 
 def test_recovery_refuses_a_result_that_does_not_read_back(tmp_path: Path) -> None:

@@ -119,7 +119,10 @@ class FactoryCoordinator:
             self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, prepared, correlation, {"correlation": correlation, "work": item.identity})
             self._store.claim_effect(self._profile, correlation)
             outcome = self._worker.start(WorkerInvocation(item.identity, correlation), item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
-            self._store.confirm_effect(self._profile, correlation, f"outcome:{outcome.kind}")
+            try:
+                self._store.confirm_effect(self._profile, correlation, f"outcome:{outcome.kind}")
+            except ReservationRejected:
+                return StopReason.BLOCKED if self._park_unknown_effect(item, reservation) else StopReason.CAPACITY_UNAVAILABLE
             completed = self._completed_for_outcome(item, current, outcome)
             unresolved = self._has_unresolved_effect(item.identity)
             if unresolved:
@@ -174,7 +177,9 @@ class FactoryCoordinator:
                 return False
             outcome = self._worker.read_back(WorkerInvocation(identity, reservation.owner))
             if outcome is None:
-                return False
+                if not self._park_unknown_effect(item, reservation):
+                    return False
+                continue
             try:
                 self._store.confirm_effect(self._profile, reservation.owner, f"outcome:{outcome.kind}")
             except ReservationRejected:
@@ -190,6 +195,20 @@ class FactoryCoordinator:
             if not self._record_result(item, self._completed_for_outcome(item, current, outcome), reservation.owner, outcome.kind):
                 return False
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+        return True
+
+    def _park_unknown_effect(self, item: ReadyWorkItem, reservation) -> bool:
+        """Turn an unreadable FD-05 effect into a scoped, durable authority block."""
+        version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
+        current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+        blocked = self._encode(current) | {"correlation": reservation.owner, "outcome": "authority-block"}
+        try:
+            self._store.park_unknown_effect(self._profile, reservation.owner, version, blocked)
+            self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+        except ReservationRejected:
+            return False
+        self._register_escalation(self._authority_request(item, current.version, "The external effect outcome is unknown and requires reconciliation authority."))
+        self._block_dependents(item, self._work.import_ready_snapshot())
         return True
 
     def _is_done(self, identity: str) -> bool:
