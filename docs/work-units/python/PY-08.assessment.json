@@ -1,0 +1,32 @@
+{
+  "disposition": "READY",
+  "governing_intent": "Deliver the bounded P0 CLI presentation adapter over existing application services so an operator can safely run, observe, explain, recover, cancel, and decide work without direct state mutation.",
+  "summary": "PY-08 is bounded, aligned with the approved ownership and control-plane architecture, and has executable acceptance obligations. PY-07 being unimplemented is only a sequencing dependency, not an unresolved decision.",
+  "owner_clarifications": [],
+  "implementation_unknowns": [
+    "Choose the CLI framework, command grammar, JSON-selection mechanism, and packaging wiring within the first-class CLI constraint.",
+    "Define the readiness-gate port boundary consumed by run; PY-09 supplies the substantive doctor checks later.",
+    "Construct real-profile subprocess fixtures and controlled process-lifecycle tests using the accepted predecessor services."
+  ],
+  "independent_decision_centers": [],
+  "semantic_split_recommendation": [],
+  "verification_assessment": "Real executable proof is required: subprocess invocation of the CLI with retained exit statuses; real predecessor-profile integration; negative authorization, staleness, idempotency, and no-backdoor tests; deterministic explain/kernel comparison; unavailable-upstream status proof; sanitization sentinel test; fitness checks; and the Node suite. These are observable and mechanically testable. The contract correctly treats JSON and human output as supported modes rather than internal-function tests.",
+  "expected_rework_locality": "MEDIUM",
+  "material_risks": [
+    "PY-08 precedes PY-09 while run must enforce a failing readiness gate; the implementation should isolate this behind a readiness port so PY-09 can supply criteria without reopening CLI semantics.",
+    "The referenced PY-08.assessment.json file is absent, so the contract contains a dangling readiness reference; this is documentation/evidence hygiene, not an owner decision.",
+    "The CLI integrates PY-04, PY-06, and PY-07 services, so acceptance fixtures must exercise their real accepted interfaces rather than recreate lifecycle logic in the adapter."
+  ],
+  "next_action": "Advance PY-08 to implementation only after PY-07 is accepted and its candidate/baseline is available; implement the CLI through application-service and readiness-port boundaries, then execute the specified subprocess and regression proof.",
+  "rationale": "The contract explicitly fixes the authority boundary, mutation path, source-labelled reads, deterministic explain behavior, output/error behavior, sanitization, adapter layering, command set, exclusions, and acceptance evidence. Its requirement links are honest: SF-REQ-034 is expressly limited to P0, while SF-REQ-035 is a PY-07-owned service surfaced by this CLI. Remaining choices are routine implementation design constrained by approved architecture, not Founder-owned product or architecture decisions.",
+  "provider_evidence": {
+    "provider": "codex",
+    "version": "codex-cli 0.155.1",
+    "compatibility": "COMPATIBLE_UNVERIFIED",
+    "capability_probe": "PASSED",
+    "invocation": "codex exec --ephemeral --json --sandbox read-only",
+    "baseline": "e25da1f",
+    "assessed": "2026-09-20",
+    "request": "PY-08.request.md"
+  }
+}

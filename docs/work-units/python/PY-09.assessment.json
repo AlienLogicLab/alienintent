@@ -1,0 +1,35 @@
+{
+  "disposition": "NEEDS_CLARIFICATION",
+  "governing_intent": "SF-REQ-038 requires a non-mutating, sanitized doctor that positively validates every dependency needed for unattended execution and prevents autonomous `run` when required readiness is not established.",
+  "summary": "The BIU is bounded, coherent, and has credible executable CLI-level verification, but it leaves the operational policy that determines which outcomes block autonomous execution unspecified. An implementation agent would need to invent the hard-required versus warning/unavailable classification and its effect on the overall disposition and exit status.",
+  "owner_clarifications": [
+    "For each listed doctor check, define whether FAIL and UNAVAILABLE are hard blockers for autonomous `run`, warnings, or profile/policy-configurable outcomes; define the resulting overall disposition and exit-code mapping.",
+    "Define whether an unavailable live dependency is always equivalent to a failed required dependency for autonomous start, or whether any explicitly approved degraded-autonomy mode exists."
+  ],
+  "implementation_unknowns": [
+    "Exact typed result schema, stable JSON field names, and numeric exit-code values once the approved outcome policy is supplied.",
+    "How adapters positively evidence non-mutating write/publication capability (for example capability negotiation, authenticated dry-run, or an adapter-specific safe probe).",
+    "Fixture shapes, local doubles, subprocess harness, and per-adapter diagnostic redaction implementation."
+  ],
+  "independent_decision_centers": [],
+  "semantic_split_recommendation": [],
+  "verification_assessment": "Strong: it requires real CLI subprocess invocation with retained exit statuses, passing and failing cases for every check, specified negative-evidence cases, a real refused `run` attempt, mutation assertions against fixtures/doubles, JSON stability, and sentinel-secret leakage coverage. Recorded fixtures and local doubles are appropriate for PY-09; PY-10 is explicitly assigned real-target evidence. The missing outcome-policy matrix prevents these otherwise executable checks from proving the intended gate semantics deterministically.",
+  "expected_rework_locality": "LOW",
+  "material_risks": [
+    "Different implementers could classify the same unavailable dependency differently, producing unsafe autonomous starts or needless total blockage.",
+    "An arbitrary exit-code/disposition mapping could make automation treat warning, failure, and unavailability inconsistently.",
+    "A capability probe chosen without an approved policy could accidentally perform an external mutation or provide only reachability rather than authenticated readiness."
+  ],
+  "next_action": "Obtain a short Founder/owner-approved doctor outcome matrix covering each check category, FAIL versus UNAVAILABLE treatment, autonomous-start eligibility, and the corresponding overall disposition/exit code; then reassess or incorporate it into PY-09.",
+  "rationale": "The BIU honestly maps SF-REQ-038 as its primary requirement, keeps installation creation, repair, Node changes, sovereignty, and later-wave work out of scope, and forms one cohesive doctor-and-gate capability rather than multiple independent products. Approved architecture and predecessor contracts constrain normal design detail. However, the binding rule only says a hard-required failure blocks `run` while the contract never identifies which checks or unavailable states are hard-required; this is an operational-authority and product-semantics choice, not routine implementation detail.",
+  "provider_evidence": {
+    "provider": "codex",
+    "version": "codex-cli 0.155.1",
+    "compatibility": "COMPATIBLE_UNVERIFIED",
+    "capability_probe": "PASSED",
+    "invocation": "codex exec --ephemeral --json --sandbox read-only",
+    "baseline": "e25da1f",
+    "assessed": "2026-09-20",
+    "request": "PY-09.request.md"
+  }
+}

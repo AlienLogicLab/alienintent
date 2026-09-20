@@ -1,0 +1,36 @@
+{
+  "disposition": "NEEDS_CLARIFICATION",
+  "governing_intent": "Prove an offline, event-driven continuous-factory walking skeleton with deterministic doubles, durable restart recovery, priority/dependency/WIP scheduling, and rolling refill, without vendor access, provider spend, Node changes, or a Python-Sovereignty claim.",
+  "summary": "The BIU is tightly bounded, its requirement extents are candid, and most acceptance criteria are observable through executable deterministic integration tests. It has one material authority conflict: it requires lifecycle progress through VERIFY, REVIEW, ACCEPT, and DONE while excluding candidate-custody mechanics, real workers, network access, and PY-06; the approved candidate-custody invariant requires a durably retrievable exact candidate for a fresh independent verifier before VERIFY.",
+  "owner_clarifications": [
+    "Must PY-04 receive an explicit, bounded test-only exception to the candidate-publication and independent-verifier requirements for its offline scripted-worker path, or must its scope be changed so it does not cross VERIFY/ACCEPT/DONE until PY-06 supplies real candidate custody and verifier invocation? The current authorities do not authorize treating an unverified scripted outcome as a substitute for that invariant."
+  ],
+  "implementation_unknowns": [
+    "Concrete WorkManagement and WorkerProvider port signatures, outcome/event payloads, and typed rejection shapes.",
+    "The deterministic fixture format, event-delivery harness, process entrypoint used only by the restart test, and run-summary schema.",
+    "The exact SQLite recovery transaction sequencing using the PY-03 OperationalStore.",
+    "The mechanical assertions for release provenance, ordering traces, no-repeat reconcile reads, and stop reasons."
+  ],
+  "independent_decision_centers": [],
+  "semantic_split_recommendation": [],
+  "verification_assessment": "The specified proof is real and mechanically testable for loop behavior: deterministic doubles exercise the coordinator rather than mocked coordinator internals; restart must be a real process restart; and ordering, WIP, refill, blocked-dependency, no-polling, release-policy, and stop-reason assertions are observable. It is not presently valid proof of the claimed full lifecycle because the contract supplies neither an authorized test-only custody/verifier exception nor PY-06 candidate custody and independent verification.",
+  "expected_rework_locality": "LOW",
+  "material_risks": [
+    "An implementer may bypass PY-02's VERIFY-entry custody guard to make the scripted loop reach DONE.",
+    "An implementer may accidentally build a partial PY-06 custody/verifier system inside PY-04, broadening scope and duplicating later work.",
+    "A scripted success could be recorded as verification or acceptance despite the definition/observation/verdict boundary.",
+    "The OFF release-policy test could accidentally inject execution directly rather than exercising the same attributable release boundary as automatic ON."
+  ],
+  "next_action": "Obtain the single custody/VERIFY boundary decision, then amend PY-04's lifecycle scope and acceptance criteria to state the approved offline test path precisely before implementation readiness is granted.",
+  "rationale": "Approved authority resolves priority ownership, release ON/OFF policy, event-driven refill, WIP defaults, durable recovery, port layering, and the test-only status of the scripted worker; their lower-level realization is delegated engineering work. But SF-REQ-007 and PY-02 explicitly prohibit entering VERIFY without a durably retrievable candidate, and the architecture requires independent verifier inputs. PY-04 currently mandates VERIFY-to-DONE while expressly excluding the capabilities that establish those conditions, creating an owner-level authorization gap rather than a normal implementation unknown.",
+  "provider_evidence": {
+    "provider": "codex",
+    "version": "codex-cli 0.155.1",
+    "compatibility": "COMPATIBLE_UNVERIFIED",
+    "capability_probe": "PASSED",
+    "invocation": "codex exec --ephemeral --json --sandbox read-only",
+    "baseline": "e25da1f",
+    "assessed": "2026-09-20",
+    "request": "PY-04.request.md"
+  }
+}

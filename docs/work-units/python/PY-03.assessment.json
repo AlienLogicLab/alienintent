@@ -1,0 +1,33 @@
+{
+  "disposition": "READY",
+  "governing_intent": "Implement the FD-05-constrained durable operational store for Python execution coordination: crash-safe canonical operational state, effectively once-only effects, fenced reservations, and recoverable restart state without expanding into factory-loop, vendor, evidence-store, or Node work.",
+  "summary": "PY-03 is a bounded successor to PY-02 with clear module ownership, explicit exclusions, honest partial requirement coverage, and executable SQLite-based acceptance proof. No Founder or architecture decision must be invented.",
+  "owner_clarifications": [],
+  "implementation_unknowns": [
+    "Concrete typed OperationalStore port shapes consistent with PY-02 domain values and typed outcome categories.",
+    "SQLite schema, transaction layout, indexes, schema-version representation, and migration implementation.",
+    "Deterministic subprocess crash harness and local idempotent-effect/read-back test fixture design.",
+    "Exact conformance-suite composition mechanism for future PostgreSQL adapter injection."
+  ],
+  "independent_decision_centers": [],
+  "semantic_split_recommendation": [],
+  "verification_assessment": "Real executable proof is required: tests use a real SQLite file and actual process termination at each named durable boundary, then verify restart recovery, deduplication, fencing, unresolved outcomes, schema failure behavior, port-only conformance, retained output, real exit statuses, existing Python fitness checks, and the Node suite. This is materially stronger than descriptive or simulated-exception-only verification.",
+  "expected_rework_locality": "HIGH",
+  "material_risks": [
+    "Execution must start only from the stated released baseline containing accepted PY-02; PY-02 absence is a sequencing constraint, not a contract ambiguity.",
+    "The inspected checkout is not clean because it contains an unrelated untracked decision document; that does not alter the contract assessment but must be resolved before implementation baseline verification.",
+    "Crash-boundary proof must use a genuine durable effect/read-back seam so the claimed once-only behavior is not merely an in-memory test artifact."
+  ],
+  "next_action": "Record READY for PY-03; after PY-02 is accepted, establish the required clean released baseline and authorize implementation under this contract.",
+  "rationale": "Approved authority fixes the durability model, ownership boundary, default storage direction, profile isolation, effect semantics, migration safety, and coexistence constraints. Remaining choices are explicitly gate-classified lower-level implementation detail. The inbox, outbox, reservations, recovery queries, schema safety, and adapter conformance belong to one transactional operational-store concern, so splitting would weaken rather than clarify the required atomic guarantees.",
+  "provider_evidence": {
+    "provider": "codex",
+    "version": "codex-cli 0.155.1",
+    "compatibility": "COMPATIBLE_UNVERIFIED",
+    "capability_probe": "PASSED",
+    "invocation": "codex exec --ephemeral --json --sandbox read-only",
+    "baseline": "e25da1f",
+    "assessed": "2026-09-20",
+    "request": "PY-03.request.md"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "disposition": "READY",
+  "governing_intent": "Make missing authority a durable, non-fatal, scoped execution outcome: escalate with decision-ready context, block only affected work and dependents, preserve independent progress, and automatically re-admit work only through normal guards after an attributable decision.",
+  "summary": "PY-07 is bounded by approved product, Founder, and architecture authority; its scope, exclusions, requirement extent, and executable acceptance criteria permit implementation without inventing product or architecture decisions.",
+  "owner_clarifications": [],
+  "implementation_unknowns": [
+    "Concrete domain types, store schema, transaction boundaries, and port signatures for decisions/events.",
+    "How the existing PY-03 unresolved-effect state is represented and when it requires a decision versus reconciliation.",
+    "Deterministic fixture design and process-restart orchestration for the required loop proofs."
+  ],
+  "independent_decision_centers": [],
+  "semantic_split_recommendation": [],
+  "verification_assessment": "Real executable proof is required through the PY-04 loop with deterministic doubles, durable-store restart, event and inbox assertions, negative idempotency/version cases, notifier-failure isolation, retained evidence, fitness checks, and the Node suite. This is mechanically verifiable rather than descriptive.",
+  "expected_rework_locality": "LOW",
+  "material_risks": [
+    "The current checkout is on main but is not clean: it has an untracked decision-record file and main is one commit ahead of origin/main; re-establish the intended released baseline before implementation release.",
+    "PY-04 and PY-05 must expose their accepted loop, store, reservation, projection, and admission interfaces before PY-07 can be sequenced; this is a dependency fact, not an owner clarification."
+  ],
+  "next_action": "Record PY-07 as READY; when PY-04 and PY-05 are accepted, implement against their released interfaces after revalidating the intended main baseline.",
+  "rationale": "SF-REQ-006 and SF-REQ-035, SWF-05, FD-01 through FD-05, and Architecture Authority sections on normal control-plane paths, no polling, event delivery, persistence, and Founder escalation collectively fix the product semantics. The contract explicitly distinguishes authority blocks from failures, confines blocking to the dependency closure, requires attributable/versioned/idempotent decisions, forbids unblock backdoors, and keeps notification non-authoritative. Remaining choices are normal implementation detail within those constraints, while event, inbox, affected-work, and notification behavior form one coherent vertical slice rather than separate decision centers.",
+  "provider_evidence": {
+    "provider": "codex",
+    "version": "codex-cli 0.155.1",
+    "compatibility": "COMPATIBLE_UNVERIFIED",
+    "capability_probe": "PASSED",
+    "invocation": "codex exec --ephemeral --json --sandbox read-only",
+    "baseline": "e25da1f",
+    "assessed": "2026-09-20",
+    "request": "PY-07.request.md"
+  }
+}
