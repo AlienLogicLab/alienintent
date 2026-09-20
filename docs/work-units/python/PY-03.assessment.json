@@ -1,33 +1,34 @@
 {
   "disposition": "READY",
   "governing_intent": "Implement the FD-05-constrained durable operational store for Python execution coordination: crash-safe canonical operational state, effectively once-only effects, fenced reservations, and recoverable restart state without expanding into factory-loop, vendor, evidence-store, or Node work.",
-  "summary": "PY-03 is a bounded successor to PY-02 with clear module ownership, explicit exclusions, honest partial requirement coverage, and executable SQLite-based acceptance proof. No Founder or architecture decision must be invented.",
+  "summary": "PY-03 is bounded by approved authority, cleanly follows PY-02, honestly claims partial requirement coverage, and specifies observable SQLite-backed executable proof. No Founder or architecture decision must be invented.",
   "owner_clarifications": [],
   "implementation_unknowns": [
-    "Concrete typed OperationalStore port shapes consistent with PY-02 domain values and typed outcome categories.",
-    "SQLite schema, transaction layout, indexes, schema-version representation, and migration implementation.",
-    "Deterministic subprocess crash harness and local idempotent-effect/read-back test fixture design.",
-    "Exact conformance-suite composition mechanism for future PostgreSQL adapter injection."
+    "Concrete typed OperationalStore port shapes consistent with accepted PY-02 values and outcomes.",
+    "SQLite schema, transaction boundaries, indexes, and migration representation.",
+    "Deterministic subprocess crash harness and idempotent-effect/read-back fixture design.",
+    "Adapter-composition mechanism for the future PostgreSQL conformance run."
   ],
   "independent_decision_centers": [],
   "semantic_split_recommendation": [],
-  "verification_assessment": "Real executable proof is required: tests use a real SQLite file and actual process termination at each named durable boundary, then verify restart recovery, deduplication, fencing, unresolved outcomes, schema failure behavior, port-only conformance, retained output, real exit statuses, existing Python fitness checks, and the Node suite. This is materially stronger than descriptive or simulated-exception-only verification.",
+  "verification_assessment": "Verification is real executable proof: a real SQLite file, actual process termination at every named durable boundary, restart recovery checks, duplicate and stale-write rejection, fencing, schema fail-closed behavior, port-only conformance, retained outputs with real exit statuses, existing Python fitness checks, and the Node suite. Simulated exceptions alone are expressly insufficient.",
   "expected_rework_locality": "HIGH",
   "material_risks": [
-    "Execution must start only from the stated released baseline containing accepted PY-02; PY-02 absence is a sequencing constraint, not a contract ambiguity.",
-    "The inspected checkout is not clean because it contains an unrelated untracked decision document; that does not alter the contract assessment but must be resolved before implementation baseline verification.",
-    "Crash-boundary proof must use a genuine durable effect/read-back seam so the claimed once-only behavior is not merely an in-memory test artifact."
+    "Implementation must begin only from the released baseline containing accepted PY-02; its absence is a sequencing constraint, not a contract ambiguity.",
+    "The currently inspected main checkout has unrelated untracked files, so a clean baseline must be established before implementation begins.",
+    "Crash proof must exercise a genuine durable effect/read-back seam so once-only behavior is not only an in-memory artifact."
   ],
-  "next_action": "Record READY for PY-03; after PY-02 is accepted, establish the required clean released baseline and authorize implementation under this contract.",
-  "rationale": "Approved authority fixes the durability model, ownership boundary, default storage direction, profile isolation, effect semantics, migration safety, and coexistence constraints. Remaining choices are explicitly gate-classified lower-level implementation detail. The inbox, outbox, reservations, recovery queries, schema safety, and adapter conformance belong to one transactional operational-store concern, so splitting would weaken rather than clarify the required atomic guarantees.",
+  "next_action": "Record PY-03 as READY; after PY-02 acceptance, establish the required clean released baseline and authorize implementation under this contract.",
+  "rationale": "Approved authority fixes the ownership boundary, durability model, profile isolation, effect semantics, storage direction, migration safety, and coexistence constraints. The remaining choices are normal implementation design. Inbox, effect intent/outbox, reservations, recovery, schema safety, and conformance form one transactional operational-store concern; splitting them would weaken the required atomic guarantees.",
   "provider_evidence": {
     "provider": "codex",
     "version": "codex-cli 0.155.1",
     "compatibility": "COMPATIBLE_UNVERIFIED",
     "capability_probe": "PASSED",
     "invocation": "codex exec --ephemeral --json --sandbox read-only",
-    "baseline": "e25da1f",
+    "baseline": "ab4efe5",
     "assessed": "2026-09-20",
-    "request": "PY-03.request.md"
+    "request": "PY-03.request.md",
+    "note": "reassessment after SWF-16..20 closure-policy contract normalization and PY-02 DONE"
   }
 }
