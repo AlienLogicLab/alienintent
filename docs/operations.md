@@ -178,6 +178,21 @@ SF-REQ-056 lands, and the observer expires when the canonical control plane reco
 
 Control: `systemctl --user {status,restart,stop} alienintent-liveness alienintent-observer`.
 
+### Provider capacity and worker provider changes
+
+A CLI provider's token/monetary budget is **measured, not enforced** (SWF-09), so quota exhaustion
+arrives as a dead invocation with no result marker — recorded as `DURABLE_RESULT_MISSING`, which does
+not by itself say the worker was cut off rather than crashed. Read the worker log to tell them apart.
+
+A worker's `provider` block may be re-pointed at either supported adapter, but the profile loader
+validates worker objects against a **fixed key set** and fails closed: adding an explanatory key
+produces `invalid config.workers.<ROLE>` and the dispatcher will not start. Record provenance in
+`docs/evidence/`, never in the profile. The change takes effect on dispatcher restart, so restart only
+with no active invocation.
+
+Worked example, including the recovery sequence and the duplicate-launch check:
+[PY-09 provider-capacity interruption](evidence/2026-09-21-py09-provider-capacity-interruption.md).
+
 ### Attention queue — observation to coordinator attention (temporary bootstrap)
 
 Observation alone does not reach anyone. PY-06 reached DONE, was observed correctly, and nothing
