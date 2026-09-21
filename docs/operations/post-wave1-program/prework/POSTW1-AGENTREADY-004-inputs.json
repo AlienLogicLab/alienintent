@@ -1,0 +1,84 @@
+{
+ "derived_at_head": "c23aa608d36b6350483fb98066beff60ab59ec38",
+ "finding_1_no_implementation": {
+  "claim": "Agent-Ready has no implementation module, no JSON schema and no CLI in this repository.",
+  "method": "grep for agent-ready/agent_ready across src/ test/ tests/ tools/ scripts/; search for any *assessment*.schema.json",
+  "code_references_found": [
+   "tools/evidence/reconcile_wave1.py (reads assessments; does not produce them)"
+  ],
+  "schema_files_found": [],
+  "note": "src/domain/rai.mjs is a different concept: its DISPOSITIONS are RESOLVED/REJECTED/SUPERSEDED, which are finding dispositions, not readiness dispositions.",
+  "consequence": "Phase 4's stated input 'actual Agent-Ready implementation/schema/CLI' does not exist. The matrix must be derived from governing authority and retained artifacts, and the absence is itself the phase's primary gap."
+ },
+ "finding_2_schema_drift": {
+  "claim": "32 assessment files carry two incompatible shapes; no field is present in all 32.",
+  "readiness_shape_count": 15,
+  "mcp_envelope_count": 17,
+  "disposition_field_presence": "15/32"
+ },
+ "finding_3_non_ready_not_persisted": {
+  "claim": "BLOCKED and SPLIT_RECOMMENDED never appear as a persisted disposition in any assessment file, although Wave 1 produced both.",
+  "observed_dispositions": {
+   "READY": 14,
+   "NEEDS_CLARIFICATION": 1,
+   "absent": 17
+  },
+  "contradicting_evidence": "tools/evidence/check_wave1.py:123 asserts PY-10 verdicts ['BLOCKED','SPLIT_RECOMMENDED','READY'] and PY-09B ['NEEDS_CLARIFICATION','NEEDS_CLARIFICATION','READY']",
+  "retained_sibling_files": {
+   "PY-09B": [
+    "PY-09B.assessment.2026-09-21-needs-clarification.json",
+    "PY-09B.assessment.json"
+   ]
+  },
+  "reading": "PY-09B retained its non-READY verdict as a dated sibling file; PY-10 did not. The final assessment file was overwritten by the READY reassessment, so the earlier verdicts survive only in trajectory evidence and in a checker's expectations.",
+  "relevance": "Phase 4's required invariant is that no non-READY outcome may be silently coerced into READY, and that resolved prerequisites do not retroactively rewrite an old verdict. The retention pattern is inconsistent between two BIUs in the same wave."
+ },
+ "authority_defining_agent_ready": [
+  "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+  "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+  "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md",
+  "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+  "docs/decisions/2026-09-21-py10-transport-split.md",
+  "docs/decisions/2026-09-21-sandbox-isolation-standard.md",
+  "docs/decisions/alienintent-software-factory-plan.md"
+ ],
+ "assessment_inventory": {
+  "readiness": [
+   "docs/work-units/eos-normalization/WO-000013.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-18.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-19.assessment.json",
+   "docs/work-units/python/PY-01.assessment.json",
+   "docs/work-units/python/PY-02.assessment.json",
+   "docs/work-units/python/PY-03.assessment.json",
+   "docs/work-units/python/PY-04.assessment.json",
+   "docs/work-units/python/PY-05.assessment.json",
+   "docs/work-units/python/PY-06.assessment.json",
+   "docs/work-units/python/PY-07.assessment.json",
+   "docs/work-units/python/PY-08.assessment.json",
+   "docs/work-units/python/PY-09.assessment.json",
+   "docs/work-units/python/PY-09B.assessment.2026-09-21-needs-clarification.json",
+   "docs/work-units/python/PY-09B.assessment.json",
+   "docs/work-units/python/PY-10.assessment.json"
+  ],
+  "mcp_envelope": [
+   "docs/work-units/pre-python-gate/assessments/PG-01.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-02.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-03.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-04.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-05.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-06.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-07.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-08.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-09.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-10.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-11.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-12.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-13.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-14.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-15.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-16.assessment.json",
+   "docs/work-units/pre-python-gate/assessments/PG-17.assessment.json"
+  ],
+  "other": []
+ }
+}
