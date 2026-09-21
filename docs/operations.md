@@ -241,6 +241,15 @@ The observer and liveness services are untouched by this and remain authoritativ
 bridge expires with the Wave 1 bootstrap, or when canonical coordinator activation (SF-REQ-053)
 replaces it.
 
+### Coordinator duty on a rejection — verification-first sequencing
+
+When a repair cycle is rejected, judge the order of the next one before its content
+([SWF-23 §4b](decisions/2026-09-20-convergent-repair-monotonic-progress.md)): the required verification
+harness must exist, changed paths must carry proof that can actually go red, previously proven criteria
+must stay proven, and only then does broad implementation repair belong in the candidate. A cycle that
+widens implementation while the harness for what it touches is missing is out of order — say so at the
+rejection rather than waiting for the defect it predicts. Binding for PY-09 and PY-10.
+
 ### Release admission gate
 
 Before every READY → IMPLEMENT release, and before any worker is launched:

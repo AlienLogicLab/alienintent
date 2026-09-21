@@ -41,6 +41,46 @@ Supersession must record:
 
 A repair preserves known-good behavior and proof while fixing the new finding. Do not trade one verified property for another.
 
+## 4b. Verification-first repair sequencing (Founder decision, 2026-09-21)
+
+Convergence is not only about preserving what is proven; it depends on the proof existing before the
+implementation it protects is repaired. The coordinator enforces this order on a repair cycle:
+
+1. **confirm the required verification harness exists;**
+2. **confirm changed paths are covered by discriminating proof;**
+3. **preserve prior proven criteria;**
+4. **then repair remaining implementation defects.**
+
+Step 2 is [SWF-24](2026-09-20-deterministic-failure-class-promotion.md) applied to repair: a check
+that cannot fail is not evidence, so coverage of a changed path must be able to go red when that path
+breaks. A cycle that widens implementation while the harness for what it touches is missing is out of
+order, and the coordinator says so at the rejection rather than waiting for the defect it predicts.
+
+**Binding for PY-09 and PY-10**, and carried in both contracts. It is not retrofitted into PY-08,
+which is released and in flight ([SWF-20](2026-09-20-wave1-closure-policy.md)); the direction PY-08
+received in its sixth cycle already embodied it.
+
+### The evidence that produced this rule
+
+PY-08 ran **five** repair cycles in which findings fell (14 → 11 → 10 → 8) while each cycle shipped one
+or two fresh defects, including two SWF-23 regressions. Across all five, two contract obligations were
+never attempted: AC 4's proof that `explain` reproduces the kernel's own decision, and the verification
+requirements' negative-control and backdoor coverage.
+
+Those were precisely the checks that would have caught what kept breaking. The sixth cycle was directed
+to build **only** that proof plus the outstanding regression. It closed AC 4, the verification
+requirements, the two-cycle AC 7 regression and the removed-diagnostics regression, added five tests,
+and introduced **no new defect and no regression** — the verifier's first report in six cycles whose
+remaining findings were all carried rather than fresh.
+
+> **When a repair loop keeps trading defects, the missing verification is usually the cause, not a
+> parallel debt.**
+
+A secondary finding, recorded because it was nearly mistaken for the primary one: this looked like a
+BIU that needed splitting. It was not. The proof obligations were buildable inside PY-08 in a single
+cycle once they were sequenced first. **Wrong sequencing imitates wrong decomposition**, and the cheap
+test of which one you have is to spend one cycle on verification alone before proposing a split.
+
 ## 5. Product Requirement
 
 Recorded as **SF-REQ-049 — Convergent Repair / Monotonic Progress**: AlienIntent must preserve previously verified behavior and evidence across repair cycles, and must detect and regard regression as a verification failure unless explicit supersession exists.
