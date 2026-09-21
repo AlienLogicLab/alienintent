@@ -50,16 +50,19 @@ graph TD
   PY07 --> PY08[PY-08 Control Plane CLI — P0 minimum]
   PY08 --> PY09[PY-09 Doctor / pre-autonomy validation]
   PY05 --> PY09
-  PY09 --> PY10[PY-10 Wave 1 live proof]
+  PY09 --> PY09B[PY-09B Live GitHub transport substrate]
+  PY09B --> PY10[PY-10 Wave 1 live proof]
   PY06 --> PY10
-  D1{{SWF-08 sandbox environment}} -.-> PY10
+  D1{{SWF-08 sandbox environment}} -.-> PY09B
   D2{{SWF-09 budget policy}} -.-> PY06
 ```
 
-Critical path: PY-02 → PY-03 → PY-04 → PY-06 → PY-09 → PY-10, with PY-07 → PY-08 joining at PY-09.
+Critical path: PY-02 → PY-03 → PY-04 → PY-06 → PY-09 → **PY-09B** → PY-10, with PY-07 → PY-08 joining at PY-09.
+
+**PY-09B was inserted on 2026-09-21 by [SWF-33](../decisions/2026-09-21-py10-transport-split.md)**, a Founder-approved decomposition amendment to SWF-08–11. PY-10's reassessment found the first live GitHub transport deferred to it by every predecessor and named in no BIU's scope, and found a single fourteen-criterion live run to have no local iteration surface. PY-09B owns that substrate and proves it repeatably; PY-10 consumes it. No completed BIU is renumbered — the suffix follows the repository's existing insertion convention, as Wave 2B does.
 
 At the default WIP of one mutating stream, the proposed execution order is:
-**PY-02, PY-03, PY-04, PY-05, PY-06, PY-07, PY-08, PY-09, PY-10.**
+**PY-02, PY-03, PY-04, PY-05, PY-06, PY-07, PY-08, PY-09, PY-09B, PY-10.**
 
 - PY-05 is independent of PY-04, and PY-07 of PY-06, so they may run concurrently if WIP is raised.
 - All BIUs inherit **P0** from their requirements. The order comes from technical dependencies only, not new priority.
