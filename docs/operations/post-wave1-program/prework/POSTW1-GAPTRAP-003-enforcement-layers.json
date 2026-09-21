@@ -1,0 +1,60 @@
+{
+ "derived_at_head": "2d3d56b4b2fd5885cfe9b1f9696f5fe92b47ad87",
+ "counts": {
+  "python_tests": "24",
+  "node_tests": "15",
+  "head": "2d3d56b4b2fd5885cfe9b1f9696f5fe92b47ad87"
+ },
+ "existing_layers": {
+  "architecture_fitness": {
+   "path": "tests/test_architecture_fitness.py",
+   "runner": "pytest",
+   "ci": ".github/workflows/python-architecture-fitness.yml",
+   "tool_dir": "tools/fitness",
+   "note": "already CI-enforced; cheapest home for structural/static invariants"
+  },
+  "python_unit_integration": {
+   "path": "tests/",
+   "runner": "pytest",
+   "note": "composition/, control_plane/, installation/ subsuites exist"
+  },
+  "node_suite": {
+   "path": "test/",
+   "runner": "node --test",
+   "note": "dispatcher, worktree-lifecycle, github-authority, profile, rai"
+  },
+  "evidence_consistency": {
+   "path": "tools/evidence/check_wave1.py",
+   "runner": "python3",
+   "note": "1075 checks, 13 semantic negative controls; the proven-red pattern to copy"
+  },
+  "ledger_contract": {
+   "path": "tools/evidence/check_learning_ledger.py",
+   "runner": "python3",
+   "note": "new in Phase 2; 12 tests incl. control that every check can fail"
+  },
+  "config_preflight": {
+   "path": "scripts/worker-preflight + test/worker-preflight.test.sh",
+   "note": "config validation before service start"
+  },
+  "installation_doctor": {
+   "path": "src/alienintent/installation/application/doctor.py",
+   "tests": "tests/installation/test_doctor.py, test_doctor_evidence.py",
+   "note": "permission/capability probes; the PY-09B specification-mismatch was found here"
+  },
+  "composition_doctor_probes": {
+   "path": "src/alienintent/composition/doctor_probes.py"
+  },
+  "mutation_gate": {
+   "decision": "docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md",
+   "note": "mutation battery precedent for proven-red fixtures"
+  },
+  "evidence_schemas": {
+   "paths": [
+    "docs/evidence/schema/execution-trajectory-v1.schema.json",
+    "docs/evidence/schema/quality-evidence-v1.schema.json"
+   ],
+   "note": "schema validation destination; extend, never fork"
+  }
+ }
+}

@@ -199,3 +199,56 @@ def test_work_still_flows_when_the_earlier_phase_is_complete(tmp_path):
     st.upsert_task("A", phase="2", title="earlier", actor="x", status="DONE", risk="MEDIUM")
     st.upsert_task("B", phase="6", title="later", actor="x", status="PLANNED", risk="HIGH")
     assert st.next_task()["task_id"] == "B"
+
+
+# --- autonomous execution amendment ---------------------------------------------------
+
+
+def test_a_non_critical_founder_decision_does_not_globally_stall_the_program(tmp_path):
+    """Amendment section 4: a decision affecting one branch must not stall unrelated work.
+    Only a decision on the critical path to the next phase halts phase progression."""
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("SIDE", phase="6", title="side branch", actor="founder",
+                   status="FOUNDER_DECISION_REQUIRED", risk="HIGH", critical_path=False)
+    st.upsert_task("NEXT", phase="4", title="unrelated next phase", actor="x",
+                   status="PLANNED", risk="MEDIUM")
+    assert st.next_task()["task_id"] == "NEXT"
+
+
+def test_a_critical_path_founder_decision_still_halts_progression(tmp_path):
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("BLOCK", phase="4", title="on the path", actor="founder",
+                   status="FOUNDER_DECISION_REQUIRED", risk="HIGH", critical_path=True)
+    st.upsert_task("NEXT", phase="4", title="next", actor="x", status="PLANNED", risk="MEDIUM")
+    assert st.next_task() is None
+
+
+def test_a_founder_decision_defaults_to_critical_path(tmp_path):
+    """Unmarked means halt. Defaulting to non-critical would let the program walk past a
+    decision nobody classified."""
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("BLOCK", phase="4", title="unclassified", actor="founder",
+                   status="FOUNDER_DECISION_REQUIRED", risk="HIGH")
+    st.upsert_task("NEXT", phase="4", title="next", actor="x", status="PLANNED", risk="MEDIUM")
+    assert st.next_task() is None
+
+
+def test_terminal_state_is_founder_decision_required_when_a_critical_decision_pends(tmp_path):
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("BLOCK", phase="4", title="x", actor="founder",
+                   status="FOUNDER_DECISION_REQUIRED", risk="HIGH", critical_path=True)
+    assert st.terminal_state() == "FOUNDER_DECISION_REQUIRED"
+
+
+def test_terminal_state_is_program_complete_when_no_work_and_no_decision_remain(tmp_path):
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("A", phase="3", title="x", actor="x", status="DONE", risk="LOW")
+    st.upsert_task("B", phase="14", title="y", actor="x", status="DONE", risk="LOW")
+    assert st.terminal_state() == "PROGRAM_COMPLETE"
+
+
+def test_terminal_state_is_none_while_work_remains(tmp_path):
+    """The only two terminal states are the amendment's two. Mid-run is neither."""
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("A", phase="3", title="x", actor="x", status="RUNNING", risk="LOW")
+    assert st.terminal_state() is None

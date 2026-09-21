@@ -1,0 +1,414 @@
+{
+ "derived_from": "docs/evidence/wave1-learning-ledger.json",
+ "derivation": "records with disposition in GAP_TRAP_PROMOTION|STRENGTHEN_EXISTING_OWNER and mechanizable yes|partial",
+ "count": 18,
+ "candidates": [
+  {
+   "learning_id": "LRN-001",
+   "failure_class": "EVIDENCE_PROOF_DEFECT",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-050",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "yes",
+   "mechanizable": "yes \u2014 a semantically applicable guard removal or inversion must make its assertion fail; SURVIVED and NOT_APPLIED cannot count as KILLED.",
+   "originating_BIUs": [
+    "PY-01",
+    "PY-02",
+    "PY-04",
+    "PY-05",
+    "PY-06",
+    "PY-08",
+    "PY-09",
+    "PY-09B",
+    "PY-10"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-deterministic-failure-class-promotion.md",
+    "docs/evidence/execution-trajectories/PY-02.jsonl",
+    "docs/evidence/execution-trajectories/PY-05.jsonl",
+    "docs/evidence/execution-trajectories/PY-09.jsonl",
+    "docs/evidence/PY-09B-live-transport.md",
+    "docs/evidence/py09b-proven-red-2026-09-21.json",
+    "docs/verification/PY-10-wave1-live-proof.md",
+    "docs/evidence/py10/proven-red.json",
+    "docs/evidence/wave1-source-observations.json"
+   ]
+  },
+  {
+   "learning_id": "LRN-002",
+   "failure_class": "unexecuted-composition-path",
+   "disposition": "GAP_TRAP_PROMOTION",
+   "current_owner": "SF-REQ-014",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "yes",
+   "mechanizable": "partial \u2014 execute each required operation through its real composition root and required failure path; dynamic reachability needs obligation-specific probes, not a universal static graph rule.",
+   "originating_BIUs": [
+    "PY-06",
+    "PY-07",
+    "PY-08",
+    "PY-09"
+   ],
+   "evidence_refs": [
+    "docs/decisions/alienintent-software-factory-plan.md",
+    "docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md",
+    "docs/evidence/execution-trajectories/PY-06.jsonl",
+    "docs/evidence/execution-trajectories/PY-07.jsonl",
+    "docs/evidence/execution-trajectories/PY-08.jsonl",
+    "docs/evidence/execution-trajectories/PY-09.jsonl"
+   ]
+  },
+  {
+   "learning_id": "LRN-003",
+   "failure_class": "verification-sequencing",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-049",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "partial \u2014 before widening a repair, require the named harness and changed-path red evidence; judging whether coverage is sufficient remains independent review.",
+   "originating_BIUs": [
+    "PY-08",
+    "PY-09",
+    "PY-09B",
+    "PY-10"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md",
+    "docs/evidence/PY-09B-live-transport.md",
+    "docs/verification/PY-10-wave1-live-proof.md",
+    "docs/evidence/execution-trajectories/PY-08.jsonl",
+    "docs/evidence/execution-trajectories/PY-09.jsonl",
+    "docs/evidence/wave1-closure-manifest.json"
+   ]
+  },
+  {
+   "learning_id": "LRN-004",
+   "failure_class": "repair-regression",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-049",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "yes",
+   "mechanizable": "yes \u2014 compare previously satisfied obligations across candidates and fail lost behavior or proof unless an explicit authorized supersession names replacement evidence.",
+   "originating_BIUs": [
+    "PY-04",
+    "PY-07",
+    "PY-08",
+    "PY-09"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md",
+    "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+    "docs/evidence/execution-trajectories/PY-04.jsonl",
+    "docs/evidence/execution-trajectories/PY-05.jsonl",
+    "docs/evidence/execution-trajectories/PY-06.jsonl",
+    "docs/evidence/execution-trajectories/PY-07.jsonl",
+    "docs/evidence/execution-trajectories/PY-08.jsonl"
+   ]
+  },
+  {
+   "learning_id": "LRN-007",
+   "failure_class": "attention-identity",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-053",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "DOCUMENTED_ONLY",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "yes \u2014 re-recording one invocation outcome must preserve attention identity; distinct invocation-free gaps must get distinct identities even after acknowledgement.",
+   "originating_BIUs": [
+    "PY-09"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+    "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+    "docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md"
+   ]
+  },
+  {
+   "learning_id": "LRN-009",
+   "failure_class": "execution-cycle-identity",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-009",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "DOCUMENTED_ONLY",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "yes \u2014 increment once per authoritative re-entry into IMPLEMENT from another state; preserve cycle on same-phase retries, failover, duplicate delivery and restart.",
+   "originating_BIUs": [
+    "PY-09"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-21-biu-execution-cycle-counter.md",
+    "docs/decisions/alienintent-software-factory-plan.md",
+    "docs/evidence/wave1-evidence-reconciliation.md",
+    "docs/evidence/wave1-closure-manifest.json",
+    "docs/evidence/wave1-consistency-report.json"
+   ]
+  },
+  {
+   "learning_id": "LRN-010",
+   "failure_class": "LIVENESS_GAP",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-056",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "DETERMINISTIC_GATE",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "yes \u2014 reconcile known nonterminal state against correlated active, pending and completed effects after grace; wait for bounded claim confirmation instead of one premature sample.",
+   "originating_BIUs": [
+    "PY-06",
+    "PY-08",
+    "PY-09"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-liveness-reconciliation.md",
+    "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+    "docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md",
+    "docs/evidence/wave1-evidence-reconciliation.md"
+   ]
+  },
+  {
+   "learning_id": "LRN-013",
+   "failure_class": "PROVIDER_CAPACITY_INTERRUPTION",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SWF-09",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "partial \u2014 retain typed capacity evidence and enforce required budgets/capabilities before an authorized failover; external quota prediction is possible only if the provider exposes usable evidence.",
+   "originating_BIUs": [
+    "PY-03",
+    "PY-09",
+    "PY-10"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md",
+    "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+    "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+    "docs/evidence/wave1-evidence-reconciliation.md",
+    "docs/evidence/execution-trajectories/PY-03.jsonl"
+   ]
+  },
+  {
+   "learning_id": "LRN-014",
+   "failure_class": "specification-consumer-mismatch",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-051",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "yes",
+   "mechanizable": "partial \u2014 compare expected permissions and acceptance claims with the consuming code and platform capabilities; mechanical exact-set checks cannot validate their own premise.",
+   "originating_BIUs": [
+    "PY-09B",
+    "PY-10"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+    "docs/operations/py10-sandbox.md",
+    "docs/decisions/2026-09-21-sandbox-isolation-standard.md",
+    "docs/work-units/python/PY-09B.assessment.2026-09-21-needs-clarification.json",
+    "docs/work-units/python/PY-09B.assessment.json",
+    "docs/evidence/py10-preflight-2026-09-21-pre-contents-grant.json",
+    "docs/evidence/py10-preflight-2026-09-21-negative-control.json",
+    "docs/evidence/py10-preflight-2026-09-21-post-contents-grant.json",
+    "docs/evidence/PY-09B-live-transport.md",
+    "docs/evidence/wave1-evidence-reconciliation.md"
+   ]
+  },
+  {
+   "learning_id": "LRN-016",
+   "failure_class": "lifecycle-projection-authority",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-002",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "yes",
+   "mechanizable": "yes \u2014 dependency admission consumes authoritative lifecycle and declared edges; stale Issue closure or a missing projected edge must not silently redefine eligibility.",
+   "originating_BIUs": [
+    "PY-06",
+    "PY-07",
+    "PY-08",
+    "PY-09B",
+    "PY-10"
+   ],
+   "evidence_refs": [
+    "docs/decisions/alienintent-software-factory-plan.md",
+    "docs/decisions/2026-09-20-wave1-closure-policy.md",
+    "docs/evidence/wave1-evidence-reconciliation.md",
+    "docs/evidence/wave1-closure-manifest.json",
+    "docs/verification/PY-10-wave1-live-proof.md",
+    "docs/evidence/py10/proven-red.json"
+   ]
+  },
+  {
+   "learning_id": "LRN-018",
+   "failure_class": "duplicate-canonical-owner",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-055",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "partial \u2014 require a stable proposal-to-owner mapping and prevent duplicate identifier delivery; semantic overlap requires authority review before choosing amendment, retirement or a distinct owner.",
+   "originating_BIUs": "UNKNOWN",
+   "evidence_refs": [
+    "docs/decisions/alienintent-software-factory-plan.md",
+    "docs/decisions/2026-09-20-evidence-and-intake-ratification.md",
+    "docs/decisions/2026-09-20-candidate-worktree-retention.md",
+    "docs/decisions/2026-09-21-biu-execution-cycle-counter.md",
+    "docs/decisions/2026-09-20-liveness-reconciliation.md",
+    "docs/proposals/INDEX.md",
+    "docs/proposals/PROP-2026-0004-execution-evidence-derivation-and-consistency-verification.md",
+    "docs/proposals/PROP-2026-0005-proposal-intake-as-product-capability.md"
+   ]
+  },
+  {
+   "learning_id": "LRN-019",
+   "failure_class": "observation-without-activation",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-053",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "partial \u2014 inject an attention-worthy event and verify durable item creation plus an observable consumer wake-up; notification-command success alone does not prove human receipt.",
+   "originating_BIUs": [
+    "PY-06",
+    "PY-07",
+    "PY-08",
+    "PY-09"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+    "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+    "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md"
+   ]
+  },
+  {
+   "learning_id": "LRN-020",
+   "failure_class": "temporary-authority-expiry",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SWF-27",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "DOCUMENTED_ONLY",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "partial \u2014 compare each temporary control's scope and expiry with current authority and replacement evidence; ambiguous expiry requires an explicit decision, not automatic retirement.",
+   "originating_BIUs": [
+    "PY-09",
+    "PY-09B",
+    "PY-10"
+   ],
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+    "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md",
+    "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+    "docs/evidence/wave1-evidence-reconciliation.md",
+    "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+    "docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md"
+   ]
+  },
+  {
+   "learning_id": "LRN-025",
+   "failure_class": "FALSE_OR_ESCALATED_AUTHORITY_REQUEST",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-006",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "partial \u2014 resolve named artifacts and scope mechanically, but judge whether authority is actually missing against the binding contract and landed code; no universal deterministic semantic verdict is claimed.",
+   "originating_BIUs": [
+    "PY-03",
+    "PY-04",
+    "PY-08"
+   ],
+   "evidence_refs": [
+    "docs/decisions/alienintent-software-factory-plan.md",
+    "docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md",
+    "docs/evidence/wave1-evidence-reconciliation.md",
+    "docs/evidence/execution-trajectories/PY-03.jsonl",
+    "docs/evidence/execution-trajectories/PY-04.jsonl",
+    "docs/evidence/execution-trajectories/PY-08.jsonl",
+    "docs/evidence/wave1-source-observations.json"
+   ]
+  },
+  {
+   "learning_id": "LRN-027",
+   "failure_class": "coordinator-replacement-continuity",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-053",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "DOCUMENTED_ONLY",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "partial \u2014 reconstruct authorized next actions from durable state in a fresh episode and compare them under the same state/events; mechanical state equality cannot fully prove judgment equivalence.",
+   "originating_BIUs": "UNKNOWN",
+   "evidence_refs": [
+    "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+    "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md"
+   ]
+  },
+  {
+   "learning_id": "LRN-028",
+   "failure_class": "acceptance-extent-and-residual-proof",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-017",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "REVIEW_GATE",
+   "proven_red": "UNKNOWN",
+   "mechanizable": "partial \u2014 map acceptance claims to exact obligations and evidence, retain residual findings and proof limits, and refuse to infer full requirement completion from a scoped BIU verdict.",
+   "originating_BIUs": [
+    "PY-06",
+    "PY-07",
+    "PY-08",
+    "PY-09",
+    "PY-09B",
+    "PY-10"
+   ],
+   "evidence_refs": [
+    "docs/decisions/alienintent-software-factory-plan.md",
+    "docs/evidence/wave1-evidence-reconciliation.md",
+    "docs/evidence/wave1-closure-manifest.json",
+    "docs/evidence/execution-trajectories/PY-08.jsonl",
+    "docs/evidence/wave1-source-observations.json",
+    "docs/verification/PY-10-wave1-live-proof.md",
+    "docs/evidence/py10/acceptance-verification.json"
+   ]
+  },
+  {
+   "learning_id": "LRN-029",
+   "failure_class": "unbounded-nonterminal-retry",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-022",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "DOCUMENTED_ONLY",
+   "proven_red": "no",
+   "mechanizable": "yes \u2014 repeated ineligible/rework outcomes must consume a durable run/retry budget and terminate or escalate when exhausted rather than rely solely on a harness timeout.",
+   "originating_BIUs": [
+    "PY-10"
+   ],
+   "evidence_refs": [
+    "docs/decisions/alienintent-software-factory-plan.md",
+    "docs/verification/PY-10-wave1-live-proof.md",
+    "docs/evidence/py10/proven-red.json",
+    "docs/evidence/wave1-evidence-reconciliation.md",
+    "docs/evidence/wave1-source-observations.json"
+   ]
+  },
+  {
+   "learning_id": "LRN-030",
+   "failure_class": "volatile-worker-outcome-recovery",
+   "disposition": "STRENGTHEN_EXISTING_OWNER",
+   "current_owner": "SF-REQ-008",
+   "owner_fit": "CANONICAL",
+   "enforcement_level": "DOCUMENTED_ONLY",
+   "proven_red": "no",
+   "mechanizable": "yes \u2014 persist attributable worker outcomes so restart can reconcile a known effect; absent or ambiguous evidence must still park rather than guess.",
+   "originating_BIUs": [
+    "PY-10"
+   ],
+   "evidence_refs": [
+    "docs/decisions/alienintent-software-factory-plan.md",
+    "docs/verification/PY-10-wave1-live-proof.md",
+    "docs/evidence/wave1-evidence-reconciliation.md",
+    "docs/evidence/py10/proven-red.json"
+   ]
+  }
+ ]
+}

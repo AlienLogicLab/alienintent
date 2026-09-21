@@ -101,12 +101,16 @@
    ],
    "created_at": "2026-09-21T19:20:30.891455+00:00",
    "phase": "3",
-   "prompt_path": null,
+   "prompt_path": "docs/operations/post-wave1-program/prompts/POSTW1-GAPTRAP-003.md",
    "resulting_commit": null,
    "review_status": null,
    "risk_class": "MEDIUM",
    "routing": {
     "chosen_actor": "codex-fresh",
+    "deterministic_prework": [
+     "docs/operations/post-wave1-program/prework/POSTW1-GAPTRAP-003-candidates.json",
+     "docs/operations/post-wave1-program/prework/POSTW1-GAPTRAP-003-enforcement-layers.json"
+    ],
     "five_questions": {
      "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
      "cheapest_model_likely_to_succeed_first_pass": "gpt-6-astra",
@@ -114,17 +118,19 @@
      "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
      "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
     },
+    "founder_authorization": "PLANNED -> READY -> RUNNING; Codex primary; coordinator review limited to promotion choices and historical failure-class interpretation; Phase 4 not in parallel",
     "model": "gpt-6-astra",
     "rationale": "Substantial code-aware/technical work; Codex is the configured primary analyst and fresh context avoids inheriting participant bias.",
     "review_required": true,
     "risk_class": "MEDIUM",
+    "sandbox": "workspace-write",
     "task_type": "requirement_owner_reconciliation",
     "tier": "CODEX_PRIMARY"
    },
-   "status": "PLANNED",
+   "status": "RUNNING",
    "task_id": "POSTW1-GAPTRAP-003",
    "title": "Gap Trap Graduation Audit",
-   "updated_at": "2026-09-21T19:20:30.891474+00:00"
+   "updated_at": "2026-09-21T19:27:40.058070+00:00"
   },
   "POSTW1-LEARN-002": {
    "artifact_refs": [
@@ -224,5 +230,5 @@
    "updated_at": "2026-09-21T18:15:13.918681+00:00"
   }
  },
- "updated_at": "2026-09-21T19:20:30.891478+00:00"
+ "updated_at": "2026-09-21T19:27:40.058091+00:00"
 }

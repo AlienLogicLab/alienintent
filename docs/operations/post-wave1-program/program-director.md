@@ -35,8 +35,10 @@ cannot.
 | Read anything in the repository | Modify Project state, runtime worker contracts, or Node/B-DISP semantics |
 | Record that a Founder decision is required, and stop | Proceed past a `FOUNDER_DECISION_REQUIRED` task |
 
-`ProgramState.next_task()` returns `None` while any task is `FOUNDER_DECISION_REQUIRED`. The
-program stops on Founder branches by construction, not by good intentions.
+`ProgramState.next_task()` returns `None` while any *blocking* task is
+`FOUNDER_DECISION_REQUIRED` — see the autonomous execution posture below for what makes a decision
+blocking. The program stops on critical-path Founder branches by construction, not by good
+intentions.
 
 **Model memory is never authority.** Where a model's recollection conflicts with durable
 repository evidence, the evidence wins and the conflict is recorded. Wave 1 produced several
@@ -85,6 +87,35 @@ the lived context is the scarce input.
 8. **Acknowledgement asserts handling.** Seeing a message is not resolving it; only the recipient
    may acknowledge, and only once it has acted.
 9. **Escalate on structural invalidity, disagreement with durable evidence, or an authority gap.**
+
+## Execution posture — autonomous
+
+Under `docs/operations/alienintent-program-director-autonomous-execution-amendment.md`, the
+Director executes the approved program **phase-to-phase without returning for authorization**
+when each exit gate is satisfied. It halts in exactly two terminal states, and in no others:
+
+    PROGRAM_COMPLETE            all autonomously executable work is finished and the final
+                                report is written
+    FOUNDER_DECISION_REQUIRED   a genuine authority decision sits on the critical path
+
+Mid-run is neither, and must never be reported as either (`ProgramState.terminal_state()`).
+
+**A Founder decision does not automatically stall the program.** Amendment §4: a decision
+affecting one branch halts that branch only. `blocking_founder_decisions()` counts a decision as
+halting unless it is explicitly marked `critical_path: false` — unmarked means halt, because
+defaulting the other way would let the program walk past a decision nobody had classified.
+
+What is *not* a Founder decision, and must not be escalated as one: model routing, evidence
+reconciliation, narrow repair, reviewer disagreement that evidence settles, choosing the cheapest
+enforcement layer, or any ordinary implementation detail. What *is*: a genuinely new Product
+Requirement, material architecture choice, risk acceptance, requirement weakening, or
+contradictory authority that deterministic reconciliation cannot resolve.
+
+Autonomy does not move judgment into a daemon. The mechanism is unchanged from the bootstrap: a
+dispatched phase runs as a tracked background task, its **exit** wakes the resident coordinator,
+and the coordinator verifies the gate and dispatches the next phase. No background process
+decides anything; it only reports. What changed is that the coordinator no longer pauses for
+Founder authorization between phases.
 
 ## Direct messaging
 

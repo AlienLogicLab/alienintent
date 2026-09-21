@@ -218,7 +218,8 @@ class ProgramState:
     def upsert_task(self, task_id: str, *, phase: str, title: str, actor: str, status: str,
                     risk: str, prompt_path: str | None = None, artifact_refs=None,
                     review_status: str | None = None, blockers=None,
-                    resulting_commit: str | None = None, routing: dict | None = None) -> None:
+                    resulting_commit: str | None = None, routing: dict | None = None,
+                    critical_path: bool | None = None) -> None:
         if status in _FORBIDDEN_AS_PROGRAM_STATE or status not in PROGRAM_STATES:
             raise ValueError(
                 f"{status!r} is not a program task state. Program states are {sorted(PROGRAM_STATES)}; "
@@ -233,6 +234,8 @@ class ProgramState:
             "blockers": list(blockers or existing.get("blockers") or []),
             "resulting_commit": resulting_commit or existing.get("resulting_commit"),
             "routing": routing or existing.get("routing"),
+            "critical_path": critical_path if critical_path is not None
+                             else existing.get("critical_path"),
             "created_at": existing.get("created_at") or datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }
@@ -247,6 +250,29 @@ class ProgramState:
     def founder_decisions_required(self) -> list[dict]:
         return [t for t in self.tasks() if t["status"] == "FOUNDER_DECISION_REQUIRED"]
 
+    def blocking_founder_decisions(self) -> list[dict]:
+        """Decisions that actually halt phase progression.
+
+        Autonomous execution amendment §4: a decision affecting only one branch must not
+        globally stall the program; only a critical-path decision halts progression. An
+        unmarked decision counts as critical — defaulting the other way would let the program
+        walk past a decision nobody had classified.
+        """
+        return [t for t in self.founder_decisions_required()
+                if t.get("critical_path") is not False]
+
+    def terminal_state(self) -> str | None:
+        """The amendment's two terminal states, or None while the run continues.
+
+        §15: the Program Director reports only PROGRAM_COMPLETE or FOUNDER_DECISION_REQUIRED.
+        Mid-run is neither, and must not be reported as either.
+        """
+        if self.blocking_founder_decisions():
+            return "FOUNDER_DECISION_REQUIRED"
+        open_work = [t for t in self.tasks()
+                     if t["status"] not in ("DONE", "SUPERSEDED", "FOUNDER_DECISION_REQUIRED")]
+        return None if open_work else "PROGRAM_COMPLETE"
+
     def next_task(self) -> dict | None:
         """The next unblocked task. A pending Founder decision stops the program.
 
@@ -254,7 +280,7 @@ class ProgramState:
         REPAIR after independent review, this offered the Phase 6 task, which would have had an
         operator start a later phase over an open repair.
         """
-        if self.founder_decisions_required():
+        if self.blocking_founder_decisions():
             return None
         for t in self.tasks():
             if t["status"] in ("READY", "PLANNED"):
