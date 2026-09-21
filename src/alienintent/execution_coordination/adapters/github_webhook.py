@@ -19,8 +19,7 @@ class GitHubWebhookIngress(EventIngress):
         self._profile, self._repository, self._secret, self._store, self._notify = profile, repository, secret, store, notify
 
     def receive(self, delivery_id: str, category: str, authenticity: str, raw_body: bytes) -> IngressReceipt:
-        expected = "sha256=" + hmac.new(self._secret, raw_body, sha256).hexdigest()
-        if not hmac.compare_digest(expected, authenticity):
+        if not self.signature_valid(self._secret, raw_body, authenticity):
             raise IngressRejected("invalid raw-body signature")
         try:
             payload = json.loads(raw_body)
@@ -52,6 +51,12 @@ class GitHubWebhookIngress(EventIngress):
             version = self._store.apply_receipt(self._profile, delivery_id, current, {"source_version": version, "category": category}, effect_id, {"notification": notification})
         self._deliver(effect_id, notification)
         return self._ingress_receipt(delivery_id, Receipt(delivery_id, aggregate, version, "applied") if fresh else receipt)
+
+    @staticmethod
+    def signature_valid(secret: bytes, raw_body: bytes, authenticity: str) -> bool:
+        """Exercise the production raw-byte signature rule without ingress effects."""
+        expected = "sha256=" + hmac.new(secret, raw_body, sha256).hexdigest()
+        return hmac.compare_digest(expected, authenticity)
 
     def _notification(self, payload: object, category: str, work: str) -> str:
         if isinstance(payload, dict) and payload.get("execution_field_edit") is True:
