@@ -52,12 +52,37 @@ private key, not taken on trust:
 | App | `alienintent-py-10-sandbox`, id **5014629** |
 | Installation | **163346526**, account `AlienLogicLab`, `repository_selection: selected` |
 | Repositories | exactly `AlienLogicLab/alienintent-sandbox` |
-| Permissions | `issues: read`, `metadata: read`, `organization_projects: write` — **exactly** the set the App preflight enforces |
+| Permissions | `issues: read`, `metadata: read`, `organization_projects: write`, **`contents: write`** — exactly the set the preflight enforces (corrected 2026-09-21, below) |
 | Events | `issue_comment`, `projects_v2_item` — exactly |
 | Private key | `~/.config/alienintent-sandbox/secrets/alienintent-py-10-sandbox.2026-09-20.private-key.pem`, mode 600, outside every working tree |
 
 The production App (4990774 / installation 162769625) is untouched and appears nowhere in the
 sandbox profile.
+
+### Permission-set correction, 2026-09-21 — the original set was wrong
+
+The first set was derived from `src/github/app-client.mjs`, the **Node bootstrap's** enforced
+permissions. That is correct for Node, whose workers publish with their own GitHub identities and use
+the App token only for Projects and Issues. **Canonical Python publishes the candidate and reads it
+back through the installation credential** (`git_source_control.publish_and_read_back`), and against a
+private repository a token without `contents` can neither push nor clone — `doctor.py` fails its
+source-control probe without `contents:write`. Founder-authorized 2026-09-21.
+
+The earlier **17/17 pass is preserved** at
+[`py10-preflight-2026-09-21-pre-contents-grant.json`](../evidence/py10-preflight-2026-09-21-pre-contents-grant.json)
+rather than rewritten, because it is the evidence of the failure mode:
+
+> **A discriminating check proves conformance to its specification; it does not prove the
+> specification is correct.** The preflight faithfully verified a permission set chosen by copying a
+> component with a different responsibility boundary.
+
+> **Bootstrap implementation permissions must not silently define canonical architecture permissions
+> when responsibility boundaries differ.**
+
+The negative control is at
+[`py10-preflight-2026-09-21-negative-control.json`](../evidence/py10-preflight-2026-09-21-negative-control.json):
+with the expectation corrected and the grant not yet made, the preflight fails **2 of 17** on exactly
+the permission checks — proof the check goes red when `contents` is absent.
 
 ## Residual risk — organization-scoped Projects permission
 
