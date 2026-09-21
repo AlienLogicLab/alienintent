@@ -91,13 +91,44 @@ The previous provider block is recorded above and the pre-change profile is reta
    The resume came from the dispatcher's own restart reconciliation, not from liveness re-emission.
 7. Attention items acknowledged only then.
 
-## Defect found in the coordinator's own tooling
+## A second, different failure on the same BIU
 
-The restart produced a **second** attention item for the same underlying event. During reconciliation
-the dispatcher re-recorded the existing diagnostic with a fresh `at` timestamp; attention identity
-anchors on that timestamp, so one invocation's single failure minted two items. Harmless here — both
-were acknowledged, one as superseded — but it is a real dedupe weakness: identity should anchor on the
-invocation plus its start, which do not change, rather than on a field the dispatcher may rewrite.
+At `02:57:37Z` the cycle-4 candidate was published and a verifier started. It ran 39 turns and ended
+at `03:03:29Z` with the text *"I'll pick this up when the sweep lands."* — no verdict, no finding, no
+`B-DISP` marker. Also recorded as `DURABLE_RESULT_MISSING`, and **not** the same class as the quota
+interruption: this invocation ran to a normal completion and simply produced no work product.
+
+Its terminal record reads `is_error: false`, `subtype: "success"`, and the provider was right — the
+*invocation* succeeded. Provider success is an observation about the invocation, not a verdict about
+the work, which is why absence of a durable result is a typed outcome rather than a silent pass. The
+same distinction the factory enforces on workers applies to the provider reporting on them.
+
+Recovery differed accordingly: the condition was resolved by acknowledging and letting the machinery
+dispatch one fresh verifier against the same published candidate. Cycle number unchanged — a verifier
+restart within the same VERIFY phase does not increment it
+([SWF-32](../decisions/2026-09-21-biu-execution-cycle-counter.md)).
+
+## Three defects found in the coordinator's own tooling
+
+The incident and its recovery exposed three, all fixed with tests:
+
+1. **Attention identity anchored on a rewritable timestamp.** The dispatcher re-records an existing
+   diagnostic during reconciliation with a fresh `at`, so one verifier failure minted **three**
+   attention items across two re-records — three wake-ups for one event. Identity now keys on
+   invocation plus outcome, since an invocation has exactly one terminal outcome.
+2. **Liveness records had no distinguishing anchor** once fix 1 removed the timestamp. A liveness gap
+   carries no invocation, so every future gap on a BIU would have collapsed onto the first one's id
+   and, once acknowledged, a later genuine gap would never have woken anyone. Liveness records now
+   anchor on their own `at`, which nothing rewrites.
+3. **Recovery verification declared failure too early.** After re-emitting a transition, the watch
+   slept a fixed 25 seconds and sampled lane claims once. Observed dispatch latencies are 21–23
+   seconds, so the sample sat on the edge — and at `03:11:32Z` it reported PY-09's recovery as failed
+   while the verifier claimed the lane moments later, raising a false attention item. Recovery now
+   polls for the claim up to 90 seconds and returns the instant it appears.
+
+Fix 2 is worth noting on its own: it was **introduced by fix 1**, and only surfaced because a real
+liveness gap arrived minutes later. A narrow fix to a dedupe rule silently broke a different case that
+depended on the same field.
 
 ## Learning questions raised, not answered here
 
