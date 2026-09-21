@@ -1,6 +1,6 @@
 # Wave 1 repair-cycle data — factory yield
 
-First extraction 2026-09-21, covering **PY-02 through PY-09**: 45 cycles, 8 BIUs. Machine-readable
+First extraction 2026-09-21, corrected the same day: **PY-02 through PY-09**, 46 cycles, 8 BIUs. Machine-readable
 records in [`wave1-repair-cycles.json`](wave1-repair-cycles.json); regenerate with
 
 ```
@@ -18,15 +18,15 @@ closure-efficiency measurement — no new requirement.
 
 | Metric | Value |
 |---|---|
-| Cycles observed | **45** across 8 BIUs |
-| Verifier rejections | **30** |
+| Cycles observed | **46** across 8 BIUs |
+| Verifier rejections | **31** |
 | Authority blocks (`FOUNDER_EXCEPTION`) | **8** |
 | **First-pass acceptances** | **0 of 7 accepted BIUs** |
 | Rejections per accepted BIU | mean **4.0**, median 4.0, range **1–9** |
 | Authority blocks per accepted BIU | mean **1.1** |
-| Verification duration | median **529 s**, range 264–2013 s (n=37) |
+| Verification duration | median **530 s**, range 264–2013 s (n=38) |
 | Implementation duration | median **690 s**, range 480–1230 s (n=7, PY-06 onward only) |
-| Candidate size | median **144** added lines, max 600 (n=42) |
+| Candidate size | median **149** added lines, max 600 (n=43) |
 
 ### Per BIU
 
@@ -38,8 +38,8 @@ closure-efficiency measurement — no new requirement.
 | PY-05 | 3 | 2 | 0 | 6 |
 | PY-06 | 6 | 4 | 1 | 5 → 2 |
 | PY-07 | 8 | 5 | 2 | 4 → 3 → 5 → 3 → 1 |
-| PY-08 | 8 | 6 | 1 | 12 → 14 → 11 → 10 → 8 → 7 → 0 |
-| PY-09 | 2 | 2 | 0 | 3 → (unreadable) — **in flight** |
+| PY-08 | 8 | 6 | 1 | 12 → 14 → 11 → 10 → 8 → **3** → 0 |
+| PY-09 | 3 | 3 | 0 | 3 → (unreadable) → (unreadable) — **in flight** |
 
 ## Readings worth acting on
 
@@ -63,16 +63,26 @@ records rather than genuine authority gaps, which is what the
 often rather than batching work into larger candidates.
 
 **PY-08's trajectory is the clearest case in the dataset.** Findings rose before they fell
-(12 → 14), plateaued (11 → 10 → 8 → 7), then collapsed to 0 in one cycle — the cycle directed to build
+(12 → 14), plateaued (11 → 10 → 8), then fell to 3 and to 0 — the cycle directed to build
 verification rather than repair implementation. That single data series is the evidence behind
 [SWF-23 §4b verification-first repair sequencing](../decisions/2026-09-20-convergent-repair-monotonic-progress.md).
 
 ## Limits of this dataset — read before trusting a number
 
-- **Findings counts are readable for 18 of 45 cycles (40%).** Verifier reports are prose and their
-  formatting varies per cycle; the extractor records `null` rather than `0` when it cannot read them,
-  so absent findings never masquerade as a clean cycle. Counts present are reliable; absent ones are
-  genuinely unknown.
+- **Findings counts are readable for 20 of 46 cycles (43%).** Verifier reports are prose and their
+  formatting varies per cycle. Unreadable counts are recorded as **`"UNKNOWN"`** — the sentinel
+  SF-REQ-030 and evidence-v1 both use, never `0` — and each record names its own gaps in
+  `unknown_metrics`. Aggregates skip UNKNOWN by type, so a mean can never absorb an unmeasured cycle
+  as zero.
+
+- **Correction, 2026-09-21.** The first extraction over-counted findings in three cycles, reported by
+  the PY-05–PY-09 extraction session. The scan counted finding identifiers wherever they appeared,
+  including the sections where a verifier re-lists **prior** findings it is reporting as closed —
+  PY-08 cycle 7 read 7 where 3 were open, and disagreed with this coordinator's own contemporaneous
+  series (14 → 11 → 10 → 8 → 3). Fixed by counting only within a report's declared open-findings
+  section, falling back to excluding recognisable closed sections, with an explicit closure heading
+  taking precedence over one that merely mentions findings. PY-08 cycle 7 and PY-06 cycle 6 now
+  extract correctly; PY-06 cycle 5 became `"UNKNOWN"` rather than wrong.
 - **Implementation durations exist for only 7 cycles.** The observation log starts at PY-06; earlier
   timings are not recoverable. Verification durations come from the result-marker timestamps and cover
   37 cycles.

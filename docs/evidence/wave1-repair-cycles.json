@@ -9,16 +9,22 @@
    "verdict": null,
    "reported_at": "2026-09-20T02:29:11Z",
    "candidate": "a82ca4e6bbb3b73b523327c58ac3eba5d0fec7ba",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 600,
    "deleted": 1,
    "files": 16,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 339,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747048805"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747048805",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed"
+   ]
   },
   {
    "biu": "PY-02",
@@ -29,16 +35,20 @@
    "verdict": null,
    "reported_at": "2026-09-20T02:37:28Z",
    "candidate": "8689771b9fccb9f86c7fdcc2e9d4f571408765f2",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": 0,
+   "findings_decisive": 0,
    "findings_ids": [],
    "added": 64,
    "deleted": 8,
    "files": 6,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 285,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747096363"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747096363",
+   "unknown_metrics": [
+    "implement_seconds",
+    "tests_passed"
+   ]
   },
   {
    "biu": "PY-02",
@@ -49,16 +59,23 @@
    "verdict": null,
    "reported_at": "2026-09-20T02:40:33Z",
    "candidate": "8689771b9fccb9f86c7fdcc2e9d4f571408765f2",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 64,
    "deleted": 8,
    "files": 6,
-   "implement_seconds": null,
-   "verify_seconds": null,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747110661"
+   "implement_seconds": "UNKNOWN",
+   "verify_seconds": "UNKNOWN",
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747110661",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed",
+    "verify_seconds"
+   ]
   },
   {
    "biu": "PY-03",
@@ -69,16 +86,23 @@
    "verdict": null,
    "reported_at": "2026-09-20T03:39:11Z",
    "candidate": "1aa8bb7a19c4409b49f746096544781794fc72f2",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 341,
    "deleted": 0,
    "files": 3,
-   "implement_seconds": null,
-   "verify_seconds": null,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5747374188"
+   "implement_seconds": "UNKNOWN",
+   "verify_seconds": "UNKNOWN",
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5747374188",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed",
+    "verify_seconds"
+   ]
   },
   {
    "biu": "PY-03",
@@ -90,15 +114,20 @@
    "reported_at": "2026-09-20T03:51:48Z",
    "candidate": "03f1c6711674b6d76ea7aa550aec52724051ee26",
    "tests_passed": 35,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 221,
    "deleted": 13,
    "files": 4,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 264,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5747452727"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5747452727",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-03",
@@ -110,20 +139,18 @@
    "reported_at": "2026-09-20T04:11:07Z",
    "candidate": "c3ba58d980aeceafa483d8cc9b8edc4fb4238a5e",
    "tests_passed": 40,
-   "findings_total": 4,
+   "findings_total": 0,
    "findings_decisive": 0,
-   "findings_ids": [
-    "1",
-    "2",
-    "3",
-    "4"
-   ],
+   "findings_ids": [],
    "added": 149,
    "deleted": 23,
    "files": 3,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 496,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5747544877"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5747544877",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -134,16 +161,23 @@
    "verdict": null,
    "reported_at": "2026-09-20T06:36:31Z",
    "candidate": "5d8fe09673224c6728a6a9f9e96c4453f7d2bf59",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 343,
    "deleted": 0,
    "files": 5,
-   "implement_seconds": null,
-   "verify_seconds": null,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5748165330"
+   "implement_seconds": "UNKNOWN",
+   "verify_seconds": "UNKNOWN",
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5748165330",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed",
+    "verify_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -155,15 +189,20 @@
    "reported_at": "2026-09-20T06:56:56Z",
    "candidate": "10fb82ef93fb4fe7f76ab2ee4d32f852cfe48f28",
    "tests_passed": 50,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 9,
    "deleted": 4,
    "files": 3,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 283,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5748256385"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5748256385",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -175,15 +214,20 @@
    "reported_at": "2026-09-20T07:17:14Z",
    "candidate": "c14beb6e7bb43fbc9a050aacb111a6a5c10d5be2",
    "tests_passed": 50,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 427,
    "deleted": 0,
    "files": 6,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 498,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5748347948"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5748347948",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -194,16 +238,23 @@
    "verdict": null,
    "reported_at": "2026-09-20T07:27:20Z",
    "candidate": "62cd4f7073e4b16f9e97dee11d56c17cbbd19817",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 441,
    "deleted": 0,
    "files": 8,
-   "implement_seconds": null,
-   "verify_seconds": null,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5748393897"
+   "implement_seconds": "UNKNOWN",
+   "verify_seconds": "UNKNOWN",
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5748393897",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed",
+    "verify_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -215,15 +266,20 @@
    "reported_at": "2026-09-20T09:48:52Z",
    "candidate": "a73baf72fc881390448f674fa4d7c106e5cb920e",
    "tests_passed": 47,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 35,
    "deleted": 2,
    "files": 3,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 531,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749047406"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749047406",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -235,15 +291,20 @@
    "reported_at": "2026-09-20T10:01:06Z",
    "candidate": "847c90c88007c1e249410072d6abf13edb1621b3",
    "tests_passed": 50,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 44,
    "deleted": 1,
    "files": 2,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 385,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749103419"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749103419",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -255,15 +316,20 @@
    "reported_at": "2026-09-20T10:28:28Z",
    "candidate": "5cb53b27cb9f7c02ad59fd55aadae2cb5b07f096",
    "tests_passed": 57,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 102,
    "deleted": 15,
    "files": 3,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 538,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749232876"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749232876",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -275,15 +341,20 @@
    "reported_at": "2026-09-20T10:42:21Z",
    "candidate": "468cb562954aeca2a3406e2f75850eaa40b26d91",
    "tests_passed": 58,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 24,
    "deleted": 2,
    "files": 2,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 540,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749297024"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749297024",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -295,15 +366,20 @@
    "reported_at": "2026-09-20T10:59:07Z",
    "candidate": "064432a70eb1cc9f12c1b03124536182d12a7c90",
    "tests_passed": 58,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 2,
    "deleted": 2,
    "files": 1,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 719,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749371003"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749371003",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -315,15 +391,20 @@
    "reported_at": "2026-09-20T11:37:06Z",
    "candidate": "1b372c2a89572afb274d780ed4205bed39a2f062",
    "tests_passed": 19,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 28,
    "deleted": 0,
    "files": 1,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 1998,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749550646"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749550646",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -333,17 +414,26 @@
    "verified": true,
    "verdict": null,
    "reported_at": "2026-09-20T11:57:07Z",
-   "candidate": null,
+   "candidate": "UNKNOWN",
    "tests_passed": 64,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
-   "added": null,
-   "deleted": null,
-   "files": null,
-   "implement_seconds": null,
+   "added": "UNKNOWN",
+   "deleted": "UNKNOWN",
+   "files": "UNKNOWN",
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 555,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749643685"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749643685",
+   "unknown_metrics": [
+    "added",
+    "candidate",
+    "deleted",
+    "files",
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-04",
@@ -355,17 +445,18 @@
    "reported_at": "2026-09-20T12:19:39Z",
    "candidate": "03896f6267e06cd9a52afe4ab63dee32d221c538",
    "tests_passed": 65,
-   "findings_total": 1,
+   "findings_total": 0,
    "findings_decisive": 0,
-   "findings_ids": [
-    "23"
-   ],
+   "findings_ids": [],
    "added": 17,
    "deleted": 0,
    "files": 1,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 835,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749754285"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749754285",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-05",
@@ -376,7 +467,7 @@
    "verdict": null,
    "reported_at": "2026-09-20T12:57:54Z",
    "candidate": "deb4da3460a0029cf6e2c9bd37b9701100b1c77f",
-   "tests_passed": null,
+   "tests_passed": "UNKNOWN",
    "findings_total": 6,
    "findings_decisive": 0,
    "findings_ids": [
@@ -390,9 +481,13 @@
    "added": 472,
    "deleted": 5,
    "files": 12,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 376,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/53#issuecomment-5749943917"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/53#issuecomment-5749943917",
+   "unknown_metrics": [
+    "implement_seconds",
+    "tests_passed"
+   ]
   },
   {
    "biu": "PY-05",
@@ -403,16 +498,22 @@
    "verdict": null,
    "reported_at": "2026-09-20T13:21:08Z",
    "candidate": "66bd3c15dcba872831708fc4cbc8d1090c729e6c",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 189,
    "deleted": 28,
    "files": 8,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 565,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/53#issuecomment-5750061854"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/53#issuecomment-5750061854",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed"
+   ]
   },
   {
    "biu": "PY-05",
@@ -423,16 +524,20 @@
    "verdict": null,
    "reported_at": "2026-09-20T13:35:31Z",
    "candidate": "761bc21c5c861317c88d3db16bb7de05425f329b",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": 0,
+   "findings_decisive": 0,
    "findings_ids": [],
    "added": 3,
    "deleted": 1,
    "files": 1,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 556,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/53#issuecomment-5750136613"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/53#issuecomment-5750136613",
+   "unknown_metrics": [
+    "implement_seconds",
+    "tests_passed"
+   ]
   },
   {
    "biu": "PY-06",
@@ -443,16 +548,23 @@
    "verdict": null,
    "reported_at": "2026-09-20T13:49:09Z",
    "candidate": "93b9b096b658f023172c258cad43ba9923451c5e",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 16,
    "deleted": 16,
    "files": 1,
-   "implement_seconds": null,
-   "verify_seconds": null,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750206343"
+   "implement_seconds": "UNKNOWN",
+   "verify_seconds": "UNKNOWN",
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750206343",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed",
+    "verify_seconds"
+   ]
   },
   {
    "biu": "PY-06",
@@ -463,16 +575,22 @@
    "verdict": null,
    "reported_at": "2026-09-20T14:11:05Z",
    "candidate": "e070965891a9881427970ea85dec7d350c2488e8",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 482,
    "deleted": 0,
    "files": 11,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 268,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750321520"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750321520",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed"
+   ]
   },
   {
    "biu": "PY-06",
@@ -483,16 +601,22 @@
    "verdict": null,
    "reported_at": "2026-09-20T14:52:53Z",
    "candidate": "d9537d1e07cef4eb5e6d5bede576cf813756b475",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 140,
    "deleted": 10,
    "files": 6,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 2013,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750544958"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750544958",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed"
+   ]
   },
   {
    "biu": "PY-06",
@@ -503,16 +627,22 @@
    "verdict": null,
    "reported_at": "2026-09-20T15:10:41Z",
    "candidate": "38a317fc1cf7c9d22f1386bade4f1327f5ffdc45",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 163,
    "deleted": 7,
    "files": 7,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 403,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750643017"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750643017",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed"
+   ]
   },
   {
    "biu": "PY-06",
@@ -524,21 +654,20 @@
    "reported_at": "2026-09-20T15:37:07Z",
    "candidate": "a7549b38c4e305cbff770f6698f443e964e214b6",
    "tests_passed": 107,
-   "findings_total": 5,
-   "findings_decisive": 0,
-   "findings_ids": [
-    "H1",
-    "H2",
-    "H3",
-    "H4",
-    "H5"
-   ],
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
+   "findings_ids": [],
    "added": 181,
    "deleted": 43,
    "files": 8,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 684,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750786675"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750786675",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-06",
@@ -550,18 +679,18 @@
    "reported_at": "2026-09-20T15:52:59Z",
    "candidate": "e660748686ffaf66340e44760dc88c898f35a0ff",
    "tests_passed": 110,
-   "findings_total": 2,
+   "findings_total": 0,
    "findings_decisive": 0,
-   "findings_ids": [
-    "J1",
-    "J2"
-   ],
+   "findings_ids": [],
    "added": 59,
    "deleted": 5,
    "files": 4,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 417,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750872643"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750872643",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-07",
@@ -571,17 +700,28 @@
    "verified": false,
    "verdict": null,
    "reported_at": "2026-09-20T16:56:31Z",
-   "candidate": null,
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "candidate": "UNKNOWN",
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
-   "added": null,
-   "deleted": null,
-   "files": null,
-   "implement_seconds": null,
-   "verify_seconds": null,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751240306"
+   "added": "UNKNOWN",
+   "deleted": "UNKNOWN",
+   "files": "UNKNOWN",
+   "implement_seconds": "UNKNOWN",
+   "verify_seconds": "UNKNOWN",
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751240306",
+   "unknown_metrics": [
+    "added",
+    "candidate",
+    "deleted",
+    "files",
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed",
+    "verify_seconds"
+   ]
   },
   {
    "biu": "PY-07",
@@ -592,16 +732,23 @@
    "verdict": null,
    "reported_at": "2026-09-20T17:05:51Z",
    "candidate": "6c3f8432129892f11d182e713102e63cf0aa9b56",
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 49,
    "deleted": 29,
    "files": 2,
-   "implement_seconds": null,
-   "verify_seconds": null,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751293412"
+   "implement_seconds": "UNKNOWN",
+   "verify_seconds": "UNKNOWN",
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751293412",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed",
+    "verify_seconds"
+   ]
   },
   {
    "biu": "PY-07",
@@ -626,7 +773,8 @@
    "files": 12,
    "implement_seconds": 1230,
    "verify_seconds": 538,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751510729"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751510729",
+   "unknown_metrics": []
   },
   {
    "biu": "PY-07",
@@ -650,7 +798,8 @@
    "files": 8,
    "implement_seconds": 810,
    "verify_seconds": 425,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751625338"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751625338",
+   "unknown_metrics": []
   },
   {
    "biu": "PY-07",
@@ -674,9 +823,12 @@
    "added": 25,
    "deleted": 23,
    "files": 2,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 418,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751807559"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751807559",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-07",
@@ -698,9 +850,12 @@
    "added": 24,
    "deleted": 9,
    "files": 3,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 576,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751995981"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5751995981",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-07",
@@ -720,9 +875,12 @@
    "added": 189,
    "deleted": 23,
    "files": 4,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 409,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5752149699"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5752149699",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-07",
@@ -734,15 +892,18 @@
    "reported_at": "2026-09-20T19:54:17Z",
    "candidate": "9caaa71f89aeac3fdecd2cc0ef3ad566ca96ebf2",
    "tests_passed": 129,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": 0,
+   "findings_decisive": 0,
    "findings_ids": [],
    "added": 55,
    "deleted": 13,
    "files": 3,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 690,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5752257418"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5752257418",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-08",
@@ -753,7 +914,7 @@
    "verdict": "REJECT",
    "reported_at": "2026-09-20T22:08:25Z",
    "candidate": "80aa7c0f180badde3fd50da44d06c650918148ca",
-   "tests_passed": null,
+   "tests_passed": "UNKNOWN",
    "findings_total": 12,
    "findings_decisive": 0,
    "findings_ids": [
@@ -775,7 +936,10 @@
    "files": 4,
    "implement_seconds": 750,
    "verify_seconds": 317,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753024014"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753024014",
+   "unknown_metrics": [
+    "tests_passed"
+   ]
   },
   {
    "biu": "PY-08",
@@ -785,17 +949,28 @@
    "verified": false,
    "verdict": null,
    "reported_at": "2026-09-20T22:25:41Z",
-   "candidate": null,
-   "tests_passed": null,
-   "findings_total": null,
-   "findings_decisive": null,
+   "candidate": "UNKNOWN",
+   "tests_passed": "UNKNOWN",
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
-   "added": null,
-   "deleted": null,
-   "files": null,
-   "implement_seconds": null,
-   "verify_seconds": null,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753117599"
+   "added": "UNKNOWN",
+   "deleted": "UNKNOWN",
+   "files": "UNKNOWN",
+   "implement_seconds": "UNKNOWN",
+   "verify_seconds": "UNKNOWN",
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753117599",
+   "unknown_metrics": [
+    "added",
+    "candidate",
+    "deleted",
+    "files",
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds",
+    "tests_passed",
+    "verify_seconds"
+   ]
   },
   {
    "biu": "PY-08",
@@ -830,7 +1005,8 @@
    "files": 8,
    "implement_seconds": 690,
    "verify_seconds": 445,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753265900"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753265900",
+   "unknown_metrics": []
   },
   {
    "biu": "PY-08",
@@ -860,9 +1036,12 @@
    "added": 40,
    "deleted": 8,
    "files": 5,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 529,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753438178"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753438178",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-08",
@@ -893,7 +1072,8 @@
    "files": 5,
    "implement_seconds": 540,
    "verify_seconds": 597,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753620981"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753620981",
+   "unknown_metrics": []
   },
   {
    "biu": "PY-08",
@@ -920,9 +1100,12 @@
    "added": 127,
    "deleted": 30,
    "files": 5,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 717,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753730505"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753730505",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-08",
@@ -934,13 +1117,9 @@
    "reported_at": "2026-09-21T00:28:26Z",
    "candidate": "8f85513b41c276a98296b37c5c3d7ed0b4f8f4ce",
    "tests_passed": 154,
-   "findings_total": 7,
+   "findings_total": 3,
    "findings_decisive": 0,
    "findings_ids": [
-    "1",
-    "2",
-    "3",
-    "4",
     "Y2",
     "Y4",
     "Z1"
@@ -950,7 +1129,8 @@
    "files": 4,
    "implement_seconds": 480,
    "verify_seconds": 549,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753874359"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5753874359",
+   "unknown_metrics": []
   },
   {
    "biu": "PY-08",
@@ -968,9 +1148,12 @@
    "added": 98,
    "deleted": 2,
    "files": 4,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 961,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5754017466"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5754017466",
+   "unknown_metrics": [
+    "implement_seconds"
+   ]
   },
   {
    "biu": "PY-09",
@@ -994,7 +1177,8 @@
    "files": 4,
    "implement_seconds": 690,
    "verify_seconds": 388,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5754208839"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5754208839",
+   "unknown_metrics": []
   },
   {
    "biu": "PY-09",
@@ -1006,15 +1190,45 @@
    "reported_at": "2026-09-21T01:41:23Z",
    "candidate": "c1674ffc43820e6d1fe5f6115035f209baac1645",
    "tests_passed": 183,
-   "findings_total": null,
-   "findings_decisive": null,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
    "findings_ids": [],
    "added": 236,
    "deleted": 3,
    "files": 3,
-   "implement_seconds": null,
+   "implement_seconds": "UNKNOWN",
    "verify_seconds": 509,
-   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5754321729"
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5754321729",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
+  },
+  {
+   "biu": "PY-09",
+   "issue": 57,
+   "cycle": 3,
+   "outcome": "REJECT",
+   "verified": true,
+   "verdict": "REJECT",
+   "reported_at": "2026-09-21T02:06:48Z",
+   "candidate": "c9563214fa20c41ef32f0aff16e7ddce02741173",
+   "tests_passed": 189,
+   "findings_total": "UNKNOWN",
+   "findings_decisive": "UNKNOWN",
+   "findings_ids": [],
+   "added": 179,
+   "deleted": 3,
+   "files": 3,
+   "implement_seconds": "UNKNOWN",
+   "verify_seconds": 814,
+   "report_url": "https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5754478561",
+   "unknown_metrics": [
+    "findings_decisive",
+    "findings_total",
+    "implement_seconds"
+   ]
   }
  ],
  "summary": {
@@ -1024,7 +1238,9 @@
    "authority_blocks": 1,
    "accepted": true,
    "first_pass": false,
-   "findings_trajectory": [],
+   "findings_trajectory": [
+    0
+   ],
    "candidate_growth": [
     600,
     64,
@@ -1038,7 +1254,7 @@
    "accepted": true,
    "first_pass": false,
    "findings_trajectory": [
-    4
+    0
    ],
    "candidate_growth": [
     341,
@@ -1053,7 +1269,7 @@
    "accepted": true,
    "first_pass": false,
    "findings_trajectory": [
-    1
+    0
    ],
    "candidate_growth": [
     343,
@@ -1076,7 +1292,8 @@
    "accepted": true,
    "first_pass": false,
    "findings_trajectory": [
-    6
+    6,
+    0
    ],
    "candidate_growth": [
     472,
@@ -1091,8 +1308,7 @@
    "accepted": true,
    "first_pass": false,
    "findings_trajectory": [
-    5,
-    2
+    0
    ],
    "candidate_growth": [
     16,
@@ -1114,7 +1330,8 @@
     3,
     5,
     3,
-    1
+    1,
+    0
    ],
    "candidate_growth": [
     49,
@@ -1138,7 +1355,7 @@
     11,
     10,
     8,
-    7,
+    3,
     0
    ],
    "candidate_growth": [
@@ -1152,8 +1369,8 @@
    ]
   },
   "PY-09": {
-   "cycles": 2,
-   "rejections": 2,
+   "cycles": 3,
+   "rejections": 3,
    "authority_blocks": 0,
    "accepted": false,
    "first_pass": false,
@@ -1162,7 +1379,8 @@
    ],
    "candidate_growth": [
     286,
-    236
+    236,
+    179
    ]
   }
  }
