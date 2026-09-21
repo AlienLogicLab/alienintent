@@ -51,6 +51,106 @@ mutation definition: the semantic rule violation being tested must be stated.
 The evidence must let a reviewer determine what rule was exercised and why the
 observed result follows.
 
+## Lifecycle role of VERIFY and REVIEW (Founder clarification, 2026-09-21)
+
+This clarifies the lifecycle significance of the principle above. It adds no
+Product Requirement, no lifecycle state, no implementation obligation and no
+retrofit onto a released BIU.
+
+Canonical meaning:
+
+> **VERIFY proves what AlienIntent already knows how to check. REVIEW discovers
+> what AlienIntent does not yet know how to check. Gap Trap / deterministic
+> failure-class promotion converts suitable REVIEW discoveries into future VERIFY
+> capability.**
+
+Shorthand:
+
+> **REVIEW explores; VERIFY accumulates.**
+
+### VERIFY — accumulated mechanically enforceable knowledge
+
+VERIFY is the factory's accumulated mechanically enforceable knowledge. Where
+applicable it includes deterministic tests; architecture and quality fitness
+rules; invariants; state-machine constraints; schema checks; admission gates;
+evidence-consistency checks; negative controls; proven-red checks; and known
+mechanically expressible failure classes.
+
+VERIFY grows by accumulation. Every promoted check is knowledge the factory no
+longer pays model cognition to rediscover.
+
+### REVIEW — the discovery frontier
+
+REVIEW is the primary lifecycle stage for novel, non-mechanized engineering
+judgment: novel engineering-quality failures; not-yet-mechanized failure classes;
+architecture and design coherence; simplicity; maintainability; unintended
+coupling; semantic fit to the authorized intent; suspicious behaviour no
+deterministic rule yet captures; other context-sensitive qualitative judgment;
+and the learning candidates that feed promotion.
+
+**REVIEW is not merely a second pass over VERIFY.** Its purpose is to apply
+engineering intelligence where deterministic knowledge ends.
+
+### The frontier must keep moving
+
+> REVIEW must not become a permanent checklist of recurring mechanizable defects.
+
+When a REVIEW finding is sufficiently generalizable, materially useful and
+mechanically expressible, AlienIntent assesses it for deterministic promotion
+through this decision / SF-REQ-050.
+
+Promotion is **incomplete** until the new mechanism carries discriminating
+evidence that a meaningful violation causes it to fail. The proven-red, mutation
+and negative-control requirements stated above apply in full and are not weakened
+by this clarification.
+
+> A successful promotion should reduce future cognitive work.
+
+> If the same mechanically expressible defect keeps being rediscovered in REVIEW
+> across BIUs, that is evidence of a learning-loop failure, an incomplete
+> promotion, or ineffective enforcement — not merely an unlucky BIU.
+
+PY-08 is the worked example already in the record. Five repair cycles traded
+defects while two contract obligations went unattempted — AC 4's proof that
+`explain` reproduces the kernel's own decision, and the verification
+requirements' negative-control and backdoor coverage. Sequencing exactly that
+proof first closed the loop in a single cycle with no fresh defect.
+[SWF-23 §4b](2026-09-20-convergent-repair-monotonic-progress.md) turned that
+lesson into verification-first repair sequencing and carried it into the
+unreleased PY-09 and PY-10 contracts rather than retrofitting released PY-08.
+That is this movement in miniature: a judgment repeatedly rediscovered at REVIEW
+became a stated, sequenced obligation. Making it deterministic — a check that
+fails when a changed path lacks discriminating coverage — is the promotion
+SF-REQ-050 owns and has not yet built.
+
+Not every REVIEW finding must become deterministic. Some engineering judgment may
+remain qualitative indefinitely; such a finding is retained as an explicit
+qualitative review heuristic rather than discarded or forced into a check it
+cannot support. Promotion remains authority-controlled (SF-REQ-032) and
+independent review is not replaced.
+
+The long-term target is therefore **not** that everything becomes VERIFY:
+
+```text
+everything reliably mechanizable becomes VERIFY
+REVIEW remains the moving frontier of engineering judgment
+```
+
+REVIEW should become **more valuable, not larger**. Its value rises because known
+repetitive checks migrate out of it, leaving cognitive capacity for the defects
+that are still novel.
+
+### Wave 1 bootstrap does not collapse the distinction
+
+The Node bootstrap currently combines mechanical verification and qualitative
+review in a single VERIFIER invocation; REVIEW is not a separately dispatched
+worker lane; and verifier `ACCEPT` routes to ACCEPT rather than REVIEW. That is a
+Wave 1 bootstrap implementation limitation and convenience, recorded in
+[operations](../operations.md#lifecycle-semantics). **It does not collapse the
+canonical semantic distinction between VERIFY and REVIEW.** This clarification
+wires no REVIEW worker and changes no current dispatch, result routing, lifecycle
+state or released BIU contract.
+
 ## Effective scope
 
 This states what already counts as sufficient evidence under existing contract language — Architecture Authority §39, SF-REQ-018's requirement that fitness checks have negative controls proving they can fail, and each Wave 1 BIU's "executable proof" verification requirement. It is **not** a new obligation retroactively imposed on accepted evidence, and it does not reopen accepted BIUs.
@@ -64,6 +164,61 @@ Promotion of findings into VERIFY checks is a **capability to be built** (SF-REQ
 - **SF-REQ-032 learning proposals, not autonomous policy mutation** — promotion is a proposal requiring authority, never automatic.
 - **SF-REQ-049 / SWF-23 convergent repair** — once a class is mechanized, future BIUs stop relying on agents remembering the lesson.
 - **SF-REQ-020 fake-DONE prevention**, **SF-REQ-024 factory yield**.
+
+## The learning loop and its existing owners
+
+The loop this decision participates in is reconstructible from existing canonical
+authority:
+
+```text
+EXECUTE
+   ↓  OBSERVE
+   ↓  REVIEW — qualitative discovery
+   ↓  GENERALIZE the learning or failure class
+   ↓  identify the canonical authority that owns it
+   ↓  assess mechanizability
+   ├─ mechanizable → build deterministic trap/control
+   │                 → prove red / negative control
+   │                 → promote into VERIFY
+   │                 → ratchet and preserve the achieved property
+   └─ otherwise    → retain an explicit qualitative review heuristic
+   ↓  future execution
+   ↓  observe effectiveness / recurrence
+   ↓  strengthen, revise or supersede under authority
+```
+
+No stage gains a new owner here. Each already belongs to an existing requirement
+or decision; this record cross-references rather than restates them.
+
+| Loop stage | Canonical owner |
+|---|---|
+| execution observation / trajectory | SF-REQ-029 Engineering Trajectory (#44) |
+| derived quality evidence and its consistency verification | SF-REQ-030 Quality Evidence (#45) |
+| REVIEW qualitative discovery and learning candidates | lifecycle authority: [FD-01](2026-09-19-alienintent-work-management-execution-authority.md), [work-and-release](../architecture/pre-python-gate/work-and-release.md), and this section |
+| learning candidate becoming an authority-gated proposal | SF-REQ-032 learning proposals, not autonomous policy mutation (#47) |
+| mechanizability assessment, deterministic trap, proven-red evidence, promotion into VERIFY | this decision / SF-REQ-050 (#61) |
+| negative controls proving architecture fitness checks can fail | SF-REQ-018 architecture conformance (#29) |
+| mechanical obligations derived *before* implementation | SF-REQ-014 (#20) |
+| preserving achieved behaviour and proof across repair cycles | [SWF-23](2026-09-20-convergent-repair-monotonic-progress.md) / SF-REQ-049 (#60) |
+| effectiveness, recurrence and yield measurement | SF-REQ-024 factory yield (#35), through the metrics listed below |
+
+### Enforcement strength, and why "documented" is not "learned"
+
+> **Documentation is weaker than enforcement.**
+
+A rule may be `DOCUMENTED`, `PROMPTED`, `MECHANICALLY CHECKED`, `PROVEN RED`,
+`GATED` or `STRUCTURALLY ENFORCED`. These are descriptive strength labels for
+assessing a promotion, not required enum values and not a new schema. Recording a
+rule is the weakest of them: a documented rule that no mechanism can fail on is
+exactly the non-discriminating evidence this decision exists to reject.
+
+> A learning-loop success should eventually reduce the model cognition required to
+> rediscover known defects.
+
+The metrics below already carry that effectiveness signal — recurrence after
+promotion, verifier findings avoided, deterministic catches, false positives and
+negatives, tokens and time saved, and time from discovery to mechanization. They
+extend SF-REQ-024; no telemetry subsystem is introduced here.
 
 ## Measurement (future yield metrics)
 

@@ -68,8 +68,8 @@ the operator is not a message relay.
 | TASKS | Materialize bounded work units |
 | READY | Sufficiently specified, dependency-resolved, Agent-Ready assessed, eligible for explicit release |
 | IMPLEMENT | Producer execution |
-| VERIFY | Deterministic/mechanical verification |
-| REVIEW | Qualitative engineering judgment; not necessarily a separately dispatched lane |
+| VERIFY | Deterministic/mechanical verification of known, mechanized obligations and known failure classes — the factory's accumulated enforceable knowledge |
+| REVIEW | Qualitative engineering judgment, and the discovery frontier for novel/non-mechanized failures and learning candidates; suitable findings graduate through SWF-24 / SF-REQ-050 into proven-red VERIFY checks. Not necessarily a separately dispatched lane |
 | ACCEPT | Accepted engineering result / authority decision |
 | DONE | Operational closure complete |
 
@@ -79,6 +79,16 @@ There is no MERGE state. Merge/landing is a repository operation performed durin
 closure after ACCEPT on the path to DONE, when authorized by the work packet.
 The bootstrap's existing VERIFY worker and result routing are unchanged; the full
 board vocabulary does not introduce a separate REVIEW worker or new handoff.
+
+**REVIEW explores; VERIFY accumulates.** VERIFY proves what AlienIntent already
+knows how to check; REVIEW discovers what it does not yet know how to check, and
+deterministic failure-class promotion converts suitable REVIEW discoveries into
+future VERIFY capability ([SWF-24](decisions/2026-09-20-deterministic-failure-class-promotion.md#lifecycle-role-of-verify-and-review-founder-clarification-2026-09-21), SF-REQ-050). Wave 1's Node bootstrap
+combines mechanical verification and qualitative review in a single verifier
+invocation, REVIEW is not a separately dispatched worker lane, and verifier
+`ACCEPT` routes to ACCEPT rather than REVIEW. **That is a Wave 1 bootstrap
+implementation limitation and convenience; it does not collapse the canonical
+semantic distinction between VERIFY and REVIEW.**
 
 ## Result protocol and lifecycle
 
