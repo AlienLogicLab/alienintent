@@ -57,7 +57,7 @@ def _parser() -> argparse.ArgumentParser:
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--profile-factory")
     sub = parser.add_subparsers(dest="command", required=True)
-    _sanitized(sub.add_parser("version")); _sanitized(sub.add_parser("status")); _sanitized(sub.add_parser("health"))
+    _sanitized(sub.add_parser("version")); _sanitized(sub.add_parser("status")); _sanitized(sub.add_parser("health")); _sanitized(sub.add_parser("doctor"))
     explain = _sanitized(sub.add_parser("explain")); explain.add_argument("target")
     for command in ("run", "resume", "stop", "cancel", "reconcile"):
         item = _sanitized(sub.add_parser(command)); item.add_argument("target", nargs="?", default="service")
@@ -90,6 +90,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "version": _render({"version": "0.0.0", "install": "python-package"}, args.json); return 0
         if not args.profile_factory: raise ValueError("--profile-factory is required")
         profile = _factory(args.profile_factory)
+        if args.command == "doctor":
+            doctor = getattr(profile, "doctor", None)
+            if doctor is None:
+                raise ValueError("profile doctor is required")
+            report = doctor.run()
+            _render(report.as_dict(), args.json)
+            return report.exit_code
         service = OperatorControlPlane(profile.name, profile.store, profile.work, profile.coordinator, profile.readiness, lambda: datetime.now(UTC).isoformat())
         if args.command == "status": value = service.status()
         elif args.command == "health": value = {"live": True, "ready": bool(profile.readiness())}
