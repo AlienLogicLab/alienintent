@@ -1,0 +1,13 @@
+```text
+YIELD_FIGURES_DISPUTED=NONE
+LESSONS_PROPAGATED=26 MECHANIZED=8 UNGRADUATED=11
+METHODOLOGY_WORKED=verification-first detection, split conservation, Agent-Ready admission, corrected Design Verification, specific proven-red controls
+METHODOLOGY_UNPROVEN=sequencing yield effect, general split transaction, automated outcome handling, general design correctness, full graduation pipeline
+RECOMMENDATIONS=16 AMENDMENTS=5 NEW_REQUIREMENTS=0 NO_CHANGE=11
+CAUSALITY_CLAIMED=hypothesis-only
+UNRESOLVED_FOUNDER_DECISIONS=4
+RETRO_CHECK=PASS
+WAVE1_CHECK=PASS
+DISPUTED=NONE
+NOTES=Deliverables: /mnt/d/Projects/alienintent/docs/evidence/wave1-final-retrospective.json and /mnt/d/Projects/alienintent/docs/evidence/wave1-final-retrospective.md; uncommitted, review pending; decisions comprise 3 existing plus 1 unregistered question; prior inputs unchanged.
+```

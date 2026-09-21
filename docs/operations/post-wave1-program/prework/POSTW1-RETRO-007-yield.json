@@ -1,0 +1,76 @@
+{
+ "derived_at_head": "712d39f5c70be6fa98e53a68742dde2c341d4666",
+ "source": "docs/evidence/wave1-closure-manifest.json (accepted Phase 0+1 boundary)",
+ "note": "Computed from the accepted manifest, not re-derived. Do not recount; dispute if wrong.",
+ "yield": {
+  "biu_count": 11,
+  "verifier_rejections": 33,
+  "verifier_verdicts": 44,
+  "execution_cycles": 44,
+  "first_pass_accepted": 2,
+  "first_pass_bius": [
+   "PY-09B",
+   "PY-10"
+  ],
+  "founder_exception_markers": 9,
+  "founder_exceptions_by_biu": [
+   [
+    "PY-01",
+    1
+   ],
+   [
+    "PY-02",
+    1
+   ],
+   [
+    "PY-03",
+    1
+   ],
+   [
+    "PY-04",
+    2
+   ],
+   [
+    "PY-06",
+    1
+   ],
+   [
+    "PY-07",
+    2
+   ],
+   [
+    "PY-08",
+    1
+   ]
+  ],
+  "tests_at_landing_summed": 1479,
+  "tests_summing_caveat": "Per-BIU test counts are cumulative snapshots at landing; the sum is not a wave total.",
+  "elapsed_to_done_seconds": {
+   "measured_bius": 11,
+   "total": 104007.129,
+   "min": 3706.544,
+   "max": 21523.43
+  },
+  "repair_records": 44,
+  "superseded_records": 46,
+  "token_usage_UNKNOWN_bius": 11,
+  "cost_UNKNOWN_bius": 11,
+  "count_definition": "Combined verifier verdicts: Wave 1 does not distinguish VERIFY failures from REVIEW discoveries. Cycles exclude same-phase retries. No unique-defect total is derived."
+ },
+ "phase_inputs": {
+  "learning_ledger": "docs/evidence/wave1-learning-ledger.json (30 lessons, 2 ownership gaps)",
+  "gap_trap": "docs/evidence/wave1-gap-trap-promotion-backlog.json (7 promotions, 11 declines)",
+  "agent_ready": "docs/evidence/wave1-agent-ready-outcome-matrix.json (4 dispositions, 3 gaps)",
+  "split_replan": "docs/evidence/wave1-biu-split-replan-design.json (69 obligations, SPLIT-G1)",
+  "bootstrap_retirement": "docs/evidence/wave1-bootstrap-retirement-matrix.json (17 mechanisms)"
+ },
+ "open_founder_decisions": [
+  "POSTW1-DECIDE-004A G1/G2 Agent-Ready ownership",
+  "POSTW1-DECIDE-005A SPLIT-G1 SF-REQ-013 amendment",
+  "POSTW1-DECIDE-006A 6 NEEDS_DECISION mechanisms plus PRODUCER-on-Claude reversion"
+ ],
+ "causality_constraint": {
+  "established": "PY-09B and PY-10 were both first-pass accepted (FACT, manifest).",
+  "refused": "The claim that verification-first sequencing or provider substitution CAUSED the two first-pass acceptances was tested in Phase 2 as RAW-100 and not promoted: n=2 and the provider change is confounded with the sequencing change. The coordinator asserted it and withdrew it. Do not reinstate it as anything stronger than HYPOTHESIS."
+ }
+}

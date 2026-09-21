@@ -1,0 +1,1624 @@
+{
+  "schema_version": "1.0",
+  "task_id": "POSTW1-RETRO-007",
+  "artifact_role": "Authoritative retrospective analysis; Markdown is its companion. Recommendations only, pending independent coordinator review.",
+  "status": "PENDING_INDEPENDENT_COORDINATOR_REVIEW",
+  "conclusion": {
+    "claim_level": "INFERENCE",
+    "verdict": "Wave 1 demonstrates bounded continuous execution on real sandbox infrastructure and several effective safety controls, while recurring proof defects, manual bootstrap dependence and incomplete recovery/observability remain. DONE for eleven BIUs is not completion of every linked Product Requirement, production cutover, or proof of economic efficiency.",
+    "evidence_refs": [
+      "docs/evidence/wave1-closure-manifest.json",
+      "docs/verification/PY-10-wave1-live-proof.md",
+      "docs/evidence/wave1-learning-ledger.json"
+    ],
+    "reconciliation_gate": "This phase supplies the evidence-to-owner reconciliation and recommended amendments. It does not enact them. Canonical-document adoption and unresolved Founder decisions remain pending; the broader architecture/requirements adoption exit gate is not claimed satisfied by writing this retrospective."
+  },
+  "yield": {
+    "biu_count": 11,
+    "verifier_rejections": 33,
+    "verifier_verdicts": 44,
+    "execution_cycles": 44,
+    "first_pass_accepted": 2,
+    "first_pass_bius": [
+      "PY-09B",
+      "PY-10"
+    ],
+    "founder_exception_markers": 9,
+    "founder_exceptions_by_biu": [
+      [
+        "PY-01",
+        1
+      ],
+      [
+        "PY-02",
+        1
+      ],
+      [
+        "PY-03",
+        1
+      ],
+      [
+        "PY-04",
+        2
+      ],
+      [
+        "PY-06",
+        1
+      ],
+      [
+        "PY-07",
+        2
+      ],
+      [
+        "PY-08",
+        1
+      ]
+    ],
+    "tests_at_landing_summed": 1479,
+    "tests_summing_caveat": "Per-BIU test counts are cumulative snapshots at landing; the sum is not a wave total.",
+    "elapsed_to_done_seconds": {
+      "measured_bius": 11,
+      "total": 104007.129,
+      "min": 3706.544,
+      "max": 21523.43
+    },
+    "repair_records": 44,
+    "superseded_records": 46,
+    "token_usage_UNKNOWN_bius": 11,
+    "cost_UNKNOWN_bius": 11,
+    "count_definition": "Combined verifier verdicts: Wave 1 does not distinguish VERIFY failures from REVIEW discoveries. Cycles exclude same-phase retries. No unique-defect total is derived.",
+    "token_usage": "UNKNOWN",
+    "cost": "UNKNOWN",
+    "founder_exception_biu_count": 7,
+    "unique_defect_total": "UNKNOWN",
+    "yield_figures_disputed": []
+  },
+  "causality_claim": "HYPOTHESIS ONLY: verification-first sequencing or provider substitution may have contributed to PY-09B/PY-10 first-pass acceptance. RAW-100 was not promoted: n=2, provider change confounded with sequencing change; the coordinator asserted and withdrew causality. FACT is limited to both being first-pass accepted. No comparative causal effect or provider ranking is established.",
+  "learning": {
+    "definitions": {
+      "propagated": "Ledger records with FACT-labelled later_consumption (26). Counts documented reuse, correction or analytical consumption, including explicitly limited same-incident use; not 26 effective preventive controls.",
+      "mechanized": "Ledger enforcement_level=DETERMINISTIC_GATE (8), scoped to the exercised control. Includes bootstrap and evidence-analysis gates; not eight fully implemented Product Requirements.",
+      "proven_red": "Ledger proven_red=yes (14), including actual invalid-input refusal and specific mutation batteries. Does not certify a generic gate or every obligation of its owner.",
+      "ungraduated": "The 11 Phase 3 not_promoted candidates, retained verbatim with revisit conditions. This is not a count of proven recurring defects. The seven promotion proposals also remain unimplemented by Phase 3; the populations must not be conflated."
+    },
+    "counts": {
+      "lessons": 30,
+      "propagated": 26,
+      "mechanized": 8,
+      "proven_red": 14,
+      "ungraduated": 11,
+      "promotion_proposals": 7,
+      "promotion_proposals_blocking": 4,
+      "promotion_proposals_advisory": 3
+    },
+    "propagated_ids": [
+      "LRN-001",
+      "LRN-002",
+      "LRN-003",
+      "LRN-004",
+      "LRN-005",
+      "LRN-006",
+      "LRN-007",
+      "LRN-008",
+      "LRN-009",
+      "LRN-010",
+      "LRN-011",
+      "LRN-012",
+      "LRN-013",
+      "LRN-014",
+      "LRN-015",
+      "LRN-016",
+      "LRN-017",
+      "LRN-018",
+      "LRN-019",
+      "LRN-020",
+      "LRN-021",
+      "LRN-022",
+      "LRN-024",
+      "LRN-025",
+      "LRN-026",
+      "LRN-028"
+    ],
+    "mechanized_ids": [
+      "LRN-005",
+      "LRN-006",
+      "LRN-008",
+      "LRN-010",
+      "LRN-011",
+      "LRN-012",
+      "LRN-017",
+      "LRN-021"
+    ],
+    "proven_red_ids": [
+      "LRN-001",
+      "LRN-002",
+      "LRN-004",
+      "LRN-005",
+      "LRN-006",
+      "LRN-008",
+      "LRN-011",
+      "LRN-012",
+      "LRN-014",
+      "LRN-015",
+      "LRN-016",
+      "LRN-017",
+      "LRN-021",
+      "LRN-026"
+    ],
+    "ledger_dispositions": {
+      "ALREADY_GRADUATED": 9,
+      "STRENGTHEN_EXISTING_OWNER": 17,
+      "GAP_TRAP_PROMOTION": 1,
+      "NEW_CAPABILITY_GAP": 2,
+      "BOOTSTRAP_ONLY": 1
+    },
+    "records": [
+      {
+        "learning_id": "LRN-001",
+        "failure_class": "EVIDENCE_PROOF_DEFECT",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-deterministic-failure-class-promotion.md",
+          "docs/evidence/execution-trajectories/PY-02.jsonl",
+          "docs/evidence/execution-trajectories/PY-05.jsonl",
+          "docs/evidence/execution-trajectories/PY-09.jsonl",
+          "docs/evidence/PY-09B-live-transport.md",
+          "docs/evidence/py09b-proven-red-2026-09-21.json",
+          "docs/verification/PY-10-wave1-live-proof.md",
+          "docs/evidence/py10/proven-red.json",
+          "docs/evidence/wave1-source-observations.json"
+        ],
+        "existing_owner": "SF-REQ-050",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: docs/evidence/PY-09B-live-transport.md records two overdetermined tests corrected before completion; docs/verification/PY-10-wave1-live-proof.md records the query-selection blind spot caught in PY-10.",
+        "effectiveness_evidence": "FACT: PY-09's gutted validator left 183 tests green; PY-09B later retained 13/13 red guards and PY-10 22/22. These are specific batteries, not an implemented general promotion pipeline (docs/evidence/py09b-proven-red-2026-09-21.json; docs/evidence/py10/proven-red.json).",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-002",
+        "failure_class": "unexecuted-composition-path",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md",
+          "docs/evidence/execution-trajectories/PY-06.jsonl",
+          "docs/evidence/execution-trajectories/PY-07.jsonl",
+          "docs/evidence/execution-trajectories/PY-08.jsonl",
+          "docs/evidence/execution-trajectories/PY-09.jsonl"
+        ],
+        "existing_owner": "SF-REQ-014",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: PY-06 acceptance re-executed a real CLI child, publication and read-back; PY-08 eventually gained subprocess negatives; PY-09 still exposed unused substrate (docs/evidence/execution-trajectories/PY-06.jsonl; docs/evidence/execution-trajectories/PY-08.jsonl; docs/evidence/execution-trajectories/PY-09.jsonl).",
+        "effectiveness_evidence": "FACT: unit-tested RetrySchedule/ReservationBook objects were unwired, PY-06 composition raised TypeError, PY-07 used an impossible store double, and five of seven PY-08 commands errored under a real profile. PY-06 repaired exception paths were proven red by source reversion. No common composition-coverage admission gate is evidenced.",
+        "recommended_disposition": "GAP_TRAP_PROMOTION"
+      },
+      {
+        "learning_id": "LRN-003",
+        "failure_class": "verification-sequencing",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md",
+          "docs/evidence/PY-09B-live-transport.md",
+          "docs/verification/PY-10-wave1-live-proof.md",
+          "docs/evidence/execution-trajectories/PY-08.jsonl",
+          "docs/evidence/execution-trajectories/PY-09.jsonl",
+          "docs/evidence/wave1-closure-manifest.json"
+        ],
+        "existing_owner": "SF-REQ-049",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: SWF-23 section 4b was carried into PY-09/PY-10; docs/evidence/PY-09B-live-transport.md and docs/verification/PY-10-wave1-live-proof.md record harness-first work and discoveries before the final candidate.",
+        "effectiveness_evidence": "FACT: PY-08's sixth verdict closed the missing explain/kernel proof and subprocess negatives without fresh defects, but still REJECTED carried obligations. PY-09 later violated the sequencing despite its contract. The later first-pass acceptances do not isolate sequencing as their cause. Red evidence exists for particular checks, not for a gate enforcing proof-before-repair ordering.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-004",
+        "failure_class": "repair-regression",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/execution-trajectories/PY-04.jsonl",
+          "docs/evidence/execution-trajectories/PY-05.jsonl",
+          "docs/evidence/execution-trajectories/PY-06.jsonl",
+          "docs/evidence/execution-trajectories/PY-07.jsonl",
+          "docs/evidence/execution-trajectories/PY-08.jsonl"
+        ],
+        "existing_owner": "SF-REQ-049",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: PY-05 recorded authorized test supersession; PY-06/PY-07 re-executed preserved obligations; PY-08 still regressed AC7 and diagnostics (docs/evidence/execution-trajectories/PY-05.jsonl; docs/evidence/execution-trajectories/PY-06.jsonl; docs/evidence/execution-trajectories/PY-07.jsonl; docs/evidence/execution-trajectories/PY-08.jsonl).",
+        "effectiveness_evidence": "FACT: PY-04 replaced tests and lost proof for five criteria; PY-07 introduced redispatch after cancellation; PY-08's AC7 regression persisted across two reports. PY-07's source-reversion control caught its cancellation regression. The coordinator's attention fix also regressed the no-invocation case in PY-09.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-005",
+        "failure_class": "CUSTODY_IDENTITY_DEFECT",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-candidate-worktree-retention.md",
+          "docs/evidence/2026-09-20-worktree-retention-audit.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/PY-09B-live-transport.md",
+          "docs/verification/PY-10-wave1-live-proof.md",
+          "docs/evidence/py10/proven-red.json"
+        ],
+        "existing_owner": "SF-REQ-007",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DETERMINISTIC_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: SWF-30 was applied to 18 published worktrees with fresh fetched-tree comparisons; PY-09 preserved unique partial work; PY-09B/PY-10 exercised independent custody (docs/evidence/2026-09-20-worktree-retention-audit.md; docs/evidence/2026-09-21-py09-provider-capacity-interruption.md; docs/evidence/PY-09B-live-transport.md; docs/verification/PY-10-wave1-live-proof.md).",
+        "effectiveness_evidence": "FACT: PY-04 verdict 9 could not identify its candidate; its presumptive SHA remains UNKNOWN as custody. Later custody gates and PY-10's custody-recheck mutation failed meaningfully. The audit retained sole copies and active work while removing redundant copies. Graduation is for this scoped identity/retention invariant, not universal automated cleanup.",
+        "recommended_disposition": "ALREADY_GRADUATED"
+      },
+      {
+        "learning_id": "LRN-006",
+        "failure_class": "release-admission-record",
+        "recurrence_count": 2,
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+          "docs/evidence/wave1-source-observations.json",
+          "docs/evidence/2026-09-21-liveness-retry-and-release-admission.md",
+          "docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md",
+          "docs/decisions/2026-09-21-py10-transport-split.md"
+        ],
+        "existing_owner": "SF-REQ-002",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DETERMINISTIC_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: PY-08/PY-09 release records consumed the amended admission checks (docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md; docs/evidence/wave1-source-observations.json); later PY-09B/PY-10 releases are retained in docs/evidence/wave1-evidence-reconciliation.md.",
+        "effectiveness_evidence": "FACT: one PY-06 producer refused nonexistent 6a2d1e9; two PY-07 producers refused one incomplete release. A replay of the PY-07 record failed on its two actual authority defects; live PY-08 admission also refused before prerequisites were satisfied. D8's suffix-parser failure and claimed repair are participant-only; they are not counted as another established defective release or as proven-red evidence.",
+        "recommended_disposition": "ALREADY_GRADUATED"
+      },
+      {
+        "learning_id": "LRN-007",
+        "failure_class": "attention-identity",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md"
+        ],
+        "existing_owner": "SF-REQ-053",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DOCUMENTED_ONLY",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: the PY-09 incident records separate anchors for invocation outcomes and liveness gaps (docs/evidence/2026-09-21-py09-provider-capacity-interruption.md). Later independent exercise is not established.",
+        "effectiveness_evidence": "FACT: one verifier outcome produced three attention items, then removing timestamps globally broke the neighboring invocation-free case. The incident says regression tests were added; the repository record does not retain their red run or demonstrate later effectiveness.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-008",
+        "failure_class": "invocation-success-without-verdict",
+        "recurrence_count": 1,
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/wave1-source-observations.json"
+        ],
+        "existing_owner": "SF-REQ-016",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DETERMINISTIC_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: a fresh verifier reviewed the same cycle-4 candidate and accepted after the no-verdict invocation (docs/evidence/wave1-evidence-reconciliation.md; docs/evidence/wave1-source-observations.json).",
+        "effectiveness_evidence": "FACT: verifier f5ca7bab ended with subtype=success, is_error=false and 39 turns but no B-DISP verdict. It became DURABLE_RESULT_MISSING rather than ACCEPT. This is a real adverse-input refusal, not a new run of the product.",
+        "recommended_disposition": "ALREADY_GRADUATED"
+      },
+      {
+        "learning_id": "LRN-009",
+        "failure_class": "execution-cycle-identity",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-21-biu-execution-cycle-counter.md",
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/wave1-closure-manifest.json",
+          "docs/evidence/wave1-consistency-report.json"
+        ],
+        "existing_owner": "SF-REQ-009",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DOCUMENTED_ONLY",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: terminal reconciliation reconstructs PY-09 as four cycles despite five verifier invocations (docs/evidence/wave1-evidence-reconciliation.md); its checker rejects a retry increment. That is analytical consumption, not a canonical runtime counter.",
+        "effectiveness_evidence": "none — no durable runtime implementation of the SWF-32 counter is established. The evidence checker enforces reconstructed counts but does not own lifecycle state.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-010",
+        "failure_class": "LIVENESS_GAP",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-liveness-reconciliation.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md",
+          "docs/evidence/wave1-evidence-reconciliation.md"
+        ],
+        "existing_owner": "SF-REQ-056",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DETERMINISTIC_GATE",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: PY-08's missing actor was recovered; PY-09's fixed 25-second confirmation produced a false alarm and was changed to bounded polling (docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md; docs/evidence/2026-09-21-py09-provider-capacity-interruption.md).",
+        "effectiveness_evidence": "FACT: SWF-29 records a roughly 28-minute PY-06 dropped-delivery stall despite healthy services. Later recovery exercised the bootstrap mechanism, but the canonical fenced capability and its negative-control evidence are not established by the Wave 1 record.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-011",
+        "failure_class": "judgment-required-retry",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-liveness-reconciliation.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/wave1-source-observations.json"
+        ],
+        "existing_owner": "SWF-29",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DETERMINISTIC_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: PY-09 at 02:20:07.366243Z had IMPLEMENT, no actor, age 441 seconds against 300-second grace and ATTENTION_WAIT; LIVENESS_SUPPRESSED was recorded (docs/evidence/wave1-evidence-reconciliation.md).",
+        "effectiveness_evidence": "FACT: the PY-07 repeated refusal motivated the amendment; PY-09's quota interruption exercised it under a different outcome, preventing re-emission during the observed blocked interval. Eight tests are recorded in the decision. No nine-hour counterfactual retry total is inferred.",
+        "recommended_disposition": "ALREADY_GRADUATED"
+      },
+      {
+        "learning_id": "LRN-012",
+        "failure_class": "effect-recovery-identity",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/decisions/2026-09-20-liveness-reconciliation.md",
+          "docs/evidence/execution-trajectories/PY-03.jsonl",
+          "docs/evidence/execution-trajectories/PY-04.jsonl",
+          "docs/evidence/py10/proven-red.json",
+          "docs/verification/PY-10-wave1-live-proof.md",
+          "docs/evidence/wave1-evidence-reconciliation.md"
+        ],
+        "existing_owner": "SF-REQ-008",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DETERMINISTIC_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: PY-10 killed a process holding launch:SB-01:0, parked it, continued independent work and resumed on an attributable decision (docs/verification/PY-10-wave1-live-proof.md; docs/evidence/wave1-evidence-reconciliation.md).",
+        "effectiveness_evidence": "FACT: the retained lost-effect mutation turns green to red; six sandbox BIUs have one published candidate each. This establishes scoped duplicate-safe publication and conservative recovery, not absence of computation before the kill. SWF-29's Node lane claim is explicitly single-process.",
+        "recommended_disposition": "ALREADY_GRADUATED"
+      },
+      {
+        "learning_id": "LRN-013",
+        "failure_class": "PROVIDER_CAPACITY_INTERRUPTION",
+        "recurrence_count": 3,
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/execution-trajectories/PY-03.jsonl"
+        ],
+        "existing_owner": "SWF-09",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: PY-09 continued its repair under a scoped provider change; the later PY-10 assessment failover still returned SPLIT_RECOMMENDED and did not authorize release (docs/evidence/2026-09-21-py09-provider-capacity-interruption.md; docs/evidence/2026-09-21-agent-ready-provider-failover.md).",
+        "effectiveness_evidence": "FACT: two execution interruptions are retained (PY-03 closure, PY-09 producer), plus one separately scoped Agent-Ready capacity interruption. Recovery worked by operator decision; predictive capacity admission or automatic authorized routing is not demonstrated. Funding-account sharing is a risk, not evidence of an observed second outage.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-014",
+        "failure_class": "specification-consumer-mismatch",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+          "docs/operations/py10-sandbox.md",
+          "docs/decisions/2026-09-21-sandbox-isolation-standard.md",
+          "docs/work-units/python/PY-09B.assessment.2026-09-21-needs-clarification.json",
+          "docs/work-units/python/PY-09B.assessment.json",
+          "docs/evidence/py10-preflight-2026-09-21-pre-contents-grant.json",
+          "docs/evidence/py10-preflight-2026-09-21-negative-control.json",
+          "docs/evidence/py10-preflight-2026-09-21-post-contents-grant.json",
+          "docs/evidence/PY-09B-live-transport.md",
+          "docs/evidence/wave1-evidence-reconciliation.md"
+        ],
+        "existing_owner": "SF-REQ-051",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: Agent-Ready blocked PY-09B, SWF-34 resolved isolation, and corrected permissions were independently exercised by PY-09B/PY-10 (docs/operations/py10-sandbox.md; docs/evidence/PY-09B-live-transport.md; docs/evidence/wave1-evidence-reconciliation.md).",
+        "effectiveness_evidence": "FACT: preflight passed 17/17 against Node's permission set; the corrected expectation failed 2 of 17 before the grant, then passed 17/17. The same contract demanded impossible token-level Project isolation. Specific controls worked after correction; upstream specification derivation remains review-dependent.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-015",
+        "failure_class": "decomposition-conservation",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/decisions/2026-09-21-py10-transport-split.md",
+          "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+          "docs/work-units/python/PY-09B.assessment.json",
+          "docs/work-units/python/PY-10.assessment.json",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/wave1-closure-manifest.json"
+        ],
+        "existing_owner": "SF-REQ-013",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: PY-09B was inserted without renumbering, then PY-10 consumed its accepted transport; both were first-pass accepted (docs/decisions/2026-09-21-py10-transport-split.md; docs/evidence/wave1-evidence-reconciliation.md; docs/evidence/wave1-closure-manifest.json).",
+        "effectiveness_evidence": "FACT: Agent-Ready returned SPLIT_RECOMMENDED for unowned live transport and an expensive coupled proof; release waited for approved SWF-33 and fresh READY. The split retained existing SF-REQ-005/007/038 ownership and capstone proof. A non-READY assessment visibly stopped release; no runtime mutation is claimed.",
+        "recommended_disposition": "ALREADY_GRADUATED"
+      },
+      {
+        "learning_id": "LRN-016",
+        "failure_class": "lifecycle-projection-authority",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/decisions/2026-09-20-wave1-closure-policy.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/wave1-closure-manifest.json",
+          "docs/verification/PY-10-wave1-live-proof.md",
+          "docs/evidence/py10/proven-red.json"
+        ],
+        "existing_owner": "SF-REQ-002",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: SWF-31 corrected PY-06/PY-07 Issue projections so PY-08 could be admitted; PY-10 respected its contract-declared sandbox dependency (docs/decisions/2026-09-20-wave1-closure-policy.md; docs/evidence/wave1-evidence-reconciliation.md; docs/evidence/py10/proven-red.json).",
+        "effectiveness_evidence": "FACT: Project DONE preceded Issue closure and the native dependency check blocked completed predecessors. Terminal capture still found no PY-09B native blocked-by edges despite four declared predecessors. PY-10's sandbox uses matching descriptors/contracts, not native links, and projects lifecycle only at completion. Its dependency-disagreement guard is proven red; full projection alignment is not.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-017",
+        "failure_class": "evidence-derivation-consistency",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/decisions/2026-09-20-evidence-and-intake-ratification.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/wave1-repair-cycles.json",
+          "docs/evidence/wave1-consistency-report.json",
+          "docs/evidence/execution-trajectories/PY-05-to-PY-09-extraction-verification.md",
+          "docs/evidence/wave1-source-observations.json",
+          "tools/evidence/check_wave1.py",
+          "tools/evidence/reconcile_wave1.py",
+          "docs/evidence/2026-09-20-worktree-retention-audit.md"
+        ],
+        "existing_owner": "SF-REQ-030",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DETERMINISTIC_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: the terminal reconciliation replaced inconsistent interim aggregates with source-backed rows and retained history; this task reproduced the existing derivation in memory (docs/evidence/wave1-evidence-reconciliation.md; tools/evidence/reconcile_wave1.py).",
+        "effectiveness_evidence": "FACT: check_wave1.py --negative-controls exited 0 with 1,075 checks, zero failures and 13/13 killed. It rejects wrong counts, UNKNOWN-to-zero, chronology, retry increments, an invented seventh candidate, broken ancestry and removed supersession. It does not mechanically interpret all verifier prose or supply missing telemetry.",
+        "recommended_disposition": "ALREADY_GRADUATED"
+      },
+      {
+        "learning_id": "LRN-018",
+        "failure_class": "duplicate-canonical-owner",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/decisions/2026-09-20-evidence-and-intake-ratification.md",
+          "docs/decisions/2026-09-20-candidate-worktree-retention.md",
+          "docs/decisions/2026-09-21-biu-execution-cycle-counter.md",
+          "docs/decisions/2026-09-20-liveness-reconciliation.md",
+          "docs/proposals/INDEX.md",
+          "docs/proposals/PROP-2026-0004-execution-evidence-derivation-and-consistency-verification.md",
+          "docs/proposals/PROP-2026-0005-proposal-intake-as-product-capability.md"
+        ],
+        "existing_owner": "SF-REQ-055",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: after SF-REQ-054 was folded into SF-REQ-030, SWF-30 chose SF-REQ-007 and SWF-32 chose SF-REQ-009 rather than creating new owners (docs/decisions/2026-09-20-evidence-and-intake-ratification.md; docs/decisions/2026-09-20-candidate-worktree-retention.md; docs/decisions/2026-09-21-biu-execution-cycle-counter.md; docs/proposals/INDEX.md).",
+        "effectiveness_evidence": "FACT: the index preserves immutable proposal history, retirement and amendment targets. SWF-29 separately explains why a new Wave 2 owner was needed to avoid retrofitting Wave 1. This is demonstrated authority-controlled intake practice, not an implemented idempotent intake service.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-019",
+        "failure_class": "observation-without-activation",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md"
+        ],
+        "existing_owner": "SF-REQ-053",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: SWF-27 records a session-bound waiter restoring the callback; the PY-09 incident reports attention reached the resident coordinator in roughly 30 seconds (docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md; docs/evidence/2026-09-21-py09-provider-capacity-interruption.md).",
+        "effectiveness_evidence": "FACT: externalizing monitoring preserved observation but lost the harness callback. SWF-27 records roughly 45 minutes waiting after PY-06 DONE and 1h45m before PY-08 release; PY-07's blocking event was unseen. These are source-recorded approximate delays, not freshly timed measurements. Windows notification seen-by-human remains unproven.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-020",
+        "failure_class": "temporary-authority-expiry",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+          "docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md"
+        ],
+        "existing_owner": "SWF-27",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DOCUMENTED_ONLY",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: SWF-26 has a durable expiry record; the later PY-09-only provider exception lacks a captured extension despite use in PY-09B/PY-10 (docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md; docs/evidence/wave1-evidence-reconciliation.md).",
+        "effectiveness_evidence": "FACT: later producer modelUsage excerpts corroborate Claude use. Any separate extension or ratification is UNKNOWN; this ledger neither ratifies nor reverts it. The expiry inventory's service/profile observations are participant-time observations, not current operational reads. Python sandbox success does not satisfy SWF-21's live-profile replacement condition.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-021",
+        "failure_class": "configuration-input-validation",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md"
+        ],
+        "existing_owner": "SF-REQ-038",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DETERMINISTIC_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: after removal of the unsupported provenance key, the PY-09 profile was accepted and recovery proceeded (docs/evidence/2026-09-21-py09-provider-capacity-interruption.md).",
+        "effectiveness_evidence": "FACT: the loader rejected _providerChangeProvenance as invalid config.workers.PRODUCER. This is observed fail-closed behavior. Exactly three failed starts and zero blast radius are participant claims not independently enumerated in the retained incident record; neither is asserted as a measured result here. Earlier pre-restart validation is not demonstrated.",
+        "recommended_disposition": "ALREADY_GRADUATED"
+      },
+      {
+        "learning_id": "LRN-022",
+        "failure_class": "ambient-provider-credentials",
+        "recurrence_count": 1,
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+          "docs/evidence/py10/proven-red.json",
+          "docs/verification/PY-10-wave1-live-proof.md"
+        ],
+        "existing_owner": "SF-REQ-025",
+        "owner_fit": "ADJACENT",
+        "enforcement_level": "DOCUMENTED_ONLY",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: Agent-Ready failover succeeded after removing the ambient key; PY-10 later retained red evidence for an explicitly stated worker environment (docs/evidence/2026-09-21-agent-ready-provider-failover.md; docs/evidence/py10/proven-red.json).",
+        "effectiveness_evidence": "FACT: the first Claude assessment attempt returned 401 because ANTHROPIC_API_KEY took precedence over the subscription login. The incident says worker launching already filters ambient secrets while coordinator tooling did not. The later worker-environment test does not prove the coordinator-tooling gap was structurally closed.",
+        "recommended_disposition": "NEW_CAPABILITY_GAP"
+      },
+      {
+        "learning_id": "LRN-023",
+        "failure_class": "provider-progress-observability",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+          "docs/evidence/wave1-source-observations.json",
+          "src/providers/codex.mjs",
+          "src/providers/claude.mjs"
+        ],
+        "existing_owner": "SF-REQ-029",
+        "owner_fit": "ADJACENT",
+        "enforcement_level": "DOCUMENTED_ONLY",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "not consumed — no later normalized progress contract or comparable progress trace was established in the reviewed Wave 1 evidence.",
+        "effectiveness_evidence": "FACT: retained terminal records differ (Codex turn.failed versus Claude result/success), and adapter arguments differ (--json versus --output-format json). HYPOTHESIS: buffered versus streaming output contributed to operator uncertainty. No retained comparative timing series establishes buffering, recurrence, or a causal stall; those claims remain unverified.",
+        "recommended_disposition": "NEW_CAPABILITY_GAP"
+      },
+      {
+        "learning_id": "LRN-024",
+        "failure_class": "persistent-diagnostic-coalescing",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/evidence/2026-09-20-worktree-retention-audit.md",
+          "docs/evidence/execution-trajectories/PY-08.jsonl",
+          "docs/evidence/wave1-source-observations.json"
+        ],
+        "existing_owner": "SF-REQ-034",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: the worktree audit assigned coalescing to unreleased PY-08; its later verifier records W10 closed and preserved (docs/evidence/2026-09-20-worktree-retention-audit.md; docs/evidence/execution-trajectories/PY-08.jsonl).",
+        "effectiveness_evidence": "FACT: the audit counted 1,202 emissions from 43 invocation/error pairs, including 980 dirty-retention and 222 registration/branch mismatches. PY-08's verifier later confirmed coalescing and preserved it. Frozen Node noise and remaining CLI logging gaps are distinct from this completed scoped mechanism.",
+        "recommended_disposition": "ALREADY_GRADUATED"
+      },
+      {
+        "learning_id": "LRN-025",
+        "failure_class": "FALSE_OR_ESCALATED_AUTHORITY_REQUEST",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/execution-trajectories/PY-03.jsonl",
+          "docs/evidence/execution-trajectories/PY-04.jsonl",
+          "docs/evidence/execution-trajectories/PY-08.jsonl",
+          "docs/evidence/wave1-source-observations.json"
+        ],
+        "existing_owner": "SF-REQ-006",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: PY-08's claim of four missing predecessor services was checked against the landed tree and rejected without changing its contract or baseline (docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md; docs/evidence/execution-trajectories/PY-08.jsonl; docs/evidence/wave1-source-observations.json).",
+        "effectiveness_evidence": "FACT: PY-03/PY-04 records distinguish incomplete contracted work from genuine authority decisions; PY-08's false escalation was resolved by code-aware review. This worked when judgment was available, but does not establish a durable authority-triage mechanism independent of the resident coordinator.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-026",
+        "failure_class": "bootstrap-mutation-gate-tenure",
+        "recurrence_count": 1,
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md",
+          "docs/decisions/2026-09-20-deterministic-failure-class-promotion.md",
+          "docs/evidence/execution-trajectories/PY-04.jsonl",
+          "docs/evidence/execution-trajectories/PY-05.jsonl",
+          "docs/evidence/wave1-evidence-reconciliation.md"
+        ],
+        "existing_owner": "SWF-26",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "yes",
+        "later_consumption": "FACT: PY-05's release evidence explicitly states SWF-26 does not apply (docs/evidence/execution-trajectories/PY-05.jsonl); the general mutation principle remains with SF-REQ-050.",
+        "effectiveness_evidence": "FACT: the temporary coordinator battery reproduced five survivors and found a sixth on 1b372c2a; the accepted candidate killed 23/23. Its decision is explicitly EXPIRED. The expiry note's 12:27:21Z DONE time differs from the accepted terminal dispatcher time 12:26:25.430Z; the event, not that old timestamp, defines the expiry.",
+        "recommended_disposition": "BOOTSTRAP_ONLY"
+      },
+      {
+        "learning_id": "LRN-027",
+        "failure_class": "coordinator-replacement-continuity",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md"
+        ],
+        "existing_owner": "SF-REQ-053",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DOCUMENTED_ONLY",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "not consumed — a Wave 1 coordinator replacement exercise is not established by the reviewed artifacts.",
+        "effectiveness_evidence": "none — the inventory says no handover occurred and the checkpoint was untested. This is participant evidence of an unproven property, not independent proof that a replacement would fail. SWF-27 documents monitoring decoupling and permits multi-BIU tenure during bootstrap; neither proves restart equivalence.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-028",
+        "failure_class": "acceptance-extent-and-residual-proof",
+        "recurrence_count": "UNKNOWN",
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/wave1-closure-manifest.json",
+          "docs/evidence/execution-trajectories/PY-08.jsonl",
+          "docs/evidence/wave1-source-observations.json",
+          "docs/verification/PY-10-wave1-live-proof.md",
+          "docs/evidence/py10/acceptance-verification.json"
+        ],
+        "existing_owner": "SF-REQ-017",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "REVIEW_GATE",
+        "proven_red": "UNKNOWN",
+        "later_consumption": "FACT: terminal quality and closure records retain nonblocking observations and scoped requirement extents (docs/evidence/wave1-evidence-reconciliation.md; docs/evidence/wave1-closure-manifest.json); PY-10's independent verifier disclosed its production-read limitation.",
+        "effectiveness_evidence": "FACT: PY-08 ACCEPT retained Y7/Y8 despite inaccurate WIP reporting and sparse mutation logs; PY-09 retained a missing proof observation. PY-10's independent verifier could not re-derive the historical production digest. Retained before/after digests and zero observed production events corroborate a limited claim, not absence of every possible write.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-029",
+        "failure_class": "unbounded-nonterminal-retry",
+        "recurrence_count": 1,
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/verification/PY-10-wave1-live-proof.md",
+          "docs/evidence/py10/proven-red.json",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/wave1-source-observations.json"
+        ],
+        "existing_owner": "SF-REQ-022",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DOCUMENTED_ONLY",
+        "proven_red": "no",
+        "later_consumption": "not consumed — the PY-10 proof and closure explicitly carried this limitation forward; no subsequent bounded-run product mechanism is established.",
+        "effectiveness_evidence": "FACT: breaking the per-invocation capability grant made the drain never finish; the retained matrix records exit 124 under the test bound. The proof says the real product re-dispatches nonterminal outcomes indefinitely. The harness fails on timeout; an owning product run-level budget was not demonstrated to fail closed.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      },
+      {
+        "learning_id": "LRN-030",
+        "failure_class": "volatile-worker-outcome-recovery",
+        "recurrence_count": 1,
+        "evidence_refs": [
+          "docs/decisions/alienintent-software-factory-plan.md",
+          "docs/verification/PY-10-wave1-live-proof.md",
+          "docs/evidence/wave1-evidence-reconciliation.md",
+          "docs/evidence/py10/proven-red.json"
+        ],
+        "existing_owner": "SF-REQ-008",
+        "owner_fit": "CANONICAL",
+        "enforcement_level": "DOCUMENTED_ONLY",
+        "proven_red": "no",
+        "later_consumption": "not consumed — no later durable worker-outcome reconciliation replacing the PY-10 in-memory read-back was established.",
+        "effectiveness_evidence": "FACT: the PY-10 process kill destroyed RealWorkerProvider's in-memory read-back. Safe parking worked, but an operator decision was required to resume. This is evidence of conservative safety, not automatic recovery of a knowable completed effect; no durable read-back mechanism or red proof for it is retained.",
+        "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      }
+    ],
+    "promotion_proposals": [
+      {
+        "learning_id": "LRN-001",
+        "existing_owner": "SF-REQ-050",
+        "layer": "mutation_gate",
+        "proposed_strength": "BLOCKING",
+        "historical_proven_red": "yes",
+        "remaining_review": "Humans still select semantically applicable mutations and assess obligation coverage. A timeout can expose liveness debt but cannot certify a different guard. The expired PY-04 coordinator role is not revived by reuse of mutation_gate.",
+        "implementation_status": "PROPOSED_ONLY",
+        "source": "docs/evidence/wave1-gap-trap-promotion-backlog.json#candidates/LRN-001"
+      },
+      {
+        "learning_id": "LRN-002",
+        "existing_owner": "SF-REQ-014",
+        "layer": "python_unit_integration",
+        "proposed_strength": "BLOCKING",
+        "historical_proven_red": "yes",
+        "remaining_review": "Probe inventory and production equivalence remain reviewed. Passing local probes cannot prove live transport or every dynamic path. Static import checks are cheaper but cannot settle this failure class.",
+        "implementation_status": "PROPOSED_ONLY",
+        "source": "docs/evidence/wave1-gap-trap-promotion-backlog.json#candidates/LRN-002"
+      },
+      {
+        "learning_id": "LRN-003",
+        "existing_owner": "SF-REQ-049",
+        "layer": "evidence_consistency",
+        "proposed_strength": "ADVISORY",
+        "historical_proven_red": "UNKNOWN",
+        "remaining_review": "Whether implementation widened and whether the harness is sufficient remain judgment-bound. No authoritative general receipt/order contract or gate red proof is established; keep advisory until those exist.",
+        "implementation_status": "PROPOSED_ONLY",
+        "source": "docs/evidence/wave1-gap-trap-promotion-backlog.json#candidates/LRN-003"
+      },
+      {
+        "learning_id": "LRN-004",
+        "existing_owner": "SF-REQ-049",
+        "layer": "evidence_consistency",
+        "proposed_strength": "BLOCKING",
+        "historical_proven_red": "yes",
+        "remaining_review": "Humans establish obligation identities, authorize target changes and judge semantic weakening. The checker validates already-established authority references; it does not approve supersession or treat a green summary as replay evidence.",
+        "implementation_status": "PROPOSED_ONLY",
+        "source": "docs/evidence/wave1-gap-trap-promotion-backlog.json#candidates/LRN-004"
+      },
+      {
+        "learning_id": "LRN-010",
+        "existing_owner": "SF-REQ-056",
+        "layer": "python_unit_integration",
+        "proposed_strength": "ADVISORY",
+        "historical_proven_red": "UNKNOWN",
+        "remaining_review": "Use existing authorized grace/bounds as parameters, not new policy. Real latency adequacy and canonical observation/fencing integration need proof before blocking. Tests do not authorize re-emission.",
+        "implementation_status": "PROPOSED_ONLY",
+        "source": "docs/evidence/wave1-gap-trap-promotion-backlog.json#candidates/LRN-010"
+      },
+      {
+        "learning_id": "LRN-016",
+        "existing_owner": "SF-REQ-002",
+        "layer": "python_unit_integration",
+        "proposed_strength": "BLOCKING",
+        "historical_proven_red": "yes",
+        "remaining_review": "Does not select a new canonical dependency representation, create native links, or equate sandbox descriptor checks with full production projection alignment. Architecture-fitness import assertions cannot prove admission behavior.",
+        "implementation_status": "PROPOSED_ONLY",
+        "source": "docs/evidence/wave1-gap-trap-promotion-backlog.json#candidates/LRN-016"
+      },
+      {
+        "learning_id": "LRN-019",
+        "existing_owner": "SF-REQ-053",
+        "layer": "python_unit_integration",
+        "proposed_strength": "ADVISORY",
+        "historical_proven_red": "UNKNOWN",
+        "remaining_review": "Real harness/notification receipt and event-classification authority remain integration prerequisites. No automatic model launch, human receipt claim, or new activation policy. Red evidence for a canonical activation gate is UNKNOWN.",
+        "implementation_status": "PROPOSED_ONLY",
+        "source": "docs/evidence/wave1-gap-trap-promotion-backlog.json#candidates/LRN-019"
+      }
+    ],
+    "ungraduated": [
+      {
+        "learning_id": "LRN-007",
+        "reason": "One PY-09 incident produced three observations of one verifier outcome and a neighboring no-invocation regression. This establishes identity defects, but not independent recurrence of the same attention-identity failure or later effectiveness; duplicate wake-ups are not three incidents.",
+        "revisit_condition": "Retain an independently reproduced later identity failure or a repeatable red replay of both identity equivalence cases, with canonical attention integration and measured duplicate/lost-event effects.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-007"
+        ]
+      },
+      {
+        "learning_id": "LRN-009",
+        "reason": "The counter semantics are documented, but the cited runtime defect recurrence is unestablished. Existing evidence_consistency already rejects reconstructed retry increments; a new runtime counter would be implementation work, not graduation of this analytical check.",
+        "revisit_condition": "Retain attributable runtime cycle miscounts and red transition/restart controls against a canonical counter; distinguish repeated delivery from re-entry.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-009"
+        ]
+      },
+      {
+        "learning_id": "LRN-013",
+        "reason": "Capacity interruptions recur, but provider quota prediction is unsupported and the records show operator-authorized recovery, not a validated automatic routing contract. A generic budget-field reminder would not remove quota diagnosis or authority judgment.",
+        "revisit_condition": "An owned routing contract and provider evidence expose a specific deterministic refusal/failover predicate with adverse fixtures that preserve budget, capability and authorization bounds.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-013"
+        ]
+      },
+      {
+        "learning_id": "LRN-014",
+        "reason": "The corrected exact-set preflight is already a demonstrated narrow control. The recurring lesson is whether the permission/isolation premise matches the real consumer and platform; rechecking the same mistaken premise would repeat the observed 17/17 false assurance.",
+        "revisit_condition": "A specific missing consumer-capability assertion beyond the existing doctor is evidenced and proven red, with independently validated expected permissions; keep general specification correctness in REVIEW.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-014"
+        ]
+      },
+      {
+        "learning_id": "LRN-018",
+        "reason": "Semantic duplicate ownership cannot be settled by identifier uniqueness. The ledger shows authority-controlled amendments and retirements, not recurring duplicate-delivery failures of an implemented intake service.",
+        "revisit_condition": "Retain repeated idempotency defects under stable proposal identities and an authoritative proposal-to-owner mapping; semantic overlap remains reviewed.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-018"
+        ]
+      },
+      {
+        "learning_id": "LRN-020",
+        "reason": "Expiry issues need authority interpretation: the later provider-extension evidence is UNKNOWN and replacement criteria are not satisfied by sandbox success. A date comparison could incorrectly retire a protection or silently ratify use.",
+        "revisit_condition": "Capture explicit machine-decidable expiry predicates and replacement evidence with reviewed authority; prove red on a concrete repeated stale-authority case without automatic retirement.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-020"
+        ]
+      },
+      {
+        "learning_id": "LRN-025",
+        "reason": "False escalation recurs, but named-artifact existence does not establish scope, authority or adequacy of predecessor services. A universal refusal rule would suppress legitimate escalations and leave the real code-aware reasoning intact.",
+        "revisit_condition": "A bounded escalation subtype has an authoritative decidable predicate and real true/false examples; artifact lookup alone is insufficient.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-025"
+        ]
+      },
+      {
+        "learning_id": "LRN-027",
+        "reason": "No coordinator replacement exercise is established; an untested checkpoint is not an observed recurring replacement failure. State equality also cannot certify equivalent judgment.",
+        "revisit_condition": "Retain a controlled replacement/replay with attributable lost durable context or divergent authorized actions; define the deterministic state boundary separately from judgment.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-027"
+        ]
+      },
+      {
+        "learning_id": "LRN-028",
+        "reason": "Preserving residual findings is valuable, but deciding exact acceptance extent and whether evidence supports a broad claim remains semantic. Existing evidence consistency covers scoped propagation; a generic completeness field would add review work without settling proof sufficiency.",
+        "revisit_condition": "A repeated concrete mechanical loss of already-classified obligations/residuals escapes existing consistency checks, with a minimal corrupt fixture and authoritative mapping.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-028"
+        ]
+      },
+      {
+        "learning_id": "LRN-029",
+        "reason": "One PY-10 adverse run demonstrates unbounded nonterminal retry; recurrence_count is 1 and product proven_red is no. Harness exit 124 is not a demonstrated product budget refusal. Do not graduate a proposed new runtime behavior.",
+        "revisit_condition": "Observe or reproduce the class independently and retain an owned durable budget implementation with red exhaustion/restart controls distinct from harness timeout.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-029"
+        ]
+      },
+      {
+        "learning_id": "LRN-030",
+        "reason": "One PY-10 process kill exposes volatile read-back; recurrence_count is 1 and proven_red is no. Safe parking already worked. A durable outcome mechanism is future capability work, not established recurring-gate graduation.",
+        "revisit_condition": "Retain another attributable outcome-loss case or independent reproduction and an owned durable recovery design with red persistence/correlation controls; ambiguous effects must still park.",
+        "evidence_refs": [
+          "docs/evidence/wave1-learning-ledger.json#LRN-030"
+        ]
+      }
+    ],
+    "recurring_failures_assessment": "LRN-001/002/003/004 retain repeated proof, composition, sequencing and regression failures despite downstream improvements; their proposed gates are not deployed graduation. Among declines, LRN-013 has three capacity interruptions and LRN-014/025 retain recurring specification/authority-judgment problems. LRN-007 duplicate observations do not establish recurrence, LRN-027 is an unexercised property, and LRN-029/030 are single observed cases. UNKNOWN recurrence remains UNKNOWN.",
+    "ownership_gaps": [
+      {
+        "learning_id": "LRN-022",
+        "reason": "INFERENCE: ADJACENT; NEW_CAPABILITY_GAP under POSTW1-DECIDE-002A. SF-REQ-025 owns exposing provider capabilities and authenticated readiness, not constructing and isolating coordinator-tool invocation environments so ambient credentials cannot override the authorized authentication profile. The prior absorbability rationale stretched that owner. No existing canonical owner cleanly owns the scoped credential-precedence isolation semantics in the reviewed authority. The retained existing_owner names the adjacent requirement, not an assignment of the gap; no requirement is created."
+      },
+      {
+        "learning_id": "LRN-023",
+        "reason": "INFERENCE: ADJACENT; NEW_CAPABILITY_GAP under POSTW1-DECIDE-002A. SF-REQ-029 owns recording engineering trajectory; it does not establish the provider-neutral started/progress/terminal/capacity normalization boundary, including explicit unavailable progress. Activation and diagnostic coalescing are also adjacent controls. No existing canonical owner cleanly owns these scoped normalization semantics in the reviewed authority. The buffering explanation remains a hypothesis; missing implementation alone is not the basis for this ownership finding. The retained existing_owner identifies adjacency; no requirement is created."
+      }
+    ],
+    "source": "docs/evidence/wave1-learning-ledger.json"
+  },
+  "methodology": [
+    {
+      "method": "verification-first",
+      "worked_within_scope": true,
+      "unproven_broader_claim": true,
+      "observation": "PY-09B corrected two overdetermined checks. PY-10 rehearsal caught redaction damage and lost seeding evidence; mutation work exposed the selection-set blind spot and unbounded drain. PY-09 had violated sequencing despite the contract.",
+      "assessment": "Specific harnesses exposed defects before final acceptance. That is demonstrated detection, not proof that ordering improved first-pass yield or that a general sequencing gate works. RAW-100 remains hypothesis-only.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-001",
+        "docs/evidence/wave1-learning-ledger.json#LRN-003",
+        "docs/evidence/PY-09B-live-transport.md",
+        "docs/verification/PY-10-wave1-live-proof.md#6-verification-harness"
+      ]
+    },
+    {
+      "method": "split/decomposition",
+      "worked_within_scope": true,
+      "unproven_broader_claim": true,
+      "observation": "SPLIT_RECOMMENDED held PY-10; SWF-33 inserted PY-09B under existing transport owners, and PY-10 consumed the accepted transport. Phase 5 maps 69 original obligations with a retained integration parent.",
+      "assessment": "Worked for this authorized decomposition and preservation of capstone proof. The 69-row mapping is design/reconciliation evidence, not execution of a generalized atomic split/replan operation; SPLIT-G1 remains open. Two acceptances do not establish a split-related yield effect.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-015",
+        "docs/evidence/wave1-biu-split-replan-design.json",
+        "docs/decisions/2026-09-21-py10-transport-split.md"
+      ]
+    },
+    {
+      "method": "Agent-Ready outcome handling",
+      "worked_within_scope": true,
+      "unproven_broader_claim": true,
+      "observation": "BLOCKED and SPLIT_RECOMMENDED for PY-10 and NEEDS_CLARIFICATION for PY-09B prevented release until prerequisite/Founder resolution and fresh READY. Historical assessments remain in Git; 15 direct objects and 17 MCP envelopes normalize to 31 READY and one NEEDS_CLARIFICATION in current files.",
+      "assessment": "Worked as a human-governed admission boundary. READY was not release authority and provider failure was not a readiness verdict. No silent coercion is demonstrated. G1 implementation/schema/CLI and G2 serialization ownership prevent claiming exhaustive automated outcome handling; G3 is a retention/discovery inconsistency.",
+      "evidence_refs": [
+        "docs/evidence/wave1-agent-ready-outcome-matrix.json#dispositions",
+        "docs/evidence/wave1-agent-ready-outcome-matrix.json#coercion_finding",
+        "docs/evidence/wave1-agent-ready-outcome-matrix.json#gaps"
+      ]
+    },
+    {
+      "method": "Design Verification",
+      "worked_within_scope": true,
+      "unproven_broader_claim": true,
+      "observation": "The copied Node permission expectation passed 17/17 while omitting the real consumer requirement. Corrected expectations failed 2/17 before the grant and passed 17/17 afterward. Agent-Ready challenged impossible token-level Project isolation; SWF-34 approved configuration isolation and compensating proof.",
+      "assessment": "Consumer-aware review and corrected checks worked on these defects. Initial green compliance proved the wrong premise. General design correctness remains judgment-dependent; exact-set checks cannot validate their own expected set. Production digest proof has the independent-verifier read limitation.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-014",
+        "docs/evidence/wave1-learning-ledger.json#LRN-028",
+        "docs/evidence/py10-preflight-2026-09-21-pre-contents-grant.json",
+        "docs/evidence/py10-preflight-2026-09-21-post-contents-grant.json"
+      ]
+    },
+    {
+      "method": "REVIEW -> Gap Trap -> VERIFY",
+      "worked_within_scope": true,
+      "unproven_broader_claim": true,
+      "observation": "Specific adverse controls failed meaningfully: PY-04 accepted battery 23/23, PY-09B 13/13, PY-10 reported 22/22, and evidence consistency 13/13 negative controls. Phase 3 proposed seven promotions and declined eleven of eighteen.",
+      "assessment": "Worked as specific defect detection and bounded reusable checks. A complete recurring-failure graduation pipeline and measured reduction in reviewer work are unproven. The PY-10 capability mutation timeout exposes retry debt; it is not semantic proof of a product budget refusal. Historical battery totals are not additive unique-guard or defect counts.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-001",
+        "docs/evidence/wave1-learning-ledger.json#LRN-017",
+        "docs/evidence/wave1-learning-ledger.json#LRN-026",
+        "docs/evidence/wave1-learning-ledger.json#LRN-029",
+        "docs/evidence/wave1-gap-trap-promotion-backlog.json"
+      ]
+    }
+  ],
+  "architecture": [
+    {
+      "area": "identity",
+      "existing_owners": [
+        "SF-REQ-007",
+        "SF-REQ-009",
+        "SF-REQ-016",
+        "SF-REQ-053"
+      ],
+      "definition": "Candidate, invocation, attention, execution-cycle and external-effect identities have distinct equivalence and retention rules; roles do not require distinct providers. Authority §§4-5 and SF-REQ-007 require fresh independent candidate retrieval.",
+      "observation": "PY-04 verdict 9 could not identify its candidate; PY-10 independently retrieved six candidates. PY-09 success-without-verdict was refused. Repeated outcome attention and invocation-free gap identities collided under an attempted repair.",
+      "verdict": "Custody and result admission worked in scope. Runtime cycle implementation and attention identity effectiveness remain unproven; reconstructed cycle counts are not invocations. Keep persisted identities and role independence.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-005",
+        "docs/evidence/wave1-learning-ledger.json#LRN-007",
+        "docs/evidence/wave1-learning-ledger.json#LRN-008",
+        "docs/evidence/wave1-learning-ledger.json#LRN-009",
+        "docs/evidence/wave1-learning-ledger.json#LRN-012",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md#4-producer-and-verifier-identities"
+      ]
+    },
+    {
+      "area": "recovery",
+      "existing_owners": [
+        "SF-REQ-008",
+        "SF-REQ-056",
+        "SWF-29"
+      ],
+      "definition": "Crash recovery reconciles attributable effects, fences ownership and parks ambiguity. Liveness checks must account for pending/completed effects and unresolved judgment.",
+      "observation": "PY-10 kill parked lost in-memory read-back, continued independent work and resumed after attributable decision. PY-09 showed LIVENESS_SUPPRESSED; fixed early confirmation sampling had produced a false alarm.",
+      "verdict": "Conservative safety and scoped retry suppression worked; durable outcome recovery and canonical fenced liveness replacement are not demonstrated. Recovery before SWF-29 is not credited to the later rule.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-010",
+        "docs/evidence/wave1-learning-ledger.json#LRN-011",
+        "docs/evidence/wave1-learning-ledger.json#LRN-012",
+        "docs/evidence/wave1-learning-ledger.json#LRN-030"
+      ]
+    },
+    {
+      "area": "provider capacity",
+      "existing_owners": [
+        "SWF-09",
+        "SF-REQ-025",
+        "SF-REQ-026",
+        "SF-REQ-028"
+      ],
+      "definition": "Authority §§22-23 require bounded spend and capability/quality-grounded routing. Unknown usage is not zero; assessment failure does not confer readiness.",
+      "observation": "Three ledger capacity interruptions include execution and assessment populations. Operator-authorized failover continued work; ambient credential precedence first returned 401. Later PRODUCER-on-Claude use has no retained extension of the PY-09-only exception.",
+      "verdict": "Manual recovery worked. Predictive quota admission, automatic authorized failover, provider superiority and economic yield remain unproven. Authentication mode is not hard-budget enforcement. LRN-022 is adjacent to SF-REQ-025, not already canonically owned.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-013",
+        "docs/evidence/wave1-learning-ledger.json#LRN-020",
+        "docs/evidence/wave1-learning-ledger.json#LRN-022",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md#22-cost-governance",
+        "docs/evidence/wave1-bootstrap-retirement-matrix.json"
+      ]
+    },
+    {
+      "area": "observability",
+      "existing_owners": [
+        "SF-REQ-029",
+        "SF-REQ-030",
+        "SF-REQ-034",
+        "SF-REQ-053"
+      ],
+      "definition": "Authority §35 separates structured observations from verdicts. Observation, durable attention, machine receipt and human awareness are distinct.",
+      "observation": "An observer continued recording without activating the coordinator. PY-09 bridge receipt was reported; Windows human receipt is unproven. Terminal provider shapes differ; normalized progress is not established. Evidence consistency protects UNKNOWN.",
+      "verdict": "Recorded evidence and scoped diagnostic coalescing worked. Provider-neutral progress normalization has an explicit ownership gap (LRN-023); missing progress cannot mean death. Buffering as a stall cause remains a hypothesis.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-017",
+        "docs/evidence/wave1-learning-ledger.json#LRN-019",
+        "docs/evidence/wave1-learning-ledger.json#LRN-023",
+        "docs/evidence/wave1-learning-ledger.json#LRN-024",
+        "docs/evidence/wave1-learning-ledger.json#LRN-027",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md#35-observability"
+      ]
+    },
+    {
+      "area": "transport",
+      "existing_owners": [
+        "SF-REQ-005",
+        "SF-REQ-007",
+        "SF-REQ-038"
+      ],
+      "definition": "Authority §3 keeps direct webhook/outbound relay behind a port. SWF-33 assigned live GitHub transport, custody and validation to existing owners.",
+      "observation": "PY-09B retained 35 bounded live checks and 13 red guards. PY-10 used real GitHub transport/custody and recorded five signed sandbox deliveries. Repository isolation was permission-enforced; Project isolation was configuration-enforced.",
+      "verdict": "Specified sandbox transport and read-back were exercised. This is not every adapter, live-profile sovereignty, or proof of token-scoped Project isolation. Tunnel retention and Node replacement require their existing gates.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-014",
+        "docs/evidence/wave1-learning-ledger.json#LRN-015",
+        "docs/evidence/wave1-learning-ledger.json#LRN-028",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md#3-transport",
+        "docs/evidence/PY-09B-live-transport.md",
+        "docs/verification/PY-10-wave1-live-proof.md"
+      ]
+    },
+    {
+      "area": "Work Management projection",
+      "existing_owners": [
+        "SF-REQ-002",
+        "SF-REQ-005",
+        "SF-REQ-034",
+        "FD-01"
+      ],
+      "definition": "FD-01: external provider owns upstream work through READY; explicit release transfers execution authority to AlienIntent. Downstream fields are projections. Node external-Project execution authority is protected bootstrap behavior.",
+      "observation": "Project DONE and Issue closure diverged for PY-06/PY-07. PY-09B terminal capture lacked four declared native edges. PY-10 used agreeing descriptor/contract edges and projected READY to DONE only at completion.",
+      "verdict": "The sandbox proved dependency semantics, not native blocked-by alignment or intermediate projection completeness. Preserve the fixed authority boundary; repair projection fidelity under existing owners without importing external DONE into execution truth.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-016",
+        "docs/decisions/2026-09-19-alienintent-work-management-execution-authority.md",
+        "docs/verification/PY-10-wave1-live-proof.md#7-findings-carried-forward"
+      ]
+    },
+    {
+      "area": "lifecycle",
+      "existing_owners": [
+        "SF-REQ-009",
+        "SF-REQ-013",
+        "SF-REQ-016",
+        "SF-REQ-022"
+      ],
+      "definition": "Authority §9 defines lifecycle; SF-REQ-009 owns cycle semantics, excluding same-phase retry/failover. Readiness, release, invocation success, verdict, acceptance and operational closure are different facts.",
+      "observation": "PY-09 four execution cycles included five verifier invocations. PY-10 nonterminal worker outcomes could redispatch indefinitely under a harness wall-clock bound. Phase 5 identifies SPLIT-G1 despite SF-REQ-013 compilation ownership.",
+      "verdict": "Cycle reconstruction and no-verdict refusal worked. Runtime cycle durability is unproven; the external timeout does not satisfy a product run budget. Split conservation requires explicit owner amendment, not weakened predecessor proof.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-008",
+        "docs/evidence/wave1-learning-ledger.json#LRN-009",
+        "docs/evidence/wave1-learning-ledger.json#LRN-015",
+        "docs/evidence/wave1-learning-ledger.json#LRN-029",
+        "docs/evidence/wave1-biu-split-replan-design.json#ownership_audit"
+      ]
+    },
+    {
+      "area": "control plane",
+      "existing_owners": [
+        "SF-REQ-034",
+        "SF-REQ-035",
+        "SF-REQ-053",
+        "SWF-21",
+        "SWF-27",
+        "SWF-29"
+      ],
+      "definition": "Authority §36 requires normal guarded domain interfaces; §§42-43 retain Node operational authority until sovereignty. Durable state must support bounded coordinator episodes.",
+      "observation": "Phase 6 audited 17 mechanisms: one expired retirement candidate, nine keep-until-replaced, one reversion recommendation, six decisions. External 18-module custody is incomplete. No coordinator replacement equivalence or live-profile sovereignty is established.",
+      "verdict": "Retain protection until its exact replacement gate and authority exist. Program mailbox proof is not product attention or handover proof. Formal closure of Wave 1 release authority is not permission to delete admission checks or release Wave 2.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-019",
+        "docs/evidence/wave1-learning-ledger.json#LRN-020",
+        "docs/evidence/wave1-learning-ledger.json#LRN-025",
+        "docs/evidence/wave1-learning-ledger.json#LRN-026",
+        "docs/evidence/wave1-learning-ledger.json#LRN-027",
+        "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md#43-python-sovereignty"
+      ]
+    }
+  ],
+  "recommendations": [
+    {
+      "recommendation_id": "R01",
+      "existing_owner": "SF-REQ-007; SF-REQ-016",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Retain exact custody, independent read-back and invocation-correlated verdict admission; no weakening based on provider success or local-copy retention.",
+      "ownership_proof": "The plan explicitly owns durable candidate retrieval in SF-REQ-007 and observation/verdict separation in SF-REQ-016; the demonstrated controls satisfy these scoped semantics.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-005",
+        "docs/evidence/wave1-learning-ledger.json#LRN-008",
+        "docs/decisions/alienintent-software-factory-plan.md"
+      ]
+    },
+    {
+      "recommendation_id": "R02",
+      "existing_owner": "SF-REQ-008",
+      "change_type": "AMENDMENT",
+      "proposed_change": "Make durable attributable worker-outcome read-back and its restart proof explicit within crash-safe execution; preserve mandatory parking for absent/ambiguous evidence.",
+      "ownership_proof": "SF-REQ-008 already owns crash/restart state and effect reconciliation. This strengthens proof specificity for an observed in-memory read-back limitation; it does not need a second recovery requirement.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-012",
+        "docs/evidence/wave1-learning-ledger.json#LRN-030",
+        "docs/decisions/alienintent-software-factory-plan.md"
+      ]
+    },
+    {
+      "recommendation_id": "R03",
+      "existing_owner": "SF-REQ-022",
+      "change_type": "AMENDMENT",
+      "proposed_change": "Explicitly cover repeated nonterminal worker outcomes with durable run/retry budget exhaustion and restart proof, distinct from per-invocation and harness timeouts.",
+      "ownership_proof": "SF-REQ-022 explicitly owns bounded repair budgets and exhaustion escalation; Authority §§21-22 own finite retries and spend bounds. Clarifying ineligible/rework paths extends this existing boundary without inventing an amount.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-029",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md"
+      ]
+    },
+    {
+      "recommendation_id": "R04",
+      "existing_owner": "SF-REQ-025 (adjacent; proposed amendment target only)",
+      "change_type": "AMENDMENT",
+      "proposed_change": "Extend provider readiness ownership to isolation of coordinator-tool invocation environments and explicit authentication precedence; require an adverse ambient-credential fixture.",
+      "ownership_proof": "Accepted Phase 2 LRN-022 identifies a real ownership gap: authenticated capability discovery does not own construction of coordinator-tool environments. Authority §32 SecretProvider and §12 sandboxing are adjacent to secret access/containment, not this precedence contract; worker-environment proof does not cover coordinator tooling. Prefer explicit SF-REQ-025 scope amendment over a new requirement; current ownership is not asserted.",
+      "current_semantics_ownership_gap": true,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": "FOUNDER_RECONCILIATION_DISPOSITION",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-022",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md"
+      ]
+    },
+    {
+      "recommendation_id": "R05",
+      "existing_owner": "SF-REQ-029 (adjacent; proposed amendment target only)",
+      "change_type": "AMENDMENT",
+      "proposed_change": "Extend trajectory ownership to provider-neutral started/progress/terminal/capacity normalization, preserving raw provenance and explicit unavailable progress.",
+      "ownership_proof": "Accepted Phase 2 LRN-023 identifies a real ownership gap: trajectory recording does not own normalization. SF-REQ-053 activation and SF-REQ-034 diagnostic presentation/coalescing are neighboring consumers, not owners of the provider observation contract. Authority §35 lists observability surfaces without this contract. An explicit SF-REQ-029 amendment is preferred; no current ownership or buffering cause is presumed.",
+      "current_semantics_ownership_gap": true,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": "FOUNDER_RECONCILIATION_DISPOSITION",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-023",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md"
+      ]
+    },
+    {
+      "recommendation_id": "R06",
+      "existing_owner": "SF-REQ-013 (current compilation owner; proposed transaction owner)",
+      "change_type": "AMENDMENT",
+      "proposed_change": "Adopt the conserved split/replan transaction scope proposed in Phase 5, retaining integration parent, lineage, all 69 mapped obligations, invalidation and recovery conditions.",
+      "ownership_proof": "SF-REQ-013 says only to lower governed requirements into bounded BIUs with explicit satisfaction links and dependency DAGs. It does not specify revision of an existing decomposition or conservation/transaction semantics. SF-REQ-015 checks unresolved decisions, boundaries, missing acceptance/verification, architecture and dependencies, while preserving Agent-Ready authority; checking an input is not authority or an operation to rewrite it. SWF-33 authorizes this particular split, not a general product mechanism. Neither candidate presently owns the complete operation explicitly. Amendment preferred over a new requirement; do not treat compilation ownership as existing complete transaction ownership.",
+      "current_semantics_ownership_gap": true,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": "POSTW1-DECIDE-005A",
+      "evidence_refs": [
+        "docs/evidence/wave1-biu-split-replan-design.json#ownership_audit",
+        "docs/decisions/alienintent-software-factory-plan.md"
+      ]
+    },
+    {
+      "recommendation_id": "R07",
+      "existing_owner": "SF-REQ-014; SF-REQ-049; SF-REQ-050",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Retain proof-before-widening, preserved obligations and discriminating mutation duties; carry Phase 3 proposals as prospective implementation under existing owners, not deployed gates.",
+      "ownership_proof": "SF-REQ-014 owns prior mechanical obligations; SWF-23 assigns convergent repair to SF-REQ-049; SWF-24 assigns failure-class promotion to SF-REQ-050. The seven proposed gates and three advisory limits do not require new Product Requirements.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-001",
+        "docs/evidence/wave1-learning-ledger.json#LRN-002",
+        "docs/evidence/wave1-learning-ledger.json#LRN-003",
+        "docs/evidence/wave1-learning-ledger.json#LRN-004",
+        "docs/evidence/wave1-gap-trap-promotion-backlog.json"
+      ]
+    },
+    {
+      "recommendation_id": "R08",
+      "existing_owner": "SF-REQ-051",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Keep independent consumer/platform validation of design premises; exact-set checks alone cannot establish specification correctness.",
+      "ownership_proof": "SWF-25 explicitly owns Design Contract and independent Design Verification in SF-REQ-051. The permission/isolation findings are failures within that obligation, not an uncovered new capability.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-014",
+        "docs/decisions/2026-09-20-design-contract-and-design-verification.md"
+      ]
+    },
+    {
+      "recommendation_id": "R09",
+      "existing_owner": "SF-REQ-002; SF-REQ-005; SF-REQ-034; FD-01",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Preserve lifecycle-authoritative dependency admission and separately visible projection disagreement; carry incomplete intermediate/native-link projection as existing-owner implementation debt.",
+      "ownership_proof": "SF-REQ-002 explicitly says dependency satisfaction is lifecycle-based; FD-01 fixes upstream/execution/projection ownership; SF-REQ-005 owns the port and SF-REQ-034 its operator view. No new authority or dependency representation is selected.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-016",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/decisions/2026-09-19-alienintent-work-management-execution-authority.md"
+      ]
+    },
+    {
+      "recommendation_id": "R10",
+      "existing_owner": "SF-REQ-009",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Retain SWF-32 cycle semantics and explicit absence of runtime proof; never count same-phase retries as cycles.",
+      "ownership_proof": "SWF-32 already amends SF-REQ-009 with transition, retry, duplicate delivery and reconstruction rules, and explicitly leaves implementation unscheduled. Consumers do not own the counter.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-009",
+        "docs/decisions/2026-09-21-biu-execution-cycle-counter.md"
+      ]
+    },
+    {
+      "recommendation_id": "R11",
+      "existing_owner": "SF-REQ-056; SWF-29; SF-REQ-053",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Retain bounded liveness reconciliation, judgment suppression and durable attention; replace bootstrap mechanisms only against the Phase 6 component gates.",
+      "ownership_proof": "SWF-29 separates the bootstrap mechanism from SF-REQ-056 canonical capability; SWF-27/SF-REQ-053 owns persistent attention and restart equivalence. Existing owners already cover these unmet protections.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-007",
+        "docs/evidence/wave1-learning-ledger.json#LRN-010",
+        "docs/evidence/wave1-learning-ledger.json#LRN-011",
+        "docs/evidence/wave1-learning-ledger.json#LRN-019",
+        "docs/evidence/wave1-learning-ledger.json#LRN-027",
+        "docs/evidence/wave1-bootstrap-retirement-matrix.json"
+      ]
+    },
+    {
+      "recommendation_id": "R12",
+      "existing_owner": "SWF-21; SWF-27; Architecture Authority §§42-43",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Carry six bootstrap decisions and the separately authorized PRODUCER reversion forward; retain Node, compatibility and protections until their exact gates are satisfied.",
+      "ownership_proof": "Phase 6 names each component authority and expiry. Sovereignty and live-profile replacement are already defined; this recommendation neither extends a temporary grant nor orders live retirement.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": "POSTW1-DECIDE-006A",
+      "evidence_refs": [
+        "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md"
+      ]
+    },
+    {
+      "recommendation_id": "R13",
+      "existing_owner": "SF-REQ-015; SWF-21 (handling/custody only)",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Preserve four-outcome handling, immutable reassessment lineage and non-READY release refusal; carry G1/G2 ownership assignment forward without inventing an assessment schema owner.",
+      "ownership_proof": "SF-REQ-015 preserves Agent-Ready readiness authority; SWF-21 and SWF-33/34 govern evidenced release and reassessment. These do not own the missing implementation/schema/CLI or canonical serialization; Phase 4 expressly records G1/G2. No requirement change is proposed before the existing Founder assignment.",
+      "current_semantics_ownership_gap": true,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": "POSTW1-DECIDE-004A",
+      "evidence_refs": [
+        "docs/evidence/wave1-agent-ready-outcome-matrix.json",
+        "docs/decisions/alienintent-software-factory-plan.md"
+      ]
+    },
+    {
+      "recommendation_id": "R14",
+      "existing_owner": "SF-REQ-025; SF-REQ-026; SF-REQ-028; SWF-09",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Retain capability, quality, budget and authorization predicates for any future provider routing; make no quota prediction, economic ranking or automatic-failover claim from these runs.",
+      "ownership_proof": "The existing owners cover capability discovery, quality-constrained routing and attributable economics. Wave 1 operator substitution is not a new routing specification or measured cost comparison.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-013",
+        "docs/evidence/wave1-learning-ledger.json#LRN-020",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md"
+      ]
+    },
+    {
+      "recommendation_id": "R15",
+      "existing_owner": "SF-REQ-030; SF-REQ-017; SF-REQ-055",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Retain source-backed evidence, UNKNOWN telemetry, residual acceptance limits and amendment-first intake; preserve the eleven declines as findings.",
+      "ownership_proof": "SF-REQ-030 explicitly owns consistency and UNKNOWN negative controls, SF-REQ-017 owns claim-to-evidence traceability, and SF-REQ-055 owns proposal intake without duplicate canonical ownership.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-017",
+        "docs/evidence/wave1-learning-ledger.json#LRN-018",
+        "docs/evidence/wave1-learning-ledger.json#LRN-028",
+        "docs/decisions/alienintent-software-factory-plan.md"
+      ]
+    },
+    {
+      "recommendation_id": "R16",
+      "existing_owner": "SF-REQ-005; SF-REQ-007; SF-REQ-038; Architecture Authority §3",
+      "change_type": "NO_CHANGE",
+      "proposed_change": "Retain the transport port, scoped custody and validation obligations; record sandbox proof extents without upgrading them to live-profile sovereignty or changing isolation policy.",
+      "ownership_proof": "SWF-33 already binds the live transport split to these owners; Authority §3 owns adapter separation. No uncovered transport semantics or new requirement is established by this retrospective.",
+      "current_semantics_ownership_gap": false,
+      "priority_or_wave_invented": false,
+      "enactment": "NOT_ENACTED",
+      "founder_decision_ref": null,
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-014",
+        "docs/evidence/wave1-learning-ledger.json#LRN-015",
+        "docs/evidence/wave1-learning-ledger.json#LRN-028",
+        "docs/decisions/2026-09-21-py10-transport-split.md",
+        "docs/architecture/alienintent-architecture-authority-2026-09-19.md"
+      ]
+    }
+  ],
+  "unresolved_founder_decisions": [
+    {
+      "decision_ref": "POSTW1-DECIDE-004A",
+      "existing_open_decision": true,
+      "question": "Founder: assign an owner for the Agent-Ready implementation/schema/CLI (G1) and the canonical serialization contract (G2)",
+      "scope": [
+        "non-blocking: carried to the Phase 14 packet, does not halt phases 5-13"
+      ],
+      "evidence_refs": [
+        "docs/evidence/wave1-agent-ready-outcome-matrix.json"
+      ],
+      "status": "FOUNDER_DECISION_REQUIRED; carried forward unchanged, not newly registered"
+    },
+    {
+      "decision_ref": "POSTW1-DECIDE-005A",
+      "existing_open_decision": true,
+      "question": "Founder: amend SF-REQ-013 to own the split/replan transaction (SPLIT-G1)",
+      "scope": [
+        "non-blocking: carried to the Phase 14 packet; phases 6-13 do not require it"
+      ],
+      "evidence_refs": [
+        "docs/evidence/wave1-biu-split-replan-design.json"
+      ],
+      "status": "FOUNDER_DECISION_REQUIRED; carried forward unchanged, not newly registered"
+    },
+    {
+      "decision_ref": "POSTW1-DECIDE-006A",
+      "existing_open_decision": true,
+      "question": "Founder: 6 NEEDS_DECISION mechanisms plus the PRODUCER-on-Claude reversion",
+      "scope": [
+        "non-blocking: no phase 7-13 work depends on these; carried to the Phase 14 packet",
+        "SWF-21 release authority",
+        "Windows notification",
+        "session-bound attention waiter",
+        "sandbox ingress tunnel",
+        "eighteen external bootstrap modules",
+        "resident coordinator multi-BIU tenure",
+        "PRODUCER-on-Claude reversion requires a separately authorized operational change"
+      ],
+      "evidence_refs": [
+        "docs/evidence/wave1-bootstrap-retirement-matrix.json"
+      ],
+      "status": "FOUNDER_DECISION_REQUIRED; carried forward unchanged, not newly registered"
+    },
+    {
+      "decision_ref": "FOUNDER_RECONCILIATION_DISPOSITION",
+      "existing_open_decision": false,
+      "registered_task_id": null,
+      "question": "Accept, reject or revise the Phase 7 amendment recommendations, including explicit ownership of LRN-022 and LRN-023; assign any needed Priority/Wave only by Founder decision.",
+      "scope": [
+        "R02-R05 scope/proof amendments; R06 remains exclusively POSTW1-DECIDE-005A",
+        "R04/R05 preserve the two Phase 2 gaps, not two newly discovered gaps",
+        "No scheduling or canonical amendment is enacted; no new program task is created"
+      ],
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.json#LRN-022",
+        "docs/evidence/wave1-learning-ledger.json#LRN-023",
+        "docs/evidence/wave1-learning-ledger.json#disposition_rationale"
+      ],
+      "status": "RECOMMENDED_DECISION_FOR_FOUNDER; unregistered question, not an additional program-state task"
+    }
+  ],
+  "disputed": [],
+  "provenance": {
+    "repository_root": "/mnt/d/Projects/alienintent",
+    "branch": "main",
+    "repository_head": "712d39f5c70be6fa98e53a68742dde2c341d4666",
+    "wave1_terminal_implementation_sha": "10cc81620511af56befbb6140504d1991bb02846",
+    "git_identity": {
+      "name": "netmarine",
+      "email": "sanuk.du@gmail.com"
+    },
+    "authority": "Direct POSTW1-RETRO-007 user packet; exactly two deliverables; no commits, network, prior-phase edits or runtime actions.",
+    "source_policy": "Yield copied from accepted prework, not recounted. Accepted phase findings are authoritative inputs; linked historical observations are not fresh live measurements. Semantic #LRN selectors identify JSON learning_id records, not JSON Pointer syntax.",
+    "initial_changes_classification": "KNOWN_AUTHORIZED task inputs: program-state adds RUNNING POSTW1-RETRO-007; untracked yield prework, matching prompt, checker and checker tests implement this packet. Preserved without edits.",
+    "initial_changed_paths": [
+      "docs/operations/post-wave1-program/program-state.json",
+      "docs/operations/post-wave1-program/prework/POSTW1-RETRO-007-yield.json",
+      "docs/operations/post-wave1-program/prompts/POSTW1-RETRO-007.md",
+      "tools/evidence/check_retrospective.py",
+      "tools/evidence/test_check_retrospective.py"
+    ],
+    "sources": [
+      {
+        "path": "docs/architecture/alienintent-architecture-authority-2026-09-19.md",
+        "sha256": "458a19726cfc72f680161bde97671870ea4e21f55de734a073b94a610067155f"
+      },
+      {
+        "path": "docs/architecture/canonical-architecture.md",
+        "sha256": "d1a8277fecdd49ffc0c942683bd3e1f265c5d64c167257bac70cd595b760515d"
+      },
+      {
+        "path": "docs/decisions/2026-09-19-alienintent-work-management-execution-authority.md",
+        "sha256": "b7b6421412f245b35ee5a2b6c6cb46d7f6086797f61f5f90da79caf635db6965"
+      },
+      {
+        "path": "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+        "sha256": "b9c4d00bf50280db41fdd9e3a52fef7ecc55e4fce34dcfd58355c305fd814e49"
+      },
+      {
+        "path": "docs/decisions/2026-09-21-biu-execution-cycle-counter.md",
+        "sha256": "a8aea557829dab270fbb89f26dd8836549d6861f838d318ef676b70ccf3e6533"
+      },
+      {
+        "path": "docs/decisions/2026-09-21-py10-transport-split.md",
+        "sha256": "9556450d30168be28975a2820e168b243f25f9a203abb5c0eda2c77bef93d54c"
+      },
+      {
+        "path": "docs/decisions/alienintent-software-factory-plan.md",
+        "sha256": "6207771dadb6d670e0fb235b68f8df3e726dd04737366198520b4c4e852015bc"
+      },
+      {
+        "path": "docs/evidence/PY-09B-live-transport.md",
+        "sha256": "5c8cffc5501a037294cea69915a8334bb0ba4c6f35dd1617aeb4596e68b8cad2"
+      },
+      {
+        "path": "docs/evidence/py10-preflight-2026-09-21-post-contents-grant.json",
+        "sha256": "658f7be6dce75c57a5fea88d4cb387f8085d24d977ac324a5d6209b90d342095"
+      },
+      {
+        "path": "docs/evidence/py10-preflight-2026-09-21-pre-contents-grant.json",
+        "sha256": "e9863d966b6f970789ca909e612c67eb485581305a3677b3816d78b1ae3d1146"
+      },
+      {
+        "path": "docs/evidence/wave1-agent-ready-outcome-matrix.json",
+        "sha256": "f9730f9eccf4022e314f74bdf3d3ac257c0e07d00c76d6cf87419e472fe4e145"
+      },
+      {
+        "path": "docs/evidence/wave1-biu-split-replan-design.json",
+        "sha256": "0796f8eb18c853e1c349bc93b4ed8093e56bd2681f7fd968fb518167687bd8d2"
+      },
+      {
+        "path": "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+        "sha256": "2b5006d881388f90d5f21d364b7a77d6a77d267c7135266d50737397185f311a"
+      },
+      {
+        "path": "docs/evidence/wave1-closure-manifest.json",
+        "sha256": "64a7fb1357690fdade561663398cd7d3a03602449bc62d6e4670307408f9f9a2"
+      },
+      {
+        "path": "docs/evidence/wave1-gap-trap-promotion-backlog.json",
+        "sha256": "cd21a38bb6e692436adf425b61788f114e9763e1d99b5b79923e50113c86d882"
+      },
+      {
+        "path": "docs/evidence/wave1-learning-ledger.json",
+        "sha256": "72bebcdf4e6b662fae2a1a21ff88710fecffcab8062099c91d6ce4717dc9261e"
+      },
+      {
+        "path": "docs/operations/post-wave1-program/prework/POSTW1-RETRO-007-yield.json",
+        "sha256": "2f832cda83ce7ca5434815d61ab6b535bd475a0a2b2a51e449a8168a1aa4c513"
+      },
+      {
+        "path": "docs/operations/post-wave1-program/program-state.json",
+        "sha256": "8794b605db6165d3e314af966a9b28d27851bdd7ec1e47aa50a9b50ea9e2bcec"
+      },
+      {
+        "path": "docs/operations/post-wave1-program/prompts/POSTW1-RETRO-007.md",
+        "sha256": "0262a6b422f6f43f490b4eb724a16359c1be26ec68e099a1535443b423c8d857"
+      },
+      {
+        "path": "docs/verification/PY-10-wave1-live-proof.md",
+        "sha256": "80d20226c3d380923d5cee784911d7bf6efdfa0e877628f0bfa673c904fcea68"
+      },
+      {
+        "path": "tools/evidence/check_retrospective.py",
+        "sha256": "b0fa9b82a528dc2597cf8fd3e60827520a55c259a645bbe191b2aaf62c7c9011"
+      },
+      {
+        "path": "tools/evidence/check_wave1.py",
+        "sha256": "fe25b0577dc185a2c00ec33984c39b9c4d989b14418fb7d364d9bedb8a34e774"
+      },
+      {
+        "path": "tools/evidence/test_check_retrospective.py",
+        "sha256": "60e97494d08e6e4d2f48e6fa29bc5ae71348d80df0ea00e4181b27aa0fbadbb9"
+      }
+    ],
+    "review": "Independent coordinator review follows; no self-approval or Phase 8 advancement.",
+    "disposition": {
+      "state": "PARKED_FOR_REQUESTED_REVIEW",
+      "owner": "POSTW1-RETRO-007 author",
+      "branch": "main",
+      "temporary_branch_or_worktree_created": false,
+      "unique_content": [
+        "docs/evidence/wave1-final-retrospective.json",
+        "docs/evidence/wave1-final-retrospective.md"
+      ],
+      "reason": "User explicitly prohibits commit, push and network. Two uncommitted deliverables are the authorized handoff.",
+      "next_action": "Independent coordinator review; any subsequent canonical amendment or publication requires its own authority."
+    }
+  },
+  "verification": {
+    "required_commands": [
+      "rtk proxy python3 tools/evidence/check_retrospective.py docs/evidence/wave1-final-retrospective.json",
+      "rtk proxy python3 tools/evidence/check_wave1.py --negative-controls"
+    ],
+    "status": "PASS",
+    "limits": "These check artifact structure and accepted evidence consistency. They do not adjudicate semantic ownership, independently review the retrospective, or establish runtime effectiveness.",
+    "results": [
+      {
+        "command": "rtk proxy python3 tools/evidence/check_retrospective.py docs/evidence/wave1-final-retrospective.json",
+        "exit_code": 0,
+        "result": "PASS; 16 recommendations, six contract checks, zero failures"
+      },
+      {
+        "command": "rtk proxy python3 tools/evidence/check_wave1.py --negative-controls",
+        "exit_code": 0,
+        "result": "PASS; 1075 checks, zero failures, 13/13 negative controls killed"
+      }
+    ],
+    "source_preservation": {
+      "result": "PASS",
+      "existing_files_hashed": 318,
+      "changed_existing_files": [],
+      "scope": "All existing docs and tools/evidence files except __pycache__, captured before output creation; exact byte hashes compared after checks."
+    }
+  }
+}

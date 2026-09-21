@@ -6,9 +6,10 @@
   "3",
   "4",
   "5",
-  "6"
+  "6",
+  "7"
  ],
- "current_phase": "7",
+ "current_phase": "8",
  "program": "post-wave1-to-wave2",
  "tasks": {
   "POSTW1-AGENTREADY-004": {
@@ -213,6 +214,28 @@
    "title": "Founder: 6 NEEDS_DECISION mechanisms plus the PRODUCER-on-Claude reversion",
    "updated_at": "2026-09-21T20:10:44.322069+00:00"
   },
+  "POSTW1-DECIDE-007A": {
+   "artifact_refs": [
+    "docs/evidence/wave1-final-retrospective.json"
+   ],
+   "assigned_actor": "founder",
+   "blockers": [
+    "non-blocking: phases 8-13 proceed against the current requirement set",
+    "Phase 8 must treat the 5 amendments as pending, not settled"
+   ],
+   "created_at": "2026-09-21T20:23:15.516357+00:00",
+   "critical_path": false,
+   "phase": "7",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": null,
+   "risk_class": "HIGH",
+   "routing": null,
+   "status": "FOUNDER_DECISION_REQUIRED",
+   "task_id": "POSTW1-DECIDE-007A",
+   "title": "Founder: accept/reject/revise the 5 Phase 7 amendment recommendations, and assign ownership for LRN-022 and LRN-023",
+   "updated_at": "2026-09-21T20:23:15.516372+00:00"
+  },
   "POSTW1-GAPTRAP-003": {
    "artifact_refs": [
     "docs/evidence/wave1-gap-trap-promotion-backlog.json",
@@ -294,6 +317,45 @@
    "task_id": "POSTW1-LEARN-002",
    "title": "Wave 1 Learning Consolidation",
    "updated_at": "2026-09-21T19:20:19.412159+00:00"
+  },
+  "POSTW1-RETRO-007": {
+   "artifact_refs": [
+    "docs/evidence/wave1-final-retrospective.json",
+    "docs/evidence/wave1-final-retrospective.md"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-21T20:14:04.791132+00:00",
+   "critical_path": null,
+   "phase": "7",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "PASS",
+   "risk_class": "HIGH",
+   "routing": {
+    "chosen_actor": "codex-fresh",
+    "deterministic_prework": [
+     "docs/operations/post-wave1-program/prework/POSTW1-RETRO-007-yield.json"
+    ],
+    "five_questions": {
+     "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+     "cheapest_model_likely_to_succeed_first_pass": "gpt-6-astra",
+     "does_this_need_independent_review": "yes (risk HIGH)",
+     "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
+     "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
+    },
+    "model": "gpt-6-astra",
+    "rationale": "Substantial code-aware/technical work; Codex is the configured primary analyst and fresh context avoids inheriting participant bias.",
+    "review_required": true,
+    "risk_class": "HIGH",
+    "sandbox": "workspace-write",
+    "task_type": "evidence_reconciliation",
+    "tier": "CODEX_PRIMARY"
+   },
+   "status": "DONE",
+   "task_id": "POSTW1-RETRO-007",
+   "title": "Final Wave 1 Retrospective + Architecture Reconciliation",
+   "updated_at": "2026-09-21T20:23:15.507367+00:00"
   },
   "POSTW1-REVIEW-001": {
    "artifact_refs": [
@@ -393,5 +455,5 @@
    "updated_at": "2026-09-21T19:57:11.598277+00:00"
   }
  },
- "updated_at": "2026-09-21T20:10:44.336348+00:00"
+ "updated_at": "2026-09-21T20:23:15.532728+00:00"
 }
