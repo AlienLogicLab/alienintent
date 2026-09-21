@@ -1,0 +1,117 @@
+{
+ "derived_at_head": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+ "method_note": "A first pass searched only for markdown headings and concluded six requirements were undefined. That was wrong: definitions take three forms. The corrected method searches all three. This is recorded because the method, not the number, is what a later reader needs.",
+ "requirement_register": {
+  "single_register_exists": false,
+  "definition_forms": {
+   "factory_plan_heading": [
+    "SF-REQ-001",
+    "SF-REQ-002",
+    "SF-REQ-003",
+    "SF-REQ-004",
+    "SF-REQ-005",
+    "SF-REQ-006",
+    "SF-REQ-007",
+    "SF-REQ-008",
+    "SF-REQ-009",
+    "SF-REQ-010",
+    "SF-REQ-011",
+    "SF-REQ-012",
+    "SF-REQ-013",
+    "SF-REQ-014",
+    "SF-REQ-015",
+    "SF-REQ-016",
+    "SF-REQ-017",
+    "SF-REQ-018",
+    "SF-REQ-019",
+    "SF-REQ-020",
+    "SF-REQ-021",
+    "SF-REQ-022",
+    "SF-REQ-023",
+    "SF-REQ-024",
+    "SF-REQ-025",
+    "SF-REQ-026",
+    "SF-REQ-027",
+    "SF-REQ-028",
+    "SF-REQ-029",
+    "SF-REQ-030",
+    "SF-REQ-031",
+    "SF-REQ-032",
+    "SF-REQ-033",
+    "SF-REQ-034",
+    "SF-REQ-035",
+    "SF-REQ-036",
+    "SF-REQ-037",
+    "SF-REQ-038",
+    "SF-REQ-039",
+    "SF-REQ-040",
+    "SF-REQ-041",
+    "SF-REQ-042",
+    "SF-REQ-043",
+    "SF-REQ-044",
+    "SF-REQ-045",
+    "SF-REQ-046",
+    "SF-REQ-047",
+    "SF-REQ-050",
+    "SF-REQ-054",
+    "SF-REQ-055"
+   ],
+   "decision_record_canonical_requirement": [
+    "SF-REQ-050",
+    "SF-REQ-051",
+    "SF-REQ-053"
+   ],
+   "decision_record_recorded_as": [
+    "SF-REQ-049"
+   ]
+  },
+  "counts": {
+   "heading": 50,
+   "canonical_requirement": 3,
+   "recorded_as": 1,
+   "referenced_anywhere": 56,
+   "defined_in_some_form": 53
+  },
+  "referenced_but_not_defined_in_any_form": [
+   "SF-REQ-048",
+   "SF-REQ-052",
+   "SF-REQ-056"
+  ],
+  "consequence": "There is no single requirement register. Definitions live in the factory plan as headings and in decision records as prose. Any Wave 2 inventory must search all forms or it will under-count, and a requirement register may itself be a Wave 2 candidate."
+ },
+ "wave2_named_candidates": {
+  "SF-REQ-051": {
+   "form": "decision-record canonical requirement",
+   "source": "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+   "note": "Agent-Ready extension for design existence/verification is explicitly 'not built now'."
+  },
+  "SF-REQ-053": {
+   "form": "decision-record canonical requirement",
+   "source": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+   "note": "Phase 6 records the coordinator tenure and checkpoint as unreplaced; LRN-027 establishes no handover was ever exercised."
+  },
+  "SF-REQ-056": {
+   "form": "ANTICIPATED, not specified",
+   "source": "docs/decisions/2026-09-20-liveness-reconciliation.md",
+   "note": "SWF-29 names it as the capability whose arrival expires the bootstrap watcher, and narrows what it must do, but no definition sentence specifies it. Phase 6 made SWF-29 KEEP_UNTIL_REPLACED on exactly this basis. Specifying it in Phase 8 is therefore writing the requirement, not restating one -- a boundary the Director may not cross silently."
+  },
+  "SF-REQ-039": {
+   "form": "factory-plan heading",
+   "priority": "P1",
+   "text": "Support deterministic scripted/fake workers that exercise the real factory lifecycle without provider credentials or token spend."
+  }
+ },
+ "pending_amendments_not_settled": [
+  "SF-REQ-008",
+  "SF-REQ-022",
+  "SF-REQ-025 (adjacent)",
+  "SF-REQ-029 (adjacent)",
+  "SF-REQ-013"
+ ],
+ "open_founder_decisions": [
+  "POSTW1-DECIDE-004A",
+  "POSTW1-DECIDE-005A",
+  "POSTW1-DECIDE-006A",
+  "POSTW1-DECIDE-007A"
+ ]
+}
