@@ -250,6 +250,21 @@ must stay proven, and only then does broad implementation repair belong in the c
 widens implementation while the harness for what it touches is missing is out of order — say so at the
 rejection rather than waiting for the defect it predicts. Binding for PY-09 and PY-10.
 
+### Repair-cycle data (factory yield)
+
+Attention and measurement are separate: the attention queue wakes a coordinator only when judgment is
+needed, so it must never decide what gets recorded. Every cycle is measured regardless.
+
+```
+python3 ~/.local/share/alienintent-bootstrap/cycle_data.py <issue>... \
+  --out docs/evidence/wave1-repair-cycles.json
+```
+
+Cycle identity comes from the **B-DISP result markers**, which every BIU carries identically — report
+prose does not, and keying on it silently loses most BIUs. Candidate sizes are computed from Git.
+Fields that cannot be read reliably are recorded as `null`, never as `0`. Results and their limits:
+[wave1-repair-cycles.md](evidence/wave1-repair-cycles.md).
+
 ### Release admission gate
 
 Before every READY → IMPLEMENT release, and before any worker is launched:
