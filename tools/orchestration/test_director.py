@@ -183,3 +183,19 @@ def test_state_records_no_private_chain_of_thought(tmp_path):
     text = json.dumps(raw).lower()
     for banned in ("reasoning", "chain_of_thought", "thinking"):
         assert banned not in text
+
+
+def test_a_later_phase_is_not_offered_while_an_earlier_phase_is_still_in_repair(tmp_path):
+    """Observed in live use: with Phase 2 in REPAIR after review, next_task() offered the
+    Phase 6 task. An operator following it would start a later phase over an open repair."""
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("A", phase="2", title="earlier", actor="x", status="REPAIR", risk="MEDIUM")
+    st.upsert_task("B", phase="6", title="later", actor="x", status="PLANNED", risk="HIGH")
+    assert st.next_task() is None
+
+
+def test_work_still_flows_when_the_earlier_phase_is_complete(tmp_path):
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("A", phase="2", title="earlier", actor="x", status="DONE", risk="MEDIUM")
+    st.upsert_task("B", phase="6", title="later", actor="x", status="PLANNED", risk="HIGH")
+    assert st.next_task()["task_id"] == "B"

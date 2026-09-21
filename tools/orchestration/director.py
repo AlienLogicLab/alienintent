@@ -43,6 +43,8 @@ FIVE_QUESTIONS = (
 # Program task states. Deliberately disjoint from AlienIntent BIU lifecycle states.
 PROGRAM_STATES = {"PLANNED", "READY", "RUNNING", "REVIEW", "REPAIR", "BLOCKED",
                   "FOUNDER_DECISION_REQUIRED", "DONE", "SUPERSEDED"}
+# Actively open work. An earlier phase in one of these stops later phases from being offered.
+_IN_PROGRESS = {"RUNNING", "REVIEW", "REPAIR"}
 BIU_LIFECYCLE_STATES = {"CAPTURE", "SPECIFY", "PLAN", "TASKS", "READY_BIU", "IMPLEMENT",
                         "VERIFY", "REVIEW_BIU", "ACCEPT", "DONE_BIU"}
 _FORBIDDEN_AS_PROGRAM_STATE = {"CAPTURE", "SPECIFY", "PLAN", "TASKS", "IMPLEMENT", "VERIFY", "ACCEPT"}
@@ -246,10 +248,18 @@ class ProgramState:
         return [t for t in self.tasks() if t["status"] == "FOUNDER_DECISION_REQUIRED"]
 
     def next_task(self) -> dict | None:
-        """The next unblocked task. A pending Founder decision stops the program."""
+        """The next unblocked task. A pending Founder decision stops the program.
+
+        Work in progress earlier in the program also stops it. Observed live: with Phase 2 in
+        REPAIR after independent review, this offered the Phase 6 task, which would have had an
+        operator start a later phase over an open repair.
+        """
         if self.founder_decisions_required():
             return None
         for t in self.tasks():
             if t["status"] in ("READY", "PLANNED"):
                 return t
+            if t["status"] in _IN_PROGRESS:
+                return None  # earlier work is actively open; nothing later is next
+            # BLOCKED and SUPERSEDED are skipped: they hold no actor and stall nothing else.
         return None

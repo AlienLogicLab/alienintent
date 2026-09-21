@@ -72,15 +72,44 @@
    "title": "Bootstrap proof: Director-to-coordinator direct message with correlated reply",
    "updated_at": "2026-09-21T18:15:13.925446+00:00"
   },
-  "POSTW1-LEARN-002": {
-   "artifact_refs": [],
-   "assigned_actor": "codex-fresh",
-   "blockers": [],
-   "created_at": "2026-09-21T18:09:10.925924+00:00",
+  "POSTW1-DECIDE-002A": {
+   "artifact_refs": [
+    "docs/evidence/wave1-learning-ledger.json",
+    "docs/operations/post-wave1-program/messages/POSTW1-LEARN-002-review-request.md"
+   ],
+   "assigned_actor": "founder",
+   "blockers": [
+    "Phase 3 consumes ownership dispositions; it must not inherit 0 gaps as a discovered finding"
+   ],
+   "created_at": "2026-09-21T18:59:17.942035+00:00",
    "phase": "2",
    "prompt_path": null,
    "resulting_commit": null,
    "review_status": null,
+   "risk_class": "HIGH",
+   "routing": null,
+   "status": "FOUNDER_DECISION_REQUIRED",
+   "task_id": "POSTW1-DECIDE-002A",
+   "title": "Founder judgment: accept ownership_gaps=0, and LRN-018 disposition",
+   "updated_at": "2026-09-21T18:59:17.942050+00:00"
+  },
+  "POSTW1-LEARN-002": {
+   "artifact_refs": [
+    "docs/evidence/wave1-learning-ledger.json",
+    "docs/evidence/wave1-learning-ledger.md",
+    "docs/operations/post-wave1-program/messages/POSTW1-LEARN-002-review-request.md"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [
+    "LRN-018 disposition change requested by independent review",
+    "F1: expose owned-vs-enforced distinction before Phase 3 consumes the ledger",
+    "F2: ownership_gaps=0 requires explicit Founder judgment, not inheritance"
+   ],
+   "created_at": "2026-09-21T18:09:10.925924+00:00",
+   "phase": "2",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "PASS_WITH_QUALIFICATIONS",
    "risk_class": "MEDIUM",
    "routing": {
     "chosen_actor": "codex-fresh",
@@ -95,13 +124,15 @@
     "rationale": "Substantial code-aware/technical work; Codex is the configured primary analyst and fresh context avoids inheriting participant bias.",
     "review_required": true,
     "risk_class": "MEDIUM",
+    "sandbox": "workspace-write",
+    "sandbox_escalation_reason": "writes exactly two deliverable files; escalated from the read-only default deliberately and recorded, not silently",
     "task_type": "learning_consolidation",
     "tier": "CODEX_PRIMARY"
    },
-   "status": "READY",
+   "status": "REPAIR",
    "task_id": "POSTW1-LEARN-002",
    "title": "Wave 1 Learning Consolidation",
-   "updated_at": "2026-09-21T18:09:10.925937+00:00"
+   "updated_at": "2026-09-21T18:58:58.958565+00:00"
   },
   "POSTW1-REVIEW-001": {
    "artifact_refs": [
@@ -162,5 +193,5 @@
    "updated_at": "2026-09-21T18:15:13.918681+00:00"
   }
  },
- "updated_at": "2026-09-21T18:15:13.925451+00:00"
+ "updated_at": "2026-09-21T18:59:17.942055+00:00"
 }
