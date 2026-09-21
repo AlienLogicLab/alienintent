@@ -1,0 +1,51 @@
+{
+ "derived_at_head": "f9b7ebfbf56cd6d407c8301f30818a367d92f857",
+ "method_note": "Phase 4 prework contained three surface-reading errors. Every claim here was verified at the layer that decides it, and the verification command is recorded.",
+ "owner_candidates": {
+  "SF-REQ-013": {
+   "title": "Requirements \u2192 BIU compilation",
+   "priority": "P1",
+   "text": "Lower governed requirements into bounded BIUs with explicit requirement-satisfaction links and dependency DAGs.",
+   "source": "docs/decisions/alienintent-software-factory-plan.md:925"
+  },
+  "SF-REQ-015": {
+   "title": "BIU lint/readiness",
+   "priority": "P1",
+   "text": "Check BIUs for unresolved decisions, incomplete boundaries, missing acceptance/verification obligations, architecture constraints, and dependency problems. Agent-Ready remains execution-readiness authority.",
+   "source": "docs/decisions/alienintent-software-factory-plan.md:935"
+  },
+  "note": "Requirements are defined in the factory plan as '## SF-REQ-NNN \u2014 title'; there is no separate requirements directory."
+ },
+ "identity_allocation_evidence": {
+  "biu_identifier_regex_in_repository_code": null,
+  "verified_by": "grep for PY-\\\\d / PY-[0-9] / \\\\d\\\\d[A-Z] across src, tools, tests, test, scripts",
+  "consequence": "No identifier grammar exists anywhere in repository code or authority. The grammar this design states will be the first.",
+  "identifier_families_in_use": {
+   "PG-NN": 20,
+   "PY-NN": 11,
+   "PY-NNA (suffixed)": 1,
+   "WO-NNNNNN": 1
+  },
+  "width_inconsistency": "PG/PY use two digits; WO-000013 uses six. Any grammar must either cover both or say which is canonical.",
+  "only_split_allocation_ever_made": "PY-09B",
+  "coordinator_note": "The PY-\\\\d\\\\d parser defect the coordinator experienced was in bootstrap tooling outside this repository. Phase 3 correctly ruled it UNSUPPORTED as a promotion candidate on durable evidence. It is recorded here as context for the grammar decision, not as an in-repository incident."
+ },
+ "reference_incident": {
+  "decision": "docs/decisions/2026-09-21-py10-transport-split.md (SWF-33)",
+  "quoted": "precedes PY-10, renumbers nothing, and sorts correctly between them. PY-01\u2026PY-09 are untouched.",
+  "verdict_sequence_of_PY-10": {
+   "c32830b": "BLOCKED",
+   "1f16b81": "SPLIT_RECOMMENDED",
+   "693fef9": "READY"
+  },
+  "verified_by": "git log --follow plus git show of the disposition field at each revision",
+  "retention_note": "PY-09B kept a dated NEEDS_CLARIFICATION sibling file; PY-10 did not. Both sets of verdicts remain retrievable in Git (Phase 4 G3)."
+ },
+ "phase4_carryover": {
+  "ownership_gaps_open": [
+   "G1 assessment implementation/schema/CLI owner",
+   "G2 canonical serialization owner"
+  ],
+  "raised_as": "POSTW1-DECIDE-004A (critical_path false; carried to the Phase 14 packet)"
+ }
+}

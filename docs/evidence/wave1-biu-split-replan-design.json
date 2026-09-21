@@ -1,0 +1,1263 @@
+{
+  "task_id": "POSTW1-SPLIT-005",
+  "artifact_role": "Authoritative design proposal for independent Claude bootstrap coordinator review; not enacted Product Requirement, runtime or lifecycle authority.",
+  "strong_invariant_asserted": true,
+  "strong_invariant": "Splitting may change decomposition, but it must conserve authorized intent and proof obligations.",
+  "sections": {
+    "authority": "SPLIT_RECOMMENDED is a recommendation, not mutation authority. Under SWF-21/SWF-33 and the Phase 4 matrix, the Founder authorizes a change to the Founder-approved decomposition by a durable decision naming exact input revisions, resulting contracts, mappings and graph. A coordinator may prepare and apply that exact decision within delegation; Agent-Ready, producers, verifiers and the Program Director task dispatch cannot independently authorize a decomposition change or product intent change. A future delegation must explicitly grant planning authority and its bounds. This document proposes a process, not that delegation. Missing authority holds affected work and emits a durable decision request.",
+    "lineage": "Retain original BIU identity and immutable contract revision. One split record links its assessment, decision, pre/post contract hashes, original and resulting requirement extents, child IDs, integration parent, dependency graphs, assessment supersession and evidence manifests. Children carry split_from and the same operation ID; the parent records all children. A repeated operation ID with identical payload returns the same result; a different payload conflicts. No renumbering, deletion of history or inference of ancestry from a suffix. The real lineage is PY-10 -> {PY-09B, retained PY-10}; there is no second child in this incident.",
+    "requirement_conservation": "Inventory every original requirement, acceptance criterion, verification obligation and evidence obligation from the immutable original contract plus its referenced binding authority. Use stable obligation IDs and verbatim text, source revision, destination extent and rationale; mappings are nonempty and resolve to resulting contracts. Shared mappings mean all stated extents must be proven, never an OR. Every destination obligation also points back to an original obligation or an explicitly approved elaboration of an existing requirement. UNKNOWN tracing remains allocated to the integration parent for custody, expressly unsatisfied, and blocks activation and closure until resolved. A mapping is not proof of satisfaction. The incident inventory below preserves whole clauses where they contain several conjunctive duties; none of those duties may be dropped.",
+    "scope_conservation": "Compare the union of resulting authorized extents to the original authorized product intent, including exclusions, architecture, capabilities, budget and proof strength. Assign implementation responsibility without weakening original integration proof. Newly explicit prerequisite work needs an existing requirement owner plus a planning decision: SWF-33 assigned previously unnamed transport to PY-09B under SF-REQ-005/007/038, not by pretending it was already explicit PY-10 scope. Unowned product semantics stop as an authority gap. A split grants no extra spend, credentials, concurrency or deployment permission; child budgets partition the authorized envelope and the parent retains integration budget, with any increase requiring separate authority.",
+    "dependency_rewriting": "Use predecessor -> dependent edges and retain their lifecycle satisfaction predicates. For original O with incoming predecessors P, resulting children C and retained parent O: preserve every pre-existing edge, copy each P -> O prerequisite to each child P -> c with the identical predicate, add each c -> O requiring child DONE, and add only expressly approved inter-child edges. Every old downstream O -> d stays O -> d with its original predicate: children cannot substitute for the integration completion boundary. Thus all downstream rewrites are identity rewrites recorded explicitly, not judgment calls or redirection to whichever child seems relevant. Reject self-edges, cycles, unresolved endpoints, weakened predicates or unspecified inter-child ordering. No transitive-edge pruning. The incident graph delta is detailed below; this future default is deliberately conservative and does not rewrite historical accepted-vs-DONE predicates.",
+    "identity_allocation": "Adopt the explicit full-string grammar below as a proposed first grammar, not an observed parser. Preserve case, family and existing widths: PG/PY two digits and WO six digits, optionally one uppercase ASCII suffix. Preserve all existing identities, including PY-09B and WO-000013; no migration or alias normalization. New children default to the lowest unused positive unsuffixed number in the original family at its fixed width, reserved atomically against all active, retired and reserved IDs. Zero is syntactically compatible but not newly allocated. A decision may explicitly reserve an unused suffixed insertion identity; it must name the complete ID, never derive lineage or dependencies from sorting. Collision fails closed; exhaustion requires a separately approved grammar extension, never truncation, width growth or reuse. PY-09B is preserved as the historical explicit SWF-33 allocation, not regenerated by the default allocator.",
+    "lifecycle_semantics": "Choose retained_integration_parent: original O remains an executable integration BIU with the same identity and final satisfaction boundary, consuming independently proven child work. This is a decomposition role, not a new lifecycle Status. Preserve historical statuses and assessments; do not mark O DONE, cancelled or superseded merely because children exist. Place an admission hold during replan; changed contracts require fresh readiness and ordinary lifecycle admission. Children and parent traverse the existing lifecycle independently, and parent implementation waits for declared prerequisites. Do not split an active invocation in place: hold release and wait for its existing terminal/safe recovery boundary under separate authority; do not cancel it through this operation. An already DONE original cannot be reopened by this design.",
+    "agent_ready_invalidation": "A decomposition commit makes previous assessments inapplicable to the new contract/baseline; retain them as immutable history with explicit reassessment links. Reassess all new children and the changed parent, plus any existing unit whose assessed contract, baseline, dependency semantics or material prerequisite changed. READY is necessary but not sufficient for IMPLEMENT: normal authority, custody, baseline, dependency and release gates still apply. BLOCKED triggers reassessment after documented prerequisite resolution; NEEDS_CLARIFICATION after attributable Founder clarification and contract correction; SPLIT_RECOMMENDED after the authorized decomposition correction and relevant input/prerequisite change. None permits implementation. Provider/tool failure or malformed/unknown results remain failed assessment attempts with a hold and bounded authorized retry after recovery, never READY. For PY-10 preserve BLOCKED -> SPLIT_RECOMMENDED -> fresh READY and require PY-09B complete before the final reassessment as SWF-33 specifies.",
+    "project_projection": "Canonical approved split state is the source; Project is a one-way projection, never split authority or execution truth. Project views show the original integration role, exact child identities, lineage, satisfaction links, dependency predicates and current lifecycle/readiness separately. Use durable idempotent delivery keyed by operation ID and target revision, expected-version fencing, exact resource identity and readback. Partial delivery records pending/failed targets and retries the same payload; no duplicate BIUs and no readiness advance from a Project edit. Hold affected release until required contract/Issue/Project projection consistency is confirmed; unrelated work continues. No new Project status or field is assumed available: bindings require approved configuration, otherwise activation remains held. This design changes no Project.",
+    "evidence": "Retain the source contract and authority snapshots, recommendation and provider provenance, authorizing decision, obligation inventory and trace verdicts, before/after graph, reserved identities, scope/budget comparison, independent design review, validated payload hash, commit/readback receipts, and fresh assessment/release links. Definition, observed artifact and verdict stay distinct. Capture exact revisions and command exit statuses; redact credentials and installation details. Existing accepted evidence survives with its scope and baseline; supersession requires an explicit record and replacement proof, never silent deletion. The mapping below demonstrates contract traceability, not a new live proof or terminal verdict. Checker success establishes only the checker contract; it does not prove inventory completeness, authorization or implementation.",
+    "closure": "The original intent is satisfied only when every child is DONE under its ordinary closure policy, the retained integration parent has independently verified every original acceptance/verification obligation at the required integrated scope, all requirement extents and retained evidence are accounted for, UNKNOWN traces and authority gaps affecting activation are resolved, and the parent completes ACCEPT -> DONE with its existing landing/evidence duties. Child completion alone, Issue closure, split commit or Project projection is insufficient. No extra live rerun is required when trusted accepted evidence already establishes it. Record an original-obligation-to-accepted-evidence completion manifest and reconcile canonical/project closure. Failed children leave the parent incomplete; abandoning a child requires another authorized conserved replan, not dropping its rows."
+  },
+  "identity_grammar": "\\A(?:(?:PG|PY)-[0-9]{2}|WO-[0-9]{6})(?:[A-Z])?\\Z",
+  "identity_grammar_semantics": {
+    "matching": "Python re full-string ASCII digits and uppercase suffix; family-specific fixed widths. Syntax does not confer allocation authority.",
+    "compatibility": "PG-NN, PY-NN, WO-NNNNNN and PY-09B accepted unchanged. Optional suffix generalized to all three families as a proposal, not claimed historical usage.",
+    "prework_inventory_caution": "Prework reports PG-NN 20 and PY-NN 11 plus one suffix. Assessment filenames inspected contain PG-01 through PG-19, PY-01 through PY-10, PY-09B and WO-000013. These are different inventory surfaces; no count-dependent allocator or claim of exhaustive global absence is made. Supplied absence-of-grammar finding is used as prework, not independently reproven by a repository-wide search."
+  },
+  "original_biu_lifecycle": "retained_integration_parent",
+  "alternatives_considered": [
+    {
+      "form": "superseded original; children replace completion boundary",
+      "rejected_because": "Risks losing coherent integration proof and requires downstream predicates to be redefined; does not match SWF-33."
+    },
+    {
+      "form": "non-executable tracking parent",
+      "rejected_because": "Cannot own the real PY-10 coherent live run and independent acceptance."
+    },
+    {
+      "form": "retained_integration_parent",
+      "chosen_because": "Matches SWF-33 capstone retention, preserves original downstream completion boundary, and keeps integration proof explicit."
+    }
+  ],
+  "destination_bindings": {
+    "child_a": {
+      "biu": "PY-09B",
+      "role": "Independently verified live transport prerequisite"
+    },
+    "child_b": {
+      "biu": null,
+      "role": "Unused in this incident; no invented BIU or obligation destination"
+    },
+    "retained_integration_parent": {
+      "biu": "PY-10",
+      "role": "Original capstone; all original integrated proof remains"
+    }
+  },
+  "conservation_mapping": [
+    {
+      "obligation_id": "SF-REQ-001",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-001 Continuous factory execution | #3 | Live end-to-end proof |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-002",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-002 READY scheduling | #4 | Live |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-003",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-003 Solve for N | #5 | WIP = 1 demonstrated live |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-004",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-004 Rolling slot refill | #6 | Live |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-005",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "child_a",
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: SWF-33 assigns the live substrate extent to PY-09B under this existing requirement; PY-10 retains its original live integration extent verbatim. Both extents are required, not interchangeable.",
+      "obligation_text": "| SF-REQ-005 Work Management abstraction | #7 | Live against a real GitHub Project |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies",
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-09B.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-006",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-006 Human decision escalation | #8 | Live |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-007",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "child_a",
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: SWF-33 assigns the live substrate extent to PY-09B under this existing requirement; PY-10 retains its original live integration extent verbatim. Both extents are required, not interchangeable.",
+      "obligation_text": "| SF-REQ-007 Candidate custody | #9 | Live, before VERIFY |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies",
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-09B.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-008",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-008 Crash-safe execution | #10 | Live restart mid-run |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-009",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-009 Deterministic kernel | #11 | Live |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-010",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-010 BIU contract model | #12 | Live |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-034",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-034 Control Plane (P0 minimum) | #13 | Operated live |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-035",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "| SF-REQ-035 Decision Inbox | #14 | Live decision recorded |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "SF-REQ-038",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "child_a",
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: SWF-33 assigns the live substrate extent to PY-09B under this existing requirement; PY-10 retains its original live integration extent verbatim. Both extents are required, not interchangeable.",
+      "obligation_text": "| SF-REQ-038 Doctor / validation | #16 | Live gate before start |",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Satisfies",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Satisfies",
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-09B.md#Satisfies"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-01",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "At least 3 READY BIUs are consumed.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-02",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Different priorities are present and respected.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-03",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "At least two equal-priority BIUs prove FIFO ordering.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-04",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "At least one dependency is respected: the dependent starts only after its blocker reaches DONE.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-05",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "WIP = 1 is enforced throughout.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-06",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Slot refill is automatic on capacity release.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-07",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "One `HumanDecisionRequired` event is emitted with complete context.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-08",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Only the affected BIU blocks; independent eligible work continues during the block.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-09",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "A durable human decision automatically unblocks and resumes the affected work.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-10",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "A Python process restart occurs during the run.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-11",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "No duplicate execution or duplicate external effect after the restart.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-12",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Exact candidate custody is proven before every VERIFY.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-13",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "All executable work reaches DONE.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-14",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "No human moves an individual BIU into IMPLEMENT at any point.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-15",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "`doctor` passes against the sandbox before autonomous start, evidenced.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-16",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "The live AlienIntent Project and the Node bootstrap are demonstrably unaffected: no Python-originated event, projection or dispatch touches them.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-AC-17",
+      "kind": "acceptance_criterion",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Retained evidence contains no secret, credential, App ID, hostname or private installation detail.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Acceptance criteria (SWF-11 — all in one coherent run)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-VERIFY-01",
+      "kind": "verification_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Live executable proof on real infrastructure. Mocks cannot satisfy any acceptance item.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Verification requirements",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Verification requirements"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-VERIFY-02",
+      "kind": "verification_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Independent verification of the retained evidence against the acceptance list by a separate verifier invocation.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Verification requirements",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Verification requirements"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-VERIFY-03",
+      "kind": "verification_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Evidence reproducible and retained with the invocation, including exact revisions and exit statuses.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Verification requirements",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Verification requirements"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-BIND-01",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Isolation.** The sandbox repository, its GitHub Project, its Python profile and its GitHub App installation/webhook identity are separate from the live AlienIntent Project and the Node bootstrap's profile. No shared state, workspace root, store or webhook route.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Binding rules — not delegated",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Binding rules — not delegated"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-BIND-02",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "The Node bootstrap keeps running and is not modified, paused or reconfigured to enable this proof.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Binding rules — not delegated",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Binding rules — not delegated"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-BIND-03",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "This is test/integration infrastructure, not a second product deployment, and not a cutover. No Python Sovereignty claim, no Node retirement, no migration of live work.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Binding rules — not delegated",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Binding rules — not delegated"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-BIND-04",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Sandbox content is deliberately minimal but sufficient to exercise the factory; the backlog BIUs are trivial engineering tasks whose purpose is to exercise the loop.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Binding rules — not delegated",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Binding rules — not delegated"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-BIND-05",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "No human moves any individual BIU into IMPLEMENT during the run.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Binding rules — not delegated",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Binding rules — not delegated"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-BIND-06",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Credentials for the sandbox App are referenced through the SecretProvider and never committed; no private installation detail, App ID, hostname or secret appears in the retained evidence.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Binding rules — not delegated",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Binding rules — not delegated"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-SCOPE-01",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: original dedicated sandbox prerequisite is retained as provisioned infrastructure consumed by PY-10 Scope 1. SWF-33 adds explicit ownership of previously unnamed live transport in PY-09B; it does not transfer sandbox provisioning into that child or delete the environment obligation.",
+      "obligation_text": "**Sandbox environment**: a minimal dedicated repository; its own GitHub Project carrying the same lifecycle Status options plus `Priority`; its own Python profile; its own GitHub App installation and webhook identity/route; minimal source content.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Scope",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Scope"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-SCOPE-02",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Seeded backlog**: at least three READY BIUs, including at least two of equal priority and at least one dependency, plus one BIU constructed to raise a genuine `HumanDecisionRequired`.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Scope",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Scope"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-SCOPE-03",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**The run**: `doctor`, then `run`, one operator decision submitted through the Decision Inbox, one deliberate process restart mid-run, through to exhaustion of the executable backlog.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Scope",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Scope"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-SCOPE-04",
+      "kind": "evidence_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Evidence capture**: ordering trace, refill events, reservations, exact candidate revisions and read-back proof, verification results, escalation payload and decision record, restart boundary, projection delivery health and final states.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Scope",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Scope"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-SCOPE-05",
+      "kind": "evidence_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Written proof report** under `docs/verification/`, with a machine-readable summary, referencing the retained evidence.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Scope",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Scope"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-INTENT",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: the original constraint remains in PY-10 after the split; additional SWF-33 reference clarifies substrate ownership without deleting the original constraint.",
+      "obligation_text": "Demonstrate the Wave 1 product statement on real infrastructure, in one coherent run:\n\n> Given a prioritized backlog, sufficient execution authority, and no unresolved blockers, AlienIntent continuously consumes eligible READY BIUs until the executable backlog is exhausted.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Intent",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Intent"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-ARCH",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: the original constraint remains in PY-10 after the split; additional SWF-33 reference clarifies substrate ownership without deleting the original constraint.",
+      "obligation_text": "- **SWF-08 (D-1)** — the proof runs on a dedicated AlienIntent sandbox environment. The Node bootstrap is not stopped, and the two control planes never share a Project/profile in a way that could dispatch the same work.\n- **SWF-11** — the acceptance list below is binding and complete.\n- **Architecture Authority** §1 deployment topology and profile isolation, §42 Node→Python coexistence, §43 Python Sovereignty (not claimed here).\n- `docs/architecture/pre-python-gate/conformance-and-sovereignty.md` — never give both implementations mutation authority over the same profile; mocks alone cannot establish live behaviour; sovereignty requires far more than this proof.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Architecture references",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Architecture references"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-EXCLUSIONS",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: the original constraint remains in PY-10 after the split; additional SWF-33 reference clarifies substrate ownership without deleting the original constraint.",
+      "obligation_text": "Running AlienIntent's own backlog on Python; cutover; Node retirement or pause; Python Sovereignty claims (that needs the full S1–S7 matrix); deployment capabilities; performance or cost optimization; Wave 2+ capability. No FactoryChecks change. No Node change except an unrelated §42 critical bootstrap repair, which would be its own BIU.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Non-goals / excluded",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Non-goals / excluded"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CAPABILITIES",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: the original constraint remains in PY-10 after the split; additional SWF-33 reference clarifies substrate ownership without deleting the original constraint.",
+      "obligation_text": "Capabilities: sandbox repository workspace, Git, Python toolchain, process control, provider CLI execution, network access to GitHub for the sandbox installation, sandbox GitHub App credentials via SecretProvider. No authority over the live AlienIntent Project, the Node profile, FactoryChecks, or any deployment target.\nBudget per SWF-09: hard wall-clock, attempts, retries, concurrency and cancellation; token and monetary cost measured and recorded, never assumed zero. Provider spend is bounded to the minimum needed for the proof.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Capabilities and budget",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Capabilities and budget"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CLOSURE-01",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Landing: required.** A **normal merge commit** of the accepted candidate into `main`, preserving the accepted SHA in `main` ancestry, is **authorized as routine closure** under SWF-19; no separate Founder exception is needed. No rebase, no squash, no rewrite of the accepted SHA, no change to accepted candidate content. If landing would alter accepted content or amounts to a material implementation change, stop and `RETURN_TO_IMPLEMENT`. After landing, run only the required post-merge checks and confirm required CI on the merge result. Merge is a closure operation, not a lifecycle state.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Required closure actions",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Required closure actions"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CLOSURE-02",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Deployment: not required.** No deployable artifact or environment is in scope.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Required closure actions",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Required closure actions"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CLOSURE-03",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Publication/release: not required.** Candidate-branch publication is completed before verification.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Required closure actions",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Required closure actions"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CLOSURE-04",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Live verification: required.** The live proof *is* this BIU's deliverable and is already established by its acceptance evidence; closure records that evidence and performs no new run.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Required closure actions",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Required closure actions"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CLOSURE-05",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**BIU-specific: required.** Retain the redacted evidence manifest and publish the written proof report under `docs/verification/`, as scope requires. The sandbox environment is not dismantled by closure.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Required closure actions",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Required closure actions"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CLOSURE-RULE-01",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Evaluated under the standing ACCEPT → DONE policy ([SWF-17, SWF-19](../../decisions/2026-09-20-wave1-closure-policy.md)). Closure performs only the minimum remaining actions needed to reach DONE.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Required closure actions",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Required closure actions"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CLOSURE-RULE-02",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Closure must not perform opportunistic refactoring, unrelated cleanup, speculative abstraction, unrelated documentation or tests, architecture redesign, additional feature work, or repeated verification already supported by trusted accepted evidence.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Required closure actions",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Required closure actions"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CLOSURE-RULE-03",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Minimum necessary work (SWF-20 / SF-REQ-048).** At IMPLEMENT, VERIFY, REVIEW, ACCEPT and closure, perform only the work necessary to satisfy this BIU, its lifecycle obligations, applicable architecture/policy and required evidence. Mechanically detectable over-scope work is a verification finding; REVIEW/ACCEPT assesses unnecessary work, unnecessary abstraction, scope expansion and whether a simpler correct implementation was available.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Required closure actions",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Required closure actions"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-CLOSURE-RULE-04",
+      "kind": "evidence_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Closure evidence (SWF-18).** Record what is available without building new telemetry: closure start/end time; actions evaluated, performed and determined unnecessary; tool/command count; changed files; token/cost where reported; authority interruptions; time blocked awaiting human authority; and any `RETURN_TO_IMPLEMENT` occurrence.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Required closure actions",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Required closure actions"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-RECORD-01",
+      "kind": "evidence_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**findings to fix** — the specific findings being addressed;",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-RECORD-02",
+      "kind": "evidence_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**previously satisfied acceptance criteria** — criteria already proven in the prior candidate;",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-RECORD-03",
+      "kind": "evidence_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**evidence that must be preserved** — the proof artifacts carrying those criteria;",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-RECORD-04",
+      "kind": "evidence_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**evidence explicitly superseded** — listed item by item, never silently dropped;",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-RECORD-05",
+      "kind": "evidence_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**supersession authority** — the decision or requirement change authorizing it;",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-RECORD-06",
+      "kind": "evidence_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**replacement proof obligations** — what must newly prove the changed target.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-VERIFY-01",
+      "kind": "verification_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Confirm the required verification harness exists.** The proof this contract's acceptance criteria and verification requirements demand must be present and executable — not planned, not deferred to a later cycle.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-VERIFY-02",
+      "kind": "verification_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Confirm changed paths are covered by discriminating proof.** A check that cannot fail is not evidence ([SWF-24](../../decisions/2026-09-20-deterministic-failure-class-promotion.md)): coverage of a changed path must be able to go red when that path breaks.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-VERIFY-03",
+      "kind": "verification_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Preserve prior proven criteria.** Everything already satisfied stays satisfied, with its evidence intact or explicitly superseded.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-VERIFY-04",
+      "kind": "verification_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "**Then repair remaining implementation defects.**",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-REPAIR-MONOTONICITY",
+      "kind": "verification_obligation",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: retained verbatim in the post-split PY-10 contract; the original integrated obligation is not discharged by child-only proof.",
+      "obligation_text": "Previously verified behavior must remain correct, and previously valid evidence must remain valid or be explicitly superseded. A repair must not fix one defect by regressing another verified property, and must not remove, weaken, bypass or discard proof for a previously satisfied acceptance criterion — tests, negative controls, mutation/proven-red checks, architecture fitness, CI checks, custody evidence, lifecycle proof, dependency proof or operational verification. Evidence disappearance without explicit supersession is a regression and a verification failure. See [SWF-23](../../decisions/2026-09-20-convergent-repair-monotonic-progress.md).",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Repair cycles (SWF-23)"
+      ],
+      "trace_status": "TRACED"
+    },
+    {
+      "obligation_id": "PY-10-READINESS-PREREQUISITES",
+      "kind": "requirement",
+      "origin_biu": "PY-10",
+      "maps_to": [
+        "retained_integration_parent"
+      ],
+      "rationale": "TRACED: post-split Readiness retains original predecessors and adds PY-09B. SWF-33 is the required Founder decision, and expressly requires a fresh READY against the current baseline with PY-09B complete; neither prior verdict is converted.",
+      "obligation_text": "PY-05, PY-06, PY-08 and PY-09 accepted; SWF-08 sandbox provisioned; Founder decomposition decision before release.",
+      "source_ref": "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md#Readiness",
+      "destination_refs": [
+        "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md#Readiness"
+      ],
+      "trace_status": "TRACED"
+    }
+  ],
+  "mapping_method": {
+    "original_revision": "1f16b816cb0d30681eacbb2ea178eb2cf92ddd02",
+    "post_split_revision": "35de8d7e9fa0e06f3e3e54e5fe546d78994883ec",
+    "source_contract": "docs/work-units/python/PY-10.md",
+    "original_requirement_links": 13,
+    "original_acceptance_criteria": 17,
+    "original_verification_bullets": 3,
+    "granularity": "One row per identified contract clause/obligation; a compound clause retains every conjunct in full. Scope 4/5, closure evidence and repair records retain the additional evidence obligations. Binding rules, constraints, closure and readiness obligations are included rather than omitted from the four-kind inventory. Requirement-kind constraint rows are contract obligations, not newly created Product Requirements.",
+    "scope_limit": "Trace to resulting authorized contracts only. No claim that a proposed conservation record existed historically, and no reinterpretation of later SWF-34 as part of the original SWF-33 payload. Current child contract was read for context; historical split references resolve at the split commit.",
+    "untraceable_obligations": 0
+  },
+  "reference_graph": {
+    "edge_direction": "predecessor -> dependent",
+    "original_predecessors": [
+      "PY-05",
+      "PY-06",
+      "PY-08",
+      "PY-09"
+    ],
+    "preserved_edges": [
+      [
+        "PY-05",
+        "PY-10"
+      ],
+      [
+        "PY-06",
+        "PY-10"
+      ],
+      [
+        "PY-08",
+        "PY-10"
+      ],
+      [
+        "PY-09",
+        "PY-10"
+      ]
+    ],
+    "added_edges": [
+      [
+        "PY-05",
+        "PY-09B"
+      ],
+      [
+        "PY-06",
+        "PY-09B"
+      ],
+      [
+        "PY-08",
+        "PY-09B"
+      ],
+      [
+        "PY-09",
+        "PY-09B"
+      ],
+      [
+        "PY-09B",
+        "PY-10"
+      ]
+    ],
+    "historical_predicates": "Contracts describe prerequisites as accepted and SWF-33 requires PY-09B complete. This design does not relabel historical state. Future splits use child DONE -> integration implementation by default.",
+    "downstream": "No hypothetical downstream BIU is invented for this capstone; the general identity rewrite rule applies to each actual outgoing edge found in a future frozen graph."
+  },
+  "operation_protocol": [
+    "PREPARE: freeze original contract/graph/authority revisions and applicable requirements; record recommendation, current invocations, proposed identity reservations, complete obligations, boundaries and budget. Hold affected admission; no lifecycle verdict is synthesized.",
+    "REVIEW: validate total mapping, reverse scope coverage, dependency predicates and DAG, unique IDs, unchanged intent/proof strength, projection bindings and assessment invalidation set; independent reviewer records findings. Any UNKNOWN or conflict stops activation.",
+    "AUTHORIZE: Founder or explicitly delegated planning authority approves the exact payload hash and revisions. Material review changes require a new approved payload; a generic split approval cannot authorize unspecified scope.",
+    "APPLY: compare expected revisions and reservation state under one canonical operation boundary, record original/children/contracts/graph/invalidation and durable projection work atomically. Concurrent revision change aborts without partially activating the split. Prior staged/reserved state is non-executable. Same operation ID is idempotent; different content conflicts. Atomic mechanism is a future implementation obligation, not an implemented capability claim.",
+    "RECOVER: if canonical apply did not commit, retry only after validating current expected revisions; if it did commit, resume recorded projection/readback work without allocating again. Partial external writes never become canonical truth; affected release stays held. Do not roll back a committed split by erasing history; any reversal is another authorized conserved replan.",
+    "REASSESS: after canonical and required external records agree, assess each affected contract at its eligible current baseline. Preserve old verdicts. Release only fresh READY work through normal admission; reassess parent after children and prerequisites are complete.",
+    "CLOSE: discharge all obligation extents with accepted evidence and ordinary child/parent closure. Record the conserved original intent as satisfied only at parent DONE."
+  ],
+  "ownership_audit": {
+    "recommended_owner": "SF-REQ-013 by amendment",
+    "current_owner_verdict": "ownership gap",
+    "ownership_gaps": [
+      {
+        "id": "SPLIT-G1",
+        "semantics": "End-to-end authorized split/replan transaction, including conservation, allocation, lifecycle, invalidation, projection and recovery.",
+        "proof": "SF-REQ-013 says only to lower governed requirements into bounded BIUs with explicit satisfaction links and dependency DAGs. It does not specify revision of an existing decomposition or conservation/transaction semantics. SF-REQ-015 checks unresolved decisions, boundaries, missing acceptance/verification, architecture and dependencies, while preserving Agent-Ready authority; checking an input is not authority or an operation to rewrite it. SWF-33 authorizes this particular split, not a general product mechanism. Neither candidate presently owns the complete operation explicitly.",
+        "recommendation": "Amend SF-REQ-013 to own recompilation of existing BIUs with this conserved transaction; use SF-REQ-015 for validation checks and preserve Agent-Ready assessment authority. No new requirement recommended or enacted."
+      }
+    ],
+    "canonical_candidates": {
+      "SF-REQ-013": {
+        "title": "Requirements → BIU compilation",
+        "priority": "P1",
+        "text": "Lower governed requirements into bounded BIUs with explicit requirement-satisfaction links and dependency DAGs.",
+        "source": "docs/decisions/alienintent-software-factory-plan.md:925"
+      },
+      "SF-REQ-015": {
+        "title": "BIU lint/readiness",
+        "priority": "P1",
+        "text": "Check BIUs for unresolved decisions, incomplete boundaries, missing acceptance/verification obligations, architecture constraints, and dependency problems. Agent-Ready remains execution-readiness authority.",
+        "source": "docs/decisions/alienintent-software-factory-plan.md:935"
+      },
+      "note": "Requirements are defined in the factory plan as '## SF-REQ-NNN — title'; there is no separate requirements directory."
+    },
+    "phase4_carryover": "G1 assessment implementation/schema/CLI ownership and G2 canonical serialization ownership remain unresolved carryovers per Phase 4. They are not resolved or double-counted as new split gaps; integration with them requires authority before implementation."
+  },
+  "disputed": [],
+  "provenance": {
+    "actor": "Fresh Codex design invocation dispatched by local Program Director",
+    "date": "2026-09-22",
+    "head_read": "f9b7ebfbf56cd6d407c8301f30818a367d92f857",
+    "branch_read": "main",
+    "git_identity": {
+      "name": "netmarine",
+      "email": "sanuk.du@gmail.com"
+    },
+    "prework_head": "f9b7ebfbf56cd6d407c8301f30818a367d92f857",
+    "authority": "User POSTW1-SPLIT-005 packet; only two deliverables authorized; independent Claude review follows.",
+    "observed_preexisting_changes": "Program-state RUNNING dispatch entry, supplied prework, matching task prompt, split checker and checker tests. These are task inputs, preserved without edits.",
+    "primary_sources": [
+      "docs/decisions/alienintent-software-factory-plan.md#SF-REQ-013",
+      "docs/decisions/alienintent-software-factory-plan.md#SF-REQ-015",
+      "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+      "docs/decisions/2026-09-21-py10-transport-split.md",
+      "docs/evidence/wave1-agent-ready-outcome-matrix.json",
+      "docs/operations/post-wave1-program/prework/POSTW1-SPLIT-005-inputs.json",
+      "docs/work-units/python/PY-09B.md",
+      "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.md",
+      "git:35de8d7e9fa0e06f3e3e54e5fe546d78994883ec:docs/work-units/python/PY-10.md"
+    ],
+    "local_verifications": [
+      "git diff 35de8d7^ 35de8d7 -- docs/work-units/python/PY-10.md: all 17 acceptance criteria and verification requirements unchanged; only prerequisite/transport boundary and reference changes.",
+      "git show of PY-10.assessment.json at c32830b, 1f16b81, 693fef9: BLOCKED, SPLIT_RECOMMENDED, READY respectively.",
+      "Canonical SF-REQ-013 and SF-REQ-015 text compared with prework: matches."
+    ],
+    "source_hashes": {
+      "original_contract_sha256": "7caa6a3c0b2440691c65ab8e95cfd79b449787435f4db63a239066a61d671ed0",
+      "post_split_contract_sha256": "197b05fcc837afbf866bced3c2aaaf849d5d21133935d31f23747c1215b2dbfa"
+    },
+    "limits": "Offline repository evidence only; no current remote, product acceptance or live operation claim. No memory-derived facts used. Grammar absence accepted from supplied prework; design-critical contract and ownership claims checked locally.",
+    "disposition": {
+      "state": "PARKED",
+      "owner": "POSTW1-SPLIT-005 dispatched Codex author; independent review by Claude bootstrap coordinator",
+      "branch": "main",
+      "unique_content": [
+        "docs/evidence/wave1-biu-split-replan-design.json",
+        "docs/evidence/wave1-biu-split-replan-design.md"
+      ],
+      "blocker": "Task explicitly forbids commits, pushes, network and authority amendments; delivery is uncommitted design artifacts for independent review.",
+      "next_action": "Claude bootstrap coordinator independently reviews these two artifacts; any enactment or publication requires separate authority. No Phase 6 begun.",
+      "temporary_state": "No branch or worktree created."
+    }
+  },
+  "validation": {
+    "design_check": {
+      "command": "rtk proxy python3 tools/evidence/check_split_design.py docs/evidence/wave1-biu-split-replan-design.json",
+      "exit_code": 0,
+      "result": "PASS",
+      "failures": 0
+    },
+    "wave1_check": {
+      "command": "rtk proxy python3 tools/evidence/check_wave1.py --negative-controls",
+      "exit_code": 0,
+      "result": "PASS",
+      "checks": 1075,
+      "failures": 0,
+      "negative_controls_killed": 13,
+      "negative_controls_total": 13,
+      "meaning": "Offline consistency only; origin/main is a local stored ref, not freshly verified remote state."
+    },
+    "supplemental": "PASS: unique obligation IDs, bound destinations, grammar valid/invalid examples, and all 68 verbatim clauses found in the original Git blob; readiness row is an explicit summary.",
+    "review_status": "Independent Claude bootstrap coordinator design review pending; no self-approval or enactment."
+  }
+}

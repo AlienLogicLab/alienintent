@@ -4,9 +4,10 @@
   "1",
   "2",
   "3",
-  "4"
+  "4",
+  "5"
  ],
- "current_phase": "5",
+ "current_phase": "6",
  "program": "post-wave1-to-wave2",
  "tasks": {
   "POSTW1-AGENTREADY-004": {
@@ -155,6 +156,27 @@
    "title": "Founder: assign an owner for the Agent-Ready implementation/schema/CLI (G1) and the canonical serialization contract (G2)",
    "updated_at": "2026-09-21T19:46:50.254933+00:00"
   },
+  "POSTW1-DECIDE-005A": {
+   "artifact_refs": [
+    "docs/evidence/wave1-biu-split-replan-design.json"
+   ],
+   "assigned_actor": "founder",
+   "blockers": [
+    "non-blocking: carried to the Phase 14 packet; phases 6-13 do not require it"
+   ],
+   "created_at": "2026-09-21T19:57:11.606414+00:00",
+   "critical_path": false,
+   "phase": "5",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": null,
+   "risk_class": "HIGH",
+   "routing": null,
+   "status": "FOUNDER_DECISION_REQUIRED",
+   "task_id": "POSTW1-DECIDE-005A",
+   "title": "Founder: amend SF-REQ-013 to own the split/replan transaction (SPLIT-G1)",
+   "updated_at": "2026-09-21T19:57:11.606432+00:00"
+  },
   "POSTW1-GAPTRAP-003": {
    "artifact_refs": [
     "docs/evidence/wave1-gap-trap-promotion-backlog.json",
@@ -294,7 +316,46 @@
    "task_id": "POSTW1-SMOKE-000",
    "title": "Bootstrap proof: launch and capture a fresh Codex session",
    "updated_at": "2026-09-21T18:15:13.918681+00:00"
+  },
+  "POSTW1-SPLIT-005": {
+   "artifact_refs": [
+    "docs/evidence/wave1-biu-split-replan-design.json",
+    "docs/evidence/wave1-biu-split-replan-design.md"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-21T19:50:09.104127+00:00",
+   "critical_path": null,
+   "phase": "5",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "PASS",
+   "risk_class": "HIGH",
+   "routing": {
+    "chosen_actor": "codex-fresh",
+    "deterministic_prework": [
+     "docs/operations/post-wave1-program/prework/POSTW1-SPLIT-005-inputs.json"
+    ],
+    "five_questions": {
+     "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+     "cheapest_model_likely_to_succeed_first_pass": "gpt-6-astra",
+     "does_this_need_independent_review": "yes (risk HIGH)",
+     "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
+     "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
+    },
+    "model": "gpt-6-astra",
+    "rationale": "Substantial code-aware/technical work; Codex is the configured primary analyst and fresh context avoids inheriting participant bias.",
+    "review_required": true,
+    "risk_class": "HIGH",
+    "sandbox": "workspace-write",
+    "task_type": "split_replan_design",
+    "tier": "CODEX_PRIMARY"
+   },
+   "status": "DONE",
+   "task_id": "POSTW1-SPLIT-005",
+   "title": "BIU Split / Replan Process Design",
+   "updated_at": "2026-09-21T19:57:11.598277+00:00"
   }
  },
- "updated_at": "2026-09-21T19:46:50.273088+00:00"
+ "updated_at": "2026-09-21T19:57:11.621382+00:00"
 }
