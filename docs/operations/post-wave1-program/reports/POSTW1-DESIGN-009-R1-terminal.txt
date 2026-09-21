@@ -1,0 +1,14 @@
+```text
+DV1_RESOLVED=Returned orchestration and real-worker outcome ownership to SPECIFY; added live binding gates and probes.
+DV2_RESOLVED=Withdrawn mandatory external allocation; evidence selects compiler-derived decomposition, pending SPECIFY resolution.
+DV3_RESOLVED=Fixed dependency graph, permitted type imports, and composition-owned premise bridge.
+DV4_RESOLVED=Pinned grammar, typed UNVERIFIED conflicts, and nonconforming-identifier fixtures.
+EPISODE_AGE_PROVENANCE=disclaimed
+ADVISORY_ADDRESSED=4 ADVISORY_DECLINED=0
+NEW_AUTHORITY_GAPS=4
+REQUIREMENTS_CREATED=0
+DESIGN_CHECK=PASS
+WAVE1_CHECK=PASS
+DISPUTED=NONE
+NOTES=Only two authorized files revised; no commit/network; independent repair review remains outstanding.
+```

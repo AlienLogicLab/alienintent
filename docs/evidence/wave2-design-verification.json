@@ -1,0 +1,316 @@
+{
+ "task_id": "POSTW1-VERIFY-010",
+ "artifact_role": "independent design verification findings",
+ "provenance": {
+  "verifier": "fresh claude session, --permission-mode plan (read-only)",
+  "independence": "independent of the Codex author and of the participant coordinator; could not edit the artifacts under review",
+  "repository_head": "c08fa798a3d9dd37fda30f4d35c9aa18c728a287",
+  "artifact_under_review": "docs/evidence/wave2-design-contracts.json",
+  "raw_output": "docs/operations/post-wave1-program/reports/POSTW1-VERIFY-010-raw.txt",
+  "note": "The Director's mechanical design checker PASSED this artifact. The verifier found four MATERIAL defects it could not see. A checker establishes that fields are present and decisions are not deferred; it cannot establish that the design is right."
+ },
+ "disposition": "REPAIR_REQUIRED",
+ "checks": [
+  {
+   "check": "ownership completeness",
+   "result": "CONCERN",
+   "note": "G1/G2 assessment ownership is carried correctly as an explicit hold, but three capabilities this design itself requires have no named owner: the SF-REQ-013 allocation author, the non-scripted producer of RoleOutcomeRecord, and the host/supervisor of the persistent monitor and reconciliation scan."
+  },
+  {
+   "check": "requirement coverage",
+   "result": "PASS",
+   "note": "All 10 selected requirements have contracts and all 53 specified acceptance IDs are listed and traced with exact ID equality; no selected requirement is undesigned."
+  },
+  {
+   "check": "capability ownership",
+   "result": "FAIL",
+   "note": "SF-REQ-039 requires role-by-role orchestration and a blocking RoleOutcomeRecord precondition inside the shared FactoryCoordinator (src/alienintent/composition/sandbox_run_profile.py:308, github_profile.py:33) but assigns no owner for the live/real worker side of that obligation."
+  },
+  {
+   "check": "no scope holes",
+   "result": "CONCERN",
+   "note": "SF-REQ-013's mandatory authorized allocation and the cross-context import-direction rule are both required inputs to implementation that no contract supplies, while deferred_to_implementation is empty for all ten."
+  },
+  {
+   "check": "architecture consistency",
+   "result": "CONCERN",
+   "note": "The design creates context_assembly->execution_coordination (adapters) and execution_coordination->context_assembly (015 consuming DesignApplicability) coupling without stating a permitted context dependency graph, which the architecture authority lists as unfinished pre-Python work (bounded-context model, dependency-direction tests)."
+  },
+  {
+   "check": "platform feasibility",
+   "result": "CONCERN",
+   "note": "Store claims check out against the real port (acquire/release, commit_with_effect, claim_effect, confirm_effect exist and do not validate a passed fence, as stated), but the 053 context-usage tenure input has no port or adapter that can supply it under the excluded SF-REQ-029."
+  },
+  {
+   "check": "impossible acceptance criteria",
+   "result": "CONCERN",
+   "note": "The Wave 1 impossible-isolation pattern is correctly replaced by four observables, but SF-REQ-053-AC-02 demands a fixture for every SWF-27 termination cause while the design gives 'contradiction' a threshold of 1 with no decidable predicate or observation source."
+  },
+  {
+   "check": "security assumptions",
+   "result": "PASS",
+   "note": "Deny-network offline fixtures, inert imported prose, access-labelled evidence, redacted export, and re-checked authority/custody/fence at dispatch; no capability is assumed that the existing code contradicts."
+  },
+  {
+   "check": "failure/recovery semantics",
+   "result": "PASS",
+   "note": "Unknown effects read back first, no unfenced takeover or lease expiry, ambiguity parks, UNKNOWN never becomes zero, and the design explicitly refuses to promise finite successful recovery when the store is unavailable."
+  },
+  {
+   "check": "deterministic enforcement",
+   "result": "PASS",
+   "note": "17 opportunities, each with a proven-red obligation; the 7 reused promotions keep the ADVISORY/BLOCKING strengths the Gap Trap backlog assigned them (LRN-003, LRN-010, LRN-019 advisory; LRN-001/002/004/016 blocking)."
+  },
+  {
+   "check": "proofability",
+   "result": "CONCERN",
+   "note": "Two stated safety properties have no probe: 015's 'live profile composition must fail closed when AssessmentAuthority is unbound', and 053's tenure threshold, whose fixture passes on injected values while no composition binds a real source."
+  },
+  {
+   "check": "local iteration surface",
+   "result": "PASS",
+   "note": "Every contract is exercisable offline against a real temporary SQLite store, local bare Git remote and fake clock, with no provider credentials or network."
+  },
+  {
+   "check": "decomposition readiness",
+   "result": "CONCERN",
+   "note": "Ports, state, transitions and identities are concrete enough to decompose, but 013 cannot be decomposed until the allocation source is settled and no contract states the context import-direction rule its own enforcement fixture would check."
+  },
+  {
+   "check": "Gap Trap opportunities",
+   "result": "PASS",
+   "note": "All seven promotions are reused at plausible boundaries, counted honestly (8 entries / 7 unique), and none is claimed as deployed enforcement."
+  },
+  {
+   "check": "bootstrap assumptions accidentally copied into canonical design",
+   "result": "PASS",
+   "note": "The session-bound waiter, resident multi-BIU tenure and file mailbox are each explicitly refused rather than adopted (mailbox stays a separate operator duty, activation port unbound by default, one-BIU default); only an unlabelled 3600 s number is suggestive."
+  }
+ ],
+ "failure_class_tests": [
+  {
+   "class": "unowned live transport",
+   "foreclosed": false,
+   "evidence": "SF-REQ-015 handles the known G1/G2 gap well (OWNER_ASSIGNMENT_HOLD, no stub READY), but the design creates three new unowned capabilities of the same shape: the 013 allocation author, the real-path RoleOutcomeRecord producer, and monitor/scan hosting for the 056 G+I bound."
+  },
+  {
+   "class": "wrong permission specification",
+   "foreclosed": true,
+   "evidence": "SF-REQ-051-AC-04 plus failure_modes 'Mechanically consistent impossible capability premise -> review rejection' and 014's PremiseEvidence port; residual risk is that premise evidence comes from the same installation doctor that produced the 17/17 false assurance, and LRN-014 was deliberately not promoted."
+  },
+  {
+   "class": "impossible Project isolation",
+   "foreclosed": true,
+   "evidence": "SF-REQ-014 design_decisions pin four observables (positive access, profile scoping, rejected out-of-scope request, unchanged outside-state readback) and refuse credential-denial oracles; SF-REQ-014-AC-03 traces it."
+  },
+  {
+   "class": "hidden identifier grammar",
+   "foreclosed": false,
+   "evidence": "SF-REQ-011 identities/ubiquitous_language/failure_modes never pin the recognized requirement-ID grammar, the 011-inventory fixture uses only plain SF-REQ-0NN identifiers, and no typed outcome is defined for an identifier shape a parser does not recognize."
+  },
+  {
+   "class": "tests that cannot fail",
+   "foreclosed": true,
+   "evidence": "014-discrimination reuses LRN-001 as BLOCKING (constant assertions and zero-application mutations refused), and every one of the 17 enforcement entries carries a proven_red_obligation."
+  },
+  {
+   "class": "unexecuted 'correct' structures",
+   "foreclosed": true,
+   "evidence": "shared_contracts.interfaces_and_wiring_proof binds every public composed operation to an intact-success and typed-failure probe against a real temporary SQLite store, with LRN-002 instantiated in 014-composition and 039-composed-lifecycle; residual is that eight contracts carry no contract-level composed-path entry."
+  },
+  {
+   "class": "late proof harness",
+   "foreclosed": true,
+   "evidence": "SF-REQ-014 transitions gate DRAFT -> FEASIBLE_PLAN before 013 compilation consumes proof_plan, and 014-repair-preservation reuses LRN-004 as BLOCKING; the ordering diagnostic itself stays ADVISORY, matching the promotion decision."
+  },
+  {
+   "class": "missing result identity",
+   "foreclosed": true,
+   "evidence": "039's OutcomeEvidencePort/RoleOutcomeRecord ('Missing RoleOutcomeRecord holds even when WorkerOutcome.kind is success'), 015's 'Zero exit without semantic result -> failure, not readiness', and 016's verdict admission rules; see DV-1 for who owns supplying it."
+  },
+  {
+   "class": "recovery ambiguity",
+   "foreclosed": true,
+   "evidence": "shared_contracts.atomic_fencing_extension.crash and .dispatch forbid unfenced takeover and lease expiry, require readback of unknown effects, and park when sender death or outcome cannot be established; 056-fenced-effect proves it BLOCKING."
+  }
+ ],
+ "findings": [
+  {
+   "id": "DV-1",
+   "severity": "MATERIAL",
+   "requirement_id": "SF-REQ-039",
+   "finding": "SF-REQ-039's design does not merely add an offline harness: it changes the shared execution kernel. It requires role-by-role orchestration replacing FactoryCoordinator._completed_for_outcome, a composed role router, and a new OutcomeEvidencePort whose absence blocks a transition even on WorkerOutcome.kind == 'success'. That application is composed by the live paths (sandbox_run_profile.py:308, github_profile.py:33) with RealWorkerProvider, and no contract assigns anyone to produce RoleOutcomeRecord on the non-scripted path; invocation_runtime is not a bounded context owned by any of the ten. The authorizing party is named only as 'when authorized', and shared_contracts.authority_boundaries simultaneously forbids 'current worker/lifecycle contract edits'.",
+   "why_it_matters": "A production capability is being introduced inside a test-proof requirement with no owner and no live-path probe. Offline scenarios would pass while the sandbox profile holds on every producer success, and the capability gap would surface at Agent-Ready or live proof \u2014 the exact shape of the Wave 1 unowned live transport.",
+   "suggested_repair": "Name the requirement and owner for canonical multi-role orchestration and for RoleOutcomeRecord emission on the real worker path (or record it as an explicit authority gap returned to SPECIFY); reconcile that against shared_contracts.authority_boundaries; and state the behaviour of the live profile when the sidecar is unavailable before the change lands."
+  },
+  {
+   "id": "DV-2",
+   "severity": "MATERIAL",
+   "requirement_id": "SF-REQ-013",
+   "finding": "The contract makes an externally supplied 'authorized allocation' a mandatory input carrying unit_key, BIU identity, obligation extents, capabilities, budgets, dependency edges and closure duties \u2014 effectively the whole BIU \u2014 and holds when it is absent ('Missing allocation meaning is a planning hold, never guessed'). Neither the canonical definition ('Lower governed requirements into bounded BIUs with explicit requirement-satisfaction links and dependency DAGs') nor the Phase 8 specification's scope, dependencies or authority_gaps mentions such an input or an actor who produces it. No authority gap is recorded for it, in contrast to the careful G1/G2 treatment in SF-REQ-015.",
+   "why_it_matters": "This silently narrows a P1 requirement from 'compile requirements into BIUs' to 'validate a hand-authored allocation', and leaves the Wave 2A outcome dependent on an unowned upstream step. Whether the decomposition author is in Wave 2 scope is a product-owner question, and the design's own rule (SF-REQ-051: an uncovered authority question returns to SPECIFY) says it should not have been settled here.",
+   "suggested_repair": "Record the allocation source as an explicit authority gap on SF-REQ-013 and return the question to SPECIFY: either name the owner and interface that produces allocations, or re-specify SF-REQ-013 to derive the decomposition under stated constraints."
+  },
+  {
+   "id": "DV-3",
+   "severity": "MATERIAL",
+   "requirement_id": "SF-REQ-051",
+   "finding": "Enforcement opportunity 051-architecture-boundary proposes extending the fitness suite with a 'context import-direction/port compatibility fixture', but no contract states the permitted direction graph. The existing checker (tools/fitness/check_architecture.py, CHECKS = layering, vendor-signature, port-contract, configuration, determinism) has no context-level rule, and the design itself creates coupling in both directions (context_assembly adapters bind execution_coordination ports and evidence_learning ports; execution_coordination's 015 consumes context_assembly DesignApplicability; 014's premise adapter reads installation and composition/doctor_probes). deferred_to_implementation is empty in all ten contracts, so nothing signals that this is open.",
+   "why_it_matters": "The implementer must invent the rule the deterministic check enforces, which the architecture authority forbids ('No agent may invent repository structure merely because implementation starts') and which the bounded-context model was supposed to settle first. A fixture written against an invented direction graph is a gate that certifies the implementer's own assumption.",
+   "suggested_repair": "State the allowed context dependency direction (including whether execution_coordination may depend on context_assembly types and how evidence_learning adapters may reach installation/composition) as a fixed decision in shared_contracts, then define 051-architecture-boundary against it."
+  },
+  {
+   "id": "DV-4",
+   "severity": "MATERIAL",
+   "requirement_id": "SF-REQ-011",
+   "finding": "The inventory must recognise requirement identifiers inside three prose forms, yet no contract field pins the identifier grammar. ubiquitous_language says only 'Existing SF-REQ identifier, never generated from wording'; identities says the ID is 'the supplied SF-REQ ID scoped to the source project'; failure_modes covers heading-only omission, conflicts, digest mismatch and retired-ID reuse but not an unrecognised identifier shape. The 011-inventory fixture pins counts (56/53) over a baseline whose IDs are all plain three-digit forms, and no probe uses a suffixed or extended identifier.",
+   "why_it_matters": "This is the PY-09B failure verbatim, one layer up: an implementer writes SF-REQ-\\d{3}, a later authorized identifier with a suffix or a different project prefix is silently dropped, the counts fixture still passes, and the register under-reports definitions \u2014 the precise omission SF-REQ-011 exists to prevent. Wave 1's version also reported the wrong reason, which is why an unrecognised shape needs a typed outcome rather than absence.",
+   "suggested_repair": "Fix the recognised identifier grammar as an explicit design decision, require an unrecognised identifier shape to yield a typed UNVERIFIED/conflict record rather than an omission, and add a non-conforming-identifier fixture with a proven-red obligation to 011-inventory."
+  },
+  {
+   "id": "DV-5",
+   "severity": "ADVISORY",
+   "requirement_id": "SF-REQ-015",
+   "finding": "The composition section states 'Live profile composition must fail closed when AssessmentAuthority is unbound' and failure_modes lists 'No configured assessment contract or ownership -> hold', but neither appears in any acceptance_design_trace (AC-01..AC-05 cover lint, dispositions, fingerprint staleness, envelope parity and PY-10 replay) and the single enforcement opportunity 015-envelope-applicability covers only parsing and handling. LRN-002 is not reused here.",
+   "why_it_matters": "The unbound-authority path is the one place a recurrence of the unowned-transport failure would be caught, and it is the only stated safety property in this contract that nothing probes. The global wiring obligation in shared_contracts covers it in principle, but nothing tracks it as an enforcement item.",
+   "suggested_repair": "Add an LRN-002 composed-path entry to SF-REQ-015 asserting that the live profile refuses to construct, or returns OWNER_ASSIGNMENT_HOLD, when AssessmentAuthority is unbound, with a proven-red obligation that binding a stub makes it fail."
+  },
+  {
+   "id": "DV-6",
+   "severity": "ADVISORY",
+   "requirement_id": "SF-REQ-053",
+   "finding": "The default tenure policy includes 'context usage threshold 0.8 of the invocation limit', with 'Missing context usage/limit ends tenure conservatively', while SF-REQ-029 provider normalization is explicitly excluded and no port or adapter in the contract supplies context usage or the invocation limit. LRN-023 (provider-progress-observability) remains an unfilled capability gap.",
+   "why_it_matters": "In the real composition there is no source for this input, so either every episode ends at its first tenure check or the threshold is inert \u2014 while the AC-02 boundary fixture passes on injected values. That is a probe that cannot see the condition that will actually hold in production.",
+   "suggested_repair": "Either name the port that observes context usage and its unavailable case, or drop the threshold from the default policy and state that conservative termination applies only when a bound source reports an unusable value; add a fixture for the 'no source bound at all' composition."
+  },
+  {
+   "id": "DV-7",
+   "severity": "ADVISORY",
+   "requirement_id": "SF-REQ-053",
+   "finding": "'contradiction count 1' is given as a tenure limit, but no contract field defines what a contradiction is, what observes it, or from which input it is derived \u2014 unlike the state-vector mismatch and numeric limits, which are decidable. SF-REQ-053-AC-02 nevertheless requires a policy fixture for every SWF-27 termination cause, and 053-tenure-fence is BLOCKING on 'every named termination cause'.",
+   "why_it_matters": "A BLOCKING gate with one undecidable member will either be implemented against an invented predicate or quietly dropped from the battery; both outcomes are the 'gate that cannot run' pattern Wave 1 recorded.",
+   "suggested_repair": "Define the contradiction predicate and its observation source, or mark that cause as a judgment obligation with a named actor in the way SF-REQ-014 handles non-mechanical predicates."
+  },
+  {
+   "id": "DV-8",
+   "severity": "ADVISORY",
+   "requirement_id": "SF-REQ-056",
+   "finding": "The G+I detection bound is honestly caveated as holding only 'with progressing clock, complete evidence and functioning scans', and 053 asserts 'Persistent monitor lifetime is independent of model invocation', but no contract names who hosts or supervises the monitor and periodic scan, and no non-goal excludes it.",
+   "why_it_matters": "Wave 1 lost an untracked background watcher launched with '&' and separately misread a systemd-managed process as not running. An unhosted scanner turns 056 into a capability whose failure mode is indistinguishable from quiet, which is the class the coordinator's own assessment singled out as most dangerous.",
+   "suggested_repair": "Name the owner of monitor hosting and supervision (or record it as an explicit out-of-scope gap with the actor who will close it), and require the scan to expose a liveness observation of itself rather than only of the work it inspects."
+  }
+ ],
+ "bootstrap_assumptions_found": [
+  "No bootstrap machinery is adopted as architecture: the session-bound waiter is replaced by a monitor whose lifetime is independent of model invocation with activation unbound by default, the file mailbox is deliberately kept as a separate operator duty with a distinct namespace and only a read-only migration-staging adapter, and the resident multi-BIU tenure is explicitly refused in favour of a one-BIU default.",
+  "Weak candidate only: the 3600 s maximum episode age coincides with the bootstrap waiter's 3600 s timeout and carries no provenance statement, while SF-REQ-056 explicitly disclaims its analogous 300 s ('not a claim that historical bootstrap 5 minutes is a canonical invariant'). The asymmetry is worth labelling; I did not establish that the value was copied.",
+  "Provider replacement as a tenure termination cause traces to SWF-27 in the specification, not to the one-off recovery authorization, and SF-REQ-029 telemetry normalization is explicitly excluded."
+ ],
+ "clean_areas": [
+  "Atomic fencing and recovery semantics (shared_contracts.atomic_fencing_extension plus SF-REQ-056 concurrency/recovery) \u2014 reservation held through send and readback, no lease expiry or unfenced takeover, sorted lock order, ambiguity parks, and an explicit refusal to promise finite successful recovery.",
+  "Requirement and acceptance coverage is exact: 10/10 selected requirements, 53/53 acceptance IDs listed and traced with matching identifiers, no invented ACs and no dropped ones.",
+  "SF-REQ-014's isolation design retires the Wave 1 impossible premise properly, replacing credential denial with four observables and routing infeasible premises back to source authority rather than waiving them.",
+  "SF-REQ-015 carries the G1/G2 ownership gaps forward without filling them: no stub READY, no invented serialization contract, explicit OWNER_ASSIGNMENT_HOLD.",
+  "SF-REQ-016's role separation is concrete and enforceable \u2014 discriminated union, evaluator/policy/revision links required for a verdict, content-addressed immutability, and null-plus-reason instead of zero for unknown measurements.",
+  "The design reads the existing code accurately rather than assuming it: it correctly identifies FactoryCoordinator._completed_for_outcome as collapsing verify/review/accept/close, and correctly states that commit_with_effect/claim_effect do not validate a passed reservation fence.",
+  "The 053/056 dependency cycle is answered rather than deferred: 053 exposes AttentionPort independently, and 056 ratification is required only for 056-specific recovery, not for generic attention or tenure.",
+  "Enforcement strengths are honest \u2014 17 opportunities all marked DESIGNED_NOT_IMPLEMENTED, advisory/blocking assignments match the Gap Trap backlog decisions, and the promotion counting (8 entries, 7 unique) is stated and correct."
+ ],
+ "verifier_note": "Read-only and pre-implementation: three of the five named contexts (context_assembly, evidence_learning, control_plane beyond decisions/CLI) are empty package skeletons, so none of the 17 designed probes exists or could be executed, and I neither re-ran the design/Wave 1 checkers nor recomputed the 28 recorded source digests; platform behaviours the design depends on \u2014 SQLite BEGIN IMMEDIATE fencing under real multi-process contention, deny-network CI, live worker readback durability, and provider context-usage telemetry \u2014 were reasoned about against the source, not tested.",
+ "reverification_r1": {
+  "disposition": "REPAIR_REQUIRED",
+  "findings_status": [
+   {
+    "id": "DV-1",
+    "status": "CLOSED",
+    "evidence": "The kernel change is no longer authorized inside the test-proof requirement. Two SPECIFY gaps are recorded with resolution actors and explicit blocks (authority_gaps R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, each stating 'Implementers and this designer may not close it'); OutcomeEvidencePort is demoted to 'Conditional target only after R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME are resolved'; composition states the separate-role path is blocked and that 'full multi-role acceptance is blocked, not passed by a parallel mock'; design_decisions[0] forbids replacing FactoryCoordinator._completed_for_outcome under SF-REQ-039 alone, reconciling with shared_contracts.authority_boundaries, which now names both gaps as blocking. The live-path hole is closed in the direction the finding demanded: the sandbox/github constructors must return ROLE_OUTCOME_BINDING_HOLD 'before any worker launch, not after every producer success', with 'Existing unmodified profiles are not claimed to enforce this future gate', and 039-composed-lifecycle adds a real-path probe whose proven_red_obligation independently kills the pre-launch binding gate and real-worker record emission. AC-01's probe is explicitly marked blocked rather than claimed satisfiable, and authority_status is downgraded to DESIGN_CANDIDATE_WITH_SPECIFY_HOLD. requirements_created=0 verified: no new Product Requirement is invented to close it."
+   },
+   {
+    "id": "DV-2",
+    "status": "CLOSED",
+    "evidence": "The wrong design is withdrawn, not merely annotated. ubiquitous_language redefines Allocation as 'Derived obligation-to-unit extent mapping in a compilation candidate; not an authorized mandatory hand-authored input'; ports mark the allocation representation as 'output/internal, not prerequisite input'; design_decisions[0] states 'Supersedes the mandatory external-allocation design choice... SF-REQ-013 must derive initial decomposition from requirements/design' and 'A validator-only implementation does not satisfy this requirement'; shared_contracts.alternatives_and_selection records the withdrawal. The validator-only path is actively foreclosed, not just deprecated: transitions say 'validation of a hand-authored candidate cannot count as initial compilation acceptance', AC-02's probe says 'Hand-authored allocation fixture success is validation-only, never proof of compilation', and 013-graph-coverage's proven_red_obligation requires 'Bypass the authority-gap gate with a complete hand-authored allocation and require the no-candidate assertion to fail'. The residual product question (derive vs. named external producer, plus identity constraints) is returned as R1-GAP-013-ALLOCATION with derivation selected on stated evidence, which is exactly what the repair instruction permitted. Consequence disclosed rather than hidden: with the gap open compile returns AUTHORITY_GAP_HOLD, so 013 is now blocked rather than narrowed, and authority_status/blocks say so."
+   },
+   {
+    "id": "DV-3",
+    "status": "PARTIAL",
+    "evidence": "The missing rule now exists and the fixture is written against it: shared_contracts.context_dependency_direction states an explicit allowed_edges table, target_layers (cross-context imports target domain values or ports only), typed_cycles (execution_coordination MAY reference context_assembly.domain DesignApplicability; reciprocal leaf references, no module cycles) and premise_bridge (evidence_learning adapters MUST NOT import installation or composition; composition/upstream_profile owns the doctor bridge), and 051-architecture-boundary now says it 'Enforce[s] shared_contracts.context_dependency_direction exactly' with named negative fixtures (execution_coordination -> context_assembly.application, evidence_learning -> installation, evidence_learning -> composition, reciprocal leaf cycle) and positive controls. SF-REQ-014's adapters were rewritten to match the premise bridge, so the internal inconsistency the finding cited is gone. What is not closed is the invention the finding was really about: the stated table contradicts imports that exist in the repository today and supplies no exemption, baseline or scope predicate a static checker can apply, so the implementer must still invent the in-scope rule before the BLOCKING gate can run. See DV2-1 for the exact imports."
+   },
+   {
+    "id": "DV-4",
+    "status": "CLOSED",
+    "evidence": "SF-REQ-011 gains an identifier_contract section that pins the grammar as a full-token regex (\\A[A-Z][A-Z0-9]*(?:-[A-Z][A-Z0-9]*)*-REQ-[0-9]{3,}(?:[A-Z])?\\Z), states extraction ('capture the entire identifier slot before grammar validation', trim only outer delimiters, 'No substring match may salvage a conforming prefix from a nonconforming token'), and defines typed outcomes: IdentifierShapeConflict(status=UNVERIFIED, reason=UNRECOGNIZED_REQUIREMENT_ID, raw_token, source_ref, locator, grammar_revision=1), distinct MISSING_/AMBIGUOUS_REQUIREMENT_ID and a separate UNAUTHORIZED_REQUIREMENT_NAMESPACE, with 'they count as issues, never silently absent definitions' and recognition explicitly conferring no authority. The PY-09B mechanism is killed by a probe, not a sentence: 011-inventory now requires synthetic SF-REQ-011A / SF-REQ-1000 / TEAM-X-REQ-011 retention and typed rejection of SF-REQ-01 / SF-REQ-011AA / SF-REQ-011-extra in all three prose forms, and its proven_red_obligation is 'Replace full-token grammar with SF-REQ-[0-9]{3}, strip a suffix, or silently drop a malformed token separately: exact identity/typed-reason assertions fail even if baseline 56/53 counts pass' \u2014 i.e. the counts fixture can no longer mask the omission. I checked the grammar against the real definition corpus (docs/decisions/alienintent-software-factory-plan.md plus the Canonical-requirement/Recorded-as decision records): 134 conforming tokens, zero nonconforming, so the pinned grammar does not reject any authorized identifier in the sources it is meant to parse. Residual risk in a different corpus is DV2-2, not a failure of the grammar itself."
+   }
+  ],
+  "episode_age_3600": {
+   "status": "DISCLAIMED",
+   "evidence": "SF-REQ-053 design_decisions[0] (docs/evidence/wave2-design-contracts.json:1487, mirrored at docs/evidence/wave2-design-contracts.md:408) now ends: 'The 3600 seconds is a proposed configurable design default, not a claim that the bootstrap waiter timeout or historical values are canonical; no empirical derivation or inheritance is asserted.' This is the same form as SF-REQ-056's 300 s disclaimer ('not a claim that historical bootstrap 5 minutes is a canonical invariant'), so the asymmetry the verdict flagged is removed. No provenance is claimed, and none is implied \u2014 the value stays versioned composition policy, 'not authority or increased budget'."
+  },
+  "regression": {
+   "found": true,
+   "detail": "The mechanical properties that previously passed are intact, and I verified them rather than trusting the repair's own numbers: 10/10 contracts, 53/53 acceptance IDs unchanged, deferred_to_implementation empty in all ten, no new bounded context, 18 enforcement opportunities with exactly one added entry (015-composed-authority, the DV-5 repair) and none removed, 9 promotion entries over 7 unique promotions, and every reused promotion keeps its prior strength (LRN-001/002/004/016 BLOCKING; LRN-003/010/019 ADVISORY) \u2014 so shared_contracts.enforcement_counting and validation.additional_checks are honest, and the previously-PASS deterministic-enforcement and coverage checks are not weakened. The .md companion was regenerated consistently (it carries the four gaps, the edge table, the identifier contract and the 3600 s disclaimer; no stale mandatory-allocation text). Two things the repair itself introduced do not hold up. (1) The new fixed edge table forbids cross-context edges that exist in production code today, and the enforcement entry that checks it has no exemption mechanism (DV2-1) \u2014 notably it forbids installation/application/doctor.py's import, and that module is the very callable the new premise_bridge routes through. (2) The new unconditional token ledger plus blocking identifier-issue semantics has no category for requirement-scoped acceptance identifiers or compound prose references (DV2-2). Both are defects of the repaired sections, not pre-existing. Separately, and not material: identifier_contract.biu_distinction calls the BIU grammar 'Existing', while its source (docs/evidence/wave1-biu-split-replan-design.json:19) calls it a proposed identity grammar and no such validator exists in src/alienintent."
+  },
+  "new_material_findings": [
+   {
+    "id": "DV2-1",
+    "requirement_id": "SF-REQ-051",
+    "finding": "shared_contracts.context_dependency_direction.allowed_edges forbids four import edges that the repository already contains, and 051-architecture-boundary is BLOCKING on checking 'this exact edge table' with no exemption list, baseline or scope predicate. The table gives installation an empty allow-list and omits execution_coordination -> installation and execution_coordination -> invocation_runtime, but /mnt/d/Projects/alienintent/src/alienintent/execution_coordination/adapters/github_projects_v2.py:20-21 and /mnt/d/Projects/alienintent/src/alienintent/execution_coordination/adapters/github_repository_api.py:14 import alienintent.installation.domain/ports, /mnt/d/Projects/alienintent/src/alienintent/execution_coordination/application/local_artifact_custody.py:11 imports alienintent.invocation_runtime.domain.runtime, and /mnt/d/Projects/alienintent/src/alienintent/installation/application/doctor.py:10 imports alienintent.execution_coordination.domain.webhook_authenticity. The scope sentence ('Fixed rule for all new/changed Wave 2 Python imports... Existing imports outside this slice are not retroactively certified') is not a predicate a static checker can evaluate: /mnt/d/Projects/alienintent/tools/fitness/check_architecture.py walks every .py under --root (python_files/rglob in run()) and has no per-file or grandfathered-edge mechanism.",
+    "why_it_matters": "The implementer cannot land the BLOCKING fixture as specified. They must either edit four production modules (including local_artifact_custody.py, which SF-REQ-039 reuses, and doctor.py, which the new premise_bridge depends on) although shared_contracts.authority_boundaries forbids retroactive Wave 1 changes, or invent an exemption/scope rule the design does not state \u2014 which is DV-3's original defect displaced one step: a gate certifying the implementer's own assumption about which files the rule covers. The alternative outcome is the 'gate that cannot run' pattern: the check is quietly dropped from the suite. Repair is cheap and stays inside design authority: record the four existing edges as explicitly named, dated exceptions (or add the edges to the table with a target-layer restriction) and state whether the fixture applies repository-wide or to an enumerated module set."
+   },
+   {
+    "id": "DV2-2",
+    "requirement_id": "SF-REQ-011",
+    "finding": "identifier_contract.extraction requires ledgering 'every whitespace-delimited token containing -REQ- in source text', typed_failure makes every nonconforming token an IdentifierShapeConflict that 'block[s] dependent source compilation until explicitly resolved', and no substring may 'salvage a conforming prefix from a nonconforming token' \u2014 but the grammar recognises only requirement identifiers, and biu_distinction handles only the requirement/BIU pair. There is no category for requirement-scoped acceptance identifiers or compound references, both of which occur in the project's own decision and specification prose: SF-REQ-053-AC-02 and the other 52 acceptance IDs (used by this very design's acceptance_design_trace and by SF-REQ-013's obligation coverage) appear throughout /mnt/d/Projects/alienintent/docs/evidence/wave2-specified-requirements.md, and compound forms appear at /mnt/d/Projects/alienintent/docs/decisions/2026-09-19-software-factory-wave1-founder-decisions.md:46 ('SF-REQ-001\u2013010'), /mnt/d/Projects/alienintent/docs/decisions/2026-09-20-wave1-release-coordinator.md:83 ('SF-REQ-001/SF-REQ-002') and /mnt/d/Projects/alienintent/docs/decisions/2026-09-20-candidate-worktree-retention.md:61 ('SF-REQ-030/054'). All fail the pinned regex.",
+    "why_it_matters": "Whenever a pinned manifest includes such a source, the inventory produces UNRECOGNIZED_REQUIREMENT_ID issues for legitimate identifiers and blocks compilation for that source, or the implementer invents an AC-suffix rule and a separator-splitting rule that extraction explicitly forbids \u2014 reintroducing the unpinned-grammar judgment DV-4 was meant to remove, now on the reject side instead of the drop side. It also collides with the retained 56/53 baseline if any baseline reference is a compound token. The known definition corpus (factory plan and Canonical-requirement/Recorded-as records) is clean, so this is a completeness defect in the new section rather than a certain failure; repair is to state the acceptance-identifier form and its typed disposition, and either exempt multi-reference tokens with an explicit separator rule or state that they are references, not identifier issues."
+   }
+  ],
+  "verifier_note": "Read-only, pre-implementation, and narrow by instruction: I checked the four findings, the 3600 s value and repair-induced damage, and did not re-run the other eleven checks or re-derive the design from the Phase 8 specification. None of the 18 designed probes exists or could be executed \u2014 /mnt/d/Projects/alienintent/src/alienintent/context_assembly and .../evidence_learning contain only __init__.py skeletons and control_plane has only the decision inbox/CLI \u2014 so every closure above is a judgment about design text and its stated proven-red obligations, not observed behaviour. I did not re-run tools/evidence/check_design_contracts.py or check_wave1.py, and I did not recompute the 28/29 preserved-source digests or the verdict_sha256; I verified the repair's structural counts (10 contracts, 53 ACs, 18 opportunities, 9/7 promotions, 0 deferred, one added enforcement entry) independently from the JSON and from git diff against HEAD. For DV-4 I tested the pinned regex mechanically against every -REQ- token in the factory plan and the Canonical-requirement/Recorded-as decision records (zero nonconforming) and across docs/ generally (104 distinct nonconforming, dominated by acceptance IDs), which is the basis for DV2-2's scoping; I could not establish which documents the historical 56-referenced/53-defined baseline manifest actually pins, because no manifest artifact is named in the contract. For DV2-1 I confirmed the four offending imports and the checker's whole-tree walk by reading the files, but I did not attempt to implement the proposed context-edge check, so I cannot say how many further violations a full implementation (including re-exports and TYPE_CHECKING imports, which the design requires it to inspect) would surface. Platform behaviours the design still rests on \u2014 SQLite BEGIN IMMEDIATE fencing under real multi-process contention, deny-network CI, live worker readback durability \u2014 were not tested. Whether the designer holds authority to fix the context edge table at all, given that the architecture authority lists the bounded-context model as unfinished pre-Python work, is an owner question I did not attempt to settle; the repair instruction directed that the graph be stated here.",
+  "provenance": {
+   "verifier": "a second fresh claude session, read-only, told not to assume the first verdict was right",
+   "raw": "docs/operations/post-wave1-program/reports/POSTW1-VERIFY-010-R1-raw.txt"
+  }
+ },
+ "reverification_r2": {
+  "disposition": "VERIFIED",
+  "findings_status": [
+   {
+    "id": "DV2-1",
+    "status": "CLOSED",
+    "evidence": "The normative table is withdrawn, not annotated. shared_contracts.context_dependency_direction.status is 'DESCRIPTIVE_ONLY; normative module-direction authority unresolved under R2-GAP-051-EDGE-AUTHORITY'; the R1 graph is relocated to withdrawn_r1_proposal marked 'Historical candidate only; not an allowed-import policy. No implementation or enforcement authority.' I recomputed the import graph myself with an AST walk over every .py under /mnt/d/Projects/alienintent/src/alienintent (Import + ImportFrom, all nodes including TYPE_CHECKING bodies) and it reproduces observed_edges exactly: context_assembly [], evidence_learning [], execution_coordination [control_plane, installation, invocation_runtime], control_plane [execution_coordination], invocation_runtime [execution_coordination], installation [execution_coordination], composition [control_plane, execution_coordination, installation, invocation_runtime]. The claim 'no relative cross-group imports were observed' also holds: the six relative imports I found are all intra-package inside execution_coordination/domain. All four violations are named with path, sha256, source/target module and line-level import: github_projects_v2.py:20-21, github_repository_api.py:14, local_artifact_custody.py:11, doctor.py:10 \u2014 and the counting sentence ('four importing-file violations, five import statements, three distinct module-pair edges') is arithmetically correct against the withdrawn table. 051-architecture-boundary is still BLOCKING but no longer on a rule the codebase fails: its rule now runs only the existing checks ('tools/fitness/check_architecture.py --root src/alienintent --check all'), explicitly says 'It must not compare production imports to withdrawn_r1_proposal' and 'observed_edges is descriptive, never a permission table', and returns ARCHITECTURE_AUTHORITY_HOLD for direction-dependent admission. I executed that checker: 'PASS: all architecture fitness checks', exit 0 \u2014 so the retained BLOCKING obligation is satisfiable today. The R1 directional fixtures are preserved as conditional_probes 'blocked pending Founder disposition', not silently dropped. Per the judgement rule: DV2-1 asserted both 'this design is wrong' and 'this is not yours to decide'; the wrong part was withdrawn and the remaining part was escalated, so the authority gap is a legitimate closure here rather than a substitute for repair."
+   },
+   {
+    "id": "DV2-2",
+    "status": "CLOSED",
+    "evidence": "A -AC- token is now classified as something else, mechanically. I compiled the two pinned regexes out of the JSON and ran them: token_kinds.acceptance_criterion_regex matches SF-REQ-053-AC-02 and SF-REQ-014-AC-03 while identifier_contract.grammar does not, and token_kinds.order puts AcceptanceCriterionId ahead of RequirementIdentifier; acceptance_disposition states the AC ID is retained with its syntactic parent as a typed relationship 'never a requirement definition or IdentifierShapeConflict', and typed_failure adds 'Recognized acceptance IDs and valid compound/possessive references do not create shape conflicts.' The DV-4 grammar is unweakened on the reject side: SF-REQ-011 / SF-REQ-011A / SF-REQ-1000 / TEAM-X-REQ-011 still match, SF-REQ-01 / SF-REQ-011AA / SF-REQ-011-extra still do not. The corpus scope is named and real, not gestured at: corpus_scope requires 'an explicit versioned source manifest, never an implicit docs/** scan', and historical_fixture_manifest pins 17 documents at revision d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998. I verified all 17 SHA-256 digests against git show at that revision \u2014 17/17 exact, 0 mismatches \u2014 and verified all 53 definition_slots by reading the named line at that revision: every slot's line contains its stated requirement ID, 53 slots total matching expected.defined_count=53. I then implemented the contract's own classification rules and scanned every whitespace token containing '-REQ-' in those 17 files: 195 RequirementIdentifier, 3 PossessiveReference, 3 CompoundReference, 1 range, and zero residual unrecognized tokens. The only token my first (non-Markdown-aware) tokenizer failed was '[SF-REQ-007](alienintent-software-factory-plan.md)', which the extraction rule already covers ('link labels separate from URLs') and which 011-inventory names verbatim as a fixture. Reconstructing the reference set under those rules yields exactly the 56 expected referenced_ids \u2014 no missing, no extra \u2014 with range endpoints only, consistent with 'No range expansion is implied'. The three compound forms DV2-2 cited (SF-REQ-001/SF-REQ-002, SF-REQ-030/054, SF-REQ-001\u2013010) are all now named categories and all appear as required fixtures in 011-inventory, whose proven_red_obligation independently kills AC misclassification, dropped compound operands, scanning an excluded document, and suppressing an in-scope malformed token. Scope of blocking is narrowed as the finding asked: issues 'block compilation dependent on the affected source spans/IDs, not unrelated sources'. The manifest is honestly labelled a reconstruction ('not a claim that Phase 8 published this manifest'), which also resolves the R1 verifier's stated inability to determine what the 56/53 baseline pinned."
+   },
+   {
+    "id": "DV-3",
+    "status": "CLOSED",
+    "evidence": "DV-3's defect was that a BLOCKING deterministic check was specified against a permitted-direction graph no contract stated, forcing the implementer to invent the rule the gate enforces. R2 removes the obligation rather than inventing the rule: no normative direction graph is asserted for production, 051-architecture-boundary now enforces only checks that already exist and already pass, and the directional extension is explicitly held \u2014 'without a pinned Founder disposition of R2-GAP-051-EDGE-AUTHORITY return ARCHITECTURE_AUTHORITY_HOLD for affected design admission, never PASS or an empty successful check'. Its proven_red_obligation makes that refusal itself falsifiable ('Independently bypass the open-authority hold and require refusal assertion failure; treating observed_edges as approved policy must fail'), so this is not the 'gate that cannot run' pattern in disguise. The missing scope predicate that made DV-3 PARTIAL is gone because there is no longer a normative rule needing one; the descriptive graph carries its own explicit scope ('every tracked src/alienintent/**/*.py at baseline_commit... a source-import snapshot, not runtime/dynamic-import reachability'). The underlying question is correctly reclassified as authority, not design: R2-GAP-051-EDGE-AUTHORITY cites docs/architecture/pre-python-gate/gate-reclassification.md G03, and I read that file \u2014 line 41 does carry 'Binding FD-02' classifying the five contexts as modules within AlienIntent Execution with Control Plane as application orchestration, which settles module classification and does not approve an edge table, exactly as the gap states. This is the 'this decision is not yours to make' shape, so the gap closes it."
+   }
+  ],
+  "previously_closed_still_closed": {
+   "DV-1": true,
+   "DV-2": true,
+   "DV-4": true,
+   "evidence": "DV-1: both R1 gaps survive intact in authority_gaps with resolution_actor 'Product authority through SPECIFY... Implementers and this designer may not close it'; SF-REQ-039.authority_status is still DESIGN_CANDIDATE_WITH_SPECIFY_HOLD with authority_gap_refs [R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME]; design_decisions[0] still forbids replacing FactoryCoordinator._completed_for_outcome under SF-REQ-039 alone; composition still says full multi-role acceptance is 'blocked, not passed by a parallel mock'; 039-composed-lifecycle retains the real-path probe and its pre-launch-binding and real-worker-emission proven-red obligations. DV-2: ubiquitous_language still reads 'Allocation: Derived obligation-to-unit extent mapping in a compilation candidate; not an authorized mandatory hand-authored input'; design_decisions[0] still 'Supersedes the mandatory external-allocation design choice' and 'A validator-only implementation does not satisfy this requirement'; transitions still force AUTHORITY_GAP_HOLD while R1-GAP-013-ALLOCATION is open and still refuse hand-authored validation as compilation acceptance; 013-graph-coverage retains the bypass-the-gate proven-red obligation. The only SF-REQ-013 delta versus baseline HEAD is domain_owner prose, rewritten in the direction DV-2 demanded. DV-4: the pinned grammar string is byte-identical to the R1 version (only grammar_revision moves 1->2), the typed outcomes MISSING_/AMBIGUOUS_REQUIREMENT_ID and UNAUTHORIZED_REQUIREMENT_NAMESPACE are retained, and 011-inventory keeps the original proven-red obligation ('Replace full-token grammar with SF-REQ-[0-9]{3}, strip a suffix, or silently drop a malformed token separately: exact identity/typed-reason assertions fail even if baseline 56/53 counts pass') while adding four more. R2 strictly extends DV-4's repair. The DV-5 repair (015-composed-authority, BLOCKING, LRN-002) and the 3600 s disclaimer ('a proposed configurable design default, not a claim that the bootstrap waiter timeout or historical values are canonical') are both still present."
+  },
+  "regression": {
+   "found": false,
+   "detail": "I verified the structural properties from the artifact and against git HEAD (c08fa79) rather than from repair_r2's own numbers. 10 contracts. deferred_to_implementation == [] in all ten. Bounded contexts are {context_assembly, evidence_learning, execution_coordination, composition, control_plane}, identical to baseline and all five present as real packages under src/alienintent. Acceptance IDs: 53 total, and the per-requirement acceptance_design_trace ID lists are set-identical and order-identical to HEAD \u2014 zero added, zero dropped, zero renamed. Enforcement opportunities: 18, one added since HEAD (015-composed-authority, the DV-5 repair), none removed; every opportunity that existed at HEAD keeps its exact strength and phase3_promotion value. Promotions: 9 entries over 7 unique (LRN-001/002/003/004/010/016/019), matching shared_contracts.enforcement_counting, with LRN-001/002/004/016 BLOCKING and LRN-003/010/019 ADVISORY as the Gap Trap backlog assigned. The .md companion is consistent, not stale: it carries DESCRIPTIVE_ONLY, observed_edges, existing_violations_of_withdrawn_r1_table, the five gaps, the identifier contract and the 3600 s disclaimer, and the only surviving occurrences of 'allowed_edges' are inside withdrawal language. I independently re-ran tools/evidence/check_design_contracts.py (PASS, 10 contracts, 0 failures) and tools/fitness/check_architecture.py --root src/alienintent --check all (PASS, exit 0), confirming validation.design_check and the retained 051-architecture-boundary obligation. Working-tree scope is the two design artifacts plus docs/operations/post-wave1-program/program-state.json, which is coordinator bookkeeping, not design content. Unlike R1 and R0, I could not find a defect introduced by this repair: the two R1-induced defects are removed by withdrawal and scoping rather than by a new normative assertion, so there is no new normative surface for a third-round regression to live on."
+  },
+  "new_material_findings": [],
+  "founder_decisions_surfaced": [
+   "R2-GAP-051-EDGE-AUTHORITY (FOUNDER_AUTHORITY_GAP, SF-REQ-051): does a normative cross-module import-direction restriction refine approved internal module design or change the approved responsibility boundary, and is adoption authorized and at what scope? Until disposed, SF-REQ-051 direction-dependent design admission returns ARCHITECTURE_AUTHORITY_HOLD and the four existing violating imports stay descriptive facts, not defects. Resolution actor: Founder; routed by Program Director.",
+   "R1-GAP-013-ALLOCATION (SF-REQ-013, RETURN_TO_SPECIFY): derive initial decomposition, or name an authorized external allocation producer and its interface? Blocks Wave 2A completion claims.",
+   "R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME (SF-REQ-039, RETURN_TO_SPECIFY): which requirement and owner authorize canonical multi-role orchestration, and who supplies durable RoleOutcomeRecord on the non-scripted worker path? Block shared-kernel role-router changes and live-path readiness claims.",
+   "R1-GAP-MONITOR-HOST (SF-REQ-053/056, RETURN_TO_SPECIFY): who owns and supervises the persistent monitor and periodic scan host? Blocks the operational G+I guarantee.",
+   "Not a design defect but a routing fact: docs/operations/post-wave1-program/program-state.json still carries POSTW1-DESIGN-009 as status REPAIR with DV-3/DV2-1/DV2-2 listed as open blockers, and nothing in the tracker reflects the R2 repair or this verification. The artifact's own status (REVISED_PENDING_INDEPENDENT_REVIEW_WITH_SPECIFY_AND_FOUNDER_HOLDS) is accurate; the tracker is behind."
+  ],
+  "verifier_note": "Read-only, pre-implementation, and narrow by instruction: I checked DV2-1, DV2-2, DV-3, regression, and that DV-1/DV-2/DV-4 were not reopened. I did not re-derive the design from the Phase 8 specification, did not re-audit the eleven original checks or the six advisory findings (DV-5..DV-8 were only spot-checked for survival), and did not recompute the 28 preserved-source digests or run tools/evidence/check_wave1.py, so validation.wave1_check (1075 checks, 13/13 negative controls) is unverified by me. None of the 18 designed probes exists or could be executed \u2014 src/alienintent/context_assembly and src/alienintent/evidence_learning contain only skeletons \u2014 so every closure above is a judgement about design text plus mechanically checkable facts about the repository, not observed probe behaviour. Three things I checked and deliberately did not raise as findings. (1) premise_bridge still states a normative 'evidence_learning adapters MUST NOT import installation or composition' while edge authority is gapped; I judged this in-scope for the designer because it constrains only modules this design proposes to build (evidence_learning has no imports today), it disclaims authority in its own text, and its fixtures sit in the blocked conditional_probes list rather than in any runnable BLOCKING gate. (2) token_kinds.compound_reference and .possessive_reference are specified in precise prose rather than as pinned regexes, unlike the requirement and acceptance grammars; I was able to implement them unambiguously enough to reproduce the expected 56-ID set exactly, so I do not consider this an unpinned-grammar recurrence, though a pinned pattern would be stronger. (3) biu_distinction's R1 overclaim ('Existing' BIU grammar) is corrected to 'Wave 1 proposed... not an implemented validator'. I could not verify the claim that a full directional check would surface no further violations beyond the four named, because no such checker exists and I did not write one; my AST scan covers absolute alienintent imports and relative imports across groups but not dynamic imports, importlib, or string-based module references. Platform behaviours the design still rests on \u2014 SQLite BEGIN IMMEDIATE fencing under real multi-process contention, deny-network CI, live worker readback durability, provider context-usage telemetry \u2014 were reasoned about, not tested. Finally: this design is verified as repaired, not as implementation-ready. Five authority gaps remain open and the artifact says so itself.",
+  "provenance": {
+   "verifier": "a third fresh claude session, read-only, told not to assume either prior verdict was right",
+   "raw": "docs/operations/post-wave1-program/reports/POSTW1-VERIFY-010-R2-raw.txt",
+   "independent_recomputation": "recomputed the src/alienintent import graph with its own AST walk including TYPE_CHECKING bodies, and compiled the two pinned regexes out of the JSON and ran them, rather than accepting the design's claims"
+  }
+ },
+ "final_disposition": "VERIFIED"
+}

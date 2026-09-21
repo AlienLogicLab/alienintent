@@ -1,0 +1,15 @@
+```text
+DV2_1_RESOLVED=authority_gap; descriptive graph recorded, normative table withdrawn pending Founder disposition
+EXISTING_VIOLATIONS_NAMED=4
+EDGE_TABLE_AUTHORITY=founder_gap_recorded
+DV2_2_RESOLVED=Manifest-scoped extraction with typed acceptance, compound and possessive references
+ACCEPTANCE_ID_SHAPE=Full requirement ID followed by -AC- and at least two digits; classified as AcceptanceCriterionId
+BASELINE_MANIFEST_NAMED=yes
+DV3_STATUS=closed
+NEW_AUTHORITY_GAPS=1
+REQUIREMENTS_CREATED=0
+DESIGN_CHECK=PASS
+WAVE1_CHECK=PASS
+DISPUTED=NONE
+NOTES=Only two authorized files changed; 532 other files preserved; no commit, push or network.
+```
