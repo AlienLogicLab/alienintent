@@ -1,0 +1,197 @@
+{
+  "schema_version": "1.0",
+  "biu_id": "PY-06",
+  "derived_from": "docs/evidence/execution-trajectories/PY-06.jsonl",
+  "issue_number": 54,
+  "title": "Invocation runtime and candidate custody",
+  "requirements": [
+    "SF-REQ-007 (primary)",
+    "SF-REQ-009",
+    "SF-REQ-003"
+  ],
+  "agent_ready": {
+    "disposition": "READY",
+    "owner_clarifications": 0,
+    "expected_rework_locality": "MEDIUM",
+    "assessment_baseline": "5b617a3"
+  },
+  "release_baseline": {
+    "as_released": "6a2d1e9 (does not exist)",
+    "corrected": "93b9b096b658f023172c258cad43ba9923451c5e"
+  },
+  "accepted_candidate": "e660748686ffaf66340e44760dc88c898f35a0ff",
+  "merge_commit": "896c0fe567fd022622500ee56f5d51a4e34032ec",
+  "first_pass_accepted": false,
+  "producer_attempts": {
+    "value": 5,
+    "definition": "IMPLEMENT invocations that published a candidate; excludes the authority-blocked first invocation and the closure invocation"
+  },
+  "closure_producer_invocations": {
+    "value": 1,
+    "definition": "post-ACCEPT closure invocations"
+  },
+  "verifier_cycles": 5,
+  "repair_cycles": 4,
+  "return_to_implement_count": 4,
+  "closure_return_to_implement_count": 0,
+  "blocking_findings_count": {
+    "value": 22,
+    "definition": "F1-F9, G1-G6, H1-H5, J1-J2; 0 at ACCEPT"
+  },
+  "blocking_findings_by_cycle": [
+    9,
+    6,
+    5,
+    2,
+    0
+  ],
+  "findings_by_class": {
+    "BEHAVIORAL_DEFECT": 9,
+    "EVIDENCE_PROOF_DEFECT": 7,
+    "ARCHITECTURE_CONFORMANCE": 4,
+    "CUSTODY_IDENTITY_DEFECT": 2,
+    "note": "evidence-local classification of the verifier's own F/G/H/J findings; not v1 schema authority"
+  },
+  "candidate_added_lines_by_cycle": {
+    "value": [
+      482,
+      140,
+      163,
+      181,
+      59
+    ],
+    "definition": "added lines of each candidate against its own parent, from Git"
+  },
+  "authority_interruptions": {
+    "value": 1,
+    "definition": "one FOUNDER_EXCEPTION raised by the producer"
+  },
+  "human_decisions_required": {
+    "value": 0,
+    "scope": "the coordinator classified the single FOUNDER_EXCEPTION as a coordinator transcription error in a durable contract field, not a missing-authority gap; no Founder decision was requested or supplied"
+  },
+  "coordinator_defect_authority_blocks": {
+    "value": 1,
+    "definition": "authority interruptions whose cause was a defect in the coordinator's own release record"
+  },
+  "human_attention_blocked_seconds": {
+    "value": 106,
+    "definition": "FOUNDER_EXCEPTION comment 13:49:09Z to coordinator correction comment 13:50:55Z"
+  },
+  "liveness_incidents": {
+    "value": 0,
+    "scope": "coordinator-liveness.jsonl records no LIVENESS_GAP for issue 54"
+  },
+  "operator_interventions": {
+    "value": 0,
+    "scope": "no status re-emission recorded"
+  },
+  "attention_items": {
+    "status": "UNKNOWN",
+    "scope": "coordinator-attention.jsonl begins 2026-09-20T17:08:53Z, after PY-06 reached DONE at 15:59Z. The only entry for issue 54 is a backfilled DONE_TO_DONE notification; no attention coverage exists for PY-06's authority interruption or its four rejection cycles. This is absent telemetry, not an observed count of zero."
+  },
+  "candidate_custody_failures": {
+    "value": 0,
+    "scope": "five published candidates; the verifier proved custody at each cycle with git ls-remote plus a fresh single-branch clone resolving the exact SHA"
+  },
+  "architecture_violations": {
+    "value": 0,
+    "scope": "architecture fitness PASS reproduced by the verifier at each candidate and on the merge result"
+  },
+  "proof_regression_count": 0,
+  "behavioral_regression_count": 0,
+  "evidence_superseded_count": 0,
+  "tests_dropped_by_cycle": {
+    "value": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "definition": "verifier-diffed test inventory against the previously rejected candidate; cycle 1 has no predecessor"
+  },
+  "proven_red_evidence": {
+    "cycle_5_accept": "both new tests proven red by reverting only the two repaired source files to a7549b3; the NameError and both FileNotFoundError parametrizations reproduce"
+  },
+  "total_elapsed_seconds": {
+    "value": 7939,
+    "definition": "release comment 13:46:47Z to DONE observation 15:59:06Z"
+  },
+  "implementation_elapsed_seconds": {
+    "value": 3582,
+    "definition": "sum of the five candidate-producing PRODUCER invocation durations; excludes the 171 s authority-blocked invocation and the 467 s closure invocation"
+  },
+  "verification_elapsed_seconds": {
+    "value": 2218,
+    "definition": "sum of the five VERIFIER invocation durations"
+  },
+  "closure_elapsed_seconds": {
+    "value": 367,
+    "definition": "ACCEPT comment 15:52:59Z to DONE observation 15:59:06Z"
+  },
+  "issue_closure_lag_seconds": {
+    "value": 20997,
+    "definition": "DONE observation to Issue closed_at 21:48:03Z; the delay that motivated SWF-31"
+  },
+  "unexplained_dispatch_gap_seconds": {
+    "value": 1653,
+    "definition": "candidate d9537d1 published 14:19:20Z and its producer worktree exited 14:19:27Z, but the next VERIFIER invocation did not start until 14:47:00Z. Cause UNKNOWN."
+  },
+  "test_count_at_landing": 110,
+  "test_count_by_cycle": [
+    94,
+    99,
+    103,
+    107,
+    110
+  ],
+  "node_suite": {
+    "claimed_by_producer": 310,
+    "observed_by_verifier": 330,
+    "note": "discrepancy recorded as non-blocking in all four verified cycles; exit status 0 either way"
+  },
+  "closure_command_count": 15,
+  "provider_capacity_failures": {
+    "value": 0,
+    "scope": "no capacity failure appears in Issue #54 comments"
+  },
+  "known_provider_model": {
+    "status": "PARTIALLY_OBSERVED",
+    "scope": "the BIU's own subject matter, not its actor identities",
+    "note": "a real `codex exec --ephemeral --json --sandbox read-only` child was launched through CliWorkerProvider as contract evidence and independently reproduced by the verifier. The provider and model that ran the PRODUCER and VERIFIER invocations themselves remain UNKNOWN."
+  },
+  "token_usage": {
+    "status": "PARTIALLY_OBSERVED",
+    "scope": "one bounded codex exec provider smoke invocation only, not the BIU",
+    "input_tokens": 21038,
+    "output_tokens": 56
+  },
+  "cost": "UNKNOWN",
+  "retained_evidence_artifact": "docs/evidence/PY-06-invocation-runtime.md",
+  "final_verdict": "ACCEPTED_AND_DONE",
+  "landed": true,
+  "done": true,
+  "repair_mode": {
+    "value": "CONVERGING",
+    "basis": "blocking findings 9 -> 6 -> 5 -> 2 -> 0, zero tests dropped in any cycle, and every cycle's prior findings independently re-executed as closed. The final repair was 5 source lines."
+  },
+  "recurring_failure_class": {
+    "label": "correct domain object, unit test of that object, no executed path that uses it",
+    "cycles_named": 3,
+    "note": "named explicitly by the verifier in cycles 2, 3 and 4 (G1-G4, H1-H4, and the J1/J2 relocation). Mechanizable as a reachability/wiring check; not mechanized."
+  },
+  "unknown_metrics": [
+    "provider and model identity of the PRODUCER and VERIFIER invocations",
+    "end-to-end token usage",
+    "monetary cost",
+    "cause of the 1,653-second dispatch gap before the cycle-2 verification"
+  ],
+  "evidence_refs": [
+    "docs/evidence/execution-trajectories/PY-06.jsonl",
+    "https://github.com/AlienLogicLab/alienintent/issues/54",
+    "commit:e660748686ffaf66340e44760dc88c898f35a0ff",
+    "commit:896c0fe567fd022622500ee56f5d51a4e34032ec",
+    "docs/evidence/PY-06-invocation-runtime.md",
+    "file:~/.local/state/alienintent/state.json#resources"
+  ]
+}

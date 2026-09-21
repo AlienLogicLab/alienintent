@@ -1,0 +1,160 @@
+{
+  "schema_version": "1.0",
+  "biu_id": "PY-05",
+  "derived_from": "docs/evidence/execution-trajectories/PY-05.jsonl",
+  "issue_number": 53,
+  "title": "GitHub Work Management adapter and webhook ingress",
+  "requirements": [
+    "SF-REQ-005 (primary)",
+    "SF-REQ-001",
+    "SF-REQ-008"
+  ],
+  "agent_ready": {
+    "disposition": "READY",
+    "owner_clarifications": 0,
+    "expected_rework_locality": "LOW",
+    "assessment_baseline": "0170af0"
+  },
+  "release_baseline": "3e5774967a16728542eed8a21b38471009dd28db",
+  "accepted_candidate": "761bc21c5c861317c88d3db16bb7de05425f329b",
+  "merge_commit": "5b617a3efaaa0fd74a02efc4263860e821548c40",
+  "first_pass_accepted": false,
+  "producer_attempts": {
+    "value": 3,
+    "definition": "IMPLEMENT invocations that published a candidate"
+  },
+  "closure_producer_invocations": {
+    "value": 1,
+    "definition": "post-ACCEPT closure invocations"
+  },
+  "verifier_cycles": 3,
+  "repair_cycles": 2,
+  "return_to_implement_count": 2,
+  "closure_return_to_implement_count": 0,
+  "blocking_findings_count": {
+    "value": 7,
+    "definition": "6 at cycle 1 + 1 at cycle 2; 0 at ACCEPT"
+  },
+  "blocking_findings_by_cycle": [
+    6,
+    1,
+    0
+  ],
+  "findings_by_class": {
+    "BEHAVIORAL_DEFECT": 4,
+    "EVIDENCE_PROOF_DEFECT": 3
+  },
+  "candidate_added_lines_by_cycle": {
+    "value": [
+      472,
+      189,
+      3
+    ],
+    "definition": "added lines of each candidate against its own parent, from Git"
+  },
+  "authority_interruptions": {
+    "value": 0,
+    "scope": "Issue #53 comments; no FOUNDER_EXCEPTION recorded"
+  },
+  "human_decisions_required": {
+    "value": 0,
+    "scope": "no Founder decision was requested or supplied for PY-05"
+  },
+  "human_attention_blocked_seconds": {
+    "value": 0,
+    "scope": "no authority interruption occurred, so no attributable blocked interval exists"
+  },
+  "liveness_incidents": {
+    "value": 0,
+    "scope": "coordinator-liveness.jsonl records no LIVENESS_GAP for issue 53"
+  },
+  "operator_interventions": {
+    "value": 0,
+    "scope": "no status re-emission or manual lifecycle action recorded"
+  },
+  "attention_items": {
+    "status": "UNKNOWN",
+    "scope": "coordinator-attention.jsonl begins 2026-09-20T17:08:53Z, after PY-05 reached DONE at 13:43Z. No attention coverage exists for PY-05's window. This is absent telemetry, not an observed count of zero."
+  },
+  "candidate_custody_failures": {
+    "value": 0,
+    "scope": "three published candidates; the verifier retrieved and reviewed each independently. PY-05 predates the fresh-clone read-back proof PY-06 introduced, so this is weaker custody evidence than PY-06 onward."
+  },
+  "architecture_violations": {
+    "value": 0,
+    "scope": "architecture fitness PASS reproduced by the verifier at each candidate and on the merge result"
+  },
+  "proof_regression_count": 0,
+  "behavioral_regression_count": 0,
+  "evidence_superseded_count": {
+    "value": 1,
+    "definition": "one test removal explicitly superseded by prior finding 2 and authorized under SWF-23 \u00a73"
+  },
+  "proven_red_evidence": {
+    "cycle_2": "13 targeted mutations, 12 caught (verifier-derived)",
+    "cycle_3": "13 mutations re-derived independently, 12 caught; fence negative control fails on the real defect"
+  },
+  "total_elapsed_seconds": {
+    "value": 4302,
+    "definition": "release comment 12:31:38Z to DONE comment 13:43:20Z"
+  },
+  "implementation_elapsed_seconds": {
+    "value": 2363,
+    "definition": "sum of the three candidate-producing PRODUCER invocation durations from the dispatcher state record; excludes closure and queue time"
+  },
+  "verification_elapsed_seconds": {
+    "value": 1530,
+    "definition": "sum of the three VERIFIER invocation durations from the dispatcher state record"
+  },
+  "closure_elapsed_seconds": {
+    "value": 469,
+    "definition": "ACCEPT comment 13:35:31Z to DONE comment 13:43:20Z"
+  },
+  "issue_closure_lag_seconds": {
+    "value": 1,
+    "definition": "DONE comment to Issue closed_at"
+  },
+  "test_count_at_landing": 87,
+  "test_count_by_cycle": [
+    79,
+    87,
+    87
+  ],
+  "node_suite": {
+    "claimed_by_producer": 310,
+    "observed_by_verifier": 330,
+    "note": "discrepancy recorded as non-blocking in all three cycles; exit status 0 either way"
+  },
+  "closure_command_count": 10,
+  "provider_capacity_failures": {
+    "status": "PARTIALLY_OBSERVED",
+    "scope": "no capacity failure appears in Issue #53; the coordinator observation log does not cover PY-05's window"
+  },
+  "known_provider_model": {
+    "status": "UNKNOWN",
+    "note": "the dispatcher state record carries no provider or model field for PY-05 invocations"
+  },
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN",
+  "final_verdict": "ACCEPTED_AND_DONE",
+  "landed": true,
+  "done": true,
+  "repair_mode": {
+    "value": "CONVERGING",
+    "basis": "blocking findings 6 -> 1 -> 0; candidate additions 472 -> 189 -> 3; no regression; one authorized supersession"
+  },
+  "unknown_metrics": [
+    "provider and model identity for every invocation",
+    "token usage",
+    "monetary cost",
+    "attention-queue coverage before 2026-09-20T17:08:53Z",
+    "whether any provider-capacity interruption occurred"
+  ],
+  "evidence_refs": [
+    "docs/evidence/execution-trajectories/PY-05.jsonl",
+    "https://github.com/AlienLogicLab/alienintent/issues/53",
+    "commit:761bc21c5c861317c88d3db16bb7de05425f329b",
+    "commit:5b617a3efaaa0fd74a02efc4263860e821548c40",
+    "file:~/.local/state/alienintent/state.json#resources"
+  ]
+}

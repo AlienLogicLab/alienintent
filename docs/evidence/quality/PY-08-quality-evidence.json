@@ -1,0 +1,205 @@
+{
+  "schema_version": "1.0",
+  "biu_id": "PY-08",
+  "derived_from": "docs/evidence/execution-trajectories/PY-08.jsonl",
+  "issue_number": 56,
+  "title": "Operator Control Plane CLI (P0 minimum)",
+  "requirements": [
+    "SF-REQ-034 (P0 minimum only)",
+    "SF-REQ-035 (operator surface)"
+  ],
+  "agent_ready": {
+    "disposition": "READY",
+    "owner_clarifications": 0,
+    "expected_rework_locality": "MEDIUM",
+    "assessment_baseline": "946e3cc"
+  },
+  "release_baseline": "946e3cc0b17951f561632f3e6474a715f541302d",
+  "accepted_candidate": "b76d639ec8eb8449ed0baf4515c01689d77e68c5",
+  "merge_commit": "2c179e5e25ddefffe11690046948a4bc53e8e2a3",
+  "first_pass_accepted": false,
+  "producer_attempts": {
+    "value": 7,
+    "definition": "IMPLEMENT invocations that published a candidate; excludes the authority-blocked invocation and the closure invocation"
+  },
+  "closure_producer_invocations": {
+    "value": 1,
+    "definition": "post-ACCEPT closure invocations"
+  },
+  "verifier_cycles": 7,
+  "repair_cycles": 6,
+  "return_to_implement_count": 6,
+  "closure_return_to_implement_count": 0,
+  "blocking_findings_count": {
+    "value": 58,
+    "definition": "F1-F12, V1-V14, W1-W11, X1-X10, Y1-Y8 and the cycle-6 set {Y2,Y4,Z1}, counting each verifier report's own enumerated findings: 12+14+11+10+8+3+0. A finding carried into a later cycle is counted again in that cycle, so this measures reported findings per cycle and not distinct defects."
+  },
+  "blocking_findings_by_cycle": [
+    12,
+    14,
+    11,
+    10,
+    8,
+    3,
+    0
+  ],
+  "decisive_findings_by_cycle": {
+    "value": [
+      0,
+      1,
+      4,
+      4,
+      4,
+      0,
+      0
+    ],
+    "definition": "findings the verifier explicitly labelled '(decisive)'. Cycle 1 used no decisive label."
+  },
+  "findings_by_class": {
+    "BEHAVIORAL_DEFECT": 39,
+    "EVIDENCE_PROOF_DEFECT": 13,
+    "ARCHITECTURE_CONFORMANCE": 4,
+    "PROCESS_INSTRUCTION_ADHERENCE": 2,
+    "note": "evidence-local classification of each verifier report's own enumerated findings, over the same 58-report population as blocking_findings_count; not v1 schema authority. PROCESS_INSTRUCTION_ADHERENCE is the assigned diagnostic-coalescing debt reported absent in two consecutive cycles."
+  },
+  "candidate_added_lines_by_cycle": {
+    "value": [
+      217,
+      197,
+      40,
+      265,
+      127,
+      168,
+      98
+    ],
+    "definition": "added lines of each candidate against its own parent, from Git. The coordinator's separate series 197 -> 314 -> 545 is cumulative added lines over the release baseline and must not be conflated with this one."
+  },
+  "authority_interruptions": {
+    "value": 1,
+    "definition": "one FOUNDER_EXCEPTION"
+  },
+  "human_decisions_required": {
+    "value": 0,
+    "scope": "the coordinator classified the FOUNDER_EXCEPTION as contracted work inside approved scope; no Founder decision was requested or supplied"
+  },
+  "false_or_escalated_authority_requests": {
+    "value": 1,
+    "definition": "the producer claimed PY-08 could not produce a compliant candidate without broader authority; the coordinator checked all four claimed blockers against the landed tree and found each in scope"
+  },
+  "human_attention_blocked_seconds": {
+    "value": 134,
+    "definition": "FOUNDER_EXCEPTION comment 22:25:41Z to coordinator response comment 22:27:55Z"
+  },
+  "liveness_incidents": {
+    "value": 1,
+    "definition": "one LIVENESS_GAP for issue 56 at state age 575 s against a 300 s grace"
+  },
+  "operator_interventions": {
+    "value": 1,
+    "definition": "one operator status re-emission IMPLEMENT -> READY -> IMPLEMENT applied as liveness recovery"
+  },
+  "attention_items": {
+    "value": 5,
+    "definition": "judgment-required durable attention items: one FOUNDER_EXCEPTION item and four repeated-rejection threshold items. Excludes the DONE_TO_DONE notification."
+  },
+  "coordinator_convergence_assessments": {
+    "value": 4,
+    "definition": "posted after rejections 3, 4, 5 and 6"
+  },
+  "candidate_custody_failures": {
+    "value": 0,
+    "scope": "seven published candidates; the verifier retrieved each from origin into a fresh independent worktree and confirmed ancestry from the authorized baseline"
+  },
+  "architecture_violations": {
+    "value": 0,
+    "scope": "architecture fitness PASS at each candidate from cycle 3 onward and on the merge result"
+  },
+  "proof_regression_count": {
+    "value": 2,
+    "definition": "SWF-23 regressions: X1/Y1, AC 7 regressed from working to unreachable and stayed so for two cycles; Y3, operator diagnostics that worked at two prior candidates were removed"
+  },
+  "behavioral_regression_count": {
+    "value": 2,
+    "definition": "the same two events, counted as behaviour as well as proof: AC 7 became unreachable and diagnostics disappeared"
+  },
+  "defects_introduced_by_repair": {
+    "value": 3,
+    "definition": "X3 VersionConflict undefined (NameError, never executed successfully once); X5 status writes the store; Y2 stop silently ignores --expected-version, introduced by the X3 repair"
+  },
+  "evidence_superseded_count": 0,
+  "never_attempted_obligations": {
+    "value": 2,
+    "definition": "AC 4's proof that explain reproduces the kernel's own decision, and the verification requirements' subprocess / negative-control / backdoor coverage. Untouched across five consecutive repair cycles; both closed in the single verification-only cycle 6."
+  },
+  "proven_red_evidence": {
+    "cycle_6": "AC 4 tested against a real kernel over a real store; four subprocess tests with real exit statuses including readiness refusal and stale-mutation rejection"
+  },
+  "total_elapsed_seconds": {
+    "value": 11443,
+    "definition": "release comment 21:50:02Z to DONE observation 01:00:45Z"
+  },
+  "implementation_elapsed_seconds": {
+    "value": 5337,
+    "definition": "sum of the seven candidate-producing PRODUCER invocation durations; excludes the 1,043 s authority-blocked invocation and the 487 s closure invocation"
+  },
+  "verification_elapsed_seconds": {
+    "value": 4220,
+    "definition": "sum of the seven VERIFIER invocation durations"
+  },
+  "closure_elapsed_seconds": {
+    "value": 458,
+    "definition": "ACCEPT comment 00:53:07Z to DONE observation 01:00:45Z"
+  },
+  "issue_closure_lag_seconds": {
+    "value": 134,
+    "definition": "DONE observation to Issue closed_at 01:02:59Z, under SWF-31"
+  },
+  "test_count_at_landing": 158,
+  "test_count_by_cycle": [
+    132,
+    133,
+    134,
+    144,
+    149,
+    154,
+    158
+  ],
+  "node_suite": {
+    "observed_by_verifier": "310 runtime, 18 RAI, 2 policy, exit 0"
+  },
+  "provider_capacity_failures": {
+    "value": 0,
+    "scope": "no capacity failure appears in Issue #56 comments or the observation log"
+  },
+  "known_provider_model": {
+    "status": "UNKNOWN",
+    "note": "the dispatcher state record carries no provider or model field"
+  },
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN",
+  "final_verdict": "ACCEPTED_AND_DONE",
+  "landed": true,
+  "done": true,
+  "repair_mode": {
+    "value": "THRASHING_THEN_CONVERGING",
+    "basis": "cycles 1-5 closed findings while shipping fresh defects, including two SWF-23 regressions and three newly introduced defects, with the AC 4 proof and verification requirements untouched throughout. Findings fell 14 -> 11 -> 10 -> 8 without acceptance. Cycle 6, directed to build only the missing proof plus the outstanding regressions, produced 3 findings all carried and none fresh; cycle 7 produced 0. The mode change is attributable to a direction, not to a smaller contract."
+  },
+  "carried_scope_debt_at_accept": {
+    "value": 2,
+    "definition": "Y7, status reports wip as len(items) and counts terminal and cancelled work, which the verifier states actively misinforms an operator; Y8, only status logs and no mutating command does. Recorded not waived; neither maps to a numbered acceptance criterion."
+  },
+  "unknown_metrics": [
+    "provider and model identity",
+    "token usage",
+    "monetary cost",
+    "per-finding discovery cost"
+  ],
+  "evidence_refs": [
+    "docs/evidence/execution-trajectories/PY-08.jsonl",
+    "https://github.com/AlienLogicLab/alienintent/issues/56",
+    "commit:b76d639ec8eb8449ed0baf4515c01689d77e68c5",
+    "commit:2c179e5e25ddefffe11690046948a4bc53e8e2a3",
+    "docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md#4b",
+    "file:~/.local/state/alienintent/coordinator-attention.jsonl"
+  ]
+}
