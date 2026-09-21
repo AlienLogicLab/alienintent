@@ -11,6 +11,114 @@ import sys
 import pytest
 
 
+class _Secrets:
+    def __init__(self, value: bytes = b"usable", *, reject: bool = False) -> None:
+        self.value, self.reject, self.effects = value, reject, []
+
+    def resolve(self, reference: str) -> bytes:
+        self.effects.append(("resolve", reference))
+        if self.reject:
+            raise RuntimeError("token=SENTINEL-SECRET")
+        return self.value
+
+    def diagnostic(self) -> str:
+        return "available"
+
+
+class _ReadOnlyFixture:
+    def __init__(self, **results: object) -> None:
+        self.results = results
+        self.effects: list[str] = []
+
+    def read(self, name: str) -> object:
+        self.effects.append(name)
+        from alienintent.installation.application.doctor import ExecutionEvidence, PersistenceEvidence, ProviderEvidence, SourceControlEvidence, TransportEvidence, WorkManagementEvidence
+        defaults = {
+            "work_management": WorkManagementEvidence(True, True, True, True, True),
+            "source_control": SourceControlEvidence(True, True, True),
+            "provider": ProviderEvidence(True, True, True, True, True),
+            "transport": TransportEvidence(True, True, True),
+            "persistence": PersistenceEvidence(True, True, True),
+            "execution": ExecutionEvidence(True, True, True),
+        }
+        result = self.results.get(name, defaults[name])
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+
+def _profile():
+    from alienintent.installation.domain.github_profile import GitHubProfile
+
+    return GitHubProfile("isolated", "AlienLogicLab/alienintent", "PVT_x", {"Ready": "READY"}, {"VERIFY": "Status"}, "webhook-secret", True)
+
+
+def _installation_service(fixture: _ReadOnlyFixture | None = None, secrets: _Secrets | None = None):
+    """A recorded fixture/local-double installation; each probe is read-only."""
+    from alienintent.installation.application.doctor import DoctorDependencies, InstallationDoctor
+
+    fixture = fixture or _ReadOnlyFixture()
+    return InstallationDoctor(DoctorDependencies(
+        profile=_profile(), secrets=secrets or _Secrets(),
+        work_management=lambda: fixture.read("work_management"),
+        source_control=lambda: fixture.read("source_control"),
+        provider=lambda: fixture.read("provider"),
+        transport=lambda: fixture.read("transport"),
+        persistence=lambda: fixture.read("persistence"),
+        execution=lambda: fixture.read("execution"),
+    )), fixture
+
+
+def test_installation_doctor_runs_every_owned_read_only_check_without_write_effect() -> None:
+    service, fixture = _installation_service()
+
+    report = service.run()
+
+    assert report.ready
+    assert fixture.effects == ["work_management", "source_control", "provider", "transport", "persistence", "execution"]
+
+
+@pytest.mark.parametrize(("check", "evidence"), (
+    ("configuration", ValueError("unknown profile field")),
+    ("secrets", RuntimeError("provider rejected material")),
+    ("work_management", ValueError("ambiguous status mapping")),
+    ("source_control", RuntimeError("baseline unavailable")),
+    ("provider", RuntimeError("unauthenticated")),
+    ("transport", ValueError("signature verification failed")),
+    ("persistence", ValueError("incompatible schema")),
+    ("execution", RuntimeError("worktree unavailable")),
+))
+def test_installation_doctor_surfaces_distinct_sanitized_failure_for_each_required_check(check: str, evidence: Exception) -> None:
+    fixture = _ReadOnlyFixture(**({check: evidence} if check != "configuration" else {}))
+    secrets = _Secrets(reject=check == "secrets")
+    service, _ = _installation_service(fixture, secrets)
+    if check == "configuration":
+        from alienintent.installation.application.doctor import DoctorDependencies, InstallationDoctor
+        service = InstallationDoctor(DoctorDependencies(
+            profile=object(), secrets=secrets, work_management=lambda: True, source_control=lambda: True,
+            provider=lambda: True, transport=lambda: True, persistence=lambda: True, execution=lambda: True,
+        ))
+
+    result = next(item for item in service.run().checks if item.name == check)
+
+    assert result.outcome == "FAIL"
+    assert result.suggested_action
+    assert "SENTINEL-SECRET" not in str(result)
+
+
+def test_installation_doctor_covers_contract_negative_evidence_cases() -> None:
+    fixture = _ReadOnlyFixture(
+        work_management=ValueError("reachable project has incomplete lifecycle Status mapping and missing Priority"),
+        transport=ValueError("endpoint responded but signature verification failed"),
+        persistence=ValueError("incompatible persistence schema version"),
+    )
+    service, _ = _installation_service(fixture, _Secrets(reject=True))
+
+    report = service.run()
+
+    assert {item.name for item in report.checks if item.outcome == "FAIL"} == {"secrets", "work_management", "transport", "persistence"}
+
+
 def _service(results: dict[str, object]):
     from alienintent.installation.application.doctor import CheckEvidence, DoctorService
 
