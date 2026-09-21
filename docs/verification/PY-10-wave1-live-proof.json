@@ -1,0 +1,128 @@
+{
+ "acceptance": [
+  {
+   "basis": "6 of 6 seeded BIUs reached DONE in the durable store: ['SB-01', 'SB-02', 'SB-03', 'SB-04', 'SB-05', 'SB-06']",
+   "criterion": 1,
+   "name": "at least three READY BIUs are consumed",
+   "ok": true
+  },
+  {
+   "basis": "seeded priorities ['P0', 'P1', 'P2', 'P3']; the first dispatch was SB-01 (P0, the highest seeded); over work no dependency or authority block deferred, the dispatch order by priority was ['P1', 'P1', 'P3'], which never decreases",
+   "criterion": 2,
+   "name": "different priorities are present and respected",
+   "ok": true
+  },
+  {
+   "basis": "SB-02 and SB-03 are both P1; READY at 2026-09-21T11:47:01Z and 2026-09-21T11:47:09Z; dispatched in that order: True",
+   "criterion": 3,
+   "name": "two equal-priority BIUs prove FIFO ordering",
+   "ok": true
+  },
+  {
+   "basis": "SB-04 (priority P2) outranks SB-05 (priority P3) yet started 2.106s after SB-05 reached DONE",
+   "criterion": 4,
+   "name": "a dependency is respected",
+   "ok": true
+  },
+  {
+   "basis": "maximum concurrent reservations observed across 34 samples: 1; independent acquisition of the held slot was refused: True",
+   "criterion": 5,
+   "name": "WIP = 1 is enforced throughout",
+   "ok": true
+  },
+  {
+   "basis": "one operator `run` command consumed 4 BIUs in sequence, so the repository slot was released and retaken without an operator; the slot fence reached 7 across 6 completed BIUs",
+   "criterion": 6,
+   "name": "slot refill is automatic on capacity release",
+   "ok": true
+  },
+  {
+   "basis": "2 of 2 escalations carry every decision-ready field: ['SB-01', 'SB-06']",
+   "criterion": 7,
+   "name": "a HumanDecisionRequired event is emitted with complete context",
+   "ok": true
+  },
+  {
+   "basis": "escalated: ['SB-01', 'SB-06']; independent work that reached DONE regardless: ['SB-02', 'SB-03', 'SB-04', 'SB-05']",
+   "criterion": 8,
+   "name": "only the affected BIU blocks",
+   "ok": true
+  },
+  {
+   "basis": "2 attributable decisions recorded; every one resumed its work item to DONE: ['SB-01', 'SB-06']",
+   "criterion": 9,
+   "name": "a durable human decision unblocks and resumes the affected work",
+   "ok": true
+  },
+  {
+   "basis": "the run process group was SIGKILLed while holding launch:SB-01:0; a later invocation reconciled it and continued",
+   "criterion": 10,
+   "name": "a Python process restart occurs during the run",
+   "ok": true
+  },
+  {
+   "basis": "published candidate branches per BIU: {'SB-01': 1, 'SB-02': 1, 'SB-03': 1, 'SB-04': 1, 'SB-05': 1, 'SB-06': 1}; every candidate is exactly one commit ahead of main: True",
+   "criterion": 11,
+   "name": "no duplicate execution or duplicate external effect after the restart",
+   "ok": true
+  },
+  {
+   "basis": "6 of 6 completed BIUs carry a source-revision candidate, marked independently read back, whose exact revision is advertised at the remote",
+   "criterion": 12,
+   "name": "exact candidate custody is proven before every VERIFY",
+   "ok": true
+  },
+  {
+   "basis": "DONE: ['SB-01', 'SB-02', 'SB-03', 'SB-04', 'SB-05', 'SB-06']; expected: ['SB-01', 'SB-02', 'SB-03', 'SB-04', 'SB-05', 'SB-06']",
+   "criterion": 13,
+   "name": "all executable work reaches DONE",
+   "ok": true
+  },
+  {
+   "basis": "seeding wrote only ['READY']; no operator command in the transcript names IMPLEMENT (13 commands reviewed)",
+   "criterion": 14,
+   "name": "no human moves an individual BIU into IMPLEMENT",
+   "ok": true
+  },
+  {
+   "basis": "doctor exit 0 disposition PASS over 8 required checks, recorded before the first `run`",
+   "criterion": 15,
+   "name": "doctor passes against the sandbox before autonomous start",
+   "ok": true
+  },
+  {
+   "basis": "production Project state digest identical before and after: True; Node bootstrap ingress answered {'8787': '000', '8788': '401'} before and {'8787': '000', '8788': '401'} after; configuration isolation findings: []; installation repository scope: ['AlienLogicLab/alienintent-sandbox']; a foreign Project identity met typed refusal: observed project is not the configured project",
+   "criterion": 16,
+   "name": "the live AlienIntent Project and the Node bootstrap are demonstrably unaffected",
+   "ok": true
+  },
+  {
+   "basis": "checked with --live against the profile's own values",
+   "criterion": 17,
+   "name": "retained evidence contains no secret, credential, App id, hostname or private installation detail",
+   "ok": true
+  }
+ ],
+ "biu": "PY-10",
+ "issue": 58,
+ "project": "AlienIntent Sandbox \u2014 Wave 1 live proof",
+ "repository": "AlienLogicLab/alienintent-sandbox",
+ "reproduce": [
+  "python3 tools/live/py10_verify_evidence.py --evidence docs/evidence/py10 --live",
+  "python3 tools/live/py10_proven_red.py --json",
+  "python3 -m pytest -q"
+ ],
+ "retained_evidence": [
+  "docs/evidence/py10/acceptance-verification.json",
+  "docs/evidence/py10/ingress-admissions.json",
+  "docs/evidence/py10/offline-suite.json",
+  "docs/evidence/py10/project-final.json",
+  "docs/evidence/py10/proof-run.json",
+  "docs/evidence/py10/proven-red.json",
+  "docs/evidence/py10/run-timeline.jsonl",
+  "docs/evidence/py10/seed.json"
+ ],
+ "run_finished_at": "2026-09-21T11:52:04Z",
+ "run_started_at": "2026-09-21T11:47:34Z",
+ "verified": true
+}

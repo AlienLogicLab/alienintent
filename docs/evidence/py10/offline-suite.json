@@ -1,0 +1,6 @@
+{
+ "command": "python3 -m pytest -q",
+ "summary": "344 passed in 29.77s",
+ "exit_status": 0,
+ "recorded_at": "2026-09-21T11:52:52Z"
+}

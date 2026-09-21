@@ -14,7 +14,7 @@ from alienintent.invocation_runtime.ports.workspace import WorkspaceManager
 
 
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str, verifier_root: Path, grant: CapabilityGrant, target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None]) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None]) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -29,11 +29,12 @@ class RealWorkerProvider(WorkerProvider):
         self._sleep = sleep
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
-        if budget.hard_wall_clock_seconds is None or budget.cancellation_limit is None or self._grant.invocation_id != invocation.correlation_id:
+        grant = self._grant_for(invocation)
+        if budget.hard_wall_clock_seconds is None or budget.cancellation_limit is None or grant.invocation_id != invocation.correlation_id:
             return WorkerOutcome("ineligible")
         try:
-            self._grant.require("process-control", self._target, self._now())
-            self._grant.require("git-write", self._target, self._now())
+            grant.require("process-control", self._target, self._now())
+            grant.require("git-write", self._target, self._now())
             capabilities = getattr(self._process, "capabilities", None)
             if capabilities is None:
                 raise BudgetIneligible("provider capabilities are required")
@@ -67,7 +68,7 @@ class RealWorkerProvider(WorkerProvider):
                 outcome = WorkerOutcome(result.kind)
             else:
                 revision = self._source.revision(workspace.path)
-                candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._branch, revision, self._verifier_root)
+                candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
                 outcome = WorkerOutcome.success(candidate)
         finally:
             if outcome.kind in {"success", "authority-block"}:
@@ -82,6 +83,35 @@ class RealWorkerProvider(WorkerProvider):
             self._active_workspaces.pop(invocation.correlation_id, None)
         self._outcomes[invocation.correlation_id] = outcome
         return outcome
+
+    def _grant_for(self, invocation: WorkerInvocation) -> CapabilityGrant:
+        """The capability grant issued for this invocation.
+
+        A grant names the invocation it authorizes, so one fixed grant admits
+        exactly one invocation. A profile draining a backlog issues one per
+        dispatch; a fixed grant stays valid for a single-invocation caller.
+        """
+        return self._grant(invocation) if callable(self._grant) else self._grant
+
+    def _producer_read_back(self, invocation: WorkerInvocation) -> Path:
+        """A fresh, unused directory for this invocation's publication read-back.
+
+        `verify` already treats `verifier_root` as a root it allocates under.
+        Publication read-back refuses a directory that already exists, so the
+        second candidate a profile publishes would fail against the root
+        itself; each invocation reads back into its own child.
+        """
+        return self._verifier_root / f"producer-{invocation.correlation_id}"
+
+    def _candidate_branch(self, invocation: WorkerInvocation) -> str:
+        """The branch this candidate publishes to.
+
+        A profile draining more than one work item cannot publish every
+        candidate to one branch: sibling revisions off the same baseline are
+        not fast-forwards of each other, so the second publication would be
+        refused and custody could never be proven for it.
+        """
+        return self._branch(invocation) if callable(self._branch) else self._branch
 
     def finalize(self, invocation: WorkerInvocation, retain: bool) -> None:
         """Complete workspace disposition after the coordinator durably records truth."""

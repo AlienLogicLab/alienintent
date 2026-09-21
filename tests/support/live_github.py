@@ -8,6 +8,7 @@ detail (binding rule 3).
 
 from __future__ import annotations
 
+from base64 import b64encode
 import json
 from typing import Callable, Mapping
 
@@ -63,6 +64,7 @@ def rest_answers(
     repositories: list[str] | None = None,
     expires_at: str = "2026-09-21T11:00:00Z",
     token_status: int = 201,
+    contents: Mapping[str, bytes] | None = None,
 ) -> dict[str, object]:
     granted = dict(permissions if permissions is not None else LEAST_PRIVILEGE)
     installed = dict(installation_permissions if installation_permissions is not None else granted)
@@ -73,6 +75,9 @@ def rest_answers(
         "/installation/repositories": {"repositories": [{"full_name": name} for name in (repositories if repositories is not None else [SANDBOX_REPOSITORY])]},
         f"/repos/{SANDBOX_REPOSITORY}": {"full_name": SANDBOX_REPOSITORY, "private": True, "default_branch": "main"},
         "&state=all": [{"number": 1, "node_id": "I_sandbox_1", "title": "sandbox probe"}],
+    } | {
+        f"/contents/{path}": {"path": path, "type": "file", "encoding": "base64", "content": b64encode(body).decode()}
+        for path, body in (contents or {}).items()
     }
 
 
@@ -88,6 +93,14 @@ def project_graphql(
 ) -> Callable[[str, dict], object]:
     """A recorded Project that answers exactly what the live one answered."""
     applied = {"status": read_back}
+    drafts: dict[str, dict[str, str]] = {}
+    recorded = {str(item.get("id")): item for item in (items or [])}
+
+    def content_for(item_id: str) -> dict[str, object]:
+        if item_id in drafts:
+            return {"id": f"DI_{item_id}", **drafts[item_id]}
+        observed = recorded.get(item_id, {}).get("content")
+        return dict(observed) if isinstance(observed, dict) else {"id": "DI_recorded"}
 
     def answer(query: str, variables: dict) -> object:
         if "fields(first:50)" in query:
@@ -103,14 +116,16 @@ def project_graphql(
         if "ProjectV2Item { id project" in query:
             return {"data": {"node": {
                 "id": variables["item"], "project": {"id": project_id, "number": project_number},
-                "content": {"id": "DI_recorded"},
+                "content": content_for(str(variables["item"])),
                 "fieldValues": {"nodes": [{"name": applied["status"], "field": {"id": status_field, "name": "Status"}}] if applied["status"] else []},
             }}}
         if "updateProjectV2ItemFieldValue" in query:
             applied["status"] = written_status if written_status is not None else _option_name(variables["option"])
             return {"data": {"updateProjectV2ItemFieldValue": {"projectV2Item": {"id": variables["item"], "project": {"id": project_id, "number": project_number}}}}}
         if "addProjectV2DraftIssue" in query:
-            return {"data": {"addProjectV2DraftIssue": {"projectItem": {"id": "PVTI_recorded", "project": {"id": project_id, "number": project_number}}}}}
+            created = f"PVTI_recorded_{len(drafts)}" if drafts else "PVTI_recorded"
+            drafts[created] = {"title": variables.get("title", ""), "body": variables.get("body", "")}
+            return {"data": {"addProjectV2DraftIssue": {"projectItem": {"id": created, "project": {"id": project_id, "number": project_number}}}}}
         if "deleteProjectV2Item" in query:
             return {"data": {"deleteProjectV2Item": {"deletedItemId": variables["item"]}}}
         return {"data": {}}

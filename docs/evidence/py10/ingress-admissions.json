@@ -1,0 +1,26 @@
+{
+ "definition": "signed GitHub deliveries admitted by the resident ingress during the run, as the ingress recorded them",
+ "count": 5,
+ "notifications": [
+  {
+   "at": 1789991307.2325058,
+   "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLKWmc"
+  },
+  {
+   "at": 1789991311.970221,
+   "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLKWmk"
+  },
+  {
+   "at": 1789991339.3109627,
+   "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLKWjk"
+  },
+  {
+   "at": 1789991364.7366214,
+   "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLKWjs"
+  },
+  {
+   "at": 1789991390.7105372,
+   "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLKWkA"
+  }
+ ]
+}

@@ -26,18 +26,18 @@ _SCHEMA_QUERY = """query($project:ID!){ node(id:$project){ ... on ProjectV2 { id
   fields(first:50){ nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } }"""
 
 _ITEMS_QUERY = """query($project:ID!,$limit:Int!){ node(id:$project){ ... on ProjectV2 { id number
-  items(first:$limit){ nodes { id content { ... on Issue { id } ... on DraftIssue { id } }
-    fieldValues(first:20){ nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2SingleSelectField { id name } } } } } } } } } }"""
+  items(first:$limit){ nodes { id content { ... on Issue { id title body } ... on DraftIssue { id title body } }
+    fieldValues(first:20){ nodes { ... on ProjectV2ItemFieldSingleSelectValue { name updatedAt field { ... on ProjectV2SingleSelectField { id name } } } } } } } } } }"""
 
 _ITEM_QUERY = """query($item:ID!){ node(id:$item){ ... on ProjectV2Item { id project { id number }
-  content { ... on Issue { id } ... on DraftIssue { id } }
-  fieldValues(first:20){ nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2SingleSelectField { id name } } } } } } } }"""
+  content { ... on Issue { id title body } ... on DraftIssue { id title body } }
+  fieldValues(first:20){ nodes { ... on ProjectV2ItemFieldSingleSelectValue { name updatedAt field { ... on ProjectV2SingleSelectField { id name } } } } } } } }"""
 
 _WRITE_MUTATION = """mutation($project:ID!,$item:ID!,$field:ID!,$option:String!){
   updateProjectV2ItemFieldValue(input:{projectId:$project,itemId:$item,fieldId:$field,value:{singleSelectOptionId:$option}}){
     projectV2Item { id project { id number } } } }"""
 
-_ADD_DRAFT_MUTATION = """mutation($project:ID!,$title:String!){ addProjectV2DraftIssue(input:{projectId:$project,title:$title}){
+_ADD_DRAFT_MUTATION = """mutation($project:ID!,$title:String!,$body:String!){ addProjectV2DraftIssue(input:{projectId:$project,title:$title,body:$body}){
   projectItem { id project { id number } } } }"""
 
 _DELETE_MUTATION = """mutation($project:ID!,$item:ID!){ deleteProjectV2Item(input:{projectId:$project,itemId:$item}){ deletedItemId } }"""
@@ -108,13 +108,15 @@ class GitHubProjectsV2Directory(ProjectDirectory):
 
     # --- transient probe subject --------------------------------------------
 
-    def add_draft_item(self, title: str) -> str:
+    def add_draft_item(self, title: str, body: str = "") -> str:
         """Create the item a projection write needs when the Project is empty.
 
-        This is the projection probe's own subject, removed by `delete_item`; it
-        is not backlog seeding, which belongs to PY-10.
+        This is the projection probe's own subject, removed by `delete_item`.
+        PY-10 also uses it to seed the proof backlog and to project a decision
+        request whose whole context must survive in the Project, which is why
+        the body is carried rather than dropped.
         """
-        added = self._graphql(_ADD_DRAFT_MUTATION, {"project": self._address.project_id, "title": title}).get("addProjectV2DraftIssue")
+        added = self._graphql(_ADD_DRAFT_MUTATION, {"project": self._address.project_id, "title": title, "body": body}).get("addProjectV2DraftIssue")
         if not isinstance(added, Mapping) or not isinstance(added.get("projectItem"), Mapping):
             raise ProjectUnavailable("Project refused the probe item")
         self._resolve(added["projectItem"].get("project"))
@@ -175,18 +177,26 @@ def _options(field: Mapping[str, object]) -> Mapping[str, str]:
 
 
 def _item_state(node: Mapping[str, object]) -> ProjectItemState:
-    values = {}
+    values: dict[str, object] = {}
+    changed: dict[str, object] = {}
     for value in _nodes(node.get("fieldValues")):
         if not isinstance(value, Mapping):
             continue
         field = value.get("field")
         if isinstance(field, Mapping) and isinstance(field.get("name"), str):
             values[field["name"]] = value.get("name")
+            changed[field["name"]] = value.get("updatedAt")
     content = node.get("content")
     content_id = content.get("id") if isinstance(content, Mapping) else None
+    title = content.get("title") if isinstance(content, Mapping) else None
+    body = content.get("body") if isinstance(content, Mapping) else None
+    status_changed = changed.get("Status")
     return ProjectItemState(
         str(node.get("id") or ""),
         values.get("Status") if isinstance(values.get("Status"), str) else None,
         values.get("Priority") if isinstance(values.get("Priority"), str) else None,
         content_id if isinstance(content_id, str) else None,
+        title if isinstance(title, str) else None,
+        body if isinstance(body, str) else None,
+        status_changed if isinstance(status_changed, str) else None,
     )

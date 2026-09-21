@@ -1,0 +1,68 @@
+{
+ "acceptance_criteria_total": 17,
+ "acceptance_criteria_unmet": [],
+ "acceptance_criteria_verified": 17,
+ "biu_done": 6,
+ "biu_failed": 0,
+ "biu_id": "PY-10",
+ "biu_seeded": 6,
+ "candidates_independently_read_back": 6,
+ "candidates_published": 6,
+ "cost": "UNKNOWN",
+ "dependency_edges": 1,
+ "derived_from": "docs/evidence/execution-trajectories/PY-10-sandbox-run.jsonl",
+ "dispatches_observed": 7,
+ "distinct_priorities": [
+  "P0",
+  "P1",
+  "P2",
+  "P3"
+ ],
+ "doctor_disposition": "PASS",
+ "done": false,
+ "duplicate_executions_after_restart": {
+  "definition": "BIUs with more than one published candidate branch or more than one commit ahead of main",
+  "value": 0
+ },
+ "evidence_refs": [
+  "docs/evidence/py10/acceptance-verification.json",
+  "docs/evidence/py10/ingress-admissions.json",
+  "docs/evidence/py10/offline-suite.json",
+  "docs/evidence/py10/project-final.json",
+  "docs/evidence/py10/proof-run.json",
+  "docs/evidence/py10/proven-red.json",
+  "docs/evidence/py10/run-timeline.jsonl",
+  "docs/evidence/py10/seed.json"
+ ],
+ "final_verdict": "ACCEPTED_BY_ACCEPTANCE_LIST",
+ "guards_not_proven_red": [],
+ "guards_proven_red": {
+  "definition": "guards whose naming test passed intact and failed when the guard was broken",
+  "value": 22
+ },
+ "human_decisions_recorded": 2,
+ "human_decisions_required": 2,
+ "issue_number": 58,
+ "known_provider_model": {
+  "scope": "every seeded BIU's implementation work; the control plane itself runs no provider",
+  "worker": "claude (Claude Code CLI, headless --print) launched by worker/run.sh in the sandbox repository"
+ },
+ "landed": false,
+ "maximum_concurrent_mutating_invocations": {
+  "definition": "highest number of simultaneously held repository reservations across every sampled moment of the run",
+  "value": 1
+ },
+ "offline_tests": "344 passed in 29.77s",
+ "process_losses_injected": 1,
+ "schema_version": "1.0",
+ "scope": "one coherent live run of canonical Python AlienIntent against the SWF-08 sandbox; these measures describe the sandbox BIUs the factory consumed, not PY-10's own lifecycle",
+ "token_usage": "UNKNOWN",
+ "total_elapsed_seconds": {
+  "definition": "from the first isolation observation to the final post-run repository read",
+  "value": 270
+ },
+ "unknown_metrics": [
+  "token_usage: the CLI worker adapter records BudgetRecord.unknown(); SWF-09 requires UNKNOWN, never zero",
+  "cost: not reported by the provider CLI in this invocation mode"
+ ]
+}

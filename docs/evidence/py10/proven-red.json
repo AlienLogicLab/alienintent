@@ -1,0 +1,115 @@
+{
+ "ok": true,
+ "checks": [
+  {
+   "check": "upstream_descriptor_completeness",
+   "ok": true,
+   "detail": "test_an_incomplete_upstream_descriptor_is_refused: exit 0 with the guard, exit 1 with it broken in sandbox_run_profile.py"
+  },
+  {
+   "check": "contract_document_field_closure",
+   "ok": true,
+   "detail": "test_a_contract_document_carrying_an_unknown_field_is_refused: exit 0 with the guard, exit 1 with it broken in sandbox_run_profile.py"
+  },
+  {
+   "check": "ready_entry_time_is_the_fifo_key",
+   "ok": true,
+   "detail": "test_equal_priority_work_is_ordered_by_the_moment_its_status_became_ready: exit 0 with the guard, exit 1 with it broken in sandbox_run_profile.py"
+  },
+  {
+   "check": "status_change_time_is_observed_upstream",
+   "ok": true,
+   "detail": "test_the_project_query_asks_for_everything_the_live_snapshot_depends_on: exit 0 with the guard, exit 1 with it broken in github_projects_v2.py"
+  },
+  {
+   "check": "upstream_descriptor_is_observed_upstream",
+   "ok": true,
+   "detail": "test_the_project_query_asks_for_everything_the_live_snapshot_depends_on: exit 0 with the guard, exit 1 with it broken in github_projects_v2.py"
+  },
+  {
+   "check": "contract_names_the_imported_work_item",
+   "ok": true,
+   "detail": "test_a_contract_document_naming_other_work_is_refused: exit 0 with the guard, exit 1 with it broken in sandbox_run_profile.py"
+  },
+  {
+   "check": "upstream_and_contract_dependencies_agree",
+   "ok": true,
+   "detail": "test_dependency_edges_that_disagree_with_the_contract_are_refused: exit 0 with the guard, exit 1 with it broken in sandbox_run_profile.py"
+  },
+  {
+   "check": "per_item_contract_resolution",
+   "ok": true,
+   "detail": "test_each_imported_item_carries_its_own_contract: exit 0 with the guard, exit 1 with it broken in github_work_management.py"
+  },
+  {
+   "check": "readiness_digest_matches_the_contract",
+   "ok": true,
+   "detail": "test_a_readiness_digest_that_no_longer_matches_the_contract_refuses_release: exit 0 with the guard, exit 1 with it broken in release.py"
+  },
+  {
+   "check": "projection_targets_the_imported_item",
+   "ok": true,
+   "detail": "test_projecting_work_no_live_item_is_bound_to_is_refused: exit 0 with the guard, exit 1 with it broken in sandbox_run_profile.py"
+  },
+  {
+   "check": "decision_request_is_read_back",
+   "ok": true,
+   "detail": "test_a_decision_request_the_project_answers_differently_is_not_reported_delivered: exit 0 with the guard, exit 1 with it broken in sandbox_run_profile.py"
+  },
+  {
+   "check": "repository_file_answer_names_the_requested_path",
+   "ok": true,
+   "detail": "test_a_repository_file_answer_naming_another_path_is_refused: exit 0 with the guard, exit 1 with it broken in github_repository_api.py"
+  },
+  {
+   "check": "correlation_becomes_a_valid_refname",
+   "ok": true,
+   "detail": "test_a_coordinator_correlation_becomes_a_branch_git_accepts: exit 0 with the guard, exit 1 with it broken in git_worktree.py"
+  },
+  {
+   "check": "one_candidate_branch_per_invocation",
+   "ok": true,
+   "detail": "test_successive_invocations_publish_to_their_own_branches_and_read_back_separately: exit 0 with the guard, exit 1 with it broken in real_worker.py"
+  },
+  {
+   "check": "one_read_back_workspace_per_invocation",
+   "ok": true,
+   "detail": "test_successive_invocations_publish_to_their_own_branches_and_read_back_separately: exit 0 with the guard, exit 1 with it broken in real_worker.py"
+  },
+  {
+   "check": "one_capability_grant_per_invocation",
+   "ok": true,
+   "detail": "test_the_profile_drains_a_prioritised_backlog_with_a_dependency_and_an_escalation: exit 0 with the guard, exit 124 with it broken in real_worker.py (124: the broken path never terminated inside the bound)"
+  },
+  {
+   "check": "worker_is_told_its_invocation",
+   "ok": true,
+   "detail": "test_the_worker_is_told_which_invocation_it_is_and_inherits_no_publication_credential: exit 0 with the guard, exit 1 with it broken in cli_worker.py"
+  },
+  {
+   "check": "worker_environment_is_stated_not_inherited",
+   "ok": true,
+   "detail": "test_the_stated_worker_environment_excludes_the_control_plane_credential: exit 0 with the guard, exit 1 with it broken in sandbox_run_profile.py"
+  },
+  {
+   "check": "autonomous_start_is_gated_on_doctor",
+   "ok": true,
+   "detail": "test_autonomous_start_is_gated_on_the_live_doctor: exit 0 with the guard, exit 1 with it broken in sandbox_run_profile.py"
+  },
+  {
+   "check": "custody_is_rechecked_before_verify",
+   "ok": true,
+   "detail": "test_control_plane_rejects_reachable_remote_without_the_exact_advertised_revision: exit 0 with the guard, exit 1 with it broken in local_artifact_custody.py"
+  },
+  {
+   "check": "a_dependency_gates_its_dependent",
+   "ok": true,
+   "detail": "test_the_profile_drains_a_prioritised_backlog_with_a_dependency_and_an_escalation: exit 0 with the guard, exit 1 with it broken in factory_coordinator.py"
+  },
+  {
+   "check": "a_lost_effect_is_parked_not_repeated",
+   "ok": true,
+   "detail": "test_a_crash_mid_dispatch_parks_the_unknown_effect_rather_than_re_executing_it: exit 0 with the guard, exit 1 with it broken in factory_coordinator.py"
+  }
+ ]
+}
