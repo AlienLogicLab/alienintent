@@ -1,0 +1,166 @@
+{
+ "completed_phases": [
+  "0",
+  "1"
+ ],
+ "current_phase": "1R",
+ "program": "post-wave1-to-wave2",
+ "tasks": {
+  "POSTW1-BOOTSTRAP-006": {
+   "artifact_refs": [
+    "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-21T18:09:10.932271+00:00",
+   "phase": "6",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": null,
+   "risk_class": "HIGH",
+   "routing": {
+    "chosen_actor": "claude-bootstrap-coordinator",
+    "five_questions": {
+     "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+     "cheapest_model_likely_to_succeed_first_pass": "claude-bootstrap-coordinator",
+     "does_this_need_independent_review": "yes (risk HIGH)",
+     "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
+     "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
+    },
+    "model": null,
+    "rationale": "Requires lived Wave 1 operational context that durable artifacts alone do not supply. Its memory is a locator; durable evidence decides disagreements.",
+    "review_required": true,
+    "risk_class": "HIGH",
+    "task_type": "bootstrap_retirement_review",
+    "tier": "CLAUDE_COORDINATOR"
+   },
+   "status": "PLANNED",
+   "task_id": "POSTW1-BOOTSTRAP-006",
+   "title": "Bootstrap Retirement / Transition Audit",
+   "updated_at": "2026-09-21T18:09:10.932285+00:00"
+  },
+  "POSTW1-BRIDGE-000": {
+   "artifact_refs": [
+    "docs/operations/post-wave1-program/reports/bootstrap-proofs.md"
+   ],
+   "assigned_actor": "claude-bootstrap-coordinator",
+   "blockers": [],
+   "created_at": "2026-09-21T18:15:13.925435+00:00",
+   "phase": "0",
+   "prompt_path": "docs/operations/post-wave1-program/messages/POSTW1-BRIDGE-000-request.md",
+   "resulting_commit": null,
+   "review_status": "PASS",
+   "risk_class": "MEDIUM",
+   "routing": {
+    "chosen_actor": "claude-bootstrap-coordinator",
+    "five_questions": {
+     "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+     "cheapest_model_likely_to_succeed_first_pass": "claude-bootstrap-coordinator",
+     "does_this_need_independent_review": "no (risk MEDIUM)",
+     "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
+     "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
+    },
+    "model": null,
+    "rationale": "Requires lived Wave 1 operational context that durable artifacts alone do not supply. Its memory is a locator; durable evidence decides disagreements.",
+    "review_required": false,
+    "risk_class": "MEDIUM",
+    "task_type": "bootstrap_control_review",
+    "tier": "CLAUDE_COORDINATOR"
+   },
+   "status": "DONE",
+   "task_id": "POSTW1-BRIDGE-000",
+   "title": "Bootstrap proof: Director-to-coordinator direct message with correlated reply",
+   "updated_at": "2026-09-21T18:15:13.925446+00:00"
+  },
+  "POSTW1-LEARN-002": {
+   "artifact_refs": [],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-21T18:09:10.925924+00:00",
+   "phase": "2",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": null,
+   "risk_class": "MEDIUM",
+   "routing": {
+    "chosen_actor": "codex-fresh",
+    "five_questions": {
+     "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+     "cheapest_model_likely_to_succeed_first_pass": "gpt-6-astra",
+     "does_this_need_independent_review": "yes (risk MEDIUM)",
+     "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
+     "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
+    },
+    "model": "gpt-6-astra",
+    "rationale": "Substantial code-aware/technical work; Codex is the configured primary analyst and fresh context avoids inheriting participant bias.",
+    "review_required": true,
+    "risk_class": "MEDIUM",
+    "task_type": "learning_consolidation",
+    "tier": "CODEX_PRIMARY"
+   },
+   "status": "READY",
+   "task_id": "POSTW1-LEARN-002",
+   "title": "Wave 1 Learning Consolidation",
+   "updated_at": "2026-09-21T18:09:10.925937+00:00"
+  },
+  "POSTW1-REVIEW-001": {
+   "artifact_refs": [
+    "docs/evidence/wave1-closure-manifest.md",
+    "docs/evidence/wave1-evidence-reconciliation.md",
+    "docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md"
+   ],
+   "assigned_actor": "claude-bootstrap-coordinator",
+   "blockers": [],
+   "created_at": "2026-09-21T18:09:10.918478+00:00",
+   "phase": "1R",
+   "prompt_path": null,
+   "resulting_commit": "f955a4a9ab2c757b27b845266c50e734bc434e57",
+   "review_status": "PASS_WITH_QUALIFICATIONS",
+   "risk_class": "HIGH",
+   "routing": {
+    "chosen_actor": "claude-bootstrap-coordinator",
+    "five_questions": {
+     "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+     "cheapest_model_likely_to_succeed_first_pass": "claude-bootstrap-coordinator",
+     "does_this_need_independent_review": "yes (risk HIGH)",
+     "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
+     "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
+    },
+    "model": null,
+    "rationale": "Requires lived Wave 1 operational context that durable artifacts alone do not supply. Its memory is a locator; durable evidence decides disagreements.",
+    "review_required": true,
+    "risk_class": "HIGH",
+    "task_type": "closure_evidence_review",
+    "tier": "CLAUDE_COORDINATOR"
+   },
+   "status": "DONE",
+   "task_id": "POSTW1-REVIEW-001",
+   "title": "Independent Wave 1 Closure/Evidence Review",
+   "updated_at": "2026-09-21T18:09:10.918491+00:00"
+  },
+  "POSTW1-SMOKE-000": {
+   "artifact_refs": [
+    "docs/operations/post-wave1-program/reports/POSTW1-SMOKE-000-terminal.txt",
+    "docs/operations/post-wave1-program/reports/bootstrap-proofs.md"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-21T18:15:13.918664+00:00",
+   "phase": "0",
+   "prompt_path": "docs/operations/post-wave1-program/prompts/POSTW1-SMOKE-000.md",
+   "resulting_commit": null,
+   "review_status": "PASS",
+   "risk_class": "LOW",
+   "routing": {
+    "model": "gpt-6-astra",
+    "sandbox": "read-only",
+    "tier": "CODEX_PRIMARY"
+   },
+   "status": "DONE",
+   "task_id": "POSTW1-SMOKE-000",
+   "title": "Bootstrap proof: launch and capture a fresh Codex session",
+   "updated_at": "2026-09-21T18:15:13.918681+00:00"
+  }
+ },
+ "updated_at": "2026-09-21T18:15:13.925451+00:00"
+}
