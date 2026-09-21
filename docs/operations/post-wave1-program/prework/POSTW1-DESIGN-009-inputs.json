@@ -1,0 +1,75 @@
+{
+ "derived_at_head": "3ea566f211a13aa6ec36c2bb8f9a4703d31a1f02",
+ "selected_requirements": [
+  "SF-REQ-011",
+  "SF-REQ-012",
+  "SF-REQ-013",
+  "SF-REQ-014",
+  "SF-REQ-015",
+  "SF-REQ-016",
+  "SF-REQ-039",
+  "SF-REQ-051",
+  "SF-REQ-053",
+  "SF-REQ-056"
+ ],
+ "existing_bounded_contexts": {
+  "python_src_alienintent": [
+   "composition",
+   "context_assembly",
+   "control_plane",
+   "evidence_learning",
+   "execution_coordination",
+   "installation",
+   "invocation_runtime"
+  ],
+  "node_src": [
+   "alienintent",
+   "config",
+   "domain",
+   "github",
+   "providers",
+   "runtime"
+  ],
+  "note": "These are the contexts that exist today. Design contracts should bind to them or state explicitly why a new context is required. Inventing a parallel structure is how a design becomes unimplementable against the codebase it governs."
+ },
+ "architecture_fitness_today": {
+  "suite": "tests/test_architecture_fitness.py",
+  "ci": ".github/workflows/python-architecture-fitness.yml",
+  "tests": [
+   "test_skeleton_satisfies_all_fitness_checks",
+   "test_each_deliberate_violation_fails_its_named_check",
+   "test_layering_rejects_relative_and_absolute_adapter_imports",
+   "test_vendor_signature_rejects_quoted_annotations_and_vendor_bases",
+   "test_adapter_contract_check_uses_a_path_relative_to_the_checked_root",
+   "test_standard_library_signature_is_not_a_vendor_violation"
+  ],
+  "enforced_rules_observed": [
+   "layering rejects relative and absolute adapter imports",
+   "vendor signature rejects quoted annotations and vendor bases",
+   "adapter contract check uses a path relative to the checked root",
+   "standard library signature is not a vendor violation"
+  ],
+  "note": "Fitness already runs in CI with a deliberate-violation test proving each check can fail. deterministic_enforcement_opportunities should prefer extending this suite over proposing new machinery -- Phase 3 promoted 7 gates into existing layers and proposed zero new ones."
+ },
+ "gap_trap_promotions_to_honour": {
+  "source": "docs/evidence/wave1-gap-trap-promotion-backlog.json",
+  "note": "7 promotions exist with named enforcement layers, deterministic rules and proven-red methods. A design contract covering the same semantics should reference the promotion rather than invent a second control."
+ },
+ "pending_and_unratified": {
+  "unratified_requirement": "SF-REQ-056 (AUTHORED_IN_THIS_PHASE, POSTW1-DECIDE-008A)",
+  "pending_amendments": [
+   "SF-REQ-008",
+   "SF-REQ-022",
+   "SF-REQ-013",
+   "SF-REQ-025 (adjacent)",
+   "SF-REQ-029 (adjacent)"
+  ],
+  "open_decisions": [
+   "POSTW1-DECIDE-004A",
+   "-005A",
+   "-006A",
+   "-007A",
+   "-008A"
+  ]
+ }
+}
