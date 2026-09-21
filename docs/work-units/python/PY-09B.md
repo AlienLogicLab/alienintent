@@ -91,7 +91,7 @@ A repair cycle that widens implementation while the harness for what it touches 
 
 - Executable proof, with the offline portion runnable repeatedly in the normal suite and the live portion bounded and individually diagnosable.
 - Negative controls for credential failure, permission drift, stale projection write, unsigned/wrong-signature/replayed delivery, and each doctor probe.
-- Independent verification by a separate verifier invocation before the capability is considered satisfied.
+- Independent verification by a separate verifier invocation before the capability is considered satisfied. **The verifier executes the bounded live portion itself** on the provisioned host, against the same sandbox identities, rather than accepting the producer's transcript of it — the same independence standard applied to every other Wave 1 BIU. The offline portion is re-run in full.
 - Retained evidence: exact revisions, exit statuses, probe outcomes, the admitted delivery's identity, and the redaction applied.
 
 ## Required closure actions
