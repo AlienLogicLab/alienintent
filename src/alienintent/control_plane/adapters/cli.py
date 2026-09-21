@@ -93,7 +93,8 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "doctor":
             doctor = getattr(profile, "doctor", None)
             if doctor is None:
-                raise ValueError("profile doctor is required")
+                _render({"error": "doctor-not-configured"}, args.json)
+                return 1
             report = doctor.run()
             _render(report.as_dict(), args.json)
             return report.exit_code
