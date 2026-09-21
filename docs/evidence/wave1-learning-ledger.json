@@ -321,13 +321,13 @@
     "raw_candidates_mapped": 97,
     "raw_candidates_not_promoted": 4,
     "dispositions": {
-      "ALREADY_GRADUATED": 10,
-      "STRENGTHEN_EXISTING_OWNER": 18,
+      "ALREADY_GRADUATED": 9,
+      "STRENGTHEN_EXISTING_OWNER": 17,
       "GAP_TRAP_PROMOTION": 1,
-      "NEW_CAPABILITY_GAP": 0,
+      "NEW_CAPABILITY_GAP": 2,
       "BOOTSTRAP_ONLY": 1
     },
-    "ownership_gaps": 0,
+    "ownership_gaps": 2,
     "clusters_collapsed": [
       "proof subcases",
       "candidate custody/retention",
@@ -416,6 +416,7 @@
         "docs/evidence/wave1-source-observations.json"
       ],
       "existing_owner": "SF-REQ-050",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "yes — a semantically applicable guard removal or inversion must make its assertion fail; SURVIVED and NOT_APPLIED cannot count as KILLED.",
       "proven_red": "yes",
@@ -444,6 +445,7 @@
         "docs/evidence/execution-trajectories/PY-09.jsonl"
       ],
       "existing_owner": "SF-REQ-014",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "partial — execute each required operation through its real composition root and required failure path; dynamic reachability needs obligation-specific probes, not a universal static graph rule.",
       "proven_red": "yes",
@@ -472,6 +474,7 @@
         "docs/evidence/wave1-closure-manifest.json"
       ],
       "existing_owner": "SF-REQ-049",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "partial — before widening a repair, require the named harness and changed-path red evidence; judging whether coverage is sufficient remains independent review.",
       "proven_red": "UNKNOWN",
@@ -501,6 +504,7 @@
         "docs/evidence/execution-trajectories/PY-08.jsonl"
       ],
       "existing_owner": "SF-REQ-049",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "yes — compare previously satisfied obligations across candidates and fail lost behavior or proof unless an explicit authorized supersession names replacement evidence.",
       "proven_red": "yes",
@@ -531,6 +535,7 @@
         "docs/evidence/py10/proven-red.json"
       ],
       "existing_owner": "SF-REQ-007",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DETERMINISTIC_GATE",
       "mechanizable": "yes — refuse VERIFY without exact independent read-back; permit local cleanup only after all seven retention conditions hold, including continuing reachability and absence of unique content.",
       "proven_red": "yes",
@@ -559,6 +564,7 @@
         "docs/decisions/2026-09-21-py10-transport-split.md"
       ],
       "existing_owner": "SF-REQ-002",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DETERMINISTIC_GATE",
       "mechanizable": "yes — require durable IMPLEMENT authority, a resolvable ancestral baseline and explicit supersession of stale unauthorized wording before release.",
       "proven_red": "yes",
@@ -581,6 +587,7 @@
         "docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md"
       ],
       "existing_owner": "SF-REQ-053",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DOCUMENTED_ONLY",
       "mechanizable": "yes — re-recording one invocation outcome must preserve attention identity; distinct invocation-free gaps must get distinct identities even after acknowledgement.",
       "proven_red": "UNKNOWN",
@@ -604,6 +611,7 @@
         "docs/evidence/wave1-source-observations.json"
       ],
       "existing_owner": "SF-REQ-016",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DETERMINISTIC_GATE",
       "mechanizable": "yes — provider exit success cannot advance work without an admissible, invocation-correlated durable work result.",
       "proven_red": "yes",
@@ -628,6 +636,8 @@
         "docs/evidence/wave1-consistency-report.json"
       ],
       "existing_owner": "SF-REQ-009",
+      "owner_fit": "CANONICAL",
+      "owner_fit_basis": "docs/decisions/2026-09-21-biu-execution-cycle-counter.md, \"Canonical owner: SF-REQ-009, by amendment\" and \"Canonical semantics\" rules 1–10: SWF-32 assigns the lifecycle-derived execution cycle to SF-REQ-009, including increment, same-phase retry/failover, duplicate-delivery and restart/reconstruction semantics.",
       "enforcement_level": "DOCUMENTED_ONLY",
       "mechanizable": "yes — increment once per authoritative re-entry into IMPLEMENT from another state; preserve cycle on same-phase retries, failover, duplicate delivery and restart.",
       "proven_red": "UNKNOWN",
@@ -653,6 +663,7 @@
         "docs/evidence/wave1-evidence-reconciliation.md"
       ],
       "existing_owner": "SF-REQ-056",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DETERMINISTIC_GATE",
       "mechanizable": "yes — reconcile known nonterminal state against correlated active, pending and completed effects after grace; wait for bounded claim confirmation instead of one premature sample.",
       "proven_red": "UNKNOWN",
@@ -677,6 +688,7 @@
         "docs/evidence/wave1-source-observations.json"
       ],
       "existing_owner": "SWF-29",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DETERMINISTIC_GATE",
       "mechanizable": "yes — a latest unresolved judgment-required lane outcome suppresses re-emission after grace; merely seeing attention must not resolve it.",
       "proven_red": "yes",
@@ -705,6 +717,7 @@
         "docs/evidence/wave1-evidence-reconciliation.md"
       ],
       "existing_owner": "SF-REQ-008",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DETERMINISTIC_GATE",
       "mechanizable": "yes — duplicate delivery cannot acquire a second effect identity; unknown external effects must park until attributable reconciliation authorizes progress.",
       "proven_red": "yes",
@@ -731,6 +744,7 @@
         "docs/evidence/execution-trajectories/PY-03.jsonl"
       ],
       "existing_owner": "SWF-09",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "partial — retain typed capacity evidence and enforce required budgets/capabilities before an authorized failover; external quota prediction is possible only if the provider exposes usable evidence.",
       "proven_red": "UNKNOWN",
@@ -761,6 +775,7 @@
         "docs/evidence/wave1-evidence-reconciliation.md"
       ],
       "existing_owner": "SF-REQ-051",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "partial — compare expected permissions and acceptance claims with the consuming code and platform capabilities; mechanical exact-set checks cannot validate their own premise.",
       "proven_red": "yes",
@@ -788,6 +803,7 @@
         "docs/evidence/wave1-closure-manifest.json"
       ],
       "existing_owner": "SF-REQ-013",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "partial — require every scoped capability and proof obligation to map to a retained owner through split lineage and dependency changes; deciding a useful split remains judgment.",
       "proven_red": "yes",
@@ -817,6 +833,7 @@
         "docs/evidence/py10/proven-red.json"
       ],
       "existing_owner": "SF-REQ-002",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "yes — dependency admission consumes authoritative lifecycle and declared edges; stale Issue closure or a missing projected edge must not silently redefine eligibility.",
       "proven_red": "yes",
@@ -856,6 +873,7 @@
         "docs/evidence/2026-09-20-worktree-retention-audit.md"
       ],
       "existing_owner": "SF-REQ-030",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DETERMINISTIC_GATE",
       "mechanizable": "yes — recompute source-supported metrics under explicit populations and timestamps; reject contradictions, unmarked supersession, inferred custody and substitution of zero for unavailable telemetry.",
       "proven_red": "yes",
@@ -881,12 +899,13 @@
         "docs/proposals/PROP-2026-0005-proposal-intake-as-product-capability.md"
       ],
       "existing_owner": "SF-REQ-055",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "partial — require a stable proposal-to-owner mapping and prevent duplicate identifier delivery; semantic overlap requires authority review before choosing amendment, retirement or a distinct owner.",
       "proven_red": "UNKNOWN",
       "later_consumption": "FACT: after SF-REQ-054 was folded into SF-REQ-030, SWF-30 chose SF-REQ-007 and SWF-32 chose SF-REQ-009 rather than creating new owners (docs/decisions/2026-09-20-evidence-and-intake-ratification.md; docs/decisions/2026-09-20-candidate-worktree-retention.md; docs/decisions/2026-09-21-biu-execution-cycle-counter.md; docs/proposals/INDEX.md).",
       "effectiveness_evidence": "FACT: the index preserves immutable proposal history, retirement and amendment targets. SWF-29 separately explains why a new Wave 2 owner was needed to avoid retrofitting Wave 1. This is demonstrated authority-controlled intake practice, not an implemented idempotent intake service.",
-      "recommended_disposition": "ALREADY_GRADUATED"
+      "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
     },
     {
       "learning_id": "LRN-019",
@@ -906,6 +925,7 @@
         "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md"
       ],
       "existing_owner": "SF-REQ-053",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "partial — inject an attention-worthy event and verify durable item creation plus an observable consumer wake-up; notification-command success alone does not prove human receipt.",
       "proven_red": "UNKNOWN",
@@ -933,6 +953,7 @@
         "docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md"
       ],
       "existing_owner": "SWF-27",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DOCUMENTED_ONLY",
       "mechanizable": "partial — compare each temporary control's scope and expiry with current authority and replacement evidence; ambiguous expiry requires an explicit decision, not automatic retirement.",
       "proven_red": "UNKNOWN",
@@ -955,6 +976,7 @@
         "docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md"
       ],
       "existing_owner": "SF-REQ-038",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DETERMINISTIC_GATE",
       "mechanizable": "yes — validate a proposed runtime profile against the consumer's accepted keys before activation, keeping provenance in its designated evidence record.",
       "proven_red": "yes",
@@ -978,12 +1000,13 @@
         "docs/verification/PY-10-wave1-live-proof.md"
       ],
       "existing_owner": "SF-REQ-025",
+      "owner_fit": "ADJACENT",
       "enforcement_level": "DOCUMENTED_ONLY",
       "mechanizable": "yes — construct the provider invocation environment deliberately and prove an unrelated ambient credential cannot override the authorized authentication profile.",
       "proven_red": "UNKNOWN",
       "later_consumption": "FACT: Agent-Ready failover succeeded after removing the ambient key; PY-10 later retained red evidence for an explicitly stated worker environment (docs/evidence/2026-09-21-agent-ready-provider-failover.md; docs/evidence/py10/proven-red.json).",
       "effectiveness_evidence": "FACT: the first Claude assessment attempt returned 401 because ANTHROPIC_API_KEY took precedence over the subscription login. The incident says worker launching already filters ambient secrets while coordinator tooling did not. The later worker-environment test does not prove the coordinator-tooling gap was structurally closed.",
-      "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      "recommended_disposition": "NEW_CAPABILITY_GAP"
     },
     {
       "learning_id": "LRN-023",
@@ -1004,12 +1027,13 @@
         "src/providers/claude.mjs"
       ],
       "existing_owner": "SF-REQ-029",
+      "owner_fit": "ADJACENT",
       "enforcement_level": "DOCUMENTED_ONLY",
       "mechanizable": "partial — normalize typed started/progress/terminal/capacity observations where available, preserve provider provenance, and report unavailable progress as unknown rather than worker death.",
       "proven_red": "UNKNOWN",
       "later_consumption": "not consumed — no later normalized progress contract or comparable progress trace was established in the reviewed Wave 1 evidence.",
       "effectiveness_evidence": "FACT: retained terminal records differ (Codex turn.failed versus Claude result/success), and adapter arguments differ (--json versus --output-format json). HYPOTHESIS: buffered versus streaming output contributed to operator uncertainty. No retained comparative timing series establishes buffering, recurrence, or a causal stall; those claims remain unverified.",
-      "recommended_disposition": "STRENGTHEN_EXISTING_OWNER"
+      "recommended_disposition": "NEW_CAPABILITY_GAP"
     },
     {
       "learning_id": "LRN-024",
@@ -1028,6 +1052,7 @@
         "docs/evidence/wave1-source-observations.json"
       ],
       "existing_owner": "SF-REQ-034",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "yes — repeated observations of one unchanged condition preserve first_seen, last_seen and repeat_count without emitting a new incident each sweep; cleared or changed conditions remain visible.",
       "proven_red": "UNKNOWN",
@@ -1056,6 +1081,7 @@
         "docs/evidence/wave1-source-observations.json"
       ],
       "existing_owner": "SF-REQ-006",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "partial — resolve named artifacts and scope mechanically, but judge whether authority is actually missing against the binding contract and landed code; no universal deterministic semantic verdict is claimed.",
       "proven_red": "UNKNOWN",
@@ -1080,6 +1106,7 @@
         "docs/evidence/wave1-evidence-reconciliation.md"
       ],
       "existing_owner": "SWF-26",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "yes — scope the manual battery to PY-04 and reject use as standing later-BIU authority after its explicit expiry.",
       "proven_red": "yes",
@@ -1099,6 +1126,8 @@
         "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md"
       ],
       "existing_owner": "SF-REQ-053",
+      "owner_fit": "CANONICAL",
+      "owner_fit_basis": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md names \"Canonical requirement: SF-REQ-053\"; \"Durable rules\" 3, 7, 8 and 9 require durable state for correct continuation after coordinator replacement, successor reconstruction from authoritative state, restart equivalence and no hidden session state.",
       "enforcement_level": "DOCUMENTED_ONLY",
       "mechanizable": "partial — reconstruct authorized next actions from durable state in a fresh episode and compare them under the same state/events; mechanical state equality cannot fully prove judgment equivalence.",
       "proven_red": "UNKNOWN",
@@ -1130,6 +1159,7 @@
         "docs/evidence/py10/acceptance-verification.json"
       ],
       "existing_owner": "SF-REQ-017",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "REVIEW_GATE",
       "mechanizable": "partial — map acceptance claims to exact obligations and evidence, retain residual findings and proof limits, and refuse to infer full requirement completion from a scoped BIU verdict.",
       "proven_red": "UNKNOWN",
@@ -1154,6 +1184,7 @@
         "docs/evidence/wave1-source-observations.json"
       ],
       "existing_owner": "SF-REQ-022",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DOCUMENTED_ONLY",
       "mechanizable": "yes — repeated ineligible/rework outcomes must consume a durable run/retry budget and terminate or escalate when exhausted rather than rely solely on a harness timeout.",
       "proven_red": "no",
@@ -1177,6 +1208,7 @@
         "docs/evidence/py10/proven-red.json"
       ],
       "existing_owner": "SF-REQ-008",
+      "owner_fit": "CANONICAL",
       "enforcement_level": "DOCUMENTED_ONLY",
       "mechanizable": "yes — persist attributable worker outcomes so restart can reconcile a known effect; absent or ambiguous evidence must still park rather than guess.",
       "proven_red": "no",
@@ -2706,7 +2738,7 @@
     },
     {
       "learning_id": "LRN-007",
-      "reason": "INFERENCE: one typed attention-identity lesson with two required cases. It cannot collapse into candidate, effect or cycle identity: the equivalence relation and lifetime differ."
+      "reason": "INFERENCE: CANONICAL. SF-REQ-053, through SWF-27, explicitly owns durable attention identity based on dispatcher outcomes rather than observation timestamps. Both invocation-correlated and invocation-free identity cases belong to that boundary. Documentary enforcement and unproven later effectiveness do not change semantic ownership."
     },
     {
       "learning_id": "LRN-008",
@@ -2714,7 +2746,7 @@
     },
     {
       "learning_id": "LRN-009",
-      "reason": "INFERENCE: collapse around lifecycle-derived identity. Its scheduling remains unassigned in SWF-32; this ledger assigns neither priority nor implementation."
+      "reason": "INFERENCE: CANONICAL. SWF-32 explicitly amends SF-REQ-009 to own the durable lifecycle-derived execution cycle and its retry/restart semantics. The missing runtime implementation is an enforcement gap, not an ownership gap. Scheduling remains unassigned; this ledger assigns neither priority nor implementation."
     },
     {
       "learning_id": "LRN-010",
@@ -2750,7 +2782,7 @@
     },
     {
       "learning_id": "LRN-018",
-      "reason": "INFERENCE: one canonicalization lesson. Successful review dispositions qualify only the observed manual mechanism. Originating BIU attribution is UNKNOWN because this is a cross-wave intake decision, not an identified BIU defect; no numeric recurrence is inferred."
+      "reason": "INFERENCE: CANONICAL, but STRENGTHEN_EXISTING_OWNER under POSTW1-DECIDE-002A. SF-REQ-055 explicitly owns proposal canonicalization and idempotent intake. The two correct outcomes demonstrate manual Founder-and-coordinator practice, not an implemented intake service that survives replacement of its authors. REVIEW_GATE, proven_red UNKNOWN and the original effectiveness evidence remain unchanged. Originating BIU attribution and recurrence remain UNKNOWN."
     },
     {
       "learning_id": "LRN-019",
@@ -2758,7 +2790,7 @@
     },
     {
       "learning_id": "LRN-020",
-      "reason": "INFERENCE: the recurring lesson is explicit exception lifecycle, not a new provider or service capability. The general risk survives bootstrap; only the specific expired battery procedure is BOOTSTRAP_ONLY in LRN-026."
+      "reason": "INFERENCE: CANONICAL. SWF-27 rule 10 explicitly requires temporary controls to carry scope, authority, expiry, provenance and a replacement target. The recurring lesson is enforcement of that exception lifecycle. It survives bootstrap; only the specific expired battery procedure is BOOTSTRAP_ONLY in LRN-026."
     },
     {
       "learning_id": "LRN-021",
@@ -2766,11 +2798,11 @@
     },
     {
       "learning_id": "LRN-022",
-      "reason": "INFERENCE: authenticated provider readiness includes the actual environment and permission mechanism, so SF-REQ-025 can absorb this gap. Provider substitution cannot be assumed equivalent solely because assessment JSON has the same shape."
+      "reason": "INFERENCE: ADJACENT; NEW_CAPABILITY_GAP under POSTW1-DECIDE-002A. SF-REQ-025 owns exposing provider capabilities and authenticated readiness, not constructing and isolating coordinator-tool invocation environments so ambient credentials cannot override the authorized authentication profile. The prior absorbability rationale stretched that owner. No existing canonical owner cleanly owns the scoped credential-precedence isolation semantics in the reviewed authority. The retained existing_owner names the adjacent requirement, not an assignment of the gap; no requirement is created."
     },
     {
       "learning_id": "LRN-023",
-      "reason": "INFERENCE: one observability concern, separate from work-result admissibility and liveness recovery. SF-REQ-029 can own normalized observations; the buffering explanation remains a hypothesis, not a newly established incident or capability gap."
+      "reason": "INFERENCE: ADJACENT; NEW_CAPABILITY_GAP under POSTW1-DECIDE-002A. SF-REQ-029 owns recording engineering trajectory; it does not establish the provider-neutral started/progress/terminal/capacity normalization boundary, including explicit unavailable progress. Activation and diagnostic coalescing are also adjacent controls. No existing canonical owner cleanly owns these scoped normalization semantics in the reviewed authority. The buffering explanation remains a hypothesis; missing implementation alone is not the basis for this ownership finding. The retained existing_owner identifies adjacency; no requirement is created."
     },
     {
       "learning_id": "LRN-024",
@@ -2786,7 +2818,7 @@
     },
     {
       "learning_id": "LRN-027",
-      "reason": "INFERENCE: distinct from activation: waking an episode does not prove it can reconstruct authority. No BIU is attributed as a demonstrated replacement failure; attribution remains UNKNOWN under section 2.2. This fresh analysis is not a lifecycle-handover test."
+      "reason": "INFERENCE: CANONICAL. SF-REQ-053 through SWF-27 rules 3, 7, 8 and 9 explicitly owns durable continuation and restart equivalence across coordinator replacement. Activation is a distinct obligation under that same owner. No handover occurred and the checkpoint was untested, so effectiveness remains absent without turning explicit ownership into adjacency. BIU attribution remains UNKNOWN; this analysis is not a lifecycle-handover test."
     },
     {
       "learning_id": "LRN-028",
@@ -2794,11 +2826,11 @@
     },
     {
       "learning_id": "LRN-029",
-      "reason": "INFERENCE: reuse SF-REQ-022 bounded retries/budgets. This is distinct from provider-capacity diagnosis and from suppressing a completed judgment-required outcome; the problematic outcomes here never become an effective terminal stop."
+      "reason": "INFERENCE: CANONICAL. SF-REQ-022 explicitly owns bounded retries/budgets and escalation on exhaustion of repair loops. Repeated nonterminal rework that never reaches an effective stop exposes an incomplete bound within that subject; the missing run-level enforcement does not require a new owner. This remains distinct from capacity diagnosis and suppression of completed judgment-required outcomes."
     },
     {
       "learning_id": "LRN-030",
-      "reason": "INFERENCE: retain the existing crash-safe execution owner. Distinct from LRN-012: one proves uncertain effects are not blindly repeated; this one seeks preserved knowledge so unnecessary uncertainty is avoided."
+      "reason": "INFERENCE: CANONICAL. SF-REQ-008 explicitly owns preservation of canonical execution state and reconciliation across crashes/restarts. Durable attributable outcome read-back is within that subject even though only conservative parking was demonstrated. Distinct from LRN-012: preventing duplicate effects does not establish preservation of knowable outcomes."
     }
   ],
   "coordinator_assessment": {

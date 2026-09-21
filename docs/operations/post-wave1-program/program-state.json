@@ -1,9 +1,10 @@
 {
  "completed_phases": [
   "0",
-  "1"
+  "1",
+  "2"
  ],
- "current_phase": "1R",
+ "current_phase": "3",
  "program": "post-wave1-to-wave2",
  "tasks": {
   "POSTW1-BOOTSTRAP-006": {
@@ -74,8 +75,7 @@
   },
   "POSTW1-DECIDE-002A": {
    "artifact_refs": [
-    "docs/evidence/wave1-learning-ledger.json",
-    "docs/operations/post-wave1-program/messages/POSTW1-LEARN-002-review-request.md"
+    "docs/operations/post-wave1-program/prompts/POSTW1-LEARN-002-R1.md"
    ],
    "assigned_actor": "founder",
    "blockers": [
@@ -85,31 +85,62 @@
    "phase": "2",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "DECIDED",
    "risk_class": "HIGH",
    "routing": null,
-   "status": "FOUNDER_DECISION_REQUIRED",
+   "status": "DONE",
    "task_id": "POSTW1-DECIDE-002A",
    "title": "Founder judgment: accept ownership_gaps=0, and LRN-018 disposition",
-   "updated_at": "2026-09-21T18:59:17.942050+00:00"
+   "updated_at": "2026-09-21T19:10:47.827950+00:00"
+  },
+  "POSTW1-GAPTRAP-003": {
+   "artifact_refs": [],
+   "assigned_actor": "codex-fresh",
+   "blockers": [
+    "not dispatched: awaiting Founder authorization to begin Phase 3"
+   ],
+   "created_at": "2026-09-21T19:20:30.891455+00:00",
+   "phase": "3",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": null,
+   "risk_class": "MEDIUM",
+   "routing": {
+    "chosen_actor": "codex-fresh",
+    "five_questions": {
+     "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+     "cheapest_model_likely_to_succeed_first_pass": "gpt-6-astra",
+     "does_this_need_independent_review": "yes (risk MEDIUM)",
+     "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
+     "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
+    },
+    "model": "gpt-6-astra",
+    "rationale": "Substantial code-aware/technical work; Codex is the configured primary analyst and fresh context avoids inheriting participant bias.",
+    "review_required": true,
+    "risk_class": "MEDIUM",
+    "task_type": "requirement_owner_reconciliation",
+    "tier": "CODEX_PRIMARY"
+   },
+   "status": "PLANNED",
+   "task_id": "POSTW1-GAPTRAP-003",
+   "title": "Gap Trap Graduation Audit",
+   "updated_at": "2026-09-21T19:20:30.891474+00:00"
   },
   "POSTW1-LEARN-002": {
    "artifact_refs": [
     "docs/evidence/wave1-learning-ledger.json",
     "docs/evidence/wave1-learning-ledger.md",
-    "docs/operations/post-wave1-program/messages/POSTW1-LEARN-002-review-request.md"
+    "tools/evidence/check_learning_ledger.py"
    ],
    "assigned_actor": "codex-fresh",
    "blockers": [
-    "LRN-018 disposition change requested by independent review",
-    "F1: expose owned-vs-enforced distinction before Phase 3 consumes the ledger",
-    "F2: ownership_gaps=0 requires explicit Founder judgment, not inheritance"
+    "R1 repair in flight: owner_fit dimension, LRN-018, adjacent-owner review"
    ],
    "created_at": "2026-09-21T18:09:10.925924+00:00",
    "phase": "2",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": "PASS_WITH_QUALIFICATIONS",
+   "review_status": "PASS",
    "risk_class": "MEDIUM",
    "routing": {
     "chosen_actor": "codex-fresh",
@@ -129,10 +160,10 @@
     "task_type": "learning_consolidation",
     "tier": "CODEX_PRIMARY"
    },
-   "status": "REPAIR",
+   "status": "DONE",
    "task_id": "POSTW1-LEARN-002",
    "title": "Wave 1 Learning Consolidation",
-   "updated_at": "2026-09-21T18:58:58.958565+00:00"
+   "updated_at": "2026-09-21T19:20:19.412159+00:00"
   },
   "POSTW1-REVIEW-001": {
    "artifact_refs": [
@@ -193,5 +224,5 @@
    "updated_at": "2026-09-21T18:15:13.918681+00:00"
   }
  },
- "updated_at": "2026-09-21T18:59:17.942055+00:00"
+ "updated_at": "2026-09-21T19:20:30.891478+00:00"
 }

@@ -4,14 +4,14 @@ Authoritative artifact: [wave1-learning-ledger.json](wave1-learning-ledger.json)
 
 Task `POSTW1-LEARN-002`; actor `codex/gpt-6-astra`; recorded `2026-09-21T18:36:03Z`. Repository HEAD `473f026255a11193027f511f6ba9ced45734281e`; Wave 1 terminal implementation `10cc81620511af56befbb6140504d1991bb02846`.
 
-30 lessons from 101 enumerated raw candidates (97 mapped, 4 not promoted). 0 ownership gaps; 0 new requirements; 100 scalar fields recorded UNKNOWN.
+30 lessons from 101 enumerated raw candidates (97 mapped, 4 not promoted). 2 ownership gaps; 0 new requirements; 100 scalar fields recorded UNKNOWN.
 
 | Disposition | Lessons |
 |---|---:|
-| ALREADY_GRADUATED | 10 |
-| STRENGTHEN_EXISTING_OWNER | 18 |
+| ALREADY_GRADUATED | 9 |
+| STRENGTHEN_EXISTING_OWNER | 17 |
 | GAP_TRAP_PROMOTION | 1 |
-| NEW_CAPABILITY_GAP | 0 |
+| NEW_CAPABILITY_GAP | 2 |
 | BOOTSTRAP_ONLY | 1 |
 
 Accepted Phase 0+1 terminal reconciliation. Local repository artifacts and retained captures only; no network or live operation.
@@ -108,6 +108,7 @@ Evidence: [docs/evidence/wave1-source-observations.json](../../docs/evidence/wav
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-deterministic-failure-class-promotion.md](../../docs/decisions/2026-09-20-deterministic-failure-class-promotion.md); [docs/evidence/execution-trajectories/PY-02.jsonl](../../docs/evidence/execution-trajectories/PY-02.jsonl); [docs/evidence/execution-trajectories/PY-05.jsonl](../../docs/evidence/execution-trajectories/PY-05.jsonl); [docs/evidence/execution-trajectories/PY-09.jsonl](../../docs/evidence/execution-trajectories/PY-09.jsonl); [docs/evidence/PY-09B-live-transport.md](../../docs/evidence/PY-09B-live-transport.md); [docs/evidence/py09b-proven-red-2026-09-21.json](../../docs/evidence/py09b-proven-red-2026-09-21.json); [docs/verification/PY-10-wave1-live-proof.md](../../docs/verification/PY-10-wave1-live-proof.md); [docs/evidence/py10/proven-red.json](../../docs/evidence/py10/proven-red.json); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json) |
 | existing_owner | SF-REQ-050 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | yes — a semantically applicable guard removal or inversion must make its assertion fail; SURVIVED and NOT_APPLIED cannot count as KILLED. |
 | proven_red | yes |
@@ -129,6 +130,7 @@ INFERENCE: all four are discrimination failures against a stated obligation. Ret
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md](../../docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md); [docs/evidence/execution-trajectories/PY-06.jsonl](../../docs/evidence/execution-trajectories/PY-06.jsonl); [docs/evidence/execution-trajectories/PY-07.jsonl](../../docs/evidence/execution-trajectories/PY-07.jsonl); [docs/evidence/execution-trajectories/PY-08.jsonl](../../docs/evidence/execution-trajectories/PY-08.jsonl); [docs/evidence/execution-trajectories/PY-09.jsonl](../../docs/evidence/execution-trajectories/PY-09.jsonl) |
 | existing_owner | SF-REQ-014 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | partial — execute each required operation through its real composition root and required failure path; dynamic reachability needs obligation-specific probes, not a universal static graph rule. |
 | proven_red | yes |
@@ -150,6 +152,7 @@ INFERENCE: these collapse around executable composition, distinct from whether a
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md](../../docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md); [docs/evidence/PY-09B-live-transport.md](../../docs/evidence/PY-09B-live-transport.md); [docs/verification/PY-10-wave1-live-proof.md](../../docs/verification/PY-10-wave1-live-proof.md); [docs/evidence/execution-trajectories/PY-08.jsonl](../../docs/evidence/execution-trajectories/PY-08.jsonl); [docs/evidence/execution-trajectories/PY-09.jsonl](../../docs/evidence/execution-trajectories/PY-09.jsonl); [docs/evidence/wave1-closure-manifest.json](../../docs/evidence/wave1-closure-manifest.json) |
 | existing_owner | SF-REQ-049 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | partial — before widening a repair, require the named harness and changed-path red evidence; judging whether coverage is sufficient remains independent review. |
 | proven_red | UNKNOWN |
@@ -171,6 +174,7 @@ INFERENCE: one sequencing lesson, not three capabilities. SF-REQ-052 supplies re
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md](../../docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/execution-trajectories/PY-04.jsonl](../../docs/evidence/execution-trajectories/PY-04.jsonl); [docs/evidence/execution-trajectories/PY-05.jsonl](../../docs/evidence/execution-trajectories/PY-05.jsonl); [docs/evidence/execution-trajectories/PY-06.jsonl](../../docs/evidence/execution-trajectories/PY-06.jsonl); [docs/evidence/execution-trajectories/PY-07.jsonl](../../docs/evidence/execution-trajectories/PY-07.jsonl); [docs/evidence/execution-trajectories/PY-08.jsonl](../../docs/evidence/execution-trajectories/PY-08.jsonl) |
 | existing_owner | SF-REQ-049 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | yes — compare previously satisfied obligations across candidates and fail lost behavior or proof unless an explicit authorized supersession names replacement evidence. |
 | proven_red | yes |
@@ -192,6 +196,7 @@ INFERENCE: behavior loss, proof loss and continuity loss are one cross-candidate
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-candidate-worktree-retention.md](../../docs/decisions/2026-09-20-candidate-worktree-retention.md); [docs/evidence/2026-09-20-worktree-retention-audit.md](../../docs/evidence/2026-09-20-worktree-retention-audit.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/PY-09B-live-transport.md](../../docs/evidence/PY-09B-live-transport.md); [docs/verification/PY-10-wave1-live-proof.md](../../docs/verification/PY-10-wave1-live-proof.md); [docs/evidence/py10/proven-red.json](../../docs/evidence/py10/proven-red.json) |
 | existing_owner | SF-REQ-007 |
+| owner_fit | CANONICAL |
 | enforcement_level | DETERMINISTIC_GATE |
 | mechanizable | yes — refuse VERIFY without exact independent read-back; permit local cleanup only after all seven retention conditions hold, including continuing reachability and absence of unique content. |
 | proven_red | yes |
@@ -213,6 +218,7 @@ INFERENCE: these collapse because custody is continuing retrievability of exact 
 | last_occurrence | 2026-09-20T16:54:46Z |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/decisions/2026-09-20-wave1-release-coordinator.md](../../docs/decisions/2026-09-20-wave1-release-coordinator.md); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json); [docs/evidence/2026-09-21-liveness-retry-and-release-admission.md](../../docs/evidence/2026-09-21-liveness-retry-and-release-admission.md); [docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md](../../docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md](../../docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md); [docs/decisions/2026-09-21-py10-transport-split.md](../../docs/decisions/2026-09-21-py10-transport-split.md) |
 | existing_owner | SF-REQ-002 |
+| owner_fit | CANONICAL |
 | enforcement_level | DETERMINISTIC_GATE |
 | mechanizable | yes — require durable IMPLEMENT authority, a resolvable ancestral baseline and explicit supersession of stale unauthorized wording before release. |
 | proven_red | yes |
@@ -239,6 +245,7 @@ INFERENCE: one admission-record lesson; baseline existence and release authoriza
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md](../../docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md](../../docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md) |
 | existing_owner | SF-REQ-053 |
+| owner_fit | CANONICAL |
 | enforcement_level | DOCUMENTED_ONLY |
 | mechanizable | yes — re-recording one invocation outcome must preserve attention identity; distinct invocation-free gaps must get distinct identities even after acknowledgement. |
 | proven_red | UNKNOWN |
@@ -246,7 +253,7 @@ INFERENCE: one admission-record lesson; baseline existence and release authoriza
 | effectiveness_evidence | FACT: one verifier outcome produced three attention items, then removing timestamps globally broke the neighboring invocation-free case. The incident says regression tests were added; the repository record does not retain their red run or demonstrate later effectiveness. |
 | recommended_disposition | STRENGTHEN_EXISTING_OWNER |
 
-INFERENCE: one typed attention-identity lesson with two required cases. It cannot collapse into candidate, effect or cycle identity: the equivalence relation and lifetime differ.
+INFERENCE: CANONICAL. SF-REQ-053, through SWF-27, explicitly owns durable attention identity based on dispatcher outcomes rather than observation timestamps. Both invocation-correlated and invocation-free identity cases belong to that boundary. Documentary enforcement and unproven later effectiveness do not change semantic ownership.
 
 ### LRN-008 — invocation-success-without-verdict
 
@@ -260,6 +267,7 @@ INFERENCE: one typed attention-identity lesson with two required cases. It canno
 | last_occurrence | 2026-09-21T03:03:29.309Z |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json) |
 | existing_owner | SF-REQ-016 |
+| owner_fit | CANONICAL |
 | enforcement_level | DETERMINISTIC_GATE |
 | mechanizable | yes — provider exit success cannot advance work without an admissible, invocation-correlated durable work result. |
 | proven_red | yes |
@@ -285,6 +293,8 @@ INFERENCE: terminal work-result admissibility is distinct from provider capacity
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-21-biu-execution-cycle-counter.md](../../docs/decisions/2026-09-21-biu-execution-cycle-counter.md); [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/wave1-closure-manifest.json](../../docs/evidence/wave1-closure-manifest.json); [docs/evidence/wave1-consistency-report.json](../../docs/evidence/wave1-consistency-report.json) |
 | existing_owner | SF-REQ-009 |
+| owner_fit | CANONICAL |
+| owner_fit_basis | docs/decisions/2026-09-21-biu-execution-cycle-counter.md, "Canonical owner: SF-REQ-009, by amendment" and "Canonical semantics" rules 1–10: SWF-32 assigns the lifecycle-derived execution cycle to SF-REQ-009, including increment, same-phase retry/failover, duplicate-delivery and restart/reconstruction semantics. |
 | enforcement_level | DOCUMENTED_ONLY |
 | mechanizable | yes — increment once per authoritative re-entry into IMPLEMENT from another state; preserve cycle on same-phase retries, failover, duplicate delivery and restart. |
 | proven_red | UNKNOWN |
@@ -292,7 +302,7 @@ INFERENCE: terminal work-result admissibility is distinct from provider capacity
 | effectiveness_evidence | none — no durable runtime implementation of the SWF-32 counter is established. The evidence checker enforces reconstructed counts but does not own lifecycle state. |
 | recommended_disposition | STRENGTHEN_EXISTING_OWNER |
 
-INFERENCE: collapse around lifecycle-derived identity. Its scheduling remains unassigned in SWF-32; this ledger assigns neither priority nor implementation.
+INFERENCE: CANONICAL. SWF-32 explicitly amends SF-REQ-009 to own the durable lifecycle-derived execution cycle and its retry/restart semantics. The missing runtime implementation is an enforcement gap, not an ownership gap. Scheduling remains unassigned; this ledger assigns neither priority nor implementation.
 
 ### LRN-010 — LIVENESS_GAP
 
@@ -306,6 +316,7 @@ INFERENCE: collapse around lifecycle-derived identity. Its scheduling remains un
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-liveness-reconciliation.md](../../docs/decisions/2026-09-20-liveness-reconciliation.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md](../../docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md) |
 | existing_owner | SF-REQ-056 |
+| owner_fit | CANONICAL |
 | enforcement_level | DETERMINISTIC_GATE |
 | mechanizable | yes — reconcile known nonterminal state against correlated active, pending and completed effects after grace; wait for bounded claim confirmation instead of one premature sample. |
 | proven_red | UNKNOWN |
@@ -327,6 +338,7 @@ INFERENCE: one state-to-effect liveness lesson, including observation latency. J
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-liveness-reconciliation.md](../../docs/decisions/2026-09-20-liveness-reconciliation.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json) |
 | existing_owner | SWF-29 |
+| owner_fit | CANONICAL |
 | enforcement_level | DETERMINISTIC_GATE |
 | mechanizable | yes — a latest unresolved judgment-required lane outcome suppresses re-emission after grace; merely seeing attention must not resolve it. |
 | proven_red | yes |
@@ -348,6 +360,7 @@ INFERENCE: these collapse into retry eligibility after a durable blocking outcom
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/decisions/2026-09-20-liveness-reconciliation.md](../../docs/decisions/2026-09-20-liveness-reconciliation.md); [docs/evidence/execution-trajectories/PY-03.jsonl](../../docs/evidence/execution-trajectories/PY-03.jsonl); [docs/evidence/execution-trajectories/PY-04.jsonl](../../docs/evidence/execution-trajectories/PY-04.jsonl); [docs/evidence/py10/proven-red.json](../../docs/evidence/py10/proven-red.json); [docs/verification/PY-10-wave1-live-proof.md](../../docs/verification/PY-10-wave1-live-proof.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md) |
 | existing_owner | SF-REQ-008 |
+| owner_fit | CANONICAL |
 | enforcement_level | DETERMINISTIC_GATE |
 | mechanizable | yes — duplicate delivery cannot acquire a second effect identity; unknown external effects must park until attributable reconciliation authorizes progress. |
 | proven_red | yes |
@@ -369,6 +382,7 @@ INFERENCE: one durable effect-identity invariant, distinct from liveness detecti
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md](../../docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/2026-09-21-agent-ready-provider-failover.md](../../docs/evidence/2026-09-21-agent-ready-provider-failover.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/execution-trajectories/PY-03.jsonl](../../docs/evidence/execution-trajectories/PY-03.jsonl) |
 | existing_owner | SWF-09 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | partial — retain typed capacity evidence and enforce required budgets/capabilities before an authorized failover; external quota prediction is possible only if the provider exposes usable evidence. |
 | proven_red | UNKNOWN |
@@ -396,6 +410,7 @@ INFERENCE: capacity diagnosis and governed provider substitution collapse into o
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-design-contract-and-design-verification.md](../../docs/decisions/2026-09-20-design-contract-and-design-verification.md); [docs/operations/py10-sandbox.md](../../docs/operations/py10-sandbox.md); [docs/decisions/2026-09-21-sandbox-isolation-standard.md](../../docs/decisions/2026-09-21-sandbox-isolation-standard.md); [docs/work-units/python/PY-09B.assessment.2026-09-21-needs-clarification.json](../../docs/work-units/python/PY-09B.assessment.2026-09-21-needs-clarification.json); [docs/work-units/python/PY-09B.assessment.json](../../docs/work-units/python/PY-09B.assessment.json); [docs/evidence/py10-preflight-2026-09-21-pre-contents-grant.json](../../docs/evidence/py10-preflight-2026-09-21-pre-contents-grant.json); [docs/evidence/py10-preflight-2026-09-21-negative-control.json](../../docs/evidence/py10-preflight-2026-09-21-negative-control.json); [docs/evidence/py10-preflight-2026-09-21-post-contents-grant.json](../../docs/evidence/py10-preflight-2026-09-21-post-contents-grant.json); [docs/evidence/PY-09B-live-transport.md](../../docs/evidence/PY-09B-live-transport.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md) |
 | existing_owner | SF-REQ-051 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | partial — compare expected permissions and acceptance claims with the consuming code and platform capabilities; mechanical exact-set checks cannot validate their own premise. |
 | proven_red | yes |
@@ -417,6 +432,7 @@ INFERENCE: one specification-validation lesson with two actual defects: D4/D5 ar
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/decisions/2026-09-21-py10-transport-split.md](../../docs/decisions/2026-09-21-py10-transport-split.md); [docs/evidence/2026-09-21-agent-ready-provider-failover.md](../../docs/evidence/2026-09-21-agent-ready-provider-failover.md); [docs/work-units/python/PY-09B.assessment.json](../../docs/work-units/python/PY-09B.assessment.json); [docs/work-units/python/PY-10.assessment.json](../../docs/work-units/python/PY-10.assessment.json); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/wave1-closure-manifest.json](../../docs/evidence/wave1-closure-manifest.json) |
 | existing_owner | SF-REQ-013 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | partial — require every scoped capability and proof obligation to map to a retained owner through split lineage and dependency changes; deciding a useful split remains judgment. |
 | proven_red | yes |
@@ -438,6 +454,7 @@ INFERENCE: one conservation lesson: reduce rework locality without dropping obli
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/decisions/2026-09-20-wave1-closure-policy.md](../../docs/decisions/2026-09-20-wave1-closure-policy.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/wave1-closure-manifest.json](../../docs/evidence/wave1-closure-manifest.json); [docs/verification/PY-10-wave1-live-proof.md](../../docs/verification/PY-10-wave1-live-proof.md); [docs/evidence/py10/proven-red.json](../../docs/evidence/py10/proven-red.json) |
 | existing_owner | SF-REQ-002 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | yes — dependency admission consumes authoritative lifecycle and declared edges; stale Issue closure or a missing projected edge must not silently redefine eligibility. |
 | proven_red | yes |
@@ -459,6 +476,7 @@ INFERENCE: one authority/projection lesson: the projection cannot define executi
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/decisions/2026-09-20-evidence-and-intake-ratification.md](../../docs/decisions/2026-09-20-evidence-and-intake-ratification.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/wave1-repair-cycles.json](../../docs/evidence/wave1-repair-cycles.json); [docs/evidence/wave1-consistency-report.json](../../docs/evidence/wave1-consistency-report.json); [docs/evidence/execution-trajectories/PY-05-to-PY-09-extraction-verification.md](../../docs/evidence/execution-trajectories/PY-05-to-PY-09-extraction-verification.md); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json); [tools/evidence/check_wave1.py](../../tools/evidence/check_wave1.py); [tools/evidence/reconcile_wave1.py](../../tools/evidence/reconcile_wave1.py); [docs/evidence/2026-09-20-worktree-retention-audit.md](../../docs/evidence/2026-09-20-worktree-retention-audit.md) |
 | existing_owner | SF-REQ-030 |
+| owner_fit | CANONICAL |
 | enforcement_level | DETERMINISTIC_GATE |
 | mechanizable | yes — recompute source-supported metrics under explicit populations and timestamps; reject contradictions, unmarked supersession, inferred custody and substitution of zero for unavailable telemetry. |
 | proven_red | yes |
@@ -480,14 +498,15 @@ INFERENCE: one source-to-derived-evidence invariant. The prior extraction's taut
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/decisions/2026-09-20-evidence-and-intake-ratification.md](../../docs/decisions/2026-09-20-evidence-and-intake-ratification.md); [docs/decisions/2026-09-20-candidate-worktree-retention.md](../../docs/decisions/2026-09-20-candidate-worktree-retention.md); [docs/decisions/2026-09-21-biu-execution-cycle-counter.md](../../docs/decisions/2026-09-21-biu-execution-cycle-counter.md); [docs/decisions/2026-09-20-liveness-reconciliation.md](../../docs/decisions/2026-09-20-liveness-reconciliation.md); [docs/proposals/INDEX.md](../../docs/proposals/INDEX.md); [docs/proposals/PROP-2026-0004-execution-evidence-derivation-and-consistency-verification.md](../../docs/proposals/PROP-2026-0004-execution-evidence-derivation-and-consistency-verification.md); [docs/proposals/PROP-2026-0005-proposal-intake-as-product-capability.md](../../docs/proposals/PROP-2026-0005-proposal-intake-as-product-capability.md) |
 | existing_owner | SF-REQ-055 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | partial — require a stable proposal-to-owner mapping and prevent duplicate identifier delivery; semantic overlap requires authority review before choosing amendment, retirement or a distinct owner. |
 | proven_red | UNKNOWN |
 | later_consumption | FACT: after SF-REQ-054 was folded into SF-REQ-030, SWF-30 chose SF-REQ-007 and SWF-32 chose SF-REQ-009 rather than creating new owners (docs/decisions/2026-09-20-evidence-and-intake-ratification.md; docs/decisions/2026-09-20-candidate-worktree-retention.md; docs/decisions/2026-09-21-biu-execution-cycle-counter.md; docs/proposals/INDEX.md). |
 | effectiveness_evidence | FACT: the index preserves immutable proposal history, retirement and amendment targets. SWF-29 separately explains why a new Wave 2 owner was needed to avoid retrofitting Wave 1. This is demonstrated authority-controlled intake practice, not an implemented idempotent intake service. |
-| recommended_disposition | ALREADY_GRADUATED |
+| recommended_disposition | STRENGTHEN_EXISTING_OWNER |
 
-INFERENCE: one canonicalization lesson. Successful review dispositions qualify only the observed manual mechanism. Originating BIU attribution is UNKNOWN because this is a cross-wave intake decision, not an identified BIU defect; no numeric recurrence is inferred.
+INFERENCE: CANONICAL, but STRENGTHEN_EXISTING_OWNER under POSTW1-DECIDE-002A. SF-REQ-055 explicitly owns proposal canonicalization and idempotent intake. The two correct outcomes demonstrate manual Founder-and-coordinator practice, not an implemented intake service that survives replacement of its authors. REVIEW_GATE, proven_red UNKNOWN and the original effectiveness evidence remain unchanged. Originating BIU attribution and recurrence remain UNKNOWN.
 
 ### LRN-019 — observation-without-activation
 
@@ -501,6 +520,7 @@ INFERENCE: one canonicalization lesson. Successful review dispositions qualify o
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md](../../docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/2026-09-21-bootstrap-expiry-inventory.md](../../docs/evidence/2026-09-21-bootstrap-expiry-inventory.md) |
 | existing_owner | SF-REQ-053 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | partial — inject an attention-worthy event and verify durable item creation plus an observable consumer wake-up; notification-command success alone does not prove human receipt. |
 | proven_red | UNKNOWN |
@@ -522,6 +542,7 @@ INFERENCE: one observation-to-activation boundary. A resident-session workaround
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md](../../docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md); [docs/evidence/2026-09-21-bootstrap-expiry-inventory.md](../../docs/evidence/2026-09-21-bootstrap-expiry-inventory.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/decisions/2026-09-20-wave1-release-coordinator.md](../../docs/decisions/2026-09-20-wave1-release-coordinator.md); [docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md](../../docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md) |
 | existing_owner | SWF-27 |
+| owner_fit | CANONICAL |
 | enforcement_level | DOCUMENTED_ONLY |
 | mechanizable | partial — compare each temporary control's scope and expiry with current authority and replacement evidence; ambiguous expiry requires an explicit decision, not automatic retirement. |
 | proven_red | UNKNOWN |
@@ -529,7 +550,7 @@ INFERENCE: one observation-to-activation boundary. A resident-session workaround
 | effectiveness_evidence | FACT: later producer modelUsage excerpts corroborate Claude use. Any separate extension or ratification is UNKNOWN; this ledger neither ratifies nor reverts it. The expiry inventory's service/profile observations are participant-time observations, not current operational reads. Python sandbox success does not satisfy SWF-21's live-profile replacement condition. |
 | recommended_disposition | STRENGTHEN_EXISTING_OWNER |
 
-INFERENCE: the recurring lesson is explicit exception lifecycle, not a new provider or service capability. The general risk survives bootstrap; only the specific expired battery procedure is BOOTSTRAP_ONLY in LRN-026.
+INFERENCE: CANONICAL. SWF-27 rule 10 explicitly requires temporary controls to carry scope, authority, expiry, provenance and a replacement target. The recurring lesson is enforcement of that exception lifecycle. It survives bootstrap; only the specific expired battery procedure is BOOTSTRAP_ONLY in LRN-026.
 
 ### LRN-021 — configuration-input-validation
 
@@ -543,6 +564,7 @@ INFERENCE: the recurring lesson is explicit exception lifecycle, not a new provi
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md](../../docs/evidence/2026-09-21-coordinator-self-assessment-wave1.md) |
 | existing_owner | SF-REQ-038 |
+| owner_fit | CANONICAL |
 | enforcement_level | DETERMINISTIC_GATE |
 | mechanizable | yes — validate a proposed runtime profile against the consumer's accepted keys before activation, keeping provenance in its designated evidence record. |
 | proven_red | yes |
@@ -564,14 +586,15 @@ INFERENCE: SF-REQ-038 reasonably owns this readiness validation; the loader is a
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/evidence/2026-09-21-agent-ready-provider-failover.md](../../docs/evidence/2026-09-21-agent-ready-provider-failover.md); [docs/evidence/py10/proven-red.json](../../docs/evidence/py10/proven-red.json); [docs/verification/PY-10-wave1-live-proof.md](../../docs/verification/PY-10-wave1-live-proof.md) |
 | existing_owner | SF-REQ-025 |
+| owner_fit | ADJACENT |
 | enforcement_level | DOCUMENTED_ONLY |
 | mechanizable | yes — construct the provider invocation environment deliberately and prove an unrelated ambient credential cannot override the authorized authentication profile. |
 | proven_red | UNKNOWN |
 | later_consumption | FACT: Agent-Ready failover succeeded after removing the ambient key; PY-10 later retained red evidence for an explicitly stated worker environment (docs/evidence/2026-09-21-agent-ready-provider-failover.md; docs/evidence/py10/proven-red.json). |
 | effectiveness_evidence | FACT: the first Claude assessment attempt returned 401 because ANTHROPIC_API_KEY took precedence over the subscription login. The incident says worker launching already filters ambient secrets while coordinator tooling did not. The later worker-environment test does not prove the coordinator-tooling gap was structurally closed. |
-| recommended_disposition | STRENGTHEN_EXISTING_OWNER |
+| recommended_disposition | NEW_CAPABILITY_GAP |
 
-INFERENCE: authenticated provider readiness includes the actual environment and permission mechanism, so SF-REQ-025 can absorb this gap. Provider substitution cannot be assumed equivalent solely because assessment JSON has the same shape.
+INFERENCE: ADJACENT; NEW_CAPABILITY_GAP under POSTW1-DECIDE-002A. SF-REQ-025 owns exposing provider capabilities and authenticated readiness, not constructing and isolating coordinator-tool invocation environments so ambient credentials cannot override the authorized authentication profile. The prior absorbability rationale stretched that owner. No existing canonical owner cleanly owns the scoped credential-precedence isolation semantics in the reviewed authority. The retained existing_owner names the adjacent requirement, not an assignment of the gap; no requirement is created.
 
 **Recurrence population:** One recorded Agent-Ready credential-precedence incident.
 
@@ -589,14 +612,15 @@ INFERENCE: authenticated provider readiness includes the actual environment and 
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/evidence/2026-09-21-py09-provider-capacity-interruption.md](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [docs/evidence/2026-09-21-agent-ready-provider-failover.md](../../docs/evidence/2026-09-21-agent-ready-provider-failover.md); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json); [src/providers/codex.mjs](../../src/providers/codex.mjs); [src/providers/claude.mjs](../../src/providers/claude.mjs) |
 | existing_owner | SF-REQ-029 |
+| owner_fit | ADJACENT |
 | enforcement_level | DOCUMENTED_ONLY |
 | mechanizable | partial — normalize typed started/progress/terminal/capacity observations where available, preserve provider provenance, and report unavailable progress as unknown rather than worker death. |
 | proven_red | UNKNOWN |
 | later_consumption | not consumed — no later normalized progress contract or comparable progress trace was established in the reviewed Wave 1 evidence. |
 | effectiveness_evidence | FACT: retained terminal records differ (Codex turn.failed versus Claude result/success), and adapter arguments differ (--json versus --output-format json). HYPOTHESIS: buffered versus streaming output contributed to operator uncertainty. No retained comparative timing series establishes buffering, recurrence, or a causal stall; those claims remain unverified. |
-| recommended_disposition | STRENGTHEN_EXISTING_OWNER |
+| recommended_disposition | NEW_CAPABILITY_GAP |
 
-INFERENCE: one observability concern, separate from work-result admissibility and liveness recovery. SF-REQ-029 can own normalized observations; the buffering explanation remains a hypothesis, not a newly established incident or capability gap.
+INFERENCE: ADJACENT; NEW_CAPABILITY_GAP under POSTW1-DECIDE-002A. SF-REQ-029 owns recording engineering trajectory; it does not establish the provider-neutral started/progress/terminal/capacity normalization boundary, including explicit unavailable progress. Activation and diagnostic coalescing are also adjacent controls. No existing canonical owner cleanly owns these scoped normalization semantics in the reviewed authority. The buffering explanation remains a hypothesis; missing implementation alone is not the basis for this ownership finding. The retained existing_owner identifies adjacency; no requirement is created.
 
 ### LRN-024 — persistent-diagnostic-coalescing
 
@@ -610,6 +634,7 @@ INFERENCE: one observability concern, separate from work-result admissibility an
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/evidence/2026-09-20-worktree-retention-audit.md](../../docs/evidence/2026-09-20-worktree-retention-audit.md); [docs/evidence/execution-trajectories/PY-08.jsonl](../../docs/evidence/execution-trajectories/PY-08.jsonl); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json) |
 | existing_owner | SF-REQ-034 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | yes — repeated observations of one unchanged condition preserve first_seen, last_seen and repeat_count without emitting a new incident each sweep; cleared or changed conditions remain visible. |
 | proven_red | UNKNOWN |
@@ -631,6 +656,7 @@ INFERENCE: one persistent-condition aggregation lesson, distinct from attention 
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md](../../docs/evidence/wave1-factory-incidents-and-learning-PY-05-to-PY-09.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/execution-trajectories/PY-03.jsonl](../../docs/evidence/execution-trajectories/PY-03.jsonl); [docs/evidence/execution-trajectories/PY-04.jsonl](../../docs/evidence/execution-trajectories/PY-04.jsonl); [docs/evidence/execution-trajectories/PY-08.jsonl](../../docs/evidence/execution-trajectories/PY-08.jsonl); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json) |
 | existing_owner | SF-REQ-006 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | partial — resolve named artifacts and scope mechanically, but judge whether authority is actually missing against the binding contract and landed code; no universal deterministic semantic verdict is claimed. |
 | proven_red | UNKNOWN |
@@ -652,6 +678,7 @@ INFERENCE: one qualitative adjudication lesson. Do not turn correct producer ref
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md](../../docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md); [docs/decisions/2026-09-20-deterministic-failure-class-promotion.md](../../docs/decisions/2026-09-20-deterministic-failure-class-promotion.md); [docs/evidence/execution-trajectories/PY-04.jsonl](../../docs/evidence/execution-trajectories/PY-04.jsonl); [docs/evidence/execution-trajectories/PY-05.jsonl](../../docs/evidence/execution-trajectories/PY-05.jsonl); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md) |
 | existing_owner | SWF-26 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | yes — scope the manual battery to PY-04 and reject use as standing later-BIU authority after its explicit expiry. |
 | proven_red | yes |
@@ -677,6 +704,8 @@ INFERENCE: this specific manual procedure expires with bootstrap authority and i
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md](../../docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md); [docs/evidence/2026-09-21-bootstrap-expiry-inventory.md](../../docs/evidence/2026-09-21-bootstrap-expiry-inventory.md) |
 | existing_owner | SF-REQ-053 |
+| owner_fit | CANONICAL |
+| owner_fit_basis | docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md names "Canonical requirement: SF-REQ-053"; "Durable rules" 3, 7, 8 and 9 require durable state for correct continuation after coordinator replacement, successor reconstruction from authoritative state, restart equivalence and no hidden session state. |
 | enforcement_level | DOCUMENTED_ONLY |
 | mechanizable | partial — reconstruct authorized next actions from durable state in a fresh episode and compare them under the same state/events; mechanical state equality cannot fully prove judgment equivalence. |
 | proven_red | UNKNOWN |
@@ -684,7 +713,7 @@ INFERENCE: this specific manual procedure expires with bootstrap authority and i
 | effectiveness_evidence | none — the inventory says no handover occurred and the checkpoint was untested. This is participant evidence of an unproven property, not independent proof that a replacement would fail. SWF-27 documents monitoring decoupling and permits multi-BIU tenure during bootstrap; neither proves restart equivalence. |
 | recommended_disposition | STRENGTHEN_EXISTING_OWNER |
 
-INFERENCE: distinct from activation: waking an episode does not prove it can reconstruct authority. No BIU is attributed as a demonstrated replacement failure; attribution remains UNKNOWN under section 2.2. This fresh analysis is not a lifecycle-handover test.
+INFERENCE: CANONICAL. SF-REQ-053 through SWF-27 rules 3, 7, 8 and 9 explicitly owns durable continuation and restart equivalence across coordinator replacement. Activation is a distinct obligation under that same owner. No handover occurred and the checkpoint was untested, so effectiveness remains absent without turning explicit ownership into adjacency. BIU attribution remains UNKNOWN; this analysis is not a lifecycle-handover test.
 
 ### LRN-028 — acceptance-extent-and-residual-proof
 
@@ -698,6 +727,7 @@ INFERENCE: distinct from activation: waking an episode does not prove it can rec
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/wave1-closure-manifest.json](../../docs/evidence/wave1-closure-manifest.json); [docs/evidence/execution-trajectories/PY-08.jsonl](../../docs/evidence/execution-trajectories/PY-08.jsonl); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json); [docs/verification/PY-10-wave1-live-proof.md](../../docs/verification/PY-10-wave1-live-proof.md); [docs/evidence/py10/acceptance-verification.json](../../docs/evidence/py10/acceptance-verification.json) |
 | existing_owner | SF-REQ-017 |
+| owner_fit | CANONICAL |
 | enforcement_level | REVIEW_GATE |
 | mechanizable | partial — map acceptance claims to exact obligations and evidence, retain residual findings and proof limits, and refuse to infer full requirement completion from a scoped BIU verdict. |
 | proven_red | UNKNOWN |
@@ -719,6 +749,7 @@ INFERENCE: one claim-to-evidence extent lesson. LRN-017 validates derived counts
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/verification/PY-10-wave1-live-proof.md](../../docs/verification/PY-10-wave1-live-proof.md); [docs/evidence/py10/proven-red.json](../../docs/evidence/py10/proven-red.json); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/wave1-source-observations.json](../../docs/evidence/wave1-source-observations.json) |
 | existing_owner | SF-REQ-022 |
+| owner_fit | CANONICAL |
 | enforcement_level | DOCUMENTED_ONLY |
 | mechanizable | yes — repeated ineligible/rework outcomes must consume a durable run/retry budget and terminate or escalate when exhausted rather than rely solely on a harness timeout. |
 | proven_red | no |
@@ -726,7 +757,7 @@ INFERENCE: one claim-to-evidence extent lesson. LRN-017 validates derived counts
 | effectiveness_evidence | FACT: breaking the per-invocation capability grant made the drain never finish; the retained matrix records exit 124 under the test bound. The proof says the real product re-dispatches nonterminal outcomes indefinitely. The harness fails on timeout; an owning product run-level budget was not demonstrated to fail closed. |
 | recommended_disposition | STRENGTHEN_EXISTING_OWNER |
 
-INFERENCE: reuse SF-REQ-022 bounded retries/budgets. This is distinct from provider-capacity diagnosis and from suppressing a completed judgment-required outcome; the problematic outcomes here never become an effective terminal stop.
+INFERENCE: CANONICAL. SF-REQ-022 explicitly owns bounded retries/budgets and escalation on exhaustion of repair loops. Repeated nonterminal rework that never reaches an effective stop exposes an incomplete bound within that subject; the missing run-level enforcement does not require a new owner. This remains distinct from capacity diagnosis and suppression of completed judgment-required outcomes.
 
 **Recurrence population:** One distinct disclosed PY-10 nonterminal redispatch limitation, not a measured number of retries.
 
@@ -744,6 +775,7 @@ INFERENCE: reuse SF-REQ-022 bounded retries/budgets. This is distinct from provi
 | last_occurrence | UNKNOWN |
 | evidence_refs | [docs/decisions/alienintent-software-factory-plan.md](../../docs/decisions/alienintent-software-factory-plan.md); [docs/verification/PY-10-wave1-live-proof.md](../../docs/verification/PY-10-wave1-live-proof.md); [docs/evidence/wave1-evidence-reconciliation.md](../../docs/evidence/wave1-evidence-reconciliation.md); [docs/evidence/py10/proven-red.json](../../docs/evidence/py10/proven-red.json) |
 | existing_owner | SF-REQ-008 |
+| owner_fit | CANONICAL |
 | enforcement_level | DOCUMENTED_ONLY |
 | mechanizable | yes — persist attributable worker outcomes so restart can reconcile a known effect; absent or ambiguous evidence must still park rather than guess. |
 | proven_red | no |
@@ -751,7 +783,7 @@ INFERENCE: reuse SF-REQ-022 bounded retries/budgets. This is distinct from provi
 | effectiveness_evidence | FACT: the PY-10 process kill destroyed RealWorkerProvider's in-memory read-back. Safe parking worked, but an operator decision was required to resume. This is evidence of conservative safety, not automatic recovery of a knowable completed effect; no durable read-back mechanism or red proof for it is retained. |
 | recommended_disposition | STRENGTHEN_EXISTING_OWNER |
 
-INFERENCE: retain the existing crash-safe execution owner. Distinct from LRN-012: one proves uncertain effects are not blindly repeated; this one seeks preserved knowledge so unnecessary uncertainty is avoided.
+INFERENCE: CANONICAL. SF-REQ-008 explicitly owns preservation of canonical execution state and reconciliation across crashes/restarts. Durable attributable outcome read-back is within that subject even though only conservative parking was demonstrated. Distinct from LRN-012: preventing duplicate effects does not establish preservation of knowable outcomes.
 
 **Recurrence population:** One demonstrated loss of worker-outcome knowledge at the PY-10 kill/restart boundary.
 
