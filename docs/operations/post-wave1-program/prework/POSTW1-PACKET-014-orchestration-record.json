@@ -1,0 +1,122 @@
+{
+ "derived_at_head": "f94e58e833cd44d264b15b0351416097dbca8c34",
+ "artifact_role": "participant evidence \u2014 the coordinator's own record of how it ran the programme, not independent review",
+ "phases_executed": [
+  "3 gap trap",
+  "4 agent-ready outcomes",
+  "5 split/replan",
+  "6 bootstrap retirement",
+  "7 retrospective",
+  "8 wave2 specify",
+  "9 design contracts",
+  "10 design verification",
+  "11 plan/DAG",
+  "12 BIU decomposition",
+  "13 agent-ready assessment"
+ ],
+ "routing": {
+  "codex_fresh_primary": 12,
+  "claude_coordinator_review": 2,
+  "fresh_independent_reviewer": 1,
+  "founder_decision_branches": 8,
+  "deterministic_prework_artifacts": [
+   "POSTW1-AGENTREADY-004-inputs.json",
+   "POSTW1-BOOTSTRAP-006-live-state.json",
+   "POSTW1-DESIGN-009-inputs.json",
+   "POSTW1-GAPTRAP-003-candidates.json",
+   "POSTW1-GAPTRAP-003-enforcement-layers.json",
+   "POSTW1-RETRO-007-yield.json",
+   "POSTW1-SPECIFY-008-inputs.json",
+   "POSTW1-SPLIT-005-inputs.json"
+  ],
+  "note": "Every phase ran deterministic prework before any model call. Prework supplied exact evidence paths, computed counts and enumerated candidate sets, so no dispatched session spent tokens rediscovering what git, a parser or a schema could settle.",
+  "task_population_note": "STATE014-001, upheld. The 23-task figure was a snapshot taken before POSTW1-PACKET-014 was created. Current population is 24. The 12 Codex-primary figure is likewise pre-packet; current is 13."
+ },
+ "deterministic_controls_built": {
+  "checkers": [
+   "check_agent_ready_matrix.py",
+   "check_agent_ready_set.py",
+   "check_design_contracts.py",
+   "check_gap_trap_backlog.py",
+   "check_learning_ledger.py",
+   "check_retirement_matrix.py",
+   "check_retrospective.py",
+   "check_split_design.py",
+   "check_wave1.py",
+   "check_wave2_bius.py",
+   "check_wave2_dag.py",
+   "check_wave2_specify.py"
+  ],
+  "test_modules": [
+   "test_check_agent_ready_matrix.py",
+   "test_check_agent_ready_set.py",
+   "test_check_design_contracts.py",
+   "test_check_gap_trap_backlog.py",
+   "test_check_learning_ledger.py",
+   "test_check_retirement_matrix.py",
+   "test_check_retrospective.py",
+   "test_check_split_design.py",
+   "test_check_wave2_bius.py",
+   "test_check_wave2_dag.py",
+   "test_check_wave2_specify.py"
+  ],
+  "discipline": "Each checker was written test-first with a control asserting every check can be made to fail, then run against the real artifact and mutated once per check. Mutation results on real data: gap trap 7/7, agent-ready matrix 7/7, split design 7/7, retirement 6/6, retrospective 6/6, wave2 specify 7/7, design contracts 5/5, DAG 5/5, BIUs 6/6.",
+  "limitation_found": "The design contract checker PASSED an artifact containing four material defects that independent verification then found. A checker establishes that fields are present and decisions are not deferred; it cannot establish that a design is right."
+ },
+ "independent_verification": {
+  "phase_10_rounds": 3,
+  "outcome": "REPAIR_REQUIRED -> repair introduced 2 new material defects -> repair -> VERIFIED",
+  "verifier": "fresh Claude sessions, read-only, each told not to assume the prior verdict was right",
+  "what_independence_caught": [
+   "a test-proof requirement silently changing the shared execution kernel",
+   "a P1 requirement narrowed from compiling BIUs to validating a hand-authored allocation",
+   "an enforcement check whose rule existed in no contract",
+   "an unpinned identifier grammar \u2014 the PY-09B failure one layer up",
+   "a 3600s threshold inherited from the coordinator's own bootstrap waiter, presented as architecture",
+   "a repair whose new edge table forbade four imports the repository already contains",
+   "a repair whose identifier contract would block on 104 legitimate acceptance IDs"
+  ]
+ },
+ "disputes_raised_by_dispatched_sessions": {
+  "count": 7,
+  "upheld": 7,
+  "detail": [
+   "no_force_fit conflated ownership with enforcement (Phase 2) \u2014 checker rule changed",
+   "BLOCKED/SPLIT_RECOMMENDED do persist in Git (Phase 4) \u2014 Director prework corrected",
+   "LRN-008 is a refusal that worked, not coercion (Phase 4) \u2014 Director prompt corrected",
+   "disposition absent in 17 files was a top-level-only read (Phase 4) \u2014 Director prework corrected",
+   "ORCH014-001 error count ambiguous between 8 and 12 \u2014 record corrected",
+   "ORCH014-002 fresh reviewer labelled with the Codex model \u2014 code defect, fixed test-first",
+   "STATE014-001 task population 24 current vs 23 in the participant record \u2014 snapshot distinguished"
+  ],
+  "note": "Every dispute a dispatched session raised against the Director was upheld."
+ },
+ "coordinator_errors_found_and_corrected": {
+  "count": "AMBIGUOUS \u2014 corrected",
+  "surface_read_errors": [
+   "checker matched 'lessons' where the array is 'records', reporting no missing fields against zero records",
+   "_has_effectiveness compared for equality with 'none', passing two records whose text said none",
+   "capacity markers matched a healthy run's stderr because the subject matter was the keyword",
+   "non-READY dispositions called unpersisted from a working-tree read; Git had them",
+   "dispositions called absent from a top-level read; MCP envelopes carried them nested",
+   "VERIFIER flagged as a temporary change; it was the Wave 1 baseline",
+   "live provider config read at the wrong nesting depth, producing nulls",
+   "requirement definitions searched only as headings, missing two other definition forms"
+  ],
+  "logic_errors": [
+   "next_task offered a later phase while an earlier phase was in REPAIR",
+   "terminal_state reported PROGRAM_COMPLETE with phases 7-14 unrun, because an empty queue read as completion",
+   "routing table sent the bootstrap retirement audit to the coordinator being audited",
+   "an R1 repair instruction directed a designer to settle an architecture question the authority lists as unfinished"
+  ],
+  "pattern": "Seven of eight surface-read errors share one shape: a single layer read and treated as the whole. Three were caught by dispatched sessions disputing the Director rather than by the Director. The two logic errors in terminal_state and next_task would both have misreported programme state to the Founder.",
+  "surface_read_error_count": 8,
+  "logic_error_count": 4,
+  "unique_combined_count": "UNKNOWN \u2014 overlap between the two lists was never assessed",
+  "correction_note": "ORCH014-001, upheld. The original record reported count 8 while listing 8 surface-read and 4 logic errors, which reads as a total and is not one. Neither 8 nor 12 is asserted as exhaustive; these are the errors that were found, not the errors that exist."
+ },
+ "founder_decisions_accumulated": 7,
+ "none_blocking": true,
+ "blocking_policy": "Amendment \u00a74: a decision affecting one branch halts that branch only. All 7 were marked critical_path false after checking that phases 8-13 did not require them. next_task and terminal_state were both fixed to honour that distinction rather than stalling globally or reporting false completion.",
+ "reviewer_provenance_correction": "ORCH014-002, upheld. Phase 10 routing metadata recorded model gpt-6-astra while the reviewer was a fresh Claude session. The Director's route() was assigning the resolved Codex model to the fresh-reviewer tier. Fixed test-first; the state record is corrected and the observed reviewer provider is Claude with exact model UNKNOWN."
+}

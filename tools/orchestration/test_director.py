@@ -20,8 +20,7 @@ from director import (  # noqa: E402
     RiskClass,
     Tier,
     classify_risk,
-    route,
-)
+    route, resolved_codex_model)
 
 
 # --- Tier 0: never spend intelligence on what tooling settles --------------------
@@ -297,3 +296,20 @@ def test_a_blocking_decision_still_outranks_incomplete_phases(tmp_path):
     st.upsert_task("B", phase="7", title="x", actor="founder",
                    status="FOUNDER_DECISION_REQUIRED", risk="HIGH", critical_path=True)
     assert st.terminal_state() == "FOUNDER_DECISION_REQUIRED"
+
+
+def test_the_fresh_reviewer_tier_is_not_labelled_with_the_codex_model():
+    """Caught by a dispatched session auditing the programme's own state: Phase 10's routing
+    metadata recorded model gpt-6-astra while the retained provenance shows the reviewer was a
+    fresh Claude session. route() assigned the Codex model to every tier that had one, including
+    the tier whose whole purpose is to be a different provider from the author."""
+    d = route(task_type="design_verification", risk=RiskClass.HIGH, deterministic_possible=False)
+    assert d.tier is Tier.FRESH_REVIEWER
+    assert d.model != resolved_codex_model()
+    assert d.model is None or "claude" in str(d.model).lower()
+
+
+def test_the_codex_primary_tier_still_carries_the_resolved_codex_model():
+    d = route(task_type="learning_consolidation", risk=RiskClass.MEDIUM, deterministic_possible=False)
+    assert d.tier is Tier.CODEX_PRIMARY
+    assert d.model == resolved_codex_model()

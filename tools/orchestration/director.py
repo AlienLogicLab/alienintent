@@ -139,8 +139,14 @@ def route(task_type: str, risk: RiskClass, deterministic_possible: bool,
                "what deterministic tooling establishes reliably.")
         review = False
     elif task_type in _FRESH_REVIEWER_TASKS:
-        tier, actor, chosen_model = Tier.FRESH_REVIEWER, "fresh-independent-reviewer", model
-        why = "High-impact work where author bias matters; reviewer must not be the author."
+        # Deliberately NOT `model`. This tier exists to be a different provider from the author,
+        # so labelling it with the resolved Codex model asserts the reviewer was the thing it was
+        # chosen not to be. A dispatched session auditing the programme's own state caught Phase
+        # 10's routing claiming gpt-6-astra while the retained provenance showed fresh Claude.
+        # The Director knows the provider differs; it does not resolve the reviewer's model.
+        tier, actor, chosen_model = Tier.FRESH_REVIEWER, "fresh-independent-reviewer", None
+        why = ("High-impact work where author bias matters; reviewer must not be the author, and "
+               "must not be recorded as carrying the author's model.")
         review = True
     elif task_type in _COORDINATOR_ONLY:
         tier, actor, chosen_model = Tier.CLAUDE_COORDINATOR, "claude-bootstrap-coordinator", None
