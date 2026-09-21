@@ -12,9 +12,16 @@ from alienintent.execution_coordination.ports.work_management import ProjectionR
 
 
 class GitHubProjectsWorkManagement(WorkManagement):
-    """Translate complete recorded provider pages into neutral imported work."""
+    """Translate complete recorded provider pages into neutral imported work.
 
-    def __init__(self, profile: str, repository: str, status_mapping: Mapping[str, str], projection_fields: Mapping[str, str], snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, projection_write: Callable[[str, str, str, int], int] | None = None, decision_projection_write: Callable[[HumanDecisionRequired], str] | None = None, directory: ProjectDirectory | None = None) -> None:
+    `contract` is either one shared contract, as a recorded-fixture profile
+    supplies, or a resolver called per row. A live backlog carries a distinct
+    BIU contract per item, and release admission compares the row's readiness
+    digest against that item's own contract digest, so one shared contract
+    would refuse every live row.
+    """
+
+    def __init__(self, profile: str, repository: str, status_mapping: Mapping[str, str], projection_fields: Mapping[str, str], snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract | Callable[[Mapping[str, object]], BiuContract], projection_write: Callable[[str, str, str, int], int] | None = None, decision_projection_write: Callable[[HumanDecisionRequired], str] | None = None, directory: ProjectDirectory | None = None) -> None:
         if not status_mapping or any(not isinstance(upstream, str) or not upstream or not isinstance(neutral, str) or not neutral for upstream, neutral in status_mapping.items()):
             raise WorkRejected("ambiguous status mapping")
         self._profile, self._repository = profile, repository
@@ -67,7 +74,16 @@ class GitHubProjectsWorkManagement(WorkManagement):
         if not isinstance(dependencies, list) or any(not isinstance(dep, str) or not dep for dep in dependencies):
             raise WorkRejected("unsupported dependency evidence")
         metadata = {"wave": str(row.get("wave", "")), "upstream_status": self._status_mapping[status], "source_version": str(row.get("source_version", "")), "contract_location": str(row.get("contract", ""))}
-        return ReadyWorkItem(identity, fifo, self._repository, self._profile, priority_value, tuple(dependencies), self._contract, digest, readiness, metadata=metadata)
+        return ReadyWorkItem(identity, fifo, self._repository, self._profile, priority_value, tuple(dependencies), self._contract_for(row), digest, readiness, metadata=metadata)
+
+    def _contract_for(self, row: Mapping[str, object]) -> BiuContract:
+        """The row's own contract, or the one shared contract a fixture binds."""
+        if isinstance(self._contract, BiuContract):
+            return self._contract
+        resolved = self._contract(row)
+        if not isinstance(resolved, BiuContract):
+            raise WorkRejected("row contract resolver did not yield a BIU contract")
+        return resolved
 
     def propose_release(self, item: ReadyWorkItem) -> None:
         # Release is a neutral proposal consumed by the application boundary, never a provider write.

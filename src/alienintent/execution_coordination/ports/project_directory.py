@@ -31,6 +31,16 @@ class ProjectItemState:
     status: str | None
     priority: str | None
     content_id: str | None
+    # PY-10 needs three further observed facts to schedule live work. The
+    # title and body carry the upstream BIU descriptor — its identity, the
+    # contract document it was made READY against, that contract's digest at
+    # that moment, and its dependency edges. The moment the Status value
+    # itself last changed is the upstream READY-entry time the plan fixes as
+    # the FIFO key. All default to absent, so a recorded fixture built from
+    # the four PY-09B fields stays valid.
+    title: str | None = None
+    body: str | None = None
+    status_updated_at: str | None = None
 
 
 class ProjectDirectory(Protocol):

@@ -4,10 +4,25 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from pathlib import Path
+import re
 import subprocess
 
 from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
 from alienintent.invocation_runtime.ports.workspace import Workspace, WorkspaceManager
+
+_REF_SAFE = re.compile(r"[^A-Za-z0-9._-]")
+
+
+def ref_safe(invocation_id: str) -> str:
+    """A refname component Git will accept for this invocation identity.
+
+    The coordinator correlates an invocation as `launch:<work>:<version>`, and
+    Git refuses a refname containing `:`. The workspace path still uses the
+    exact identity, so two different invocations always get different
+    directories; a branch name that did collide fails closed on `worktree add`
+    rather than quietly sharing a branch.
+    """
+    return _REF_SAFE.sub("-", invocation_id).strip(".-") or "invocation"
 
 
 @dataclass(frozen=True)
@@ -34,7 +49,7 @@ class GitWorktreeAdapter(WorkspaceManager):
         if path.exists():
             raise CandidateUnavailable("workspace is already allocated")
         self._root.mkdir(parents=True, exist_ok=True)
-        branch = f"invocation/{invocation_id}"
+        branch = f"invocation/{ref_safe(invocation_id)}"
         self._git("worktree", "add", "-b", branch, str(path), baseline)
         return GitWorkspace(invocation_id, owner, path, branch)
 

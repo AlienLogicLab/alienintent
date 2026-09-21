@@ -1,0 +1,1337 @@
+{
+ "after": {
+  "at": "2026-09-21T11:52:01Z",
+  "candidates": [
+   {
+    "author": "AlienIntent sandbox worker",
+    "branch": "candidate/launch-SB-01-3",
+    "changed_paths": [
+     "docs/SB-01.md"
+    ],
+    "commits_ahead_of_main": "1",
+    "revision": "cc6eac4d43624cdfabf245a2ccb1f3dd2075d2f1",
+    "subject": "SB-01: factory candidate for launch:SB-01:3"
+   },
+   {
+    "author": "AlienIntent sandbox worker",
+    "branch": "candidate/launch-SB-02-0",
+    "changed_paths": [
+     "docs/SB-02.md"
+    ],
+    "commits_ahead_of_main": "1",
+    "revision": "7987efb9f071a04061da43485863156912a56c36",
+    "subject": "SB-02: factory candidate for launch:SB-02:0"
+   },
+   {
+    "author": "AlienIntent sandbox worker",
+    "branch": "candidate/launch-SB-03-0",
+    "changed_paths": [
+     "docs/SB-03.md"
+    ],
+    "commits_ahead_of_main": "1",
+    "revision": "c365ac5a31268292862de269d917c05920d565f4",
+    "subject": "SB-03: factory candidate for launch:SB-03:0"
+   },
+   {
+    "author": "AlienIntent sandbox worker",
+    "branch": "candidate/launch-SB-04-0",
+    "changed_paths": [
+     "docs/SB-04.md"
+    ],
+    "commits_ahead_of_main": "1",
+    "revision": "a11e17760d67e18e3fa6384f908bc4e30f5c686c",
+    "subject": "SB-04: factory candidate for launch:SB-04:0"
+   },
+   {
+    "author": "AlienIntent sandbox worker",
+    "branch": "candidate/launch-SB-05-0",
+    "changed_paths": [
+     "docs/SB-05.md"
+    ],
+    "commits_ahead_of_main": "1",
+    "revision": "8f3bb37742e79faa1a5a287fe9abb50a47d268b1",
+    "subject": "SB-05: factory candidate for launch:SB-05:0"
+   },
+   {
+    "author": "AlienIntent sandbox worker",
+    "branch": "candidate/launch-SB-06-2",
+    "changed_paths": [
+     "docs/SB-06.md"
+    ],
+    "commits_ahead_of_main": "1",
+    "revision": "6f7a61c79192417aab66a51e48c7e537ea41c31a",
+    "subject": "SB-06: factory candidate for launch:SB-06:2"
+   }
+  ],
+  "node_bootstrap": {
+   "bootstrap_port_answers": {
+    "8787": "000",
+    "8788": "401"
+   },
+   "bootstrap_ports_listening": [
+    "8788"
+   ],
+   "definition": "the Node bootstrap's own ingress, observed from outside it; PY-10 neither starts, stops nor reconfigures it",
+   "root_tunnel_config_mtime": 1789742673
+  },
+  "production_project": {
+   "definition": "digest over every item identity and its updatedAt; equal digests before and after mean nothing in that Project changed",
+   "identity_digest": "sha256:e15c281f3f5a03bf228c75c119f998e127180aeaa92baedd1f971b12944c39c2",
+   "item_count": 67,
+   "observed": true,
+   "project_updated_at": "2026-09-21T10:45:23Z",
+   "state_digest": "sha256:c12bbd148801ca45bf4a3e70f9394902c704e2e87970040c9818d77e46ec4712"
+  },
+  "published_branches": {
+   "candidate/launch-SB-01-3": "cc6eac4d43624cdfabf245a2ccb1f3dd2075d2f1",
+   "candidate/launch-SB-02-0": "7987efb9f071a04061da43485863156912a56c36",
+   "candidate/launch-SB-03-0": "c365ac5a31268292862de269d917c05920d565f4",
+   "candidate/launch-SB-04-0": "a11e17760d67e18e3fa6384f908bc4e30f5c686c",
+   "candidate/launch-SB-05-0": "8f3bb37742e79faa1a5a287fe9abb50a47d268b1",
+   "candidate/launch-SB-06-2": "6f7a61c79192417aab66a51e48c7e537ea41c31a",
+   "main": "697fa8b789c484c9e5af37ecf8e21365ddeead59"
+  }
+ },
+ "before": {
+  "at": "2026-09-21T11:47:34Z",
+  "node_bootstrap": {
+   "bootstrap_port_answers": {
+    "8787": "000",
+    "8788": "401"
+   },
+   "bootstrap_ports_listening": [
+    "8788"
+   ],
+   "definition": "the Node bootstrap's own ingress, observed from outside it; PY-10 neither starts, stops nor reconfigures it",
+   "root_tunnel_config_mtime": 1789742673
+  },
+  "production_project": {
+   "definition": "digest over every item identity and its updatedAt; equal digests before and after mean nothing in that Project changed",
+   "identity_digest": "sha256:e15c281f3f5a03bf228c75c119f998e127180aeaa92baedd1f971b12944c39c2",
+   "item_count": 67,
+   "observed": true,
+   "project_updated_at": "2026-09-21T10:45:23Z",
+   "state_digest": "sha256:c12bbd148801ca45bf4a3e70f9394902c704e2e87970040c9818d77e46ec4712"
+  },
+  "published_branches": {
+   "main": "697fa8b789c484c9e5af37ecf8e21365ddeead59"
+  },
+  "sandbox_baseline": "697fa8b789c484c9e5af37ecf8e21365ddeead59"
+ },
+ "biu": "PY-10",
+ "durable_state": {
+  "aggregates": {
+   "decision-inbox": {
+    "open": {},
+    "revision": 4
+   },
+   "decision-key:py10-decision-0": {
+    "event": {
+     "actor": "PY-10 operator",
+     "biu_version": 0,
+     "idempotency_key": "py10-decision-0",
+     "work_item": "SB-01"
+    },
+    "revision": 1,
+    "submission": {
+     "actor": "PY-10 operator",
+     "authority_reference": "AlienLogicLab/alienintent#58 (SWF-11)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "py10-decision-0",
+     "work_item": "SB-01"
+    }
+   },
+   "decision-key:py10-decision-1": {
+    "event": {
+     "actor": "PY-10 operator",
+     "biu_version": 0,
+     "idempotency_key": "py10-decision-1",
+     "work_item": "SB-06"
+    },
+    "revision": 1,
+    "submission": {
+     "actor": "PY-10 operator",
+     "authority_reference": "AlienLogicLab/alienintent#58 (SWF-11)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "py10-decision-1",
+     "work_item": "SB-06"
+    }
+   },
+   "decision:SB-01": {
+    "event": {
+     "actor": "PY-10 operator",
+     "biu_version": 0,
+     "idempotency_key": "py10-decision-0",
+     "work_item": "SB-01"
+    },
+    "revision": 1,
+    "submission": {
+     "actor": "PY-10 operator",
+     "authority_reference": "AlienLogicLab/alienintent#58 (SWF-11)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "py10-decision-0",
+     "work_item": "SB-01"
+    }
+   },
+   "decision:SB-06": {
+    "event": {
+     "actor": "PY-10 operator",
+     "biu_version": 0,
+     "idempotency_key": "py10-decision-1",
+     "work_item": "SB-06"
+    },
+    "revision": 1,
+    "submission": {
+     "actor": "PY-10 operator",
+     "authority_reference": "AlienLogicLab/alienintent#58 (SWF-11)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "py10-decision-1",
+     "work_item": "SB-06"
+    }
+   },
+   "factory:SB-01": {
+    "accepted": true,
+    "candidate": {
+     "content_digest": "sha256:132a7e51df0b1d5d5989f5e21a0d0b4d43e0a1f1cce7e7dd964ddb44d454ecf8",
+     "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-SB-01-3@cc6eac4d43624cdfabf245a2ccb1f3dd2075d2f1@sha256:132a7e51df0b1d5d5989f5e21a0d0b4d43e0a1f1cce7e7dd964ddb44d454ecf8",
+     "independent_read_back_proven": true,
+     "kind": "source-revision",
+     "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-SB-01-3@cc6eac4d43624cdfabf245a2ccb1f3dd2075d2f1",
+     "provenance": "source-control revision"
+    },
+    "closure": [
+     "candidate-published"
+    ],
+    "correlation": "launch:SB-01:3",
+    "decision_choice": "authorize",
+    "decision_key": "py10-decision-0",
+    "outcome": "success",
+    "revision": 5,
+    "stage": "DONE",
+    "version": 4
+   },
+   "factory:SB-02": {
+    "accepted": true,
+    "candidate": {
+     "content_digest": "sha256:5baaa1d4d592e2a0fc7d0074620a3dcdcc04816581e8be68578e7c8a9e735bc1",
+     "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-SB-02-0@7987efb9f071a04061da43485863156912a56c36@sha256:5baaa1d4d592e2a0fc7d0074620a3dcdcc04816581e8be68578e7c8a9e735bc1",
+     "independent_read_back_proven": true,
+     "kind": "source-revision",
+     "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-SB-02-0@7987efb9f071a04061da43485863156912a56c36",
+     "provenance": "source-control revision"
+    },
+    "closure": [
+     "candidate-published"
+    ],
+    "correlation": "launch:SB-02:0",
+    "outcome": "success",
+    "revision": 2,
+    "stage": "DONE",
+    "version": 4
+   },
+   "factory:SB-03": {
+    "accepted": true,
+    "candidate": {
+     "content_digest": "sha256:891a9b421a341aa3d3ff5e45d0b282311aa6ebc79c5a2825224c33573530e383",
+     "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-SB-03-0@c365ac5a31268292862de269d917c05920d565f4@sha256:891a9b421a341aa3d3ff5e45d0b282311aa6ebc79c5a2825224c33573530e383",
+     "independent_read_back_proven": true,
+     "kind": "source-revision",
+     "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-SB-03-0@c365ac5a31268292862de269d917c05920d565f4",
+     "provenance": "source-control revision"
+    },
+    "closure": [
+     "candidate-published"
+    ],
+    "correlation": "launch:SB-03:0",
+    "outcome": "success",
+    "revision": 2,
+    "stage": "DONE",
+    "version": 4
+   },
+   "factory:SB-04": {
+    "accepted": true,
+    "candidate": {
+     "content_digest": "sha256:105879371c3bae119ba7dc9fb8758599c9f9e908cbf6e01553987a65d2a93111",
+     "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-SB-04-0@a11e17760d67e18e3fa6384f908bc4e30f5c686c@sha256:105879371c3bae119ba7dc9fb8758599c9f9e908cbf6e01553987a65d2a93111",
+     "independent_read_back_proven": true,
+     "kind": "source-revision",
+     "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-SB-04-0@a11e17760d67e18e3fa6384f908bc4e30f5c686c",
+     "provenance": "source-control revision"
+    },
+    "closure": [
+     "candidate-published"
+    ],
+    "correlation": "launch:SB-04:0",
+    "outcome": "success",
+    "revision": 2,
+    "stage": "DONE",
+    "version": 4
+   },
+   "factory:SB-05": {
+    "accepted": true,
+    "candidate": {
+     "content_digest": "sha256:271b2ca44294b6444541b9fed768157c9a88d813bbe995c54f3d47c0b09efa12",
+     "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-SB-05-0@8f3bb37742e79faa1a5a287fe9abb50a47d268b1@sha256:271b2ca44294b6444541b9fed768157c9a88d813bbe995c54f3d47c0b09efa12",
+     "independent_read_back_proven": true,
+     "kind": "source-revision",
+     "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-SB-05-0@8f3bb37742e79faa1a5a287fe9abb50a47d268b1",
+     "provenance": "source-control revision"
+    },
+    "closure": [
+     "candidate-published"
+    ],
+    "correlation": "launch:SB-05:0",
+    "outcome": "success",
+    "revision": 2,
+    "stage": "DONE",
+    "version": 4
+   },
+   "factory:SB-06": {
+    "accepted": true,
+    "candidate": {
+     "content_digest": "sha256:60502c4fa974def8ba6dfa59f3fa5d09632727e5010801179a8cddedf64092d5",
+     "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-SB-06-2@6f7a61c79192417aab66a51e48c7e537ea41c31a@sha256:60502c4fa974def8ba6dfa59f3fa5d09632727e5010801179a8cddedf64092d5",
+     "independent_read_back_proven": true,
+     "kind": "source-revision",
+     "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-SB-06-2@6f7a61c79192417aab66a51e48c7e537ea41c31a",
+     "provenance": "source-control revision"
+    },
+    "closure": [
+     "candidate-published"
+    ],
+    "correlation": "launch:SB-06:2",
+    "decision_choice": "authorize",
+    "decision_key": "py10-decision-1",
+    "outcome": "success",
+    "revision": 4,
+    "stage": "DONE",
+    "version": 4
+   },
+   "ingress:DI_lADOEcrpC84BkIEXzgLKWjk": {
+    "category": "projects_v2_item",
+    "revision": 1,
+    "source_version": 0
+   },
+   "ingress:DI_lADOEcrpC84BkIEXzgLKWjs": {
+    "category": "projects_v2_item",
+    "revision": 1,
+    "source_version": 0
+   },
+   "ingress:DI_lADOEcrpC84BkIEXzgLKWkA": {
+    "category": "projects_v2_item",
+    "revision": 1,
+    "source_version": 0
+   },
+   "ingress:DI_lADOEcrpC84BkIEXzgLKWmc": {
+    "category": "projects_v2_item",
+    "revision": 1,
+    "source_version": 0
+   },
+   "ingress:DI_lADOEcrpC84BkIEXzgLKWmk": {
+    "category": "projects_v2_item",
+    "revision": 1,
+    "source_version": 0
+   }
+  },
+  "effects": [
+   {
+    "aggregate": "factory:SB-01",
+    "identity": "launch:SB-01:0",
+    "status": "authority-authorized"
+   },
+   {
+    "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLKWmc",
+    "identity": "ingress:5a6fd280-b5b2-11f1-8fb0-21be9765c6f5",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "factory:SB-02",
+    "identity": "launch:SB-02:0",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLKWmk",
+    "identity": "ingress:5ca30630-b5b2-11f1-8df2-71a175e26dc2",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "factory:SB-03",
+    "identity": "launch:SB-03:0",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLKWjk",
+    "identity": "ingress:6e156ca0-b5b2-11f1-8a97-cc714a6b55bb",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "factory:SB-05",
+    "identity": "launch:SB-05:0",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLKWjs",
+    "identity": "ingress:7d3e3130-b5b2-11f1-83fc-47b51845dff9",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLKWkA",
+    "identity": "ingress:8cf86050-b5b2-11f1-8bcb-642935b7a86c",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "factory:SB-04",
+    "identity": "launch:SB-04:0",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "factory:SB-01",
+    "identity": "launch:SB-01:3",
+    "status": "confirmed"
+   },
+   {
+    "aggregate": "factory:SB-06",
+    "identity": "launch:SB-06:2",
+    "status": "confirmed"
+   }
+  ],
+  "reservations": []
+ },
+ "finished_at": "2026-09-21T11:52:04Z",
+ "operator_transcript": [
+  {
+   "at": "2026-09-21T11:47:51Z",
+   "command": [
+    "alienintent",
+    "doctor"
+   ],
+   "elapsed_seconds": 10.609,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "checks": [
+     {
+      "name": "configuration",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "secrets",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "work_management",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "source_control",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "provider",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "transport",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "persistence",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "execution",
+      "outcome": "PASS",
+      "suggested_action": null
+     }
+    ],
+    "disposition": "PASS",
+    "exit_code": 0,
+    "ready": true
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:50:16Z",
+   "command": [
+    "alienintent",
+    "run",
+    "service",
+    "--actor",
+    "PY-10 operator",
+    "--authority",
+    "AlienLogicLab/alienintent#58 (SWF-11)",
+    "--intent",
+    "resume after the process loss",
+    "--expected-version",
+    "0",
+    "--reason",
+    "resume after the process loss",
+    "--idempotency-key",
+    "py10-run-2"
+   ],
+   "elapsed_seconds": 123.849,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "authority_blocked": [
+     "SB-01",
+     "SB-06"
+    ],
+    "dispatched": [
+     "SB-02",
+     "SB-03",
+     "SB-05",
+     "SB-04"
+    ],
+    "failed": [],
+    "stop_reason": "dependencies-or-authority-blocked"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:50:17Z",
+   "command": [
+    "alienintent",
+    "decisions",
+    "list"
+   ],
+   "elapsed_seconds": 1.23,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": [
+    {
+     "affected_architecture": [
+      "FD-05"
+     ],
+     "affected_requirements": [
+      "SF-REQ-001",
+      "SF-REQ-010"
+     ],
+     "authorizations": [
+      "authorize permits one normal guarded re-admission",
+      "defer authorizes continued blocking"
+     ],
+     "biu_version": 0,
+     "cost_of_waiting": "The affected work and transitive dependents remain blocked.",
+     "decision": "Authorize the blocked execution to continue through normal admission guards.",
+     "options": [
+      "authorize",
+      "defer"
+     ],
+     "profile": "py10-sandbox",
+     "project": "AlienLogicLab/alienintent-sandbox",
+     "reason": "The external effect outcome is unknown and requires reconciliation authority.",
+     "recommendation": "defer",
+     "tradeoffs": [
+      "authorize permits the bounded work to resume",
+      "defer retains the scoped authority block"
+     ],
+     "work_item": "SB-01"
+    },
+    {
+     "affected_architecture": [
+      "FD-05"
+     ],
+     "affected_requirements": [
+      "SF-REQ-001",
+      "SF-REQ-010"
+     ],
+     "authorizations": [
+      "authorize permits one normal guarded re-admission",
+      "defer authorizes continued blocking"
+     ],
+     "biu_version": 0,
+     "cost_of_waiting": "The affected work and transitive dependents remain blocked.",
+     "decision": "Authorize the blocked execution to continue through normal admission guards.",
+     "options": [
+      "authorize",
+      "defer"
+     ],
+     "profile": "py10-sandbox",
+     "project": "AlienLogicLab/alienintent-sandbox",
+     "reason": "Release admission requires authority not present in this profile.",
+     "recommendation": "defer",
+     "tradeoffs": [
+      "authorize permits the bounded work to resume",
+      "defer retains the scoped authority block"
+     ],
+     "work_item": "SB-06"
+    }
+   ],
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:50:52Z",
+   "command": [
+    "alienintent",
+    "decisions",
+    "decide",
+    "SB-01",
+    "--choice",
+    "authorize",
+    "--biu-version",
+    "0",
+    "--actor",
+    "PY-10 operator",
+    "--authority",
+    "AlienLogicLab/alienintent#58 (SWF-11)",
+    "--intent",
+    "authorize SB-01 to resume through normal admission guards",
+    "--expected-version",
+    "2",
+    "--reason",
+    "PY-10 live proof decision",
+    "--idempotency-key",
+    "py10-decision-0"
+   ],
+   "elapsed_seconds": 34.787,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "event": {
+     "actor": "PY-10 operator",
+     "biu_version": 0,
+     "idempotency_key": "py10-decision-0",
+     "work_item": "SB-01"
+    },
+    "submission": {
+     "actor": "PY-10 operator",
+     "authority_reference": "AlienLogicLab/alienintent#58 (SWF-11)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "py10-decision-0",
+     "work_item": "SB-01"
+    }
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:51:27Z",
+   "command": [
+    "alienintent",
+    "decisions",
+    "decide",
+    "SB-06",
+    "--choice",
+    "authorize",
+    "--biu-version",
+    "0",
+    "--actor",
+    "PY-10 operator",
+    "--authority",
+    "AlienLogicLab/alienintent#58 (SWF-11)",
+    "--intent",
+    "authorize SB-06 to resume through normal admission guards",
+    "--expected-version",
+    "1",
+    "--reason",
+    "PY-10 live proof decision",
+    "--idempotency-key",
+    "py10-decision-1"
+   ],
+   "elapsed_seconds": 34.874,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "event": {
+     "actor": "PY-10 operator",
+     "biu_version": 0,
+     "idempotency_key": "py10-decision-1",
+     "work_item": "SB-06"
+    },
+    "submission": {
+     "actor": "PY-10 operator",
+     "authority_reference": "AlienLogicLab/alienintent#58 (SWF-11)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "py10-decision-1",
+     "work_item": "SB-06"
+    }
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:51:35Z",
+   "command": [
+    "alienintent",
+    "run",
+    "service",
+    "--actor",
+    "PY-10 operator",
+    "--authority",
+    "AlienLogicLab/alienintent#58 (SWF-11)",
+    "--intent",
+    "confirm the executable backlog is exhausted",
+    "--expected-version",
+    "0",
+    "--reason",
+    "confirm the executable backlog is exhausted",
+    "--idempotency-key",
+    "py10-run-3"
+   ],
+   "elapsed_seconds": 7.646,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "authority_blocked": [],
+    "dispatched": [],
+    "failed": [],
+    "stop_reason": "eligible-backlog-exhausted"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:51:38Z",
+   "command": [
+    "alienintent",
+    "status"
+   ],
+   "elapsed_seconds": 3.272,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "diagnostics": [],
+    "execution": {
+     "items": [
+      {
+       "identity": "SB-01",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 5
+      },
+      {
+       "identity": "SB-02",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 2
+      },
+      {
+       "identity": "SB-03",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 2
+      },
+      {
+       "identity": "SB-04",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 2
+      },
+      {
+       "identity": "SB-05",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 2
+      },
+      {
+       "identity": "SB-06",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 4
+      }
+     ],
+     "source": "operational-store",
+     "status": "known",
+     "wip": 6
+    },
+    "profile": "py10-sandbox",
+    "projection": {
+     "source": "decision-notifier",
+     "status": "unknown"
+    },
+    "upstream": {
+     "items": [],
+     "source": "work-management",
+     "status": "available"
+    }
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:51:41Z",
+   "command": [
+    "alienintent",
+    "explain",
+    "SB-01"
+   ],
+   "elapsed_seconds": 3.265,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "evidence": {
+     "execution_revision": 5
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-01"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:51:46Z",
+   "command": [
+    "alienintent",
+    "explain",
+    "SB-02"
+   ],
+   "elapsed_seconds": 4.773,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "evidence": {
+     "execution_revision": 2
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-02"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:51:49Z",
+   "command": [
+    "alienintent",
+    "explain",
+    "SB-03"
+   ],
+   "elapsed_seconds": 3.275,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "evidence": {
+     "execution_revision": 2
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-03"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:51:53Z",
+   "command": [
+    "alienintent",
+    "explain",
+    "SB-04"
+   ],
+   "elapsed_seconds": 3.743,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "evidence": {
+     "execution_revision": 2
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-04"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:51:56Z",
+   "command": [
+    "alienintent",
+    "explain",
+    "SB-05"
+   ],
+   "elapsed_seconds": 2.776,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "evidence": {
+     "execution_revision": 2
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-05"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "at": "2026-09-21T11:51:59Z",
+   "command": [
+    "alienintent",
+    "explain",
+    "SB-06"
+   ],
+   "elapsed_seconds": 2.747,
+   "exit_status": 0,
+   "stderr": "",
+   "stdout": {
+    "evidence": {
+     "execution_revision": 4
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-06"
+   },
+   "wall_clock_bound_reached": false
+  }
+ ],
+ "phases": [
+  {
+   "configured_project": "PVT_kwDOEcrpC84BkIEX",
+   "findings": [],
+   "foreign_project_negative_control": "typed refusal: observed project is not the configured project",
+   "phase": "isolation",
+   "repository_scope": [
+    "AlienLogicLab/alienintent-sandbox"
+   ],
+   "repository_selection": "selected",
+   "standard": "SWF-34: repository isolation is permission enforced; Project isolation is configuration enforced; AC 16 is the compensating end-to-end control. No token-level Project isolation is claimed."
+  },
+  {
+   "exit_status": 0,
+   "phase": "doctor",
+   "report": {
+    "checks": [
+     {
+      "name": "configuration",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "secrets",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "work_management",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "source_control",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "provider",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "transport",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "persistence",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "execution",
+      "outcome": "PASS",
+      "suggested_action": null
+     }
+    ],
+    "disposition": "PASS",
+    "exit_code": 0,
+    "ready": true
+   }
+  },
+  {
+   "after": {
+    "aggregates": {
+     "factory:SB-01": {
+      "accepted": false,
+      "candidate": null,
+      "closure": [],
+      "revision": 1,
+      "stage": "IMPLEMENT",
+      "version": 0
+     }
+    },
+    "effects": [
+     {
+      "aggregate": "factory:SB-01",
+      "identity": "launch:SB-01:0",
+      "status": "unknown"
+     }
+    ],
+    "reservations": [
+     {
+      "fence": 1,
+      "owner": "launch:SB-01:0",
+      "resource_key": "AlienLogicLab/alienintent-sandbox",
+      "scope": "repository"
+     }
+    ]
+   },
+   "before": {
+    "aggregates": {
+     "factory:SB-01": {
+      "accepted": false,
+      "candidate": null,
+      "closure": [],
+      "revision": 1,
+      "stage": "IMPLEMENT",
+      "version": 0
+     }
+    },
+    "effects": [
+     {
+      "aggregate": "factory:SB-01",
+      "identity": "launch:SB-01:0",
+      "status": "unknown"
+     }
+    ],
+    "reservations": [
+     {
+      "fence": 1,
+      "owner": "launch:SB-01:0",
+      "resource_key": "AlienLogicLab/alienintent-sandbox",
+      "scope": "repository"
+     }
+    ]
+   },
+   "boundary": "SIGKILL to the run process group while the repository reservation was held and its effect was unresolved",
+   "definition": "the whole process group is signalled, so the worker the control plane launched dies with it",
+   "exit_status": -9,
+   "held_reservation": {
+    "fence": 1,
+    "owner": "launch:SB-01:0",
+    "resource_key": "AlienLogicLab/alienintent-sandbox",
+    "scope": "repository"
+   },
+   "phase": "process-loss",
+   "signal": "SIGKILL"
+  },
+  {
+   "exit_status": 0,
+   "phase": "restart",
+   "summary": {
+    "authority_blocked": [
+     "SB-01",
+     "SB-06"
+    ],
+    "dispatched": [
+     "SB-02",
+     "SB-03",
+     "SB-05",
+     "SB-04"
+    ],
+    "failed": [],
+    "stop_reason": "dependencies-or-authority-blocked"
+   }
+  },
+  {
+   "phase": "decisions-open",
+   "requests": [
+    {
+     "affected_architecture": [
+      "FD-05"
+     ],
+     "affected_requirements": [
+      "SF-REQ-001",
+      "SF-REQ-010"
+     ],
+     "authorizations": [
+      "authorize permits one normal guarded re-admission",
+      "defer authorizes continued blocking"
+     ],
+     "biu_version": 0,
+     "cost_of_waiting": "The affected work and transitive dependents remain blocked.",
+     "decision": "Authorize the blocked execution to continue through normal admission guards.",
+     "options": [
+      "authorize",
+      "defer"
+     ],
+     "profile": "py10-sandbox",
+     "project": "AlienLogicLab/alienintent-sandbox",
+     "reason": "The external effect outcome is unknown and requires reconciliation authority.",
+     "recommendation": "defer",
+     "tradeoffs": [
+      "authorize permits the bounded work to resume",
+      "defer retains the scoped authority block"
+     ],
+     "work_item": "SB-01"
+    },
+    {
+     "affected_architecture": [
+      "FD-05"
+     ],
+     "affected_requirements": [
+      "SF-REQ-001",
+      "SF-REQ-010"
+     ],
+     "authorizations": [
+      "authorize permits one normal guarded re-admission",
+      "defer authorizes continued blocking"
+     ],
+     "biu_version": 0,
+     "cost_of_waiting": "The affected work and transitive dependents remain blocked.",
+     "decision": "Authorize the blocked execution to continue through normal admission guards.",
+     "options": [
+      "authorize",
+      "defer"
+     ],
+     "profile": "py10-sandbox",
+     "project": "AlienLogicLab/alienintent-sandbox",
+     "reason": "Release admission requires authority not present in this profile.",
+     "recommendation": "defer",
+     "tradeoffs": [
+      "authorize permits the bounded work to resume",
+      "defer retains the scoped authority block"
+     ],
+     "work_item": "SB-06"
+    }
+   ]
+  },
+  {
+   "exit_status": 0,
+   "phase": "decision",
+   "record": {
+    "event": {
+     "actor": "PY-10 operator",
+     "biu_version": 0,
+     "idempotency_key": "py10-decision-0",
+     "work_item": "SB-01"
+    },
+    "submission": {
+     "actor": "PY-10 operator",
+     "authority_reference": "AlienLogicLab/alienintent#58 (SWF-11)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "py10-decision-0",
+     "work_item": "SB-01"
+    }
+   },
+   "work_item": "SB-01"
+  },
+  {
+   "exit_status": 0,
+   "phase": "decision",
+   "record": {
+    "event": {
+     "actor": "PY-10 operator",
+     "biu_version": 0,
+     "idempotency_key": "py10-decision-1",
+     "work_item": "SB-06"
+    },
+    "submission": {
+     "actor": "PY-10 operator",
+     "authority_reference": "AlienLogicLab/alienintent#58 (SWF-11)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "py10-decision-1",
+     "work_item": "SB-06"
+    }
+   },
+   "work_item": "SB-06"
+  },
+  {
+   "exit_status": 0,
+   "phase": "drain-to-exhaustion",
+   "summary": {
+    "authority_blocked": [],
+    "dispatched": [],
+    "failed": [],
+    "stop_reason": "eligible-backlog-exhausted"
+   }
+  },
+  {
+   "phase": "status",
+   "status": {
+    "diagnostics": [],
+    "execution": {
+     "items": [
+      {
+       "identity": "SB-01",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 5
+      },
+      {
+       "identity": "SB-02",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 2
+      },
+      {
+       "identity": "SB-03",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 2
+      },
+      {
+       "identity": "SB-04",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 2
+      },
+      {
+       "identity": "SB-05",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 2
+      },
+      {
+       "identity": "SB-06",
+       "lifecycle": "DONE",
+       "outcome": "success",
+       "revision": 4
+      }
+     ],
+     "source": "operational-store",
+     "status": "known",
+     "wip": 6
+    },
+    "profile": "py10-sandbox",
+    "projection": {
+     "source": "decision-notifier",
+     "status": "unknown"
+    },
+    "upstream": {
+     "items": [],
+     "source": "work-management",
+     "status": "available"
+    }
+   }
+  },
+  {
+   "account": {
+    "evidence": {
+     "execution_revision": 5
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-01"
+   },
+   "phase": "explain",
+   "target": "SB-01"
+  },
+  {
+   "account": {
+    "evidence": {
+     "execution_revision": 2
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-02"
+   },
+   "phase": "explain",
+   "target": "SB-02"
+  },
+  {
+   "account": {
+    "evidence": {
+     "execution_revision": 2
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-03"
+   },
+   "phase": "explain",
+   "target": "SB-03"
+  },
+  {
+   "account": {
+    "evidence": {
+     "execution_revision": 2
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-04"
+   },
+   "phase": "explain",
+   "target": "SB-04"
+  },
+  {
+   "account": {
+    "evidence": {
+     "execution_revision": 2
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-05"
+   },
+   "phase": "explain",
+   "target": "SB-05"
+  },
+  {
+   "account": {
+    "evidence": {
+     "execution_revision": 4
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "success",
+     "reason": "terminal"
+    },
+    "target": "SB-06"
+   },
+   "phase": "explain",
+   "target": "SB-06"
+  }
+ ],
+ "profile": "py10-sandbox",
+ "project": "PVT_kwDOEcrpC84BkIEX",
+ "repository": "AlienLogicLab/alienintent-sandbox",
+ "started_at": "2026-09-21T11:47:34Z"
+}

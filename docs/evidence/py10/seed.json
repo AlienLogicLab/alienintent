@@ -1,0 +1,102 @@
+{
+ "addressed": [
+  "PVT_kwDOEcrpC84BkIEX"
+ ],
+ "profile": "py10-sandbox",
+ "project": "PVT_kwDOEcrpC84BkIEX",
+ "recorded_at": "2026-09-21T11:47:24Z",
+ "repository": "AlienLogicLab/alienintent-sandbox",
+ "seed_revision": "697fa8b789c484c9e5af37ecf8e21365ddeead59",
+ "seeded": [
+  {
+   "contract": "biu/SB-01.json",
+   "dependencies": [],
+   "identity": "SB-01",
+   "item": "PVTI_lADOEcrpC84BkIEXzg78I_I",
+   "priority": "P0",
+   "readiness_digest": "sha256:3a91306f5bc108133fa0c17739fe4cfaec8ddbc551d37bfa48ff9a77dffeca46",
+   "ready_since": "2026-09-21T11:46:48Z",
+   "required_capabilities": [
+    "python"
+   ],
+   "seed_order": 0,
+   "status": "READY"
+  },
+  {
+   "contract": "biu/SB-06.json",
+   "dependencies": [],
+   "identity": "SB-06",
+   "item": "PVTI_lADOEcrpC84BkIEXzg78JDU",
+   "priority": "P0",
+   "readiness_digest": "sha256:c688d162de71d22b0840f7469b866175194c6a073b86163ae952fc846679491f",
+   "ready_since": "2026-09-21T11:46:55Z",
+   "required_capabilities": [
+    "python",
+    "network-egress"
+   ],
+   "seed_order": 1,
+   "status": "READY"
+  },
+  {
+   "contract": "biu/SB-02.json",
+   "dependencies": [],
+   "identity": "SB-02",
+   "item": "PVTI_lADOEcrpC84BkIEXzg78JIE",
+   "priority": "P1",
+   "readiness_digest": "sha256:b18979842b7ad08c5f9fd5d612e066cafca48c22adf07fb07aa3ddb36ee04c31",
+   "ready_since": "2026-09-21T11:47:01Z",
+   "required_capabilities": [
+    "python"
+   ],
+   "seed_order": 2,
+   "status": "READY"
+  },
+  {
+   "contract": "biu/SB-03.json",
+   "dependencies": [],
+   "identity": "SB-03",
+   "item": "PVTI_lADOEcrpC84BkIEXzg78JOk",
+   "priority": "P1",
+   "readiness_digest": "sha256:9f9fa382b2163078e330e9c8990ede3844de7d6b9a0d8086f45fd9abb1493e33",
+   "ready_since": "2026-09-21T11:47:09Z",
+   "required_capabilities": [
+    "python"
+   ],
+   "seed_order": 3,
+   "status": "READY"
+  },
+  {
+   "contract": "biu/SB-04.json",
+   "dependencies": [
+    "SB-05"
+   ],
+   "identity": "SB-04",
+   "item": "PVTI_lADOEcrpC84BkIEXzg78JWM",
+   "priority": "P2",
+   "readiness_digest": "sha256:e533b3389c096f65f58ae24d9fddcc71c6d70e91dbe9316b6366aa26c492378b",
+   "ready_since": "2026-09-21T11:47:15Z",
+   "required_capabilities": [
+    "python"
+   ],
+   "seed_order": 4,
+   "status": "READY"
+  },
+  {
+   "contract": "biu/SB-05.json",
+   "dependencies": [],
+   "identity": "SB-05",
+   "item": "PVTI_lADOEcrpC84BkIEXzg78JaM",
+   "priority": "P3",
+   "readiness_digest": "sha256:e2cb969e8d9a9da20db95dce518756e2cba5e5ad304a53528dbf3d831a136794",
+   "ready_since": "2026-09-21T11:47:21Z",
+   "required_capabilities": [
+    "python"
+   ],
+   "seed_order": 5,
+   "status": "READY"
+  }
+ ],
+ "statuses_written_by_seeding": [
+  "READY"
+ ]
+}

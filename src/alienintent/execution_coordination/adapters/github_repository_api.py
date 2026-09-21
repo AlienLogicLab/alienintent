@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import base64
 import json
 from typing import Callable, Mapping
 
@@ -31,6 +32,25 @@ class GitHubRepositoryApi(RepositoryDirectory):
         if not isinstance(listed, list):
             raise RepositoryUnavailable("repository issues could not be read back")
         return tuple(entry for entry in listed if isinstance(entry, Mapping))
+
+    def contents(self, path: str, ref: str = "") -> bytes:
+        """Read one repository file with the installation credential.
+
+        A live backlog names the BIU contract it was made READY against, and
+        that document lives in the repository rather than in the Project. It
+        is fetched here, through the same credential the rest of the profile
+        runs on, instead of being trusted from a local copy.
+        """
+        document = self._read(f"/repos/{self._repository}/contents/{path}" + (f"?ref={ref}" if ref else ""))
+        if document.get("path") != path or document.get("type") != "file":
+            raise RepositoryRejected("observed content is not the requested repository file")
+        encoded = document.get("content")
+        if document.get("encoding") != "base64" or not isinstance(encoded, str):
+            raise RepositoryUnavailable("repository file could not be read back")
+        try:
+            return base64.b64decode(encoded, validate=False)
+        except ValueError as error:
+            raise RepositoryUnavailable("repository file could not be decoded") from error
 
     def _read(self, path: str) -> Mapping[str, object]:
         response = self._transport.request("GET", f"{self._api_root}{path}", dict(self._authorization()))
