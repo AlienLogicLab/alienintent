@@ -82,7 +82,27 @@ rather than rewritten, because it is the evidence of the failure mode:
 The negative control is at
 [`py10-preflight-2026-09-21-negative-control.json`](../evidence/py10-preflight-2026-09-21-negative-control.json):
 with the expectation corrected and the grant not yet made, the preflight fails **2 of 17** on exactly
-the permission checks — proof the check goes red when `contents` is absent.
+the permission checks — proof the check goes red when `contents` is absent. After the grant it returns
+to **17/17** ([post-grant snapshot](../evidence/py10-preflight-2026-09-21-post-contents-grant.json)).
+Three states, in order: passing against the wrong specification, failing against the right one, passing
+against the right one.
+
+### Live custody proof, 2026-09-21
+
+The capability the grant exists for was proven end to end with the installation credential against the
+**private** sandbox repository, not merely asserted from the permission list:
+
+| Step | Result |
+|---|---|
+| Clone the private repository with an installation token | OK — `ab68d3a` |
+| Commit a candidate and push it to a new branch | OK — revision `2c8799d30e5747bed168741bc6395deebe565229` |
+| Independent read-back: **fresh clone, no shared objects** | published and read-back identity **identical** |
+| Tree comparison across the two clones | `e380d531…` on both |
+| `ls-remote` resolves the exact published identity | yes |
+
+Every one of those fails without `contents`: the clone needs read, the push needs write. The
+verification branch was deleted afterwards and the sandbox is back to `main` alone; the installation
+token and both clones were destroyed.
 
 ## Residual risk — organization-scoped Projects permission
 
