@@ -3,6 +3,8 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
+from hashlib import sha256
+import hmac
 from typing import Literal
 
 from alienintent.installation.domain.github_profile import GitHubProfile
@@ -91,7 +93,6 @@ class DoctorDependencies:
     persistence: Callable[[], object]
     execution: Callable[[], object]
 
-
 @dataclass(frozen=True)
 class WorkManagementEvidence:
     project_reachable: bool; lifecycle_mapping_complete: bool; priority_readable: bool; dependencies_readable: bool; projection_capability: bool
@@ -166,22 +167,64 @@ class InstallationDoctor:
 
     def _work_management(self) -> CheckEvidence:
         value = self._dependencies.work_management()
+        if isinstance(value, Mapping):
+            rows, statuses = value.get("rows"), value.get("lifecycle_statuses")
+            if not isinstance(rows, tuple) or not isinstance(statuses, Mapping):
+                raise DoctorFailure("recorded Project evidence is incomplete")
+            mapped = tuple(statuses.values())
+            if not mapped or mapped.count("READY") != 1 or len(set(mapped)) != len(mapped):
+                raise DoctorFailure("lifecycle Status mapping is incomplete or ambiguous")
+            if not self._dependencies.profile.projection_fields or "VERIFY" not in self._dependencies.profile.projection_fields:
+                raise DoctorFailure("projection write capability cannot be read back")
+            for row in rows:
+                if not isinstance(row, Mapping) or row.get("repository") != self._dependencies.profile.repository or row.get("status") not in statuses:
+                    raise DoctorFailure("recorded Project is unreachable or unmapped")
+                if "priority" not in row or not isinstance(row.get("dependencies"), (list, tuple)):
+                    raise DoctorFailure("Priority or dependency evidence is missing")
+            return CheckEvidence.passed()
         return self._require(value, WorkManagementEvidence, value.project_reachable, value.lifecycle_mapping_complete, value.priority_readable, value.dependencies_readable, value.projection_capability) if isinstance(value, WorkManagementEvidence) else self._require(value, WorkManagementEvidence, False)
 
     def _source_control(self) -> CheckEvidence:
         value = self._dependencies.source_control()
+        if isinstance(value, Mapping):
+            permissions = value.get("publication_permissions")
+            if value.get("repository") != self._dependencies.profile.repository or not isinstance(value.get("baseline"), str) or len(value["baseline"]) != 40 or not isinstance(permissions, tuple) or "contents:write" not in permissions:
+                raise DoctorFailure("repository, baseline, or publication permission cannot be read back")
+            return CheckEvidence.passed()
         return self._require(value, SourceControlEvidence, value.repository_reachable, value.baseline_resolvable, value.candidate_publication_capable) if isinstance(value, SourceControlEvidence) else self._require(value, SourceControlEvidence, False)
 
     def _provider(self) -> CheckEvidence:
         value = self._dependencies.provider()
+        if isinstance(value, Mapping):
+            capabilities = value.get("capabilities")
+            required = {"wall-clock", "attempts", "retries", "concurrency", "cancellation"}
+            if not isinstance(value.get("name"), str) or not value["name"] or not isinstance(value.get("version"), str) or not value["version"] or not isinstance(capabilities, tuple) or not required.issubset(capabilities) or value.get("authenticated") is not True:
+                raise DoctorFailure("provider readiness or enforceable budget evidence is incomplete")
+            return CheckEvidence.passed()
         return self._require(value, ProviderEvidence, value.present, value.version_reported, value.capabilities_advertised, value.budget_enforceable, value.authenticated) if isinstance(value, ProviderEvidence) else self._require(value, ProviderEvidence, False)
 
     def _transport(self) -> CheckEvidence:
         value = self._dependencies.transport()
+        if isinstance(value, Mapping):
+            body, signature, route = value.get("body"), value.get("signature"), value.get("route")
+            secret = self._dependencies.secrets.resolve(self._dependencies.profile.webhook_secret_reference)
+            expected = "sha256=" + hmac.new(secret, body, sha256).hexdigest() if isinstance(body, bytes) else ""
+            if not isinstance(route, str) or not route or not isinstance(body, bytes) or not isinstance(signature, str) or not hmac.compare_digest(expected, signature):
+                raise DoctorFailure("webhook route or signature evidence is invalid")
+            return CheckEvidence.passed()
         return self._require(value, TransportEvidence, value.route_configured, value.secret_configured, value.signature_verified) if isinstance(value, TransportEvidence) else self._require(value, TransportEvidence, False)
 
     def _persistence(self) -> CheckEvidence:
         value = self._dependencies.persistence()
+        if isinstance(value, Mapping):
+            preflight = value.get("preflight")
+            if not callable(preflight):
+                raise DoctorFailure("persistence location is unavailable")
+            observed = preflight()
+            current_version, migration = getattr(observed, "current_version", None), getattr(observed, "migration", None)
+            if current_version != 2 or migration is not None:
+                raise DoctorFailure("persistence schema is incompatible or unsettled")
+            return CheckEvidence.passed()
         return self._require(value, PersistenceEvidence, value.reachable, value.schema_compatible, value.migrations_settled) if isinstance(value, PersistenceEvidence) else self._require(value, PersistenceEvidence, False)
 
     def _execution(self) -> CheckEvidence:
