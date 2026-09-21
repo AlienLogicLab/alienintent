@@ -44,7 +44,7 @@ Distinguishing **FACT** (directly observed), **INFERENCE** (supported but not is
 
 ### 1. Is first-pass quality improving?
 
-**FACT: no BIU in Wave 1 has ever been accepted first-pass.** Nine for nine across PY-02–PY-09 (seven accepted, two in flight or counted at boundary). Rework is the normal path in this factory, not the exception.
+**FACT: no BIU in Wave 1 has ever been accepted first-pass.** Eight for eight across PY-02–PY-09 — seven accepted, each after at least one rejection, plus PY-09 rejected on its first candidate and still in flight. Rework is the normal path in this factory, not the exception.
 
 **FACT:** the *shape* of the first rejection has changed. PY-05 and PY-06 opened on behavioural defects. PY-08 and PY-09 opened on the command surface or the check set never having executed at all against a real composition root. The first rejection is increasingly about what was never exercised rather than about what was exercised wrongly.
 
