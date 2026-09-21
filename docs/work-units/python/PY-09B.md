@@ -35,7 +35,11 @@ Provisioning satisfied environmental prerequisites — repository, Project, prof
 3. **Credentials are referenced, never embedded.** The App private key and webhook secret resolve through the existing `SecretProvider`. No secret, App ID, installation ID, hostname or private installation detail appears in source, tests, logs, diagnostics or retained evidence.
 4. **Least privilege is exact.** The installation grants exactly `issues: read`, `metadata: read`, `organization_projects: write` and the events `issue_comment`, `projects_v2_item`. An extra grant fails the check as surely as a missing one.
 5. **Webhook admission is authenticated.** An unsigned or wrongly signed delivery is rejected; a replayed delivery is admitted at most once. Signature verification uses the existing ingress rule rather than a second copy of it.
-6. **Isolation is proven, not assumed.** Evidence must show the installation targets only the sandbox repository, profile and Project identities, and that no production identity is reachable through the configured profile.
+6. **Isolation is proven at the layer that can enforce it** ([SWF-34](../../decisions/2026-09-21-sandbox-isolation-standard.md)). Two different controls, proven differently, and neither may be described as the other:
+   - **Repository boundary — permission-enforced.** The App installation is selected-repository scope, includes `AlienLogicLab/alienintent-sandbox`, grants no production repository, and the sandbox profile resolves only that repository identity. GitHub enforces this.
+   - **Project boundary — configuration-enforced.** `organization_projects` is an organization-scoped permission, so the sandbox token *can* technically reach other Projects in `AlienLogicLab`, including production Project #1. **Do not claim or attempt to prove that the token reaches only Project #2 — that is false under the platform's model.** Instead: the profile names the exact Project #2 identity; every Project read and every Project write targets Project #2; Project identity resolution **fails closed** on mismatch or ambiguity; no production Project identity appears in sandbox configuration; the implementation never enumerates or opportunistically selects an alternate Project; and evidence identifies the exact Project targeted by every relevant operation.
+
+   The organization-wide Project permission is an **accepted residual risk of the chosen organization topology**, not a defect to engineer around here. PY-10 AC 16 is its compensating end-to-end control.
 7. **This BIU does not run the Wave 1 proof.** It neither seeds a backlog nor executes the factory loop; that is PY-10's, and absorbing it here would recreate the coupling SWF-33 split.
 
 ## Scope
@@ -47,7 +51,7 @@ Provisioning satisfied environmental prerequisites — repository, Project, prof
 5. **Resident webhook ingress** — bind the configured host and port, receive deliveries through the provisioned sandbox endpoint, verify signatures, and admit each delivery at most once. Profile fields carry the bind address, port and secret reference.
 6. **Sandbox profile composition** — the profile factory the control plane loads to bind all of the above, from the recorded resource identities and secret references.
 7. **Live `doctor` transport probes** — work management reachable, source control reachable, transport (ingress) reachable, provider reachable, each returning a typed outcome distinguishable from `UNAVAILABLE`.
-8. **Isolation evidence** — deterministic proof that the configured installation reaches the sandbox repository and Project only.
+8. **Isolation evidence** — permission-level proof of the repository boundary, and configuration-level proof that Project addressing is deterministic, exclusive to Project #2 and fail-closed (SWF-34).
 
 ## Non-goals / excluded
 
@@ -83,7 +87,10 @@ A repair cycle that widens implementation while the harness for what it touches 
 7. A real signed webhook delivery reaches the resident ingress through the provisioned endpoint and is admitted exactly once. An unsigned delivery, a wrongly signed delivery, and a replayed delivery are each rejected or deduplicated, with the wrong-secret case proven red.
 8. The sandbox profile composition loads from the recorded identities and secret references and binds every capability above.
 9. `doctor` returns typed outcomes for work management, source control, transport and provider against the sandbox, distinguishing `PASS`, `FAIL` and `UNAVAILABLE`; each probe has both a passing and a failing case, and no probe can pass on an adapter-declared flag alone.
-10. Isolation evidence shows the installation reaches the sandbox repository and Project only, and that no production identity is reachable through the configured profile.
+10. **Isolation evidence, at the layer each control actually operates:**
+    a. **Repository, permission-enforced** — the installation is `repository_selection: selected`, includes the sandbox repository, and grants no production repository; the profile resolves only that repository identity.
+    b. **Project, configuration-enforced** — the profile names Project #2 exactly; every Project read and write performed by this capability targets Project #2; identity resolution fails closed on mismatch or ambiguity, proven by a negative case; no production Project identity appears in sandbox configuration; no code path enumerates or opportunistically selects another Project; and the evidence names the exact Project targeted by each operation.
+    This criterion does **not** assert token-level Project isolation, which `organization_projects` cannot provide. The residual risk is recorded and accepted under [SWF-34](../../decisions/2026-09-21-sandbox-isolation-standard.md); PY-10 AC 16 compensates.
 11. Retained evidence contains no secret, credential, App ID, installation ID, hostname or private installation detail — while still proving the run used the sandbox identity.
 12. The Python suite, architecture fitness and the Node suite all pass.
 

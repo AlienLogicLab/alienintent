@@ -74,9 +74,16 @@ isolation, however, **cannot be enforced by the token**. The compensating contro
 2. PY-10 acceptance criterion 16 already requires evidence that the live AlienIntent Project and the
    Node bootstrap were demonstrably unaffected — no Python-originated event, projection or dispatch.
 
-If that is judged insufficient, the only stronger isolation GitHub offers is a **separate
-organization** for the sandbox, which would mean a new org, App and Project. That is a Founder
-decision and is not taken here.
+**Resolved 2026-09-21 by [SWF-34](../decisions/2026-09-21-sandbox-isolation-standard.md).** The Founder
+accepted this residual risk for the Wave 1 live-proof sandbox rather than provisioning a separate
+organization. The canonical standard: repository isolation is **permission-enforced**, Project
+isolation is **configuration-enforced** (deterministic, exclusive, fail-closed addressing of Project
+#2), and PY-10 AC 16 is the compensating end-to-end control proving production Project #1 was
+unchanged during the live proof. PY-09B must not claim token-level Project isolation, because
+`organization_projects` cannot provide it.
+
+The acceptance does not extend beyond this sandbox: higher-assurance deployments may require a
+separate organization or account boundary.
 
 ## Validation performed
 

@@ -1,0 +1,81 @@
+{
+ "disposition": "NEEDS_CLARIFICATION",
+ "governing_intent": "Build the smallest canonical-Python substrate that can actually talk to the provisioned SWF-08 sandbox \u2014 installation-token acquisition, live repository and Projects v2 read, fenced one-way projection write, resident authenticated webhook ingress, sandbox profile composition and live doctor transport probes \u2014 and prove it independently, so PY-10 enters its single coherent live proof with transport defects already removed from the failure surface.",
+ "summary": "The contract is well-formed and answers the exact decomposition defect SWF-33 was created to fix. Its eight scope items map one-for-one onto the capability the PY-10 reassessment found owned by no BIU, and the boundary against PY-10 is drawn twice and consistently (PY-09B non-goals exclude seeding, the loop, the proof and 'any PY-10 acceptance criterion'; PY-10 scope item 1 now says 'PY-10 builds none of it'). The premise is factually correct against clean main: github_work_management.py:16 takes `snapshot` and `projection_write` as injected callables with no HTTP path; github_webhook.py:99 binds 127.0.0.1:0 inside a test-helper contextmanager; GitHubProfile (installation/domain/github_profile.py:13) carries no App identity, installation id, bind address or port; composition/doctor_probes.py covers only Git worktrees and the worker executable; doctor.py consumes profile-supplied evidence callables. Intent, binding rules, non-goals and twelve acceptance criteria are bounded and observable, the requirement links are honest about extent ('the first **live** GitHub adapter behind the existing port' rather than a claim on SF-REQ-005 as a whole), and the iteration surface SWF-33 demanded is explicit: deterministic fixture-backed checks for protocol and projection logic, bounded live checks for what only real infrastructure establishes, proven-red negative controls per guard. One owner-level defect blocks release. Binding rule 6 (non-delegated) and acceptance criterion 10 require evidence that the installation 'reaches the sandbox repository and Project only' \u2014 and the Founder-recorded provisioning note the contract binds to (docs/operations/py10-sandbox.md, 'Residual risk \u2014 organization-scoped Projects permission') records the opposite as a verified read-only fact: `organization_projects` is an org-level grant, GitHub offers no per-Project scoping, and the sandbox token returns production Project #1 (`PVT_kwDOEcrpC84Bj5i_`) when asked. Binding rule 4 then pins that exact grant as the least-privilege set, so the same contract mandates the permission that makes its own isolation criterion unprovable. The note names a separate organization as the only stronger option and explicitly leaves that decision to the Founder; PY-09B never mentions the residue and carries none of the compensating framing PY-10 AC 16 supplies. Everything else an implementer needs is constrained by approved architecture or is normal engineering.",
+ "owner_clarifications": [
+  "Isolation standard for the org-wide Projects grant. Binding rule 6 and AC 10 demand proof that the installation reaches the sandbox Project only; docs/operations/py10-sandbox.md records as verified that the sandbox installation token can reach every org Project including production Project #1, and that the only stronger isolation GitHub offers is a separate organization \u2014 'a Founder decision and is not taken here'. Binding rule 4 simultaneously fixes `organization_projects: write` as required least privilege. An implementer cannot make AC 10 true and cannot weaken a rule marked not-delegated. The Founder must either (a) restate rule 6 / AC 10 in the terms that are actually provable \u2014 repository isolation proven at the installation level, Project isolation proven at the configured-profile level, with the org-wide grant recorded as accepted residual risk and PY-10 AC 16 named as the compensating control \u2014 or (b) authorize a separate sandbox organization, App and Project."
+ ],
+ "implementation_unknowns": [
+  "How to mint the App JWT. The repository declares no runtime dependencies (pyproject.toml) and the stdlib has no RS256 signing; the choice between adding a first adapter-layer dependency (PyJWT/cryptography \u2014 what the bootstrap preflight already uses) and shelling out to openssl is ordinary engineering. Fitness rule F01 bans vendor types only in domain/ports signatures, so either is permitted at the adapter boundary.",
+  "The shape of the live GitHub client behind the existing ports: REST for app/installation/token/repo/issues, GraphQL for Projects v2 field and option identities, inside the PY-05 port contracts and the hexagonal-contracts adapter rules that already constrain it.",
+  "How the fence is realized. Projects v2 exposes no compare-and-set on `updateProjectV2ItemFieldValue`, so 'carries the expected revision and refuses on conflict' must be canonical-side fencing plus read-back \u2014 which is what FD-01 requires and what the existing adapter (github_work_management.py:59) already demonstrates against its own revision map.",
+  "How to originate a real signed delivery repeatably for AC 7. Least privilege is `issues: read`, so the factory cannot self-trigger an `issue_comment`; the one App-writable trigger is the Project field update from scope item 4, which emits `projects_v2_item`. Whether GitHub redelivers an installation's own Project writes to that installation needs empirical confirmation, with a manual trigger as fallback.",
+  "Extending GitHubProfile with App identity, installation id, ingress bind address, port and private-key reference while keeping doctor's `_configuration` check (doctor.py:117) meaningful, and deciding how the profile factory locates ~/.config/alienintent-sandbox/profile.json without embedding installation detail in source (composition is the only layer the fitness `configuration` check permits to read the environment).",
+  "How the resident ingress is started and stopped for the bounded live checks without entering PY-10 territory: the CLI has no resident mode today (FactoryCoordinator.start() is a synchronous drain, and `run` is a one-shot subcommand), so the smallest sufficient answer is probably a bounded harness-owned server lifetime rather than a new long-running command.",
+  "The mechanism that keeps the live portion out of the default collected suite (markers or an env-gated skip) so AC 12's 'Python suite passes' holds on a runner with no sandbox credentials, and where the redacted evidence is retained \u2014 the contract names no path, and the repository convention is docs/evidence/ rather than the docs/verification/ that PY-10 mandates for its report.",
+  "A stable non-reversible way to prove 'the run used the sandbox identity' (AC 11) without emitting App ID, installation ID or hostname \u2014 e.g. a salted digest of the identifiers compared against the profile."
+ ],
+ "independent_decision_centers": [],
+ "semantic_split_recommendation": [],
+ "verification_assessment": "Real executable proof, not description, and unusually well sequenced for this cohort. Every capability in scope has a named negative control \u2014 invalid/missing credential reference, simulated extra and missing grant, stale projection write, unsigned/wrong-signature/replayed delivery, a failing case for each doctor probe \u2014 and AC 5, AC 7 and AC 9 go further by requiring proven-red demonstration (remove the fence, use the wrong secret, deny an adapter-declared pass) in line with SWF-24. The offline/live split is stated rather than assumed, which is the specific thing SWF-33 demanded, and the verification-first repair sequencing clause is satisfiable here in a way it was not for PY-10, because the fixture-backed harness can exist before any live call. Four weaknesses. First, AC 10 asks for evidence that the recorded provisioning facts contradict; a verifier reading it literally must reject a candidate that is behaving correctly. Second, the independent verifier invocation must execute the bounded live portion to confirm AC 1\u201310, which means it needs the sandbox credentials at ~/.config/alienintent-sandbox \u2014 the contract does not say whether the verifier runs on the provisioned host, and a verifier that can only re-read evidence is weaker than the contract implies. Third, AC 12's 'the Python suite passes' collides with CI, which runs `pip install pytest` then `pytest -q` on a hosted runner with no credentials and no project install, so the live/offline boundary must be mechanized and any new dependency must reach the workflow. Fourth, AC 11's redaction obligation is in tension with AC 7's requirement to prove the delivery arrived through the provisioned endpoint and with the fact that py10-sandbox.md already publishes those identifiers in-repo; the redaction scheme must not destroy the isolation proof it protects, and must not be read as licence to rewrite an immutable operations record.",
+ "expected_rework_locality": "MEDIUM",
+ "material_risks": [
+  "AC 10 as written is unsatisfiable against the recorded environment, and rule 6 is marked not-delegated \u2014 the predictable outcome is a candidate that does the right thing, documents the org-wide grant honestly, and is rejected at VERIFY for failing the criterion as stated.",
+  "Widening GitHubProfile ripples through doctor's configuration check, both composition roots and the existing profile tests, so a defect in the profile shape is the one failure mode in this BIU that is not module-local.",
+  "Introducing the repository's first runtime dependency would require a matching change to .github/workflows/python-architecture-fitness.yml, which installs only pytest and never installs the project \u2014 unnamed work that SWF-20 makes a mechanically detectable verification finding unless treated as lifecycle-necessary.",
+  "AC 7 depends on GitHub actually redelivering an event the installation itself caused; if it does not, the only repeatable in-band trigger disappears and the 'bounded, repeatable, individually diagnosable' property SWF-33 required degrades toward a manual one-shot.",
+  "Binding rule 3 forbids App ID, installation ID and hostname in source, tests, logs, diagnostics and evidence, while docs/operations/py10-sandbox.md commits exactly those values; an implementer or verifier could read the rule as requiring that record be redacted, which is out of scope and would destroy the environment documentation PY-10 depends on.",
+  "Scope item 5 ('resident') has no home in the current CLI, and the boundary between a bounded harness-owned server and a new long-running service sits directly against the non-goal 'this BIU does not run the factory loop' \u2014 the cheapest correct answer risks reading as under-delivery, the fuller one as scope expansion.",
+  "PY-10.md still carries an 'Open prerequisite: a Founder scope decision' paragraph that SWF-33 has resolved, alongside the SWF-33 references added elsewhere in the same file; left standing it will confuse PY-10's next readiness assessment.",
+  "SWF-09 applies: the CLI invocation path used for the live checks may report neither token nor monetary cost, which must be recorded UNKNOWN and never assumed zero."
+ ],
+ "next_action": "Put the single isolation question to the Founder: amend binding rule 6 and AC 10 to the provable standard \u2014 installation-level repository isolation, profile-level Project isolation, with the recorded org-wide `organization_projects` residue named as accepted risk and PY-10 AC 16 as its compensating control \u2014 or authorize a separate sandbox organization. In the same pass, state whether the independent verifier executes the bounded live portion on the provisioned host, and clear the stale 'Open prerequisite' paragraph in PY-10.md. Then reassess PY-09B against the amended contract and release it through normal SWF-21 admission; nothing else in the contract is holding it back.",
+ "rationale": "This contract does what SWF-33 asked of it. The capability every predecessor deferred and no BIU owned is now named explicitly, bounded against PY-10 from both sides, carried by three requirements that already own its semantics with no new Product Requirement invented, and given the locally repeatable verification surface whose absence made PY-10's shape wrong. The decision inputs are all closed \u2014 SWF-08 fixes and has provisioned the target, SWF-09 fixes budget policy, FD-01 fixes projection direction, FD-02\u2013FD-06 and the Architecture Authority constrain the implementation, PY-05/06/08/09 are accepted and on main \u2014 so almost everything an implementer faces is research inside constraints that already exist: which JWT library, which GraphQL queries, how to gate live tests, where to retain evidence. None of that is owner work, and none of it should be treated as such. There is also no case for splitting again: outbound API access and inbound ingress share one profile, one credential path and one set of doctor probes, and the only repeatable way to originate a real delivery runs through the projection write, so the two halves verify each other rather than standing apart. What stops this being READY is narrow and cheap to fix. The contract asserts, as a non-delegated binding rule and as acceptance criterion 10, an isolation property that the Founder's own provisioning record disproves by measurement, while separately mandating the grant that causes it \u2014 and the record deliberately parks the only stronger remedy as an untaken Founder decision. An implementation agent that hits this must either weaken a rule it is forbidden to weaken or fail a criterion it cannot satisfy. That is exactly the class of thing an owner decides, and a one-line amendment converts an unprovable criterion into a provable one without touching anything else in the contract.",
+ "provider_evidence": {
+  "provider": "claude",
+  "adapter": "claude (Claude Code CLI)",
+  "model": "claude-opus-5[1m]",
+  "version": "claude-code CLI (headless --print)",
+  "invocation": "claude -p --no-session-persistence --output-format json --permission-mode plan --disallowed-tools Edit Write NotebookEdit",
+  "compatibility": "COMPATIBLE_UNVERIFIED",
+  "capability_probe": "PASSED",
+  "baseline": "35de8d7e",
+  "assessed": "2026-09-21",
+  "request": "PY-09B.request.md",
+  "turns": 36,
+  "duration_s": 319,
+  "permission_denials": [
+   {
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_01JvHM9aEcjL8p3MG4Ha4nST",
+    "tool_input": {
+     "command": "find src/alienintent -type f -name '*.py' | sort | head -200 && echo \"---TESTS---\" && find tests -type d | sort | head -60",
+     "description": "List Python source and test layout"
+    }
+   },
+   {
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_01TU6E84VkvszdF6zgtsFxri",
+    "tool_input": {
+     "command": "rtk tree src/alienintent -L 3 2>&1 | head -120",
+     "description": "Show Python package tree"
+    }
+   },
+   {
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_01RJdUwvxhG2shrkKuGjzw4W",
+    "tool_input": {
+     "command": "rtk tree tests -L 2 2>&1 | head -80",
+     "description": "Show tests tree"
+    }
+   }
+  ],
+  "provider_failover": {
+   "authorized_by": "Founder decision 2026-09-21 \u2014 Agent-Ready reassessment provider failover",
+   "reason": "codex quota exhausted until ~18:22 local; assessed on the claude adapter under the same request, semantics, readiness criteria, disposition contract and SWF-21 gate",
+   "provenance_difference": "PY-01..PY-09 were assessed with codex-cli 0.155.1; this is not provider-identical to them."
+  },
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN"
+ }
+}

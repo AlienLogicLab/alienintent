@@ -76,6 +76,14 @@ PY-09B complete, and only through normal SWF-21 admission.
 
 Nothing in Node/B-DISP changes, no completed BIU is reopened, and no manual proof shortcut is created.
 
+## Follow-on: the isolation standard (SWF-34)
+
+PY-09B's own Agent-Ready assessment then found that the contract as drafted demanded a property GitHub
+cannot provide — proof that the sandbox token reaches only Project #2, which `organization_projects`
+makes impossible. Resolved by [SWF-34](2026-09-21-sandbox-isolation-standard.md): repository isolation
+permission-enforced, Project isolation configuration-enforced, PY-10 AC 16 compensating. No PY-10
+acceptance criterion changed.
+
 ## Evidence preserved
 
 The Claude reassessment and its provider-failover provenance are retained as the evidence that caused
