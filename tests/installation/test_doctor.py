@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import hashlib
+import hmac
 import json
 import os
 from pathlib import Path
@@ -22,29 +24,88 @@ class _Secrets:
         return self.value
 
     def diagnostic(self) -> str:
-        return "available"
+        return "protected-local-file references=webhook-secret"
 
 
 class _ReadOnlyFixture:
-    def __init__(self, **results: object) -> None:
+    """A recorded-fixture installation that also exposes the writes doctor must never make.
+
+    `read` is the only non-mutating door. Every other door records the attempt
+    and performs the real effect, so a doctor that creates, projects or
+    publishes anything is caught rather than assumed absent.
+    """
+
+    def __init__(self, root: Path, **results: object) -> None:
         self.results = results
+        self.root = root
+        self.workspace_root = self.root / "workspaces"
+        self.workspace_root.mkdir(parents=True, exist_ok=True)
         self.effects: list[str] = []
+        self.mutations: list[tuple[str, str]] = []
 
     def read(self, name: str) -> object:
         self.effects.append(name)
-        from alienintent.installation.application.doctor import ExecutionEvidence, PersistenceEvidence, ProviderEvidence, SourceControlEvidence, TransportEvidence, WorkManagementEvidence
-        defaults = {
-            "work_management": WorkManagementEvidence(True, True, True, True, True),
-            "source_control": SourceControlEvidence(True, True, True),
-            "provider": ProviderEvidence(True, True, True, True, True),
-            "transport": TransportEvidence(True, True, True),
-            "persistence": PersistenceEvidence(True, True, True),
-            "execution": ExecutionEvidence(True, True, True),
-        }
-        result = self.results.get(name, defaults[name])
+        result = self.results.get(name, self._defaults()[name])
         if isinstance(result, Exception):
             raise result
         return result
+
+    def write(self, name: str, payload: str) -> None:
+        self.mutations.append(("write", name))
+        (self.root / name).write_text(payload, encoding="utf-8")
+
+    def create(self, name: str) -> Path:
+        self.mutations.append(("create", name))
+        target = self.root / name
+        target.mkdir(parents=True, exist_ok=True)
+        return target
+
+    def project(self, name: str, value: str) -> None:
+        self.mutations.append(("project", name))
+        self.write(f"{name}.projection", value)
+
+    def publish(self, name: str) -> None:
+        self.mutations.append(("publish", name))
+        self.write(f"{name}.published", name)
+
+    def _defaults(self) -> dict[str, object]:
+        workspace_root = self.workspace_root
+        return {
+            "work_management": {"rows": ({"repository": "AlienLogicLab/alienintent", "status": "Ready", "priority": "P0", "dependencies": []},), "lifecycle_statuses": {"Ready": "READY"}, "projection_permissions": ("VERIFY",)},
+            "source_control": {"repository": "AlienLogicLab/alienintent", "baseline": "a" * 40, "publication_permissions": ("contents:write",)},
+            "provider": {"name": "worker", "version": "1", "capabilities": ("wall-clock", "attempts", "retries", "concurrency", "cancellation"), "authenticated": True},
+            "transport": {"route": "/webhook", "body": b"body", "signature": "sha256=" + hmac.new(b"usable", b"body", hashlib.sha256).hexdigest()},
+            "persistence": {"preflight": lambda: type("Preflight", (), {"current_version": 2, "migration": None})()},
+            "execution": {
+                "workspace_root": workspace_root,
+                "workspace_manager": _WorkspaceManagerDouble(),
+                "git_worktrees": (workspace_root,),
+                "worker_capabilities": _Capabilities(frozenset({"wall-clock", "attempts", "retries", "concurrency", "cancellation"})),
+                "worker_executable": Path(sys.executable),
+            },
+        }
+
+
+class _WorkspaceManagerDouble:
+    def allocate(self, invocation_id: str, owner: str, baseline: str) -> object:
+        raise AssertionError("doctor must never allocate a workspace")
+
+    def cleanup(self, workspace: object, process_id: int | None) -> None:
+        raise AssertionError("doctor must never remove a workspace")
+
+
+class _Capabilities:
+    def __init__(self, enforceable_dimensions: frozenset[str]) -> None:
+        self.enforceable_dimensions = enforceable_dimensions
+
+
+def _tree_digest(root: Path) -> dict[str, str]:
+    """Every path under `root` with its content, so any write shows up as a diff."""
+    digest: dict[str, str] = {}
+    for path in sorted(root.rglob("*")):
+        key = str(path.relative_to(root))
+        digest[key] = "dir" if path.is_dir() else hashlib.sha256(path.read_bytes()).hexdigest()
+    return digest
 
 
 def _profile():
@@ -53,11 +114,10 @@ def _profile():
     return GitHubProfile("isolated", "AlienLogicLab/alienintent", "PVT_x", {"Ready": "READY"}, {"VERIFY": "Status"}, "webhook-secret", True)
 
 
-def _installation_service(fixture: _ReadOnlyFixture | None = None, secrets: _Secrets | None = None):
+def _installation_service(fixture: _ReadOnlyFixture, secrets: _Secrets | None = None):
     """A recorded fixture/local-double installation; each probe is read-only."""
     from alienintent.installation.application.doctor import DoctorDependencies, InstallationDoctor
 
-    fixture = fixture or _ReadOnlyFixture()
     return InstallationDoctor(DoctorDependencies(
         profile=_profile(), secrets=secrets or _Secrets(),
         work_management=lambda: fixture.read("work_management"),
@@ -69,13 +129,29 @@ def _installation_service(fixture: _ReadOnlyFixture | None = None, secrets: _Sec
     )), fixture
 
 
-def test_installation_doctor_runs_every_owned_read_only_check_without_write_effect() -> None:
-    service, fixture = _installation_service()
+def test_installation_doctor_runs_every_owned_read_only_check_without_write_effect(tmp_path: Path) -> None:
+    """AC 4: no write-effect occurs — neither through the doubles nor onto disk."""
+    fixture = _ReadOnlyFixture(tmp_path)
+    service, _ = _installation_service(fixture)
+    before = _tree_digest(tmp_path)
 
     report = service.run()
 
     assert report.ready
     assert fixture.effects == ["work_management", "source_control", "provider", "transport", "persistence", "execution"]
+    assert fixture.mutations == []
+    assert _tree_digest(tmp_path) == before
+
+
+def test_read_only_assertion_detects_a_write_effect(tmp_path: Path) -> None:
+    """The AC 4 harness must be able to go red; a check that writes is caught."""
+    fixture = _ReadOnlyFixture(tmp_path)
+    before = _tree_digest(tmp_path)
+
+    fixture.write("repair-attempt", "doctor must never do this")
+
+    assert fixture.mutations == [("write", "repair-attempt")]
+    assert _tree_digest(tmp_path) != before
 
 
 @pytest.mark.parametrize(("check", "evidence"), (
@@ -88,8 +164,8 @@ def test_installation_doctor_runs_every_owned_read_only_check_without_write_effe
     ("persistence", ValueError("incompatible schema")),
     ("execution", RuntimeError("worktree unavailable")),
 ))
-def test_installation_doctor_surfaces_distinct_sanitized_failure_for_each_required_check(check: str, evidence: Exception) -> None:
-    fixture = _ReadOnlyFixture(**({check: evidence} if check != "configuration" else {}))
+def test_installation_doctor_surfaces_distinct_sanitized_failure_for_each_required_check(check: str, evidence: Exception, tmp_path: Path) -> None:
+    fixture = _ReadOnlyFixture(tmp_path, **({check: evidence} if check != "configuration" else {}))
     secrets = _Secrets(reject=check == "secrets")
     service, _ = _installation_service(fixture, secrets)
     if check == "configuration":
@@ -106,8 +182,9 @@ def test_installation_doctor_surfaces_distinct_sanitized_failure_for_each_requir
     assert "SENTINEL-SECRET" not in str(result)
 
 
-def test_installation_doctor_covers_contract_negative_evidence_cases() -> None:
+def test_installation_doctor_covers_contract_negative_evidence_cases(tmp_path: Path) -> None:
     fixture = _ReadOnlyFixture(
+        tmp_path,
         work_management=ValueError("reachable project has incomplete lifecycle Status mapping and missing Priority"),
         transport=ValueError("endpoint responded but signature verification failed"),
         persistence=ValueError("incompatible persistence schema version"),
@@ -266,3 +343,66 @@ def make():
     assert "SENTINEL-CLI" not in doctor.stdout + doctor.stderr
     assert refused.returncode != 0
     assert json.loads(refused.stdout) == {"error": "readiness-gate-failed"}
+
+
+_RUN_ARGUMENTS = ("run", "--actor", "morty", "--authority", "SWF-21", "--intent", "start", "--expected-version", "0", "--reason", "approved", "--idempotency-key", "run-1", "--json")
+
+
+def _cli_profile(tmp_path: Path, disposition: str) -> dict[str, str]:
+    """Write a real profile factory whose doctor reaches exactly one disposition."""
+    broken = {
+        "FAIL": "checks['persistence'] = lambda: (_ for _ in ()).throw(DoctorFailure('token=SENTINEL-CLI'))",
+        "UNAVAILABLE": "checks['transport'] = lambda: (_ for _ in ()).throw(DoctorUnavailable('token=SENTINEL-CLI'))",
+        "PASS": "pass",
+    }[disposition]
+    (tmp_path / "profile_factory.py").write_text(
+        f"""
+from pathlib import Path
+from alienintent.composition.offline_profile import OfflineProfile
+from alienintent.installation.application.doctor import CheckEvidence, DoctorFailure, DoctorService, DoctorUnavailable
+class Work:
+    def import_ready_snapshot(self): return ()
+class Worker:
+    def start(self, *_): raise AssertionError('no ready work exists to start')
+def make():
+    checks = {{name: CheckEvidence.passed for name in ('configuration', 'secrets', 'work_management', 'source_control', 'provider', 'transport', 'persistence', 'execution')}}
+    {broken}
+    return OfflineProfile(Path(__file__).with_name('state.db'), Work(), Worker(), Path(__file__).parent / 'artifacts', doctor=DoctorService(checks))
+""",
+        encoding="utf-8",
+    )
+    return os.environ | {"PYTHONPATH": f"src:{tmp_path}"}
+
+
+def _alienintent(env: dict[str, str], *arguments: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [sys.executable, "-m", "alienintent", "--profile-factory", "profile_factory:make", *arguments],
+        text=True, capture_output=True, env=env, check=False,
+    )
+
+
+def test_doctor_fail_disposition_refuses_a_real_run_attempt(tmp_path: Path) -> None:
+    """AC 3 primary clause: a FAIL blocks autonomous start through the real CLI."""
+    env = _cli_profile(tmp_path, "FAIL")
+
+    doctor = _alienintent(env, "doctor", "--json")
+    refused = _alienintent(env, *_RUN_ARGUMENTS)
+
+    assert doctor.returncode == 1
+    assert json.loads(doctor.stdout)["disposition"] == "FAIL"
+    assert "SENTINEL-CLI" not in doctor.stdout + doctor.stderr + refused.stdout + refused.stderr
+    assert refused.returncode == 2
+    assert json.loads(refused.stdout) == {"error": "readiness-gate-failed"}
+
+
+def test_doctor_pass_disposition_lets_a_real_run_attempt_proceed(tmp_path: Path) -> None:
+    """The gate discriminates: without it, the FAIL and UNAVAILABLE refusals prove nothing."""
+    env = _cli_profile(tmp_path, "PASS")
+
+    doctor = _alienintent(env, "doctor", "--json")
+    started = _alienintent(env, *_RUN_ARGUMENTS)
+
+    assert doctor.returncode == 0
+    assert json.loads(doctor.stdout)["disposition"] == "PASS"
+    assert started.returncode == 0, started.stdout + started.stderr
+    assert json.loads(started.stdout) != {"error": "readiness-gate-failed"}

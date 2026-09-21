@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from contextlib import contextmanager
 from hashlib import sha256
-import hmac
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 from typing import Callable, Iterator
 
+from alienintent.execution_coordination.domain.webhook_authenticity import signature_valid as raw_body_signature_valid
 from alienintent.execution_coordination.ports.event_ingress import EventIngress, IngressReceipt, IngressRejected
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, Receipt, ReservationRejected, VersionConflict
 
@@ -55,8 +55,7 @@ class GitHubWebhookIngress(EventIngress):
     @staticmethod
     def signature_valid(secret: bytes, raw_body: bytes, authenticity: str) -> bool:
         """Exercise the production raw-byte signature rule without ingress effects."""
-        expected = "sha256=" + hmac.new(secret, raw_body, sha256).hexdigest()
-        return hmac.compare_digest(expected, authenticity)
+        return raw_body_signature_valid(secret, raw_body, authenticity)
 
     def _notification(self, payload: object, category: str, work: str) -> str:
         if isinstance(payload, dict) and payload.get("execution_field_edit") is True:

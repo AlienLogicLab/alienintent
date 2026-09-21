@@ -3,10 +3,11 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
-from hashlib import sha256
-import hmac
+import os
+from pathlib import Path
 from typing import Literal
 
+from alienintent.execution_coordination.domain.webhook_authenticity import signature_valid
 from alienintent.installation.domain.github_profile import GitHubProfile
 from alienintent.installation.ports.secret_provider import SecretProvider
 
@@ -93,35 +94,6 @@ class DoctorDependencies:
     persistence: Callable[[], object]
     execution: Callable[[], object]
 
-@dataclass(frozen=True)
-class WorkManagementEvidence:
-    project_reachable: bool; lifecycle_mapping_complete: bool; priority_readable: bool; dependencies_readable: bool; projection_capability: bool
-
-
-@dataclass(frozen=True)
-class SourceControlEvidence:
-    repository_reachable: bool; baseline_resolvable: bool; candidate_publication_capable: bool
-
-
-@dataclass(frozen=True)
-class ProviderEvidence:
-    present: bool; version_reported: bool; capabilities_advertised: bool; budget_enforceable: bool; authenticated: bool
-
-
-@dataclass(frozen=True)
-class TransportEvidence:
-    route_configured: bool; secret_configured: bool; signature_verified: bool
-
-
-@dataclass(frozen=True)
-class PersistenceEvidence:
-    reachable: bool; schema_compatible: bool; migrations_settled: bool
-
-
-@dataclass(frozen=True)
-class ExecutionEvidence:
-    workspace_writable: bool; worktree_available: bool; process_control_available: bool
-
 
 class InstallationDoctor:
     """Own the eight Wave-1 prerequisites; adapters provide only read evidence."""
@@ -144,12 +116,12 @@ class InstallationDoctor:
 
     def _configuration(self) -> CheckEvidence:
         profile = self._dependencies.profile
+        # GitHubProfile rejects blank identity, an unmapped READY status, an
+        # authority-inverting status and unknown fields at construction, so a
+        # typed profile in hand *is* the positive evidence. Re-checking those
+        # rules here would be unreachable code that no test could turn red.
         if not isinstance(profile, GitHubProfile):
             raise DoctorFailure("profile is not typed-valid")
-        # GitHubProfile validates required references and mappings at construction;
-        # this additional guard makes an isolated profile name explicit evidence.
-        if not profile.profile.strip() or not profile.repository.strip() or not profile.project_reference.strip():
-            raise DoctorFailure("profile namespace is incomplete")
         return CheckEvidence.passed()
 
     def _secrets(self) -> CheckEvidence:
@@ -157,12 +129,13 @@ class InstallationDoctor:
         material = self._dependencies.secrets.resolve(reference)
         if not isinstance(material, bytes) or not material:
             raise DoctorFailure("secret provider returned an unusable handle")
-        return CheckEvidence.passed()
-
-    @staticmethod
-    def _require(evidence: object, kind: type[object], *facts: bool) -> CheckEvidence:
-        if not isinstance(evidence, kind) or not all(facts):
-            raise DoctorFailure("adapter did not provide complete positive readiness evidence")
+        # Positive evidence is the provider naming the reference it holds; the
+        # same diagnostic must never carry the material it resolved.
+        diagnostic = self._dependencies.secrets.diagnostic()
+        if not isinstance(diagnostic, str) or reference not in diagnostic:
+            raise DoctorFailure("secret provider does not report the configured reference")
+        if material and material.decode("latin-1") in diagnostic:
+            raise DoctorFailure("secret provider diagnostic reveals resolved material")
         return CheckEvidence.passed()
 
     def _work_management(self) -> CheckEvidence:
@@ -174,7 +147,8 @@ class InstallationDoctor:
             mapped = tuple(statuses.values())
             if not mapped or mapped.count("READY") != 1 or len(set(mapped)) != len(mapped):
                 raise DoctorFailure("lifecycle Status mapping is incomplete or ambiguous")
-            if not self._dependencies.profile.projection_fields or "VERIFY" not in self._dependencies.profile.projection_fields:
+            permissions = value.get("projection_permissions")
+            if not isinstance(permissions, tuple) or "VERIFY" not in permissions:
                 raise DoctorFailure("projection write capability cannot be read back")
             for row in rows:
                 if not isinstance(row, Mapping) or row.get("repository") != self._dependencies.profile.repository or row.get("status") not in statuses:
@@ -182,7 +156,7 @@ class InstallationDoctor:
                 if "priority" not in row or not isinstance(row.get("dependencies"), (list, tuple)):
                     raise DoctorFailure("Priority or dependency evidence is missing")
             return CheckEvidence.passed()
-        return self._require(value, WorkManagementEvidence, value.project_reachable, value.lifecycle_mapping_complete, value.priority_readable, value.dependencies_readable, value.projection_capability) if isinstance(value, WorkManagementEvidence) else self._require(value, WorkManagementEvidence, False)
+        raise DoctorFailure("recorded Project evidence is unavailable")
 
     def _source_control(self) -> CheckEvidence:
         value = self._dependencies.source_control()
@@ -191,7 +165,7 @@ class InstallationDoctor:
             if value.get("repository") != self._dependencies.profile.repository or not isinstance(value.get("baseline"), str) or len(value["baseline"]) != 40 or not isinstance(permissions, tuple) or "contents:write" not in permissions:
                 raise DoctorFailure("repository, baseline, or publication permission cannot be read back")
             return CheckEvidence.passed()
-        return self._require(value, SourceControlEvidence, value.repository_reachable, value.baseline_resolvable, value.candidate_publication_capable) if isinstance(value, SourceControlEvidence) else self._require(value, SourceControlEvidence, False)
+        raise DoctorFailure("source-control evidence is unavailable")
 
     def _provider(self) -> CheckEvidence:
         value = self._dependencies.provider()
@@ -201,18 +175,17 @@ class InstallationDoctor:
             if not isinstance(value.get("name"), str) or not value["name"] or not isinstance(value.get("version"), str) or not value["version"] or not isinstance(capabilities, tuple) or not required.issubset(capabilities) or value.get("authenticated") is not True:
                 raise DoctorFailure("provider readiness or enforceable budget evidence is incomplete")
             return CheckEvidence.passed()
-        return self._require(value, ProviderEvidence, value.present, value.version_reported, value.capabilities_advertised, value.budget_enforceable, value.authenticated) if isinstance(value, ProviderEvidence) else self._require(value, ProviderEvidence, False)
+        raise DoctorFailure("provider evidence is unavailable")
 
     def _transport(self) -> CheckEvidence:
         value = self._dependencies.transport()
         if isinstance(value, Mapping):
             body, signature, route = value.get("body"), value.get("signature"), value.get("route")
             secret = self._dependencies.secrets.resolve(self._dependencies.profile.webhook_secret_reference)
-            expected = "sha256=" + hmac.new(secret, body, sha256).hexdigest() if isinstance(body, bytes) else ""
-            if not isinstance(route, str) or not route or not isinstance(body, bytes) or not isinstance(signature, str) or not hmac.compare_digest(expected, signature):
+            if not isinstance(route, str) or not route or not isinstance(body, bytes) or not isinstance(signature, str) or not signature_valid(secret, body, signature):
                 raise DoctorFailure("webhook route or signature evidence is invalid")
             return CheckEvidence.passed()
-        return self._require(value, TransportEvidence, value.route_configured, value.secret_configured, value.signature_verified) if isinstance(value, TransportEvidence) else self._require(value, TransportEvidence, False)
+        raise DoctorFailure("transport evidence is unavailable")
 
     def _persistence(self) -> CheckEvidence:
         value = self._dependencies.persistence()
@@ -225,11 +198,36 @@ class InstallationDoctor:
             if current_version != 2 or migration is not None:
                 raise DoctorFailure("persistence schema is incompatible or unsettled")
             return CheckEvidence.passed()
-        return self._require(value, PersistenceEvidence, value.reachable, value.schema_compatible, value.migrations_settled) if isinstance(value, PersistenceEvidence) else self._require(value, PersistenceEvidence, False)
+        raise DoctorFailure("persistence evidence is unavailable")
 
     def _execution(self) -> CheckEvidence:
+        """Derive execution capability from the filesystem and negotiated capability.
+
+        Nothing here creates a worktree or starts a process: the workspace root
+        is stat-ed, the worktree inventory is read back, and process control is
+        established by the provider advertising the dimensions it can enforce.
+        """
         value = self._dependencies.execution()
-        return self._require(value, ExecutionEvidence, value.workspace_writable, value.worktree_available, value.process_control_available) if isinstance(value, ExecutionEvidence) else self._require(value, ExecutionEvidence, False)
+        if not isinstance(value, Mapping):
+            raise DoctorFailure("execution evidence is unavailable")
+        root = value.get("workspace_root")
+        if not isinstance(root, Path) or not root.is_dir():
+            raise DoctorFailure("workspace root is absent or is not a directory")
+        if not os.access(root, os.W_OK | os.X_OK):
+            raise DoctorFailure("workspace root is not writable")
+        manager = value.get("workspace_manager")
+        if not callable(getattr(manager, "allocate", None)) or not callable(getattr(manager, "cleanup", None)):
+            raise DoctorFailure("no workspace manager can create a Git worktree")
+        inventory = value.get("git_worktrees")
+        if not isinstance(inventory, tuple) or not inventory or not all(isinstance(entry, Path) and entry.is_dir() for entry in inventory):
+            raise DoctorFailure("Git worktree inventory could not be read back")
+        dimensions = getattr(value.get("worker_capabilities"), "enforceable_dimensions", None)
+        if not isinstance(dimensions, frozenset) or not {"wall-clock", "cancellation"} <= dimensions:
+            raise DoctorFailure("worker provider does not negotiate process control")
+        executable = value.get("worker_executable")
+        if not isinstance(executable, Path) or not executable.is_file() or not os.access(executable, os.X_OK):
+            raise DoctorFailure("worker executable is absent or not executable")
+        return CheckEvidence.passed()
 
 
 class DoctorService:
