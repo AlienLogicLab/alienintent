@@ -11,9 +11,10 @@
   "8",
   "9",
   "10",
-  "11"
+  "11",
+  "12"
  ],
- "current_phase": "12",
+ "current_phase": "13",
  "program": "post-wave1-to-wave2",
  "tasks": {
   "POSTW1-AGENTREADY-004": {
@@ -54,6 +55,26 @@
    "task_id": "POSTW1-AGENTREADY-004",
    "title": "Agent-Ready Outcome Completeness Audit",
    "updated_at": "2026-09-21T19:46:50.244813+00:00"
+  },
+  "POSTW1-BIU-012": {
+   "artifact_refs": [
+    "docs/evidence/wave2-candidate-bius.json",
+    "docs/evidence/wave2-candidate-bius.md"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-21T22:01:20.646876+00:00",
+   "critical_path": null,
+   "phase": "12",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "PASS",
+   "risk_class": "HIGH",
+   "routing": null,
+   "status": "DONE",
+   "task_id": "POSTW1-BIU-012",
+   "title": "Wave 2 BIU Decomposition",
+   "updated_at": "2026-09-21T22:08:26.503762+00:00"
   },
   "POSTW1-BOOTSTRAP-006": {
    "artifact_refs": [
@@ -660,5 +681,5 @@
    "updated_at": "2026-09-21T21:43:57.339548+00:00"
   }
  },
- "updated_at": "2026-09-21T21:59:32.437884+00:00"
+ "updated_at": "2026-09-21T22:08:26.518272+00:00"
 }
