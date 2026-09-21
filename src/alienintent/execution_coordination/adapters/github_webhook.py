@@ -9,30 +9,29 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from threading import Thread
 from typing import Callable, Iterator
 
+from alienintent.execution_coordination.domain.github_delivery import DeliveryRejected, DeliveryReference, delivery_reference
 from alienintent.execution_coordination.domain.webhook_authenticity import signature_valid as raw_body_signature_valid
 from alienintent.execution_coordination.ports.event_ingress import EventIngress, IngressReceipt, IngressRejected
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, Receipt, ReservationRejected, VersionConflict
 
 
+RESIDENT_INGRESS_MARKER = b"alienintent-resident-ingress"
+
+
 class GitHubWebhookIngress(EventIngress):
-    def __init__(self, profile: str, repository: str, secret: bytes, store: OperationalStore, notify: Callable[[str], None]) -> None:
+    def __init__(self, profile: str, repository: str, secret: bytes, store: OperationalStore, notify: Callable[[str], None], project_reference: str | None = None) -> None:
         self._profile, self._repository, self._secret, self._store, self._notify = profile, repository, secret, store, notify
+        self._project_reference = project_reference
 
     def receive(self, delivery_id: str, category: str, authenticity: str, raw_body: bytes) -> IngressReceipt:
         if not self.signature_valid(self._secret, raw_body, authenticity):
             raise IngressRejected("invalid raw-body signature")
         try:
             payload = json.loads(raw_body)
-            work = payload.get("project_item", {}).get("id")
-            version = payload.get("project_item", {}).get("version", 0)
-        except (AttributeError, UnicodeDecodeError, json.JSONDecodeError) as error:
+        except (UnicodeDecodeError, json.JSONDecodeError) as error:
             raise IngressRejected("unsupported payload") from error
-        if not isinstance(work, str) or not work or not isinstance(version, int):
-            raise IngressRejected("ambiguous profile or work reference")
-        repository_ref = payload.get("repository")
-        repository = repository_ref.get("full_name") if isinstance(repository_ref, dict) else None
-        if repository != self._repository:
-            raise IngressRejected("ambiguous profile or work reference")
+        reference = self._admissible(payload, category)
+        work, version = reference.work, reference.version
         notification = self._notification(payload, category, work)
         prior = self._store.receipt(self._profile, delivery_id)
         if prior is not None:
@@ -52,6 +51,30 @@ class GitHubWebhookIngress(EventIngress):
         self._deliver(effect_id, notification)
         return self._ingress_receipt(delivery_id, Receipt(delivery_id, aggregate, version, "applied") if fresh else receipt)
 
+    def _admissible(self, payload: object, category: str) -> DeliveryReference:
+        """Admit only deliveries this profile owns, at the boundary each one carries.
+
+        A repository-bearing delivery is judged against the repository the
+        installation is scoped to. A `projects_v2_item` delivery names no
+        repository, so the configured Project identity is the only boundary it
+        can be judged against — and `organization_projects` is organization
+        wide, so this comparison is the control that keeps a foreign Project's
+        delivery out. It is configuration-enforced, not token-enforced.
+        """
+        try:
+            reference = delivery_reference(payload, category)
+        except DeliveryRejected as error:
+            raise IngressRejected(str(error)) from error
+        if reference.repository is not None:
+            if reference.repository != self._repository:
+                raise IngressRejected("ambiguous profile or work reference")
+            return reference
+        if reference.project is None or self._project_reference is None:
+            raise IngressRejected("ambiguous profile or work reference")
+        if reference.project != self._project_reference:
+            raise IngressRejected("delivery targets a project outside this profile")
+        return reference
+
     @staticmethod
     def signature_valid(secret: bytes, raw_body: bytes, authenticity: str) -> bool:
         """Exercise the production raw-byte signature rule without ingress effects."""
@@ -60,7 +83,9 @@ class GitHubWebhookIngress(EventIngress):
     def _notification(self, payload: object, category: str, work: str) -> str:
         if isinstance(payload, dict) and payload.get("execution_field_edit") is True:
             return f"downstream-drift:{work}"
-        if category in {"projects_v2_item", "issues", "issue_dependency"}:
+        # `issue_comment` is one of the two events this installation subscribes to:
+        # a comment on the Issue that carries a BIU is an upstream product change.
+        if category in {"projects_v2_item", "issues", "issue_comment", "issue_dependency"}:
             return f"upstream-product-change:{work}"
         if category == "release_command":
             return f"explicit-release-command:{work}"
@@ -84,8 +109,16 @@ class GitHubWebhookIngress(EventIngress):
 
 
 @contextmanager
-def serve_webhook(ingress: GitHubWebhookIngress) -> Iterator[str]:
+def serve_webhook(ingress: GitHubWebhookIngress, address: str = "127.0.0.1", port: int = 0) -> Iterator[str]:
+    """Bind the resident ingress; an ephemeral port keeps offline tests isolated."""
     class Handler(BaseHTTPRequestHandler):
+        def do_GET(self) -> None:  # noqa: N802
+            """Read-only liveness for the doctor transport probe; admits nothing."""
+            self.send_response(200)
+            self.send_header("Content-Type", "text/plain")
+            self.end_headers()
+            self.wfile.write(RESIDENT_INGRESS_MARKER)
+
         def do_POST(self) -> None:  # noqa: N802
             body = self.rfile.read(int(self.headers.get("Content-Length", "0")))
             try:
@@ -96,11 +129,11 @@ def serve_webhook(ingress: GitHubWebhookIngress) -> Iterator[str]:
                 self.send_response(202)
             self.end_headers()
         def log_message(self, format: str, *args: object) -> None: pass
-    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    server = ThreadingHTTPServer((address, port), Handler)
     thread = Thread(target=server.serve_forever, daemon=True)
     thread.start()
     try:
-        yield f"http://127.0.0.1:{server.server_port}/webhook"
+        yield f"http://{server.server_address[0]}:{server.server_port}/webhook"
     finally:
         server.shutdown()
         thread.join()

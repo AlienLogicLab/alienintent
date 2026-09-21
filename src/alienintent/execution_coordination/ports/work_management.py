@@ -7,6 +7,7 @@ from typing import Protocol
 
 from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.execution_coordination.domain.escalation import HumanDecisionRequired
+from alienintent.execution_coordination.ports.project_directory import ProjectSchema
 
 
 class WorkRejected(ValueError):
@@ -41,6 +42,7 @@ class ReadyWorkItem:
 
 
 class WorkManagement(Protocol):
+    def resolve_project(self) -> ProjectSchema: ...
     def import_ready_snapshot(self) -> tuple[ReadyWorkItem, ...]: ...
     def propose_release(self, item: ReadyWorkItem) -> None: ...
     def project_execution_state(self, identity: str, state: str, revision: int = 0) -> ProjectionReceipt: ...

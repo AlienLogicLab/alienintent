@@ -1,0 +1,70 @@
+{
+ "ok": true,
+ "checks": [
+  {
+   "check": "stale_projection_fence",
+   "ok": true,
+   "detail": "test_the_stale_projection_fence_still_refuses_a_superseded_revision: exit 0 with the guard, exit 1 with the guard removed from github_work_management.py"
+  },
+  {
+   "check": "projection_read_back_confirmation",
+   "ok": true,
+   "detail": "test_a_projection_the_project_did_not_apply_is_never_reported_as_confirmed: exit 0 with the guard, exit 1 with the guard removed from github_projects_v2.py"
+  },
+  {
+   "check": "project_identity_resolution",
+   "ok": true,
+   "detail": "test_an_answer_naming_another_project_is_refused_instead_of_being_used: exit 0 with the guard, exit 1 with the guard removed from project_identity.py"
+  },
+  {
+   "check": "project_field_identity_comparison",
+   "ok": true,
+   "detail": "test_a_project_answering_with_a_different_field_identity_is_refused: exit 0 with the guard, exit 1 with the guard removed from github_projects_v2.py"
+  },
+  {
+   "check": "webhook_raw_body_signature",
+   "ok": true,
+   "detail": "test_a_delivery_signed_with_a_different_secret_is_rejected: exit 0 with the guard, exit 1 with the guard removed from github_webhook.py"
+  },
+  {
+   "check": "foreign_project_delivery_refusal",
+   "ok": true,
+   "detail": "test_a_delivery_for_another_project_is_refused_even_though_the_token_could_reach_it: exit 0 with the guard, exit 1 with the guard removed from github_webhook.py"
+  },
+  {
+   "check": "exact_least_privilege",
+   "ok": true,
+   "detail": "test_an_extra_a_missing_and_a_read_only_contents_grant_each_fail_the_check: exit 0 with the guard, exit 1 with the guard removed from app_credentials.py"
+  },
+  {
+   "check": "repository_scope_enforcement",
+   "ok": true,
+   "detail": "test_repository_scope_drift_is_reported_rather_than_tolerated: exit 0 with the guard, exit 1 with the guard removed from app_credentials.py"
+  },
+  {
+   "check": "installation_token_staleness",
+   "ok": true,
+   "detail": "test_expiry_inside_the_refresh_margin_is_already_stale: exit 0 with the guard, exit 1 with the guard removed from app_credentials.py"
+  },
+  {
+   "check": "credential_reference_fails_closed",
+   "ok": true,
+   "detail": "test_unusable_credential_material_fails_closed_before_any_live_call: exit 0 with the guard, exit 1 with the guard removed from installation_credentials.py"
+  },
+  {
+   "check": "bearer_material_redaction",
+   "ok": true,
+   "detail": "test_installation_token_representation_never_carries_the_bearer_material: exit 0 with the guard, exit 1 with the guard removed from app_credentials.py"
+  },
+  {
+   "check": "resident_ingress_marker",
+   "ok": true,
+   "detail": "test_the_transport_probe_fails_when_the_route_answers_from_another_origin: exit 0 with the guard, exit 1 with the guard removed from doctor_probes.py"
+  },
+  {
+   "check": "app_assertion_signature",
+   "ok": true,
+   "detail": "test_signature_verifies_against_the_public_numbers_of_the_signing_key: exit 0 with the guard, exit 1 with the guard removed from app_jwt.py"
+  }
+ ]
+}
