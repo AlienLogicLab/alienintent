@@ -2,212 +2,274 @@
   "schema_version": "1.0",
   "biu_id": "PY-09",
   "derived_from": "docs/evidence/execution-trajectories/PY-09.jsonl",
-  "issue_number": 57,
-  "title": "Doctor and pre-autonomy validation",
-  "requirements": [
-    "SF-REQ-038 (primary)"
+  "derivation_scope": "reconciliation == wave1-terminal; historical events are explicitly superseded for aggregation",
+  "source_schema_version": "1.0",
+  "evidence_refs": [
+    "https://github.com/AlienLogicLab/alienintent/issues/57",
+    "https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5755009604",
+    "https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5755058363",
+    "docs/work-units/python/PY-09.md",
+    "docs/evidence/wave1-source-observations.json"
   ],
   "extraction_status": {
-    "value": "IN_FLIGHT",
-    "captured_at": "2026-09-21T02:45:00Z",
-    "note": "PY-09 is ACTIVE. Issue #57 OPEN, Project Status IMPLEMENT. Three verifier rejections; repair cycle 4 was interrupted by provider capacity exhaustion and restarted on a different provider adapter under Founder authorization; the continuation producer was still running at the boundary. Every terminal measure below is UNKNOWN, not zero."
+    "value": "TERMINAL",
+    "captured_at": "2026-09-21T14:04:28.291848+00:00"
   },
-  "agent_ready": {
-    "disposition": "READY",
-    "owner_clarifications": 0,
-    "expected_rework_locality": "LOW",
-    "assessment_baseline": "2c179e5",
-    "material_risk_carried": "The verification harness must be established before broad repair work, with discriminating proof for changed paths."
-  },
-  "release_baseline": "2c179e5e25ddefffe11690046948a4bc53e8e2a3",
-  "accepted_candidate": "UNKNOWN",
-  "merge_commit": "UNKNOWN",
   "first_pass_accepted": false,
-  "producer_attempts": {
-    "value": 3,
-    "definition": "IMPLEMENT invocations that published a candidate up to the capture boundary; a fourth producer invocation was running and is not counted"
-  },
-  "closure_producer_invocations": {
-    "value": 0,
-    "scope": "no ACCEPT has occurred, so no closure invocation exists yet"
-  },
-  "verifier_cycles": {
-    "value": 3,
-    "scope": "up to the capture boundary"
-  },
-  "repair_cycles": {
-    "value": 3,
-    "scope": "up to the capture boundary; a fourth was in progress"
-  },
-  "return_to_implement_count": {
-    "value": 3,
-    "scope": "up to the capture boundary"
-  },
-  "blocking_findings_count": {
-    "value": 12,
-    "definition": "verifier-headed blocking findings: 5 + 2 + 5, up to the capture boundary"
-  },
-  "blocking_findings_by_cycle": [
+  "verifier_cycles": 4,
+  "verifier_rejections": 3,
+  "repair_cycles": 3,
+  "execution_cycles": 4,
+  "return_to_implement_count": 3,
+  "repair_finding_groups_by_verdict": [
     5,
     2,
-    5
+    5,
+    0
   ],
-  "findings_by_class": {
-    "EVIDENCE_PROOF_DEFECT": 8,
-    "BEHAVIORAL_DEFECT": 4,
-    "note": "evidence-local classification up to the capture boundary; not v1 schema authority"
+  "repair_finding_groups_definition": "Report-local outstanding acceptance/scope groups; not all observations or unique defects. See per-report definitions in repair dataset.",
+  "unique_findings": "UNKNOWN",
+  "accepted_candidate": "24cdd64f0dc565d537052cedca8c3341503359b1",
+  "merge_commit": "85b606037e144e977c1bc1f7b0aa795d97e19d83",
+  "agent_ready": {
+    "disposition": "READY",
+    "expected_rework_locality": "LOW"
   },
-  "candidate_added_lines_by_cycle": {
-    "value": [
-      286,
-      236,
-      "UNKNOWN"
-    ],
-    "definition": "added lines against the candidate's own parent, from Git; cycle 3's producer-scope figure is reported by the verifier per file rather than as a single total"
+  "final_verdict": "ACCEPT",
+  "landed": true,
+  "done": true,
+  "done_at": "2026-09-21T03:38:22.332Z",
+  "done_signal_at": "2026-09-21T03:38:15Z",
+  "issue_closed_at": "2026-09-21T03:40:19Z",
+  "elapsed_to_done_seconds": {
+    "value": 9116.332,
+    "definition": "release authorization comment to dispatcher DONE completedAt"
   },
-  "authority_interruptions": {
-    "value": 1,
-    "definition": "no FOUNDER_EXCEPTION was raised by a worker; the one interruption is the operator decision the coordinator declared necessary after the provider-capacity failure"
-  },
-  "human_decisions_required": {
-    "value": 1,
-    "definition": "a genuine human decision: which provider adapter the PY-09 PRODUCER runs on after quota exhaustion. Changing a worker's provider is a profile change with budget implications under SWF-09 and is explicitly not a coordinator decision. This is the FIRST genuine human decision required by any BIU in PY-05..PY-09."
-  },
-  "human_attention_blocked_seconds": {
-    "value": 532,
-    "definition": "interrupted invocation end 02:12:46Z to the recovery authorization comment 02:21:38Z"
-  },
-  "liveness_incidents": {
-    "value": 0,
-    "scope": "coordinator-liveness.jsonl records no LIVENESS_GAP for issue 57 up to the capture boundary"
-  },
-  "operator_interventions": {
-    "value": 0,
-    "scope": "up to the capture boundary"
-  },
-  "attention_items": {
-    "value": 3,
-    "definition": "one repeated-rejection threshold item at 3 rejections plus two DURABLE_RESULT_MISSING items, both carrying requires_model_judgment=true"
-  },
-  "coordinator_convergence_assessments": {
-    "value": 1,
-    "definition": "posted after the third rejection"
-  },
-  "liveness_suppressions": {
-    "value": 1,
-    "definition": "recovery deliberately held under SWF-29 rather than re-emitted, because relaunching would hit the same quota wall every grace period"
-  },
-  "candidate_custody_failures": {
-    "value": 0,
-    "scope": "three published candidates; the verifier fetched each from origin into a fresh worktree and confirmed the read-back SHA matched the published identity"
-  },
-  "architecture_violations": {
-    "value": 0,
-    "scope": "architecture fitness PASS reproduced by the verifier at cycle 3; cycles 1 and 2 did not report a fitness run"
-  },
-  "proof_regression_count": {
-    "value": 0,
-    "scope": "up to the capture boundary; each rejection opens with an explicit 'closed since the last cycle, do not rewrite' section and none reports a regression"
-  },
-  "behavioral_regression_count": {
-    "value": 0,
-    "scope": "up to the capture boundary"
-  },
-  "verification_first_sequencing": {
-    "rule_present_before_execution": true,
-    "carried_in": [
-      "the release-authorization comment",
-      "docs/work-units/python/PY-09.md",
-      "docs/work-units/python/PY-09.assessment.json material_risks"
-    ],
-    "verifier_applied_step_2_negative_control": true,
-    "negative_control": "delete the validation body of _require so all six delegated checks unconditionally PASS, then re-run the suite",
-    "negative_control_result_by_cycle": [
-      "NOT_APPLIED",
-      "0 tests red of 183",
-      "0 tests red of 189"
-    ],
-    "producer_sequenced_verification_first": false,
-    "note": "The rule was present before execution and the verifier turned it into a standing, repeated mutation control. The producer's cycle-1 and cycle-2 candidates still widened implementation ahead of the harness; cycle 3 is the first in which any check gained discriminating coverage (six of eight, verifier-confirmed by mutation)."
-  },
-  "proven_red_evidence": {
-    "cycle_3": "verifier mutation-tested six checks individually; each made unconditionally passing produced 1-2 failing tests. The aggregate _require gutting still produced zero."
-  },
-  "total_elapsed_seconds": {
-    "value": 4512,
-    "definition": "release comment 01:06:26Z to the cycle-4 recovery authorization 02:21:38Z, the last durable event before the capture boundary. NOT time to DONE, which is UNKNOWN."
-  },
-  "implementation_elapsed_seconds": {
-    "value": 1913,
-    "definition": "sum of the three completed candidate-producing PRODUCER invocation durations; excludes the running fourth"
-  },
-  "verification_elapsed_seconds": {
-    "value": 1758,
-    "definition": "sum of the three VERIFIER invocation durations"
-  },
-  "closure_elapsed_seconds": "NOT_APPLICABLE",
-  "elapsed_to_acceptance_seconds": "UNKNOWN",
-  "elapsed_to_done_seconds": "UNKNOWN",
-  "test_count_at_landing": "UNKNOWN",
-  "test_count_by_cycle": [
-    173,
-    183,
-    189
-  ],
-  "node_suite": {
-    "observed_by_verifier": "exit 0 at every cycle"
-  },
-  "provider_capacity_failures": {
-    "value": 1,
-    "definition": "PRODUCER invocation e84d12a0 died at 02:12:46Z after approximately 350 s when the provider returned turn.failed on a usage limit. No result marker was posted; the dispatcher recorded DURABLE_RESULT_MISSING."
-  },
-  "provider_capacity_wait_seconds": {
-    "status": "UNKNOWN",
-    "scope": "the quota reset was stated as roughly nine hours away; the recovery took a different provider instead, so no wait was served"
-  },
-  "known_provider_model": {
-    "status": "PARTIALLY_OBSERVED",
-    "scope": "adapter identity only, stated by the coordinator during the capacity incident; no model identity and no per-invocation provider field exists",
-    "producer_adapter": "codex, provider-default funding",
-    "verifier_adapter": "claude, separate subscription",
-    "recovery_producer_adapter": "claude, Founder-authorized for this PY-09 recovery only",
-    "note": "This is the only point in PY-05..PY-09 where actor provider identity becomes durable. Applying the same assignment to PY-05..PY-08 would be inference, and those records keep it UNKNOWN."
-  },
+  "test_count_at_landing": 209,
   "token_usage": "UNKNOWN",
   "cost": "UNKNOWN",
-  "final_verdict": "UNKNOWN",
-  "landed": false,
-  "done": false,
-  "repair_mode": {
-    "value": "VERIFICATION_MISSING",
-    "basis": "all three rejections rest on the same cause: implementation exists and the suite is green, but the changed paths carry no coverage that can go red. Blocking findings did not fall (5 -> 2 -> 5) while the test count rose 173 -> 183 -> 189. The coordinator's cycle-3 assessment states the same conclusion independently. Cycle 4 was additionally PROVIDER_BLOCKED for 532 s. This is the classification the trajectory supports at the capture boundary; it is not a prediction of the outcome."
-  },
-  "lesson_propagation_to_producer": {
-    "value": "APPLIED_AT_CYCLE_3",
-    "definition": "SWF-23 \u00a74b bound the coordinator and the verifier from release. The coordinator's cycle-3 assessment is the first direction that states the method as a PRODUCER obligation: 'for every test you add or rely on, delete or neuter the code it covers and confirm the suite goes red - run that check yourself before publishing'. Whether cycle 4 honours it is UNKNOWN at the boundary."
-  },
+  "founder_exception_markers": 0,
   "unknown_metrics": [
-    "final verdict",
-    "accepted candidate",
-    "landing SHA",
-    "DONE timestamp",
-    "total repair cycles",
-    "elapsed time to acceptance",
-    "elapsed time to DONE",
-    "test count at landing",
-    "model identity for every invocation",
-    "token usage, including the tokens consumed by the invocation that exhausted the quota",
-    "monetary cost",
-    "outcome of the cycle-4 continuation producer"
+    "end-to-end tokens",
+    "end-to-end cost",
+    "unique defects across reports",
+    "mechanical VERIFY versus qualitative REVIEW attribution",
+    "complete per-invocation model attribution"
   ],
-  "evidence_refs": [
-    "docs/evidence/execution-trajectories/PY-09.jsonl",
-    "https://github.com/AlienLogicLab/alienintent/issues/57",
-    "docs/work-units/python/PY-09.assessment.json",
-    "docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md#4b",
-    "docs/decisions/2026-09-20-liveness-reconciliation.md",
-    "docs/decisions/2026-09-20-candidate-worktree-retention.md",
-    "file:~/.local/state/alienintent/state.json#resources",
-    "file:~/.local/state/alienintent/coordinator-attention.jsonl"
-  ]
+  "superseded_measurement": {
+    "schema_version": "1.0",
+    "biu_id": "PY-09",
+    "derived_from": "docs/evidence/execution-trajectories/PY-09.jsonl",
+    "issue_number": 57,
+    "title": "Doctor and pre-autonomy validation",
+    "requirements": [
+      "SF-REQ-038 (primary)"
+    ],
+    "extraction_status": {
+      "value": "IN_FLIGHT",
+      "captured_at": "2026-09-21T02:45:00Z",
+      "note": "PY-09 is ACTIVE. Issue #57 OPEN, Project Status IMPLEMENT. Three verifier rejections; repair cycle 4 was interrupted by provider capacity exhaustion and restarted on a different provider adapter under Founder authorization; the continuation producer was still running at the boundary. Every terminal measure below is UNKNOWN, not zero."
+    },
+    "agent_ready": {
+      "disposition": "READY",
+      "owner_clarifications": 0,
+      "expected_rework_locality": "LOW",
+      "assessment_baseline": "2c179e5",
+      "material_risk_carried": "The verification harness must be established before broad repair work, with discriminating proof for changed paths."
+    },
+    "release_baseline": "2c179e5e25ddefffe11690046948a4bc53e8e2a3",
+    "accepted_candidate": "UNKNOWN",
+    "merge_commit": "UNKNOWN",
+    "first_pass_accepted": false,
+    "producer_attempts": {
+      "value": 3,
+      "definition": "IMPLEMENT invocations that published a candidate up to the capture boundary; a fourth producer invocation was running and is not counted"
+    },
+    "closure_producer_invocations": {
+      "value": 0,
+      "scope": "no ACCEPT has occurred, so no closure invocation exists yet"
+    },
+    "verifier_cycles": {
+      "value": 3,
+      "scope": "up to the capture boundary"
+    },
+    "repair_cycles": {
+      "value": 3,
+      "scope": "up to the capture boundary; a fourth was in progress"
+    },
+    "return_to_implement_count": {
+      "value": 3,
+      "scope": "up to the capture boundary"
+    },
+    "blocking_findings_count": {
+      "value": 12,
+      "definition": "verifier-headed blocking findings: 5 + 2 + 5, up to the capture boundary"
+    },
+    "blocking_findings_by_cycle": [
+      5,
+      2,
+      5
+    ],
+    "findings_by_class": {
+      "EVIDENCE_PROOF_DEFECT": 8,
+      "BEHAVIORAL_DEFECT": 4,
+      "note": "evidence-local classification up to the capture boundary; not v1 schema authority"
+    },
+    "candidate_added_lines_by_cycle": {
+      "value": [
+        286,
+        236,
+        "UNKNOWN"
+      ],
+      "definition": "added lines against the candidate's own parent, from Git; cycle 3's producer-scope figure is reported by the verifier per file rather than as a single total"
+    },
+    "authority_interruptions": {
+      "value": 1,
+      "definition": "no FOUNDER_EXCEPTION was raised by a worker; the one interruption is the operator decision the coordinator declared necessary after the provider-capacity failure"
+    },
+    "human_decisions_required": {
+      "value": 1,
+      "definition": "a genuine human decision: which provider adapter the PY-09 PRODUCER runs on after quota exhaustion. Changing a worker's provider is a profile change with budget implications under SWF-09 and is explicitly not a coordinator decision. This is the FIRST genuine human decision required by any BIU in PY-05..PY-09."
+    },
+    "human_attention_blocked_seconds": {
+      "value": 532,
+      "definition": "interrupted invocation end 02:12:46Z to the recovery authorization comment 02:21:38Z"
+    },
+    "liveness_incidents": {
+      "value": 0,
+      "scope": "coordinator-liveness.jsonl records no LIVENESS_GAP for issue 57 up to the capture boundary"
+    },
+    "operator_interventions": {
+      "value": 0,
+      "scope": "up to the capture boundary"
+    },
+    "attention_items": {
+      "value": 3,
+      "definition": "one repeated-rejection threshold item at 3 rejections plus two DURABLE_RESULT_MISSING items, both carrying requires_model_judgment=true"
+    },
+    "coordinator_convergence_assessments": {
+      "value": 1,
+      "definition": "posted after the third rejection"
+    },
+    "liveness_suppressions": {
+      "value": 1,
+      "definition": "recovery deliberately held under SWF-29 rather than re-emitted, because relaunching would hit the same quota wall every grace period"
+    },
+    "candidate_custody_failures": {
+      "value": 0,
+      "scope": "three published candidates; the verifier fetched each from origin into a fresh worktree and confirmed the read-back SHA matched the published identity"
+    },
+    "architecture_violations": {
+      "value": 0,
+      "scope": "architecture fitness PASS reproduced by the verifier at cycle 3; cycles 1 and 2 did not report a fitness run"
+    },
+    "proof_regression_count": {
+      "value": 0,
+      "scope": "up to the capture boundary; each rejection opens with an explicit 'closed since the last cycle, do not rewrite' section and none reports a regression"
+    },
+    "behavioral_regression_count": {
+      "value": 0,
+      "scope": "up to the capture boundary"
+    },
+    "verification_first_sequencing": {
+      "rule_present_before_execution": true,
+      "carried_in": [
+        "the release-authorization comment",
+        "docs/work-units/python/PY-09.md",
+        "docs/work-units/python/PY-09.assessment.json material_risks"
+      ],
+      "verifier_applied_step_2_negative_control": true,
+      "negative_control": "delete the validation body of _require so all six delegated checks unconditionally PASS, then re-run the suite",
+      "negative_control_result_by_cycle": [
+        "NOT_APPLIED",
+        "0 tests red of 183",
+        "0 tests red of 189"
+      ],
+      "producer_sequenced_verification_first": false,
+      "note": "The rule was present before execution and the verifier turned it into a standing, repeated mutation control. The producer's cycle-1 and cycle-2 candidates still widened implementation ahead of the harness; cycle 3 is the first in which any check gained discriminating coverage (six of eight, verifier-confirmed by mutation)."
+    },
+    "proven_red_evidence": {
+      "cycle_3": "verifier mutation-tested six checks individually; each made unconditionally passing produced 1-2 failing tests. The aggregate _require gutting still produced zero."
+    },
+    "total_elapsed_seconds": {
+      "value": 4512,
+      "definition": "release comment 01:06:26Z to the cycle-4 recovery authorization 02:21:38Z, the last durable event before the capture boundary. NOT time to DONE, which is UNKNOWN."
+    },
+    "implementation_elapsed_seconds": {
+      "value": 1913,
+      "definition": "sum of the three completed candidate-producing PRODUCER invocation durations; excludes the running fourth"
+    },
+    "verification_elapsed_seconds": {
+      "value": 1758,
+      "definition": "sum of the three VERIFIER invocation durations"
+    },
+    "closure_elapsed_seconds": "NOT_APPLICABLE",
+    "elapsed_to_acceptance_seconds": "UNKNOWN",
+    "elapsed_to_done_seconds": "UNKNOWN",
+    "test_count_at_landing": "UNKNOWN",
+    "test_count_by_cycle": [
+      173,
+      183,
+      189
+    ],
+    "node_suite": {
+      "observed_by_verifier": "exit 0 at every cycle"
+    },
+    "provider_capacity_failures": {
+      "value": 1,
+      "definition": "PRODUCER invocation e84d12a0 died at 02:12:46Z after approximately 350 s when the provider returned turn.failed on a usage limit. No result marker was posted; the dispatcher recorded DURABLE_RESULT_MISSING."
+    },
+    "provider_capacity_wait_seconds": {
+      "status": "UNKNOWN",
+      "scope": "the quota reset was stated as roughly nine hours away; the recovery took a different provider instead, so no wait was served"
+    },
+    "known_provider_model": {
+      "status": "PARTIALLY_OBSERVED",
+      "scope": "adapter identity only, stated by the coordinator during the capacity incident; no model identity and no per-invocation provider field exists",
+      "producer_adapter": "codex, provider-default funding",
+      "verifier_adapter": "claude, separate subscription",
+      "recovery_producer_adapter": "claude, Founder-authorized for this PY-09 recovery only",
+      "note": "This is the only point in PY-05..PY-09 where actor provider identity becomes durable. Applying the same assignment to PY-05..PY-08 would be inference, and those records keep it UNKNOWN."
+    },
+    "token_usage": "UNKNOWN",
+    "cost": "UNKNOWN",
+    "final_verdict": "UNKNOWN",
+    "landed": false,
+    "done": false,
+    "repair_mode": {
+      "value": "VERIFICATION_MISSING",
+      "basis": "all three rejections rest on the same cause: implementation exists and the suite is green, but the changed paths carry no coverage that can go red. Blocking findings did not fall (5 -> 2 -> 5) while the test count rose 173 -> 183 -> 189. The coordinator's cycle-3 assessment states the same conclusion independently. Cycle 4 was additionally PROVIDER_BLOCKED for 532 s. This is the classification the trajectory supports at the capture boundary; it is not a prediction of the outcome."
+    },
+    "lesson_propagation_to_producer": {
+      "value": "APPLIED_AT_CYCLE_3",
+      "definition": "SWF-23 §4b bound the coordinator and the verifier from release. The coordinator's cycle-3 assessment is the first direction that states the method as a PRODUCER obligation: 'for every test you add or rely on, delete or neuter the code it covers and confirm the suite goes red - run that check yourself before publishing'. Whether cycle 4 honours it is UNKNOWN at the boundary."
+    },
+    "unknown_metrics": [
+      "final verdict",
+      "accepted candidate",
+      "landing SHA",
+      "DONE timestamp",
+      "total repair cycles",
+      "elapsed time to acceptance",
+      "elapsed time to DONE",
+      "test count at landing",
+      "model identity for every invocation",
+      "token usage, including the tokens consumed by the invocation that exhausted the quota",
+      "monetary cost",
+      "outcome of the cycle-4 continuation producer"
+    ],
+    "evidence_refs": [
+      "docs/evidence/execution-trajectories/PY-09.jsonl",
+      "https://github.com/AlienLogicLab/alienintent/issues/57",
+      "docs/work-units/python/PY-09.assessment.json",
+      "docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md#4b",
+      "docs/decisions/2026-09-20-liveness-reconciliation.md",
+      "docs/decisions/2026-09-20-candidate-worktree-retention.md",
+      "file:~/.local/state/alienintent/state.json#resources",
+      "file:~/.local/state/alienintent/coordinator-attention.jsonl"
+    ]
+  },
+  "provider_capacity_failures": 1,
+  "verifier_no_verdict_invocations": 1,
+  "provider_failovers": 1
 }

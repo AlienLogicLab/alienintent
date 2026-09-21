@@ -1,0 +1,727 @@
+{
+  "schema_version": "1.0",
+  "terminal_sha": "10cc81620511af56befbb6140504d1991bb02846",
+  "captured_at": "2026-09-21T14:04:28.291848+00:00",
+  "bius": [
+    {
+      "biu_id": "PY-01",
+      "issue_number": 2,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/2",
+      "title": "PY-01 — Python S0: enforceable architecture skeleton coexisting with Node",
+      "requirements": "UNKNOWN",
+      "requirement_note": "PY-01 is governed by architecture authority; no SF-REQ mapping declared in its contract.",
+      "dependencies": [],
+      "native_blocked_by": [],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7tE2I",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "b07ea94768e794702aa2b6bbc038d764b08ee3ea",
+      "merge_commit": "ab08449a0fac8d25374a80f4361a4023509118b1",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "HIGH"
+      },
+      "verifier_rejections": 2,
+      "verifier_verdicts": 3,
+      "execution_cycles": 3,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": false,
+      "founder_exception_markers": 1,
+      "done_signal_at": "2026-09-19T10:54:46Z",
+      "done_at": "2026-09-19T10:54:51.347Z",
+      "issue_closed_at": "2026-09-19T10:59:10Z",
+      "accepted_at": "2026-09-19T10:35:00Z",
+      "release_record_at": "UNKNOWN",
+      "timing_origin": "2026-09-19T06:23:02.287Z",
+      "timing_origin_definition": "first retained producer allocation; release timestamp UNKNOWN",
+      "release_baseline": "UNKNOWN",
+      "elapsed_to_done_seconds": 16309.06,
+      "test_count_at_landing": 6,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/2",
+        "https://github.com/AlienLogicLab/alienintent/issues/2#issuecomment-5741087648",
+        "https://github.com/AlienLogicLab/alienintent/issues/2#issuecomment-5741232248",
+        "docs/work-units/python/PY-01.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-02",
+      "issue_number": 50,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/50",
+      "title": "PY-02 — Execution domain kernel (pure)",
+      "requirements": [
+        {
+          "id": "SF-REQ-010",
+          "extent": "Primary — the machine-readable contract model"
+        },
+        {
+          "id": "SF-REQ-002",
+          "extent": "Selection policy as a pure function"
+        },
+        {
+          "id": "SF-REQ-003",
+          "extent": "Limit model (global/profile/repository)"
+        },
+        {
+          "id": "SF-REQ-007",
+          "extent": "The `CandidateRef` model and VERIFY-entry guard; retrieval mechanics are PY-04 (local artifact) and PY-06 (source control)"
+        },
+        {
+          "id": "SF-REQ-009",
+          "extent": "Deterministic lifecycle/policy core and its fitness proof"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-01"
+      ],
+      "native_blocked_by": [
+        "PY-01"
+      ],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7x1_0",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "8689771b9fccb9f86c7fdcc2e9d4f571408765f2",
+      "merge_commit": "ab4efe54df752a4d7a35f047054435a24a21ddaf",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "LOW"
+      },
+      "verifier_rejections": 1,
+      "verifier_verdicts": 2,
+      "execution_cycles": 2,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": false,
+      "founder_exception_markers": 1,
+      "done_signal_at": "2026-09-20T03:14:14Z",
+      "done_at": "2026-09-20T03:14:20.229Z",
+      "issue_closed_at": "2026-09-20T03:31:11Z",
+      "accepted_at": "2026-09-20T02:37:28Z",
+      "release_record_at": "UNKNOWN",
+      "timing_origin": "2026-09-20T02:11:07.655Z",
+      "timing_origin_definition": "first retained producer allocation; release timestamp UNKNOWN",
+      "release_baseline": "UNKNOWN",
+      "elapsed_to_done_seconds": 3792.574,
+      "test_count_at_landing": 23,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/50",
+        "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747096363",
+        "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747257998",
+        "docs/work-units/python/PY-02.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-03",
+      "issue_number": 51,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/51",
+      "title": "PY-03 — Durable operational store",
+      "requirements": [
+        {
+          "id": "SF-REQ-008",
+          "extent": "Primary — durable state, once-only effects, recovery"
+        },
+        {
+          "id": "SF-REQ-003",
+          "extent": "Atomic reservations with fencing"
+        },
+        {
+          "id": "SF-REQ-004",
+          "extent": "Durable reservation release that a refill can observe"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-02"
+      ],
+      "native_blocked_by": [
+        "PY-02"
+      ],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7x2BA",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "c3ba58d980aeceafa483d8cc9b8edc4fb4238a5e",
+      "merge_commit": "d8f80e1722848116f2139728fe5f67da3af8dd0b",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "HIGH"
+      },
+      "verifier_rejections": 1,
+      "verifier_verdicts": 2,
+      "execution_cycles": 2,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": false,
+      "founder_exception_markers": 1,
+      "done_signal_at": "2026-09-20T06:23:12Z",
+      "done_at": "2026-09-20T06:23:18.806Z",
+      "issue_closed_at": "2026-09-20T06:27:00Z",
+      "accepted_at": "2026-09-20T04:11:07Z",
+      "release_record_at": "UNKNOWN",
+      "timing_origin": "2026-09-20T03:31:32.507Z",
+      "timing_origin_definition": "first retained producer allocation; release timestamp UNKNOWN",
+      "release_baseline": "UNKNOWN",
+      "elapsed_to_done_seconds": 10306.299,
+      "test_count_at_landing": 40,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/51",
+        "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5747544877",
+        "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5748104520",
+        "docs/work-units/python/PY-03.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-04",
+      "issue_number": 52,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/52",
+      "title": "PY-04 — Offline continuous factory loop (walking skeleton)",
+      "requirements": [
+        {
+          "id": "SF-REQ-001",
+          "extent": "Primary — the control loop, offline; live proof is PY-10"
+        },
+        {
+          "id": "SF-REQ-004",
+          "extent": "Primary"
+        },
+        {
+          "id": "SF-REQ-002",
+          "extent": "Policy applied in the loop"
+        },
+        {
+          "id": "SF-REQ-003",
+          "extent": "Capacity/WIP enforcement in the loop"
+        },
+        {
+          "id": "SF-REQ-005",
+          "extent": "The port shape only; the GitHub adapter is PY-05"
+        },
+        {
+          "id": "SF-REQ-007",
+          "extent": "Contributing — the local-artifact custody path proven under SWF-12; PY-06 remains primary for production/source-control custody"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-03"
+      ],
+      "native_blocked_by": [
+        "PY-03"
+      ],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7x2B4",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "03896f6267e06cd9a52afe4ab63dee32d221c538",
+      "merge_commit": "0170af0b3d995935835c8b7790341f93b5b23eb4",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "LOW"
+      },
+      "verifier_rejections": 9,
+      "verifier_verdicts": 10,
+      "execution_cycles": 10,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": false,
+      "founder_exception_markers": 2,
+      "done_signal_at": "2026-09-20T12:26:19Z",
+      "done_at": "2026-09-20T12:26:25.430Z",
+      "issue_closed_at": "2026-09-20T12:31:12Z",
+      "accepted_at": "2026-09-20T12:19:39Z",
+      "release_record_at": "2026-09-20T06:27:42Z",
+      "timing_origin": "2026-09-20T06:27:42Z",
+      "timing_origin_definition": "release authorization comment",
+      "release_baseline": "UNKNOWN",
+      "elapsed_to_done_seconds": 21523.43,
+      "test_count_at_landing": 65,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/52",
+        "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749754285",
+        "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749787226",
+        "docs/work-units/python/PY-04.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-05",
+      "issue_number": 53,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/53",
+      "title": "PY-05 — GitHub Work Management adapter and webhook ingress",
+      "requirements": [
+        {
+          "id": "SF-REQ-005",
+          "extent": "Primary — port plus first (GitHub Projects) adapter"
+        },
+        {
+          "id": "SF-REQ-001",
+          "extent": "Event-driven freshness of the READY view"
+        },
+        {
+          "id": "SF-REQ-008",
+          "extent": "Ingress custody: durable receipt before acknowledgment"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-03",
+        "PY-04"
+      ],
+      "native_blocked_by": [
+        "PY-03",
+        "PY-04"
+      ],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7x2C4",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "761bc21c5c861317c88d3db16bb7de05425f329b",
+      "merge_commit": "5b617a3efaaa0fd74a02efc4263860e821548c40",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "LOW"
+      },
+      "verifier_rejections": 2,
+      "verifier_verdicts": 3,
+      "execution_cycles": 3,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": false,
+      "founder_exception_markers": 0,
+      "done_signal_at": "2026-09-20T13:40:36Z",
+      "done_at": "2026-09-20T13:40:41.916Z",
+      "issue_closed_at": "2026-09-20T13:43:21Z",
+      "accepted_at": "2026-09-20T13:35:31Z",
+      "release_record_at": "2026-09-20T12:31:38Z",
+      "timing_origin": "2026-09-20T12:31:38Z",
+      "timing_origin_definition": "release authorization comment",
+      "release_baseline": "UNKNOWN",
+      "elapsed_to_done_seconds": 4143.916,
+      "test_count_at_landing": 87,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/53",
+        "https://github.com/AlienLogicLab/alienintent/issues/53#issuecomment-5750136613",
+        "https://github.com/AlienLogicLab/alienintent/issues/53#issuecomment-5750162413",
+        "docs/work-units/python/PY-05.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-06",
+      "issue_number": 54,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/54",
+      "title": "PY-06 — Invocation runtime and candidate custody",
+      "requirements": [
+        {
+          "id": "SF-REQ-007",
+          "extent": "Primary — enforced in the control plane, not worker instructions"
+        },
+        {
+          "id": "SF-REQ-009",
+          "extent": "Capability grants and fail-closed budgets"
+        },
+        {
+          "id": "SF-REQ-003",
+          "extent": "Per-invocation workspace isolation"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-04",
+        "PY-05",
+        "PY-02",
+        "PY-03"
+      ],
+      "native_blocked_by": [
+        "PY-04",
+        "PY-05"
+      ],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7x2D8",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "e660748686ffaf66340e44760dc88c898f35a0ff",
+      "merge_commit": "896c0fe567fd022622500ee56f5d51a4e34032ec",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "MEDIUM"
+      },
+      "verifier_rejections": 4,
+      "verifier_verdicts": 5,
+      "execution_cycles": 5,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": false,
+      "founder_exception_markers": 1,
+      "done_signal_at": "2026-09-20T15:58:54Z",
+      "done_at": "2026-09-20T15:58:59.927Z",
+      "issue_closed_at": "2026-09-20T21:48:03Z",
+      "accepted_at": "2026-09-20T15:52:59Z",
+      "release_record_at": "2026-09-20T13:46:47Z",
+      "timing_origin": "2026-09-20T13:46:47Z",
+      "timing_origin_definition": "release authorization comment",
+      "release_baseline": "UNKNOWN",
+      "elapsed_to_done_seconds": 7932.927,
+      "test_count_at_landing": 110,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/54",
+        "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750872643",
+        "https://github.com/AlienLogicLab/alienintent/issues/54#issuecomment-5750903886",
+        "docs/work-units/python/PY-06.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-07",
+      "issue_number": 55,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/55",
+      "title": "PY-07 — HumanDecisionRequired and Decision Inbox",
+      "requirements": [
+        {
+          "id": "SF-REQ-006",
+          "extent": "Primary"
+        },
+        {
+          "id": "SF-REQ-035",
+          "extent": "Primary — application service and durable decisions; CLI surface is PY-08"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-04",
+        "PY-05"
+      ],
+      "native_blocked_by": [
+        "PY-04",
+        "PY-05"
+      ],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7x2Fc",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "9caaa71f89aeac3fdecd2cc0ef3ad566ca96ebf2",
+      "merge_commit": "946e3cc0b17951f561632f3e6474a715f541302d",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "LOW"
+      },
+      "verifier_rejections": 5,
+      "verifier_verdicts": 6,
+      "execution_cycles": 6,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": false,
+      "founder_exception_markers": 2,
+      "done_signal_at": "2026-09-20T19:58:37Z",
+      "done_at": "2026-09-20T19:58:44.009Z",
+      "issue_closed_at": "2026-09-20T21:48:06Z",
+      "accepted_at": "2026-09-20T19:54:17Z",
+      "release_record_at": "2026-09-20T17:09:57Z",
+      "timing_origin": "2026-09-20T17:09:57Z",
+      "timing_origin_definition": "release authorization comment",
+      "release_baseline": "6c3f8432129892f11d182e713102e63cf0aa9b56",
+      "elapsed_to_done_seconds": 10127.009,
+      "test_count_at_landing": 129,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/55",
+        "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5752257418",
+        "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5752283995",
+        "docs/work-units/python/PY-07.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-08",
+      "issue_number": 56,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/56",
+      "title": "PY-08 — Operator Control Plane CLI (P0 minimum)",
+      "requirements": [
+        {
+          "id": "SF-REQ-034",
+          "extent": "The **P0 minimum** only; the P5 polish scope stays open (Wave 6)"
+        },
+        {
+          "id": "SF-REQ-035",
+          "extent": "Operator surface over the PY-07 service"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-07"
+      ],
+      "native_blocked_by": [
+        "PY-07"
+      ],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7x2Hk",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "b76d639ec8eb8449ed0baf4515c01689d77e68c5",
+      "merge_commit": "2c179e5e25ddefffe11690046948a4bc53e8e2a3",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "MEDIUM"
+      },
+      "verifier_rejections": 6,
+      "verifier_verdicts": 7,
+      "execution_cycles": 7,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": false,
+      "founder_exception_markers": 1,
+      "done_signal_at": "2026-09-21T01:00:34Z",
+      "done_at": "2026-09-21T01:00:41.420Z",
+      "issue_closed_at": "2026-09-21T01:03:00Z",
+      "accepted_at": "2026-09-21T00:53:07Z",
+      "release_record_at": "2026-09-20T21:50:02Z",
+      "timing_origin": "2026-09-20T21:50:02Z",
+      "timing_origin_definition": "release authorization comment",
+      "release_baseline": "946e3cc0b17951f561632f3e6474a715f541302d",
+      "elapsed_to_done_seconds": 11439.42,
+      "test_count_at_landing": 158,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/56",
+        "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5754017466",
+        "https://github.com/AlienLogicLab/alienintent/issues/56#issuecomment-5754059192",
+        "docs/work-units/python/PY-08.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-09",
+      "issue_number": 57,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/57",
+      "title": "PY-09 — Doctor and pre-autonomy validation",
+      "requirements": [
+        {
+          "id": "SF-REQ-038",
+          "extent": "Primary"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-05",
+        "PY-06",
+        "PY-08"
+      ],
+      "native_blocked_by": [
+        "PY-05",
+        "PY-06",
+        "PY-08"
+      ],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7x2Io",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "24cdd64f0dc565d537052cedca8c3341503359b1",
+      "merge_commit": "85b606037e144e977c1bc1f7b0aa795d97e19d83",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "LOW"
+      },
+      "verifier_rejections": 3,
+      "verifier_verdicts": 4,
+      "execution_cycles": 4,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": false,
+      "founder_exception_markers": 0,
+      "done_signal_at": "2026-09-21T03:38:15Z",
+      "done_at": "2026-09-21T03:38:22.332Z",
+      "issue_closed_at": "2026-09-21T03:40:19Z",
+      "accepted_at": "2026-09-21T03:30:36Z",
+      "release_record_at": "2026-09-21T01:06:26Z",
+      "timing_origin": "2026-09-21T01:06:26Z",
+      "timing_origin_definition": "release authorization comment",
+      "release_baseline": "2c179e5e25ddefffe11690046948a4bc53e8e2a3",
+      "elapsed_to_done_seconds": 9116.332,
+      "test_count_at_landing": 209,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/57",
+        "https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5755009604",
+        "https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5755058363",
+        "docs/work-units/python/PY-09.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-09B",
+      "issue_number": 68,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/68",
+      "title": "PY-09B — Live GitHub transport and projection substrate",
+      "requirements": [
+        {
+          "id": "SF-REQ-005",
+          "extent": "The first **live** GitHub adapter behind the existing port"
+        },
+        {
+          "id": "SF-REQ-007",
+          "extent": "Live repository access sufficient for custody against the sandbox"
+        },
+        {
+          "id": "SF-REQ-038",
+          "extent": "The live transport probes `doctor` needs to establish readiness"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-09",
+        "PY-05",
+        "PY-06",
+        "PY-08"
+      ],
+      "native_blocked_by": [],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg748m4",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "3bc361e6ae313285b8364a0f8ececa593c997d86",
+      "merge_commit": "93dd8b1078a26b157df316bd21e8510ea4d86156",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "MEDIUM"
+      },
+      "verifier_rejections": 0,
+      "verifier_verdicts": 1,
+      "execution_cycles": 1,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": true,
+      "founder_exception_markers": 0,
+      "done_signal_at": "2026-09-21T10:34:24Z",
+      "done_at": "2026-09-21T10:34:30.544Z",
+      "issue_closed_at": "2026-09-21T10:36:42Z",
+      "accepted_at": "2026-09-21T10:27:29Z",
+      "release_record_at": "2026-09-21T09:32:44Z",
+      "timing_origin": "2026-09-21T09:32:44Z",
+      "timing_origin_definition": "release authorization comment",
+      "release_baseline": "d3f54ebe120ab435b483b1cf60120b16ae3d706d",
+      "elapsed_to_done_seconds": 3706.544,
+      "test_count_at_landing": 308,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/68",
+        "https://github.com/AlienLogicLab/alienintent/issues/68#issuecomment-5759003341",
+        "https://github.com/AlienLogicLab/alienintent/issues/68#issuecomment-5759083753",
+        "docs/work-units/python/PY-09B.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    },
+    {
+      "biu_id": "PY-10",
+      "issue_number": 58,
+      "issue_url": "https://github.com/AlienLogicLab/alienintent/issues/58",
+      "title": "PY-10 — Wave 1 live proof on the dedicated sandbox",
+      "requirements": [
+        {
+          "id": "SF-REQ-001",
+          "extent": "Live end-to-end proof"
+        },
+        {
+          "id": "SF-REQ-002",
+          "extent": "Live"
+        },
+        {
+          "id": "SF-REQ-003",
+          "extent": "WIP = 1 demonstrated live"
+        },
+        {
+          "id": "SF-REQ-004",
+          "extent": "Live"
+        },
+        {
+          "id": "SF-REQ-005",
+          "extent": "Live against a real GitHub Project"
+        },
+        {
+          "id": "SF-REQ-006",
+          "extent": "Live"
+        },
+        {
+          "id": "SF-REQ-007",
+          "extent": "Live, before VERIFY"
+        },
+        {
+          "id": "SF-REQ-008",
+          "extent": "Live restart mid-run"
+        },
+        {
+          "id": "SF-REQ-009",
+          "extent": "Live"
+        },
+        {
+          "id": "SF-REQ-010",
+          "extent": "Live"
+        },
+        {
+          "id": "SF-REQ-034",
+          "extent": "Operated live"
+        },
+        {
+          "id": "SF-REQ-035",
+          "extent": "Live decision recorded"
+        },
+        {
+          "id": "SF-REQ-038",
+          "extent": "Live gate before start"
+        }
+      ],
+      "requirement_note": "Extent is the contract contribution, not a declaration that the entire Product Requirement is DONE.",
+      "dependencies": [
+        "PY-09B",
+        "PY-05",
+        "PY-06",
+        "PY-08",
+        "PY-09"
+      ],
+      "native_blocked_by": [
+        "PY-05",
+        "PY-06",
+        "PY-08",
+        "PY-09",
+        "PY-09B"
+      ],
+      "project_item": "PVTI_lADOEcrpC84Bj5i_zg7x2K4",
+      "final_lifecycle_state": "DONE",
+      "issue_state": "CLOSED",
+      "accepted_candidate": "04bc54bada9c1e5a0ec3758f05dc9a3c82ab4190",
+      "merge_commit": "10cc81620511af56befbb6140504d1991bb02846",
+      "agent_ready": {
+        "disposition": "READY",
+        "expected_rework_locality": "MEDIUM"
+      },
+      "verifier_rejections": 0,
+      "verifier_verdicts": 1,
+      "execution_cycles": 1,
+      "execution_cycle_definition": "Initial admitted IMPLEMENT plus each verifier-returned repair; same-phase authority recovery/re-emission, capacity failover and no-verdict retry excluded. No ACCEPT-to-IMPLEMENT control marker exists in captured Wave 1 records.",
+      "first_pass_accepted": true,
+      "founder_exception_markers": 0,
+      "done_signal_at": "2026-09-21T12:18:10Z",
+      "done_at": "2026-09-21T12:18:17.618Z",
+      "issue_closed_at": "2026-09-21T12:21:51Z",
+      "accepted_at": "2026-09-21T12:11:25Z",
+      "release_record_at": "2026-09-21T10:44:48Z",
+      "timing_origin": "2026-09-21T10:44:48Z",
+      "timing_origin_definition": "release authorization comment",
+      "release_baseline": "693fef995f03ab3eca43cb74ad5692cdcd69ffcf",
+      "elapsed_to_done_seconds": 5609.618,
+      "test_count_at_landing": 344,
+      "token_usage": "UNKNOWN",
+      "cost": "UNKNOWN",
+      "evidence_refs": [
+        "https://github.com/AlienLogicLab/alienintent/issues/58",
+        "https://github.com/AlienLogicLab/alienintent/issues/58#issuecomment-5760269849",
+        "https://github.com/AlienLogicLab/alienintent/issues/58#issuecomment-5760356977",
+        "docs/work-units/python/PY-10.md",
+        "docs/evidence/wave1-source-observations.json"
+      ]
+    }
+  ],
+  "count_definitions": "Combined verifier verdicts: Wave 1 does not distinguish VERIFY failures from REVIEW discoveries. Cycles exclude same-phase retries. No unique-defect total is derived."
+}

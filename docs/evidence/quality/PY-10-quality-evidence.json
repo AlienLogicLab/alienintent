@@ -1,0 +1,57 @@
+{
+  "schema_version": "1.0",
+  "biu_id": "PY-10",
+  "derived_from": "docs/evidence/execution-trajectories/PY-10.jsonl",
+  "derivation_scope": "reconciliation == wave1-terminal; historical events are explicitly superseded for aggregation",
+  "source_schema_version": "1.0",
+  "evidence_refs": [
+    "https://github.com/AlienLogicLab/alienintent/issues/58",
+    "https://github.com/AlienLogicLab/alienintent/issues/58#issuecomment-5760269849",
+    "https://github.com/AlienLogicLab/alienintent/issues/58#issuecomment-5760356977",
+    "docs/work-units/python/PY-10.md",
+    "docs/evidence/wave1-source-observations.json"
+  ],
+  "extraction_status": {
+    "value": "TERMINAL",
+    "captured_at": "2026-09-21T14:04:28.291848+00:00"
+  },
+  "first_pass_accepted": true,
+  "verifier_cycles": 1,
+  "verifier_rejections": 0,
+  "repair_cycles": 0,
+  "execution_cycles": 1,
+  "return_to_implement_count": 0,
+  "repair_finding_groups_by_verdict": [
+    0
+  ],
+  "repair_finding_groups_definition": "Report-local outstanding acceptance/scope groups; not all observations or unique defects. See per-report definitions in repair dataset.",
+  "unique_findings": "UNKNOWN",
+  "accepted_candidate": "04bc54bada9c1e5a0ec3758f05dc9a3c82ab4190",
+  "merge_commit": "10cc81620511af56befbb6140504d1991bb02846",
+  "agent_ready": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM"
+  },
+  "final_verdict": "ACCEPT",
+  "landed": true,
+  "done": true,
+  "done_at": "2026-09-21T12:18:17.618Z",
+  "done_signal_at": "2026-09-21T12:18:10Z",
+  "issue_closed_at": "2026-09-21T12:21:51Z",
+  "elapsed_to_done_seconds": {
+    "value": 5609.618,
+    "definition": "release authorization comment to dispatcher DONE completedAt"
+  },
+  "test_count_at_landing": 344,
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN",
+  "founder_exception_markers": 0,
+  "unknown_metrics": [
+    "end-to-end tokens",
+    "end-to-end cost",
+    "unique defects across reports",
+    "mechanical VERIFY versus qualitative REVIEW attribution",
+    "complete per-invocation model attribution"
+  ],
+  "superseded_measurement": {}
+}

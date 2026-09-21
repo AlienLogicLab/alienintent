@@ -1,5 +1,8 @@
 # PY-05 through PY-09 — cross-BIU comparison
 
+> **Terminal reconciliation notice — Superseded by:** [Wave 1 Closure Manifest](../wave1-closure-manifest.md) and [evidence reconciliation](../wave1-evidence-reconciliation.md) for terminal counts, timestamps and comparisons. This document is retained as historical observation/interpretation at its original capture boundary; it is not the current Wave 1 aggregate. No historical hypothesis becomes a terminal causal conclusion.
+
+
 Derived from the five Quality Evidence documents in this directory and their trajectories in [`../execution-trajectories/`](../execution-trajectories/). PY-02–PY-04 figures are carried from the existing records for context and are not re-derived here.
 
 > **PY-09 is in flight at the 2026-09-21T02:45Z capture boundary.** Its row is interim. Any trend reading that depends on PY-09's terminal outcome is marked HYPOTHESIS.

@@ -1,1 +1,121 @@
-{"schema_version":"1.0","biu_id":"PY-04","derived_from":"docs/evidence/execution-trajectories/PY-04.jsonl","rejection_class_events":10,"formal_independent_verifier_cycles":9,"producer_self_review_rejection_events":1,"return_to_implement_count":9,"first_pass_accepted":false,"producer_attempts":{"value":10,"definition":"initial producer/self-review safety rejection plus nine formal verification candidates"},"verifier_cycles":9,"repair_cycles":9,"blocking_findings_count":{"value":10,"definition":"rejection-class events; excludes the later mutation-gate finding"},"human_decisions_required":{"value":1,"definition":"genuine missing-authority decision: SWF-22 custody by transfer"},"false_or_escalated_authority_requests":{"value":1,"definition":"initial FOUNDER_EXCEPTION later determined to be unfinished contracted work"},"human_attention_blocked_seconds":{"value":7074,"definition":"genuine SWF-22 authority gap only"},"provider_capacity_failures":"UNKNOWN","return_to_implement_count_note":"nine formal verifier rejections; initial producer/self-review event did not enter VERIFY","closure_return_to_implement_count":0,"final_verdict":"ACCEPTED_AND_DONE","landed":true,"done":true,"accepted_candidate":"03896f6267e06cd9a52afe4ab63dee32d221c538","merge_commit":"0170af0b3d995935835c8b7790341f93b5b23eb4","token_usage":"UNKNOWN","cost":"UNKNOWN","unknown_metrics":["provider-capacity interruption","end-to-end cost","comparable token total","full final mutation-battery killed/survived result","closure command count","per-rejection finding counts where Issue heading alone was inspected","per-event factual recording timestamp for legacy recorded_at placeholders"],"evidence_refs":["docs/evidence/execution-trajectories/PY-04.jsonl","https://github.com/AlienLogicLab/alienintent/issues/52"]}
+{
+  "schema_version": "1.0",
+  "biu_id": "PY-04",
+  "derived_from": "docs/evidence/execution-trajectories/PY-04.jsonl",
+  "derivation_scope": "reconciliation == wave1-terminal; historical events are explicitly superseded for aggregation",
+  "source_schema_version": "1.0",
+  "evidence_refs": [
+    "https://github.com/AlienLogicLab/alienintent/issues/52",
+    "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749754285",
+    "https://github.com/AlienLogicLab/alienintent/issues/52#issuecomment-5749787226",
+    "docs/work-units/python/PY-04.md",
+    "docs/evidence/wave1-source-observations.json"
+  ],
+  "extraction_status": {
+    "value": "TERMINAL",
+    "captured_at": "2026-09-21T14:04:28.291848+00:00"
+  },
+  "first_pass_accepted": false,
+  "verifier_cycles": 10,
+  "verifier_rejections": 9,
+  "repair_cycles": 9,
+  "execution_cycles": 10,
+  "return_to_implement_count": 9,
+  "repair_finding_groups_by_verdict": [
+    5,
+    5,
+    10,
+    3,
+    2,
+    1,
+    1,
+    1,
+    2,
+    0
+  ],
+  "repair_finding_groups_definition": "Report-local outstanding acceptance/scope groups; not all observations or unique defects. See per-report definitions in repair dataset.",
+  "unique_findings": "UNKNOWN",
+  "accepted_candidate": "03896f6267e06cd9a52afe4ab63dee32d221c538",
+  "merge_commit": "0170af0b3d995935835c8b7790341f93b5b23eb4",
+  "agent_ready": {
+    "disposition": "READY",
+    "expected_rework_locality": "LOW"
+  },
+  "final_verdict": "ACCEPT",
+  "landed": true,
+  "done": true,
+  "done_at": "2026-09-20T12:26:25.430Z",
+  "done_signal_at": "2026-09-20T12:26:19Z",
+  "issue_closed_at": "2026-09-20T12:31:12Z",
+  "elapsed_to_done_seconds": {
+    "value": 21523.43,
+    "definition": "release authorization comment to dispatcher DONE completedAt"
+  },
+  "test_count_at_landing": 65,
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN",
+  "founder_exception_markers": 2,
+  "unknown_metrics": [
+    "end-to-end tokens",
+    "end-to-end cost",
+    "unique defects across reports",
+    "mechanical VERIFY versus qualitative REVIEW attribution",
+    "complete per-invocation model attribution"
+  ],
+  "superseded_measurement": {
+    "schema_version": "1.0",
+    "biu_id": "PY-04",
+    "derived_from": "docs/evidence/execution-trajectories/PY-04.jsonl",
+    "rejection_class_events": 10,
+    "formal_independent_verifier_cycles": 9,
+    "producer_self_review_rejection_events": 1,
+    "return_to_implement_count": 9,
+    "first_pass_accepted": false,
+    "producer_attempts": {
+      "value": 10,
+      "definition": "initial producer/self-review safety rejection plus nine formal verification candidates"
+    },
+    "verifier_cycles": 9,
+    "repair_cycles": 9,
+    "blocking_findings_count": {
+      "value": 10,
+      "definition": "rejection-class events; excludes the later mutation-gate finding"
+    },
+    "human_decisions_required": {
+      "value": 1,
+      "definition": "genuine missing-authority decision: SWF-22 custody by transfer"
+    },
+    "false_or_escalated_authority_requests": {
+      "value": 1,
+      "definition": "initial FOUNDER_EXCEPTION later determined to be unfinished contracted work"
+    },
+    "human_attention_blocked_seconds": {
+      "value": 7074,
+      "definition": "genuine SWF-22 authority gap only"
+    },
+    "provider_capacity_failures": "UNKNOWN",
+    "return_to_implement_count_note": "nine formal verifier rejections; initial producer/self-review event did not enter VERIFY",
+    "closure_return_to_implement_count": 0,
+    "final_verdict": "ACCEPTED_AND_DONE",
+    "landed": true,
+    "done": true,
+    "accepted_candidate": "03896f6267e06cd9a52afe4ab63dee32d221c538",
+    "merge_commit": "0170af0b3d995935835c8b7790341f93b5b23eb4",
+    "token_usage": "UNKNOWN",
+    "cost": "UNKNOWN",
+    "unknown_metrics": [
+      "provider-capacity interruption",
+      "end-to-end cost",
+      "comparable token total",
+      "full final mutation-battery killed/survived result",
+      "closure command count",
+      "per-rejection finding counts where Issue heading alone was inspected",
+      "per-event factual recording timestamp for legacy recorded_at placeholders"
+    ],
+    "evidence_refs": [
+      "docs/evidence/execution-trajectories/PY-04.jsonl",
+      "https://github.com/AlienLogicLab/alienintent/issues/52"
+    ]
+  },
+  "formal_independent_verifier_cycles": 10
+}

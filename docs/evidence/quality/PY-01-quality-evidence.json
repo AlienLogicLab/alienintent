@@ -1,0 +1,59 @@
+{
+  "schema_version": "1.0",
+  "biu_id": "PY-01",
+  "derived_from": "docs/evidence/execution-trajectories/PY-01.jsonl",
+  "derivation_scope": "reconciliation == wave1-terminal; historical events are explicitly superseded for aggregation",
+  "source_schema_version": "1.0",
+  "evidence_refs": [
+    "https://github.com/AlienLogicLab/alienintent/issues/2",
+    "https://github.com/AlienLogicLab/alienintent/issues/2#issuecomment-5741087648",
+    "https://github.com/AlienLogicLab/alienintent/issues/2#issuecomment-5741232248",
+    "docs/work-units/python/PY-01.md",
+    "docs/evidence/wave1-source-observations.json"
+  ],
+  "extraction_status": {
+    "value": "TERMINAL",
+    "captured_at": "2026-09-21T14:04:28.291848+00:00"
+  },
+  "first_pass_accepted": false,
+  "verifier_cycles": 3,
+  "verifier_rejections": 2,
+  "repair_cycles": 2,
+  "execution_cycles": 3,
+  "return_to_implement_count": 2,
+  "repair_finding_groups_by_verdict": [
+    3,
+    2,
+    0
+  ],
+  "repair_finding_groups_definition": "Report-local outstanding acceptance/scope groups; not all observations or unique defects. See per-report definitions in repair dataset.",
+  "unique_findings": "UNKNOWN",
+  "accepted_candidate": "b07ea94768e794702aa2b6bbc038d764b08ee3ea",
+  "merge_commit": "ab08449a0fac8d25374a80f4361a4023509118b1",
+  "agent_ready": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH"
+  },
+  "final_verdict": "ACCEPT",
+  "landed": true,
+  "done": true,
+  "done_at": "2026-09-19T10:54:51.347Z",
+  "done_signal_at": "2026-09-19T10:54:46Z",
+  "issue_closed_at": "2026-09-19T10:59:10Z",
+  "elapsed_to_done_seconds": {
+    "value": 16309.06,
+    "definition": "first retained producer allocation; release timestamp UNKNOWN to dispatcher DONE completedAt"
+  },
+  "test_count_at_landing": 6,
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN",
+  "founder_exception_markers": 1,
+  "unknown_metrics": [
+    "end-to-end tokens",
+    "end-to-end cost",
+    "unique defects across reports",
+    "mechanical VERIFY versus qualitative REVIEW attribution",
+    "complete per-invocation model attribution"
+  ],
+  "superseded_measurement": {}
+}

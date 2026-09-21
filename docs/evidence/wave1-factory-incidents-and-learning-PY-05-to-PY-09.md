@@ -1,5 +1,8 @@
 # Wave 1 factory incidents and learning graduation — PY-05 to PY-09
 
+> **Terminal reconciliation notice — Superseded by:** [Wave 1 Closure Manifest](wave1-closure-manifest.md) and [evidence reconciliation](wave1-evidence-reconciliation.md) for terminal counts, timestamps and comparisons. This document is retained as historical observation/interpretation at its original capture boundary; it is not the current Wave 1 aggregate. No historical hypothesis becomes a terminal causal conclusion.
+
+
 A BIU can succeed while teaching the factory something about itself. This record separates **product implementation defects**, which belong in the per-BIU Quality Evidence, from **factory and bootstrap defects discovered while processing a BIU**, which belong here — and then tracks what happened to each lesson afterwards.
 
 Sources: Issue comments #53–#57, the dispatcher state record, the coordinator liveness / attention / observation logs, Git, and the decision records named below. Capture boundary 2026-09-21T02:45Z; PY-09 is in flight.

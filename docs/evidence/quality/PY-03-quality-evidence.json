@@ -1,1 +1,139 @@
-{"schema_version":"1.0","derived_from":"docs/evidence/execution-trajectories/PY-03.jsonl","biu_id":"PY-03","issue_number":51,"first_pass_accepted":false,"producer_attempts":{"value":3,"definition":"published implementation candidates, including the incomplete pre-VERIFY candidate"},"closure_producer_invocations":{"value":2,"definition":"one capacity-failed closure invocation and one successful closure invocation"},"verifier_cycles":2,"repair_cycles":1,"blocking_findings_count":4,"findings_by_class":{"conformance":1,"custody_recovery":1,"reservation_recovery":1,"typed_unavailability":1},"human_decisions_required":1,"human_attention_blocked_seconds":125,"total_elapsed_seconds":10533,"implementation_elapsed_seconds":{"value":1517,"definition":"sum of three producer invocation durations; excludes gaps and verification"},"repair_elapsed_seconds":{"value":663,"definition":"REJECT Issue-comment timestamp to repair-candidate Issue-comment timestamp"},"closure_elapsed_seconds":{"value":8152,"definition":"ACCEPT Issue-comment timestamp to DONE Issue-comment timestamp; includes capacity failure and an otherwise unexplained gap"},"candidate_custody_failures":{"value":0,"scope":"three published candidates reviewed or retained for PY-03"},"architecture_violations":{"value":0,"scope":"accepted candidate and merge-result evidence"},"reproducibility_failures":0,"ineffective_test_detection_count":1,"return_to_implement_count":1,"closure_return_to_implement_count":0,"provider_capacity_failures":1,"provider_capacity_wait_seconds":"UNKNOWN","final_verdict":"ACCEPTED_AND_DONE","landed":true,"done":true,"token_usage":{"status":"PARTIALLY_OBSERVED","note":"six completed invocation logs contain native token fields; capacity-failed invocation has no usage"},"cost":{"status":"PARTIALLY_OBSERVED","known_verifier_cost_usd":4.044471,"unknown":"producer costs and end-to-end cost"},"known_provider_model":{"scope":"both VERIFIER invocations","provider":"firstParty","model":"claude-opus-5"},"unknown_metrics":["producer provider-model identities","producer and end-to-end monetary cost","comparable summed token total","cause of the post-capacity-failure gap","provider capacity wait duration"],"evidence_refs":["docs/evidence/execution-trajectories/PY-03.jsonl","https://github.com/AlienLogicLab/alienintent/issues/51","commit:d8f80e1722848116f2139728fe5f67da3af8dd0b"]}
+{
+  "schema_version": "1.0",
+  "biu_id": "PY-03",
+  "derived_from": "docs/evidence/execution-trajectories/PY-03.jsonl",
+  "derivation_scope": "reconciliation == wave1-terminal; historical events are explicitly superseded for aggregation",
+  "source_schema_version": "1.0",
+  "evidence_refs": [
+    "https://github.com/AlienLogicLab/alienintent/issues/51",
+    "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5747544877",
+    "https://github.com/AlienLogicLab/alienintent/issues/51#issuecomment-5748104520",
+    "docs/work-units/python/PY-03.md",
+    "docs/evidence/wave1-source-observations.json"
+  ],
+  "extraction_status": {
+    "value": "TERMINAL",
+    "captured_at": "2026-09-21T14:04:28.291848+00:00"
+  },
+  "first_pass_accepted": false,
+  "verifier_cycles": 2,
+  "verifier_rejections": 1,
+  "repair_cycles": 1,
+  "execution_cycles": 2,
+  "return_to_implement_count": 1,
+  "repair_finding_groups_by_verdict": [
+    4,
+    0
+  ],
+  "repair_finding_groups_definition": "Report-local outstanding acceptance/scope groups; not all observations or unique defects. See per-report definitions in repair dataset.",
+  "unique_findings": "UNKNOWN",
+  "accepted_candidate": "c3ba58d980aeceafa483d8cc9b8edc4fb4238a5e",
+  "merge_commit": "d8f80e1722848116f2139728fe5f67da3af8dd0b",
+  "agent_ready": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH"
+  },
+  "final_verdict": "ACCEPT",
+  "landed": true,
+  "done": true,
+  "done_at": "2026-09-20T06:23:18.806Z",
+  "done_signal_at": "2026-09-20T06:23:12Z",
+  "issue_closed_at": "2026-09-20T06:27:00Z",
+  "elapsed_to_done_seconds": {
+    "value": 10306.299,
+    "definition": "first retained producer allocation; release timestamp UNKNOWN to dispatcher DONE completedAt"
+  },
+  "test_count_at_landing": 40,
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN",
+  "founder_exception_markers": 1,
+  "unknown_metrics": [
+    "end-to-end tokens",
+    "end-to-end cost",
+    "unique defects across reports",
+    "mechanical VERIFY versus qualitative REVIEW attribution",
+    "complete per-invocation model attribution"
+  ],
+  "superseded_measurement": {
+    "schema_version": "1.0",
+    "derived_from": "docs/evidence/execution-trajectories/PY-03.jsonl",
+    "biu_id": "PY-03",
+    "issue_number": 51,
+    "first_pass_accepted": false,
+    "producer_attempts": {
+      "value": 3,
+      "definition": "published implementation candidates, including the incomplete pre-VERIFY candidate"
+    },
+    "closure_producer_invocations": {
+      "value": 2,
+      "definition": "one capacity-failed closure invocation and one successful closure invocation"
+    },
+    "verifier_cycles": 2,
+    "repair_cycles": 1,
+    "blocking_findings_count": 4,
+    "findings_by_class": {
+      "conformance": 1,
+      "custody_recovery": 1,
+      "reservation_recovery": 1,
+      "typed_unavailability": 1
+    },
+    "human_decisions_required": 1,
+    "human_attention_blocked_seconds": 125,
+    "total_elapsed_seconds": 10533,
+    "implementation_elapsed_seconds": {
+      "value": 1517,
+      "definition": "sum of three producer invocation durations; excludes gaps and verification"
+    },
+    "repair_elapsed_seconds": {
+      "value": 663,
+      "definition": "REJECT Issue-comment timestamp to repair-candidate Issue-comment timestamp"
+    },
+    "closure_elapsed_seconds": {
+      "value": 8152,
+      "definition": "ACCEPT Issue-comment timestamp to DONE Issue-comment timestamp; includes capacity failure and an otherwise unexplained gap"
+    },
+    "candidate_custody_failures": {
+      "value": 0,
+      "scope": "three published candidates reviewed or retained for PY-03"
+    },
+    "architecture_violations": {
+      "value": 0,
+      "scope": "accepted candidate and merge-result evidence"
+    },
+    "reproducibility_failures": 0,
+    "ineffective_test_detection_count": 1,
+    "return_to_implement_count": 1,
+    "closure_return_to_implement_count": 0,
+    "provider_capacity_failures": 1,
+    "provider_capacity_wait_seconds": "UNKNOWN",
+    "final_verdict": "ACCEPTED_AND_DONE",
+    "landed": true,
+    "done": true,
+    "token_usage": {
+      "status": "PARTIALLY_OBSERVED",
+      "note": "six completed invocation logs contain native token fields; capacity-failed invocation has no usage"
+    },
+    "cost": {
+      "status": "PARTIALLY_OBSERVED",
+      "known_verifier_cost_usd": 4.044471,
+      "unknown": "producer costs and end-to-end cost"
+    },
+    "known_provider_model": {
+      "scope": "both VERIFIER invocations",
+      "provider": "firstParty",
+      "model": "claude-opus-5"
+    },
+    "unknown_metrics": [
+      "producer provider-model identities",
+      "producer and end-to-end monetary cost",
+      "comparable summed token total",
+      "cause of the post-capacity-failure gap",
+      "provider capacity wait duration"
+    ],
+    "evidence_refs": [
+      "docs/evidence/execution-trajectories/PY-03.jsonl",
+      "https://github.com/AlienLogicLab/alienintent/issues/51",
+      "commit:d8f80e1722848116f2139728fe5f67da3af8dd0b"
+    ]
+  }
+}

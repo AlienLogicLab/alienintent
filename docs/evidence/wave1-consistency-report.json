@@ -1,0 +1,118 @@
+{
+  "ok": true,
+  "checks": 1075,
+  "failures": [],
+  "negative_controls": [
+    {
+      "violation": "derived rejection count",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-01 rejection count reconciles to markers",
+        "PY-01 trajectory terminal projection",
+        "yield totals"
+      ]
+    },
+    {
+      "violation": "UNKNOWN to zero",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-10 UNKNOWN end-to-end telemetry never zero",
+        "PY-10 v1 Quality Evidence schema"
+      ]
+    },
+    {
+      "violation": "impossible chronology",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-10 DONE uses dispatcher completedAt",
+        "PY-10 acceptance/signal/DONE/closure chronology",
+        "PY-10 elapsed time reconciles",
+        "PY-10 trajectory terminal projection"
+      ]
+    },
+    {
+      "violation": "Issue mismatch",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-10 Issue title mapping",
+        "PY-10 trajectory terminal projection"
+      ]
+    },
+    {
+      "violation": "false first-pass",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-09 first-pass matches full verdict history"
+      ]
+    },
+    {
+      "violation": "provider failure counted as repair",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-09 repair returns distinct from attempts"
+      ]
+    },
+    {
+      "violation": "retry increments cycle",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-09 cycle count excludes retries and exceptions"
+      ]
+    },
+    {
+      "violation": "fabricated finding count",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-10 finding groups reconcile against Quality Evidence",
+        "PY-10 cycle 1 trajectory finding groups"
+      ]
+    },
+    {
+      "violation": "Issue closure conflated with DONE",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-10 DONE uses dispatcher completedAt",
+        "PY-10 elapsed time reconciles",
+        "PY-10 trajectory terminal projection"
+      ]
+    },
+    {
+      "violation": "seventh candidate",
+      "result": "KILLED",
+      "failed_checks": [
+        "six candidates plus main, not seven candidates",
+        "live refs match retained run candidate identities"
+      ]
+    },
+    {
+      "violation": "nonexistent merge",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-10 Quality Evidence identities",
+        "PY-10 trajectory terminal projection",
+        "PY-10 merge exists",
+        "PY-10 candidate reachable from stated merge",
+        "PY-10 merge within terminal boundary"
+      ]
+    },
+    {
+      "violation": "unreachable accepted candidate",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-10 accepted SHA named by verifier",
+        "PY-10 Quality Evidence identities",
+        "PY-10 trajectory terminal projection",
+        "PY-10 candidate reachable from stated merge",
+        "PY-10 candidate reachable from refreshed origin/main"
+      ]
+    },
+    {
+      "violation": "supersession removed",
+      "result": "KILLED",
+      "failed_checks": [
+        "PY-09 historical records explicitly superseded"
+      ]
+    }
+  ],
+  "scope": "Offline consistency against retained GitHub/runtime source capture and current Git objects/origin refs; not a fresh product verdict or re-execution of live proof."
+}

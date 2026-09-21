@@ -1,5 +1,8 @@
 # PY-02 vs PY-03
 
+> **Terminal reconciliation notice — Superseded by:** [Wave 1 Closure Manifest](../wave1-closure-manifest.md) and [evidence reconciliation](../wave1-evidence-reconciliation.md) for terminal counts, timestamps and comparisons. This document is retained as historical observation/interpretation at its original capture boundary; it is not the current Wave 1 aggregate. No historical hypothesis becomes a terminal causal conclusion.
+
+
 ## Direct comparison
 
 | Measure | PY-02 | PY-03 |

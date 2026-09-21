@@ -1,34 +1,137 @@
 {
   "schema_version": "1.0",
-  "derived_from": "docs/evidence/execution-trajectories/PY-02.jsonl",
   "biu_id": "PY-02",
-  "issue_number": 50,
+  "derived_from": "docs/evidence/execution-trajectories/PY-02.jsonl",
+  "derivation_scope": "reconciliation == wave1-terminal; historical events are explicitly superseded for aggregation",
+  "source_schema_version": "1.0",
+  "evidence_refs": [
+    "https://github.com/AlienLogicLab/alienintent/issues/50",
+    "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747096363",
+    "https://github.com/AlienLogicLab/alienintent/issues/50#issuecomment-5747257998",
+    "docs/work-units/python/PY-02.md",
+    "docs/evidence/wave1-source-observations.json"
+  ],
+  "extraction_status": {
+    "value": "TERMINAL",
+    "captured_at": "2026-09-21T14:04:28.291848+00:00"
+  },
   "first_pass_accepted": false,
-  "producer_attempts": {"value": 2, "definition": "IMPLEMENT attempts that published candidates"},
-  "closure_producer_invocations": {"value": 2, "definition": "post-ACCEPT closure invocations, one blocked and one resumed"},
   "verifier_cycles": 2,
+  "verifier_rejections": 1,
   "repair_cycles": 1,
-  "blocking_findings_count": 3,
-  "findings_by_class": {"lifecycle_contract_preservation": 1, "reproducibility_and_ci_coverage": 1, "test_effectiveness": 1},
-  "human_decisions_required": 1,
-  "human_attention_blocked_seconds": 1832,
-  "total_elapsed_seconds": 3788,
-  "implementation_elapsed_seconds": {"value": 978, "definition": "sum of recorded initial and repair PRODUCER invocation durations; excludes verification and queue time"},
-  "repair_elapsed_seconds": {"value": 212, "definition": "first REJECT Issue-comment timestamp to repair-candidate Issue-comment timestamp"},
-  "closure_elapsed_seconds": {"value": 2206, "definition": "independent ACCEPT Issue-comment timestamp to DONE Issue-comment timestamp; includes authority wait"},
-  "candidate_custody_failures": {"value": 0, "scope": "the two published candidates reviewed for PY-02; verifier reported each candidate identifiable and retrievable"},
-  "architecture_violations": {"value": 0, "scope": "accepted candidate and merge-result evidence; this is not a claim about future revisions"},
-  "reproducibility_failures": 1,
-  "ineffective_test_detection_count": 2,
+  "execution_cycles": 2,
   "return_to_implement_count": 1,
-  "closure_return_to_implement_count": 0,
-  "final_verdict": "ACCEPTED_AND_DONE",
+  "repair_finding_groups_by_verdict": [
+    3,
+    0
+  ],
+  "repair_finding_groups_definition": "Report-local outstanding acceptance/scope groups; not all observations or unique defects. See per-report definitions in repair dataset.",
+  "unique_findings": "UNKNOWN",
+  "accepted_candidate": "8689771b9fccb9f86c7fdcc2e9d4f571408765f2",
+  "merge_commit": "ab4efe54df752a4d7a35f047054435a24a21ddaf",
+  "agent_ready": {
+    "disposition": "READY",
+    "expected_rework_locality": "LOW"
+  },
+  "final_verdict": "ACCEPT",
   "landed": true,
   "done": true,
-  "closure_command_count": 46,
-  "token_usage": {"status": "PARTIALLY_OBSERVED", "note": "all six invocation logs expose token fields, but producer and verifier schemas differ and are not summed"},
-  "cost": {"status": "PARTIALLY_OBSERVED", "known_verifier_cost_usd": 3.999279, "unknown": "producer costs and therefore end-to-end cost"},
-  "known_provider_model": {"scope": "both VERIFIER invocations", "provider": "firstParty", "model": "claude-opus-5"},
-  "unknown_metrics": ["producer provider-model identities", "producer monetary cost", "end-to-end monetary cost", "per-command duration", "human-attention quality beyond elapsed blocked time"],
-  "evidence_refs": ["docs/evidence/execution-trajectories/PY-02.jsonl", "https://github.com/AlienLogicLab/alienintent/issues/50", "commit:ab4efe54df752a4d7a35f047054435a24a21ddaf"]
+  "done_at": "2026-09-20T03:14:20.229Z",
+  "done_signal_at": "2026-09-20T03:14:14Z",
+  "issue_closed_at": "2026-09-20T03:31:11Z",
+  "elapsed_to_done_seconds": {
+    "value": 3792.574,
+    "definition": "first retained producer allocation; release timestamp UNKNOWN to dispatcher DONE completedAt"
+  },
+  "test_count_at_landing": 23,
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN",
+  "founder_exception_markers": 1,
+  "unknown_metrics": [
+    "end-to-end tokens",
+    "end-to-end cost",
+    "unique defects across reports",
+    "mechanical VERIFY versus qualitative REVIEW attribution",
+    "complete per-invocation model attribution"
+  ],
+  "superseded_measurement": {
+    "schema_version": "1.0",
+    "derived_from": "docs/evidence/execution-trajectories/PY-02.jsonl",
+    "biu_id": "PY-02",
+    "issue_number": 50,
+    "first_pass_accepted": false,
+    "producer_attempts": {
+      "value": 2,
+      "definition": "IMPLEMENT attempts that published candidates"
+    },
+    "closure_producer_invocations": {
+      "value": 2,
+      "definition": "post-ACCEPT closure invocations, one blocked and one resumed"
+    },
+    "verifier_cycles": 2,
+    "repair_cycles": 1,
+    "blocking_findings_count": 3,
+    "findings_by_class": {
+      "lifecycle_contract_preservation": 1,
+      "reproducibility_and_ci_coverage": 1,
+      "test_effectiveness": 1
+    },
+    "human_decisions_required": 1,
+    "human_attention_blocked_seconds": 1832,
+    "total_elapsed_seconds": 3788,
+    "implementation_elapsed_seconds": {
+      "value": 978,
+      "definition": "sum of recorded initial and repair PRODUCER invocation durations; excludes verification and queue time"
+    },
+    "repair_elapsed_seconds": {
+      "value": 212,
+      "definition": "first REJECT Issue-comment timestamp to repair-candidate Issue-comment timestamp"
+    },
+    "closure_elapsed_seconds": {
+      "value": 2206,
+      "definition": "independent ACCEPT Issue-comment timestamp to DONE Issue-comment timestamp; includes authority wait"
+    },
+    "candidate_custody_failures": {
+      "value": 0,
+      "scope": "the two published candidates reviewed for PY-02; verifier reported each candidate identifiable and retrievable"
+    },
+    "architecture_violations": {
+      "value": 0,
+      "scope": "accepted candidate and merge-result evidence; this is not a claim about future revisions"
+    },
+    "reproducibility_failures": 1,
+    "ineffective_test_detection_count": 2,
+    "return_to_implement_count": 1,
+    "closure_return_to_implement_count": 0,
+    "final_verdict": "ACCEPTED_AND_DONE",
+    "landed": true,
+    "done": true,
+    "closure_command_count": 46,
+    "token_usage": {
+      "status": "PARTIALLY_OBSERVED",
+      "note": "all six invocation logs expose token fields, but producer and verifier schemas differ and are not summed"
+    },
+    "cost": {
+      "status": "PARTIALLY_OBSERVED",
+      "known_verifier_cost_usd": 3.999279,
+      "unknown": "producer costs and therefore end-to-end cost"
+    },
+    "known_provider_model": {
+      "scope": "both VERIFIER invocations",
+      "provider": "firstParty",
+      "model": "claude-opus-5"
+    },
+    "unknown_metrics": [
+      "producer provider-model identities",
+      "producer monetary cost",
+      "end-to-end monetary cost",
+      "per-command duration",
+      "human-attention quality beyond elapsed blocked time"
+    ],
+    "evidence_refs": [
+      "docs/evidence/execution-trajectories/PY-02.jsonl",
+      "https://github.com/AlienLogicLab/alienintent/issues/50",
+      "commit:ab4efe54df752a4d7a35f047054435a24a21ddaf"
+    ]
+  }
 }

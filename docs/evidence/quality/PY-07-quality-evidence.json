@@ -2,39 +2,26 @@
   "schema_version": "1.0",
   "biu_id": "PY-07",
   "derived_from": "docs/evidence/execution-trajectories/PY-07.jsonl",
-  "issue_number": 55,
-  "title": "HumanDecisionRequired and Decision Inbox",
-  "requirements": [
-    "SF-REQ-006 (primary)",
-    "SF-REQ-035 (primary)"
+  "derivation_scope": "reconciliation == wave1-terminal; historical events are explicitly superseded for aggregation",
+  "source_schema_version": "1.0",
+  "evidence_refs": [
+    "https://github.com/AlienLogicLab/alienintent/issues/55",
+    "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5752257418",
+    "https://github.com/AlienLogicLab/alienintent/issues/55#issuecomment-5752283995",
+    "docs/work-units/python/PY-07.md",
+    "docs/evidence/wave1-source-observations.json"
   ],
-  "agent_ready": {
-    "disposition": "READY",
-    "owner_clarifications": 0,
-    "expected_rework_locality": "LOW",
-    "assessment_baseline": "896c0fe"
+  "extraction_status": {
+    "value": "TERMINAL",
+    "captured_at": "2026-09-21T14:04:28.291848+00:00"
   },
-  "release_baseline": "6c3f8432129892f11d182e713102e63cf0aa9b56",
-  "accepted_candidate": "9caaa71f89aeac3fdecd2cc0ef3ad566ca96ebf2",
-  "merge_commit": "946e3cc0b17951f561632f3e6474a715f541302d",
   "first_pass_accepted": false,
-  "producer_attempts": {
-    "value": 6,
-    "definition": "IMPLEMENT invocations that published a candidate; excludes two authority-blocked invocations and the closure invocation"
-  },
-  "closure_producer_invocations": {
-    "value": 1,
-    "definition": "post-ACCEPT closure invocations"
-  },
   "verifier_cycles": 6,
+  "verifier_rejections": 5,
   "repair_cycles": 5,
+  "execution_cycles": 6,
   "return_to_implement_count": 5,
-  "closure_return_to_implement_count": 0,
-  "blocking_findings_count": {
-    "value": 13,
-    "definition": "verifier-numbered blocking findings under 'Why this is (still) a REJECT': 4 + 2 + 3 + 3 + 1; 0 at ACCEPT. Items the verifier explicitly labelled restated, minor or producer-judgment are excluded."
-  },
-  "blocking_findings_by_cycle": [
+  "repair_finding_groups_by_verdict": [
     4,
     2,
     3,
@@ -42,142 +29,216 @@
     1,
     0
   ],
-  "findings_by_class": {
-    "BEHAVIORAL_DEFECT": 9,
-    "EVIDENCE_PROOF_DEFECT": 2,
-    "ARCHITECTURE_CONFORMANCE": 2,
-    "note": "evidence-local classification of the verifier's prose findings; not v1 schema authority"
+  "repair_finding_groups_definition": "Report-local outstanding acceptance/scope groups; not all observations or unique defects. See per-report definitions in repair dataset.",
+  "unique_findings": "UNKNOWN",
+  "accepted_candidate": "9caaa71f89aeac3fdecd2cc0ef3ad566ca96ebf2",
+  "merge_commit": "946e3cc0b17951f561632f3e6474a715f541302d",
+  "agent_ready": {
+    "disposition": "READY",
+    "expected_rework_locality": "LOW"
   },
-  "candidate_added_lines_by_cycle": {
-    "value": [
-      449,
-      223,
-      25,
-      24,
-      189,
-      55
-    ],
-    "definition": "added lines of each candidate against its own parent, from Git. Cycles 2-4 were re-implementations on the release baseline, so their parent-relative figures are not comparable with cycles 5-6, which are descendant repairs."
-  },
-  "authority_interruptions": {
-    "value": 2,
-    "definition": "two FOUNDER_EXCEPTIONs, both raised on the same ground"
-  },
-  "human_decisions_required": {
-    "value": 0,
-    "scope": "the coordinator supplied the missing release record and stated the omission was its own; no Founder decision was requested or supplied"
-  },
-  "coordinator_defect_authority_blocks": {
-    "value": 2,
-    "definition": "both interruptions were caused by a release performed without the release record PY-02..PY-06 each carried"
-  },
-  "human_attention_blocked_seconds": {
-    "value": 806,
-    "definition": "first FOUNDER_EXCEPTION comment 16:56:31Z to the release-authorization comment 17:09:57Z; spans both refusals and both liveness recoveries"
-  },
-  "liveness_incidents": {
-    "value": 2,
-    "definition": "two LIVENESS_GAP records for issue 55, at state ages 459 s and 539 s against a 300 s grace"
-  },
-  "operator_interventions": {
-    "value": 2,
-    "definition": "two operator status re-emissions IMPLEMENT -> READY -> IMPLEMENT applied as liveness recovery"
-  },
-  "attention_items": {
-    "value": 5,
-    "definition": "judgment-required durable attention items: two FOUNDER_EXCEPTION items and three repeated-rejection threshold items. Excludes the DONE_TO_DONE notification."
-  },
-  "candidate_custody_failures": {
-    "value": 0,
-    "scope": "six published candidates; the verifier fetched each named ref independently into a fresh worktree and confirmed the tip equals the claimed SHA"
-  },
-  "architecture_violations": {
-    "value": 0,
-    "scope": "architecture fitness PASS reproduced by the verifier at every candidate, against both --root src and --root src/alienintent"
-  },
-  "proof_regression_count": 0,
-  "behavioral_regression_count": {
-    "value": 1,
-    "definition": "cycle 5 introduced a defect in its own repair: cancelled-by-decision was not terminal, so a cancelled BIU was re-dispatched and completed by the next loop tick"
-  },
-  "evidence_superseded_count": 0,
-  "candidate_lineage": {
-    "re_implementations_on_baseline": 3,
-    "descendant_repairs": 2,
-    "definition": "cycles 2, 3 and 4 were not descendants of the rejected candidate; cycles 5 and 6 were, the switch recorded in commit 822ca38 'start PY-07 repair cycle 5 from rejected candidate'"
-  },
-  "proven_red_evidence": {
-    "cycle_6_accept": "reverting only factory_coordinator.py to the parent makes the candidate's own new regression test fail with the exact cycle-5 defect"
-  },
-  "total_elapsed_seconds": {
-    "value": 11057,
-    "definition": "READY -> IMPLEMENT transition 16:54:46Z to DONE observation 19:59:03Z"
-  },
-  "implementation_elapsed_seconds": {
-    "value": 6597,
-    "definition": "sum of the six candidate-producing PRODUCER invocation durations; excludes the 113 s and 102 s authority-blocked invocations and the 266 s closure invocation"
-  },
-  "verification_elapsed_seconds": {
-    "value": 3153,
-    "definition": "sum of the six VERIFIER invocation durations"
-  },
-  "closure_elapsed_seconds": {
-    "value": 286,
-    "definition": "ACCEPT comment 19:54:17Z to DONE observation 19:59:03Z"
-  },
-  "issue_closure_lag_seconds": {
-    "value": 6482,
-    "definition": "DONE observation to Issue closed_at 21:48:05Z"
-  },
-  "test_count_at_landing": 129,
-  "test_count_by_cycle": [
-    112,
-    118,
-    120,
-    123,
-    129,
-    129
-  ],
-  "node_suite": {
-    "observed_by_verifier": "runtime 310/310, preflight PASS, RAI 18/18, policy 2/2, exit 0",
-    "note": "PY-07 verifications ran `node scripts/check.mjs all` rather than `npm test`, so the 310/330 discrepancy seen in PY-05 and PY-06 does not arise"
-  },
-  "provider_capacity_failures": {
-    "value": 0,
-    "scope": "no capacity failure appears in Issue #55 comments or the observation log"
-  },
-  "known_provider_model": {
-    "status": "UNKNOWN",
-    "note": "the dispatcher state record carries no provider or model field"
-  },
-  "token_usage": "UNKNOWN",
-  "cost": "UNKNOWN",
-  "retained_evidence_artifact": "docs/evidence/PY-07-human-decision-inbox.md",
-  "final_verdict": "ACCEPTED_AND_DONE",
+  "final_verdict": "ACCEPT",
   "landed": true,
   "done": true,
-  "repair_mode": {
-    "value": "CONVERGING_AFTER_A_STAGNANT_PHASE",
-    "basis": "blocking findings 4 -> 2 -> 3 -> 3 -> 1 -> 0. The same Scope \u00a72 requirement was reported unsatisfied in three consecutive cycles (2, 3, 4) in three different shapes while the candidate was rebuilt from the baseline each time. Convergence coincides with cycle 5, the first repair taken from the rejected candidate rather than restarted from the baseline."
+  "done_at": "2026-09-20T19:58:44.009Z",
+  "done_signal_at": "2026-09-20T19:58:37Z",
+  "issue_closed_at": "2026-09-20T21:48:06Z",
+  "elapsed_to_done_seconds": {
+    "value": 10127.009,
+    "definition": "release authorization comment to dispatcher DONE completedAt"
   },
-  "recurring_failure_class": {
-    "label": "an escalation that is registered but not decidable - recorded, reported, not recoverable",
-    "cycles_named": 4,
-    "note": "the same dead-end shape appeared at the admission path, the unresolved-effect path, the worker-raised path and the defer disposition. Each occurrence was a different code path; the class was the same."
-  },
+  "test_count_at_landing": 129,
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN",
+  "founder_exception_markers": 2,
   "unknown_metrics": [
-    "provider and model identity",
-    "token usage",
-    "monetary cost",
-    "per-cycle candidate diff for cycles 2-4 measured against a common base"
+    "end-to-end tokens",
+    "end-to-end cost",
+    "unique defects across reports",
+    "mechanical VERIFY versus qualitative REVIEW attribution",
+    "complete per-invocation model attribution"
   ],
-  "evidence_refs": [
-    "docs/evidence/execution-trajectories/PY-07.jsonl",
-    "https://github.com/AlienLogicLab/alienintent/issues/55",
-    "commit:9caaa71f89aeac3fdecd2cc0ef3ad566ca96ebf2",
-    "commit:946e3cc0b17951f561632f3e6474a715f541302d",
-    "docs/evidence/PY-07-human-decision-inbox.md",
-    "docs/evidence/2026-09-21-liveness-retry-and-release-admission.md",
-    "file:~/.local/state/alienintent/coordinator-liveness.jsonl"
-  ]
+  "superseded_measurement": {
+    "schema_version": "1.0",
+    "biu_id": "PY-07",
+    "derived_from": "docs/evidence/execution-trajectories/PY-07.jsonl",
+    "issue_number": 55,
+    "title": "HumanDecisionRequired and Decision Inbox",
+    "requirements": [
+      "SF-REQ-006 (primary)",
+      "SF-REQ-035 (primary)"
+    ],
+    "agent_ready": {
+      "disposition": "READY",
+      "owner_clarifications": 0,
+      "expected_rework_locality": "LOW",
+      "assessment_baseline": "896c0fe"
+    },
+    "release_baseline": "6c3f8432129892f11d182e713102e63cf0aa9b56",
+    "accepted_candidate": "9caaa71f89aeac3fdecd2cc0ef3ad566ca96ebf2",
+    "merge_commit": "946e3cc0b17951f561632f3e6474a715f541302d",
+    "first_pass_accepted": false,
+    "producer_attempts": {
+      "value": 6,
+      "definition": "IMPLEMENT invocations that published a candidate; excludes two authority-blocked invocations and the closure invocation"
+    },
+    "closure_producer_invocations": {
+      "value": 1,
+      "definition": "post-ACCEPT closure invocations"
+    },
+    "verifier_cycles": 6,
+    "repair_cycles": 5,
+    "return_to_implement_count": 5,
+    "closure_return_to_implement_count": 0,
+    "blocking_findings_count": {
+      "value": 13,
+      "definition": "verifier-numbered blocking findings under 'Why this is (still) a REJECT': 4 + 2 + 3 + 3 + 1; 0 at ACCEPT. Items the verifier explicitly labelled restated, minor or producer-judgment are excluded."
+    },
+    "blocking_findings_by_cycle": [
+      4,
+      2,
+      3,
+      3,
+      1,
+      0
+    ],
+    "findings_by_class": {
+      "BEHAVIORAL_DEFECT": 9,
+      "EVIDENCE_PROOF_DEFECT": 2,
+      "ARCHITECTURE_CONFORMANCE": 2,
+      "note": "evidence-local classification of the verifier's prose findings; not v1 schema authority"
+    },
+    "candidate_added_lines_by_cycle": {
+      "value": [
+        449,
+        223,
+        25,
+        24,
+        189,
+        55
+      ],
+      "definition": "added lines of each candidate against its own parent, from Git. Cycles 2-4 were re-implementations on the release baseline, so their parent-relative figures are not comparable with cycles 5-6, which are descendant repairs."
+    },
+    "authority_interruptions": {
+      "value": 2,
+      "definition": "two FOUNDER_EXCEPTIONs, both raised on the same ground"
+    },
+    "human_decisions_required": {
+      "value": 0,
+      "scope": "the coordinator supplied the missing release record and stated the omission was its own; no Founder decision was requested or supplied"
+    },
+    "coordinator_defect_authority_blocks": {
+      "value": 2,
+      "definition": "both interruptions were caused by a release performed without the release record PY-02..PY-06 each carried"
+    },
+    "human_attention_blocked_seconds": {
+      "value": 806,
+      "definition": "first FOUNDER_EXCEPTION comment 16:56:31Z to the release-authorization comment 17:09:57Z; spans both refusals and both liveness recoveries"
+    },
+    "liveness_incidents": {
+      "value": 2,
+      "definition": "two LIVENESS_GAP records for issue 55, at state ages 459 s and 539 s against a 300 s grace"
+    },
+    "operator_interventions": {
+      "value": 2,
+      "definition": "two operator status re-emissions IMPLEMENT -> READY -> IMPLEMENT applied as liveness recovery"
+    },
+    "attention_items": {
+      "value": 5,
+      "definition": "judgment-required durable attention items: two FOUNDER_EXCEPTION items and three repeated-rejection threshold items. Excludes the DONE_TO_DONE notification."
+    },
+    "candidate_custody_failures": {
+      "value": 0,
+      "scope": "six published candidates; the verifier fetched each named ref independently into a fresh worktree and confirmed the tip equals the claimed SHA"
+    },
+    "architecture_violations": {
+      "value": 0,
+      "scope": "architecture fitness PASS reproduced by the verifier at every candidate, against both --root src and --root src/alienintent"
+    },
+    "proof_regression_count": 0,
+    "behavioral_regression_count": {
+      "value": 1,
+      "definition": "cycle 5 introduced a defect in its own repair: cancelled-by-decision was not terminal, so a cancelled BIU was re-dispatched and completed by the next loop tick"
+    },
+    "evidence_superseded_count": 0,
+    "candidate_lineage": {
+      "re_implementations_on_baseline": 3,
+      "descendant_repairs": 2,
+      "definition": "cycles 2, 3 and 4 were not descendants of the rejected candidate; cycles 5 and 6 were, the switch recorded in commit 822ca38 'start PY-07 repair cycle 5 from rejected candidate'"
+    },
+    "proven_red_evidence": {
+      "cycle_6_accept": "reverting only factory_coordinator.py to the parent makes the candidate's own new regression test fail with the exact cycle-5 defect"
+    },
+    "total_elapsed_seconds": {
+      "value": 11057,
+      "definition": "READY -> IMPLEMENT transition 16:54:46Z to DONE observation 19:59:03Z"
+    },
+    "implementation_elapsed_seconds": {
+      "value": 6597,
+      "definition": "sum of the six candidate-producing PRODUCER invocation durations; excludes the 113 s and 102 s authority-blocked invocations and the 266 s closure invocation"
+    },
+    "verification_elapsed_seconds": {
+      "value": 3153,
+      "definition": "sum of the six VERIFIER invocation durations"
+    },
+    "closure_elapsed_seconds": {
+      "value": 286,
+      "definition": "ACCEPT comment 19:54:17Z to DONE observation 19:59:03Z"
+    },
+    "issue_closure_lag_seconds": {
+      "value": 6482,
+      "definition": "DONE observation to Issue closed_at 21:48:05Z"
+    },
+    "test_count_at_landing": 129,
+    "test_count_by_cycle": [
+      112,
+      118,
+      120,
+      123,
+      129,
+      129
+    ],
+    "node_suite": {
+      "observed_by_verifier": "runtime 310/310, preflight PASS, RAI 18/18, policy 2/2, exit 0",
+      "note": "PY-07 verifications ran `node scripts/check.mjs all` rather than `npm test`, so the 310/330 discrepancy seen in PY-05 and PY-06 does not arise"
+    },
+    "provider_capacity_failures": {
+      "value": 0,
+      "scope": "no capacity failure appears in Issue #55 comments or the observation log"
+    },
+    "known_provider_model": {
+      "status": "UNKNOWN",
+      "note": "the dispatcher state record carries no provider or model field"
+    },
+    "token_usage": "UNKNOWN",
+    "cost": "UNKNOWN",
+    "retained_evidence_artifact": "docs/evidence/PY-07-human-decision-inbox.md",
+    "final_verdict": "ACCEPTED_AND_DONE",
+    "landed": true,
+    "done": true,
+    "repair_mode": {
+      "value": "CONVERGING_AFTER_A_STAGNANT_PHASE",
+      "basis": "blocking findings 4 -> 2 -> 3 -> 3 -> 1 -> 0. The same Scope §2 requirement was reported unsatisfied in three consecutive cycles (2, 3, 4) in three different shapes while the candidate was rebuilt from the baseline each time. Convergence coincides with cycle 5, the first repair taken from the rejected candidate rather than restarted from the baseline."
+    },
+    "recurring_failure_class": {
+      "label": "an escalation that is registered but not decidable - recorded, reported, not recoverable",
+      "cycles_named": 4,
+      "note": "the same dead-end shape appeared at the admission path, the unresolved-effect path, the worker-raised path and the defer disposition. Each occurrence was a different code path; the class was the same."
+    },
+    "unknown_metrics": [
+      "provider and model identity",
+      "token usage",
+      "monetary cost",
+      "per-cycle candidate diff for cycles 2-4 measured against a common base"
+    ],
+    "evidence_refs": [
+      "docs/evidence/execution-trajectories/PY-07.jsonl",
+      "https://github.com/AlienLogicLab/alienintent/issues/55",
+      "commit:9caaa71f89aeac3fdecd2cc0ef3ad566ca96ebf2",
+      "commit:946e3cc0b17951f561632f3e6474a715f541302d",
+      "docs/evidence/PY-07-human-decision-inbox.md",
+      "docs/evidence/2026-09-21-liveness-retry-and-release-admission.md",
+      "file:~/.local/state/alienintent/coordinator-liveness.jsonl"
+    ]
+  }
 }

@@ -1,5 +1,8 @@
 # PY-05 to PY-09 extraction verification
 
+> **Terminal reconciliation notice — Superseded by:** [Wave 1 Closure Manifest](../wave1-closure-manifest.md) and [evidence reconciliation](../wave1-evidence-reconciliation.md) for terminal counts, timestamps and comparisons. This document is retained as historical observation/interpretation at its original capture boundary; it is not the current Wave 1 aggregate. No historical hypothesis becomes a terminal causal conclusion.
+
+
 SF-REQ-030 requires that derived evidence reconcile against its sources, that contradictory derived evidence fail deterministic consistency verification rather than be silently normalized, and that the consistency verification **itself** carry discriminating negative-control evidence. This record is that verification.
 
 Capture boundary **2026-09-21T02:45:00Z**.
