@@ -32,14 +32,19 @@ closure-efficiency measurement — no new requirement.
 
 | BIU | Cycles | Rejections | Authority blocks | Findings trajectory |
 |---|---|---|---|---|
-| PY-02 | 3 | 1 | 1 | — |
-| PY-03 | 3 | 1 | 1 | 4 |
-| PY-04 | 12 | **9** | 2 | 1 |
-| PY-05 | 3 | 2 | 0 | 6 |
-| PY-06 | 6 | 4 | 1 | 5 → 2 |
-| PY-07 | 8 | 5 | 2 | 4 → 3 → 5 → 3 → 1 |
-| PY-08 | 8 | 6 | 1 | 12 → 14 → 11 → 10 → 8 → **3** → 0 |
-| PY-09 | 3 | 3 | 0 | 3 → (unreadable) → (unreadable) — **in flight** |
+| PY-02 | 3 | 1 | 1 | 0 (2 UNKNOWN) |
+| PY-03 | 3 | 1 | 1 | 0 (2 UNKNOWN) |
+| PY-04 | 12 | **9** | 2 | 0 (11 UNKNOWN) |
+| PY-05 | 3 | 2 | 0 | 6 → 0 (1 UNKNOWN) |
+| PY-06 | 6 | 4 | 1 | 0 (5 UNKNOWN) |
+| PY-07 | 8 | 5 | 2 | 4 → 3 → 5 → 3 → 1 → 0 (2 UNKNOWN) |
+| PY-08 | 8 | 6 | 1 | **12 → 14 → 11 → 10 → 8 → 3 → 0** (1 UNKNOWN) |
+| PY-09 | 3 | 3 | 0 | 3 (2 UNKNOWN) — **in flight** |
+
+The trailing `0` is the accepting cycle. Counts the extractor could not read are UNKNOWN and are
+omitted from the trajectory rather than shown as zero — which is why several BIUs show only their
+acceptance. **PY-08 is the only BIU with a complete readable series**, which is what makes it the
+reference case below.
 
 ## Readings worth acting on
 
@@ -58,7 +63,7 @@ working — but each one costs a full invocation, and at least two were caused b
 records rather than genuine authority gaps, which is what the
 [SF-REQ-002 admission preconditions](../decisions/alienintent-software-factory-plan.md) now prevent.
 
-**Verification is fast; implementation is slow.** Verify runs at a median 529 s against implement at
+**Verification is fast; implementation is slow.** Verify runs at a median 530 s against implement at
 690 s, and verification is the step that catches defects. That ratio is an argument for verifying more
 often rather than batching work into larger candidates.
 
@@ -84,8 +89,10 @@ verification rather than repair implementation. That single data series is the e
   taking precedence over one that merely mentions findings. PY-08 cycle 7 and PY-06 cycle 6 now
   extract correctly; PY-06 cycle 5 became `"UNKNOWN"` rather than wrong.
 - **Implementation durations exist for only 7 cycles.** The observation log starts at PY-06; earlier
-  timings are not recoverable. Verification durations come from the result-marker timestamps and cover
-  37 cycles.
+  timings are not recoverable here. Verification durations come from the result-marker timestamps and
+  cover 38 cycles. (The PY-05–PY-09 extraction session recovered earlier implementation durations from
+  `state.json resources`, which carries `createdAt`/`exitedAt` per invocation — a better spine than the
+  observation log for this purpose.)
 - **Cycle identity comes from the B-DISP result protocol**, not from report prose. Report titles vary
   across BIUs ("VERIFIER — PY-04 candidate … : ACCEPT", "PY-07 repair verification (cycle 6) — ACCEPT",
   "PY-09 independent verification — REJECT"), and an earlier extraction that keyed on titles silently
