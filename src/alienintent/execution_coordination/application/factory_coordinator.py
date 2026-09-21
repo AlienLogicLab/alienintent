@@ -24,6 +24,10 @@ class StopReason(StrEnum):
     CAPACITY_UNAVAILABLE = "capacity-unavailable"
 
 
+class TerminalWork(ValueError):
+    """A normal domain refusal to alter terminal or accepted work."""
+
+
 @dataclass(frozen=True)
 class RunSummary:
     stop_reason: StopReason
@@ -120,8 +124,10 @@ class FactoryCoordinator:
         prior = raw.get("cancellation")
         if isinstance(prior, dict) and prior.get("idempotency_key") == idempotency_key:
             return {"status": "cancelled", "target": identity, "idempotent": True}
+        if isinstance(prior, dict) and raw.get("outcome") == "cancelled-by-operator":
+            return {"status": "cancelled", "target": identity, "idempotent": True}
         if raw.get("stage") == LifecycleStage.DONE.value or raw.get("accepted"):
-            raise ValueError("terminal or accepted work cannot be cancelled")
+            raise TerminalWork("terminal or accepted work cannot be cancelled")
         if version != expected_version:
             raise VersionConflict("stale expected version")
         cancellation = {"actor": actor, "authority": authority, "reason": reason, "idempotency_key": idempotency_key}
@@ -136,6 +142,8 @@ class FactoryCoordinator:
             if raw.get("stage") == LifecycleStage.DONE.value or raw.get("accepted") or raw.get("outcome") in {"cancelled-by-operator", "cancelled-by-decision"}:
                 continue
             candidates.append((identity, version))
+        if any(version > expected_version for _, version in candidates):
+            raise VersionConflict("stale expected version")
         # A profile may legitimately contain independent in-flight aggregates
         # at different revisions.  Apply each cancellation against the exact
         # snapshot revision it was enumerated with; cancel() remains the guard

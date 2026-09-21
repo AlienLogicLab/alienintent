@@ -182,6 +182,44 @@ def make():
     assert json.loads(result.stdout) == {"error": "stale-expected-version"}
 
 
+def test_cli_stop_rejects_a_stale_profile_fence(tmp_path: Path) -> None:
+    """Dropping stop's expected-version fence would let this subprocess cancel work."""
+    factory = tmp_path / "profile_factory.py"
+    factory.write_text(
+        """
+from pathlib import Path
+from alienintent.composition.offline_profile import OfflineProfile
+class Work:
+    def import_ready_snapshot(self): return ()
+class Worker:
+    def cancel(self, *_): raise AssertionError('stale stop reached cancellation')
+def make():
+    profile = OfflineProfile(Path(__file__).with_name('state.db'), Work(), Worker(), Path(__file__).parent / 'artifacts')
+    profile.store.commit('offline', 'factory:PY-08', 0, {'stage': 'IMPLEMENT', 'version': 0, 'accepted': False, 'closure': []})
+    return profile
+"""
+    )
+    result = subprocess.run(
+        [sys.executable, "-m", "alienintent", "--profile-factory", "profile_factory:make", "stop", "--actor", "morty", "--authority", "SWF-21", "--intent", "stop", "--expected-version", "0", "--reason", "stale", "--idempotency-key", "stop-1", "--json"],
+        text=True, capture_output=True, env=os.environ | {"PYTHONPATH": f"src:{tmp_path}"}, check=False,
+    )
+
+    assert result.returncode != 0
+    assert json.loads(result.stdout) == {"error": "stale-expected-version"}
+
+
+def test_cli_sanitizer_labels_domain_conflicts_without_exposing_messages() -> None:
+    """Generic ValueError/RuntimeError buckets misdescribe normal domain outcomes."""
+    from alienintent.control_plane.adapters.cli import _sanitize
+    from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
+    from alienintent.execution_coordination.domain.escalation import SupersededDecision
+    from alienintent.execution_coordination.ports.operational_store import VersionConflict
+
+    assert _sanitize(TerminalWork("terminal work contains token=SENTINEL")) == "terminal-work"
+    assert _sanitize(SupersededDecision("decision token=SENTINEL")) == "superseded-decision"
+    assert _sanitize(VersionConflict("revision token=SENTINEL")) == "stale-expected-version"
+
+
 def test_cli_cancel_cannot_write_through_its_store_view(tmp_path: Path) -> None:
     """Replacing the application-service cancellation with a store write must fail."""
     factory = tmp_path / "profile_factory.py"

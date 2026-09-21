@@ -94,9 +94,50 @@ def test_stop_quiesces_each_nonterminal_item_at_its_own_revision(tmp_path: Path)
     profile.store.commit("offline", "factory:PY-09", 0, {"stage": "IMPLEMENT", "accepted": False, "closure": []})
     profile.store.commit("offline", "factory:PY-09", 1, {"stage": "IMPLEMENT", "accepted": False, "closure": [], "note": "newer"})
 
-    result = profile.coordinator.stop_owned("morty", "operator", 0, "quiesce", "stop-1")
+    result = profile.coordinator.stop_owned("morty", "operator", 2, "quiesce", "stop-1")
     assert {entry["target"] for entry in result["stopped"]} == {"PY-08", "PY-09"}
     assert worker.cancelled == ["PY-08", "PY-09"]
+
+
+def test_stop_rejects_an_operator_view_older_than_an_owned_item(tmp_path: Path) -> None:
+    """Ignoring the stop fence would cancel work from a stale operator view."""
+    from alienintent.composition.offline_profile import OfflineProfile
+    from alienintent.execution_coordination.ports.operational_store import VersionConflict
+
+    class Work:
+        def import_ready_snapshot(self): return ()
+    class Worker:
+        def cancel(self, *_): raise AssertionError("stale stop must not reach the worker")
+
+    profile = OfflineProfile(tmp_path / "state.db", Work(), Worker(), tmp_path / "artifacts")
+    profile.store.commit("offline", "factory:PY-08", 0, {"stage": "IMPLEMENT", "accepted": False, "closure": []})
+
+    with pytest.raises(VersionConflict, match="stale expected version"):
+        profile.coordinator.stop_owned("morty", "operator", 0, "quiesce", "stop-1")
+
+
+def test_cancel_with_a_new_key_preserves_the_first_cancellation_evidence(tmp_path: Path) -> None:
+    """Replacing the prior cancellation record would erase attributable evidence."""
+    from alienintent.composition.offline_profile import OfflineProfile
+
+    class Work:
+        def import_ready_snapshot(self): return ()
+    class Worker:
+        def __init__(self): self.calls = 0
+        def cancel(self, *_): self.calls += 1; return "cancelled"
+
+    worker = Worker()
+    profile = OfflineProfile(tmp_path / "state.db", Work(), worker, tmp_path / "artifacts")
+    profile.store.commit("offline", "factory:PY-08", 0, {"stage": "IMPLEMENT", "accepted": False, "closure": []})
+    first = profile.coordinator.cancel("PY-08", "morty", "operator", 1, "first reason", "cancel-1")
+    persisted = profile.store.read_state("offline", "factory:PY-08")[1]
+
+    second = profile.coordinator.cancel("PY-08", "jessica", "other-authority", 2, "other reason", "cancel-2")
+
+    assert first["idempotent"] is False
+    assert second == {"status": "cancelled", "target": "PY-08", "idempotent": True}
+    assert profile.store.read_state("offline", "factory:PY-08")[1] == persisted
+    assert worker.calls == 1
 
 
 def test_cancelled_work_is_not_dispatched_again(tmp_path: Path) -> None:

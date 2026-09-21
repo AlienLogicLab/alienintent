@@ -10,6 +10,9 @@ from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from alienintent.control_plane.application.operator import OperatorControlPlane, OperatorDenied
+from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
+from alienintent.execution_coordination.domain.escalation import SupersededDecision
+from alienintent.execution_coordination.ports.operational_store import VersionConflict
 
 
 def _sanitize(value: object) -> str:
@@ -20,6 +23,12 @@ def _sanitize(value: object) -> str:
         if str(value) == "stale expected version":
             return "stale-expected-version"
         return "authority-denied"
+    if isinstance(value, VersionConflict):
+        return "stale-expected-version"
+    if isinstance(value, SupersededDecision):
+        return "superseded-decision"
+    if isinstance(value, TerminalWork):
+        return "terminal-work"
     if isinstance(value, KeyError):
         return "unknown-work-item"
     if isinstance(value, ValueError):
