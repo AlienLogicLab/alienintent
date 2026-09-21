@@ -12,9 +12,10 @@
   "9",
   "10",
   "11",
-  "12"
+  "12",
+  "13"
  ],
- "current_phase": "13",
+ "current_phase": "14",
  "program": "post-wave1-to-wave2",
  "tasks": {
   "POSTW1-AGENTREADY-004": {
@@ -308,6 +309,27 @@
    "title": "Founder: five design authority gaps surfaced by verification (edge authority, 013 allocation, 039 orchestration and real-outcome, monitor host)",
    "updated_at": "2026-09-21T21:43:57.345148+00:00"
   },
+  "POSTW1-DECIDE-013A": {
+   "artifact_refs": [
+    "docs/evidence/wave2-agent-ready-assessments.json"
+   ],
+   "assigned_actor": "founder",
+   "blockers": [
+    "Wave 2 has zero READY BIUs; WO-220101 is the single entry point and awaits this answer"
+   ],
+   "created_at": "2026-09-21T22:18:45.874628+00:00",
+   "critical_path": false,
+   "phase": "13",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": null,
+   "risk_class": "HIGH",
+   "routing": null,
+   "status": "FOUNDER_DECISION_REQUIRED",
+   "task_id": "POSTW1-DECIDE-013A",
+   "title": "Founder: clarification AR13-CQ-001 \u2014 identify the authorized allocator and retained execution packet (blocks Wave 2's only assessable entry point)",
+   "updated_at": "2026-09-21T22:18:45.874643+00:00"
+  },
   "POSTW1-DESIGN-009": {
    "artifact_refs": [
     "docs/evidence/wave2-design-contracts.json",
@@ -468,6 +490,26 @@
    "task_id": "POSTW1-PLAN-011",
    "title": "Wave 2 PLAN / Dependency DAG",
    "updated_at": "2026-09-21T21:59:32.422423+00:00"
+  },
+  "POSTW1-READY-013": {
+   "artifact_refs": [
+    "docs/evidence/wave2-agent-ready-assessments.json",
+    "docs/evidence/wave2-agent-ready-assessments.md"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-21T22:10:05.127569+00:00",
+   "critical_path": null,
+   "phase": "13",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "PASS",
+   "risk_class": "HIGH",
+   "routing": null,
+   "status": "DONE",
+   "task_id": "POSTW1-READY-013",
+   "title": "Agent-Ready Assessment of Wave 2 BIUs",
+   "updated_at": "2026-09-21T22:18:45.867730+00:00"
   },
   "POSTW1-RETRO-007": {
    "artifact_refs": [
@@ -681,5 +723,5 @@
    "updated_at": "2026-09-21T21:43:57.339548+00:00"
   }
  },
- "updated_at": "2026-09-21T22:08:26.518272+00:00"
+ "updated_at": "2026-09-21T22:18:45.888396+00:00"
 }
