@@ -140,3 +140,37 @@ Disposition: **PARKED_FOR_REQUESTED_REVIEW** on existing `main`, owned by POSTW1
 | POSTW1-DECIDE-013A | Resolve first for entry: name authorized allocator and exact retained execution packet/limits/remaining allowance for WO-220101, or explicitly defer it; then reassess. |
 
 **OPTIONAL FOLLOW-UPS:** Request invocation-level economic telemetry and a controlled routing/yield comparison; review the eleven declined promotions when their stated revisit conditions are met. These do not replace mandatory allocation, readiness, authority or operational gates.
+
+---
+
+## Director closure addendum
+
+Added by the local Program Director after the report above was written and landed. It is kept
+separate because the report's author could not have written it: a final report cannot contain the
+identity of the commit that lands it, and the §15 conditions it correctly listed as outstanding
+were outstanding *at the time of writing*.
+
+**Amendment §15 completion conditions, as of `352fa9d7fce76b661ca98bebca0adec7a00a13df`:**
+
+1. Phases 3–14 complete — yes, all recorded in `program-state.json` `completed_phases`.
+2. Deterministic checks pass — 12 of 12 checkers run against their real artifacts, all PASS;
+   `check_wave1.py --negative-controls` reports 1,075 checks, 0 failures, 13/13 controls killed.
+3. Required independent reviews closed — Phase 10 VERIFIED after three verification rounds and two
+   repairs; the final report accuracy-checked across 108 figures and repaired.
+4. Phase 14 packet complete — 23 of 23 sections.
+5. `FINAL-REPORT.md` written — this file.
+6. Repository changes landed and remotely verified — `352fa9d7` pushed to `origin/main` and
+   confirmed reachable by `git merge-base --is-ancestor`.
+7. No temporary worktree or task left without a durable disposition — the bootstrap retirement
+   matrix records all 17 mechanisms with dispositions; no retirement action was taken, and the six
+   `NEEDS_DECISION` items plus the `PRODUCER-on-Claude` reversion are carried as
+   `POSTW1-DECIDE-006A`.
+8. Terminal state — **`PROGRAM_COMPLETE`**, computed by `ProgramState.terminal_state()`, which
+   requires every approved phase 3–14 complete and no blocking Founder decision. Seven Founder
+   decisions are open; all are marked `critical_path: false`, which is why they do not produce
+   `FOUNDER_DECISION_REQUIRED`.
+
+**What `PROGRAM_COMPLETE` does and does not mean.** It means the approved programme executed to
+its end and every deterministic control passes. It does not mean Wave 2 can begin: Wave 2 has zero
+READY BIUs, its single assessable entry point awaits clarification `AR13-CQ-001`, and eight
+execution prerequisites are listed in §Wave 2. Those are Founder decisions, not programme work.
