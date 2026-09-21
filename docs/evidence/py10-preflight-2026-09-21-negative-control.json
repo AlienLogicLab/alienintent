@@ -4,7 +4,7 @@
   {
    "check": "profile_records_app_identity",
    "ok": true,
-   "detail": "app_id=5014629 installation_id=163346526"
+   "detail": "app_id=<app-id redacted> installation_id=<installation-id redacted>"
   },
   {
    "check": "private_key_present_and_protected",
@@ -24,7 +24,7 @@
   {
    "check": "app_authenticates_with_private_key",
    "ok": true,
-   "detail": "HTTP 200 slug=alienintent-py-10-sandbox id=5014629"
+   "detail": "HTTP 200 slug=alienintent-py-10-sandbox id=<app-id redacted>"
   },
   {
    "check": "app_permissions_are_exactly_least_privilege",
@@ -39,7 +39,7 @@
   {
    "check": "installation_belongs_to_this_app",
    "ok": true,
-   "detail": "HTTP 200 app_id=5014629 account=AlienLogicLab"
+   "detail": "HTTP 200 app_id=<app-id redacted> account=AlienLogicLab"
   },
   {
    "check": "installation_is_repository_scoped",
@@ -87,5 +87,6 @@
    "ok": true,
    "detail": "alienintent-sandbox-tunnel=active"
   }
- ]
+ ],
+ "_redaction": "App and installation identifiers replaced with placeholders. PY-09B binding rule 3 and PY-10 AC 17 forbid them in retained evidence; the provisioned identities live in docs/operations/py10-sandbox.md, which is documentation rather than evidence. No check outcome is altered by the redaction."
 }
