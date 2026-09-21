@@ -83,10 +83,15 @@ The previous provider block is recorded above and the pre-change profile is reta
    `invalid config.workers.PRODUCER`. Correct behaviour on the loader's part; provenance belongs in
    this record, not in the profile. Key removed, profile accepted.
 3. Dispatcher restarted with no active invocation; App preflight passed; current PID clean.
-4. Continuation record posted to the Issue **before** any producer could start, naming the preserved
-   worktree, the cycle-3 findings, §4b, and the provider-capacity notice.
+4. Continuation record posted to the Issue, naming the preserved worktree, the cycle-3 findings, §4b,
+   and the provider-capacity notice. **Correction (2026-09-22):** this step originally claimed the
+   record was posted *before* any producer could start. Timestamp evidence does not support that —
+   resource allocation occurred at `02:21:37.058Z` and the comment at `02:21:38Z`, so **allocation
+   preceded the comment by 0.942 s**. The producer did read the record, but pre-launch ordering was
+   asserted, not observed. Found by the Codex Wave 1 evidence reconciliation; authoritative sources are
+   `state.json#resources` and issue [#57 comment 5754575853](https://github.com/AlienLogicLab/alienintent/issues/57#issuecomment-5754575853).
 5. Replacement producer **`9979bdcc-adaf-4b5a-9847-265e6556645e`**, pid 823528, running `claude -p`,
-   started `02:21:36Z` — after the continuation record.
+   allocated `02:21:37.058Z`.
 6. **Duplicate check: exactly one lane claim for `#57`, exactly one live worker process** on the host.
    The resume came from the dispatcher's own restart reconciliation, not from liveness re-emission.
 7. Attention items acknowledged only then.
