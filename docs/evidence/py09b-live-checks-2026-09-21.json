@@ -1,0 +1,180 @@
+{
+ "ok": true,
+ "checks": [
+  {
+   "check": "installation_token_mints_from_the_referenced_private_key",
+   "ok": true,
+   "detail": "minted 1 token; expiry 1789989268 epoch; repr=InstallationToken(value=<redacted>, expires_at=1789989268.0, repository_selection='selected')"
+  },
+  {
+   "check": "installation_token_is_used_for_a_live_call",
+   "ok": true,
+   "detail": "installation repositories=['AlienLogicLab/alienintent-sandbox']"
+  },
+  {
+   "check": "installation_token_refreshes_rather_than_being_reused_past_expiry",
+   "ok": true,
+   "detail": "a token already inside its refresh margin was re-minted rather than reused: mints=2; second credential differs from the first: True"
+  },
+  {
+   "check": "a_usable_token_is_reused_before_its_refresh_margin",
+   "ok": true,
+   "detail": "the live credential was reused rather than re-minted: mints=1"
+  },
+  {
+   "check": "missing_credential_reference_fails_closed",
+   "ok": true,
+   "detail": "typed outcome CredentialRejected: App private key reference does not resolve"
+  },
+  {
+   "check": "granted_permissions_and_events_are_exactly_least_privilege",
+   "ok": true,
+   "detail": "granted={'contents': 'write', 'issues': 'read', 'metadata': 'read', 'organization_projects': 'write'}; drift=[]"
+  },
+  {
+   "check": "contents_write_is_granted_not_merely_contents_read",
+   "ok": true,
+   "detail": "contents='write'; read alone permits the clone half of read-back and not the push half"
+  },
+  {
+   "check": "sandbox_repository_metadata_read_live",
+   "ok": true,
+   "detail": "full_name=AlienLogicLab/alienintent-sandbox private=True default_branch=main"
+  },
+  {
+   "check": "sandbox_repository_issues_read_live",
+   "ok": true,
+   "detail": "1 issue(s) readable with the installation token"
+  },
+  {
+   "check": "candidate_custody_exercised_with_the_installation_credential",
+   "ok": true,
+   "detail": "published a8a1b01cae017ee1b9c052e912e98b30d86a0974 to a probe branch and read it back from a fresh clone; locator=git:https://github.com/AlienLogicLab/alienintent-sandbox.git#py09b-transport-probe-1789985676@a8a1b01cae017ee1b9c052e912e98b30d86a0974"
+  },
+  {
+   "check": "custody_probe_branch_removed",
+   "ok": true,
+   "detail": "probe branch deleted; sandbox repository left as found"
+  },
+  {
+   "check": "sandbox_project_resolved_live_through_the_work_management_port",
+   "ok": true,
+   "detail": "project PVT_kwDOEcrpC84BkIEX number 2 titled 'AlienIntent Sandbox \u2014 Wave 1 live proof'"
+  },
+  {
+   "check": "project_status_and_priority_field_and_option_identities_resolved",
+   "ok": true,
+   "detail": "Status PVTSSF_lADOEcrpC84BkIEXzhi5x34 options=['ACCEPT', 'CAPTURE', 'DONE', 'IMPLEMENT', 'PLAN', 'READY', 'REVIEW', 'SPECIFY', 'TASKS', 'VERIFY']; Priority PVTSSF_lADOEcrpC84BkIEXzhi5x-w options=['P0', 'P1', 'P2', 'P3', 'P4', 'P5']"
+  },
+  {
+   "check": "project_identity_resolution_fails_closed_on_mismatch",
+   "ok": true,
+   "detail": "typed outcome ProjectAddressRejected: observed project is not the configured project"
+  },
+  {
+   "check": "every_project_operation_targeted_the_configured_project",
+   "ok": true,
+   "detail": "1 Project operation(s), all addressed to PVT_kwDOEcrpC84BkIEX"
+  },
+  {
+   "check": "repository_boundary_is_permission_enforced",
+   "ok": true,
+   "detail": "repository_selection=selected; repositories=['AlienLogicLab/alienintent-sandbox']; findings=[]"
+  },
+  {
+   "check": "no_project_identity_other_than_the_configured_one_appears_in_configuration",
+   "ok": true,
+   "detail": "sandbox configuration names exactly PVT_kwDOEcrpC84BkIEX; Project isolation is configuration-enforced, not token-enforced (SWF-34)"
+  },
+  {
+   "check": "organization_scoped_projects_grant_is_recorded_not_claimed_away",
+   "ok": true,
+   "detail": "organization_projects is an organization permission; this run makes no claim that the token reaches only the configured Project. PY-10 AC 16 is the compensating end-to-end control."
+  },
+  {
+   "check": "resident_ingress_bound_the_configured_address_and_port",
+   "ok": true,
+   "detail": "ingress resident at http://127.0.0.1:8789/webhook"
+  },
+  {
+   "check": "provisioned_public_endpoint_reaches_the_resident_ingress",
+   "ok": true,
+   "detail": "<ingress-hostname redacted>/ answered the resident ingress marker: True"
+  },
+  {
+   "check": "fenced_lifecycle_projection_written_and_read_back_as_written",
+   "ok": true,
+   "detail": "projection revision 2 confirmed=True; Project read-back Status=IMPLEMENT"
+  },
+  {
+   "check": "stale_projection_carrying_a_superseded_revision_is_refused",
+   "ok": true,
+   "detail": "revision 1 after 2: confirmed=False detail='stale projection fenced'; Project still IMPLEMENT"
+  },
+  {
+   "check": "projection_remains_one_way",
+   "ok": true,
+   "detail": "the Project was read after the write and contributed no execution authority: IMPLEMENT is not a configured upstream release status, so no canonical state followed the Project"
+  },
+  {
+   "check": "real_signed_delivery_reached_the_resident_ingress_and_was_admitted",
+   "ok": true,
+   "detail": "delivery 482bfe30-b5a5-11f1-9b6c-d376d715c08e event=projects_v2_item status_code=202; ingress notifications=2"
+  },
+  {
+   "check": "replayed_delivery_is_admitted_at_most_once",
+   "ok": true,
+   "detail": "redelivered 482bfe30-b5a5-11f1-9b6c-d376d715c08e; its durable receipt is unchanged (version=2 status=applied), so the replay produced no second admission"
+  },
+  {
+   "check": "unsigned_delivery_is_rejected",
+   "ok": true,
+   "detail": "typed outcome IngressRejected: invalid raw-body signature"
+  },
+  {
+   "check": "wrongly_signed_delivery_is_rejected",
+   "ok": true,
+   "detail": "typed outcome IngressRejected: invalid raw-body signature"
+  },
+  {
+   "check": "delivery_signed_with_a_different_secret_is_rejected",
+   "ok": true,
+   "detail": "typed outcome IngressRejected: invalid raw-body signature"
+  },
+  {
+   "check": "delivery_for_another_project_is_refused",
+   "ok": true,
+   "detail": "replayed a real delivery for a Project this profile does not target; ingress refused it (GitHub recorded status_code=401); notifications unchanged at 2"
+  },
+  {
+   "check": "doctor_work_management_probe_is_live",
+   "ok": true,
+   "detail": "evidence={\"rows\": [], \"lifecycle_statuses\": \"{'READY': 'READY'}\", \"projection_permissions\": [\"ACCEPT\", \"DONE\", \"IMPLEMENT\", \"REVIEW\", \"VERIFY\"], \"project\": \"PVT_kwDOEcrpC84BkIEX\"}"
+  },
+  {
+   "check": "doctor_source_control_probe_is_live",
+   "ok": true,
+   "detail": "evidence={\"repository\": \"AlienLogicLab/alienintent-sandbox\", \"baseline\": \"ab68d3a0797a92fe64e7b3dea8b37021fe12cd9b\", \"publication_permissions\": [\"contents:write\"]}"
+  },
+  {
+   "check": "doctor_provider_probe_is_live",
+   "ok": true,
+   "detail": "evidence={\"name\": \"codex\", \"version\": \"Python 3.12.3\", \"capabilities\": [\"attempts\", \"cancellation\", \"concurrency\", \"retries\", \"wall-clock\"], \"authenticated\": true}"
+  },
+  {
+   "check": "doctor_transport_probe_is_live",
+   "ok": true,
+   "detail": "route reached the resident ingress; signature=sha256=c860859\u2026"
+  },
+  {
+   "check": "doctor_returns_typed_outcomes_against_the_sandbox",
+   "ok": true,
+   "detail": "disposition=PASS exit=0 outcomes={\"configuration\": \"PASS\", \"execution\": \"PASS\", \"persistence\": \"PASS\", \"provider\": \"PASS\", \"secrets\": \"PASS\", \"source_control\": \"PASS\", \"transport\": \"PASS\", \"work_management\": \"PASS\"}"
+  },
+  {
+   "check": "transient_probe_item_removed",
+   "ok": true,
+   "detail": "probe item PVTI_lADOEcrpC84BkIEXzg77S5U deleted; sandbox Project left as found"
+  }
+ ]
+}

@@ -7,19 +7,37 @@ from typing import Mapping
 
 from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.execution_coordination.domain.escalation import HumanDecisionRequired
+from alienintent.execution_coordination.ports.project_directory import ProjectDirectory, ProjectSchema
 from alienintent.execution_coordination.ports.work_management import ProjectionReceipt, ReadyWorkItem, WorkManagement, WorkRejected, WorkUnavailable
 
 
 class GitHubProjectsWorkManagement(WorkManagement):
     """Translate complete recorded provider pages into neutral imported work."""
 
-    def __init__(self, profile: str, repository: str, status_mapping: Mapping[str, str], projection_fields: Mapping[str, str], snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, projection_write: Callable[[str, str, str, int], int] | None = None, decision_projection_write: Callable[[HumanDecisionRequired], str] | None = None) -> None:
+    def __init__(self, profile: str, repository: str, status_mapping: Mapping[str, str], projection_fields: Mapping[str, str], snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, projection_write: Callable[[str, str, str, int], int] | None = None, decision_projection_write: Callable[[HumanDecisionRequired], str] | None = None, directory: ProjectDirectory | None = None) -> None:
         if not status_mapping or any(not isinstance(upstream, str) or not upstream or not isinstance(neutral, str) or not neutral for upstream, neutral in status_mapping.items()):
             raise WorkRejected("ambiguous status mapping")
         self._profile, self._repository = profile, repository
         self._status_mapping, self._projection_fields, self._snapshot, self._contract, self._projection_write = dict(status_mapping), dict(projection_fields), snapshot, contract, projection_write
-        self._decision_projection_write = decision_projection_write
+        self._decision_projection_write, self._directory = decision_projection_write, directory
         self._projected_revisions: dict[str, int] = {}
+
+    def resolve_project(self) -> ProjectSchema:
+        """Resolve the live Project and its field and option identities.
+
+        The configured lifecycle and projection states must exist as real Status
+        options, so a profile mapped against a Project that cannot carry it is
+        rejected here rather than discovered by a failed projection write.
+        """
+        if self._directory is None:
+            raise WorkUnavailable("no project directory is bound to this profile")
+        schema = self._directory.schema()
+        if not schema.status_options or not schema.priority_options:
+            raise WorkRejected("Project Status or Priority field carries no option identities")
+        absent = sorted((set(self._status_mapping) | set(self._projection_fields)) - set(schema.status_options))
+        if absent:
+            raise WorkRejected("configured lifecycle states are absent from the Project Status field")
+        return schema
 
     def import_ready_snapshot(self) -> tuple[ReadyWorkItem, ...]:
         try:
