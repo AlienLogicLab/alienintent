@@ -11,6 +11,7 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 | PROP-2026-0005 | Proposal Intake as a Product Capability | Product Requirement | [SWF-28](../decisions/2026-09-20-evidence-and-intake-ratification.md) | SF-REQ-055 | [#66](https://github.com/AlienLogicLab/alienintent/issues/66) | ratified 2026-09-20; CAPTURE; P1 / Wave 3 |
 | PROP-2026-0006 | Deterministic Actor-Launch Liveness Reconciliation | Product Requirement | [SWF-29](../decisions/2026-09-20-liveness-reconciliation.md) | SF-REQ-056 | [#67](https://github.com/AlienLogicLab/alienintent/issues/67) | canonicalized 2026-09-20; CAPTURE; P0 / Wave 2 |
 | PROP-2026-0007 | Candidate Worktree Retention — local worktree as operational cache | Operational policy; canonicalized as an amendment to an existing requirement | [SWF-30](../decisions/2026-09-20-candidate-worktree-retention.md) | **SF-REQ-007** (amendment) | [#9](https://github.com/AlienLogicLab/alienintent/issues/9) | approved and canonicalized 2026-09-20 with a clarification to condition 2; applied — 18 worktrees removed, 3 retained |
+| PROP-2026-0008 | BIU Execution Cycle Counter — canonical cycle identity and Work Management projection | Workflow semantics over execution-domain state; canonicalized as an amendment | [SWF-32](../decisions/2026-09-21-biu-execution-cycle-counter.md) | **SF-REQ-009** (amendment) | [#11](https://github.com/AlienLogicLab/alienintent/issues/11) | canonicalized 2026-09-21; **Priority/Wave unassigned — open Founder decision** |
 
 ## Intake rules
 
@@ -35,11 +36,15 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 
 ## Open Founder decisions
 
-None outstanding from proposal intake. **PROP-2026-0007 is resolved:** remote publication with
+- **PROP-2026-0008 / SF-REQ-009 amendment** — the cycle semantics are canonical, but the **implementation obligation carries no Priority or Wave**. SF-REQ-009 is P0/Wave 1 and its Wave 1 scope is materially complete, so inheriting that scheduling would imply Wave 1 must deliver the counter. The coordinator does not invent priority or wave; the Founder assigns one.
+
+Otherwise none outstanding from proposal intake. **PROP-2026-0007 is resolved:** remote publication with
 confirmed read-back does satisfy retention for a local candidate worktree, provided the remote
 reference's own retention is at least as strong as the applicable evidence-retention obligation
 ([SWF-30](../decisions/2026-09-20-candidate-worktree-retention.md)). The 2 sole-copy PY-04 worktrees
 remain retained regardless.
+
+**PROP-2026-0008 note:** a new requirement was assessed and rejected. SF-REQ-009 already owns deterministic, replay-safe canonical execution state derived from lifecycle — the cycle counter is the same class as the candidate identity it already names, so amendment distorts nothing and a separate requirement would split one concept across two owners (the failure SWF-28 corrected for SF-REQ-030/054). Engineering Trajectory, factory yield, the Operator Control Plane, convergent repair and convergence assistance were each assessed and are **consumers**: trajectory owning the counter would let evidence define state, and a display or policy surface cannot own execution state. FD-01 already settles the projection direction, so no projection authority was created.
 
 **PROP-2026-0007 note:** amendment was preferred and adopted. SF-REQ-007 candidate custody already
 owns "durably identifiable and retrievable"; the retention rule is the converse of the same

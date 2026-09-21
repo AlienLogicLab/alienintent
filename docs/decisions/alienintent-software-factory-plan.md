@@ -901,6 +901,12 @@ Preserve canonical execution state across crashes/restarts and prevent duplicate
 
 Lifecycle, policy, reservations, WIP, retries, capabilities, budgets, candidate identity, and verdict admissibility are deterministic. No LLM owns canonical execution state.
 
+**Amendment (2026-09-21, [SWF-32](2026-09-21-biu-execution-cycle-counter.md)) — BIU execution cycle counter.** The kernel maintains a durable per-BIU **execution cycle number** after release, deterministic and reconstructible like the candidate identity it sits beside. The first authoritative transition into `IMPLEMENT` establishes cycle 1; every later authoritative transition into `IMPLEMENT` from another lifecycle state — including authorized `ACCEPT → IMPLEMENT` rework — increments by exactly one; `VERIFY` inherits the cycle and never increments it; `ACCEPT`/`DONE` retain it as history. Retry, restart, provider failover or a replacement worker within the same phase does not increment, a verifier restart within `VERIFY` does not increment, liveness recovery or replay of the same state does not increment, and duplicate delivery of one transition must not increment twice. Restart, replay and reconciliation preserve or deterministically reconstruct the same value.
+
+**Cycle count is not invocation count.** A cycle is a lifecycle fact; an invocation attempt is a worker fact; neither is derivable from the other. Worker invocations remain separately identifiable, and trajectory must represent BIU → cycle → invocation attempts. The cycle is projected to the configured Work Management provider for operator visibility (FD-01 direction only — a projected field is never execution authority), and is **evidence, not a verdict**: SF-REQ-024, SF-REQ-029, SF-REQ-034, SF-REQ-049 and SF-REQ-052 consume it; none of them owns it.
+
+**Not retrofitted.** This adds no obligation to the Node bootstrap or to any released BIU, and carries **no Priority or Wave assignment** — the implementation obligation is unscheduled until the Founder assigns one.
+
 ## SF-REQ-010 — BIU contract model
 **Priority:** P0
 
