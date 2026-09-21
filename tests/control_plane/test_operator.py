@@ -175,6 +175,44 @@ def test_explain_uses_the_coordinator_guard_account() -> None:
     assert result == {"target": "PY-08", "guard_outcomes": {"eligible": False, "reason": "authority-block"}, "evidence": {"execution_revision": 4}}
 
 
+def test_explain_matches_a_real_kernel_authority_block(tmp_path: Path) -> None:
+    """A fake guard account cannot prove the CLI reports the kernel's decision."""
+    from alienintent.composition.offline_profile import OfflineProfile
+    from alienintent.control_plane.application.operator import OperatorControlPlane
+    from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
+    from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
+    from alienintent.execution_coordination.ports.worker_provider import WorkerOutcome
+
+    contract = BiuContract(
+        identity="PY-08", version="1", intent="Exercise the kernel guard", satisfied_requirement_ids=("SF-REQ-034",),
+        fixed_decisions=("kernel-guard",), authorized_scope=("execution",), excluded_scope=("web",), dependencies=(),
+        required_capabilities=("python",), budget_policy=BudgetPolicy(hard_required_dimensions=("attempts",)),
+        retry_policy="no retry", completion_criteria=("guard account",), verification_obligations=("kernel comparison",),
+        required_evidence=("test",), non_goals=("network",), candidate_custody_requirements=("read-back",),
+        release_policy="automatic-on", authority_issuer="Founder", authority_references=("SWF-21",),
+        target_repositories=("AlienLogicLab/alienintent",), baselines=("main",), required_closure_actions=("publish",),
+        stop_escalation_conditions=("authority block",),
+    )
+    item = ReadyWorkItem("PY-08", 0, "repo", "offline", 1, (), contract, contract.content_digest, "ready", True)
+
+    class Work:
+        def __init__(self): self.items = (item,)
+        def import_ready_snapshot(self): return self.items
+        def propose_release(self, _): pass
+        def project_execution_state(self, *_): pass
+    class Worker:
+        def start(self, *_): return WorkerOutcome("authority-block")
+
+    profile = OfflineProfile(tmp_path / "state.db", Work(), Worker(), tmp_path / "artifacts")
+    summary = profile.coordinator.start()
+    service = OperatorControlPlane(profile.name, profile.store, profile.work, profile.coordinator, lambda: True)
+
+    assert summary.authority_blocked == ("PY-08",)
+    assert service.explain("PY-08")["guard_outcomes"] == {
+        "eligible": False, "reason": "authority-block", "lifecycle": "IMPLEMENT", "outcome": "authority-block",
+    }
+
+
 def test_reconcile_calls_the_coordinator_recovery_boundary() -> None:
     from alienintent.control_plane.application.operator import OperatorControlPlane
 

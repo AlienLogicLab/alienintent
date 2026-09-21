@@ -9,15 +9,22 @@ import sys
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
-from alienintent.control_plane.application.operator import OperatorControlPlane
+from alienintent.control_plane.application.operator import OperatorControlPlane, OperatorDenied
 
 
 def _sanitize(value: object) -> str:
-    # Errors cross a provider boundary and are therefore untrusted diagnostic
-    # material.  A stable public summary is safer than a deny-list of secret
-    # formats (which would eventually miss a provider's next token shape).
-    del value
-    return "operation failed; diagnostic redacted"
+    """Map trusted operator failures to a closed, secret-safe vocabulary."""
+    if isinstance(value, OperatorDenied):
+        if str(value).startswith("readiness gate failed"):
+            return "readiness-gate-failed"
+        if str(value) == "stale expected version":
+            return "stale-expected-version"
+        return "authority-denied"
+    if isinstance(value, KeyError):
+        return "unknown-work-item"
+    if isinstance(value, ValueError):
+        return "invalid-command-arguments"
+    return "internal-error"
 
 
 def _argument_error(_: str) -> None:

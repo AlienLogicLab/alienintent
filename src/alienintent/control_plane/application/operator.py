@@ -103,7 +103,11 @@ class OperatorControlPlane:
         biu_version = fields.get("biu_version")
         if not isinstance(biu_version, int) or biu_version < 0:
             raise OperatorDenied("BIU version is required")
-        record = DecisionInbox(self._store, self._coordinator, self._profile).submit(DecisionSubmission(str(fields["actor"]), str(fields["authority"]), identity, biu_version, int(fields["expected_version"]), str(fields["idempotency_key"]), str(fields["choice"])))
+        _, state = self._store.read_state(self._profile, f"factory:{identity}")
+        kernel_version = state.get("version")
+        if not isinstance(kernel_version, int) or kernel_version < 0:
+            raise OperatorDenied("decision target has no kernel version")
+        record = DecisionInbox(self._store, self._coordinator, self._profile).submit(DecisionSubmission(str(fields["actor"]), str(fields["authority"]), identity, biu_version, kernel_version, str(fields["idempotency_key"]), str(fields["choice"])))
         return asdict(record)
 
     def _admit(self, fields: dict[str, object]) -> None:
