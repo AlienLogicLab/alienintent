@@ -12,7 +12,7 @@ from alienintent.execution_coordination.domain.escalation import DecisionRecord,
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
 from alienintent.execution_coordination.domain.release import ReleaseRequest, ReleaseSource, admit_release
 from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, evaluate_verdict
-from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected
+from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
@@ -22,6 +22,10 @@ class StopReason(StrEnum):
     EXHAUSTED = "eligible-backlog-exhausted"
     BLOCKED = "dependencies-or-authority-blocked"
     CAPACITY_UNAVAILABLE = "capacity-unavailable"
+
+
+class TerminalWork(ValueError):
+    """A normal domain refusal to alter terminal or accepted work."""
 
 
 @dataclass(frozen=True)
@@ -79,6 +83,74 @@ class FactoryCoordinator:
             raise KeyError(identity)
         return ProjectedState(self._decode(raw), raw.get("outcome") if isinstance(raw.get("outcome"), str) else None)
 
+    def guard_account(self, identity: str) -> dict[str, object]:
+        """Expose the same eligibility decision the scheduler applies, read-only."""
+        version, raw = self._store.read_state(self._profile, self._aggregate(identity))
+        if not raw:
+            raise KeyError(f"unknown work item: {identity}")
+        item = next((candidate for candidate in self._work.import_ready_snapshot() if candidate.identity == identity), None)
+        outcome = raw.get("outcome")
+        terminal = raw.get("stage") == LifecycleStage.DONE.value or outcome in {"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"}
+        eligible = bool(item is not None and self._eligible(item))
+        if terminal:
+            reason = "terminal"
+        elif outcome in {"authority-block", "blocked-by-authority"}:
+            reason = "authority-block"
+        elif item is None:
+            reason = "not-in-upstream-ready-snapshot"
+        elif not all(self._is_done(dependency) for dependency in item.dependencies):
+            reason = "dependencies-incomplete"
+        elif not eligible:
+            reason = "release-not-admitted"
+        else:
+            reason = "eligible"
+        return {"target": identity, "eligible": eligible, "reason": reason, "lifecycle": raw.get("stage"), "outcome": outcome, "evidence": {"execution_revision": version}}
+
+    def reconcile(self, identity: str) -> dict[str, object]:
+        """Recover durable effects without importing upstream terminal truth."""
+        items = self._work.import_ready_snapshot()
+        if not self._recover(items):
+            raise ReservationRejected("recovery could not establish durable execution truth")
+        version, raw = self._store.read_state(self._profile, self._aggregate(identity))
+        if not raw:
+            raise KeyError(f"unknown work item: {identity}")
+        return {"target": identity, "source": "execution-revision", "status": "reconciled", "execution_revision": version}
+
+    def cancel(self, identity: str, actor: str, authority: str, expected_version: int, reason: str, idempotency_key: str) -> dict[str, object]:
+        """Apply an attributable operator cancellation through the coordinator boundary."""
+        version, raw = self._store.read_state(self._profile, self._aggregate(identity))
+        if not raw:
+            raise KeyError(identity)
+        prior = raw.get("cancellation")
+        if isinstance(prior, dict) and prior.get("idempotency_key") == idempotency_key:
+            return {"status": "cancelled", "target": identity, "idempotent": True}
+        if isinstance(prior, dict) and raw.get("outcome") == "cancelled-by-operator":
+            return {"status": "cancelled", "target": identity, "idempotent": True}
+        if raw.get("stage") == LifecycleStage.DONE.value or raw.get("accepted"):
+            raise TerminalWork("terminal or accepted work cannot be cancelled")
+        if version != expected_version:
+            raise VersionConflict("stale expected version")
+        cancellation = {"actor": actor, "authority": authority, "reason": reason, "idempotency_key": idempotency_key}
+        self._worker.cancel(identity, reason)
+        self._store.commit(self._profile, self._aggregate(identity), version, raw | {"outcome": "cancelled-by-operator", "cancellation": cancellation})
+        return {"status": "cancelled", "target": identity, "idempotent": False}
+
+    def stop_owned(self, actor: str, authority: str, expected_version: int, reason: str, idempotency_key: str) -> dict[str, object]:
+        """Quiesce durable, nonterminal work instead of reporting a false service stop."""
+        candidates: list[tuple[str, int]] = []
+        for identity, version, raw in self._store.list_states(self._profile, "factory:"):
+            if raw.get("stage") == LifecycleStage.DONE.value or raw.get("accepted") or raw.get("outcome") in {"cancelled-by-operator", "cancelled-by-decision"}:
+                continue
+            candidates.append((identity, version))
+        if any(version > expected_version for _, version in candidates):
+            raise VersionConflict("stale expected version")
+        # A profile may legitimately contain independent in-flight aggregates
+        # at different revisions.  Apply each cancellation against the exact
+        # snapshot revision it was enumerated with; cancel() remains the guard
+        # that rejects a concurrent change rather than making stop impossible.
+        stopped = [self.cancel(identity.removeprefix("factory:"), actor, authority, version, reason, f"{idempotency_key}:{identity}") for identity, version in candidates]
+        return {"stopped": stopped}
+
     def _next_item(self, items: Iterable[ReadyWorkItem]) -> ReadyWorkItem | None:
         eligible = [item for item in items if self._eligible(item)]
         return min(eligible, key=lambda item: (item.priority is None, item.priority if item.priority is not None else 0, item.fifo), default=None)
@@ -86,7 +158,7 @@ class FactoryCoordinator:
     def _eligible(self, item: ReadyWorkItem) -> bool:
         try:
             projected = self.state(item.identity)
-            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "cancelled-by-decision", "failure", "timeout"}:
+            if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"}:
                 return False
         except KeyError:
             pass

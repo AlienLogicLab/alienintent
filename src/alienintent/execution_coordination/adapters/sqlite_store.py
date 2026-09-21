@@ -154,6 +154,15 @@ class SQLiteOperationalStore(OperationalStore):
                 return (0, {})
             return (row["version"], json.loads(row["state"]))
 
+    def list_states(self, profile: str, prefix: str = "") -> tuple[tuple[str, int, dict[str, object]], ...]:
+        """Read durable execution state without changing schema or semantics."""
+        with self._read() as connection:
+            rows = connection.execute(
+                "SELECT identity, version, state FROM aggregates WHERE profile=? AND identity LIKE ? ORDER BY identity",
+                (profile, f"{prefix}%"),
+            ).fetchall()
+            return tuple((row["identity"], row["version"], json.loads(row["state"])) for row in rows)
+
     def commit_with_effect(self, profile: str, aggregate: str, expected_version: int, state: Mapping[str, object], effect_id: str, payload: Mapping[str, object]) -> int:
         with self._transaction() as connection:
             self._ensure_unblocked(connection, profile, aggregate)
