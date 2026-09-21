@@ -1,0 +1,12 @@
+```text
+MECHANISMS_AUDITED=17
+RETIRE_CANDIDATE=1 KEEP_UNTIL_REPLACED=9 REVERT_TEMPORARY_CHANGE=1 NEEDS_DECISION=6
+STILL_OPERATING=16
+NEVER_FIRED=SWF-21 release authority; SWF-27 observer; Windows notification; coordinator checkpoint; Node/bootstrap execution authority; sandbox ingress tunnel; external module bundle; resident coordinator tenure; b-disp alias; Program Director role
+OUT_OF_SCOPE_FOUND=resident coordinator tenure; Director mailbox bridge; SWF-26 mutation gate; release-admission gate; b-disp alias; Program Director role
+TRANSITION_PLAN_STEPS=17
+MATRIX_CHECK=PASS
+WAVE1_CHECK=PASS
+DISPUTED=NONE
+NOTES=Only two deliverables added; no retirement actions. NEVER_FIRED means prevention unproven. Wave1: 1075 checks, 13/13 negative controls. Coordinator review pending.
+```

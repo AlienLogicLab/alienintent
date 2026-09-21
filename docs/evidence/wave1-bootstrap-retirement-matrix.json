@@ -1,0 +1,937 @@
+{
+  "schema_version": "1.0",
+  "artifact_type": "bootstrap_retirement_matrix",
+  "status": "AUDIT_RECOMMENDATIONS_PENDING_COORDINATOR_REVIEW",
+  "provenance": {
+    "task": "POSTW1-BOOTSTRAP-006",
+    "author": "Fresh Codex audit invocation; independent of resident coordinator",
+    "date": "2026-09-22",
+    "repository_root": "/mnt/d/Projects/alienintent",
+    "branch": "main",
+    "baseline_sha": "45c0697921d9b538101a33def6e337cd12bfd218",
+    "git_identity": {
+      "name": "netmarine",
+      "email": "sanuk.du@gmail.com"
+    },
+    "authority": "Direct Phase 6 task: audit and recommend only; only the two deliverables may change; no network, commit, publication, live action or phase progression.",
+    "participant_evidence_policy": "Coordinator inventory and supplied live snapshot are testimony/recorded observations. Decisions establish authority; local evidence corroborates claims. No fresh systemctl, provider, attention or external-module execution was performed. Snapshot has a matching derived_at_head but no observation timestamp; do not claim current operational readiness.",
+    "state_classification": "Existing tracked routing/program changes and untracked packet, prework and checker/test are KNOWN_AUTHORIZED audit preparation consistent with user packet; preserved byte-for-byte. No temporary branch/worktree created.",
+    "existing_changes_sha256": {
+      "docs/operations/post-wave1-program/program-state.json": "b4036e28add0686871f313d7f93af68db77062d60d6a755966bcfc955d583715",
+      "tools/orchestration/director.py": "b4b72885b373d35153a316aa7c33070887f29f2323f38454f99c01a24d23711f",
+      "tools/orchestration/test_director.py": "c02fae836fe4bce22f25b518dbd0b145bb82213e8dc72575b7843a89b2961cdd",
+      "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json": "a70968979796035c7e849f07256b141c3d219e951633bc10d3c5ac494c45eabc",
+      "docs/operations/post-wave1-program/prompts/POSTW1-BOOTSTRAP-006.md": "e7b2e9cb6cd1af87481a3fda5264e9e0fc65b89b6e472658aba0b4c2c8b0ffdb",
+      "tools/evidence/check_retirement_matrix.py": "7004cc20c9b4c9696368cd304fb36e89ac522d3cc442a4074b2520c2f65489a8",
+      "tools/evidence/test_check_retirement_matrix.py": "33f8c2fdfcfb772ca6322e530d40664481223eb216ae2457fb84ab08213f4e4b"
+    },
+    "sources": {
+      "live": {
+        "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+        "sha256": "a70968979796035c7e849f07256b141c3d219e951633bc10d3c5ac494c45eabc"
+      },
+      "inventory": {
+        "path": "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md",
+        "sha256": "a401005358655456281afd251355f9f64c85d1470a9e0196964bc0a20aa1570d"
+      },
+      "ledger": {
+        "path": "docs/evidence/wave1-learning-ledger.json",
+        "sha256": "72bebcdf4e6b662fae2a1a21ff88710fecffcab8062099c91d6ce4717dc9261e"
+      },
+      "release": {
+        "path": "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+        "sha256": "732d71e918c16107f94c7a59ea5cd7aa12de8eaa6dc0b19f0898b9282abbd9fb"
+      },
+      "liveness": {
+        "path": "docs/decisions/2026-09-20-liveness-reconciliation.md",
+        "sha256": "cf38a1b481c710b1229e1d24c143439ca3c4115b53f636abc4e0aeee68a1f6e6"
+      },
+      "episodes": {
+        "path": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+        "sha256": "87e820775d5ae42ddba84a402553db8409f47409ad9ab771c469d55f06eeefa9"
+      },
+      "mutation": {
+        "path": "docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md",
+        "sha256": "4245c33a8c737efc8e93a598b6a7dacda6182c1a2379787e1748237260972fe4"
+      },
+      "sandbox": {
+        "path": "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md",
+        "sha256": "a818239d9d8da818b92d1ad37e09fef4cbfef73f36e3288ea459c6b63c78b45d"
+      },
+      "capacity": {
+        "path": "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+        "sha256": "382ab783493acf771d8f189396fd58321a528d0e6bbe3cf237f8ee38c033ae33"
+      },
+      "admission": {
+        "path": "docs/evidence/2026-09-21-liveness-retry-and-release-admission.md",
+        "sha256": "75c43bb6c3b872cfb179bae6547c69bd2d1840479cbe35892e029f4de737044c"
+      },
+      "operations": {
+        "path": "docs/operations.md",
+        "sha256": "5429a40e5c5e028fb511898d65b5a48751afa4ec2efcb14e286e67a2d379072a"
+      },
+      "closure": {
+        "path": "docs/evidence/wave1-closure-manifest.json",
+        "sha256": "64a7fb1357690fdade561663398cd7d3a03602449bc62d6e4670307408f9f9a2"
+      },
+      "proof": {
+        "path": "docs/verification/PY-10-wave1-live-proof.md",
+        "sha256": "80d20226c3d380923d5cee784911d7bf6efdfa0e877628f0bfa673c904fcea68"
+      },
+      "contract": {
+        "path": "docs/work-units/python/PY-10.md",
+        "sha256": "19786e07666da992d1c449e8af973fc1fdd43a24644257de995734f4860839c0"
+      },
+      "architecture": {
+        "path": "docs/architecture/alienintent-architecture-authority-2026-09-19.md",
+        "sha256": "458a19726cfc72f680161bde97671870ea4e21f55de734a073b94a610067155f"
+      },
+      "conformance": {
+        "path": "docs/architecture/pre-python-gate/conformance-and-sovereignty.md",
+        "sha256": "a616411b7311868770cfbe58b6f10c293bdd0fceff73e633a16792bb2020f8f0"
+      },
+      "amendment": {
+        "path": "docs/operations/alienintent-program-director-autonomous-execution-amendment.md",
+        "sha256": "281ba1c88152456cbe3acd5bbf9cd0cca27dda24c9ce17cc59a5e08bbbe8bbdf"
+      },
+      "director": {
+        "path": "docs/operations/post-wave1-program/program-director.md",
+        "sha256": "ebb5217898caea3ff2599be243b2410fd50346054ba30d6d3fc7bb498cbc723c"
+      },
+      "bridge": {
+        "path": "docs/operations/post-wave1-program/reports/bootstrap-proofs.md",
+        "sha256": "9aefa27d351dcc948b9fcd8ce28487febc6b144587d91538fb3a8d45bac89f5b"
+      },
+      "alias": {
+        "path": "docs/decisions/2026-09-18-alienintent-name-and-organization.md",
+        "sha256": "0b2eb4870faddd5feee70fd86feaf970dd3fb53d6f9b2399815a4146b96e236e"
+      },
+      "package": {
+        "path": "package.json",
+        "sha256": "703694a7fafbb18235beb1686005c806403d1bee4f521c61ce7366cca4100833"
+      },
+      "python": {
+        "path": "src/alienintent/composition/github_profile.py",
+        "sha256": "99e3f41db49fc5c4fa6cc19e1533e826154d8b95255c0b14086538b01d789fc6"
+      },
+      "program": {
+        "path": "docs/operations/post-wave1-program/program-state.json",
+        "sha256": "b4036e28add0686871f313d7f93af68db77062d60d6a755966bcfc955d583715"
+      },
+      "packet": {
+        "path": "docs/operations/post-wave1-program/prompts/POSTW1-BOOTSTRAP-006.md",
+        "sha256": "e7b2e9cb6cd1af87481a3fda5264e9e0fc65b89b6e472658aba0b4c2c8b0ffdb"
+      }
+    },
+    "review": "Coordinator review follows. This audit does not self-approve retirement or claim phase closure.",
+    "delivery_disposition": "PARKED for coordinator review on existing main worktree; two uncommitted deliverables only. Direct task prohibits commit/push; reviewer/authorized owner must decide subsequent disposition."
+  },
+  "definitions": {
+    "replacement_implemented": "True only for an operational replacement of the complete scoped mechanism, including required migration/authority; partial source implementation or sandbox proof is insufficient. All rows remain false in this evidence set.",
+    "bootstrap_still_operating": "Retained authority, enabled service/profile, resident dependency or still-available tooling, as source-recorded; not a claim each module/process is executing or that a dormant grant authorizes new work.",
+    "NEVER_FIRED": "Report shorthand for no demonstrated prevented failure in reviewed evidence, not proof the mechanism never executed. Joint protections and negative controls are labelled explicitly.",
+    "evidence": "Paths plus section/JSON locators, with full source hashes in provenance. Findings are audit inferences; historical timings/test results are not rerun claims."
+  },
+  "mechanisms": [
+    {
+      "mechanism": "SWF-21 release authority",
+      "purpose": "Fill the Node automatic-release gap for eligible Wave 1 BIUs, subject to readiness and admission.",
+      "demonstrated_failure_prevented": "No separately demonstrated prevented failure for the authority grant itself. Releases occurred, but the grant also allowed the defective PY-07 release. The admission gate has a separate demonstrated refusal (M15).",
+      "authority": "SWF-21: eligible Wave 1 BIUs only; six admission preconditions amend the nine eligibility conditions.",
+      "stated_expiry_condition": "Canonical SF-REQ-001/002 automatic release operating on the live profile replaces manual transitions; scope is explicitly Wave 1.",
+      "replacement_requirement": "Operational live-profile automatic release with durable authorization, exact baseline, readiness, dependencies, capacity and refusal checks; explicit authority for any subsequent wave.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "NEEDS_DECISION",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+          "locator": "Authority granted; Release admission preconditions; Expiry"
+        },
+        {
+          "path": "docs/evidence/wave1-closure-manifest.json",
+          "locator": "bius: Wave 1 DONE/CLOSED"
+        },
+        {
+          "path": "docs/verification/PY-10-wave1-live-proof.md",
+          "locator": "AC 14 and sandbox-only limitation"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "live_services.detail.alienintent.service"
+        },
+        {
+          "path": "src/alienintent/composition/github_profile.py",
+          "locator": "automatic_release composition"
+        }
+      ],
+      "finding": "Wave 1 purpose is complete; sandbox automatic release does not satisfy the stated live-profile expiry. Recommend formally ending the Wave 1 grant, without carrying it into Wave 2. No decision here extinguishes authority. Preserve the separate admission protection and decide the next release owner before any new live work.",
+      "prevented_failure_demonstrated": false
+    },
+    {
+      "mechanism": "SWF-29 liveness reconciliation",
+      "purpose": "Repair missing actors/effects after the grace period while yielding to completed outcomes requiring judgment.",
+      "demonstrated_failure_prevented": "PY-09 capacity incident records ATTENTION_WAIT (DURABLE_RESULT_MISSING) and no repeated relaunch; suppression prevented retrying an exhausted provider. PY-06 was the motivating gap, already recovered before SWF-29 took effect, not a save by this watch.",
+      "authority": "SWF-29 Part 1 and judgment-suppression amendment; Node single-dispatcher lane guard supplies duplicate exclusion.",
+      "stated_expiry_condition": "When operational SF-REQ-056 replaces the bootstrap capability.",
+      "replacement_requirement": "SF-REQ-056 or an authorized equivalent operating on the live workload: missing-effect detection, completed-outcome suppression, explicit resolution/supersession, durable fenced recovery, delayed-delivery duplicate safety and correlated outcome readback.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "KEEP_UNTIL_REPLACED",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-liveness-reconciliation.md",
+          "locator": "Motivating incident; Part 1; Duplicate prevention; Amendment"
+        },
+        {
+          "path": "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "locator": "The suppression rule earned its keep; SEEN != RESOLVED"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "live_services.detail.alienintent-liveness.service"
+        }
+      ],
+      "finding": "Service active in supplied snapshot. Specification/CAPTURE is not operational replacement. Preserve the queue dependency and exactly one Node dispatcher until replacement is proven.",
+      "prevented_failure_demonstrated": true
+    },
+    {
+      "mechanism": "SWF-27 observer",
+      "purpose": "Persist lifecycle observations independently of the resident model session.",
+      "demonstrated_failure_prevented": "No demonstrated prevented operational failure. SWF-27 records timely PY-06 DONE and PY-07 blocking-event observations but attention still failed. Externalization removes session-process coupling; no complete coordinator replacement exercise proves continuity.",
+      "authority": "SWF-27 bootstrap monitoring interpretation; docs/operations.md observer boundary.",
+      "stated_expiry_condition": "Canonical control plane records its own trajectory under SF-REQ-029.",
+      "replacement_requirement": "Operational live-profile trajectory capture preserving identity, ordering, timestamps, anomalies, retention and consumption by an attention producer across process/session restart.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "KEEP_UNTIL_REPLACED",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "locator": "Monitoring decoupled; activation boundary"
+        },
+        {
+          "path": "docs/operations.md",
+          "locator": "Coordinator-independent monitoring"
+        },
+        {
+          "path": "docs/evidence/wave1-learning-ledger.json",
+          "locator": "LRN-019; LRN-027"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "live_services.detail.alienintent-observer.service"
+        }
+      ],
+      "finding": "Observer is observation only. Retire it separately from the queue and only after evidence continuity is demonstrated; Python sandbox trajectories alone do not replace live Node observations.",
+      "prevented_failure_demonstrated": false
+    },
+    {
+      "mechanism": "attention queue",
+      "purpose": "Durably retain judgment-required observations and handled state; supply the identity and resolution boundary used by liveness suppression.",
+      "demonstrated_failure_prevented": "During PY-09 the item remained unacknowledged while the provider was blocked, preserving suppression until recovery readiness. This is a shared queue/liveness protection, not an independently isolated causal effect.",
+      "authority": "SWF-27 Applied and Relationship to Decision Inbox; SWF-29 suppression amendment.",
+      "stated_expiry_condition": "File queue expires when SF-REQ-053 activation and SF-REQ-035 Decision Inbox integration replace its bootstrap function.",
+      "replacement_requirement": "Durable attention ingestion/identity/deduplication, attribution, resolved-versus-seen semantics, replay and migration of pending and historical items; verified liveness consumer and SF-REQ-053 activation. Keep product decision authority separate.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "KEEP_UNTIL_REPLACED",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "locator": "Applied; Relationship to the Decision Inbox"
+        },
+        {
+          "path": "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "locator": "SEEN != RESOLVED"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "attention_queue"
+        }
+      ],
+      "finding": "Zero outstanding items is a snapshot, not absence of future demand. Decision Inbox implementation does not replace the attention queue. Never delete the historical queue as part of retiring its producer.",
+      "prevented_failure_demonstrated": true
+    },
+    {
+      "mechanism": "Windows notification",
+      "purpose": "Best-effort human notification after a durable attention item is written.",
+      "demonstrated_failure_prevented": "No demonstrated prevented failure. Participant evidence records successful notification commands but no confirmed human receipt; exit zero is not a seen toast.",
+      "authority": "SWF-27 Applied: notification, not activation.",
+      "stated_expiry_condition": "No independent explicit expiry in the decision; participant inventory ties it to the queue it serves.",
+      "replacement_requirement": "SF-REQ-035 notification adapter or explicitly approved alternative with an end-to-end human receipt/response exercise, durable attempts/failures and preserved attention records.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "NEEDS_DECISION",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "locator": "Applied: Notification, not activation"
+        },
+        {
+          "path": "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md",
+          "locator": "6. Windows notification path"
+        },
+        {
+          "path": "docs/evidence/wave1-learning-ledger.json",
+          "locator": "LRN-019"
+        }
+      ],
+      "finding": "Reject the participant recommendation to retire merely as lowest-value. Removal changes a fallback notification path without demonstrated replacement. Founder must choose a tested replacement or explicitly accept removal risk. Current availability is participant-reported, not independently probed.",
+      "prevented_failure_demonstrated": false
+    },
+    {
+      "mechanism": "session-bound attention waiter",
+      "purpose": "Wake the resident coordinator by exiting a tracked task when durable attention needs judgment.",
+      "demonstrated_failure_prevented": "PY-09 incident reports the capacity-interruption attention item reached the resident coordinator in about 30 seconds, avoiding the previously observed silent waiting pattern. Timing is source-reported, not freshly measured.",
+      "authority": "SWF-27 wake-up bridge; docs/operations.md attention waiter.",
+      "stated_expiry_condition": "Expires with Wave 1 bootstrap or canonical SF-REQ-053 activation replacement; scoped to a resident episode.",
+      "replacement_requirement": "Before resident exit, a tested successor/human consumer for bootstrap attention, or operational SF-REQ-053; prove delivery and handling from durable identity while monitors remain independent.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "NEEDS_DECISION",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "locator": "The wake-up bridge, restored"
+        },
+        {
+          "path": "docs/operations.md",
+          "locator": "Attention waiter"
+        },
+        {
+          "path": "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "locator": "SEEN != RESOLVED"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "session_bound_waiters.attention_waiter"
+        }
+      ],
+      "finding": "Re-armed after closure to preserve status quo. May retire with resident coordinator only after remaining attention duty is assigned and exercised or explicitly ended by authority; an empty queue does not prove it is no longer needed.",
+      "prevented_failure_demonstrated": true
+    },
+    {
+      "mechanism": "coordinator checkpoint",
+      "purpose": "Provide durable continuation context to a fresh coordinator without relying on the old conversation.",
+      "demonstrated_failure_prevented": "No demonstrated prevented failure: no Wave 1 handover exercise is established. The checkpoint is untested for restart equivalence.",
+      "authority": "SWF-27 rules 3, 7, 8 and 9; bootstrap checkpoint described in operations.",
+      "stated_expiry_condition": "No explicit artifact expiry; continuation obligations survive bootstrap retirement.",
+      "replacement_requirement": "SF-REQ-053 durable project-owned context and a fresh invocation reconstructing authorized next actions, unresolved decisions and evidence from the same durable state; compare results before retiring the checkpoint as active input.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "KEEP_UNTIL_REPLACED",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "locator": "Durable rules 3, 7, 8, 9"
+        },
+        {
+          "path": "docs/operations.md",
+          "locator": "Coordinator-independent monitoring"
+        },
+        {
+          "path": "docs/evidence/wave1-learning-ledger.json",
+          "locator": "LRN-027"
+        },
+        {
+          "path": "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md",
+          "locator": "5. Coordinator checkpoint"
+        }
+      ],
+      "finding": "Retention is justified by the still-unreplaced continuity obligation, not by an invented successful handover. Preserve historical checkpoint evidence after migration; location outside the repository is not a reason to delete it.",
+      "prevented_failure_demonstrated": false
+    },
+    {
+      "mechanism": "PRODUCER-on-Claude temporary profile change",
+      "purpose": "Resume the interrupted PY-09 cycle-4 repair using the configured alternate provider and preserve partial work.",
+      "demonstrated_failure_prevented": "PY-09 recovery launched replacement producer 9979bdcc after quota exhaustion, retaining partial work and producing a candidate. It avoided waiting for the reported roughly nine-hour quota reset; exact counterfactual delay was not measured.",
+      "authority": "Founder PY-09 recovery-only authorization in the provider-capacity record; no accepted extension found.",
+      "stated_expiry_condition": "Completion of the current PY-09 recovery; explicitly does not redefine the default producer provider. PY-09 is DONE/CLOSED.",
+      "replacement_requirement": "Restore the prior PRODUCER provider block under a separately authorized operational change, validating current provider readiness, no owned invocation, profile schema and identity/auth/budget continuity; alternatively obtain an explicit scoped new decision before further use.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "REVERT_TEMPORARY_CHANGE",
+      "evidence": [
+        {
+          "path": "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "locator": "Recovery: scope; before/after block; backup; sequence"
+        },
+        {
+          "path": "docs/evidence/wave1-learning-ledger.json",
+          "locator": "LRN-020"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "live_worker_providers.PRODUCER and verified_by"
+        },
+        {
+          "path": "docs/evidence/wave1-closure-manifest.json",
+          "locator": "PY-09 terminal state"
+        }
+      ],
+      "finding": "Live snapshot reads workers.PRODUCER.provider, not the incorrect workers.PRODUCER.adapter path. Exception persisted into PY-09B/PY-10. Recommend narrow reversion, not blind full-backup restore or VERIFIER changes. Audit does not authorize reconfiguration/restart; historical backup existence is not readiness proof.",
+      "prevented_failure_demonstrated": true
+    },
+    {
+      "mechanism": "Node/bootstrap execution authority",
+      "purpose": "Own live execution while canonical Python is built and sovereignty remains unproven.",
+      "demonstrated_failure_prevented": "No demonstrated prevented duplicate failure in the cited recovery: PY-09 records exactly one lane claim and live worker, but no competing delivery rejected by the guard is shown there. SWF-29 identifies the Node lane guard as the protection; successful execution and absence of a duplicate do not alone prove a prevented attempt.",
+      "authority": "Architecture Authority §§42–43; FD-01 retains bootstrap operational authority until approved cutover.",
+      "stated_expiry_condition": "Python operates development end-to-end without Node and passes full conformance, live self-hosting, recovery, control-plane, evidence and learning proof.",
+      "replacement_requirement": "Full sovereignty evidence, approved one-writer live-profile migration, active-work/effect reconciliation, backup and nonduplicating rollback; conformance S1–S7 is a design elaboration, not current operational proof.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "KEEP_UNTIL_REPLACED",
+      "evidence": [
+        {
+          "path": "docs/architecture/alienintent-architecture-authority-2026-09-19.md",
+          "locator": "§§42–43"
+        },
+        {
+          "path": "docs/architecture/pre-python-gate/conformance-and-sovereignty.md",
+          "locator": "Required sovereignty proof matrix; Cutover and rollback (candidate design)"
+        },
+        {
+          "path": "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "locator": "Recovery step 6"
+        },
+        {
+          "path": "docs/decisions/2026-09-20-liveness-reconciliation.md",
+          "locator": "Duplicate prevention"
+        },
+        {
+          "path": "docs/work-units/python/PY-10.md",
+          "locator": "Non-goals"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "live_services.detail.alienintent.service"
+        }
+      ],
+      "finding": "PY-10 explicitly claims neither Node retirement nor live-work migration. Keep exactly one execution writer; retained liveness currently depends on Node lane exclusion.",
+      "prevented_failure_demonstrated": false
+    },
+    {
+      "mechanism": "sandbox ingress tunnel",
+      "purpose": "Provide the isolated webhook ingress route for SWF-08/PY-10 live sandbox proof.",
+      "demonstrated_failure_prevented": "No demonstrated prevented failure attributable to the tunnel itself. PY-10 proves functioning isolated ingress; signature checks and profile isolation supply protections, not the tunnel alone.",
+      "authority": "SWF-08 sandbox infrastructure; PY-10 contract says sandbox is not dismantled by closure.",
+      "stated_expiry_condition": "Unit description says temporary Wave 1 infrastructure; no accepted automatic shutdown trigger. Wave 1/PY-10 terminal state alone does not override retention in the contract.",
+      "replacement_requirement": "Decision on continued isolated proof infrastructure versus retirement; before shutdown verify no pending sandbox delivery/effect or required consumer, preserve proof/configuration identities and establish reproducible isolated ingress if future proofs need it.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "NEEDS_DECISION",
+      "evidence": [
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "live_services.detail.alienintent-sandbox-tunnel.service"
+        },
+        {
+          "path": "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md",
+          "locator": "SWF-08"
+        },
+        {
+          "path": "docs/work-units/python/PY-10.md",
+          "locator": "BIU-specific closure: environment not dismantled"
+        },
+        {
+          "path": "docs/verification/PY-10-wave1-live-proof.md",
+          "locator": "Ingress; Isolation; sandbox left standing"
+        }
+      ],
+      "finding": "In scope because explicitly temporary and still active. Current evidence cannot establish unused ingress or grant shutdown. Do not confuse it with the Node production route; no change to either is made.",
+      "prevented_failure_demonstrated": false
+    },
+    {
+      "mechanism": "eighteen external bootstrap modules",
+      "purpose": "Implement operational observation, attention, release admission, liveness, preflight and evidence utilities with colocated tests outside repository custody.",
+      "demonstrated_failure_prevented": "Module-specific successes exist for liveness suppression and release admission (M2/M15), but no demonstrated prevention attributable to the external location or a complete 18-module suite. Test filenames are not executed-test evidence.",
+      "authority": "Component authority comes from SWF-21/27/29 and operator ownership in operations; no blanket authority or common expiry for the directory.",
+      "stated_expiry_condition": "Per-component replacement and scope expiry; no accepted directory-wide retirement condition.",
+      "replacement_requirement": "An authorized custody/maintenance disposition naming each module, consumer, authority, revision, test evidence and successor; migrate necessary protections under existing owners and retain historical evidence. Do not bulk-delete or bulk-promote this directory into permanent product architecture.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "NEEDS_DECISION",
+      "evidence": [
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "bootstrap_tooling_outside_the_repository: all 18 names"
+        },
+        {
+          "path": "docs/operations.md",
+          "locator": "Coordinator-independent monitoring: bootstrap operator ownership"
+        },
+        {
+          "path": "docs/evidence/2026-09-21-liveness-retry-and-release-admission.md",
+          "locator": "14 admission tests and live refusal"
+        },
+        {
+          "path": "docs/evidence/2026-09-21-py09-provider-capacity-interruption.md",
+          "locator": "Three defects found in coordinator tooling"
+        }
+      ],
+      "finding": "In scope as an external operational dependency. Repository prose names and owns some functions, so the supplied claim that no artifact governs or tests them is too broad if read literally. Their code/revisions and full test coverage are not repository-controlled or independently validated here. Operating=true means operational components in the bundle, not that all test modules are running.",
+      "prevented_failure_demonstrated": false
+    },
+    {
+      "mechanism": "resident coordinator multi-BIU tenure",
+      "purpose": "Preserve judgment continuity across Wave 1 under a scoped bootstrap exception.",
+      "demonstrated_failure_prevented": "No demonstrated prevented failure attributable to long tenure. LRN-027 establishes neither a handover nor restart equivalence; continuity benefit is a rationale, not measured comparative evidence.",
+      "authority": "SWF-27 Wave 1 tenure exception; post-Wave1 Program Director role/amendment supplies bounded program duties, not a perpetual extension of Wave 1 release authority.",
+      "stated_expiry_condition": "Wave 1 exception is bounded to Wave 1 with externalized state; subsequent program duties end at the approved program boundary or an authorized handoff.",
+      "replacement_requirement": "Explicit successor/tenure decision and fresh-context reconstruction from checkpoint, program state and authority; independently test product attention and program mailbox delivery after handoff.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "NEEDS_DECISION",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+          "locator": "Coordinator tenure during Wave 1; rules 6–10"
+        },
+        {
+          "path": "docs/evidence/wave1-learning-ledger.json",
+          "locator": "LRN-027"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "coordinator_status"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/program-director.md",
+          "locator": "Execution posture"
+        },
+        {
+          "path": "docs/operations/alienintent-program-director-autonomous-execution-amendment.md",
+          "locator": "§15 program completion"
+        }
+      ],
+      "finding": "Wave 1 is terminal but a resident coordinator is still participating in the separately authorized program. Do not erase those duties or use them to carry SWF-21 into Wave 2. Independent author recommends a bounded handoff; participant reviewer testimony cannot alone prove continuity.",
+      "prevented_failure_demonstrated": false
+    },
+    {
+      "mechanism": "Program Director mailbox bridge waiter",
+      "purpose": "Deliver program review/task messages into the resident coordinator via tracked-task completion.",
+      "demonstrated_failure_prevented": "Bootstrap proof records correlated request/reply cor-957146bd3a1b without Founder relay and no duplicate delivery on re-arm. This demonstrates prevention of silent mailbox delivery in that exercise, not wake-up of a new coordinator.",
+      "authority": "Program Director operating rules and supported file-backed mailbox; separate from product attention.",
+      "stated_expiry_condition": "Session lifetime; role says a supported delivery helper supersedes this mailbox when available. No timed retirement is specified.",
+      "replacement_requirement": "A tested program-message consumer in the successor episode or supported helper preserving request/reply identity, pending messages, handled attribution and duplicate suppression; or completed program with no outstanding duties.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "KEEP_UNTIL_REPLACED",
+      "evidence": [
+        {
+          "path": "docs/operations/post-wave1-program/program-director.md",
+          "locator": "Direct messaging"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/reports/bootstrap-proofs.md",
+          "locator": "§7 bridge proof; §8 reconstruction"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "session_bound_waiters.bridge_waiter"
+        }
+      ],
+      "finding": "Do not retire alongside the product waiter merely because both are session-bound. This program remains in progress and its separate communication dependency must survive coordinator replacement.",
+      "prevented_failure_demonstrated": true
+    },
+    {
+      "mechanism": "SWF-26 PY-04 mutation gate",
+      "purpose": "Temporarily corroborate PY-04 mutation evidence before independent VERIFY.",
+      "demonstrated_failure_prevented": "Battery reproduced five survivors and found a sixth on 1b372c2a; accepted 03896f62 killed all 23. It detected insufficient mutation proof rather than merely asserting protection.",
+      "authority": "SWF-26 explicit Founder expiry; LRN-026 BOOTSTRAP_ONLY.",
+      "stated_expiry_condition": "PY-04 DONE, already occurred; earlier equivalent promotion would also have ended the exception.",
+      "replacement_requirement": "No replacement of this expired PY-04-only coordinator role is needed. General mutation-proof promotion remains with SF-REQ-050 and normal independent verification.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": false,
+      "recommended_disposition": "RETIRE_CANDIDATE",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md",
+          "locator": "Expiry; Evidence it produced; Battery provenance"
+        },
+        {
+          "path": "docs/evidence/wave1-learning-ledger.json",
+          "locator": "LRN-026 and timestamp discrepancy"
+        }
+      ],
+      "finding": "Already expired precedent, not a new retirement action. Keep historical battery evidence and do not reinstate it for later BIUs. Expiry event matters, not the conflicting historic DONE timestamps.",
+      "prevented_failure_demonstrated": true,
+      "protection_not_lost": "No protection is lost by keeping the already-expired PY-04-only coordinator gate retired: PY-04 acceptance and its 23/23 mutation evidence remain intact; ordinary independent VERIFY and SF-REQ-050 obligations are unchanged. No later BIU is authorized to rely on this exceptional gate."
+    },
+    {
+      "mechanism": "bootstrap release-admission gate",
+      "purpose": "Refuse release before launch when authorization, exact resolvable baseline, consistent wording or other admission conditions fail.",
+      "demonstrated_failure_prevented": "Recorded live run against PY-08 refused TASKS/no authorization/stale wording/open dependency; replay against defective PY-07 refused the same grounds cited by workers. This demonstrates a refusal, not proof it prevented the earlier PY-07 invocations.",
+      "authority": "SWF-21 admission amendment and durable SF-REQ-002 ownership.",
+      "stated_expiry_condition": "Bootstrap implementation is superseded when equivalent canonical admission operates at the live release boundary; durable admission obligations do not expire with manual release authority.",
+      "replacement_requirement": "Canonical live release admission enforcing all six preconditions plus eligibility before any launch, with meaningful negative controls and production-profile boundary evidence.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "KEEP_UNTIL_REPLACED",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+          "locator": "Release admission preconditions"
+        },
+        {
+          "path": "docs/evidence/2026-09-21-liveness-retry-and-release-admission.md",
+          "locator": "Incident 2; live validation output and replay"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json",
+          "locator": "bootstrap_tooling_outside_the_repository.modules"
+        }
+      ],
+      "finding": "Separate mechanism from authority to perform transitions. Keep the check available even if Wave 1 release authority is formally ended; availability grants no authority to release new work.",
+      "prevented_failure_demonstrated": true
+    },
+    {
+      "mechanism": "b-disp command compatibility alias",
+      "purpose": "Keep existing installations launch-compatible during the AlienIntent rename.",
+      "demonstrated_failure_prevented": "No demonstrated prevented launch failure attributable to the alias in the reviewed evidence. package.json proves availability, not active installation use.",
+      "authority": "AlienIntent name/organization decision; preserve persisted identities and protocol markers.",
+      "stated_expiry_condition": "After installations migrate their launch commands.",
+      "replacement_requirement": "Installation-by-installation proof that launch commands and integrations use alienintent; canonical command exists, but complete migration is unproven. Persisted B-DISP markers/IDs are not alias-removal targets.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "KEEP_UNTIL_REPLACED",
+      "evidence": [
+        {
+          "path": "docs/decisions/2026-09-18-alienintent-name-and-organization.md",
+          "locator": "Temporary compatibility alias; persisted-state compatibility"
+        },
+        {
+          "path": "package.json",
+          "locator": "bin.alienintent and bin.b-disp"
+        }
+      ],
+      "finding": "Explicitly temporary mechanism beyond the Wave 1 list. Operating=true means still shipped/available; invocation frequency is UNKNOWN. Command replacement exists but the migration condition is not demonstrated.",
+      "prevented_failure_demonstrated": false
+    },
+    {
+      "mechanism": "Local Program Director bootstrap orchestration role",
+      "purpose": "Route and sequence the approved post-Wave1 program using durable task state, review gates and scoped execution.",
+      "demonstrated_failure_prevented": "No independently demonstrated prevented operational failure for the role as a whole. Bootstrap reconstruction tests and corrected capacity-classification tests support narrow properties, not permanent orchestration effectiveness; this task required a routing correction.",
+      "authority": "Program Director role and autonomous execution amendment §§1, 6, 9, 15; no canonical BIU lifecycle authority.",
+      "stated_expiry_condition": "Approved program completion conditions in amendment §15; continued product/runtime orchestration is not granted.",
+      "replacement_requirement": "Complete or explicitly disposition approved program tasks, reviews, decision branches and final packet, then end the scoped role or obtain separately bounded continuation authority; preserve program state and evidence.",
+      "replacement_implemented": false,
+      "bootstrap_still_operating": true,
+      "recommended_disposition": "KEEP_UNTIL_REPLACED",
+      "evidence": [
+        {
+          "path": "docs/operations/post-wave1-program/program-director.md",
+          "locator": "Status; Authority boundaries; Execution posture"
+        },
+        {
+          "path": "docs/operations/alienintent-program-director-autonomous-execution-amendment.md",
+          "locator": "§§1, 6, 9, 15"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/program-state.json",
+          "locator": "POSTW1-BOOTSTRAP-006 routing and RUNNING state"
+        },
+        {
+          "path": "docs/operations/post-wave1-program/reports/bootstrap-proofs.md",
+          "locator": "§8 reconstruction; §10 corrected capacity classification"
+        }
+      ],
+      "finding": "Include as noncanonical bootstrap orchestration, not a proposed product requirement. Retain for unfinished authorized program duties; do not turn this role or its mailbox into permanent product architecture. This audit does not advance any program phase.",
+      "prevented_failure_demonstrated": false
+    }
+  ],
+  "transition_plan": [
+    {
+      "step": 1,
+      "mechanism": "SWF-26 PY-04 mutation gate",
+      "depends_on": [],
+      "recommended_action": "Record the already-expired SWF-26 precedent as historical; do not run or reintroduce the gate.",
+      "release_gate": "Review confirms PY-04-only scope and retained acceptance/mutation evidence; no deletion or live action.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 2,
+      "mechanism": "eighteen external bootstrap modules",
+      "depends_on": [],
+      "recommended_action": "Before any cutover, have the bootstrap operator enumerate all 18 modules, consumers, revisions and test provenance and obtain a per-component custody decision.",
+      "release_gate": "No bulk import or deletion; preserve release, monitoring, attention, notification and evidence dependencies.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 3,
+      "mechanism": "SWF-21 release authority",
+      "depends_on": [
+        2
+      ],
+      "recommended_action": "Ask Founder to formally close the Wave 1 release grant and explicitly identify authority for any future live releases.",
+      "release_gate": "No implied Wave 2 continuation; ending the grant does not remove M15 admission checks or assign release to the Director.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 4,
+      "mechanism": "PRODUCER-on-Claude temporary profile change",
+      "depends_on": [
+        2
+      ],
+      "recommended_action": "Recommend narrow PRODUCER provider reversion at an authorized safe boundary, or obtain a new explicit exception before further use.",
+      "release_gate": "Founder standing no-profile-change instruction must be superseded; prove quiescence, retained work, current original-provider readiness and validated exact provider-block diff. Preserve identities and verifier profile; verify operational readback after authorized change.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 5,
+      "mechanism": "sandbox ingress tunnel",
+      "depends_on": [
+        2
+      ],
+      "recommended_action": "Obtain explicit sandbox tunnel retention/shutdown decision reconciling temporary label with contractual retention.",
+      "release_gate": "Before any shutdown prove no consumer, pending delivery/effect or scheduled proof depends on ingress; retain evidence and reproducible isolated route. Do not affect production tunnel.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 6,
+      "mechanism": "coordinator checkpoint",
+      "depends_on": [
+        2
+      ],
+      "recommended_action": "Prepare and test fresh-context continuation from durable checkpoint and authoritative state.",
+      "release_gate": "Successor reconstructs scope, unresolved decisions, effects and authorized next actions without prior conversation; mismatch blocks tenure change. Preserve checkpoint until equivalent canonical continuity works.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 7,
+      "mechanism": "Program Director mailbox bridge waiter",
+      "depends_on": [
+        6
+      ],
+      "recommended_action": "Prove successor program mailbox consumption and correlated reply, or settle all program duties.",
+      "release_gate": "Deliver an authorized harmless test through the intended replacement path, with pending-message reconciliation and no duplicate handling. Keep current bridge until demonstrated.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 8,
+      "mechanism": "Windows notification",
+      "depends_on": [
+        2,
+        6
+      ],
+      "recommended_action": "Resolve the Windows notification decision separately from queue retention.",
+      "release_gate": "Prove human receipt/response through replacement, or obtain explicit Founder risk acceptance for removal; command success alone cannot clear this gate.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 9,
+      "mechanism": "session-bound attention waiter",
+      "depends_on": [
+        6,
+        7,
+        8
+      ],
+      "recommended_action": "Resolve product attention activation and plan waiter retirement at resident handoff.",
+      "release_gate": "Demonstrate replacement consumer for new and unresolved attention, including judgment-required outcomes, or explicit end of those duties. Queue stays durable and liveness suppression remains intact.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 10,
+      "mechanism": "resident coordinator multi-BIU tenure",
+      "depends_on": [
+        3,
+        6,
+        7,
+        8,
+        9
+      ],
+      "recommended_action": "Authorize and execute a bounded resident-coordinator handoff only after both wake-up paths and durable continuity are ready.",
+      "release_gate": "Explicit tenure decision; no loss of program review/communication duties; monitors independent; fresh invocation verifies equivalent authority and continuation. Unattended activation requires its own authority.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 11,
+      "mechanism": "bootstrap release-admission gate",
+      "depends_on": [
+        2,
+        3
+      ],
+      "recommended_action": "Retire external admission implementation only after canonical live-profile admission is operational.",
+      "release_gate": "All six preconditions plus eligibility refuse meaningful invalid cases before launch; formal release-authority closure alone does not clear this gate.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 12,
+      "mechanism": "SWF-29 liveness reconciliation",
+      "depends_on": [
+        2
+      ],
+      "recommended_action": "Replace SWF-29 only after SF-REQ-056 or authorized equivalent runs operationally on the target live workload.",
+      "release_gate": "Prove dropped-event recovery, suppression during provider/judgment block, explicit resolution, delayed delivery and restart duplicate safety. Preserve one writer and queue linkage; specification or sandbox-only tests fail this gate.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 13,
+      "mechanism": "SWF-27 observer",
+      "depends_on": [
+        2
+      ],
+      "recommended_action": "Replace observer after canonical trajectory capture runs and evidence continuity is reconciled.",
+      "release_gate": "No observation loss across the boundary; consumer/identity/restart/retention proof. Keep attention queue even if observer retires.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 14,
+      "mechanism": "attention queue",
+      "depends_on": [
+        9,
+        12,
+        13
+      ],
+      "recommended_action": "Replace file-based attention queue only after its producers and consumers support canonical attention.",
+      "release_gate": "Migrate retained history and pending items; prove dedupe, seen versus resolved, liveness suppression and SF-REQ-053/SF-REQ-035 integration. Empty queue alone fails the gate.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 15,
+      "mechanism": "Node/bootstrap execution authority",
+      "depends_on": [
+        11,
+        12,
+        13,
+        14
+      ],
+      "recommended_action": "Consider Node retirement only after full sovereignty proof and explicit cutover decision.",
+      "release_gate": "Single approved live-profile writer; reconcile owned work and external effects, retain compatible checkpoint/rollback, prove Node-independent live self-hosting and full required suite. No simultaneous Node/Python dispatch of the same work.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 16,
+      "mechanism": "b-disp command compatibility alias",
+      "depends_on": [],
+      "recommended_action": "Retire command alias only after all installation launch references are migrated and validated.",
+      "release_gate": "Prove installation coverage and canonical command launches; preserve protocol markers, persisted lane/resource identities and history.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    },
+    {
+      "step": 17,
+      "mechanism": "Local Program Director bootstrap orchestration role",
+      "depends_on": [
+        7,
+        10
+      ],
+      "recommended_action": "Close the scoped Director role only at its approved program completion boundary or an explicitly authorized successor handoff.",
+      "release_gate": "Amendment §15 completion evidence, reviews and decision branches resolved/dispositioned; mailbox and artifacts preserved. No Phase 7 or later work is performed by this audit.",
+      "execution_status": "NOT_EXECUTED",
+      "failure_behavior": "Keep existing protection and evidence; block only this dependent transition and record the missing proof/decision."
+    }
+  ],
+  "transition_policy": "Dependency order is necessary, not authorization. Obtain coordinator review and exact operational authority before any action; this phase executes no transition. Retained controls have conditional replacement gates, not calendar deadlines. Steps on independent branches may be considered independently; decisions block only dependent work.",
+  "findings": [
+    "SWF-21 Wave 1 purpose is complete, but its live-profile expiry is not proven; formal scope closure must never be treated as Wave 2 authority.",
+    "Participant attribution of PY-06 recovery to SWF-29 conflicts with the decision: recovery preceded the rule. PY-09 suppression is the demonstrated protection.",
+    "Participant low-value Windows retirement recommendation is unsupported: delivery is not human receipt and absence of proof does not authorize removal.",
+    "Tunnel temporary label does not override PY-10 explicit nondismantling closure contract.",
+    "External modules have partial prose authority and reported tests; absence of repository-controlled code and suite provenance is the precise custody gap, not proof that every module is ungoverned or untested.",
+    "Checkpoint continuity and multi-BIU tenure benefit are unproven. Program-state reconstruction proof is not a coordinator-handover proof.",
+    "PRODUCER exception outlived PY-09 authority; use by later producers does not ratify it. Reversion is a recommendation only."
+  ],
+  "scope_notes": {
+    "additional_to_explicit_mechanism_list": [
+      "resident coordinator multi-BIU tenure",
+      "Program Director mailbox bridge waiter",
+      "SWF-26 PY-04 mutation gate",
+      "bootstrap release-admission gate",
+      "b-disp command compatibility alias",
+      "Local Program Director bootstrap orchestration role"
+    ],
+    "explicitly_flagged_and_included": [
+      "sandbox ingress tunnel",
+      "eighteen external bootstrap modules"
+    ],
+    "external_modules": [
+      "attention.py",
+      "attention_wait.py",
+      "cycle_data.py",
+      "liveness.py",
+      "notify_founder.py",
+      "observer.py",
+      "py05_py09_quality.py",
+      "py05_py09_trajectory.py",
+      "py10_preflight.py",
+      "release_admission.py",
+      "test_attention.py",
+      "test_attention_wait.py",
+      "test_cycle_data.py",
+      "test_liveness_suppression.py",
+      "test_notify_founder.py",
+      "test_py10_preflight.py",
+      "test_release_admission.py",
+      "trajectory_consistency.py"
+    ],
+    "not_retirement_targets": "SWF-10 scripted worker is bounded test infrastructure, not a live authority exception with a retirement mandate; preserve regression fixtures. Durable Product Requirements, SWF-29 Part 2, Decision Inbox authority, persisted B-DISP markers and historical evidence do not expire with these implementations."
+  },
+  "summary": {
+    "mechanisms_audited": 17,
+    "RETIRE_CANDIDATE": 1,
+    "KEEP_UNTIL_REPLACED": 9,
+    "REVERT_TEMPORARY_CHANGE": 1,
+    "NEEDS_DECISION": 6,
+    "still_operating": 16,
+    "never_fired": [
+      "SWF-21 release authority",
+      "SWF-27 observer",
+      "Windows notification",
+      "coordinator checkpoint",
+      "Node/bootstrap execution authority",
+      "sandbox ingress tunnel",
+      "eighteen external bootstrap modules",
+      "resident coordinator multi-BIU tenure",
+      "b-disp command compatibility alias",
+      "Local Program Director bootstrap orchestration role"
+    ],
+    "transition_plan_steps": 17
+  },
+  "validation": {
+    "matrix_check": "PASS",
+    "wave1_check": "PASS",
+    "disputed": "NONE",
+    "commands": [
+      {
+        "command": "rtk proxy python3 tools/evidence/check_retirement_matrix.py docs/evidence/wave1-bootstrap-retirement-matrix.json",
+        "exit_code": 0,
+        "result": "PASS",
+        "mechanisms": 17,
+        "failures": 0
+      },
+      {
+        "command": "rtk proxy python3 tools/evidence/check_wave1.py --negative-controls",
+        "exit_code": 0,
+        "ok": true,
+        "checks": 1075,
+        "failures": [],
+        "negative_controls_killed": 13,
+        "negative_controls_total": 13
+      }
+    ],
+    "checkers_sha256": {
+      "tools/evidence/check_retirement_matrix.py": "7004cc20c9b4c9696368cd304fb36e89ac522d3cc442a4074b2520c2f65489a8",
+      "tools/evidence/check_wave1.py": "fe25b0577dc185a2c00ec33984c39b9c4d989b14418fb7d364d9bedb8a34e774"
+    },
+    "additional_checks": "Input/source hashes preserved; 17 unique mechanisms; transition dependencies refer only to earlier steps; all 18 supplied module names retained.",
+    "limits": "These checks validate artifact structure and retained evidence consistency, not operational replacement or retirement authority. Git ancestry checks use existing local objects and origin/main; no fetch or remote verification was performed."
+  }
+}

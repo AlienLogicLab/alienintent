@@ -78,9 +78,14 @@ def test_historical_cross_check_routes_to_the_bootstrap_coordinator():
     assert d.actor == "claude-bootstrap-coordinator"
 
 
-def test_bootstrap_retirement_review_uses_the_coordinator_that_witnessed_it():
+def test_bootstrap_retirement_review_does_not_go_to_the_coordinator_being_retired():
+    """Corrected. This test originally asserted CLAUDE_COORDINATOR, on the reasoning that the
+    coordinator witnessed the bootstrap. The program plan routes Phase 6 as Codex primary with
+    coordinator review, and the plan is canonical authority over the Director's own routing
+    assumption. It is also the better split: the coordinator is the participant whose bootstrap
+    is under audit, and its lived context belongs in the evidence, not in the authorship."""
     assert route(task_type="bootstrap_retirement_review", risk=RiskClass.HIGH,
-                 deterministic_possible=False).tier is Tier.CLAUDE_COORDINATOR
+                 deterministic_possible=False).tier is Tier.CODEX_PRIMARY
 
 
 def test_the_coordinator_is_not_used_as_primary_author_merely_for_convenience():
@@ -241,9 +246,13 @@ def test_terminal_state_is_founder_decision_required_when_a_critical_decision_pe
 
 
 def test_terminal_state_is_program_complete_when_no_work_and_no_decision_remain(tmp_path):
+    """Corrected: this originally asserted completion from an empty queue alone, which is the
+    defect test_program_complete_requires_every_approved_phase... now covers."""
     st = ProgramState(tmp_path / "s.json")
     st.upsert_task("A", phase="3", title="x", actor="x", status="DONE", risk="LOW")
     st.upsert_task("B", phase="14", title="y", actor="x", status="DONE", risk="LOW")
+    for p in [str(i) for i in range(3, 15)]:
+        st.complete_phase(p)
     assert st.terminal_state() == "PROGRAM_COMPLETE"
 
 
@@ -252,3 +261,39 @@ def test_terminal_state_is_none_while_work_remains(tmp_path):
     st = ProgramState(tmp_path / "s.json")
     st.upsert_task("A", phase="3", title="x", actor="x", status="RUNNING", risk="LOW")
     assert st.terminal_state() is None
+
+
+def test_bootstrap_retirement_review_routes_to_codex_not_the_coordinator():
+    """The program plan routes Phase 6 as Codex primary with Claude review. Routing it to the
+    coordinator would have the participant whose bootstrap is being retired author the
+    retirement audit -- the authorship conflict Phase 2 identified."""
+    d = route(task_type="bootstrap_retirement_review", risk=RiskClass.HIGH,
+              deterministic_possible=False)
+    assert d.tier is Tier.CODEX_PRIMARY
+    assert d.review_required is True
+
+
+def test_program_complete_requires_every_approved_phase_not_merely_an_empty_queue(tmp_path):
+    """Observed live: with phases 3-6 done and 7-14 not yet seeded, terminal_state() reported
+    PROGRAM_COMPLETE because no task was open. Absence of planned work is not completion, and
+    reporting it as such would hand the Founder the wrong terminal state."""
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("A", phase="6", title="done", actor="x", status="DONE", risk="LOW")
+    for p in ("3", "4", "5", "6"):
+        st.complete_phase(p)
+    assert st.terminal_state() is None
+
+
+def test_program_complete_when_every_approved_phase_is_complete(tmp_path):
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("A", phase="14", title="done", actor="x", status="DONE", risk="LOW")
+    for p in [str(i) for i in range(3, 15)]:
+        st.complete_phase(p)
+    assert st.terminal_state() == "PROGRAM_COMPLETE"
+
+
+def test_a_blocking_decision_still_outranks_incomplete_phases(tmp_path):
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("B", phase="7", title="x", actor="founder",
+                   status="FOUNDER_DECISION_REQUIRED", risk="HIGH", critical_path=True)
+    assert st.terminal_state() == "FOUNDER_DECISION_REQUIRED"

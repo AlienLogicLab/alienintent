@@ -1,0 +1,80 @@
+{
+ "derived_at_head": "45c0697921d9b538101a33def6e337cd12bfd218",
+ "why_this_exists": "The live operating state of the bootstrap is not in the repository. This records it so the audit reasons about what is actually running, not about what the documentation says should be running. Every value here was read from the running system.",
+ "live_services": {
+  "units": [
+   "alienintent-liveness.service",
+   "alienintent-observer.service",
+   "alienintent-sandbox-tunnel.service",
+   "alienintent.service"
+  ],
+  "verified_by": "systemctl --user list-units --type=service --all",
+  "detail": {
+   "alienintent.service": "Node bootstrap dispatcher; active; ExecStart uses --config ~/.config/alienintent/self-hosting.json",
+   "alienintent-liveness.service": "unit description states 'temporary, SWF-29'; active",
+   "alienintent-observer.service": "observation only; active",
+   "alienintent-sandbox-tunnel.service": "unit description states 'SWF-08, temporary Wave 1 infrastructure'; active although Wave 1 and PY-10 are closed"
+  }
+ },
+ "live_worker_providers": {
+  "PRODUCER": {
+   "display_name": "Morty",
+   "github_login": "morty-worker",
+   "adapter": "claude",
+   "permission_mode": "bypassPermissions",
+   "funding_profile": "claude-subscription",
+   "authentication_profile": "existing-claude-login"
+  },
+  "VERIFIER": {
+   "display_name": "JC",
+   "github_login": "jc-worker",
+   "adapter": "claude",
+   "permission_mode": "bypassPermissions",
+   "funding_profile": "claude-subscription",
+   "authentication_profile": "existing-claude-login"
+  },
+  "verified_by": "read of cfg['workers'][role]['provider'] in the active dispatcher config named by the running unit's ExecStart. A first pass read cfg['workers'][role]['adapter'] and produced nulls; the adapter is nested under 'provider'. Recorded because the corrected path is the one that decides the finding.",
+  "significance": "The Claude adapter for PRODUCER was authorized narrowly for the PY-09 provider-capacity recovery. That recovery closed with Wave 1 and the change is still in place. The Learning Ledger records that the PY-09-only change was used by two later producers while a durable extension was not found in accepted evidence (LRN-020). This is the clearest live instance of a temporary mechanism not yet expiring.",
+  "standing_constraint": "The Founder instructed, during the pre-mortem: do not stop services, change profiles, revert provider configuration, or retire authority yet. Nothing in this phase may act on this finding. Audit and recommend only."
+ },
+ "attention_queue": {
+  "outstanding_items": 0,
+  "state": "drained",
+  "verified_by": "attention.py list",
+  "location": "outside the repository"
+ },
+ "bootstrap_tooling_outside_the_repository": {
+  "path": "/home/netmarine/.local/share/alienintent-bootstrap",
+  "modules": [
+   "attention.py",
+   "attention_wait.py",
+   "cycle_data.py",
+   "liveness.py",
+   "notify_founder.py",
+   "observer.py",
+   "py05_py09_quality.py",
+   "py05_py09_trajectory.py",
+   "py10_preflight.py",
+   "release_admission.py",
+   "test_attention.py",
+   "test_attention_wait.py",
+   "test_cycle_data.py",
+   "test_liveness_suppression.py",
+   "test_notify_founder.py",
+   "test_py10_preflight.py",
+   "test_release_admission.py",
+   "trajectory_consistency.py"
+  ],
+  "significance": "Eighteen modules, including release_admission.py, liveness.py, observer.py and attention.py, are operational bootstrap machinery that no repository artifact governs or tests. Phase 3 ruled the BIU-identifier parser defect UNSUPPORTED precisely because the code that held it lives here rather than in the repository."
+ },
+ "session_bound_waiters": {
+  "attention_waiter": "armed during Wave 1; re-armed after Wave 1 closure to preserve the status quo pending a Founder decision",
+  "bridge_waiter": "Program Director mailbox waiter; exits on delivery and is re-armed",
+  "note": "Both are session-bound: they exist only while this coordinator session does."
+ },
+ "coordinator_status": {
+  "tenure": "multi-BIU, extended through Wave 1 under the SWF-27 bootstrap-evidence exception",
+  "still_resident": true,
+  "note": "The coordinator authoring context for this audit is the mechanism under audit. Phase 6 is routed to Codex for that reason; this file is evidence, not authorship."
+ }
+}

@@ -5,9 +5,10 @@
   "2",
   "3",
   "4",
-  "5"
+  "5",
+  "6"
  ],
- "current_phase": "6",
+ "current_phase": "7",
  "program": "post-wave1-to-wave2",
  "tasks": {
   "POSTW1-AGENTREADY-004": {
@@ -51,36 +52,43 @@
   },
   "POSTW1-BOOTSTRAP-006": {
    "artifact_refs": [
-    "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md"
+    "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+    "docs/evidence/wave1-bootstrap-retirement-matrix.md"
    ],
    "assigned_actor": "codex-fresh",
    "blockers": [],
    "created_at": "2026-09-21T18:09:10.932271+00:00",
+   "critical_path": null,
    "phase": "6",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "PASS",
    "risk_class": "HIGH",
    "routing": {
-    "chosen_actor": "claude-bootstrap-coordinator",
+    "chosen_actor": "codex-fresh",
+    "deterministic_prework": [
+     "docs/operations/post-wave1-program/prework/POSTW1-BOOTSTRAP-006-live-state.json"
+    ],
     "five_questions": {
      "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
-     "cheapest_model_likely_to_succeed_first_pass": "claude-bootstrap-coordinator",
+     "cheapest_model_likely_to_succeed_first_pass": "gpt-6-astra",
      "does_this_need_independent_review": "yes (risk HIGH)",
      "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
      "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
     },
-    "model": null,
-    "rationale": "Requires lived Wave 1 operational context that durable artifacts alone do not supply. Its memory is a locator; durable evidence decides disagreements.",
+    "model": "gpt-6-astra",
+    "rationale": "Substantial code-aware/technical work; Codex is the configured primary analyst and fresh context avoids inheriting participant bias.",
     "review_required": true,
     "risk_class": "HIGH",
+    "routing_correction": "Director routing table originally sent this to the coordinator; corrected to match the program plan (Codex primary, Claude review) because the coordinator is the mechanism under audit.",
+    "sandbox": "workspace-write",
     "task_type": "bootstrap_retirement_review",
-    "tier": "CLAUDE_COORDINATOR"
+    "tier": "CODEX_PRIMARY"
    },
-   "status": "PLANNED",
+   "status": "DONE",
    "task_id": "POSTW1-BOOTSTRAP-006",
    "title": "Bootstrap Retirement / Transition Audit",
-   "updated_at": "2026-09-21T18:09:10.932285+00:00"
+   "updated_at": "2026-09-21T20:10:44.313917+00:00"
   },
   "POSTW1-BRIDGE-000": {
    "artifact_refs": [
@@ -176,6 +184,34 @@
    "task_id": "POSTW1-DECIDE-005A",
    "title": "Founder: amend SF-REQ-013 to own the split/replan transaction (SPLIT-G1)",
    "updated_at": "2026-09-21T19:57:11.606432+00:00"
+  },
+  "POSTW1-DECIDE-006A": {
+   "artifact_refs": [
+    "docs/evidence/wave1-bootstrap-retirement-matrix.json"
+   ],
+   "assigned_actor": "founder",
+   "blockers": [
+    "non-blocking: no phase 7-13 work depends on these; carried to the Phase 14 packet",
+    "SWF-21 release authority",
+    "Windows notification",
+    "session-bound attention waiter",
+    "sandbox ingress tunnel",
+    "eighteen external bootstrap modules",
+    "resident coordinator multi-BIU tenure",
+    "PRODUCER-on-Claude reversion requires a separately authorized operational change"
+   ],
+   "created_at": "2026-09-21T20:10:44.322045+00:00",
+   "critical_path": false,
+   "phase": "6",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": null,
+   "risk_class": "HIGH",
+   "routing": null,
+   "status": "FOUNDER_DECISION_REQUIRED",
+   "task_id": "POSTW1-DECIDE-006A",
+   "title": "Founder: 6 NEEDS_DECISION mechanisms plus the PRODUCER-on-Claude reversion",
+   "updated_at": "2026-09-21T20:10:44.322069+00:00"
   },
   "POSTW1-GAPTRAP-003": {
    "artifact_refs": [
@@ -357,5 +393,5 @@
    "updated_at": "2026-09-21T19:57:11.598277+00:00"
   }
  },
- "updated_at": "2026-09-21T19:57:11.621382+00:00"
+ "updated_at": "2026-09-21T20:10:44.336348+00:00"
 }

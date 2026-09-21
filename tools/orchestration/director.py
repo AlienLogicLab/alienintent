@@ -45,6 +45,10 @@ PROGRAM_STATES = {"PLANNED", "READY", "RUNNING", "REVIEW", "REPAIR", "BLOCKED",
                   "FOUNDER_DECISION_REQUIRED", "DONE", "SUPERSEDED"}
 # Actively open work. An earlier phase in one of these stops later phases from being offered.
 _IN_PROGRESS = {"RUNNING", "REVIEW", "REPAIR"}
+# The phases the autonomous execution amendment approves, section 1. PROGRAM_COMPLETE requires
+# all of them, not merely an empty task queue: unseeded phases produce no open work, and an
+# empty queue would otherwise read as completion.
+APPROVED_PHASES = tuple(str(i) for i in range(3, 15))
 BIU_LIFECYCLE_STATES = {"CAPTURE", "SPECIFY", "PLAN", "TASKS", "READY_BIU", "IMPLEMENT",
                         "VERIFY", "REVIEW_BIU", "ACCEPT", "DONE_BIU"}
 _FORBIDDEN_AS_PROGRAM_STATE = {"CAPTURE", "SPECIFY", "PLAN", "TASKS", "IMPLEMENT", "VERIFY", "ACCEPT"}
@@ -65,8 +69,12 @@ class RiskClass(Enum):
 
 
 # Task types whose value comes specifically from lived Wave 1 participation.
+# Note: bootstrap_retirement_review is deliberately NOT here. The program plan routes it to
+# Codex with coordinator review, and that is right: the coordinator is the participant whose
+# bootstrap is being retired, so authoring its own retirement audit is the authorship conflict
+# Phase 2 identified. Lived context is supplied as evidence, not as authorship.
 _COORDINATOR_ONLY = {
-    "historical_cross_check", "bootstrap_retirement_review", "bootstrap_control_review",
+    "historical_cross_check", "bootstrap_control_review",
     "missing_incident_identification", "incident_interpretation_review",
     "closure_evidence_review",
 }
@@ -271,7 +279,12 @@ class ProgramState:
             return "FOUNDER_DECISION_REQUIRED"
         open_work = [t for t in self.tasks()
                      if t["status"] not in ("DONE", "SUPERSEDED", "FOUNDER_DECISION_REQUIRED")]
-        return None if open_work else "PROGRAM_COMPLETE"
+        if open_work:
+            return None
+        done = set(self._data.get("completed_phases") or [])
+        if not set(APPROVED_PHASES) <= done:
+            return None  # phases remain; an empty queue is not completion
+        return "PROGRAM_COMPLETE"
 
     def next_task(self) -> dict | None:
         """The next unblocked task. A pending Founder decision stops the program.
