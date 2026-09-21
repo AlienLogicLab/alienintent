@@ -1,0 +1,91 @@
+{
+ "ok": true,
+ "checks": [
+  {
+   "check": "profile_records_app_identity",
+   "ok": true,
+   "detail": "app_id=5014629 installation_id=163346526"
+  },
+  {
+   "check": "private_key_present_and_protected",
+   "ok": true,
+   "detail": "/home/netmarine/.config/alienintent-sandbox/secrets/alienintent-py-10-sandbox.2026-09-20.private-key.pem mode=0o600"
+  },
+  {
+   "check": "profile_loads_as_GitHubProfile",
+   "ok": true,
+   "detail": "typed profile constructed from recorded values"
+  },
+  {
+   "check": "webhook_secret_resolves",
+   "ok": true,
+   "detail": "64 bytes via protected-local-file references=py10-sandbox-webhook"
+  },
+  {
+   "check": "app_authenticates_with_private_key",
+   "ok": true,
+   "detail": "HTTP 200 slug=alienintent-py-10-sandbox id=5014629"
+  },
+  {
+   "check": "app_permissions_are_exactly_least_privilege",
+   "ok": true,
+   "detail": "granted={'issues': 'read', 'metadata': 'read', 'organization_projects': 'write'} required={'issues': 'read', 'metadata': 'read', 'organization_projects': 'write'}"
+  },
+  {
+   "check": "app_events_are_exactly_required",
+   "ok": true,
+   "detail": "subscribed=['issue_comment', 'projects_v2_item'] required=['issue_comment', 'projects_v2_item']"
+  },
+  {
+   "check": "installation_belongs_to_this_app",
+   "ok": true,
+   "detail": "HTTP 200 app_id=5014629 account=AlienLogicLab"
+  },
+  {
+   "check": "installation_is_repository_scoped",
+   "ok": true,
+   "detail": "repository_selection=selected"
+  },
+  {
+   "check": "installation_permissions_are_exactly_least_privilege",
+   "ok": true,
+   "detail": "granted={'issues': 'read', 'metadata': 'read', 'organization_projects': 'write'}"
+  },
+  {
+   "check": "installation_token_mints",
+   "ok": true,
+   "detail": "HTTP 201"
+  },
+  {
+   "check": "installation_reaches_only_the_sandbox_repository",
+   "ok": true,
+   "detail": "repositories=['AlienLogicLab/alienintent-sandbox']"
+  },
+  {
+   "check": "installation_scope_excludes_production_repository",
+   "ok": true,
+   "detail": "installation grants exactly [AlienLogicLab/alienintent-sandbox]"
+  },
+  {
+   "check": "sandbox_issues_readable_with_installation_token",
+   "ok": true,
+   "detail": "HTTP 200"
+  },
+  {
+   "check": "residual_capability_org_projects_is_org_wide",
+   "ok": true,
+   "note": true,
+   "detail": "organization_projects is org-wide: the sandbox token CAN reach production Project #1. GitHub offers no per-project scope. Compensating control: the sandbox profile targets PVT_kwDOEcrpC84BkIEX only, and PY-10 AC 16 requires evidence that Project #1 was untouched."
+  },
+  {
+   "check": "isolation_from_production",
+   "ok": true,
+   "detail": "no production identifier appears in the sandbox profile"
+  },
+  {
+   "check": "sandbox_tunnel_active",
+   "ok": true,
+   "detail": "alienintent-sandbox-tunnel=active"
+  }
+ ]
+}
