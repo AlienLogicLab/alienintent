@@ -14,24 +14,23 @@
   "claim": "32 assessment files carry two incompatible shapes; no field is present in all 32.",
   "readiness_shape_count": 15,
   "mcp_envelope_count": 17,
-  "disposition_field_presence": "15/32"
+  "disposition_field_presence": "15/32",
+  "correction": {
+   "status": "PARTIALLY CORRECTED",
+   "corrected_by": "codex/gpt-6-astra during POSTW1-AGENTREADY-004",
+   "what_was_wrong": "The prework reported disposition 'absent' in 17 of 32 files. That was a top-level-only reading. All 17 MCP envelopes carry isError=false and READY nested in structuredContent, matching their parsed text payload. Normalized, the observed count is READY=31, not 14.",
+   "what_stands": "The two incompatible serialization shapes are real, and no top-level field is common to all 32. The drift finding holds; the absence count did not."
+  }
  },
  "finding_3_non_ready_not_persisted": {
-  "claim": "BLOCKED and SPLIT_RECOMMENDED never appear as a persisted disposition in any assessment file, although Wave 1 produced both.",
-  "observed_dispositions": {
-   "READY": 14,
-   "NEEDS_CLARIFICATION": 1,
-   "absent": 17
-  },
-  "contradicting_evidence": "tools/evidence/check_wave1.py:123 asserts PY-10 verdicts ['BLOCKED','SPLIT_RECOMMENDED','READY'] and PY-09B ['NEEDS_CLARIFICATION','NEEDS_CLARIFICATION','READY']",
-  "retained_sibling_files": {
-   "PY-09B": [
-    "PY-09B.assessment.2026-09-21-needs-clarification.json",
-    "PY-09B.assessment.json"
-   ]
-  },
-  "reading": "PY-09B retained its non-READY verdict as a dated sibling file; PY-10 did not. The final assessment file was overwritten by the READY reassessment, so the earlier verdicts survive only in trajectory evidence and in a checker's expectations.",
-  "relevance": "Phase 4's required invariant is that no non-READY outcome may be silently coerced into READY, and that resolved prerequisites do not retroactively rewrite an old verdict. The retention pattern is inconsistent between two BIUs in the same wave."
+  "status": "CORRECTED \u2014 the original claim was false",
+  "corrected_at_head": "750a6e3",
+  "corrected_by": "codex/gpt-6-astra during POSTW1-AGENTREADY-004, disputed rather than accepted",
+  "original_claim": "BLOCKED and SPLIT_RECOMMENDED never appear as a persisted disposition in any assessment file, although Wave 1 produced both.",
+  "why_it_was_wrong": "The claim was derived from the working-tree snapshot only. A working tree is not the persistence layer. Git history retains the full verdict sequence for docs/work-units/python/PY-10.assessment.json: c32830b BLOCKED -> 1f16b81 SPLIT_RECOMMENDED -> 693fef9 READY, each with a descriptive commit message naming the reassessment.",
+  "verified_by": "git log --follow plus git show of the disposition field at each revision",
+  "corrected_claim": "Non-READY dispositions persist in Git history. What differs between BIUs is working-tree retention: PY-09B kept a dated sibling file, PY-10 did not. That is a retention convention inconsistency, not silent coercion.",
+  "consequence_had_it_stood": "Phase 4 would have reported silent coercion that the evidence disproves. The dispatched session disputed the premise instead of adopting it."
  },
  "authority_defining_agent_ready": [
   "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
@@ -80,5 +79,14 @@
    "docs/work-units/pre-python-gate/assessments/PG-17.assessment.json"
   ],
   "other": []
+ },
+ "finding_4_lrn008_mischaracterised_in_dispatch": {
+  "status": "CORRECTED \u2014 the dispatch prompt was wrong",
+  "claim_in_prompt": "conflating execution failures with dispositions 'is the failure LRN-008 records'",
+  "why_it_was_wrong": "LRN-008 records a verifier that exited success with no B-DISP verdict and became DURABLE_RESULT_MISSING rather than ACCEPT. The ledger calls it 'a real adverse-input refusal'. It is an instance of the control working, not of coercion occurring.",
+  "corrected_by": "codex/gpt-6-astra, disputed in POSTW1-AGENTREADY-004"
+ },
+ "director_self_assessment": {
+  "note": "Three claims in this prework were wrong, and all three failed the same way: a surface reading treated as a complete one. Non-READY verdicts were called unpersisted because the working tree lacked them (Git had them); dispositions were called absent because the top level lacked them (the envelopes had them); LRN-008 was cited as an instance of coercion when the ledger calls it a refusal that worked. The dispatched session disputed all three rather than inheriting them. Deterministic prework is only as good as the layer it reads, and a prework artifact that feeds a false premise into a phase is more dangerous than no prework, because it arrives labelled deterministic."
  }
 }

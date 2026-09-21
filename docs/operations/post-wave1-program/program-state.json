@@ -3,11 +3,51 @@
   "0",
   "1",
   "2",
-  "3"
+  "3",
+  "4"
  ],
- "current_phase": "4",
+ "current_phase": "5",
  "program": "post-wave1-to-wave2",
  "tasks": {
+  "POSTW1-AGENTREADY-004": {
+   "artifact_refs": [
+    "docs/evidence/wave1-agent-ready-outcome-matrix.json",
+    "docs/evidence/wave1-agent-ready-outcome-matrix.md"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-21T19:39:57.294850+00:00",
+   "critical_path": null,
+   "phase": "4",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "PASS",
+   "risk_class": "HIGH",
+   "routing": {
+    "chosen_actor": "codex-fresh",
+    "deterministic_prework": [
+     "docs/operations/post-wave1-program/prework/POSTW1-AGENTREADY-004-inputs.json"
+    ],
+    "five_questions": {
+     "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+     "cheapest_model_likely_to_succeed_first_pass": "gpt-6-astra",
+     "does_this_need_independent_review": "yes (risk HIGH)",
+     "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
+     "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
+    },
+    "model": "gpt-6-astra",
+    "rationale": "Substantial code-aware/technical work; Codex is the configured primary analyst and fresh context avoids inheriting participant bias.",
+    "review_required": true,
+    "risk_class": "HIGH",
+    "sandbox": "workspace-write",
+    "task_type": "lifecycle_semantics",
+    "tier": "CODEX_PRIMARY"
+   },
+   "status": "DONE",
+   "task_id": "POSTW1-AGENTREADY-004",
+   "title": "Agent-Ready Outcome Completeness Audit",
+   "updated_at": "2026-09-21T19:46:50.244813+00:00"
+  },
   "POSTW1-BOOTSTRAP-006": {
    "artifact_refs": [
     "docs/evidence/2026-09-21-bootstrap-expiry-inventory.md"
@@ -93,6 +133,27 @@
    "task_id": "POSTW1-DECIDE-002A",
    "title": "Founder judgment: accept ownership_gaps=0, and LRN-018 disposition",
    "updated_at": "2026-09-21T19:10:47.827950+00:00"
+  },
+  "POSTW1-DECIDE-004A": {
+   "artifact_refs": [
+    "docs/evidence/wave1-agent-ready-outcome-matrix.json"
+   ],
+   "assigned_actor": "founder",
+   "blockers": [
+    "non-blocking: carried to the Phase 14 packet, does not halt phases 5-13"
+   ],
+   "created_at": "2026-09-21T19:46:50.254919+00:00",
+   "critical_path": false,
+   "phase": "4",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": null,
+   "risk_class": "HIGH",
+   "routing": null,
+   "status": "FOUNDER_DECISION_REQUIRED",
+   "task_id": "POSTW1-DECIDE-004A",
+   "title": "Founder: assign an owner for the Agent-Ready implementation/schema/CLI (G1) and the canonical serialization contract (G2)",
+   "updated_at": "2026-09-21T19:46:50.254933+00:00"
   },
   "POSTW1-GAPTRAP-003": {
    "artifact_refs": [
@@ -235,5 +296,5 @@
    "updated_at": "2026-09-21T18:15:13.918681+00:00"
   }
  },
- "updated_at": "2026-09-21T19:37:57.662150+00:00"
+ "updated_at": "2026-09-21T19:46:50.273088+00:00"
 }

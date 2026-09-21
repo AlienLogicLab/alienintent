@@ -1,0 +1,404 @@
+{
+  "task_id": "POSTW1-AGENTREADY-004",
+  "artifact_role": "Authoritative outcome handling audit; no product requirement, runtime change or release authorization",
+  "scope": {
+    "supported_dispositions_basis": "Seven governing decision records plus all 32 retained current assessments and six revision-addressed assessments. Four authority-backed disposition names are established; no external implementation enum was available.",
+    "implementation_found": false,
+    "implementation_absence_basis": "docs/operations/post-wave1-program/prework/POSTW1-AGENTREADY-004-inputs.json",
+    "implementation_search_repeated": false,
+    "handling_status": "Authority-derived process definition; automated enforcement and completeness against an external implementation remain unverified.",
+    "authority_owner_meaning": "Single accountable next-process owner; Agent-Ready remains readiness-verdict authority. Conditional escalation is a step in that path, not a competing owner.",
+    "implementation_allowed_meaning": "READY true is conditional eligibility only, never standalone implementation authorization; every non-READY and every execution failure is false.",
+    "unknown_outcome_handling": "Treat an unrecognized result as malformed_result and hold affected work for authority/schema resolution; do not invent another supported disposition.",
+    "attention_status": "Durable attention is required for judgment and unrecovered failure by the governing activation record; this audit neither asserts an implemented Agent-Ready event bridge nor activates anything."
+  },
+  "invariants": [
+    "Every supported disposition has exactly one defined authority path.",
+    "No non-READY outcome may be silently coerced into READY.",
+    "Resolved prerequisites never rewrite an old BLOCKED verdict; fresh reassessment is required."
+  ],
+  "dispositions": [
+    {
+      "disposition": "READY",
+      "semantic_meaning": "The assessed work is sufficiently bounded and authority-complete for execution without inventing product or architecture decisions; engineering research may remain. Readiness alone is not release authority.",
+      "authority_owner": "Wave 1 release coordinator (SWF-21, only while its bootstrap delegation remains effective)",
+      "lifecycle_effect": "Eligible for readiness admission; IMPLEMENT requires all nine SWF-21 conditions and all six release-record preconditions. This audit changes no lifecycle state.",
+      "next_action": "Check assessment freshness, Project READY, dependencies, authority, invocation absence, WIP, release ON, holds and durable release/baseline admission. Release only when every guard passes; otherwise preserve current state and record the failed guard. If SWF-21 has expired, use the canonical release authority; do not revive its manual delegation.",
+      "required_artifact": "Identifiable retained assessment with disposition, assessed contract/baseline, provider provenance and rationale; preserve prior assessment by immutable revision or dated artifact and link the new assessment to it.",
+      "attention_behavior": "Evaluate when a slot or dependency opens. Persist attention for a guard needing judgment; escalate genuinely missing authority, not routine waiting.",
+      "stale_assessment_rule": "Retain the old verdict as history. A changed contract, baseline, governing decision or material prerequisite requires a separate fresh assessment; resolving a blocker never changes the old verdict to READY.",
+      "reassessment_trigger": "Contract or baseline change, changed governing authority, or material readiness evidence invalidation.",
+      "DAG_effect": "No dependency edge is added, removed or satisfied by READY; dependency satisfaction remains a lifecycle fact.",
+      "Founder_decision_required": "Conditional: only genuinely missing Founder/product/architecture authority; routine authorized release requires no new Founder decision.",
+      "implementation_allowed": true,
+      "evidence_refs": [
+        "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/work-units/python/PY-02.assessment.json"
+      ]
+    },
+    {
+      "disposition": "BLOCKED",
+      "semantic_meaning": "A known prerequisite is unavailable or sequencing/environment conditions are unmet; a bounded contract can still be BLOCKED.",
+      "authority_owner": "Wave 1 release coordinator (SWF-21, within existing orchestration authority)",
+      "lifecycle_effect": "Refuse release into IMPLEMENT; preserve the current pre-implementation state and historical verdict.",
+      "next_action": "Record each unmet prerequisite and its evidence. Track resolution under existing authority; send missing authority to the Founder through a durable decision request. Once prerequisite evidence is resolved, obtain and retain a fresh assessment before considering release.",
+      "required_artifact": "Identifiable retained assessment with disposition, assessed contract/baseline, provider provenance and rationale; preserve prior assessment by immutable revision or dated artifact and link the new assessment to it.",
+      "attention_behavior": "Persist the blocker and attention when judgment or missing authority is involved. Observe routine dependency completion without repeated unproductive recovery; independent eligible work continues.",
+      "stale_assessment_rule": "Retain the old verdict as history. A changed contract, baseline, governing decision or material prerequisite requires a separate fresh assessment; resolving a blocker never changes the old verdict to READY.",
+      "reassessment_trigger": "Documented prerequisite resolution, or a change in the assessed contract/baseline; obtain a new assessment even if all old blockers are resolved.",
+      "DAG_effect": "Preserve declared edges. The affected BIU cannot release, and successors still wait for their declared lifecycle prerequisites; independent branches may continue.",
+      "Founder_decision_required": "Conditional: required for prerequisite resolution outside delegated authority; dependency completion alone requires no new Founder decision.",
+      "implementation_allowed": false,
+      "evidence_refs": [
+        "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+        "docs/decisions/2026-09-21-py10-transport-split.md",
+        "docs/evidence/2026-09-21-agent-ready-provider-failover.md"
+      ]
+    },
+    {
+      "disposition": "NEEDS_CLARIFICATION",
+      "semantic_meaning": "A material owner decision or contradictory requirement prevents unambiguous execution; the implementer must not invent the answer.",
+      "authority_owner": "Founder",
+      "lifecycle_effect": "No release into IMPLEMENT on this verdict; a clarification does not itself convert the assessment to READY.",
+      "next_action": "Present the exact unresolved question and conflicting evidence for a durable Founder decision. Apply only the authorized clarification to the contract, retain the prior assessment, and request a fresh assessment before release.",
+      "required_artifact": "Identifiable retained assessment with disposition, assessed contract/baseline, provider provenance and rationale; preserve prior assessment by immutable revision or dated artifact and link the new assessment to it.",
+      "attention_behavior": "Durable coordinator attention and a decision request identify the affected BIU, question, evidence and required authority; only affected work waits.",
+      "stale_assessment_rule": "Retain the old verdict as history. A changed contract, baseline, governing decision or material prerequisite requires a separate fresh assessment; resolving a blocker never changes the old verdict to READY.",
+      "reassessment_trigger": "An attributable clarification and any authorized contract change are recorded; reassess the amended contract and current baseline.",
+      "DAG_effect": "No automatic DAG change. Preserve dependencies; any clarification that changes decomposition needs explicit planning authority.",
+      "Founder_decision_required": "Yes for the owner/product/architecture questions evidenced by SWF-34; the coordinator has no substitute decision authority.",
+      "implementation_allowed": false,
+      "evidence_refs": [
+        "docs/decisions/2026-09-21-sandbox-isolation-standard.md",
+        "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+        "docs/work-units/python/PY-09B.assessment.2026-09-21-needs-clarification.json"
+      ]
+    },
+    {
+      "disposition": "SPLIT_RECOMMENDED",
+      "semantic_meaning": "The work has a decomposition defect, unowned capability or coupled proof/decision surface that merits re-planning before execution. A recommendation is not authority to split.",
+      "authority_owner": "Founder",
+      "lifecycle_effect": "Hold the assessed work before IMPLEMENT; neither a split recommendation nor approval is a READY assessment.",
+      "next_action": "Present the decomposition finding for a durable Founder planning decision. Apply the authorized split or other explicitly chosen correction with preserved total proof obligations and dependency lineage; reassess the affected contracts before normal admission.",
+      "required_artifact": "Identifiable retained assessment with disposition, assessed contract/baseline, provider provenance and rationale; preserve prior assessment by immutable revision or dated artifact and link the new assessment to it.",
+      "attention_behavior": "Durable attention carries the assessment, split rationale, affected contracts and planning decision request. Resume readiness assessment after the decision and required prerequisites.",
+      "stale_assessment_rule": "Retain the old verdict as history. A changed contract, baseline, governing decision or material prerequisite requires a separate fresh assessment; resolving a blocker never changes the old verdict to READY.",
+      "reassessment_trigger": "The authorized decomposition correction is recorded and the relevant contract/baseline or prerequisite state has changed; obtain fresh assessments for affected units before release.",
+      "DAG_effect": "Only the approved planning decision changes edges or inserts units. SWF-33 inserted PY-09B before PY-10 without weakening the capstone proof; the disposition alone changes no edge.",
+      "Founder_decision_required": "Yes: changing the Founder-approved decomposition is outside coordinator authority.",
+      "implementation_allowed": false,
+      "evidence_refs": [
+        "docs/decisions/2026-09-21-py10-transport-split.md",
+        "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+        "docs/evidence/2026-09-21-agent-ready-provider-failover.md"
+      ]
+    }
+  ],
+  "execution_failures": [
+    {
+      "mode": "provider_or_tool_failure",
+      "is_readiness_disposition": false,
+      "semantic_meaning": "Provider capacity, authentication, adapter or tool invocation failure prevents an admissible assessment.",
+      "authority_owner": "Coordinator for attempt handling within existing delegation",
+      "next_action": "Classify the concrete provider/tool error; preserve any prior verdict unchanged. Use bounded authorized recovery or obtain missing recovery authority. Preserve invocation identity, assessed input/baseline, provider, terminal/partial output and failure evidence separately from assessments. Do not advance readiness or lifecycle from this attempt. The coordinator may retry or fail over only within already-authorized provider/capability/budget policy; absent such authority, persist attention and a Founder decision request and hold affected work. A new invocation must yield an admissible fresh assessment; unresolved or repeated failure yields attention rather than an unbounded retry loop.",
+      "implementation_allowed": false,
+      "evidence_refs": [
+        "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+        "docs/evidence/wave1-learning-ledger.md#LRN-008"
+      ]
+    },
+    {
+      "mode": "timeout",
+      "is_readiness_disposition": false,
+      "semantic_meaning": "The assessment attempt exceeds its authorized execution deadline without an admissible terminal result.",
+      "authority_owner": "Coordinator for attempt handling within existing delegation",
+      "next_action": "Record timeout as attempt failure, reconcile whether the attempt remains active before retrying, and retain partial evidence. Do not infer BLOCKED, READY or rejection from elapsed time. Preserve invocation identity, assessed input/baseline, provider, terminal/partial output and failure evidence separately from assessments. Do not advance readiness or lifecycle from this attempt. The coordinator may retry or fail over only within already-authorized provider/capability/budget policy; absent such authority, persist attention and a Founder decision request and hold affected work. A new invocation must yield an admissible fresh assessment; unresolved or repeated failure yields attention rather than an unbounded retry loop.",
+      "implementation_allowed": false,
+      "evidence_refs": [
+        "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+        "docs/evidence/wave1-learning-ledger.md#LRN-008"
+      ]
+    },
+    {
+      "mode": "malformed_result",
+      "is_readiness_disposition": false,
+      "semantic_meaning": "The result is unparsable, contradictory, lacks required readiness identity/meaning, or contains an unrecognized disposition. A recognized MCP wrapper alone is not malformed.",
+      "authority_owner": "Coordinator for attempt handling within existing delegation",
+      "next_action": "Quarantine the raw result for inspection. Separate a recognized envelope from its payload and require consistency where both text and structured content exist. Reject ambiguous or conflicting payloads; obtain a fresh assessment under existing authority rather than invent fields or map an unknown value to READY. Record schema uncertainty for the owner gap G1/G2. Preserve invocation identity, assessed input/baseline, provider, terminal/partial output and failure evidence separately from assessments. Do not advance readiness or lifecycle from this attempt. The coordinator may retry or fail over only within already-authorized provider/capability/budget policy; absent such authority, persist attention and a Founder decision request and hold affected work. A new invocation must yield an admissible fresh assessment; unresolved or repeated failure yields attention rather than an unbounded retry loop.",
+      "implementation_allowed": false,
+      "evidence_refs": [
+        "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+        "docs/evidence/wave1-learning-ledger.md#LRN-008"
+      ]
+    },
+    {
+      "mode": "missing_terminal_result",
+      "is_readiness_disposition": false,
+      "semantic_meaning": "The attempt ends or disappears without a durable, invocation-correlated assessment, including a provider success envelope with no assessment.",
+      "authority_owner": "Coordinator for attempt handling within existing delegation",
+      "next_action": "Record missing terminal evidence and reconcile retained output against invocation identity. If no admissible assessment is recoverable, use authorized retry or attention. A success exit code is not a readiness verdict. Preserve invocation identity, assessed input/baseline, provider, terminal/partial output and failure evidence separately from assessments. Do not advance readiness or lifecycle from this attempt. The coordinator may retry or fail over only within already-authorized provider/capability/budget policy; absent such authority, persist attention and a Founder decision request and hold affected work. A new invocation must yield an admissible fresh assessment; unresolved or repeated failure yields attention rather than an unbounded retry loop.",
+      "implementation_allowed": false,
+      "evidence_refs": [
+        "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+        "docs/evidence/wave1-learning-ledger.md#LRN-008"
+      ]
+    }
+  ],
+  "gaps": [
+    {
+      "gap_id": "G1",
+      "title": "Absent in-repository assessment implementation, schema and CLI",
+      "finding": "Accepted deterministic prework: no assessment-producing implementation, versioned assessment schema or Agent-Ready CLI exists in this repository. RAI finding dispositions are a different concept. No contrary implementation was found in the audit inputs; this is not a claim about external installations.",
+      "consequence": "An exhaustive implementation enum, executable semantic validation and automated outcome handling cannot be certified here. This matrix defines authority-backed handling for the four evidenced dispositions, not an invented external schema.",
+      "fix_owner": "OWNERSHIP GAP: the seven records do not designate the assessment implementation/schema/CLI maintainer. Founder assignment is required before an implementation fix can be tasked.",
+      "ownership_gap": true,
+      "next_process": "Record the gap for the Program Director to route to the Founder for owner assignment under existing authority. No Product Requirement or implementation task is created.",
+      "evidence_refs": [
+        "docs/operations/post-wave1-program/prework/POSTW1-AGENTREADY-004-inputs.json",
+        "docs/decisions/alienintent-software-factory-plan.md",
+        "docs/decisions/2026-09-20-design-contract-and-design-verification.md"
+      ]
+    },
+    {
+      "gap_id": "G2",
+      "title": "Unversioned serialization drift",
+      "finding": "The 32 current retained files contain 15 direct readiness objects and 17 MCP envelopes. No top-level field is common to all 32; top-level disposition appears in 15. All 17 envelopes have isError=false and READY in structuredContent, matching the parsed text payload. Thus the normalized observed count is READY=31 and NEEDS_CLARIFICATION=1, not 17 missing semantic verdicts. No assessment schema_version is present.",
+      "consequence": "A top-level-only reader loses 17 valid nested verdicts. Absent a versioned canonical serialization contract, consumers cannot mechanically establish full schema compatibility; the observed wrapper difference is not proof of conflicting readiness semantics.",
+      "fix_owner": "OWNERSHIP GAP: no canonical serialization/schema owner is named in the reviewed authority. Founder assignment must precede a schema or consumer migration.",
+      "ownership_gap": true,
+      "next_process": "Present the observed two-shape inventory with G1 for owner assignment; preserve source envelopes and provenance. Do not rewrite retained evidence in this audit.",
+      "evidence_refs": [
+        "docs/operations/post-wave1-program/prework/POSTW1-AGENTREADY-004-inputs.json",
+        "docs/work-units/pre-python-gate/assessments/PG-01.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-02.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-03.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-04.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-05.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-06.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-07.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-08.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-09.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-10.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-11.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-12.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-13.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-14.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-15.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-16.assessment.json",
+        "docs/work-units/pre-python-gate/assessments/PG-17.assessment.json"
+      ]
+    },
+    {
+      "gap_id": "G3",
+      "title": "Inconsistent current-file retention of non-READY assessments",
+      "finding": "Current PY-10.assessment.json carries READY without dated sibling files for BLOCKED or SPLIT_RECOMMENDED, whereas PY-09B retains a dated NEEDS_CLARIFICATION sibling. Both PY-10 non-READY assessments persist as retrievable Git blobs referenced by trajectory, with matching recorded hashes. PY-09B also has a second historical NEEDS_CLARIFICATION retained by revision.",
+      "consequence": "Reading only current filenames obscures reassessment history and invites incorrect coercion claims. The evidence shows retention/discovery inconsistency, not demonstrated silent coercion or loss of the historical assessments.",
+      "fix_owner": "Wave 1 coordinator for assessment evidence custody and explicit reassessment linkage under SWF-21, SWF-33 and SWF-34; a product-wide automated retention implementation owner remains covered by G1.",
+      "ownership_gap": false,
+      "next_process": "Preserve immutable revision references and explicit supersession/reassessment linkage in future authorized evidence handling; submit any broader retention standard to existing authority. No historical evidence is rewritten here.",
+      "evidence_refs": [
+        "docs/decisions/2026-09-21-py10-transport-split.md",
+        "docs/decisions/2026-09-21-sandbox-isolation-standard.md",
+        "docs/evidence/execution-trajectories/PY-10.jsonl",
+        "docs/evidence/execution-trajectories/PY-09B.jsonl"
+      ]
+    }
+  ],
+  "coercion_finding": {
+    "verdict": "retention inconsistency",
+    "silent_coercion_demonstrated": false,
+    "reason": "SWF-33 explicitly refuses to treat BLOCKED or SPLIT_RECOMMENDED as READY. Locally retrieved assessments preserve BLOCKED at e25da1f, SPLIT_RECOMMENDED at 85b6060 and fresh READY at 93dd8b1 after PY-09B completed. The final assessment retains the earlier causes in assessment_history. Different current-file retention conventions do not demonstrate retroactive verdict conversion.",
+    "historical_assessments": [
+      {
+        "biu": "PY-10",
+        "revision": "c32830b931a06562fa12f273d83e55f4b7c1816c",
+        "path": "docs/work-units/python/PY-10.assessment.json",
+        "disposition": "BLOCKED",
+        "assessed_baseline": "e25da1f",
+        "trajectory_event": "wave1-terminal-PY-10-9",
+        "retrieved_locally": true,
+        "trajectory_hash_matches": true,
+        "sha256_of_stripped_text": "0e074b5016df6fcdfaf2b94b62ec81121458a5aa980a1415e7edd773aa544e2e"
+      },
+      {
+        "biu": "PY-10",
+        "revision": "1f16b816cb0d30681eacbb2ea178eb2cf92ddd02",
+        "path": "docs/work-units/python/PY-10.assessment.json",
+        "disposition": "SPLIT_RECOMMENDED",
+        "assessed_baseline": "85b606037e144e977c1bc1f7b0aa795d97e19d83",
+        "trajectory_event": "wave1-terminal-PY-10-10",
+        "retrieved_locally": true,
+        "trajectory_hash_matches": true,
+        "sha256_of_stripped_text": "e77cfb3647c818f41e377cea01e0c2ea76ceb0d0eb731f447869002f7a5d9775"
+      },
+      {
+        "biu": "PY-10",
+        "revision": "693fef995f03ab3eca43cb74ad5692cdcd69ffcf",
+        "path": "docs/work-units/python/PY-10.assessment.json",
+        "disposition": "READY",
+        "assessed_baseline": "93dd8b1",
+        "trajectory_event": "wave1-terminal-PY-10-11",
+        "retrieved_locally": true,
+        "trajectory_hash_matches": true,
+        "sha256_of_stripped_text": "69f53f56870fad25f87ea810240f530bbbabf861dbd451b401545b1874b140c0"
+      },
+      {
+        "biu": "PY-09B",
+        "revision": "d35928dfe9bf00e0a4f9a2bb5c0beb63f53aaf8c",
+        "path": "docs/work-units/python/PY-09B.assessment.json",
+        "disposition": "NEEDS_CLARIFICATION",
+        "assessed_baseline": "35de8d7e",
+        "trajectory_event": "wave1-terminal-PY-09B-9",
+        "retrieved_locally": true,
+        "trajectory_hash_matches": true,
+        "sha256_of_stripped_text": "23a9afa4b22b616eb26d75689154b69da608caa931a5ab00dc3edb50cb1f1f14"
+      },
+      {
+        "biu": "PY-09B",
+        "revision": "d01bc388739b50f32123f0cd6ec351d0c0875aad",
+        "path": "docs/work-units/python/PY-09B.assessment.json",
+        "disposition": "NEEDS_CLARIFICATION",
+        "assessed_baseline": "30d0703b",
+        "trajectory_event": "wave1-terminal-PY-09B-10",
+        "retrieved_locally": true,
+        "trajectory_hash_matches": true,
+        "sha256_of_stripped_text": "0a20f6fbefbaeca389fba1145db4407e044bdb99bb212bde94ac0af44ca8b8e9"
+      },
+      {
+        "biu": "PY-09B",
+        "revision": "d3f54ebe120ab435b483b1cf60120b16ae3d706d",
+        "path": "docs/work-units/python/PY-09B.assessment.json",
+        "disposition": "READY",
+        "assessed_baseline": "de2113dd",
+        "trajectory_event": "wave1-terminal-PY-09B-11",
+        "retrieved_locally": true,
+        "trajectory_hash_matches": true,
+        "sha256_of_stripped_text": "a4ac2cc6a71b0a9db39cd32da1f0567542bf1a63a72b8f3d86313106c52d2bf5"
+      }
+    ],
+    "limits": "Local retained evidence only; no network, live-state verification or external Agent-Ready inspection. Trajectory timestamps describe commit retention time, not assessment execution time."
+  },
+  "disputed": [
+    {
+      "id": "D1",
+      "claim": "Prework/prompt: earlier PY-10 verdicts survive only in trajectory/checker expectations; checker module commentary infers silent coercion is not hypothetical from the retention pattern.",
+      "finding": "Both original non-READY assessment JSON blobs are retrievable locally at the trajectory revisions and their hashes match. Narrow the non-persistence claim to the current file set. No coercion is demonstrated; no failing checker assertion was altered or waived.",
+      "evidence_refs": [
+        "docs/operations/post-wave1-program/prework/POSTW1-AGENTREADY-004-inputs.json",
+        "tools/evidence/check_agent_ready_matrix.py",
+        "git:c32830b931a06562fa12f273d83e55f4b7c1816c:docs/work-units/python/PY-10.assessment.json",
+        "git:1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.assessment.json"
+      ]
+    },
+    {
+      "id": "D2",
+      "claim": "The task describes LRN-008 as a provider timeout becoming a readiness verdict.",
+      "finding": "LRN-008 instead records PY-09 verifier invocation success without a work verdict; it was refused as DURABLE_RESULT_MISSING and replaced independently. It supports separating invocation outcome from work verdict but does not demonstrate timeout-to-readiness coercion.",
+      "evidence_refs": [
+        "docs/evidence/wave1-learning-ledger.md#LRN-008",
+        "tools/evidence/reconcile_wave1.py"
+      ]
+    }
+  ],
+  "provenance": {
+    "generating_actor": "Codex GPT-6 Astra, fresh audit invocation dispatched by local Program Director",
+    "task_id": "POSTW1-AGENTREADY-004",
+    "head_read": "750a6e3463a6ab5431909ba0fb5d2577c44860c3",
+    "branch_read": "main",
+    "input_paths_opened": [
+      "docs/operations/post-wave1-program/prework/POSTW1-AGENTREADY-004-inputs.json",
+      "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+      "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+      "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md",
+      "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+      "docs/decisions/2026-09-21-py10-transport-split.md",
+      "docs/decisions/2026-09-21-sandbox-isolation-standard.md",
+      "docs/decisions/alienintent-software-factory-plan.md",
+      "docs/work-units/eos-normalization/WO-000013.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-18.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-19.assessment.json",
+      "docs/work-units/python/PY-01.assessment.json",
+      "docs/work-units/python/PY-02.assessment.json",
+      "docs/work-units/python/PY-03.assessment.json",
+      "docs/work-units/python/PY-04.assessment.json",
+      "docs/work-units/python/PY-05.assessment.json",
+      "docs/work-units/python/PY-06.assessment.json",
+      "docs/work-units/python/PY-07.assessment.json",
+      "docs/work-units/python/PY-08.assessment.json",
+      "docs/work-units/python/PY-09.assessment.json",
+      "docs/work-units/python/PY-09B.assessment.2026-09-21-needs-clarification.json",
+      "docs/work-units/python/PY-09B.assessment.json",
+      "docs/work-units/python/PY-10.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-01.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-02.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-03.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-04.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-05.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-06.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-07.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-08.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-09.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-10.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-11.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-12.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-13.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-14.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-15.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-16.assessment.json",
+      "docs/work-units/pre-python-gate/assessments/PG-17.assessment.json",
+      "docs/evidence/execution-trajectories/PY-10.jsonl",
+      "docs/evidence/execution-trajectories/PY-09B.jsonl",
+      "docs/evidence/2026-09-21-agent-ready-provider-failover.md",
+      "docs/evidence/wave1-learning-ledger.md",
+      "tools/evidence/reconcile_wave1.py",
+      "tools/evidence/check_agent_ready_matrix.py",
+      "tools/evidence/check_wave1.py",
+      "tools/evidence/test_check_agent_ready_matrix.py",
+      "docs/migration/agent-packages/GOVERNING_AGENT_DIRECTIVE.md",
+      "docs/templates/work-packet.md",
+      "docs/operations/forward-momentum.md",
+      "docs/operations/post-wave1-program/program-state.json",
+      "docs/operations/post-wave1-program/prompts/POSTW1-AGENTREADY-004.md"
+    ],
+    "historical_inputs_opened": [
+      {
+        "revision": "c32830b931a06562fa12f273d83e55f4b7c1816c",
+        "path": "docs/work-units/python/PY-10.assessment.json"
+      },
+      {
+        "revision": "1f16b816cb0d30681eacbb2ea178eb2cf92ddd02",
+        "path": "docs/work-units/python/PY-10.assessment.json"
+      },
+      {
+        "revision": "693fef995f03ab3eca43cb74ad5692cdcd69ffcf",
+        "path": "docs/work-units/python/PY-10.assessment.json"
+      },
+      {
+        "revision": "d35928dfe9bf00e0a4f9a2bb5c0beb63f53aaf8c",
+        "path": "docs/work-units/python/PY-09B.assessment.json"
+      },
+      {
+        "revision": "d01bc388739b50f32123f0cd6ec351d0c0875aad",
+        "path": "docs/work-units/python/PY-09B.assessment.json"
+      },
+      {
+        "revision": "d3f54ebe120ab435b483b1cf60120b16ae3d706d",
+        "path": "docs/work-units/python/PY-09B.assessment.json"
+      }
+    ],
+    "prework_head": "c23aa608d36b6350483fb98066beff60ab59ec38",
+    "baseline_note": "Prework HEAD differs from current HEAD; the supplied prework remains the authorized implementation-absence input. Assessment inventory and historical retention claims were checked locally at the read HEAD.",
+    "preexisting_changes": "Program-state RUNNING entry, matching task prompt, matrix checker and its tests were present before audit edits; inspected as task-dispatch/acceptance inputs and left unchanged.",
+    "output_disposition": "Two deliverables left uncommitted in the existing worktree as explicitly required. No temporary branch/worktree created; no commit, push, network or Phase 5 action.",
+    "memory_basis": "No memory-derived fact used as audit evidence."
+  }
+}
