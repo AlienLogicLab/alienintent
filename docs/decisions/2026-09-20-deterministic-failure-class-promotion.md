@@ -226,6 +226,19 @@ extend SF-REQ-024; no telemetry subsystem is introduced here.
 
 Missing telemetry is **UNKNOWN**, never zero. No telemetry subsystem is built during Wave 1 (SWF-18).
 
+**Attribution caveat for Wave 1 data.** Several of these metrics presuppose that a
+finding can be attributed to REVIEW or to VERIFY. Wave 1's Node bootstrap cannot
+make that attribution: it combines mechanical verification and qualitative review
+in a single VERIFIER invocation, so a Wave 1 rejection count means *combined
+verifier rejections*, not VERIFY failures and not REVIEW discoveries. Any dataset
+derived from Wave 1 execution must say so rather than presenting the figure as
+either. Attributable measurement of `review_findings_promoted_to_verify`,
+`verifier_findings_avoided_after_promotion` and the recurrence metrics requires the
+distinction to be observable in the record — through a separately dispatched REVIEW
+lane or per-finding classification within the combined invocation. Neither exists
+today, and this decision does not create either. Until one does, those metrics are
+**UNKNOWN** for Wave 1 rather than derivable from rejection counts.
+
 ## Non-goals
 
 Not every REVIEW judgment becomes deterministic. No automatic policy promotion without authority. Independent review is not replaced. No new lifecycle state. Wave 1 execution is not blocked.
