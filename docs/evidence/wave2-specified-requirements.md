@@ -12,9 +12,11 @@ SF-REQ-056 is **AUTHORED_IN_THIS_PHASE** and requires **Founder ratification**. 
 
 The requirement inventory searches all three definition forms. At the pinned input baseline: 56 referenced IDs, 53 defined, including retired SF-REQ-054. The new 056 draft does not rewrite that historical count. The register need is covered by SF-REQ-011 rather than a second canonical authority store.
 
-Agent-Ready process hardening is selected under SF-REQ-015. Its missing implementation/schema/CLI and serialization owners remain POSTW1-DECIDE-004A decisions. General split/replan is deferred pending the SF-REQ-013 amendment. SWF-32 is deferred because its implementation Wave is explicitly unassigned.
+Agent-Ready process hardening is selected under SF-REQ-015. Its missing implementation/schema/CLI and serialization owners remain POSTW1-DECIDE-004A decisions. General split/replan is now included under the binding SF-REQ-013 amendment of 2026-09-22; the separately recorded original SPLIT-REPLAN evaluation below is historical and superseded by revised SF-REQ-013. SWF-32 is deferred because its implementation Wave is explicitly unassigned.
 
 All nine KEEP_UNTIL_REPLACED mechanisms are evaluated below, together with the other eight Phase 6 mechanisms. No bootstrap mechanism is retired or claimed currently replaced.
+
+Session A revision applies only to SF-REQ-011/013 and their rendered entries. Other candidate evaluations and Phase 8 validation/disposition below retain their recorded baseline; they do not override the 2026-09-22 amendments. Current revision provenance and local checks are in the [revision note](wave2-revisions/2026-09-22-respecify-011-013.md).
 
 ## Candidate inventory
 
@@ -22,7 +24,7 @@ All nine KEEP_UNTIL_REPLACED mechanisms are evaluated below, together with the o
 |---|---|---|
 | SF-REQ-011 | Yes | Requirements IR: Select: the fragmented definition corpus makes stable identity and authoritative provenance necessary for CAPTURE/SPECIFY; the original plan already assigns the IR to this scope. |
 | SF-REQ-012 | Yes | Requirements ambiguity detection: Select: without explicit ambiguity/authority questions, upstream lanes could pass unresolved product meaning into design or implementation. |
-| SF-REQ-013 | Yes | Requirements to BIU compilation: initial decomposition: Select only current initial compilation: it is the existing PLAN/TASKS bridge. Excluding the unapproved split/replan extension preserves its current authority. |
+| SF-REQ-013 | Yes | Requirements to BIU compilation and conserved split/replan: Select initial compilation and the authority-bearing split/replan transaction under the binding SF-REQ-013 amendment of 2026-09-22; no new requirement, Priority or Wave. |
 | SF-REQ-014 | Yes | Mechanical verification obligations before implementation: Select: upstream compilation needs feasible proof obligations before implementation; the Wave 1 impossible permission premise makes feasibility checking material. |
 | SF-REQ-015 | Yes | BIU lint/readiness and Agent-Ready process hardening: Select existing lint/readiness process: four-outcome handling and immutable reassessment make READY operational. Defer schema ownership rather than invent it. |
 | SF-REQ-016 | Yes | Definition / Observation / Verdict separation: Select: IR, evidence and readiness need explicit separation so imported claims cannot become authority or verdicts. |
@@ -68,7 +70,7 @@ Definition status: **DEFINED**. Founder ratification required: **false**.
 
 ### Intent
 
-Represent authorized requirements independently of their source tool, retaining stable identity and source authority.
+Represent authorized requirements independently of their source tool, retaining stable identity and source authority. Requirements / Planning owns intake and normalization through RequirementSource; the core consumes only the provider-neutral internal requirements model.
 
 ### Value
 
@@ -78,6 +80,10 @@ Make the actual requirement set discoverable and traceable before compilation; p
 
 - Stable requirement IDs, source revisions and provenance, status, dependencies and BIU satisfaction links.
 - A unified inventory view includes all three observed definition forms, distinguishes references from definitions and preserves retirement/supersession. Existing source decisions remain authority until an authorized adoption changes that.
+- RequirementSource obtains requirement/proposal information; WorkManagement separately represents and projects work state. One vendor may fill both roles through separate adapters.
+- Supported Requirement Source kinds: GitHub Issues/Projects, Jira, Linear, Azure DevOps, GitLab, local files, structured product documents, AlienIntent-native proposal intake (SF-REQ-055), and imported prototypes/artifacts (SF-REQ-041–044). This is an extensibility/support contract, not a new Wave assignment or implementation of every intake product.
+- Adapters translate Source Records plus provenance into the internal requirements model. Every Requirement retains external source, external identity, external revision, source link, ingestion timestamp, authority status and synchronization/projection semantics.
+- External vocabulary is never domain identity: Jira Epic is not intrinsically a Requirement; GitHub Issue is not intrinsically a BIU; Linear Project is not intrinsically a Wave. Replace a source or Work Management Provider without rewriting Requirements / Planning.
 
 ### Non goals
 
@@ -91,10 +97,12 @@ Make the actual requirement set discoverable and traceable before compilation; p
 
 ### Acceptance criteria
 
-- **SF-REQ-011-AC-01**: Given the pinned pre-phase source corpus, inventory all 56 referenced IDs, identify 53 defined IDs across the three supplied forms, count SF-REQ-050 once, preserve SF-REQ-054 as retired and classify 048/052/056 as undefined at that baseline. A heading-only extractor must fail this fixture. The separately authored 056 revision must not retroactively alter that historical count.
-- **SF-REQ-011-AC-02**: Given the same authorized requirement supplied through two source formats, retain the same stable identity, authority revision, dependency meaning and satisfaction links; format changes must not create a second requirement.
-- **SF-REQ-011-AC-03**: Given conflicting definitions or a reference with no definition, return an explicit conflict/unresolved record with both sources; no effective approved definition or compilable authorization may be fabricated.
-- **SF-REQ-011-AC-04**: Given an updated authorized definition, preserve the previous revision and identify affected downstream links as needing revalidation; a retired ID cannot be silently reused.
+- **SF-REQ-011-AC-01**: Given the pinned pre-phase source corpus, inventory all 56 referenced IDs, identify 53 defined IDs across the three supplied forms, count SF-REQ-050 once, preserve SF-REQ-054 as retired and classify 048/052/056 as undefined at that baseline. A heading-only extractor must fail this fixture. The separately authored 056 revision must not retroactively alter that historical count. Verification: Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.
+- **SF-REQ-011-AC-02**: Given the same authorized requirement supplied through two source formats, retain the same stable identity, authority revision, dependency meaning and satisfaction links; format changes must not create a second requirement. Verification: Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.
+- **SF-REQ-011-AC-03**: Given conflicting definitions or a reference with no definition, return an explicit conflict/unresolved record with both sources; no effective approved definition or compilable authorization may be fabricated. Verification: Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.
+- **SF-REQ-011-AC-04**: Given an updated authorized definition, preserve the previous revision and identify affected downstream links as needing revalidation; a retired ID cannot be silently reused. Verification: Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.
+- **SF-REQ-011-AC-05**: Through RequirementSource, translate representative Source Records for every named source kind to provider-neutral inputs while retaining all seven Requirement Provenance fields. Missing or ambiguous provenance or unsupported versions yields a typed refusal for affected input; never fabricate authority from vendor type. Same-vendor RequirementSource and WorkManagement adapters remain distinct. Verification: Versioned adapter conformance fixtures for all listed kinds, asserting exact retained provenance and typed failures. Fixtures prove the boundary contract, not live vendor integrations; delete each mandatory provenance field independently as negative controls.
+- **SF-REQ-011-AC-06**: Replace one Requirement Source adapter and independently one Work Management Provider adapter across two Projects without changing Requirements / Planning domain code or requirement identity/meaning. Preserve source histories, dependencies and satisfaction links; do not turn Jira Epics, GitHub Issues or Linear Projects into Requirement, BIU or Wave identities by type alone. Verification: Two adapter implementations against the same conformance cases, including separate source/work roles for one vendor, per-project namespace isolation and explicit configured authority bindings; retain source and projection receipts separately.
 
 ### Authority gaps
 
@@ -112,6 +120,7 @@ Make the actual requirement set discoverable and traceable before compilation; p
 ### Observability evidence
 
 - Pinned source manifest, ID-to-definition ledger, conflict/undefined records, revision history and requirement-to-BIU links.
+- Per-Requirement seven-field provenance, adapter/contract versions, source-role versus work-state projection receipts and substitution/conformance evidence; no live integration claim from fixtures.
 
 ### Failure modes
 
@@ -120,7 +129,11 @@ Make the actual requirement set discoverable and traceable before compilation; p
 - Reference promoted to definition
 - Stale downstream satisfaction claim
 
-Sources: [SF-REQ-011; Initial implementation waves / Wave 2](../../docs/decisions/alienintent-software-factory-plan.md); [requirement_register](../../docs/operations/post-wave1-program/prework/POSTW1-SPECIFY-008-inputs.json).
+### Revision 2026-09-22
+
+`revision_2026_09_22`: see JSON `/candidates/0/revision_2026_09_22` and [revision note](wave2-revisions/2026-09-22-respecify-011-013.md) for authority, changed pointers and preserved holds.
+
+Sources: [SF-REQ-011; Initial implementation waves / Wave 2](../decisions/alienintent-software-factory-plan.md); [requirement_register](../operations/post-wave1-program/prework/POSTW1-SPECIFY-008-inputs.json); [2026-09-22 A2/A3 and amendment (b)](../architecture/alienintent-architecture-authority-2026-09-19.md).
 
 ## SF-REQ-012 — Requirements ambiguity detection
 
@@ -183,13 +196,13 @@ Keep unresolved intent visible and localize holds to the affected work.
 
 Sources: [SF-REQ-012; SF-REQ-006; SF-REQ-035](../../docs/decisions/alienintent-software-factory-plan.md); [Design authority boundary](../../docs/decisions/2026-09-20-design-contract-and-design-verification.md).
 
-## SF-REQ-013 — Requirements to BIU compilation: initial decomposition
+## SF-REQ-013 — Requirements to BIU compilation and conserved split/replan
 
 Definition status: **DEFINED**. Founder ratification required: **false**.
 
 ### Intent
 
-Lower governed requirements into bounded BIU contracts with explicit satisfaction links and a dependency DAG.
+Lower governed requirements into bounded BIU contracts with explicit satisfaction links and a dependency DAG. The BIU Compiler in Requirements / Planning derives the initial decomposition itself and owns authorized Split Transactions; Agent Ready supplies judgment and recommended semantic boundaries, not mutation.
 
 ### Value
 
@@ -197,12 +210,16 @@ Make authorized requirements the normal input to execution without asking worker
 
 ### Scope
 
-- Initial compilation from specified requirements and approved, verified design into proposed bounded BIUs.
-- Trace every input obligation to allocated BIU scope, carry fixed decisions, boundaries, capabilities, budgets, verification and evidence duties, and validate the dependency graph.
+- Initial compilation from specified requirements and approved, verified design into proposed bounded BIUs. The compiler derives this decomposition; a hand-authored external obligation mapping is not a mandatory input.
+- Trace every input obligation to BIU scope through obligation mapping, carry fixed decisions, boundaries, capabilities, budgets, verification and evidence duties, and validate the dependency graph.
+- Freeze the original requirements, acceptance criteria, verification obligations and evidence obligations. Map 100% to resulting units or a retained Integration Parent; no loss, invention or weakening of authorized intent or proof.
+- Deterministically rewrite dependency identities without judgment redirection, cycles or weakened satisfaction predicates; record original/result lineage and preserve original evidence.
+- Invalidate applicability of stale Readiness Assessments without rewriting history, materialize resulting candidate BIUs, and submit each result (including the retained Integration Parent) to SF-REQ-015 lint and fresh Agent Ready assessment.
+- Use a stated BIU identity grammar with collision-safe reservation, never sort-order identity. Reconcile the Phase 5 candidate design against the amendment and SWF-33; candidate mechanisms are not automatically approved.
 
 ### Non goals
 
-- Revision of an existing decomposition or general split/replan transaction; that extension is pending.
+- Unapproved product intent changes, silent reallocation or weakened proof; splitting active invocations in place, reopening DONE work or bypassing ordinary readiness, release and closure gates.
 - Automatic execution, new priority, budget increases, new authority or implementation choices that belong in design.
 
 ### Dependencies
@@ -216,15 +233,18 @@ Make authorized requirements the normal input to execution without asking worker
 
 ### Acceptance criteria
 
-- **SF-REQ-013-AC-01**: For a specified fixture with named requirements and an approved design, each emitted BIU links its exact requirement and design revisions and carries every SF-REQ-010 contract field; an omitted boundary or evidence obligation blocks output admission.
-- **SF-REQ-013-AC-02**: A coverage report maps each input acceptance/verification obligation to one or more explicit BIU extents. An unmapped obligation blocks compilation acceptance; mapping alone never claims satisfaction.
-- **SF-REQ-013-AC-03**: Fixtures with a cyclic dependency, missing endpoint or dependency whose satisfaction predicate is unspecified are refused with the offending edge identified; an acyclic fully resolved graph is admitted for assessment.
-- **SF-REQ-013-AC-04**: Missing design verification, unresolved product authority or conflicting fixed decisions produces a hold and no READY or IMPLEMENT transition.
-- **SF-REQ-013-AC-05**: A request to rewrite an existing approved decomposition is identified as outside this initial-compilation scope and retained for the pending split/replan decision; it must not mutate existing BIUs.
+- **SF-REQ-013-AC-01**: For a specified fixture with named requirements and an approved design, each emitted BIU links its exact requirement and design revisions and carries every SF-REQ-010 contract field; an omitted boundary or evidence obligation blocks output admission. Verification: Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.
+- **SF-REQ-013-AC-02**: A coverage report maps each input requirement, acceptance criterion, verification obligation and evidence obligation to one or more explicit BIU extents through obligation mapping. Unmapped obligations block compilation acceptance; mapping alone never claims satisfaction. Verification: Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.
+- **SF-REQ-013-AC-03**: Fixtures with a cyclic dependency, missing endpoint or dependency whose satisfaction predicate is unspecified are refused with the offending edge identified; an acyclic fully resolved graph is admitted for assessment. Verification: Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.
+- **SF-REQ-013-AC-04**: Missing design verification, unresolved product authority or conflicting fixed decisions produces a hold and no READY or IMPLEMENT transition. Verification: Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.
+- **SF-REQ-013-AC-05**: Given an authorized split of a pinned existing decomposition, freeze all original obligations and conserve 100% in resulting units or a retained Integration Parent. Reject loss, invented intent, weakened proof, budget/capability expansion, stale authority and partial mapping before applying a mutation. Preserve existing identities/history and integration proof. Verification: Replay the SWF-33 PY-10 / PY-09B precedent as a historical contract fixture, not a live mutation; compare exact original clauses, resulting extents and retained integration duties. Proven-red omissions, weaker clauses and invented obligations must refuse admission.
+- **SF-REQ-013-AC-06**: Initial compilation derives bounded units and obligation mapping from exact authorized requirements, verified design and proof inputs without a mandatory external hand-authored mapping. Every SF-REQ-010 field and stable identity is present; changed inputs produce an attributable distinct revision. Verification: Composed positive compilation fixture without external mapping; reject validator-only output, missing obligations or invented scope. Permute input enumeration and assert semantic mapping and identities do not derive from sorting.
+- **SF-REQ-013-AC-07**: Split dependency rewrites are deterministic identity rewrites: preserve authoritative predicates and downstream integration boundary; reject cycles, missing endpoints, weakened predicates and judgment-based redirection. New identities satisfy the stated grammar and explicit reservations, with lineage stored independently of suffixes or sort order. Verification: Before/after graph and identity fixtures, including PY-09B compatibility, collisions, exhaustion, stale reservations, reordered inputs and changed predicates; each invalid case refuses mutation.
+- **SF-REQ-013-AC-08**: A Split Transaction records lineage and invalidates old assessment applicability while retaining raw history, materializes every resulting candidate, then submits each child and retained Integration Parent through SF-REQ-015 lint and supported Agent Ready assessment. Each result is READY / CLARIFY / SPLIT / HOLD; no result itself releases execution. Verification: Inspect per-result submission and assessment links; missing one, reusing stale READY or trusting a shape-compatible surrogate fails. Retry/recovery preserves operation identity and immutable historical assessments; provider failure is an execution failure, never a disposition.
 
 ### Authority gaps
 
-- SF-REQ-013 amendment under POSTW1-DECIDE-005A / POSTW1-DECIDE-007A is not approved. Initial compilation is specified now; general split/replan is excluded.
+- SPLIT-G1 and R1-GAP-013-ALLOCATION are settled by the SF-REQ-013 amendment 2026-09-22. Existing product authority, exact authorized replan scope, independent design verification, dependency-edge authority and normal release/budget/custody gates still apply; ownership does not grant blanket mutation or release authority.
 
 ### Security constraints
 
@@ -234,10 +254,13 @@ Make authorized requirements the normal input to execution without asking worker
 
 - Stable source-to-output traceability across repeated compilation; changed source/design requires a distinct identifiable candidate revision.
 - Dependency satisfaction retains authoritative lifecycle predicates; projections cannot redefine them.
+- Identity grammar and reservation are explicit design constraints, never derived from sorted position; obligation mapping is compile-time, Allocation is execution-time only.
+- A replan requires exact scope/baseline authority, conserved budget and a safe quiescent boundary; candidate design approval and fresh assessment remain prerequisites to release.
 
 ### Observability evidence
 
 - Pinned input and design revisions, generated contract manifest, coverage report, graph validation and admission refusals.
+- Frozen obligation inventory, forward/reverse obligation mapping, lineage, pre/post graphs and predicates, identity reservations, operation payload and authority, stale-assessment applicability records, materialized candidate digests and per-result fresh assessment submissions/outcomes.
 
 ### Failure modes
 
@@ -246,7 +269,11 @@ Make authorized requirements the normal input to execution without asking worker
 - Cycle or unresolved dependency
 - Unapproved replan disguised as compilation
 
-Sources: [SF-REQ-010; SF-REQ-013](../../docs/decisions/alienintent-software-factory-plan.md); [Relationship to BIU and Agent-Ready](../../docs/decisions/2026-09-20-design-contract-and-design-verification.md); [ownership_audit](../../docs/evidence/wave1-biu-split-replan-design.json).
+### Revision 2026-09-22
+
+`revision_2026_09_22`: see JSON `/candidates/2/revision_2026_09_22` and [revision note](wave2-revisions/2026-09-22-respecify-011-013.md) for authority, changed pointers and preserved holds.
+
+Sources: [SF-REQ-010; SF-REQ-013](../decisions/alienintent-software-factory-plan.md); [Relationship to BIU and Agent-Ready](../decisions/2026-09-20-design-contract-and-design-verification.md); [candidate design: sections, identity_grammar, operation_protocol; ownership_audit/SPLIT-G1 superseded only by amendment 2026-09-22](../evidence/wave1-biu-split-replan-design.json); [SWF-33; retained Integration Parent and unchanged proof precedent; bootstrap-assessor history](../decisions/2026-09-21-py10-transport-split.md); [2026-09-22 A2/A3 and amendment (b)](../architecture/alienintent-architecture-authority-2026-09-19.md).
 
 ## SF-REQ-014 — Mechanical verification obligations before implementation
 

@@ -575,7 +575,7 @@
     },
     {
       "id": "U7",
-      "title": "Compiler validation and explicit allocation hold",
+      "title": "Compiler validation and conserved obligation mapping",
       "requirement_ids": [
         "SF-REQ-013"
       ],
@@ -628,16 +628,34 @@
       "bootstrap_replacement_for": [],
       "track": "upstream",
       "node_kind": "capability",
-      "scope": "",
-      "proceeds_regardless": "Validation and refusal mechanics without decomposition algorithm or BIU output.",
-      "completion_predicate": "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+      "scope": "Validation of compiler-derived initial candidates and conserved split/replan candidates: contract completeness, obligation mapping, graph predicates, identity and authority bounds.",
+      "proceeds_regardless": "Independent validation/refusal mechanics remain testable; successful compilation and mutation additionally require the exact verified design and applicable authority.",
+      "completion_predicate": "Reject incomplete contract, uncovered requirement/acceptance/verification/evidence obligation, cyclic/missing/predicate-free edge, stale design or unauthorized/nonconserving replan. Validate deterministic identity rewrites, preserved predicates, lineage and immutable stale-assessment history. A hand-authored mapping fixture proves validation only; U8 must derive initial decomposition.",
       "inherited_authority_gate_refs": [],
       "completion_status": "PROCEEDS_REGARDLESS",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_22": {
+        "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
+        "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+        "authority": [
+          "factory plan SF-REQ-013 amendment 2026-09-22",
+          "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+        ],
+        "changed": [
+          "/nodes/9/title",
+          "/nodes/9/scope",
+          "/nodes/9/proceeds_regardless",
+          "/nodes/9/completion_predicate"
+        ],
+        "preserved_holds": [
+          "Exact authority, verified design and normal admission gates"
+        ]
+      }
     },
     {
       "id": "U8",
-      "title": "Conditional initial compilation",
+      "title": "Initial compilation and conserved split/replan",
       "requirement_ids": [
         "SF-REQ-013"
       ],
@@ -696,23 +714,40 @@
         "R9"
       ],
       "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
         "R2-GAP-051-EDGE-AUTHORITY"
       ],
-      "direct_authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION"
-      ],
+      "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "migration": null,
       "bootstrap_replacement_for": [],
       "track": "upstream",
       "node_kind": "authority_blocked_prerequisite",
-      "scope": "Planning ownership only. Product authority must resolve derivation versus explicitly owned external producer/interface; if external producer is chosen, revise this DAG before implementation.",
-      "proceeds_regardless": "U7 validation/refusal continues; no successful initial compilation or Wave 2A completion claim.",
-      "completion_predicate": "After SPECIFY resolves allocation mechanism and identity constraints, derive initial candidate from exact requirements/design/proof under that reviewed design; cover every AC with explicit extents and complete BiuContract fields. No supplied-allocation validator may masquerade as compiler. Existing decomposition remains immutable.",
+      "scope": "SF-REQ-013 owns compiler-derived initial decomposition and authorized conserved Split Transactions. The amendment settles derivation and ownership; existing independent design and edge-authority gates remain.",
+      "proceeds_regardless": "U7 validation/refusal continues while unresolved design/edge authority holds affected admission; no helper-only Wave 2A completion claim.",
+      "completion_predicate": "Derive initial candidates from exact requirements/design/proof without a mandatory external hand-authored mapping; cover all four obligation categories and complete BiuContract fields. Prove authorized split/replan with frozen obligations, 100% mapping to resulting units/Integration Parent, deterministic graph identity rewrites without weaker predicates or cycles, grammar-based identities independent of sort order, lineage, stale-assessment invalidation and materialization/submission of each result through SF-REQ-015. Preserve immutable original history. Agent Ready judgment never performs mutation or authorizes release.",
       "inherited_authority_gate_refs": [],
       "completion_status": "GAP_BLOCKED",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_22": {
+        "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
+        "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+        "authority": [
+          "factory plan SF-REQ-013 amendment 2026-09-22",
+          "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+        ],
+        "changed": [
+          "/nodes/10/title",
+          "/nodes/10/authority_gap_refs",
+          "/nodes/10/direct_authority_gap_refs",
+          "/nodes/10/scope",
+          "/nodes/10/proceeds_regardless",
+          "/nodes/10/completion_predicate"
+        ],
+        "preserved_holds": [
+          "R2-GAP-051-EDGE-AUTHORITY"
+        ]
+      }
     },
     {
       "id": "U9",
@@ -929,7 +964,6 @@
         "R9"
       ],
       "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
         "R2-GAP-051-EDGE-AUTHORITY"
       ],
       "direct_authority_gap_refs": [],
@@ -940,10 +974,26 @@
       "node_kind": "capability",
       "scope": "",
       "proceeds_regardless": "Partial integration of U1-U5/U7/U9 is useful but cannot satisfy this capstone.",
-      "completion_predicate": "Integrate already-proven inventory -> ambiguity -> premise/proof -> independent design applicability -> initial compilation -> lint/retained assessment consumption. Mutate a source/decision/design revision and prove downstream hold without lifecycle/Project mutation. No output asserts release. Allocation hold blocks Wave 2A completion even if every helper passes.",
+      "completion_predicate": "Integrate already-proven inventory -> ambiguity -> premise/proof -> independent design applicability -> initial compilation -> lint/retained assessment consumption. Mutate a source/decision/design revision and prove downstream hold without lifecycle/Project mutation. No output asserts release. Integrate U8 conserved split/replan with per-result lint/assessment submission and obligation/lineage evidence; helper-only validation cannot satisfy compiler or transaction proof. Existing design-edge and readiness integration gates still apply; compiler derivation is settled.",
       "inherited_authority_gate_refs": [],
       "completion_status": "GAP_BLOCKED",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_22": {
+        "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
+        "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+        "authority": [
+          "factory plan SF-REQ-013 amendment 2026-09-22",
+          "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+        ],
+        "changed": [
+          "/nodes/13/authority_gap_refs",
+          "/nodes/13/completion_predicate"
+        ],
+        "preserved_holds": [
+          "R2-GAP-051-EDGE-AUTHORITY"
+        ]
+      }
     },
     {
       "id": "C1",
@@ -2186,7 +2236,6 @@
         "C"
       ],
       "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
         "R1-GAP-039-ORCHESTRATION",
         "R1-GAP-039-REAL-OUTCOME",
         "R2-GAP-051-EDGE-AUTHORITY"
@@ -2218,7 +2267,28 @@
         "No stale denial wording without explicit superseding record",
         "Zero worker launches until preceding five pass"
       ],
-      "authority_limit": "SWF-21 nine eligibility conditions and six preconditions are retained proof inputs, not renewed Wave 2 release authority. Pending requirement amendments are not adopted."
+      "authority_limit": "SWF-21 nine eligibility conditions and six preconditions are retained proof inputs, not renewed Wave 2 release authority. Pending requirement amendments are not adopted.",
+      "revision_2026_09_22": {
+        "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
+        "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+        "authority": [
+          "factory plan SF-REQ-013 amendment 2026-09-22",
+          "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+        ],
+        "changed": [
+          "/nodes/30/authority_gap_refs"
+        ],
+        "preserved_holds": [
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "R2-GAP-051-EDGE-AUTHORITY",
+          "POSTW1-DECIDE-006A",
+          "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
+          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
+          "POSTW1-DECIDE-004A"
+        ]
+      }
     },
     {
       "id": "B4",
@@ -2423,7 +2493,6 @@
         "C"
       ],
       "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
         "R1-GAP-039-ORCHESTRATION",
         "R1-GAP-039-REAL-OUTCOME",
         "R1-GAP-MONITOR-HOST",
@@ -2452,7 +2521,33 @@
         "WINDOWS_NOTIFICATION_DISPOSITION"
       ],
       "completion_status": "GAP_BLOCKED",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_22": {
+        "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
+        "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+        "authority": [
+          "factory plan SF-REQ-013 amendment 2026-09-22",
+          "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+        ],
+        "changed": [
+          "/nodes/33/authority_gap_refs"
+        ],
+        "preserved_holds": [
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "R1-GAP-MONITOR-HOST",
+          "R2-GAP-051-EDGE-AUTHORITY",
+          "POSTW1-DECIDE-006A",
+          "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
+          "ATTENTION_ACTIVATION_AUTHORITY",
+          "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
+          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
+          "POSTW1-DECIDE-004A",
+          "POSTW1-DECIDE-008A",
+          "WINDOWS_NOTIFICATION_DISPOSITION"
+        ]
+      }
     },
     {
       "id": "B7",
@@ -3088,7 +3183,6 @@
         "C"
       ],
       "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
         "R1-GAP-039-ORCHESTRATION",
         "R1-GAP-039-REAL-OUTCOME",
         "R2-GAP-051-EDGE-AUTHORITY"
@@ -3124,7 +3218,28 @@
         "POSTW1-DECIDE-006A"
       ],
       "completion_status": "GAP_BLOCKED",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_22": {
+        "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
+        "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+        "authority": [
+          "factory plan SF-REQ-013 amendment 2026-09-22",
+          "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+        ],
+        "changed": [
+          "/nodes/41/authority_gap_refs"
+        ],
+        "preserved_holds": [
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "R2-GAP-051-EDGE-AUTHORITY",
+          "POSTW1-DECIDE-006A",
+          "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
+          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
+          "POSTW1-DECIDE-004A"
+        ]
+      }
     },
     {
       "id": "R7",
@@ -3188,7 +3303,6 @@
         "C"
       ],
       "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
         "R1-GAP-039-ORCHESTRATION",
         "R1-GAP-039-REAL-OUTCOME",
         "R1-GAP-MONITOR-HOST",
@@ -3231,7 +3345,35 @@
         "WINDOWS_NOTIFICATION_DISPOSITION"
       ],
       "completion_status": "GAP_BLOCKED",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_22": {
+        "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
+        "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+        "authority": [
+          "factory plan SF-REQ-013 amendment 2026-09-22",
+          "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+        ],
+        "changed": [
+          "/nodes/42/authority_gap_refs"
+        ],
+        "preserved_holds": [
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "R1-GAP-MONITOR-HOST",
+          "R2-GAP-051-EDGE-AUTHORITY",
+          "POSTW1-DECIDE-006A",
+          "ATTENTION_ACTIVATION_AUTHORITY",
+          "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
+          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
+          "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
+          "POSTW1-DECIDE-004A",
+          "POSTW1-DECIDE-008A",
+          "RESIDENT_TENURE_DECISION",
+          "SWF-21_SCOPE_DISPOSITION",
+          "WINDOWS_NOTIFICATION_DISPOSITION"
+        ]
+      }
     },
     {
       "id": "R8",

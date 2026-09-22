@@ -38,11 +38,15 @@
    "priority_or_wave_invented": false,
    "selection_reason": "Select: the fragmented definition corpus makes stable identity and authoritative provenance necessary for CAPTURE/SPECIFY; the original plan already assigns the IR to this scope.",
    "evaluated_aliases": [],
-   "intent": "Represent authorized requirements independently of their source tool, retaining stable identity and source authority.",
+   "intent": "Represent authorized requirements independently of their source tool, retaining stable identity and source authority. Requirements / Planning owns intake and normalization through RequirementSource; the core consumes only the provider-neutral internal requirements model.",
    "value": "Make the actual requirement set discoverable and traceable before compilation; prevent heading-only omissions and a second conflicting authority store.",
    "scope": [
     "Stable requirement IDs, source revisions and provenance, status, dependencies and BIU satisfaction links.",
-    "A unified inventory view includes all three observed definition forms, distinguishes references from definitions and preserves retirement/supersession. Existing source decisions remain authority until an authorized adoption changes that."
+    "A unified inventory view includes all three observed definition forms, distinguishes references from definitions and preserves retirement/supersession. Existing source decisions remain authority until an authorized adoption changes that.",
+    "RequirementSource obtains requirement/proposal information; WorkManagement separately represents and projects work state. One vendor may fill both roles through separate adapters.",
+    "Supported Requirement Source kinds: GitHub Issues/Projects, Jira, Linear, Azure DevOps, GitLab, local files, structured product documents, AlienIntent-native proposal intake (SF-REQ-055), and imported prototypes/artifacts (SF-REQ-041–044). This is an extensibility/support contract, not a new Wave assignment or implementation of every intake product.",
+    "Adapters translate Source Records plus provenance into the internal requirements model. Every Requirement retains external source, external identity, external revision, source link, ingestion timestamp, authority status and synchronization/projection semantics.",
+    "External vocabulary is never domain identity: Jira Epic is not intrinsically a Requirement; GitHub Issue is not intrinsically a BIU; Linear Project is not intrinsically a Wave. Replace a source or Work Management Provider without rewriting Requirements / Planning."
    ],
    "non_goals": [
     "New product intent, automatic ratification, new Priority/Wave, importing proposals as approved requirements.",
@@ -72,6 +76,16 @@
      "id": "SF-REQ-011-AC-04",
      "criterion": "Given an updated authorized definition, preserve the previous revision and identify affected downstream links as needing revalidation; a retired ID cannot be silently reused.",
      "verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately."
+    },
+    {
+     "id": "SF-REQ-011-AC-05",
+     "criterion": "Through RequirementSource, translate representative Source Records for every named source kind to provider-neutral inputs while retaining all seven Requirement Provenance fields. Missing or ambiguous provenance or unsupported versions yields a typed refusal for affected input; never fabricate authority from vendor type. Same-vendor RequirementSource and WorkManagement adapters remain distinct.",
+     "verification": "Versioned adapter conformance fixtures for all listed kinds, asserting exact retained provenance and typed failures. Fixtures prove the boundary contract, not live vendor integrations; delete each mandatory provenance field independently as negative controls."
+    },
+    {
+     "id": "SF-REQ-011-AC-06",
+     "criterion": "Replace one Requirement Source adapter and independently one Work Management Provider adapter across two Projects without changing Requirements / Planning domain code or requirement identity/meaning. Preserve source histories, dependencies and satisfaction links; do not turn Jira Epics, GitHub Issues or Linear Projects into Requirement, BIU or Wave identities by type alone.",
+     "verification": "Two adapter implementations against the same conformance cases, including separate source/work roles for one vendor, per-project namespace isolation and explicit configured authority bindings; retain source and projection receipts separately."
     }
    ],
    "authority_gaps": [
@@ -85,7 +99,8 @@
     "No source rewriting or online intake is performed by this specification."
    ],
    "observability_evidence": [
-    "Pinned source manifest, ID-to-definition ledger, conflict/undefined records, revision history and requirement-to-BIU links."
+    "Pinned source manifest, ID-to-definition ledger, conflict/undefined records, revision history and requirement-to-BIU links.",
+    "Per-Requirement seven-field provenance, adapter/contract versions, source-role versus work-state projection receipts and substitution/conformance evidence; no live integration claim from fixtures."
    ],
    "failure_modes": [
     "Heading-only undercount",
@@ -101,9 +116,32 @@
     {
      "path": "docs/operations/post-wave1-program/prework/POSTW1-SPECIFY-008-inputs.json",
      "locator": "requirement_register"
+    },
+    {
+     "path": "docs/architecture/alienintent-architecture-authority-2026-09-19.md",
+     "locator": "2026-09-22 A2/A3 and amendment (b)"
     }
    ],
-   "design_readiness": "SPECIFIED; authority conditions below remain explicit gates, not decisions delegated to designers."
+   "design_readiness": "SPECIFIED; authority conditions below remain explicit gates, not decisions delegated to designers.",
+   "revision_2026_09_22": {
+    "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
+    "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+    "authority": [
+     "factory plan SF-REQ-011 amendment 2026-09-22",
+     "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
+     "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+    ],
+    "changed": [
+     "/candidates/0/intent",
+     "/candidates/0/scope",
+     "/candidates/0/acceptance_criteria",
+     "/candidates/0/observability_evidence",
+     "/candidates/0/provenance"
+    ],
+    "preserved_holds": [
+     "No new register owner is invented. This is an IR/inventory capability under existing SF-REQ-011, not migration of canonical authority. Conflicting source authority blocks only affected compilation."
+    ]
+   }
   },
   {
    "requirement_id": "SF-REQ-012",
@@ -185,22 +223,26 @@
   },
   {
    "requirement_id": "SF-REQ-013",
-   "title": "Requirements to BIU compilation: initial decomposition",
+   "title": "Requirements to BIU compilation and conserved split/replan",
    "selected": true,
    "rejection_reason": null,
    "definition_status": "DEFINED",
    "founder_ratification_required": false,
    "priority_or_wave_invented": false,
-   "selection_reason": "Select only current initial compilation: it is the existing PLAN/TASKS bridge. Excluding the unapproved split/replan extension preserves its current authority.",
+   "selection_reason": "Select initial compilation and the authority-bearing split/replan transaction under the binding SF-REQ-013 amendment of 2026-09-22; no new requirement, Priority or Wave.",
    "evaluated_aliases": [],
-   "intent": "Lower governed requirements into bounded BIU contracts with explicit satisfaction links and a dependency DAG.",
+   "intent": "Lower governed requirements into bounded BIU contracts with explicit satisfaction links and a dependency DAG. The BIU Compiler in Requirements / Planning derives the initial decomposition itself and owns authorized Split Transactions; Agent Ready supplies judgment and recommended semantic boundaries, not mutation.",
    "value": "Make authorized requirements the normal input to execution without asking workers to invent decomposition intent.",
    "scope": [
-    "Initial compilation from specified requirements and approved, verified design into proposed bounded BIUs.",
-    "Trace every input obligation to allocated BIU scope, carry fixed decisions, boundaries, capabilities, budgets, verification and evidence duties, and validate the dependency graph."
+    "Initial compilation from specified requirements and approved, verified design into proposed bounded BIUs. The compiler derives this decomposition; a hand-authored external obligation mapping is not a mandatory input.",
+    "Trace every input obligation to BIU scope through obligation mapping, carry fixed decisions, boundaries, capabilities, budgets, verification and evidence duties, and validate the dependency graph.",
+    "Freeze the original requirements, acceptance criteria, verification obligations and evidence obligations. Map 100% to resulting units or a retained Integration Parent; no loss, invention or weakening of authorized intent or proof.",
+    "Deterministically rewrite dependency identities without judgment redirection, cycles or weakened satisfaction predicates; record original/result lineage and preserve original evidence.",
+    "Invalidate applicability of stale Readiness Assessments without rewriting history, materialize resulting candidate BIUs, and submit each result (including the retained Integration Parent) to SF-REQ-015 lint and fresh Agent Ready assessment.",
+    "Use a stated BIU identity grammar with collision-safe reservation, never sort-order identity. Reconcile the Phase 5 candidate design against the amendment and SWF-33; candidate mechanisms are not automatically approved."
    ],
    "non_goals": [
-    "Revision of an existing decomposition or general split/replan transaction; that extension is pending.",
+    "Unapproved product intent changes, silent reallocation or weakened proof; splitting active invocations in place, reopening DONE work or bypassing ordinary readiness, release and closure gates.",
     "Automatic execution, new priority, budget increases, new authority or implementation choices that belong in design."
    ],
    "dependencies": [
@@ -219,7 +261,7 @@
     },
     {
      "id": "SF-REQ-013-AC-02",
-     "criterion": "A coverage report maps each input acceptance/verification obligation to one or more explicit BIU extents. An unmapped obligation blocks compilation acceptance; mapping alone never claims satisfaction.",
+     "criterion": "A coverage report maps each input requirement, acceptance criterion, verification obligation and evidence obligation to one or more explicit BIU extents through obligation mapping. Unmapped obligations block compilation acceptance; mapping alone never claims satisfaction.",
      "verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately."
     },
     {
@@ -234,22 +276,40 @@
     },
     {
      "id": "SF-REQ-013-AC-05",
-     "criterion": "A request to rewrite an existing approved decomposition is identified as outside this initial-compilation scope and retained for the pending split/replan decision; it must not mutate existing BIUs.",
-     "verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately."
+     "criterion": "Given an authorized split of a pinned existing decomposition, freeze all original obligations and conserve 100% in resulting units or a retained Integration Parent. Reject loss, invented intent, weakened proof, budget/capability expansion, stale authority and partial mapping before applying a mutation. Preserve existing identities/history and integration proof.",
+     "verification": "Replay the SWF-33 PY-10 / PY-09B precedent as a historical contract fixture, not a live mutation; compare exact original clauses, resulting extents and retained integration duties. Proven-red omissions, weaker clauses and invented obligations must refuse admission."
+    },
+    {
+     "id": "SF-REQ-013-AC-06",
+     "criterion": "Initial compilation derives bounded units and obligation mapping from exact authorized requirements, verified design and proof inputs without a mandatory external hand-authored mapping. Every SF-REQ-010 field and stable identity is present; changed inputs produce an attributable distinct revision.",
+     "verification": "Composed positive compilation fixture without external mapping; reject validator-only output, missing obligations or invented scope. Permute input enumeration and assert semantic mapping and identities do not derive from sorting."
+    },
+    {
+     "id": "SF-REQ-013-AC-07",
+     "criterion": "Split dependency rewrites are deterministic identity rewrites: preserve authoritative predicates and downstream integration boundary; reject cycles, missing endpoints, weakened predicates and judgment-based redirection. New identities satisfy the stated grammar and explicit reservations, with lineage stored independently of suffixes or sort order.",
+     "verification": "Before/after graph and identity fixtures, including PY-09B compatibility, collisions, exhaustion, stale reservations, reordered inputs and changed predicates; each invalid case refuses mutation."
+    },
+    {
+     "id": "SF-REQ-013-AC-08",
+     "criterion": "A Split Transaction records lineage and invalidates old assessment applicability while retaining raw history, materializes every resulting candidate, then submits each child and retained Integration Parent through SF-REQ-015 lint and supported Agent Ready assessment. Each result is READY / CLARIFY / SPLIT / HOLD; no result itself releases execution.",
+     "verification": "Inspect per-result submission and assessment links; missing one, reusing stale READY or trusting a shape-compatible surrogate fails. Retry/recovery preserves operation identity and immutable historical assessments; provider failure is an execution failure, never a disposition."
     }
    ],
    "authority_gaps": [
-    "SF-REQ-013 amendment under POSTW1-DECIDE-005A / POSTW1-DECIDE-007A is not approved. Initial compilation is specified now; general split/replan is excluded."
+    "SPLIT-G1 and R1-GAP-013-ALLOCATION are settled by the SF-REQ-013 amendment 2026-09-22. Existing product authority, exact authorized replan scope, independent design verification, dependency-edge authority and normal release/budget/custody gates still apply; ownership does not grant blanket mutation or release authority."
    ],
    "security_constraints": [
     "Compilation cannot widen credentials, source access, execution budget or trust boundaries beyond approved inputs."
    ],
    "operational_constraints": [
     "Stable source-to-output traceability across repeated compilation; changed source/design requires a distinct identifiable candidate revision.",
-    "Dependency satisfaction retains authoritative lifecycle predicates; projections cannot redefine them."
+    "Dependency satisfaction retains authoritative lifecycle predicates; projections cannot redefine them.",
+    "Identity grammar and reservation are explicit design constraints, never derived from sorted position; obligation mapping is compile-time, Allocation is execution-time only.",
+    "A replan requires exact scope/baseline authority, conserved budget and a safe quiescent boundary; candidate design approval and fresh assessment remain prerequisites to release."
    ],
    "observability_evidence": [
-    "Pinned input and design revisions, generated contract manifest, coverage report, graph validation and admission refusals."
+    "Pinned input and design revisions, generated contract manifest, coverage report, graph validation and admission refusals.",
+    "Frozen obligation inventory, forward/reverse obligation mapping, lineage, pre/post graphs and predicates, identity reservations, operation payload and authority, stale-assessment applicability records, materialized candidate digests and per-result fresh assessment submissions/outcomes."
    ],
    "failure_modes": [
     "Lost proof obligation",
@@ -268,10 +328,45 @@
     },
     {
      "path": "docs/evidence/wave1-biu-split-replan-design.json",
-     "locator": "ownership_audit"
+     "locator": "candidate design: sections, identity_grammar, operation_protocol; ownership_audit/SPLIT-G1 superseded only by amendment 2026-09-22"
+    },
+    {
+     "path": "docs/decisions/2026-09-21-py10-transport-split.md",
+     "locator": "SWF-33; retained Integration Parent and unchanged proof precedent; bootstrap-assessor history"
+    },
+    {
+     "path": "docs/architecture/alienintent-architecture-authority-2026-09-19.md",
+     "locator": "2026-09-22 A2/A3 and amendment (b)"
     }
    ],
-   "design_readiness": "SPECIFIED; authority conditions below remain explicit gates, not decisions delegated to designers."
+   "design_readiness": "SPECIFIED; authority conditions below remain explicit gates, not decisions delegated to designers.",
+   "revision_2026_09_22": {
+    "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
+    "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+    "authority": [
+     "factory plan SF-REQ-013 amendment 2026-09-22",
+     "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
+     "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+    ],
+    "changed": [
+     "/candidates/2/title",
+     "/candidates/2/selection_reason",
+     "/candidates/2/intent",
+     "/candidates/2/scope",
+     "/candidates/2/non_goals",
+     "/candidates/2/acceptance_criteria",
+     "/candidates/2/authority_gaps",
+     "/candidates/2/operational_constraints",
+     "/candidates/2/observability_evidence",
+     "/candidates/2/provenance"
+    ],
+    "preserved_holds": [
+     "Unresolved product authority/conflicting fixed decisions",
+     "Independent verified design and exact planning authority",
+     "Dependency-edge authority",
+     "Budget/capability/custody/release prerequisites"
+    ]
+   }
   },
   {
    "requirement_id": "SF-REQ-014",
