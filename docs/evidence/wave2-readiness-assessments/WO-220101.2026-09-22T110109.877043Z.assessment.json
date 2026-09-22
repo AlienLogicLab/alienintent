@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Deliver the bounded S0 reusable isolated proof substrate by extending the existing offline profile and adapters at current interfaces, providing local proof transport and an existing-kernel fixture without changing lifecycle contracts, role routing, requirements authority, or release posture.",
+    "implementation_unknowns": [
+      "Where the existing offline profile, adapters, provider transport, work-management transport, and kernel fixture extension points are located and how they are currently composed.",
+      "How to enforce and observe outbound-network denial in the local test environment without requiring impossible platform credential denial.",
+      "How to implement the durable scripted worker journal while preserving existing WorkerProvider and lifecycle interfaces.",
+      "How to pin executable fixture commands, inputs, expected outcomes, and evidence schema before implementation in the repository's existing evidence conventions.",
+      "How to count and prove zero provider calls through the existing provider instrumentation.",
+      "How to run the existing kernel unchanged and capture the stated success-collapse limitation as an explicit observation rather than treating it as operational success.",
+      "How to demonstrate intact, fault, and restored discrimination for the mechanical controls in the available test harness."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The task is constrained to current interfaces; if existing interfaces cannot support one of the required observables, scope pressure could arise and require escalation rather than local redesign.",
+      "Network-denial and credential-absence evidence may be platform-sensitive and could fail if the local environment lacks reliable isolation hooks.",
+      "The existing kernel's success-collapse limitation must be reported accurately; treating local success as operational proof would violate the evidence contract.",
+      "No hard wall-clock or numeric cost ceiling is stated, so runaway execution must be managed procedurally through liveness inspection and operator cancellation rather than an enforced bootstrap limit.",
+      "Evidence retention requirements are strict; incomplete command, revision, exit-status, raw-observation, or verdict capture would block acceptance even if the fixture behavior works."
+    ],
+    "next_action": "Hand off for implementation of the S0 local proof substrate, beginning by pinning the executable fixture commands, inputs, expected outcomes, and evidence schema before changing adapters or fixtures.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "rationale": "READY is the controlling disposition because the governing intent, scope boundaries, non-goals, acceptance criteria, verification obligations, and allocation/custody expectations are sufficiently specified for autonomous engineering execution. Remaining uncertainty is primarily implementation research inside the repository and local environment, not unresolved owner intent. The work is cohesive rather than a set of independent decision centers: the SQLite, Git, transport, journal, network-denial, provider-count, and evidence obligations all serve one shared isolated proof harness and should receive one integrated verification verdict.",
+    "semantic_split_recommendation": [],
+    "summary": "The work describes a cohesive root-node implementation: construct a local, isolated proof harness using temporary SQLite, disposable bare Git remote, fresh verifier worktree retrieval, local work-management/provider transport, injected clock/IDs, durable scripted worker journal, absent credentials, denied outbound network with refusal evidence, zero provider calls, and execution of the existing kernel unchanged while reporting the known success-collapse limitation. The supplied packet includes allocation/custody expectations and observable evidence obligations.",
+    "verification_assessment": "Acceptance is observable: the fixture either creates and uses real temporary SQLite, a disposable local bare Git remote, a fresh verifier worktree, local transports, injected clock/IDs, durable journal records, credential absence, denied outbound-network refusal, zero provider-call evidence, unchanged kernel execution, and retained evidence records, or it does not. One independent verification verdict is meaningful because the work is a single shared proof substrate with a coherent fixture/evidence contract; failures should be attributable to the local substrate rather than to unrelated product decisions."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "6b056813f6e3643219b4fac50be2d2f2785536a7",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-22T11:01:35.699681+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 8455,
+    "input_sha256": "ad4628afff366ef63f6bd089d4ade8bf505d8cc80eeb464d44f1d26589f9a41c",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-h1r1emye/WO-220101.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "started_at": "2026-09-22T11:01:09.877043+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220101"
+}
