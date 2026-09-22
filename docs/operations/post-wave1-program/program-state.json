@@ -19,6 +19,81 @@
  "current_phase": "14",
  "program": "post-wave1-to-wave2",
  "tasks": {
+  "FACT-ARCLOSE-001": {
+   "artifact_refs": [
+    "agent-ready: branch pub/codex-compatibility-probe (d0e00a8 candidate, c688a11 repair)",
+    "agent-ready: branch docs/ubiquitous-language-v0.1 @7a85c4d"
+   ],
+   "assigned_actor": "claude-bootstrap-coordinator",
+   "blockers": [],
+   "created_at": "2026-09-22T08:48:20.486532+00:00",
+   "critical_path": true,
+   "phase": "F1",
+   "prompt_path": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/review-64725f9.prompt.md",
+   "resulting_commit": null,
+   "review_status": "R1 REPAIR_REQUIRED (codex gpt-6-astra, read-only); R2 running",
+   "risk_class": "HIGH",
+   "routing": {
+    "model": "gpt-6-astra",
+    "reviewer": "codex-fresh",
+    "sandbox": "read-only",
+    "tier": 4
+   },
+   "status": "RUNNING",
+   "subdecisions": [],
+   "task_id": "FACT-ARCLOSE-001",
+   "title": "Agent Ready publication/provenance closure: independent review of 64725f9, repair, publish prerequisite + UL, Issue #1 status",
+   "updated_at": "2026-09-22T08:48:20.486554+00:00"
+  },
+  "FACT-BACKLOG-003": {
+   "artifact_refs": [
+    "gh project item-list 1 --owner AlienLogicLab (2026-09-22)"
+   ],
+   "assigned_actor": "deterministic",
+   "blockers": [],
+   "created_at": "2026-09-22T08:48:20.508208+00:00",
+   "critical_path": null,
+   "phase": "F2",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "PASS (read-only gh inventory)",
+   "risk_class": "LOW",
+   "routing": {
+    "tier": 0
+   },
+   "status": "DONE",
+   "subdecisions": [],
+   "task_id": "FACT-BACKLOG-003",
+   "title": "GitHub Project #1 inventory: 10 Wave 2 requirement issues at CAPTURE (P0: 051/053/056; P1: 011-016, 039); Wave 1 SF-REQ issues remain at TASKS with PY BIUs DONE",
+   "updated_at": "2026-09-22T08:48:20.508225+00:00"
+  },
+  "FACT-RECON-002": {
+   "artifact_refs": [
+    "docs/evidence/wave2-specified-requirements.json",
+    "docs/evidence/wave2-design-contracts.json",
+    "docs/evidence/wave2-candidate-bius.json#/bius/0"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-22T08:48:20.497460+00:00",
+   "critical_path": true,
+   "phase": "F2",
+   "prompt_path": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.prompt.md",
+   "resulting_commit": null,
+   "review_status": "required (coordinator cross-check; fresh DV if revisions follow)",
+   "risk_class": "HIGH",
+   "routing": {
+    "deterministic_prework": "stale set computed from plan amendments",
+    "model": "gpt-6-astra",
+    "sandbox": "read-only",
+    "tier": 2
+   },
+   "status": "RUNNING",
+   "subdecisions": [],
+   "task_id": "FACT-RECON-002",
+   "title": "Wave 2 reconciliation delta: SF-REQ-011/013/015/039 Phase 8/9 artifacts vs 2026-09-22 amendments; S0 impact",
+   "updated_at": "2026-09-22T08:48:20.497488+00:00"
+  },
   "POSTW1-AGENTREADY-004": {
    "artifact_refs": [
     "docs/evidence/wave1-agent-ready-outcome-matrix.json",
@@ -886,5 +961,5 @@
    "updated_at": "2026-09-21T22:31:40.936775+00:00"
   }
  },
- "updated_at": "2026-09-22T05:51:56.022806+00:00"
+ "updated_at": "2026-09-22T08:48:20.508237+00:00"
 }
