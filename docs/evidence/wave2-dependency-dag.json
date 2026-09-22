@@ -4006,11 +4006,15 @@
       "owner_node": "U10",
       "status": "PLANNED_NOT_EXECUTED",
       "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-      "scenario": "POSTW1-DECIDE-004A assigns G1/G2 and verifies provider contract before binding transport/schema. Prove authorized binding reaches consumer, unbound and unauthorized READY stub refuse before release; raw response retained. No new assessment engine or external serialization selected by this plan.",
+      "scenario": "Ownership is settled (A1: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integrates); verify the published provider contract at the bound package version before binding transport/schema. Prove authorized binding reaches consumer, unbound and unauthorized READY stub refuse before release; raw response retained. No new assessment engine or external serialization selected by this plan.",
       "acceptance_ids": [],
       "enforcement_ids": [],
       "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
-      "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL"
+      "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+      "scenario_history": {
+        "until_2026_09_22": "POSTW1-DECIDE-004A assigns G1/G2 and verifies provider contract before binding transport/schema. Prove authorized binding reaches consumer, unbound and unauthorized READY stub refuse before release; raw response retained. No new assessment engine or external serialization selected by this plan.",
+        "dv_repair": "DV-15"
+      }
     },
     {
       "id": "FX-A",

@@ -1140,18 +1140,21 @@
       "requirement_id": "AGENT-READY-SCHEMA",
       "title": "Agent-Ready implementation/schema/CLI ownership and serialization",
       "selected": false,
-      "rejection_reason": "DEFER this extension pending POSTW1-DECIDE-004A G1/G2 owner assignment. Selected SF-REQ-015 covers current process semantics and retained source evidence without inventing an external schema or maintainer.",
+      "rejection_reason": "OUT OF SCOPE for AlienIntent under Architecture Authority A1 (2026-09-22): Agent Ready's implementation, schema, CLI and MCP are owned by the independent Agent Ready product; AlienIntent owns only the integration (SF-REQ-015) and the immutable retained-assessment serialization (SF-REQ-029). No AlienIntent requirement claims them.",
       "definition_status": "DEFINED",
       "definition_status_note": "For a non-SF evaluation key, DEFINED means the candidate need is documented in the cited source; it does not mint a canonical Product Requirement.",
       "priority_or_wave_invented": false,
-      "canonical_owner": "UNASSIGNED",
+      "canonical_owner": "Agent Ready product (A1); integration SF-REQ-015; serialization SF-REQ-029",
       "evaluated_aliases": [],
       "provenance": [
         {
           "path": "docs/evidence/wave1-agent-ready-outcome-matrix.json",
           "locator": "gaps G1/G2"
         }
-      ]
+      ],
+      "rejection_reason_history": {
+        "until_2026_09_22": "DEFER this extension pending POSTW1-DECIDE-004A G1/G2 owner assignment. Selected SF-REQ-015 covers current process semantics and retained source evidence without inventing an external schema or maintainer."
+      }
     },
     {
       "requirement_id": "SF-REQ-008",
@@ -2015,7 +2018,13 @@
       "affected": [
         "AGENT-READY-SCHEMA"
       ],
-      "product_intent_hidden": false
+      "product_intent_hidden": false,
+      "resolution_2026_09_22": {
+        "status": "RESOLVED",
+        "authority": "Founder decisions v0.1 §2 → Architecture Authority A1 (Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 owns integration; SF-REQ-029 owns retained-assessment serialization); program-state POSTW1-DECIDE-004A DONE",
+        "note": "required_action and affected retained as Phase 8 history",
+        "dv_repair": "DV-15"
+      }
     },
     {
       "id": "POSTW1-DECIDE-005A / POSTW1-DECIDE-007A",

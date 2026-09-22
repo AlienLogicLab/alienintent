@@ -37,7 +37,7 @@ _Regenerated 2026-09-22 from the JSON (DV-2); the JSON is authoritative._
 | SWF-32 | No | Execution cycle capability: DEFER: canonical semantics already amend SF-REQ-009, but the decision expressly withholds Priority/Wave. Evaluation does not assign it to Wave 2. Preserve all eleven cycle rules; obtain Founder scheduling before adding it to selected work. |
 | SPLIT-REPLAN | No | General split/replan capability: DEFER: SF-REQ-013 currently owns initial compilation only. The Phase 5 conserved transaction remains a proposal with SPLIT-G1 ownership gap and pending POSTW1-DECIDE-005A/007A. SWF-33 authorizes one historical split, not a general product operation. Preserve the 69-obligation proposal as decision input; do not bury transaction authority in design. |
 | REQUIREMENT-REGISTER | No | Separate requirement register: FOLD INTO SF-REQ-011: stable IDs, provenance and traceability already own the necessary inventory view. A separate canonical register would add a competing authority representation. No standalone new requirement is justified; unified discovery across all definition forms is selected under SF-REQ-011. |
-| AGENT-READY-SCHEMA | No | Agent-Ready implementation/schema/CLI ownership and serialization: DEFER this extension pending POSTW1-DECIDE-004A G1/G2 owner assignment. Selected SF-REQ-015 covers current process semantics and retained source evidence without inventing an external schema or maintainer. |
+| AGENT-READY-SCHEMA | No | Agent-Ready implementation/schema/CLI ownership and serialization: OUT OF SCOPE for AlienIntent under Architecture Authority A1 (2026-09-22): Agent Ready's implementation, schema, CLI and MCP are owned by the independent Agent Ready product; AlienIntent owns only the integration (SF-REQ-015) and the immutable retained-assessment serialization (SF-REQ-029). No AlienIntent requirement claims them. |
 | SF-REQ-008 | No | Crash-safety scope amendment: DEFER: Current crash-safe behavior is a dependency, not a new Wave 2 reimplementation. R02 durable control fields, explicit effect receipts and restart-proof elaboration is pending POSTW1-DECIDE-007A; do not enact it via 053/056. |
 | SF-REQ-022 | No | Nonterminal retry exhaustion amendment: DEFER: Current requirement covers rejection/repair loops; extension to repeated nonterminal outcomes is pending POSTW1-DECIDE-007A and has no new Wave assignment. Existing bounded behavior remains a constraint, not authorization for new attempts. |
 | SF-REQ-025 | No | Coordinator-tool credential environment ownership: DEFER: R04 is an adjacent-owner proposal, not existing ownership of coordinator environment construction/auth precedence. Defer until POSTW1-DECIDE-007A assigns scope; existing security boundaries remain mandatory. |
@@ -133,9 +133,7 @@ Make the actual requirement set discoverable and traceable before compilation; p
 
 ### Revision 2026-09-22
 
-`revision_2026_09_22`: see JSON `/candidates/0/revision_2026_09_22` and [revision note](wave2-revisions/2026-09-22-respecify-011-013.md) for authority, changed pointers and preserved holds.
-
-Sources: [SF-REQ-011; Initial implementation waves / Wave 2](../decisions/alienintent-software-factory-plan.md); [requirement_register](../operations/post-wave1-program/prework/POSTW1-SPECIFY-008-inputs.json); [2026-09-22 A2/A3 and amendment (b)](../architecture/alienintent-architecture-authority-2026-09-19.md).
+`revision_2026_09_22`: see JSON `/candidates/<i>/revision_2026_09_22` and the revision note under `wave2-revisions/` for authority, changed pointers and preserved holds.
 
 ## SF-REQ-012 — Requirements ambiguity detection
 
@@ -195,8 +193,6 @@ Keep unresolved intent visible and localize holds to the affected work.
 - Unattributed answer accepted
 - Stale resolution reused
 - Global stall for a local gap
-
-Sources: [SF-REQ-012; SF-REQ-006; SF-REQ-035](../../docs/decisions/alienintent-software-factory-plan.md); [Design authority boundary](../../docs/decisions/2026-09-20-design-contract-and-design-verification.md).
 
 ## SF-REQ-013 — Requirements to BIU compilation and conserved split/replan
 
@@ -273,9 +269,7 @@ Make authorized requirements the normal input to execution without asking worker
 
 ### Revision 2026-09-22
 
-`revision_2026_09_22`: see JSON `/candidates/2/revision_2026_09_22` and [revision note](wave2-revisions/2026-09-22-respecify-011-013.md) for authority, changed pointers and preserved holds.
-
-Sources: [SF-REQ-010; SF-REQ-013](../decisions/alienintent-software-factory-plan.md); [Relationship to BIU and Agent-Ready](../decisions/2026-09-20-design-contract-and-design-verification.md); [candidate design: sections, identity_grammar, operation_protocol; ownership_audit/SPLIT-G1 superseded only by amendment 2026-09-22](../evidence/wave1-biu-split-replan-design.json); [SWF-33; retained Integration Parent and unchanged proof precedent; bootstrap-assessor history](../decisions/2026-09-21-py10-transport-split.md); [2026-09-22 A2/A3 and amendment (b)](../architecture/alienintent-architecture-authority-2026-09-19.md).
+`revision_2026_09_22`: see JSON `/candidates/<i>/revision_2026_09_22` and the revision note under `wave2-revisions/` for authority, changed pointers and preserved holds.
 
 ## SF-REQ-014 — Mechanical verification obligations before implementation
 
@@ -336,8 +330,6 @@ Catch wrong or weakened acceptance tests and ensure mechanical gates can actuall
 - Impossible permission proof
 - Dropped repair evidence
 
-Sources: [SF-REQ-014](../../docs/decisions/alienintent-software-factory-plan.md); [Binding isolation standard](../../docs/decisions/2026-09-21-sandbox-isolation-standard.md); [decision_policy; candidates](../../docs/evidence/wave1-gap-trap-promotion-backlog.json).
-
 ## SF-REQ-015 — BIU lint/readiness and Agent-Ready process hardening
 
 Definition status: **DEFINED**. Founder ratification required: **false**.
@@ -356,7 +348,7 @@ Stop missing decisions, stale assessments and tool failures from masquerading as
 - Exactly one disposition from the exhaustive set READY, CLARIFY, SPLIT, HOLD; immutable assessment evidence and reassessment lineage. A Disposition is an assessment result, never lifecycle state; BLOCKED is not an Agent Ready disposition.
 - Design prerequisites are supplied by SF-REQ-051. Consumer handling must preserve source envelopes and reject ambiguous results.
 - ReadinessAssessment.assess(candidate_work_unit) -> ReadinessAssessment | AttemptFailure. Requirements / Planning passes pinned candidate text; the result preserves the raw Agent Ready assessment plus provenance. Domain knows no executable location, subprocess syntax, transport or package internals. AlienIntent never imports Agent Ready private implementation, copies its rubric or duplicates its decision logic.
-- Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites.
+- Ownership per wave2-design-contracts.json#/contracts/4/ownership_statement (DV-5/DV-10).
 
 ### Non goals
 
@@ -369,7 +361,7 @@ Stop missing decisions, stale assessments and tool failures from masquerading as
 - SF-REQ-012
 - SF-REQ-014
 - SF-REQ-051
-- Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites.
+- Agent Ready product (Architecture Authority A1): the independent product whose supported CLI/MCP interface this requirement integrates.
 
 ### Acceptance criteria
 
@@ -383,7 +375,7 @@ Stop missing decisions, stale assessments and tool failures from masquerading as
 
 ### Authority gaps
 
-- Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites.
+- None settled-pending; surviving prerequisites are capability availability (configured, doctor-validated), established producer identity/version, a supported public contract at the bound package version, and independent design verification (DV-5: former ownership statement moved to design_decisions).
 
 ### Security constraints
 
@@ -397,7 +389,7 @@ Stop missing decisions, stale assessments and tool failures from masquerading as
 ### Observability evidence
 
 - Raw assessment, normalized semantic observation, assessed revision, provider/invocation identity, attempt failure, immutable predecessor link and separate release decision.
-- Retain producer identity established from the configured Agent Ready executable/MCP server and its package metadata, Agent Ready version (UNKNOWN if unestablished, blocking admission), editable checkout revision when applicable, contract_version = "package-release-bound; no result-level identifier (agent-ready#1)", published schema digest/release binding, provider, optional unmodified provider_evidence, model provenance (not exposed by current results; UNKNOWN, never inferred from provider CLI version), exact input fingerprint, invocation identity/arguments or MCP tool request, timestamps and exit/error status. Raw result bytes/envelope and provenance remain distinct immutable evidence. Neither a compatible schema nor copied provider_evidence authenticates the producer; absent/mismatched producer evidence blocks admission.
+- Retain producer/version provenance exactly as specified in the design contract's provenance_contract (wave2-design-contracts.json#/contracts/4/provenance_contract); raw result bytes/envelope and provenance remain distinct immutable evidence (DV-5).
 
 ### Failure modes
 
@@ -410,9 +402,7 @@ Stop missing decisions, stale assessments and tool failures from masquerading as
 
 ### Revision 2026-09-22
 
-`revision_2026_09_22`: see JSON `/candidates/4/revision_2026_09_22` and [revision note](wave2-revisions/2026-09-22-respecify-015-039.md).
-
-Sources: [SF-REQ-015](../decisions/alienintent-software-factory-plan.md); [dispositions; execution_failures; gaps; coercion_finding](../evidence/wave1-agent-ready-outcome-matrix.json); [Relationship to BIU and Agent-Ready](../decisions/2026-09-20-design-contract-and-design-verification.md); [2026-09-22 A1/A9; amendment (b)](../architecture/alienintent-architecture-authority-2026-09-19.md).
+`revision_2026_09_22`: see JSON `/candidates/<i>/revision_2026_09_22` and the revision note under `wave2-revisions/` for authority, changed pointers and preserved holds.
 
 ## SF-REQ-016 — Definition / Observation / Verdict separation
 
@@ -469,8 +459,6 @@ Prevent worker claims and imported evidence from silently acquiring authority or
 - Observation overwrites definition
 - Unattributed verdict
 - UNKNOWN silently becomes zero
-
-Sources: [SF-REQ-016; SF-REQ-009; SF-REQ-030](../../docs/decisions/alienintent-software-factory-plan.md).
 
 ## SF-REQ-039 — Deterministic Test Worker
 
@@ -539,9 +527,7 @@ Make upstream-to-execution verification repeatable and cheap while detecting lif
 
 ### Revision 2026-09-22
 
-`revision_2026_09_22`: see JSON `/candidates/6/revision_2026_09_22` and [revision note](wave2-revisions/2026-09-22-respecify-015-039.md).
-
-Sources: [SF-REQ-039; Initial implementation waves / Wave 2](../decisions/alienintent-software-factory-plan.md); [2026-09-22 A1/A9; amendment (b)](../architecture/alienintent-architecture-authority-2026-09-19.md).
+`revision_2026_09_22`: see JSON `/candidates/<i>/revision_2026_09_22` and the revision note under `wave2-revisions/` for authority, changed pointers and preserved holds.
 
 ## SF-REQ-051 — Design Contract and Design Verification
 
@@ -604,8 +590,6 @@ Prevent impossible premises and material decisions from reaching implementation 
 - Unresolved product decision disguised as local detail
 - Self-review
 - Stale design verification reused
-
-Sources: [Workflow semantics; Design Contract; Design Verification; Founder clarifications](../../docs/decisions/2026-09-20-design-contract-and-design-verification.md); [Binding isolation standard](../../docs/decisions/2026-09-21-sandbox-isolation-standard.md).
 
 ## SF-REQ-053 — Persistent control plane and bounded coordinator episodes
 
@@ -676,8 +660,6 @@ Allow coordination to end or restart without losing authorized next actions, att
 - Seen mistaken for resolved
 - Program mailbox silently abandoned at handoff
 
-Sources: [Durable rules; Architectural separation; activation boundary; Relationship to Decision Inbox](../../docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md); [SWF-27 observer; attention queue; coordinator checkpoint; resident coordinator multi-BIU tenure](../../docs/evidence/wave1-bootstrap-retirement-matrix.json); [LRN-027](../../docs/evidence/wave1-learning-ledger.json).
-
 ## SF-REQ-056 — Canonical actor/effect liveness reconciliation
 
 Definition status: **AUTHORED_IN_THIS_PHASE**. Founder ratification required: **true**.
@@ -745,8 +727,6 @@ Prevent indefinite stalls from lost delivery while avoiding repeated actors agai
 - Completed judgment outcome relaunches endlessly
 - Acknowledgment erases unresolved blocker
 - Unavailable projection mistaken for missing effect
-
-Sources: [Part 1; judgment-suppression amendment; Binding semantics preserved](../../docs/decisions/2026-09-20-liveness-reconciliation.md); [SWF-29 liveness reconciliation](../../docs/evidence/wave1-bootstrap-retirement-matrix.json); [SEEN != RESOLVED](../../docs/evidence/2026-09-21-py09-provider-capacity-interruption.md); [SF-REQ-056 undefined definition status](../../docs/operations/post-wave1-program/prework/POSTW1-SPECIFY-008-inputs.json).
 
 ## Operational upstream semantics
 

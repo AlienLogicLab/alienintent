@@ -24,6 +24,7 @@ Usage: python3 tools/evidence/check_wave2_specify.py [specified-requirements.jso
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -143,6 +144,48 @@ def render_acceptance_line(ac) -> str:
     return f"- **{ac['id']}**: {crit} Verification: {ver}"
 
 
+_SECTION_FIELDS = (("scope", "Scope"), ("non_goals", "Non goals"), ("dependencies", "Dependencies"),
+                   ("acceptance_criteria", "Acceptance criteria"), ("authority_gaps", "Authority gaps"),
+                   ("security_constraints", "Security constraints"),
+                   ("operational_constraints", "Operational constraints"),
+                   ("observability_evidence", "Observability evidence"), ("failure_modes", "Failure modes"))
+
+
+def _one_line(v) -> str:
+    return str(v).replace("\n", " ")
+
+
+def render_candidate_section(c: dict) -> str:
+    """The one way a selected candidate's section is rendered (DV-13)."""
+    out = [f"## {c['requirement_id']} — {c.get('title', '')}", "",
+           f"Definition status: **{c.get('definition_status', '')}**. Founder ratification required: "
+           f"**{str(c.get('founder_ratification_required', '')).lower()}**.", "",
+           "### Intent", "", _one_line(c.get("intent", "")), "", "### Value", "", _one_line(c.get("value", "")), ""]
+    for key, heading in _SECTION_FIELDS:
+        items = c.get(key) or []
+        if isinstance(items, str):
+            items = [items]
+        out += [f"### {heading}", ""]
+        for it in items:
+            out.append(render_acceptance_line(it) if key == "acceptance_criteria" else f"- {_one_line(it)}")
+        out.append("")
+    rev = c.get("revision_2026_09_22")
+    if rev:
+        out += ["### Revision 2026-09-22", "",
+                "`revision_2026_09_22`: see JSON `/candidates/<i>/revision_2026_09_22` and the revision note under "
+                "`wave2-revisions/` for authority, changed pointers and preserved holds.", ""]
+    return "\n".join(out)
+
+
+def _section_of(markdown: str, requirement_id: str) -> str | None:
+    head = f"## {requirement_id} — "
+    i = markdown.find(head)
+    if i < 0:
+        return None
+    j = markdown.find("\n## ", i + 1)
+    return markdown[i:] if j < 0 else markdown[i:j]
+
+
 def check_render(doc: dict, markdown: str) -> tuple[bool, list[str]]:
     """DV-9 (2026-09-22): a Markdown rendering that disagrees with the JSON is a live
     contradiction, not a cosmetic drift — the stale AC-05 prescribed a different acceptance scope.
@@ -155,10 +198,29 @@ def check_render(doc: dict, markdown: str) -> tuple[bool, list[str]]:
         if row not in markdown:
             failures.append(f"markdown_render_equivalent: inventory row for {c['requirement_id']} does not "
                             "match the JSON title/selection reason")
-        for ac in c.get("acceptance_criteria", []):
-            if render_acceptance_line(ac) not in markdown:
-                failures.append(f"markdown_render_equivalent: {ac.get('id')} in the Markdown does not match "
-                                "the JSON criterion/verification")
+        section = _section_of(markdown, c["requirement_id"])
+        if section is None:
+            failures.append(f"markdown_render_equivalent: no section for {c['requirement_id']}")
+            continue
+        for key in ("intent", "value"):
+            if c.get(key) and _one_line(c[key]) not in section:
+                failures.append(f"markdown_render_equivalent: {c['requirement_id']} {key} in the Markdown does "
+                                "not match the JSON")
+        for key, _heading in _SECTION_FIELDS:
+            items = c.get(key) or []
+            items = [items] if isinstance(items, str) else items
+            for it in items:
+                line = render_acceptance_line(it) if key == "acceptance_criteria" else f"- {_one_line(it)}"
+                if line not in section:
+                    label = it.get("id") if isinstance(it, dict) else key
+                    failures.append(f"markdown_render_equivalent: {c['requirement_id']} {key} ({label}) in the "
+                                    "Markdown does not match the JSON")
+        # Reverse direction: an acceptance ID that exists only in the rendering is invented scope.
+        json_ids = {a.get("id") for a in c.get("acceptance_criteria", []) if isinstance(a, dict)}
+        for mid in re.findall(r"^- \*\*([A-Z0-9-]+-AC-\d+)\*\*", section, re.M):
+            if mid not in json_ids:
+                failures.append(f"markdown_render_equivalent: {c['requirement_id']} renders {mid}, which the "
+                                "JSON does not define")
     return (not failures), failures
 
 

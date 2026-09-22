@@ -145,7 +145,7 @@ def _registered():
     d["authority_gaps"] = [{"id": "GAP-A", "status": "RETURN_TO_SPECIFY"},
                            {"id": "GAP-B", "status": "RETURN_TO_SPECIFY",
                             "resolution_2026_09_22": {"status": "SETTLED_BY_AMENDMENT"}}]
-    d["authority_policy"] = {"wave2a_completion_blocker": "GAP-A"}
+    d["authority_policy"] = {"wave2a_completion_blocker": "GAP-A", "wave2a_completion_node": "W2-03"}
     d["statistics"] = {"nodes": 3, "gap_blocked_nodes": 1, "proceeds_regardless": 2,
                        "separate_authority_only_nodes": 0}
     return d
@@ -206,3 +206,17 @@ def test_the_completion_blocker_must_be_carried_by_the_named_completion_node():
     d["authority_policy"]["wave2a_completion_blocker"] = "GAP-C"   # carried by W2-02, not by W2-03
     ok, f = check_dag(d)
     assert not ok and any("root_register_consistent" in x for x in f)
+
+
+# --- DV-14 (round 3): the blocker rule must not degrade when the completion node is missing ----
+
+def test_a_blocker_without_a_named_completion_node_is_rejected():
+    d = _registered(); d["authority_policy"].pop("wave2a_completion_node", None)
+    ok, f = check_dag(d)
+    assert not ok and any("wave2a_completion_node" in x for x in f)
+
+
+def test_a_completion_node_that_does_not_exist_is_rejected():
+    d = _registered(); d["authority_policy"]["wave2a_completion_node"] = "W2-99"
+    ok, f = check_dag(d)
+    assert not ok and any("wave2a_completion_node" in x for x in f)

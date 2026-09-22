@@ -159,12 +159,12 @@ def _root_register(dag: dict, nodes: list) -> list[str]:
     blocker = policy.get("wave2a_completion_blocker")
     node_id = policy.get("wave2a_completion_node")
     carrier = next((n for n in nodes if n.get("id") == node_id), None) if node_id else None
-    if blocker and carrier is not None and blocker not in (carrier.get("authority_gap_refs") or []):
+    if blocker and carrier is None:
+        out.append(f"root_register_consistent: wave2a_completion_blocker is set but wave2a_completion_node "
+                   f"{node_id!r} is missing or names no node (DV-14)")
+    elif blocker and blocker not in (carrier.get("authority_gap_refs") or []):
         out.append(f"root_register_consistent: wave2a_completion_blocker {blocker!r} is not carried by the "
                    f"named completion node {node_id!r}")
-    elif blocker and blocker not in referenced:
-        out.append(f"root_register_consistent: wave2a_completion_blocker {blocker!r} is carried by no "
-                   "node; the register names a blocker the graph does not have")
     stats = dag.get("statistics") or {}
     status = [n.get("completion_status") for n in nodes]
     expected = {"nodes": len(nodes),

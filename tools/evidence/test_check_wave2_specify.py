@@ -181,9 +181,12 @@ def _rendered(doc):
 
 
 def test_a_faithful_rendering_passes():
+    """A rows-plus-criteria rendering without candidate sections is no longer faithful (DV-13);
+    the faithful case is test_a_fully_faithful_rendering_passes below. This keeps the
+    row/criteria helper honest: it must fail for the missing sections, not pass vacuously."""
     doc = _doc()
     ok, f = check_render(doc, _rendered(doc))
-    assert ok, f
+    assert not ok and any("no section" in x for x in f)
 
 
 def test_the_real_stale_ac05_rendering_is_rejected():
@@ -205,3 +208,53 @@ def test_a_stale_inventory_row_is_rejected():
 
 def test_render_checks_are_named():
     assert RENDER_CHECKS == ("markdown_render_equivalent",)
+
+
+# --- DV-13 (round 3): every rendered field, both directions -------------------------------
+# Found live: after the JSON dedup, the Markdown still rendered the old ownership paragraph as
+# SF-REQ-015's scope, dependency and authority gap, and the render rule (rows + acceptance only)
+# passed it. The rule now covers every list-valued specification field within the candidate's
+# own section, and an acceptance ID present only in the Markdown is rejected.
+
+from check_wave2_specify import render_candidate_section  # noqa: E402
+
+REAL_STALE_AUTHORITY_GAP_LINE = ("- Agent Ready product owns assessment semantics, implementation, public schema, CLI and local "
+    "MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment "
+    "serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and "
+    "independent design verification remain prerequisites.")
+
+
+def _full_doc():
+    doc = _doc()
+    for c in doc["candidates"]:
+        c["title"] = "T"; c["scope"] = ["s1", "s2"]; c["non_goals"] = ["n1"]; c["dependencies"] = ["d1"]
+        c["authority_gaps"] = ["none settled-pending"]; c["security_constraints"] = ["sec"]
+        c["operational_constraints"] = ["op"]; c["observability_evidence"] = ["obs"]; c["failure_modes"] = ["f1"]
+        c["acceptance_criteria"] = [{"id": f"{c['requirement_id']}-AC-01", "criterion": "crit", "verification": "ver"}]
+    return doc
+
+
+def _full_md(doc):
+    return "# x\n\n" + "\n".join(render_inventory_row(c) for c in doc["candidates"]) + "\n\n" + \
+        "\n".join(render_candidate_section(c) for c in doc["candidates"]) + "\n## Pending amendments\n"
+
+
+def test_a_fully_faithful_rendering_passes():
+    doc = _full_doc()
+    ok, f = check_render(doc, _full_md(doc))
+    assert ok, f
+
+
+def test_a_stale_authority_gap_line_in_the_candidates_section_is_rejected():
+    doc = _full_doc()
+    md = _full_md(doc).replace("- none settled-pending", REAL_STALE_AUTHORITY_GAP_LINE, 1)
+    ok, f = check_render(doc, md)
+    assert not ok and any("markdown_render_equivalent" in x and "authority_gaps" in x for x in f)
+
+
+def test_an_acceptance_id_present_only_in_the_markdown_is_rejected():
+    doc = _full_doc()
+    rid = doc["candidates"][0]["requirement_id"]
+    md = _full_md(doc).replace(f"- **{rid}-AC-01**", f"- **{rid}-AC-99**: ghost Verification: none\n- **{rid}-AC-01**", 1)
+    ok, f = check_render(doc, md)
+    assert not ok and any("markdown_render_equivalent" in x and "AC-99" in x for x in f)
