@@ -1,4 +1,25 @@
-# Codex-primary activation — routing landed, live activation blocked
+# Codex-primary activation — activated; ACCEPT-only closure completed
+
+## Closure read-back — 2026-09-22T16:35Z
+
+Successor `5efc665c-4bd2-4566-a548-c7dc02a79c1b` published
+[DONE](https://github.com/AlienLogicLab/alienintent/issues/69#issuecomment-5780228636)
+at 16:34:42Z. The dispatcher recorded `DONE_TO_DONE` at 16:34:49.116Z;
+live Project read-back confirmed DONE. Accepted candidate was merged by
+[PR #70](https://github.com/AlienLogicLab/alienintent/pull/70) into
+`9174849713df2685117de7a8150126d916a4b644`, preserving its full SHA and all 24
+candidate paths. Both exact-merge CI workflows succeeded (35754774665,
+35754774927). The Director checked ancestry and then closed Issue #69 as SWF-31
+bookkeeping; no lifecycle transition was made by the Director.
+
+The worker exited at 16:34:58.218Z. Its runtime resource is `REMOVED` with no cleanup
+diagnostic, and active claims are empty. The old capacity attention item
+`att-16e105ede481` was acknowledged only after DONE was read back. No other
+service restart, worker termination or new IMPLEMENT/VERIFY invocation occurred.
+
+S1 is the next dependency-satisfied unit. Its distinct admission hold is recorded
+in [the budget decision record](../operations/post-wave1-program/reports/2026-09-22-s1-admission-budget-hold.md).
+This hold does not qualify the successful activation or completed S0 closure.
 
 ## Recovery addendum — 2026-09-22T16:29Z
 
