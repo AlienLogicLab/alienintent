@@ -303,6 +303,13 @@ feedback contract (for example `READY → first-pass accepted`, `SPLIT → split
 Wave 2 design-learning objective. Agent Ready's corpus and rule improvement remain Agent Ready's,
 governed and versioned.
 
+**Surrogate Readiness Assessment** *(historical)* — A Wave 1 readiness assessment produced by the
+AlienIntent bootstrap assessor: a coordinator-run Codex or Claude prompt shaped to the Agent Ready
+contract, not an execution of the Agent Ready product. Retained verbatim as evidence with its
+producer declared in `docs/evidence/wave1-readiness-assessment-provenance.json`; never
+represented as a native Agent Ready assessment. The recorded instance of the *Authoritative
+Capability Substitution* failure class (Architecture Authority amendment (b)).
+
 ### Retained candidate-model terms
 
 The pre-Python candidate domain model (`docs/architecture/pre-python-gate/domain-model.md`)

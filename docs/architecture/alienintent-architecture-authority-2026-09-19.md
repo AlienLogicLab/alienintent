@@ -716,3 +716,36 @@ completion.
 `alienintent-ubiquitous-language-v0.1.md`, which records terminology collisions rather than
 normalizing them and explicitly does not canonicalize "Gap Trap".
 
+## Amendment — 2026-09-22 (b): Reuse Before Build
+
+Source: Founder follow-up of 2026-09-22 after the Wave 1 authoritative-capability-substitution
+finding (`../evidence/2026-09-22-wave1-authoritative-capability-substitution.md`). Canonical
+owner of the principle: this section, as a governing principle beside KISS and "solve for N".
+Design-time enforcement: SWF-25 Design Verification (amended). Runtime classification:
+SF-REQ-029 (amended). Configured-capability validation: SF-REQ-038 (amended).
+
+> **Reuse Before Build.** Before implementing, emulating or prompting around a capability,
+> determine whether an authoritative implementation already exists in the configured project /
+> Alien Logic Lab / tool ecosystem. If one exists, consume it through its supported interface
+> unless explicit authority records why it is unsuitable.
+
+> **A compatible output shape is not evidence that the authoritative capability produced the
+> result.** Producer identity is provenance to be recorded and checked, never inferred from
+> field names, vocabulary or a passing schema.
+
+**Failure class named:** *Authoritative Capability Substitution* — a workflow implements,
+emulates or prompts around behaviour already owned by an available authoritative capability
+instead of consuming that capability through its supported interface. Wave 1's readiness
+assessments (PY-01…PY-10, PY-09B) are the recorded instance: the Agent Ready product, CLI and
+MCP existed and had been used natively during the pre-Python gate, yet the Wave 1 coordinator ran
+raw Codex/Claude prompts shaped to the Agent Ready contract.
+
+**What follows for design and operation:**
+- A Design Contract or work packet that names a specific external capability ("run Agent-Ready")
+  names the *product*, not a shape; a substitute requires explicit recorded authority.
+- Capability availability is **project configuration**, not host-local configuration
+  (§31, §38, SF-REQ-037/038): a capability configured only in one operator's or one host's
+  settings is not "available" to the factory.
+- Where a contract names an external capability, enforcement fails closed on producer identity
+  (SF-REQ-038 doctor; evidence checker `tools/evidence/check_assessment_producer.py`).
+

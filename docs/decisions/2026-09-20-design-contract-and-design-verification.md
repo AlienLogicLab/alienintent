@@ -38,6 +38,17 @@ If such a decision remains unresolved, **the BIU is not ready**.
 
 Before BIU decomposition or release, the Design Contract is verified against: EOS; project architecture authority; DDD boundaries; Hexagonal dependency direction; ACL boundaries; Ubiquitous Language; existing ADRs and Founder decisions; security/privacy rules; canonical existing mechanisms; consistency with requirements; compatibility with existing interfaces; unnecessary mechanism/complexity; observability and recovery expectations.
 
+**Amendment (2026-09-22, Reuse Before Build — Architecture Authority amendment (b)).** Design
+Verification explicitly asks, for every capability the design implements, emulates or prompts
+around: *Does an authoritative implementation already exist in the configured project / Alien
+Logic Lab / tool ecosystem?* If yes, the design consumes it through its supported interface, or
+records the authority that finds it unsuitable. "Canonical existing mechanisms" and "duplicate
+mechanism introduction" above already cover *internal* duplication; this extends the same
+question to external authoritative capabilities, and adds the provenance requirement: where a
+contract names an external capability, the design states how the producer's identity and
+version are recorded and checked, because a compatible output shape is not evidence the
+capability produced the result.
+
 **Mechanical-first**, consistent with SWF-24:
 
 > **If a design rule can be checked mechanically, verify it mechanically before model or human review spends intelligence on it.**

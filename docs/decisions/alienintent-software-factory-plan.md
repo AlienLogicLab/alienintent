@@ -1021,7 +1021,7 @@ Record token/cost/time per attempt and accepted BIU, including retries. Cheap fa
 
 Record observable engineering trajectory independent of Git commits: actions, artifacts, checks, findings, repairs, policy/context versions, cost, outcomes. No private chain-of-thought required.
 
-Trajectory observations may carry versioned, evidence-backed failure classifications where supported: behavioral defect, evidence/proof defect, custody/identity defect, tooling/publication defect, process-instruction adherence, genuine authority required, false/escalated authority request, and provider-capacity interruption. Classification describes observed evidence and does not itself declare a verdict.
+Trajectory observations may carry versioned, evidence-backed failure classifications where supported: behavioral defect, evidence/proof defect, custody/identity defect, tooling/publication defect, process-instruction adherence, genuine authority required, false/escalated authority request, provider-capacity interruption, and **authoritative capability substitution** (added 2026-09-22: a workflow implemented, emulated or prompted around behaviour owned by an available authoritative capability instead of consuming it through its supported interface — Architecture Authority amendment (b)). Classification describes observed evidence and does not itself declare a verdict.
 
 **Amendment (2026-09-22, Founder decisions v0.1 §3; settled #3) — Readiness Assessments are immutable observations.** A Readiness Assessment obtained through SF-REQ-015 is retained as an immutable observation preserving, where available: the raw original assessment; exact input identity/fingerprint; Agent Ready version; assessment contract/schema version; provider/model provenance; timestamp; original disposition and explanation. It is never rewritten because Agent Ready later changes its schema or reasoning; schema evolution is handled by backward-compatible readers, versioned adapters, read-time projection into the current internal representation, or explicit migration views. A corrupt record is corrected by preserving the original plus correction provenance. Retention custody belongs to the Evidence and Learning module; readiness semantics belong to Agent Ready — not the same owner.
 
@@ -1092,6 +1092,13 @@ Show active/queued/completed work, WIP/capacity, workers, provider/model, BIU, s
 **Priority:** P0
 
 Validate installation, work-management access, provider readiness, source-control access, transport health, lifecycle mapping, persistence, and execution capability before autonomous work begins.
+
+**Amendment (2026-09-22, Reuse Before Build).** Validation includes the **configured external
+capabilities** a Project's contracts name — first among them the Agent Ready interface (CLI or
+MCP): reachable, of an identifiable version, and producing a result that validates against its
+published contract. A capability configured only on one host or in one operator's settings is
+not validated as available to the factory. Where a contract names an external capability and the
+doctor cannot validate it, autonomous work that depends on it does not begin.
 
 ## SF-REQ-039 — Deterministic Test Worker
 **Priority:** P1
