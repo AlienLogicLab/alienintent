@@ -20,15 +20,17 @@ Session A revision applies only to SF-REQ-011/013 and their rendered entries. Ot
 
 ## Candidate inventory
 
+_Regenerated 2026-09-22 from the JSON (DV-2); the JSON is authoritative._
+
 | Evaluation ID | Selected | Title / disposition |
 |---|---|---|
 | SF-REQ-011 | Yes | Requirements IR: Select: the fragmented definition corpus makes stable identity and authoritative provenance necessary for CAPTURE/SPECIFY; the original plan already assigns the IR to this scope. |
 | SF-REQ-012 | Yes | Requirements ambiguity detection: Select: without explicit ambiguity/authority questions, upstream lanes could pass unresolved product meaning into design or implementation. |
 | SF-REQ-013 | Yes | Requirements to BIU compilation and conserved split/replan: Select initial compilation and the authority-bearing split/replan transaction under the binding SF-REQ-013 amendment of 2026-09-22; no new requirement, Priority or Wave. |
 | SF-REQ-014 | Yes | Mechanical verification obligations before implementation: Select: upstream compilation needs feasible proof obligations before implementation; the Wave 1 impossible permission premise makes feasibility checking material. |
-| SF-REQ-015 | Yes | BIU lint/readiness and Agent-Ready process hardening: Select existing lint/readiness process: four-outcome handling and immutable reassessment make READY operational. Defer schema ownership rather than invent it. |
+| SF-REQ-015 | Yes | BIU lint/readiness and Agent-Ready process hardening: Select existing lint/readiness integration with the independent Agent Ready product; A1 settles product versus integration and retention ownership. |
 | SF-REQ-016 | Yes | Definition / Observation / Verdict separation: Select: IR, evidence and readiness need explicit separation so imported claims cannot become authority or verdicts. |
-| SF-REQ-039 | Yes | Fake-agent / offline factory proof: Select: the original plan includes deterministic offline lifecycle proof; it supplies affordable discriminating checks for the selected upstream/control-plane work. |
+| SF-REQ-039 | Yes | Deterministic Test Worker: Select: the original plan includes deterministic offline lifecycle proof; it supplies affordable discriminating checks for the selected upstream/control-plane work. |
 | SF-REQ-051 | Yes | Design Contract and Design Verification: Select: SWF-25 explicitly requires this gate for newly planned post-Wave-1 work; omitting it would bypass a binding design prerequisite. |
 | SF-REQ-053 | Yes | Persistent control plane and bounded coordinator episodes: Select: binding bounded-tenure authority plus unreplaced attention/checkpoint duties establish a concrete need; no successful handover is presumed. |
 | SF-REQ-056 | Yes | Canonical actor/effect liveness reconciliation: Select and author for ratification: SWF-29 has no operational canonical replacement and provides binding limits for this expressly in-scope undefined requirement. |
@@ -823,7 +825,7 @@ These are six semantic steps, not six newly created Project statuses. SWF-25 kee
 - **operation:** Bind readiness to exact assessed inputs. Retain non-READY outcomes and failed attempts distinctly. Invalidate applicability on material changes and obtain a fresh assessment.
 - **output:** Readiness record plus a separate admission/release eligibility result.
 - **exit gate:** IMPLEMENT requires applicable READY plus SF-REQ-002 admission and release policy, satisfied lifecycle dependencies, capabilities and capacity. No manual Project edit can grant execution authority.
-- **failure:** BLOCKED, NEEDS_CLARIFICATION, SPLIT_RECOMMENDED, stale verdict or failed attempt holds affected work and routes the appropriate decision/reassessment.
+- **failure:** HOLD, CLARIFY, SPLIT, stale verdict or failed attempt holds affected work and routes the appropriate decision/reassessment.
 - **evidence:** Immutable assessment, input revision, separate release/baseline record and refusal reasons.
 - **owners:** SF-REQ-015, SF-REQ-002, SF-REQ-051
 - **visible state:** Existing READY; preparedness is not execution authorization.

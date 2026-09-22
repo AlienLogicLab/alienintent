@@ -24,10 +24,12 @@ Usage: python3 tools/evidence/check_wave2_dag.py [dag.json]
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
-CHECKS = ("acyclic", "dependencies_resolve", "one_owner_per_capability", "capstone_integrates",
+CHECKS = ("root_register_consistent",
+          "acyclic", "dependencies_resolve", "one_owner_per_capability", "capstone_integrates",
           "proof_inputs_reachable")
 
 
@@ -126,7 +128,41 @@ def check_dag(dag: dict) -> tuple[bool, list[str]]:
                     f"proof_inputs_reachable: {n['id']} requires {unreachable} to prove itself, "
                     "but no node on its dependency path owns them")
 
+    failures.extend(_root_register(dag, nodes))
     return (not failures), failures
+
+
+def _root_register(dag: dict, nodes: list) -> list[str]:
+    """The artifact's own status register must agree with its nodes (DV-1, 2026-09-22).
+
+    Found live: `authority_policy.wave2a_completion_blocker` named a gap the amendment had
+    settled and no node carried; `authority_gaps[*]` still called it open; `statistics` counted
+    a node in the wrong completion class. Readers consult the register, not 46 nodes.
+    """
+    out: list[str] = []
+    referenced = {g for n in nodes for g in (n.get("authority_gap_refs") or [])}
+    # A dated `resolution_YYYY_MM_DD` record settles a gap; `resolution_actor` does not.
+    settled = {g["id"] for g in dag.get("authority_gaps", [])
+               if isinstance(g, dict) and any(re.match(r"resolution_\d{4}_\d{2}_\d{2}$", k) for k in g)}
+    for g in dag.get("authority_gaps", []):
+        if isinstance(g, dict) and g["id"] not in settled and g["id"] not in referenced:
+            out.append(f"root_register_consistent: authority_gaps {g['id']!r} is registered as open "
+                       "but no node carries it; either stale (record its resolution) or unpropagated")
+    blocker = (dag.get("authority_policy") or {}).get("wave2a_completion_blocker")
+    if blocker and blocker not in referenced:
+        out.append(f"root_register_consistent: wave2a_completion_blocker {blocker!r} is carried by no "
+                   "node; the register names a blocker the graph does not have")
+    stats = dag.get("statistics") or {}
+    status = [n.get("completion_status") for n in nodes]
+    expected = {"nodes": len(nodes),
+                "gap_blocked_nodes": status.count("GAP_BLOCKED"),
+                "proceeds_regardless": status.count("PROCEEDS_REGARDLESS"),
+                "separate_authority_only_nodes": status.count("SEPARATE_AUTHORITY_REQUIRED")}
+    for key, want in expected.items():
+        if key in stats and stats[key] != want:
+            out.append(f"root_register_consistent: statistics.{key} = {stats[key]} but the nodes "
+                       f"count {want}")
+    return out
 
 
 def main(argv: list[str]) -> int:

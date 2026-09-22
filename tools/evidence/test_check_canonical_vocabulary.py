@@ -208,3 +208,28 @@ def test_every_check_has_a_negative_control():
             unkillable.append(name)
     assert not unkillable, f"checks that could not be made to fail: {unkillable}"
     assert set(NEGATIVE_CONTROLS) == set(CHECKS)
+
+
+# --- Markdown renderings are active artifacts too (DV-2, 2026-09-22) ------------------------
+
+REAL_STALE_MARKDOWN_LANE_LINE = (
+    "- **failure:** BLOCKED, NEEDS_CLARIFICATION, SPLIT_RECOMMENDED, stale verdict or failed "
+    "attempt holds affected work and routes the appropriate decision/reassessment.")
+
+
+def test_the_wave2_markdown_renderings_are_active_artifacts():
+    from check_canonical_vocabulary import ACTIVE_ARTIFACTS
+    assert "docs/evidence/wave2-specified-requirements.md" in ACTIVE_ARTIFACTS
+    # The design-contracts prose companion is a Phase 9 rendering superseded by the JSON and
+    # carries a historical banner instead (DV-2); it is deliberately not active.
+
+
+def test_the_real_stale_markdown_lane_line_is_rejected():
+    """Proven red against the actual line the DV reviewer found at
+    wave2-specified-requirements.md:826 — bootstrap vocabulary presented as current READY-lane
+    failure handling, with no historical marker."""
+    texts = _clean()
+    texts["docs/evidence/wave2-specified-requirements.md"] = REAL_STALE_MARKDOWN_LANE_LINE
+    ok, failures = check_texts(texts)
+    assert not ok
+    assert any("agent_ready_dispositions_exact" in f for f in failures)

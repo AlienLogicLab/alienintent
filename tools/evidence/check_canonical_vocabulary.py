@@ -48,6 +48,7 @@ ACTIVE_ARTIFACTS = (
     "docs/decisions/2026-09-20-liveness-reconciliation.md",
     "docs/decisions/2026-09-21-py10-transport-split.md",
     "docs/evidence/wave2-specified-requirements.json",
+    "docs/evidence/wave2-specified-requirements.md",
     "docs/evidence/wave2-design-contracts.json",
     "docs/operations.md",
     "tools/evidence/check_agent_ready_set.py",

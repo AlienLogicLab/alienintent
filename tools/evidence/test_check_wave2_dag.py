@@ -103,6 +103,7 @@ def test_a_node_whose_proof_needs_a_capability_it_does_not_depend_on_is_rejected
 
 
 NEGATIVE_CONTROLS = {
+    "root_register_consistent": lambda d: d.update(authority_policy={"wave2a_completion_blocker": "GAP-NOBODY-CARRIES"}),
     "acyclic": lambda d: d["nodes"][0].__setitem__("depends_on", ["W2-03"]),
     "dependencies_resolve": lambda d: d["nodes"][1].__setitem__("depends_on", ["W2-99"]),
     "one_owner_per_capability": lambda d: d["planned_capabilities"].append("live_transport"),
@@ -123,3 +124,60 @@ def test_every_check_has_a_negative_control():
             unkillable.append(name)
     assert not unkillable, f"checks that could not be made to fail: {unkillable}"
     assert set(NEGATIVE_CONTROLS) == set(CHECKS)
+
+
+# --- root register consistency (DV-1, 2026-09-22) -----------------------------------------
+# Found live: the DAG's own status register (authority_policy.wave2a_completion_blocker,
+# authority_gaps[*].status, statistics.*) said a settled gap still blocked Wave 2A and reported
+# counts that no longer matched the nodes, while every node said otherwise. A checker that only
+# reads nodes stays green while the artifact contradicts itself.
+
+REPO = Path(__file__).resolve().parents[2]
+
+
+def _registered():
+    d = _dag()
+    for n in d["nodes"]:
+        n["completion_status"] = "PROCEEDS_REGARDLESS"
+        n["authority_gap_refs"] = []
+    d["nodes"][2]["completion_status"] = "GAP_BLOCKED"
+    d["nodes"][2]["authority_gap_refs"] = ["GAP-A"]
+    d["authority_gaps"] = [{"id": "GAP-A", "status": "RETURN_TO_SPECIFY"},
+                           {"id": "GAP-B", "status": "RETURN_TO_SPECIFY",
+                            "resolution_2026_09_22": {"status": "SETTLED_BY_AMENDMENT"}}]
+    d["authority_policy"] = {"wave2a_completion_blocker": "GAP-A"}
+    d["statistics"] = {"nodes": 3, "gap_blocked_nodes": 1, "proceeds_regardless": 2,
+                       "separate_authority_only_nodes": 0}
+    return d
+
+
+def test_a_consistent_root_register_passes():
+    ok, f = check_dag(_registered())
+    assert ok, f
+
+
+def test_statistics_that_do_not_match_the_nodes_are_rejected():
+    d = _registered(); d["statistics"]["proceeds_regardless"] = 1
+    ok, f = check_dag(d)
+    assert not ok and any("root_register_consistent" in x for x in f)
+
+
+def test_a_completion_blocker_no_node_references_is_rejected():
+    d = _registered(); d["authority_policy"]["wave2a_completion_blocker"] = "GAP-B"
+    ok, f = check_dag(d)
+    assert not ok and any("root_register_consistent" in x for x in f)
+
+
+def test_an_open_gap_no_node_references_is_rejected():
+    """A gap the register calls open but no node carries is either stale or unpropagated."""
+    d = _registered(); d["authority_gaps"][1].pop("resolution_2026_09_22")
+    ok, f = check_dag(d)
+    assert not ok and any("root_register_consistent" in x for x in f)
+
+
+def test_the_real_dag_root_register_is_consistent():
+    """Proven red against the live artifact before the DV-1 repair (stale blocker, stale
+    counts, R1-GAP-013-ALLOCATION open in the register and referenced by no node)."""
+    import json
+    ok, f = check_dag(json.loads((REPO / "docs/evidence/wave2-dependency-dag.json").read_text()))
+    assert ok, f

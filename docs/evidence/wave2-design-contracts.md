@@ -1,5 +1,13 @@
 # Wave 2 Design Contracts — POSTW1-DESIGN-009-R2
 
+> **Terminology note (2026-09-22).** This prose companion is the historical Phase 9 rendering of
+> `wave2-design-contracts.json` and is superseded by the JSON, which was revised on 2026-09-22
+> against the canonicalized Founder decisions. Any `BLOCKED` / `NEEDS_CLARIFICATION` /
+> `SPLIT_RECOMMENDED`, `Fake-agent`, `OWNER_ASSIGNMENT_HOLD`, `INITIAL_ONLY` or
+> `R1-GAP-013-ALLOCATION` wording below is bootstrap-assessor / pre-amendment history, not
+> current design. Read the JSON.
+
+
 The [JSON contract](wave2-design-contracts.json) governs this companion. These ten revised design candidates await independent repair review. The [Phase 10 verdict](wave2-design-verification.json) remains unchanged. Phase 8 specifications remain requirements authority; this repair creates or amends no Product Requirement. Four R1 authority gaps remain at SPECIFY; one R2 edge-direction question is recorded for the Founder. A structural checker pass does not close them or approve implementation.
 
 Original design baseline: `3ea566f211a13aa6ec36c2bb8f9a4703d31a1f02`. Repair baseline: `c08fa798a3d9dd37fda30f4d35c9aa18c728a287`. Only these two design files are revised locally; no commit, push, network, lifecycle/Project state change or worker contract change is authorized.
