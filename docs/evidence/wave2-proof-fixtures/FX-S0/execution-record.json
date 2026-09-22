@@ -1,0 +1,131 @@
+{
+ "record_kind": "ProofFixtureExecution",
+ "schema_version": "1",
+ "fixture_id": "FX-S0",
+ "biu_id": "WO-220101",
+ "issue_number": 69,
+ "plan": {
+  "path": "docs/evidence/wave2-proof-fixtures/FX-S0/fixture-plan.json",
+  "sha256": "sha256:3f5da08492589336d3feac3b3ccd832957c06480b8a20b57fd7f49f65b6f4085"
+ },
+ "manifest": {
+  "path": "docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json",
+  "sha256": "sha256:7c75584ee21da52d85ab2d3f722f1acdbaaa7956d591d62de2125f347cdde167"
+ },
+ "status": "EXECUTED",
+ "started_at": "2026-09-22T12:56:35Z",
+ "ended_at": "2026-09-22T12:58:05Z",
+ "source_revision": "37f09a617a9a2bc0421ee00b37c2f7d5fe8ca315",
+ "uncommitted_source_paths_at_run": [],
+ "platform": {
+  "system": "Linux-6.18.35.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+  "python": "3.12.3",
+  "git": "git version 2.43.0",
+  "unshare": "unshare from util-linux 2.39.3",
+  "unshare_rn_available": true
+ },
+ "commands": [
+  {
+   "id": "C1",
+   "purpose": "unit and composed tests for the substrate",
+   "command": "python3 -m pytest -q tests/invocation_runtime/test_scripted_worker.py tests/execution_coordination/test_local_work_management.py tests/composition/test_offline_proof.py",
+   "exit_status": 0,
+   "expected_exit": 0,
+   "ok": true,
+   "summary": "30 passed in 8.60s"
+  },
+  {
+   "id": "C2",
+   "purpose": "intact FX-S0 proof under enforced network denial",
+   "command": "unshare -rn python3 -m alienintent.composition.offline_proof --root <tmp>/fx-s0-h943dny2/intact --manifest <repo>/docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json --network-timeout 3",
+   "exit_status": 0,
+   "expected_exit": 0,
+   "ok": true,
+   "summary": "{\"fixture_id\": \"FX-S0\", \"verdict\": \"PASS\", \"exit_status\": 0, \"report\": \"<tmp>/fx-s0-h943dny2/intact/run-report.json\", \"hold_reasons\": []}",
+   "verdict": "PASS",
+   "network_denial": "ENFORCED"
+  },
+  {
+   "id": "C3",
+   "purpose": "fault: same proof without the network namespace",
+   "command": "python3 -m alienintent.composition.offline_proof --root <tmp>/fx-s0-h943dny2/c3 --manifest <repo>/docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json --network-timeout 3",
+   "exit_status": 2,
+   "expected_exit": 2,
+   "ok": true,
+   "summary": "{\"fixture_id\": \"FX-S0\", \"verdict\": \"HOLD\", \"exit_status\": 2, \"report\": \"<tmp>/fx-s0-h943dny2/c3/run-report.json\", \"hold_reasons\": [\"outbound network denial not established: {\\\"result\\\": \\\"timeout\\\", \\\"detail\\\": \\\"no answer within 3.0s; silence is not denial\\\"}\"]}",
+   "verdict": "HOLD",
+   "network_denial": "NOT_ESTABLISHED"
+  },
+  {
+   "id": "C4",
+   "purpose": "fault: a credential variable present in the proof environment",
+   "command": "unshare -rn python3 -m alienintent.composition.offline_proof --root <tmp>/fx-s0-h943dny2/c4 --manifest <repo>/docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json --network-timeout 3",
+   "exit_status": 2,
+   "expected_exit": 2,
+   "ok": true,
+   "summary": "{\"fixture_id\": \"FX-S0\", \"verdict\": \"HOLD\", \"exit_status\": 2, \"report\": \"<tmp>/fx-s0-h943dny2/c4/run-report.json\", \"hold_reasons\": [\"credential variables present in the proof environment: ['GITHUB_TOKEN']\"]}",
+   "verdict": "HOLD",
+   "credentials_present": [
+    "GITHUB_TOKEN"
+   ]
+  },
+  {
+   "id": "C5",
+   "purpose": "fault: a scripted step that attempts a provider call",
+   "command": "unshare -rn python3 -m alienintent.composition.offline_proof --root <tmp>/fx-s0-h943dny2/c5 --manifest <tmp>/fx-s0-h943dny2/provider-call-manifest.json --network-timeout 3",
+   "exit_status": 1,
+   "expected_exit": 1,
+   "ok": true,
+   "summary": "{\"fixture_id\": \"FX-S0\", \"verdict\": \"FAIL\", \"exit_status\": 1, \"report\": \"<tmp>/fx-s0-h943dny2/c5/run-report.json\", \"hold_reasons\": []}",
+   "verdict": "FAIL",
+   "provider_calls_observed": 1
+  },
+  {
+   "id": "C7a",
+   "purpose": "architecture fitness",
+   "command": "python3 tools/fitness/check_architecture.py --root src/alienintent --check all",
+   "exit_status": 0,
+   "expected_exit": 0,
+   "ok": true,
+   "summary": "PASS: all architecture fitness checks"
+  },
+  {
+   "id": "C7b",
+   "purpose": "full Python suite",
+   "command": "python3 -m pytest -q",
+   "exit_status": 0,
+   "expected_exit": 0,
+   "ok": true,
+   "summary": "374 passed in 38.62s"
+  },
+  {
+   "id": "C7c",
+   "purpose": "Node runtime, preflight, RAI and policy suites",
+   "command": "node scripts/check.mjs all",
+   "exit_status": 0,
+   "expected_exit": 0,
+   "ok": true,
+   "summary": "\u2139 duration_ms 22.832865"
+  }
+ ],
+ "holds": [],
+ "artifacts": {
+  "docs/evidence/wave2-proof-fixtures/FX-S0/fixture-plan.json": "sha256:3f5da08492589336d3feac3b3ccd832957c06480b8a20b57fd7f49f65b6f4085",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json": "sha256:7c75584ee21da52d85ab2d3f722f1acdbaaa7956d591d62de2125f347cdde167",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/negative-controls/C3-run-report.json": "sha256:b9057445bc3afd262ac9f9b61ce9794a0ddb5155e5feaae65af9d634b250a15b",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/negative-controls/C4-run-report.json": "sha256:df23e920901f006da72d1c5d28c61a38a0da8518b40aecdfd61d0e58293277b2",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/negative-controls/C5-run-report.json": "sha256:2b966d3023a5dcb61fe9aba8a6fdd0785e3ff54d6c08519270a886d534d2295c",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/offline-suite.json": "sha256:a8c10afb61cbe7b161a4a899ea080cb8b3e71dc30a38bdc1a3cc30e45dc6cbf7",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/proven-red.json": "sha256:8acea71a0a49c09fd36742c357a2cdba9e42765894b4a3b2db86ee258f811de5",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/raw/journal.jsonl": "sha256:8d58ea2e5fced7ea1837fff3e374e7d11d8908cb3358f389f236b4f4e48d801c",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/raw/ready-snapshot.json": "sha256:12ccdd8ceb150b6e8109bc0181ab8e64ce4b014cd1844d96e839c1a56045f280",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/raw/receipts.jsonl": "sha256:8d609f016d2e56960f49b9a1f94c708592d0851e61017d1027db99a323e2220e",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/run-report.json": "sha256:d9c32de0d756fd365189d340085b10c674e1fc24bc5a1c1947b94ab9c2255803",
+  "docs/evidence/wave2-proof-fixtures/FX-S0/trajectory.jsonl": "sha256:22dbf12f37ff3b8c9bf9098bfa290fd8e404d03beafae5c8e4fb0ce733b5fb84"
+ },
+ "not_claimed": [
+  "multi-role producer/verifier/closure proof",
+  "live proof",
+  "any scenario beyond the single seeded success"
+ ]
+}

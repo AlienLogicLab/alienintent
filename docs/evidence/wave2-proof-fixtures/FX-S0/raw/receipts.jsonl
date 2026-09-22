@@ -1,0 +1,2 @@
+{"at": 1758542400.0, "contract_digest": "sha256:d456cc8932941787d62e81913672caf11d8f971a2ee9f8236d6aebbd36e79e2b", "identity": "S0-PROBE", "readiness_digest": "sha256:d456cc8932941787d62e81913672caf11d8f971a2ee9f8236d6aebbd36e79e2b", "receipt": "release-proposed", "sequence": 0}
+{"at": 1758542400.0, "identity": "S0-PROBE", "receipt": "execution-state-projected", "revision": 4, "sequence": 1, "state": "DONE"}

@@ -1,0 +1,312 @@
+{
+ "record_kind": "ProofFixturePlan",
+ "schema_version": "1",
+ "fixture_id": "FX-S0",
+ "owner_node": "S0",
+ "biu_id": "WO-220101",
+ "issue_number": 69,
+ "pinned_at": "2026-09-22T12:40:39Z",
+ "pinned_by": "PRODUCER Morty, invocation AlienLogicLab/alienintent#69:PRODUCER:f97f8a53-864d-4b5f-b43e-7b3d2038b505",
+ "status": "PINNED_NOT_EXECUTED",
+ "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+ "environment": "Disposable local root under a temporary directory; outbound network denied by an unprivileged user+network namespace (`unshare -rn`); process environment stated in full (`env -i`); no live action, no provider, no credential.",
+ "authority": {
+  "contract": {
+   "path": "docs/work-units/wave2/WO-220101.md",
+   "sha256": "ad4628afff366ef63f6bd089d4ade8bf505d8cc80eeb464d44f1d26589f9a41c",
+   "committed_at": "4feb9ae2a3073410eaa28abdae1c616752c4db83"
+  },
+  "candidate_contract": {
+   "ref": "docs/evidence/wave2-candidate-bius.json#/bius/0",
+   "sha256": "b96f8feadacf4cd2ef2ff977cf6dbccb094ffcb70a03767e75780c77991b6360"
+  },
+  "execution_packet": {
+   "path": "docs/evidence/wave2-execution-packets/WO-220101.packet.json",
+   "sha256": "db88b4dc0e66b3e1cc0157fd2d5c135d17998ac0a0e0ada3ded4d7996f6a3ac4"
+  },
+  "design_contract": "docs/evidence/wave2-design-contracts.json#/contracts/6",
+  "dag_node": "docs/evidence/wave2-dependency-dag.json#/nodes/0",
+  "release": {
+   "record": "docs/work-units/wave2/WO-220101.release.md",
+   "authority": "SWF-35",
+   "baseline": "ade44cb93f3f33a570e1cf1b4bda500a79cd95bb"
+  },
+  "requirements": [
+   "SF-REQ-039",
+   "SF-REQ-014"
+  ]
+ },
+ "node_predicate": "Real temporary SQLite; disposable local bare Git remote, publication/fetch into a fresh verifier worktree, local work-management and provider transport, injected clock/IDs, durable scripted worker journal, credentials absent and enforced denied outbound network with attempted-network refusal. Count zero provider calls. Run existing kernel unchanged and report success-collapse limitation; no scripted lifecycle transitions.",
+ "kernel_unchanged_pin": {
+  "definition": "these blobs at the candidate must equal the blobs at the release baseline; `git diff --quiet <baseline> -- <paths>` exits 0",
+  "baseline": "ade44cb93f3f33a570e1cf1b4bda500a79cd95bb",
+  "blobs": {
+   "src/alienintent/execution_coordination/application/factory_coordinator.py": "7af96dcd93b519c95100299b69b4b7db30d6cb6e",
+   "src/alienintent/execution_coordination/domain/lifecycle.py": "6b31cb4e77383d2f7caaf22a022c9cb80ad1812f",
+   "src/alienintent/execution_coordination/application/local_artifact_custody.py": "b107d112696c047115861f5af4ca449cff3671c7",
+   "src/alienintent/execution_coordination/adapters/sqlite_store.py": "49704060f6d19591dcbca1eba00011b496329f93",
+   "src/alienintent/invocation_runtime/application/real_worker.py": "cece9e2d5f12de7865e59155f73f0d240189f70f",
+   "src/alienintent/invocation_runtime/adapters/git_source_control.py": "ee0e1bf72895d6b0cf533c483f412858f9e5569b",
+   "src/alienintent/invocation_runtime/adapters/git_worktree.py": "63bbee0e181bea9df1488fca586b85c8d98981e6"
+  }
+ },
+ "substituted_boundaries": [
+  {
+   "boundary": "worker provider transport",
+   "production": "CliWorkerProvider launching a provider CLI",
+   "substitute": "ScriptedWorkerProcess (invocation_runtime/adapters/scripted_worker.py) behind the unchanged RealWorkerProvider; deterministic protocol behaviour only, no model",
+   "port": "invocation_runtime.ports.worker_process.WorkerProcess"
+  },
+  {
+   "boundary": "worker outcome journal",
+   "production": "RealWorkerProvider in-memory outcome map",
+   "substitute": "ScriptedWorkerProvider wrapping RealWorkerProvider with a durable JSONL journal keyed by invocation ID",
+   "port": "execution_coordination.ports.worker_provider.WorkerProvider"
+  },
+  {
+   "boundary": "work management transport",
+   "production": "GitHubProjectsWorkManagement",
+   "substitute": "LocalWorkManagement (execution_coordination/adapters/local_work_management.py) with durable receipts under the fixture root",
+   "port": "execution_coordination.ports.work_management.WorkManagement"
+  },
+  {
+   "boundary": "source-control remote",
+   "production": "GitHub repository over HTTPS",
+   "substitute": "disposable local bare repository `<root>/remote.git` addressed by filesystem path",
+   "port": "none substituted; GitSourceControl and GitWorktreeAdapter run unchanged"
+  },
+  {
+   "boundary": "decision notification",
+   "production": "Work Management projection",
+   "substitute": "NoOpDecisionNotifier (existing OfflineProfile behaviour)",
+   "port": "control_plane.ports.decision_notifier.DecisionNotifier"
+  }
+ ],
+ "not_substituted": [
+  "SQLiteOperationalStore",
+  "FactoryCoordinator",
+  "lifecycle domain",
+  "release admission",
+  "RealWorkerProvider",
+  "GitSourceControl",
+  "GitWorktreeAdapter",
+  "LocalArtifactStore / verify_in_fresh_process",
+  "OfflineProfile composition"
+ ],
+ "inputs": {
+  "manifest": "docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json",
+  "manifest_notes": "one seeded item S0-PROBE with script [\"success\"]; fixed injected clock 1758542400; seed fx-s0-seed-1; baseline README only",
+  "environment_for_the_proof_process": {
+   "PATH": "inherited",
+   "HOME": "<root>/home (fixture-contained, empty)",
+   "LANG": "C.UTF-8",
+   "PYTHONPATH": "<repo>/src",
+   "everything_else": "absent (env -i)"
+  }
+ },
+ "commands": [
+  {
+   "id": "C1",
+   "purpose": "unit and composed tests for the substrate",
+   "command": "python3 -m pytest -q tests/invocation_runtime/test_scripted_worker.py tests/execution_coordination/test_local_work_management.py tests/composition/test_offline_proof.py",
+   "expected_exit": 0
+  },
+  {
+   "id": "C2",
+   "purpose": "intact FX-S0 proof under enforced network denial",
+   "command": "unshare -rn env -i PATH=\"$PATH\" HOME=<root>/home LANG=C.UTF-8 PYTHONPATH=<repo>/src python3 -m alienintent.composition.offline_proof --root <root> --manifest docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json --report <root>/run-report.json --trajectory <root>/trajectory.jsonl",
+   "expected_exit": 0,
+   "expected_report": {
+    "verdict": "PASS",
+    "network_denial.status": "ENFORCED",
+    "credentials_present": [],
+    "provider_calls_observed.value": 0,
+    "lifecycle_terminal_stage": "DONE"
+   }
+  },
+  {
+   "id": "C3",
+   "purpose": "fault: same proof without the network namespace",
+   "command": "env -i ... python3 -m alienintent.composition.offline_proof ... (no unshare)",
+   "expected_exit": 2,
+   "expected_report": {
+    "verdict": "HOLD",
+    "network_denial.status": "NOT_ESTABLISHED"
+   }
+  },
+  {
+   "id": "C4",
+   "purpose": "fault: a credential variable present in the proof environment",
+   "command": "unshare -rn env -i ... GITHUB_TOKEN=fx-s0-sentinel python3 -m alienintent.composition.offline_proof ...",
+   "expected_exit": 2,
+   "expected_report": {
+    "verdict": "HOLD",
+    "credentials_present": [
+     "GITHUB_TOKEN"
+    ]
+   }
+  },
+  {
+   "id": "C5",
+   "purpose": "fault: a scripted step that attempts a provider call",
+   "command": "unshare -rn env -i ... python3 -m alienintent.composition.offline_proof --manifest <manifest with script [\"provider-call\"]> ...",
+   "expected_exit": 1,
+   "expected_report": {
+    "verdict": "FAIL",
+    "provider_calls_observed.value": 1
+   }
+  },
+  {
+   "id": "C6",
+   "purpose": "fault: a different injected clock changes the candidate revision; the same clock reproduces it in an isolated root",
+   "command": "pytest test in C1 (test_offline_proof.py::test_the_candidate_revision_is_determined_by_manifest_and_injected_clock)",
+   "expected_exit": 0
+  },
+  {
+   "id": "C7",
+   "purpose": "architecture fitness, full Python suite, Node suites",
+   "command": "python3 tools/fitness/check_architecture.py --root src/alienintent --check all && python3 -m pytest -q && node scripts/check.mjs all",
+   "expected_exit": 0
+  },
+  {
+   "id": "C8",
+   "purpose": "retain evidence: run C1-C5 and write the retained artifacts",
+   "command": "python3 tools/evidence/fx_s0_evidence.py --out docs/evidence/wave2-proof-fixtures/FX-S0",
+   "expected_exit": 0
+  }
+ ],
+ "predicates": [
+  {
+   "id": "P1",
+   "name": "real temporary SQLite",
+   "decidability": "mechanical",
+   "controlled_inputs": "manifest; fresh root",
+   "expected_observable": "<root>/state.sqlite exists; operational_schema.version == 2; aggregate factory:S0-PROBE stage DONE with candidate.independent_read_back_proven true",
+   "evidence_field": "checks[P1]",
+   "negative_control": "a fresh root has no aggregate (KeyError) before start"
+  },
+  {
+   "id": "P2",
+   "name": "disposable local bare Git remote",
+   "decidability": "mechanical",
+   "controlled_inputs": "manifest baseline files",
+   "expected_observable": "<root>/remote.git is bare; refs/heads/main advertises the baseline commit; refs/heads/candidate/<ref_safe(correlation)> advertises the candidate revision",
+   "evidence_field": "checks[P2]",
+   "negative_control": "before start the candidate branch is not advertised"
+  },
+  {
+   "id": "P3",
+   "name": "publication and fetch into a fresh verifier worktree",
+   "decidability": "mechanical",
+   "controlled_inputs": "candidate revision",
+   "expected_observable": "<root>/producer-read-back/producer-<correlation>/.git exists (producer read-back clone) and <root>/verifier-evidence/<revision>/.git exists (kernel custody clone); both resolve <revision>^{commit} == revision",
+   "evidence_field": "checks[P3]",
+   "negative_control": "existing PY-06 proof: unpublished or mismatched branch is CandidateUnavailable (tests/invocation_runtime/test_runtime.py)"
+  },
+  {
+   "id": "P4",
+   "name": "local work-management transport",
+   "decidability": "mechanical",
+   "controlled_inputs": "seeded items",
+   "expected_observable": "<root>/work-management/receipts.jsonl holds release-proposed then execution-state-projected DONE for S0-PROBE, each read back after append; ready-snapshot.json digest matches the seeded items",
+   "evidence_field": "checks[P4]",
+   "negative_control": "test: a reopened root with a different seed is refused (WorkRejected)"
+  },
+  {
+   "id": "P5",
+   "name": "local provider transport",
+   "decidability": "mechanical",
+   "controlled_inputs": "script",
+   "expected_observable": "the WorkerProcess bound to RealWorkerProvider is ScriptedWorkerProcess with provider 'scripted'; no executable is configured",
+   "evidence_field": "checks[P5]",
+   "negative_control": "C5"
+  },
+  {
+   "id": "P6",
+   "name": "injected clock and IDs",
+   "decidability": "mechanical",
+   "controlled_inputs": "clock epoch; seed",
+   "expected_observable": "every journal/receipt timestamp equals the epoch; candidate commit author and committer dates equal the epoch; the same manifest in a second isolated root yields the same candidate revision; a different epoch yields a different revision",
+   "evidence_field": "checks[P6]",
+   "negative_control": "C6"
+  },
+  {
+   "id": "P7",
+   "name": "durable scripted worker journal",
+   "decidability": "mechanical",
+   "controlled_inputs": "journal path",
+   "expected_observable": "<root>/worker-journal/journal.jsonl has invocation-started and invocation-outcome records for launch:S0-PROBE:0; a new provider over the same root reads back the identical outcome; a fresh root reads back None",
+   "evidence_field": "checks[P7]",
+   "negative_control": "test: unknown invocation reads back None"
+  },
+  {
+   "id": "P8",
+   "name": "credentials absent",
+   "decidability": "mechanical",
+   "controlled_inputs": "process environment",
+   "expected_observable": "no environment variable matching the credential denylist (TOKEN|SECRET|PASSWORD|PASSWD|API_KEY|APIKEY|CREDENTIAL|PRIVATE_KEY, GIT_CONFIG_COUNT, GIT_ASKPASS, SSH_AUTH_SOCK) is present; no secret provider is constructed",
+   "evidence_field": "credentials_present",
+   "negative_control": "C4"
+  },
+  {
+   "id": "P9",
+   "name": "enforced denied outbound network with attempted-network refusal",
+   "decidability": "mechanical, platform-sensitive",
+   "controlled_inputs": "TEST-NET addresses 192.0.2.1:9 and https://198.51.100.1/denied.git",
+   "expected_observable": "socket connect raises OSError with errno in {ENETUNREACH, EPERM, EACCES}; git ls-remote exits nonzero; the proof process net namespace inode differs from the launching test's",
+   "evidence_field": "network_denial",
+   "negative_control": "C3; when the platform cannot create the namespace the status is NOT_ESTABLISHED and the verdict HOLD, never PASS"
+  },
+  {
+   "id": "P10",
+   "name": "zero provider calls",
+   "decidability": "mechanical",
+   "controlled_inputs": "journal",
+   "expected_observable": "sum of provider_calls over journal records == 0, definition: attempts by the worker process adapter to execute a provider executable",
+   "evidence_field": "provider_calls_observed",
+   "negative_control": "C5"
+  },
+  {
+   "id": "P11",
+   "name": "existing kernel unchanged",
+   "decidability": "mechanical",
+   "controlled_inputs": "kernel_paths; kernel_baseline",
+   "expected_observable": "`git diff --quiet <baseline> -- <kernel_paths>` exits 0 in the source checkout and the blob ids equal kernel_unchanged_pin.blobs",
+   "evidence_field": "kernel_unchanged",
+   "negative_control": "any kernel edit turns the check FAIL"
+  },
+  {
+   "id": "P12",
+   "name": "success-collapse limitation reported",
+   "decidability": "mechanical + declared",
+   "controlled_inputs": "kernel behaviour",
+   "expected_observable": "the store shows one correlation launch:S0-PROBE:0 carrying the terminal DONE state; no VERIFY-stage projection receipt exists; the report states independent_verifier_invocation NOT_ESTABLISHED and live_proof NOT_ESTABLISHED",
+   "evidence_field": "success_collapse_limitation",
+   "negative_control": "a report lacking the limitation fields is a FAIL of the report check"
+  },
+  {
+   "id": "P13",
+   "name": "no scripted lifecycle transitions",
+   "decidability": "mechanical",
+   "controlled_inputs": "receipts; journal",
+   "expected_observable": "every lifecycle receipt is emitted by LocalWorkManagement when FactoryCoordinator projects; the journal carries no lifecycle stage field; ScriptedWorkerProcess and ScriptedWorkerProvider hold no OperationalStore reference",
+   "evidence_field": "checks[P13]",
+   "negative_control": "test asserts the scripted adapters expose no store attribute and the receipts sequence equals the kernel's projections"
+  }
+ ],
+ "evidence_schema": {
+  "run_report": "quality-evidence-v1 document (schema_version 1.0, biu_id WO-220101, derived_from trajectory path, evidence_refs) extended with: fixture_id, verdict (PASS|FAIL|HOLD), hold_reasons, checks[] (id,status,expected,observed), substituted_boundaries, live_proof, network_denial, credentials_present, provider_calls_observed {value,definition}, kernel_unchanged, success_collapse_limitation, lifecycle_terminal_stage, candidate {branch,revision,locator}, injected_clock, recorder, recorded_at; token_usage and cost are NOT_APPLICABLE (no provider ran) never zero",
+  "trajectory": "execution-trajectory-v1 JSONL, biu_id S0-PROBE for lifecycle facts and WO-220101 for fixture-level facts, event types BIU_RELEASED, INVOCATION_STARTED, CANDIDATE_PUBLISHED, BIU_DONE plus ISOLATION_OBSERVED (network/credential observations) and SUCCESS_COLLAPSE_OBSERVED (new, documented)",
+  "proven_red": "same shape as docs/evidence/py10/proven-red.json: {ok, checks[{check, ok, detail}]} where each check names the intact command/exit and the fault command/exit",
+  "offline_suite": "same shape as docs/evidence/py10/offline-suite.json",
+  "extensions_documented_in": "docs/evidence/schema/v1-extensions-from-FX-S0.md",
+  "retained_under": "docs/evidence/wave2-proof-fixtures/FX-S0/"
+ },
+ "holds_policy": "A measurement that cannot be taken is recorded as HOLD with its reason; it is never recorded as zero or PASS. Platform-sensitive network-denial evidence that cannot be obtained routes to HumanDecisionRequired, not local redesign.",
+ "not_claimed": [
+  "multi-role producer/verifier/closure proof (K1/K2/K3/O)",
+  "rework, rejection, restart-after-crash, duplicate and delayed outcome scenarios",
+  "live GitHub, provider or bootstrap proof",
+  "any lifecycle transition performed by a script"
+ ]
+}

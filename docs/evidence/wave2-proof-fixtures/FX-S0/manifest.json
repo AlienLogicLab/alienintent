@@ -1,0 +1,103 @@
+{
+ "baseline_files": {
+  "README.md": "FX-S0 disposable baseline\n"
+ },
+ "clock": {
+  "definition": "every substrate clock read returns exactly this value (2026-09-22T12:00:00Z); git author/committer dates, journal and receipt timestamps derive from it",
+  "epoch_seconds": 1758542400
+ },
+ "fixture_id": "FX-S0",
+ "kernel_baseline": "ade44cb93f3f33a570e1cf1b4bda500a79cd95bb",
+ "kernel_paths": [
+  "src/alienintent/execution_coordination/application/factory_coordinator.py",
+  "src/alienintent/execution_coordination/domain/lifecycle.py",
+  "src/alienintent/execution_coordination/application/local_artifact_custody.py",
+  "src/alienintent/execution_coordination/adapters/sqlite_store.py",
+  "src/alienintent/invocation_runtime/application/real_worker.py",
+  "src/alienintent/invocation_runtime/adapters/git_source_control.py",
+  "src/alienintent/invocation_runtime/adapters/git_worktree.py"
+ ],
+ "profile": "fx-s0",
+ "record_kind": "OfflineProofManifest",
+ "repository": "local:fx-s0",
+ "schema_version": "1",
+ "seed": "fx-s0-seed-1",
+ "work_items": [
+  {
+   "contract": {
+    "authority_issuer": "FX-S0 proof fixture",
+    "authority_references": [
+     "WO-220101",
+     "SWF-35"
+    ],
+    "authorized_scope": [
+     "docs/S0-PROBE.md"
+    ],
+    "baselines": [
+     "main"
+    ],
+    "budget_policy": {
+     "cancellation_limit": 1,
+     "concurrency_limit": 1,
+     "hard_required_dimensions": [
+      "attempts",
+      "retries"
+     ],
+     "hard_wall_clock_seconds": 60,
+     "maximum_attempts": 1,
+     "retry_limit": 0
+    },
+    "candidate_custody_requirements": [
+     "published source revision, independently read back"
+    ],
+    "completion_criteria": [
+     "docs/S0-PROBE.md records the invocation"
+    ],
+    "dependencies": [],
+    "excluded_scope": [
+     "every other path"
+    ],
+    "fixed_decisions": [
+     "S0 current-interface substrate only"
+    ],
+    "identity": "S0-PROBE",
+    "intent": "prove the FX-S0 local substrate carries one seeded item through the existing kernel unchanged",
+    "non_goals": [
+     "anything outside the named note"
+    ],
+    "release_policy": "automatic-on",
+    "required_capabilities": [
+     "python"
+    ],
+    "required_closure_actions": [
+     "candidate-published"
+    ],
+    "required_evidence": [
+     "artifact-verified"
+    ],
+    "retry_policy": "no-retry",
+    "satisfied_requirement_ids": [
+     "SF-REQ-039",
+     "SF-REQ-014"
+    ],
+    "stop_escalation_conditions": [
+     "authority outside the profile"
+    ],
+    "target_repositories": [
+     "local:fx-s0"
+    ],
+    "verification_obligations": [
+     "candidate read back from a fresh clone"
+    ],
+    "version": "1"
+   },
+   "dependencies": [],
+   "identity": "S0-PROBE",
+   "note_path": "docs/S0-PROBE.md",
+   "priority": 1,
+   "script": [
+    "success"
+   ]
+  }
+ ]
+}

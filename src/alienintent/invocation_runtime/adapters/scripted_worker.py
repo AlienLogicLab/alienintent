@@ -1,0 +1,234 @@
+"""Deterministic scripted worker transport for the offline proof substrate (S0).
+
+This substitutes exactly one boundary: the provider process behind the
+production Worker Port. ``RealWorkerProvider``, ``GitSourceControl`` and
+``GitWorktreeAdapter`` run unchanged above it, so a scripted "success" is a real
+commit in a real worktree that the production path publishes to the fixture's
+remote and reads back from a fresh clone. The script drives external outcomes
+only: it holds no operational store, performs no lifecycle transition, runs no
+model, spends no token and is handed no credential.
+
+Every outcome is journaled durably by invocation identity before it is reported,
+so a restart reopens the same journal and reads back the same truth.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+import subprocess
+from typing import Callable, Mapping, Sequence
+
+from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
+from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
+from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.invocation_runtime.domain.runtime import BudgetRecord, InvocationRole, JournalUnreadable, ProcessResult, ProviderCapabilities, ScriptRejected
+from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
+
+SCRIPTED_PROVIDER = "scripted"
+SCRIPTED_DIMENSIONS = frozenset({"wall-clock", "attempts", "retries", "concurrency", "cancellation"})
+SCRIPTED_STEPS = frozenset({"success", "failure", "timeout", "authority-block", "provider-call"})
+PROVIDER_NOT_CONFIGURED = "alienintent-provider-not-configured"
+
+
+
+def encode_candidate(candidate: CandidateRef | None) -> dict[str, object] | None:
+    if candidate is None:
+        return None
+    return {
+        "kind": str(candidate.kind), "identity": candidate.identity, "content_digest": candidate.content_digest,
+        "locator": candidate.locator, "provenance": candidate.provenance,
+        "independent_read_back_proven": candidate.independent_read_back_proven,
+    }
+
+
+def decode_candidate(record: Mapping[str, object] | None) -> CandidateRef | None:
+    if record is None:
+        return None
+    return CandidateRef(
+        CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]),
+        str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"]),
+    )
+
+
+def work_identity_of(invocation_id: str) -> str:
+    """The work item an invocation belongs to.
+
+    The coordinator correlates an invocation as ``launch:<work>:<version>``; any
+    other identity is taken to name the work item directly.
+    """
+    if invocation_id.startswith("launch:") and invocation_id.count(":") >= 2:
+        _, identity, _ = invocation_id.rsplit(":", 2)
+        return identity
+    return invocation_id
+
+
+def journal_records(path: Path) -> tuple[dict[str, object], ...]:
+    """Every record of the durable JSONL worker journal at ``path``."""
+    if not path.exists():
+        return ()
+    return tuple(json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+
+
+def journal_append(path: Path, clock: Callable[[], float], record: Mapping[str, object]) -> dict[str, object]:
+    """Append one record and read it back before reporting it; the journal is append-only."""
+    path.parent.mkdir(parents=True, exist_ok=True)
+    entry = dict(record) | {"sequence": len(journal_records(path)), "at": clock()}
+    line = json.dumps(entry, sort_keys=True)
+    with path.open("a", encoding="utf-8") as sink:
+        sink.write(line + "\n")
+        sink.flush()
+        os.fsync(sink.fileno())
+    read_back = journal_records(path)
+    if not read_back or read_back[-1] != json.loads(line):
+        raise JournalUnreadable("journal append did not read back identically")
+    return entry
+
+
+def journal_outcome(path: Path, correlation_id: str) -> WorkerOutcome | None:
+    """The durably recorded outcome of an invocation, or None when none was recorded."""
+    for entry in reversed(journal_records(path)):
+        if entry.get("event") == "invocation-outcome" and entry.get("correlation_id") == correlation_id:
+            candidate = entry.get("candidate")
+            return WorkerOutcome(str(entry["kind"]), decode_candidate(candidate if isinstance(candidate, dict) else None))
+    return None
+
+
+def journal_provider_calls(path: Path) -> int:
+    """Attempts by the process adapter to execute a provider executable; an observed count, never assumed."""
+    return sum(int(entry.get("provider_calls", 0)) for entry in journal_records(path) if entry.get("event") == "process-run")
+
+
+class ScriptedWorkerProcess(WorkerProcess):
+    """Deterministic process behind the production Worker Port.
+
+    ``run`` consumes the next scripted step for the invocation's work item. A
+    ``success`` step commits the pinned note into the allocated worktree with
+    the injected clock as author and committer date, so the same script and
+    clock reproduce the same revision. A ``provider-call`` step *attempts* to
+    execute a provider executable that is not configured; it exists so the
+    zero-provider-call counter can be shown to move.
+    """
+
+    def __init__(
+        self,
+        script: Mapping[str, Sequence[str]],
+        notes: Mapping[str, str],
+        clock: Callable[[], float],
+        journal_path: Path,
+        environment: Mapping[str, str],
+        *,
+        provider_executable: str = PROVIDER_NOT_CONFIGURED,
+    ) -> None:
+        unknown = sorted({step for steps in script.values() for step in steps} - SCRIPTED_STEPS)
+        if unknown:
+            raise ScriptRejected(f"unknown scripted step: {unknown[0]}")
+        self.capabilities = ProviderCapabilities(SCRIPTED_PROVIDER, SCRIPTED_DIMENSIONS)
+        self._remaining = {identity: list(steps) for identity, steps in script.items()}
+        self._notes = dict(notes)
+        self._clock, self.journal_path = clock, journal_path
+        self._environment = dict(environment)
+        self._provider_executable = provider_executable
+        self._attempts: dict[str, int] = {}
+        self._completed: set[str] = set()
+        self.provider_calls = 0
+
+    def run(self, invocation_id: str, role: InvocationRole, workspace: Path, wall_clock_seconds: float) -> ProcessResult:
+        work = work_identity_of(invocation_id)
+        steps = self._remaining.get(work)
+        if not steps:
+            raise ScriptRejected(f"no scripted step remains for {work}")
+        step = steps.pop(0)
+        attempt = self._attempts[work] = self._attempts.get(work, 0) + 1
+        provider_calls = 0
+        if step == "success":
+            self._commit(work, invocation_id, workspace)
+            result = ProcessResult("success", 0, True, BudgetRecord.unknown())
+        elif step == "provider-call":
+            provider_calls = 1
+            self.provider_calls += 1
+            result = ProcessResult("failure", self._attempt_provider(workspace), True, BudgetRecord.unknown())
+        elif step == "failure":
+            result = ProcessResult("failure", 1, True, BudgetRecord.unknown())
+        elif step == "timeout":
+            result = ProcessResult("timeout", None, True, BudgetRecord.unknown())
+        else:
+            result = ProcessResult("authority-block", 0, True, BudgetRecord.unknown())
+        self._completed.add(invocation_id)
+        journal_append(self.journal_path, self._clock, {
+            "event": "process-run", "invocation_id": invocation_id, "work_identity": work, "role": str(role),
+            "attempt": attempt, "step": step, "result": result.kind, "exit_status": result.exit_status,
+            "provider_calls": provider_calls, "wall_clock_seconds": wall_clock_seconds,
+            "token_cost": "UNKNOWN", "monetary_cost": "UNKNOWN",
+        })
+        return result
+
+    def cancel(self, invocation_id: str, reason: str) -> ProcessResult:
+        quiescent = invocation_id in self._completed
+        journal_append(self.journal_path, self._clock, {"event": "process-cancel", "invocation_id": invocation_id, "reason": reason, "quiescent": quiescent})
+        return ProcessResult("already-finished" if quiescent else "unresolved-recovery", None, quiescent, BudgetRecord.unknown())
+
+    def _git(self, *args: str, cwd: Path) -> None:
+        epoch = int(self._clock())
+        environment = self._environment | {"GIT_AUTHOR_DATE": f"{epoch} +0000", "GIT_COMMITTER_DATE": f"{epoch} +0000"}
+        result = subprocess.run(["git", *args], cwd=cwd, env=environment, capture_output=True, text=True, check=False)
+        if result.returncode:
+            raise ScriptRejected(f"scripted git step failed: {result.stderr.strip()[:200]}")
+
+    def _commit(self, work: str, invocation_id: str, workspace: Path) -> None:
+        note = workspace / self._notes.get(work, f"docs/{work}.md")
+        note.parent.mkdir(parents=True, exist_ok=True)
+        note.write_text(f"{work} produced by the scripted worker under {invocation_id}\n", encoding="utf-8")
+        self._git("add", "-A", cwd=workspace)
+        self._git("commit", "-q", "-m", f"{work}: scripted candidate", cwd=workspace)
+
+    def _attempt_provider(self, workspace: Path) -> int:
+        try:
+            completed = subprocess.run([self._provider_executable, "--version"], cwd=workspace, env=self._environment, capture_output=True, text=True, timeout=5, check=False)
+        except FileNotFoundError:
+            return 127
+        except subprocess.TimeoutExpired:
+            return 124
+        return completed.returncode
+
+
+class ScriptedWorkerProvider(WorkerProvider):
+    """The production worker provider with a durable journal at its boundary.
+
+    ``start`` journals the invocation before and after the wrapped provider
+    runs it; ``read_back`` answers only from the journal, so a process that died
+    between the two records reads back as unresolved rather than as any outcome.
+    """
+
+    def __init__(self, inner: WorkerProvider, journal_path: Path, clock: Callable[[], float]) -> None:
+        self._inner, self.journal_path, self._clock = inner, journal_path, clock
+
+    def _append(self, record: Mapping[str, object]) -> dict[str, object]:
+        return journal_append(self.journal_path, self._clock, record)
+
+    def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
+        self._append({
+            "event": "invocation-started", "correlation_id": invocation.correlation_id, "work_identity": invocation.work_identity,
+            "role": str(InvocationRole.PRODUCER), "contract_digest": None if context is None else context.content_digest,
+        })
+        outcome = self._inner.start(invocation, context, grants, budget)
+        self._append({
+            "event": "invocation-outcome", "correlation_id": invocation.correlation_id, "work_identity": invocation.work_identity,
+            "kind": outcome.kind, "candidate": encode_candidate(outcome.candidate),
+        })
+        return outcome
+
+    def read_back(self, invocation: WorkerInvocation) -> WorkerOutcome | None:
+        return journal_outcome(self.journal_path, invocation.correlation_id)
+
+    def cancel(self, invocation_id: str, reason: str) -> object:
+        result = self._inner.cancel(invocation_id, reason)
+        self._append({"event": "invocation-cancel", "correlation_id": invocation_id, "reason": reason, "result": getattr(result, "kind", str(result))})
+        return result
+
+    def finalize(self, invocation: WorkerInvocation, retain: bool) -> None:
+        finalize = getattr(self._inner, "finalize", None)
+        if callable(finalize):
+            finalize(invocation, retain)
+        self._append({"event": "workspace-finalized", "correlation_id": invocation.correlation_id, "retained": retain})

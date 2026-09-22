@@ -23,6 +23,14 @@ class CandidateUnavailable(ValueError):
     pass
 
 
+class ScriptRejected(ValueError):
+    """A scripted worker step is not one the deterministic adapter can perform."""
+
+
+class JournalUnreadable(RuntimeError):
+    """An appended worker journal record could not be read back identically."""
+
+
 @dataclass(frozen=True)
 class VerifierIndependence:
     producer_invocation_id: str
