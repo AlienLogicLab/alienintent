@@ -1,5 +1,61 @@
 # Codex-primary activation — routing landed, live activation blocked
 
+## Recovery addendum — 2026-09-22T16:29Z
+
+The historical blocked record below is preserved. Founder subsequently authorized
+targeted termination after identity/ownership validation, required a stale-tree
+absence check, and authorized continuation from ACCEPT only.
+
+Recovered local receipt `/tmp/py10-orphan-termination-evidence.json` records
+SIGTERM at 16:19:24Z to PID 933588, start ticks 20643711, exact pytest argv and
+`/tmp/py10-proven-red-9ths3bmz/tree` cwd, the dispatcher cgroup, empty active
+claims and no associated registered invocation. It records process disappearance.
+This resumed session did not send another signal. Fresh host execution of
+`/tmp/check_py10_tree_gone.py` at 16:25:39Z exited 0: target absent, no remaining
+tree processes, no unreadable candidate processes. Protected system processes
+predating the stale parent were recorded separately.
+
+The prior session had also prepared the profile at 16:20:41Z. Its private archive
+is `/home/netmarine/.local/state/alienintent/codex-primary-activation-20260922/`;
+`prepared.json` records that only the two provider blocks changed and preserves
+the original permission and identity boundaries. Both roles select Codex,
+`gpt-6-astra`. The profile digest is
+`d65c1ebea1de57fcc8ea9bde96a967b796ea361426d7dca164d81cad0a5b5f77`.
+
+Fresh full Project and host idle checks at 16:25:48Z passed: only #69 ACCEPT was
+startup-actionable; active claims, live registered worker PIDs and service children
+were empty. HEAD, local origin/main and live remote main all read back
+`9ee0ccd397147f20c57cb4077e7db6de4b260e6a`. Existing program-state edits and two
+untracked operator reports remained intact.
+
+[ACCEPT-only continuation](https://github.com/AlienLogicLab/alienintent/issues/69#issuecomment-5780107470)
+was published before restart. The retained helper repeated remote and idle checks,
+verified the prepared profile digest, and restarted only `alienintent.service` at
+16:26:23Z. MainPID changed from 822833 to 1206384, active. The startup entrypoint
+loads the profile once before reconciliation; no subsequent profile edit was made.
+
+Startup reconciliation admitted exactly one new PRODUCER at ACCEPT:
+`AlienLogicLab/alienintent#69:PRODUCER:5efc665c-4bd2-4566-a548-c7dc02a79c1b`,
+16:28:44.893Z, resource `ef8f11d7-248c-4adb-bd1c-7b69e36d7938`.
+Host `/proc` read-back confirmed PID 1207613, PPID 1206384, start ticks 31123482,
+dispatcher cgroup, its registered worktree, and executable command
+`node /home/netmarine/.local/bin/codex exec ... --model gpt-6-astra` with the
+post-ACCEPT closure prompt. The worker log records thread
+`01a0c9f2-efd1-7cc3-8753-dfef151160bf`. This proves actual Codex PRODUCER use;
+VERIFIER configuration was loaded but no new verifier invocation was requested.
+
+Activation and ACCEPT-only admission are observed. Closure is still RUNNING at
+this checkpoint, not DONE. Implementation, readiness and independent verification
+were not repeated by the Director. Historical worktree cleanup warnings were
+retained without deleting their resources. The open attention item
+`att-16e105ede481` concerns the prior capacity interruption; acknowledgement waits
+for recovery evidence. Ten unacknowledged bridge replies concern completed older
+program tasks, not new dispatch requests.
+
+The current DAG identifies S1 / WO-220102 after S0, but the full Project read-back
+has no S1 issue yet. Do not dispatch it before S0 is DONE and SWF-35 admission is
+satisfied at the then-current baseline.
+
 Authority: Founder direction to make Codex the default cognitive worker, followed by
 explicit approval of the bounded plan and an **idle-only** dispatcher restart.
 Resume WO-220101 from ACCEPT only; no repeat implementation, assessment or verification.
