@@ -70,21 +70,50 @@
    "title": "GitHub Project #1 inventory: 10 Wave 2 requirement issues at CAPTURE (P0: 051/053/056; P1: 011-016, 039); Wave 1 SF-REQ issues remain at TASKS with PY BIUs DONE",
    "updated_at": "2026-09-22T08:48:20.508225+00:00"
   },
+  "FACT-BIU-007": {
+   "artifact_refs": [
+    "docs/evidence/wave2-execution-packets/WO-220101.allocation.json",
+    "docs/evidence/wave2-execution-packets/WO-220101.packet.json",
+    "docs/work-units/wave2/WO-220101.md",
+    "docs/evidence/wave2-readiness-assessments/WO-220101.2026-09-22T110109.877043Z.assessment.json (READY; agent-ready-cli 0.1.0rc1 @ 6b05681; codex-cli 0.155.1 COMPATIBLE_UNVERIFIED/PASSED)"
+   ],
+   "assigned_actor": "claude-bootstrap-coordinator",
+   "blockers": [],
+   "created_at": "2026-09-22T11:00:27.763234+00:00",
+   "critical_path": true,
+   "phase": "F5",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "Agent Ready READY (native product). Next: Project issue at READY; Founder release grant (FD-01 \u00a73) required for READY\u2192IMPLEMENT",
+   "risk_class": "HIGH",
+   "routing": {
+    "note": "deterministic packet generation (Allocator trivial case); coordinator only as temporary release/bridge function",
+    "tier": 0
+   },
+   "status": "RUNNING",
+   "subdecisions": [],
+   "task_id": "FACT-BIU-007",
+   "title": "WO-220101 (S0): allocation decision + execution packet + work-unit doc; fresh native Agent Ready assessment; Project issue; release ask",
+   "updated_at": "2026-09-22T11:03:54.698006+00:00"
+  },
   "FACT-DV-005": {
    "artifact_refs": [
     "/tmp/\u2026/scratchpad/dv-005.claude.md (REPAIR_REQUIRED: DV-1 DAG root register/statistics; DV-2 Markdown rendering + checker coverage; DV-3 SF-REQ-011 AC-05 overreach; DV-4..8 advisory; classification correction: R1-GAP-MONITOR-HOST \u2192 REQUIRES_OPERATIONAL_PROOF citing SF-REQ-037 + SWF-27 Applied, not AA \u00a714)",
     "repairs: branch commit d120455 + docs/evidence/wave2-revisions/2026-09-22-dv-005-repairs.md",
     "/tmp/\u2026/scratchpad/dv-005-r2.codex.md (R2 REPAIR_REQUIRED: DV-1/4/6/7 SATISFIED; DV-2/3/5/8 PARTIAL; new DV-9 material AC-05 consistency; DV-10..12 advisory; no Founder decision)",
-    "round-3 repairs: branch commit 74516f4"
+    "round-3 repairs: branch commit 74516f4",
+    "/tmp/\u2026/scratchpad/dv-005-r3.claude.md (R3 REPAIR_REQUIRED: DV-11/12 SATISFIED; DV-9/10 PARTIAL \u2192 DV-13 material: SF-REQ-015 Markdown sections stale, render rule one-directional; DV-14/15 advisory; no Founder decision)",
+    "round-4 repairs: branch commit (see git log wave2/respecify-2026-09-22)",
+    "docs/evidence/wave2-revisions/reviews/ (4 DV rounds + reconciliation delta)"
    ],
    "assigned_actor": "fresh-reviewer",
    "blockers": [],
    "created_at": "2026-09-22T09:20:49.113903+00:00",
-   "critical_path": true,
+   "critical_path": false,
    "phase": "F4",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": "R1 REPAIR_REQUIRED (claude) \u2192 repaired d120455; R2 REPAIR_REQUIRED (codex) \u2192 repaired 74516f4; R3 (claude fresh, plan) running",
+   "review_status": "R4 REPAIR_REQUIRED (codex fresh): DV-16/19 material, DV-17/18 advisory \u2014 PARKED as planning evidence per Founder direction 2026-09-22; S0 confirmed unchanged in all rounds",
    "risk_class": "HIGH",
    "routing": {
     "r1": {
@@ -102,13 +131,31 @@
      "reason": "provider alternation: R2 was Codex; limits reset",
      "reviewer": "claude-fresh"
     },
+    "r4": {
+     "chosen_actor": "fresh-independent-reviewer",
+     "diversity_reason": null,
+     "five_questions": {
+      "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+      "cheapest_model_likely_to_succeed_first_pass": "fresh-independent-reviewer",
+      "does_this_need_independent_review": "yes (risk HIGH)",
+      "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap",
+      "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals"
+     },
+     "model": null,
+     "rationale": "High-impact work where author bias matters; reviewer must not be the author, and must not be recorded as carrying the author's model. Default is a fresh Codex context; a different provider only for a recorded diversity reason \u2014 none recorded.",
+     "review_required": true,
+     "reviewer_provider": "codex-fresh",
+     "risk_class": "HIGH",
+     "task_type": "design_verification",
+     "tier": "FRESH_REVIEWER"
+    },
     "tier": 4
    },
-   "status": "REVIEW",
+   "status": "DONE",
    "subdecisions": [],
    "task_id": "FACT-DV-005",
    "title": "Independent Design Verification of the Wave 2 re-SPECIFY (A+B) and of the Founder decision-bundle classification",
-   "updated_at": "2026-09-22T10:43:10.712475+00:00"
+   "updated_at": "2026-09-22T11:03:54.669094+00:00"
   },
   "FACT-RECON-002": {
    "artifact_refs": [
@@ -134,6 +181,28 @@
    "title": "Wave 2 reconciliation delta: SF-REQ-011/013/015/039 Phase 8/9 artifacts vs 2026-09-22 amendments; S0 impact",
    "updated_at": "2026-09-22T08:56:52.329421+00:00"
   },
+  "FACT-SELECT-006": {
+   "artifact_refs": [
+    "docs/evidence/wave2-dependency-dag.json (C-track replaces coordinator checkpoint R1, mailbox waiter R2, observer R4, attention queue R5)"
+   ],
+   "assigned_actor": "deterministic",
+   "blockers": [],
+   "created_at": "2026-09-22T11:00:27.755578+00:00",
+   "critical_path": null,
+   "phase": "F5",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "PASS (plan graph read; S0 is the dependency-free root every chain needs)",
+   "risk_class": "MEDIUM",
+   "routing": {
+    "tier": 0
+   },
+   "status": "DONE",
+   "subdecisions": [],
+   "task_id": "FACT-SELECT-006",
+   "title": "Founder redirect 2026-09-22: incremental Wave 1 execution model; select next bounded unit deterministically (target SF-REQ-053 P0; chain S0\u2192S1\u2192S2\u2192C1; next BIU WO-220101)",
+   "updated_at": "2026-09-22T11:00:27.755601+00:00"
+  },
   "FACT-SPECIFY-004A": {
    "artifact_refs": [
     "docs/evidence/wave2-revisions/2026-09-22-respecify-011-013.md"
@@ -141,11 +210,11 @@
    "assigned_actor": "codex-fresh",
    "blockers": [],
    "created_at": "2026-09-22T08:56:52.343431+00:00",
-   "critical_path": true,
+   "critical_path": false,
    "phase": "F3",
    "prompt_path": null,
    "resulting_commit": "bd38510 (branch wave2/respecify-2026-09-22)",
-   "review_status": "Director verification: 5/5 checkers PASS, pytest 161; independent DV pending (FACT-DV-005)",
+   "review_status": "Director verification: 5/5 checkers PASS, pytest 161; independent DV pending (FACT-DV-005); landed on main as planning evidence (not verified as a whole design)",
    "risk_class": "HIGH",
    "routing": {
     "isolation": "git worktree",
@@ -154,11 +223,11 @@
     "sandbox": "workspace-write",
     "tier": 2
    },
-   "status": "REVIEW",
+   "status": "DONE",
    "subdecisions": [],
    "task_id": "FACT-SPECIFY-004A",
    "title": "Re-SPECIFY SF-REQ-011/013 + contracts + shared_contracts + DAG predicates (session A)",
-   "updated_at": "2026-09-22T09:10:46.374557+00:00"
+   "updated_at": "2026-09-22T11:03:54.679422+00:00"
   },
   "FACT-SPECIFY-004B": {
    "artifact_refs": [
@@ -167,11 +236,11 @@
    "assigned_actor": "codex-fresh",
    "blockers": [],
    "created_at": "2026-09-22T09:10:46.384799+00:00",
-   "critical_path": true,
+   "critical_path": false,
    "phase": "F3",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": "Director verification: 5/5 checkers PASS, pytest 161; independent DV pending (FACT-DV-005)",
+   "review_status": "Director verification: 5/5 checkers PASS, pytest 161; independent DV pending (FACT-DV-005); landed on main as planning evidence (not verified as a whole design)",
    "risk_class": "HIGH",
    "routing": {
     "isolation": "git worktree",
@@ -180,11 +249,11 @@
     "sandbox": "workspace-write",
     "tier": 2
    },
-   "status": "REVIEW",
+   "status": "DONE",
    "subdecisions": [],
    "task_id": "FACT-SPECIFY-004B",
    "title": "Re-SPECIFY SF-REQ-015/039 + contracts + U9/U10 + S0 reference refresh (session B)",
-   "updated_at": "2026-09-22T09:20:49.106995+00:00"
+   "updated_at": "2026-09-22T11:03:54.687502+00:00"
   },
   "POSTW1-AGENTREADY-004": {
    "artifact_refs": [
@@ -1053,5 +1122,5 @@
    "updated_at": "2026-09-21T22:31:40.936775+00:00"
   }
  },
- "updated_at": "2026-09-22T10:43:10.712493+00:00"
+ "updated_at": "2026-09-22T11:03:54.698029+00:00"
 }
