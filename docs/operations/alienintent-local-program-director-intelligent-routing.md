@@ -522,3 +522,43 @@ Before every model call, answer:
 5. What evidence would trigger escalation?
 
 If those five questions are not answered, do not launch the model.
+
+## Amendment — 2026-09-22: Codex-primary routing policy (Founder direction)
+
+Source: Founder direction of 2026-09-22 ("Codex-Primary Routing Policy"). Applies to the current
+bootstrap/factory development environment; AlienIntent the product remains provider-neutral
+(Architecture Authority §23, A4).
+
+> **Codex is the default worker; model diversity is a tool, not a ritual.**
+
+- **Default.** Any task needing model cognition routes to a fresh Codex session unless a specific,
+  evidence-backed reason names a better-suited actor. Tier 2 is the default for requirement
+  analysis, specification, research synthesis, architecture candidates, Design Contracts, planning,
+  DAG/BIU work, implementation, repairs, tests, evidence reconciliation, deterministic-control
+  implementation, Agent Ready integration, implementation-tied documentation, routine technical
+  review and repository-aware investigation. Claude is not invoked because it was historically
+  used for a task class.
+- **Tier 3 (resident Claude coordinator)** is reserved for work its lived participation
+  materially improves: locating Wave 1 evidence, explaining bootstrap mechanisms it operated,
+  retirement/handoff analysis, historical cross-checks not efficiently reconstructible, and
+  temporary coordinator functions canonical AlienIntent lacks. Its memory is a locator, not
+  authority; where durable evidence suffices, prefer fresh Codex.
+- **Tier 4 (independent review)** remains required where risk policy requires it. Independence
+  means separation from the author, not "use Claude": the default reviewer is a **fresh Codex
+  context** (`Codex author → deterministic checks → fresh independent Codex context`). A fresh
+  Claude reviewer is chosen only for a recorded `diversity_reason`: different-provider
+  independence materially improves the test, model-family diversity is explicitly useful, prior
+  Codex reasoning appears systematically suspect, or architecture/design risk justifies it.
+  Actual reviewer provenance is always recorded (`route()` records `reviewer_provider` and
+  `diversity_reason`).
+- **Tier 0 first, always.** Deterministic extraction/validation precedes every model call; only
+  irreducible reasoning goes to a model. The cheapest model call remains the one not made.
+- **Local models** enter between Tier 0 and Codex once canonical Allocation (SF-REQ-026,
+  SF-REQ-037) configures them.
+- **Do not disturb active work.** Healthy invocations are not cancelled, completed analysis is
+  not restarted, verification underway is not repeated, providers are not switched mid-task
+  without evidence; the policy applies at the next routing decision.
+- **Evidence-correctable.** Task class, provider/model, acceptance/review outcome, repair
+  required, latency, token usage, cost and provider interruptions are recorded where available;
+  if another model consistently produces better accepted results at lower total cost for a task
+  class, routing adapts.

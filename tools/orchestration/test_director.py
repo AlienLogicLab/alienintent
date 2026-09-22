@@ -339,3 +339,30 @@ def test_marking_a_bundle_done_with_an_open_subdecision_is_refused(tmp_path):
     with pytest.raises(ValueError):
         st.upsert_task("D", phase="10", title="bundle", actor="founder", status="DONE",
                        risk="HIGH", subdecisions=[{"id": "x", "status": "OPEN"}])
+
+
+# --- Codex-primary routing policy (Founder direction, 2026-09-22) ----------------------------
+# "Codex is the default worker; model diversity is a tool, not a ritual." Independence does not
+# mean "use Claude": the fresh reviewer is the cheapest capable context separated from the author,
+# and a different provider is chosen only for a recorded reason.
+
+
+def test_the_fresh_reviewer_defaults_to_a_fresh_codex_context():
+    d = route(task_type="design_verification", risk=RiskClass.HIGH, deterministic_possible=False)
+    assert d.tier is Tier.FRESH_REVIEWER
+    assert d.reviewer_provider == "codex-fresh"
+    assert d.model is None  # still never labelled with the author's resolved model
+    assert "diversity" in d.rationale.lower()
+
+
+def test_a_recorded_diversity_reason_selects_a_fresh_claude_reviewer():
+    d = route(task_type="design_verification", risk=RiskClass.HIGH, deterministic_possible=False,
+              diversity_reason="author was Codex; architecture risk justifies provider diversity")
+    assert d.reviewer_provider == "claude-fresh"
+    assert d.as_record()["reviewer_provider"] == "claude-fresh"
+    assert "architecture risk" in d.as_record()["diversity_reason"]
+
+
+def test_non_reviewer_tiers_carry_no_reviewer_provider():
+    d = route(task_type="evidence_reconciliation", risk=RiskClass.MEDIUM, deterministic_possible=False)
+    assert d.reviewer_provider is None

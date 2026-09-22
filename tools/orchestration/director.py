@@ -116,22 +116,34 @@ class RoutingDecision:
     review_required: bool
     rationale: str
     questions: dict = field(default_factory=dict)
+    # Tier 4 only: which fresh context reviews, and why a non-default provider was chosen.
+    reviewer_provider: str | None = None
+    diversity_reason: str | None = None
 
     def as_record(self) -> dict:
         return {"task_type": self.task_type, "risk_class": self.risk.value,
                 "tier": self.tier.name, "chosen_actor": self.actor, "model": self.model,
                 "review_required": self.review_required, "rationale": self.rationale,
+                "reviewer_provider": self.reviewer_provider,
+                "diversity_reason": self.diversity_reason,
                 "five_questions": self.questions}
 
 
 def route(task_type: str, risk: RiskClass, deterministic_possible: bool,
-          bounded_input: bool = False, codex_model: str | None = None) -> RoutingDecision:
+          bounded_input: bool = False, codex_model: str | None = None,
+          diversity_reason: str | None = None) -> RoutingDecision:
     """Choose the cheapest actor capable of succeeding first-pass.
 
     Deterministic tooling wins whenever it can settle the question — including for HIGH
     risk, because risk raises the review bar, not the need for a model to count things.
+
+    Codex-primary policy (Founder, 2026-09-22): "Codex is the default worker; model diversity
+    is a tool, not a ritual." Independence means separation from the author, not "use Claude":
+    the fresh reviewer is a fresh Codex context unless `diversity_reason` records why a
+    different provider materially improves the test.
     """
     model = codex_model or resolved_codex_model()
+    reviewer_provider = None
 
     if deterministic_possible or task_type in _DETERMINISTIC_TASKS:
         tier, actor, chosen_model = Tier.DETERMINISTIC, "deterministic-tooling", None
@@ -145,8 +157,11 @@ def route(task_type: str, risk: RiskClass, deterministic_possible: bool,
         # 10's routing claiming gpt-6-astra while the retained provenance showed fresh Claude.
         # The Director knows the provider differs; it does not resolve the reviewer's model.
         tier, actor, chosen_model = Tier.FRESH_REVIEWER, "fresh-independent-reviewer", None
+        reviewer_provider = "claude-fresh" if diversity_reason else "codex-fresh"
         why = ("High-impact work where author bias matters; reviewer must not be the author, and "
-               "must not be recorded as carrying the author's model.")
+               "must not be recorded as carrying the author's model. Default is a fresh Codex "
+               "context; a different provider only for a recorded diversity reason"
+               + (f" — here: {diversity_reason}" if diversity_reason else " — none recorded") + ".")
         review = True
     elif task_type in _COORDINATOR_ONLY:
         tier, actor, chosen_model = Tier.CLAUDE_COORDINATOR, "claude-bootstrap-coordinator", None
@@ -166,6 +181,8 @@ def route(task_type: str, risk: RiskClass, deterministic_possible: bool,
     return RoutingDecision(
         task_type=task_type, risk=risk, tier=tier, actor=actor, model=chosen_model,
         review_required=review, rationale=why,
+        reviewer_provider=reviewer_provider,
+        diversity_reason=diversity_reason if reviewer_provider else None,
         questions={
             "can_deterministic_tooling_do_this":
                 "yes" if tier is Tier.DETERMINISTIC else "no — irreducible reasoning remains",

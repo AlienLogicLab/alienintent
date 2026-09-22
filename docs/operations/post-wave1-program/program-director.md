@@ -63,6 +63,8 @@ Five questions are answered before any model call, and recorded with the routing
 | 3 | Claude bootstrap coordinator | work whose value depends on lived Wave 1 context |
 | 4 | fresh independent reviewer | high-risk work where author bias actually matters |
 
+*Amendment 2026-09-22 (Founder, Codex-primary routing policy):* Tier 2 is the default for all model cognition; Tier 3 is reserved for lived-context work; Tier 4's default reviewer is a fresh **Codex** context, with a fresh Claude reviewer only for a recorded diversity reason. See the routing policy's 2026-09-22 amendment.
+
 Tier 0 wins even at HIGH risk. Risk raises the review bar; it does not create a need for a model
 to count things. Tier 3 is deliberately narrow — the coordinator is a *participant*, so routing
 work to it buys context at the cost of independence, and that trade is only worth making where

@@ -73,7 +73,9 @@
   "FACT-DV-005": {
    "artifact_refs": [
     "/tmp/\u2026/scratchpad/dv-005.claude.md (REPAIR_REQUIRED: DV-1 DAG root register/statistics; DV-2 Markdown rendering + checker coverage; DV-3 SF-REQ-011 AC-05 overreach; DV-4..8 advisory; classification correction: R1-GAP-MONITOR-HOST \u2192 REQUIRES_OPERATIONAL_PROOF citing SF-REQ-037 + SWF-27 Applied, not AA \u00a714)",
-    "repairs: branch commit d120455 + docs/evidence/wave2-revisions/2026-09-22-dv-005-repairs.md"
+    "repairs: branch commit d120455 + docs/evidence/wave2-revisions/2026-09-22-dv-005-repairs.md",
+    "/tmp/\u2026/scratchpad/dv-005-r2.codex.md (R2 REPAIR_REQUIRED: DV-1/4/6/7 SATISFIED; DV-2/3/5/8 PARTIAL; new DV-9 material AC-05 consistency; DV-10..12 advisory; no Founder decision)",
+    "round-3 repairs: branch commit 74516f4"
    ],
    "assigned_actor": "fresh-reviewer",
    "blockers": [],
@@ -82,7 +84,7 @@
    "phase": "F4",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": "R1 REPAIR_REQUIRED (claude fresh) \u2192 repaired; R2 attempt 1 (claude fresh) PROVIDER_CAPACITY_INTERRUPTION (session limit; launcher misclassified NONZERO_EXIT \u2014 fixed test-first); R2 attempt 2 rerouted to codex fresh (read-only), running",
+   "review_status": "R1 REPAIR_REQUIRED (claude) \u2192 repaired d120455; R2 REPAIR_REQUIRED (codex) \u2192 repaired 74516f4; R3 (claude fresh, plan) running",
    "risk_class": "HIGH",
    "routing": {
     "r1": {
@@ -95,13 +97,18 @@
      "reviewer": "codex-fresh",
      "sandbox": "read-only"
     },
+    "r3": {
+     "permission_mode": "plan",
+     "reason": "provider alternation: R2 was Codex; limits reset",
+     "reviewer": "claude-fresh"
+    },
     "tier": 4
    },
    "status": "REVIEW",
    "subdecisions": [],
    "task_id": "FACT-DV-005",
    "title": "Independent Design Verification of the Wave 2 re-SPECIFY (A+B) and of the Founder decision-bundle classification",
-   "updated_at": "2026-09-22T10:32:00.826105+00:00"
+   "updated_at": "2026-09-22T10:43:10.712475+00:00"
   },
   "FACT-RECON-002": {
    "artifact_refs": [
@@ -1046,5 +1053,5 @@
    "updated_at": "2026-09-21T22:31:40.936775+00:00"
   }
  },
- "updated_at": "2026-09-22T10:32:00.826128+00:00"
+ "updated_at": "2026-09-22T10:43:10.712493+00:00"
 }
