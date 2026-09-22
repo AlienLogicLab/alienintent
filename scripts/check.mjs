@@ -8,7 +8,7 @@ const suites = {
   runtime: ["test/dispatcher.test.mjs", "test/github-authority.test.mjs", "test/github-app.test.mjs",
     "test/worker-runner.test.mjs", "test/cli.test.mjs", "test/app-cli.test.mjs",
     "test/profile.test.mjs", "test/legacy-state.test.mjs", "test/repository-state.test.mjs", "test/check.test.mjs",
-    "test/worktree-manager.test.mjs", "test/worktree-lifecycle.test.mjs", "test/self-hosting.test.mjs"],
+    "test/worktree-manager.test.mjs", "test/worktree-lifecycle.test.mjs", "test/self-hosting.test.mjs", "test/systemd-supervision.test.mjs"],
   preflight: ["test/worker-preflight.test.sh"],
   rai: ["test/rai.test.mjs"],
   policy: ["test/governing-instructions.test.mjs"],

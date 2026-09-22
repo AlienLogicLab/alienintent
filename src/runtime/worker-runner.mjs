@@ -1,3 +1,4 @@
+import { createSystemdSupervisor } from "./systemd-supervision.mjs";
 import { spawn, execFileSync } from "node:child_process";
 import { appendFileSync, mkdirSync } from "node:fs";
 import { join, isAbsolute } from "node:path";
@@ -31,7 +32,7 @@ function subscriptionStatus(command, options) {
   try { return JSON.parse(execFileSync(command, ["auth", "status", "--json"], { ...options, encoding: "utf8", timeout: 10000, stdio: ["ignore", "pipe", "pipe"] })); }
   catch { throw new Error("CLAUDE_SUBSCRIPTION_AUTH_REQUIRED"); }
 }
-export function spawnWorker({ role, worker, item, invocationId, bootstrap, authenticate = subscriptionStatus, execute = spawn, environment = process.env, logDirectory = worker.logDirectory }) {
+export function spawnWorker({ role, worker, item, invocationId, bootstrap, resource, supervisor, authenticate = subscriptionStatus, execute = spawn, environment = process.env, logDirectory = worker.logDirectory }) {
   const options = { cwd: worker.worktree, env: workerEnvironment({ role, worker, environment }), stdio: ["ignore", "pipe", "pipe"] };
   if (worker.fundingProfile === "claude-subscription") {
     const auth = authenticate(worker.command, options);
@@ -43,16 +44,27 @@ export function spawnWorker({ role, worker, item, invocationId, bootstrap, authe
   const logPath = workerLogPath(invocationId, logDirectory);
   mkdirSync(logDirectory, { recursive: true });
   appendFileSync(logPath, "");
-  const child = execute(worker.command, args, options);
+  let child;
+  if (worker.supervision) {
+    if (resource?.supervision?.invocationId !== invocationId || !supervisor) throw new Error("SUPERVISION_INTENT_REQUIRED");
+    child = supervisor.launch(resource.supervision, worker.command, args, options, logPath);
+  } else child = execute(worker.command, args, options);
   // Persist each chunk immediately, including when no close event can arrive.
   const append = (data) => { try { appendFileSync(logPath, data); } catch {} };
   child.stdout?.on("data", append); child.stderr?.on("data", append);
   return child;
 }
-export function createWorkerLauncher({ workers, runner = spawnWorker }) {
-  return ({ role, item, invocationId, bootstrap, worktree }) => {
+export function createWorkerLauncher({ workers, runner = spawnWorker, supervisorFactory = createSystemdSupervisor }) {
+  const supervisors = Object.fromEntries(Object.entries(workers).filter(([, worker]) => worker.supervision).map(([role, worker]) => [role, supervisorFactory(worker.supervision)]));
+  const launch = ({ role, item, invocationId, bootstrap, worktree, resource }) => {
     if (typeof worktree !== "string" || !isAbsolute(worktree) || worktree.includes("\0")) throw new Error("INVOCATION_WORKTREE_REQUIRED");
     if (!workers[role]) throw new Error("UNKNOWN_WORKER_ROLE");
-    return runner({ role, worker: { ...workers[role], worktree }, item, invocationId, bootstrap });
+    return runner({ role, worker: { ...workers[role], worktree }, item, invocationId, bootstrap, ...(resource ? { resource } : {}), ...(supervisors[role] ? { supervisor: supervisors[role] } : {}) });
   };
+  launch.plan = request => supervisors[request.role]?.plan(request);
+  launch.observe = (resource, persist) => {
+    if (!supervisors[resource.role]) throw new Error("SUPERVISION_CONFIGURATION_REQUIRED");
+    return supervisors[resource.role].observe(resource.supervision, persist);
+  };
+  return launch;
 }

@@ -118,3 +118,70 @@ test('preflight failure reclaims allocation without launching and retains owners
   assert.equal(f.launches.length, 0); assert.equal(f.removed.length, 1);
   assert.equal(Object.values(f.relay.state().resources)[0].lifecycle, 'REMOVED');
 });
+
+function supervise(f) {
+  let terminal = false, unavailable = false;
+  f.relay.options.launch.plan = ({ invocationId }) => ({ mode: 'systemd', invocationId, unit: 'owned.service' });
+  f.relay.options.launch.observe = (resource, persist) => {
+    if (unavailable) throw new Error('SUPERVISION_MANAGER_UNAVAILABLE');
+    if (terminal) persist({ ...resource.supervision, terminalReceipt: { invocationId: resource.invocationId }, stopConfirmed: true });
+    return { terminal };
+  };
+  return { set terminal(v) { terminal = v; }, set unavailable(v) { unavailable = v; } };
+}
+test('supervision intent precedes effect; client death cannot release lane or remove worktree', async t => {
+  const f = fixture(t); const control = supervise(f); const launch = f.relay.options.launch;
+  f.relay.options.launch = Object.assign(request => {
+    assert.equal(f.relay.state().resources[request.invocationId].supervision?.invocationId, request.invocationId);
+    return launch(request);
+  }, launch);
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  const active = [...f.relay.active.values()][0];
+  active.closed = true; active.child.exitCode = 0;
+  await f.relay.complete(active);
+  assert.equal(f.relay.state().active[active.lane].invocationId, active.invocationId);
+  assert.deepEqual(f.removed, []);
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  assert.equal(f.launches.length, 1);
+  control.terminal = true;
+  await f.relay.inspectLiveness(active.invocationId);
+  assert.equal(f.relay.state().active[active.lane], undefined);
+  assert.equal(f.transitions.length, 0, 'client exit zero cannot supply a workflow result');
+  assert.ok(f.relay.state().resources[active.invocationId].supervision.terminalReceipt);
+});
+test('supervised recovery holds on manager failure or live unit despite dead client', async t => {
+  const f = fixture(t); const control = supervise(f);
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  const active = [...f.relay.active.values()][0];
+  f.relay.active.clear(); f.relay.options.isProcessAlive = () => false;
+  control.unavailable = true;
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  assert.equal(f.launches.length, 1);
+  control.unavailable = false;
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  assert.equal(f.launches.length, 1);
+  assert.equal(f.relay.state().active[active.lane].invocationId, active.invocationId);
+  assert.deepEqual(f.removed, []);
+});
+test('durable result retains existing semantics while supervised work remains owned', async t => {
+  const f = fixture(t); const control = supervise(f);
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  const active = [...f.relay.active.values()][0];
+  await f.relay.routeResult(active, 'VERIFY');
+  active.closed = true; active.child.exitCode = 0;
+  await f.relay.complete(active);
+  assert.deepEqual(f.transitions, ['VERIFY']); assert.deepEqual(f.removed, []);
+  control.terminal = true; await f.relay.complete(active);
+  assert.equal(f.removed.length, 1);
+  assert.equal(f.relay.state().resources[active.invocationId].supervision.stopConfirmed, true);
+});
+test('launch transport exception after supervised intent holds claim across restart', async t => {
+  const f = fixture(t); supervise(f);
+  const original = f.relay.options.launch;
+  f.relay.options.launch = Object.assign(() => { throw new Error('transport lost'); }, original);
+  await assert.rejects(f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT'), /transport lost/);
+  assert.equal(Object.keys(f.relay.state().active).length, 1);
+  f.relay.active.clear();
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  assert.deepEqual(f.removed, []);
+});

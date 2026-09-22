@@ -31,6 +31,14 @@ systemd 255 user manager. No new package dependency or credential.
   intent before the effect. Reject existing unmatched units. Read back exact
   manager identity, invocation binding and cgroup; missing/unavailable/mismatched
   readback holds. Capture terminal observations before metadata collection.
+- Terminal metadata retention clarification: use `RemainAfterExit=yes`. An exact
+  `active/exited` observation plus independently empty owned cgroup permits a
+  durable terminal receipt, not ownership release. Persist the unit, manager and
+  systemd InvocationID, cgroup and stop intent; stop only the still-matching unit.
+  Release requires inactive/empty readback, or receipt-backed disappearance after
+  confirmed owned stop and an empty cgroup. Missing metadata before that receipt
+  remains HOLD. Receipts never authorize a different manager or unit invocation.
+  This avoids systemd's immediate collection of successful transient services.
 - Transient service properties: Type=exec, ExitType=cgroup, Restart=no,
   RuntimeMaxSec and bounded TimeoutStopSec, RuntimeRandomizedExtraSec=0,
   KillMode=control-group, SendSIGKILL=yes; bound startup. Do not use a scope.

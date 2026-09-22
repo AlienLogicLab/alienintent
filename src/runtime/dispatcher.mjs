@@ -65,6 +65,20 @@ export class EventRelay {
     if (!state.resources?.[invocationId]) return;
     Object.assign(state.resources[invocationId], changes); this.save(state);
   }
+  ownedWorkAlive(claim) {
+    const resource = this.state().resources?.[claim.invocationId];
+    if (!resource?.supervision) return this.processAlive(claim.pid);
+    try {
+      if (!this.options.launch.observe) throw new Error("SUPERVISION_OBSERVER_REQUIRED");
+      const observation = this.options.launch.observe(resource, supervision => this.updateResource(claim.invocationId, { supervision }));
+      if (observation.terminal) this.updateResource(claim.invocationId, { exitedAt: resource.exitedAt ?? new Date(this.now()).toISOString() });
+      return !observation.terminal;
+    } catch (error) {
+      this.updateResource(claim.invocationId, { supervisionDiagnostic: error.message });
+      this.emit({ invocationId: claim.invocationId, outcome: "SUPERVISION_HOLD", error: error.message });
+      return true;
+    }
+  }
   reconcileResources() {
     if (!this.options.worktreeManager) return;
     this.assertResourcePaths();
@@ -72,9 +86,10 @@ export class EventRelay {
       const state = this.state(), resource = state.resources[invocationId];
       if (resource.lifecycle === "REMOVED" || this.active.has(invocationId)
           || Object.values(state.active).some(claim => claim.invocationId === invocationId)) continue;
+      if (resource.supervision && this.ownedWorkAlive(resource)) continue;
       // PID reuse can cause conservative retention; permission errors are unknown.
       // A crash between spawn and PID persistence must never authorize deletion.
-      if (!resource.exitedAt && !["ALLOCATING", "READY"].includes(resource.lifecycle)) {
+      if (!resource.supervision && !resource.exitedAt && !["ALLOCATING", "READY"].includes(resource.lifecycle)) {
         if (!Number.isInteger(resource.pid) || resource.pid <= 0) continue;
         if (this.options.isProcessAlive) { if (this.options.isProcessAlive(resource.pid)) continue; }
         else { try { process.kill(resource.pid, 0); continue; } catch (error) { if (error.code !== "ESRCH") continue; } }
@@ -288,7 +303,7 @@ export class EventRelay {
     const prior = persisted.active[lane] ?? (recoverable(diagnostic?.outcome) ? diagnostic : null);
     if (prior) {
       const claim = { ...prior, item, role, lane };
-      if (this.processAlive(claim.pid)) { this.emit({ issue: item.issue, role, outcome: "ACTIVE_INVOCATION_EXISTS" }); return false; }
+      if (this.ownedWorkAlive(claim)) { this.emit({ issue: item.issue, role, outcome: "ACTIVE_INVOCATION_EXISTS" }); return false; }
       // Reserve the exact prior invocation before awaiting its durable read.
       // Startup and Status events share this bounded recovery; no retry loop.
       if (!persisted.active[lane]) { persisted.active[lane] = claim; this.save(persisted); }
@@ -356,8 +371,10 @@ export class EventRelay {
         this.release(active); this.active.delete(invocationId); this.reconcileResources();
         this.emit({ issue: item.issue, role, outcome: this.stopped ? "SERVICE_STOPPED" : "PREFLIGHT_FAILED" }); return false;
       }
-      this.updateResource(invocationId, { lifecycle: "LAUNCHING" });
-      const child = this.options.launch({ role, item, invocationId, worktree: active.worktree, resource, bootstrap: workerBootstrap(role, item, invocationId, status, this.roleNames, this.options.workerDisplayNames) });
+      const supervision = this.options.launch.plan?.({ role, item, invocationId, resource });
+      if (this.options.workers?.[role]?.supervision && !supervision) throw new Error("SUPERVISION_PLAN_REQUIRED");
+      this.updateResource(invocationId, { lifecycle: "LAUNCHING", ...(supervision ? { supervision } : {}) });
+      const child = this.options.launch({ role, item, invocationId, worktree: active.worktree, resource: this.state().resources?.[invocationId], bootstrap: workerBootstrap(role, item, invocationId, status, this.roleNames, this.options.workerDisplayNames) });
       active.child = child;
       this.active.set(invocationId, active);
       child.stdout?.on("data", () => { active.lastOutputAt = this.now(); });
@@ -377,7 +394,7 @@ export class EventRelay {
       return true;
     } catch (error) {
       this.diagnostic(active, "WORKER_TECHNICAL_FAILURE", { error: error.message });
-      if (!active.child) {
+      if (!active.child && !this.state().resources?.[invocationId]?.supervision) {
         const resource = this.state().resources?.[invocationId];
         if (resource && ["ALLOCATING", "READY"].includes(resource.lifecycle)) this.updateResource(invocationId, { admissionFailed: true });
         this.release(active); this.active.delete(invocationId); this.reconcileResources();
@@ -388,6 +405,7 @@ export class EventRelay {
   async complete(active) {
     if (this.active.get(active.invocationId) !== active) return;
     if (active.completing) return active.completing;
+    if (this.state().resources?.[active.invocationId]?.supervision && this.ownedWorkAlive(active)) return;
     this.cancelInspection(active);
     active.completing = (async () => {
       let completedClaim;
@@ -444,7 +462,8 @@ export class EventRelay {
   async inspectLiveness(invocationId) {
     const active = this.active.get(invocationId);
     if (!active || this.stopped || (!active.child && !active.recoveredProcess)) return "PROCESS_GONE";
-    if ((active.recoveredProcess && !this.processAlive(active.pid)) || active.closed || active.child?.exitCode != null || active.child?.signalCode != null) {
+    const supervised = this.state().resources?.[invocationId]?.supervision;
+    if (supervised ? !this.ownedWorkAlive(active) : ((active.recoveredProcess && !this.processAlive(active.pid)) || active.closed || active.child?.exitCode != null || active.child?.signalCode != null)) {
       await this.complete(active); return "PROCESS_GONE";
     }
     if (routedSignal(this.state().active[active.lane])) return "RESULT_ALREADY_DURABLE";
@@ -490,7 +509,7 @@ export class EventRelay {
         const durable = routedSignal(persisted) ?? persisted.pendingSignal?.value ?? await this.readResult(claim);
         if (allowedSignals(claim, this.roleNames).has(durable)) {
           const routed = routedSignal(persisted) || await this.routeResult(claim, durable);
-          if (!this.processAlive(claim.pid)) {
+          if (!this.ownedWorkAlive(claim)) {
             const completed = this.state().active[lane];
             this.release(claim);
             this.reconcileResources();
@@ -500,9 +519,9 @@ export class EventRelay {
               // intent first, then preserve that admission after confirmation.
               await this.start(item, this.roles[item.status], item.status);
             } else if (routed && item.status === "ACCEPT") await this.start(item, this.roleNames.PRODUCER, "ACCEPT");
-          } else if (this.isClosure(claim) || item.status === "ACCEPT") {
+          } else if (this.isClosure(claim) || item.status === "ACCEPT" || this.state().resources?.[claim.invocationId]?.supervision) {
             const surviving = this.state().active[lane];
-            if (!this.isClosure(claim)) {
+            if (!this.isClosure(claim) && item.status === "ACCEPT") {
               surviving.pendingStatus = "ACCEPT";
               const state = this.state(); state.active[lane] = surviving; this.save(state);
             }
@@ -510,8 +529,8 @@ export class EventRelay {
           }
           continue;
         }
-        if (this.processAlive(claim.pid)) {
-          if (this.isClosure(claim)) this.trackSurvivingClosure(claim);
+        if (this.ownedWorkAlive(claim)) {
+          if (this.isClosure(claim) || this.state().resources?.[claim.invocationId]?.supervision) this.trackSurvivingClosure(claim);
           this.emit({ issue: item.issue, role, outcome: "SURVIVING_INVOCATION_EXISTS", invocationId: claim.invocationId }); continue;
         }
         durableRead = { invocationId: claim.invocationId, value: durable };
