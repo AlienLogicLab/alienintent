@@ -34,7 +34,8 @@ REFUSED_MODES = ("bypassPermissions",)
 
 FILTERED_ENV = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN")
 
-_CAPACITY_MARKERS = ("usage limit", "quota", "rate limit", "insufficient credits")
+# "session limit" is Claude's own phrasing for a usage window, seen live in FACT-DV-005 round 2.
+_CAPACITY_MARKERS = ("usage limit", "session limit", "quota", "rate limit", "insufficient credits")
 
 
 def _now() -> str:
@@ -127,7 +128,8 @@ class ClaudeSession:
 
         if result.exit_code != 0:
             result.failure_class, result.failure_reason = _classify_failure(
-                result.stderr, f"non-zero exit {result.exit_code}", "NONZERO_EXIT")
+                result.stderr + "\n" + result.stdout[-2000:],
+                f"non-zero exit {result.exit_code}", "NONZERO_EXIT")
             return result
         if not result.terminal_message.strip():
             result.failure_class, result.failure_reason = _classify_failure(

@@ -33,7 +33,8 @@ REFUSED_SANDBOXES = ("danger-full-access",)
 # Ambient credentials that must not leak into a child session.
 FILTERED_ENV = ("ANTHROPIC_API_KEY", "ANTHROPIC_AUTH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN")
 
-_CAPACITY_MARKERS = ("usage limit", "quota", "rate limit", "insufficient credits")
+# "session limit" is Claude's own phrasing for a usage window, seen live in FACT-DV-005 round 2.
+_CAPACITY_MARKERS = ("usage limit", "session limit", "quota", "rate limit", "insufficient credits")
 
 
 def _now() -> str:
@@ -63,6 +64,7 @@ class SessionResult:
     ended_at: str = ""
     exit_code: int | None = None
     terminal_message: str = ""
+    stdout: str = ""
     stderr: str = ""
     sha_before: str | None = None
     sha_after: str | None = None
@@ -116,6 +118,7 @@ class CodexSession:
             proc = self.runner(argv, input=prompt, capture_output=True, text=True,
                                env=env, timeout=timeout_s)
             result.exit_code = proc.returncode
+            result.stdout = (proc.stdout or "")[-4000:]
             result.stderr = (proc.stderr or "")[-4000:]
         except Exception as exc:
             result.exit_code = None
@@ -134,7 +137,8 @@ class CodexSession:
         # run that exited 0 with a correct terminal report.
         if result.exit_code != 0:
             result.failure_class, result.failure_reason = _classify_failure(
-                result.stderr, f"non-zero exit {result.exit_code}", "NONZERO_EXIT")
+                result.stderr + "\n" + result.stdout[-2000:],
+                f"non-zero exit {result.exit_code}", "NONZERO_EXIT")
             return result
         if not result.terminal_message.strip():
             result.failure_class, result.failure_reason = _classify_failure(

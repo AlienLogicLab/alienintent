@@ -72,28 +72,36 @@
   },
   "FACT-DV-005": {
    "artifact_refs": [
-    "/tmp/\u2026/scratchpad/dv-005.claude.md (REPAIR_REQUIRED: DV-1 DAG root register/statistics; DV-2 Markdown rendering + checker coverage; DV-3 SF-REQ-011 AC-05 overreach; DV-4..8 advisory; classification correction: R1-GAP-MONITOR-HOST \u2192 REQUIRES_OPERATIONAL_PROOF citing SF-REQ-037 + SWF-27 Applied, not AA \u00a714)"
+    "/tmp/\u2026/scratchpad/dv-005.claude.md (REPAIR_REQUIRED: DV-1 DAG root register/statistics; DV-2 Markdown rendering + checker coverage; DV-3 SF-REQ-011 AC-05 overreach; DV-4..8 advisory; classification correction: R1-GAP-MONITOR-HOST \u2192 REQUIRES_OPERATIONAL_PROOF citing SF-REQ-037 + SWF-27 Applied, not AA \u00a714)",
+    "repairs: branch commit d120455 + docs/evidence/wave2-revisions/2026-09-22-dv-005-repairs.md"
    ],
-   "assigned_actor": "claude-fresh",
+   "assigned_actor": "fresh-reviewer",
    "blockers": [],
    "created_at": "2026-09-22T09:20:49.113903+00:00",
    "critical_path": true,
    "phase": "F4",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": "R1 REPAIR_REQUIRED (claude fresh, plan mode); no Founder decision required; repairs routed deterministic/coordinator; R2 pending",
+   "review_status": "R1 REPAIR_REQUIRED (claude fresh) \u2192 repaired; R2 attempt 1 (claude fresh) PROVIDER_CAPACITY_INTERRUPTION (session limit; launcher misclassified NONZERO_EXIT \u2014 fixed test-first); R2 attempt 2 rerouted to codex fresh (read-only), running",
    "risk_class": "HIGH",
    "routing": {
-    "model": "UNKNOWN (claude -p; exact model not reported)",
-    "permission_mode": "plan",
-    "reviewer": "claude-fresh",
+    "r1": {
+     "permission_mode": "plan",
+     "reviewer": "claude-fresh"
+    },
+    "r2": {
+     "model": "gpt-6-astra",
+     "reason": "provider failover after Claude session limit; author of repairs is the Claude coordinator, so a Codex reviewer is also more independent",
+     "reviewer": "codex-fresh",
+     "sandbox": "read-only"
+    },
     "tier": 4
    },
-   "status": "REPAIR",
+   "status": "REVIEW",
    "subdecisions": [],
    "task_id": "FACT-DV-005",
    "title": "Independent Design Verification of the Wave 2 re-SPECIFY (A+B) and of the Founder decision-bundle classification",
-   "updated_at": "2026-09-22T09:47:07.862557+00:00"
+   "updated_at": "2026-09-22T10:32:00.826105+00:00"
   },
   "FACT-RECON-002": {
    "artifact_refs": [
@@ -1038,5 +1046,5 @@
    "updated_at": "2026-09-21T22:31:40.936775+00:00"
   }
  },
- "updated_at": "2026-09-22T09:47:07.862582+00:00"
+ "updated_at": "2026-09-22T10:32:00.826128+00:00"
 }

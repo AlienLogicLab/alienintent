@@ -132,3 +132,13 @@ def test_the_terminal_message_is_persisted_to_the_output_file_when_the_reviewer_
     ClaudeSession(workdir=tmp_path, runner=_runner(cap, stdout="DISPOSITION: ACCEPT\n")).run(
         prompt="verify", output_file=out)
     assert out.read_text() == "DISPOSITION: ACCEPT\n"
+
+
+def test_a_session_limit_message_is_a_capacity_interruption_not_a_task_failure(tmp_path):
+    """Found live (FACT-DV-005 round 2): the reviewer exited non-zero with the provider's own
+    "You've hit your session limit" message and was classified NONZERO_EXIT. Wave 1's rule: a
+    provider capacity interruption is never a task failure, so the marker set must know this
+    phrasing."""
+    cap = {}
+    r = ClaudeSession(workdir=tmp_path, runner=_runner(cap, returncode=1, stdout="You've hit your session limit · resets 5:30pm")).run(prompt="verify")
+    assert r.failure_class == "PROVIDER_CAPACITY_INTERRUPTION"
