@@ -22,6 +22,9 @@ Domain depends on domain value objects and policies only. Application services c
 | ContextSource | authorized source/version/query -> provenance-bearing content or unavailable |
 | SecretProvider | authorized reference/consumer -> protected handle; never secret in diagnostic |
 | Clock/Identifier | time/unique identity requests -> stable typed values |
+| RequirementSource *(added 2026-09-22, Founder decisions v0.1 §9)* | scoped source reference/version -> provenance-bearing Source Record (external identity, revision, link, ingestion time, authority status); provider vocabulary never enters the domain; unsupported or ambiguous source rejects. Distinct from WorkManagement: one vendor may implement both through separate adapters |
+| ReadinessAssessment *(added 2026-09-22, §7)* | candidate work unit text -> Readiness Assessment (raw Agent Ready assessment preserved, plus provenance: input fingerprint, Agent Ready version, contract version, provider/model, timestamp); malformed, timed-out or failed assessment is an execution failure, never a disposition. Adapters: Agent Ready CLI, Agent Ready local MCP. Domain never knows executable location, subprocess syntax, transport or package internals |
+| AssessmentFeedback *(added 2026-09-22, §4; timing unsettled)* | attributable structured outcome evidence linked to a prior Readiness Assessment -> acknowledged feedback receipt; never reduced to success/failure; emission point is a Wave 2 learning objective |
 
 Budget, assurance and release decisions are application/domain policy, not arbitrary adapter permissions. Binding FD-01 fixes direction: the Work Management Provider owns upstream product/work state; AlienIntent owns execution after explicit READY release. Adapter methods must distinguish upstream imports/release intents from downstream projection writes. There is no generic vendor status update capable of overwriting internal execution authority.
 

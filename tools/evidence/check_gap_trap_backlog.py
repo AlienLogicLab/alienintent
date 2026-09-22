@@ -1,5 +1,9 @@
 #!/usr/bin/env python3
-"""Contract checker for the Gap Trap Promotion Backlog (Phase 3).
+"""Contract checker for the Phase 3 promotion backlog (`wave1-gap-trap-promotion-backlog.json`).
+
+Terminology (2026-09-22): the canonical AlienIntent term is *deterministic failure-class
+promotion* (SWF-24 / SF-REQ-050). "Gap Trap" is the name of the external project that informed
+it and is retained here only because the historical artifact this checker validates carries it.
 
 The canonical principle this serves:
 

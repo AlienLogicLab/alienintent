@@ -177,20 +177,34 @@
    ],
    "assigned_actor": "founder",
    "blockers": [
-    "non-blocking: carried to the Phase 14 packet, does not halt phases 5-13"
+    "Resolved by Founder decisions v0.1; no AlienIntent requirement claims Agent Ready internals."
    ],
    "created_at": "2026-09-21T19:46:50.254919+00:00",
    "critical_path": false,
    "phase": "4",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "RESOLVED",
    "risk_class": "HIGH",
    "routing": null,
-   "status": "FOUNDER_DECISION_REQUIRED",
+   "status": "DONE",
+   "subdecisions": [
+    {
+     "id": "G1 implementation/schema/CLI owner",
+     "provenance": "Founder decisions v0.1 (docs/decisions/alienintent-agent-ready-founder-decisions-and-ubiquitous-language-v0.1.md), canonicalized 2026-09-22 \u00a72, settled #1-#2",
+     "resolution": "Owner is the independent Agent Ready product \u2014 not AlienIntent. AlienIntent owns only the integration (SF-REQ-015 amended; ReadinessAssessment port).",
+     "status": "RESOLVED"
+    },
+    {
+     "id": "G2 canonical serialization contract owner",
+     "provenance": "Founder decisions v0.1 (docs/decisions/alienintent-agent-ready-founder-decisions-and-ubiquitous-language-v0.1.md), canonicalized 2026-09-22 \u00a7\u00a72-3, settled #2-#3",
+     "resolution": "Agent Ready owns the public assessment schema. AlienIntent owns its retained Readiness Assessment record envelope (SF-REQ-029 amended, Evidence and Learning). Envelope design is Wave 2 design work (follow-up F3).",
+     "status": "RESOLVED"
+    }
+   ],
    "task_id": "POSTW1-DECIDE-004A",
-   "title": "Founder: assign an owner for the Agent-Ready implementation/schema/CLI (G1) and the canonical serialization contract (G2)",
-   "updated_at": "2026-09-21T19:46:50.254933+00:00"
+   "title": "Founder: Agent-Ready implementation/schema/CLI owner (G1) and serialization contract owner (G2)",
+   "updated_at": "2026-09-22T05:51:55.976102+00:00"
   },
   "POSTW1-DECIDE-005A": {
    "artifact_refs": [
@@ -198,20 +212,28 @@
    ],
    "assigned_actor": "founder",
    "blockers": [
-    "non-blocking: carried to the Phase 14 packet; phases 6-13 do not require it"
+    "Enacted as an amendment to SF-REQ-013."
    ],
    "created_at": "2026-09-21T19:57:11.606414+00:00",
    "critical_path": false,
    "phase": "5",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "RESOLVED",
    "risk_class": "HIGH",
    "routing": null,
-   "status": "FOUNDER_DECISION_REQUIRED",
+   "status": "DONE",
+   "subdecisions": [
+    {
+     "id": "SPLIT-G1 owner",
+     "provenance": "Founder decisions v0.1 (docs/decisions/alienintent-agent-ready-founder-decisions-and-ubiquitous-language-v0.1.md), canonicalized 2026-09-22 \u00a75, settled #5",
+     "resolution": "SF-REQ-013 amended 2026-09-22 to own the authority-bearing split/replan transaction; Agent Ready owns split judgment.",
+     "status": "RESOLVED"
+    }
+   ],
    "task_id": "POSTW1-DECIDE-005A",
    "title": "Founder: amend SF-REQ-013 to own the split/replan transaction (SPLIT-G1)",
-   "updated_at": "2026-09-21T19:57:11.606432+00:00"
+   "updated_at": "2026-09-22T05:51:55.984402+00:00"
   },
   "POSTW1-DECIDE-006A": {
    "artifact_refs": [
@@ -219,27 +241,64 @@
    ],
    "assigned_actor": "founder",
    "blockers": [
-    "non-blocking: no phase 7-13 work depends on these; carried to the Phase 14 packet",
-    "SWF-21 release authority",
-    "Windows notification",
-    "session-bound attention waiter",
-    "sandbox ingress tunnel",
-    "eighteen external bootstrap modules",
-    "resident coordinator multi-BIU tenure",
-    "PRODUCER-on-Claude reversion requires a separately authorized operational change"
+    "Founder decisions v0.1 \u00a714 confirms the monitoring direction (SWF-27/SF-REQ-053/056) but authorizes no retirement action.",
+    "OPEN: SWF-21 release authority \u2014 operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+    "OPEN: Windows notification \u2014 operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+    "OPEN: session-bound attention waiter \u2014 operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+    "OPEN: sandbox ingress tunnel \u2014 operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+    "OPEN: eighteen external bootstrap modules \u2014 operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+    "OPEN: resident coordinator multi-BIU tenure \u2014 operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+    "OPEN: PRODUCER-on-Claude reversion (separate operational authority) \u2014 operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1"
    ],
    "created_at": "2026-09-21T20:10:44.322045+00:00",
    "critical_path": false,
    "phase": "6",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "PARTIALLY_RESOLVED",
    "risk_class": "HIGH",
    "routing": null,
    "status": "FOUNDER_DECISION_REQUIRED",
+   "subdecisions": [
+    {
+     "id": "SWF-21 release authority",
+     "note": "operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+     "status": "OPEN"
+    },
+    {
+     "id": "Windows notification",
+     "note": "operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+     "status": "OPEN"
+    },
+    {
+     "id": "session-bound attention waiter",
+     "note": "operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+     "status": "OPEN"
+    },
+    {
+     "id": "sandbox ingress tunnel",
+     "note": "operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+     "status": "OPEN"
+    },
+    {
+     "id": "eighteen external bootstrap modules",
+     "note": "operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+     "status": "OPEN"
+    },
+    {
+     "id": "resident coordinator multi-BIU tenure",
+     "note": "operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+     "status": "OPEN"
+    },
+    {
+     "id": "PRODUCER-on-Claude reversion (separate operational authority)",
+     "note": "operational retirement requires proof of replacement before action; not decided by Founder decisions v0.1",
+     "status": "OPEN"
+    }
+   ],
    "task_id": "POSTW1-DECIDE-006A",
    "title": "Founder: 6 NEEDS_DECISION mechanisms plus the PRODUCER-on-Claude reversion",
-   "updated_at": "2026-09-21T20:10:44.322069+00:00"
+   "updated_at": "2026-09-22T05:51:55.994260+00:00"
   },
   "POSTW1-DECIDE-007A": {
    "artifact_refs": [
@@ -247,21 +306,52 @@
    ],
    "assigned_actor": "founder",
    "blockers": [
-    "non-blocking: phases 8-13 proceed against the current requirement set",
-    "Phase 8 must treat the 5 amendments as pending, not settled"
+    "One of five amendments enacted (R06). Four remain for Founder disposition.",
+    "OPEN: R02 SF-REQ-008 durable worker-outcome read-back \u2014 not addressed by Founder decisions v0.1",
+    "OPEN: R03 SF-REQ-022 nonterminal retry budget \u2014 not addressed",
+    "OPEN: R04 SF-REQ-025 adjacent / LRN-022 ownership \u2014 not addressed; LRN-022 remains a NEW_CAPABILITY_GAP",
+    "OPEN: R05 SF-REQ-029 adjacent / LRN-023 ownership \u2014 not addressed; LRN-023 remains a NEW_CAPABILITY_GAP"
    ],
    "created_at": "2026-09-21T20:23:15.516357+00:00",
    "critical_path": false,
    "phase": "7",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "PARTIALLY_RESOLVED",
    "risk_class": "HIGH",
    "routing": null,
    "status": "FOUNDER_DECISION_REQUIRED",
+   "subdecisions": [
+    {
+     "id": "R06 SF-REQ-013 split/replan",
+     "provenance": "Founder decisions v0.1 (docs/decisions/alienintent-agent-ready-founder-decisions-and-ubiquitous-language-v0.1.md), canonicalized 2026-09-22 \u00a75",
+     "resolution": "Same decision as 005A; enacted.",
+     "status": "RESOLVED"
+    },
+    {
+     "id": "R02 SF-REQ-008 durable worker-outcome read-back",
+     "note": "not addressed by Founder decisions v0.1",
+     "status": "OPEN"
+    },
+    {
+     "id": "R03 SF-REQ-022 nonterminal retry budget",
+     "note": "not addressed",
+     "status": "OPEN"
+    },
+    {
+     "id": "R04 SF-REQ-025 adjacent / LRN-022 ownership",
+     "note": "not addressed; LRN-022 remains a NEW_CAPABILITY_GAP",
+     "status": "OPEN"
+    },
+    {
+     "id": "R05 SF-REQ-029 adjacent / LRN-023 ownership",
+     "note": "not addressed; LRN-023 remains a NEW_CAPABILITY_GAP",
+     "status": "OPEN"
+    }
+   ],
    "task_id": "POSTW1-DECIDE-007A",
-   "title": "Founder: accept/reject/revise the 5 Phase 7 amendment recommendations, and assign ownership for LRN-022 and LRN-023",
-   "updated_at": "2026-09-21T20:23:15.516372+00:00"
+   "title": "Founder: five Phase 7 amendment recommendations; LRN-022/LRN-023 ownership",
+   "updated_at": "2026-09-22T05:51:56.001411+00:00"
   },
   "POSTW1-DECIDE-008A": {
    "artifact_refs": [
@@ -269,20 +359,28 @@
    ],
    "assigned_actor": "founder",
    "blockers": [
-    "non-blocking: phases 9-13 may design against it as specified, marked unratified"
+    "Still requires explicit ratification of the authored specification.",
+    "OPEN: SF-REQ-056 ratification \u2014 Founder decisions v0.1 \u00a714 is consistent with the authored specification but does not ratify its text"
    ],
    "created_at": "2026-09-21T20:38:27.496267+00:00",
    "critical_path": false,
    "phase": "8",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "PARTIALLY_RESOLVED",
    "risk_class": "HIGH",
    "routing": null,
    "status": "FOUNDER_DECISION_REQUIRED",
+   "subdecisions": [
+    {
+     "id": "SF-REQ-056 ratification",
+     "note": "Founder decisions v0.1 \u00a714 is consistent with the authored specification but does not ratify its text",
+     "status": "OPEN"
+    }
+   ],
    "task_id": "POSTW1-DECIDE-008A",
    "title": "Founder: ratify SF-REQ-056, authored in Phase 8 from an id defined nowhere",
-   "updated_at": "2026-09-21T20:38:27.496284+00:00"
+   "updated_at": "2026-09-22T05:51:56.007763+00:00"
   },
   "POSTW1-DECIDE-010A": {
    "artifact_refs": [
@@ -290,25 +388,52 @@
    ],
    "assigned_actor": "founder",
    "blockers": [
-    "non-blocking for phases 11-13 planning; R1-GAP-013-ALLOCATION blocks Wave 2A completion claims",
-    "R2-GAP-051-EDGE-AUTHORITY",
-    "R1-GAP-013-ALLOCATION",
-    "R1-GAP-039-ORCHESTRATION",
-    "R1-GAP-039-REAL-OUTCOME",
-    "R1-GAP-MONITOR-HOST"
+    "One of five gaps resolved (013 allocation). Four remain.",
+    "OPEN: R2-GAP-051-EDGE-AUTHORITY \u2014 normative cross-module import-direction table still unresolved; \u00a716 modular-monolith bias does not decide it",
+    "OPEN: R1-GAP-039-ORCHESTRATION \u2014 \u00a712 fixes the Deterministic Test Worker on the same WorkerPort but names no owner for canonical multi-role orchestration",
+    "OPEN: R1-GAP-039-REAL-OUTCOME \u2014 real-worker-path RoleOutcomeRecord producer still unowned",
+    "OPEN: R1-GAP-MONITOR-HOST \u2014 \u00a714 fixes that monitoring lives outside model sessions; it does not name who owns/supervises the host"
    ],
    "created_at": "2026-09-21T21:43:57.345133+00:00",
    "critical_path": false,
    "phase": "10",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "PARTIALLY_RESOLVED",
    "risk_class": "HIGH",
    "routing": null,
    "status": "FOUNDER_DECISION_REQUIRED",
+   "subdecisions": [
+    {
+     "id": "R1-GAP-013-ALLOCATION",
+     "provenance": "Founder decisions v0.1 (docs/decisions/alienintent-agent-ready-founder-decisions-and-ubiquitous-language-v0.1.md), canonicalized 2026-09-22 \u00a7\u00a75-6, settled #6",
+     "resolution": "The BIU Compiler derives the initial decomposition itself; no external hand-authored allocation is a mandatory input (SF-REQ-013 amended). Terminology collision resolved: compile-time mapping is 'obligation mapping'; 'Allocation' is execution binding (SF-REQ-026).",
+     "status": "RESOLVED"
+    },
+    {
+     "id": "R2-GAP-051-EDGE-AUTHORITY",
+     "note": "normative cross-module import-direction table still unresolved; \u00a716 modular-monolith bias does not decide it",
+     "status": "OPEN"
+    },
+    {
+     "id": "R1-GAP-039-ORCHESTRATION",
+     "note": "\u00a712 fixes the Deterministic Test Worker on the same WorkerPort but names no owner for canonical multi-role orchestration",
+     "status": "OPEN"
+    },
+    {
+     "id": "R1-GAP-039-REAL-OUTCOME",
+     "note": "real-worker-path RoleOutcomeRecord producer still unowned",
+     "status": "OPEN"
+    },
+    {
+     "id": "R1-GAP-MONITOR-HOST",
+     "note": "\u00a714 fixes that monitoring lives outside model sessions; it does not name who owns/supervises the host",
+     "status": "OPEN"
+    }
+   ],
    "task_id": "POSTW1-DECIDE-010A",
-   "title": "Founder: five design authority gaps surfaced by verification (edge authority, 013 allocation, 039 orchestration and real-outcome, monitor host)",
-   "updated_at": "2026-09-21T21:43:57.345148+00:00"
+   "title": "Founder: five design authority gaps surfaced by verification",
+   "updated_at": "2026-09-22T05:51:56.015506+00:00"
   },
   "POSTW1-DECIDE-013A": {
    "artifact_refs": [
@@ -316,20 +441,34 @@
    ],
    "assigned_actor": "founder",
    "blockers": [
-    "Wave 2 has zero READY BIUs; WO-220101 is the single entry point and awaits this answer"
+    "Concept and owner canonical; the concrete clarification for WO-220101 remains open. Wave 2 execution not thereby authorized.",
+    "OPEN: AR13-CQ-001 concrete answer for WO-220101 \u2014 a specific authorized allocator instance, retained execution packet, positive limits and remaining allowance for WO-220101 still require an operational authority answer; Wave 2 execution is not authorized"
    ],
    "created_at": "2026-09-21T22:18:45.874628+00:00",
    "critical_path": false,
    "phase": "13",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "PARTIALLY_RESOLVED",
    "risk_class": "HIGH",
    "routing": null,
    "status": "FOUNDER_DECISION_REQUIRED",
+   "subdecisions": [
+    {
+     "id": "Allocator capability and owner",
+     "provenance": "Founder decisions v0.1 (docs/decisions/alienintent-agent-ready-founder-decisions-and-ubiquitous-language-v0.1.md), canonicalized 2026-09-22 \u00a711, settled #10-#11",
+     "resolution": "Cognizant Allocator canonicalized under SF-REQ-026 (amended); local-model-first default; Execution Packet defined in UL v0.1.",
+     "status": "RESOLVED"
+    },
+    {
+     "id": "AR13-CQ-001 concrete answer for WO-220101",
+     "note": "a specific authorized allocator instance, retained execution packet, positive limits and remaining allowance for WO-220101 still require an operational authority answer; Wave 2 execution is not authorized",
+     "status": "OPEN"
+    }
+   ],
    "task_id": "POSTW1-DECIDE-013A",
-   "title": "Founder: clarification AR13-CQ-001 \u2014 identify the authorized allocator and retained execution packet (blocks Wave 2's only assessable entry point)",
-   "updated_at": "2026-09-21T22:18:45.874643+00:00"
+   "title": "Founder: clarification AR13-CQ-001 \u2014 authorized allocator and retained execution packet for WO-220101",
+   "updated_at": "2026-09-22T05:51:56.022786+00:00"
   },
   "POSTW1-DESIGN-009": {
    "artifact_refs": [
@@ -747,5 +886,5 @@
    "updated_at": "2026-09-21T22:31:40.936775+00:00"
   }
  },
- "updated_at": "2026-09-21T22:48:22.587636+00:00"
+ "updated_at": "2026-09-22T05:51:56.022806+00:00"
 }

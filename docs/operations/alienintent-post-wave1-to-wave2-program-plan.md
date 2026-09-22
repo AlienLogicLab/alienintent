@@ -6,6 +6,8 @@ Founder-approved operating plan for the local AlienIntent Program Director.
 
 This document defines the ordered program of work from completed Wave 1 through Wave 2 design and Founder approval.
 
+> **Terminology note (2026-09-22).** The programme this plan governed is complete. It uses the historical bootstrap-assessor readiness vocabulary (`BLOCKED`, `NEEDS_CLARIFICATION`, `SPLIT_RECOMMENDED`) and the borrowed name "Gap Trap"; both were superseded by Founder decisions v0.1 — Agent Ready's dispositions are `READY / CLARIFY / SPLIT / HOLD`, and the product-native term is *deterministic failure-class promotion*. The plan is retained unchanged as a historical operating record.
+
 It is a **program operations artifact**, not a Product Requirement, BIU contract, lifecycle state machine, or replacement for canonical architecture authority.
 
 The Program Director must pair this plan with the Intelligent Routing role definition.

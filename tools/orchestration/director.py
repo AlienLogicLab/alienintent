@@ -233,12 +233,19 @@ class ProgramState:
                     risk: str, prompt_path: str | None = None, artifact_refs=None,
                     review_status: str | None = None, blockers=None,
                     resulting_commit: str | None = None, routing: dict | None = None,
-                    critical_path: bool | None = None) -> None:
+                    critical_path: bool | None = None, subdecisions=None) -> None:
         if status in _FORBIDDEN_AS_PROGRAM_STATE or status not in PROGRAM_STATES:
             raise ValueError(
                 f"{status!r} is not a program task state. Program states are {sorted(PROGRAM_STATES)}; "
                 "BIU lifecycle states must never be used here.")
         existing = self._data["tasks"].get(task_id, {})
+        subs = list(subdecisions) if subdecisions is not None else list(existing.get("subdecisions") or [])
+        # A Founder-decision bundle is only as closed as its least-closed part. Declaring the
+        # bundle DONE while a subdecision is OPEN would hide a live decision behind a closed one.
+        if status == "DONE" and any(str(s.get("status", "")).upper() == "OPEN" for s in subs):
+            raise ValueError(
+                f"{task_id} cannot be DONE: subdecisions still OPEN — "
+                f"{[s.get('id') for s in subs if str(s.get('status','')).upper() == 'OPEN']}")
         self._data["tasks"][task_id] = {
             **existing,
             "task_id": task_id, "phase": phase, "title": title, "assigned_actor": actor,
@@ -250,6 +257,7 @@ class ProgramState:
             "routing": routing or existing.get("routing"),
             "critical_path": critical_path if critical_path is not None
                              else existing.get("critical_path"),
+            "subdecisions": subs,
             "created_at": existing.get("created_at") or datetime.now(timezone.utc).isoformat(),
             "updated_at": datetime.now(timezone.utc).isoformat(),
         }

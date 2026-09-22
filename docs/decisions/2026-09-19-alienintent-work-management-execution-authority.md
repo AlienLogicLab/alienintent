@@ -53,3 +53,30 @@ The ownership decision is approved. FD-02–FD-05 are now binding in [the relate
 - [Control Plane](../architecture/pre-python-gate/control-plane.md)
 - [Conformance and migration](../architecture/pre-python-gate/conformance-and-sovereignty.md)
 - [PG-17 assessed revision BIU](../work-units/pre-python-gate/PG-17.md)
+
+## Refinement (2026-09-22) — Requirements / Planning bounded context
+
+Founder decisions v0.1 §§5–6, 9 (settled #6, #8) establish an AlienIntent **Requirements /
+Planning bounded context** that ingests requirement information from N sources through a
+`RequirementSource` port, normalizes it into a provider-neutral internal requirements model with
+provenance, and performs specification, planning, requirement-to-BIU compilation, dependency
+construction, Agent Ready invocation through a port, and the split/replan transaction.
+
+This refines rather than reverses the decision above:
+
+- Item 1 stands for **product authority**: the configured Work Management Provider remains
+  canonical for prioritization, product ownership and business context, and remains the human
+  surface on which `CAPTURE … READY` are represented.
+- The *engineering conversion* performed within those lanes — specification, planning,
+  compilation, readiness integration, replanning — is AlienIntent work performed by the
+  Requirements / Planning context, whose results are **projected** to the provider (item 4
+  direction). The internal requirements model is canonical for compilation inputs and
+  provenance; it is not a second product backlog (item 5 stands).
+- Item 3 stands unchanged: explicit Release of a READY BIU remains the boundary into Execution.
+
+Wording tension recorded honestly: item 1's phrase "canonical for … CAPTURE, SPECIFY, PLAN,
+TASKS, READY" now means canonical for the *product/work-management state and its human
+representation*, not that AlienIntent performs no specification or planning. Canonical owner of
+the context: Architecture Authority amendment 2026-09-22 (A2). No implementation, package
+restructuring or Node change is authorized by this refinement.
+

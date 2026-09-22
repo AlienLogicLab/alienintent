@@ -313,3 +313,29 @@ def test_the_codex_primary_tier_still_carries_the_resolved_codex_model():
     d = route(task_type="learning_consolidation", risk=RiskClass.MEDIUM, deterministic_possible=False)
     assert d.tier is Tier.CODEX_PRIMARY
     assert d.model == resolved_codex_model()
+
+
+# --- Founder-decision reconciliation (2026-09-22) ------------------------------------
+
+
+def test_a_founder_decision_can_carry_subdecisions_with_separate_status(tmp_path):
+    """A bundle that is partly resolved must not be declared wholly done. Each subdecision
+    carries its own status and provenance; the task stays FOUNDER_DECISION_REQUIRED while any
+    subdecision is OPEN."""
+    st = ProgramState(tmp_path / "s.json")
+    st.upsert_task("D", phase="10", title="bundle", actor="founder",
+                   status="FOUNDER_DECISION_REQUIRED", risk="HIGH", critical_path=False,
+                   subdecisions=[
+                       {"id": "R1-GAP-013-ALLOCATION", "status": "RESOLVED",
+                        "provenance": "Founder decisions v0.1 section 5"},
+                       {"id": "R1-GAP-MONITOR-HOST", "status": "OPEN"}])
+    t = ProgramState(tmp_path / "s.json").task("D")
+    assert [s["status"] for s in t["subdecisions"]] == ["RESOLVED", "OPEN"]
+    assert t["status"] == "FOUNDER_DECISION_REQUIRED"
+
+
+def test_marking_a_bundle_done_with_an_open_subdecision_is_refused(tmp_path):
+    st = ProgramState(tmp_path / "s.json")
+    with pytest.raises(ValueError):
+        st.upsert_task("D", phase="10", title="bundle", actor="founder", status="DONE",
+                       risk="HIGH", subdecisions=[{"id": "x", "status": "OPEN"}])

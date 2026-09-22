@@ -60,9 +60,13 @@ retrofit onto a released BIU.
 Canonical meaning:
 
 > **VERIFY proves what AlienIntent already knows how to check. REVIEW discovers
-> what AlienIntent does not yet know how to check. Gap Trap / deterministic
-> failure-class promotion converts suitable REVIEW discoveries into future VERIFY
-> capability.**
+> what AlienIntent does not yet know how to check. Deterministic failure-class
+> promotion converts suitable REVIEW discoveries into future VERIFY capability.**
+
+*Terminology (2026-09-22, Founder decisions v0.1): the product-native term for this mechanism is
+**deterministic failure-class promotion**. The concept was informed by the external "Gap Trap"
+project; that name is attribution, not AlienIntent Ubiquitous Language, and is not used as a
+canonical noun or verb. Historical programme artifacts that carry the name are unchanged.*
 
 Shorthand:
 

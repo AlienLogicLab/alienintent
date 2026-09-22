@@ -917,6 +917,8 @@ BIUs have machine-readable Intent, requirement links, fixed decisions, boundarie
 
 Represent authorized requirements independently of GitHub/Jira/document formats, with stable IDs, provenance, status, dependencies, and traceability to BIUs.
 
+**Amendment (2026-09-22, Founder decisions v0.1 §9, settled #8) — Requirement Sources and provenance.** Requirement information enters through a **`RequirementSource` port**, distinct from the Work Management port (SF-REQ-005): a source supplies requirement/proposal information; a provider represents and projects work state; one vendor may play both roles through separate adapters. Supported source kinds include GitHub Issues/Projects, Jira, Linear, Azure DevOps, GitLab, local files, structured product documents, AlienIntent-native proposal intake (SF-REQ-055) and imported prototypes/artifacts (SF-REQ-041–044). Adapters translate Source Records plus provenance into the internal requirements model; the core operates only on that model. Each Requirement retains **external source, external identity, external revision, source link, ingestion timestamp, authority status and synchronization/projection semantics** as Requirement Provenance. External vocabulary never becomes the domain model: a Jira Epic is not intrinsically a Requirement, a GitHub Issue is not intrinsically a BIU, a Linear Project is not intrinsically a Wave. Design target: replace one source or provider with another without rewriting the Requirements / Planning domain. Definitions: Ubiquitous Language v0.1.
+
 ## SF-REQ-012 — Requirements ambiguity detection
 **Priority:** P1
 
@@ -927,6 +929,10 @@ Detect missing authority or ambiguity before implementation and emit structured 
 
 Lower governed requirements into bounded BIUs with explicit requirement-satisfaction links and dependency DAGs.
 
+**Amendment (2026-09-22, Founder decisions v0.1 §§5, 8; settled #5, #6) — the split/replan transaction, and the compiler derives decomposition.** This requirement is the canonical owner of the **authority-bearing split/replan mutation** within the Requirements / Planning bounded context, resolving the ownership gap SPLIT-G1 recorded by Phase 5 and POSTW1-DECIDE-005A. Agent Ready owns split *judgment* (a `SPLIT` disposition with recommended semantic boundaries) and mutates nothing; AlienIntent performs the mutation: freeze the original obligation set; map **100 % of obligations** (requirements, acceptance criteria, verification obligations, evidence obligations) to resulting units or a retained Integration Parent; rewrite dependency relationships **deterministically** (identity rewrites, no judgment redirection, no cycles, no weakened predicates); record lineage; invalidate stale Readiness Assessments; materialize resulting candidate BIUs; re-submit each for assessment. Invariant: **splitting may change decomposition; it may not lose, invent or weaken authorized intent or proof obligations.** Identity allocation follows a stated grammar and is never derived from sort order. The Phase 5 design (`docs/evidence/wave1-biu-split-replan-design.json`) is the candidate design for this transaction and SWF-33 is its worked precedent; SF-REQ-015 supplies lint of the results and preserves Agent Ready as readiness authority.
+
+**The BIU Compiler derives the initial decomposition itself.** A hand-authored external "allocation" is not a mandatory input to compilation (resolving R1-GAP-013-ALLOCATION, POSTW1-DECIDE-010A). To avoid collision with the execution-time term *Allocation* (SF-REQ-026), the compile-time mapping of obligations to units is called **obligation mapping**.
+
 ## SF-REQ-014 — Mechanical test obligations before implementation
 **Priority:** P1
 
@@ -936,6 +942,12 @@ Where mechanically testable, derive verification/test obligations before impleme
 **Priority:** P1
 
 Check BIUs for unresolved decisions, incomplete boundaries, missing acceptance/verification obligations, architecture constraints, and dependency problems. Agent-Ready remains execution-readiness authority.
+
+**Amendment (2026-09-22, Founder decisions v0.1 §§1, 2, 7; settled #1, #2, #7) — Agent Ready integration through a port; exact disposition vocabulary.** *Agent Ready* is the independent product that owns readiness semantics, its assessment contract/schema, CLI and local MCP interface; this requirement owns only AlienIntent's **integration** with it. The Requirements / Planning context obtains a Readiness Assessment through the **`ReadinessAssessment` port** (`assess(candidate_work_unit) -> ReadinessAssessment`) with CLI or MCP adapters; the domain never knows Agent Ready's location, subprocess syntax, transport or package internals, and AlienIntent never imports Agent Ready private implementation, copies its rubric or duplicates its decision logic.
+
+Agent Ready returns exactly one of **`READY`, `CLARIFY`, `SPLIT`, `HOLD`**. A disposition is an assessment result, never a lifecycle state, and lifecycle/work-management vocabulary is never projected back into it: `BLOCKED` is an AlienIntent planning/verdict state and is not an Agent Ready disposition. Process semantics: `READY` → eligible for the separate release gates (SF-REQ-002), not release itself; `CLARIFY` → resolve only the material owner question(s) through decision authority (SF-REQ-035), then reassess; `SPLIT` → the SF-REQ-013 split transaction, then reassess each result; `HOLD` → satisfy the prerequisite, then reassess. A resolved prerequisite never rewrites an old disposition; reassessment is required. Assessment execution failure (timeout, malformed result, missing result, provider failure) is not a disposition and never becomes READY.
+
+*Historical note:* Wave 1 and the post-Wave-1 programme assessed readiness with an **AlienIntent bootstrap assessor** — a coordinator-run prompt that borrowed the Agent Ready contract shape — whose vocabulary was `READY / BLOCKED / NEEDS_CLARIFICATION / SPLIT_RECOMMENDED`. Those records are retained verbatim as evidence and are not Agent Ready assessments.
 
 ## SF-REQ-016 — Definition / Observation / Verdict separation
 **Priority:** P1
@@ -992,6 +1004,8 @@ Provider adapters expose capabilities and authenticated readiness; routing canno
 
 Select the cheapest provider/model demonstrated capable of meeting the quality bar; prefer capable local models.
 
+**Amendment (2026-09-22, Founder decisions v0.1 §11; settled #10, #11) — the cognizant Allocator.** This requirement is the canonical owner of **Allocation**: binding authorized work to an eligible worker/provider/model as an **attributable allocation decision** recording the selection, why it was selected, limits (budget, concurrency, capabilities), authority basis and fallback/escalation conditions. Inputs may include BIU requirements and required capabilities, risk class, provider/model capability evidence (SF-REQ-025), current provider readiness, local/remote availability, WIP/capacity, concurrency limits, execution and remaining budget (SF-REQ-028), security/privacy constraints, repository/project constraints, historical quality/yield evidence (SF-REQ-024/031), routing policy and retry/failover policy. Allocation is distinct from scheduling — SF-REQ-002 decides *which* READY BIU is next; the Allocator decides *who executes it and under what packet* — and the deterministic kernel (SF-REQ-009) enforces the resulting limits. **Local-model-first:** deterministic policy settles trivial cases without a model; an adequate local model performs ordinary allocation cognition where configured and demonstrated capable; frontier/paid models are optional escalation reserved for cases exceeding local capability or configured confidence/risk policy. Initialization configures the local allocator model, capability/readiness validation, escalation providers, escalation conditions and budget policy (SF-REQ-037/038). Existing capability, quality, budget and authorization predicates are unchanged.
+
 ## SF-REQ-027 — Source intelligence
 **Priority:** P3
 
@@ -1009,6 +1023,8 @@ Record observable engineering trajectory independent of Git commits: actions, ar
 
 Trajectory observations may carry versioned, evidence-backed failure classifications where supported: behavioral defect, evidence/proof defect, custody/identity defect, tooling/publication defect, process-instruction adherence, genuine authority required, false/escalated authority request, and provider-capacity interruption. Classification describes observed evidence and does not itself declare a verdict.
 
+**Amendment (2026-09-22, Founder decisions v0.1 §3; settled #3) — Readiness Assessments are immutable observations.** A Readiness Assessment obtained through SF-REQ-015 is retained as an immutable observation preserving, where available: the raw original assessment; exact input identity/fingerprint; Agent Ready version; assessment contract/schema version; provider/model provenance; timestamp; original disposition and explanation. It is never rewritten because Agent Ready later changes its schema or reasoning; schema evolution is handled by backward-compatible readers, versioned adapters, read-time projection into the current internal representation, or explicit migration views. A corrupt record is corrected by preserving the original plus correction provenance. Retention custody belongs to the Evidence and Learning module; readiness semantics belong to Agent Ready — not the same owner.
+
 ## SF-REQ-030 — Quality Evidence
 **Priority:** P4
 
@@ -1017,6 +1033,8 @@ Derive durable Quality Evidence from trajectories; raw observation and learned h
 Derived evidence identifies its source trajectory/schema version and explicit evidence inputs. Where facts permit, aggregate metrics reconcile against those sources, including verifier cycles, RETURN_TO_IMPLEMENT, classified rejections, authority decisions, attributable human-blocked duration, candidate/merge identity, final verdict/landed/DONE and timestamp relationships. UNKNOWN or partial telemetry is never silently converted to zero. Contradictory derived evidence fails deterministic consistency verification.
 
 The deterministic consistency verification must itself carry discriminating negative-control / proven-red evidence where practical: altering a derived count, substituting zero for UNKNOWN telemetry without evidence, or introducing an impossible timestamp relation must cause the applicable check to fail. A consistency check that cannot fail is not evidence (SWF-24). Folded from PROP-2026-0004 by Founder decision of 2026-09-20; SF-REQ-030 is the canonical owner of Execution Evidence Derivation and Consistency Verification.
+
+**Amendment (2026-09-22, Founder decisions v0.1 §4; settled #4) — Assessment Feedback.** Agent Ready provides the feedback contract; AlienIntent, as consumer, supplies **attributable, structured outcome evidence** derived from Quality Evidence and linked to the preceding Readiness Assessment — for example `READY → first-pass accepted`, `READY → repeated repair`, `READY → later decomposition failure`, `SPLIT → useful split`, `SPLIT → unnecessary split`, `CLARIFY → answer materially changed implementation`, `CLARIFY → unnecessary question`, `HOLD → prerequisite genuinely blocked execution`, `HOLD → supposed prerequisite proved unnecessary`. Feedback is emitted through an `AssessmentFeedback` port as part of normal evidence closure, never as manual bookkeeping, and is never reduced to success/failure. **The lifecycle/evidence point at which feedback is mature enough to be useful without being premature is deliberately unsettled**: Wave 2 execution identifies and validates it empirically, and may do so before Wave 2 completes. Agent Ready never mutates readiness rules from one consumer's feedback; rule improvement remains governed and versioned on its side, and AlienIntent's own learning remains proposal-gated (SF-REQ-032).
 
 ## SF-REQ-054 — retired: folded into SF-REQ-030
 
@@ -1068,15 +1086,19 @@ Show active/queued/completed work, WIP/capacity, workers, provider/model, BIU, s
 
 `alienintent init` configures a normal self-hosted installation with convention-heavy defaults and discovers what can be discovered.
 
+**Amendment (2026-09-22, Founder decisions v0.1 §19; settled #18) — extension points to preserve.** Polished onboarding is not prioritized ahead of factory completion, but the architecture must preserve a project-initialization boundary through which `alienintent init` can configure, and `alienintent doctor` (SF-REQ-038) validate before autonomous execution: Project identity; Requirement Source adapters; the Work Management Provider adapter; repositories/source-control adapters; lifecycle mapping; authority policy; the Agent Ready interface; providers/models; the local allocator model; frontier escalation providers; execution budget; concurrency/WIP policy; worker capability policy; sandbox/worktree policy; evidence storage; monitoring host; Decision Inbox/notification; security/privacy policy.
+
 ## SF-REQ-038 — Doctor / validation
 **Priority:** P0
 
 Validate installation, work-management access, provider readiness, source-control access, transport health, lifecycle mapping, persistence, and execution capability before autonomous work begins.
 
-## SF-REQ-039 — Fake-agent/offline factory proof
+## SF-REQ-039 — Deterministic Test Worker
 **Priority:** P1
 
-Support deterministic scripted/fake workers that exercise the real factory lifecycle without provider credentials or token spend.
+*Renamed and reframed 2026-09-22 (Founder decisions v0.1 §12; settled #12–#14). Former title: "Fake-agent/offline factory proof"; former text: "Support deterministic scripted/fake workers that exercise the real factory lifecycle without provider credentials or token spend." Requirement identity, priority and Wave 2 assignment are unchanged; existing artifacts referencing the former title remain valid by identifier.*
+
+A **Deterministic Test Worker** is a deterministic implementation of the same worker-facing port/protocol used by production workers (`WorkerPort → Test Worker Adapter → deterministic scenarios`, beside `WorkerPort → Real Worker Adapter → provider`), capable of producing scripted valid and invalid worker behaviours so AlienIntent's real control plane, lifecycle, recovery, identity, evidence and fault handling can be exercised without model inference, provider credentials or token spend. It does **not** simulate frontier-model intelligence; it substitutes deterministic worker behaviour while exercising the same observable contract. The core must not special-case lifecycle semantics for it — no `if test_mode: mark_done()` shortcuts. Supported scenarios include: valid outcome; malformed outcome; missing outcome; delayed outcome; duplicate outcome; wrong identity/correlation; provider/capacity failure; crash before output; progress then crash; restart/resume; repair cycle; verification rejection; human-decision condition; split recommendation where appropriate; normal end-to-end success. Naming may be refined later ("Test Worker", "Worker Protocol Simulator"); names implying imitation of LLM intelligence are avoided.
 
 ## SF-REQ-040 — Provider-free replay
 **Priority:** P2/P4

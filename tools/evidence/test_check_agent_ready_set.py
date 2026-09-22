@@ -60,7 +60,7 @@ def test_a_biu_with_an_open_authority_gap_cannot_be_ready():
 
 
 def test_the_same_biu_blocked_passes():
-    ok, f = check_set(_doc([_a(disposition="BLOCKED",
+    ok, f = check_set(_doc([_a(disposition="HOLD",
                                open_authority_gaps=["R1-GAP-MONITOR-HOST"],
                                implementation_allowed=False,
                                next_action="await Founder disposition",
@@ -69,14 +69,14 @@ def test_the_same_biu_blocked_passes():
 
 
 def test_a_non_ready_disposition_permitting_implementation_is_rejected():
-    ok, f = check_set(_doc([_a(disposition="BLOCKED", implementation_allowed=True,
+    ok, f = check_set(_doc([_a(disposition="HOLD", implementation_allowed=True,
                                next_action="x", reassessment_trigger="y")]))
     assert not ok
     assert any("matrix_conformance" in x for x in f)
 
 
 def test_a_non_ready_disposition_without_a_reassessment_trigger_is_rejected():
-    ok, f = check_set(_doc([_a(disposition="NEEDS_CLARIFICATION", implementation_allowed=False,
+    ok, f = check_set(_doc([_a(disposition="CLARIFY", implementation_allowed=False,
                                next_action="ask", reassessment_trigger="none")]))
     assert not ok
     assert any("matrix_conformance" in x for x in f)
@@ -107,15 +107,17 @@ def test_an_unvalidated_terminal_result_is_rejected():
     assert any("terminal_result_validated" in x for x in f)
 
 
-def test_split_recommended_must_reference_the_split_process():
-    ok, f = check_set(_doc([_a(disposition="SPLIT_RECOMMENDED", implementation_allowed=False,
-                               next_action="split", reassessment_trigger="after split")]))
+def test_legacy_split_recommended_under_declared_vocabulary_must_reference_the_split_process():
+    d = _doc([_a(disposition="SPLIT_RECOMMENDED", implementation_allowed=False,
+                 next_action="split", reassessment_trigger="after split")])
+    d["assessor_vocabulary"] = "alienintent-bootstrap-assessor"
+    ok, f = check_set(d)
     assert not ok
     assert any("split_invokes_process" in x for x in f)
 
 
-def test_split_recommended_referencing_the_process_passes():
-    ok, f = check_set(_doc([_a(disposition="SPLIT_RECOMMENDED", implementation_allowed=False,
+def test_split_referencing_the_process_passes():
+    ok, f = check_set(_doc([_a(disposition="SPLIT", implementation_allowed=False,
                                next_action="split", reassessment_trigger="after split",
                                split_process_ref="docs/evidence/wave1-biu-split-replan-design.json")]))
     assert ok, f
@@ -126,11 +128,11 @@ NEGATIVE_CONTROLS = {
     "canonical_disposition": lambda d: d["assessments"][0].__setitem__("disposition", "NOPE"),
     "no_coercion_to_ready": lambda d: d["assessments"][0].__setitem__("open_authority_gaps", ["G"]),
     "matrix_conformance": lambda d: d["assessments"][0].update(
-        disposition="BLOCKED", implementation_allowed=True),
+        disposition="HOLD", implementation_allowed=True),
     "provider_provenance": lambda d: d["assessments"][0].__setitem__("provider", ""),
     "terminal_result_validated": lambda d: d["assessments"][0].__setitem__("terminal_result_valid", False),
     "split_invokes_process": lambda d: d["assessments"][0].update(
-        disposition="SPLIT_RECOMMENDED", implementation_allowed=False),
+        disposition="SPLIT", implementation_allowed=False),
 }
 
 
@@ -144,3 +146,51 @@ def test_every_check_has_a_negative_control():
             unkillable.append(name)
     assert not unkillable, f"checks that could not be made to fail: {unkillable}"
     assert set(NEGATIVE_CONTROLS) == set(CHECKS)
+
+
+# --- Founder decision 2026-09-22: Agent Ready dispositions are exactly READY/CLARIFY/SPLIT/HOLD
+
+
+def test_the_canonical_disposition_set_is_agent_readys_four():
+    from check_agent_ready_set import AGENT_READY_DISPOSITIONS
+    assert AGENT_READY_DISPOSITIONS == ("READY", "CLARIFY", "SPLIT", "HOLD")
+
+
+def test_an_undeclared_artifact_is_held_to_agent_ready_vocabulary():
+    """BLOCKED is not an Agent Ready disposition. An artifact that does not declare the
+    legacy bootstrap-assessor vocabulary is held to the canonical four."""
+    ok, f = check_set(_doc([_a(disposition="BLOCKED", implementation_allowed=False,
+                               next_action="await prerequisite", reassessment_trigger="x")]))
+    assert not ok
+    assert any("canonical_disposition" in x for x in f)
+
+
+def test_hold_is_accepted_as_the_canonical_prerequisite_disposition():
+    ok, f = check_set(_doc([_a(disposition="HOLD", implementation_allowed=False,
+                               next_action="obtain prerequisite", reassessment_trigger="x")]))
+    assert ok, f
+
+
+def test_a_historical_artifact_may_declare_the_legacy_bootstrap_assessor_vocabulary():
+    """Historical records remain historical: the Wave 2 programme assessments were produced by
+    the AlienIntent bootstrap assessor and are validated under the vocabulary they declare."""
+    d = _doc([_a(disposition="BLOCKED", implementation_allowed=False,
+                 next_action="await prerequisite", reassessment_trigger="x")])
+    d["assessor_vocabulary"] = "alienintent-bootstrap-assessor"
+    ok, f = check_set(d)
+    assert ok, f
+
+
+def test_an_agent_ready_declared_artifact_rejects_legacy_names():
+    d = _doc([_a(disposition="NEEDS_CLARIFICATION", implementation_allowed=False,
+                 next_action="ask", reassessment_trigger="x")])
+    d["assessor_vocabulary"] = "agent-ready"
+    ok, f = check_set(d)
+    assert not ok
+
+
+def test_split_under_agent_ready_vocabulary_must_invoke_the_split_process():
+    ok, f = check_set(_doc([_a(disposition="SPLIT", implementation_allowed=False,
+                               next_action="split", reassessment_trigger="after split")]))
+    assert not ok
+    assert any("split_invokes_process" in x for x in f)

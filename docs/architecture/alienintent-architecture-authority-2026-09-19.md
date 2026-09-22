@@ -630,3 +630,89 @@ When Founder review is required, present:
 8. what remains undecided
 
 Do not silently choose because one implementation is convenient.
+
+## Amendment — 2026-09-22: Founder architecture decisions (canonicalized)
+
+Source: **Founder Architecture Decisions and Ubiquitous Language v0.1**
+(`../decisions/alienintent-agent-ready-founder-decisions-and-ubiquitous-language-v0.1.md`),
+Founder-approved; canonicalized here by the resident bootstrap coordinator. Each item names its
+single canonical owner. Where the owner is another artifact, this section cross-references and
+does not restate.
+
+**Governing-principle refinement.** *Elegance includes the absence of unnecessary complexity.
+Prefer the simplest architecture that preserves the required invariants and extension
+boundaries.* Current architectural bias: **modular monolith + explicit DDD bounded contexts +
+Hexagonal ports/adapters + distribution only when evidence justifies it** (independent scaling,
+security isolation, failure containment, genuinely independent release lifecycle, operational
+ownership, host/runtime constraints). This is not a prohibition on services; a bounded context
+never implies a deployment boundary. Owner: this section (extends the KISS principle above).
+
+**A1. Agent Ready product boundary.** Agent Ready remains an independent product, repository and
+bounded context. It owns readiness semantics, the dispositions `READY / CLARIFY / SPLIT / HOLD`,
+assessment logic, the versioned public assessment contract/schema, its CLI, its local MCP
+interface, provider adapters and backward compatibility of its public interface. AlienIntent
+consumes it **only** through supported public interfaces behind a Hexagonal port
+(`ReadinessAssessment`, CLI or MCP adapters); it never imports Agent Ready private
+implementation, copies its rubric, duplicates its decision logic or mutates its internals.
+*Agent Ready remains a separate system* (canonical-architecture non-responsibility, retained).
+Owner of the **integration**: SF-REQ-015 (amended). Owner of Agent Ready itself: the Agent Ready
+product — no AlienIntent requirement claims it.
+
+**A2. Requirements / Planning bounded context.** AlienIntent has an explicit Requirements /
+Planning bounded context owning the invariant *authorized product intent is converted into
+executable work without losing, inventing, weakening or silently reallocating obligations*:
+requirement intake/normalization, provenance, specification, design inputs, planning,
+requirement-to-BIU compilation, dependency DAG construction, Agent Ready invocation through a
+port, processing of the four dispositions, the split/replan transaction, obligation conservation
+and Wave-plan materialization. It exists even when deployed in the same process as other
+contexts. FD-01's external-provider ownership of product authority, priority and business context
+is unchanged; see the FD-01 refinement of 2026-09-22 and the FD-02 refinement in
+`pre-python-gate/founder-decisions.md`. §41 and §44(3) apply: no package restructuring by this
+amendment. Owners: this section (context map); SF-REQ-011/012/013/015 (capabilities).
+
+**A3. Solve for N Projects and N Requirement Sources (binding).** §8 is refined: requirement
+information enters through a `RequirementSource` port distinct from the `WorkManagement` port;
+the core operates on a provider-neutral internal requirements model; external identity, revision,
+link, ingestion time and authority status are retained as provenance; external vocabulary never
+becomes the domain model. Neither AlienIntent self-hosting, nor any single external product, nor
+GitHub, nor one model provider may be assumed by the core; project-specific conventions live in
+configuration, adapters and policy. Owner: SF-REQ-011 (amended) for the port and provenance;
+SF-REQ-005 for Work Management; this section for the principle.
+
+**A4. Cognizant Allocator.** §23 is refined: AlienIntent has an explicit Allocation capability
+producing attributable allocation decisions (selected worker/provider/model, why, limits,
+authority basis, fallback/escalation), distinct from scheduling (SF-REQ-002). Default posture:
+deterministic policy settles trivial cases; an adequate **local model** performs ordinary
+allocation cognition where configured and demonstrated capable; frontier/paid models are optional
+escalation, configured at initialization. Owner: SF-REQ-026 (amended); initialization SF-REQ-037.
+
+**A5. Architecture-edge authority.** §45 is refined: when implementation encounters a material
+architecture question existing authority does not answer, the affected branch stops and an
+**Architecture Decision Required** is surfaced with evidence, options and a recommendation, as a
+kind of `HumanDecisionRequired` through the Decision Inbox (SF-REQ-035). Engineering research is
+allowed; silent architecture invention is not. No second decision mechanism is created.
+
+**A6. Persistent deterministic monitoring.** Already canonical: SWF-27 §Bootstrap evidence
+(*persistent monitoring is operational infrastructure and must not determine coordinator tenure*)
+and SF-REQ-053/056. Restated only as the UL invariant *cognition may be episodic; deterministic
+monitoring must be durable.* Owner: SWF-27 / SF-REQ-053. Not duplicated here.
+
+**A7. Historical readiness assessments are immutable.** Consistent with §15 and §26. Owner of
+retention/provenance: SF-REQ-029 (amended) within the Evidence and Learning module. Owner of
+readiness semantics: Agent Ready (A1). Not the same owner.
+
+**A8. Assessment feedback.** Agent Ready provides the feedback contract; consumers supply
+attributable structured outcome evidence. AlienIntent derives it from durable execution evidence.
+Owner: SF-REQ-030 (amended). The maturity point is **deliberately unsettled** — a Wave 2
+design-learning objective.
+
+**A9. Deterministic Test Worker.** SF-REQ-039 renamed and reframed in place; identity retained.
+
+**A10. Project initialization.** §31 and §38 stand; the extension points `alienintent init` must
+preserve are enumerated in SF-REQ-037 (amended). Polish is not prioritized ahead of factory
+completion.
+
+**A11. Ubiquitous Language artifact.** §9 and §44(2) are satisfied in first canonical form by
+`alienintent-ubiquitous-language-v0.1.md`, which records terminology collisions rather than
+normalizing them and explicitly does not canonicalize "Gap Trap".
+

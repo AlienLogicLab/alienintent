@@ -14,8 +14,8 @@ An assessment execution failure is not a disposition. LRN-008 records a verifier
 success with no B-DISP verdict and became DURABLE_RESULT_MISSING rather than ACCEPT — the control
 working. Failures belong in `execution_failures`, never in `disposition`.
 
-SPLIT_RECOMMENDED must invoke the process Phase 5 designed rather than improvising, which is the
-whole point of having designed it.
+A SPLIT disposition (historical bootstrap-assessor name: SPLIT_RECOMMENDED) must invoke the
+process Phase 5 designed rather than improvising, which is the whole point of having designed it.
 
 Usage: python3 tools/evidence/check_agent_ready_set.py [assessments.json]
 """
@@ -25,7 +25,14 @@ import json
 import sys
 from pathlib import Path
 
-DISPOSITIONS = ("READY", "BLOCKED", "NEEDS_CLARIFICATION", "SPLIT_RECOMMENDED")
+# Agent Ready's dispositions are exactly these four (Founder decisions v0.1, 2026-09-22).
+AGENT_READY_DISPOSITIONS = ("READY", "CLARIFY", "SPLIT", "HOLD")
+# Historical bootstrap-assessor vocabulary: what Wave 1 and the post-Wave-1 programme produced
+# through a coordinator-run prompt. Valid only for an artifact that declares it.
+LEGACY_BOOTSTRAP_ASSESSOR_DISPOSITIONS = (  # historical bootstrap-assessor vocabulary
+    "READY", "BLOCKED", "NEEDS_CLARIFICATION", "SPLIT_RECOMMENDED")  # historical, not Agent Ready
+LEGACY_VOCABULARY = "alienintent-bootstrap-assessor"
+_SPLIT_NAMES = ("SPLIT", "SPLIT_RECOMMENDED")  # canonical, then historical bootstrap-assessor name
 
 CHECKS = ("every_biu_assessed", "canonical_disposition", "no_coercion_to_ready",
           "matrix_conformance", "provider_provenance", "terminal_result_validated",
@@ -47,16 +54,18 @@ def _absent(value) -> bool:
 def check_set(doc: dict) -> tuple[bool, list[str]]:
     failures: list[str] = []
     assessments = doc.get("assessments", [])
+    legacy = doc.get("assessor_vocabulary") == LEGACY_VOCABULARY
+    dispositions = LEGACY_BOOTSTRAP_ASSESSOR_DISPOSITIONS if legacy else AGENT_READY_DISPOSITIONS
 
     for a in assessments:
         bid = a.get("biu_id", "<no id>")
         disp = a.get("disposition")
 
-        if disp not in DISPOSITIONS:
+        if disp not in dispositions:
             failures.append(
                 f"canonical_disposition: {bid} has disposition {disp!r}, not one of "
-                f"{DISPOSITIONS}. An execution failure is not a readiness verdict and belongs in "
-                "execution_failures")
+                f"{dispositions}. Agent Ready has exactly READY, CLARIFY, SPLIT, HOLD; BLOCKED is "
+                "a lifecycle state, and an execution failure belongs in execution_failures")
             continue
 
         if disp == "READY" and not _absent(a.get("open_authority_gaps")):
@@ -79,10 +88,11 @@ def check_set(doc: dict) -> tuple[bool, list[str]]:
                     f"matrix_conformance: {bid} is {disp} with no next action, which leaves the "
                     "outcome to coordinator improvisation")
 
-        if disp == "SPLIT_RECOMMENDED" and _absent(a.get("split_process_ref")):
+        if disp in _SPLIT_NAMES and _absent(a.get("split_process_ref")):
             failures.append(
-                f"split_invokes_process: {bid} is SPLIT_RECOMMENDED without referencing the "
-                "canonical split/replan process; Phase 5 exists so this is not improvised")
+                f"split_invokes_process: {bid} is {disp} without referencing the canonical "
+                "split/replan process; the split transaction (SF-REQ-013) exists so this is not "
+                "improvised")
 
         if _absent(a.get("provider")) or _absent(a.get("model")):
             failures.append(

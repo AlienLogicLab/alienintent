@@ -4,6 +4,13 @@ Date: 2026-09-21. Status: **Founder decision — binding**. Amends the PY-02…P
 approved by [SWF-08–11](2026-09-20-wave1-plan-approval-d1-d2.md).
 Source: direct Founder instruction, on the evidence of PY-10's 2026-09-21 Agent-Ready reassessment.
 
+> **Terminology note (2026-09-22).** The dispositions quoted in this record — `BLOCKED`,
+> `SPLIT_RECOMMENDED`, `READY` — are the historical **bootstrap-assessor vocabulary**: Wave 1
+> readiness was assessed by a coordinator-run prompt that borrowed the Agent Ready contract shape,
+> not by the Agent Ready product, whose dispositions are exactly `READY / CLARIFY / SPLIT / HOLD`.
+> The record is preserved as written; the equivalent Agent Ready judgments would be `HOLD` and
+> `SPLIT`. See the Ubiquitous Language v0.1 §1.
+
 ## What the evidence said
 
 PY-10's fresh reassessment at baseline `85b6060` returned **`SPLIT_RECOMMENDED`**, rework locality

@@ -24,6 +24,16 @@ The earlier recommendation for AlienIntent-owned whole-lifecycle state, and both
 
 **If approved:** complete the concrete aggregate/port contracts against this partition and finalize UL v1 for review. Not permission to scaffold Python packages. Existing domain/lifecycle terms remain unchanged.
 
+**Refinement (2026-09-22, Founder decisions v0.1 §6, settled #6).** A **Requirements / Planning**
+bounded context is established alongside the FD-01 contexts, owning intake/normalization,
+provenance, specification, planning, requirement-to-BIU compilation, dependency DAG construction,
+Agent Ready invocation through a port, disposition processing and the split/replan transaction
+(Architecture Authority amendment A2). This is a semantic boundary, not a deployment boundary:
+the architectural bias remains a modular monolith with Hexagonal ports. The Wave 2 design
+contracts bound SF-REQ-011..013 to the `context_assembly` module; whether that module *is* the
+Requirements / Planning context or a sub-module of it is a Design Contract question to settle
+under SF-REQ-051 — recorded as follow-up, not restructured here. Package names remain unset.
+
 ## FD-03 — RESOLVED: release/capability/budget policy
 
 **Required decision:** approve the candidate per-BIU authority envelope and the initial release default. Confirm fail-closed budget admission when required hard limits cannot be enforced or consumption is unknown.
