@@ -53,10 +53,20 @@ export function loadProfile(profilePath) {
   const port = positive(p.webhook.listenPort, "webhook.listenPort");
   if (port > 65535) fail("webhook.listenPort");
   path(p.webhook.secretFile, "webhook.secretFile");
-  object(p.execution, "execution", ["enabled", "inspectionIntervalMilliseconds"]);
+  object(p.execution, "execution", ["enabled", "inspectionIntervalMilliseconds", "supervision"]);
   if (typeof p.execution.enabled !== "boolean") fail("execution.enabled");
   const inspectionIntervalMs = p.execution.inspectionIntervalMilliseconds ?? 60000;
   if (!Number.isSafeInteger(inspectionIntervalMs) || inspectionIntervalMs < 1000 || inspectionIntervalMs > 300000) fail("execution.inspectionIntervalMilliseconds");
+  const supervision = p.execution.supervision;
+  if (supervision !== undefined) {
+    object(supervision, "execution.supervision", ["mode", "runtimeMilliseconds", "stopGraceMilliseconds", "startupMilliseconds", "systemdRun", "systemctl", "env"]);
+    if (supervision.mode !== "systemd") fail("execution.supervision.mode");
+    for (const key of ["runtimeMilliseconds", "stopGraceMilliseconds", "startupMilliseconds"]) {
+      positive(supervision[key], `execution.supervision.${key}`);
+      if (supervision[key] > 2147483647) fail(`execution.supervision.${key}`);
+    }
+    for (const key of ["systemdRun", "systemctl", "env"]) path(supervision[key], `execution.supervision.${key}`);
+  }
   object(p.operator, "operator", ["authorizedGithubLogins"]);
   const authorizedOperatorLogins = strings(p.operator.authorizedGithubLogins, "operator.authorizedGithubLogins");
   if (!authorizedOperatorLogins.length || new Set(authorizedOperatorLogins).size !== authorizedOperatorLogins.length) fail("operator.authorizedGithubLogins");
@@ -130,7 +140,7 @@ export function loadProfile(profilePath) {
       authenticationProfile: w.provider.authenticationProfile, fundingProfile: w.provider.fundingProfile,
       ghConfigDir, ghShimDir, runtimePath, logDirectory: p.paths.workerLogDirectory, executables,
       environment: { inheritNames, values: { ...w.environment.values, HOME: home } },
-      knownChanges: w.knownChanges ?? [], legacyInvocationIdentities };
+      knownChanges: w.knownChanges ?? [], legacyInvocationIdentities, ...(supervision ? { supervision } : {}) };
   }
   let webhookSecret;
   try { webhookSecret = readFileSync(p.webhook.secretFile, "utf8").trim(); if (!webhookSecret) throw new Error(); }

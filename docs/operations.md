@@ -369,3 +369,37 @@ Project item/field reads remain bounded to the first 100 entries and require exp
 arbitrary status mapping or comprehensive recovery engine. Restart liveness uses
 PIDs without durable process-start identity, so PID reuse can retain resources
 conservatively. RAI remains unwired.
+
+### Opt-in bootstrap duration enforcement
+
+The Node bootstrap uses direct, **unbounded** execution when
+`execution.supervision` is absent. It cannot supply hard-duration admission
+proof in that mode. To opt in, configure `execution.supervision` with
+`mode: "systemd"`, explicit positive integer `runtimeMilliseconds`,
+`startupMilliseconds`, and `stopGraceMilliseconds` (each at most 2147483647),
+and absolute executable paths `systemdRun`, `systemctl`, and `env`.
+For example, the executable bindings on this Linux host are
+`/usr/bin/systemd-run`, `/usr/bin/systemctl`, and `/usr/bin/env`.
+There is no default duration allocation. The packet's total allowance must cover
+startup + runtime + stop grace. Configuration changes require separate live
+admission; source repair alone does not activate supervision.
+
+This adapter requires a unified cgroup hierarchy and a compatible systemd user
+manager (host proof used systemd 255). It persists invocation-bound launch intent
+before creating a transient service and never falls back to direct execution.
+The provider receives the existing isolated environment through `env -i`.
+Manager connection variables remain confined to the transport client.
+
+The service bounds ordinary descendants, including detached sessions, regardless
+of dispatcher progress or launcher-client death. Deliberate same-user/privileged
+cgroup migration is outside this guarantee. Ownership remains held on missing,
+unavailable or mismatched readback. A terminal receipt is persisted before stopping
+the exact empty owned unit; an owned failed unit is reset only after that receipt.
+Only confirmed terminal collection permits resource release. Neither timeout nor
+exit status supplies a durable workflow result or new retry entitlement.
+
+Run the non-provider disposable host proof explicitly with
+`rtk proxy node test/host/systemd-supervision.mjs`. It needs user-manager access,
+uses only synthetic temporary resources, and returns failure rather than skipping
+an unavailable manager. Its numeric limits are test fixtures, not installation
+defaults. Deterministic regressions run in `rtk proxy node scripts/check.mjs all`.

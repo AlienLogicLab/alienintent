@@ -187,3 +187,30 @@ test("worker permission modes stay adapter-scoped after the claude bootstrap fix
     }
   }
 });
+
+const boundedSupervision = () => ({ mode: "systemd", runtimeMilliseconds: 120000,
+  stopGraceMilliseconds: 5000, startupMilliseconds: 10000,
+  systemdRun: "/usr/bin/systemd-run", systemctl: "/usr/bin/systemctl", env: "/usr/bin/env" });
+test("explicit bounded supervision reaches both workers without a default budget", () => {
+  const f = fixture();
+  assert.equal(f.load().workers.PRODUCER.supervision, undefined);
+  f.value.execution.supervision = boundedSupervision();
+  const loaded = f.load();
+  for (const worker of Object.values(loaded.workers)) assert.deepEqual(worker.supervision, f.value.execution.supervision);
+});
+test("bounded supervision rejects missing invalid and excessive limits and bindings", () => {
+  for (const key of ["runtimeMilliseconds", "stopGraceMilliseconds", "startupMilliseconds"]) {
+    for (const value of [undefined, 0, -1, 0.5, Infinity, NaN, 2147483648]) {
+      const f = fixture(); f.value.execution.supervision = boundedSupervision();
+      f.value.execution.supervision[key] = value;
+      assert.throws(() => f.load(), /invalid config.execution.supervision/);
+    }
+  }
+  for (const key of ["systemdRun", "systemctl", "env"]) {
+    for (const value of [undefined, "relative", "", "/bad\0path"]) {
+      const f = fixture(); f.value.execution.supervision = boundedSupervision();
+      f.value.execution.supervision[key] = value;
+      assert.throws(() => f.load(), /invalid config.execution.supervision/);
+    }
+  }
+});

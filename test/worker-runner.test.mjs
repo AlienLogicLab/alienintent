@@ -172,3 +172,14 @@ test("assigned worktree reaches provider cwd and codex argv while authentication
   assert.equal(capture.options.env.GH_CONFIG_DIR, original.ghConfigDir);
   assert.equal(original.worktree, "/tmp");
 });
+
+test('bounded launcher requires persisted exact supervision intent and never calls direct executor', () => {
+  const worker = fixture('codex'); worker.supervision = { mode: 'systemd' };
+  let direct = 0, bounded = 0;
+  const supervisor = { launch: (owner, command, args, options) => { bounded++; assert.equal(owner.invocationId, 'owned'); assert.equal(options.env.GH_TOKEN, undefined); return new EventEmitter(); } };
+  const request = { worker, role: 'PRODUCER', invocationId: 'owned', bootstrap: 'literal $HOME', logDirectory: mkdtempSync(join(tmpdir(), 'bounded-worker-')), supervisor, execute: () => { direct++; } };
+  assert.throws(() => spawnWorker(request), /SUPERVISION_INTENT_REQUIRED/);
+  assert.throws(() => spawnWorker({ ...request, resource: { supervision: { invocationId: 'wrong' } } }), /SUPERVISION_INTENT_REQUIRED/);
+  spawnWorker({ ...request, resource: { supervision: { invocationId: 'owned' } } });
+  assert.equal(direct, 0); assert.equal(bounded, 1);
+});
