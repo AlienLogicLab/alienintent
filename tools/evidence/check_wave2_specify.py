@@ -125,14 +125,55 @@ def check_specify(doc: dict) -> tuple[bool, list[str]]:
     return (not failures), failures
 
 
+RENDER_CHECKS = ("markdown_render_equivalent",)
+
+
+def render_inventory_row(c: dict) -> str:
+    """The one way an inventory row is rendered; the Markdown must contain it verbatim."""
+    sel = "Yes" if c.get("selected") else "No"
+    reason = (c.get("selection_reason") or c.get("rejection_reason") or "").replace("\n", " ").replace("|", "/")
+    return f"| {c['requirement_id']} | {sel} | {c.get('title', '')}: {reason} |"
+
+
+def render_acceptance_line(ac) -> str:
+    if not isinstance(ac, dict):  # older fixtures render a bare criterion
+        return f"- {str(ac).replace(chr(10), ' ')}"
+    crit = str(ac.get("criterion", "")).replace("\n", " ")
+    ver = str(ac.get("verification", "")).replace("\n", " ")
+    return f"- **{ac['id']}**: {crit} Verification: {ver}"
+
+
+def check_render(doc: dict, markdown: str) -> tuple[bool, list[str]]:
+    """DV-9 (2026-09-22): a Markdown rendering that disagrees with the JSON is a live
+    contradiction, not a cosmetic drift — the stale AC-05 prescribed a different acceptance scope.
+    Every selected candidate's inventory row and acceptance criteria must appear verbatim."""
+    failures: list[str] = []
+    for c in doc.get("candidates", []):
+        if not c.get("selected"):
+            continue
+        row = render_inventory_row(c)
+        if row not in markdown:
+            failures.append(f"markdown_render_equivalent: inventory row for {c['requirement_id']} does not "
+                            "match the JSON title/selection reason")
+        for ac in c.get("acceptance_criteria", []):
+            if render_acceptance_line(ac) not in markdown:
+                failures.append(f"markdown_render_equivalent: {ac.get('id')} in the Markdown does not match "
+                                "the JSON criterion/verification")
+    return (not failures), failures
+
+
 def main(argv: list[str]) -> int:
     path = Path(argv[0] if argv else "docs/evidence/wave2-specified-requirements.json")
     doc = json.loads(path.read_text())
     ok, failures = check_specify(doc)
+    md = path.with_suffix(".md")
+    if md.exists():
+        rok, rfail = check_render(doc, md.read_text())
+        ok, failures = ok and rok, failures + rfail
     sel = [c for c in doc.get("candidates", []) if c.get("selected")]
     print(f"document   : {path}")
     print(f"candidates : {len(doc.get('candidates', []))} evaluated, {len(sel)} selected")
-    print(f"checks     : {', '.join(CHECKS)}")
+    print(f"checks     : {', '.join(CHECKS + RENDER_CHECKS)}")
     print(f"result     : {'PASS' if ok else 'FAIL'}  ({len(failures)} failure(s))")
     for f in failures:
         print(f"  - {f}")

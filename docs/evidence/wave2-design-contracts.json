@@ -125,7 +125,7 @@
     "cross_contract_cycles": "011 and 016 share neutral Ref values, not mutual application imports. 014 creates proof plans from candidate design/premises, 051 reviews that exact pair, 013 consumes the verified pair. 053 exposes AttentionPort independently of 056; 056 consumes it and produces ordinary observed events. Ratification of 056 is required only for 056-specific recovery capability, not for generic 053 attention/tenure.",
     "failure_protocol": "Typed Hold includes reason code, affected refs, evidence refs and required authority/action. StoreUnavailable/SchemaIncompatible stop dependent mutations. VersionConflict never changes an old result to fit new state. No auto-retry may exceed existing authorized budget; failed evidence writes prevent admission. Commands propagate nonzero failure, with held/unverified distinctly rendered.",
     "interfaces_and_wiring_proof": "Every new adapter declares its port; every public composed operation needs intact success and a typed-failure probe against a real temporary SQLite store. LRN-002 is the single reused composition promotion. Static architecture rules do not substitute for runtime reachability or consumer truth.",
-    "authority_boundaries": "All ten are design candidates, not release authority. SF-REQ-056 remains AUTHORED_IN_THIS_PHASE and unratified. Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites. Existing unresolved authority stays explicit even though deferred_to_implementation is empty. No retroactive Wave 1 changes or current worker/lifecycle contract edits. R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME block shared-kernel/real-worker changes; R1-GAP-MONITOR-HOST blocks operational monitor/scan adoption. R1-GAP-013-ALLOCATION and SPLIT-G1 are settled by the SF-REQ-013 amendment 2026-09-22; revised candidate design still requires independent verification. The remaining gaps are SPECIFY returns, not deferred implementation choices, approved requirements, or authority granted by this design. Unaffected design remains reviewable. R2-GAP-051-EDGE-AUTHORITY is a Founder question about adoption of the R1 module-direction proposal, not a new requirement or reopening of FD-02; normative direction-dependent admission is held, while established architecture checks remain active.",
+    "authority_boundaries": "All ten are design candidates, not release authority. SF-REQ-056 remains AUTHORED_IN_THIS_PHASE and unratified. Ownership per #/contracts/4/ownership_statement (DV-5/DV-10). Existing unresolved authority stays explicit even though deferred_to_implementation is empty. No retroactive Wave 1 changes or current worker/lifecycle contract edits. R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME block shared-kernel/real-worker changes; R1-GAP-MONITOR-HOST blocks operational monitor/scan adoption. R1-GAP-013-ALLOCATION and SPLIT-G1 are settled by the SF-REQ-013 amendment 2026-09-22; revised candidate design still requires independent verification. The remaining gaps are SPECIFY returns, not deferred implementation choices, approved requirements, or authority granted by this design. Unaffected design remains reviewable. R2-GAP-051-EDGE-AUTHORITY is a Founder question about adoption of the R1 module-direction proposal, not a new requirement or reopening of FD-02; normative direction-dependent admission is held, while established architecture checks remain active.",
     "amendments": "POSTW1-DECIDE-007A pending SF-REQ-008, 022, adjacent 025 and 029 are not assumed. SF-REQ-013 amendment 2026-09-22 is binding and includes conserved split/replan plus compiler-derived initial decomposition; reconciliation excludes new exhaustion/retry policy; episode/effect records use existing store primitives; evidence does not promote learning; telemetry normalization remains outside. Therefore no selected contract requires adoption of a pending amendment. If any is adopted, affected design revisions need independent review before use.",
     "enforcement_counting": "Count each contract opportunity entry once; promotion reuse count is entries with phase3_promotion. Repeated LRN-002 entries are distinct consumer probes under the same promotion, not new controls. Seven unique promotions are reused. All opportunities are proposed, not deployed or proven by this design phase.",
     "atomic_fencing_extension": {
@@ -469,7 +469,7 @@
         },
         {
           "acceptance_id": "SF-REQ-011-AC-05",
-          "design_probe": "Versioned adapter conformance fixtures for all listed kinds, asserting exact retained provenance and typed failures. Fixtures prove the boundary contract, not live vendor integrations; delete each mandatory provenance field independently as negative controls.",
+          "design_probe": "Versioned adapter conformance fixtures for the two proven kinds, asserting exact retained provenance and typed failures; delete each mandatory provenance field independently as negative controls. Fixtures prove the boundary contract, not live vendor integrations. An extension-obligation entry records each further named kind as pending its own requirement.",
           "contract_sections": [
             "ports",
             "state",
@@ -478,7 +478,8 @@
             "evidence",
             "composition",
             "deterministic_enforcement_opportunities"
-          ]
+          ],
+          "dv_repair": "DV-9: probe synchronized with the rescoped AC-05 (two heterogeneous kinds + extension obligations)"
         },
         {
           "acceptance_id": "SF-REQ-011-AC-06",
@@ -1553,8 +1554,8 @@
       ],
       "adapters": [
         "Proposed execution_coordination/adapters/assessment_consumer.py reads retained direct objects and known MCP envelopes for consumer tests; raw evidence is stored byte-for-byte privately before normalization.",
-        "CLI adapter: the published CLI contract at the bound package version (assess <file|OWNER/REPO#N> --provider <p> [--json]; exact syntax, limits and exit codes live in the conformance fixture, not here); use --json for integration, pin submitted text/revision. GitHub input retrieves title/body only, so missing linked obligations cannot be assumed supplied. Exit 0 for every successful disposition; 1 execution error with no assessment; 2 usage error. No exit status alone establishes readiness. Bind configured executable/package through composition only.",
-        "Local MCP adapter: host-managed agent-ready-mcp stdio server; assess_work_unit(text, provider), actual text rather than a file path, provider codex|claude and no additional keys. Preserve structuredContent and JSON text envelope; isError is failure. Pin host server/package identity and correlate request/response. Honor public input limits (100,000 text characters; CLI file 400,000 bytes) without truncation."
+        "CLI adapter: the published CLI contract at the bound package version (assess <file|OWNER/REPO#N> --provider <p> [--json]; exact syntax, limits and exit codes live in the conformance fixture, not here); use --json for integration, pin submitted text/revision. GitHub input retrieves title/body only, so missing linked obligations cannot be assumed supplied. Exit-code semantics are the published contract at the bound package version (pinned in the conformance fixture). No exit status alone establishes readiness. Bind configured executable/package through composition only.",
+        "Local MCP adapter: host-managed agent-ready-mcp stdio server; assess_work_unit(text, provider), actual text rather than a file path, provider codex|claude and no additional keys. Preserve structuredContent and JSON text envelope; isError is failure. Pin host server/package identity and correlate request/response. Honor the published input limits at the bound package version (pinned in the conformance fixture, not restated here) without truncation."
       ],
       "state": "Immutable AssessmentAttempt includes attempt ID, raw digest, authority/provider/invocation IDs, input fingerprint, predecessor assessment ref, observed disposition or failure, and lint report. Current applicability is a separate versioned pointer, never an edit to an old assessment. Producer/version provenance per #/contracts/4/provenance_contract (DV-5).",
       "transitions": [
@@ -1630,7 +1631,7 @@
           "SF-REQ-015-AC-07"
         ],
         "authority_conditions": [
-          "Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites."
+          "Ownership per #/contracts/4/ownership_statement (DV-5/DV-10)."
         ]
       },
       "ratification_dependency": [],
@@ -1735,17 +1736,18 @@
       },
       "provenance_contract": {
         "text": "Retain producer identity established from the configured Agent Ready executable/MCP server and its package metadata, Agent Ready version (UNKNOWN if unestablished, blocking admission), editable checkout revision when applicable, contract_version = \"package-release-bound; no result-level identifier (agent-ready#1)\", published schema digest/release binding, provider, optional unmodified provider_evidence, model provenance (not exposed by current results; UNKNOWN, never inferred from provider CLI version), exact input fingerprint, invocation identity/arguments or MCP tool request, timestamps and exit/error status. Raw result bytes/envelope and provenance remain distinct immutable evidence. Neither a compatible schema nor copied provider_evidence authenticates the producer; absent/mismatched producer evidence blocks admission.",
-        "dv_repair": "DV-5: single normative statement; other locations reference this pointer",
+        "dv_repair": "DV-5/DV-10: single normative statement; S#/candidates/4 acceptance_criteria[6] and observability_evidence[1], C#/contracts/4 state/evidence/design_decisions[1]/acceptance_design_trace[6], D#/nodes/12 reference wave2-design-contracts.json#/contracts/4/provenance_contract",
         "version_source": {
-          "cli": "installed-distribution metadata of the configured Agent Ready environment (importlib.metadata / pip show; editable checkout revision when applicable) — a non-private surface; the CLI exposes no --version in v0.1",
-          "mcp": "initialize.serverInfo.version of the configured server — currently reports the MCP SDK version, not Agent Ready's (agent-ready#1); record the observed value and its source, never substitute",
-          "rule": "record version_source beside the version; UNKNOWN blocks admission; never read Agent Ready private modules",
-          "dv_repair": "DV-8"
+          "product_version": "installed-distribution metadata (importlib.metadata / pip show agent-ready) of the configured Agent Ready environment, resolved from the configured executable or MCP server command path so it is bound to the launched identity; editable checkout revision recorded when applicable; applies to CLI and MCP alike",
+          "cli_handshake": "none — the CLI exposes no --version in v0.1",
+          "mcp_handshake": "initialize.serverInfo.version, recorded separately as sdk_version; it currently reports the MCP SDK version, never a substitute for product_version (sanookdu/agent-ready#1)",
+          "rule": "record version_source beside each recorded version; product_version UNKNOWN blocks admission; never read Agent Ready private modules",
+          "dv_repair": "DV-8/DV-11"
         }
       },
       "ownership_statement": {
         "text": "Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites.",
-        "dv_repair": "DV-5: single statement; domain_owner, design_decisions[1], authority_conditions and shared authority_boundaries reference it"
+        "dv_repair": "DV-5/DV-10: single statement; domain_owner, design_decisions[1], source_specification.authority_conditions[0], shared_contracts.authority_boundaries, S#/candidates/4/scope/4 and D#/nodes/12 reference it"
       },
       "adapters_note": "DV-5: numeric limits and exact syntax are Agent Ready's published contract at the bound package version; the conformance fixture pins them, this text does not restate them."
     },

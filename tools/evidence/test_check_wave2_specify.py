@@ -152,3 +152,56 @@ def test_every_check_has_a_negative_control():
             unkillable.append(name)
     assert not unkillable, f"checks that could not be made to fail: {unkillable}"
     assert set(NEGATIVE_CONTROLS) == set(CHECKS)
+
+
+# --- DV-9 (round 2): the Markdown rendering must agree with the JSON ------------------------
+# Found live: after AC-05 was rescoped in the JSON, the Markdown still carried the superseded
+# criterion. Vocabulary checking cannot see a semantic contradiction; a render-equivalence rule
+# can, because the rendering of an acceptance criterion and an inventory row is deterministic.
+
+from check_wave2_specify import (RENDER_CHECKS, check_render, render_acceptance_line,  # noqa: E402
+                                 render_inventory_row)
+
+REAL_STALE_AC05_LINE = ("- **SF-REQ-011-AC-05**: Through RequirementSource, translate representative Source Records "
+    "for every named source kind to provider-neutral inputs while retaining all seven Requirement Provenance "
+    "fields. Missing or ambiguous provenance or unsupported versions yields a typed refusal for affected input; "
+    "never fabricate authority from vendor type. Same-vendor RequirementSource and WorkManagement adapters remain "
+    "distinct. Verification: Versioned adapter conformance fixtures for all listed kinds, asserting exact retained "
+    "provenance and typed failures. Fixtures prove the boundary contract, not live vendor integrations; delete "
+    "each mandatory provenance field independently as negative controls.")
+
+
+def _rendered(doc):
+    lines = []
+    for c in doc["candidates"]:
+        lines.append(render_inventory_row(c))
+        for ac in c.get("acceptance_criteria", []):
+            lines.append(render_acceptance_line(ac))
+    return "\n".join(lines) + "\n"
+
+
+def test_a_faithful_rendering_passes():
+    doc = _doc()
+    ok, f = check_render(doc, _rendered(doc))
+    assert ok, f
+
+
+def test_the_real_stale_ac05_rendering_is_rejected():
+    doc = _doc()
+    doc["candidates"][0]["acceptance_criteria"] = [{"id": "SF-REQ-011-AC-05", "criterion": "two heterogeneous kinds",
+                                                    "verification": "two kinds"}]
+    md = _rendered(doc).replace(render_acceptance_line(doc["candidates"][0]["acceptance_criteria"][0]),
+                                REAL_STALE_AC05_LINE)
+    ok, f = check_render(doc, md)
+    assert not ok and any("markdown_render_equivalent" in x for x in f)
+
+
+def test_a_stale_inventory_row_is_rejected():
+    doc = _doc()
+    md = _rendered(doc).replace(render_inventory_row(doc["candidates"][0]), "| SF-REQ-011 | Yes | Old title: old reason |")
+    ok, f = check_render(doc, md)
+    assert not ok and any("markdown_render_equivalent" in x for x in f)
+
+
+def test_render_checks_are_named():
+    assert RENDER_CHECKS == ("markdown_render_equivalent",)

@@ -28,6 +28,7 @@ import re
 import sys
 from pathlib import Path
 
+TERMINAL_RESOLUTIONS = ("SETTLED_BY_AMENDMENT", "SETTLED", "RESOLVED", "WITHDRAWN", "SUPERSEDED")
 CHECKS = ("root_register_consistent",
           "acyclic", "dependencies_resolve", "one_owner_per_capability", "capstone_integrates",
           "proof_inputs_reachable")
@@ -141,15 +142,27 @@ def _root_register(dag: dict, nodes: list) -> list[str]:
     """
     out: list[str] = []
     referenced = {g for n in nodes for g in (n.get("authority_gap_refs") or [])}
-    # A dated `resolution_YYYY_MM_DD` record settles a gap; `resolution_actor` does not.
-    settled = {g["id"] for g in dag.get("authority_gaps", [])
-               if isinstance(g, dict) and any(re.match(r"resolution_\d{4}_\d{2}_\d{2}$", k) for k in g)}
+    # A dated `resolution_YYYY_MM_DD` record with a terminal status settles a gap; a dated record
+    # that still says RETURN_TO_SPECIFY does not, and `resolution_actor` never does (DV-12).
+    settled = {g["id"] for g in dag.get("authority_gaps", []) if isinstance(g, dict) and any(
+        re.match(r"resolution_\d{4}_\d{2}_\d{2}$", k) and isinstance(v, dict)
+        and str(v.get("status", "")).upper() in TERMINAL_RESOLUTIONS for k, v in g.items())}
+    for n in nodes:
+        stale = sorted(set(n.get("authority_gap_refs") or []) & settled)
+        if stale:
+            out.append(f"root_register_consistent: {n['id']} still carries settled gap(s) {stale}")
     for g in dag.get("authority_gaps", []):
         if isinstance(g, dict) and g["id"] not in settled and g["id"] not in referenced:
             out.append(f"root_register_consistent: authority_gaps {g['id']!r} is registered as open "
                        "but no node carries it; either stale (record its resolution) or unpropagated")
-    blocker = (dag.get("authority_policy") or {}).get("wave2a_completion_blocker")
-    if blocker and blocker not in referenced:
+    policy = dag.get("authority_policy") or {}
+    blocker = policy.get("wave2a_completion_blocker")
+    node_id = policy.get("wave2a_completion_node")
+    carrier = next((n for n in nodes if n.get("id") == node_id), None) if node_id else None
+    if blocker and carrier is not None and blocker not in (carrier.get("authority_gap_refs") or []):
+        out.append(f"root_register_consistent: wave2a_completion_blocker {blocker!r} is not carried by the "
+                   f"named completion node {node_id!r}")
+    elif blocker and blocker not in referenced:
         out.append(f"root_register_consistent: wave2a_completion_blocker {blocker!r} is carried by no "
                    "node; the register names a blocker the graph does not have")
     stats = dag.get("statistics") or {}

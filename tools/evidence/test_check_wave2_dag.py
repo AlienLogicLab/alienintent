@@ -181,3 +181,28 @@ def test_the_real_dag_root_register_is_consistent():
     import json
     ok, f = check_dag(json.loads((REPO / "docs/evidence/wave2-dependency-dag.json").read_text()))
     assert ok, f
+
+
+# --- DV-12 (round 2): the register rule must not accept look-alike settlements ---------------
+
+def test_a_resolution_record_without_a_terminal_status_does_not_settle_a_gap():
+    d = _registered(); d["authority_gaps"][1]["resolution_2026_09_22"] = {"status": "RETURN_TO_SPECIFY"}
+    ok, f = check_dag(d)
+    assert not ok and any("root_register_consistent" in x for x in f)
+
+
+def test_a_settled_gap_still_carried_by_a_node_is_rejected():
+    d = _registered(); d["nodes"][2]["authority_gap_refs"].append("GAP-B")
+    ok, f = check_dag(d)
+    assert not ok and any("root_register_consistent" in x for x in f)
+
+
+def test_the_completion_blocker_must_be_carried_by_the_named_completion_node():
+    d = _registered()
+    d["authority_policy"]["wave2a_completion_node"] = "W2-03"
+    d["nodes"][1]["authority_gap_refs"] = ["GAP-C"]; d["nodes"][1]["completion_status"] = "GAP_BLOCKED"
+    d["authority_gaps"].append({"id": "GAP-C", "status": "RETURN_TO_SPECIFY"})
+    d["statistics"].update(gap_blocked_nodes=2, proceeds_regardless=1)
+    d["authority_policy"]["wave2a_completion_blocker"] = "GAP-C"   # carried by W2-02, not by W2-03
+    ok, f = check_dag(d)
+    assert not ok and any("root_register_consistent" in x for x in f)

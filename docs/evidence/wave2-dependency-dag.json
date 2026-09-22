@@ -906,7 +906,7 @@
       "node_kind": "external_prerequisite",
       "scope": "",
       "proceeds_regardless": "SF-REQ-015 integration design proceeds under A1; external product capability and public-contract compatibility still require proof.",
-      "completion_predicate": "Ownership per #/contracts/4/ownership_statement (DV-5). Prove ReadinessAssessment CLI/MCP adapters reach the consumer with raw response and configured invocation-to-result provenance. Unbound, unestablished producer/version, incompatible public contract or surrogate READY refuses admission. Record contract version limitation agent-ready#1; no duplicate engine or copied rubric. Producer/version provenance per #/contracts/4/provenance_contract (DV-5).",
+      "completion_predicate": "Ownership per wave2-design-contracts.json#/contracts/4/ownership_statement (DV-5). Prove ReadinessAssessment CLI/MCP adapters reach the consumer with raw response and configured invocation-to-result provenance. Unbound, unestablished producer/version, incompatible public contract or surrogate READY refuses admission. Record contract version limitation agent-ready#1; no duplicate engine or copied rubric. Producer/version provenance per wave2-design-contracts.json#/contracts/4/provenance_contract (DV-5).",
       "inherited_authority_gate_refs": [],
       "completion_status": "PROCEEDS_REGARDLESS",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
@@ -3730,7 +3730,8 @@
     "wave2a_completion_blocker_history": {
       "until_2026_09_22": "R1-GAP-013-ALLOCATION",
       "dv_finding": "DV-1"
-    }
+    },
+    "wave2a_completion_node": "A"
   },
   "parallel_tracks": [
     {

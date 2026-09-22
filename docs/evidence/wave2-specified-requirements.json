@@ -470,7 +470,7 @@
         "Exactly one disposition from the exhaustive set READY, CLARIFY, SPLIT, HOLD; immutable assessment evidence and reassessment lineage. A Disposition is an assessment result, never lifecycle state; BLOCKED is not an Agent Ready disposition.",
         "Design prerequisites are supplied by SF-REQ-051. Consumer handling must preserve source envelopes and reject ambiguous results.",
         "ReadinessAssessment.assess(candidate_work_unit) -> ReadinessAssessment | AttemptFailure. Requirements / Planning passes pinned candidate text; the result preserves the raw Agent Ready assessment plus provenance. Domain knows no executable location, subprocess syntax, transport or package internals. AlienIntent never imports Agent Ready private implementation, copies its rubric or duplicates its decision logic.",
-        "Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites."
+        "Ownership per wave2-design-contracts.json#/contracts/4/ownership_statement (DV-5/DV-10)."
       ],
       "non_goals": [
         "Implementing Agent Ready, importing its private implementation, copying its rubric, duplicating its decision logic or inventing its public serialization contract.",
@@ -516,7 +516,7 @@
         },
         {
           "id": "SF-REQ-015-AC-07",
-          "criterion": "At the actual composition/admission boundary, a correctly bound Agent Ready invocation with established producer/package provenance reaches the consumer; an unbound adapter, unknown producer/version, shape-compatible surrogate or forged saved provider_evidence cannot supply readiness. Producer/version provenance per #/contracts/4/provenance_contract (DV-5).",
+          "criterion": "At the actual composition/admission boundary, a correctly bound Agent Ready invocation with established producer/package provenance reaches the consumer; an unbound adapter, unknown producer/version, shape-compatible surrogate or forged saved provider_evidence cannot supply readiness. Producer/version provenance per wave2-design-contracts.json#/contracts/4/provenance_contract (DV-5).",
           "verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately."
         }
       ],
@@ -532,7 +532,7 @@
       ],
       "observability_evidence": [
         "Raw assessment, normalized semantic observation, assessed revision, provider/invocation identity, attempt failure, immutable predecessor link and separate release decision.",
-        "Retain producer/version provenance exactly as specified in the design contract's provenance_contract (#/contracts/4/provenance_contract); raw result bytes/envelope and provenance remain distinct immutable evidence (DV-5)."
+        "Retain producer/version provenance exactly as specified in the design contract's provenance_contract (wave2-design-contracts.json#/contracts/4/provenance_contract); raw result bytes/envelope and provenance remain distinct immutable evidence (DV-5)."
       ],
       "failure_modes": [
         "Top-level-only parser loses nested verdict",
