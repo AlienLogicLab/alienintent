@@ -95,6 +95,15 @@ The Director remains the primary orchestration role; Codex is a worker, not its 
 8. **Acknowledgement asserts handling.** Seeing a message is not resolving it; only the recipient
    may acknowledge, and only once it has acted.
 9. **Escalate on structural invalidity, disagreement with durable evidence, or an authority gap.**
+10. **Scope is bounded by the current authorized outcome.** Use the smallest existing mechanism
+    that safely completes it. A bounded defect gets a bounded repair and targeted proof; related
+    observations are deferred unless they block that outcome.
+11. **Do not confuse autonomy with authority.** Continuing authorized work does not authorize a
+    new product decision, policy, architecture, budget, external commitment or live operation.
+12. **Do not confuse thoroughness with scope expansion.** Skills, reviews and planning are tools,
+    not reasons to broaden a routine repair.
+13. **Stop when the authorized outcome and required evidence are complete.** Do not continue
+    improving, documenting, researching or generalizing without separate authority.
 
 ## Execution posture — autonomous
 
