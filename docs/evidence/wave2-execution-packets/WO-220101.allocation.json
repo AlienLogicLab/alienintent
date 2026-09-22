@@ -1,0 +1,102 @@
+{
+  "record_kind": "AllocationDecision",
+  "schema_version": "1",
+  "biu_id": "WO-220101",
+  "decided_at": "2026-09-22T11:00:11.761857+00:00",
+  "allocator": {
+    "role": "Allocator (SF-REQ-026, amended 2026-09-22)",
+    "instance": "Local Program Director \u2014 deterministic policy branch (trivial case: exactly one configured eligible worker per role)",
+    "cognition_tier": "deterministic; no local or frontier model consulted",
+    "authority_basis": [
+      "Founder direction 2026-09-22 \u00a75/\u00a78: bind the canonical Allocator role; construct the exact bounded execution packet from existing authority and current configuration",
+      "SF-REQ-026 amendment: deterministic policy settles trivial cases without a model",
+      "Architecture Authority A4"
+    ]
+  },
+  "selection": {
+    "execution_path": "existing factory lifecycle: Work Management READY \u2192 explicit Release \u2192 IMPLEMENT (PRODUCER) \u2192 VERIFY (VERIFIER) \u2192 REVIEW \u2192 ACCEPT \u2192 DONE, executed by the retained bootstrap (KEEP_UNTIL_REPLACED, retirement matrix) with the live self-hosting profile",
+    "producer": {
+      "role": "PRODUCER",
+      "adapter": "claude",
+      "configured_in": "~/.config/alienintent/self-hosting.json (workers.PRODUCER)",
+      "funding_profile": "claude-subscription"
+    },
+    "verifier": {
+      "role": "VERIFIER",
+      "adapter": "claude",
+      "configured_in": "~/.config/alienintent/self-hosting.json (workers.VERIFIER)",
+      "funding_profile": "claude-subscription",
+      "independence": "separate GitHub identity and worktree; fresh verifier worktree retrieves the exact candidate SHA"
+    },
+    "why": "The only configured, doctor-validated workers; standing instruction of 2026-09-2x forbids changing provider configuration; Wave 1 PY-02..PY-09 executed on this path. Local-model allocation is not configured (SF-REQ-037 initialization is Wave 6); no escalation to a frontier model is needed for a trivial allocation.",
+    "alternatives_rejected": [
+      {
+        "option": "coordinator-launched fresh Codex session (tools/orchestration/codex_session.py)",
+        "reason": "bypasses the factory lifecycle and candidate custody (SWF-15: the coordinator does not hand a BIU to a provider CLI directly)"
+      },
+      {
+        "option": "revert PRODUCER to codex",
+        "reason": "POSTW1-DECIDE-006A item 7 is REQUIRES_OPERATIONAL_PROOF; standing instruction: do not revert provider configuration"
+      }
+    ]
+  },
+  "limits": {
+    "policy": "SWF-09: hard-enforced dimensions are wall-clock, attempts, retries, concurrency, cancellation; tokens and cost are measured, never assumed zero",
+    "concurrency": {
+      "value": 1,
+      "enforcement": "bootstrap lane claim repository#issue:ROLE (synchronous check-and-reserve, ACTIVE_INVOCATION_EXISTS); WIP = 1",
+      "status": "ENFORCED_BY_MECHANISM"
+    },
+    "attempts": {
+      "value": "3 execution cycles (SWF-32 semantics: IMPLEMENT\u2192VERIFY\u2192IMPLEMENT increments)",
+      "enforcement": "Program Director records the cycle from authoritative transitions and withholds any further release beyond cycle 3 (deterministic); the bootstrap itself enforces no cycle cap",
+      "status": "ENFORCED_BY_DIRECTOR_PROCEDURE"
+    },
+    "retries_within_phase": {
+      "value": "1 replacement worker per phase on non-terminal outcome (does not increment the cycle, SWF-32 \u00a76)",
+      "enforcement": "liveness reconciliation (SWF-27) re-emits at most once per grace window; Director stops re-emission after one replacement",
+      "status": "ENFORCED_BY_DIRECTOR_PROCEDURE"
+    },
+    "wall_clock": {
+      "value": "UNKNOWN \u2014 the bootstrap dispatcher enforces liveness inspection only (src/runtime/dispatcher.mjs scheduleInspection); no per-invocation wall-clock bound is enforced by the bootstrap",
+      "enforcement": "NONE_IN_BOOTSTRAP",
+      "status": "NOT_ENFORCED \u2014 declared honestly; whether this BIU may run without a hard wall-clock bound is for readiness/release to judge, not for this record to assume"
+    },
+    "cancellation": {
+      "value": "operator stop of the active invocation",
+      "enforcement": "operator control plane / bootstrap process control",
+      "status": "AVAILABLE"
+    },
+    "tokens_and_cost": {
+      "value": "measured where the provider reports them; UNKNOWN otherwise; never zero",
+      "status": "MEASURED_NOT_CAPPED"
+    },
+    "paid_provider_calls": {
+      "value": "subscription-funded worker sessions only; no API-key spend",
+      "status": "CONFIGURED"
+    }
+  },
+  "remaining_allowance": {
+    "basis": "no numeric token/cost allowance exists in any authority (FACT: candidate budget.execution_allocation); attempts allowance = 3 cycles, 0 consumed",
+    "cycles_consumed": 0,
+    "cycles_remaining": 3
+  },
+  "escalation": {
+    "budget_exhaustion": "cycle 3 verification rejection \u2192 HumanDecisionRequired via Decision Inbox (SF-REQ-035); no silent increase",
+    "architecture_question": "Architecture Decision Required (AA A5) via Decision Inbox; branch stops",
+    "provider_capacity": "classified PROVIDER_CAPACITY_INTERRUPTION, not a task failure; one replacement worker, then hold"
+  },
+  "not_granted_here": "Wave 2 release authority (FD-01 \u00a73; W2-P01). This decision binds who/what/limits; the Founder's Wave-authorization packet grants release.",
+  "provenance": {
+    "baseline_sha": "dfeca645fc015cb7cf7f4facdc7991f9ae55adea",
+    "candidate_contract_sha256": "b96f8feadacf4cd2ef2ff977cf6dbccb094ffcb70a03767e75780c77991b6360",
+    "candidate_ref": "docs/evidence/wave2-candidate-bius.json#/bius/0",
+    "recorded_by": "Local Program Director (resident bootstrap coordinator)",
+    "evidence_reads": [
+      "~/.config/alienintent/self-hosting.json (workers, execution)",
+      "src/runtime/dispatcher.mjs (liveness inspection only)",
+      "docs/decisions/2026-09-21-biu-execution-cycle-counter.md (SWF-32)",
+      "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md (SWF-09)"
+    ]
+  }
+}
