@@ -75,7 +75,10 @@
     "docs/evidence/wave2-execution-packets/WO-220101.allocation.json",
     "docs/evidence/wave2-execution-packets/WO-220101.packet.json",
     "docs/work-units/wave2/WO-220101.md",
-    "docs/evidence/wave2-readiness-assessments/WO-220101.2026-09-22T110109.877043Z.assessment.json (READY; agent-ready-cli 0.1.0rc1 @ 6b05681; codex-cli 0.155.1 COMPATIBLE_UNVERIFIED/PASSED)"
+    "docs/evidence/wave2-readiness-assessments/WO-220101.2026-09-22T110109.877043Z.assessment.json (READY; agent-ready-cli 0.1.0rc1 @ 6b05681; codex-cli 0.155.1 COMPATIBLE_UNVERIFIED/PASSED)",
+    "docs/decisions/2026-09-22-wave2-incremental-release-authority.md (SWF-35)",
+    "docs/work-units/wave2/WO-220101.release.md (ADMITTED; baseline ade44cb)",
+    "Project #1 #69 Status READY\u2192IMPLEMENT 2026-09-22 (coordinator, SWF-21 mechanics under SWF-35)"
    ],
    "assigned_actor": "claude-bootstrap-coordinator",
    "blockers": [],
@@ -84,7 +87,7 @@
    "phase": "F5",
    "prompt_path": null,
    "resulting_commit": null,
-   "review_status": "Agent Ready READY (native product). Next: Project issue at READY; Founder release grant (FD-01 \u00a73) required for READY\u2192IMPLEMENT",
+   "review_status": "RELEASED: native Agent Ready READY; release_admission ADMITTED; transition performed; bootstrap PRODUCER launch being observed",
    "risk_class": "HIGH",
    "routing": {
     "note": "deterministic packet generation (Allocator trivial case); coordinator only as temporary release/bridge function",
@@ -94,7 +97,7 @@
    "subdecisions": [],
    "task_id": "FACT-BIU-007",
    "title": "WO-220101 (S0): allocation decision + execution packet + work-unit doc; fresh native Agent Ready assessment; Project issue; release ask",
-   "updated_at": "2026-09-22T11:03:54.698006+00:00"
+   "updated_at": "2026-09-22T12:32:26.791881+00:00"
   },
   "FACT-DV-005": {
    "artifact_refs": [
@@ -1122,5 +1125,5 @@
    "updated_at": "2026-09-21T22:31:40.936775+00:00"
   }
  },
- "updated_at": "2026-09-22T11:03:54.698029+00:00"
+ "updated_at": "2026-09-22T12:32:26.791909+00:00"
 }
