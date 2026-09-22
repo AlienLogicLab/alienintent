@@ -1,0 +1,15 @@
+{
+ "items": [
+  {
+   "automatic_release": true,
+   "contract_digest": "sha256:d456cc8932941787d62e81913672caf11d8f971a2ee9f8236d6aebbd36e79e2b",
+   "dependencies": [],
+   "fifo": 0,
+   "identity": "S0-PROBE",
+   "priority": 1,
+   "readiness_digest": "sha256:d456cc8932941787d62e81913672caf11d8f971a2ee9f8236d6aebbd36e79e2b"
+  }
+ ],
+ "profile": "fx-s0",
+ "repository": "local:fx-s0"
+}

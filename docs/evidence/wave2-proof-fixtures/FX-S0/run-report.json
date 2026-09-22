@@ -1,0 +1,312 @@
+{
+ "baseline_revision": "244000c861317294693805126d48be53ebf68093",
+ "biu_id": "WO-220101",
+ "candidates": {
+  "S0-PROBE": {
+   "author_date": 1758542400,
+   "branch": "candidate/launch-S0-PROBE-0",
+   "clones": {
+    "producer_read_back": "/tmp/fx-s0-h943dny2/intact/producer-read-back/producer-launch:S0-PROBE:0",
+    "verifier_evidence": "/tmp/fx-s0-h943dny2/intact/verifier-evidence/0af156cb4d5ba1b03085a5b1227fa55ab6ea7fa9"
+   },
+   "committer_date": 1758542400,
+   "correlation": "launch:S0-PROBE:0",
+   "locator": "git:/tmp/fx-s0-h943dny2/intact/remote.git#candidate/launch-S0-PROBE-0@0af156cb4d5ba1b03085a5b1227fa55ab6ea7fa9",
+   "resolved": {
+    "producer_read_back": "0af156cb4d5ba1b03085a5b1227fa55ab6ea7fa9",
+    "verifier_evidence": "0af156cb4d5ba1b03085a5b1227fa55ab6ea7fa9"
+   },
+   "revision": "0af156cb4d5ba1b03085a5b1227fa55ab6ea7fa9"
+  }
+ },
+ "checks": [
+  {
+   "expected": "state.sqlite at schema 2 holds every seeded aggregate at DONE with an independently read-back candidate",
+   "id": "P1",
+   "name": "real temporary SQLite",
+   "observed": {
+    "path": "/tmp/fx-s0-h943dny2/intact/state.sqlite",
+    "schema_version": 2,
+    "stages": {
+     "S0-PROBE": "DONE"
+    }
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "remote.git is bare, advertises main at the baseline and each candidate branch at its revision",
+   "id": "P2",
+   "name": "disposable local bare Git remote",
+   "observed": {
+    "bare": true,
+    "baseline": "244000c861317294693805126d48be53ebf68093",
+    "candidates": {
+     "S0-PROBE": {
+      "advertised": "0af156cb4d5ba1b03085a5b1227fa55ab6ea7fa9",
+      "branch": "candidate/launch-S0-PROBE-0",
+      "revision": "0af156cb4d5ba1b03085a5b1227fa55ab6ea7fa9"
+     }
+    },
+    "main": "244000c861317294693805126d48be53ebf68093",
+    "remote": "/tmp/fx-s0-h943dny2/intact/remote.git"
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "the producer read-back clone and the kernel's verifier clone each resolve the exact candidate revision",
+   "id": "P3",
+   "name": "publication and fetch into a fresh verifier worktree",
+   "observed": {
+    "S0-PROBE": {
+     "producer_read_back": "0af156cb4d5ba1b03085a5b1227fa55ab6ea7fa9",
+     "verifier_evidence": "0af156cb4d5ba1b03085a5b1227fa55ab6ea7fa9"
+    }
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "ready-snapshot.json exists and each item's receipts are release-proposed then execution-state-projected DONE",
+   "id": "P4",
+   "name": "local work-management transport",
+   "observed": {
+    "receipts": {
+     "S0-PROBE": [
+      [
+       "release-proposed",
+       null
+      ],
+      [
+       "execution-state-projected",
+       "DONE"
+      ]
+     ]
+    },
+    "seed": "/tmp/fx-s0-h943dny2/intact/work-management/ready-snapshot.json"
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "the process behind RealWorkerProvider is ScriptedWorkerProcess with provider 'scripted'",
+   "id": "P5",
+   "name": "local provider transport",
+   "observed": {
+    "process": "ScriptedWorkerProcess",
+    "provider": "scripted"
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "every journal and receipt timestamp and every candidate author/committer date equals the injected epoch",
+   "id": "P6",
+   "name": "injected clock and IDs",
+   "observed": {
+    "commit_dates": {
+     "S0-PROBE": [
+      1758542400,
+      1758542400
+     ]
+    },
+    "epoch": 1758542400,
+    "journal_stamps": [
+     1758542400.0
+    ],
+    "receipt_stamps": [
+     1758542400.0
+    ]
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "the journal file over the same root reads back each invocation's outcome, and started/outcome records exist",
+   "id": "P7",
+   "name": "durable scripted worker journal",
+   "observed": {
+    "events": {
+     "S0-PROBE": [
+      "invocation-started",
+      "process-run",
+      "invocation-outcome",
+      "workspace-finalized"
+     ]
+    },
+    "path": "/tmp/fx-s0-h943dny2/intact/worker-journal/journal.jsonl"
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "sum of provider_calls over process-run journal records is 0",
+   "id": "P10",
+   "name": "zero provider calls",
+   "observed": {
+    "definition": "attempts by the worker process adapter to execute a provider executable",
+    "value": 0
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "pinned kernel paths equal the release baseline",
+   "id": "P11",
+   "name": "existing kernel unchanged",
+   "observed": {
+    "baseline": "ade44cb93f3f33a570e1cf1b4bda500a79cd95bb",
+    "blobs": {
+     "src/alienintent/execution_coordination/adapters/sqlite_store.py": "49704060f6d19591dcbca1eba00011b496329f93",
+     "src/alienintent/execution_coordination/application/factory_coordinator.py": "7af96dcd93b519c95100299b69b4b7db30d6cb6e",
+     "src/alienintent/execution_coordination/application/local_artifact_custody.py": "b107d112696c047115861f5af4ca449cff3671c7",
+     "src/alienintent/execution_coordination/domain/lifecycle.py": "6b31cb4e77383d2f7caaf22a022c9cb80ad1812f",
+     "src/alienintent/invocation_runtime/adapters/git_source_control.py": "ee0e1bf72895d6b0cf533c483f412858f9e5569b",
+     "src/alienintent/invocation_runtime/adapters/git_worktree.py": "63bbee0e181bea9df1488fca586b85c8d98981e6",
+     "src/alienintent/invocation_runtime/application/real_worker.py": "cece9e2d5f12de7865e59155f73f0d240189f70f"
+    },
+    "definition": "git diff --quiet <baseline> -- <kernel_paths> exits 0 in the source checkout; blob ids recorded",
+    "paths": [
+     "src/alienintent/execution_coordination/application/factory_coordinator.py",
+     "src/alienintent/execution_coordination/domain/lifecycle.py",
+     "src/alienintent/execution_coordination/application/local_artifact_custody.py",
+     "src/alienintent/execution_coordination/adapters/sqlite_store.py",
+     "src/alienintent/invocation_runtime/application/real_worker.py",
+     "src/alienintent/invocation_runtime/adapters/git_source_control.py",
+     "src/alienintent/invocation_runtime/adapters/git_worktree.py"
+    ],
+    "source_revision": "37f09a617a9a2bc0421ee00b37c2f7d5fe8ca315",
+    "status": "UNCHANGED"
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "each DONE item reached DONE under its single launch correlation with no VERIFY/REVIEW/ACCEPT projection; the limitation is stated",
+   "id": "P12",
+   "name": "success-collapse limitation reported",
+   "observed": {
+    "authority": "R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME remain open; S0 reports the limitation and does not repair it",
+    "independent_verifier_invocation": "NOT_ESTABLISHED",
+    "live_proof": "NOT_ESTABLISHED",
+    "observed": true,
+    "statement": "FactoryCoordinator._completed_for_outcome carries a successful producer outcome through verify/review/accept/close in one kernel step; no separate VERIFY, REVIEW or ACCEPT projection was emitted and no independent verifier invocation exists"
+   },
+   "status": "PASS"
+  },
+  {
+   "expected": "the journal carries no lifecycle field and the only lifecycle receipts are the kernel's projections",
+   "id": "P13",
+   "name": "no scripted lifecycle transitions",
+   "observed": {
+    "adapter_holds_store": false,
+    "scripted_transition_records": 0
+   },
+   "status": "PASS"
+  }
+ ],
+ "coordinator_summary": {
+  "authority_blocked": [],
+  "dispatched": [
+   "S0-PROBE"
+  ],
+  "failed": [],
+  "stop_reason": "eligible-backlog-exhausted"
+ },
+ "cost": "NOT_APPLICABLE",
+ "credentials_present": [],
+ "derived_from": "/tmp/fx-s0-h943dny2/intact/trajectory.jsonl",
+ "elapsed_seconds": {
+  "definition": "real wall-clock from probe start to report",
+  "value": 1.788
+ },
+ "evidence_refs": [
+  "run-report.json",
+  "trajectory.jsonl",
+  "worker-journal/journal.jsonl",
+  "work-management/receipts.jsonl",
+  "work-management/ready-snapshot.json",
+  "state.sqlite"
+ ],
+ "fixture_id": "FX-S0",
+ "hold_reasons": [],
+ "injected_clock": {
+  "definition": "every substrate clock read returns this value; artifact recorded_at uses the real clock",
+  "epoch_seconds": 1758542400
+ },
+ "kernel_unchanged": {
+  "baseline": "ade44cb93f3f33a570e1cf1b4bda500a79cd95bb",
+  "blobs": {
+   "src/alienintent/execution_coordination/adapters/sqlite_store.py": "49704060f6d19591dcbca1eba00011b496329f93",
+   "src/alienintent/execution_coordination/application/factory_coordinator.py": "7af96dcd93b519c95100299b69b4b7db30d6cb6e",
+   "src/alienintent/execution_coordination/application/local_artifact_custody.py": "b107d112696c047115861f5af4ca449cff3671c7",
+   "src/alienintent/execution_coordination/domain/lifecycle.py": "6b31cb4e77383d2f7caaf22a022c9cb80ad1812f",
+   "src/alienintent/invocation_runtime/adapters/git_source_control.py": "ee0e1bf72895d6b0cf533c483f412858f9e5569b",
+   "src/alienintent/invocation_runtime/adapters/git_worktree.py": "63bbee0e181bea9df1488fca586b85c8d98981e6",
+   "src/alienintent/invocation_runtime/application/real_worker.py": "cece9e2d5f12de7865e59155f73f0d240189f70f"
+  },
+  "definition": "git diff --quiet <baseline> -- <kernel_paths> exits 0 in the source checkout; blob ids recorded",
+  "paths": [
+   "src/alienintent/execution_coordination/application/factory_coordinator.py",
+   "src/alienintent/execution_coordination/domain/lifecycle.py",
+   "src/alienintent/execution_coordination/application/local_artifact_custody.py",
+   "src/alienintent/execution_coordination/adapters/sqlite_store.py",
+   "src/alienintent/invocation_runtime/application/real_worker.py",
+   "src/alienintent/invocation_runtime/adapters/git_source_control.py",
+   "src/alienintent/invocation_runtime/adapters/git_worktree.py"
+  ],
+  "source_revision": "37f09a617a9a2bc0421ee00b37c2f7d5fe8ca315",
+  "status": "UNCHANGED"
+ },
+ "lifecycle_terminal_stage": {
+  "S0-PROBE": "DONE"
+ },
+ "live_proof": "NOT_ESTABLISHED",
+ "manifest": {
+  "digest": "sha256:c9759bec9f3a4796b1b29e79693866ea183ddaffcf4389caaf6a45afa834b93c",
+  "profile": "fx-s0",
+  "seed": "fx-s0-seed-1",
+  "work_items": [
+   "S0-PROBE"
+  ]
+ },
+ "network_denial": {
+  "definition": "outbound TCP connect to TEST-NET 192.0.2.1:9 must be refused by the environment, and git must be unable to reach an HTTPS remote",
+  "git_ls_remote": {
+   "exit_status": 128,
+   "stderr": [
+    "fatal: unable to access 'https://198.51.100.1/denied.git/': Failed to connect to 198.51.100.1 port 443 after 0 ms: Couldn't connect to server"
+   ]
+  },
+  "net_namespace_inode": 4026532577,
+  "socket": {
+   "detail": "[Errno 101] Network is unreachable",
+   "errno": 101,
+   "name": "ENETUNREACH",
+   "result": "refused"
+  },
+  "status": "ENFORCED"
+ },
+ "provider_calls_observed": {
+  "definition": "attempts by the worker process adapter to execute a provider executable, summed over the durable journal",
+  "value": 0
+ },
+ "recorded_at": "2026-09-22T12:56:45Z",
+ "recorder": "FX offline proof runner (alienintent.composition.offline_proof) for FX-S0",
+ "reopened_root": false,
+ "root": "/tmp/fx-s0-h943dny2/intact",
+ "schema_version": "1.0",
+ "scope": "one local run of the S0 isolated proof substrate over a disposable root; describes the seeded probe items, not WO-220101's own lifecycle",
+ "substituted_boundaries": [
+  "worker provider transport: ScriptedWorkerProcess behind the unchanged RealWorkerProvider",
+  "worker outcome journal: ScriptedWorkerProvider durable JSONL",
+  "work management transport: LocalWorkManagement durable receipts",
+  "source-control remote: local bare repository by path",
+  "decision notification: NoOpDecisionNotifier"
+ ],
+ "success_collapse_limitation": {
+  "authority": "R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME remain open; S0 reports the limitation and does not repair it",
+  "independent_verifier_invocation": "NOT_ESTABLISHED",
+  "live_proof": "NOT_ESTABLISHED",
+  "observed": true,
+  "statement": "FactoryCoordinator._completed_for_outcome carries a successful producer outcome through verify/review/accept/close in one kernel step; no separate VERIFY, REVIEW or ACCEPT projection was emitted and no independent verifier invocation exists"
+ },
+ "token_usage": "NOT_APPLICABLE",
+ "unknown_metrics": [
+  "token_usage: no provider ran; NOT_APPLICABLE, never zero",
+  "cost: no provider ran; NOT_APPLICABLE, never zero"
+ ],
+ "verdict": "PASS"
+}

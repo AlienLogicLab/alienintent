@@ -1,0 +1,57 @@
+{
+ "biu_id": "WO-220101",
+ "checks": [],
+ "cost": "NOT_APPLICABLE",
+ "credentials_present": [],
+ "derived_from": "/tmp/fx-s0-h943dny2/c3/trajectory.jsonl",
+ "elapsed_seconds": {
+  "definition": "real wall-clock from probe start to report",
+  "value": 3.004
+ },
+ "evidence_refs": [
+  "run-report.json",
+  "trajectory.jsonl",
+  "worker-journal/journal.jsonl",
+  "work-management/receipts.jsonl",
+  "work-management/ready-snapshot.json",
+  "state.sqlite"
+ ],
+ "fixture_id": "FX-S0",
+ "hold_reasons": [
+  "outbound network denial not established: {\"result\": \"timeout\", \"detail\": \"no answer within 3.0s; silence is not denial\"}"
+ ],
+ "injected_clock": {
+  "definition": "every substrate clock read returns this value; artifact recorded_at uses the real clock",
+  "epoch_seconds": 1758542400
+ },
+ "live_proof": "NOT_ESTABLISHED",
+ "manifest": {
+  "digest": "sha256:c9759bec9f3a4796b1b29e79693866ea183ddaffcf4389caaf6a45afa834b93c",
+  "profile": "fx-s0",
+  "seed": "fx-s0-seed-1",
+  "work_items": [
+   "S0-PROBE"
+  ]
+ },
+ "network_denial": {
+  "definition": "outbound TCP connect to TEST-NET 192.0.2.1:9 must be refused by the environment, and git must be unable to reach an HTTPS remote",
+  "git_ls_remote": "NOT_RUN",
+  "net_namespace_inode": 4026531833,
+  "socket": {
+   "detail": "no answer within 3.0s; silence is not denial",
+   "result": "timeout"
+  },
+  "status": "NOT_ESTABLISHED"
+ },
+ "recorded_at": "2026-09-22T12:56:50Z",
+ "recorder": "FX offline proof runner (alienintent.composition.offline_proof) for FX-S0",
+ "root": "/tmp/fx-s0-h943dny2/c3",
+ "schema_version": "1.0",
+ "scope": "one local run of the S0 isolated proof substrate over a disposable root; describes the seeded probe items, not WO-220101's own lifecycle",
+ "token_usage": "NOT_APPLICABLE",
+ "unknown_metrics": [
+  "token_usage: no provider ran; NOT_APPLICABLE, never zero",
+  "cost: no provider ran; NOT_APPLICABLE, never zero"
+ ],
+ "verdict": "HOLD"
+}
