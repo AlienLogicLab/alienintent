@@ -120,3 +120,15 @@ def test_the_record_never_reports_unknown_telemetry_as_zero(tmp_path):
     rec = ClaudeSession(workdir=tmp_path, runner=runner).run(prompt="x", output_file=out).as_record()
     assert rec["token_usage"] == "UNKNOWN" and rec["cost"] == "UNKNOWN"
     assert rec["provider"] == "claude"
+
+
+def test_the_terminal_message_is_persisted_to_the_output_file_when_the_reviewer_cannot_write(tmp_path):
+    """Found live (FACT-DV-005): a plan-mode reviewer cannot write files, so an `output_file` that
+    the prompt asked for never appeared and the 24,722-character review survived only in the
+    process object, which the caller discarded. The launcher owns persistence: if the reviewer did
+    not write the file, the launcher writes the captured terminal message there."""
+    cap = {}
+    out = tmp_path / "review.md"
+    ClaudeSession(workdir=tmp_path, runner=_runner(cap, stdout="DISPOSITION: ACCEPT\n")).run(
+        prompt="verify", output_file=out)
+    assert out.read_text() == "DISPOSITION: ACCEPT\n"

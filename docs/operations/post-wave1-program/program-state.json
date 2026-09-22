@@ -70,6 +70,29 @@
    "title": "GitHub Project #1 inventory: 10 Wave 2 requirement issues at CAPTURE (P0: 051/053/056; P1: 011-016, 039); Wave 1 SF-REQ issues remain at TASKS with PY BIUs DONE",
    "updated_at": "2026-09-22T08:48:20.508225+00:00"
   },
+  "FACT-DV-005": {
+   "artifact_refs": [],
+   "assigned_actor": "claude-fresh",
+   "blockers": [],
+   "created_at": "2026-09-22T09:20:49.113903+00:00",
+   "critical_path": true,
+   "phase": "F4",
+   "prompt_path": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/dv-005.prompt.md",
+   "resulting_commit": null,
+   "review_status": null,
+   "risk_class": "HIGH",
+   "routing": {
+    "model": "UNKNOWN until run record",
+    "permission_mode": "plan",
+    "reviewer": "claude-fresh",
+    "tier": 4
+   },
+   "status": "RUNNING",
+   "subdecisions": [],
+   "task_id": "FACT-DV-005",
+   "title": "Independent Design Verification of the Wave 2 re-SPECIFY (A+B) and of the Founder decision-bundle classification",
+   "updated_at": "2026-09-22T09:20:49.113919+00:00"
+  },
   "FACT-RECON-002": {
    "artifact_refs": [
     "/tmp/\u2026/scratchpad/wave2-recon.codex.md (RECON: RE_SPECIFY_REQUIRED; S0 extent unchanged; no new Founder decision; stale DAG predicates U7/U8/U9/U10/A/B3/B6/R6/R7)"
@@ -96,28 +119,55 @@
   },
   "FACT-SPECIFY-004A": {
    "artifact_refs": [
-    "worktree .worktrees/wave2-respecify branch wave2/respecify-2026-09-22"
+    "docs/evidence/wave2-revisions/2026-09-22-respecify-011-013.md"
    ],
    "assigned_actor": "codex-fresh",
    "blockers": [],
    "created_at": "2026-09-22T08:56:52.343431+00:00",
    "critical_path": true,
    "phase": "F3",
-   "prompt_path": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/respecify-A.prompt.md",
-   "resulting_commit": null,
-   "review_status": "required: fresh Claude Design Verification after sessions A+B",
+   "prompt_path": null,
+   "resulting_commit": "bd38510 (branch wave2/respecify-2026-09-22)",
+   "review_status": "Director verification: 5/5 checkers PASS, pytest 161; independent DV pending (FACT-DV-005)",
    "risk_class": "HIGH",
    "routing": {
     "isolation": "git worktree",
     "model": "gpt-6-astra",
+    "note": "sandbox could not write git metadata; Director committed the verified tree",
     "sandbox": "workspace-write",
     "tier": 2
    },
-   "status": "RUNNING",
+   "status": "REVIEW",
    "subdecisions": [],
    "task_id": "FACT-SPECIFY-004A",
    "title": "Re-SPECIFY SF-REQ-011/013 + contracts + shared_contracts + DAG predicates (session A)",
-   "updated_at": "2026-09-22T08:56:52.343456+00:00"
+   "updated_at": "2026-09-22T09:10:46.374557+00:00"
+  },
+  "FACT-SPECIFY-004B": {
+   "artifact_refs": [
+    "docs/evidence/wave2-revisions/2026-09-22-respecify-015-039.md"
+   ],
+   "assigned_actor": "codex-fresh",
+   "blockers": [],
+   "created_at": "2026-09-22T09:10:46.384799+00:00",
+   "critical_path": true,
+   "phase": "F3",
+   "prompt_path": null,
+   "resulting_commit": null,
+   "review_status": "Director verification: 5/5 checkers PASS, pytest 161; independent DV pending (FACT-DV-005)",
+   "risk_class": "HIGH",
+   "routing": {
+    "isolation": "git worktree",
+    "model": "gpt-6-astra",
+    "note": "sandbox could not write git metadata; Director committed the verified tree",
+    "sandbox": "workspace-write",
+    "tier": 2
+   },
+   "status": "REVIEW",
+   "subdecisions": [],
+   "task_id": "FACT-SPECIFY-004B",
+   "title": "Re-SPECIFY SF-REQ-015/039 + contracts + U9/U10 + S0 reference refresh (session B)",
+   "updated_at": "2026-09-22T09:20:49.106995+00:00"
   },
   "POSTW1-AGENTREADY-004": {
    "artifact_refs": [
@@ -986,5 +1036,5 @@
    "updated_at": "2026-09-21T22:31:40.936775+00:00"
   }
  },
- "updated_at": "2026-09-22T08:56:52.343463+00:00"
+ "updated_at": "2026-09-22T09:20:49.113923+00:00"
 }

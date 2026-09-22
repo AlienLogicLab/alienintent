@@ -119,6 +119,11 @@ class ClaudeSession:
             result.terminal_message = out.read_text()
         else:
             result.terminal_message = result.stdout
+            # A plan-mode reviewer cannot write files, so the launcher owns persistence: the
+            # review must outlive the process object that captured it (found live, FACT-DV-005).
+            if out is not None and result.terminal_message.strip():
+                out.parent.mkdir(parents=True, exist_ok=True)
+                out.write_text(result.terminal_message)
 
         if result.exit_code != 0:
             result.failure_class, result.failure_reason = _classify_failure(
