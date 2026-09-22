@@ -21,17 +21,20 @@
  "tasks": {
   "FACT-ARCLOSE-001": {
    "artifact_refs": [
-    "agent-ready: branch pub/codex-compatibility-probe (d0e00a8 candidate, c688a11 repair)",
-    "agent-ready: branch docs/ubiquitous-language-v0.1 @7a85c4d"
+    "agent-ready PR #2 pub/codex-compatibility-probe -> feat/v0.1 (d0e00a8 + c688a11; R1 REPAIR_REQUIRED, R2 ACCEPT)",
+    "agent-ready PR #3 docs/ubiquitous-language-v0.1-pub -> pub/codex-compatibility-probe (UL v0.1 + README sentence)",
+    "agent-ready issue #1 status comment: OPEN_REQUIRED with 6 remaining acceptance criteria"
    ],
    "assigned_actor": "claude-bootstrap-coordinator",
-   "blockers": [],
+   "blockers": [
+    "PARKED at merge: harness permission classifier denied `git push pub:feat/v0.1` and `gh pr merge 2` (Merge Without Review) although independent review is recorded; Founder/operator must merge PR #2 then PR #3, or grant a merge permission rule"
+   ],
    "created_at": "2026-09-22T08:48:20.486532+00:00",
-   "critical_path": true,
+   "critical_path": false,
    "phase": "F1",
-   "prompt_path": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/review-64725f9.prompt.md",
+   "prompt_path": null,
    "resulting_commit": null,
-   "review_status": "R1 REPAIR_REQUIRED (codex gpt-6-astra, read-only); R2 running",
+   "review_status": "R2 ACCEPT (codex gpt-6-astra, fresh, read-only)",
    "risk_class": "HIGH",
    "routing": {
     "model": "gpt-6-astra",
@@ -39,11 +42,11 @@
     "sandbox": "read-only",
     "tier": 4
    },
-   "status": "RUNNING",
+   "status": "BLOCKED",
    "subdecisions": [],
    "task_id": "FACT-ARCLOSE-001",
    "title": "Agent Ready publication/provenance closure: independent review of 64725f9, repair, publish prerequisite + UL, Issue #1 status",
-   "updated_at": "2026-09-22T08:48:20.486554+00:00"
+   "updated_at": "2026-09-22T08:55:04.128488+00:00"
   },
   "FACT-BACKLOG-003": {
    "artifact_refs": [
@@ -961,5 +964,5 @@
    "updated_at": "2026-09-21T22:31:40.936775+00:00"
   }
  },
- "updated_at": "2026-09-22T08:48:20.508237+00:00"
+ "updated_at": "2026-09-22T08:55:04.128514+00:00"
 }
