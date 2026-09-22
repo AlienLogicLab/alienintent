@@ -13,6 +13,7 @@ Never releases a BIU, never changes Project lifecycle state.
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import json
 import subprocess
 import sys
@@ -69,9 +70,21 @@ def cmd_status(args) -> int:
 def cmd_route(args) -> int:
     risk = RiskClass(args.risk) if args.risk else classify_risk(args.task_type)
     d = route(task_type=args.task_type, risk=risk,
-              deterministic_possible=args.deterministic, bounded_input=args.bounded)
-    print(json.dumps(d.as_record(), indent=1))
-    return 0
+              deterministic_possible=args.deterministic, bounded_input=args.bounded,
+              diversity_reason=args.diversity_reason, context_reason=args.context_reason,
+              unavailable_providers=tuple(args.unavailable_provider),
+              claude_required=args.claude_required)
+    record = {**d.as_record(), "task_id": args.task_id,
+              "recorded_at": datetime.now(timezone.utc).isoformat(),
+              "unavailable_providers": args.unavailable_provider}
+    if args.record:
+        if not args.task_id:
+            raise ValueError("--record requires --task-id to preserve work identity")
+        # Immutable receipt; never overwrite an earlier routing decision or program state.
+        with Path(args.record).open("x") as stream:
+            stream.write(json.dumps(record, indent=1) + "\n")
+    print(json.dumps(record, indent=1))
+    return 0 if d.dispatch_allowed else 3
 
 
 def cmd_ask(args) -> int:
@@ -132,6 +145,12 @@ def main(argv: list[str]) -> int:
     r.add_argument("--risk", choices=[x.value for x in RiskClass])
     r.add_argument("--deterministic", action="store_true")
     r.add_argument("--bounded", action="store_true")
+    r.add_argument("--diversity-reason")
+    r.add_argument("--context-reason")
+    r.add_argument("--claude-required", action="store_true")
+    r.add_argument("--unavailable-provider", action="append", default=[], choices=["claude", "codex"])
+    r.add_argument("--task-id")
+    r.add_argument("--record", help="Write a new immutable routing receipt; requires --task-id")
 
     a = sub.add_parser("ask"); a.set_defaults(func=cmd_ask)
     a.add_argument("--task", required=True)

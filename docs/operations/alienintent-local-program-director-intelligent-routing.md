@@ -84,6 +84,9 @@ Principle:
 
 ## Tier 1 — Small/cheap reasoning model or bounded local analysis
 
+**Current activation:** reserved until canonical Allocation proves a local model capable.
+The examples below do not authorize a cheap-model dispatch today; unresolved cognition defaults to Codex.
+
 Use the cheapest capable model/provider for:
 
 - summarizing already-localized evidence;
@@ -122,7 +125,7 @@ Favor Codex because:
 - current Founder preference is to lean more heavily on Codex temporarily;
 - Claude has been carrying a disproportionate recent load.
 
-Do not use Codex automatically when Tier 0/1 suffices.
+Do not use a model when Tier 0 suffices. Tier 1 requires the capability proof above.
 
 ---
 
@@ -197,7 +200,7 @@ Examples:
 
 Default:
 - Codex primary;
-- selective targeted Claude review of disputed/high-risk sections only.
+- selective fresh Codex review of disputed/high-risk sections; Claude only for a recorded exception.
 
 ## HIGH
 Examples:
@@ -212,7 +215,7 @@ Examples:
 
 Default:
 - Codex primary;
-- independent Claude review;
+- fresh independent Codex review by default; Claude only for justified model-family diversity;
 - deterministic checks;
 - Founder decision where authority requires it.
 
@@ -282,7 +285,7 @@ Possible escalation:
         ↓ low confidence / architectural complexity
     Codex GPT-6 Astra
         ↓ high-impact disagreement / historical ambiguity
-    Claude independent review
+    Fresh independent review (Codex default; Claude with a recorded justification)
         ↓ genuine authority gap
     Founder
 
@@ -402,11 +405,10 @@ Use for:
 Claude bootstrap coordinator:
     historical cross-check
     bootstrap-control review
-    independent critic
-    adversarial review
+    missing-evidence location when durable evidence is insufficient
 
 Fresh Claude:
-    independent high-risk design verification where participant history would bias review
+    independent review only when a specific model-family-diversity reason is recorded
 
 Deterministic tooling:
     facts, counts, identity, consistency, replay, validation
@@ -562,3 +564,34 @@ bootstrap/factory development environment; AlienIntent the product remains provi
   required, latency, token usage, cost and provider interruptions are recorded where available;
   if another model consistently produces better accepted results at lower total cost for a task
   class, routing adapts.
+
+### Activation — Founder-approved 2026-09-22
+
+The Local Program Director remains the orchestrator. `route()` implements this temporary
+operating policy outside the product domain. A task name alone cannot select the resident
+coordinator: `context_reason` must identify why its lived context matters. Whitespace is not
+a justification. A fresh reviewer does not inherit author history or private reasoning.
+
+Before each dispatch, read current provider availability. Pass known exhausted providers as
+`--unavailable-provider`. Optional Claude work fails over to fresh Codex under the same task
+and role contract; `--claude-required` is only for indispensable historical context or required
+cross-provider independence, with its justification. A required unavailable provider yields
+`dispatch_allowed=false` and CLI exit 3. Never launch that decision or repeatedly probe capacity.
+Unrelated eligible work continues. If Codex is also unavailable, hold rather than silently
+spending Claude capacity or changing the task contract.
+
+Retain each substantive decision with `route <type> --task-id <existing-id> --record <new-path>`;
+receipts are immutable. Record interrupted invocation, reason, provider, preserved work and
+successor invocation separately. A capacity interruption adds neither a verifier rejection nor
+a repair cycle. Availability is operator-observed operational state, not a permanent model ranking.
+
+Routing receipts are **intent**, not actual provider/model/session provenance. At invocation
+completion retain actual provider, model if reported, session/thread id, prompt/artifact paths,
+start/end and outcome; use UNKNOWN when not exposed. Never label a configured model as observed.
+This CLI recommends routes; it is not an autonomous failover daemon. The Director must honor its
+dispatch permission and persist the actual outcome.
+
+Healthy invocations retain their provider until completion. Installation worker defaults take
+effect through the approved idle-only restart, not by editing active invocation records.
+See [activation plan](post-wave1-program/codex-primary-activation-plan.md) and
+[activation evidence](../evidence/2026-09-22-codex-primary-activation.md).

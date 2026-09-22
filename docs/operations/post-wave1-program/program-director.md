@@ -58,7 +58,7 @@ Five questions are answered before any model call, and recorded with the routing
 | Tier | Actor | Used for |
 | --- | --- | --- |
 | 0 | deterministic tooling | facts, counts, identity, ancestry, schema, replay |
-| 1 | cheapest capable model | bounded extraction, classification, drafting against a schema |
+| 1 | proven capable local model (reserved) | unavailable until canonical Allocation establishes capability |
 | 2 | Codex GPT-6 Astra (fresh) | substantial technical analysis, design, code-aware work |
 | 3 | Claude bootstrap coordinator | work whose value depends on lived Wave 1 context |
 | 4 | fresh independent reviewer | high-risk work where author bias actually matters |
@@ -69,6 +69,12 @@ Tier 0 wins even at HIGH risk. Risk raises the review bar; it does not create a 
 to count things. Tier 3 is deliberately narrow — the coordinator is a *participant*, so routing
 work to it buys context at the cost of independence, and that trade is only worth making where
 the lived context is the scarce input.
+
+Activation details: [Codex-primary plan](codex-primary-activation-plan.md). All cognitive work,
+including bounded extraction, defaults to Codex. Coordinator routing requires `context_reason`;
+Claude independent review requires `diversity_reason`. Read availability at the next dispatch,
+honor `dispatch_allowed`, and retain immutable routing receipts plus actual invocation provenance.
+The Director remains the primary orchestration role; Codex is a worker, not its replacement.
 
 ## Operating rules
 

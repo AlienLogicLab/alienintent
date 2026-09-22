@@ -1,0 +1,28 @@
+{
+ "task_type": "closure",
+ "risk_class": "LOW",
+ "tier": "CODEX_PRIMARY",
+ "chosen_actor": "codex-fresh",
+ "model": "gpt-6-astra",
+ "review_required": false,
+ "rationale": "Substantial code-aware/technical work; Codex is the configured primary analyst and fresh context avoids inheriting participant bias.",
+ "reviewer_provider": null,
+ "diversity_reason": null,
+ "context_reason": null,
+ "dispatch_allowed": true,
+ "capacity_disposition": "AVAILABLE",
+ "policy": "codex-primary-2026-09-22",
+ "provenance_scope": "routing intent, not actual invocation provenance",
+ "five_questions": {
+  "can_deterministic_tooling_do_this": "no \u2014 irreducible reasoning remains",
+  "cheapest_model_likely_to_succeed_first_pass": "gpt-6-astra",
+  "minimum_context_required": "task contract, canonical authority references, bounded evidence paths, output schema, non-goals",
+  "does_this_need_independent_review": "no (risk LOW)",
+  "evidence_that_would_trigger_escalation": "structurally invalid result, disagreement with durable evidence, or an authority gap"
+ },
+ "task_id": "WO-220101",
+ "recorded_at": "2026-09-22T16:15:57.113043+00:00",
+ "unavailable_providers": [
+  "claude"
+ ]
+}

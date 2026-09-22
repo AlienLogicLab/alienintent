@@ -48,10 +48,10 @@ def test_deterministic_wins_even_for_high_risk_when_it_can_settle_the_question()
 # --- Tier 1/2: cheapest capable ---------------------------------------------------
 
 
-def test_narrow_bounded_extraction_routes_to_the_cheap_tier():
+def test_bounded_cognition_defaults_to_codex_until_allocator_proves_local_capability():
     d = route(task_type="extract_fields", risk=RiskClass.LOW, deterministic_possible=False,
               bounded_input=True)
-    assert d.tier is Tier.CHEAP_MODEL
+    assert d.tier is Tier.CODEX_PRIMARY
 
 
 def test_substantial_technical_analysis_routes_to_codex_primary():
@@ -70,11 +70,57 @@ def test_design_and_decomposition_route_to_codex_primary():
 # --- Tier 3: the bootstrap coordinator only for what only it can do ---------------
 
 
-def test_historical_cross_check_routes_to_the_bootstrap_coordinator():
+def test_historical_task_name_alone_does_not_justify_claude():
     d = route(task_type="historical_cross_check", risk=RiskClass.HIGH,
               deterministic_possible=False)
-    assert d.tier is Tier.CLAUDE_COORDINATOR
+    assert d.tier is Tier.CODEX_PRIMARY
+    assert d.actor == "codex-fresh"
+
+
+def test_missing_durable_context_can_justify_resident_coordinator():
+    d = route("historical_cross_check", RiskClass.HIGH, False,
+              context_reason="Incident evidence path absent; participant can locate its log")
     assert d.actor == "claude-bootstrap-coordinator"
+    assert d.as_record()["context_reason"].startswith("Incident evidence")
+
+
+def test_blank_diversity_reason_does_not_select_claude():
+    assert route("design_verification", RiskClass.HIGH, False,
+                 diversity_reason="   ").reviewer_provider == "codex-fresh"
+
+
+def test_capacity_routes_optional_diversity_to_codex():
+    d = route("design_verification", RiskClass.HIGH, False,
+              diversity_reason="Useful but not mandatory model-family diversity",
+              unavailable_providers=("claude",))
+    assert d.reviewer_provider == "codex-fresh"
+    assert d.dispatch_allowed
+    assert d.as_record()["capacity_disposition"] == "FAILOVER_CODEX"
+
+
+def test_required_claude_context_waits_without_relaunch():
+    d = route("historical_cross_check", RiskClass.HIGH, False,
+              context_reason="Only participant can locate the missing incident log",
+              claude_required=True, unavailable_providers=("claude",))
+    assert not d.dispatch_allowed
+    assert d.capacity_disposition == "WAIT_REQUIRED_PROVIDER"
+
+
+def test_ordinary_codex_work_continues_while_claude_unavailable():
+    d = route("implementation", RiskClass.MEDIUM, False,
+              unavailable_providers=("claude",))
+    assert d.actor == "codex-fresh" and d.dispatch_allowed
+
+
+def test_known_codex_capacity_wall_does_not_get_a_launch():
+    d = route("repair", RiskClass.MEDIUM, False,
+              unavailable_providers=("codex",))
+    assert not d.dispatch_allowed
+
+
+def test_claude_required_without_task_justification_is_rejected():
+    with pytest.raises(ValueError, match="justification"):
+        route("implementation", RiskClass.HIGH, False, claude_required=True)
 
 
 def test_bootstrap_retirement_review_does_not_go_to_the_coordinator_being_retired():
@@ -366,3 +412,27 @@ def test_a_recorded_diversity_reason_selects_a_fresh_claude_reviewer():
 def test_non_reviewer_tiers_carry_no_reviewer_provider():
     d = route(task_type="evidence_reconciliation", risk=RiskClass.MEDIUM, deterministic_possible=False)
     assert d.reviewer_provider is None
+
+
+def test_cli_capacity_hold_cannot_look_like_dispatch_permission():
+    import subprocess
+    p = subprocess.run([sys.executable, str(Path(__file__).with_name("director_cli.py")),
+                        "route", "design_verification", "--diversity-reason", "Required independent family",
+                        "--claude-required", "--unavailable-provider", "claude"],
+                       text=True, capture_output=True)
+    assert p.returncode == 3
+    assert json.loads(p.stdout)["dispatch_allowed"] is False
+
+
+def test_cli_records_same_task_capacity_failover(tmp_path):
+    import subprocess
+    receipt = tmp_path / "route.json"
+    p = subprocess.run([sys.executable, str(Path(__file__).with_name("director_cli.py")),
+                        "route", "design_verification", "--diversity-reason", "Optional diversity",
+                        "--unavailable-provider", "claude", "--task-id", "T-existing",
+                        "--record", str(receipt)], text=True, capture_output=True)
+    assert p.returncode == 0
+    record = json.loads(receipt.read_text())
+    assert record["task_id"] == "T-existing"
+    assert record["reviewer_provider"] == "codex-fresh"
+    assert record["capacity_disposition"] == "FAILOVER_CODEX"

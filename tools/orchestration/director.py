@@ -16,7 +16,7 @@ Hard boundaries, from both documents:
 Routing exists to spend intelligence only where intelligence is required:
 
     Tier 0  deterministic tooling   — facts, counts, identity, ancestry, schema, replay
-    Tier 1  cheapest capable model  — bounded extraction/classification/drafting
+    Tier 1  proven local model      — reserved for future canonical Allocation capability proof
     Tier 2  Codex GPT-6 Astra       — substantial technical analysis, design, code-aware work
     Tier 3  Claude bootstrap coord. — only where its lived Wave 1 context has unique value
     Tier 4  fresh independent       — high-risk work where author bias actually matters
@@ -68,7 +68,7 @@ class RiskClass(Enum):
     HIGH = "HIGH"
 
 
-# Task types whose value comes specifically from lived Wave 1 participation.
+# Task types eligible for lived-context exceptions, with an explicit per-task reason.
 # Note: bootstrap_retirement_review is deliberately NOT here. The program plan routes it to
 # Codex with coordinator review, and that is right: the coordinator is the participant whose
 # bootstrap is being retired, so authoring its own retirement audit is the authorship conflict
@@ -119,6 +119,9 @@ class RoutingDecision:
     # Tier 4 only: which fresh context reviews, and why a non-default provider was chosen.
     reviewer_provider: str | None = None
     diversity_reason: str | None = None
+    context_reason: str | None = None
+    dispatch_allowed: bool = True
+    capacity_disposition: str = "AVAILABLE"
 
     def as_record(self) -> dict:
         return {"task_type": self.task_type, "risk_class": self.risk.value,
@@ -126,12 +129,19 @@ class RoutingDecision:
                 "review_required": self.review_required, "rationale": self.rationale,
                 "reviewer_provider": self.reviewer_provider,
                 "diversity_reason": self.diversity_reason,
+                "context_reason": self.context_reason,
+                "dispatch_allowed": self.dispatch_allowed,
+                "capacity_disposition": self.capacity_disposition,
+                "policy": "codex-primary-2026-09-22",
+                "provenance_scope": "routing intent, not actual invocation provenance",
                 "five_questions": self.questions}
 
 
 def route(task_type: str, risk: RiskClass, deterministic_possible: bool,
           bounded_input: bool = False, codex_model: str | None = None,
-          diversity_reason: str | None = None) -> RoutingDecision:
+          diversity_reason: str | None = None, context_reason: str | None = None,
+          unavailable_providers: tuple[str, ...] = (),
+          claude_required: bool = False) -> RoutingDecision:
     """Choose the cheapest actor capable of succeeding first-pass.
 
     Deterministic tooling wins whenever it can settle the question — including for HIGH
@@ -144,6 +154,15 @@ def route(task_type: str, risk: RiskClass, deterministic_possible: bool,
     """
     model = codex_model or resolved_codex_model()
     reviewer_provider = None
+    diversity_reason = (diversity_reason or "").strip() or None
+    context_reason = (context_reason or "").strip() or None
+    if claude_required and not (
+        (task_type in _FRESH_REVIEWER_TASKS and diversity_reason)
+        or (task_type in _COORDINATOR_ONLY and context_reason)
+    ):
+        raise ValueError("Claude-specific requirement needs a task-specific justification")
+    if set(unavailable_providers) - {"claude", "codex"}:
+        raise ValueError("unknown unavailable provider")
 
     if deterministic_possible or task_type in _DETERMINISTIC_TASKS:
         tier, actor, chosen_model = Tier.DETERMINISTIC, "deterministic-tooling", None
@@ -151,26 +170,20 @@ def route(task_type: str, risk: RiskClass, deterministic_possible: bool,
                "what deterministic tooling establishes reliably.")
         review = False
     elif task_type in _FRESH_REVIEWER_TASKS:
-        # Deliberately NOT `model`. This tier exists to be a different provider from the author,
-        # so labelling it with the resolved Codex model asserts the reviewer was the thing it was
-        # chosen not to be. A dispatched session auditing the programme's own state caught Phase
-        # 10's routing claiming gpt-6-astra while the retained provenance showed fresh Claude.
-        # The Director knows the provider differs; it does not resolve the reviewer's model.
+        # Routing intent is not observed reviewer model/session provenance. Independence
+        # requires a fresh context, not a different provider or model.
         tier, actor, chosen_model = Tier.FRESH_REVIEWER, "fresh-independent-reviewer", None
         reviewer_provider = "claude-fresh" if diversity_reason else "codex-fresh"
         why = ("High-impact work where author bias matters; reviewer must not be the author, and "
-               "must not be recorded as carrying the author's model. Default is a fresh Codex "
+               "actual model/session must be recorded from the invocation. Default is a fresh Codex "
                "context; a different provider only for a recorded diversity reason"
                + (f" — here: {diversity_reason}" if diversity_reason else " — none recorded") + ".")
         review = True
-    elif task_type in _COORDINATOR_ONLY:
+    elif task_type in _COORDINATOR_ONLY and context_reason:
         tier, actor, chosen_model = Tier.CLAUDE_COORDINATOR, "claude-bootstrap-coordinator", None
         why = ("Requires lived Wave 1 operational context that durable artifacts alone do not "
-               "supply. Its memory is a locator; durable evidence decides disagreements.")
-        review = risk is RiskClass.HIGH
-    elif bounded_input and task_type in _CHEAP_TASKS:
-        tier, actor, chosen_model = Tier.CHEAP_MODEL, "cheap-bounded-model", None
-        why = "Narrow bounded extraction against an explicit schema; no architecture judgment."
+               "supply. Its memory is a locator; durable evidence decides disagreements. "
+               + context_reason)
         review = risk is RiskClass.HIGH
     else:
         tier, actor, chosen_model = Tier.CODEX_PRIMARY, "codex-fresh", model
@@ -178,11 +191,31 @@ def route(task_type: str, risk: RiskClass, deterministic_possible: bool,
                "and fresh context avoids inheriting participant bias.")
         review = risk is not RiskClass.LOW
 
+    dispatch_allowed, capacity_disposition = True, "AVAILABLE"
+    selected = ("claude" if tier is Tier.CLAUDE_COORDINATOR or reviewer_provider == "claude-fresh"
+                else "codex" if tier in {Tier.CODEX_PRIMARY, Tier.FRESH_REVIEWER} else None)
+    if selected == "claude" and "claude" in unavailable_providers:
+        if claude_required:
+            dispatch_allowed, capacity_disposition = False, "WAIT_REQUIRED_PROVIDER"
+            why += " Required Claude-specific work waits; no launch into known exhaustion."
+        else:
+            if tier is Tier.FRESH_REVIEWER:
+                reviewer_provider = "codex-fresh"
+            else:
+                tier, actor, chosen_model = Tier.CODEX_PRIMARY, "codex-fresh", model
+            selected, capacity_disposition = "codex", "FAILOVER_CODEX"
+            why += " Claude unavailable; same task continues on Codex, not a task failure or repair cycle."
+    if selected == "codex" and "codex" in unavailable_providers:
+        dispatch_allowed, capacity_disposition = False, "WAIT_CAPACITY"
+        why += " Codex also unavailable; no automatic relaunch or unjustified Claude use."
+
     return RoutingDecision(
         task_type=task_type, risk=risk, tier=tier, actor=actor, model=chosen_model,
         review_required=review, rationale=why,
         reviewer_provider=reviewer_provider,
         diversity_reason=diversity_reason if reviewer_provider else None,
+        context_reason=context_reason if task_type in _COORDINATOR_ONLY else None,
+        dispatch_allowed=dispatch_allowed, capacity_disposition=capacity_disposition,
         questions={
             "can_deterministic_tooling_do_this":
                 "yes" if tier is Tier.DETERMINISTIC else "no — irreducible reasoning remains",
