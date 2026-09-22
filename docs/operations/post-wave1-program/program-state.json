@@ -71,27 +71,29 @@
    "updated_at": "2026-09-22T08:48:20.508225+00:00"
   },
   "FACT-DV-005": {
-   "artifact_refs": [],
+   "artifact_refs": [
+    "/tmp/\u2026/scratchpad/dv-005.claude.md (REPAIR_REQUIRED: DV-1 DAG root register/statistics; DV-2 Markdown rendering + checker coverage; DV-3 SF-REQ-011 AC-05 overreach; DV-4..8 advisory; classification correction: R1-GAP-MONITOR-HOST \u2192 REQUIRES_OPERATIONAL_PROOF citing SF-REQ-037 + SWF-27 Applied, not AA \u00a714)"
+   ],
    "assigned_actor": "claude-fresh",
    "blockers": [],
    "created_at": "2026-09-22T09:20:49.113903+00:00",
    "critical_path": true,
    "phase": "F4",
-   "prompt_path": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/dv-005.prompt.md",
+   "prompt_path": null,
    "resulting_commit": null,
-   "review_status": null,
+   "review_status": "R1 REPAIR_REQUIRED (claude fresh, plan mode); no Founder decision required; repairs routed deterministic/coordinator; R2 pending",
    "risk_class": "HIGH",
    "routing": {
-    "model": "UNKNOWN until run record",
+    "model": "UNKNOWN (claude -p; exact model not reported)",
     "permission_mode": "plan",
     "reviewer": "claude-fresh",
     "tier": 4
    },
-   "status": "RUNNING",
+   "status": "REPAIR",
    "subdecisions": [],
    "task_id": "FACT-DV-005",
    "title": "Independent Design Verification of the Wave 2 re-SPECIFY (A+B) and of the Founder decision-bundle classification",
-   "updated_at": "2026-09-22T09:20:49.113919+00:00"
+   "updated_at": "2026-09-22T09:47:07.862557+00:00"
   },
   "FACT-RECON-002": {
    "artifact_refs": [
@@ -1036,5 +1038,5 @@
    "updated_at": "2026-09-21T22:31:40.936775+00:00"
   }
  },
- "updated_at": "2026-09-22T09:20:49.113923+00:00"
+ "updated_at": "2026-09-22T09:47:07.862582+00:00"
 }
