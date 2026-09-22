@@ -125,7 +125,7 @@
   "cross_contract_cycles": "011 and 016 share neutral Ref values, not mutual application imports. 014 creates proof plans from candidate design/premises, 051 reviews that exact pair, 013 consumes the verified pair. 053 exposes AttentionPort independently of 056; 056 consumes it and produces ordinary observed events. Ratification of 056 is required only for 056-specific recovery capability, not for generic 053 attention/tenure.",
   "failure_protocol": "Typed Hold includes reason code, affected refs, evidence refs and required authority/action. StoreUnavailable/SchemaIncompatible stop dependent mutations. VersionConflict never changes an old result to fit new state. No auto-retry may exceed existing authorized budget; failed evidence writes prevent admission. Commands propagate nonzero failure, with held/unverified distinctly rendered.",
   "interfaces_and_wiring_proof": "Every new adapter declares its port; every public composed operation needs intact success and a typed-failure probe against a real temporary SQLite store. LRN-002 is the single reused composition promotion. Static architecture rules do not substitute for runtime reachability or consumer truth.",
-  "authority_boundaries": "All ten are design candidates, not release authority. SF-REQ-056 remains AUTHORED_IN_THIS_PHASE and unratified. G1/G2 owner assignment is a real upstream authority prerequisite, not a decision left to implementation. Existing unresolved authority stays explicit even though deferred_to_implementation is empty. No retroactive Wave 1 changes or current worker/lifecycle contract edits. R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME block shared-kernel/real-worker changes; R1-GAP-MONITOR-HOST blocks operational monitor/scan adoption. R1-GAP-013-ALLOCATION and SPLIT-G1 are settled by the SF-REQ-013 amendment 2026-09-22; revised candidate design still requires independent verification. The remaining gaps are SPECIFY returns, not deferred implementation choices, approved requirements, or authority granted by this design. Unaffected design remains reviewable. R2-GAP-051-EDGE-AUTHORITY is a Founder question about adoption of the R1 module-direction proposal, not a new requirement or reopening of FD-02; normative direction-dependent admission is held, while established architecture checks remain active.",
+  "authority_boundaries": "All ten are design candidates, not release authority. SF-REQ-056 remains AUTHORED_IN_THIS_PHASE and unratified. Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites. Existing unresolved authority stays explicit even though deferred_to_implementation is empty. No retroactive Wave 1 changes or current worker/lifecycle contract edits. R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME block shared-kernel/real-worker changes; R1-GAP-MONITOR-HOST blocks operational monitor/scan adoption. R1-GAP-013-ALLOCATION and SPLIT-G1 are settled by the SF-REQ-013 amendment 2026-09-22; revised candidate design still requires independent verification. The remaining gaps are SPECIFY returns, not deferred implementation choices, approved requirements, or authority granted by this design. Unaffected design remains reviewable. R2-GAP-051-EDGE-AUTHORITY is a Founder question about adoption of the R1 module-direction proposal, not a new requirement or reopening of FD-02; normative direction-dependent admission is held, while established architecture checks remain active.",
   "amendments": "POSTW1-DECIDE-007A pending SF-REQ-008, 022, adjacent 025 and 029 are not assumed. SF-REQ-013 amendment 2026-09-22 is binding and includes conserved split/replan plus compiler-derived initial decomposition; reconciliation excludes new exhaustion/retry policy; episode/effect records use existing store primitives; evidence does not promote learning; telemetry normalization remains outside. Therefore no selected contract requires adoption of a pending amendment. If any is adopted, affected design revisions need independent review before use.",
   "enforcement_counting": "Count each contract opportunity entry once; promotion reuse count is entries with phase3_promotion. Repeated LRN-002 entries are distinct consumer probes under the same promotion, not new controls. Seven unique promotions are reused. All opportunities are proposed, not deployed or proven by this design phase.",
   "atomic_fencing_extension": {
@@ -280,13 +280,15 @@
    "authority": [
     "factory plan SF-REQ-013 amendment 2026-09-22",
     "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
-    "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+    "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable",
+    "factory plan SF-REQ-015/039 amendments; Architecture Authority A1/A9 and amendment (b); Ubiquitous Language; ReadinessAssessment port; SWF-25"
    ],
    "changed": [
     "/shared_contracts/architecture_scope",
     "/shared_contracts/alternatives_and_selection",
     "/shared_contracts/authority_boundaries",
-    "/shared_contracts/amendments"
+    "/shared_contracts/amendments",
+    "/shared_contracts/authority_boundaries"
    ],
    "preserved_holds": [
     "R2-GAP-051-EDGE-AUTHORITY",
@@ -294,9 +296,13 @@
     "R1-GAP-039-REAL-OUTCOME",
     "R1-GAP-MONITOR-HOST",
     "G+I operational proof",
-    "SF-REQ-056 ratification; remaining G1/G2 text belongs to session B",
-    "Unrelated pending amendments and external release/cutover authority"
-   ]
+    "SF-REQ-056 ratification",
+    "Unrelated pending amendments and external release/cutover authority",
+    "R1-GAP-039-ORCHESTRATION",
+    "R1-GAP-039-REAL-OUTCOME",
+    "independent revised Design Verification; release, budget, custody and live-operation gates"
+   ],
+   "session_b": "G1/G2 owner assignment settled: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integration; SF-REQ-029 retained-assessment serialization. All unrelated holds remain."
   }
  },
  "contracts": [
@@ -1524,25 +1530,27 @@
    "requirement_id": "SF-REQ-015",
    "title": "BIU lint/readiness and Agent-Ready process hardening",
    "bounded_context": "execution_coordination",
-   "domain_owner": "Readiness consumer owns lint/applicability/hold handling. Agent-Ready remains assessment authority; G1/G2 ownership is not assigned by this design.",
+   "domain_owner": "Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites. The bounded_context field retains the legacy implementation location, not a competing semantic owner or package-mapping decision.",
    "ubiquitous_language": {
     "AssessmentAttempt": "Invocation and immutable raw output, including failed attempts.",
-    "Disposition": "Observed READY/CLARIFY/SPLIT/HOLD semantics.",
-    "Applicability": "Exact assessed contract, baseline, decision, dependency and design revisions still match."
+    "Disposition": "Exactly one of READY, CLARIFY, SPLIT, HOLD; assessment result, not lifecycle/planning state. BLOCKED is not an Agent Ready disposition.",
+    "Applicability": "Exact assessed contract, baseline, decision, dependency and design revisions still match.",
+    "Readiness Assessment": "Immutable raw Agent Ready assessment plus attributable provenance and separate read-time applicability; retained by SF-REQ-029."
    },
    "ports": [
     "ReadinessAdmission.lint(candidate, design_applicability, proof_plan, dependency_snapshot) -> LintReport. DesignApplicability is a leaf context_assembly.domain value under shared_contracts.context_dependency_direction; no upstream application import.",
     "AssessmentConsumer.observe(raw_artifact, attempt_metadata, recognized_shape) -> SemanticAssessment | AttemptFailure; consume(assessment, current_input_fingerprint) -> ReadinessEligibility | Hold. This is an internal consumer contract, not a new Agent-Ready wire schema.",
-    "AssessmentAuthority is an injected boundary accepting a pinned assessment request and returning raw bytes plus invocation metadata; transport/schema implementation is blocked on POSTW1-DECIDE-004A G1/G2 assignment."
+    "ReadinessAssessment.assess(candidate_work_unit) -> ReadinessAssessment | AttemptFailure. Requirements / Planning passes pinned candidate text; the result preserves the raw Agent Ready assessment plus provenance. Domain knows no executable location, subprocess syntax, transport or package internals. AlienIntent never imports Agent Ready private implementation, copies its rubric or duplicates its decision logic."
    ],
    "adapters": [
     "Proposed execution_coordination/adapters/assessment_consumer.py reads retained direct objects and known MCP envelopes for consumer tests; raw evidence is stored byte-for-byte privately before normalization.",
-    "Production assessment adapter remains unbound until G1/G2 owner assignment and verified provider contract. The missing adapter returns explicit OWNER_ASSIGNMENT_HOLD; no stub READY or replacement assessment engine."
+    "CLI adapter: agent-ready assess <file|OWNER/REPO#N> --provider codex|claude [--json]; use --json for integration, pin submitted text/revision. GitHub input retrieves title/body only, so missing linked obligations cannot be assumed supplied. Exit 0 for every successful disposition; 1 execution error with no assessment; 2 usage error. No exit status alone establishes readiness. Bind configured executable/package through composition only.",
+    "Local MCP adapter: host-managed agent-ready-mcp stdio server; assess_work_unit(text, provider), actual text rather than a file path, provider codex|claude and no additional keys. Preserve structuredContent and JSON text envelope; isError is failure. Pin host server/package identity and correlate request/response. Honor public input limits (100,000 text characters; CLI file 400,000 bytes) without truncation."
    ],
-   "state": "Immutable AssessmentAttempt includes attempt ID, raw digest, authority/provider/invocation IDs, input fingerprint, predecessor assessment ref, observed disposition or failure, and lint report. Current applicability is a separate versioned pointer, never an edit to an old assessment.",
+   "state": "Immutable AssessmentAttempt includes attempt ID, raw digest, authority/provider/invocation IDs, input fingerprint, predecessor assessment ref, observed disposition or failure, and lint report. Current applicability is a separate versioned pointer, never an edit to an old assessment. Retain producer identity established from the configured Agent Ready executable/MCP server and its package metadata, Agent Ready version (UNKNOWN if unestablished, blocking admission), editable checkout revision when applicable, contract_version = \"package-release-bound; no result-level identifier (agent-ready#1)\", published schema digest/release binding, provider, optional unmodified provider_evidence, model provenance (not exposed by current results; UNKNOWN, never inferred from provider CLI version), exact input fingerprint, invocation identity/arguments or MCP tool request, timestamps and exit/error status. Raw result bytes/envelope and provenance remain distinct immutable evidence. Neither a compatible schema nor copied provider_evidence authenticates the producer; absent/mismatched producer evidence blocks admission.",
    "transitions": [
-    "Lint failure -> HOLD without invoking assessment.",
-    "READY plus matching inputs -> ELIGIBLE_FOR_SEPARATE_RELEASE_CHECKS; HOLD -> prerequisite hold; CLARIFY -> attributed-answer hold; SPLIT -> planning-decision hold.",
+    "Lint failure -> attributable AlienIntent lint hold without invoking assessment; not a fabricated Agent Ready HOLD disposition.",
+    "READY with applicable inputs -> eligibility for separate SF-REQ-002 release gates only; CLARIFY -> resolve only material owner questions through SF-REQ-035 Decision Inbox, then reassess; SPLIT -> authorized SF-REQ-013 Split Transaction, invalidate stale applicability, lint and reassess each materialized result including a retained Integration Parent; HOLD -> satisfy prerequisite, then reassess. No non-READY disposition authorizes implementation and no resolution rewrites an old assessment.",
     "Timeout/provider error/no terminal result/unknown or conflicting payload -> ATTEMPT_FAILURE and hold.",
     "Material input change invalidates applicability; fresh reassessment links predecessor. Clearing a blocker does not rewrite its outcome."
    ],
@@ -1551,23 +1559,23 @@
    "concurrency": "Reads return a version; each mutation supplies expected_version. SQLite transactions serialize commits; VersionConflict returns a typed stale-input hold, with no blind retry of a decision. Duplicate identity with identical digest is a no-op; different digest is a conflict. Never hold a SQLite transaction across filesystem, provider or network calls. One active assessment reservation per contract/input fingerprint; duplicate responses attach to the same attempt, conflicting terminal data is held.",
    "failure_modes": [
     "MCP error or conflicting direct/text/structured semantics -> attempt failure.",
-    "No configured assessment contract or ownership -> hold.",
+    "Unavailable/unbound public interface, unknown producer/version or incompatible published contract -> capability/provenance hold; no surrogate fallback.",
     "READY from stale revision -> inapplicable.",
     "Zero exit without semantic result -> failure, not readiness."
    ],
    "recovery": "Recover attempt from immutable raw evidence and original metadata. Unknown invocation completion stays held pending readback or separately authorized fresh attempt within existing budget. Historical PY-10 assessment Git blobs remain retrievable by revision.",
-   "evidence": "Raw envelope, parsed observation, all supplied disposition values, input fingerprint, failure reason, predecessor and independent release record; historical bootstrap-assessor sequence BLOCKED -> SPLIT_RECOMMENDED -> fresh READY retained without coercion claim.",
+   "evidence": "Raw envelope, parsed observation, all supplied disposition values, input fingerprint, failure reason, predecessor and independent release record; historical bootstrap-assessor sequence BLOCKED -> SPLIT_RECOMMENDED -> fresh READY retained without coercion claim. Retain producer identity established from the configured Agent Ready executable/MCP server and its package metadata, Agent Ready version (UNKNOWN if unestablished, blocking admission), editable checkout revision when applicable, contract_version = \"package-release-bound; no result-level identifier (agent-ready#1)\", published schema digest/release binding, provider, optional unmodified provider_evidence, model provenance (not exposed by current results; UNKNOWN, never inferred from provider CLI version), exact input fingerprint, invocation identity/arguments or MCP tool request, timestamps and exit/error status. Raw result bytes/envelope and provenance remain distinct immutable evidence. Neither a compatible schema nor copied provider_evidence authenticates the producer; absent/mismatched producer evidence blocks admission.",
    "observability": "readiness.lint_held / attempt_failed / observed / stale reports exact attempt and revision; counts READY semantics separately from released work.",
-   "security": "Only configured assessment authority is trusted. Parse JSON as data; malformed/multiple conflicting text payloads hold. Preserve auth/sandbox constraints; raw private output is not exported unredacted.",
-   "operator_surface": "Proposed upstream readiness show/lint/observe surfaces attempt lineage and four handling outcomes. Assessment invocation/schema migration stays unavailable until G1/G2 decisions; release remains existing control-plane authority.",
+   "security": "Only configured assessment authority is trusted. Parse JSON as data; malformed/multiple conflicting text payloads hold. Preserve auth/sandbox constraints; raw private output is not exported unredacted. Preserve Agent Ready provider-security capability gating, authentication and isolation; do not downgrade providers or bypass a failed capability probe. Provider Evidence is optional, host-measured and Codex-only in the current public contract; its version is provider CLI version, not Agent Ready product/schema/model identity.",
+   "operator_surface": "Proposed upstream readiness show/lint/observe surfaces attempt lineage, four dispositions, configured capability/version and provenance limitations; failed invocation has no disposition. Release remains existing control-plane authority.",
    "non_goals": {
     "specified": [
-     "Assigning the missing Agent-Ready implementation/schema/CLI owner or inventing a canonical serialization contract.",
-     "General split/replan execution, readiness by process exit code, or release solely because READY was returned."
+     "Implementing Agent Ready, importing its private implementation, copying its rubric, duplicating its decision logic or inventing its public serialization contract.",
+     "Executing split/replan inside SF-REQ-015 (SF-REQ-013 owns the transaction), readiness by process exit code, or release solely because READY was returned."
     ],
     "phase_interpretation": "Phase-relative exclusions in Phase 8 mean no design authored during SPECIFY; this Phase 9 authors design only. No implementation, BIUs, verification verdict or operational adoption is performed."
    },
-   "architecture_fitness": "Keep domain values and ports vendor-neutral; domain/application may not import adapters. Extend tests/test_architecture_fitness.py and its deliberate-violation fixtures for the named dependency restriction; retain existing layering, vendor-signature, port-contract, configuration and determinism checks. Composed behavior is tested separately in the existing Python unit/integration layer.",
+   "architecture_fitness": "Keep domain values and ports vendor-neutral; domain/application may not import adapters. Extend tests/test_architecture_fitness.py and its deliberate-violation fixtures for the named dependency restriction; retain existing layering, vendor-signature, port-contract, configuration and determinism checks. Composed behavior is tested separately in the existing Python unit/integration layer. ReadinessAssessment.assess(candidate_work_unit) -> ReadinessAssessment | AttemptFailure. Requirements / Planning passes pinned candidate text; the result preserves the raw Agent Ready assessment plus provenance. Domain knows no executable location, subprocess syntax, transport or package internals. AlienIntent never imports Agent Ready private implementation, copies its rubric or duplicates its decision logic. Contract conformance swaps CLI/MCP adapters with unchanged domain; deliberate private-import/rubric-copy/duplicate-engine violations must fail review/fitness checks.",
    "deterministic_enforcement_opportunities": [
     {
      "id": "015-envelope-applicability",
@@ -1581,8 +1589,8 @@
     {
      "id": "015-composed-authority",
      "layer": "python_unit_integration",
-     "rule": "Reuse LRN-002 at the actual live-profile readiness construction/call boundary with local transport and real temporary SQLite. Unbound AssessmentAuthority or a stub lacking assigned G1/G2 authority must refuse construction or return OWNER_ASSIGNMENT_HOLD before assessment/release; a pinned authorized fixture binding reaches the consumer and still checks semantic outcome.",
-     "proven_red_obligation": "Bind a stub that returns READY without G1/G2 authority, then bypass the unbound-authority guard separately: each must fail the expected OWNER_ASSIGNMENT_HOLD/no-release assertion; intact authorized fixture reaches the consumer.",
+     "rule": "Reuse LRN-002 at actual readiness construction/admission with local transport and real temporary SQLite: unbound or unestablished product/package provenance returns CAPABILITY_PROVENANCE_HOLD; a supported product binding reaches the consumer, preserving raw bytes and complete provenance. Test doubles are explicitly fixture producers and cannot discharge native-producer proof.",
+     "proven_red_obligation": "Supply a schema-perfect surrogate READY, copied provider_evidence, wrong package identity or a response disconnected from its invocation; each must fail native admission. Bypass provenance checking independently: corresponding refusal assertion must fail. Intact identified public-interface binding reaches consumer without release bypass.",
      "phase3_promotion": "LRN-002",
      "status": "DESIGNED_NOT_IMPLEMENTED",
      "strength": "BLOCKING"
@@ -1594,10 +1602,11 @@
     "Internal iteration order only where canonical output ordering and effect order stay unchanged.",
     "Test fixture helper decomposition; no changes to predicates, boundary semantics, identity, persistence or authority."
    ],
-   "composition": "composition/upstream_profile.py wires lint and retained-evidence consumer into readiness admission. Live profile composition must fail closed when AssessmentAuthority is unbound. FactoryCoordinator release consumes applicable evidence through existing admission; it never creates READY.",
+   "composition": "composition/upstream_profile.py injects lint, ReadinessAssessment CLI or MCP adapter and retained-evidence consumer for Requirements / Planning. Validate configured product identity/package/schema binding before admission; unbound or unestablished provenance yields CAPABILITY_PROVENANCE_HOLD, never READY. FactoryCoordinator consumes applicable evidence through existing release admission. SF-REQ-029 retains raw assessment/provenance; SF-REQ-035 resolves material questions; SF-REQ-013 owns Split Transaction/result materialization. No new application import edges are authorized.",
    "design_decisions": [
     "Known MCP parsing: isError=true is failure; collect structuredContent disposition and parseable JSON text-content dispositions. Require at least one recognized terminal value and agreement among every supplied value. Unknown/malformed/conflicting purported result is failure. Preserve wrappers.",
-    "This fixes intended consumer semantics only. No external versioned serialization, implementation maintainer or CLI is invented; implementation/migration of that boundary requires G1/G2 authority."
+    "Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites. Retain producer identity established from the configured Agent Ready executable/MCP server and its package metadata, Agent Ready version (UNKNOWN if unestablished, blocking admission), editable checkout revision when applicable, contract_version = \"package-release-bound; no result-level identifier (agent-ready#1)\", published schema digest/release binding, provider, optional unmodified provider_evidence, model provenance (not exposed by current results; UNKNOWN, never inferred from provider CLI version), exact input fingerprint, invocation identity/arguments or MCP tool request, timestamps and exit/error status. Raw result bytes/envelope and provenance remain distinct immutable evidence. Neither a compatible schema nor copied provider_evidence authenticates the producer; absent/mismatched producer evidence blocks admission.",
+    "Reuse Before Build: the public Agent Ready product already exists; use its CLI/MCP, never raw model prompts shaped as its schema. check_assessment_producer.py supplies negative shape evidence, not positive producer authentication. tools/orchestration/readiness_assessment.py is an interim programme adapter/provenance example, not the product implementation or proof of trustworthy provenance by itself. Require configured invocation-to-result custody and independent producer checks at admission."
    ],
    "source_specification": {
     "path": "docs/evidence/wave2-specified-requirements.json",
@@ -1607,10 +1616,12 @@
      "SF-REQ-015-AC-02",
      "SF-REQ-015-AC-03",
      "SF-REQ-015-AC-04",
-     "SF-REQ-015-AC-05"
+     "SF-REQ-015-AC-05",
+     "SF-REQ-015-AC-06",
+     "SF-REQ-015-AC-07"
     ],
     "authority_conditions": [
-     "POSTW1-DECIDE-004A must assign G1 assessment implementation/schema/CLI and G2 canonical serialization ownership before implementing those changes. This selected scope defines process and consumer semantics only, and does not fill those ownership gaps."
+     "Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites."
     ]
    },
    "ratification_dependency": [],
@@ -1619,7 +1630,7 @@
    "acceptance_design_trace": [
     {
      "acceptance_id": "SF-REQ-015-AC-01",
-     "design_probe": "Missing lint duties yield pre-assessment hold and zero authority calls. 015-composed-authority covers unbound and unauthorized-stub live composition with OWNER_ASSIGNMENT_HOLD and no release.",
+     "design_probe": "Missing lint duties yield pre-assessment hold and zero calls. 015-composed-authority covers unbound/surrogate composition with CAPABILITY_PROVENANCE_HOLD and no release.",
      "contract_sections": [
       "ports",
       "transitions",
@@ -1630,7 +1641,7 @@
     },
     {
      "acceptance_id": "SF-REQ-015-AC-02",
-     "design_probe": "Four-disposition table plus separate release gate; three non-READY values never launch.",
+     "design_probe": "READY with applicable inputs -> eligibility for separate SF-REQ-002 release gates only; CLARIFY -> resolve only material owner questions through SF-REQ-035 Decision Inbox, then reassess; SPLIT -> authorized SF-REQ-013 Split Transaction, invalidate stale applicability, lint and reassess each materialized result including a retained Integration Parent; HOLD -> satisfy prerequisite, then reassess. No non-READY disposition authorizes implementation and no resolution rewrites an old assessment. Probe all four routes, stale applicability and reassessment of every split result; no generic planning hold substitutes for the handoff.",
      "contract_sections": [
       "ports",
       "transitions",
@@ -1663,7 +1674,7 @@
     },
     {
      "acceptance_id": "SF-REQ-015-AC-05",
-     "design_probe": "Replay exact retained PY-10 revisions and retrieve all historical blobs without rewriting.",
+     "design_probe": "Replaying the retained PY-10 bootstrap-assessor history preserves verbatim BLOCKED → SPLIT_RECOMMENDED → READY, with READY a distinct fresh assessment after prerequisite completion and all prior revision references retrievable. These are historical Surrogate Readiness Assessments, not an Agent Ready sequence; retention does not coerce or relabel historical verdicts.",
      "contract_sections": [
       "ports",
       "transitions",
@@ -1671,10 +1682,48 @@
       "composition",
       "deterministic_enforcement_opportunities"
      ]
+    },
+    {
+     "acceptance_id": "SF-REQ-015-AC-06",
+     "design_probe": "CLI and local MCP adapters implement the same ReadinessAssessment port without changing domain code; invoke only supported public interfaces and validate the published package-bound contract. CLI exit 0 requires a valid assessment for any of the four dispositions; exit 1 (execution error), exit 2 (usage error), malformed/missing output, timeout and MCP isError are AttemptFailure with no disposition. Preserve full raw responses and equivalent semantic handling.",
+     "contract_sections": [
+      "ports",
+      "adapters",
+      "state",
+      "composition",
+      "deterministic_enforcement_opportunities"
+     ]
+    },
+    {
+     "acceptance_id": "SF-REQ-015-AC-07",
+     "design_probe": "At the actual composition/admission boundary, a correctly bound Agent Ready invocation with established producer/package provenance reaches the consumer; an unbound adapter, unknown producer/version, shape-compatible surrogate or forged saved provider_evidence cannot supply readiness. Retain producer identity established from the configured Agent Ready executable/MCP server and its package metadata, Agent Ready version (UNKNOWN if unestablished, blocking admission), editable checkout revision when applicable, contract_version = \"package-release-bound; no result-level identifier (agent-ready#1)\", published schema digest/release binding, provider, optional unmodified provider_evidence, model provenance (not exposed by current results; UNKNOWN, never inferred from provider CLI version), exact input fingerprint, invocation identity/arguments or MCP tool request, timestamps and exit/error status. Raw result bytes/envelope and provenance remain distinct immutable evidence. Neither a compatible schema nor copied provider_evidence authenticates the producer; absent/mismatched producer evidence blocks admission.",
+     "contract_sections": [
+      "ports",
+      "adapters",
+      "state",
+      "composition",
+      "deterministic_enforcement_opportunities"
+     ]
     }
    ],
    "authority_gap_refs": [],
-   "terminology_repair_2026_09_22": "Terminology repair 2026-09-22 (Founder decisions v0.1 section 1): this artifact originally used the historical AlienIntent bootstrap-assessor vocabulary (READY, BLOCKED, NEEDS_CLARIFICATION, SPLIT_RECOMMENDED). Normative disposition semantics are corrected to Agent Ready's READY, CLARIFY, SPLIT, HOLD; original wording is preserved in git history at the commit before this repair. Requirement semantics are otherwise unchanged."
+   "terminology_repair_2026_09_22": "Terminology repair 2026-09-22 (Founder decisions v0.1 section 1): this artifact originally used the historical AlienIntent bootstrap-assessor vocabulary (READY, BLOCKED, NEEDS_CLARIFICATION, SPLIT_RECOMMENDED). Normative disposition semantics are corrected to Agent Ready's READY, CLARIFY, SPLIT, HOLD; original wording is preserved in git history at the commit before this repair. Requirement semantics are otherwise unchanged.",
+   "revision_2026_09_22": {
+    "reason": "Session B: reconcile SF-REQ-015/039 with binding 2026-09-22 amendments; not implementation or independent Design Verification.",
+    "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+    "authority": [
+     "factory plan SF-REQ-015/039 amendments; Architecture Authority A1/A9 and amendment (b); Ubiquitous Language; ReadinessAssessment port; SWF-25"
+    ],
+    "changed": [
+     "/contracts/4: public interfaces, evidence, acceptance traces and preserved authority"
+    ],
+    "preserved_holds": [
+     "R1-GAP-039-ORCHESTRATION",
+     "R1-GAP-039-REAL-OUTCOME",
+     "independent revised Design Verification; release, budget, custody and live-operation gates"
+    ],
+    "session_b": "G1/G2 owner assignment settled: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integration; SF-REQ-029 retained-assessment serialization. All unrelated holds remain."
+   }
   },
   {
    "requirement_id": "SF-REQ-016",
@@ -1811,16 +1860,17 @@
   },
   {
    "requirement_id": "SF-REQ-039",
-   "title": "Fake-agent / offline factory proof",
+   "title": "Deterministic Test Worker",
    "bounded_context": "composition",
    "domain_owner": "Offline proof composition assembles the real execution_coordination kernel; scripts own external outcomes only.",
    "ubiquitous_language": {
     "Scenario": "Pinned input/event/outcome schedule.",
-    "ScriptedWorker": "Port implementation returning deterministic outcomes.",
-    "OfflineReceipt": "Local effect evidence, not live platform proof."
+    "ScriptedWorker": "Implementation role for Deterministic Test Worker; deterministic protocol behavior only, not model intelligence.",
+    "OfflineReceipt": "Local effect evidence, not live platform proof.",
+    "Worker Port": "Abstract WorkerPort; existing compatible WorkerProvider code interface is retained."
    },
    "ports": [
-    "Reuse WorkManagement, WorkerProvider, SourceControl, WorkspaceManager and OperationalStore ports. Scripted WorkerProvider.start/read_back/cancel retains outcome by invocation ID.",
+    "Reuse WorkManagement, WorkerProvider, SourceControl, WorkspaceManager and OperationalStore ports. Scripted WorkerProvider.start/read_back/cancel retains outcome by invocation ID. Worker Port (abstract WorkerPort) is the same worker-facing port/protocol used by production: WorkerPort → Test Worker Adapter → deterministic scenarios, beside WorkerPort → Real Worker Adapter → provider. Existing code interface WorkerProvider.start/read_back/cancel and WorkerOutcome compatibility remain; no rename is required. It does not simulate model intelligence or frontier-model intelligence; no model inference, provider credentials or token spend. No test-specific lifecycle shortcuts or script-driven mark_done.",
     "ScenarioRunner.run(scenario_manifest, injected_clock, profile) -> ordered observations/effect receipts and terminal/hold snapshot. It may deliver inputs but cannot set lifecycle stage.",
     "Proposed OutcomeEvidencePort.get(correlation_id) -> immutable RoleOutcomeRecord | Missing. RoleOutcomeRecord fields: role, invocation ID, attempt, exact contract/candidate refs, findings, observation refs, outcome kind, terminal flag, and closure receipts. WorkerOutcome stays compatible; it is insufficient alone for role-specific evidence. Conditional target only after R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME are resolved: the application validates the sidecar before transition. A scripted adapter may model it, but no real-path producer is assigned or presumed here."
    ],
@@ -1841,9 +1891,12 @@
     "Network/provider access attempted -> test failure.",
     "Script exits zero without result/candidate -> hold.",
     "Wrong/unpublished candidate -> custody refusal.",
-    "Missing fresh verifier or script directly changes stage -> scenario invalid."
+    "Missing fresh verifier or script directly changes stage -> scenario invalid.",
+    "Malformed/missing/miscorrelated output never supplies terminal success; delayed output requires correlated readback; duplicate identical outcome is idempotent and conflicting duplicate holds.",
+    "Simulated provider/capacity failure or crash before output/progress then crash retains durable evidence and unknown effects; no invented retry budget or replacement actor.",
+    "Split recommendation is an observation, not assessment/planning mutation authority; hold for authorized SF-REQ-013/SF-REQ-015 processing."
    ],
-   "recovery": "Kill only the disposable fixture process at named before/after-intent boundaries, reopen the real store and worker journal, and compare authorized action/lifecycle/effect sets. Unknown external effects remain parked.",
+   "recovery": "Kill only the disposable fixture process at named before/after-intent boundaries, reopen the real store and worker journal, and compare authorized action/lifecycle/effect sets. Unknown external effects remain parked. Distinguish crash before output from progress then crash; preserve progress separately from terminal outcome and original invocation/correlation across restart. No terminal success inferred from process death or progress.",
    "evidence": "Scenario manifest, substituted-boundary list, ordered domain transitions, actual worker invocations, candidate branch/SHA and retrieved identity, effect/outcome readbacks, restart comparison and zero-provider-call counter.",
    "observability": "Run report separates scenario PASS, negative-control qualified failure, substituted boundaries and live-proof NOT_ESTABLISHED. Unexpected network call count must be zero.",
    "security": "Unset provider credentials and use a deny-network test environment. Local Git/file transports only with fixture-contained paths; no installation secret provider is constructed.",
@@ -1860,7 +1913,7 @@
     {
      "id": "039-composed-lifecycle",
      "layer": "python_unit_integration",
-     "rule": "Reuse LRN-002 composed-path promotion for OfflineProfile with actual store/adapters and fresh verifier; cover success, rejection, result/custody gaps, duplicate/restart, judgment hold. Full multi-role proof remains blocked on both 039 gaps. After resolution, exercise actual sandbox/github profile constructors with local transport substitutes: absent authority/real outcome binding holds before launch; bound real-worker adapter persists/readbacks correctly correlated RoleOutcomeRecord through success, verifier rejection and restart. Offline scripted records alone cannot discharge the real-path probe.",
+     "rule": "Reuse LRN-002 composed-path promotion for OfflineProfile with actual store/adapters and fresh verifier; cover success, rejection, result/custody gaps, duplicate/restart, judgment hold. Full multi-role proof remains blocked on both 039 gaps. After resolution, exercise actual sandbox/github profile constructors with local transport substitutes: absent authority/real outcome binding holds before launch; bound real-worker adapter persists/readbacks correctly correlated RoleOutcomeRecord through success, verifier rejection and restart. Offline scripted records alone cannot discharge the real-path probe. Complete the scenario matrix in acceptance_design_trace; S0 supplies only fixtures. Simulate faults through the production port; do not call a model or emit purported native readiness assessments.",
      "proven_red_obligation": "Disconnect verifier invocation or custody readback while unit tests stay green; targeted end-to-end assertion must fail. Bypass construction binding validation or disconnect real-worker record emission independently; pre-launch refusal or correlated real-path outcome assertion must fail.",
      "phase3_promotion": "LRN-002",
      "status": "DESIGNED_NOT_IMPLEMENTED",
@@ -1880,7 +1933,8 @@
     "Offline tests exercise the production orchestration path through composition, not a second mocked lifecycle.",
     "A composed role router resolves PRODUCER/VERIFIER/CLOSURE from the durable invocation record keyed by correlation_id and injects the role-specific worker implementation. Existing WorkerProvider signatures stay intact; verifier output must reference retrieved candidate and independent invocation. Missing RoleOutcomeRecord holds even when WorkerOutcome.kind is success.",
     "On verifier rejection, persist finding refs and invoke existing transition(action=rework) at the current lifecycle version; enforce remaining authorized attempts/budget before producer allocation. REVIEW evaluates exactly required trusted evidence through evaluate_verdict. ACCEPT performs each required closure action and consumes its receipt; no synthesized closure evidence.",
-    "Before any shared-kernel change lands, both sandbox_run_profile and github_profile constructors must validate assigned authority plus real OutcomeEvidencePort binding for multi-role mode. Missing binding/authority returns ROLE_OUTCOME_BINDING_HOLD before any worker launch, not after every producer success. Existing unmodified profiles are not claimed to enforce this future gate. No mode may claim 039 multi-role proof by falling back to the current success-collapse path. After activation, a missing/miscorrelated sidecar holds the affected transition even on WorkerOutcome success."
+    "Before any shared-kernel change lands, both sandbox_run_profile and github_profile constructors must validate assigned authority plus real OutcomeEvidencePort binding for multi-role mode. Missing binding/authority returns ROLE_OUTCOME_BINDING_HOLD before any worker launch, not after every producer success. Existing unmodified profiles are not claimed to enforce this future gate. No mode may claim 039 multi-role proof by falling back to the current success-collapse path. After activation, a missing/miscorrelated sidecar holds the affected transition even on WorkerOutcome success.",
+    "Worker Port (abstract WorkerPort) is the same worker-facing port/protocol used by production: WorkerPort → Test Worker Adapter → deterministic scenarios, beside WorkerPort → Real Worker Adapter → provider. Existing code interface WorkerProvider.start/read_back/cancel and WorkerOutcome compatibility remain; no rename is required. It does not simulate model intelligence or frontier-model intelligence; no model inference, provider credentials or token spend. No test-specific lifecycle shortcuts or script-driven mark_done. S0 owns current-interface substrate only; scenario assertions and full multi-role proof are allocated to K1/K2/K3/O below, conditional on surviving authority holds."
    ],
    "source_specification": {
     "path": "docs/evidence/wave2-specified-requirements.json",
@@ -1891,7 +1945,10 @@
      "SF-REQ-039-AC-03",
      "SF-REQ-039-AC-04",
      "SF-REQ-039-AC-05",
-     "SF-REQ-039-AC-06"
+     "SF-REQ-039-AC-06",
+     "SF-REQ-039-AC-07",
+     "SF-REQ-039-AC-08",
+     "SF-REQ-039-AC-09"
     ],
     "authority_conditions": [
      "No scheduling change needed: explicitly included by the original Wave 2 plan. Live operations and paid providers remain separately authorized."
@@ -1910,7 +1967,35 @@
       "evidence",
       "composition",
       "deterministic_enforcement_opportunities"
-     ]
+     ],
+     "scenario_node_allocation": [
+      {
+       "scenario": "valid outcome",
+       "nodes": [
+        "K1",
+        "K3",
+        "O"
+       ],
+       "expected": "Correlated durable valid result; production binding readback and normal admission."
+      },
+      {
+       "scenario": "end-to-end success",
+       "nodes": [
+        "K2",
+        "K3",
+        "O"
+       ],
+       "expected": "Distinct producer/verifier/closure, actual receipts, zero provider calls."
+      }
+     ],
+     "dag_nodes": [
+      "K1",
+      "K2",
+      "K3",
+      "O"
+     ],
+     "substrate": "S0 / FX-S0 supplies existing-kernel fixture and local proof transport only; no scenario or multi-role acceptance expansion.",
+     "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
     },
     {
      "acceptance_id": "SF-REQ-039-AC-02",
@@ -1921,7 +2006,33 @@
       "evidence",
       "composition",
       "deterministic_enforcement_opportunities"
-     ]
+     ],
+     "scenario_node_allocation": [
+      {
+       "scenario": "repair cycle",
+       "nodes": [
+        "K2",
+        "O"
+       ],
+       "expected": "Rejection findings conserved through bounded rework and fresh passing candidate."
+      },
+      {
+       "scenario": "verification rejection",
+       "nodes": [
+        "K2",
+        "K3",
+        "O"
+       ],
+       "expected": "Real routing returns same BIU to implementation; binding cannot collapse success."
+      }
+     ],
+     "dag_nodes": [
+      "K2",
+      "K3",
+      "O"
+     ],
+     "substrate": "S0 / FX-S0 supplies existing-kernel fixture and local proof transport only; no scenario or multi-role acceptance expansion.",
+     "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
     },
     {
      "acceptance_id": "SF-REQ-039-AC-03",
@@ -1932,7 +2043,34 @@
       "evidence",
       "composition",
       "deterministic_enforcement_opportunities"
-     ]
+     ],
+     "scenario_node_allocation": [
+      {
+       "scenario": "missing outcome",
+       "nodes": [
+        "K1",
+        "K3",
+        "O"
+       ],
+       "expected": "No durable terminal record means hold even on zero exit."
+      },
+      {
+       "scenario": "wrong identity/correlation",
+       "nodes": [
+        "K1",
+        "K3",
+        "O"
+       ],
+       "expected": "Wrong candidate, role, invocation, attempt or contract cannot advance; unpublished candidate refused."
+      }
+     ],
+     "dag_nodes": [
+      "K1",
+      "K3",
+      "O"
+     ],
+     "substrate": "S0 / FX-S0 supplies existing-kernel fixture and local proof transport only; no scenario or multi-role acceptance expansion.",
+     "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
     },
     {
      "acceptance_id": "SF-REQ-039-AC-04",
@@ -1943,7 +2081,27 @@
       "evidence",
       "composition",
       "deterministic_enforcement_opportunities"
-     ]
+     ],
+     "scenario_node_allocation": [
+      {
+       "scenario": "restart/resume",
+       "nodes": [
+        "K1",
+        "K2",
+        "K3",
+        "O"
+       ],
+       "expected": "Reopen same SQLite/journal, read back original identities, one authorized effect."
+      }
+     ],
+     "dag_nodes": [
+      "K1",
+      "K2",
+      "K3",
+      "O"
+     ],
+     "substrate": "S0 / FX-S0 supplies existing-kernel fixture and local proof transport only; no scenario or multi-role acceptance expansion.",
+     "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
     },
     {
      "acceptance_id": "SF-REQ-039-AC-05",
@@ -1954,7 +2112,23 @@
       "evidence",
       "composition",
       "deterministic_enforcement_opportunities"
-     ]
+     ],
+     "scenario_node_allocation": [
+      {
+       "scenario": "human-decision condition",
+       "nodes": [
+        "K2",
+        "O"
+       ],
+       "expected": "Attention through existing decision authority, no replacement until resolved."
+      }
+     ],
+     "dag_nodes": [
+      "K2",
+      "O"
+     ],
+     "substrate": "S0 / FX-S0 supplies existing-kernel fixture and local proof transport only; no scenario or multi-role acceptance expansion.",
+     "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
     },
     {
      "acceptance_id": "SF-REQ-039-AC-06",
@@ -1965,13 +2139,158 @@
       "evidence",
       "composition",
       "deterministic_enforcement_opportunities"
-     ]
+     ],
+     "scenario_node_allocation": [],
+     "dag_nodes": [
+      "O"
+     ],
+     "substrate": "S0 / FX-S0 supplies existing-kernel fixture and local proof transport only; no scenario or multi-role acceptance expansion.",
+     "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
+    },
+    {
+     "acceptance_id": "SF-REQ-039-AC-07",
+     "design_probe": "At the same production Worker Port, malformed, missing, delayed and duplicate outcomes and wrong invocation/role/attempt/contract/candidate correlation are discriminated. No missing, malformed, stale or miscorrelated outcome advances lifecycle; delayed output waits for correlated readback within existing policy; duplicate identical output has one authorized effect and conflicting duplicate output holds.",
+     "contract_sections": [
+      "ports",
+      "failure_modes",
+      "recovery",
+      "composition",
+      "evidence"
+     ],
+     "scenario_node_allocation": [
+      {
+       "scenario": "malformed outcome",
+       "nodes": [
+        "K1",
+        "K3",
+        "O"
+       ],
+       "expected": "Invalid result rejected, raw evidence retained, no advancement."
+      },
+      {
+       "scenario": "delayed outcome",
+       "nodes": [
+        "K1",
+        "K3",
+        "O"
+       ],
+       "expected": "Injected clock/barriers prove no early advance; late correlated output handled under existing policy."
+      },
+      {
+       "scenario": "duplicate outcome",
+       "nodes": [
+        "K1",
+        "K2",
+        "O"
+       ],
+       "expected": "Identical duplicate has one effect; conflicting duplicate holds."
+      }
+     ],
+     "dag_nodes": [
+      "K1",
+      "K2",
+      "K3",
+      "O"
+     ],
+     "substrate": "S0 / FX-S0 supplies existing-kernel fixture and local proof transport only; no scenario or multi-role acceptance expansion.",
+     "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
+    },
+    {
+     "acceptance_id": "SF-REQ-039-AC-08",
+     "design_probe": "Script provider/capacity failure, crash before output and progress then crash. None fabricates a terminal success; retain progress and uncertain-effect evidence, recover from the real durable store/journal with original identity, and resume only under existing authority/budget and readback rules. Assert no replacement actor while outcome/ownership is unknown.",
+     "contract_sections": [
+      "ports",
+      "failure_modes",
+      "recovery",
+      "composition",
+      "evidence"
+     ],
+     "scenario_node_allocation": [
+      {
+       "scenario": "provider/capacity failure",
+       "nodes": [
+        "K1",
+        "K3",
+        "O"
+       ],
+       "expected": "Script failure without provider contact; no synthetic success or retry entitlement."
+      },
+      {
+       "scenario": "crash before output",
+       "nodes": [
+        "K1",
+        "K3",
+        "O"
+       ],
+       "expected": "No output, original invocation remains unresolved pending readback/death evidence."
+      },
+      {
+       "scenario": "progress then crash",
+       "nodes": [
+        "K1",
+        "K2",
+        "O"
+       ],
+       "expected": "Progress retained, never terminal success; no duplicate actor or lost evidence."
+      }
+     ],
+     "dag_nodes": [
+      "K1",
+      "K2",
+      "K3",
+      "O"
+     ],
+     "substrate": "S0 / FX-S0 supplies existing-kernel fixture and local proof transport only; no scenario or multi-role acceptance expansion.",
+     "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
+    },
+    {
+     "acceptance_id": "SF-REQ-039-AC-09",
+     "design_probe": "Where a scripted outcome recommends splitting, preserve it as test evidence, never as an Agent Ready assessment or planning authority. The canonical path holds for authorized SF-REQ-013 planning and SF-REQ-015 reassessment of every result, with immutable prior evidence and no automatic release; no test worker mutates the plan or imitates readiness judgment.",
+     "contract_sections": [
+      "ports",
+      "failure_modes",
+      "recovery",
+      "composition",
+      "evidence"
+     ],
+     "scenario_node_allocation": [
+      {
+       "scenario": "split recommendation where appropriate",
+       "nodes": [
+        "K2",
+        "O"
+       ],
+       "expected": "Test observation routes to authorized planning/assessment handoff; cannot act as native Agent Ready or mutate plan."
+      }
+     ],
+     "dag_nodes": [
+      "K2",
+      "O"
+     ],
+     "substrate": "S0 / FX-S0 supplies existing-kernel fixture and local proof transport only; no scenario or multi-role acceptance expansion.",
+     "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
     }
    ],
    "authority_gap_refs": [
     "R1-GAP-039-ORCHESTRATION",
     "R1-GAP-039-REAL-OUTCOME"
-   ]
+   ],
+   "revision_2026_09_22": {
+    "reason": "Session B: reconcile SF-REQ-015/039 with binding 2026-09-22 amendments; not implementation or independent Design Verification.",
+    "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+    "authority": [
+     "factory plan SF-REQ-015/039 amendments; Architecture Authority A1/A9 and amendment (b); Ubiquitous Language; ReadinessAssessment port; SWF-25"
+    ],
+    "changed": [
+     "/contracts/6: public interfaces, evidence, acceptance traces and preserved authority"
+    ],
+    "preserved_holds": [
+     "R1-GAP-039-ORCHESTRATION",
+     "R1-GAP-039-REAL-OUTCOME",
+     "independent revised Design Verification; release, budget, custody and live-operation gates"
+    ],
+    "session_b": "G1/G2 owner assignment settled: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integration; SF-REQ-029 retained-assessment serialization. All unrelated holds remain."
+   }
   },
   {
    "requirement_id": "SF-REQ-051",

@@ -342,7 +342,7 @@ Definition status: **DEFINED**. Founder ratification required: **false**.
 
 ### Intent
 
-Admit only complete, current BIUs for Agent-Ready assessment and honor the resulting readiness disposition without coercion.
+Requirements / Planning admits only complete, current BIUs to the ReadinessAssessment port and honors the authoritative Agent Ready disposition without coercion.
 
 ### Value
 
@@ -351,13 +351,15 @@ Stop missing decisions, stale assessments and tool failures from masquerading as
 ### Scope
 
 - Contract lint for boundaries, acceptance/verification, architecture and dependency problems; preserve Agent-Ready as readiness authority.
-- Process semantics for READY, BLOCKED, NEEDS_CLARIFICATION, SPLIT_RECOMMENDED; immutable assessment evidence and reassessment lineage.
+- Exactly one disposition from the exhaustive set READY, CLARIFY, SPLIT, HOLD; immutable assessment evidence and reassessment lineage. A Disposition is an assessment result, never lifecycle state; BLOCKED is not an Agent Ready disposition.
 - Design prerequisites are supplied by SF-REQ-051. Consumer handling must preserve source envelopes and reject ambiguous results.
+- ReadinessAssessment.assess(candidate_work_unit) -> ReadinessAssessment | AttemptFailure. Requirements / Planning passes pinned candidate text; the result preserves the raw Agent Ready assessment plus provenance. Domain knows no executable location, subprocess syntax, transport or package internals. AlienIntent never imports Agent Ready private implementation, copies its rubric or duplicates its decision logic.
+- Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites.
 
 ### Non goals
 
-- Assigning the missing Agent-Ready implementation/schema/CLI owner or inventing a canonical serialization contract.
-- General split/replan execution, readiness by process exit code, or release solely because READY was returned.
+- Implementing Agent Ready, importing its private implementation, copying its rubric, duplicating its decision logic or inventing its public serialization contract.
+- Executing split/replan inside SF-REQ-015 (SF-REQ-013 owns the transaction), readiness by process exit code, or release solely because READY was returned.
 
 ### Dependencies
 
@@ -365,19 +367,21 @@ Stop missing decisions, stale assessments and tool failures from masquerading as
 - SF-REQ-012
 - SF-REQ-014
 - SF-REQ-051
-- Existing Agent-Ready assessment authority; G1/G2 assignment needed before schema/CLI implementation work
+- Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites.
 
 ### Acceptance criteria
 
 - **SF-REQ-015-AC-01**: A complete pinned BIU may proceed to assessment; fixtures missing a decision, boundary, verification obligation, architecture constraint or dependency produce an attributable lint hold before implementation.
-- **SF-REQ-015-AC-02**: For READY, retain exact assessed inputs and apply separate release gates. BLOCKED holds pending prerequisite resolution; NEEDS_CLARIFICATION holds for an attributable answer; SPLIT_RECOMMENDED holds for an authorized planning decision. None of the three non-READY outcomes authorizes implementation.
+- **SF-REQ-015-AC-02**: READY with applicable inputs -> eligibility for separate SF-REQ-002 release gates only; CLARIFY -> resolve only material owner questions through SF-REQ-035 Decision Inbox, then reassess; SPLIT -> authorized SF-REQ-013 Split Transaction, invalidate stale applicability, lint and reassess each materialized result including a retained Integration Parent; HOLD -> satisfy prerequisite, then reassess. No non-READY disposition authorizes implementation and no resolution rewrites an old assessment.
 - **SF-REQ-015-AC-03**: After a material contract, baseline, governing decision or prerequisite change, a fresh assessment links the prior immutable assessment. Resolving a blocker cannot rewrite the old verdict to READY.
 - **SF-REQ-015-AC-04**: A direct readiness object and a known MCP envelope carrying the same disposition yield the same semantic handling while preserving raw evidence. Conflicting text/structured values, unknown disposition, missing terminal result, timeout or provider failure produce an attempt failure and hold, never synthesized readiness.
-- **SF-REQ-015-AC-05**: Replaying the retained PY-10 assessment revision sequence shows BLOCKED then SPLIT_RECOMMENDED then a distinct fresh READY after prerequisite completion; all prior revision references remain retrievable in the fixture. This is a retention test, not proof that historical verdicts were coerced.
+- **SF-REQ-015-AC-05**: Replaying the retained PY-10 bootstrap-assessor history preserves verbatim BLOCKED → SPLIT_RECOMMENDED → READY, with READY a distinct fresh assessment after prerequisite completion and all prior revision references retrievable. These are historical Surrogate Readiness Assessments, not an Agent Ready sequence; retention does not coerce or relabel historical verdicts.
+- **SF-REQ-015-AC-06**: CLI and local MCP adapters implement the same ReadinessAssessment port without changing domain code; invoke only supported public interfaces and validate the published package-bound contract. CLI exit 0 requires a valid assessment for any of the four dispositions; exit 1 (execution error), exit 2 (usage error), malformed/missing output, timeout and MCP isError are AttemptFailure with no disposition. Preserve full raw responses and equivalent semantic handling.
+- **SF-REQ-015-AC-07**: At the actual composition/admission boundary, a correctly bound Agent Ready invocation with established producer/package provenance reaches the consumer; an unbound adapter, unknown producer/version, shape-compatible surrogate or forged saved provider_evidence cannot supply readiness. Retain producer identity established from the configured Agent Ready executable/MCP server and its package metadata, Agent Ready version (UNKNOWN if unestablished, blocking admission), editable checkout revision when applicable, contract_version = "package-release-bound; no result-level identifier (agent-ready#1)", published schema digest/release binding, provider, optional unmodified provider_evidence, model provenance (not exposed by current results; UNKNOWN, never inferred from provider CLI version), exact input fingerprint, invocation identity/arguments or MCP tool request, timestamps and exit/error status. Raw result bytes/envelope and provenance remain distinct immutable evidence. Neither a compatible schema nor copied provider_evidence authenticates the producer; absent/mismatched producer evidence blocks admission.
 
 ### Authority gaps
 
-- POSTW1-DECIDE-004A must assign G1 assessment implementation/schema/CLI and G2 canonical serialization ownership before implementing those changes. This selected scope defines process and consumer semantics only, and does not fill those ownership gaps.
+- Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites.
 
 ### Security constraints
 
@@ -385,12 +389,13 @@ Stop missing decisions, stale assessments and tool failures from masquerading as
 
 ### Operational constraints
 
-- Four evidenced dispositions are the required handling set, not a claimed exhaustive external schema.
+- READY, CLARIFY, SPLIT, HOLD are the exhaustive Agent Ready dispositions; execution failures and AlienIntent planning/lifecycle states are not dispositions.
 - Retries/failover remain within already authorized budgets and capability policy; unknown contract shape is held for owner resolution.
 
 ### Observability evidence
 
 - Raw assessment, normalized semantic observation, assessed revision, provider/invocation identity, attempt failure, immutable predecessor link and separate release decision.
+- Retain producer identity established from the configured Agent Ready executable/MCP server and its package metadata, Agent Ready version (UNKNOWN if unestablished, blocking admission), editable checkout revision when applicable, contract_version = "package-release-bound; no result-level identifier (agent-ready#1)", published schema digest/release binding, provider, optional unmodified provider_evidence, model provenance (not exposed by current results; UNKNOWN, never inferred from provider CLI version), exact input fingerprint, invocation identity/arguments or MCP tool request, timestamps and exit/error status. Raw result bytes/envelope and provenance remain distinct immutable evidence. Neither a compatible schema nor copied provider_evidence authenticates the producer; absent/mismatched producer evidence blocks admission.
 
 ### Failure modes
 
@@ -399,8 +404,13 @@ Stop missing decisions, stale assessments and tool failures from masquerading as
 - Historical assessment overwritten
 - Stale READY reused
 - Split recommendation treated as planning authority
+- Shape-compatible bootstrap prompt or copied provider evidence falsely admitted as an Agent Ready producer
 
-Sources: [SF-REQ-015](../../docs/decisions/alienintent-software-factory-plan.md); [dispositions; execution_failures; gaps; coercion_finding](../../docs/evidence/wave1-agent-ready-outcome-matrix.json); [Relationship to BIU and Agent-Ready](../../docs/decisions/2026-09-20-design-contract-and-design-verification.md).
+### Revision 2026-09-22
+
+`revision_2026_09_22`: see JSON `/candidates/4/revision_2026_09_22` and [revision note](wave2-revisions/2026-09-22-respecify-015-039.md).
+
+Sources: [SF-REQ-015](../decisions/alienintent-software-factory-plan.md); [dispositions; execution_failures; gaps; coercion_finding](../evidence/wave1-agent-ready-outcome-matrix.json); [Relationship to BIU and Agent-Ready](../decisions/2026-09-20-design-contract-and-design-verification.md); [2026-09-22 A1/A9; amendment (b)](../architecture/alienintent-architecture-authority-2026-09-19.md).
 
 ## SF-REQ-016 — Definition / Observation / Verdict separation
 
@@ -460,13 +470,13 @@ Prevent worker claims and imported evidence from silently acquiring authority or
 
 Sources: [SF-REQ-016; SF-REQ-009; SF-REQ-030](../../docs/decisions/alienintent-software-factory-plan.md).
 
-## SF-REQ-039 — Fake-agent / offline factory proof
+## SF-REQ-039 — Deterministic Test Worker
 
 Definition status: **DEFINED**. Founder ratification required: **false**.
 
 ### Intent
 
-Exercise the real factory lifecycle using deterministic scripted workers without provider credentials or token spend.
+Exercise the real factory lifecycle using deterministic scripted workers without provider credentials or token spend. Worker Port (abstract WorkerPort) is the same worker-facing port/protocol used by production: WorkerPort → Test Worker Adapter → deterministic scenarios, beside WorkerPort → Real Worker Adapter → provider. Existing code interface WorkerProvider.start/read_back/cancel and WorkerOutcome compatibility remain; no rename is required. It does not simulate model intelligence or frontier-model intelligence; no model inference, provider credentials or token spend. No test-specific lifecycle shortcuts or script-driven mark_done.
 
 ### Value
 
@@ -476,6 +486,7 @@ Make upstream-to-execution verification repeatable and cheap while detecting lif
 
 - Scripted worker outcomes through real canonical lifecycle, admission, custody, verification and closure policy paths with isolated local external-system substitutes.
 - Successful delivery, rejection/repair, missing result, missing authority, duplicate event, restart and judgment-blocking scenarios.
+- Explicit scenarios: valid outcome; malformed outcome; missing outcome; delayed outcome; duplicate outcome; wrong identity/correlation; provider/capacity failure; crash before output; progress then crash; restart/resume; repair cycle; verification rejection; human-decision condition; split recommendation where appropriate; normal end-to-end success.
 
 ### Non goals
 
@@ -496,6 +507,9 @@ Make upstream-to-execution verification repeatable and cheap while detecting lif
 - **SF-REQ-039-AC-04**: Replay a duplicate trigger and restart from saved durable fixture state: retain one authorized effect for the same identity and the same reconstructed lifecycle state.
 - **SF-REQ-039-AC-05**: A completed judgment-required outcome produces a hold/attention and no automatic replacement actor until resolved. The fixture records observed invocations and retained outcomes.
 - **SF-REQ-039-AC-06**: Disable the tested custody guard in an isolated negative control: the corresponding test must fail. Test documentation identifies which external effects were substituted and does not label offline success as live proof.
+- **SF-REQ-039-AC-07**: At the same production Worker Port, malformed, missing, delayed and duplicate outcomes and wrong invocation/role/attempt/contract/candidate correlation are discriminated. No missing, malformed, stale or miscorrelated outcome advances lifecycle; delayed output waits for correlated readback within existing policy; duplicate identical output has one authorized effect and conflicting duplicate output holds.
+- **SF-REQ-039-AC-08**: Script provider/capacity failure, crash before output and progress then crash. None fabricates a terminal success; retain progress and uncertain-effect evidence, recover from the real durable store/journal with original identity, and resume only under existing authority/budget and readback rules. Assert no replacement actor while outcome/ownership is unknown.
+- **SF-REQ-039-AC-09**: Where a scripted outcome recommends splitting, preserve it as test evidence, never as an Agent Ready assessment or planning authority. The canonical path holds for authorized SF-REQ-013 planning and SF-REQ-015 reassessment of every result, with immutable prior evidence and no automatic release; no test worker mutates the plan or imitates readiness judgment.
 
 ### Authority gaps
 
@@ -521,7 +535,11 @@ Make upstream-to-execution verification repeatable and cheap while detecting lif
 - Nondeterministic fixture
 - Offline result overclaimed as live proof
 
-Sources: [SF-REQ-039; Initial implementation waves / Wave 2](../../docs/decisions/alienintent-software-factory-plan.md).
+### Revision 2026-09-22
+
+`revision_2026_09_22`: see JSON `/candidates/6/revision_2026_09_22` and [revision note](wave2-revisions/2026-09-22-respecify-015-039.md).
+
+Sources: [SF-REQ-039; Initial implementation waves / Wave 2](../decisions/alienintent-software-factory-plan.md); [2026-09-22 A1/A9; amendment (b)](../architecture/alienintent-architecture-authority-2026-09-19.md).
 
 ## SF-REQ-051 — Design Contract and Design Verification
 

@@ -816,15 +816,31 @@
       "track": "upstream",
       "node_kind": "capability",
       "scope": "",
-      "proceeds_regardless": "Consumer semantics, retained-envelope parity and unbound-boundary tests with pinned local fixture authority; no G1/G2 transport implementation.",
-      "completion_predicate": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs. At actual profile boundary unbound/unauthorized stub yields OWNER_ASSIGNMENT_HOLD before launch.",
+      "proceeds_regardless": "Consumer semantics, retained-envelope parity and provenance/admission refusal tests at current interfaces; Agent Ready product ownership is settled by A1.",
+      "completion_predicate": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 historical bootstrap-assessor immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs, never label as Agent Ready. At actual profile boundary unbound/unauthorized stub yields CAPABILITY_PROVENANCE_HOLD before launch. Require established producer/package provenance, not schema shape; CLARIFY routes via SF-REQ-035 then reassessment; SPLIT via SF-REQ-013 then lint/reassess each result.",
       "inherited_authority_gate_refs": [],
       "completion_status": "PROCEEDS_REGARDLESS",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_22": {
+        "reason": "Session B: reconcile SF-REQ-015/039 with binding 2026-09-22 amendments; not implementation or independent Design Verification.",
+        "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+        "authority": [
+          "factory plan SF-REQ-015/039 amendments; Architecture Authority A1/A9 and amendment (b); Ubiquitous Language; ReadinessAssessment port; SWF-25"
+        ],
+        "changed": [
+          "/nodes/11: settled G1/G2 assessment-owner annotations only"
+        ],
+        "preserved_holds": [
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "independent revised Design Verification; release, budget, custody and live-operation gates"
+        ],
+        "session_b": "G1/G2 owner assignment settled: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integration; SF-REQ-029 retained-assessment serialization. All unrelated holds remain."
+      }
     },
     {
       "id": "U10",
-      "title": "Externally assigned assessment transport boundary",
+      "title": "Agent Ready public-interface assessment binding",
       "requirement_ids": [
         "SF-REQ-015"
       ],
@@ -883,19 +899,33 @@
       ],
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
-      "authority_gate_refs": [
-        "POSTW1-DECIDE-004A"
-      ],
+      "authority_gate_refs": [],
       "migration": null,
       "bootstrap_replacement_for": [],
       "track": "upstream",
       "node_kind": "external_prerequisite",
       "scope": "",
-      "proceeds_regardless": "U9 consumer/hold tests; transport/schema implementation waits on assigned owner.",
-      "completion_predicate": "POSTW1-DECIDE-004A assigns G1/G2 and verifies provider contract before binding transport/schema. Prove authorized binding reaches consumer, unbound and unauthorized READY stub refuse before release; raw response retained. No new assessment engine or external serialization selected by this plan.",
+      "proceeds_regardless": "SF-REQ-015 integration design proceeds under A1; external product capability and public-contract compatibility still require proof.",
+      "completion_predicate": "Agent Ready product owns assessment semantics, implementation, public schema, CLI and local MCP; SF-REQ-015 owns integration in Requirements / Planning; SF-REQ-029 owns immutable retained-assessment serialization. A1 settles G1/G2 ownership; capability availability, producer identity, supported contract and independent design verification remain prerequisites. Prove ReadinessAssessment CLI/MCP adapters reach the consumer with raw response and configured invocation-to-result provenance. Unbound, unestablished producer/version, incompatible public contract or surrogate READY refuses admission. Record contract version limitation agent-ready#1; no duplicate engine or copied rubric. Retain producer identity established from the configured Agent Ready executable/MCP server and its package metadata, Agent Ready version (UNKNOWN if unestablished, blocking admission), editable checkout revision when applicable, contract_version = \"package-release-bound; no result-level identifier (agent-ready#1)\", published schema digest/release binding, provider, optional unmodified provider_evidence, model provenance (not exposed by current results; UNKNOWN, never inferred from provider CLI version), exact input fingerprint, invocation identity/arguments or MCP tool request, timestamps and exit/error status. Raw result bytes/envelope and provenance remain distinct immutable evidence. Neither a compatible schema nor copied provider_evidence authenticates the producer; absent/mismatched producer evidence blocks admission.",
       "inherited_authority_gate_refs": [],
-      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "completion_status": "PROCEEDS_REGARDLESS",
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_22": {
+        "reason": "Session B: reconcile SF-REQ-015/039 with binding 2026-09-22 amendments; not implementation or independent Design Verification.",
+        "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
+        "authority": [
+          "factory plan SF-REQ-015/039 amendments; Architecture Authority A1/A9 and amendment (b); Ubiquitous Language; ReadinessAssessment port; SWF-25"
+        ],
+        "changed": [
+          "/nodes/12: settled G1/G2 assessment-owner annotations only"
+        ],
+        "preserved_holds": [
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "independent revised Design Verification; release, budget, custody and live-operation gates"
+        ],
+        "session_b": "G1/G2 owner assignment settled: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integration; SF-REQ-029 retained-assessment serialization. All unrelated holds remain."
+      }
     },
     {
       "id": "A",
@@ -2254,7 +2284,6 @@
       "completion_predicate": "After explicit future release authority and SWF-21 scope disposition, verify all six existing release preconditions plus eligibility at actual live-profile prelaunch boundary; meaningful invalid cases launch zero actors. Readiness is not release. Use existing release requirement authority; if implementation coverage is missing, return to scope owner, never expand 015 into release ownership.",
       "inherited_authority_gate_refs": [
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-        "POSTW1-DECIDE-004A",
         "POSTW1-DECIDE-006A"
       ],
       "completion_status": "GAP_BLOCKED",
@@ -2274,10 +2303,12 @@
         "authority": [
           "factory plan SF-REQ-013 amendment 2026-09-22",
           "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
-          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable",
+          "factory plan SF-REQ-015/039 amendments; Architecture Authority A1/A9 and amendment (b); Ubiquitous Language; ReadinessAssessment port; SWF-25"
         ],
         "changed": [
-          "/nodes/30/authority_gap_refs"
+          "/nodes/30/authority_gap_refs",
+          "/nodes/30: settled G1/G2 assessment-owner annotations only"
         ],
         "preserved_holds": [
           "R1-GAP-039-ORCHESTRATION",
@@ -2286,8 +2317,11 @@
           "POSTW1-DECIDE-006A",
           "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-          "POSTW1-DECIDE-004A"
-        ]
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "independent revised Design Verification; release, budget, custody and live-operation gates"
+        ],
+        "session_b": "G1/G2 owner assignment settled: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integration; SF-REQ-029 retained-assessment serialization. All unrelated holds remain."
       }
     },
     {
@@ -2515,7 +2549,6 @@
         "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
-        "POSTW1-DECIDE-004A",
         "POSTW1-DECIDE-006A",
         "POSTW1-DECIDE-008A",
         "WINDOWS_NOTIFICATION_DISPOSITION"
@@ -2528,10 +2561,12 @@
         "authority": [
           "factory plan SF-REQ-013 amendment 2026-09-22",
           "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
-          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable",
+          "factory plan SF-REQ-015/039 amendments; Architecture Authority A1/A9 and amendment (b); Ubiquitous Language; ReadinessAssessment port; SWF-25"
         ],
         "changed": [
-          "/nodes/33/authority_gap_refs"
+          "/nodes/33/authority_gap_refs",
+          "/nodes/33: settled G1/G2 assessment-owner annotations only"
         ],
         "preserved_holds": [
           "R1-GAP-039-ORCHESTRATION",
@@ -2543,10 +2578,13 @@
           "ATTENTION_ACTIVATION_AUTHORITY",
           "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-          "POSTW1-DECIDE-004A",
           "POSTW1-DECIDE-008A",
-          "WINDOWS_NOTIFICATION_DISPOSITION"
-        ]
+          "WINDOWS_NOTIFICATION_DISPOSITION",
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "independent revised Design Verification; release, budget, custody and live-operation gates"
+        ],
+        "session_b": "G1/G2 owner assignment settled: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integration; SF-REQ-029 retained-assessment serialization. All unrelated holds remain."
       }
     },
     {
@@ -3214,7 +3252,6 @@
       "inherited_authority_gate_refs": [
         "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-        "POSTW1-DECIDE-004A",
         "POSTW1-DECIDE-006A"
       ],
       "completion_status": "GAP_BLOCKED",
@@ -3225,10 +3262,12 @@
         "authority": [
           "factory plan SF-REQ-013 amendment 2026-09-22",
           "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
-          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable",
+          "factory plan SF-REQ-015/039 amendments; Architecture Authority A1/A9 and amendment (b); Ubiquitous Language; ReadinessAssessment port; SWF-25"
         ],
         "changed": [
-          "/nodes/41/authority_gap_refs"
+          "/nodes/41/authority_gap_refs",
+          "/nodes/41: settled G1/G2 assessment-owner annotations only"
         ],
         "preserved_holds": [
           "R1-GAP-039-ORCHESTRATION",
@@ -3237,8 +3276,11 @@
           "POSTW1-DECIDE-006A",
           "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-          "POSTW1-DECIDE-004A"
-        ]
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "independent revised Design Verification; release, budget, custody and live-operation gates"
+        ],
+        "session_b": "G1/G2 owner assignment settled: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integration; SF-REQ-029 retained-assessment serialization. All unrelated holds remain."
       }
     },
     {
@@ -3337,7 +3379,6 @@
         "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
-        "POSTW1-DECIDE-004A",
         "POSTW1-DECIDE-006A",
         "POSTW1-DECIDE-008A",
         "RESIDENT_TENURE_DECISION",
@@ -3352,10 +3393,12 @@
         "authority": [
           "factory plan SF-REQ-013 amendment 2026-09-22",
           "Architecture Authority 2026-09-22 A2/A3 and amendment (b)",
-          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable"
+          "Ubiquitous Language v0.1; FD-02 refinement; SWF-25; SWF-33 and Phase 5 candidate design where applicable",
+          "factory plan SF-REQ-015/039 amendments; Architecture Authority A1/A9 and amendment (b); Ubiquitous Language; ReadinessAssessment port; SWF-25"
         ],
         "changed": [
-          "/nodes/42/authority_gap_refs"
+          "/nodes/42/authority_gap_refs",
+          "/nodes/42: settled G1/G2 assessment-owner annotations only"
         ],
         "preserved_holds": [
           "R1-GAP-039-ORCHESTRATION",
@@ -3367,12 +3410,15 @@
           "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
           "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
-          "POSTW1-DECIDE-004A",
           "POSTW1-DECIDE-008A",
           "RESIDENT_TENURE_DECISION",
           "SWF-21_SCOPE_DISPOSITION",
-          "WINDOWS_NOTIFICATION_DISPOSITION"
-        ]
+          "WINDOWS_NOTIFICATION_DISPOSITION",
+          "R1-GAP-039-ORCHESTRATION",
+          "R1-GAP-039-REAL-OUTCOME",
+          "independent revised Design Verification; release, budget, custody and live-operation gates"
+        ],
+        "session_b": "G1/G2 owner assignment settled: Agent Ready product owns implementation/schema/CLI/MCP; SF-REQ-015 integration; SF-REQ-029 retained-assessment serialization. All unrelated holds remain."
       }
     },
     {
