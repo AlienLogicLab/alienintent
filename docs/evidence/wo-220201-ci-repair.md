@@ -41,3 +41,36 @@ Only the assigned candidate branch may be pushed. No main push, merge, deploymen
 live operation, bootstrap retirement, other-repository or lifecycle changes.
 Runtime-managed resources remain retained for fresh verifier retrieval and BIU
 closure. Tokens and cost UNKNOWN.
+
+## Observed local validation
+
+Proof pin commit: `13f13bc` precedes the workflow change.
+Only the workflow and this record differ from accepted candidate `4a227659`;
+all prior implementation, tests, tools and evidence remain byte-for-byte unchanged.
+
+- Depth-one clone of prior candidate: two historical tests fail, exit 1;
+  both fail on missing pinned Git blobs (git show exit 128).
+- `git fetch --unshallow origin`: exit 0. Identical two tests then pass,
+  13 deselected, exit 0. No files changed in the reproduction clone.
+- `python3 -m pytest -q`: 482 passed in 63.82s, exit 0.
+- `node scripts/check.mjs all`: runtime 332/332, preflight PASS, RAI 18/18,
+  policy 3/3, exit 0.
+- `python3 tools/fitness/check_architecture.py --root src/alienintent --check all`:
+  PASS, exit 0. `git diff --check`: exit 0.
+- Read-only internal review: no blocking findings; pinned corpus revision is
+  ancestral. Fresh independent BIU verification remains required.
+
+Diagnostic logs are outside the worktree at `/tmp/wo-220201-ci-486061b7/`.
+The disposable reproduction clone was DISCARDED and removed after confirming
+clean state and exact prior candidate HEAD. Its logs remain available locally.
+The runtime-owned candidate is retained for BIU retrieval/closure.
+Remote CI outcomes on the published exact SHA will be recorded in the invocation
+Issue comment; local results alone do not establish remote success.
+
+Log SHA-256:
+
+- `shallow-red.log`: `0cc80d7c3ea4920e6b0c751fda2344203305c468948553808dc6376f59620e42`
+- `fetch.log`: `e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855`
+- `full-history-green.log`: `f53c267d3e430997303d8ff448ce6e094df047afdd36a7e9b3afacb1e9989624`
+- `python.log`: `8ad85f7c81b9be1376d6151e836be8542159491c60cd8f4463701dda4e49114f`
+- `node.log`: `9aedbc4162a98e7e231ae8b76f2765e55aba8a0d780e057ee9b02fe469ba5e61`
