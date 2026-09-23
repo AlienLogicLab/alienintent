@@ -1,6 +1,7 @@
 """Composition root for the PY-04 offline profile and the S0 isolated proof substrate.
 
-``OfflineProfile`` is the PY-04 composition and is unchanged. ``OfflineProofSubstrate``
+``OfflineProfile`` is the PY-04 composition, with optional S1 evidence composition.
+Its execution kernel remains unchanged. ``OfflineProofSubstrate``
 (WO-220101, DAG node S0) composes it, at current interfaces only, over a
 disposable local root: a real SQLite operational store, a local bare Git remote
 with worktree allocation, publication and fresh-clone read-back through the
@@ -23,6 +24,9 @@ import subprocess
 from typing import TYPE_CHECKING, Callable, Mapping
 
 from alienintent.composition.sandbox_run_profile import contract_from_document
+from alienintent.composition.evidence_profile import EvidenceProfile
+from alienintent.evidence_learning.domain.admission import AuthoritySnapshot
+from alienintent.evidence_learning.domain.refs import EvidenceHold
 from alienintent.control_plane.adapters.decision_notifier import NoOpDecisionNotifier
 from alienintent.execution_coordination.adapters.local_work_management import LocalWorkManagement
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
@@ -41,12 +45,21 @@ if TYPE_CHECKING:
 
 
 class OfflineProfile:
-    def __init__(self, database: Path, work: WorkManagement, worker: WorkerProvider, artifact_root: Path, verifier_root: Path | None = None, *, name: str = "offline", automatic_release: bool = True, doctor: "DoctorService | None" = None) -> None:
+    def __init__(self, database: Path, work: WorkManagement, worker: WorkerProvider, artifact_root: Path, verifier_root: Path | None = None, *, name: str = "offline", automatic_release: bool = True, doctor: "DoctorService | None" = None,
+                 evidence_root: Path | None = None, evidence_permitted_root: Path | None = None,
+                 evidence_project: str | None = None, evidence_authority: AuthoritySnapshot | None = None) -> None:
         self.name = name
         self.store = SQLiteOperationalStore(database)
         self.work = work
         self.coordinator = FactoryCoordinator(self.store, work, worker, LocalArtifactStore(artifact_root, verifier_root or artifact_root / "verifier-evidence"), name, automatic_release=automatic_release, notifier=NoOpDecisionNotifier())
         self.doctor = doctor
+        self.evidence = None
+        evidence_arguments = (evidence_root, evidence_permitted_root, evidence_project, evidence_authority)
+        if any(value is not None for value in evidence_arguments):
+            if any(value is None for value in evidence_arguments):
+                raise EvidenceHold("EVIDENCE_CONFIGURATION", required_action="supply root, permitted root, project and pinned authority together")
+            self.evidence = EvidenceProfile(evidence_root, permitted_root=evidence_permitted_root, project=evidence_project,
+                                            name=name, authority=evidence_authority, store=self.store)
 
     def readiness(self) -> bool:
         """PY-09 owns substantive doctor checks; PY-08 supplies this injected gate."""
