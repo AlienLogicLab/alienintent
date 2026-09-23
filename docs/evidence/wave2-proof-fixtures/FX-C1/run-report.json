@@ -1,0 +1,43 @@
+{
+  "acceptance_to_probes": {
+    "SF-REQ-053-AC-05": [
+      "test_restart_dedupe_origin",
+      "test_delivery_failure_pending_fresh_consumer",
+      "test_concurrent_handling_preserves_delivery_result",
+      "test_notification_crash_preserves_unconfirmed_attempt",
+      "test_resolution_authority_refusal",
+      "test_resolution_requires_retrievable_correlated_disposition",
+      "test_seen_is_not_resolved_and_decision_inbox_distinct",
+      "test_correlated_consumer_receipt"
+    ],
+    "SF-REQ-053-AC-06": [
+      "test_unbound_activation_zero_launches",
+      "test_bound_activation_policy_does_not_supply_episode_executor"
+    ]
+  },
+  "focused_command": {
+    "id": "intact",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/control_plane/test_attention.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:26622596ea0a807357d171b10c16780ffba39475bb541b69237b05aaa53c8ddb",
+      "locator": "observations/26622596ea0a807357d171b10c16780ffba39475bb541b69237b05aaa53c8ddb"
+    }
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:eb127a4cb2e78b37d24e9beabf2116bf1fc482c7449864f301e7b12254f28ef3",
+    "locator": "observations/eb127a4cb2e78b37d24e9beabf2116bf1fc482c7449864f301e7b12254f28ef3"
+  },
+  "model_launch_count": 0,
+  "migration": "staged snapshots/aliases only; source writer retained",
+  "activation": "notification only; explicit policy applicability checked; authority-bearing executor remains unbound",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "exit_status": 0
+}
