@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Implement the bounded WO-220203 node extent: read retained installation-doctor capability evidence through neutral typed inputs at composition, covering the four specified platform-isolation observables, while representing missing premise evidence as InfeasibleProof rather than inventing credential-denial proof.",
+    "implementation_unknowns": [
+      "Where the retained installation-doctor capability evidence is stored and how it is currently represented in the codebase or evidence fixtures.",
+      "Which composition layer accepts the neutral typed inputs and what existing type/interface conventions must be preserved.",
+      "How the four observables map to existing proof-plan, fixture, profile, and source revisions without inferring predicate mappings from passing source code.",
+      "Where InfeasibleProof is currently modeled, or whether an equivalent internal representation must be added within the pinned architecture constraints.",
+      "How existing architecture fitness checks are invoked and retained alongside the new evidence bridge without implying they certify premise truth.",
+      "Exact test or fixture harness mechanics for FX-U3, including raw observation retention and independent-verdict recording."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "If required retained evidence, fixture revisions, profile revisions, candidate identities, or raw observations are unavailable, the work must hold rather than invent or infer proof.",
+      "Semantic predicate mappings are stated to be authority-reviewed inputs; implementing them by inference from passing source code would violate the design constraint.",
+      "Confusing architecture fitness checks with proof of premise truth could produce an invalid acceptance claim.",
+      "Interface, persisted identity, or ownership changes outside the node boundary could unintentionally absorb sibling scope.",
+      "The instruction to merge accepted candidate directly without a pull request is a process constraint that requires the configured authority and custody path to be available outside implementation."
+    ],
+    "next_action": "Proceed with implementation handoff for the bounded node, preserving the fixed design decisions and evidence obligations; stop only if the stated evidence, custody, dependency, authority, or source-revision prerequisites prove unavailable during execution.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "rationale": "READY is the controlling disposition because the owner intent is specific, non-goals and boundaries are explicit, dependencies and allocation are reported as available, and acceptance is tied to concrete evidence obligations and an independent verifier path. The open questions are normal engineering discovery about locating and wiring existing artifacts, not material product or architecture decisions requiring clarification, and the work is a cohesive node rather than multiple independent decision centers.",
+    "semantic_split_recommendation": [],
+    "summary": "The proposed work has a cohesive, bounded intent tied to SF-REQ-014 and SF-REQ-051, with fixed design decisions, explicit non-goals, stated dependency completion, allocation/custody constraints, and observable evidence obligations. The remaining uncertainty is primarily implementation research rather than unresolved owner intent.",
+    "verification_assessment": "Acceptance is observable through FX-U3 and the evidence contract: the implementation must read retained capability evidence through neutral typed inputs, preserve exact revisions/invocations/results/observation references, demonstrate the four specified observables, and treat missing premise evidence as InfeasibleProof. A single independent verification verdict is meaningful because the node has one bounded semantic outcome and the evidence obligations define the discriminating observations."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "6b056813f6e3643219b4fac50be2d2f2785536a7",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-23T17:52:29.087669+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 5859,
+    "input_sha256": "4bbc71668a7913ec6558d33fa337ae4ffad51ad26f79c6d2c3da3ab42601a1e7",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-jf97p5xs/WO-220203.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "started_at": "2026-09-23T17:52:07.676430+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220203"
+}
