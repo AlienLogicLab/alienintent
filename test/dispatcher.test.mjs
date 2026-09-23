@@ -1209,3 +1209,49 @@ test("persisted cycle-limit escalation fences verifier admission through direct,
   assert.deepEqual(f.launches, ["VERIFIER"]);
   restarted.stop();
 });
+
+// An ordinary Issue comment is not a worker result. Emitting INVALID_RESULT_COMMENT
+// for every comment that is not one turned routine authorized Director comments
+// into apparent worker-result errors (AlienLogicLab/alienintent#83). A comment
+// only claims to signal when it carries a B-DISP marker.
+test("an ordinary operator comment is not reported as an invalid worker result", async () => {
+  const { relay } = subject();
+  await relay.acceptEvent(resultEvent({ body: "Program Director recovery: resume closure under the approved activation.", login: "sanookdu", id: "operator-comment" }));
+  assert.equal(relay.events.some(e => e.outcome === "INVALID_RESULT_COMMENT"), false);
+  assert.equal(relay.events.at(-1).outcome, "NON_RESULT_COMMENT");
+});
+
+test("a result marker that fails validation is still reported as an invalid worker result", async () => {
+  const { relay } = subject();
+  await relay.acceptEvent(resultEvent({ invocationId: "no-such-invocation", id: "unmatched-marker" }));
+  assert.equal(relay.events.at(-1).outcome, "INVALID_RESULT_COMMENT");
+});
+
+test("a worker comment carrying a marker from the wrong author is still reported", async () => {
+  const { relay } = subject();
+  await relay.acceptEvent(event("IMPLEMENT", "start-for-author-check"));
+  const invocationId = Object.values(relay.state().active)[0].invocationId;
+  await relay.acceptEvent(resultEvent({ invocationId, login: "someone-else", id: "wrong-author-marker" }));
+  assert.equal(relay.events.some(e => e.outcome === "INVALID_RESULT_COMMENT"), true);
+});
+
+// AlienIntent does not use pull requests: PRs are for humans, the factory is for models.
+// SWF-19 fixes the canonical closure landing as "a normal merge preserving the accepted
+// candidate SHA". Wave 1 landed exactly that way ("Merge accepted PY-02 candidate (Issue
+// #50)"). Wave 2 workers read the ambiguous "account for landing/merge" as permission to
+// open pull requests (#70, #73, #77, #84). The instruction has to name the mechanism.
+test("closure instructions name the merge landing mechanism and forbid pull requests", async () => {
+  const { relay, launches } = subject({ launch: (options) => { launches.push(options.bootstrap); return child(); } });
+  relay.options.authority.currentStatus = async () => "ACCEPT";
+  await relay.acceptEvent(event("ACCEPT", "closure-landing"));
+  const bootstrap = launches.at(-1);
+  assert.match(bootstrap, /merge/i);
+  assert.match(bootstrap, /accepted candidate/i);
+  assert.match(bootstrap, /do not open (a )?pull request/i);
+});
+
+test("implementation instructions also forbid opening pull requests", async () => {
+  const { relay, launches } = subject({ launch: (options) => { launches.push(options.bootstrap); return child(); } });
+  await relay.acceptEvent(event("IMPLEMENT", "implement-no-pr"));
+  assert.match(launches.at(-1), /do not open (a )?pull request/i);
+});
