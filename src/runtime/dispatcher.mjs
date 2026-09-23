@@ -2,7 +2,7 @@ import { existsSync, readFileSync, writeFileSync, renameSync, rmSync } from "nod
 import crypto from "node:crypto";
 import { inspectWorker, workerLogPath } from "./worker-runner.mjs";
 import { isAbsolute } from "node:path";
-import { allowedSignals, hasResultMarker, parseInvocationSignal } from "../github/authority.mjs";
+import { allowedSignals, attemptsResultSignal, parseInvocationSignal } from "../github/authority.mjs";
 const defaultRoleNames = { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" };
 
 const routedSignal = claim => claim?.control ?? claim?.result;
@@ -180,7 +180,7 @@ export class EventRelay {
       const expectedLogin = this.options.workerLogins?.[claim?.role] ?? this.options.authority.workerLogins?.[claim?.role];
       if (claim?.workerLogin !== undefined && claim.workerLogin !== expectedLogin) throw new Error("ACTIVE_WORKER_IDENTITY_CONFIGURATION_MISMATCH");
       if (claim && (typeof expectedLogin !== "string" || !expectedLogin.trim() || author !== expectedLogin)) this.diagnostic(claim, "WORKER_IDENTITY_MISMATCH", { evidence: { commentId: payload.comment.id, author: author ?? null, expectedLogin: expectedLogin ?? null } });
-      if (!repository || repository !== this.options.repository || !Number.isInteger(issue) || !claim || !signal || !timestampValid || typeof expectedLogin !== "string" || !expectedLogin.trim() || author !== expectedLogin) { this.emit({ issue, outcome: hasResultMarker(body) ? "INVALID_RESULT_COMMENT" : "NON_RESULT_COMMENT" }); }
+      if (!repository || repository !== this.options.repository || !Number.isInteger(issue) || !claim || !signal || !timestampValid || typeof expectedLogin !== "string" || !expectedLogin.trim() || author !== expectedLogin) { this.emit({ issue, outcome: attemptsResultSignal(body) ? "INVALID_RESULT_COMMENT" : "NON_RESULT_COMMENT" }); }
       else {
         claim.signalEvidence = { commentId: payload.comment.id, createdAt: payload.comment.created_at, author };
         if (claim.recovered) {

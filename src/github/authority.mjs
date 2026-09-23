@@ -1,11 +1,14 @@
 const defaultRoleNames = { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" };
 
-// One grammar for the worker result marker. A comment claims to signal a result
-// only when it carries this marker; anything else is ordinary Issue conversation.
+// One grammar for the worker result marker, used for acceptance.
 const RESULT_MARKER = "<!-- B-DISP: INVOCATION=([^\\s>]+) (RESULT|CONTROL)=([^\\s>]+) -->";
+// Classification keys on the *attempt*, not on a successful parse: a truncated or
+// otherwise malformed marker is a broken worker result, not ordinary conversation, and
+// must still be reported. Only a comment carrying no B-DISP directive at all is routine.
+const RESULT_SIGNAL_ATTEMPT = /<!--\s*B-DISP:/;
 
-export function hasResultMarker(body) {
-  return typeof body === "string" && new RegExp(RESULT_MARKER).test(body);
+export function attemptsResultSignal(body) {
+  return typeof body === "string" && RESULT_SIGNAL_ATTEMPT.test(body);
 }
 
 export function allowedSignals(claim, roleNames = defaultRoleNames) {

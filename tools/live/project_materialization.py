@@ -92,19 +92,36 @@ def _gh(*args) -> str:
 
 def read_board():
     query = ('query($owner:String!,$number:Int!){organization(login:$owner){projectV2(number:$number)'
-             '{items(first:100){totalCount nodes{id type content{__typename ... on Issue{number} '
+             '{items(first:100){totalCount pageInfo{hasNextPage} nodes{id type content{__typename ... on Issue{number} '
              '... on PullRequest{number}} fieldValueByName(name:"Status")'
              '{... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}')
     payload = json.loads(_gh("api", "graphql", "-f", f"query={query}",
                             "-F", f"owner={PROJECT_OWNER}", "-F", f"number={PROJECT_NUMBER}"))
-    items = payload["data"]["organization"]["projectV2"]["items"]
-    if items["totalCount"] > len(items["nodes"]):
-        raise MaterializationFailed("Project item collection is larger than one page; "
-                                    "verification would be incomplete")
+    return board_from_payload(payload["data"]["organization"]["projectV2"]["items"])
+
+
+def board_from_payload(items):
+    """Map one Project item connection to board rows, refusing an incomplete answer.
+
+    A fail-closed verifier cannot accept a connection whose own metadata contradicts its
+    nodes: `totalCount` disagreeing in either direction, or another page waiting, means the
+    board we would verify against was never the whole board.
+    """
+    nodes = items.get("nodes")
+    total = items.get("totalCount")
+    has_next = (items.get("pageInfo") or {}).get("hasNextPage")
+    if not isinstance(nodes, list) or not isinstance(total, int) or total < 0 or has_next is not False:
+        raise MaterializationFailed(
+            "MATERIALIZATION FAILED\n  - Project item collection is incomplete or "
+            f"inconsistent (totalCount={total!r}, hasNextPage={has_next!r})")
+    if total != len(nodes):
+        raise MaterializationFailed(
+            "MATERIALIZATION FAILED\n  - Project reports "
+            f"{total} items but returned {len(nodes)}; verification would be incomplete")
     return [{"id": node["id"], "type": node["type"],
              "issue": (node.get("content") or {}).get("number"),
              "status": (node.get("fieldValueByName") or {}).get("name")}
-            for node in items["nodes"]]
+            for node in nodes]
 
 
 def read_issue_side(issue: int):

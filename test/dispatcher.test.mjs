@@ -1255,3 +1255,30 @@ test("implementation instructions also forbid opening pull requests", async () =
   await relay.acceptEvent(event("IMPLEMENT", "implement-no-pr"));
   assert.match(launches.at(-1), /do not open (a )?pull request/i);
 });
+
+// Adversarial review finding 1: a comment that *attempts* a B-DISP result but malforms it
+// was downgraded to NON_RESULT_COMMENT, so a broken worker result looked like chat and
+// bypassed identity-mismatch reporting. Classification must key on the attempt, not on a
+// successful parse.
+test("a truncated result marker is still reported as an invalid worker result", async () => {
+  const { relay } = subject();
+  await relay.acceptEvent(event("IMPLEMENT", "start-truncated"));
+  const invocationId = Object.values(relay.state().active)[0].invocationId;
+  await relay.acceptEvent(resultEvent({ body: `<!-- B-DISP: INVOCATION=${invocationId} RESULT=VERIFY`, id: "truncated-marker" }));
+  assert.equal(relay.events.at(-1).outcome, "INVALID_RESULT_COMMENT");
+});
+
+test("two result markers in one comment are reported as invalid, not routine", async () => {
+  const { relay } = subject();
+  await relay.acceptEvent(event("IMPLEMENT", "start-double"));
+  const invocationId = Object.values(relay.state().active)[0].invocationId;
+  const marker = `<!-- B-DISP: INVOCATION=${invocationId} RESULT=VERIFY -->`;
+  await relay.acceptEvent(resultEvent({ body: `${marker}\n${marker}`, id: "double-marker" }));
+  assert.equal(relay.events.at(-1).outcome, "INVALID_RESULT_COMMENT");
+});
+
+test("an unknown B-DISP directive is reported as invalid rather than ignored", async () => {
+  const { relay } = subject();
+  await relay.acceptEvent(resultEvent({ body: "<!-- B-DISP: INVOCATION=x RESULT=BANANA -->", id: "bogus-directive" }));
+  assert.equal(relay.events.at(-1).outcome, "INVALID_RESULT_COMMENT");
+});

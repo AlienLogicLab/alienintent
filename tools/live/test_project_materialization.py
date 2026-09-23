@@ -15,7 +15,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from project_materialization import MaterializationFailed, verify_materialization  # noqa: E402
+from project_materialization import (MaterializationFailed, board_from_payload,  # noqa: E402
+                                     verify_materialization)
 
 ITEM = "PVTI_good"
 
@@ -75,3 +76,39 @@ def test_success_is_never_inferred_from_a_returned_item_id_alone():
     with pytest.raises(MaterializationFailed):
         verify_materialization(issue=90, expected_status="CAPTURE", board=[],
                                issue_side_items=[ITEM, "PVTI_second"])
+
+
+# Adversarial review finding 3: a fail-closed verifier must not accept a connection whose
+# own metadata contradicts its nodes. Rejecting only totalCount > len(nodes) let a partial
+# or inconsistent response through, and the target item could then "verify" against a board
+# that was never complete.
+
+def _payload(nodes, total=None, has_next=False):
+    return {"totalCount": len(nodes) if total is None else total,
+            "pageInfo": {"hasNextPage": has_next},
+            "nodes": [{"id": n, "type": "ISSUE", "content": {"__typename": "Issue", "number": 90},
+                       "fieldValueByName": {"name": "CAPTURE"}} for n in nodes]}
+
+
+def test_a_complete_board_payload_is_accepted():
+    assert len(board_from_payload(_payload([ITEM]))) == 1
+
+
+def test_a_count_greater_than_the_nodes_fails_closed():
+    with pytest.raises(MaterializationFailed):
+        board_from_payload(_payload([ITEM], total=5))
+
+
+def test_a_count_smaller_than_the_nodes_fails_closed():
+    with pytest.raises(MaterializationFailed):
+        board_from_payload(_payload([ITEM, "PVTI_b"], total=0))
+
+
+def test_another_page_fails_closed():
+    with pytest.raises(MaterializationFailed):
+        board_from_payload(_payload([ITEM], has_next=True))
+
+
+def test_missing_completeness_metadata_fails_closed():
+    with pytest.raises(MaterializationFailed):
+        board_from_payload({"nodes": [], "pageInfo": {}})

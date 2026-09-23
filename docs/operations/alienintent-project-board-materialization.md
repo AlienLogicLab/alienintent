@@ -133,3 +133,29 @@ Per the forward-only rule, a lesson must terminate in mechanical enforcement, de
 preflight, or explicit judgment — never in "remember this next time". The Wave 1 read-back
 was a coordinator habit, so it was lost with the coordinator. `tools/live/project_materialization.py`
 converts it into deterministic behaviour that cannot be forgotten.
+
+## Landing mechanism and the PR prohibition
+
+AlienIntent lands accepted work by **merging the accepted candidate branch directly into the
+baseline branch, preserving the accepted candidate SHA** (SWF-19). Wave 1 landed exactly that
+way — `Merge accepted PY-02 candidate (Issue #50)`. Wave 2 workers instead opened pull
+requests (#70, #73, #77, #84). The worker instruction had not changed; it said "account for
+landing/merge", which the newer worker provider read as permission to open a PR.
+
+Pull requests are for humans. The factory is for models. A PR is never the landing mechanism,
+and a PR must never appear on the Project board.
+
+Forward-only disposition for this lesson:
+
+| Layer | Control | Status |
+|---|---|---|
+| Worker instruction | closure and implementation prompts name merge landing and forbid pull requests | **JUDGMENT_ONLY** — defense in depth, not enforcement |
+| Board hygiene | `project_materialization.py` fails closed on any non-Issue item on the board | **DETERMINISTIC_PREFLIGHT** |
+| Worker capability | worker credentials still carry Pull-requests write access | **MECHANICAL_ENFORCEMENT — NOT YET IN PLACE** |
+
+An adversarial review correctly found that prompt wording cannot stop a worker that holds PR
+write capability. Closing that properly means removing Pull-requests write permission from the
+worker GitHub App installation while preserving candidate-branch push, merge landing and Issue
+comments. That is a change to the App's permissions, which is Founder authority and outside the
+Node engine — it is recorded here as an open mechanical-enforcement gap, not silently treated
+as solved by the prompt.
