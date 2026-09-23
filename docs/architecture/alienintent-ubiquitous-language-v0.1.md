@@ -287,9 +287,18 @@ model-session lifetime (liveness, lifecycle, queues/attention, service health, a
 already-authorized reconciliation). Owner: SF-REQ-053 / SWF-27; liveness specifically SF-REQ-056 /
 SWF-29.
 
-**Coordinator** — A bounded cognitive/control role that evaluates durable state and makes or
-requests authorized coordination decisions. An episode need not be permanent; conversation is
-never authority. Owner: SF-REQ-053 / SWF-27.
+**Factory Director** — AlienIntent's single canonical cognizant orchestration and
+production-control role. It evaluates durable state and makes or requests authorized coordination
+decisions. An episode need not be permanent; conversation is never authority. The retained
+temporary Node execution runtime/service is non-cognizant infrastructure: it launches and
+supervises workers and performs deterministic runtime functions; it is never a second Director or
+coordinator. Owner: SF-REQ-053 / SWF-27.
+
+**Coordinator, Program Director, Local Program Director, bootstrap coordinator and resident
+coordinator** *(historical/noncanonical role aliases)* — Do not use these names for the current
+cognizant role; current prose uses **Factory Director**. Preserve historical names only in
+historical artifact names, decision titles, quotations or provenance where rewriting would corrupt
+history. Do not use *bootstrap* in new current-state role language.
 
 **Learning Proposal** — A cited recommendation to change policy, routing, context, verification or
 design based on evidence; not active policy until approved under promotion authority. Owner:
