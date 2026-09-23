@@ -1,0 +1,99 @@
+{
+  "record_kind": "AllocationDecision",
+  "schema_version": "1",
+  "biu_id": "WO-220102",
+  "decided_at": "2026-09-23T01:47:35+00:00",
+  "allocator": {
+    "role": "Allocator (SF-REQ-026, amended 2026-09-22)",
+    "instance": "Local Program Director — deterministic policy branch (trivial case: exactly one configured eligible worker per role)",
+    "cognition_tier": "deterministic; no local or frontier model consulted",
+    "authority_basis": [
+      "SWF-35: incremental Wave 2 release requires a fully bound execution packet and separate release admission",
+      "SF-REQ-026 amendment: deterministic policy settles trivial cases without a model",
+      "Architecture Authority A4",
+      "SWF-09 hard duration requirement and live execution.supervision configuration"
+    ]
+  },
+  "selection": {
+    "execution_path": "existing factory lifecycle: Work Management READY → explicit Release → IMPLEMENT (PRODUCER) → VERIFY (VERIFIER) → REVIEW → ACCEPT → DONE, executed by the retained bootstrap (KEEP_UNTIL_REPLACED, retirement matrix) with the live self-hosting profile",
+    "producer": {
+      "role": "PRODUCER",
+      "adapter": "codex",
+      "configured_in": "~/.config/alienintent/self-hosting.json (workers.PRODUCER)",
+      "funding_profile": "provider-default"
+    },
+    "verifier": {
+      "role": "VERIFIER",
+      "adapter": "codex",
+      "configured_in": "~/.config/alienintent/self-hosting.json (workers.VERIFIER)",
+      "funding_profile": "provider-default",
+      "independence": "separate GitHub identity and worktree; fresh verifier worktree retrieves the exact candidate SHA"
+    },
+    "why": "The current self-hosting profile configures exactly one Codex worker for PRODUCER and one for VERIFIER, with distinct GitHub identities and worktree custody. This allocation does not change provider configuration or launch a worker."
+  },
+  "limits": {
+    "policy": "SWF-09: hard-enforced dimensions are wall-clock, attempts, retries, concurrency, cancellation; tokens and cost are measured, never assumed zero",
+    "concurrency": {
+      "value": 1,
+      "enforcement": "bootstrap lane claim repository#issue:ROLE (synchronous check-and-reserve, ACTIVE_INVOCATION_EXISTS); WIP = 1",
+      "status": "ENFORCED_BY_MECHANISM"
+    },
+    "attempts": {
+      "value": "3 execution cycles (SWF-32 semantics: IMPLEMENT→VERIFY→IMPLEMENT increments)",
+      "enforcement": "Program Director records the cycle from authoritative transitions and withholds any further release beyond cycle 3 (deterministic); the bootstrap itself enforces no cycle cap",
+      "status": "ENFORCED_BY_DIRECTOR_PROCEDURE"
+    },
+    "retries_within_phase": {
+      "value": "1 replacement worker per phase on non-terminal outcome (does not increment the cycle, SWF-32 §6)",
+      "enforcement": "liveness reconciliation (SWF-27) re-emits at most once per grace window; Director stops re-emission after one replacement",
+      "status": "ENFORCED_BY_DIRECTOR_PROCEDURE"
+    },
+    "wall_clock": {
+      "value": "120000 ms startup + 7200000 ms runtime + 300000 ms stop grace = 7620000 ms (127 min) total per invocation",
+      "startup_milliseconds": 120000,
+      "runtime_milliseconds": 7200000,
+      "stop_grace_milliseconds": 300000,
+      "total_milliseconds": 7620000,
+      "enforcement": "live execution.supervision.mode=systemd; transient owned unit sets TimeoutStartSec, RuntimeMaxSec, TimeoutStopSec and KillMode=control-group; no direct-execution fallback",
+      "status": "ENFORCED_BY_CONFIGURED_SYSTEMD_SUPERVISION"
+    },
+    "cancellation": {
+      "value": "operator stop of the active invocation; owned systemd unit terminates its process tree",
+      "enforcement": "operator control plane and configured systemd supervision",
+      "status": "AVAILABLE"
+    },
+    "tokens_and_cost": {
+      "value": "measured where the provider reports them; UNKNOWN otherwise; never zero; no numeric token or monetary ceiling allocated",
+      "status": "MEASURED_NOT_CAPPED"
+    },
+    "paid_provider_calls": {
+      "value": "configured Codex provider-default funding profile; usage/cost UNKNOWN until observed",
+      "status": "CONFIGURED_NOT_ASSUMED_ZERO"
+    }
+  },
+  "remaining_allowance": {
+    "basis": "No numeric token/cost allowance exists in planning authority (candidate budget.execution_allocation); this decision allocates 3 execution cycles, 0 consumed, and one replacement worker per phase. No S1 worker invocation is authorized by this allocation alone.",
+    "cycles_consumed": 0,
+    "cycles_remaining": 3
+  },
+  "escalation": {
+    "budget_exhaustion": "cycle 3 verification rejection → HumanDecisionRequired via Decision Inbox (SF-REQ-035); no silent increase",
+    "architecture_question": "Architecture Decision Required (AA A5) via Decision Inbox; branch stops",
+    "provider_capacity": "classified PROVIDER_CAPACITY_INTERRUPTION, not a task failure; one replacement worker, then hold",
+    "duration_exhaustion": "a hard duration stop yields a terminal supervision receipt; it does not grant a new retry or cycle"
+  },
+  "not_granted_here": "Release authority is NOT YET GRANTED. SWF-35 standing grant applies only after native Agent Ready READY, Work Management READY, predecessor evidence, fully bound packet and release-admission checks; this allocation is not that verdict or transition.",
+  "provenance": {
+    "baseline_sha": "90e4765b9c599206c0e5e34d18568575e949c576",
+    "candidate_contract_sha256": "d74262cfb09af5d127832762983b8b2c368b075cdd9b6d9fde7ad7cda8ee1710",
+    "candidate_ref": "docs/evidence/wave2-candidate-bius.json#/bius/1",
+    "recorded_by": "Bounded S1 packet builder for local Program Director allocation",
+    "evidence_reads": [
+      "~/.config/alienintent/self-hosting.json (workers.PRODUCER, workers.VERIFIER, execution.supervision; inspected 2026-09-23)",
+      "src/runtime/systemd-supervision.mjs (owned transient-unit limits and fail-closed validation)",
+      "docs/decisions/2026-09-21-biu-execution-cycle-counter.md (SWF-32)",
+      "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md (SWF-09)",
+      "docs/decisions/2026-09-22-wave2-incremental-release-authority.md (SWF-35)"
+    ]
+  }
+}
