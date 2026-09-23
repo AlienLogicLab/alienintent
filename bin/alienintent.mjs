@@ -9,7 +9,6 @@ import { createGitHubAppClient } from "../src/github/app-client.mjs";
 import { createWorkerLauncher, workerEnvironment, inspectWorker } from "../src/runtime/worker-runner.mjs";
 import { createWorktreeManager } from "../src/runtime/worktree-manager.mjs";
 import { loadProfile } from "../src/config/profile.mjs";
-import { assertExecutionConformance } from "../src/runtime/execution-conformance.mjs";
 
 if (process.argv.includes("--help")) {
   console.log("Usage: alienintent --config <profile.json> [--preflight-only | --once]\nExecution disabled suppresses launches, not reconciliation mutations.");
@@ -18,7 +17,6 @@ if (process.argv.includes("--help")) {
 const i = process.argv.indexOf("--config");
 if (i < 0 || !process.argv[i + 1]) throw new Error("--config is required");
 const config = loadProfile(process.argv[i + 1]);
-if (config.executionEnabled) assertExecutionConformance({ controls: config.executionControls, runtime: { dispatcherControls: config.executionControls, supervision: config.supervision, workersSupervised: Object.values(config.workers).every(worker => worker.supervision === config.supervision) } });
 const appClient = createGitHubAppClient(config);
 const appEvidence = appClient.preflight();
 console.log(`AlienIntent App preflight: ${JSON.stringify(appEvidence)}`);
@@ -45,7 +43,7 @@ const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(eve
   workerLogins: config.workerLogins, roleNames: config.roleNames,
   authorizedOperatorLogins: config.authorizedOperatorLogins, appIdentity: appEvidence.identity,
   workerDisplayNames: Object.fromEntries(Object.entries(config.workers).map(([role, worker]) => [role, worker.displayName])),
-  executionEnabled: config.executionEnabled, requireExecutionControls: config.executionEnabled, executionControls: config.executionControls, authority, workers: config.workers,
+  executionEnabled: config.executionEnabled, authority, workers: config.workers,
   worktreeManager: config.executionEnabled ? createWorktreeManager({ repository: config.repository,
     repositoryStore: config.repositoryStore, worktreeRoot: config.worktreeRoot,
     baselineRef: config.baselineRef, git: config.executables.git }) : undefined,

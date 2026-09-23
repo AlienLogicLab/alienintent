@@ -23,7 +23,6 @@ export class EventRelay {
   isClosure(claim) { return claim?.role === this.roleNames.PRODUCER && claim.status === "ACCEPT"; }
   configuredWorkerLogin(role) { return this.options.workerLogins?.[role] ?? this.options.authority.workerLogins?.[role]; }
   assertActiveConfiguration() {
-    if (this.options.requireExecutionControls && !this.options.executionControls) throw new Error("EXECUTION_CONFORMANCE_REQUIRED");
     this.assertResourcePaths();
     const roles = new Set(Object.values(this.roleNames));
     for (const [lane, claim] of Object.entries(this.state().active ?? {})) {
@@ -118,9 +117,6 @@ export class EventRelay {
   }
   get events() { return this._events; } emit(event) { const record = { at: new Date().toISOString(), ...event }; this._events.push(record); this.options.onEvent?.(record); }
   lane(item, role) { return `${item.repository}#${item.issue}:${role}`; } invocation(item, role) { return `${this.lane(item, role)}:${crypto.randomUUID()}`; }
-  budgetKey(item) { return `${item.repository}#${item.issue}`; }
-  reservePhaseAttempt(item, role, status) { const c = this.options.executionControls; if (!c || status === "ACCEPT") return true; const state = this.state(); state.executionBudgets ??= {}; const budget = state.executionBudgets[this.budgetKey(item)] ??= { cycle: 1, phases: {} }; const phase = `${budget.cycle}:${status}:${role}`, launches = budget.phases[phase] ?? 0; if (launches && launches - 1 >= c.replacements.value) return false; budget.phases[phase] = launches + 1; this.save(state); return true; }
-  reserveNextCycle(item, state) { const c = this.options.executionControls; if (!c) return true; state.executionBudgets ??= {}; const budget = state.executionBudgets[this.budgetKey(item)] ??= { cycle: 1, phases: {} }; if (budget.cycle >= c.attempts.value) return false; budget.cycle += 1; return true; }
   biuKey(item) { return `${item.repository}#${item.issue}`; }
   limitFor(item) {
     const limit = this.options.biuLimits?.[this.biuKey(item)];
@@ -273,7 +269,6 @@ export class EventRelay {
           account.transitionInvocationId = claim.invocationId;
         }
       }
-      if (target === "IMPLEMENT" && !this.reserveNextCycle(item, latest)) { this.diagnostic(claim, "EXECUTION_CYCLE_CAP_REACHED", { cycleLimit: this.options.executionControls?.attempts?.value }, latest); return false; }
       if (target || this.isClosure(claim)) owned.pendingSignal ??= { value: result, target };
       this.save(latest);
       if (target && !confirmed) await this.options.authority.transition(item, target);
@@ -408,7 +403,6 @@ export class EventRelay {
       this.save(persisted);
     }
     if (this.options.executionEnabled === false) { this.emit({ issue: item.issue, role, outcome: "DRY_RUN_ACTIONABLE" }); return false; }
-    if (this.options.executionControls && Object.keys(persisted.active).length >= this.options.executionControls.concurrency.value) { this.emit({ issue: item.issue, role, outcome: "CONCURRENCY_CAP_REACHED", concurrencyLimit: this.options.executionControls.concurrency.value }); return false; }
     const limit = this.limitFor(item);
     if (limit && (status === "IMPLEMENT" || status === "VERIFY")) {
       const account = this.limitState(persisted, item, status);
@@ -438,7 +432,6 @@ export class EventRelay {
         this.release(active); this.active.delete(invocationId); this.reconcileResources();
         this.emit({ issue: item.issue, role, outcome: this.stopped ? "SERVICE_STOPPED" : "PREFLIGHT_FAILED" }); return false;
       }
-      if (!this.reservePhaseAttempt(item, role, status)) { this.updateResource(invocationId, { admissionFailed: true }); this.release(active); this.active.delete(invocationId); this.reconcileResources(); this.emit({ issue: item.issue, role, outcome: "REPLACEMENT_CAP_REACHED", replacementLimit: this.options.executionControls?.replacements?.value }); return false; }
       const supervision = this.options.launch.plan?.({ role, item, invocationId, resource });
       if (this.options.workers?.[role]?.supervision && !supervision) throw new Error("SUPERVISION_PLAN_REQUIRED");
       if (limit && (status === "IMPLEMENT" || status === "VERIFY")) {

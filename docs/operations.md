@@ -305,8 +305,6 @@ failure with its reason, and exits non-zero. **A failed check is a refusal to tr
 warning.** The checklist is in [SWF-21](decisions/2026-09-20-wave1-release-coordinator.md); the
 incident that produced it is in [evidence](evidence/2026-09-21-liveness-retry-and-release-admission.md).
 
-Before the first BIU of a Wave/runtime profile, run `node scripts/execution-conformance --config <private-profile.json>`. It checks wall-clock, execution cycles, same-phase replacement workers, concurrency and cancellation together against the retained profile and bootstrap wiring. Every hard control needs its bounded value where applicable, authority, exact active mechanism and inspectable proof. Manual/Director tracking, telemetry, best-effort, `NOT_ENFORCED`, `UNKNOWN`, missing or inactive mechanisms refuse admission; the JSON result reports all failures together. An execution packet is policy evidence, never enforcement. No numeric packet value is a default: missing or pending authority refuses admission.
-
 This queue is bootstrap tooling, not the Decision Inbox. The Decision Inbox (SF-REQ-035, PY-07) owns
 durable authority decisions; this owns making a coordinator aware that judgment is needed. It expires
 when SF-REQ-053 activation and the Decision Inbox land.
