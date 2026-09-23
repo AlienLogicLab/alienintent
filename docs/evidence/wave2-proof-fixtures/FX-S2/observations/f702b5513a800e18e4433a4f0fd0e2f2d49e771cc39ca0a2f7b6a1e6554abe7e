@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","tests/execution_coordination/test_fenced_store.py::test_forged_receipt_cannot_confirm"],"cwd":"/tmp/fx-s2-controls-2bnu_glw","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.13s\n"}
