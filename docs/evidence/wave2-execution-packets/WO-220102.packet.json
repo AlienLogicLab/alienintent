@@ -47,7 +47,7 @@
     "WO-220101": {
       "dag_node": "S0",
       "completion_predicate": "Real temporary SQLite; disposable local bare Git remote, publication/fetch into a fresh verifier worktree, local work-management and provider transport, injected clock/IDs, durable scripted worker journal, credentials absent and enforced denied outbound network with attempted-network refusal. Count zero provider calls. Run existing kernel unchanged and report success-collapse limitation; no scripted lifecycle transitions.",
-      "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
+      "admission": "Consume exact independently verified predecessor candidate 761a3cb4d6e24dc24ec370de45e25fe8c505eeda; independent verifier receipt https://github.com/AlienLogicLab/alienintent/issues/69#issuecomment-5777072691; landing/closure receipt https://github.com/AlienLogicLab/alienintent/issues/69#issuecomment-5780241887; docs/evidence/wave2-proof-fixtures/FX-S0/{execution-record.json,run-report.json,proven-red.json}; and docs/work-units/wave2/WO-220101.release.md. Preserve the reported success-collapse and platform limitations; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
     }
   },
   "required_evidence": [

@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Implement the bounded Wave 2 S1 node for typed immutable evidence and neutral references, satisfying SF-REQ-016 without expanding into sibling scopes, policy changes, RAI wiring, inventory dependencies, or release automation.",
+    "implementation_unknowns": [
+      "Exact repository locations and existing interfaces for evidence_learning port/local adapter, shared neutral Ref values, composition/evidence_profile.py, and evaluate_verdict integration.",
+      "Concrete executable fixture commands, inputs, expected outcomes, and evidence schema must be pinned before implementation as required by the packet.",
+      "Existing persistence mechanisms and how to implement fsync/install-before-CAS-pointer semantics consistently in the current codebase.",
+      "How crash-before-pointer and crash-after-pointer scenarios are simulated or asserted in the existing local proof harness.",
+      "How additive M-EVIDENCE migration should coexist with current references, rollback behavior, incompatible schema holds, and absence of garbage collection.",
+      "How independent verifier custody and retrieval receipts are produced in the configured live self-hosting profile."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The packet explicitly states release authority is not yet granted and no IMPLEMENT transition is authorized by the document.",
+      "The work depends on WO-220101/S0 predecessor proof and retained receipts; the packet reports them but this assessment does not independently verify referenced artifacts.",
+      "Profile binding and execution allocation details are release-admission prerequisites, and the packet says unbound attempt/replacement tracking must not be relied upon.",
+      "Incorrectly treating observations, learned hypotheses, or worker/test statements as authoritative definitions or PASS verdicts would violate the core authority boundary.",
+      "Durability semantics around immutable objects, exact digest validation, and CAS pointer updates are material; false-positive proof could mask crash consistency defects.",
+      "Bridging to existing evaluate_verdict without new policy may expose interface or semantic mismatches that must not be resolved by silently changing policy."
+    ],
+    "next_action": "Hold implementation until the required release-admission prerequisites are available: Work Management READY, predecessor evidence accepted for this use, bound execution/profile limits and custody path, and explicit authority to enter implementation. Then hand off as one cohesive S1 implementation with the FX-S1 fixture plan pinned before code changes.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "rationale": "The controlling condition is not unclear product intent or a need to split the work. The governing intent, scope boundaries, non-goals, and acceptance probes are specific enough for autonomous engineering once prerequisites are satisfied. The work also represents one coherent decision center: typed evidence admission, immutable storage references, migration, and verifier-facing proof for SF-REQ-016. The packet itself, however, withholds implementation/release authority and names external prerequisites that must precede execution. That makes HOLD the appropriate disposition.",
+    "semantic_split_recommendation": [],
+    "summary": "The work is semantically cohesive and has clear acceptance criteria for admitting Definition, Observation, and Verdict records; preserving immutable digest-backed evidence; enforcing role, authority, revision, and hash boundaries; and bridging to the existing verdict evaluator without new policy. However, the submitted packet itself states that release authority is not yet granted and that fresh Agent Ready assessment, Work Management READY, predecessor evidence, profile binding, and release-admission checks are separate prerequisites. Those unavailable authorities/prerequisites control readiness more than implementation ambiguity.",
+    "verification_assessment": "The proposed acceptance is observable: the FX-S1 probes and blocking enforcement checks can distinguish intact, fault-injected, and restored behavior for role separation, digest validation, revision matching, authority validation, null-with-reason measurements, and refusal to mint unauthorized PASS verdicts. A single independent verification verdict would be meaningful for this cohesive node once the predecessor substrate, executable fixture definitions, custody/profile binding, and release-admission prerequisites are actually available. At present, the packet only reports planned verification obligations and explicitly says no future fixture is claimed executed here."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "6b056813f6e3643219b4fac50be2d2f2785536a7",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-23T04:20:48.168363+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10385,
+    "input_sha256": "ab8650cf389cc33430bbc69222cbbbc0fffbf99d925643f8468c9a26c64ddf51",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-jevll4um/WO-220102.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "started_at": "2026-09-23T04:20:17.770401+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220102"
+}
