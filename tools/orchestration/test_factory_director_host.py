@@ -1,5 +1,6 @@
 """Contract tests for the temporary, non-cognizant Factory Director Host."""
 from pathlib import Path
+import json
 import sys
 
 import pytest
@@ -135,6 +136,72 @@ def test_unfinished_prelaunch_lease_refuses_after_host_crash_window(tmp_path):
 
     assert service.reconcile().reason == "AMBIGUOUS_LEASE"
     assert launcher.launched == []
+
+
+@pytest.mark.parametrize("pid,process_start_ticks", [
+    (None, "123"),
+    (True, "123"),
+    (False, "123"),
+    (0, "123"),
+    (-1, "123"),
+    (1, None),
+    (1, ""),
+])
+def test_malformed_active_lease_refuses_without_successor_or_idle_inspection(tmp_path, pid, process_start_ticks):
+    service, launcher = host(tmp_path)
+    (tmp_path / "lease.json").write_text(json.dumps({
+        "host_id": "old", "episode_id": "active", "pid": pid,
+        "started_at": "2026-01-01T00:00:00+00:00",
+        "process_start_ticks": process_start_ticks, "status": "ACTIVE",
+    }))
+
+    assert service.reconcile().reason == "AMBIGUOUS_LEASE"
+    assert launcher.launched == []
+    inspection = service.inspect()
+    assert inspection.state is HostState.REFUSED
+    assert inspection.last_reason == "AMBIGUOUS_LEASE"
+
+
+@pytest.mark.parametrize("failed_operation", ["write", "close"])
+def test_prompt_handoff_failure_keeps_spawned_pid_leased_and_prevents_successor(
+        tmp_path, monkeypatch, failed_operation):
+    class BrokenStdin:
+        def write(self, prompt):
+            if failed_operation == "write":
+                raise OSError("simulated prompt write failure")
+
+        def close(self):
+            if failed_operation == "close":
+                raise OSError("simulated prompt close failure")
+
+    class SpawnedChild:
+        pid = 12345
+        stdin = BrokenStdin()
+
+    popen_calls = []
+
+    def spawned_then_handoff_fails(*args, **kwargs):
+        popen_calls.append((args, kwargs))
+        return SpawnedChild()
+
+    monkeypatch.setattr("factory_director_host.subprocess.Popen", spawned_then_handoff_fails)
+    prompt = tmp_path / "prompt.md"
+    prompt.write_text("episode {{EPISODE_ID}}")
+    launcher = ProcessDirectorLauncher(tmp_path, prompt, codex="unused", model="test")
+    monkeypatch.setattr(launcher, "_process_start_ticks", lambda pid: "987654")
+    monkeypatch.setattr(launcher, "liveness", lambda episode: True)
+    service = FactoryDirectorHost(tmp_path / "host", required, launcher)
+
+    first = service.reconcile()
+    lease = json.loads((tmp_path / "host" / "lease.json").read_text())
+    second = service.reconcile()
+
+    assert first.reason == "DIRECTOR_LAUNCH_HANDOFF_AMBIGUOUS"
+    assert lease["status"] == "ACTIVE"
+    assert lease["pid"] == 12345
+    assert lease["process_start_ticks"] == "987654"
+    assert second.reason == "DIRECTOR_EPISODE_ACTIVE"
+    assert len(popen_calls) == 1
 
 
 def test_restart_reconstructs_active_lease_without_duplicate_activation(tmp_path):

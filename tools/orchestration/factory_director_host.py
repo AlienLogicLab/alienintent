@@ -112,11 +112,16 @@ class InMemoryDirectorLauncher:
         self.launched: list[Episode] = []
         self._active: dict[str, bool] = {}
         self._exits: dict[str, int] = {}
+        self._next_pid = 10_000
 
-    def launch(self, episode_id: str) -> Episode:
-        episode = Episode(episode_id, None, _now())
+    def launch(self, episode_id: str, on_spawned: Callable[[Episode], None] | None = None) -> Episode:
+        pid = self._next_pid
+        self._next_pid += 1
+        episode = Episode(episode_id, pid, _now(), f"memory-{pid}")
         self.launched.append(episode)
         self._active[episode_id] = True
+        if on_spawned is not None:
+            on_spawned(episode)
         return episode
 
     def is_active(self, episode: Episode) -> bool:
@@ -151,7 +156,7 @@ class ProcessDirectorLauncher:
         except (OSError, subprocess.SubprocessError):
             return False
 
-    def launch(self, episode_id: str) -> Episode:
+    def launch(self, episode_id: str, on_spawned: Callable[[Episode], None] | None = None) -> Episode:
         from codex_session import FILTERED_ENV
         from director import resolved_codex_model
         output = self.workdir / ".factory-director-host" / f"{episode_id}.last-message.txt"
@@ -163,10 +168,15 @@ class ProcessDirectorLauncher:
                 "--output-last-message", str(output), "-"]
         env = {k: v for k, v in os.environ.items() if k not in FILTERED_ENV}
         child = subprocess.Popen(argv, stdin=subprocess.PIPE, text=True, env=env)
+        episode = Episode(episode_id, child.pid, _now(), self._process_start_ticks(child.pid))
+        if on_spawned is not None:
+            if not isinstance(episode.process_start_ticks, str) or not episode.process_start_ticks:
+                raise RuntimeError("spawned child process identity is unavailable")
+            on_spawned(episode)
         assert child.stdin is not None
         child.stdin.write(prompt)
         child.stdin.close()
-        return Episode(episode_id, child.pid, _now(), self._process_start_ticks(child.pid))
+        return episode
 
     @staticmethod
     def _process_start_ticks(pid: int) -> str | None:
@@ -243,6 +253,11 @@ class FactoryDirectorHost:
                 raise ValueError("lease pid is invalid")
             if value["status"] not in {"ACTIVATING", "ACTIVE", "LAUNCH_FAILED"}:
                 raise ValueError("lease status is invalid")
+            if value["status"] == "ACTIVE":
+                if isinstance(value["pid"], bool) or not isinstance(value["pid"], int) or value["pid"] <= 0:
+                    raise ValueError("active lease pid is invalid")
+                if not isinstance(value["process_start_ticks"], str) or not value["process_start_ticks"]:
+                    raise ValueError("active lease process identity is invalid")
             return value
         except FileNotFoundError:
             return None
@@ -321,9 +336,25 @@ class FactoryDirectorHost:
                                         "pid": None, "started_at": _now(), "process_start_ticks": None,
                                         "status": "ACTIVATING", "keep_until_replaced": True,
                                         "retirement": "KEEP_UNTIL_REPLACED"})
+        bound_episode: Episode | None = None
+
+        def bind_spawned(spawned: Episode) -> None:
+            nonlocal bound_episode
+            if (isinstance(spawned.pid, bool) or not isinstance(spawned.pid, int) or spawned.pid <= 0
+                    or not isinstance(spawned.process_start_ticks, str) or not spawned.process_start_ticks):
+                raise AmbiguousLease("spawned episode identity is invalid")
+            _atomic_json(self._lease_path, {"host_id": self.host_id, **asdict(spawned),
+                                            "status": "ACTIVE", "keep_until_replaced": True,
+                                            "retirement": "KEEP_UNTIL_REPLACED"})
+            bound_episode = spawned
+
         try:
-            episode = self.launcher.launch(episode_id)
+            episode = self.launcher.launch(episode_id, on_spawned=bind_spawned)
         except Exception as exc:
+            if bound_episode is not None:
+                result = Reconciliation(HostState.REFUSED, "DIRECTOR_LAUNCH_HANDOFF_AMBIGUOUS", episode_id)
+                self._record(result)
+                return result
             _atomic_json(self._lease_path, {"host_id": self.host_id, "episode_id": episode_id,
                                             "pid": None, "started_at": _now(), "process_start_ticks": None,
                                             "status": "LAUNCH_FAILED", "failure": str(exc)[:240],
