@@ -117,6 +117,27 @@ export class EventRelay {
   }
   get events() { return this._events; } emit(event) { const record = { at: new Date().toISOString(), ...event }; this._events.push(record); this.options.onEvent?.(record); }
   lane(item, role) { return `${item.repository}#${item.issue}:${role}`; } invocation(item, role) { return `${this.lane(item, role)}:${crypto.randomUUID()}`; }
+  biuKey(item) { return `${item.repository}#${item.issue}`; }
+  limitFor(item) {
+    const limit = this.options.biuLimits?.[this.biuKey(item)];
+    if (!limit) return null;
+    if (!Number.isSafeInteger(limit.maxCycles) || limit.maxCycles < 1
+        || !Number.isSafeInteger(limit.maxReplacementsPerPhase) || limit.maxReplacementsPerPhase < 0) throw new Error("BIU_LIMIT_CONFIGURATION_INVALID");
+    return limit;
+  }
+  limitState(state, item, phase) {
+    const key = this.biuKey(item);
+    state.executionLimits ??= {};
+    state.executionLimits[key] ??= { cycle: 1, phase, phaseInvocations: [] };
+    return state.executionLimits[key];
+  }
+  limitHold(state, item, outcome, details) {
+    const key = this.biuKey(item);
+    state.limitEscalations ??= {};
+    state.limitEscalations[key] ??= { outcome, biu: key, ...details, at: new Date(this.now()).toISOString() };
+    this.save(state);
+    this.emit({ issue: item.issue, outcome, biu: key, ...details });
+  }
   target(role, result) { if (role === this.roleNames.PRODUCER && result === "VERIFY") return "VERIFY"; if (role === this.roleNames.VERIFIER && result === "REJECT") return "IMPLEMENT"; if (role === this.roleNames.VERIFIER && result === "ACCEPT") return "ACCEPT"; return null; }
   processAlive(pid) { if (!Number.isInteger(pid) || pid <= 0) return false; if (this.options.isProcessAlive) return this.options.isProcessAlive(pid); try { process.kill(pid, 0); return true; } catch { return false; } }
   authorizedOperator(sender) {
@@ -184,7 +205,7 @@ export class EventRelay {
     if (current?.invocationId !== claim.invocationId) return;
     state.diagnostics ??= {};
     const previous = state.diagnostics[claim.lane];
-    const consumed = previous?.invocationId === claim.invocationId && ["FOUNDER_EXCEPTION", "VERIFY_TO_VERIFY", "ACCEPT_TO_ACCEPT", "REJECT_TO_IMPLEMENT", "DONE_TO_DONE", "RETURN_TO_IMPLEMENT_TO_IMPLEMENT"].includes(previous.outcome);
+    const consumed = previous?.invocationId === claim.invocationId && ["FOUNDER_EXCEPTION", "VERIFY_TO_VERIFY", "ACCEPT_TO_ACCEPT", "REJECT_TO_IMPLEMENT", "DONE_TO_DONE", "RETURN_TO_IMPLEMENT_TO_IMPLEMENT", "EXECUTION_CYCLE_LIMIT"].includes(previous.outcome);
     state.diagnostics[claim.lane] = { invocationId: claim.invocationId, item: claim.item, role: claim.role, status: claim.status, ...(current.workerLogin !== undefined ? { workerLogin: current.workerLogin } : {}), signalEvidence: current.signalEvidence ?? claim.signalEvidence, pendingSignal: current.pendingSignal, pendingStatus: current.pendingStatus, pendingOperatorEvent: current.pendingOperatorEvent, result: current.result, control: current.control, startedAt: claim.startedAt, at: new Date(this.now()).toISOString(), outcome: consumed ? previous.outcome : outcome, ...evidence };
     this.save(state);
     this.emit({ issue: claim.item.issue, role: claim.role, invocationId: claim.invocationId, outcome, ...evidence });
@@ -215,6 +236,7 @@ export class EventRelay {
       const latest = this.state();
       const owned = latest.active[claim.lane];
       if (owned?.invocationId !== claim.invocationId || routedSignal(owned)) return false;
+      if (owned.limitHold) return false;
       const intent = owned.pendingSignal;
       if (intent && (intent.value !== result || intent.target !== target)) return false;
       const confirmed = target && intent?.value === result && intent.target === target && status === target;
@@ -223,6 +245,24 @@ export class EventRelay {
       if (status !== expectedStatus && !confirmed) {
         this.diagnostic(claim, "STALE_RESULT", { rejectedSignal: result, expectedStatus, observedStatus: status }, latest);
         return false;
+      }
+      const limit = this.limitFor(item);
+      if (limit && target) {
+        const account = this.limitState(latest, item, expectedStatus);
+        if (account.transitionInvocationId !== claim.invocationId && account.phase !== expectedStatus) throw new Error("BIU_LIMIT_PHASE_MISMATCH");
+        if (account.transitionInvocationId !== claim.invocationId) {
+          const nextCycle = target === "IMPLEMENT" && expectedStatus !== "IMPLEMENT" ? account.cycle + 1 : account.cycle;
+          if (nextCycle > limit.maxCycles) {
+            owned.limitHold = "EXECUTION_CYCLE_LIMIT";
+            this.limitHold(latest, item, "EXECUTION_CYCLE_LIMIT", { cycle: account.cycle, maxCycles: limit.maxCycles, invocationId: claim.invocationId, rejectedSignal: result, phase: expectedStatus });
+            this.diagnostic(claim, "EXECUTION_CYCLE_LIMIT", { rejectedSignal: result, cycle: account.cycle, maxCycles: limit.maxCycles });
+            return false;
+          }
+          account.cycle = nextCycle;
+          account.phase = target;
+          account.phaseInvocations = [];
+          account.transitionInvocationId = claim.invocationId;
+        }
       }
       if (target || this.isClosure(claim)) owned.pendingSignal ??= { value: result, target };
       this.save(latest);
@@ -355,6 +395,19 @@ export class EventRelay {
       this.save(persisted);
     }
     if (this.options.executionEnabled === false) { this.emit({ issue: item.issue, role, outcome: "DRY_RUN_ACTIONABLE" }); return false; }
+    const limit = this.limitFor(item);
+    if (limit && (status === "IMPLEMENT" || status === "VERIFY")) {
+      const account = this.limitState(persisted, item, status);
+      if (account.phase !== status) {
+        this.limitHold(persisted, item, "BIU_LIMIT_PHASE_MISMATCH", { cycle: account.cycle, expectedPhase: account.phase, observedPhase: status });
+        return false;
+      }
+      if (account.phaseInvocations.length >= 1 + limit.maxReplacementsPerPhase) {
+        this.limitHold(persisted, item, "PHASE_REPLACEMENT_LIMIT", { cycle: account.cycle, phase: status, maxReplacementsPerPhase: limit.maxReplacementsPerPhase });
+        return false;
+      }
+      this.save(persisted);
+    }
     const invocationId = this.invocation(item, role);
     const workerLogin = this.configuredWorkerLogin(role);
     const claim = { invocationId, item, role, status, startedAt: new Date(this.now()).toISOString(), ...(typeof workerLogin === "string" && workerLogin.trim() ? { workerLogin } : {}) };
@@ -373,6 +426,13 @@ export class EventRelay {
       }
       const supervision = this.options.launch.plan?.({ role, item, invocationId, resource });
       if (this.options.workers?.[role]?.supervision && !supervision) throw new Error("SUPERVISION_PLAN_REQUIRED");
+      if (limit && (status === "IMPLEMENT" || status === "VERIFY")) {
+        const accounting = this.state();
+        const account = this.limitState(accounting, item, status);
+        if (account.phase !== status || account.phaseInvocations.length >= 1 + limit.maxReplacementsPerPhase) throw new Error("BIU_LIMIT_RESERVATION_CHANGED");
+        account.phaseInvocations.push(invocationId);
+        this.save(accounting);
+      }
       this.updateResource(invocationId, { lifecycle: "LAUNCHING", ...(supervision ? { supervision } : {}) });
       const child = this.options.launch({ role, item, invocationId, worktree: active.worktree, resource: this.state().resources?.[invocationId], bootstrap: workerBootstrap(role, item, invocationId, status, this.roleNames, this.options.workerDisplayNames) });
       active.child = child;

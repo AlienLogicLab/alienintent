@@ -1131,3 +1131,56 @@ for (const status of ["CAPTURE", "SPECIFY", "PLAN", "TASKS", "READY", "REVIEW", 
     } finally { relay.stop(); }
   });
 }
+
+test("third-cycle verifier rejection holds the BIU before a fourth IMPLEMENT transition", async () => {
+  let status = "IMPLEMENT";
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" };
+  const f = subject({ biuLimits: { "ExampleOrg/sample-project#303": { maxCycles: 3, maxReplacementsPerPhase: 1 } } });
+  f.relay.options.authority.currentStatus = async () => status;
+  f.relay.options.authority.transition = async (_item, target) => { f.transitions.push(target); status = target; };
+  let relay = f.relay;
+  async function runPhase(role, result) {
+    assert.equal(await relay.start(item, role, status), true);
+    const claim = [...relay.active.values()][0];
+    assert.equal(await relay.routeResult(claim, result), true);
+    claim.child.exitCode = 0;
+    await relay.complete(claim);
+  }
+  for (let cycle = 1; cycle <= 3; cycle++) {
+    await runPhase("PRODUCER", "VERIFY");
+    if (cycle < 3) await runPhase("VERIFIER", "REJECT");
+    if (cycle === 2) { relay.stop(); relay = new EventRelay({ ...relay.options }); }
+  }
+  assert.equal(await relay.start(item, "VERIFIER", status), true);
+  const verifier = [...relay.active.values()][0];
+  assert.equal(await relay.routeResult(verifier, "REJECT"), false);
+  assert.equal(status, "VERIFY");
+  assert.deepEqual(f.transitions, ["VERIFY", "IMPLEMENT", "VERIFY", "IMPLEMENT", "VERIFY"]);
+  assert.equal(relay.state().executionLimits["ExampleOrg/sample-project#303"].cycle, 3);
+  assert.equal(relay.state().diagnostics[verifier.lane].outcome, "EXECUTION_CYCLE_LIMIT");
+  assert.equal(relay.state().diagnostics[verifier.lane].rejectedSignal, "REJECT");
+  relay.stop();
+});
+
+test("one same-phase replacement survives restart; repeated liveness and delivery cannot grant another", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" };
+  const f = subject({ isProcessAlive: () => false, biuLimits: { "ExampleOrg/sample-project#303": { maxCycles: 3, maxReplacementsPerPhase: 1 } } });
+  assert.equal(await f.relay.start(item, "PRODUCER", "IMPLEMENT"), true);
+  let claim = [...f.relay.active.values()][0];
+  claim.child.exitCode = 124;
+  await f.relay.complete(claim);
+  assert.equal(await f.relay.start(item, "PRODUCER", "IMPLEMENT"), true);
+  claim = [...f.relay.active.values()][0];
+  claim.child.exitCode = 124;
+  await f.relay.complete(claim);
+  const restarted = new EventRelay({ ...f.relay.options });
+  assert.equal(await restarted.start(item, "PRODUCER", "IMPLEMENT"), false);
+  assert.equal(await restarted.inspectLiveness(claim.invocationId), "PROCESS_GONE");
+  await restarted.acceptEvent(event("IMPLEMENT", "repeat-after-restart"));
+  assert.deepEqual(f.launches, ["PRODUCER", "PRODUCER"]);
+  assert.equal(restarted.state().executionLimits["ExampleOrg/sample-project#303"].cycle, 1);
+  assert.equal(restarted.state().limitEscalations["ExampleOrg/sample-project#303"].outcome, "PHASE_REPLACEMENT_LIMIT");
+  assert.equal(await restarted.start({ ...item, issue: 304 }, "PRODUCER", "IMPLEMENT"), true);
+  assert.deepEqual(f.launches, ["PRODUCER", "PRODUCER", "PRODUCER"]);
+  f.relay.stop(); restarted.stop();
+});
