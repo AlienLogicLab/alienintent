@@ -1,0 +1,20 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220301",
+  "issued_at": "2026-09-23T11:00:00+00:00",
+  "goal": "Deliver the approved bounded extent: durable attention identity and resolution.",
+  "starting_authority": {"requirements": ["SF-REQ-053"], "dag_node": ["C1"], "candidate_contract_ref": "docs/evidence/wave2-candidate-bius.json#/bius/14", "candidate_contract_baseline_sha": "fcb65fffda65fc2a01516aed38d8d5a662cbaba8", "candidate_contract_blob": "64c113e6788728be3930e1f5a300f83a96f5ec70", "admission_baseline_sha": "2deec9351e9255091ec5d9d831ed9af2ecaefae1", "release_authority": "Founder execution authorization plus SWF-35; this packet does not itself transition status or launch a worker."},
+  "allowed_scope": {"extent": "DONE/judgment events dedupe across restart; delivery failure retains a pending item and failed attempt; SEEN remains distinct from RESOLVED; wrong actor/revision/lane cannot resolve; DecisionInbox distinct; unbound activation launches zero models; preserve origin IDs/history/handler attribution; staged M-ATTENTION only.", "migration": {"id": "M-ATTENTION", "sequence": ["snapshot source queue/history without retiring writer", "stage aliases and attributed pending/seen/resolved history", "compare producers/consumers before any separately authorized one-writer switchover"], "rollback": "retain source queue and aliases; stop new writer and reconcile pending effects"}, "non_goals": ["live operation or deployment", "automatic activation", "architecture expansion or sibling work", "retirement/replacement of existing protections or Factory Director Host cutover"]},
+  "dependencies": ["WO-220102", "WO-220103"],
+  "dependency_predicates": {
+    "WO-220102": {"dag_node": "S1", "accepted_candidate": "b80d0cb502d68589a3907331f1db802280c67c5f", "verifier_receipt": "https://github.com/AlienLogicLab/alienintent/issues/71#issuecomment-5789957070", "closure_receipt": "https://github.com/AlienLogicLab/alienintent/issues/71#issuecomment-5790010355", "proof": "docs/evidence/wave2-proof-fixtures/FX-S1/"},
+    "WO-220103": {"dag_node": "S2", "accepted_candidate": "8e2547980ca1d95849460b9abf0c08857a6671b9", "verifier_receipt": "https://github.com/AlienLogicLab/alienintent/issues/74#issuecomment-5791867997", "closure_receipt": "https://github.com/AlienLogicLab/alienintent/issues/74#issuecomment-5791914826", "proof": "docs/evidence/wave2-proof-fixtures/FX-S2/"}
+  },
+  "acceptance": {"criteria": ["SF-REQ-053-AC-05", "SF-REQ-053-AC-06"], "proof_fixture": "docs/evidence/wave2-proof-fixtures/FX-C1.md", "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL", "order": "Implement only after pinning the fixture; run intact, each fault, restored, evidence generation, and narrow regressions; retain raw observations and independent verifier verdict separately."},
+  "candidate_custody": {"policy": "Producer publishes exact candidate branch and full SHA before RESULT=VERIFY; fresh verifier retrieves it in a separate worktree; normal closure records LANDED, DISCARDED, or PARKED. No worker pushes main directly."},
+  "limits_ref": "WO-220301.allocation.json#/limits",
+  "release_preconditions": ["fresh native Agent Ready READY against this exact work-unit and admission baseline", "active profile readback binds AlienLogicLab/alienintent#78 with the allocation limits", "Project status READY", "all SWF-35 and release_admission checks pass", "no active C1 claim and profile WIP permits it", "GitHub Project status change generates the signed App webhook; Director does not launch a worker directly"],
+  "stop_condition": ["hold on missing/bad predecessor receipt, profile binding mismatch, failed release gate, active claim, WIP refusal, unavailable proof evidence, or scope/authority change; preserve completed proof."],
+  "readiness": "The earlier HOLD is superseded only by a fresh native assessment of this exact packet/work-unit input. READY is eligibility, not release."
+}

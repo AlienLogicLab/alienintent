@@ -1,0 +1,32 @@
+{
+  "record_kind": "AllocationDecision",
+  "schema_version": "1",
+  "biu_id": "WO-220301",
+  "decided_at": "2026-09-23T11:00:00+00:00",
+  "allocator": {
+    "role": "Factory Director",
+    "authority_basis": [
+      "Founder execution authorization of 2026-09-23",
+      "SWF-35 incremental Wave 2 release authority",
+      "SF-REQ-026 deterministic trivial allocation policy",
+      "SWF-09 and the live systemd supervision profile"
+    ]
+  },
+  "selection": {
+    "execution_path": "GitHub Project READY status -> signed GitHub webhook -> existing AlienIntent App admission/dispatcher -> IMPLEMENT producer -> VERIFY verifier -> REVIEW -> ACCEPT -> DONE",
+    "producer": {"role": "PRODUCER", "adapter": "codex", "funding_profile": "provider-default"},
+    "verifier": {"role": "VERIFIER", "adapter": "codex", "funding_profile": "provider-default", "independence": "fresh separately owned worktree retrieves the exact published candidate"},
+    "why": "The live profile has one configured worker for each role. This record allocates no new provider or model configuration and does not launch either worker."
+  },
+  "limits": {
+    "concurrency": {"value": "existing factory profile WIP", "status": "GOVERNED_BY_ACTIVE_PROFILE"},
+    "execution_cycles": {"value": 3, "enforcement": "exact normal Issue identity AlienLogicLab/alienintent#78 must be present in active execution.biuLimits before release", "status": "ENFORCED_WHEN_PROFILE_BOUND"},
+    "replacements_per_phase": {"value": 1, "enforcement": "exact normal Issue identity AlienLogicLab/alienintent#78 must be present in active execution.biuLimits before release", "status": "ENFORCED_WHEN_PROFILE_BOUND"},
+    "wall_clock": {"startup_milliseconds": 120000, "runtime_milliseconds": 7200000, "stop_grace_milliseconds": 300000, "enforcement": "existing systemd transient-unit supervision; no direct-execution fallback", "status": "ENFORCED_BY_CONFIGURED_SYSTEMD_SUPERVISION"},
+    "tokens_and_cost": {"value": "measure actual provider usage where available; otherwise UNKNOWN with reason; never infer zero", "status": "MEASURED_NOT_CAPPED"}
+  },
+  "remaining_allowance": {"cycles_consumed": 0, "cycles_remaining": 3, "replacements_remaining_per_phase": 1, "tokens": "UNKNOWN_UNTIL_OBSERVED", "cost": "UNKNOWN_UNTIL_OBSERVED"},
+  "scope_boundary": "C1 and FX-C1 only. No live operation, deployment, architecture expansion, sibling work, automatic-activation enablement, existing-protection retirement, or host cutover is granted.",
+  "escalation": {"cycle_exhaustion": "retain dispatcher limit hold and create durable attention; no fourth cycle", "provider_usage_unavailable": "record UNKNOWN; do not infer zero", "duration_stop": "terminal supervision receipt grants neither replacement nor cycle"},
+  "provenance": {"admission_baseline_sha": "2deec9351e9255091ec5d9d831ed9af2ecaefae1", "candidate_contract_baseline_sha": "fcb65fffda65fc2a01516aed38d8d5a662cbaba8", "candidate_contract_blob": "64c113e6788728be3930e1f5a300f83a96f5ec70", "profile_path": "/home/netmarine/.config/alienintent/self-hosting.json", "profile_binding": "APPLIED_AND_READ_BACK_2026-09-23T11:06:47Z", "service_main_pid_after_restart": 1529821}
+}
