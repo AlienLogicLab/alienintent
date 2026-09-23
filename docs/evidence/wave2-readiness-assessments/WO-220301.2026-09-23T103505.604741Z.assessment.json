@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Implement the pinned WO-220301 / Wave 2 C1 scope for durable attention identity and resolution, preserving pending attention items, identity/history/attribution, authorization boundaries, and staged migration behavior under SF-REQ-053.",
+    "implementation_unknowns": [
+      "Where the existing attention queue, history, alias, notification-attempt, and DecisionInbox storage paths are implemented.",
+      "How current DONE, judgment, SEEN, RESOLVED, lane, revision, actor, and handler-attribution semantics are represented in code and persisted.",
+      "How restart durability is currently tested or simulated for dedupe and pending-item preservation.",
+      "How notification failure is currently surfaced and whether failed attempts already have a durable schema or need migration support.",
+      "How staged migration M-ATTENTION should be encoded mechanically while retaining the existing writer until replacement gates pass.",
+      "What existing test harnesses or fixtures can support the planned FX-C1 intact/fault/restored proof once pinned."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Starting without the exact admission baseline could cause work to target the wrong source state or contract version.",
+      "Missing predecessor proof receipts could invalidate assumptions about S1/S2 behavior consumed by C1.",
+      "Unpinned FX-C1 evidence could lead to implementation that appears locally correct but cannot satisfy the required proof standard.",
+      "Incorrect migration staging could prematurely retire or bypass the existing writer, creating source-authority or rollback risk.",
+      "Confusing SEEN with RESOLVED or allowing wrong actor/revision/lane resolution would violate core durable attention semantics.",
+      "Accidental activation of authority-bearing episodes without explicit policy would violate the stated boundary."
+    ],
+    "next_action": "Make the admission prerequisites available before implementation: provide execution allocation/budget, exact baseline/profile binding, predecessor evidence receipts for WO-220102 and WO-220103, candidate publication/retrieval artifacts as required by the workflow, and a pinned FX-C1 proof specification with commands, inputs, expected outcomes, and evidence schema.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "rationale": "The work itself is not too large or split-worthy: the durable identity, resolution, notification-failure, authorization, attribution, and staged migration requirements form one cohesive C1 decision center with shared acceptance. There are no material owner questions apparent because the boundaries explicitly prohibit sibling work, live operation, unapproved activation, and premature writer retirement. The controlling issue is that the submitted work states mandatory external admission/proof prerequisites remain to be supplied; that is a HOLD condition, not a CLARIFY or SPLIT condition.",
+    "semantic_split_recommendation": [],
+    "summary": "The proposed work has a coherent bounded outcome and appears semantically cohesive, but the supplied text itself identifies mandatory admission and custody prerequisites that remain unresolved before execution: explicit allocation/budget, exact admission baseline, profile binding, predecessor evidence/receipts, candidate publication, independent retrieval, and FX-C1 proof pinning. These are external/process prerequisites rather than product-intent ambiguities, so HOLD is the controlling disposition.",
+    "verification_assessment": "Acceptance is in principle observable through durable restart, notification-failure, authorization, wrong-actor/revision/lane, DecisionInbox separation, and staged-migration scenarios. One independent verification verdict would be meaningful if FX-C1 commands, inputs, expected outcomes, evidence schema, admission baseline, and predecessor receipts are available. At present, the supplied text says those proof/admission materials remain mandatory and not yet completed, so verification coherence is blocked rather than merely needing implementation research."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "6b056813f6e3643219b4fac50be2d2f2785536a7",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-23T10:35:33.679439+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 3038,
+    "input_sha256": "a2f28655a6e87eec1b52ac58580878c133fa3ffe9590f4b187b57c306fb78726",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-gekpcps8/WO-220301.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "started_at": "2026-09-23T10:35:05.604741+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220301"
+}
