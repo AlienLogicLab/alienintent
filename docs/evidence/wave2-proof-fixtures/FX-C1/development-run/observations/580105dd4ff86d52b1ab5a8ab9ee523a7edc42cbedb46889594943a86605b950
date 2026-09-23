@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","tests/control_plane/test_attention.py::test_resolution_authority_refusal[actor-intruder]"],"cwd":"/tmp/fx-c1-controls-k9oeazhb","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.13s\n"}

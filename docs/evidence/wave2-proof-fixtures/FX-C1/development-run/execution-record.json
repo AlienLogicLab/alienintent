@@ -1,0 +1,64 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-C1",
+  "invocation": "AlienLogicLab/alienintent#78:PRODUCER:f4f2ffd3-6e47-4192-8fab-3766200a06e4",
+  "source_revision": "2137625a788f839029e456b6268494c0f261c21d",
+  "source_status": "?? src/alienintent/composition/control_plane_profile.py\n?? src/alienintent/control_plane/adapters/attention_import.py\n?? src/alienintent/control_plane/adapters/attention_repository.py\n?? src/alienintent/control_plane/application/attention.py\n?? src/alienintent/control_plane/domain/\n?? src/alienintent/control_plane/ports/attention.py\n?? tests/control_plane/test_attention.py\n?? tools/evidence/fx_c1_evidence.py\n",
+  "admission_baseline": "3d14d3004971d447bc597075f778c4aad4b037d9",
+  "input_digests": {
+    "docs/evidence/wave2-proof-fixtures/FX-C1.md": "sha256:848e31baaa30d186e546d8bdafc8b09f2433c73980a388029f7f068b12470862",
+    "docs/evidence/wave2-proof-fixtures/FX-C1/implementation-plan.md": "sha256:b1c35888d56fd9829fd0f5cd70723f7858648950442eec07abf3fb68bdfc20fd",
+    "docs/evidence/wave2-execution-packets/WO-220301.packet.json": "sha256:65ef9b634e95651f4d720acf898f49d1c733c5bff7aeada45fe207dd813b624e",
+    "docs/evidence/wave2-execution-packets/WO-220301.allocation.json": "sha256:1cfe79d471c55e62855c5d2e332fd30f11866a90d9a63f83567e6e76300b3581",
+    "tests/control_plane/test_attention.py": "sha256:3adc8d832ede2f4c80718d0494133ad12bf7d1040731f08fe9d57cf48909b720",
+    "tools/evidence/fx_c1_evidence.py": "sha256:aa879de08e27328b5047e8db5903e3520589496ec900ea77f2f691f7ea7b6dfb",
+    "src/alienintent/composition/control_plane_profile.py": "sha256:35eac0b21d5cdf16f2a85e2977360412d411ae424f440913dd1a994f66a05b86",
+    "src/alienintent/control_plane/adapters/attention_import.py": "sha256:a2aaf475e7312bc029bb4eaa531418709dfeba53c03d7f5cb01799473fb2dc61",
+    "src/alienintent/control_plane/adapters/attention_repository.py": "sha256:bacb75f528ebbf7bcec078c6195aa92a565722dc28b860799fbe2f9caa76cf6d",
+    "src/alienintent/control_plane/application/attention.py": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+    "src/alienintent/control_plane/domain/attention.py": "sha256:dc846d731b6cf050469c5aa69581c1c3bc33a2179745848f8905e1a5c4724df1",
+    "src/alienintent/control_plane/ports/attention.py": "sha256:4fc26c6744c9499461056b07c7ab1bbe94609df891d5674058084de4dd15600f"
+  },
+  "commands": [
+    {
+      "id": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:74864f5485e717d4c488a9319451e58c313d982b1241cfbdc63206f0a701530e",
+        "locator": "observations/74864f5485e717d4c488a9319451e58c313d982b1241cfbdc63206f0a701530e"
+      }
+    }
+  ],
+  "holds": [
+    "source is not a clean committed candidate"
+  ],
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": null,
+    "reason": "UNKNOWN: provider usage is unavailable to this local fixture"
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:eb127a4cb2e78b37d24e9beabf2116bf1fc482c7449864f301e7b12254f28ef3",
+    "locator": "observations/eb127a4cb2e78b37d24e9beabf2116bf1fc482c7449864f301e7b12254f28ef3"
+  },
+  "profile_ref": {
+    "revision_digest": "sha256:5aa302e0f401fc52e2978a0b096e31a857fe3e6d56fbc89b48fcda803189cdc1",
+    "locator": "observations/5aa302e0f401fc52e2978a0b096e31a857fe3e6d56fbc89b48fcda803189cdc1"
+  },
+  "model_launch_count": 0,
+  "profile_digest": "sha256:5aa302e0f401fc52e2978a0b096e31a857fe3e6d56fbc89b48fcda803189cdc1",
+  "exit_status": 1
+}

@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","tests/control_plane/test_attention.py"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/579c2496-799c-4094-927a-f831fb8cbdeb","exit_status":0,"stderr":"","stdout":"...............................                                          [100%]\n31 passed in 1.87s\n"}
