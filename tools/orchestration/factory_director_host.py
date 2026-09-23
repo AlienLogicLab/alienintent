@@ -233,10 +233,20 @@ class FactoryDirectorHost:
 
     def _lease(self) -> dict | None:
         try:
-            return json.loads(self._lease_path.read_text())
+            value = json.loads(self._lease_path.read_text())
+            required = {"host_id", "episode_id", "pid", "started_at", "process_start_ticks", "status"}
+            if not isinstance(value, dict) or set(value) < required:
+                raise ValueError("lease schema is incomplete")
+            if not isinstance(value["host_id"], str) or not isinstance(value["episode_id"], str):
+                raise ValueError("lease identity is invalid")
+            if value["pid"] is not None and not isinstance(value["pid"], int):
+                raise ValueError("lease pid is invalid")
+            if value["status"] not in {"ACTIVATING", "ACTIVE", "LAUNCH_FAILED"}:
+                raise ValueError("lease status is invalid")
+            return value
         except FileNotFoundError:
             return None
-        except (OSError, json.JSONDecodeError, TypeError) as exc:
+        except (OSError, ValueError, TypeError) as exc:
             raise AmbiguousLease("lease cannot be read") from exc
 
     def _episode(self, lease: dict) -> Episode:
@@ -340,9 +350,14 @@ class FactoryDirectorHost:
                 try: history.append(json.loads(line))
                 except json.JSONDecodeError: pass
         try:
-            active = bool(lease and self.launcher.is_active(self._episode(lease)))
+            liveness = (self.launcher.liveness(self._episode(lease)) if lease and hasattr(self.launcher, "liveness")
+                        else self.launcher.is_active(self._episode(lease)) if lease else False)
         except KeyError:
             return Inspection(HostState.REFUSED, False, None, None, None, None, "AMBIGUOUS_LEASE")
+        if liveness is None:
+            return Inspection(HostState.REFUSED, False, lease.get("host_id"), lease.get("episode_id"),
+                              None, None, "EPISODE_LIVENESS_AMBIGUOUS")
+        active = bool(liveness)
         latest = history[-1] if history else {}
         activation = next((r["reason"] for r in reversed(history) if r["reason"] in {"DIRECTOR_CONTINUITY_FAULT", "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"}), None)
         exit_reason = next((r.get("exit_reason") for r in reversed(history) if r.get("exit_reason")), None)

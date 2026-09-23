@@ -105,6 +105,14 @@ def test_corrupt_lease_refuses_rather_than_launching_a_second_episode(tmp_path):
     assert launcher.launched == []
 
 
+def test_parseable_but_incomplete_lease_refuses_rather_than_launching(tmp_path):
+    service, launcher = host(tmp_path)
+    (tmp_path / "lease.json").write_text("{}")
+
+    assert service.reconcile().reason == "AMBIGUOUS_LEASE"
+    assert launcher.launched == []
+
+
 def test_indeterminate_process_liveness_refuses_rather_than_relaunching(tmp_path):
     class UncertainLauncher(InMemoryDirectorLauncher):
         def liveness(self, episode):

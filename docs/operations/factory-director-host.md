@@ -65,7 +65,7 @@ Inspect with `systemctl --user status alienintent-factory-director-host` and:
 python3 ~/.local/share/alienintent-bootstrap/factory-director-host/factory_director_host.py \
   --state-root ~/.local/state/alienintent/factory-director-host \
   --inputs ~/.config/alienintent/factory-director-host-input.json \
-  --workdir /mnt/d/Projects/alienintent \
+  --workdir "$FACTORY_DIRECTOR_WORKTREE" \
   --prompt ~/.local/share/alienintent-bootstrap/factory-director-host/factory-director-episode.md \
   --inspect
 ```
