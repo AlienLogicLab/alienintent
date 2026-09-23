@@ -24,6 +24,23 @@ function positive(value, field) {
   if (!Number.isSafeInteger(value) || value <= 0) fail(field);
   return value;
 }
+function biuLimits(value, field, repository) {
+  if (value === undefined) return undefined;
+  if (!value || typeof value !== "object" || Array.isArray(value)) fail(field);
+  const limits = {};
+  for (const [key, limit] of Object.entries(value)) {
+    if (!/^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+#[1-9][0-9]*$/.test(key)
+        || !key.startsWith(`${repository}#`)) fail(field);
+    object(limit, field, ["maxCycles", "maxReplacementsPerPhase"]);
+    limits[key] = {
+      maxCycles: positive(limit.maxCycles, field),
+      maxReplacementsPerPhase: limit.maxReplacementsPerPhase,
+    };
+    if (!Number.isSafeInteger(limits[key].maxReplacementsPerPhase)
+        || limits[key].maxReplacementsPerPhase < 0) fail(field);
+  }
+  return limits;
+}
 function strings(value, field) {
   if (!Array.isArray(value) || value.some(v => typeof v !== "string" || !v.trim() || v.includes("\0"))) fail(field);
   return value;
@@ -53,10 +70,11 @@ export function loadProfile(profilePath) {
   const port = positive(p.webhook.listenPort, "webhook.listenPort");
   if (port > 65535) fail("webhook.listenPort");
   path(p.webhook.secretFile, "webhook.secretFile");
-  object(p.execution, "execution", ["enabled", "inspectionIntervalMilliseconds", "supervision"]);
+  object(p.execution, "execution", ["enabled", "inspectionIntervalMilliseconds", "supervision", "biuLimits"]);
   if (typeof p.execution.enabled !== "boolean") fail("execution.enabled");
   const inspectionIntervalMs = p.execution.inspectionIntervalMilliseconds ?? 60000;
   if (!Number.isSafeInteger(inspectionIntervalMs) || inspectionIntervalMs < 1000 || inspectionIntervalMs > 300000) fail("execution.inspectionIntervalMilliseconds");
+  const configuredBiuLimits = biuLimits(p.execution.biuLimits, "execution.biuLimits", `${p.repository.owner}/${p.repository.name}`);
   const supervision = p.execution.supervision;
   if (supervision !== undefined) {
     object(supervision, "execution.supervision", ["mode", "runtimeMilliseconds", "stopGraceMilliseconds", "startupMilliseconds", "systemdRun", "systemctl", "env"]);
@@ -148,7 +166,7 @@ export function loadProfile(profilePath) {
   const config = { repository: `${p.repository.owner}/${p.repository.name}`, projectOwner: p.project.owner,
     projectNumber: p.project.number, githubApp, host, port, webhookSecret,
     repositoryStore: p.paths.repositoryStore, worktreeRoot: p.paths.worktreeRoot, baselineRef: p.repository.baselineRef,
-    statePath: p.paths.stateFile, executionEnabled: p.execution.enabled, inspectionIntervalMs,
+    statePath: p.paths.stateFile, executionEnabled: p.execution.enabled, inspectionIntervalMs, biuLimits: configuredBiuLimits,
     roleNames, workers, workerLogins, authorizedOperatorLogins, executables, runtimePath };
   verifyStateCompatibility(config);
   return config;

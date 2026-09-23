@@ -43,7 +43,7 @@ const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(eve
   workerLogins: config.workerLogins, roleNames: config.roleNames,
   authorizedOperatorLogins: config.authorizedOperatorLogins, appIdentity: appEvidence.identity,
   workerDisplayNames: Object.fromEntries(Object.entries(config.workers).map(([role, worker]) => [role, worker.displayName])),
-  executionEnabled: config.executionEnabled, authority, workers: config.workers,
+  executionEnabled: config.executionEnabled, biuLimits: config.biuLimits, authority, workers: config.workers,
   worktreeManager: config.executionEnabled ? createWorktreeManager({ repository: config.repository,
     repositoryStore: config.repositoryStore, worktreeRoot: config.worktreeRoot,
     baselineRef: config.baselineRef, git: config.executables.git }) : undefined,

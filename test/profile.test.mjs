@@ -143,6 +143,31 @@ test("execution profile requires canonical repository store and baseline without
   assert.throws(() => f.load(), /baselineRef/);
 });
 
+test("execution profile exposes validated per-BIU execution limits", () => {
+  const f = fixture();
+  const key = "ExampleOrg/sample-project#220102";
+  f.value.execution.biuLimits = {
+    [key]: { maxCycles: 3, maxReplacementsPerPhase: 1 },
+  };
+  assert.deepEqual(f.load().biuLimits, f.value.execution.biuLimits);
+});
+
+test("execution profile rejects malformed per-BIU execution limits", () => {
+  const key = "ExampleOrg/sample-project#220102";
+  for (const value of [
+    [],
+    { "ExampleOrg/sample-project#0": { maxCycles: 3, maxReplacementsPerPhase: 1 } },
+    { "OtherOrg/other-project#220102": { maxCycles: 3, maxReplacementsPerPhase: 1 } },
+    { [key]: { maxCycles: 0, maxReplacementsPerPhase: 1 } },
+    { [key]: { maxCycles: 3, maxReplacementsPerPhase: -1 } },
+    { [key]: { maxCycles: 3, maxReplacementsPerPhase: 1, extra: true } },
+  ]) {
+    const f = fixture();
+    f.value.execution.biuLimits = value;
+    assert.throws(() => f.load(), /invalid config\.execution\.biuLimits/);
+  }
+});
+
 const fullLifecycle = ["CAPTURE", "SPECIFY", "PLAN", "TASKS", "READY", "IMPLEMENT", "VERIFY", "REVIEW", "ACCEPT", "DONE"];
 test("profile accepts the full lifecycle without changing worker roles", () => {
   const f = fixture();

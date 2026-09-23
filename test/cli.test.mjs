@@ -21,6 +21,10 @@ test("preflight receives the dispatched item issue", () => {
   assert.doesNotMatch(source, /config\.preflightIssue \?\? 11/);
 });
 
+test("CLI passes configured per-BIU execution limits to the relay", () => {
+  assert.match(source, /biuLimits: config\.biuLimits, authority/);
+});
+
 test("operator documents invocation-correlated markers, Accept routing, and dry-run limits", () => {
   const operator = readFileSync(new URL("../docs/operations.md", import.meta.url), "utf8");
   assert.match(operator, /<!-- B-DISP: INVOCATION=<exact-id> RESULT=VERIFY -->/);
