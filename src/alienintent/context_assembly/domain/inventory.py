@@ -209,9 +209,32 @@ def _mask_markdown(text: str, preserve_columns: bool = True) -> str:
                   lambda m: " "*len(m[1])+m[2]+" "*len(m[1]) if preserve_columns else m[2], text)
 
 
+def _mask_destinations(line: str) -> str:
+    """Mask complete inline destinations, balancing unescaped parentheses."""
+    masked = list(line)
+    start = 0
+    while (start := line.find("](", start)) != -1:
+        end, depth = start + 2, 1
+        while end < len(line) and depth:
+            if line[end] == "\\":
+                end += 2  # An escaped parenthesis cannot open or close a destination.
+                continue
+            if line[end] == "(":
+                depth += 1
+            elif line[end] == ")":
+                depth -= 1
+            end += 1
+        if depth == 0:
+            masked[start+1:end] = " " * (end-start-1)
+            start = end
+        else:
+            start += 2  # Incomplete syntax must not hide the remaining prose.
+    return "".join(masked)
+
+
 def _reference_tokens(line: str, namespaces: tuple[str, ...]) -> tuple[Token, ...]:
     # Hide only Markdown destinations; preserve source columns and complete labels.
-    line = re.sub(r"\]\([^\n)]*\)", lambda m: "]"+" "*(len(m[0])-1), line)
+    line = _mask_destinations(line)
     line = re.sub(r"(?<![A-Za-z0-9])(\*\*|__|`|\*)(.+?)\1(?![A-Za-z0-9])",
                   lambda m: " "*len(m[1])+m[2]+" "*len(m[1]), line)
     result = []
@@ -311,9 +334,10 @@ def assemble(project: str, records: tuple[SourceRecord, ...], previous: Inventor
                            or re.match(r"(?:Status:\s*)?retired\b", semantic, re.I))
             dependencies = tuple(sorted({operand for t in source_tokens if span.start <= t.line <= span.end and not t.reason
                                          for operand in t.operands if operand != raw}))
-            fields = (raw, spec.authority_revision, semantic, spec.role, dependencies, spec.satisfaction_links, retired)
+            links = tuple(sorted(set(spec.satisfaction_links)))
+            fields = (raw, spec.authority_revision, semantic, spec.role, dependencies, links, retired)
             definitions.append(Requirement(raw, digest(fields), spec.authority_revision, semantic, spec.role,
-                                           dependencies, spec.satisfaction_links, (spec.provenance,), (spec.path,), ((spec.path, span.start, span.end),), retired,
+                                           dependencies, links, (spec.provenance,), (spec.path,), ((spec.path, span.start, span.end),), retired,
                                            spec.provenance.authority_status == "approved" and spec.role == "Requirement"))
     merged: dict[tuple[str, str], Requirement] = {}
     for d in definitions:

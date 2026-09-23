@@ -29,6 +29,7 @@ TEST = "tests.context_assembly.test_inventory.InventoryTests."
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--invocation", default=INVOCATION)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     repository = LocalEvidenceRepository(args.output/"evidence", "AlienLogicLab/alienintent", "fx-u1")
@@ -40,10 +41,14 @@ def main():
     (args.output/"historical-manifest.json").write_text(json.dumps(asdict(manifest), indent=2)+"\n")
     (args.output/"historical-snapshot.json").write_text(json.dumps(asdict(snapshot), indent=2)+"\n")
     service = InventoryService(repository, SQLiteOperationalStore(args.output/"current.sqlite"), manifest.project,
-                               "fx-u1", definition_ref, INVOCATION, frozenset({"private"}))
+                               "fx-u1", definition_ref, args.invocation, frozenset({"private"}))
     _, snapshot_ref = service.publish(manifest, snapshot, 0)
     assert service.read()[1]["defined_ids"] == list(snapshot.defined_ids)
     controls = [
+        ("markdown-destination-boundary", DOMAIN, '    line = _mask_destinations(line)',
+         '    line = re.sub(r"\\]\\([^\\n)]*\\)", lambda m: "]"+" "*(len(m[0])-1), line)', "test_markdown_balanced_and_escaped_destinations"),
+        ("satisfaction-link-order", DOMAIN, 'links = tuple(sorted(set(spec.satisfaction_links)))',
+         'links = spec.satisfaction_links', "test_satisfaction_link_set_order_preserves_revision_and_applicability"),
         ("canonical-parser-disabled", DOMAIN, 'if form == "canonical_requirement":', 'if form == "canonical_requirement" and False:', "test_historical_exact_manifest"),
         ("recorded-parser-disabled", DOMAIN, 'if form == "recorded_as":', 'if form == "recorded_as" and False:', "test_historical_exact_manifest"),
         ("conflicting-definition-effective", DOMAIN, 'if requirement_id in snapshot.conflicts:', 'if False and requirement_id in snapshot.conflicts:', "test_conflicts_aliases_revision_retirement_and_local_holds"),
@@ -81,7 +86,7 @@ def main():
         value = json.dumps(observation, sort_keys=True)
         record = Observation(Header("AlienLogicLab/alienintent", "fx-u1", logical, sha256(value.encode()).hexdigest(),
                                     (definition_ref,), "private"), definition_ref, logical, "python-unittest-real-mutated-copy",
-                             (), value, None, "Morty", INVOCATION, "sha256:"+sha256(raw).hexdigest())
+                             (), value, None, "Morty", args.invocation, "sha256:"+sha256(raw).hexdigest())
         observation["observation_ref"] = asdict(repository.put(record))
         observations.append(observation)
         print(name, phase, completed.returncode, flush=True)
@@ -107,7 +112,7 @@ def main():
             restored, _ = run(root, name, "restored", test, 0)
             outcomes.append({"control": name, "discriminated": intact == 0 and fault != 0 and b"FAIL:" in raw and restored == 0})
     report = {"schema_version": 1, "fixture": "FX-U1", "baseline": "901d17444aa0aa1e5098017c3726d0d0daad1442",
-              "invocation": INVOCATION, "candidate_revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
+              "invocation": args.invocation, "candidate_revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
               "source_manifest_digest": sha256(json.dumps(json.loads((ROOT/"docs/evidence/wave2-design-contracts.json").read_text())["contracts"][0]["identifier_contract"]["historical_fixture_manifest"], sort_keys=True, separators=(",", ":")).encode()).hexdigest(),
               "implementation_files": {str(p.relative_to(ROOT)): sha256(p.read_bytes()).hexdigest() for p in sorted((ROOT/"src/alienintent/context_assembly").rglob("*.py"))},
               "historical_snapshot_ref": asdict(snapshot_ref), "historical_snapshot_digest": snapshot.digest,

@@ -98,6 +98,49 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(s.referenced_ids, ("SF-REQ-007", "SF-REQ-011"))
         self.assertEqual(s.identifier_issues, ())
 
+    def test_markdown_balanced_and_escaped_destinations(self):
+        for destination in ("https://host/a(b)/SF-REQ-999",
+                            "https://host/a(b(c))/SF-REQ-999",
+                            r"https://host/a\)/SF-REQ-999",
+                            r"https://host/a\(/SF-REQ-999",
+                            r"https://host/a\\(b)/SF-REQ-999"):
+            with self.subTest(destination=destination):
+                body = f"[SF-REQ-007]({destination}) SF-REQ-008"
+                s = assemble("p", (source(body=body),))
+                self.assertEqual(s.identifier_issues, ())
+                self.assertEqual(s.referenced_ids, ("SF-REQ-007", "SF-REQ-008", "SF-REQ-011"))
+                self.assertEqual(resolve(s, "SF-REQ-011").status, "ELIGIBLE_FOR_PREPARATION")
+                self.assertEqual([(t.raw_token, t.column) for t in s.tokens if t.line == 2],
+                                 [("SF-REQ-007", 2), ("SF-REQ-008", body.index("SF-REQ-008")+1)])
+                bad = assemble("p", (source(body=f"[SF-REQ-007-extra]({destination})"),))
+                self.assertEqual(len(bad.identifier_issues), 1)
+                self.assertEqual(bad.identifier_issues[0].raw_token, "SF-REQ-007-extra")
+                self.assertEqual(resolve(bad, "SF-REQ-011").status, "UNVERIFIED")
+        incomplete = assemble("p", (source(body="[SF-REQ-007](unterminated SF-REQ-008"),))
+        self.assertIn("SF-REQ-008", incomplete.referenced_ids)
+
+    def test_satisfaction_link_set_order_preserves_revision_and_applicability(self):
+        a = source(body="Depends on SF-REQ-002", links=("BIU:1", "BIU:2"))
+        downstream = source("SF-REQ-003", body="Depends on SF-REQ-011", path="down.md", links=("BIU:3",))
+        first = assemble("p", (a, downstream))
+        for form in FORMS:
+            for links in (("BIU:2", "BIU:1"), ("BIU:2", "BIU:1", "BIU:2")):
+                with self.subTest(form=form, links=links):
+                    b = source(body="Depends on SF-REQ-002", form=form, path="b.md", links=links)
+                    merged = assemble("p", (a, b))
+                    self.assertEqual(len(merged.current), 1)
+                    d = resolve(merged, "SF-REQ-011").definition
+                    self.assertIsNotNone(d)
+                    self.assertEqual(d.satisfaction_links, ("BIU:1", "BIU:2"))
+                    self.assertEqual(d.authority_revision, a.spec.authority_revision)
+                    self.assertEqual(d.dependencies, ("SF-REQ-002",))
+                    second = assemble("p", (b, downstream), previous=first)
+                    self.assertEqual(second.stale_links, ())
+                    self.assertEqual(len(second.history), 2)
+                    self.assertEqual(resolve(second, "SF-REQ-011").definition.revision, d.revision)
+        changed = assemble("p", (source(body="Depends on SF-REQ-002", links=("BIU:4",)), downstream), previous=first)
+        self.assertEqual(changed.stale_links, ("BIU:1", "BIU:2", "BIU:3"))
+
     def test_conflicts_aliases_revision_retirement_and_local_holds(self):
         a = source(body="The system retains **evidence**. SF-REQ-002", links=("BIU:1",))
         b = source(body="The system retains evidence. SF-REQ-002", form=FORMS[1], path="b.md", links=("BIU:1",))
