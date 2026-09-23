@@ -1,0 +1,26 @@
+test_source_scope_digest_and_provenance (tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance) ... FAIL
+
+======================================================================
+FAIL: test_source_scope_digest_and_provenance (tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-360lubb4/tests/context_assembly/test_inventory.py", line 136, in test_source_scope_digest_and_provenance
+    self.assertEqual(observed.identifier_issues, ())
+AssertionError: Tuples differ: (Issue(path='excluded.md', line=1, raw_tok[98 chars]D'),) != ()
+
+First tuple contains 1 additional elements.
+First extra element 0:
+Issue(path='excluded.md', line=1, raw_token='SF-REQ-011-extra', reason='UNRECOGNIZED_REQUIREMENT_ID', grammar_revision=2, status='UNVERIFIED')
+
++ ()
+- (Issue(path='excluded.md',
+-        line=1,
+-        raw_token='SF-REQ-011-extra',
+-        reason='UNRECOGNIZED_REQUIREMENT_ID',
+-        grammar_revision=2,
+-        status='UNVERIFIED'),)
+
+----------------------------------------------------------------------
+Ran 1 test in 4.394s
+
+FAILED (failures=1)

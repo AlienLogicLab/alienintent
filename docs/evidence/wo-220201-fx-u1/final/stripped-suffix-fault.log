@@ -1,0 +1,60 @@
+test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) ... 
+  test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='factory_plan_heading', token='SF-REQ-011A') ... FAIL
+  test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='canonical_requirement', token='SF-REQ-011A') ... FAIL
+  test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='recorded_as', token='SF-REQ-011A') ... FAIL
+
+======================================================================
+FAIL: test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='factory_plan_heading', token='SF-REQ-011A')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-360lubb4/tests/context_assembly/test_inventory.py", line 60, in test_all_forms_exact_tokens_and_issues
+    self.assertEqual(tuple(t.raw_token for t in s.tokens if t.kind == "RequirementIdentifier"), (token,))
+AssertionError: Tuples differ: ('SF-REQ-011',) != ('SF-REQ-011A',)
+
+First differing element 0:
+'SF-REQ-011'
+'SF-REQ-011A'
+
+- ('SF-REQ-011',)
++ ('SF-REQ-011A',)
+?             +
+
+
+======================================================================
+FAIL: test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='canonical_requirement', token='SF-REQ-011A')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-360lubb4/tests/context_assembly/test_inventory.py", line 60, in test_all_forms_exact_tokens_and_issues
+    self.assertEqual(tuple(t.raw_token for t in s.tokens if t.kind == "RequirementIdentifier"), (token,))
+AssertionError: Tuples differ: ('SF-REQ-011',) != ('SF-REQ-011A',)
+
+First differing element 0:
+'SF-REQ-011'
+'SF-REQ-011A'
+
+- ('SF-REQ-011',)
++ ('SF-REQ-011A',)
+?             +
+
+
+======================================================================
+FAIL: test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='recorded_as', token='SF-REQ-011A')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-360lubb4/tests/context_assembly/test_inventory.py", line 60, in test_all_forms_exact_tokens_and_issues
+    self.assertEqual(tuple(t.raw_token for t in s.tokens if t.kind == "RequirementIdentifier"), (token,))
+AssertionError: Tuples differ: ('SF-REQ-011',) != ('SF-REQ-011A',)
+
+First differing element 0:
+'SF-REQ-011'
+'SF-REQ-011A'
+
+- ('SF-REQ-011',)
++ ('SF-REQ-011A',)
+?             +
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.008s
+
+FAILED (failures=3)

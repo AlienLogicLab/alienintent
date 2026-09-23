@@ -1,0 +1,6 @@
+test_issue_holds_only_affected_span_within_one_source (tests.context_assembly.test_inventory.InventoryTests.test_issue_holds_only_affected_span_within_one_source) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+OK

@@ -1,0 +1,24 @@
+test_historical_exact_manifest (tests.context_assembly.test_inventory.InventoryTests.test_historical_exact_manifest) ... FAIL
+
+======================================================================
+FAIL: test_historical_exact_manifest (tests.context_assembly.test_inventory.InventoryTests.test_historical_exact_manifest)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-360lubb4/tests/context_assembly/test_inventory.py", line 42, in test_historical_exact_manifest
+    self.assertEqual(sorted(snapshot.definition_locators), slots)
+AssertionError: Lists differ: [('do[112 chars]ions/alienintent-software-factory-plan.md', 73[4851 chars]40')] != [('do[112 chars]ions/2026-09-20-design-contract-and-design-ver[5211 chars]40')]
+
+First differing element 1:
+('docs/decisions/alienintent-software-factory-plan.md', 73[35 chars]041')
+('docs/decisions/2026-09-20-design-contract-and-design-ver[51 chars]051')
+
+Second list contains 3 additional elements.
+First extra element 50:
+('docs/decisions/alienintent-software-factory-plan.md', 1071, 'factory_plan_heading', 'SF-REQ-038')
+
+Diff is 6174 characters long. Set self.maxDiff to None to see it.
+
+----------------------------------------------------------------------
+Ran 1 test in 6.850s
+
+FAILED (failures=1)

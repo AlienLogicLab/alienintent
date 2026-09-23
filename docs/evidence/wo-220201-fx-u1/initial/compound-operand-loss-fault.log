@@ -1,0 +1,42 @@
+test_reference_kinds_and_definition_rejection (tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection) ... 
+  test_reference_kinds_and_definition_rejection (tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection) (token='SF-REQ-001/SF-REQ-002') ... FAIL
+  test_reference_kinds_and_definition_rejection (tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection) (token='SF-REQ-030/054') ... FAIL
+
+======================================================================
+FAIL: test_reference_kinds_and_definition_rejection (tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection) (token='SF-REQ-001/SF-REQ-002')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-kx4mt3sh/tests/context_assembly/test_inventory.py", line 86, in test_reference_kinds_and_definition_rejection
+    self.assertEqual((got.kind, got.operands, got.reason), (kind, operands, None))
+AssertionError: Tuples differ: ('CompoundReference', ('SF-REQ-001',), None) != ('CompoundReference', ('SF-REQ-001', 'SF-REQ-002'), None)
+
+First differing element 1:
+('SF-REQ-001',)
+('SF-REQ-001', 'SF-REQ-002')
+
+- ('CompoundReference', ('SF-REQ-001',), None)
++ ('CompoundReference', ('SF-REQ-001', 'SF-REQ-002'), None)
+?                                     +++++++++++++
+
+
+======================================================================
+FAIL: test_reference_kinds_and_definition_rejection (tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection) (token='SF-REQ-030/054')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-kx4mt3sh/tests/context_assembly/test_inventory.py", line 86, in test_reference_kinds_and_definition_rejection
+    self.assertEqual((got.kind, got.operands, got.reason), (kind, operands, None))
+AssertionError: Tuples differ: ('CompoundReference', ('SF-REQ-030',), None) != ('CompoundReference', ('SF-REQ-030', 'SF-REQ-054'), None)
+
+First differing element 1:
+('SF-REQ-030',)
+('SF-REQ-030', 'SF-REQ-054')
+
+- ('CompoundReference', ('SF-REQ-030',), None)
++ ('CompoundReference', ('SF-REQ-030', 'SF-REQ-054'), None)
+?                                     +++++++++++++
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.013s
+
+FAILED (failures=2)

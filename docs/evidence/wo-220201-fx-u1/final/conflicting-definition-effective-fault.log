@@ -1,0 +1,17 @@
+test_conflicts_aliases_revision_retirement_and_local_holds (tests.context_assembly.test_inventory.InventoryTests.test_conflicts_aliases_revision_retirement_and_local_holds) ... FAIL
+
+======================================================================
+FAIL: test_conflicts_aliases_revision_retirement_and_local_holds (tests.context_assembly.test_inventory.InventoryTests.test_conflicts_aliases_revision_retirement_and_local_holds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-360lubb4/tests/context_assembly/test_inventory.py", line 112, in test_conflicts_aliases_revision_retirement_and_local_holds
+    self.assertEqual(resolve(conflict, "SF-REQ-011").status, "CONFLICT")
+AssertionError: 'ELIGIBLE_FOR_PREPARATION' != 'CONFLICT'
+- ELIGIBLE_FOR_PREPARATION
++ CONFLICT
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+FAILED (failures=1)

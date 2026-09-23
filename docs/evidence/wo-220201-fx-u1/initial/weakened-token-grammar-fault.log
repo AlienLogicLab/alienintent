@@ -1,0 +1,102 @@
+test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) ... 
+  test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='factory_plan_heading', token='SF-REQ-011A') ... FAIL
+  test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='factory_plan_heading', token='SF-REQ-1000') ... FAIL
+  test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='canonical_requirement', token='SF-REQ-011A') ... FAIL
+  test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='canonical_requirement', token='SF-REQ-1000') ... FAIL
+  test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='recorded_as', token='SF-REQ-011A') ... FAIL
+  test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='recorded_as', token='SF-REQ-1000') ... FAIL
+
+======================================================================
+FAIL: test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='factory_plan_heading', token='SF-REQ-011A')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-kx4mt3sh/tests/context_assembly/test_inventory.py", line 59, in test_all_forms_exact_tokens_and_issues
+    self.assertEqual(s.defined_ids, (token,))
+AssertionError: Tuples differ: () != ('SF-REQ-011A',)
+
+Second tuple contains 1 additional elements.
+First extra element 0:
+'SF-REQ-011A'
+
+- ()
++ ('SF-REQ-011A',)
+
+======================================================================
+FAIL: test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='factory_plan_heading', token='SF-REQ-1000')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-kx4mt3sh/tests/context_assembly/test_inventory.py", line 59, in test_all_forms_exact_tokens_and_issues
+    self.assertEqual(s.defined_ids, (token,))
+AssertionError: Tuples differ: () != ('SF-REQ-1000',)
+
+Second tuple contains 1 additional elements.
+First extra element 0:
+'SF-REQ-1000'
+
+- ()
++ ('SF-REQ-1000',)
+
+======================================================================
+FAIL: test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='canonical_requirement', token='SF-REQ-011A')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-kx4mt3sh/tests/context_assembly/test_inventory.py", line 59, in test_all_forms_exact_tokens_and_issues
+    self.assertEqual(s.defined_ids, (token,))
+AssertionError: Tuples differ: () != ('SF-REQ-011A',)
+
+Second tuple contains 1 additional elements.
+First extra element 0:
+'SF-REQ-011A'
+
+- ()
++ ('SF-REQ-011A',)
+
+======================================================================
+FAIL: test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='canonical_requirement', token='SF-REQ-1000')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-kx4mt3sh/tests/context_assembly/test_inventory.py", line 59, in test_all_forms_exact_tokens_and_issues
+    self.assertEqual(s.defined_ids, (token,))
+AssertionError: Tuples differ: () != ('SF-REQ-1000',)
+
+Second tuple contains 1 additional elements.
+First extra element 0:
+'SF-REQ-1000'
+
+- ()
++ ('SF-REQ-1000',)
+
+======================================================================
+FAIL: test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='recorded_as', token='SF-REQ-011A')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-kx4mt3sh/tests/context_assembly/test_inventory.py", line 59, in test_all_forms_exact_tokens_and_issues
+    self.assertEqual(s.defined_ids, (token,))
+AssertionError: Tuples differ: () != ('SF-REQ-011A',)
+
+Second tuple contains 1 additional elements.
+First extra element 0:
+'SF-REQ-011A'
+
+- ()
++ ('SF-REQ-011A',)
+
+======================================================================
+FAIL: test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) (form='recorded_as', token='SF-REQ-1000')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-kx4mt3sh/tests/context_assembly/test_inventory.py", line 59, in test_all_forms_exact_tokens_and_issues
+    self.assertEqual(s.defined_ids, (token,))
+AssertionError: Tuples differ: () != ('SF-REQ-1000',)
+
+Second tuple contains 1 additional elements.
+First extra element 0:
+'SF-REQ-1000'
+
+- ()
++ ('SF-REQ-1000',)
+
+----------------------------------------------------------------------
+Ran 1 test in 0.018s
+
+FAILED (failures=6)
