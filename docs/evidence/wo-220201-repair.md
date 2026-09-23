@@ -43,3 +43,39 @@ regression before repair, then taught the scanner to respect the angle-delimited
 boundary. Both targeted tests now pass, including opening and closing literal
 parentheses. Full validation is rerun against the final implementation; intermediate
 runs are not final source proof. The original candidate evidence remains untouched.
+
+Follow-up review also exercised leading whitespace before angle destinations and
+single/double quoted titles containing parentheses. Those variants were reproduced
+red, then covered by destination/title states. Final read-only review at
+`c25c378115881bf6e3e2d48504cce20cdc19e067` found no remaining bounded findings and
+independently reran both regression tests (2 passed, exit 0).
+
+## Final validation
+
+- Full Python suite at final implementation: 482 passed in 72.47s, exit 0.
+- Node checks: runtime 332/332, preflight PASS, RAI 18/18, policy 3/3, exit 0.
+  Node inputs were unchanged by the later Python-only boundary repair.
+- Architecture fitness at final implementation: PASS, exit 0.
+- Original proof, initial/final FX-U1 artifacts and predecessor evidence remain
+  byte-for-byte unchanged relative to the prior published candidate.
+- Durable runtime readback binds this exact invocation and worktree resource;
+  active count one, systemd supervision with 7200000 ms runtime limit.
+
+Portable final proof is retained under `wo-220201-fx-u1/repair/`; operational
+SQLite state stays outside the repository. The pre-repair red log records exactly
+2 failures and 13 passes. Intermediate runs in /tmp are diagnostic only and do
+not substitute for final source-bound proof. Tokens and cost remain UNKNOWN.
+
+## Custody disposition
+
+Runtime-managed candidate remains retained for fresh independent verification and
+BIU closure. It is not LANDED or accepted; verifier retrieval is the next gate.
+Only the assigned candidate branch is published. No main push, lifecycle mutation,
+deployment, live operation, other-repository mutation, or bootstrap retirement.
+
+Final FX-U1: **12/12 controls discriminate**, 36 intact/fault/restored observations,
+exit 0. Original 10 controls plus independent reversions of both repairs. Report binds
+implementation `c25c378115881bf6e3e2d48504cce20cdc19e067` and exact source digests.
+Raw-log hashes, digest-addressed evidence objects and implementation hashes verify.
+Historical exact sets/forms/locators still pass (56 referenced, 53 defined).
+Raw logs retain original whitespace; source/document whitespace checks pass.
