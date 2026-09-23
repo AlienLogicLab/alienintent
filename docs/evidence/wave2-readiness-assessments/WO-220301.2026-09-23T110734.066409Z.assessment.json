@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Implement WO-220301 / DAG node C1 to provide durable attention identity and resolution within the bounded planned extent, preserving pending attention items, identity/history/attribution, authorization boundaries, and staged migration behavior without expanding into sibling nodes, live operation, host cutover, or automatic activation.",
+    "implementation_unknowns": [
+      "Where the current attention queue, history, alias, origin ID, handler attribution, lane, revision, actor, and DecisionInbox data structures are implemented.",
+      "How existing DONE/judgment event IDs are generated and persisted, and what storage boundary must be used to dedupe them across restart.",
+      "How notification delivery attempts and failures are currently represented, and whether an existing retry or audit mechanism can be reused.",
+      "How authorized consumer inspection and handling is currently modeled after the original conversation is gone.",
+      "How to implement the zero-model-launch spy for unbound activation within the existing test or fixture framework.",
+      "How the staged M-ATTENTION migration should snapshot queue/history, stage aliases, compare producers/consumers, and reconcile rollback effects using existing repository conventions.",
+      "How to encode and publish the FX-C1 commands, inputs, expected outcomes, evidence schema, and independent-verifier retrieval evidence in the repository's established proof format."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Incorrect identity or dedupe persistence could allow duplicate DONE/judgment handling after restart.",
+      "Notification failure handling could accidentally drop or resolve pending items instead of preserving them with auditable failed attempts.",
+      "Authorization checks for actor, revision, or lane could be incomplete, allowing wrong consumers to resolve attention items.",
+      "SEEN and RESOLVED semantics could be conflated, weakening pending-item lifecycle guarantees.",
+      "Migration staging could corrupt or lose source queue, aliases, history, origin IDs, or pending effects if rollback reconciliation is incomplete.",
+      "Implementation could accidentally cross stated boundaries by enabling automatic activation, launching models on an unbound activation path, retiring existing protection, or performing host/source-authority cutover.",
+      "Proof could be too local or fixture-specific unless the FX-C1 evidence clearly demonstrates intact/fault/restored discrimination and independent retrieval."
+    ],
+    "next_action": "Hand off for implementation of WO-220301/C1 against the pinned FX-C1 proof contract and stated boundaries, treating all referenced dependency receipts and repository artifacts as inputs to be confirmed during normal execution rather than as independently verified by this readiness gate.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "rationale": "The controlling condition is readiness: the owner intent is specific, bounded, and authority-aware; material product and architectural decisions are already stated, including no unattended activation authority, no live operation, no sibling work, no host cutover, and staged migration only. The remaining uncertainties are implementation research about locating existing mechanisms and fitting the proof into the repository. The work is cohesive around one DAG node and one proof fixture; its subconcerns share the same attention identity/resolution lifecycle and can receive a single meaningful independent verification verdict. Expected repair is not purely local because persistence, authorization, migration, and proof are coupled, but the rework remains bounded within the C1 attention-resolution scope.",
+    "semantic_split_recommendation": [],
+    "summary": "The submitted work describes a cohesive implementation for durable attention identity and resolution, including restart-stable dedupe for DONE/judgment events, failure-preserving notification behavior, strict SEEN versus RESOLVED semantics, actor/revision/lane authorization checks, DecisionInbox separation, origin/history/handler preservation, and a staged M-ATTENTION migration. Acceptance is tied to SF-REQ-053-AC-05 and AC-06 plus the FX-C1 proof fixture with intact/fault/restored discrimination and independent retrieval. The stated dependencies and prerequisite receipts are reported as completed and retained; this assessment does not independently verify those artifacts.",
+    "verification_assessment": "Acceptance is observable: AC-05 can be verified by inducing notification failure, confirming the item remains pending with a recorded failed attempt, and then having a later authorized consumer inspect and handle it without the former conversation; AC-06 can be verified by proving notification without unauthorized authority-bearing activation and by confirming the unbound activation path launches zero models. FX-C1 is described as the executable proof contract with pinned commands, inputs, expected outcomes, evidence schema, intact/fault/restored probes, and independent retrieval. One independent verification verdict is meaningful for this C1 node because the scope is bounded to durable attention identity/resolution and explicitly excludes live operation, sibling node work, host cutover, and broader release authority."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "6b056813f6e3643219b4fac50be2d2f2785536a7",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-23T11:08:04.568538+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 5144,
+    "input_sha256": "0c3b385fa4993746924abc027f601f9147be4d23928517aec0c438d6a00bc9cc",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-lc_o7r3a/WO-220301.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "started_at": "2026-09-23T11:07:34.066409+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220301"
+}
