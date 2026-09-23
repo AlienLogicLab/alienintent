@@ -1,0 +1,98 @@
+{
+  "schema_version": 1,
+  "fixture_id": "FX-S1",
+  "biu_id": "WO-220102",
+  "status": "PINNED_BEFORE_IMPLEMENTATION",
+  "invocation": "AlienLogicLab/alienintent#71:PRODUCER:c1f15fac-1056-4e6b-8206-ad5d607a277c",
+  "admission_baseline": "7bd7a6e782d8c4c1562f6f1f6813322870935825",
+  "owner": "Morty / morty-worker",
+  "candidate_branch": "b-disp/b69c44d2-ee8b-47a0-afbf-7a1177e555c7",
+  "inputs": {
+    "docs/work-units/wave2/WO-220102.md": "sha256:911958143c17a13d615eca72b4c6a942e0136e7dce6f3310c478622ae66251bd",
+    "docs/evidence/wave2-execution-packets/WO-220102.packet.json": "sha256:0b32af46d0fe4705295384cd127db410d94ddec39ab2df7430bac6e82480e902",
+    "docs/evidence/wave2-execution-packets/WO-220102.allocation.json": "sha256:d8c691239219fda887256f85fcc94b555b863f46b3bd11a829679217744924c7",
+    "docs/evidence/wave2-design-contracts.json": "sha256:56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242",
+    "src/alienintent/execution_coordination/domain/verdict.py": "sha256:757d343e459ee0fe56b6f26c93c625b1f6df22007592be4a37cd8b92bf0a0e14",
+    "src/alienintent/execution_coordination/adapters/sqlite_store.py": "sha256:49855e8b0c3565f3b031a3ac9e24373ac3cbe05c8f3b13d4622ed14050dc1e91",
+    "docs/evidence/wave2-proof-fixtures/FX-S0/execution-record.json": "sha256:6be22bb47591840f9e2c64a99cee63db30a8d72b18f0e359aacadc95f5bebc02"
+  },
+  "predecessor": {
+    "candidate": "761a3cb4d6e24dc24ec370de45e25fe8c505eeda",
+    "verifier_receipt": "https://github.com/AlienLogicLab/alienintent/issues/69#issuecomment-5777072691",
+    "closure_receipt": "https://github.com/AlienLogicLab/alienintent/issues/69#issuecomment-5780228636",
+    "receipt_locator_observation": "Packet cites 5780241887 (HTTP 404); actual retained Morty closure receipt 5780228636 names the same accepted SHA and merge 9174849713df2685117de7a8150126d916a4b644. No authority or proof superseded. All 12 FX-S0 artifact digests verified; accepted SHA is ancestor of admission baseline.",
+    "limitations": [
+      "success collapse remains",
+      "CI namespace limitation remains",
+      "no new live proof"
+    ]
+  },
+  "commands": [
+    {
+      "id": "C1",
+      "command": "python3 -m pytest -q tests/evidence_learning tests/execution_coordination/test_evidence_verdict_bridge.py tests/composition/test_evidence_profile.py",
+      "expected_exit": 0
+    },
+    {
+      "id": "C2",
+      "command": "python3 tools/evidence/fx_s1_evidence.py --output <external-root>",
+      "expected_exit": 0,
+      "expected": "intact and restored acceptance tests pass; each of kind/authority/revision removal produces assertion failure with exactly one applied mutation"
+    },
+    {
+      "id": "C3",
+      "command": "python3 tools/fitness/check_architecture.py --root src/alienintent --check all",
+      "expected_exit": 0
+    },
+    {
+      "id": "C4",
+      "command": "python3 -m pytest -q",
+      "expected_exit": 0
+    },
+    {
+      "id": "C5",
+      "command": "node scripts/check.mjs all",
+      "expected_exit": 0
+    }
+  ],
+  "probes": {
+    "AC01": "Store separately typed definition, worker claim and measured test observation; only authorized evaluator plus exact policy and required trusted evidence yields ACCEPT through unchanged evaluate_verdict.",
+    "AC02": "Missing object, corrupt digest, stale definition revision, wrong observation role, unauthorized evaluator or wrong policy reference refuses verdict.",
+    "AC03": "Append conflicting observation; retain both objects and definition; pointer becomes held and cannot reuse prior verdict.",
+    "AC04": "Observation/hypothesis with normative label or lacking exact source-authorized definition digest rejected; authorized versioned definition admitted.",
+    "durability": "Real external object directory plus real temporary SQLite. File fsync -> exclusive install -> directory fsync -> digest read -> CAS. Kill subprocess immediately before/after actual SQLite commit, reopen and verify retained object/pointer. Stale CAS cannot overwrite; identical puts idempotent; incompatible object/pointer schemas refuse mutation.",
+    "types": "Round-trip exact JSON scalar types; null requires uncertainty reason, distinct from zero; NaN/Infinity rejected.",
+    "isolation": "Profile and access scope enforce reference isolation; safe roots and size limits; no inventory, RAI, source authority authoring, lifecycle or runtime changes."
+  },
+  "fixture_inputs": {
+    "profile": "fx-s1",
+    "project": "AlienLogicLab/alienintent",
+    "definition": "requirement/tests revision 1; required_ids=[tests]",
+    "issuer": "fixture-authority",
+    "observer": "fixture-runner",
+    "worker": "fixture-worker (untrusted)",
+    "evaluator": "fixture-verifier",
+    "policy": "exact digest of existing verdict.py",
+    "external_authority": "fixed fixture refs (sha256 canonical JSON) supplied by composition, never minted by ingestion",
+    "conflict": "trusted tests=true then tests=false at same exact definition; preserve both",
+    "unknown": "value=null, uncertainty=not measured"
+  },
+  "evidence_schema": {
+    "record_kind": "ProofFixtureExecution",
+    "schema_version": 1,
+    "fields": [
+      "fixture_id",
+      "invocation",
+      "source_revision",
+      "fixture_plan_sha256",
+      "input_digests",
+      "commands with exact argv/exit/stdout/stderr",
+      "observations with immutable sha256 refs",
+      "mutation application counts",
+      "expected/observed outcomes",
+      "independent_verdict=PENDING"
+    ],
+    "source_pin": "Execution records pin a committed source SHA. Final evidence-only candidate SHA is published in the single Issue result comment; no self-referential digest."
+  },
+  "disposition": "Published candidate retained under runtime-managed BIU policy for fresh independent verifier; no direct main push, deployment, service changes, GC or other repository edits."
+}
