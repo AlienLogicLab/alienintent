@@ -1,0 +1,13 @@
+[Unit]
+Description=AlienIntent temporary non-cognizant Factory Director Host
+After=default.target
+
+[Service]
+Type=simple
+ExecStart=%h/.local/share/alienintent-bootstrap/factory-director-host/factory-director-host.sh
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target
