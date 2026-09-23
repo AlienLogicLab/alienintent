@@ -32,7 +32,7 @@
     "why": "The current self-hosting profile configures exactly one Codex worker for PRODUCER and one for VERIFIER, with distinct GitHub identities and worktree custody. This allocation does not change provider configuration or launch a worker."
   },
   "limits": {
-    "policy": "SWF-09: hard-enforced dimensions are wall-clock, attempts, retries, concurrency, cancellation; tokens and cost are measured, never assumed zero",
+    "policy": "SWF-09 requires hard enforcement of wall-clock, attempts, retries, concurrency and cancellation; this record distinguishes the configured mechanisms from the unenforced attempt/replacement counts. Tokens and cost are measured, never assumed zero.",
     "concurrency": {
       "value": 1,
       "enforcement": "bootstrap lane claim repository#issue:ROLE (synchronous check-and-reserve, ACTIVE_INVOCATION_EXISTS); WIP = 1",
@@ -40,13 +40,13 @@
     },
     "attempts": {
       "value": "3 execution cycles (SWF-32 semantics: IMPLEMENT→VERIFY→IMPLEMENT increments)",
-      "enforcement": "Program Director records the cycle from authoritative transitions and withholds any further release beyond cycle 3 (deterministic); the bootstrap itself enforces no cycle cap",
-      "status": "ENFORCED_BY_DIRECTOR_PROCEDURE"
+      "enforcement": "NOT HARD-ENFORCED: SWF-35 release admission governs READY→IMPLEMENT, but the bootstrap routes VERIFY REJECT→IMPLEMENT without a cycle-cap guard. Program Director tracking is required; it does not prevent that transition.",
+      "status": "NOT_ENFORCED_REQUIRES_DIRECTOR_TRACKING"
     },
     "retries_within_phase": {
       "value": "1 replacement worker per phase on non-terminal outcome (does not increment the cycle, SWF-32 §6)",
-      "enforcement": "liveness reconciliation (SWF-27) re-emits at most once per grace window; Director stops re-emission after one replacement",
-      "status": "ENFORCED_BY_DIRECTOR_PROCEDURE"
+      "enforcement": "NOT HARD-ENFORCED: SWF-29 liveness reconciliation may re-emit after a grace window, and the bootstrap has no per-phase replacement-count guard. Program Director tracking is required; a prior replacement does not mechanically prevent another re-emission.",
+      "status": "NOT_ENFORCED_REQUIRES_DIRECTOR_TRACKING"
     },
     "wall_clock": {
       "value": "120000 ms startup + 7200000 ms runtime + 300000 ms stop grace = 7620000 ms (127 min) total per invocation",
@@ -77,12 +77,12 @@
     "cycles_remaining": 3
   },
   "escalation": {
-    "budget_exhaustion": "cycle 3 verification rejection → HumanDecisionRequired via Decision Inbox (SF-REQ-035); no silent increase",
+    "budget_exhaustion": "Director must hold and route a cycle-3 verification rejection to HumanDecisionRequired via Decision Inbox (SF-REQ-035); the bootstrap does not enforce this cap",
     "architecture_question": "Architecture Decision Required (AA A5) via Decision Inbox; branch stops",
-    "provider_capacity": "classified PROVIDER_CAPACITY_INTERRUPTION, not a task failure; one replacement worker, then hold",
+    "provider_capacity": "classify PROVIDER_CAPACITY_INTERRUPTION, not a task failure; Director must track one replacement worker then hold, because the bootstrap has no replacement-count guard",
     "duration_exhaustion": "a hard duration stop yields a terminal supervision receipt; it does not grant a new retry or cycle"
   },
-  "not_granted_here": "Release authority is NOT YET GRANTED. SWF-35 standing grant applies only after native Agent Ready READY, Work Management READY, predecessor evidence, fully bound packet and release-admission checks; this allocation is not that verdict or transition.",
+  "not_granted_here": "Release authority is NOT YET GRANTED. SWF-35 standing grant applies only after native Agent Ready READY, Work Management READY, predecessor evidence, fully bound packet and release-admission checks. Attempts and replacement limits are not hard-enforced by the bootstrap, so this allocation does not establish fully bound execution admission or authorize a transition.",
   "provenance": {
     "baseline_sha": "90e4765b9c599206c0e5e34d18568575e949c576",
     "candidate_contract_sha256": "d74262cfb09af5d127832762983b8b2c368b075cdd9b6d9fde7ad7cda8ee1710",
@@ -92,6 +92,7 @@
       "~/.config/alienintent/self-hosting.json (workers.PRODUCER, workers.VERIFIER, execution.supervision; inspected 2026-09-23)",
       "src/runtime/systemd-supervision.mjs (owned transient-unit limits and fail-closed validation)",
       "docs/decisions/2026-09-21-biu-execution-cycle-counter.md (SWF-32)",
+      "docs/decisions/2026-09-20-liveness-reconciliation.md (SWF-29)",
       "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md (SWF-09)",
       "docs/decisions/2026-09-22-wave2-incremental-release-authority.md (SWF-35)"
     ]
