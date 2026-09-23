@@ -1,5 +1,16 @@
 const defaultRoleNames = { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" };
 
+// One grammar for the worker result marker, used for acceptance.
+const RESULT_MARKER = "<!-- B-DISP: INVOCATION=([^\\s>]+) (RESULT|CONTROL)=([^\\s>]+) -->";
+// Classification keys on the *attempt*, not on a successful parse: a truncated or
+// otherwise malformed marker is a broken worker result, not ordinary conversation, and
+// must still be reported. Only a comment carrying no B-DISP directive at all is routine.
+const RESULT_SIGNAL_ATTEMPT = /<!--\s*B-DISP:/;
+
+export function attemptsResultSignal(body) {
+  return typeof body === "string" && RESULT_SIGNAL_ATTEMPT.test(body);
+}
+
 export function allowedSignals(claim, roleNames = defaultRoleNames) {
   if (claim?.role === roleNames.PRODUCER) return claim.status === "ACCEPT"
     ? new Set(["DONE", "FOUNDER_EXCEPTION", "RETURN_TO_IMPLEMENT"])
@@ -9,7 +20,7 @@ export function allowedSignals(claim, roleNames = defaultRoleNames) {
 
 export function parseInvocationSignal(body, claim, roleNames = defaultRoleNames) {
   if (typeof body !== "string" || !claim?.invocationId) return null;
-  const markers = [...body.matchAll(/<!-- B-DISP: INVOCATION=([^\s>]+) (RESULT|CONTROL)=([^\s>]+) -->/g)];
+  const markers = [...body.matchAll(new RegExp(RESULT_MARKER, "g"))];
   if (markers.length !== 1) return null;
   const [, invocationId, kind, value] = markers[0];
   if (invocationId !== claim.invocationId || !allowedSignals(claim, roleNames).has(value)) return null;
