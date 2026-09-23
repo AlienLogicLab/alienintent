@@ -57,7 +57,9 @@ def run(output: Path) -> int:
               "source_revision": subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip(),
               "fixture_plan_sha256": digest((ROOT / PLAN).read_bytes()),
               "source_status": subprocess.check_output(["git", "status", "--porcelain"], cwd=ROOT, text=True),
-              "independent_verdict": "PENDING", "live_proof": "NOT_ESTABLISHED", "provider_calls_observed": 0,
+              "independent_verdict": "PENDING", "live_proof": "NOT_ESTABLISHED", "provider_calls_observed": None,
+              "provider_calls_reason": "FX-S1 does not instrument provider usage; retained S0 receipts carry their separate zero-call proof",
+              "token_usage": None, "cost": None, "usage_uncertainty": "not measured by this fixture runner",
               "scope": "local synthetic evidence/SQLite proof; not an invocation/provider accounting report",
               "commands": [], "mutations": [], "holds": []}
     paths = [p for base in ("src/alienintent/evidence_learning", "tests/evidence_learning") for p in (ROOT / base).rglob("*.py")]
