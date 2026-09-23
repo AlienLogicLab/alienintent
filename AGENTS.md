@@ -9,6 +9,11 @@ proceed; investigate unexplained changes and resolve actual conflicts. Preserve
 baseline, identity, credential and publication boundaries. Do not infer unseen
 concurrent actors or treat a nonempty Git status as an automatic admission failure.
 
+Repository-changing agent work must not edit the shared main checkout directly. It
+must run in an isolated worktree or workspace with one durable mutation owner,
+coordinated by the Factory Director. Reviewers use read-only state or separate
+isolated state. Conflicting ownership refuses mutation before any file change.
+
 Continue authorized edits, tests, independent review, repairs and meaningful local
 commits without routine confirmation. Stop at a concrete authority gap, conflicting
 baseline, destructive action or unavailable external prerequisite. A local commit

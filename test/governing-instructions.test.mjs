@@ -22,3 +22,12 @@ test("active operator admission distinguishes authorized changes from conflictin
   assert.match(guidance, /exact path.*content/i);
   assert.match(guidance, /new or unexpected bytes/i);
 });
+
+test("repository-changing work has isolated, non-conflicting mutation ownership", () => {
+  const contract = read("AGENTS.md").replace(/\s+/g, " ");
+  assert.match(contract, /must not edit the shared main checkout directly/i);
+  assert.match(contract, /isolated worktree or workspace/i);
+  assert.match(contract, /one durable mutation owner, coordinated by the Factory Director/i);
+  assert.match(contract, /Reviewers use read-only state or separate isolated state/i);
+  assert.match(contract, /Conflicting ownership refuses mutation before any file change/i);
+});
