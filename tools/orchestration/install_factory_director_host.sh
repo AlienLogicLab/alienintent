@@ -15,12 +15,18 @@ install -m 0644 "$source_root/systemd/alienintent-factory-director-host.service"
 if [[ ! -e "$config_root/factory-director-host-input.json" ]]; then
   install -m 0600 "$(cd "$source_root/../.." && pwd)/config/factory-director-host-input.example.json" "$config_root/factory-director-host-input.json"
 fi
+if [[ ! -e "$config_root/factory-director-host.env" ]]; then
+  install -m 0600 /dev/null "$config_root/factory-director-host.env"
+  printf '%s\n' '# Set FACTORY_DIRECTOR_WORKTREE to a dedicated linked worktree, never main.' >> "$config_root/factory-director-host.env"
+fi
 cat > "$target_root/factory-director-host.sh" <<EOF
 #!/usr/bin/env bash
+set -euo pipefail
+: "\${FACTORY_DIRECTOR_WORKTREE:?set an isolated linked worktree in factory-director-host.env}"
 exec python3 "$target_root/factory_director_host.py" \\
   --state-root "${HOME}/.local/state/alienintent/factory-director-host" \\
   --inputs "$config_root/factory-director-host-input.json" \\
-  --workdir "/mnt/d/Projects/alienintent" \\
+  --workdir "\${FACTORY_DIRECTOR_WORKTREE}" \\
   --prompt "$target_root/factory-director-episode.md"
 EOF
 chmod 0700 "$target_root/factory-director-host.sh"

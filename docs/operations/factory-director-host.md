@@ -49,8 +49,11 @@ tools/orchestration/install_factory_director_host.sh
 
 It copies repository-owned source into the established bootstrap location and
 runs `systemctl --user daemon-reload`; it does not enable or start the service.
-After an authorized projection has been installed and live coexistence has been
-checked against active BIU ownership, activation is explicitly:
+Before activation, create and configure a dedicated linked Factory Director
+worktree in `~/.config/alienintent/factory-director-host.env` as
+`FACTORY_DIRECTOR_WORKTREE=/absolute/path`. The host rejects the canonical main
+checkout. After an authorized projection has been installed and live coexistence
+has been checked against active BIU ownership, activation is explicitly:
 
 ```bash
 systemctl --user enable --now alienintent-factory-director-host.service

@@ -97,6 +97,38 @@ def test_second_host_refuses_conflicting_active_lease(tmp_path):
     assert second_launcher.launched == []
 
 
+def test_corrupt_lease_refuses_rather_than_launching_a_second_episode(tmp_path):
+    service, launcher = host(tmp_path)
+    (tmp_path / "lease.json").write_text("{not-json")
+
+    assert service.reconcile().reason == "AMBIGUOUS_LEASE"
+    assert launcher.launched == []
+
+
+def test_indeterminate_process_liveness_refuses_rather_than_relaunching(tmp_path):
+    class UncertainLauncher(InMemoryDirectorLauncher):
+        def liveness(self, episode):
+            return None
+    launcher = UncertainLauncher()
+    service = FactoryDirectorHost(tmp_path, required, launcher)
+    service.reconcile()
+
+    assert service.reconcile().reason == "EPISODE_LIVENESS_AMBIGUOUS"
+    assert len(launcher.launched) == 1
+
+
+def test_unfinished_prelaunch_lease_refuses_after_host_crash_window(tmp_path):
+    service, launcher = host(tmp_path)
+    (tmp_path / "lease.json").write_text(__import__("json").dumps({
+        "host_id": "old", "episode_id": "reserved", "pid": None,
+        "started_at": "2026-01-01T00:00:00+00:00", "process_start_ticks": None,
+        "status": "ACTIVATING",
+    }))
+
+    assert service.reconcile().reason == "AMBIGUOUS_LEASE"
+    assert launcher.launched == []
+
+
 def test_restart_reconstructs_active_lease_without_duplicate_activation(tmp_path):
     first, launcher = host(tmp_path)
     first.reconcile()

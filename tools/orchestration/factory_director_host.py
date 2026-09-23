@@ -84,6 +84,10 @@ class HostState(Enum):
     REFUSED = "REFUSED"
 
 
+class AmbiguousLease(Exception):
+    pass
+
+
 @dataclass(frozen=True)
 class Reconciliation:
     state: HostState
@@ -130,9 +134,22 @@ class InMemoryDirectorLauncher:
 class ProcessDirectorLauncher:
     """Starts a fresh bounded Codex episode; no conversation is resumed or inherited."""
     def __init__(self, workdir: Path | str, prompt_file: Path | str,
-                 codex: str | None = None, model: str | None = None) -> None:
+                 codex: str | None = None, model: str | None = None,
+                 require_isolated: bool = False) -> None:
         self.workdir, self.prompt_file = Path(workdir), Path(prompt_file)
         self.codex, self.model = codex or str(Path.home() / ".local/bin/codex"), model
+        if require_isolated and not self._is_linked_worktree():
+            raise ValueError("Factory Director workspace must be an isolated linked worktree")
+
+    def _is_linked_worktree(self) -> bool:
+        try:
+            git_dir = subprocess.run(["git", "-C", str(self.workdir), "rev-parse", "--absolute-git-dir"],
+                                     capture_output=True, text=True, check=True).stdout.strip()
+            common = subprocess.run(["git", "-C", str(self.workdir), "rev-parse", "--path-format=absolute", "--git-common-dir"],
+                                    capture_output=True, text=True, check=True).stdout.strip()
+            return bool(git_dir and common and Path(git_dir).resolve() != Path(common).resolve())
+        except (OSError, subprocess.SubprocessError):
+            return False
 
     def launch(self, episode_id: str) -> Episode:
         from codex_session import FILTERED_ENV
@@ -162,6 +179,9 @@ class ProcessDirectorLauncher:
             return None
 
     def is_active(self, episode: Episode) -> bool:
+        return self.liveness(episode) is True
+
+    def liveness(self, episode: Episode) -> bool | None:
         if episode.pid is None:
             return False
         try:
@@ -170,8 +190,10 @@ class ProcessDirectorLauncher:
                 return False
             current_start = fields[19]
             return episode.process_start_ticks is not None and current_start == episode.process_start_ticks
-        except (OSError, IndexError):
+        except FileNotFoundError:
             return False
+        except (OSError, IndexError):
+            return None
 
     def exit_reason(self, episode: Episode) -> str | None:
         return "PROCESS_EXITED" if not self.is_active(episode) else None
@@ -212,8 +234,10 @@ class FactoryDirectorHost:
     def _lease(self) -> dict | None:
         try:
             return json.loads(self._lease_path.read_text())
-        except (FileNotFoundError, json.JSONDecodeError):
+        except FileNotFoundError:
             return None
+        except (OSError, json.JSONDecodeError, TypeError) as exc:
+            raise AmbiguousLease("lease cannot be read") from exc
 
     def _episode(self, lease: dict) -> Episode:
         return Episode(lease["episode_id"], lease.get("pid"), lease["started_at"],
@@ -248,9 +272,18 @@ class FactoryDirectorHost:
             result = Reconciliation(HostState.IDLE if idle in {"FACTORY_PAUSED", "FOUNDER_DECISION_PENDING", "WIP_INTENTIONALLY_FULL", "NO_ELIGIBLE_AUTHORIZED_WORK"} else HostState.REFUSED, idle)
             self._record(result)
             return result
-        lease = self._lease()
+        try:
+            lease = self._lease()
+        except AmbiguousLease:
+            result = Reconciliation(HostState.REFUSED, "AMBIGUOUS_LEASE")
+            self._record(result)
+            return result
         prior_exit = None
         if lease:
+            if lease.get("status") == "ACTIVATING":
+                result = Reconciliation(HostState.REFUSED, "AMBIGUOUS_LEASE")
+                self._record(result)
+                return result
             try:
                 prior = self._episode(lease)
             except KeyError:
@@ -261,27 +294,55 @@ class FactoryDirectorHost:
                 result = Reconciliation(HostState.REFUSED, "AMBIGUOUS_LEASE")
                 self._record(result)
                 return result
-            if self.launcher.is_active(prior):
+            liveness = self.launcher.liveness(prior) if hasattr(self.launcher, "liveness") else self.launcher.is_active(prior)
+            if liveness is None:
+                result = Reconciliation(HostState.REFUSED, "EPISODE_LIVENESS_AMBIGUOUS", prior.episode_id)
+                self._record(result)
+                return result
+            if liveness:
                 result = Reconciliation(HostState.ACTIVE, "DIRECTOR_EPISODE_ACTIVE", prior.episode_id)
                 self._record(result)
                 return result
             prior_exit = self.launcher.exit_reason(prior) or "EPISODE_LIVENESS_AMBIGUOUS"
         episode_id = f"factory-director-{uuid.uuid4().hex}"
-        episode = self.launcher.launch(episode_id)
+        # Reserve before spawning. A crash in the hand-off window stays visibly
+        # ambiguous rather than creating an unleased child and a duplicate successor.
+        _atomic_json(self._lease_path, {"host_id": self.host_id, "episode_id": episode_id,
+                                        "pid": None, "started_at": _now(), "process_start_ticks": None,
+                                        "status": "ACTIVATING", "keep_until_replaced": True,
+                                        "retirement": "KEEP_UNTIL_REPLACED"})
+        try:
+            episode = self.launcher.launch(episode_id)
+        except Exception as exc:
+            _atomic_json(self._lease_path, {"host_id": self.host_id, "episode_id": episode_id,
+                                            "pid": None, "started_at": _now(), "process_start_ticks": None,
+                                            "status": "LAUNCH_FAILED", "failure": str(exc)[:240],
+                                            "keep_until_replaced": True, "retirement": "KEEP_UNTIL_REPLACED"})
+            result = Reconciliation(HostState.REFUSED, "DIRECTOR_LAUNCH_FAILED", episode_id)
+            self._record(result)
+            return result
         reason = "PRIOR_EPISODE_EXITED_CONTROL_REMAINS" if lease else "DIRECTOR_CONTINUITY_FAULT"
         _atomic_json(self._lease_path, {"host_id": self.host_id, **asdict(episode),
-                                        "keep_until_replaced": True, "retirement": "KEEP_UNTIL_REPLACED"})
+                                        "status": "ACTIVE", "keep_until_replaced": True,
+                                        "retirement": "KEEP_UNTIL_REPLACED"})
         result = Reconciliation(HostState.ACTIVE, reason, episode.episode_id)
         self._record(result, exit_reason=prior_exit)
         return result
 
     def inspect(self) -> Inspection:
-        lease, history = self._lease(), []
+        try:
+            lease = self._lease()
+        except AmbiguousLease:
+            return Inspection(HostState.REFUSED, False, None, None, None, None, "AMBIGUOUS_LEASE")
+        history = []
         if self._history_path.exists():
             for line in self._history_path.read_text().splitlines():
                 try: history.append(json.loads(line))
                 except json.JSONDecodeError: pass
-        active = bool(lease and self.launcher.is_active(self._episode(lease)))
+        try:
+            active = bool(lease and self.launcher.is_active(self._episode(lease)))
+        except KeyError:
+            return Inspection(HostState.REFUSED, False, None, None, None, None, "AMBIGUOUS_LEASE")
         latest = history[-1] if history else {}
         activation = next((r["reason"] for r in reversed(history) if r["reason"] in {"DIRECTOR_CONTINUITY_FAULT", "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"}), None)
         exit_reason = next((r.get("exit_reason") for r in reversed(history) if r.get("exit_reason")), None)
@@ -301,7 +362,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--inspect", action="store_true")
     args = parser.parse_args(argv)
     host = FactoryDirectorHost(args.state_root, JsonDirectorInputs(args.inputs),
-                               ProcessDirectorLauncher(args.workdir, args.prompt))
+                               ProcessDirectorLauncher(args.workdir, args.prompt, require_isolated=True))
     if args.inspect:
         print(json.dumps(asdict(host.inspect()), default=lambda value: value.value, sort_keys=True))
         return 0
