@@ -40,13 +40,13 @@
     },
     "attempts": {
       "value": "3 execution cycles (SWF-32 semantics: IMPLEMENT→VERIFY→IMPLEMENT increments)",
-      "enforcement": "NOT HARD-ENFORCED: SWF-35 release admission governs READY→IMPLEMENT, but the bootstrap routes VERIFY REJECT→IMPLEMENT without a cycle-cap guard. Program Director tracking is required; it does not prevent that transition.",
-      "status": "NOT_ENFORCED_REQUIRES_DIRECTOR_TRACKING"
+      "enforcement": "retained dispatcher SWF-32 cycle guard; it refuses VERIFY REJECT→IMPLEMENT at the configured cap without treating same-phase replacement as a cycle.",
+      "status": "PENDING_NUMERIC_AUTHORITY"
     },
     "retries_within_phase": {
       "value": "1 replacement worker per phase on non-terminal outcome (does not increment the cycle, SWF-32 §6)",
-      "enforcement": "NOT HARD-ENFORCED: SWF-29 liveness reconciliation may re-emit after a grace window, and the bootstrap has no per-phase replacement-count guard. Program Director tracking is required; a prior replacement does not mechanically prevent another re-emission.",
-      "status": "NOT_ENFORCED_REQUIRES_DIRECTOR_TRACKING"
+      "enforcement": "retained dispatcher per-cycle/phase/role replacement guard; it refuses a worker above the configured cap.",
+      "status": "PENDING_NUMERIC_AUTHORITY"
     },
     "wall_clock": {
       "value": "120000 ms startup + 7200000 ms runtime + 300000 ms stop grace = 7620000 ms (127 min) total per invocation",

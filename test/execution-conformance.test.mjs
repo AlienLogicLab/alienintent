@@ -1,0 +1,12 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { evaluateExecutionConformance } from "../src/runtime/execution-conformance.mjs";
+const controls = () => ({ wallClock:{value:7620000,status:"ENFORCED",mechanism:"systemd-owned-supervision",authority:"AUTHORIZED"}, attempts:{value:3,status:"ENFORCED",mechanism:"dispatcher-cycle-guard",authority:"AUTHORIZED"}, replacements:{value:1,status:"ENFORCED",mechanism:"dispatcher-replacement-guard",authority:"AUTHORIZED"}, concurrency:{value:1,status:"ENFORCED",mechanism:"dispatcher-global-concurrency-guard",authority:"AUTHORIZED"}, cancellation:{status:"ENFORCED",mechanism:"systemd-owned-stop",authority:"AUTHORIZED"} });
+const runtime = c => ({ supervision:{mode:"systemd",runtimeMilliseconds:7200000,startupMilliseconds:120000,stopGraceMilliseconds:300000},workersSupervised:true,dispatcherControls:c });
+const check = (c=controls(), r=runtime(c)) => evaluateExecutionConformance({controls:c,runtime:r});
+test("manual tracked hard control refuses",()=>{const c=controls();c.attempts.status="MANUAL_TRACKING";assert.deepEqual(check(c).missing,[{dimension:"attempts",reason:"CONTROL_STATUS_REFUSED"}]);});
+test("missing mechanism refuses",()=>{const c=controls();delete c.replacements.mechanism;assert.deepEqual(check(c).missing,[{dimension:"replacements",reason:"MECHANISM_MISSING"}]);});
+test("inactive mechanism refuses",()=>{const c=controls();assert.deepEqual(check(c,{dispatcherControls:c}).missing,[{dimension:"wallClock",reason:"MECHANISM_CONFIGURATION_MISMATCH"},{dimension:"cancellation",reason:"MECHANISM_INACTIVE"}]);});
+test("missing numeric refuses",()=>{const c=controls();delete c.attempts.value;assert.deepEqual(check(c).missing,[{dimension:"attempts",reason:"NUMERIC_VALUE_REQUIRED"}]);});
+test("all controls enforced pass",()=>assert.deepEqual(check(),{admissible:true,missing:[]}));
+test("all missing controls report together",()=>{const c=controls();c.attempts.status="NOT_ENFORCED";delete c.replacements.mechanism;delete c.concurrency.value;c.wallClock.value=1;assert.deepEqual(check(c,{dispatcherControls:false}).missing,[{dimension:"wallClock",reason:"MECHANISM_CONFIGURATION_MISMATCH"},{dimension:"attempts",reason:"CONTROL_STATUS_REFUSED"},{dimension:"replacements",reason:"MECHANISM_MISSING"},{dimension:"concurrency",reason:"NUMERIC_VALUE_REQUIRED"},{dimension:"cancellation",reason:"MECHANISM_INACTIVE"}]);});

@@ -1,0 +1,7 @@
+#!/usr/bin/env node
+import { loadProfile } from "../src/config/profile.mjs";
+import { evaluateExecutionConformance } from "../src/runtime/execution-conformance.mjs";
+const index = process.argv.indexOf("--config"); if (index < 0 || !process.argv[index + 1]) throw new Error("--config is required");
+const config = loadProfile(process.argv[index + 1]);
+const result = evaluateExecutionConformance({ controls: config.executionControls, runtime: { dispatcherControls: config.executionControls, supervision: config.supervision, workersSupervised: Object.values(config.workers).every(worker => worker.supervision === config.supervision) } });
+process.stdout.write(`${JSON.stringify(result)}\n`); process.exitCode = result.admissible ? 0 : 1;

@@ -53,7 +53,7 @@ export function loadProfile(profilePath) {
   const port = positive(p.webhook.listenPort, "webhook.listenPort");
   if (port > 65535) fail("webhook.listenPort");
   path(p.webhook.secretFile, "webhook.secretFile");
-  object(p.execution, "execution", ["enabled", "inspectionIntervalMilliseconds", "supervision"]);
+  object(p.execution, "execution", ["enabled", "inspectionIntervalMilliseconds", "supervision", "controls"]);
   if (typeof p.execution.enabled !== "boolean") fail("execution.enabled");
   const inspectionIntervalMs = p.execution.inspectionIntervalMilliseconds ?? 60000;
   if (!Number.isSafeInteger(inspectionIntervalMs) || inspectionIntervalMs < 1000 || inspectionIntervalMs > 300000) fail("execution.inspectionIntervalMilliseconds");
@@ -67,6 +67,8 @@ export function loadProfile(profilePath) {
     }
     for (const key of ["systemdRun", "systemctl", "env"]) path(supervision[key], `execution.supervision.${key}`);
   }
+  const controls = p.execution.controls;
+  if (controls !== undefined) { object(controls, "execution.controls", ["wallClock", "attempts", "replacements", "concurrency", "cancellation"]); for (const [dimension, control] of Object.entries(controls)) { object(control, `execution.controls.${dimension}`, ["value", "status", "mechanism", "authority"]); for (const key of ["status", "mechanism", "authority"]) if (control[key] !== undefined) text(control[key], `execution.controls.${dimension}.${key}`); if (control.value !== undefined && (!Number.isSafeInteger(control.value) || control.value <= 0)) fail(`execution.controls.${dimension}.value`); } }
   object(p.operator, "operator", ["authorizedGithubLogins"]);
   const authorizedOperatorLogins = strings(p.operator.authorizedGithubLogins, "operator.authorizedGithubLogins");
   if (!authorizedOperatorLogins.length || new Set(authorizedOperatorLogins).size !== authorizedOperatorLogins.length) fail("operator.authorizedGithubLogins");
@@ -148,7 +150,7 @@ export function loadProfile(profilePath) {
   const config = { repository: `${p.repository.owner}/${p.repository.name}`, projectOwner: p.project.owner,
     projectNumber: p.project.number, githubApp, host, port, webhookSecret,
     repositoryStore: p.paths.repositoryStore, worktreeRoot: p.paths.worktreeRoot, baselineRef: p.repository.baselineRef,
-    statePath: p.paths.stateFile, executionEnabled: p.execution.enabled, inspectionIntervalMs,
+    statePath: p.paths.stateFile, executionEnabled: p.execution.enabled, inspectionIntervalMs, supervision, executionControls: controls,
     roleNames, workers, workerLogins, authorizedOperatorLogins, executables, runtimePath };
   verifyStateCompatibility(config);
   return config;

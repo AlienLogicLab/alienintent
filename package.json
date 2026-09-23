@@ -15,6 +15,7 @@
     "src/",
     "scripts/worker-preflight",
     "scripts/worker-gh",
+    "scripts/execution-conformance",
     "config/profile.example.json"
   ],
   "scripts": {
