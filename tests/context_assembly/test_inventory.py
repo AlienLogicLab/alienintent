@@ -99,7 +99,12 @@ class InventoryTests(unittest.TestCase):
         self.assertEqual(s.identifier_issues, ())
 
     def test_markdown_balanced_and_escaped_destinations(self):
-        for destination in ("https://host/a(b)/SF-REQ-999",
+        for destination in ('https://host/SF-REQ-999 "title ("',
+                            "https://host/SF-REQ-999 'title )'",
+                            " <https://host/a(/SF-REQ-999>",
+                            "<https://host/a(/SF-REQ-999>",
+                            "<https://host/a)/SF-REQ-999>",
+                            "https://host/a(b)/SF-REQ-999",
                             "https://host/a(b(c))/SF-REQ-999",
                             r"https://host/a\)/SF-REQ-999",
                             r"https://host/a\(/SF-REQ-999",

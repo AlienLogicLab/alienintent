@@ -215,11 +215,23 @@ def _mask_destinations(line: str) -> str:
     start = 0
     while (start := line.find("](", start)) != -1:
         end, depth = start + 2, 1
+        while end < len(line) and line[end] in " \t":
+            end += 1
+        angle = end < len(line) and line[end] == "<"
+        quote = None
         while end < len(line) and depth:
             if line[end] == "\\":
                 end += 2  # An escaped parenthesis cannot open or close a destination.
                 continue
-            if line[end] == "(":
+            if angle:
+                if line[end] == ">":
+                    angle = False
+            elif quote:
+                if line[end] == quote:
+                    quote = None
+            elif depth == 1 and line[end] in ("\"", "'") and line[end-1] in " \t":
+                quote = line[end]
+            elif line[end] == "(":
                 depth += 1
             elif line[end] == ")":
                 depth -= 1

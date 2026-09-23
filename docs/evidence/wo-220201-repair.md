@@ -34,3 +34,12 @@ with intact/restored exit 0 and fault assertion failures. Retain schema from ori
 contract with accurate current invocation, command/status/raw-log digest and source
 digests. Full suites must exit 0. Token/cost UNKNOWN. Publish branch and exact SHA;
 retain runtime-managed resources for independent verifier and BIU closure.
+
+## Internal review repair
+
+A read-only reviewer reproduced a regression in the first repair: literal parentheses
+inside angle-delimited destinations were incorrectly balanced. Added a failing
+regression before repair, then taught the scanner to respect the angle-delimited
+boundary. Both targeted tests now pass, including opening and closing literal
+parentheses. Full validation is rerun against the final implementation; intermediate
+runs are not final source proof. The original candidate evidence remains untouched.
