@@ -1,0 +1,1 @@
+{"activation_policy":"UNBOUND","attempt_id":"attempt-1","clock":"2026-09-23T00:00:00Z","invocation":"AlienLogicLab/alienintent#78:PRODUCER:f4f2ffd3-6e47-4192-8fab-3766200a06e4","name":"fixture","notification":"injected channel failure","project":"project","resolvers":[{"actor":"director","authority":"authority-1","lane":"product","work_ref":"issue:78","work_revision":"rev-1"}]}

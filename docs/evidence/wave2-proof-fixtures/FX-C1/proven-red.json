@@ -1,0 +1,295 @@
+{
+  "controls": [
+    {
+      "control": "origin_dedupe",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "            return existing",
+        "replace_with": "            return self._change(existing, \"DUPLICATE\", origin.producer)"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_restart_dedupe_origin[DONE]"
+      ],
+      "assertion": "origin dedupe lost history",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:06497b501793dd2dfd93f69fa6eb835ac3d9f2cffd328f8d33ebe1e5f71e8d3b",
+        "locator": "observations/06497b501793dd2dfd93f69fa6eb835ac3d9f2cffd328f8d33ebe1e5f71e8d3b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:cf7540d67f4ed9edae00e0728a40c1dda207707d3bf275f083cb1c2bd35e4a22",
+        "locator": "observations/cf7540d67f4ed9edae00e0728a40c1dda207707d3bf275f083cb1c2bd35e4a22"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "durable_creation",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "        item = self.ensure(origin)",
+        "replace_with": "        return None"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_delivery_failure_pending_fresh_consumer"
+      ],
+      "assertion": "durable attention creation must precede delivery",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:c1428f64513c60ac8f63facd64daf027732c87beb58b670f70a5be65fbf15a2b",
+        "locator": "observations/c1428f64513c60ac8f63facd64daf027732c87beb58b670f70a5be65fbf15a2b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:d2587684ff3d40a0067ac1043a9ef97b12365ec29787a8fc49bcdc6a23755517",
+        "locator": "observations/d2587684ff3d40a0067ac1043a9ef97b12365ec29787a8fc49bcdc6a23755517"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "consumer_bridge",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "NotificationAttempt(attempt_id, \"DELIVERED\", receipt=receipt)",
+        "replace_with": "NotificationAttempt(attempt_id, \"DELIVERED\")"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_correlated_consumer_receipt"
+      ],
+      "assertion": "consumer bridge lost durable correlated receipt",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:9294951fa9899207fa47bfc287b8a37dcb0e7d2a95d2c06eaf419f673662b0e5",
+        "locator": "observations/9294951fa9899207fa47bfc287b8a37dcb0e7d2a95d2c06eaf419f673662b0e5"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:9b5711ac91f73858196abc6dcf88da8e42b5827fc229a171fe6dd6358d73e204",
+        "locator": "observations/9b5711ac91f73858196abc6dcf88da8e42b5827fc229a171fe6dd6358d73e204"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "actor",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "if decision.actor not in {g.actor for g in applicable}:",
+        "replace_with": "if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_resolution_authority_refusal[actor-intruder]"
+      ],
+      "assertion": "DID NOT RAISE",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:cf2df04db84213fdee1e95673bc9a139eb6c2c3ae61aa8cd9cf3c2f048306d7c",
+        "locator": "observations/cf2df04db84213fdee1e95673bc9a139eb6c2c3ae61aa8cd9cf3c2f048306d7c"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:8a44858c6e9935f1faf5f78ce01f6d1e2f8376cc4c1c3edffe2648bc4e3eb61d",
+        "locator": "observations/8a44858c6e9935f1faf5f78ce01f6d1e2f8376cc4c1c3edffe2648bc4e3eb61d"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "revision",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "if decision.work_revision != item.origin.work_revision:",
+        "replace_with": "if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_resolution_authority_refusal[work_revision-stale]"
+      ],
+      "assertion": "DID NOT RAISE",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:14e3877a2d24c3851cd70edbef512487965cf5312c91b8b590398c4eada096ff",
+        "locator": "observations/14e3877a2d24c3851cd70edbef512487965cf5312c91b8b590398c4eada096ff"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:b7ad17e7a29da0fc75f524a1086e26a1b13342919470dd9e66a9ce2b3cb8dc28",
+        "locator": "observations/b7ad17e7a29da0fc75f524a1086e26a1b13342919470dd9e66a9ce2b3cb8dc28"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "lane",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "if decision.lane != item.origin.lane:",
+        "replace_with": "if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_resolution_authority_refusal[lane-mailbox]"
+      ],
+      "assertion": "DID NOT RAISE",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:649d953b917ebdc1c64c9436e269ecdd46d10229993b884e8a88b01de6ae28a3",
+        "locator": "observations/649d953b917ebdc1c64c9436e269ecdd46d10229993b884e8a88b01de6ae28a3"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:08a51ad03293af9e6f46acd4b0133274970e1338b3325332e9ae1cd0edf6a4fb",
+        "locator": "observations/08a51ad03293af9e6f46acd4b0133274970e1338b3325332e9ae1cd0edf6a4fb"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "authority",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "if decision.authority != item.origin.required_authority:",
+        "replace_with": "if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_resolution_authority_refusal[authority-wrong]"
+      ],
+      "assertion": "DID NOT RAISE",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:5f932b1ca347adb39f71be2bf5bc31ea62754191bbcd688e9ca1f451c0bb8ccd",
+        "locator": "observations/5f932b1ca347adb39f71be2bf5bc31ea62754191bbcd688e9ca1f451c0bb8ccd"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:edb5eab93c6cef924a535d72b9be5faa87d24a4ac75235455a228e7c7c764edf",
+        "locator": "observations/edb5eab93c6cef924a535d72b9be5faa87d24a4ac75235455a228e7c7c764edf"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "seen_not_resolved",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "status=\"SEEN\")",
+        "replace_with": "status=\"RESOLVED\")"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_seen_is_not_resolved_and_decision_inbox_distinct"
+      ],
+      "assertion": "AssertionError",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:9c9ef82ae5e91949171f169ef4a65be01775160891f9e2db3306eac4754eba50",
+        "locator": "observations/9c9ef82ae5e91949171f169ef4a65be01775160891f9e2db3306eac4754eba50"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:9369c2f9b7d491d87d5417e13ee8a53a06db3559cfc73ab6a6ad89fc486d3fee",
+        "locator": "observations/9369c2f9b7d491d87d5417e13ee8a53a06db3559cfc73ab6a6ad89fc486d3fee"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "resolution_evidence",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "        self.repository.validate_resolution(item, decision)",
+        "replace_with": "        pass"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_resolution_requires_retrievable_correlated_disposition[unrelated]"
+      ],
+      "assertion": "DID NOT RAISE",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:56b3943f84bfb4a1bdfc410504219c7f0972fdfebbf41f48e646bc2a427adcbf",
+        "locator": "observations/56b3943f84bfb4a1bdfc410504219c7f0972fdfebbf41f48e646bc2a427adcbf"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:a1e5fa8e3b2f650cc847a4d4eca13871be0a0cf2734eb082dc95923964c7b308",
+        "locator": "observations/a1e5fa8e3b2f650cc847a4d4eca13871be0a0cf2734eb082dc95923964c7b308"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "unbound_activation",
+      "application_count": 1,
+      "source_digest": "sha256:7f3c058ee6dc59f899255b199fc3cb5386ea8ec5767db151e32f594ba9a12b76",
+      "mutation": {
+        "remove": "            return ActivationHold(\"ACTIVATION_UNBOUND\")",
+        "replace_with": "            self.activation.launch(item)\n            return ActivationHold(\"ACTIVATION_UNBOUND\")"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_attention.py::test_unbound_activation_zero_launches"
+      ],
+      "assertion": "unbound activation launched a model",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:b9ece228cb0f37401e50b6bf2f62bd25d6c03997c34fb7b9a92434d351e98a04",
+        "locator": "observations/b9ece228cb0f37401e50b6bf2f62bd25d6c03997c34fb7b9a92434d351e98a04"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:9504bbd9b46c427b736a5e8283f05d4d2ade61409c500247a0a53932dc55257d",
+        "locator": "observations/9504bbd9b46c427b736a5e8283f05d4d2ade61409c500247a0a53932dc55257d"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}
