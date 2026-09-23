@@ -5,7 +5,7 @@
   "decided_at": "2026-09-23T01:47:35+00:00",
   "allocator": {
     "role": "Allocator (SF-REQ-026, amended 2026-09-22)",
-    "instance": "Local Program Director — deterministic policy branch (trivial case: exactly one configured eligible worker per role)",
+    "instance": "Factory Director — deterministic policy branch (trivial case: exactly one configured eligible worker per role)",
     "cognition_tier": "deterministic; no local or frontier model consulted",
     "authority_basis": [
       "SWF-35: incremental Wave 2 release requires a fully bound execution packet and separate release admission",
@@ -32,7 +32,7 @@
     "why": "The current self-hosting profile configures exactly one Codex worker for PRODUCER and one for VERIFIER, with distinct GitHub identities and worktree custody. This allocation does not change provider configuration or launch a worker."
   },
   "limits": {
-    "policy": "SWF-09 requires hard enforcement of wall-clock, attempts, retries, concurrency and cancellation; this record distinguishes the configured mechanisms from the unenforced attempt/replacement counts. Tokens and cost are measured, never assumed zero.",
+    "policy": "SWF-09 requires hard enforcement of wall-clock, attempts, retries, concurrency and cancellation. The reviewed per-BIU dispatcher guard enforces attempts and replacements only when this BIU's exact normal Issue identity is bound through execution.biuLimits in the active profile. Tokens and cost are measured, never assumed zero.",
     "concurrency": {
       "value": 1,
       "enforcement": "bootstrap lane claim repository#issue:ROLE (synchronous check-and-reserve, ACTIVE_INVOCATION_EXISTS); WIP = 1",
@@ -40,13 +40,13 @@
     },
     "attempts": {
       "value": "3 execution cycles (SWF-32 semantics: IMPLEMENT→VERIFY→IMPLEMENT increments)",
-      "enforcement": "NOT HARD-ENFORCED: SWF-35 release admission governs READY→IMPLEMENT, but the bootstrap routes VERIFY REJECT→IMPLEMENT without a cycle-cap guard. Program Director tracking is required; it does not prevent that transition.",
-      "status": "NOT_ENFORCED_REQUIRES_DIRECTOR_TRACKING"
+      "enforcement": "reviewed retained dispatcher per-BIU cycle guard; after the exact normal Issue identity is bound through active execution.biuLimits, it refuses VERIFY REJECT→IMPLEMENT at the configured cap without treating a same-phase replacement as a cycle.",
+      "status": "ENFORCED_WHEN_ACTIVE_PROFILE_BOUND"
     },
     "retries_within_phase": {
       "value": "1 replacement worker per phase on non-terminal outcome (does not increment the cycle, SWF-32 §6)",
-      "enforcement": "NOT HARD-ENFORCED: SWF-29 liveness reconciliation may re-emit after a grace window, and the bootstrap has no per-phase replacement-count guard. Program Director tracking is required; a prior replacement does not mechanically prevent another re-emission.",
-      "status": "NOT_ENFORCED_REQUIRES_DIRECTOR_TRACKING"
+      "enforcement": "reviewed retained dispatcher per-BIU phase guard; after the exact normal Issue identity is bound through active execution.biuLimits, it refuses an additional worker above the configured replacement cap, including liveness reconciliation and replay paths.",
+      "status": "ENFORCED_WHEN_ACTIVE_PROFILE_BOUND"
     },
     "wall_clock": {
       "value": "120000 ms startup + 7200000 ms runtime + 300000 ms stop grace = 7620000 ms (127 min) total per invocation",
@@ -72,22 +72,22 @@
     }
   },
   "remaining_allowance": {
-    "basis": "No numeric token/cost allowance exists in planning authority (candidate budget.execution_allocation); this decision allocates 3 execution cycles, 0 consumed, and one replacement worker per phase. No S1 worker invocation is authorized by this allocation alone.",
+    "basis": "No numeric token/cost allowance exists in planning authority (candidate budget.execution_allocation); Founder-authorized bootstrap execution-budget policy allocates 3 execution cycles, 0 consumed, and one replacement worker per phase. No S1 worker invocation is authorized by this allocation alone.",
     "cycles_consumed": 0,
     "cycles_remaining": 3
   },
   "escalation": {
-    "budget_exhaustion": "Director must hold and route a cycle-3 verification rejection to HumanDecisionRequired via Decision Inbox (SF-REQ-035); the bootstrap does not enforce this cap",
+    "budget_exhaustion": "Factory Director must preserve the dispatcher EXECUTION_CYCLE_LIMIT hold and route a cycle-3 verification rejection to HumanDecisionRequired via Decision Inbox (SF-REQ-035); no fourth cycle is authorized",
     "architecture_question": "Architecture Decision Required (AA A5) via Decision Inbox; branch stops",
-    "provider_capacity": "classify PROVIDER_CAPACITY_INTERRUPTION, not a task failure; Director must track one replacement worker then hold, because the bootstrap has no replacement-count guard",
+    "provider_capacity": "classify PROVIDER_CAPACITY_INTERRUPTION, not a task failure; the retained dispatcher admits at most one replacement worker per phase and holds further replacement attempts",
     "duration_exhaustion": "a hard duration stop yields a terminal supervision receipt; it does not grant a new retry or cycle"
   },
-  "not_granted_here": "Release authority is NOT YET GRANTED. SWF-35 standing grant applies only after native Agent Ready READY, Work Management READY, predecessor evidence, fully bound packet and release-admission checks. Attempts and replacement limits are not hard-enforced by the bootstrap, so this allocation does not establish fully bound execution admission or authorize a transition.",
+  "not_granted_here": "Release authority is NOT YET GRANTED. SWF-35 standing grant applies only after native Agent Ready READY, Work Management READY, predecessor evidence, an exact active-profile execution.biuLimits binding, fully bound packet and release-admission checks. This allocation does not authorize a transition.",
   "provenance": {
-    "baseline_sha": "90e4765b9c599206c0e5e34d18568575e949c576",
+    "baseline_sha": "2528e3acd773f53de116f6f28537244d1f1f8b2f",
     "candidate_contract_sha256": "d74262cfb09af5d127832762983b8b2c368b075cdd9b6d9fde7ad7cda8ee1710",
     "candidate_ref": "docs/evidence/wave2-candidate-bius.json#/bius/1",
-    "recorded_by": "Bounded S1 packet builder for local Program Director allocation",
+    "recorded_by": "Bounded S1 packet builder for Factory Director allocation",
     "evidence_reads": [
       "~/.config/alienintent/self-hosting.json (workers.PRODUCER, workers.VERIFIER, execution.supervision; inspected 2026-09-23)",
       "src/runtime/systemd-supervision.mjs (owned transient-unit limits and fail-closed validation)",
