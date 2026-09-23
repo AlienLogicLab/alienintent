@@ -44,15 +44,15 @@ def unshare_available() -> bool:
         return False
 
 
-def proof_command(root: Path, manifest: Path, *, namespace: bool, extra_environment: dict[str, str] | None = None, timeout: float = 1.0) -> tuple[subprocess.CompletedProcess[str], dict]:
+def proof_command(root: Path, manifest: Path, *, namespace: bool, extra_environment: dict[str, str] | None = None, timeout: float = 1.0, source_root: Path = ROOT) -> tuple[subprocess.CompletedProcess[str], dict]:
     """The pinned C2 invocation: env stated in full, optionally inside `unshare -rn`."""
     home = root / "home"
     home.mkdir(parents=True, exist_ok=True)
-    environment = {"PATH": os.environ["PATH"], "HOME": str(home), "LANG": "C.UTF-8", "PYTHONPATH": str(ROOT / "src")} | (extra_environment or {})
+    environment = {"PATH": os.environ["PATH"], "HOME": str(home), "LANG": "C.UTF-8", "PYTHONPATH": str(source_root / "src")} | (extra_environment or {})
     command = [sys.executable, "-m", "alienintent.composition.offline_proof", "--root", str(root), "--manifest", str(manifest), "--network-timeout", str(timeout)]
     if namespace:
         command = ["unshare", "-rn", *command]
-    completed = subprocess.run(command, cwd=ROOT, env=environment, capture_output=True, text=True, timeout=300, check=False)
+    completed = subprocess.run(command, cwd=source_root, env=environment, capture_output=True, text=True, timeout=300, check=False)
     report = json.loads((root / "run-report.json").read_text()) if (root / "run-report.json").exists() else {}
     return completed, report
 
@@ -150,7 +150,19 @@ def test_reopening_the_same_root_reads_back_the_same_truth_and_dispatches_nothin
 
 @pytest.mark.skipif(not unshare_available(), reason="platform cannot create an unprivileged user+network namespace; network-denial evidence is NOT_ESTABLISHED here")
 def test_the_proof_command_passes_inside_an_enforced_network_namespace(tmp_path: Path) -> None:
-    completed, report = proof_command(tmp_path / "root", MANIFEST, namespace=True)
+    """Retain S0's positive proof at the exact pre-S2 admission source.
+
+    S2 authorizes extending sqlite_store.py; this does not retroactively change
+    S0's immutable manifest or its requirement that its own kernel be unchanged.
+    """
+    baseline = "0515444b5c43c83f4a5e26c9ec2c5956f064e1d9"
+    source = tmp_path / "historical-source"
+    subprocess.run(["git", "clone", "--quiet", "--shared", "--no-checkout", str(ROOT), str(source)], check=True, capture_output=True)
+    subprocess.run(["git", "-C", str(source), "checkout", "--quiet", "--detach", baseline], check=True, capture_output=True)
+    assert subprocess.check_output(["git", "-C", str(source), "rev-parse", "HEAD"], text=True).strip() == baseline
+    historical_manifest = source / MANIFEST.relative_to(ROOT)
+    assert historical_manifest.read_bytes() == MANIFEST.read_bytes()
+    completed, report = proof_command(tmp_path / "root", historical_manifest, namespace=True, source_root=source)
 
     assert completed.returncode == EXIT_PASS, completed.stderr
     assert report["verdict"] == "PASS" and report["hold_reasons"] == []
@@ -168,6 +180,21 @@ def test_the_proof_command_passes_inside_an_enforced_network_namespace(tmp_path:
     assert [event["event_type"] for event in events] == ["ISOLATION_OBSERVED", "BIU_RELEASED", "INVOCATION_STARTED", "CANDIDATE_PUBLISHED", "SUCCESS_COLLAPSE_OBSERVED", "BIU_DONE"]
     required = {"schema_version", "event_id", "project", "biu_id", "event_type", "actor_role", "evidence_refs", "recorded_at"}
     assert all(required <= set(event) and event["evidence_refs"] for event in events)
+
+
+@pytest.mark.skipif(not unshare_available(), reason="platform cannot create an unprivileged user+network namespace")
+def test_s0_frozen_kernel_guard_rejects_authorized_s2_store_extension(tmp_path: Path) -> None:
+    """Removing P11 must not turn a changed kernel into historical S0 proof."""
+    completed, report = proof_command(tmp_path / "root", MANIFEST, namespace=True)
+    assert completed.returncode == EXIT_FAIL
+    assert report["verdict"] == "FAIL"
+    assert report["kernel_unchanged"]["status"] == "CHANGED"
+    kernel = report["kernel_unchanged"]
+    changed = subprocess.check_output(["git", "diff", "--name-only", kernel["baseline"], "--", *kernel["paths"]], cwd=ROOT, text=True).splitlines()
+    assert changed == ["src/alienintent/execution_coordination/adapters/sqlite_store.py"]
+    assert {c["id"] for c in report["checks"]} == {"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P10", "P11", "P12", "P13"}
+    assert [c["id"] for c in report["checks"] if c["status"] != "PASS"] == ["P11"]
+    assert report["success_collapse_limitation"]["independent_verifier_invocation"] == "NOT_ESTABLISHED"
 
 
 def test_the_proof_command_holds_when_network_denial_is_not_enforced(tmp_path: Path) -> None:

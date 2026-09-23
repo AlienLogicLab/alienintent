@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","tests/execution_coordination/test_fenced_store.py::test_expired_authority_cannot_claim_or_deliver"],"cwd":"/tmp/fx-s2-controls-2bnu_glw","exit_status":0,"stderr":"","stdout":"..                                                                       [100%]\n2 passed in 0.13s\n"}

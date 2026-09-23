@@ -1,0 +1,208 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-S2",
+  "invocation": "AlienLogicLab/alienintent#74:PRODUCER:cd01c897-5523-486b-9a38-86ab2dbacb77",
+  "producer_invocation": "AlienLogicLab/alienintent#74:PRODUCER:cd01c897-5523-486b-9a38-86ab2dbacb77",
+  "source_revision": "11d4b13d704a0fae15e3ba038673ae9a9ef59c42",
+  "source_status": "",
+  "fixture_plan_sha256": "sha256:24cbacebcc2f079cb5dc67c8e27c6bc14d48a1750d169e7443655ed1cd77a502",
+  "independent_verdict": "PENDING",
+  "live_proof": "NOT_ESTABLISHED",
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": null,
+    "uncertainty": "not instrumented by this local fixture; no inference from absent telemetry"
+  },
+  "commands": [
+    {
+      "id": "intact",
+      "expected_exit": 0,
+      "observed_exit": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:7bc584031e464fe53146e6a0ad20ea2c760873c8dbda69a69ef90012105e47d2",
+        "locator": "observations/7bc584031e464fe53146e6a0ad20ea2c760873c8dbda69a69ef90012105e47d2"
+      }
+    }
+  ],
+  "mutations": [
+    {
+      "control": "fence",
+      "application_count": 1,
+      "source_sha256": "sha256:f00f1f65649df0799f4f4ab11ef7a2da9b2f4e795c1f12a061995ef917e26668",
+      "mutation": {
+        "remove": "if not row or row[\"owner\"] != reservation.owner or row[\"fence\"] != reservation.fence:",
+        "replace_with": "if False:"
+      },
+      "expected_fault_exit": 1,
+      "observed_fault_exit": 1,
+      "expected_restored_exit": 0,
+      "observed_restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:93b3e02195a0f8fc5cc7e2d9820e257040659f619a682c2ef0c3e3b27f42d12d",
+        "locator": "observations/93b3e02195a0f8fc5cc7e2d9820e257040659f619a682c2ef0c3e3b27f42d12d"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:69cc7218d61fe3175ce218514b5cc8692fa3aa8f23096b8c41bf77e693267cfc",
+        "locator": "observations/69cc7218d61fe3175ce218514b5cc8692fa3aa8f23096b8c41bf77e693267cfc"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "vector",
+      "application_count": 1,
+      "source_sha256": "sha256:f00f1f65649df0799f4f4ab11ef7a2da9b2f4e795c1f12a061995ef917e26668",
+      "mutation": {
+        "remove": "if actual != expected:",
+        "replace_with": "if False:"
+      },
+      "expected_fault_exit": 1,
+      "observed_fault_exit": 1,
+      "expected_restored_exit": 0,
+      "observed_restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:baebb95f73c3bc624e73778f9aedfb3a537f03bac2ae8ab8c790443676f9588a",
+        "locator": "observations/baebb95f73c3bc624e73778f9aedfb3a537f03bac2ae8ab8c790443676f9588a"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:7f04f0c598ec50663623d66e6ed95c6c607a365ee9d4cd586aa4f954c62e4044",
+        "locator": "observations/7f04f0c598ec50663623d66e6ed95c6c607a365ee9d4cd586aa4f954c62e4044"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "expiry",
+      "application_count": 1,
+      "source_sha256": "sha256:f00f1f65649df0799f4f4ab11ef7a2da9b2f4e795c1f12a061995ef917e26668",
+      "mutation": {
+        "remove": "if now >= expiry:",
+        "replace_with": "if False:"
+      },
+      "expected_fault_exit": 1,
+      "observed_fault_exit": 1,
+      "expected_restored_exit": 0,
+      "observed_restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:395910c9c4181ec3fa8a3d4a2bfc4627f8f03bc3b5dc51884e10f76006c3a0c2",
+        "locator": "observations/395910c9c4181ec3fa8a3d4a2bfc4627f8f03bc3b5dc51884e10f76006c3a0c2"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:d607a5bb87cb4b834c2b43ebf5793b953e6030e8a7b9bb874b5a0f577be215ea",
+        "locator": "observations/d607a5bb87cb4b834c2b43ebf5793b953e6030e8a7b9bb874b5a0f577be215ea"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "receipt",
+      "application_count": 1,
+      "source_sha256": "sha256:f00f1f65649df0799f4f4ab11ef7a2da9b2f4e795c1f12a061995ef917e26668",
+      "mutation": {
+        "remove": "receipt != self._consumer_receipt(record)",
+        "replace_with": "False"
+      },
+      "expected_fault_exit": 1,
+      "observed_fault_exit": 1,
+      "expected_restored_exit": 0,
+      "observed_restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:698d6fcc84f7c8442935db287caa3b7d7b2f1d82bb7b0291867b11dbf54c7b14",
+        "locator": "observations/698d6fcc84f7c8442935db287caa3b7d7b2f1d82bb7b0291867b11dbf54c7b14"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:f702b5513a800e18e4433a4f0fd0e2f2d49e771cc39ca0a2f7b6a1e6554abe7e",
+        "locator": "observations/f702b5513a800e18e4433a4f0fd0e2f2d49e771cc39ca0a2f7b6a1e6554abe7e"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": [],
+  "input_digests": {
+    "src/alienintent/execution_coordination/adapters/sqlite_store.py": "sha256:f00f1f65649df0799f4f4ab11ef7a2da9b2f4e795c1f12a061995ef917e26668",
+    "docs/evidence/wave2-proof-fixtures/FX-S2/fixture-plan.json": "sha256:24cbacebcc2f079cb5dc67c8e27c6bc14d48a1750d169e7443655ed1cd77a502",
+    "tools/evidence/fx_s2_evidence.py": "sha256:7a02405351fd248177578d19d049550a1a22b7da7f81edb5117820649f116292",
+    "src/alienintent/execution_coordination/ports/fenced_store.py": "sha256:9e7eafe5526810716b68bca2666794db23deeabf50ecab5827347fca9da5448d",
+    "src/alienintent/execution_coordination/application/guarded_effect_execution.py": "sha256:e25a2502629cb3e5549ffdac6bb752a9eb691ea7a4562fd8d3742354d106c61b",
+    "src/alienintent/composition/fenced_profile.py": "sha256:dde30c9637681c7af37cb92855687313897324444c039bca23971240db6e2be3",
+    "tests/execution_coordination/test_fenced_store.py": "sha256:188719d319534d0b06cf6c792ff60649ed22871bc1d65046e872ae1c9db6d4df",
+    "tests/execution_coordination/test_operational_store.py": "sha256:5355691e6b5beae921291c76d89fbe0aaabdaceac6f402f6554daa2827c722d9",
+    "tests/composition/test_fenced_profile.py": "sha256:8688a366423d92dca9ea2d3d2932cc5991ee00fd99f38e48ddf0c7f2dcad278e"
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:ad561a13c4c4c3bab82277d1fe7a36ba28a5a457f371c8e9d630a49f9e9431ac",
+    "locator": "observations/ad561a13c4c4c3bab82277d1fe7a36ba28a5a457f371c8e9d630a49f9e9431ac"
+  },
+  "profile_ref": {
+    "revision_digest": "sha256:0b5a9701c5e475f1a5b8b6dd35f388d0fc607fbae725ab24cfb095048360f76f",
+    "locator": "observations/0b5a9701c5e475f1a5b8b6dd35f388d0fc607fbae725ab24cfb095048360f76f"
+  },
+  "profile_digest": "sha256:0b5a9701c5e475f1a5b8b6dd35f388d0fc607fbae725ab24cfb095048360f76f",
+  "exit_status": 0,
+  "regression_checks": [
+    {
+      "id": "python_initial",
+      "observed_exit": 1,
+      "observation_ref": {
+        "revision_digest": "sha256:b0629b0467bd86aa7c50d246f282cb096bdcf89c7729acfd8529aab3ef044009",
+        "locator": "observations/b0629b0467bd86aa7c50d246f282cb096bdcf89c7729acfd8529aab3ef044009"
+      }
+    },
+    {
+      "id": "python_final",
+      "observed_exit": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:906657e96b030fcba28dcf5d3390b8864513c9ae630bd831ad3d5c03d7014c0d",
+        "locator": "observations/906657e96b030fcba28dcf5d3390b8864513c9ae630bd831ad3d5c03d7014c0d"
+      }
+    },
+    {
+      "id": "node",
+      "observed_exit": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:32ba7624adc2df5068f50e6edfe8019924a417583fa99a8720ca279e4e354c98",
+        "locator": "observations/32ba7624adc2df5068f50e6edfe8019924a417583fa99a8720ca279e4e354c98"
+      }
+    },
+    {
+      "id": "architecture",
+      "observed_exit": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:92f8d66e28f601031b5032680516cbdce70e621acc1faef60bc6670dbbd00f04",
+        "locator": "observations/92f8d66e28f601031b5032680516cbdce70e621acc1faef60bc6670dbbd00f04"
+      }
+    }
+  ],
+  "initial_s0_failure_detail": {
+    "status": "OBSERVED_IN_SESSION_NOT_RETAINED_AS_FILE",
+    "reason": "pytest temporary root was rotated by later test runs before evidence copy; original full-suite stdout/stderr/exit retained above",
+    "observed_failed_predicate": "P11: sqlite_store.py differs from historical S0 kernel baseline; all other S0 predicates passed",
+    "replacement_proof": "final test_s0_frozen_kernel_guard_rejects_authorized_s2_store_extension asserts full predicate set, only P11 fails and exact changed path; historical positive also passes"
+  },
+  "local_review_ref": {
+    "revision_digest": "sha256:fcd773eea0f722b2862e353cd591c0232fc64c428f4a1ac5b5cbb1da00c6a4cd",
+    "locator": "observations/fcd773eea0f722b2862e353cd591c0232fc64c428f4a1ac5b5cbb1da00c6a4cd"
+  },
+  "predecessor_integrity": {
+    "S0": {
+      "candidate": "761a3cb4d6e24dc24ec370de45e25fe8c505eeda",
+      "verified_artifacts": 12
+    },
+    "S1": {
+      "candidate": "b80d0cb502d68589a3907331f1db802280c67c5f",
+      "verified_artifacts": 19
+    },
+    "accepted_candidates_ancestral_to_admission": true,
+    "historical_evidence_changed": false
+  },
+  "regression_content_digests": {
+    "docs/evidence/wave2-proof-fixtures/FX-S2/implementation-notes.md": "sha256:a67dac0502293fad55d722c10ac39715caa5b37218c3d6c91ab7677fa7447fb0",
+    "src/alienintent/composition/fenced_profile.py": "sha256:dde30c9637681c7af37cb92855687313897324444c039bca23971240db6e2be3",
+    "src/alienintent/execution_coordination/adapters/sqlite_store.py": "sha256:f00f1f65649df0799f4f4ab11ef7a2da9b2f4e795c1f12a061995ef917e26668",
+    "src/alienintent/execution_coordination/application/guarded_effect_execution.py": "sha256:e25a2502629cb3e5549ffdac6bb752a9eb691ea7a4562fd8d3742354d106c61b",
+    "src/alienintent/execution_coordination/ports/fenced_store.py": "sha256:9e7eafe5526810716b68bca2666794db23deeabf50ecab5827347fca9da5448d",
+    "tests/composition/test_fenced_profile.py": "sha256:8688a366423d92dca9ea2d3d2932cc5991ee00fd99f38e48ddf0c7f2dcad278e",
+    "tests/composition/test_offline_proof.py": "sha256:7869da4ee123dcde110fd1ce8b217180a25fae1cbb444e2529d4dc59d78ad83d",
+    "tests/execution_coordination/test_fenced_store.py": "sha256:188719d319534d0b06cf6c792ff60649ed22871bc1d65046e872ae1c9db6d4df",
+    "tools/evidence/fx_s2_evidence.py": "sha256:7a02405351fd248177578d19d049550a1a22b7da7f81edb5117820649f116292"
+  }
+}
