@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","tests/evidence_learning/test_admission.py::test_authority_rejects_observation_promotion"],"cwd":"/tmp/fx-s1-mutations-2f2k66s1","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.13s\n"}
