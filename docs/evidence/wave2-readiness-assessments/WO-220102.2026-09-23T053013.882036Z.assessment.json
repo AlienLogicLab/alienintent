@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Deliver the bounded WO-220102/S1 capability for typed immutable evidence and neutral references under SF-REQ-016, preserving authority boundaries, immutable digest-backed evidence objects, versioned typed links, and verdict admission semantics without expanding into sibling DAG nodes or new policy.",
+    "implementation_unknowns": [
+      "Where the existing evidence_learning port/local adapter, shared Ref value types, composition/evidence_profile.py, and evaluate_verdict integration points are located in the repository.",
+      "The exact current shape of persisted evidence records, store abstractions, migration framework, and any existing digest/CAS utilities that should be reused rather than duplicated.",
+      "How fsync/install-before-pointer durability is currently represented and tested in the codebase, including available crash-simulation or fault-injection helpers.",
+      "How the fixture FX-S1 commands, evidence schema, and intact/fault/restored discrimination should be encoded in the existing test or proof harness.",
+      "How the existing system distinguishes authorized evaluator/policy references from worker observations and test outputs at runtime."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Durability and crash-consistency behavior may require careful integration with existing storage primitives and could expose platform-specific fsync or atomic-install differences.",
+      "Authority and role validation mistakes could silently turn observations or worker statements into effective PASS verdicts, which is central to the requirement.",
+      "Migration M-EVIDENCE touches persisted references and rollback behavior; schema compatibility or readback gaps could require coupled changes across storage, profile, and fixture code.",
+      "The task depends on reported predecessor receipts and active execution/profile binding; if those reported prerequisites are not actually available to the implementer, execution should hold at that later gate.",
+      "Bridging to existing evaluate_verdict without new policy may be constrained by existing APIs that do not yet expose all required typed reference or authority metadata."
+    ],
+    "next_action": "Proceed to Work Management READY or implementation handoff, retaining the supplied packet/fingerprint and first pinning the executable FX-S1 fixture commands, inputs, expected outcomes, and evidence schema against the stated node predicate.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "rationale": "The controlling condition is readiness rather than clarification, split, or hold: the governing intent and boundaries are explicit, owner-level decisions are fixed by the referenced design contract, acceptance is concrete and independently verifiable, and the work centers on one capability rather than multiple independent decision centers. Remaining uncertainties are engineering discovery about existing code locations, APIs, durability mechanisms, and fixture encoding. The text reports prerequisite predecessor evidence and allocation context rather than establishing a missing external artifact that would force HOLD, while also making clear that release admission remains a later gate.",
+    "semantic_split_recommendation": [],
+    "summary": "The proposed work is a cohesive implementation of the typed_evidence_repository capability: admit Definition, Observation, and Verdict records; store immutable durable digest objects before CAS pointer updates; reject missing, mismatched, stale, or improperly promoted evidence; preserve unknown measurements as null with reasons; and bridge to the existing evaluate_verdict path without adding policy. The supplied text defines scope, non-goals, acceptance criteria, negative controls, migration expectations, and evidence obligations with sufficient coherence for autonomous handoff.",
+    "verification_assessment": "Acceptance is observable through the stated probes and negative controls: role-separated Definition/Observation/Verdict admission, refusal of missing or mismatched references, preservation of conflicting observations, rejection of observation-to-definition promotion, crash-before/after-pointer behavior, durable immutable-object installation, and continued use of existing evaluate_verdict without new policy. A single independent verification verdict is meaningful because the scope is one coherent capability with shared storage/admission semantics and discriminating fixtures that can reject role-boundary, revision, authority, and hash-validation faults."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "6b056813f6e3643219b4fac50be2d2f2785536a7",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-23T05:30:38.472156+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10712,
+    "input_sha256": "911958143c17a13d615eca72b4c6a942e0136e7dce6f3310c478622ae66251bd",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-vo4wkyf5/WO-220102.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "started_at": "2026-09-23T05:30:13.882036+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220102"
+}
