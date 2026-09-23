@@ -1,0 +1,113 @@
+{
+  "schema_version": 1,
+  "fixture_id": "FX-S2",
+  "biu_id": "WO-220103",
+  "status": "PINNED_BEFORE_IMPLEMENTATION",
+  "invocation": "AlienLogicLab/alienintent#74:PRODUCER:cd01c897-5523-486b-9a38-86ab2dbacb77",
+  "baseline": "0515444b5c43c83f4a5e26c9ec2c5956f064e1d9",
+  "release": "https://github.com/AlienLogicLab/alienintent/issues/74#issuecomment-5791498705",
+  "candidate_branch": "b-disp/e7a6312c-eb0d-4635-af4e-edf0c36b3e9e",
+  "owner": "Morty / morty-worker",
+  "input_digests": {
+    "docs/evidence/wave2-candidate-bius.json": "sha256:61f9324e7d1b7f0937bbc1aff7cbaba77c50192204e109cad5d78edb04f677f7",
+    "docs/evidence/wave2-design-contracts.json": "sha256:56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242",
+    "docs/evidence/wave2-proof-fixtures/FX-S0/execution-record.json": "sha256:6be22bb47591840f9e2c64a99cee63db30a8d72b18f0e359aacadc95f5bebc02",
+    "docs/evidence/wave2-proof-fixtures/FX-S1/execution-record.json": "sha256:e4b0c3956226d8fbc1211a53e6cfbbb986914274f8280fb49bee83fe9ae3fe8f",
+    "src/alienintent/execution_coordination/adapters/sqlite_store.py": "sha256:49855e8b0c3565f3b031a3ac9e24373ac3cbe05c8f3b13d4622ed14050dc1e91"
+  },
+  "active_profile_sha256": "1be6e4f3dd5be1b42673c99f36db79649e26599efdc777b7c0f8e083e0ecc6e7",
+  "limits": {
+    "maxCycles": 3,
+    "maxReplacementsPerPhase": 1,
+    "totalInvocationMs": 7620000
+  },
+  "predecessors": {
+    "S0": "761a3cb4d6e24dc24ec370de45e25fe8c505eeda",
+    "S1": "b80d0cb502d68589a3907331f1db802280c67c5f",
+    "S1_verdict": "https://github.com/AlienLogicLab/alienintent/issues/71#issuecomment-5789957070",
+    "S1_closure": "https://github.com/AlienLogicLab/alienintent/issues/71#issuecomment-5790010355"
+  },
+  "commands": [
+    {
+      "command": "python3 -m pytest -q tests/execution_coordination/test_fenced_store.py tests/execution_coordination/test_operational_store.py tests/composition/test_fenced_profile.py",
+      "expected_exit": 0
+    },
+    {
+      "command": "python3 tools/evidence/fx_s2_evidence.py --output <external-root> --invocation <actual-invocation>",
+      "expected_exit": 0,
+      "expected": "intact and restored pass; each fault applies exactly once and fails an acceptance assertion"
+    },
+    {
+      "command": "python3 tools/fitness/check_architecture.py --root src/alienintent --check all",
+      "expected_exit": 0
+    },
+    {
+      "command": "python3 -m pytest -q",
+      "expected_exit": 0
+    },
+    {
+      "command": "node scripts/check.mjs all",
+      "expected_exit": 0
+    }
+  ],
+  "inputs": {
+    "profile": "fx-s2",
+    "database": "temporary real SQLite, existing schema/tables",
+    "clock": 100,
+    "authority": {
+      "schema_version": 1,
+      "epoch": 1,
+      "invocation": "worker-1",
+      "active": true,
+      "expires_at": 200
+    },
+    "vector": "job=0, authority=1, premise=1; job advances at intent",
+    "reservations": [
+      "repository/repo",
+      "lane/job"
+    ],
+    "payload": {
+      "kind": "local-delivery",
+      "value": "one"
+    },
+    "consumer": "durable local journal; no arbitrary external callback or exactly-once network claim"
+  },
+  "probes": {
+    "atomic": "two independent processes race on same database: single intent and single claim; stale vector/epoch/authority/fence, suppression and duplicate intent refuse without partial write",
+    "locking": "sorted multi-reservation acquisition is atomic; contention rolls back newly acquired reservations only, preserving retained owners",
+    "crash": "SIGKILL before/after intent, after claim, after consumer acceptance and after readback; reopen same database, keep unknown ownership and deduplicate persisted receipt",
+    "delayed": "original sender delayed across authority expiry/revocation and attempted reassignment; no duplicate consumer effect, unknown reservation retained",
+    "receipt": "confirm only exact persisted correlated receipt under current reservation owner/fence; forged/mismatched receipts refuse",
+    "migration": "old methods compatible on unadopted lanes; every legacy mutation/dispatch/reconciliation bypass on adopted lane refused; no automatic rollback; same database consumer proof",
+    "controls": [
+      "remove reservation fence check",
+      "remove vector check",
+      "remove authority expiry check",
+      "remove receipt correlation check"
+    ]
+  },
+  "evidence_schema": {
+    "record_kind": "ProofFixtureExecution",
+    "schema_version": 1,
+    "fields": [
+      "source_revision",
+      "fixture_plan_sha256",
+      "input_digests",
+      "profile_digest",
+      "actual invocation",
+      "exact argv/stdout/stderr/exit",
+      "expected and observed outcomes",
+      "mutation application count",
+      "immutable sha256 observations",
+      "independent_verdict=PENDING"
+    ],
+    "candidate_pin": "final evidence-only commit is named in single Issue result comment; source revision is committed before retained run",
+    "measurements": "unmeasured token/cost/provider use null with reason"
+  },
+  "boundaries": [
+    "local composed/mechanical proof only",
+    "preserve S0 success-collapse and platform limitations and S1 evidence",
+    "no sibling work, live adoption, service/profile mutation, deployment, RAI, pending amendments or other repository changes"
+  ],
+  "disposition": "runtime-managed candidate retained for independent VERIFY and subsequent authorized closure; no main push"
+}
