@@ -1151,6 +1151,20 @@ Requirements: SF-REQ-036, SF-REQ-037, advanced Control Plane UX.
 
 Outcome: a new user installs and operates the factory without reproducing bootstrap pain.
 
+## Deferred future-work backlog — post-core Factory Operations / Commissioning capability cluster
+
+Founder direction (2026-09-23): preserve the following future capabilities without displacing
+current Factory-core construction/hardening or the approved Wave 2 plan/DAG: governed Project
+Plan management; Factory Operations Console; Factory Communications Fabric; Factory
+Supervisory Controls and Safety; and Factory Commissioning / Minimum Viable Project Intent.
+
+The immutable submitted provenance is `PROP-2026-0009` through `PROP-2026-0013` in
+[`docs/proposals/`](../proposals/). These items are deferred until Factory core is sufficiently
+complete and hardened. Exact Priority and Wave are unresolved and must be assigned only by
+applicable Founder authority. This backlog entry creates no Product Requirement, BIU,
+implementation/release authority, plan amendment or change to the current Wave 2 dependency
+DAG.
+
 # Source projects / design references
 
 Idea sources, not dependencies:

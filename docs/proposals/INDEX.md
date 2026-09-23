@@ -12,6 +12,11 @@ Proposal files in this directory are **immutable provenance artifacts**. They ar
 | PROP-2026-0006 | Deterministic Actor-Launch Liveness Reconciliation | Product Requirement | [SWF-29](../decisions/2026-09-20-liveness-reconciliation.md) | SF-REQ-056 | [#67](https://github.com/AlienLogicLab/alienintent/issues/67) | canonicalized 2026-09-20; CAPTURE; P0 / Wave 2 |
 | PROP-2026-0007 | Candidate Worktree Retention — local worktree as operational cache | Operational policy; canonicalized as an amendment to an existing requirement | [SWF-30](../decisions/2026-09-20-candidate-worktree-retention.md) | **SF-REQ-007** (amendment) | [#9](https://github.com/AlienLogicLab/alienintent/issues/9) | approved and canonicalized 2026-09-20 with a clarification to condition 2; applied — 18 worktrees removed, 3 retained |
 | PROP-2026-0008 | BIU Execution Cycle Counter — canonical cycle identity and Work Management projection | Workflow semantics over execution-domain state; canonicalized as an amendment | [SWF-32](../decisions/2026-09-21-biu-execution-cycle-counter.md) | **SF-REQ-009** (amendment) | [#11](https://github.com/AlienLogicLab/alienintent/issues/11) | canonicalized 2026-09-21; **Priority/Wave unassigned — open Founder decision** |
+| PROP-2026-0009 | Governed Project Plan Management | Product capability; likely new canonical owner | — | — | — | submitted 2026-09-23; pending intake/reconciliation; Priority/Wave unassigned |
+| PROP-2026-0010 | Factory Operations Console | Future strengthening of Operator Control Plane and Factory Dashboard | — | — | — | submitted 2026-09-23; pending intake/reconciliation; no scheduling assigned |
+| PROP-2026-0011 | Factory Communications Fabric | Product capability; related to escalation, trajectory and decisions | — | — | — | submitted 2026-09-23; pending intake/reconciliation; Priority/Wave unassigned |
+| PROP-2026-0012 | Factory Supervisory Controls and Safety | Future strengthening of Operator Control Plane; safety ownership unresolved | — | — | — | submitted 2026-09-23; pending intake/reconciliation; no scheduling assigned |
+| PROP-2026-0013 | Factory Commissioning and Minimum Viable Project Intent | Product capability; related to installation, intake and sources | — | — | — | submitted 2026-09-23; pending intake/reconciliation; Priority/Wave unassigned |
 
 ## Intake rules
 
