@@ -1,0 +1,6 @@
+test_source_scope_digest_and_provenance (tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 10.341s
+
+OK

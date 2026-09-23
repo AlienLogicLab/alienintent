@@ -1,0 +1,60 @@
+test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) ... 
+  test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='factory_plan_heading', links=('BIU:2', 'BIU:1')) ... FAIL
+  test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='factory_plan_heading', links=('BIU:2', 'BIU:1', 'BIU:2')) ... FAIL
+  test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='canonical_requirement', links=('BIU:2', 'BIU:1')) ... FAIL
+  test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='canonical_requirement', links=('BIU:2', 'BIU:1', 'BIU:2')) ... FAIL
+  test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='recorded_as', links=('BIU:2', 'BIU:1')) ... FAIL
+  test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='recorded_as', links=('BIU:2', 'BIU:1', 'BIU:2')) ... FAIL
+
+======================================================================
+FAIL: test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='factory_plan_heading', links=('BIU:2', 'BIU:1'))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 136, in test_satisfaction_link_set_order_preserves_revision_and_applicability
+    self.assertEqual(len(merged.current), 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='factory_plan_heading', links=('BIU:2', 'BIU:1', 'BIU:2'))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 136, in test_satisfaction_link_set_order_preserves_revision_and_applicability
+    self.assertEqual(len(merged.current), 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='canonical_requirement', links=('BIU:2', 'BIU:1'))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 136, in test_satisfaction_link_set_order_preserves_revision_and_applicability
+    self.assertEqual(len(merged.current), 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='canonical_requirement', links=('BIU:2', 'BIU:1', 'BIU:2'))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 136, in test_satisfaction_link_set_order_preserves_revision_and_applicability
+    self.assertEqual(len(merged.current), 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='recorded_as', links=('BIU:2', 'BIU:1'))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 136, in test_satisfaction_link_set_order_preserves_revision_and_applicability
+    self.assertEqual(len(merged.current), 1)
+AssertionError: 2 != 1
+
+======================================================================
+FAIL: test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) (form='recorded_as', links=('BIU:2', 'BIU:1', 'BIU:2'))
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 136, in test_satisfaction_link_set_order_preserves_revision_and_applicability
+    self.assertEqual(len(merged.current), 1)
+AssertionError: 2 != 1
+
+----------------------------------------------------------------------
+Ran 1 test in 0.007s
+
+FAILED (failures=6)

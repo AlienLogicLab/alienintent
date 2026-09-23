@@ -1,0 +1,6 @@
+test_satisfaction_link_set_order_preserves_revision_and_applicability (tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.011s
+
+OK

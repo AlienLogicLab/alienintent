@@ -1,0 +1,14 @@
+test_source_scope_digest_and_provenance (tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance) ... FAIL
+
+======================================================================
+FAIL: test_source_scope_digest_and_provenance (tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 188, in test_source_scope_digest_and_provenance
+    self.assertTrue(any(i.reason == "SOURCE_DIGEST_MISMATCH" for i in observed.source_issues))
+AssertionError: False is not true
+
+----------------------------------------------------------------------
+Ran 1 test in 9.682s
+
+FAILED (failures=1)
