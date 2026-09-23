@@ -14,7 +14,7 @@
     ],
     "candidate_contract_sha256": "d74262cfb09af5d127832762983b8b2c368b075cdd9b6d9fde7ad7cda8ee1710",
     "baseline_sha": "2528e3acd773f53de116f6f28537244d1f1f8b2f",
-    "release_authority": "NOT YET GRANTED — separate native Agent Ready, Work Management READY and release-admission steps required before any IMPLEMENT transition"
+    "release_authority": "SWF-35 is a binding standing grant: the Factory Director may authorize READY -> IMPLEMENT only after separate native Agent Ready READY, Work Management READY, predecessor-evidence, active-profile-limit-binding, custody, and release-admission checks pass; this packet itself does not transition IMPLEMENT"
   },
   "allowed_scope": {
     "extent": "Definition/Observation/Verdict admission; immutable digest objects with fsync/install before CAS pointer; crash before/after pointer; missing/hash-mismatched records refuse verdict; unknown measurement remains null with reason; competing role/revision/authority records cannot mint PASS. Bridge to existing evaluate_verdict without new policy.",

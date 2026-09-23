@@ -82,7 +82,7 @@
     "provider_capacity": "classify PROVIDER_CAPACITY_INTERRUPTION, not a task failure; the retained dispatcher admits at most one replacement worker per phase and holds further replacement attempts",
     "duration_exhaustion": "a hard duration stop yields a terminal supervision receipt; it does not grant a new retry or cycle"
   },
-  "not_granted_here": "Release authority is NOT YET GRANTED. SWF-35 standing grant applies only after native Agent Ready READY, Work Management READY, predecessor evidence, an exact active-profile execution.biuLimits binding, fully bound packet and release-admission checks. This allocation does not authorize a transition.",
+  "not_granted_here": "This allocation does not itself authorize a transition. The binding SWF-35 standing grant permits the Factory Director to authorize READY -> IMPLEMENT only after native Agent Ready READY, Work Management READY, predecessor evidence, an exact active-profile execution.biuLimits binding, fully bound packet, custody, and release-admission checks.",
   "provenance": {
     "baseline_sha": "2528e3acd773f53de116f6f28537244d1f1f8b2f",
     "candidate_contract_sha256": "d74262cfb09af5d127832762983b8b2c368b075cdd9b6d9fde7ad7cda8ee1710",
