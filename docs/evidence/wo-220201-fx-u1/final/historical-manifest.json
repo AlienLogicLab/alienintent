@@ -1,0 +1,787 @@
+{
+  "project": "AlienLogicLab/alienintent",
+  "entries": [
+    {
+      "path": "docs/decisions/2026-09-19-software-factory-wave1-founder-decisions.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "0f32bc672ee20e8cecdbdf66cbbcd395a6b21f1a7f20a0641029685ee3289c83",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          46
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-19-software-factory-wave1-founder-decisions.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-19-software-factory-wave1-founder-decisions.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-candidate-worktree-retention.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "75d8eda8a716eab9a9668776c93459514c03058ceb7537177657b0e97b0bdf8d",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          84
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-candidate-worktree-retention.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-candidate-worktree-retention.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-convergence-assistance-willing-convergence.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "dcb2e78c179f85bf1ed20b8240b3c6dd26e3b522a6a769bf6bd1271025d6ccc4",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          488
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-convergence-assistance-willing-convergence.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-convergence-assistance-willing-convergence.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "f7b8c8b0122ebe25b90720a71300f1b1c048cc4b3a6684f43db654c3fefcad87",
+      "definitions": [
+        {
+          "start": 86,
+          "end": 137,
+          "form": "recorded_as"
+        }
+      ],
+      "references": [
+        [
+          1,
+          137
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-convergent-repair-monotonic-progress.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "b9c4d00bf50280db41fdd9e3a52fef7ecc55e4fce34dcfd58355c305fd814e49",
+      "definitions": [
+        {
+          "start": 5,
+          "end": 79,
+          "form": "canonical_requirement"
+        }
+      ],
+      "references": [
+        [
+          1,
+          79
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-deterministic-failure-class-promotion.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "ae7b77fde421abd707eb359d0829ceb51d1730dd510708715eeb2b24c3fd0f11",
+      "definitions": [
+        {
+          "start": 5,
+          "end": 244,
+          "form": "canonical_requirement"
+        }
+      ],
+      "references": [
+        [
+          1,
+          244
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-deterministic-failure-class-promotion.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-deterministic-failure-class-promotion.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-evidence-and-intake-ratification.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "e2da4f8d98c9f028b87c09f78f78ba87390e43f98bf51c236ddeab7506300fc6",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          48
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-evidence-and-intake-ratification.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-evidence-and-intake-ratification.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-liveness-reconciliation.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "cf38a1b481c710b1229e1d24c143439ca3c4115b53f636abc4e0aeee68a1f6e6",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          105
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-liveness-reconciliation.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-liveness-reconciliation.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "87e820775d5ae42ddba84a402553db8409f47409ad9ab771c469d55f06eeefa9",
+      "definitions": [
+        {
+          "start": 5,
+          "end": 173,
+          "form": "canonical_requirement"
+        }
+      ],
+      "references": [
+        [
+          1,
+          173
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-persistent-control-plane-bounded-coordinator-episodes.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "4245c33a8c737efc8e93a598b6a7dacda6182c1a2379787e1748237260972fe4",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          38
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-py04-coordinator-mutation-gate.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-wave1-closure-policy.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "7c08593da9a81507e4a1cec80c13389be50d18c3f47330f19ae928f326e30fb0",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          107
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-wave1-closure-policy.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-wave1-closure-policy.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-wave1-execution-decisions.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "e94def3936395d3322cfd44b6cede30677e7f3391c7d4db1adba855ac420ad57",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          68
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-wave1-execution-decisions.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-wave1-execution-decisions.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "a818239d9d8da818b92d1ad37e09fef4cbfef73f36e3288ea459c6b63c78b45d",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          83
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-wave1-plan-approval-d1-d2.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "732d71e918c16107f94c7a59ea5cd7aa12de8eaa6dc0b19f0898b9282abbd9fb",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          83
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-20-wave1-release-coordinator.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-21-biu-execution-cycle-counter.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "a8aea557829dab270fbb89f26dd8836549d6861f838d318ef676b70ccf3e6533",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          115
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-21-biu-execution-cycle-counter.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-21-biu-execution-cycle-counter.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/2026-09-21-py10-transport-split.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "9556450d30168be28975a2820e168b243f25f9a203abb5c0eda2c77bef93d54c",
+      "definitions": [],
+      "references": [
+        [
+          1,
+          94
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/2026-09-21-py10-transport-split.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/2026-09-21-py10-transport-split.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    },
+    {
+      "path": "docs/decisions/alienintent-software-factory-plan.md",
+      "revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "digest": "6207771dadb6d670e0fb235b68f8df3e726dd04737366198520b4c4e852015bc",
+      "definitions": [
+        {
+          "start": 731,
+          "end": 743,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 744,
+          "end": 748,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 749,
+          "end": 758,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 759,
+          "end": 765,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 766,
+          "end": 772,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 773,
+          "end": 782,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 783,
+          "end": 789,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 842,
+          "end": 846,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 847,
+          "end": 864,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 865,
+          "end": 869,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 870,
+          "end": 874,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 875,
+          "end": 879,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 880,
+          "end": 884,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 885,
+          "end": 893,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 894,
+          "end": 898,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 899,
+          "end": 909,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 910,
+          "end": 914,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 915,
+          "end": 919,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 920,
+          "end": 924,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 925,
+          "end": 929,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 930,
+          "end": 934,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 935,
+          "end": 939,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 940,
+          "end": 944,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 945,
+          "end": 949,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 950,
+          "end": 954,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 955,
+          "end": 959,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 960,
+          "end": 964,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 965,
+          "end": 969,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 970,
+          "end": 974,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 975,
+          "end": 979,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 980,
+          "end": 984,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 985,
+          "end": 989,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 990,
+          "end": 994,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 995,
+          "end": 999,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1000,
+          "end": 1004,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1005,
+          "end": 1011,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1012,
+          "end": 1020,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1021,
+          "end": 1026,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1027,
+          "end": 1035,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1036,
+          "end": 1040,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1041,
+          "end": 1045,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1046,
+          "end": 1050,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1051,
+          "end": 1055,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1056,
+          "end": 1060,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1061,
+          "end": 1065,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1066,
+          "end": 1070,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1071,
+          "end": 1075,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1076,
+          "end": 1080,
+          "form": "factory_plan_heading"
+        },
+        {
+          "start": 1081,
+          "end": 1085,
+          "form": "factory_plan_heading"
+        }
+      ],
+      "references": [
+        [
+          1,
+          1147
+        ]
+      ],
+      "namespaces": [
+        "SF"
+      ],
+      "provenance": {
+        "external_source": "git",
+        "external_identity": "docs/decisions/alienintent-software-factory-plan.md",
+        "external_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+        "source_link": "git:d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998:docs/decisions/alienintent-software-factory-plan.md",
+        "ingestion_timestamp": "2026-09-23T00:00:00Z",
+        "authority_status": "historical-observation",
+        "synchronization": "no-projection; regression-only"
+      },
+      "authority_revision": "d83e87e6f2bb4ff90ff4f4f0e3940582f8d5c998",
+      "role": "Observation",
+      "satisfaction_links": [],
+      "access_label": "private",
+      "adapter_version": "git-prose-v1",
+      "contract_version": "SF-REQ-011/grammar-2"
+    }
+  ],
+  "name": "POSTW1-011-HISTORICAL-CORPUS-R2",
+  "version": 1
+}

@@ -1,0 +1,22 @@
+test_reference_kinds_and_definition_rejection (tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection) ... 
+  test_reference_kinds_and_definition_rejection (tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection) (token='SF-REQ-053-AC-01') ... FAIL
+
+======================================================================
+FAIL: test_reference_kinds_and_definition_rejection (tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection) (token='SF-REQ-053-AC-01')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 87, in test_reference_kinds_and_definition_rejection
+    self.assertEqual((got.kind, got.operands, got.reason), (kind, operands, None))
+AssertionError: Tuples differ: ('RequirementIdentifier', (), None) != ('AcceptanceCriterionId', (), None)
+
+First differing element 0:
+'RequirementIdentifier'
+'AcceptanceCriterionId'
+
+- ('RequirementIdentifier', (), None)
++ ('AcceptanceCriterionId', (), None)
+
+----------------------------------------------------------------------
+Ran 1 test in 0.011s
+
+FAILED (failures=1)

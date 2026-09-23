@@ -1,0 +1,6 @@
+test_all_forms_exact_tokens_and_issues (tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.009s
+
+OK

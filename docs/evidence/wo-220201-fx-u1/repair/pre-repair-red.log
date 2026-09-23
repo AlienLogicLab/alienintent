@@ -1,0 +1,52 @@
+......F....F...                                                          [100%]
+=================================== FAILURES ===================================
+________ InventoryTests.test_markdown_balanced_and_escaped_destinations ________
+
+self = <tests.context_assembly.test_inventory.InventoryTests testMethod=test_markdown_balanced_and_escaped_destinations>
+
+    def test_markdown_balanced_and_escaped_destinations(self):
+        for destination in ("https://host/a(b)/SF-REQ-999",
+                            "https://host/a(b(c))/SF-REQ-999",
+                            r"https://host/a\)/SF-REQ-999",
+                            r"https://host/a\(/SF-REQ-999",
+                            r"https://host/a\\(b)/SF-REQ-999"):
+            with self.subTest(destination=destination):
+                body = f"[SF-REQ-007]({destination}) SF-REQ-008"
+                s = assemble("p", (source(body=body),))
+>               self.assertEqual(s.identifier_issues, ())
+E               AssertionError: Tuples differ: (Issue(path='a.md', line=2, raw_token='/SF[86 chars]D'),) != ()
+E               
+E               First tuple contains 1 additional elements.
+E               First extra element 0:
+E               Issue(path='a.md', line=2, raw_token='/SF-REQ-999', reason='UNRECOGNIZED_REQUIREMENT_ID', grammar_revision=2, status='UNVERIFIED')
+E               
+E               + ()
+E               - (Issue(path='a.md',
+E               -        line=2,
+E               -        raw_token='/SF-REQ-999',
+E               -        reason='UNRECOGNIZED_REQUIREMENT_ID',
+E               -        grammar_revision=2,
+E               -        status='UNVERIFIED'),)
+
+tests/context_assembly/test_inventory.py:110: AssertionError
+_ InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability _
+
+self = <tests.context_assembly.test_inventory.InventoryTests testMethod=test_satisfaction_link_set_order_preserves_revision_and_applicability>
+
+    def test_satisfaction_link_set_order_preserves_revision_and_applicability(self):
+        a = source(body="Depends on SF-REQ-002", links=("BIU:1", "BIU:2"))
+        downstream = source("SF-REQ-003", body="Depends on SF-REQ-011", path="down.md", links=("BIU:3",))
+        first = assemble("p", (a, downstream))
+        for form in FORMS:
+            for links in (("BIU:2", "BIU:1"), ("BIU:2", "BIU:1", "BIU:2")):
+                with self.subTest(form=form, links=links):
+                    b = source(body="Depends on SF-REQ-002", form=form, path="b.md", links=links)
+                    merged = assemble("p", (a, b))
+>                   self.assertEqual(len(merged.current), 1)
+E                   AssertionError: 2 != 1
+
+tests/context_assembly/test_inventory.py:131: AssertionError
+=========================== short test summary info ============================
+FAILED tests/context_assembly/test_inventory.py::InventoryTests::test_markdown_balanced_and_escaped_destinations
+FAILED tests/context_assembly/test_inventory.py::InventoryTests::test_satisfaction_link_set_order_preserves_revision_and_applicability
+2 failed, 13 passed in 15.04s

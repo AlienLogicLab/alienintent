@@ -1,0 +1,6 @@
+test_conflicts_aliases_revision_retirement_and_local_holds (tests.context_assembly.test_inventory.InventoryTests.test_conflicts_aliases_revision_retirement_and_local_holds) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.006s
+
+OK

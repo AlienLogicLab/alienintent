@@ -1,0 +1,111 @@
+test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) ... 
+  test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='<https://host/a)/SF-REQ-999>') ... FAIL
+  test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='https://host/a(b)/SF-REQ-999') ... FAIL
+  test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='https://host/a(b(c))/SF-REQ-999') ... FAIL
+  test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='https://host/a\\)/SF-REQ-999') ... FAIL
+  test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='https://host/a\\\\(b)/SF-REQ-999') ... FAIL
+
+======================================================================
+FAIL: test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='<https://host/a)/SF-REQ-999>')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 115, in test_markdown_balanced_and_escaped_destinations
+    self.assertEqual(s.identifier_issues, ())
+AssertionError: Tuples differ: (Issue(path='a.md', line=2, raw_token='/SF[86 chars]D'),) != ()
+
+First tuple contains 1 additional elements.
+First extra element 0:
+Issue(path='a.md', line=2, raw_token='/SF-REQ-999', reason='UNRECOGNIZED_REQUIREMENT_ID', grammar_revision=2, status='UNVERIFIED')
+
++ ()
+- (Issue(path='a.md',
+-        line=2,
+-        raw_token='/SF-REQ-999',
+-        reason='UNRECOGNIZED_REQUIREMENT_ID',
+-        grammar_revision=2,
+-        status='UNVERIFIED'),)
+
+======================================================================
+FAIL: test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='https://host/a(b)/SF-REQ-999')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 115, in test_markdown_balanced_and_escaped_destinations
+    self.assertEqual(s.identifier_issues, ())
+AssertionError: Tuples differ: (Issue(path='a.md', line=2, raw_token='/SF[86 chars]D'),) != ()
+
+First tuple contains 1 additional elements.
+First extra element 0:
+Issue(path='a.md', line=2, raw_token='/SF-REQ-999', reason='UNRECOGNIZED_REQUIREMENT_ID', grammar_revision=2, status='UNVERIFIED')
+
++ ()
+- (Issue(path='a.md',
+-        line=2,
+-        raw_token='/SF-REQ-999',
+-        reason='UNRECOGNIZED_REQUIREMENT_ID',
+-        grammar_revision=2,
+-        status='UNVERIFIED'),)
+
+======================================================================
+FAIL: test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='https://host/a(b(c))/SF-REQ-999')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 115, in test_markdown_balanced_and_escaped_destinations
+    self.assertEqual(s.identifier_issues, ())
+AssertionError: Tuples differ: (Issue(path='a.md', line=2, raw_token='/SF[86 chars]D'),) != ()
+
+First tuple contains 1 additional elements.
+First extra element 0:
+Issue(path='a.md', line=2, raw_token='/SF-REQ-999', reason='UNRECOGNIZED_REQUIREMENT_ID', grammar_revision=2, status='UNVERIFIED')
+
++ ()
+- (Issue(path='a.md',
+-        line=2,
+-        raw_token='/SF-REQ-999',
+-        reason='UNRECOGNIZED_REQUIREMENT_ID',
+-        grammar_revision=2,
+-        status='UNVERIFIED'),)
+
+======================================================================
+FAIL: test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='https://host/a\\)/SF-REQ-999')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 115, in test_markdown_balanced_and_escaped_destinations
+    self.assertEqual(s.identifier_issues, ())
+AssertionError: Tuples differ: (Issue(path='a.md', line=2, raw_token='/SF[86 chars]D'),) != ()
+
+First tuple contains 1 additional elements.
+First extra element 0:
+Issue(path='a.md', line=2, raw_token='/SF-REQ-999', reason='UNRECOGNIZED_REQUIREMENT_ID', grammar_revision=2, status='UNVERIFIED')
+
++ ()
+- (Issue(path='a.md',
+-        line=2,
+-        raw_token='/SF-REQ-999',
+-        reason='UNRECOGNIZED_REQUIREMENT_ID',
+-        grammar_revision=2,
+-        status='UNVERIFIED'),)
+
+======================================================================
+FAIL: test_markdown_balanced_and_escaped_destinations (tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations) (destination='https://host/a\\\\(b)/SF-REQ-999')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u1-g4gnzuy7/tests/context_assembly/test_inventory.py", line 115, in test_markdown_balanced_and_escaped_destinations
+    self.assertEqual(s.identifier_issues, ())
+AssertionError: Tuples differ: (Issue(path='a.md', line=2, raw_token='/SF[86 chars]D'),) != ()
+
+First tuple contains 1 additional elements.
+First extra element 0:
+Issue(path='a.md', line=2, raw_token='/SF-REQ-999', reason='UNRECOGNIZED_REQUIREMENT_ID', grammar_revision=2, status='UNVERIFIED')
+
++ ()
+- (Issue(path='a.md',
+-        line=2,
+-        raw_token='/SF-REQ-999',
+-        reason='UNRECOGNIZED_REQUIREMENT_ID',
+-        grammar_revision=2,
+-        status='UNVERIFIED'),)
+
+----------------------------------------------------------------------
+Ran 1 test in 0.008s
+
+FAILED (failures=5)

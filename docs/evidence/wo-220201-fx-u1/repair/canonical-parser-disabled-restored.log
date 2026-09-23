@@ -1,0 +1,6 @@
+test_historical_exact_manifest (tests.context_assembly.test_inventory.InventoryTests.test_historical_exact_manifest) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 8.158s
+
+OK

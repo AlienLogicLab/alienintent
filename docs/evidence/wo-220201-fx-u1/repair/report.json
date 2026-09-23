@@ -1,0 +1,983 @@
+{
+  "schema_version": 1,
+  "fixture": "FX-U1",
+  "baseline": "901d17444aa0aa1e5098017c3726d0d0daad1442",
+  "invocation": "AlienLogicLab/alienintent#76:PRODUCER:3f47a296-d48a-40bf-8dd7-6878e2261fa6",
+  "candidate_revision": "c25c378115881bf6e3e2d48504cce20cdc19e067",
+  "source_manifest_digest": "03889d4a3b8d1d253031b4dfd45f80dedb63dcb61e6415e2d46fa90efffad9cf",
+  "implementation_files": {
+    "src/alienintent/context_assembly/__init__.py": "77f8edd6814a04298fd5e1ffbbac9b40f3309602b215f3b6645d52efa57371b6",
+    "src/alienintent/context_assembly/adapters/__init__.py": "0b9a2509a6d432dccc6c8de8d76f6955b43ac0f78d25f798bdb8d4492e67e9fc",
+    "src/alienintent/context_assembly/adapters/versioned_source.py": "56511a1358fbfa223e2441256cd0ead03da7c0b9a29c43f73f00522cb49c9331",
+    "src/alienintent/context_assembly/application/__init__.py": "43b1caee047f372790af11f57ef9b5b0ed371460aa9ac7b8cbc570c5b0d91847",
+    "src/alienintent/context_assembly/application/inventory_service.py": "2be5dc24a09b51d9da1f050de7b8ecc82a2606dd0c13cee077d8944824ce1213",
+    "src/alienintent/context_assembly/domain/__init__.py": "b5545d4c6e4b8b910735c0fd4eeb1ab43435518af4be5b8f20284276f98f00ec",
+    "src/alienintent/context_assembly/domain/inventory.py": "58fe39ca0682ecb05e9826dc371c57944df7a353afd6297d29618721f258e379",
+    "src/alienintent/context_assembly/ports/__init__.py": "efa04ce5cf9e41758cee2d5d3ef2b81cd20ab74d5ac5f4858c4d1fdbaeb24b04",
+    "src/alienintent/context_assembly/ports/requirement_source.py": "82de69933bd978a881518d32c2a66524fbda88ee82a577a7394e434ce5757453"
+  },
+  "historical_snapshot_ref": {
+    "project": "AlienLogicLab/alienintent",
+    "profile": "fx-u1",
+    "logical_id": "inventory.snapshot:f833410c0947aa762514247883eda4985fd1f903c9799463017032c281386d85",
+    "revision_digest": "sha256:6f8a68ac8b8b51f0c04fd628f42295f27a83d6b64ab9945b23bc1d0bcb19a99b",
+    "locator": "objects/6f8a68ac8b8b51f0c04fd628f42295f27a83d6b64ab9945b23bc1d0bcb19a99b"
+  },
+  "historical_snapshot_digest": "f833410c0947aa762514247883eda4985fd1f903c9799463017032c281386d85",
+  "tokens": null,
+  "cost": null,
+  "measurement_reason": "UNKNOWN: invocation billing telemetry unavailable",
+  "controls": [
+    {
+      "control": "markdown-destination-boundary",
+      "discriminated": true
+    },
+    {
+      "control": "satisfaction-link-order",
+      "discriminated": true
+    },
+    {
+      "control": "canonical-parser-disabled",
+      "discriminated": true
+    },
+    {
+      "control": "recorded-parser-disabled",
+      "discriminated": true
+    },
+    {
+      "control": "conflicting-definition-effective",
+      "discriminated": true
+    },
+    {
+      "control": "weakened-token-grammar",
+      "discriminated": true
+    },
+    {
+      "control": "stripped-suffix",
+      "discriminated": true
+    },
+    {
+      "control": "malformed-token-suppressed",
+      "discriminated": true
+    },
+    {
+      "control": "acceptance-wrong-kind",
+      "discriminated": true
+    },
+    {
+      "control": "compound-operand-loss",
+      "discriminated": true
+    },
+    {
+      "control": "excluded-scope-scanned",
+      "discriminated": true
+    },
+    {
+      "control": "manifest-digest-mismatch-ignored",
+      "discriminated": true
+    }
+  ],
+  "observations": [
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "markdown-destination-boundary",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "2e963ad651c14dfbbb33d459be2e2e08a3bb9b87c1a34384e21b373a6eb50b59",
+      "raw_output": "markdown-destination-boundary-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "markdown-destination-boundary/intact",
+        "revision_digest": "sha256:f9e61845d4177d4e2d08da8c67b6bb7f737a43a3c3e33703cb0a2ebef0b536fa",
+        "locator": "objects/f9e61845d4177d4e2d08da8c67b6bb7f737a43a3c3e33703cb0a2ebef0b536fa"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "markdown-destination-boundary",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "295209cfc06d03bf561c88ff110492df17be9584992145ed8195f51f5171cb03",
+      "raw_output": "markdown-destination-boundary-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "markdown-destination-boundary/fault",
+        "revision_digest": "sha256:b8a59a1752249406874a4a2761d72da81ab173175e04ddf3af79e7fea096117b",
+        "locator": "objects/b8a59a1752249406874a4a2761d72da81ab173175e04ddf3af79e7fea096117b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "markdown-destination-boundary",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_markdown_balanced_and_escaped_destinations",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "0b86484cb9dfc4b768a27ab246799093c1878947c0b5693e57068fada3fbe32e",
+      "raw_output": "markdown-destination-boundary-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "markdown-destination-boundary/restored",
+        "revision_digest": "sha256:1b357a8ae3126f4eb53b9d4f93c5fbdc50407792230713af4ebe941fc18ebe67",
+        "locator": "objects/1b357a8ae3126f4eb53b9d4f93c5fbdc50407792230713af4ebe941fc18ebe67"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "satisfaction-link-order",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "666e3b61f927c929e8f55b9725cd424333bb951b1a1810e134670ef55cbd5418",
+      "raw_output": "satisfaction-link-order-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "satisfaction-link-order/intact",
+        "revision_digest": "sha256:e2e2751fb5eef040117117dbdf78c22948d81b07d3bb0e75a33f2890654547ce",
+        "locator": "objects/e2e2751fb5eef040117117dbdf78c22948d81b07d3bb0e75a33f2890654547ce"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "satisfaction-link-order",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "ecb9db99833bf0a14f01b09d4458c0ac925d4a0546cc1fe7deabe9369aba5678",
+      "raw_output": "satisfaction-link-order-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "satisfaction-link-order/fault",
+        "revision_digest": "sha256:17a749ddeed927176426199c688fe4c7d4b401d05f68439083852337d91ce753",
+        "locator": "objects/17a749ddeed927176426199c688fe4c7d4b401d05f68439083852337d91ce753"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "satisfaction-link-order",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_satisfaction_link_set_order_preserves_revision_and_applicability",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "4962d0dff8f07ab5a063f6beb90ecad27ef4d6f09c266f2b23d4fc94ecee4325",
+      "raw_output": "satisfaction-link-order-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "satisfaction-link-order/restored",
+        "revision_digest": "sha256:abd18ff1e3613f86701eaecc79c3bdc9696659f081ae0d9660315817a6fe3e86",
+        "locator": "objects/abd18ff1e3613f86701eaecc79c3bdc9696659f081ae0d9660315817a6fe3e86"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "canonical-parser-disabled",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_historical_exact_manifest",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "358232e07f1d5a03f01aa5494ff5b47e41adf6abb4526a3cc19c96870d555cf2",
+      "raw_output": "canonical-parser-disabled-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "canonical-parser-disabled/intact",
+        "revision_digest": "sha256:6b48bb0d7701ab55753cc232bc741752c2e38ab2e0508010e2cf80395f4ba578",
+        "locator": "objects/6b48bb0d7701ab55753cc232bc741752c2e38ab2e0508010e2cf80395f4ba578"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "canonical-parser-disabled",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_historical_exact_manifest",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "b7005a9c16276798d00ffade48fb430af0c09ce987b746be286df78f60ea86a6",
+      "raw_output": "canonical-parser-disabled-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "canonical-parser-disabled/fault",
+        "revision_digest": "sha256:36dd7f2049f961fcbe12f485ca0b271fcc333dce3bf5d340fd466bee1f429bec",
+        "locator": "objects/36dd7f2049f961fcbe12f485ca0b271fcc333dce3bf5d340fd466bee1f429bec"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "canonical-parser-disabled",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_historical_exact_manifest",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "cd3439ca418596f6c093e501e7ffad3eee93129e28d4c40b2e4a7325eb150543",
+      "raw_output": "canonical-parser-disabled-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "canonical-parser-disabled/restored",
+        "revision_digest": "sha256:2414b52097a824f2c507ec1bf364f5e8baf85b95a05811209b14aadf300035a8",
+        "locator": "objects/2414b52097a824f2c507ec1bf364f5e8baf85b95a05811209b14aadf300035a8"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "recorded-parser-disabled",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_historical_exact_manifest",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "cd8ebc9b177d432275f8f76a3671b5f5c9b1587fa4327af015e9c9861a9b6565",
+      "raw_output": "recorded-parser-disabled-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "recorded-parser-disabled/intact",
+        "revision_digest": "sha256:7607b0a06991d1ffb3c933b217f2781345d81169e9f3fb70fb66b5e693d05946",
+        "locator": "objects/7607b0a06991d1ffb3c933b217f2781345d81169e9f3fb70fb66b5e693d05946"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "recorded-parser-disabled",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_historical_exact_manifest",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "a823f41048994bc9b111b803512acee02e051fa7981cc445f09ee20769524d5c",
+      "raw_output": "recorded-parser-disabled-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "recorded-parser-disabled/fault",
+        "revision_digest": "sha256:73ee05ff1daa6ab7a4f64499ab5ee4cbf8fc82573a778e7a9b8bf8725c7090f2",
+        "locator": "objects/73ee05ff1daa6ab7a4f64499ab5ee4cbf8fc82573a778e7a9b8bf8725c7090f2"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "recorded-parser-disabled",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_historical_exact_manifest",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "a66cb2dd0e17965ab7b970db363f8bfec3bf3965e69329d0ee37b71d701b32ea",
+      "raw_output": "recorded-parser-disabled-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "recorded-parser-disabled/restored",
+        "revision_digest": "sha256:a8dda7fa7c4a1ca5f9af2408588c66b3a0d0abbcae5af43e6279611e3a71ca65",
+        "locator": "objects/a8dda7fa7c4a1ca5f9af2408588c66b3a0d0abbcae5af43e6279611e3a71ca65"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "conflicting-definition-effective",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_conflicts_aliases_revision_retirement_and_local_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "f3beb343361ee830dcc68d477dfba283605fec0098904159f3bde425f9f9c8e1",
+      "raw_output": "conflicting-definition-effective-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "conflicting-definition-effective/intact",
+        "revision_digest": "sha256:430daaf5be058257b5dd08f1d2492e9502f2c6a656eaf5e89f894f4fb6116bfa",
+        "locator": "objects/430daaf5be058257b5dd08f1d2492e9502f2c6a656eaf5e89f894f4fb6116bfa"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "conflicting-definition-effective",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_conflicts_aliases_revision_retirement_and_local_holds",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "66d980f99845398a9323bf4732cb95bb663848d00be221f051983dc05c053758",
+      "raw_output": "conflicting-definition-effective-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "conflicting-definition-effective/fault",
+        "revision_digest": "sha256:2e5b28e344c8df083e50e22fe620eb1b5459c4119eb59bc273485d4007274529",
+        "locator": "objects/2e5b28e344c8df083e50e22fe620eb1b5459c4119eb59bc273485d4007274529"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "conflicting-definition-effective",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_conflicts_aliases_revision_retirement_and_local_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "f3beb343361ee830dcc68d477dfba283605fec0098904159f3bde425f9f9c8e1",
+      "raw_output": "conflicting-definition-effective-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "conflicting-definition-effective/restored",
+        "revision_digest": "sha256:dcaeb62f68c739128e63c2bd5d9f54079f19998c9fcc57cef279aef3e8d62704",
+        "locator": "objects/dcaeb62f68c739128e63c2bd5d9f54079f19998c9fcc57cef279aef3e8d62704"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "weakened-token-grammar",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "fc1f9cbcacd62a51d174f76792f9a666865bb5d2061c3cc835eefb7e535da89f",
+      "raw_output": "weakened-token-grammar-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "weakened-token-grammar/intact",
+        "revision_digest": "sha256:d39a87822fa82b7c01b4daf9230a84b6c37dff3f887645c53fdd95f34a60c662",
+        "locator": "objects/d39a87822fa82b7c01b4daf9230a84b6c37dff3f887645c53fdd95f34a60c662"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "weakened-token-grammar",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "2efa2605fe6f1f5be84842eedc9456138abe229e86a5eff3131e263fd2809cd3",
+      "raw_output": "weakened-token-grammar-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "weakened-token-grammar/fault",
+        "revision_digest": "sha256:9e59ec6cb73464130dff8a9be7d9d4226290ec6bfb4a972689679fae5fa483b6",
+        "locator": "objects/9e59ec6cb73464130dff8a9be7d9d4226290ec6bfb4a972689679fae5fa483b6"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "weakened-token-grammar",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "fc1f9cbcacd62a51d174f76792f9a666865bb5d2061c3cc835eefb7e535da89f",
+      "raw_output": "weakened-token-grammar-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "weakened-token-grammar/restored",
+        "revision_digest": "sha256:01989e97acab7663efa5ecf7d931c4d5c7d78aa2a5e14cfb06ae1becfbe934d1",
+        "locator": "objects/01989e97acab7663efa5ecf7d931c4d5c7d78aa2a5e14cfb06ae1becfbe934d1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "stripped-suffix",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "8eaaf776dd7275ca37fffd183bf215d87094558d9d5d7bd48d053486c889fb6b",
+      "raw_output": "stripped-suffix-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "stripped-suffix/intact",
+        "revision_digest": "sha256:e51751ef5467553c986dfa0a8265dda484ab9b820fc89b1b89256ae0e4b18d23",
+        "locator": "objects/e51751ef5467553c986dfa0a8265dda484ab9b820fc89b1b89256ae0e4b18d23"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "stripped-suffix",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "fd6ed5468a34eeeb01d04db5a5fb60dffbb208bbca64903a3179af7bf5e8c727",
+      "raw_output": "stripped-suffix-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "stripped-suffix/fault",
+        "revision_digest": "sha256:1da9e83779ddea7e31290e38de39a4ce9ccd192907e84840cc6ce548a542f35e",
+        "locator": "objects/1da9e83779ddea7e31290e38de39a4ce9ccd192907e84840cc6ce548a542f35e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "stripped-suffix",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_all_forms_exact_tokens_and_issues",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "8eaaf776dd7275ca37fffd183bf215d87094558d9d5d7bd48d053486c889fb6b",
+      "raw_output": "stripped-suffix-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "stripped-suffix/restored",
+        "revision_digest": "sha256:94e4377f8d4c2a6a4eaeec6bae4bb2e7cec3ce5bf8e047d54da6df1f37ffce37",
+        "locator": "objects/94e4377f8d4c2a6a4eaeec6bae4bb2e7cec3ce5bf8e047d54da6df1f37ffce37"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "malformed-token-suppressed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_issue_holds_only_affected_span_within_one_source",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "cfeab837390f5445a388ba94c563c4b6481cca60cea983fea0c5dc2213d9c7c9",
+      "raw_output": "malformed-token-suppressed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "malformed-token-suppressed/intact",
+        "revision_digest": "sha256:ae441d042863224aca5100d6240579562a3d3f0e0fda4fe8772deeca60021f6b",
+        "locator": "objects/ae441d042863224aca5100d6240579562a3d3f0e0fda4fe8772deeca60021f6b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "malformed-token-suppressed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_issue_holds_only_affected_span_within_one_source",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "dd7457eba464bec57a69b8063339d9848e79e4efcc6bc0e8cc875575e99bd6c6",
+      "raw_output": "malformed-token-suppressed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "malformed-token-suppressed/fault",
+        "revision_digest": "sha256:f8b525bcabd2f17bb0b943288cee4e36240aaddd191262a9e858ba42047c1174",
+        "locator": "objects/f8b525bcabd2f17bb0b943288cee4e36240aaddd191262a9e858ba42047c1174"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "malformed-token-suppressed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_issue_holds_only_affected_span_within_one_source",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "20a87c04463e83fdbf76a26f1d5e0a6b6832b9c16c1c6d753b03070b9448d158",
+      "raw_output": "malformed-token-suppressed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "malformed-token-suppressed/restored",
+        "revision_digest": "sha256:d47a345bf75d25489e743636d66bef2bf9cefcb722a66082a647720c66c507d3",
+        "locator": "objects/d47a345bf75d25489e743636d66bef2bf9cefcb722a66082a647720c66c507d3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "acceptance-wrong-kind",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "11bc1c1e1a11cd79205de2fbd1fad66df5dd7d746034d4e91f142e252a6f89da",
+      "raw_output": "acceptance-wrong-kind-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "acceptance-wrong-kind/intact",
+        "revision_digest": "sha256:8a62a5be776b55f031097b984e063fef54c401409128483e79300a7c684b0bf1",
+        "locator": "objects/8a62a5be776b55f031097b984e063fef54c401409128483e79300a7c684b0bf1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "acceptance-wrong-kind",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "753a7de98e91430e4a055ee113b19e084e8d3f76be64c7b3acb2594ff01e3a40",
+      "raw_output": "acceptance-wrong-kind-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "acceptance-wrong-kind/fault",
+        "revision_digest": "sha256:70eb2ba015fc0f9b77480b686971e6c2828c35e0e452ba7ff58655a9217192b8",
+        "locator": "objects/70eb2ba015fc0f9b77480b686971e6c2828c35e0e452ba7ff58655a9217192b8"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "acceptance-wrong-kind",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e8c64065ddb3b8947eb9a22de55f7e68af51b6820bb8ce10e654b9454cc145e3",
+      "raw_output": "acceptance-wrong-kind-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "acceptance-wrong-kind/restored",
+        "revision_digest": "sha256:88b57a3eeb53bc2f353eb808db489f77bc6b39cb76e9ce3e8c7cc76e45b46847",
+        "locator": "objects/88b57a3eeb53bc2f353eb808db489f77bc6b39cb76e9ce3e8c7cc76e45b46847"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "compound-operand-loss",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e8c64065ddb3b8947eb9a22de55f7e68af51b6820bb8ce10e654b9454cc145e3",
+      "raw_output": "compound-operand-loss-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "compound-operand-loss/intact",
+        "revision_digest": "sha256:d2ff98dec435bfac615e4138c36d8d3a4a4a25c00b8b25b031770af7eb0f9602",
+        "locator": "objects/d2ff98dec435bfac615e4138c36d8d3a4a4a25c00b8b25b031770af7eb0f9602"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "compound-operand-loss",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "ef8dd2b0371696dc1397618eac5551c1803e3b45d1b8b6387907682894279187",
+      "raw_output": "compound-operand-loss-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "compound-operand-loss/fault",
+        "revision_digest": "sha256:62b135835acbd58de9334141205fde2971295bdfaac1117e07adebcb5dc33589",
+        "locator": "objects/62b135835acbd58de9334141205fde2971295bdfaac1117e07adebcb5dc33589"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "compound-operand-loss",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_reference_kinds_and_definition_rejection",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e8c64065ddb3b8947eb9a22de55f7e68af51b6820bb8ce10e654b9454cc145e3",
+      "raw_output": "compound-operand-loss-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "compound-operand-loss/restored",
+        "revision_digest": "sha256:2abea94bafcfa375fedd85600c18ef77a4e784205cfacdc8029d2669a76d35fd",
+        "locator": "objects/2abea94bafcfa375fedd85600c18ef77a4e784205cfacdc8029d2669a76d35fd"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "excluded-scope-scanned",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "d501622fc2ff089c9b7a3ee6ad9ffa93abc29e7cacbcce5c7e3581576d70158a",
+      "raw_output": "excluded-scope-scanned-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "excluded-scope-scanned/intact",
+        "revision_digest": "sha256:b50084ef0fd7bb6c946ddb461602d0d2850c5213ceff737e67d7db539961525c",
+        "locator": "objects/b50084ef0fd7bb6c946ddb461602d0d2850c5213ceff737e67d7db539961525c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "excluded-scope-scanned",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "b2c193cd327e952f5875d23755733915cf0b063c39e72b11dadf5c2850a66659",
+      "raw_output": "excluded-scope-scanned-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "excluded-scope-scanned/fault",
+        "revision_digest": "sha256:a5509e8dcfbf8b8da41878fb6b0c17e6bbd860e31f511594c5ebb0af9fc21797",
+        "locator": "objects/a5509e8dcfbf8b8da41878fb6b0c17e6bbd860e31f511594c5ebb0af9fc21797"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "excluded-scope-scanned",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "a09f3458d5ba8397264ab21c5afbd5325f4c80bddd85e05cf973e011d00cf474",
+      "raw_output": "excluded-scope-scanned-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "excluded-scope-scanned/restored",
+        "revision_digest": "sha256:5ba2897c6a31fdc3898398ba7563534548c3943630d353d07bc46647cb8fcd8d",
+        "locator": "objects/5ba2897c6a31fdc3898398ba7563534548c3943630d353d07bc46647cb8fcd8d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "manifest-digest-mismatch-ignored",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "d06cc7910d7281743af01b7a01d2b934b6fa48940b2076cb737fcb11c352d5d2",
+      "raw_output": "manifest-digest-mismatch-ignored-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "manifest-digest-mismatch-ignored/intact",
+        "revision_digest": "sha256:4af1f7fca577306d8ac1d04b98f98484b06d0d7a2d8a035a6e2c8b7f26b30487",
+        "locator": "objects/4af1f7fca577306d8ac1d04b98f98484b06d0d7a2d8a035a6e2c8b7f26b30487"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "manifest-digest-mismatch-ignored",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "b5f0fd167d30cd1b14a029cc0087d792ac1812c47609a6639e94ee4c5ffcbd88",
+      "raw_output": "manifest-digest-mismatch-ignored-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "manifest-digest-mismatch-ignored/fault",
+        "revision_digest": "sha256:3adbf2c9f64a5cf9ece798260788d1a4f8fd8344e80be28150efeda1836c2c74",
+        "locator": "objects/3adbf2c9f64a5cf9ece798260788d1a4f8fd8344e80be28150efeda1836c2c74"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U1",
+      "control": "manifest-digest-mismatch-ignored",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_inventory.InventoryTests.test_source_scope_digest_and_provenance",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "50eb298213aa4a2b7fa5349429776e0d14e6907f07dfe391ab6ea861730a9ca9",
+      "raw_output": "manifest-digest-mismatch-ignored-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u1",
+        "logical_id": "manifest-digest-mismatch-ignored/restored",
+        "revision_digest": "sha256:ffbd1c2491a7face608de08ddc5ae11effb246c1c910e148392108d4db03a64a",
+        "locator": "objects/ffbd1c2491a7face608de08ddc5ae11effb246c1c910e148392108d4db03a64a"
+      }
+    }
+  ],
+  "verdict": "independent verifier pending"
+}
