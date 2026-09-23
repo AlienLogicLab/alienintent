@@ -1184,3 +1184,28 @@ test("one same-phase replacement survives restart; repeated liveness and deliver
   assert.deepEqual(f.launches, ["PRODUCER", "PRODUCER", "PRODUCER"]);
   f.relay.stop(); restarted.stop();
 });
+
+test("persisted cycle-limit escalation fences verifier admission through direct, event and startup paths", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "VERIFY" };
+  const key = "ExampleOrg/sample-project#303";
+  const f = subject({ biuLimits: { [key]: { maxCycles: 3, maxReplacementsPerPhase: 1 } } });
+  f.relay.save({ deliveries: {}, active: {}, executionLimits: {
+    [key]: { cycle: 3, phase: "VERIFY", phaseInvocations: ["held-verifier"] },
+  }, limitEscalations: { [key]: { biu: key, outcome: "EXECUTION_CYCLE_LIMIT", cycle: 3, rejectedSignal: "REJECT" } } });
+  f.relay.options.authority.listItems = async () => [item];
+  const restarted = new EventRelay({ ...f.relay.options });
+  assert.equal(await restarted.start(item, "VERIFIER", "VERIFY"), false);
+  const lane = restarted.lane(item, "VERIFIER");
+  const claim = { item, lane, role: "VERIFIER", status: "VERIFY", invocationId: "held-verifier", startedAt: "2026-09-23T00:00:00.000Z" };
+  const persisted = restarted.state(); persisted.active[lane] = claim; restarted.save(persisted);
+  assert.equal(await restarted.routeResult(claim, "ACCEPT"), false);
+  assert.deepEqual(f.transitions, []);
+  const cleared = restarted.state(); delete cleared.active[lane]; restarted.save(cleared);
+  await restarted.acceptEvent(event("VERIFY", "held-event"));
+  await restarted.startupReconcile();
+  assert.deepEqual(f.launches, []);
+  assert.equal(restarted.state().executionLimits[key].cycle, 3);
+  assert.equal(await restarted.start({ ...item, issue: 304 }, "VERIFIER", "VERIFY"), true);
+  assert.deepEqual(f.launches, ["VERIFIER"]);
+  restarted.stop();
+});

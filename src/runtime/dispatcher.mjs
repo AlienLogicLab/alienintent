@@ -134,7 +134,10 @@ export class EventRelay {
   limitHold(state, item, outcome, details) {
     const key = this.biuKey(item);
     state.limitEscalations ??= {};
-    state.limitEscalations[key] ??= { outcome, biu: key, ...details, at: new Date(this.now()).toISOString() };
+    const previous = state.limitEscalations[key];
+    if (!previous || (outcome === "EXECUTION_CYCLE_LIMIT" && previous.outcome !== outcome)) {
+      state.limitEscalations[key] = { outcome, biu: key, ...details, at: new Date(this.now()).toISOString(), ...(previous ? { prior: previous } : {}) };
+    }
     this.save(state);
     this.emit({ issue: item.issue, outcome, biu: key, ...details });
   }
@@ -218,7 +221,9 @@ export class EventRelay {
     if (!allowedSignals(claim, this.roleNames).has(result)) return false;
     if (this.routing.has(claim.invocationId)) return this.routing.get(claim.invocationId);
     const pending = (async () => {
-      const current = this.state().active[claim.lane];
+      const snapshot = this.state();
+      if (snapshot.limitEscalations?.[this.biuKey(claim.item)]?.outcome === "EXECUTION_CYCLE_LIMIT") return false;
+      const current = snapshot.active[claim.lane];
       if (current?.invocationId !== claim.invocationId || routedSignal(current)) return false;
       const item = await this.options.authority.resolveItem(claim.item);
       const resolved = this.state();
@@ -318,6 +323,9 @@ export class EventRelay {
       this.emit({ issue: item.issue, role, outcome: "STALE_ACCEPT_EVENT" }); return false;
     }
     let persisted = this.state();
+    if (persisted.limitEscalations?.[this.biuKey(item)]?.outcome === "EXECUTION_CYCLE_LIMIT") {
+      this.emit({ issue: item.issue, role, outcome: "EXECUTION_CYCLE_LIMIT", biu: this.biuKey(item) }); return false;
+    }
     if (operatorEvent && (routedSignal(persisted.active[lane]) === "FOUNDER_EXCEPTION"
         || persisted.diagnostics?.[lane]?.outcome === "FOUNDER_EXCEPTION") && !this.authorizedOperator(operatorEvent.sender)) {
       this.emit({ issue: item.issue, role, outcome: "UNAUTHORIZED_OPERATOR_RECOVERY" }); return false;
