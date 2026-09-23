@@ -90,6 +90,36 @@ invocation, REVIEW is not a separately dispatched worker lane, and verifier
 implementation limitation and convenience; it does not collapse the canonical
 semantic distinction between VERIFY and REVIEW.**
 
+## Forward-Only Factory Contract
+
+The Factory Director is the single cognizant orchestration role. The existing
+per-profile repository reservation is acquired before a worker starts and refuses a
+conflicting mutation owner; the existing worktree allocator independently gives each
+invocation one unique workspace before preflight. A terminal or abandoned owner
+releases or retains its claim through the existing recovery and closure rules.
+
+Already-decided machinery repair, deterministic reconciliation, compatibility repair
+and test repair use delegated engineering authority. The Factory Director requests a
+Founder Decision only for unresolved product intent, material architecture policy,
+security or risk acceptance, unbounded budget limits, external commitments, or an
+explicit live-operation decision. A durable answered decision is reused by normal
+guarded re-admission rather than escalated again.
+
+Completed evidence is reused until a later change intersects its declared inputs,
+interfaces, authority or required evidence. The resulting recheck is limited to the
+intersected boundary; an unrelated revision does not reopen completed REVIEW or
+VERIFY. An unbounded impact requires full validation, as do explicit cross-cutting,
+integration, release and cutover gates.
+
+Every generalized failure class closes with exactly one disposition and evidence:
+`MECHANICAL_ENFORCEMENT` with enforcing mechanism and proven-red evidence,
+`DETERMINISTIC_PREFLIGHT` with a repeatable failing check, or `JUDGMENT_ONLY` with
+the reason mechanization is unsuitable and the judgment owner. These are the
+dispositions within deterministic failure-class promotion (SF-REQ-050), not a second
+learning system. A recurrence after mechanical enforcement or deterministic preflight
+is a regression in that control, not a new lesson. This ratchets the existing SWF-23
+monotonic-progress rule without changing any Wave 2 product scope.
+
 ## Result protocol and lifecycle
 
 The compatibility marker remains:
