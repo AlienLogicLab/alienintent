@@ -127,8 +127,8 @@ CONTROLS = [
      COMPOSED, "test_lost_plan_pointer_is_not_an_empty_history"),
     # Revision 2: controls for the confirmatory-review repairs.
     ("emptied-state-accepted", "014-repair-preservation", AC4, SERVICE_MODULE,
-     "if (version, state) != (0, {}) and not _valid_state(state, requirement_id, version):",
-     "if state and not _valid_state(state, requirement_id, version):",
+     "if (version, state) != (0, {}) and not (_valid_state(state, requirement_id, version)",
+     "if state and not (_valid_state(state, requirement_id, version)",
      COMPOSED, "test_emptied_or_non_object_state_is_a_hold_not_an_empty_history"),
     ("nested-root-comparison-removed", "AC-02", AC2, DOMAIN, "folded[:len(prefix)] == prefix", "folded[:1] == prefix",
      UNIT, "test_nested_roots_and_prefixed_whitespace_are_circular"),
