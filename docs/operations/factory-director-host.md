@@ -58,6 +58,17 @@ example host configuration if none exists, and runs `systemctl --user daemon-rel
 does not enable or start the service. It never creates the Director-owned hold record or
 inbox. Until the Factory Director writes them, the host stays failed closed.
 
+The unit reads its environment from `~/.config/alienintent/factory-director-host.env`. The
+installer seeds that file with commented guidance only when it does not exist, and never
+overwrites it. The file must set `FACTORY_DIRECTOR_WORKTREE`, `GH_CONFIG_DIR` and `PATH`.
+`PATH` is required because the systemd user unit does not inherit the login shell's `PATH`,
+and its default does not include `~/.local/bin`. It must resolve every executable the host
+runs: `gh` and `python3` (adapter), `git`, and the configured provider CLI (`claude` or
+`codex`). Use absolute directories, because systemd does not expand `$HOME` or `~` there,
+for example `PATH=/home/netmarine/.local/bin:/usr/local/bin:/usr/bin:/bin`. When `gh`
+cannot be resolved, the adapter fails closed (`AUTHORITATIVE_STATE_UNAVAILABLE`) with a
+failure that names `gh` and the `PATH` it searched.
+
 Inspect with `systemctl --user status alienintent-factory-director-host` and:
 
 ```bash

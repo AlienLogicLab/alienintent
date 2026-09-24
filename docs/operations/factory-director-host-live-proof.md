@@ -58,7 +58,16 @@ Edit `~/.config/alienintent/factory-director-host.env` so that it contains:
 ```bash
 FACTORY_DIRECTOR_WORKTREE=/home/netmarine/.local/state/alienintent/factory-director/worktree
 GH_CONFIG_DIR=/home/netmarine/.config/gh
+PATH=/home/netmarine/.local/bin:/usr/local/bin:/usr/bin:/bin
 ```
+
+`PATH` is required. The systemd user unit does not inherit the login shell's `PATH`, and
+its default `PATH` does not include `~/.local/bin`. The `PATH` must resolve every
+executable the host runs: `gh` and `python3` (adapter), `git`, and the configured provider
+CLI (`claude` or `codex`). Write it as absolute directories: systemd does not expand
+`$HOME` or `~` in this file. Without it the adapter cannot run `gh`, and the host stays at
+`AUTHORITATIVE_STATE_UNAVAILABLE` with a failure naming `gh` and the `PATH` it searched.
+The dry run below sources this file, so it checks the same `PATH`.
 
 `GH_CONFIG_DIR` must name a gh configuration that can read Project #1 and Issue comments.
 A worker's fine-grained token cannot read Project #1, and with one the host stays at
