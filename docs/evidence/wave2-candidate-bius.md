@@ -33,7 +33,7 @@ Repository admission: baseline ba25d304fa911aa374372e1c61fdfe6d5a2f5b68 on main;
 | WO-220204 | U4 | Pre-implementation proof plans | no | WO-220201, WO-220202, WO-220203 | PROCEEDS_REGARDLESS |
 | WO-220205 | U5 | Design admission and independent review mechanics | no | WO-220202, WO-220204 | PROCEEDS_REGARDLESS |
 | WO-220206 | U6 | Conditional direction-dependent design applicability | no | WO-220205 | GAP_BLOCKED |
-| WO-220207 | U7 | Compiler validation and explicit allocation hold | no | WO-220205 | PROCEEDS_REGARDLESS |
+| WO-220207 | U7 | Compiler validation and conserved obligation mapping | no | WO-220205 | PROCEEDS_REGARDLESS |
 | WO-220208 | U8 | Conditional initial compilation | no | WO-220207, WO-220206 | GAP_BLOCKED |
 | WO-220209 | U9 | Readiness lint and retained assessment consumer | no | WO-220205, WO-220207 | PROCEEDS_REGARDLESS |
 | WO-220210 | U10 | Externally assigned assessment transport boundary | no | WO-220209 | SEPARATE_AUTHORITY_REQUIRED |

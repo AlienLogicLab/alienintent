@@ -4000,9 +4000,9 @@
       "dag_node_ids": [
         "U7"
       ],
-      "title": "Compiler validation and explicit allocation hold",
+      "title": "Compiler validation and conserved obligation mapping",
       "is_capstone": false,
-      "intent": "Deliver the bounded planned extent: Compiler validation and explicit allocation hold",
+      "intent": "Deliver the bounded planned extent: Compiler validation and conserved obligation mapping",
       "requirement_links": [
         "SF-REQ-013"
       ],
@@ -4016,8 +4016,12 @@
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/2",
           "requirement_id": "SF-REQ-013",
           "decisions": [
-            "Supersedes the mandatory external-allocation design choice. On current evidence SF-REQ-013 must derive initial decomposition from requirements/design; return the allocation-source question and constraints to SPECIFY via R1-GAP-013-ALLOCATION. A validator-only implementation does not satisfy this requirement. No new planner owner or requirement is invented.",
-            "SF-REQ-013 pending split/replan amendment (POSTW1-DECIDE-005A/-007A) is expressly excluded, not a dependency of initial compilation."
+            "R1-GAP-013-ALLOCATION is resolved by the SF-REQ-013 amendment: compiler-derived initial decomposition and obligation mapping; mandatory external hand-authored mapping is rejected. A validator-only implementation does not satisfy this requirement. No new planner owner, requirement, priority or Wave.",
+            "SPLIT-G1 is resolved by the same amendment: SF-REQ-013 owns Split Transactions. Phase 5 is the named candidate design; SWF-33 is the worked retained-Integration-Parent precedent. Neither reference approves every proposed mechanism or grants blanket mutation authority.",
+            "Design Verification must ask whether an authoritative implementation already exists in the configured project / Alien Logic Lab / tool ecosystem before implementing, emulating or prompting around each capability. Consume its supported interface unless explicit authority records unsuitability. Record and check producer identity and version; matching output shape is not producer proof. Existing BiuContract, OperationalStore and EvidenceRepository boundaries are reused; Agent Ready is consumed through SF-REQ-015, never copied or replaced.",
+            "Requirements / Planning is the semantic owner under Architecture Authority A2. The legacy bounded_context value and proposed context_assembly paths are retained as implementation-location references only; their mapping to the semantic context remains Design Contract work under FD-02 refinement, not decided in this re-SPECIFY session and not implementation-local freedom.",
+            "Reconcile Phase 5 as follows: carry forward as candidate mechanisms the retained Integration Parent, frozen/reverse mapping, conservative identity-preserving graph rules, fixed-width grammar/reservations, exact-payload authorization, atomic apply/readback and recovery. Preserve incoming prerequisites on parent and copy to each child with identical predicates; preserve old downstream parent edges; add child -> parent DONE edges and only explicitly authorized inter-child edges. No transitive pruning or judgment redirection. Retain original integration proof and budget partition; a new prerequisite must have an existing requirement owner and exact planning authority. Review these mechanisms independently; this revision records no implementation or approval verdict.",
+            "Do not carry forward Phase 5 ownership-gap or bootstrap assessment semantics as current authority. Historical bootstrap-assessor BLOCKED -> SPLIT_RECOMMENDED -> READY is retained only as history; current Agent Ready dispositions are exactly READY / CLARIFY / SPLIT / HOLD. Hold release during replan; do not cancel active invocations or reopen DONE work. Candidate external projection uses WorkManagement, versioned delivery/readback and configured bindings; no new fields/statuses or live writes are authorized. Missing required projection consistency holds affected release, not unrelated work."
           ],
           "binding_sections": [
             "ports",
@@ -4041,8 +4045,8 @@
         }
       ],
       "scope": {
-        "dag_scope": "",
-        "extent": "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+        "dag_scope": "Validation of compiler-derived initial candidates and conserved split/replan candidates: contract completeness, obligation mapping, graph predicates, identity and authority bounds.",
+        "extent": "Reject incomplete contract, uncovered requirement/acceptance/verification/evidence obligation, cyclic/missing/predicate-free edge, stale design or unauthorized/nonconserving replan. Validate deterministic identity rewrites, preserved predicates, lineage and immutable stale-assessment history. A hand-authored mapping fixture proves validation only; U8 must derive initial decomposition.",
         "node_kind": "capability",
         "owns_capabilities": [
           "compilation_validation_hold"
@@ -4066,10 +4070,10 @@
         }
       },
       "acceptance_criteria": [
-        "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+        "Reject incomplete contract, uncovered requirement/acceptance/verification/evidence obligation, cyclic/missing/predicate-free edge, stale design or unauthorized/nonconserving replan. Validate deterministic identity rewrites, preserved predicates, lineage and immutable stale-assessment history. A hand-authored mapping fixture proves validation only; U8 must derive initial decomposition.",
         "SF-REQ-013-AC-03: Fixtures with a cyclic dependency, missing endpoint or dependency whose satisfaction predicate is unspecified are refused with the offending edge identified; an acyclic fully resolved graph is admitted for assessment.",
         "SF-REQ-013-AC-04: Missing design verification, unresolved product authority or conflicting fixed decisions produces a hold and no READY or IMPLEMENT transition.",
-        "SF-REQ-013-AC-05: A request to rewrite an existing approved decomposition is identified as outside this initial-compilation scope and retained for the pending split/replan decision; it must not mutate existing BIUs."
+        "SF-REQ-013-AC-05: Given an authorized split of a pinned existing decomposition, freeze all original obligations and conserve 100% in resulting units or a retained Integration Parent. Reject loss, invented intent, weakened proof, budget/capability expansion, stale authority and partial mapping before applying a mutation. Preserve existing identities/history and integration proof."
       ],
       "acceptance_ids": [
         "SF-REQ-013-AC-03",
@@ -4110,7 +4114,7 @@
           "requirement_id": "SF-REQ-013",
           "proof_owner_node": "U7",
           "fixture_ref": "FX-U7",
-          "source_design_probe": "Approved decomposition identity refuses rewrite without mutating prior candidate/BIUs.",
+          "source_design_probe": "Freeze original clauses, conserve all obligation extents in child/Integration Parent, preserve intent/proof and budget; reject stale/unauthorized or weakening mutation before atomic apply.",
           "source_contract_sections": [
             "ports",
             "transitions",
@@ -4126,7 +4130,7 @@
           "owner_node": "U7",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+          "scenario": "Reject incomplete contract, uncovered requirement/acceptance/verification/evidence obligation, cyclic/missing/predicate-free edge, stale design or unauthorized/nonconserving replan. Validate deterministic identity rewrites, preserved predicates, lineage and immutable stale-assessment history. A hand-authored mapping fixture proves validation only; U8 must derive initial decomposition.",
           "acceptance_ids": [
             "SF-REQ-013-AC-03",
             "SF-REQ-013-AC-04",
@@ -4151,8 +4155,8 @@
           },
           {
             "acceptance_id": "SF-REQ-013-AC-05",
-            "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
-            "design_probe": "Approved decomposition identity refuses rewrite without mutating prior candidate/BIUs."
+            "specified_verification": "Replay the SWF-33 PY-10 / PY-09B precedent as a historical contract fixture, not a live mutation; compare exact original clauses, resulting extents and retained integration duties. Proven-red omissions, weaker clauses and invented obligations must refuse admission.",
+            "design_probe": "Freeze original clauses, conserve all obligation extents in child/Integration Parent, preserve intent/proof and budget; reject stale/unauthorized or weakening mutation before atomic apply."
           }
         ],
         "enforcement_obligations": [
@@ -4247,8 +4251,34 @@
       "inherited_authority_gate_refs": [],
       "planning_eligibility": "PROCEEDS_REGARDLESS",
       "assessment_status": "NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE",
-      "partial_work_that_proceeds": "Validation and refusal mechanics without decomposition algorithm or BIU output.",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "partial_work_that_proceeds": "Independent validation/refusal mechanics remain testable; successful compilation and mutation additionally require the exact verified design and applicable authority.",
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_25": {
+        "reason": "Consistency repair: candidate was compiled (Phase 12) before the 2026-09-22 SF-REQ-013 re-specification; re-derive the stale fields from the revised U7 node, SF-REQ-013 criteria and contract 2. Not implementation, independent Design Verification, readiness assessment or release.",
+        "delta_ref": "docs/evidence/wave2-revisions/2026-09-25-wo-220207-candidate-consistency-repair.md",
+        "authority": [
+          "Issue #101 Factory Director preparation record (consistency repair, not a Founder decision)",
+          "docs/evidence/wave2-revisions/2026-09-22-respecify-011-013.md (factory plan SF-REQ-013 amendment 2026-09-22; New Founder decision required: none)",
+          "docs/evidence/wave2-revisions/2026-09-22-dv-005-repairs.md DV-19 rule: each finding is applied when its affected unit is next scheduled"
+        ],
+        "changed": [
+          "/bius/9/title",
+          "/bius/9/intent",
+          "/bius/9/fixed_decisions/0/decisions",
+          "/bius/9/scope/dag_scope",
+          "/bius/9/scope/extent",
+          "/bius/9/acceptance_criteria",
+          "/bius/9/acceptance_extents/2/source_design_probe",
+          "/bius/9/verification_obligations/proof_fixture/scenario",
+          "/bius/9/verification_obligations/acceptance_probes/2",
+          "/bius/9/partial_work_that_proceeds"
+        ],
+        "preserved": "biu_id, dag_node_ids, requirement links, dependencies and predicates, acceptance_ids, capability identities (compilation_validation_hold), enforcement obligations, budget, custody, release, stop/escalation conditions and planning_eligibility unchanged.",
+        "preserved_holds": [
+          "Exact authority, verified design and normal admission gates (D#/nodes/9/revision_2026_09_22/preserved_holds)",
+          "Independent revised Design Verification; budget/capability/custody/release prerequisites"
+        ]
+      }
     },
     {
       "biu_id": "WO-220208",

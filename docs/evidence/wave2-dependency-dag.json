@@ -3953,7 +3953,7 @@
       "owner_node": "U7",
       "status": "PLANNED_NOT_EXECUTED",
       "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-      "scenario": "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+      "scenario": "Reject incomplete contract, uncovered requirement/acceptance/verification/evidence obligation, cyclic/missing/predicate-free edge, stale design or unauthorized/nonconserving replan. Validate deterministic identity rewrites, preserved predicates, lineage and immutable stale-assessment history. A hand-authored mapping fixture proves validation only; U8 must derive initial decomposition.",
       "acceptance_ids": [
         "SF-REQ-013-AC-03",
         "SF-REQ-013-AC-04",
@@ -3963,7 +3963,12 @@
         "013-dependency-authority"
       ],
       "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
-      "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL"
+      "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+      "scenario_history": {
+        "until_2026_09_25": "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+        "repair": "WO-220207 candidate consistency repair (Issue #101; SF-REQ-013 re-specification 2026-09-22)",
+        "revision_record": "docs/evidence/wave2-revisions/2026-09-25-wo-220207-candidate-consistency-repair.md"
+      }
     },
     {
       "id": "FX-U8",
@@ -4592,14 +4597,19 @@
       "requirement_id": "SF-REQ-013",
       "proof_owner_node": "U7",
       "fixture_ref": "FX-U7",
-      "source_design_probe": "Approved decomposition identity refuses rewrite without mutating prior candidate/BIUs.",
+      "source_design_probe": "Freeze original clauses, conserve all obligation extents in child/Integration Parent, preserve intent/proof and budget; reject stale/unauthorized or weakening mutation before atomic apply.",
       "source_contract_sections": [
         "ports",
         "transitions",
         "evidence",
         "composition",
         "deterministic_enforcement_opportunities"
-      ]
+      ],
+      "source_design_probe_history": {
+        "until_2026_09_25": "Approved decomposition identity refuses rewrite without mutating prior candidate/BIUs.",
+        "repair": "WO-220207 candidate consistency repair (Issue #101; SF-REQ-013 re-specification 2026-09-22)",
+        "revision_record": "docs/evidence/wave2-revisions/2026-09-25-wo-220207-candidate-consistency-repair.md"
+      }
     },
     {
       "acceptance_id": "SF-REQ-014-AC-01",
