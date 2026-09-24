@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Make Factory Director continuity structural. A deterministic, non-cognizant host reads only durable sources and computes whether Director control is required. It launches a fresh, provider-neutral, bounded Director episode whenever control is required and no valid lease is held, and re-evaluates after every episode exit. No model episode ever owns the decision that no further Director episode is needed.",
+    "implementation_unknowns": [
+      "Concrete paths and on-disk schemas for the Founder-hold record, explicit-pause flag and Director inbox directory. The contract fixes their semantics (required vs presence-only, empty list or empty directory, processed/<id>.json receipts) but not their location or format. The PRODUCER must define these in code, tests and the runtime contract.",
+      "Where a 'retained Agent Ready assessment' for a TASKS Issue is stored, and how the adapter detects it together with the absence of a READY transition.",
+      "How the configured WIP limit (1) is sourced. Options include runtime state, Node configuration or a host config, and the adapter must not write any of them.",
+      "Exact fresh-session, non-resumed invocation flags and model selection for the codex and claude CLIs, and how provider/model actually used and token/cost figures are captured when the provider exposes them.",
+      "Which of the four prior-branch commits (7dc2b17, 1947d41, 02b62bd, 0846cfd) remain valid after merging the branch with baseline 674b78d2db17, and how the existing DirectorInputs/host reconcile logic orders precedence among explicit_pause, attention_required, founder_decision_pending and WIP-full idle reasons.",
+      "How to reuse the fail-closed read path in tools/live/project_materialization.py offline with fixture boards, including partial boards and boards containing non-Issue items.",
+      "The content of chat record \u00a713\u2013\u00a717 (terminal conditions, continuity-fault definition, replacement-safety rule, twelve-step live proof), which the PRODUCER must read from the repository. This gate has not verified it."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The PRODUCER-chosen schemas and paths for hold, pause and inbox sources become de facto contracts that the Director and Founder must later write to. A poor choice creates follow-on friction, and a mismatch with any existing convention in the repository could cause the live host to fail closed permanently.",
+      "The prior branch was authored outside the lifecycle and has had no independent verification. Latent defects in lease validation or launch handoff may be carried forward unless the PRODUCER re-derives them against the fixed mapping.",
+      "Idle-reason precedence is not spelled out in this text (for example explicit pause vs pending inbox vs founder hold). A divergence from chat record \u00a715 could pass tests the PRODUCER writes yet contradict the runtime contract.",
+      "A mistaken predicate could launch authority-bearing model episodes unattended once the host is later installed. The fail-closed tests and the read-only audit are the main safeguards.",
+      "Codex CLI behaviour for guaranteed non-resumed sessions and model reporting may differ from Claude, risking inferred rather than recorded provider/model data.",
+      "Release cannot proceed until the Issue passes materialization read-back, execution.biuLimits is bound and a Factory Director release record exists. The submission states these are outstanding; they are release gates, not work prerequisites."
+    ],
+    "next_action": "Hand off as READY to the Factory Director for release. Materialize the Issue and confirm canonical read-back, bind the execution.biuLimits entry (3 cycles, 1 replacement per phase), and record the release. Then dispatch the PRODUCER from feature/factory-director-harness @ c14aba15 merged with 674b78d2db17. Instruct the PRODUCER to document the chosen hold, pause, inbox and WIP-limit source paths and schemas and the idle-reason precedence in the runtime contract and tests.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent and owner decisions are resolved. The submission reports that the Factory Director has fixed the predicate mapping and the earlier clarification topics: hold coverage across all states, required vs presence-only sources, and inbox receipt semantics. Authority for the episode is cited as existing Director authority, and the host confers none. The adapter, launcher, contract document and proofs serve one continuity outcome and share one verification verdict, so there are no materially independent decision centers that would justify SPLIT. The remaining gaps (source paths and schemas, CLI flags, WIP-limit sourcing, reuse of prior commits) are engineering research the PRODUCER can resolve within the fixed semantics, so CLARIFY is not warranted. Named dependencies are reported as landed, and the prior branch is reported as published. The outstanding Issue, biuLimits and release record are the standard release steps that follow this assessment rather than unavailable external prerequisites, so HOLD is not the controlling condition. Rework is expected to be localized to individual predicates, the launcher or the documents.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive bootstrap-infrastructure unit with five parts: a read-only predicate adapter producing nine fixed booleans from durable sources, a claude/codex launcher selected by configuration, a runtime-contract document, an offline continuity proof, and a live-proof procedure that is written but not executed. The submission reports that the Factory Director has already answered the earlier owner clarifications on Founder-hold coverage, absent sources and inbox receipt semantics. The predicate mapping is fixed in the contract, non-goals are explicit, and acceptance is expressed as discriminating offline tests with negative controls. The remaining uncertainty is engineering research: locating existing formats, choosing default paths and schemas, and codex fresh-session flags. Lifecycle release steps are still outstanding: materialized Issue, bound execution.biuLimits and a release record. These are the normal post-assessment release gate, not missing prerequisites for the work itself.",
+    "verification_assessment": "Acceptance is observable offline and discriminating:\n- Per-predicate true/false tests.\n- Negative controls per malformed or absent source, shown failing against a deliberately broken adapter.\n- Specific hold/inbox scenarios.\n- An A\u2192B episode continuity sequence with new id and lease.\n- Launcher command-line and isolation checks for both providers.\n- Document coverage checks.\n- node scripts/check.mjs all.\n- A read-only audit for GitHub, runtime-state and configuration writes and Issue transitions.\n\nThe live proof is explicitly excluded, so a single independent VERIFIER verdict on one pinned SHA is meaningful. Criterion 6 (document coverage and 'runnable as written') is partly judgment-based and depends on the verifier comparing against chat record \u00a715\u2013\u00a717."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T05:52:38.817828+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 13139,
+    "input_sha256": "01a0ab5961dd5877531c4527620c2f2b905763f454af7dbdefb5d29ba24187d1",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-uv2h8rlj/FDH-01.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T05:52:03.941687+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "FDH-01"
+}
