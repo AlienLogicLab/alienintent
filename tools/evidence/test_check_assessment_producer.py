@@ -139,6 +139,14 @@ INVALID_PROVIDER_EVIDENCE = {
                                          "pair_not_checked"),
     "incompatible_failed": (_pe("codex", "codex-cli 0.153.4", "INCOMPATIBLE", "FAILED"),
                             "pair_not_checked"),
+    # Found by the ARP-01 verifier (F1): these crashed both readers instead of rejecting.
+    "compatibility_list": (_pe("claude", "2.1.281 (Claude Code)", [], "PASSED"),
+                           "pair_not_checked"),
+    "compatibility_dict": (_pe("codex", "codex-cli 0.155.1", {}, "PASSED"), "pair_not_checked"),
+    "capability_probe_list": (_pe("codex", "codex-cli 0.153.4", "SUPPORTED", []),
+                              "pair_not_checked"),
+    "capability_probe_dict": (_pe("claude", "2.1.258 (Claude Code)", "SUPPORTED", {}),
+                              "pair_not_checked"),
     "missing_key": (_missing_key, "keys_not_exact"),
     "extra_key": (dict(_pe("claude", "2.1.281 (Claude Code)"), model="claude-opus-5"),
                   "keys_not_exact"),
@@ -198,6 +206,20 @@ PERMISSIVE_VARIANTS = {"provider_not_checked": _provider_not_checked,
                        "keys_not_exact": _keys_not_exact,
                        "non_dict_accepted": _non_dict_accepted}
 
+def _pair_type_not_checked(pe):
+    """The first ARP-01 candidate (04b082c): pair membership on unchecked JSON values."""
+    if not isinstance(pe, dict) or set(pe) != NATIVE_PROVIDER_EVIDENCE_KEYS:
+        return False
+    f = AGENT_READY_PROVIDER_VERSION_FORMATS.get(pe["provider"]) \
+        if isinstance(pe["provider"], str) else None
+    if f is None or not isinstance(pe["version"], str) or not f.fullmatch(pe["version"]):
+        return False
+    return (pe["compatibility"], pe["capability_probe"]) in AGENT_READY_COMPATIBILITY_PAIRS
+
+
+UNHASHABLE_PAIR_CASES = ("compatibility_list", "compatibility_dict", "capability_probe_list",
+                         "capability_probe_dict")
+
 READERS = {"looks_native_agent_ready": lambda pe: looks_native_agent_ready(_full(pe)),
            "native_provenance_only": lambda pe: native_provenance_only(_partial(pe))}
 
@@ -242,6 +264,23 @@ def test_each_rejection_fails_against_a_permissive_variant(reader, case, monkeyp
     pe, variant = INVALID_PROVIDER_EVIDENCE[case]
     monkeypatch.setattr(cap, "is_native_provider_evidence", PERMISSIVE_VARIANTS[variant])
     assert READERS[reader](copy.deepcopy(pe)) is True
+
+
+@pytest.mark.parametrize("reader", sorted(READERS))
+@pytest.mark.parametrize("case", UNHASHABLE_PAIR_CASES)
+def test_unhashable_pair_values_crash_the_unguarded_rule(reader, case, monkeypatch):
+    """The rejection of a list/object compatibility or probe is also shown failing against the
+    rule it repairs: unguarded, the reader raises instead of returning False."""
+    monkeypatch.setattr(cap, "is_native_provider_evidence", _pair_type_not_checked)
+    with pytest.raises(TypeError):
+        READERS[reader](copy.deepcopy(INVALID_PROVIDER_EVIDENCE[case][0]))
+
+
+@pytest.mark.parametrize("inner", [None, [], "READY", ["disposition", "READY"]])
+def test_a_non_object_structured_content_is_rejected_not_raised(inner):
+    envelope = {"content": [], "structuredContent": inner, "isError": False}
+    assert looks_native_agent_ready(envelope) is False
+    assert native_provenance_only(envelope) is False
 
 
 @pytest.mark.parametrize("case", sorted(VALID_PROVIDER_EVIDENCE))

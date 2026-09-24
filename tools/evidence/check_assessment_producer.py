@@ -84,7 +84,9 @@ def is_native_provider_evidence(pe) -> bool:
     if version_format is None or not isinstance(version, str) \
             or not version_format.fullmatch(version):
         return False
-    return (pe.get("compatibility"), pe.get("capability_probe")) in AGENT_READY_COMPATIBILITY_PAIRS
+    pair = (pe.get("compatibility"), pe.get("capability_probe"))
+    # JSON may carry a list or object here; it is malformed evidence, not a reason to raise.
+    return all(isinstance(v, str) for v in pair) and pair in AGENT_READY_COMPATIBILITY_PAIRS
 
 
 def looks_native_agent_ready(artifact: dict) -> bool:
@@ -116,7 +118,7 @@ def native_provenance_only(artifact: dict) -> bool:
     if not isinstance(artifact, dict):
         return False
     inner = artifact.get("structuredContent", artifact)
-    if inner.get("disposition") not in AGENT_READY_DISPOSITIONS:
+    if not isinstance(inner, dict) or inner.get("disposition") not in AGENT_READY_DISPOSITIONS:
         return False
     if not is_native_provider_evidence(inner.get("provider_evidence")):
         return False
