@@ -85,6 +85,81 @@ VARIANTS: tuple[tuple[str, str, str, str], ...] = (
         'r"docs/evidence/(?:[\\w-]+/)*"',
         f"{UNIT}::test_a_record_in_another_directory_is_rejected",
     ),
+    # JC R1: a rejected citation must not reach the Wave 1 record for the same identifier.
+    (
+        "rejected_citation_falls_back_to_wave1",
+        "    biu = _wave1_biu(body)\n",
+        "    biu = biu_from_body(body)\n",
+        f"{FIXTURE}::test_a_rejected_citation_never_admits_through_the_wave1_record",
+    ),
+    (
+        "wave1_any_directory",
+        ' and (not prefix or prefix.endswith(f"{WAVE1_DIR}/"))',
+        "",
+        f"{UNIT}::test_a_wave1_record_in_another_directory_is_rejected",
+    ),
+    (
+        "wave1_parent_segment_allowed",
+        '".." not in prefix.split("/") and ',
+        "",
+        f"{UNIT}::test_a_wave1_record_reached_through_a_parent_segment_is_rejected",
+    ),
+    (
+        "wave1_accepts_stamped_names",
+        r"(PY-\d\d[A-Z]?|WO-\d{6})\.assessment",
+        r"(PY-\d\d[A-Z]?|WO-\d{6})[\w.-]*\.assessment",
+        f"{UNIT}::test_a_stamped_name_is_not_a_wave1_record",
+    ),
+    (
+        "wave1_no_leading_boundary",
+        'r"(?<![\\w./-])([^',
+        'r"([^',
+        f"{UNIT}::test_a_wave1_identifier_embedded_in_a_longer_name_is_rejected",
+    ),
+    (
+        "wave1_no_trailing_boundary",
+        r'\.assessment\.json(?!\.?[\w/-])")',
+        r'\.assessment\.json")',
+        f"{UNIT}::test_a_wave1_record_path_continued_past_the_file_is_rejected",
+    ),
+    # JC R2: the refusal tests the first matrix left unproven.
+    (
+        "ignores_the_explicit_release_point",
+        'f"{release_point}^{{commit}}"',
+        'f"origin/main^{{commit}}"',
+        f"{FIXTURE}::test_an_explicit_release_point_is_read_instead_of_origin_main",
+    ),
+    (
+        "accepts_any_assessment_outcome",
+        'record.get("outcome") != "ASSESSED" or ',
+        "",
+        f"{FIXTURE}::test_a_cited_record_that_is_not_an_agent_ready_assessment_still_yields_no_disposition",
+    ),
+    (
+        "writes_through_gh",
+        '_gh_json(root, "issue", "view", str(issue)',
+        '_gh_json(root, "issue", "edit", str(issue)',
+        f"{FIXTURE}::test_the_gate_only_reads_from_github",
+    ),
+    # Preserved behaviour, proven the same way: each positive test can fail.
+    (
+        "native_receipt_fallback_removed",
+        "    for comment in reversed(comments or []):\n",
+        "    for comment in []:\n",
+        f"{FIXTURE}::test_the_native_receipt_fallback_is_unchanged_when_the_cited_record_is_absent",
+    ),
+    (
+        "repository_not_derived_from_the_gate",
+        "[str(Path(__file__).resolve().parent), os.getcwd()]",
+        "[os.getcwd()]",
+        f"{FIXTURE}::test_the_repository_is_derived_from_the_gate_location_without_an_override",
+    ),
+    (
+        "wave1_directory_path_not_recognised",
+        ' or prefix.endswith(f"{WAVE1_DIR}/")',
+        "",
+        f"{FIXTURE}::test_a_wave1_record_cited_by_its_own_path_is_still_admitted",
+    ),
     # The two recognition changes, proven the same way: without them the new cases refuse.
     (
         "wave2_identifier_is_wo_only",

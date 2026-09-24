@@ -216,8 +216,7 @@ def test_a_rejected_citation_never_admits_through_the_wave1_record(world, path):
 
 def test_a_wave1_record_cited_by_its_own_path_is_still_admitted(world):
     world.land("docs/work-units/python/PY-05.assessment.json")
-    world.issue(body="see [`PY-05.assessment.json`](https://github.com/AlienLogicLab/alienintent/"
-                     "blob/main/docs/work-units/python/PY-05.assessment.json)")
+    world.issue(body="Assessment: docs/work-units/python/PY-05.assessment.json")  # the form of #2
 
     result = world.admit(workdir=world.work)
 
