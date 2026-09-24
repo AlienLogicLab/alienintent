@@ -1,0 +1,19 @@
+test_absent_mapped_check_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_absent_mapped_check_is_a_missing_premise) ... FAIL
+
+======================================================================
+FAIL: test_absent_mapped_check_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_absent_mapped_check_is_a_missing_premise)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 114, in test_absent_mapped_check_is_a_missing_premise
+    self.assertInfeasible(self.read(root), "MISSING_PREMISE", "predicate:delivery_for_another_project_is_refused")
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 77, in assertInfeasible
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'UNSATISFIED_PREMISE' != 'MISSING_PREMISE'
+- UNSATISFIED_PREMISE
++ MISSING_PREMISE
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.014s
+
+FAILED (failures=1)

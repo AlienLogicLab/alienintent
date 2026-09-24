@@ -1,0 +1,6 @@
+test_artifact_paths_cannot_escape_the_root_or_block (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_artifact_paths_cannot_escape_the_root_or_block) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.037s
+
+OK

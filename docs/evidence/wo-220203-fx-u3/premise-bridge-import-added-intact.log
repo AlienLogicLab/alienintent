@@ -1,0 +1,6 @@
+test_premise_modules_import_no_installation_or_composition (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_modules_import_no_installation_or_composition) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.004s
+
+OK

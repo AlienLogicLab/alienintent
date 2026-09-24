@@ -1,0 +1,6 @@
+test_absent_mapped_check_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_absent_mapped_check_is_a_missing_premise) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.016s
+
+OK

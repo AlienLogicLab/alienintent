@@ -1,0 +1,6 @@
+test_null_or_empty_readback_is_not_an_unchanged_state (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_null_or_empty_readback_is_not_an_unchanged_state) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.063s
+
+OK

@@ -1,0 +1,6 @@
+test_readback_comparison_is_type_exact (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_readback_comparison_is_type_exact) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.030s
+
+OK

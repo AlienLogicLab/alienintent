@@ -1,0 +1,6 @@
+test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.030s
+
+OK

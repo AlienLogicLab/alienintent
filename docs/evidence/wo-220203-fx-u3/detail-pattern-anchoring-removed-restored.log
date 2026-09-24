@@ -1,0 +1,6 @@
+test_negated_refusal_detail_is_unsatisfied (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_negated_refusal_detail_is_unsatisfied) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.031s
+
+OK

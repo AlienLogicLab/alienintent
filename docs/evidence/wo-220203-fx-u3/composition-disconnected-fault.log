@@ -1,0 +1,17 @@
+test_composed_profile_reads_retained_doctor_evidence_as_isolation_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_composed_profile_reads_retained_doctor_evidence_as_isolation_premise) ... FAIL
+
+======================================================================
+FAIL: test_composed_profile_reads_retained_doctor_evidence_as_isolation_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_composed_profile_reads_retained_doctor_evidence_as_isolation_premise)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 84, in test_composed_profile_reads_retained_doctor_evidence_as_isolation_premise
+    result = self.read(ROOT)
+             ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 71, in read
+    self.assertIsNotNone(profile.premises, "UpstreamProfile must compose the PremiseEvidence reader")
+AssertionError: unexpectedly None : UpstreamProfile must compose the PremiseEvidence reader
+
+----------------------------------------------------------------------
+Ran 1 test in 0.012s
+
+FAILED (failures=1)

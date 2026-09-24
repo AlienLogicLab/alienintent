@@ -1,0 +1,6 @@
+test_unpinned_or_missing_mapping_is_infeasible (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unpinned_or_missing_mapping_is_infeasible) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.023s
+
+OK
