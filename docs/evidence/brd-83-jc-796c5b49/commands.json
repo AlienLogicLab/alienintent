@@ -1,0 +1,59 @@
+{
+  "tools": {
+    "command": [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tools"
+    ],
+    "exit": 1
+  },
+  "tests": {
+    "command": [
+      "env",
+      "PYTHONPATH=src",
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tests"
+    ],
+    "exit": 0
+  },
+  "red": {
+    "command": [
+      "python3",
+      "tools/live/brd83_proven_red.py",
+      "--json"
+    ],
+    "exit": 0
+  },
+  "gate": {
+    "command": [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tools/live/test_release_admission.py",
+      "tools/live/test_release_admission_release_point.py"
+    ],
+    "exit": 0
+  },
+  "check": {
+    "command": [
+      "node",
+      "scripts/check.mjs",
+      "all"
+    ],
+    "exit": 0
+  },
+  "independent-path-probe": {
+    "command": [
+      "python3",
+      "docs/evidence/brd-83-jc-796c5b49/probe.py"
+    ],
+    "exit": 1,
+    "expected": 0
+  }
+}

@@ -1,0 +1,26 @@
+[
+  {
+    "path": "docs/evidence/elsewhere/WO-220202.s.assessment.json",
+    "resolved_path": "docs/work-units/python/WO-220202.assessment.json",
+    "expected_exit": 1,
+    "observed_exit": 0,
+    "stdout": "BIU #901: status=READY agent_ready=READY baseline=a64b1be4bf94795b5f4e1f038ee6419bffae1884 resolves=True ancestral=True\nADMITTED: release record complete; READY -> IMPLEMENT may proceed.\n",
+    "stderr": "release point origin/main -> 6643dbc580ff68580425b6c392ebe5771eae0698 (fetched) in /tmp/brd83-jc-path-h17djkfd/work\n"
+  },
+  {
+    "path": "docs/evidence/wave2-readiness-assessments/../../../WO-220202.s.assessment.json",
+    "resolved_path": "docs/work-units/python/WO-220202.assessment.json",
+    "expected_exit": 1,
+    "observed_exit": 0,
+    "stdout": "BIU #901: status=READY agent_ready=READY baseline=a64b1be4bf94795b5f4e1f038ee6419bffae1884 resolves=True ancestral=True\nADMITTED: release record complete; READY -> IMPLEMENT may proceed.\n",
+    "stderr": "release point origin/main -> 6643dbc580ff68580425b6c392ebe5771eae0698 (fetched) in /tmp/brd83-jc-path-h17djkfd/work\n"
+  },
+  {
+    "path": "docs/evidence/wave2-readiness-assessments/ARP/WO-220202.s.assessment.json",
+    "resolved_path": "docs/work-units/python/WO-220202.assessment.json",
+    "expected_exit": 1,
+    "observed_exit": 0,
+    "stdout": "BIU #901: status=READY agent_ready=READY baseline=a64b1be4bf94795b5f4e1f038ee6419bffae1884 resolves=True ancestral=True\nADMITTED: release record complete; READY -> IMPLEMENT may proceed.\n",
+    "stderr": "release point origin/main -> 6643dbc580ff68580425b6c392ebe5771eae0698 (fetched) in /tmp/brd83-jc-path-h17djkfd/work\n"
+  }
+]
