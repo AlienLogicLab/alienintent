@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Implement the C4 monitor_health_core capability: persist monitor instance/generation, tick and scan outcomes independently of model life and workload, and classify health by an ordered rule. Invalid, absent or regressing clock, unreadable store, or a missing record gives UNVERIFIED. Tick age or scan-completion age strictly greater than 2*I gives STALE, and exactly 2*I stays in bound. A failed or incomplete scan gives DEGRADED. Otherwise the status is HEALTHY. Monitor state must survive episode end. The work must be proven by a local, composed, mechanical service/inspection fixture (FX-C4), not by deployment supervision.",
+    "implementation_unknowns": [
+      "Where to fit the new history-then-pointer repository (aggregate `monitor:<profile>`, history method `monitor-history`) into the existing SQLiteOperationalStore CAS semantics, mirroring attention_repository.py.",
+      "The exact field set of the `#/shared_contracts/monitor_liveness` record, which MonitorHealth must match exactly (to be read from the pinned design contract).",
+      "How to represent absent (`None`) versus unreadable (raising) clock injection, and how to compare microsecond boundaries in UTC without float drift.",
+      "How to add MonitorProfile to composition/control_plane_profile.py without changing AttentionProfile or violating architecture fitness checks (e.g. adapter import rules).",
+      "Where the scan-progress port in execution_coordination should sit so that control_plane can consume it without a forbidden dependency direction.",
+      "Adapting the fx_c1_evidence.py harness into fx_c4_evidence.py: pinning exact CONTROLS needles so each control applies exactly once, and designing the observation/digest-manifest write-once (`xb`) behaviour.",
+      "How to structure the concurrent-writer CAS test deterministically, so that exactly one VersionConflict occurs and no observation is lost."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The Fixed Decisions section carries extensive SF-REQ-053 tenure and SF-REQ-056 G/C/reconciliation text that lies outside C4's extent. The producer could over-implement tenure, G/C policy or reconciliation, contrary to U6 and the Boundaries section.",
+      "SF-REQ-056 is stated to depend on POSTW1-DECIDE-008A ratification. The packet relies on the DAG statement that the 053 core does not depend on 056 ratification. If the verifier reads the listed requirement differently, it may raise a hold.",
+      "The dependency states, the C1 verdict, the input digests and the 'all dependencies DONE' claim are reported and have not been verified here. A digest or source-revision mismatch at admission would trigger a stop.",
+      "The labelled local substitutions (LOCAL_EPISODE_END_STAND_IN, SCAN_AGE_FROM_LAST_COMPLETION) could later be misread as operational or real-EpisodeControl proof.",
+      "The landing mode merges directly into the baseline branch without a pull request. Custody depends on strict SHA pinning and verifier retrieval receipts, so errors there have a larger blast radius.",
+      "The budget is 3 cycles and a 120-minute runtime. The 18 discriminating controls plus the full suite could consume a meaningful share of that allowance if the control needles are brittle.",
+      "Unassigned host (R1-GAP-MONITOR-HOST) means no real liveness supervision exists after landing. The HEALTHY status is valid only when the service is ticked by an external caller."
+    ],
+    "next_action": "Hand off WO-220304 to the configured PRODUCER. The producer should first verify the pinned input digests and the admission baseline, and pin the CONTROLS needles and fixture commands before writing implementation code. The producer should then implement the planned surface strictly within the C4 extent (I-only MonitorPolicy, no tenure, G/C, reconciliation or trajectory work). Next, the producer runs FX-C4 and the full checks and publishes the candidate SHA to the Issue. After that, the fresh independent VERIFIER retrieves and judges that exact SHA.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "READY is the controlling condition because none of the other dispositions applies. CLARIFY does not apply: the material owner-intent questions (trajectory scope, episode-end semantics, scan-age reference, precedence, regression reference, policy scope, scan ownership) are each reported as dispositioned, and what remains is engineering research. SPLIT does not apply: the planned files all serve one classification rule and one persisted aggregate verified by one fixture, and splitting them would create microtasks whose separate verdicts would be meaningless. HOLD is not supported by the text: the sole dependency is reported as landed with an independent verdict, allocation and verifier roles are bound, and the fixture uses a disposable local environment that the packet presents as available. The possible POSTW1-DECIDE-008A tension is addressed by the explicit U6 scoping and is recorded as a risk rather than a blocker. Rework locality is HIGH because any failure surfaces through a specific named test or control mapped to one component of a single coherent capability.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive, bounded work order for one capability. The domain model, port, application service, repository adapter, scan-progress port and composition profile are all coupled to one classification rule and one persisted aggregate. Every owner question (U1\u2013U8) is reported as dispositioned in the pinned proof packet. Trajectory behaviour is explicitly excluded; the title is title-only. Two items are covered by labelled local choices: the episode-end stand-in and scan age measured from last completion. Precedence, the regression reference, policy scope (I only, no G/C) and scan ownership (injected fake scanner) are reported as decided. The only dependency, C1, is reported as landed with a cited independent ACCEPT verdict. Allocation, producer/verifier roles and landing mode are stated. What remains is engineering research, not owner intent. This gate has not independently verified any of the cited digests, verdicts or dependency states.",
+    "verification_assessment": "Acceptance is highly observable. The packet lists named pytest node ids with explicit expected outcomes at below/at/above boundaries for tick age, scan age and the configurable interval, plus precedence, clock, store, restart, episode-end, CAS, policy-invalid and composition cases. It defines 18 discriminating fault controls, each with an intact/fault/restored expectation and a single application count. It also requires full-suite and architecture-fitness commands with exit status 0, and a structured evidence record with digests and holds. All of these criteria converge on one capability and one fixture, so a single fresh independent verifier retrieving the exact candidate SHA can render one meaningful ACCEPT/REJECT verdict. The verdict establishes local proof only (live_proof NOT_ESTABLISHED), which is consistent with the stated scope."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T11:50:13.540154+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 20836,
+    "input_sha256": "9cdc643d3f699a6adc7446d78459663ca30561f87bf4a9d04225562962c9036a",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-5mb5mvcd/WO-220304.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T11:49:44.146627+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220304"
+}

@@ -1,0 +1,75 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Implement durable context reconstruction (SF-REQ-053, DAG node C2). Two fresh, transcript-free invocations reading the same pinned context manifest must deterministically reconstruct equal authorized_next_action_set, blocked_set, current_work, unresolved_decisions, pending_attention, evidence_refs and lifecycle. Unavailable, drifted, malformed or missing state must produce a typed hold rather than a guessed result. Proof is local fixture FX-C2 only, with no operational handoff.",
+    "implementation_unknowns": [
+      "How to probe execution_coordination.domain.lifecycle.transition on a pure ExecutionState value to list accepted actions without committing, and whether the existing API exposes enumerable actions or needs a non-mutating probe per candidate action.",
+      "How to install and read back the context:manifest:<id> pointer aggregate in the existing OperationalStore, with CAS and VersionConflict semantics, while preserving one-writer ownership.",
+      "The exact S1 Observation API and shape for evidence_id 'context.manifest' and 'context.reconstruction'.",
+      "The canonical serialisation and sorting scheme needed for byte-equal documents and equal digests across separate processes.",
+      "How to launch the successor subprocesses with a sanitised environment so that ALIENINTENT_CONVERSATION and other transcript carriers are provably absent from inputs, while the process remains functional.",
+      "How to validate the raw decision-inbox aggregate shape independently, without changing DecisionInbox.list_open.",
+      "How to adapt the fx_c1_evidence.py harness patterns (disposable copies, a single mutation application, an immutable observation store) into fx_c2_evidence.py for the 13 named controls.",
+      "Where to wire a compatible addition into composition/control_plane_profile.py without tripping the architecture fitness checks."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The Fixed decisions section carries the full SF-REQ-053 tenure policy (epochs, context-usage thresholds, contradiction counting), but the packet assigns that to C3. A producer could scope-creep into tenure or EpisodeControl; the Boundaries section must control scope.",
+      "The labelled delegated choices (the U-1 derivation rule, the U-3 process-boundary substitute for an episode) could be rejected by the independent verifier as exceeding implementation_local_freedom. Rework would then return to the Factory Director or design owner rather than stay local.",
+      "Adding a new context:manifest pointer aggregate may be read as conflicting with 'Existing store versions/events suffice'. The packet's interpretation is reported rather than independently verified here.",
+      "Probing lifecycle.transition to enumerate actions may be impossible without touching execution_coordination internals, which would risk an interface change that is out of scope. Per the escalation rules, that would be routed to the owner, not repaired locally.",
+      "Deferring the silent empty return of DecisionInbox.list_open leaves a known latent defect outside this node.",
+      "Predecessor status, receipt digests and pinned input hashes are reported, not verified by this gate. A mismatch at admission should trigger the stated HOLD.",
+      "Direct merge into the baseline branch without a pull request depends on the independent verifier's ACCEPT and preserving the accepted SHA; errors in custody would be hard to reverse.",
+      "Tokens and cost are recorded as null or UNKNOWN; the budget is bounded by systemd wall-clock and 3 cycles rather than measured spend."
+    ],
+    "next_action": "Hand off to the configured PRODUCER under the pinned FX-C2 packet. Steps, in order:\n1. Verify admission inputs: baseline SHA, pinned input digests, C1/U1 verdict and closure receipts.\n2. Pin the fixture commands and demonstrate intact/fault/restored discrimination before implementing.\n3. Implement context_assembly reconstruction within C2 boundaries, keeping tenure and episode scope excluded.\n4. Publish the candidate branch and full SHA to the Issue before RESULT=VERIFY, for independent verification by JC.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "The controlling condition is resolved intent plus a coherent, observable verification plan. The task text reports every owner-level ambiguity as dispositioned with citations or labelled delegation, and there is no residual product, compatibility or policy question for the owner. Everything outstanding is implementation research: store APIs, the lifecycle probing mechanics, serialisation and the harness. The work is one capability with one completion predicate, so SPLIT would only fragment a cohesive reconstruction feature and its proof. Prerequisites are reported available with receipts, and allocation and verifier are named, so HOLD is not warranted on the supplied text. The discriminating controls map failures to specific assertions, so repair should be local. Readiness recommends handoff only; it does not authorise execution or release, and the admission checks remain the producer's obligation.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive single-capability work order with a pinned proof packet. The owner-level questions reported in the packet (U-1 to U-6) are either cited as decided by the pinned design/DAG or delegated as labelled engineering choices that the packet authorises. Predecessors C1 and U1 are reported DONE, with ACCEPT verdicts and closure receipts cited. The packet names interfaces, commands, probes, discriminating controls and the evidence layout. Boundaries exclude C3/C4 scope, bootstrap handoff, M-CONTEXT cutover and C1/U1 changes. No material owner intent appears unresolved, and the work does not break into independent decision centres. The remaining unknowns are engineering unknowns. These statements reflect the task text only; this gate did not verify any referenced artifact, digest or receipt.",
+    "verification_assessment": "Acceptance is observable and mechanical. AC-01 maps to named probes:\n- byte-equal canonical documents from predecessor and successors;\n- MISMATCH producing a nonzero exit;\n- conversation isolation;\n- order independence;\n- derivation of actions via the lifecycle rule;\n- SEEN is not treated as RESOLVED;\n- typed holds for seven failure classes.\nEach probe is backed by discriminating controls with an intact/fault/restored pattern and application_count 1, plus full regression and architecture checks. The evidence schema is pinned. One independent verifier verdict (JC, fresh worktree, exact SHA) is meaningful because all probes share one predicate, reconstruction equivalence plus hold behaviour. The labelled substitutions (LOCAL_PROCESS_BOUNDARY_SUBSTITUTE_FOR_EPISODE and LABELLED_DERIVATION_RULE_v1) must be visible to the verifier. The local PASS is explicitly not operational acceptance."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T11:50:13.508236+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 21676,
+    "input_sha256": "ddfb512eb8e478ca69067f131f52f663edc5882ab4eccfef4239d9a350e80059",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-oxfknths/WO-220302.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T11:49:44.154178+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220302"
+}
