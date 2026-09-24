@@ -1,0 +1,56 @@
+{
+  "record_kind": "PremisePredicateMapping",
+  "schema_version": 1,
+  "premise_id": "platform-isolation:wave1-sandbox",
+  "target": "AlienLogicLab/alienintent-sandbox",
+  "authority": {
+    "basis": "SWF-34 Founder decision (binding) enumerates the realizable isolation controls; SF-REQ-014-AC-03 names the four observables. Each entry below cites the SWF-34 control it evidences. The mapping is PRODUCER-authored from that authority text, not inferred from passing source code, and is subject to independent VERIFIER judgment.",
+    "refs": {
+      "docs/decisions/2026-09-21-sandbox-isolation-standard.md": "sha256:a70f5ca62c9934a92ce566b896a6ae4e213e3a7536649ad4de5ff929d762fccc",
+      "docs/evidence/wave2-design-contracts.json": "sha256:56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242"
+    }
+  },
+  "artifacts": {
+    "py09b-live-checks": {
+      "path": "docs/evidence/py09b-live-checks-2026-09-21.json",
+      "sha256": "526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+      "description": "PY-09B bounded live checks against the sandbox, including the installation doctor run (retained at 3bc361e)",
+      "target": {"check": "doctor_source_control_probe_is_live", "field": "repository"}
+    },
+    "py10-proof-run": {
+      "path": "docs/evidence/py10/proof-run.json",
+      "sha256": "d8fa0efab6bec2b26f6da129bb6c7be0e93473c37ee8e0ebd199fdfe60ec5358",
+      "description": "PY-10 Wave 1 live proof run record with before/after outside-state readback (retained at 04bc54b)",
+      "target": {"pointer": "/repository"}
+    }
+  },
+  "doctor": {
+    "artifact": "py09b-live-checks",
+    "check": "doctor_returns_typed_outcomes_against_the_sandbox"
+  },
+  "observables": [
+    {"observable": "POSITIVE_TARGET_ACCESS", "artifact": "py09b-live-checks", "check": "installation_token_is_used_for_a_live_call",
+     "authority": "SWF-34 repository boundary: the sandbox repository is included in the installation scope"},
+    {"observable": "POSITIVE_TARGET_ACCESS", "artifact": "py09b-live-checks", "check": "sandbox_repository_metadata_read_live",
+     "authority": "SWF-34 repository boundary: the sandbox profile resolves that repository identity"},
+    {"observable": "POSITIVE_TARGET_ACCESS", "artifact": "py09b-live-checks", "check": "doctor_source_control_probe_is_live",
+     "authority": "SWF-34 repository boundary; installation doctor source_control evidence names the target"},
+    {"observable": "PROFILE_SCOPING", "artifact": "py09b-live-checks", "check": "repository_boundary_is_permission_enforced",
+     "authority": "SWF-34 repository boundary: selected-repository scope, no production repository granted"},
+    {"observable": "PROFILE_SCOPING", "artifact": "py09b-live-checks", "check": "every_project_operation_targeted_the_configured_project",
+     "authority": "SWF-34 Project boundary: every Project read and write targets the configured Project"},
+    {"observable": "PROFILE_SCOPING", "artifact": "py09b-live-checks", "check": "no_project_identity_other_than_the_configured_one_appears_in_configuration",
+     "authority": "SWF-34 Project boundary: no production Project identity appears in sandbox configuration"},
+    {"observable": "OUT_OF_SCOPE_REJECTION", "artifact": "py09b-live-checks", "check": "project_identity_resolution_fails_closed_on_mismatch",
+     "authority": "SWF-34 Project boundary: identity resolution fails closed on mismatch (application refusal, not credential denial)"},
+    {"observable": "OUT_OF_SCOPE_REJECTION", "artifact": "py09b-live-checks", "check": "delivery_for_another_project_is_refused",
+     "authority": "SWF-34 Project boundary: a request for a Project this profile does not target is refused by the application"},
+    {"observable": "OUTSIDE_STATE_READBACK", "artifact": "py10-proof-run", "unchanged": [
+       "/production_project/observed", "/production_project/state_digest", "/production_project/identity_digest",
+       "/production_project/item_count", "/production_project/project_updated_at", "/node_bootstrap/bootstrap_port_answers"],
+     "authority": "SWF-34 compensating control (PY-10 AC 16): production Project and Node bootstrap read back unchanged before/after"}
+  ],
+  "not_mapped": {
+    "credential_denial": "Never an observable. organization_projects is organization-scoped (SWF-34); a demand for token-level denial is an unachievable premise and yields InfeasibleProof."
+  }
+}
