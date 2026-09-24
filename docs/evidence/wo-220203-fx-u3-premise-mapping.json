@@ -39,11 +39,11 @@
      "authority": "SWF-34 repository boundary: selected-repository scope, no production repository granted"},
     {"observable": "PROFILE_SCOPING", "artifact": "py09b-live-checks", "check": "every_project_operation_targeted_the_configured_project",
      "authority": "SWF-34 Project boundary: every Project read and write targets the configured Project"},
-    {"observable": "PROFILE_SCOPING", "artifact": "py09b-live-checks", "check": "no_project_identity_other_than_the_configured_one_appears_in_configuration",
-     "authority": "SWF-34 Project boundary: no production Project identity appears in sandbox configuration"},
     {"observable": "OUT_OF_SCOPE_REJECTION", "artifact": "py09b-live-checks", "check": "project_identity_resolution_fails_closed_on_mismatch",
+     "detail_requires": ["typed outcome ProjectAddressRejected"],
      "authority": "SWF-34 Project boundary: identity resolution fails closed on mismatch (application refusal, not credential denial)"},
     {"observable": "OUT_OF_SCOPE_REJECTION", "artifact": "py09b-live-checks", "check": "delivery_for_another_project_is_refused",
+     "detail_requires": ["replayed a real delivery", "status_code=401"],
      "authority": "SWF-34 Project boundary: a request for a Project this profile does not target is refused by the application"},
     {"observable": "OUTSIDE_STATE_READBACK", "artifact": "py10-proof-run", "unchanged": [
        "/production_project/observed", "/production_project/state_digest", "/production_project/identity_digest",
@@ -51,6 +51,7 @@
      "authority": "SWF-34 compensating control (PY-10 AC 16): production Project and Node bootstrap read back unchanged before/after"}
   ],
   "not_mapped": {
+    "no_project_identity_other_than_the_configured_one_appears_in_configuration": "Excluded (Revision 1): tools/live/py09b_live_checks.py records it unconditionally ok=true, so it cannot discriminate (SF-REQ-014-AC-02 refuses unconditional-success checks as proof).",
     "credential_denial": "Never an observable. organization_projects is organization-scoped (SWF-34); a demand for token-level denial is an unachievable premise and yields InfeasibleProof."
   }
 }

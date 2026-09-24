@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MAPPING = Path("docs/evidence/wo-220203-fx-u3-premise-mapping.json")
 PY09B, PY10 = "docs/evidence/py09b-live-checks-2026-09-21.json", "docs/evidence/py10/proof-run.json"
 PROJECT, PROFILE, TARGET, PREMISE = "AlienLogicLab/alienintent", "fx-u3", "AlienLogicLab/alienintent-sandbox", "platform-isolation:wave1-sandbox"
+MAPPING_SHA256 = "8f6c9f063a934a8c63ea724fb1c554154cdd6bf8a70b250a0d06d09480b2ba23"
 PREMISE_MODULES = ("src/alienintent/evidence_learning/domain/premise.py",
                    "src/alienintent/evidence_learning/ports/premise_evidence.py",
                    "src/alienintent/evidence_learning/application/premise_service.py")
@@ -28,6 +29,7 @@ class PremiseEvidenceTests(unittest.TestCase):
     def setUp(self):
         self.tmp = Path(tempfile.mkdtemp(prefix="fx-u3-"))
         self.addCleanup(shutil.rmtree, self.tmp)
+        self.mapping_sha256 = MAPPING_SHA256
 
     def profile(self, root: Path, target: str = TARGET) -> UpstreamProfile:
         state = Path(tempfile.mkdtemp(prefix="state-", dir=self.tmp))
@@ -35,7 +37,7 @@ class PremiseEvidenceTests(unittest.TestCase):
         return UpstreamProfile(LocalEvidenceRepository(state / "evidence", PROJECT, PROFILE),
                                SQLiteOperationalStore(state / "operational.sqlite"), PROJECT, PROFILE, definition,
                                "fx-u3-test", "Founder", frozenset({"private"}),
-                               premise_evidence=RetainedDoctorPremiseEvidence(root, MAPPING, PROJECT, PROFILE),
+                               premise_evidence=RetainedDoctorPremiseEvidence(root, MAPPING, self.mapping_sha256, PROJECT, PROFILE),
                                premise_target=target)
 
     def copy(self) -> Path:
@@ -52,9 +54,16 @@ class PremiseEvidenceTests(unittest.TestCase):
         body = json.dumps(document, indent=1).encode()
         (root / path).write_bytes(body)
         if repin:
-            mapping = json.loads((root / MAPPING).read_text())
-            mapping["artifacts"][key]["sha256"] = sha256(body).hexdigest()
-            (root / MAPPING).write_text(json.dumps(mapping))
+            self.remap(root, lambda m: m["artifacts"][key].update(sha256=sha256(body).hexdigest()))
+
+    def remap(self, root: Path, change, repin=True):
+        """Change the mapping; repin models an authority re-review that pins the new mapping digest."""
+        mapping = json.loads((root / MAPPING).read_text())
+        change(mapping)
+        body = json.dumps(mapping).encode()
+        (root / MAPPING).write_bytes(body)
+        if repin:
+            self.mapping_sha256 = sha256(body).hexdigest()
 
     def read(self, root: Path, **kwargs):
         profile = self.profile(root)
@@ -74,12 +83,13 @@ class PremiseEvidenceTests(unittest.TestCase):
         result = self.read(ROOT)
         self.assertIsInstance(result, PlatformIsolationPremise)
         self.assertEqual((result.premise_id, result.target), (PREMISE, TARGET))
-        self.assertEqual(len(result.observations), 9)
+        self.assertEqual(len(result.observations), 8)
         self.assertEqual({o.observable for o in result.observations}, set(ISOLATION_OBSERVABLES))
         self.assertTrue(all(o.satisfied is True and o.target == TARGET for o in result.observations))
         digests = {o.source_ref.logical_id: o.source_ref.revision_digest for o in result.observations}
         self.assertEqual(digests, {"py09b-live-checks": "sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
                                    "py10-proof-run": "sha256:d8fa0efab6bec2b26f6da129bb6c7be0e93473c37ee8e0ebd199fdfe60ec5358"})
+        self.assertEqual(result.mapping_ref.revision_digest, "sha256:" + MAPPING_SHA256)
         self.assertEqual(result.doctor_ref.locator,
                          "repository:" + PY09B + "#doctor_returns_typed_outcomes_against_the_sandbox")
         rejection = [o.predicate for o in result.observations if o.observable == IsolationObservable.OUT_OF_SCOPE_REJECTION]
@@ -163,11 +173,98 @@ class PremiseEvidenceTests(unittest.TestCase):
     def test_premise_modules_import_no_installation_or_composition(self):
         for path in PREMISE_MODULES:
             tree = ast.parse((ROOT / path).read_text())
-            modules = [n.module or "" for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
+            modules = ["." * n.level + (n.module or "") for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
             modules += [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
             for module in modules:
                 with self.subTest(path=path, module=module):
-                    self.assertFalse(module.startswith(("alienintent.installation", "alienintent.composition")))
+                    self.assertFalse({"installation", "composition"} & set(module.split(".")))
+
+    def test_premise_id_is_bound_to_the_pinned_mapping(self):
+        profile = self.profile(ROOT)
+        self.assertInfeasible(profile.premises.read("credential-denial:production"), "PREMISE_MISMATCH", PREMISE)
+
+    def test_unpinned_or_missing_mapping_is_infeasible(self):
+        root = self.copy()
+        self.remap(root, lambda m: m["observables"].__setitem__(slice(None), m["observables"][:1] * 4), repin=False)
+        self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+        (root / MAPPING).unlink()
+        self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "mapping:" + str(MAPPING))
+
+    def test_malformed_mapping_is_infeasible_not_an_exception(self):
+        changes = {
+            "credential-denial-observable": lambda m: m["observables"].append(
+                {"observable": "CREDENTIAL_DENIAL", "artifact": "py09b-live-checks", "check": "x"}),
+            "undeclared-artifact": lambda m: m["observables"][3].update(artifact="py09b-typo"),
+            "entry-without-predicate": lambda m: m["observables"][0].pop("check"),
+            "no-doctor": lambda m: m.pop("doctor"),
+            "not-an-object": lambda m: m.clear(),
+        }
+        for name, change in changes.items():
+            with self.subTest(name=name):
+                root = self.copy()
+                self.remap(root, change)
+                self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                shutil.rmtree(root)
+
+    def test_null_or_empty_readback_is_not_an_unchanged_state(self):
+        for value in (None, "", {}, []):
+            with self.subTest(value=value):
+                root = self.copy()
+
+                def blank(document, value=value):
+                    for side in ("before", "after"):
+                        for field in ("state_digest", "identity_digest", "project_updated_at"):
+                            document[side]["production_project"][field] = value
+                        document[side]["node_bootstrap"]["bootstrap_port_answers"] = value
+                self.rewrite(root, "py10-proof-run", PY10, blank)
+                self.assertInfeasible(self.read(root), "UNSATISFIED_PREMISE", "OUTSIDE_STATE_READBACK")
+                shutil.rmtree(root)
+
+    def test_vacuous_out_of_scope_refusal_is_unsatisfied(self):
+        root = self.copy()
+
+        def vacuous(document):
+            for check in document["checks"]:
+                if check["check"] == "delivery_for_another_project_is_refused":
+                    check["detail"] = "no recorded delivery for another Project was available to replay in this run"
+        self.rewrite(root, "py09b-live-checks", PY09B, vacuous)
+        self.assertInfeasible(self.read(root), "UNSATISFIED_PREMISE", "OUT_OF_SCOPE_REJECTION")
+
+    def test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception(self):
+        cases = {
+            "null-detail": ("doctor_returns_typed_outcomes_against_the_sandbox", None, "DOCTOR_EVIDENCE_UNAVAILABLE"),
+            "duplicate-outcome": ("doctor_returns_typed_outcomes_against_the_sandbox",
+                                  'disposition=PASS exit=0 outcomes={"configuration": "FAIL", '
+                                  + ", ".join(f'"{c}": "PASS"' for c in ("configuration", "secrets", "work_management",
+                                  "source_control", "provider", "transport", "persistence", "execution"))
+                                  + "}", "DOCTOR_EVIDENCE_UNAVAILABLE"),
+        }
+        for name, (check_name, detail, reason) in cases.items():
+            with self.subTest(name=name):
+                root = self.copy()
+
+                def change(document, check_name=check_name, detail=detail):
+                    for check in document["checks"]:
+                        if check["check"] == check_name:
+                            check["detail"] = detail
+                self.rewrite(root, "py09b-live-checks", PY09B, change)
+                self.assertInfeasible(self.read(root), reason)
+                shutil.rmtree(root)
+
+    def test_unreadable_artifact_target_is_a_missing_premise(self):
+        for value in ("", None, 5):
+            with self.subTest(value=value):
+                root = self.copy()
+                self.rewrite(root, "py10-proof-run", PY10, lambda d, value=value: d.update(repository=value))
+                self.assertInfeasible(self.read(root), "MISSING_PREMISE", "target:py10-proof-run", "OUTSIDE_STATE_READBACK")
+                shutil.rmtree(root)
+
+    def test_premise_evidence_requires_a_configured_target(self):
+        with self.assertRaises(ValueError):
+            UpstreamProfile(LocalEvidenceRepository(self.tmp / "e", PROJECT, PROFILE), SQLiteOperationalStore(self.tmp / "s.sqlite"),
+                            PROJECT, PROFILE, Ref(PROJECT, PROFILE, "c", "sha256:" + "0" * 64, "repository:c"), "fx-u3-test",
+                            "Founder", frozenset({"private"}),
+                            premise_evidence=RetainedDoctorPremiseEvidence(ROOT, MAPPING, MAPPING_SHA256, PROJECT, PROFILE))
 
 
 if __name__ == "__main__":

@@ -27,5 +27,7 @@ class UpstreamProfile:
         self.ambiguity = AmbiguityService(self.inventory, repository, store, self.questions, project, profile,
                                           definition_ref, invocation, decision_actor, access_scope, self.questions)
         # Retained capability evidence enters as neutral values; no probe runs here.
+        if (premise_evidence is None) != (premise_target is None):
+            raise ValueError("premise_evidence and premise_target must be configured together")
         self.premises = (PremiseEvidenceReader(premise_evidence, premise_target)
                          if premise_evidence is not None and premise_target is not None else None)

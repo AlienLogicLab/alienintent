@@ -42,7 +42,7 @@ CONTROLS = [
      ' \\\n            and set(outcomes) == set(REQUIRED_CHECKS) and all(v == "PASS" for v in outcomes.values())', "",
      "test_doctor_evidence_that_is_not_a_full_pass_is_infeasible"),
     ("outside-state-comparison-removed", ADAPTER,
-     "b is not _ABSENT and b == a and (b is True or not isinstance(b, bool))", "b is not _ABSENT",
+     "satisfied = all(_read_back(b) and b == a for _, b, a in pairs)", "satisfied = all(_read_back(b) for _, b, a in pairs)",
      "test_changed_outside_state_is_unsatisfied"),
     ("absent-check-invented", ADAPTER, "            if check is None:\n                return None\n",
      '            if check is None:\n                check = {"ok": True}\n',
@@ -52,6 +52,21 @@ CONTROLS = [
     ("premise-bridge-import-added", DOMAIN, "from alienintent.evidence_learning.domain.refs import Ref\n",
      "from alienintent.evidence_learning.domain.refs import Ref\nfrom alienintent.installation.application.doctor import REQUIRED_CHECKS\n",
      "test_premise_modules_import_no_installation_or_composition"),
+    # Revision 1: controls for the independent-review repairs.
+    ("premise-identity-unbound", DOMAIN, "if evidence.premise_id != premise_id:", "if False:",
+     "test_premise_id_is_bound_to_the_pinned_mapping"),
+    ("mapping-pin-removed", ADAPTER, "if sha256(body).hexdigest() != self._mapping_sha256:", "if False:",
+     "test_unpinned_or_missing_mapping_is_infeasible"),
+    ("mapping-validation-removed", ADAPTER, "if not _valid_mapping(mapping):", "if not isinstance(mapping, dict):",
+     "test_malformed_mapping_is_infeasible_not_an_exception"),
+    ("empty-readback-accepted", ADAPTER, "if value is _ABSENT or value is None or value is False:",
+     "if value is _ABSENT or value is False:", "test_null_or_empty_readback_is_not_an_unchanged_state"),
+    ("detail-predicate-removed", ADAPTER, ' and all(s in detail for s in entry.get("detail_requires", ()))', "",
+     "test_vacuous_out_of_scope_refusal_is_unsatisfied"),
+    ("duplicate-key-accepted", ADAPTER, "if len(keys) != len(set(keys)):", "if False:",
+     "test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception"),
+    ("absent-target-accepted", ADAPTER, "elif loaded[2] is None:", "elif False:",
+     "test_unreadable_artifact_target_is_a_missing_premise"),
 ]
 
 

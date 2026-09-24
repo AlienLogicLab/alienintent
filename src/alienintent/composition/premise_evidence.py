@@ -1,7 +1,9 @@
 """Composition-owned PremiseEvidence bridge over retained installation-doctor evidence.
 
-Only retained, digest-pinned artifacts are read. Nothing here runs the doctor, a probe
-or a credential call; the predicate mapping is authority-reviewed data, not code.
+Only retained, digest-pinned artifacts are read under a digest-pinned predicate mapping.
+Nothing here runs the doctor, a probe or a credential call; the mapping is
+authority-reviewed data, not code. Unreadable or malformed input becomes a recorded gap
+that the domain turns into InfeasibleProof, never an exception or an invented observation.
 """
 from __future__ import annotations
 
@@ -18,94 +20,149 @@ from alienintent.installation.application.doctor import REQUIRED_CHECKS
 
 _ABSENT = object()
 _DOCTOR_DETAIL = re.compile(r"disposition=(\w+) exit=(\d+) outcomes=(\{.*\})")
+_OBSERVABLES = {o.value for o in IsolationObservable}
 
 
 class RetainedDoctorPremiseEvidence(PremiseEvidence):
-    def __init__(self, repository_root: Path, mapping_path: Path, project: str, profile: str) -> None:
-        self._root, self._project, self._profile = Path(repository_root), project, profile
-        self.mapping = json.loads((self._root / mapping_path).read_text(encoding="utf-8"))
-        self.target = self.mapping["target"]
+    def __init__(self, repository_root: Path, mapping_path: Path, mapping_sha256: str, project: str, profile: str) -> None:
+        self._root, self._mapping_path, self._mapping_sha256 = Path(repository_root), str(mapping_path), mapping_sha256
+        self._project, self._profile = project, profile
 
     def observe(self) -> RetainedPremiseEvidence:
+        mapping, mapping_ref = self._mapping()
+        if mapping is None:
+            return RetainedPremiseEvidence("", None, "", False, None, (), ("mapping:" + self._mapping_path,))
         artifacts, unavailable = {}, []
-        for key, spec in self.mapping["artifacts"].items():
+        for key, spec in mapping["artifacts"].items():
             loaded = self._load(key, spec)
             if loaded is None:
                 unavailable.append("artifact:" + key)
+            elif loaded[2] is None:
+                unavailable.append("target:" + key)
             else:
                 artifacts[key] = loaded
-        doctor_passed, doctor_ref = self._doctor(artifacts)
+        doctor_passed, doctor_ref = self._doctor(mapping["doctor"], artifacts)
         observations = []
-        for entry in self.mapping["observables"]:
-            if entry["artifact"] not in artifacts:
-                continue
-            observation = self._observe(entry, *artifacts[entry["artifact"]])
+        for entry in mapping["observables"]:
+            observation = self._observe(entry, *artifacts[entry["artifact"]]) if entry["artifact"] in artifacts else None
             if observation is None:
                 # Every mapped predicate is an obligation; an absent one is a missing premise.
-                unavailable.append("predicate:" + entry["check"])
+                unavailable.append("predicate:" + entry.get("check", entry["observable"]))
             else:
                 observations.append(observation)
-        return RetainedPremiseEvidence(self.target, doctor_passed, doctor_ref, tuple(observations), tuple(unavailable))
+        return RetainedPremiseEvidence(mapping["premise_id"], mapping_ref, mapping["target"], doctor_passed, doctor_ref,
+                                       tuple(observations), tuple(dict.fromkeys(unavailable)))
 
-    def _load(self, key: str, spec: dict) -> tuple[object, Ref, str] | None:
-        path = self._root / spec["path"]
-        if not path.is_file():
+    def _mapping(self) -> tuple[dict | None, Ref | None]:
+        try:
+            body = (self._root / self._mapping_path).read_bytes()
+        except OSError:
+            return None, None
+        if sha256(body).hexdigest() != self._mapping_sha256:
+            return None, None
+        mapping = _json(body)
+        if not _valid_mapping(mapping):
+            return None, None
+        return mapping, Ref(self._project, self._profile, "premise-mapping", "sha256:" + self._mapping_sha256,
+                            "repository:" + self._mapping_path)
+
+    def _load(self, key: str, spec: dict) -> tuple[object, Ref, str | None] | None:
+        try:
+            body = (self._root / spec["path"]).read_bytes()
+        except OSError:
             return None
-        body = path.read_bytes()
         if sha256(body).hexdigest() != spec["sha256"]:
             return None
-        try:
-            document = json.loads(body)
-        except ValueError:
+        document = _json(body)
+        if document is _ABSENT:
             return None
         ref = Ref(self._project, self._profile, key, "sha256:" + spec["sha256"], "repository:" + spec["path"])
-        return document, ref, self._artifact_target(document, spec.get("target", {}))
+        return document, ref, _artifact_target(document, spec["target"])
 
     @staticmethod
-    def _artifact_target(document: object, locator: dict) -> str:
-        if "pointer" in locator:
-            value = _pointer(document, locator["pointer"])
-        elif "check" in locator:
-            check = _check(document, locator["check"])
-            value = _evidence(check).get(locator.get("field", ""), _ABSENT) if check is not None else _ABSENT
-        else:
-            value = _ABSENT
-        return value if isinstance(value, str) else ""
-
-    def _doctor(self, artifacts: dict) -> tuple[bool, Ref | None]:
-        spec = self.mapping["doctor"]
+    def _doctor(spec: dict, artifacts: dict) -> tuple[bool, Ref | None]:
         if spec["artifact"] not in artifacts:
             return False, None
         document, ref, _ = artifacts[spec["artifact"]]
         check = _check(document, spec["check"])
-        match = _DOCTOR_DETAIL.fullmatch(check.get("detail", "")) if check is not None else None
+        detail = check.get("detail") if check is not None else None
+        match = _DOCTOR_DETAIL.fullmatch(detail) if isinstance(detail, str) else None
         if check is None or check.get("ok") is not True or match is None:
             return False, None
-        try:
-            outcomes = json.loads(match[3])
-        except ValueError:
-            return False, None
+        outcomes = _json(match[3].encode())
         passed = (match[1], match[2]) == ("PASS", "0") and isinstance(outcomes, dict) \
             and set(outcomes) == set(REQUIRED_CHECKS) and all(v == "PASS" for v in outcomes.values())
-        return passed, Ref(ref.project, ref.profile, ref.logical_id, ref.revision_digest, ref.locator + "#" + spec["check"])
+        return passed, _locate(ref, spec["check"])
 
-    def _observe(self, entry: dict, document: object, ref: Ref, target: str) -> PremiseObservation | None:
+    @staticmethod
+    def _observe(entry: dict, document: object, ref: Ref, target: str) -> PremiseObservation | None:
         observable = IsolationObservable(entry["observable"])
         if "check" in entry:
             check = _check(document, entry["check"])
             if check is None:
                 return None
-            return PremiseObservation(observable, target, entry["check"], str(check.get("detail", "")),
-                                      check.get("ok") is True, _locate(ref, entry["check"]))
+            detail = check.get("detail")
+            detail = detail if isinstance(detail, str) else ""
+            satisfied = check.get("ok") is True and all(s in detail for s in entry.get("detail_requires", ()))
+            return PremiseObservation(observable, target, entry["check"], detail, satisfied, _locate(ref, entry["check"]))
         pointers = entry["unchanged"]
         pairs = [(p, _pointer(document, "/before" + p), _pointer(document, "/after" + p)) for p in pointers]
-        # A readback is only evidence when both sides were read and agree; a boolean must be
-        # True because `observed: false` on both sides is agreement without a readback.
-        satisfied = bool(pairs) and all(b is not _ABSENT and b == a and (b is True or not isinstance(b, bool))
-                                        for _, b, a in pairs)
+        satisfied = all(_read_back(b) and b == a for _, b, a in pairs)
         observed = "; ".join(f"{p}: {_show(b)} -> {_show(a)}" for p, b, a in pairs)
         return PremiseObservation(observable, target, "unchanged:" + ",".join(pointers), observed, satisfied,
                                   _locate(ref, "/before,/after"))
+
+
+def _valid_mapping(mapping: object) -> bool:
+    def text(value: object) -> bool:
+        return isinstance(value, str) and bool(value.strip())
+
+    if not isinstance(mapping, dict) or not all(text(mapping.get(k)) for k in ("premise_id", "target")):
+        return False
+    artifacts, doctor, entries = mapping.get("artifacts"), mapping.get("doctor"), mapping.get("observables")
+    if not isinstance(artifacts, dict) or not artifacts or not isinstance(doctor, dict) \
+            or not isinstance(entries, list) or not entries:
+        return False
+    for spec in artifacts.values():
+        locator = spec.get("target") if isinstance(spec, dict) else None
+        if not isinstance(spec, dict) or not text(spec.get("path")) or not re.fullmatch(r"[0-9a-f]{64}", str(spec.get("sha256"))) \
+                or not isinstance(locator, dict) or not (text(locator.get("pointer")) or text(locator.get("check")) and text(locator.get("field"))):
+            return False
+    if doctor.get("artifact") not in artifacts or not text(doctor.get("check")):
+        return False
+    for entry in entries:
+        if not isinstance(entry, dict) or entry.get("observable") not in _OBSERVABLES or entry.get("artifact") not in artifacts:
+            return False
+        requires = entry.get("detail_requires", [])
+        unchanged = entry.get("unchanged")
+        by_check = text(entry.get("check")) and "unchanged" not in entry \
+            and isinstance(requires, list) and all(text(s) for s in requires)
+        by_readback = "check" not in entry and isinstance(unchanged, list) and bool(unchanged) \
+            and all(text(p) and p.startswith("/") for p in unchanged)
+        if not (by_check or by_readback):
+            return False
+    return True
+
+
+def _json(body: bytes) -> object:
+    def unique(pairs: list[tuple[str, object]]) -> dict:
+        keys = [k for k, _ in pairs]
+        if len(keys) != len(set(keys)):
+            raise ValueError("duplicate key")
+        return dict(pairs)
+    try:
+        return json.loads(body, object_pairs_hook=unique)
+    except (ValueError, UnicodeDecodeError):
+        return _ABSENT
+
+
+def _artifact_target(document: object, locator: dict) -> str | None:
+    if "pointer" in locator:
+        value = _pointer(document, locator["pointer"])
+    else:
+        check = _check(document, locator["check"])
+        value = _evidence(check).get(locator["field"], _ABSENT) if check is not None else _ABSENT
+    return value if isinstance(value, str) and value else None
 
 
 def _check(document: object, name: str) -> dict | None:
@@ -115,13 +172,10 @@ def _check(document: object, name: str) -> dict | None:
 
 
 def _evidence(check: dict) -> dict:
-    detail = check.get("detail", "")
+    detail = check.get("detail")
     if not isinstance(detail, str) or not detail.startswith("evidence="):
         return {}
-    try:
-        value = json.loads(detail[len("evidence="):])
-    except ValueError:
-        return {}
+    value = _json(detail[len("evidence="):].encode())
     return value if isinstance(value, dict) else {}
 
 
@@ -132,6 +186,17 @@ def _pointer(document: object, pointer: str) -> object:
             return _ABSENT
         value = value[part]
     return value
+
+
+def _read_back(value: object) -> bool:
+    """A readback is only evidence when a value was actually read on that side.
+
+    Absent, null, empty and ``False`` values agreeing before and after are agreement
+    without a readback (for example ``observed: false`` on both sides), not an unchanged state.
+    """
+    if value is _ABSENT or value is None or value is False:
+        return False
+    return not (isinstance(value, (str, list, dict)) and not value)
 
 
 def _show(value: object) -> str:

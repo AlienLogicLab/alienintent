@@ -29,7 +29,9 @@ class PremiseObservation:
 
 @dataclass(frozen=True)
 class RetainedPremiseEvidence:
-    """What the outer boundary read: the doctor state, observations and unreadable artifacts."""
+    """What the outer boundary read under one pinned mapping: doctor state, observations, gaps."""
+    premise_id: str
+    mapping_ref: Ref | None
     target: str
     doctor_passed: bool
     doctor_ref: Ref | None
@@ -47,6 +49,7 @@ class PlatformIsolationPremise:
     target: str
     observations: tuple[PremiseObservation, ...]
     doctor_ref: Ref
+    mapping_ref: Ref
 
 
 @dataclass(frozen=True)
@@ -60,7 +63,12 @@ class InfeasibleProof:
 
 def evaluate_isolation_premise(premise_id: str, target: str, requested: frozenset[str],
                                evidence: RetainedPremiseEvidence) -> PlatformIsolationPremise | InfeasibleProof:
-    refs = tuple(dict.fromkeys(o.source_ref for o in evidence.observations))
+    refs = tuple(dict.fromkeys(((evidence.mapping_ref,) if evidence.mapping_ref else ())
+                               + tuple(o.source_ref for o in evidence.observations)))
+    if evidence.mapping_ref is None:
+        return InfeasibleProof(premise_id, "MAPPING_UNAVAILABLE", ("predicate-mapping",) + evidence.unavailable, refs)
+    if evidence.premise_id != premise_id:
+        return InfeasibleProof(premise_id, "PREMISE_MISMATCH", (evidence.premise_id,), refs)
     unachievable = sorted(set(requested) - {o.value for o in ISOLATION_OBSERVABLES})
     if unachievable:
         return InfeasibleProof(premise_id, "UNACHIEVABLE_PREMISE", tuple(unachievable), refs)
@@ -79,4 +87,4 @@ def evaluate_isolation_premise(premise_id: str, target: str, requested: frozense
     unsatisfied = sorted({o.observable.value for o in evidence.observations if o.satisfied is not True})
     if unsatisfied:
         return InfeasibleProof(premise_id, "UNSATISFIED_PREMISE", tuple(unsatisfied), refs)
-    return PlatformIsolationPremise(premise_id, target, evidence.observations, evidence.doctor_ref)
+    return PlatformIsolationPremise(premise_id, target, evidence.observations, evidence.doctor_ref, evidence.mapping_ref)
