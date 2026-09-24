@@ -72,9 +72,10 @@ class Finding:
     affected: tuple[str, ...]
     reviewer_ref: str | None = None
 
-    @property
-    def work_item(self) -> str:
-        return "upstream-question:" + self.finding_id
+
+def question_work_item(finding_id: str, cycle: int) -> str:
+    """Each OPEN cycle is a distinct inbox question; a prior cycle's answer never carries over."""
+    return f"upstream-question:{finding_id}:{cycle}"
 
 
 @dataclass(frozen=True)
@@ -231,14 +232,17 @@ def inspect(snapshot: InventorySnapshot, reviews: tuple[SemanticReview, ...], de
                                f"{requirement_id}: {QUESTIONS[rule]}",
                                f"{rule}: {requirement_id} cannot advance to upstream preparation until {decision_actor} answers {fid}",
                                decision_actor, affected))
-        semantic_status, review_holds = "NOT_RECORDED", []
-        for review in sorted((r for r in reviews if r.requirement_id == requirement_id), key=lambda r: r.review_ref):
+        recorded, review_holds = set(), []
+        mine = sorted((r for r in reviews if r.requirement_id == requirement_id), key=lambda r: r.review_ref)
+        current_reviewers = {r.reviewer for r in mine if r.requirement_revision == revision}
+        for review in mine:
             if review.requirement_revision != revision:
-                continue  # A review of another revision is prior evidence, not a current finding.
-            semantic_status = "RECORDED_FINDINGS" if review.questions or semantic_status == "RECORDED_FINDINGS" else "RECORDED_NO_FINDINGS"
+                if review.reviewer not in current_reviewers:  # A prior review holds until re-reviewed.
+                    review_holds.append("SEMANTIC_REVIEW_STALE:" + review.review_ref)
+                continue
+            recorded.add("RECORDED_FINDINGS" if review.questions else "RECORDED_NO_FINDINGS")
             for index, question in enumerate(review.questions):
                 if not _covered(question.locators, spans):
-                    semantic_status = "UNVERIFIED"
                     review_holds.append("SEMANTIC_LOCATOR_OUTSIDE_REQUIREMENT:" + review.review_ref)
                     continue
                 reviewer_ref = f"{review.review_ref}#{index}"
@@ -248,6 +252,8 @@ def inspect(snapshot: InventorySnapshot, reviews: tuple[SemanticReview, ...], de
                                    locators, f"{requirement_id}: {question.question}",
                                    f"SEMANTIC_REVIEW: {requirement_id} cannot advance to upstream preparation until {decision_actor} answers {fid}",
                                    decision_actor, affected, reviewer_ref))
+        semantic_status = ("UNVERIFIED" if review_holds else "RECORDED_FINDINGS" if "RECORDED_FINDINGS" in recorded
+                           else "RECORDED_NO_FINDINGS" if recorded else "NOT_RECORDED")
         overlapping = any(i.path == path and (i.line == 0 or start <= i.line <= end)
                           for i in snapshot.identifier_issues + snapshot.source_issues for path, start, end in spans)
         inventory_status = resolve(snapshot, requirement_id).status

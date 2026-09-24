@@ -4,7 +4,7 @@ import json
 
 from alienintent.context_assembly.domain.ambiguity import (
     OPEN, RESOLVED, STALE, AmbiguityHold, AnswerHold, Finding, InspectionReport, QuestionResolution, SemanticReview,
-    requirement_revision, finding_from_document, inspect, report_from_document, resolution_identity, review_from_document,
+    finding_from_document, inspect, question_work_item, report_from_document, resolution_identity, review_from_document,
     snapshot_from_document)
 from alienintent.context_assembly.domain.inventory import canonical, digest
 from alienintent.context_assembly.ports.decision_resolution import DecisionResolution, InventoryReader, QuestionChannel
@@ -13,6 +13,13 @@ from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
 from alienintent.execution_coordination.domain.escalation import DecisionRecord
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, VersionConflict
+
+
+_OPENING = frozenset({"inspection", "reopened"})
+
+
+def _work_item(history: list | tuple) -> str:
+    return next(e["work_item"] for e in reversed(history) if e["event"] in _OPENING)
 
 
 class UpstreamQuestionAdmission:
@@ -69,6 +76,10 @@ class AmbiguityService:
         return tuple((finding_from_document(e["finding"]), e["history"][-1]["status"], tuple(e["history"]))
                      for _, e in entries if status is None or e["history"][-1]["status"] == status)
 
+    def work_item(self, finding_id: str) -> str:
+        """The Decision Inbox question for the finding's current OPEN cycle."""
+        return _work_item(self.show(finding_id)[2])
+
     def show(self, finding_id: str) -> tuple[Finding, str, tuple[dict, ...]]:
         found = next((q for q in self.questions(None) if q[0].finding_id == finding_id), None)
         if found is None:
@@ -86,10 +97,7 @@ class AmbiguityService:
         for review in reviews:
             if stored.get(review.key, review) != review:
                 return AnswerHold("REVIEW_CONFLICT")
-            definitions = [d for d in snapshot.current if d.requirement_id == review.requirement_id]
-            if not definitions or requirement_revision(definitions) != review.requirement_revision:
-                return AnswerHold("REVIEW_REVISION_MISMATCH")
-            stored[review.key] = review
+            stored[review.key] = review  # A non-current revision holds only its requirement (UNVERIFIED).
         findings = dict(state.get("findings") or {})
         prior = {fid: e["history"][-1]["status"] for fid, e in findings.items()}
         current = {f.finding_id: f for f in inspect(snapshot, tuple(stored.values()), self.decision_actor, prior).findings}
@@ -99,16 +107,17 @@ class AmbiguityService:
                 findings[fid] = {**entry, "history": entry["history"] + [
                     {"status": STALE, "event": "input_changed", "inventory_digest": snapshot.digest}]}
         for fid, finding in sorted(current.items()):
-            if fid not in findings:
-                findings[fid] = {"finding": asdict(finding), "history": [
-                    {"status": OPEN, "event": "inspection", "inventory_digest": snapshot.digest}]}
-                opened.append(finding)
-            elif findings[fid]["history"][-1]["status"] == STALE:
-                findings[fid] = {**findings[fid], "history": findings[fid]["history"] + [
-                    {"status": OPEN, "event": "reopened", "inventory_digest": snapshot.digest}]}
-        for finding in opened:
+            history = findings[fid]["history"] if fid in findings else []
+            if history and history[-1]["status"] != STALE:
+                continue
+            cycle = 1 + sum(e["event"] in _OPENING for e in history)
+            event = {"status": OPEN, "event": "reopened" if history else "inspection",
+                     "inventory_digest": snapshot.digest, "work_item": question_work_item(fid, cycle)}
+            findings[fid] = {"finding": asdict(finding), "history": history + [event]}
+            opened.append((finding, event["work_item"]))
+        for finding, work_item in opened:
             if self.channel is not None:
-                self.channel.open(finding)  # Idempotent; registered before commit so replay cannot lose it.
+                self.channel.open(finding, work_item)  # Idempotent; registered before commit so replay cannot lose it.
         return self._commit(version, state, snapshot, stored, findings)
 
     def resolve(self, finding_id: str, decision: DecisionRecord, input_revision: str,
@@ -125,15 +134,20 @@ class AmbiguityService:
         finding, last = finding_from_document(entry["finding"]), entry["history"][-1]
         submission = decision.submission
         resolution_id = resolution_identity(finding_id, submission.idempotency_key, submission.actor)
+        work_item = _work_item(entry["history"])
         if last["status"] == RESOLVED:
-            if last["resolution_id"] == resolution_id and input_revision == finding.requirement_revision:
-                return QuestionResolution(resolution_id, finding_id, finding.requirement_revision, submission.actor,
-                                          submission.authority_reference, submission.idempotency_key, last["evidence_ref"])
+            # Replay returns the stored resolution only for the identical, still-attributable decision.
+            same = (last["resolution_id"], last["input_revision"], last["authority_reference"], last["choice"],
+                    last["work_item"]) == (resolution_id, input_revision, submission.authority_reference,
+                                           submission.choice, submission.work_item)
+            if same and self.resolution.validate(finding, work_item, decision) is None:
+                return QuestionResolution(resolution_id, finding_id, finding.requirement_revision, last["actor"],
+                                          last["authority_reference"], last["idempotency_key"], last["evidence_ref"])
             return AnswerHold("ALREADY_RESOLVED", finding_id)
         if last["status"] == STALE or input_revision != finding.requirement_revision:
             reason = "REVISION_HOLD"
         else:
-            reason = self.resolution.validate(finding, decision)
+            reason = self.resolution.validate(finding, work_item, decision)
         answer = {"finding_id": finding_id, "requirement_id": finding.requirement_id,
                   "requirement_revision": finding.requirement_revision, "input_revision": input_revision,
                   "work_item": submission.work_item, "actor": submission.actor, "event_actor": decision.event.actor,
@@ -143,6 +157,7 @@ class AmbiguityService:
         event = {"status": last["status"] if reason else RESOLVED, "event": "answer_rejected" if reason else "decision",
                  "reason": reason, "resolution_id": None if reason else resolution_id, "actor": submission.actor,
                  "authority_reference": submission.authority_reference, "idempotency_key": submission.idempotency_key,
+                 "choice": submission.choice, "work_item": submission.work_item,
                  "input_revision": input_revision, "evidence_ref": asdict(ref)}
         findings = {**state["findings"], finding_id: {**entry, "history": entry["history"] + [event]}}
         stored = {k: review_from_document(v) for k, v in state["reviews"].items()}

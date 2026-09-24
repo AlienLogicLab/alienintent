@@ -1,6 +1,7 @@
 """FX-U2 assertions: questions hold only their branch; only an exact attributed decision resolves."""
 from dataclasses import replace
 from hashlib import sha256
+import ast
 from pathlib import Path
 import tempfile
 import unittest
@@ -71,9 +72,13 @@ class Harness:
     def inspect(self, reviews=()):
         return self.service.inspect(self.service.read()[0], reviews)
 
-    def answer(self, finding, actor=ACTOR, key=None, inbox=None):
-        submission = DecisionSubmission(actor, "FD-9 answer", finding.work_item, 0, 0, key or "k-"+finding.finding_id[:12], "resolve")
+    def answer(self, finding, actor=ACTOR, key=None, inbox=None, choice="resolve"):
+        submission = DecisionSubmission(actor, "FD-9 answer", self.work_item(finding), 0, 0,
+                                        key or "k-"+finding.finding_id[:12]+"-"+self.work_item(finding)[-1], choice)
         return (inbox or self.profile.inbox).submit(submission)
+
+    def work_item(self, finding):
+        return self.service.work_item(finding.finding_id)
 
     def resolve(self, finding, decision, revision=None):
         return self.service.resolve(finding.finding_id, decision, revision or finding.requirement_revision, self.service.read()[0])
@@ -127,7 +132,7 @@ class AmbiguityTests(unittest.TestCase):
                 entry = report.requirement(rid)
                 self.assertEqual(entry.preparation, "HELD")
                 self.assertIn(f"{rule}:{f.finding_id}", entry.hold_reasons)
-                self.assertIn(f.work_item, open_items)
+                self.assertIn(h.work_item(f), open_items)
         self.assertEqual(report.requirement("SF-REQ-906").mechanical_status, "COMPLETE")
         self.assertEqual(report.requirement("SF-REQ-906").preparation, "ELIGIBLE_FOR_PREPARATION")
         self.assertEqual(h.service.report(), report)
@@ -151,8 +156,8 @@ class AmbiguityTests(unittest.TestCase):
         self.assertEqual(h.service.show(intent.finding_id)[2][-1]["event"], "answer_rejected")
         self.assertIsNotNone(h.repository.get(Ref(**held.evidence_ref), frozenset({"private"})))
         self.assertHold(h.resolve(acceptance, decision), "FINDING_MISMATCH")
-        unrecorded = DecisionRecord(replace(decision.submission, work_item=acceptance.work_item, idempotency_key="forged"),
-                                    DecisionRecorded(acceptance.work_item, 0, "forged", ACTOR))
+        unrecorded = DecisionRecord(replace(decision.submission, work_item=h.work_item(acceptance), idempotency_key="forged"),
+                                    DecisionRecorded(h.work_item(acceptance), 0, "forged", ACTOR))
         self.assertHold(h.resolve(acceptance, unrecorded), "AUTHORITY_HOLD")
         permissive = DecisionInbox(h.store, PermissiveAdmission(), PROFILE)
         wrong_actor = h.answer(other, actor="Mallory", inbox=permissive)
@@ -168,6 +173,8 @@ class AmbiguityTests(unittest.TestCase):
         self.assertEqual(entry.preparation, "HELD")
         self.assertNotIn(f"MISSING_INTENT:{intent.finding_id}", entry.hold_reasons)
         self.assertEqual(h.resolve(intent, decision), resolved)
+        forged = DecisionRecord(replace(decision.submission, authority_reference="FORGED"), decision.event)
+        self.assertHold(h.resolve(intent, forged), "ALREADY_RESOLVED")
         self.assertIsInstance(h.resolve(acceptance, h.answer(acceptance)), QuestionResolution)
         self.assertEqual(h.service.report().requirement("SF-REQ-910").preparation, "ELIGIBLE_FOR_PREPARATION")
         self.assertHold(h.service.resolve(other.finding_id, wrong_actor, other.requirement_revision, 0), "STALE_INPUT")
@@ -199,7 +206,9 @@ class AmbiguityTests(unittest.TestCase):
         review = SemanticReview("reviewer-jc", "review:jc-1", "SF-REQ-920", entry.revision,
                                 (SemanticQuestion("Does 'every decision' include deferred decisions?", (("920.md", 6, 6),)),))
         stale_review = replace(review, review_ref="review:jc-old", requirement_revision="old-revision")
-        self.assertHold(h.inspect((stale_review,)), "REVIEW_REVISION_MISMATCH")
+        held = h.inspect((stale_review,)).requirement("SF-REQ-920")
+        self.assertEqual((held.semantic_review_status, held.preparation), ("UNVERIFIED", "HELD"))
+        self.assertIn("SEMANTIC_REVIEW_STALE:review:jc-old", held.hold_reasons)
         clean = SemanticReview("reviewer-jc", "review:jc-2", "SF-REQ-921", before.requirement("SF-REQ-921").revision, ())
         after = h.inspect((review, clean))
         reviewed = after.requirement("SF-REQ-920")
@@ -223,6 +232,8 @@ class AmbiguityTests(unittest.TestCase):
         artifacts = LocalArtifactStore(root/"producer", root/"verifier")
         worker = ScriptedWorker(artifacts, {"independent": ["success"]})
         coordinator = FactoryCoordinator(h.store, MemoryWorkManagement([_item("independent", 0, 1)]), worker, artifacts, PROFILE)
+        execution = lambda: {k: (v, st) for k, v, st in h.store.list_states(PROFILE) if not k.startswith(("upstream:", "decision"))}
+        before = execution()
         h.publish(record("SF-REQ-930", "930.md", body("SF-REQ-930", Intent=None)),
                   record("SF-REQ-931", "931.md", body("SF-REQ-931") + ("Depends on SF-REQ-930.",)),
                   record("SF-REQ-932", "932.md", body("SF-REQ-932")))
@@ -241,7 +252,76 @@ class AmbiguityTests(unittest.TestCase):
         self.assertEqual(worker.dispatched, [])
         self.assertEqual(h.store.pending_effects(PROFILE), ())
         self.assertEqual(h.store.recovery_reservations(PROFILE), ())
+        self.assertEqual(execution(), before)
         self.assertIsNotNone(coordinator)  # Live in the same store for the whole question lifecycle.
+
+    def test_upstream_composition_has_no_worker_path(self):
+        """SF-REQ-012-AC-04: no module on the question/answer path can reach a worker or dispatcher."""
+        root = Path(__file__).resolve().parents[2]/"src/alienintent"
+        forbidden = ("factory_coordinator", "worker_provider", "invocation_runtime", "dispatch")
+        for path in sorted((root/"context_assembly").rglob("*.py")) + [root/"composition/upstream_profile.py"]:
+            for node in ast.walk(ast.parse(path.read_text())):
+                names = ([a.name for a in node.names] if isinstance(node, ast.Import)
+                         else [node.module or ""] if isinstance(node, ast.ImportFrom) else [])
+                for name in names:
+                    with self.subTest(path=path.name, module=name):
+                        self.assertFalse(any(f in name for f in forbidden))
+
+    def test_changed_input_keeps_an_unanswered_semantic_review_hold(self):
+        h = self.h
+        h.publish(record("SF-REQ-960", "960.md", body("SF-REQ-960")))
+        revision = h.inspect().requirement("SF-REQ-960").revision
+        review = SemanticReview("reviewer-jc", "review:jc-960", "SF-REQ-960", revision,
+                                (SemanticQuestion("Which decisions count?", (("960.md", 2, 2),)),))
+        finding = h.finding(h.inspect((review,)), "SF-REQ-960", "SEMANTIC_REVIEW")
+        h.publish(record("SF-REQ-960", "960.md", body("SF-REQ-960", Intent="Retain evidence for decisions."), revision="r2"))
+        entry = h.inspect().requirement("SF-REQ-960")
+        self.assertEqual(h.status(finding), "STALE")
+        self.assertEqual((entry.semantic_review_status, entry.preparation), ("UNVERIFIED", "HELD"))
+        self.assertIn("SEMANTIC_REVIEW_STALE:review:jc-960", entry.hold_reasons)
+        rereview = SemanticReview("reviewer-jc", "review:jc-960-r2", "SF-REQ-960", entry.revision, ())
+        self.assertEqual(h.inspect((rereview,)).requirement("SF-REQ-960").preparation, "ELIGIBLE_FOR_PREPARATION")
+
+    def test_reopened_finding_requires_a_fresh_answer(self):
+        h = self.h
+        first = record("SF-REQ-965", "965.md", body("SF-REQ-965", Intent=None))
+        h.publish(first)
+        finding = h.finding(h.inspect(), "SF-REQ-965", "MISSING_INTENT")
+        decision = h.answer(finding)
+        self.assertIsInstance(h.resolve(finding, decision), QuestionResolution)
+        h.publish(record("SF-REQ-965", "965.md", body("SF-REQ-965", Intent=None, Scope="evidence retention."), revision="r2"))
+        h.inspect()
+        h.publish(first)
+        report = h.inspect()
+        self.assertEqual(h.finding(report, "SF-REQ-965", "MISSING_INTENT"), finding)
+        self.assertEqual(h.status(finding), "OPEN")
+        self.assertEqual(report.requirement("SF-REQ-965").preparation, "HELD")
+        self.assertNotEqual(h.work_item(finding), decision.submission.work_item)
+        self.assertIn(h.work_item(finding), {q.work_item for q in h.profile.inbox.list_open()})
+        self.assertHold(h.resolve(finding, decision), "FINDING_MISMATCH")
+        self.assertIsInstance(h.resolve(finding, h.answer(finding)), QuestionResolution)
+        self.assertEqual(h.service.report().requirement("SF-REQ-965").preparation, "ELIGIBLE_FOR_PREPARATION")
+
+    def test_stale_review_replay_holds_only_its_requirement(self):
+        h = self.h
+        h.publish(record("SF-REQ-970", "970.md", body("SF-REQ-970")), record("SF-REQ-971", "971.md", body("SF-REQ-971")))
+        review = SemanticReview("reviewer-jc", "review:jc-970", "SF-REQ-970",
+                                h.inspect().requirement("SF-REQ-970").revision, ())
+        h.inspect((review,))
+        h.publish(record("SF-REQ-970", "970.md", body("SF-REQ-970", Intent="Retain evidence."), revision="r2"),
+                  record("SF-REQ-971", "971.md", body("SF-REQ-971", Scope=None), revision="r2"))
+        report = h.inspect((review,))
+        self.assertEqual(report.requirement("SF-REQ-970").semantic_review_status, "UNVERIFIED")
+        self.assertEqual(h.status(h.finding(report, "SF-REQ-971", "MISSING_SCOPE")), "OPEN")
+        other = h.finding(report, "SF-REQ-971", "MISSING_SCOPE")
+        self.assertIsInstance(h.resolve(other, h.answer(other)), QuestionResolution)
+
+    def test_deferred_answer_does_not_resolve(self):
+        h = self.h
+        h.publish(record("SF-REQ-975", "975.md", body("SF-REQ-975", Intent=None)))
+        finding = h.finding(h.inspect(), "SF-REQ-975", "MISSING_INTENT")
+        self.assertHold(h.resolve(finding, h.answer(finding, choice="defer")), "DECISION_NOT_RESOLVE")
+        self.assertEqual(h.status(finding), "OPEN")
 
     def test_replay_is_idempotent_and_conflicts_hold(self):
         h = self.h
@@ -265,9 +345,9 @@ class AmbiguityTests(unittest.TestCase):
         self.assertEqual(h.profile.inbox.list_open(), ())
         self.assertEqual(h.status(finding), "OPEN")
         self.assertEqual(report.requirement("SF-REQ-951").preparation, "ELIGIBLE_FOR_PREPARATION")
-        self.assertIsInstance(h.resolve(finding, DecisionRecord(
-            DecisionSubmission(ACTOR, "x", finding.work_item, 0, 0, "k", "resolve"),
-            DecisionRecorded(finding.work_item, 0, "k", ACTOR))), AnswerHold)
+        self.assertHold(h.resolve(finding, DecisionRecord(
+            DecisionSubmission(ACTOR, "x", h.work_item(finding), 0, 0, "k", "resolve"),
+            DecisionRecorded(h.work_item(finding), 0, "k", ACTOR))), "AUTHORITY_HOLD")
 
 
 if __name__ == "__main__":

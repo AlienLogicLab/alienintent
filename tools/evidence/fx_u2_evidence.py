@@ -26,6 +26,7 @@ AC01 = "test_missing_fields_and_conflicting_sources_open_source_linked_questions
 AC02 = "test_only_matching_attributed_decision_resolves_that_question"
 AC03 = "test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent"
 AC04 = "test_unrelated_requirement_stays_preparable_and_no_worker_launches"
+PROFILE = "src/alienintent/composition/upstream_profile.py"
 CONTROLS = [
     ("revision-matching-removed", APP, 'if last["status"] == STALE or input_revision != finding.requirement_revision:',
      'if last["status"] == STALE:', AC02),
@@ -50,6 +51,13 @@ CONTROLS = [
     ("worker-launch-injected", APP,
      '        return None  # Resuming preparation is a new validated operation and launches no worker.',
      '        import gc\n        [o.start() for o in gc.get_objects() if type(o).__name__ == "FactoryCoordinator"]', AC04),
+    ("worker-path-composed", PROFILE, 'from alienintent.evidence_learning.domain.refs import Ref\n',
+     'from alienintent.evidence_learning.domain.refs import Ref\nfrom alienintent.execution_coordination.ports.worker_provider import WorkerProvider\n',
+     "test_upstream_composition_has_no_worker_path"),
+    ("semantic-stale-hold-removed", DOMAIN, 'review_holds.append("SEMANTIC_REVIEW_STALE:" + review.review_ref)', 'pass',
+     "test_changed_input_keeps_an_unanswered_semantic_review_hold"),
+    ("reopen-reuses-prior-answer", APP, 'cycle = 1 + sum(e["event"] in _OPENING for e in history)', 'cycle = 1',
+     "test_reopened_finding_requires_a_fresh_answer"),
 ]
 
 
