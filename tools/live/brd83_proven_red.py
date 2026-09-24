@@ -94,15 +94,47 @@ VARIANTS: tuple[tuple[str, str, str, str], ...] = (
     ),
     (
         "wave1_any_directory",
-        ' and (not prefix or prefix.endswith(f"{WAVE1_DIR}/"))',
-        "",
+        "        if not prefix or WAVE1_PREFIX.fullmatch(prefix):\n",
+        "        if True:\n",
         f"{UNIT}::test_a_wave1_record_in_another_directory_is_rejected",
     ),
     (
         "wave1_parent_segment_allowed",
-        '".." not in prefix.split("/") and ',
-        "",
+        '/blob/[A-Za-z0-9][\\w.-]*/)?"',
+        '/blob/[\\w./-]+/)?"',
         f"{UNIT}::test_a_wave1_record_reached_through_a_parent_segment_is_rejected",
+    ),
+    # JC R1, repair cycle 2: WAVE1_DIR must be the whole prefix. The first two variants restore
+    # the exact rejected cycle-1 composition.
+    (
+        "wave1_directory_is_a_suffix",
+        "WAVE1_PREFIX.fullmatch(prefix)",
+        'prefix.endswith(f"{WAVE1_DIR}/")',
+        f"{FIXTURE}::test_a_prefixed_wave1_directory_never_admits_through_the_wave1_record",
+    ),
+    (
+        "wave1_directory_is_a_suffix_unit",
+        "WAVE1_PREFIX.fullmatch(prefix)",
+        'prefix.endswith(f"{WAVE1_DIR}/")',
+        f"{UNIT}::test_a_wave1_directory_under_another_prefix_is_rejected",
+    ),
+    (
+        "wave1_prefix_is_searched",
+        "WAVE1_PREFIX.fullmatch(prefix)",
+        "WAVE1_PREFIX.search(prefix)",
+        f"{UNIT}::test_a_wave1_directory_under_another_prefix_is_rejected",
+    ),
+    (
+        "wave1_blob_ref_multi_segment",
+        '/blob/[A-Za-z0-9][\\w.-]*/)?"',
+        '/blob/[A-Za-z0-9][\\w.-]*(?:/[A-Za-z0-9][\\w.-]*)*/)?"',
+        f"{UNIT}::test_a_wave1_blob_url_with_a_multi_segment_ref_is_rejected",
+    ),
+    (
+        "wave1_any_blob_url",
+        'r"(?:https://github\\.com/" + re.escape(REPO) + r"/blob/',
+        'r"(?:https?://[^\\s/]+/[^\\s/]+/[^\\s/]+/[a-z]+/',
+        f"{UNIT}::test_a_wave1_url_that_is_not_a_blob_of_this_repository_is_rejected",
     ),
     (
         "wave1_accepts_stamped_names",
@@ -156,9 +188,21 @@ VARIANTS: tuple[tuple[str, str, str, str], ...] = (
     ),
     (
         "wave1_directory_path_not_recognised",
-        ' or prefix.endswith(f"{WAVE1_DIR}/")',
+        " or WAVE1_PREFIX.fullmatch(prefix)",
         "",
         f"{FIXTURE}::test_a_wave1_record_cited_by_its_own_path_is_still_admitted",
+    ),
+    (
+        "wave1_blob_url_not_recognised",
+        '/blob/[A-Za-z0-9][\\w.-]*/)?"',
+        '/blob/[A-Za-z0-9][\\w.-]*/){0}"',
+        f"{FIXTURE}::test_a_wave1_record_cited_by_its_blob_url_is_still_admitted",
+    ),
+    (
+        "wave1_blob_url_at_a_commit_not_recognised",
+        '/blob/[A-Za-z0-9][\\w.-]*/)?"',
+        '/blob/[a-z]+/)?"',
+        f"{UNIT}::test_a_wave1_blob_url_at_a_commit_still_resolves",
     ),
     # The two recognition changes, proven the same way: without them the new cases refuse.
     (
