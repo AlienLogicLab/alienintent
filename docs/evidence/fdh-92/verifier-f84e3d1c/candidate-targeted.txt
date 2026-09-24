@@ -1,0 +1,5 @@
+COMMAND: rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py::test_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_no_control_required_idles_wip_intentionally_full tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_idle_as_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_never_suppresses_director_only_control tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_never_suppress_director_only_control
+...........                                                              [100%]
+11 passed in 0.27s
+
+EXIT: 0

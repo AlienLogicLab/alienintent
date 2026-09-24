@@ -1,0 +1,52 @@
+[
+  {
+    "name": "baseline-ac12",
+    "command": "rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py::test_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_no_control_required_idles_wip_intentionally_full tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_idle_as_wip_intentionally_full",
+    "exit": 1
+  },
+  {
+    "name": "baseline-ac3",
+    "command": "rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py::test_overlap_never_suppresses_director_only_control tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_never_suppress_director_only_control",
+    "exit": 0
+  },
+  {
+    "name": "eq-ac12",
+    "command": "rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py::test_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_no_control_required_idles_wip_intentionally_full tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_idle_as_wip_intentionally_full",
+    "exit": 1
+  },
+  {
+    "name": "suppress-ac3",
+    "command": "rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py::test_overlap_never_suppresses_director_only_control tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_never_suppress_director_only_control",
+    "exit": 1
+  },
+  {
+    "name": "candidate-targeted",
+    "command": "rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py::test_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_no_control_required_idles_wip_intentionally_full tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_idle_as_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_never_suppresses_director_only_control tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_never_suppress_director_only_control",
+    "exit": 0
+  },
+  {
+    "name": "candidate-fdh-suites",
+    "command": "rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py tools/orchestration/test_factory_director_host.py tools/orchestration/test_factory_director_docs.py",
+    "exit": 0
+  },
+  {
+    "name": "candidate-check-all",
+    "command": "rtk proxy node scripts/check.mjs all",
+    "exit": 0
+  },
+  {
+    "name": "candidate-pytest-tools",
+    "command": "rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools",
+    "exit": 1
+  },
+  {
+    "name": "baseline-archive-pytest-tools",
+    "command": "rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools",
+    "exit": 1
+  },
+  {
+    "name": "baseline-pytest-tools",
+    "command": "rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools",
+    "exit": 1
+  }
+]

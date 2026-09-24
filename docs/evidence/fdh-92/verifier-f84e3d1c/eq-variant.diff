@@ -1,0 +1,11 @@
+--- /home/netmarine/.local/state/alienintent/worktrees/6d430c7c-16a2-4c42-a895-e6aeff23e4ce/tools/orchestration/factory_director_inputs.py	2026-09-24 17:59:23.097233661 +0700
++++ /tmp/fdh92-jc-4w9f17tq/eq/tools/orchestration/factory_director_inputs.py	2026-09-24 18:00:28.381335673 +0700
+@@ -372,7 +372,7 @@
+         lifecycle_requires_selection=selection,
+         # At or above the limit, not only equal: a worker handoff briefly overlaps two claims
+         # (FDH-92), and that is full WIP, not a refusal. The two predicates stay exact complements.
+-        wip_intentionally_full=runtime.claims >= wip_limit,
++        wip_intentionally_full=runtime.claims == wip_limit,
+         founder_decision_pending=bool(held) and not unheld and not attention and not inbox,
+         explicit_pause=paused,
+     )

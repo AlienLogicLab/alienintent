@@ -1,0 +1,7 @@
+COMMAND: rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py tools/orchestration/test_factory_director_host.py tools/orchestration/test_factory_director_docs.py
+........................................................................ [ 33%]
+........................................................................ [ 66%]
+.......................................................................  [100%]
+215 passed in 1.30s
+
+EXIT: 0

@@ -1,0 +1,11 @@
+--- /home/netmarine/.local/state/alienintent/worktrees/6d430c7c-16a2-4c42-a895-e6aeff23e4ce/tools/orchestration/factory_director_host.py	2026-09-24 17:59:23.093237240 +0700
++++ /tmp/fdh92-jc-4w9f17tq/suppress/tools/orchestration/factory_director_host.py	2026-09-24 18:00:28.394863030 +0700
+@@ -421,7 +421,7 @@
+         if not values.authoritative_state: return "AUTHORITATIVE_STATE_UNAVAILABLE"
+         if values.explicit_pause: return "FACTORY_PAUSED"
+         if values.founder_decision_pending: return "FOUNDER_DECISION_PENDING"
+-        if values.wip_intentionally_full and not values.director_only_control():
++        if values.wip_intentionally_full:
+             return "WIP_INTENTIONALLY_FULL"
+         if not values.control_required(): return "NO_ELIGIBLE_AUTHORIZED_WORK"
+         # Attention, inbox and selection need Director cognition, not a worker WIP slot.

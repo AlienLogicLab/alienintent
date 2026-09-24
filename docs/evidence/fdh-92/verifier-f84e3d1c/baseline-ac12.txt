@@ -1,0 +1,83 @@
+COMMAND: rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py::test_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full tools/orchestration/test_factory_director_inputs.py::test_overlap_with_no_control_required_idles_wip_intentionally_full tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_idle_as_wip_intentionally_full
+FFFFF                                                                    [100%]
+=================================== FAILURES ===================================
+_________________________ test_wip_intentionally_full __________________________
+
+sources = <test_factory_director_inputs.Sources object at 0x7656af441160>
+
+    def test_wip_intentionally_full(sources):
+        assert sources.inputs().wip_intentionally_full is False
+        sources.claim(9)
+        assert sources.inputs().wip_intentionally_full is True
+        sources.claim(10)  # over the limit (a handoff overlap) is still intentionally full (FDH-92)
+        values = sources.inputs()
+>       assert (values.executable_capacity, values.wip_intentionally_full) == (False, True)
+E       assert (False, False) == (False, True)
+E         At index 1 diff: False != True
+E         Use -v to get more diff
+
+tools/orchestration/test_factory_director_inputs.py:194: AssertionError
+___ test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full ____
+
+sources = <test_factory_director_inputs.Sources object at 0x7656af442b70>
+
+    def test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full(sources):
+        overlap(sources, 81, "VERIFY").issue(50, "READY")  # criterion 1: the #81 08:55:32Z case
+        values = sources.inputs()
+>       assert (values.executable_capacity, values.wip_intentionally_full) == (False, True)
+E       assert (False, False) == (False, True)
+E         At index 1 diff: False != True
+E         Use -v to get more diff
+
+tools/orchestration/test_factory_director_inputs.py:451: AssertionError
+______ test_overlap_with_no_control_required_idles_wip_intentionally_full ______
+
+sources = <test_factory_director_inputs.Sources object at 0x7656af288a40>
+
+    def test_overlap_with_no_control_required_idles_wip_intentionally_full(sources):
+        overlap(sources, 83, "VERIFY")  # criterion 2: the #83 09:29:48Z case
+        values = sources.inputs()
+>       assert not values.control_required() and values.wip_intentionally_full
+E       assert (not False and False)
+E        +  where False = <bound method DirectorInputs.control_required of DirectorInputs(authoritative_state=True, eligible_authorized_work=Fal...ifecycle_requires_selection=False, wip_intentionally_full=False, founder_decision_pending=False, explicit_pause=False)>()
+E        +    where <bound method DirectorInputs.control_required of DirectorInputs(authoritative_state=True, eligible_authorized_work=Fal...ifecycle_requires_selection=False, wip_intentionally_full=False, founder_decision_pending=False, explicit_pause=False)> = DirectorInputs(authoritative_state=True, eligible_authorized_work=False, executable_capacity=False, attention_required...lifecycle_requires_selection=False, wip_intentionally_full=False, founder_decision_pending=False, explicit_pause=False).control_required
+E        +  and   False = DirectorInputs(authoritative_state=True, eligible_authorized_work=False, executable_capacity=False, attention_required...lifecycle_requires_selection=False, wip_intentionally_full=False, founder_decision_pending=False, explicit_pause=False).wip_intentionally_full
+
+tools/orchestration/test_factory_director_inputs.py:461: AssertionError
+_ test_claims_above_the_wip_limit_idle_as_wip_intentionally_full[worker-work-pending] _
+
+tmp_path = PosixPath('/tmp/pytest-of-netmarine/pytest-1650/test_claims_above_the_wip_limi0')
+board = {50: 'READY'}
+
+    @pytest.mark.parametrize("board", [{50: "READY"}, {}], ids=["worker-work-pending", "no-control-required"])
+    def test_claims_above_the_wip_limit_idle_as_wip_intentionally_full(tmp_path, board):
+        values = overlap_inputs(board)
+>       assert (values.executable_capacity, values.wip_intentionally_full) == (False, True)
+E       assert (False, False) == (False, True)
+E         At index 1 diff: False != True
+E         Use -v to get more diff
+
+tools/orchestration/test_factory_director_host.py:365: AssertionError
+_ test_claims_above_the_wip_limit_idle_as_wip_intentionally_full[no-control-required] _
+
+tmp_path = PosixPath('/tmp/pytest-of-netmarine/pytest-1650/test_claims_above_the_wip_limi1')
+board = {}
+
+    @pytest.mark.parametrize("board", [{50: "READY"}, {}], ids=["worker-work-pending", "no-control-required"])
+    def test_claims_above_the_wip_limit_idle_as_wip_intentionally_full(tmp_path, board):
+        values = overlap_inputs(board)
+>       assert (values.executable_capacity, values.wip_intentionally_full) == (False, True)
+E       assert (False, False) == (False, True)
+E         At index 1 diff: False != True
+E         Use -v to get more diff
+
+tools/orchestration/test_factory_director_host.py:365: AssertionError
+=========================== short test summary info ============================
+FAILED tools/orchestration/test_factory_director_inputs.py::test_wip_intentionally_full
+FAILED tools/orchestration/test_factory_director_inputs.py::test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full
+FAILED tools/orchestration/test_factory_director_inputs.py::test_overlap_with_no_control_required_idles_wip_intentionally_full
+FAILED tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_idle_as_wip_intentionally_full[worker-work-pending]
+FAILED tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_idle_as_wip_intentionally_full[no-control-required]
+5 failed in 0.36s
+
+EXIT: 1

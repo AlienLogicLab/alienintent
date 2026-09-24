@@ -1,0 +1,4 @@
+inbox: claims=2 wipLimit=1 idle_reason=None; PASS
+escalation: claims=2 wipLimit=1 idle_reason=None; PASS
+selection: claims=2 wipLimit=1 idle_reason=None; PASS
+EXIT: 0

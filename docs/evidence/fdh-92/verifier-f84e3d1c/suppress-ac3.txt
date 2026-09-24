@@ -1,0 +1,139 @@
+COMMAND: rtk proxy python3 -m pytest -q -p no:cacheprovider -rfE tools/orchestration/test_factory_director_inputs.py::test_overlap_never_suppresses_director_only_control tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_never_suppress_director_only_control
+FFFFFF                                                                   [100%]
+=================================== FAILURES ===================================
+__________ test_overlap_never_suppresses_director_only_control[inbox] __________
+
+sources = <test_factory_director_inputs.Sources object at 0x7b2098775940>
+control = 'inbox'
+
+    @pytest.mark.parametrize("control", ["inbox", "escalation", "selection"])
+    def test_overlap_never_suppresses_director_only_control(sources, control):
+        overlap(sources, 83, "VERIFY").issue(50, "READY")  # criterion 3: a regression guard
+        {"inbox": lambda: sources.inbox_entry("founder-2026-09-24"),
+         "escalation": lambda: sources.escalate(83),
+         "selection": lambda: sources.issue(51, "REVIEW")}[control]()
+        values = sources.inputs()
+        assert values.executable_capacity is False and values.director_only_control()
+        result, launcher = reconcile(sources)
+>       assert result.reason == "DIRECTOR_CONTINUITY_FAULT" and len(launcher.launched) == 1
+E       AssertionError: assert ('WIP_INTENTIONALLY_FULL' == 'DIRECTOR_CONTINUITY_FAULT'
+E         - DIRECTOR_CONTINUITY_FAULT
+E         + WIP_INTENTIONALLY_FULL)
+
+tools/orchestration/test_factory_director_inputs.py:476: AssertionError
+_______ test_overlap_never_suppresses_director_only_control[escalation] ________
+
+sources = <test_factory_director_inputs.Sources object at 0x7b2098771ca0>
+control = 'escalation'
+
+    @pytest.mark.parametrize("control", ["inbox", "escalation", "selection"])
+    def test_overlap_never_suppresses_director_only_control(sources, control):
+        overlap(sources, 83, "VERIFY").issue(50, "READY")  # criterion 3: a regression guard
+        {"inbox": lambda: sources.inbox_entry("founder-2026-09-24"),
+         "escalation": lambda: sources.escalate(83),
+         "selection": lambda: sources.issue(51, "REVIEW")}[control]()
+        values = sources.inputs()
+        assert values.executable_capacity is False and values.director_only_control()
+        result, launcher = reconcile(sources)
+>       assert result.reason == "DIRECTOR_CONTINUITY_FAULT" and len(launcher.launched) == 1
+E       AssertionError: assert ('WIP_INTENTIONALLY_FULL' == 'DIRECTOR_CONTINUITY_FAULT'
+E         - DIRECTOR_CONTINUITY_FAULT
+E         + WIP_INTENTIONALLY_FULL)
+
+tools/orchestration/test_factory_director_inputs.py:476: AssertionError
+________ test_overlap_never_suppresses_director_only_control[selection] ________
+
+sources = <test_factory_director_inputs.Sources object at 0x7b20985c1670>
+control = 'selection'
+
+    @pytest.mark.parametrize("control", ["inbox", "escalation", "selection"])
+    def test_overlap_never_suppresses_director_only_control(sources, control):
+        overlap(sources, 83, "VERIFY").issue(50, "READY")  # criterion 3: a regression guard
+        {"inbox": lambda: sources.inbox_entry("founder-2026-09-24"),
+         "escalation": lambda: sources.escalate(83),
+         "selection": lambda: sources.issue(51, "REVIEW")}[control]()
+        values = sources.inputs()
+        assert values.executable_capacity is False and values.director_only_control()
+        result, launcher = reconcile(sources)
+>       assert result.reason == "DIRECTOR_CONTINUITY_FAULT" and len(launcher.launched) == 1
+E       AssertionError: assert ('WIP_INTENTIONALLY_FULL' == 'DIRECTOR_CONTINUITY_FAULT'
+E         - DIRECTOR_CONTINUITY_FAULT
+E         + WIP_INTENTIONALLY_FULL)
+
+tools/orchestration/test_factory_director_inputs.py:476: AssertionError
+_ test_claims_above_the_wip_limit_never_suppress_director_only_control[inbox] __
+
+tmp_path = PosixPath('/tmp/pytest-of-netmarine/pytest-1653/test_claims_above_the_wip_limi0')
+control = {'board': {50: 'READY'}, 'unprocessed': ('founder-note',)}
+
+    @pytest.mark.parametrize("control", [
+        dict(board={50: "READY"}, unprocessed=("founder-note",)),
+        dict(board={50: "READY"}, escalations=(("AlienLogicLab/alienintent#83",
+                                                {"outcome": "EXECUTION_CYCLE_LIMIT", "at": "2026-09-24T09:29:05Z"}),)),
+        dict(board={51: "REVIEW"}),
+    ], ids=["inbox", "escalation", "selection"])
+    def test_claims_above_the_wip_limit_never_suppress_director_only_control(tmp_path, control):
+        values = overlap_inputs(**control)
+        assert values.executable_capacity is False and values.director_only_control()
+        service, launcher = host(tmp_path, values)
+
+>       assert service.reconcile().reason == "DIRECTOR_CONTINUITY_FAULT"
+E       AssertionError: assert 'WIP_INTENTIONALLY_FULL' == 'DIRECTOR_CONTINUITY_FAULT'
+E         - DIRECTOR_CONTINUITY_FAULT
+E         + WIP_INTENTIONALLY_FULL
+
+tools/orchestration/test_factory_director_host.py:385: AssertionError
+_ test_claims_above_the_wip_limit_never_suppress_director_only_control[escalation] _
+
+tmp_path = PosixPath('/tmp/pytest-of-netmarine/pytest-1653/test_claims_above_the_wip_limi1')
+control = {'board': {50: 'READY'}, 'escalations': (('AlienLogicLab/alienintent#83', {'at': '2026-09-24T09:29:05Z', 'outcome': 'EXECUTION_CYCLE_LIMIT'}),)}
+
+    @pytest.mark.parametrize("control", [
+        dict(board={50: "READY"}, unprocessed=("founder-note",)),
+        dict(board={50: "READY"}, escalations=(("AlienLogicLab/alienintent#83",
+                                                {"outcome": "EXECUTION_CYCLE_LIMIT", "at": "2026-09-24T09:29:05Z"}),)),
+        dict(board={51: "REVIEW"}),
+    ], ids=["inbox", "escalation", "selection"])
+    def test_claims_above_the_wip_limit_never_suppress_director_only_control(tmp_path, control):
+        values = overlap_inputs(**control)
+        assert values.executable_capacity is False and values.director_only_control()
+        service, launcher = host(tmp_path, values)
+
+>       assert service.reconcile().reason == "DIRECTOR_CONTINUITY_FAULT"
+E       AssertionError: assert 'WIP_INTENTIONALLY_FULL' == 'DIRECTOR_CONTINUITY_FAULT'
+E         - DIRECTOR_CONTINUITY_FAULT
+E         + WIP_INTENTIONALLY_FULL
+
+tools/orchestration/test_factory_director_host.py:385: AssertionError
+_ test_claims_above_the_wip_limit_never_suppress_director_only_control[selection] _
+
+tmp_path = PosixPath('/tmp/pytest-of-netmarine/pytest-1653/test_claims_above_the_wip_limi2')
+control = {'board': {51: 'REVIEW'}}
+
+    @pytest.mark.parametrize("control", [
+        dict(board={50: "READY"}, unprocessed=("founder-note",)),
+        dict(board={50: "READY"}, escalations=(("AlienLogicLab/alienintent#83",
+                                                {"outcome": "EXECUTION_CYCLE_LIMIT", "at": "2026-09-24T09:29:05Z"}),)),
+        dict(board={51: "REVIEW"}),
+    ], ids=["inbox", "escalation", "selection"])
+    def test_claims_above_the_wip_limit_never_suppress_director_only_control(tmp_path, control):
+        values = overlap_inputs(**control)
+        assert values.executable_capacity is False and values.director_only_control()
+        service, launcher = host(tmp_path, values)
+
+>       assert service.reconcile().reason == "DIRECTOR_CONTINUITY_FAULT"
+E       AssertionError: assert 'WIP_INTENTIONALLY_FULL' == 'DIRECTOR_CONTINUITY_FAULT'
+E         - DIRECTOR_CONTINUITY_FAULT
+E         + WIP_INTENTIONALLY_FULL
+
+tools/orchestration/test_factory_director_host.py:385: AssertionError
+=========================== short test summary info ============================
+FAILED tools/orchestration/test_factory_director_inputs.py::test_overlap_never_suppresses_director_only_control[inbox]
+FAILED tools/orchestration/test_factory_director_inputs.py::test_overlap_never_suppresses_director_only_control[escalation]
+FAILED tools/orchestration/test_factory_director_inputs.py::test_overlap_never_suppresses_director_only_control[selection]
+FAILED tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_never_suppress_director_only_control[inbox]
+FAILED tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_never_suppress_director_only_control[escalation]
+FAILED tools/orchestration/test_factory_director_host.py::test_claims_above_the_wip_limit_never_suppress_director_only_control[selection]
+6 failed in 0.36s
+
+EXIT: 1
