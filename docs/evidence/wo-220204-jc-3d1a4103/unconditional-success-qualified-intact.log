@@ -1,0 +1,6 @@
+test_battery_refuses_unconditional_success (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unconditional_success) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK

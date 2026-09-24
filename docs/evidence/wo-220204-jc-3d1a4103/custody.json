@@ -1,0 +1,23 @@
+{
+  "wo-220204-fx-u4": {
+    "manifest_entries": 88
+  },
+  "wo-220204-fx-u4-r4": {
+    "manifest_entries": 195
+  },
+  "docs/evidence/wo-220204-fx-u4": {
+    "manifest_entries": 88,
+    "phase_logs": 87,
+    "controls": 29
+  },
+  "docs/evidence/wo-220204-fx-u4-r4": {
+    "manifest_entries": 195,
+    "phase_logs": 93,
+    "controls": 31
+  },
+  "/tmp/jc-94-3d1a4103/fx": {
+    "phase_logs": 93,
+    "controls": 31
+  },
+  "preserved_original_files": 91
+}

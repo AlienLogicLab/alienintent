@@ -1,0 +1,12 @@
+intact PlanHold PRIOR_OBLIGATION_DROPPED prior= None judgment_present= N/A
+structured-empty-history current_after_erasure= PlanHold(reason_code='INCOMPATIBLE_PROOF_PLAN_STATE', affected=('SF-REQ-014',), evidence_refs=(), required_action='repair the operational proof-plan pointer')
+Traceback (most recent call last):
+  File "/tmp/jc-94-3d1a4103/reproduce.py", line 23, in <module>
+    result = fixture.derive()
+             ^^^^^^^^^^^^^^^^
+  File "/home/netmarine/.local/state/alienintent/worktrees/69b63221-2b36-4831-9d81-6462fcc22de6/tests/evidence_learning/test_proof_planning.py", line 258, in derive
+    version, _ = profile.proofs.read(REQUIREMENT)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/netmarine/.local/state/alienintent/worktrees/69b63221-2b36-4831-9d81-6462fcc22de6/src/alienintent/evidence_learning/application/proof_planning_service.py", line 77, in read
+    raise EvidenceHold("INCOMPATIBLE_PROOF_PLAN_STATE")
+alienintent.evidence_learning.domain.refs.EvidenceHold: INCOMPATIBLE_PROOF_PLAN_STATE: supply valid evidence or obtain the named source authority

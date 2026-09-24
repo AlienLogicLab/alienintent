@@ -1,0 +1,17 @@
+test_battery_refuses_zero_application (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_zero_application) ... FAIL
+
+======================================================================
+FAIL: test_battery_refuses_zero_application (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_zero_application)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-rmgemszz/tests/evidence_learning/test_proof_planning.py", line 166, in test_battery_refuses_zero_application
+    self.assertEqual(verdict.reason, "ZERO_APPLICATION")
+AssertionError: 'OVERDETERMINED' != 'ZERO_APPLICATION'
+- OVERDETERMINED
++ ZERO_APPLICATION
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)

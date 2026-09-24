@@ -1,0 +1,15 @@
+{
+  "candidate": "c8ed707efdb0cd70294bfdb6814ec9f9eb71216d",
+  "invocation": "AlienLogicLab/alienintent#94:VERIFIER:3d1a4103-93fc-496c-a63a-23cddf8adb1a",
+  "commands": {
+    "PYTHONPATH=src python3 -m pytest -q tests": 0,
+    "node scripts/check.mjs all": 0,
+    "python3 tools/fitness/check_architecture.py --root src/alienintent --check all": 0,
+    "PYTHONPATH=src python3 tools/evidence/fx_u4_evidence.py --output /tmp/jc-94-3d1a4103/fx --invocation AlienLogicLab/alienintent#94:VERIFIER:3d1a4103-93fc-496c-a63a-23cddf8adb1a": 0,
+    "PYTHONPATH=src:. python3 /tmp/jc-94-3d1a4103/probes.py": 0,
+    "PYTHONPATH=src:. python3 /tmp/jc-94-3d1a4103/reproduce.py": 1,
+    "git diff --check 4b94f2d..HEAD": 0
+  },
+  "tokens": "UNKNOWN",
+  "cost": "UNKNOWN"
+}

@@ -1,0 +1,16 @@
+test_erased_truncated_or_padded_history_is_a_hold (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold) ... FAIL
+
+======================================================================
+FAIL: test_erased_truncated_or_padded_history_is_a_hold (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-rmgemszz/tests/evidence_learning/test_proof_planning.py", line 536, in test_erased_truncated_or_padded_history_is_a_hold
+    self.assertHold(proofs.current(REQUIREMENT), "INCOMPATIBLE_PROOF_PLAN_STATE")
+  File "/tmp/fx-u4-rmgemszz/tests/evidence_learning/test_proof_planning.py", line 262, in assertHold
+    self.assertIsInstance(result, PlanHold)
+AssertionError: None is not an instance of <class 'alienintent.evidence_learning.domain.proof_plan.PlanHold'>
+
+----------------------------------------------------------------------
+Ran 1 test in 0.090s
+
+FAILED (failures=1)

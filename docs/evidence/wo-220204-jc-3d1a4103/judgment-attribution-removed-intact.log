@@ -1,0 +1,6 @@
+test_unattributed_judgment_holds (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_unattributed_judgment_holds) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.031s
+
+OK
