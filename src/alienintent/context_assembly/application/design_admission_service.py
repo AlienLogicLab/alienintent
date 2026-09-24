@@ -9,7 +9,7 @@ import json
 
 from alienintent.context_assembly.domain.design_admission import (
     MECHANICALLY_HELD, REJECTED, REVIEW_REQUIRED, STALE, VERIFIED, CurrentVerified, DesignContract, DesignInvalid,
-    Held, MechanicalReport, ReviewAdmitted, ReviewRefused, Stale, admit_review, applicability, canonical,
+    Held, MechanicalReport, ReviewAdmitted, ReviewRecord, ReviewRefused, Stale, admit_review, applicability, canonical,
     design_from_document, inspect_design, report_from_document, review_from_document)
 from alienintent.context_assembly.ports.design_admission import ArchitectureChecks, DirectionAuthoritySource, PremiseCheck
 from alienintent.evidence_learning.domain.records import Header, Observation, ref_from_document
@@ -136,6 +136,10 @@ class DesignAdmission:
         elif isinstance(result, ReviewAdmitted) and result.decision == VERIFIED and state["last_review"] == REJECTED:
             # An attributed rejection of this revision stands until a repaired design is inspected.
             result = ReviewRefused("BLOCKING_FINDINGS", ("prior-rejection",))
+        elif isinstance(result, ReviewAdmitted) and self._decided(state, review):
+            # Revision 2 (JC R1): a reviewer invocation that already decided this report is historical, not a
+            # fresh review; after invalidation and re-inspection only a new independent invocation re-verifies.
+            result = ReviewRefused("REVIEW_NOT_FRESH", ("invocation:" + review.reviewer["invocation"],))
         if isinstance(result, ReviewRefused):
             return self._refused(design_key, version, state, result, document)
         event = EVENTS[result.decision]
@@ -195,6 +199,17 @@ class DesignAdmission:
         if report.digest != state["report_digest"] or design.digest != report.design_digest:
             return None
         return design, report
+
+    def _decided(self, state: dict, review: ReviewRecord) -> bool:
+        """Whether the retained history already holds a decision by this reviewer invocation on this report."""
+        for entry in state["history"]:
+            if entry["event"] not in (EVENTS[VERIFIED], EVENTS[REJECTED]):
+                continue
+            prior = self.retained(ref_from_document(entry["ref"]))["review"]
+            if prior["reviewer"]["invocation"] == review.reviewer["invocation"] \
+                    and prior["mechanical_report_digest"] == review.mechanical_report_digest:
+                return True
+        return False
 
     @staticmethod
     def _previous(state: dict) -> Ref | None:

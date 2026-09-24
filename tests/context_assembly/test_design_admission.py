@@ -269,7 +269,45 @@ class DesignAdmissionTests(unittest.TestCase):
         self.assertRefused(profile.design.record_review(KEY, review(report), 3), "STALE_REVIEW")
         again = self.inspected(profile, contract(), 4)
         self.assertEqual(again.status, REVIEW_REQUIRED)
-        self.assertIsInstance(profile.design.record_review(KEY, review(again), 5), ReviewAdmitted)
+        fresh = review(again, reviewer=("JC", "verifier-invocation-2"))
+        self.assertIsInstance(profile.design.record_review(KEY, fresh, 5), ReviewAdmitted)
+
+    def test_historical_review_cannot_renew_invalidated_design(self):
+        """JC R1: after invalidation and re-inspection the retained prior review is not a fresh review."""
+        profile = self.profile()
+        report = self.verified(profile)
+        old = review(report)
+        moved = {**deepcopy(report.vector), "requirements": {KEY: "sha256:" + "b" * 64}}
+        self.assertIsInstance(profile.design.check(KEY, moved), Stale)
+        again = self.inspected(profile, contract(), 3)
+        self.assertEqual(again.digest, report.digest)  # The content-only report digest recurs.
+        self.assertRefused(profile.design.record_review(KEY, deepcopy(old), 4), "REVIEW_NOT_FRESH")
+        self.assertFalse(profile.design_readiness.admit(KEY, again.vector).admitted)
+        self.assertEqual(profile.design.check(KEY, again.vector), Held(REVIEW_REQUIRED))
+        fresh = review(again, reviewer=("JC", "verifier-invocation-2"))
+        self.assertIsInstance(profile.design.record_review(KEY, fresh, 5), ReviewAdmitted)
+        self.assertTrue(profile.design_readiness.admit(KEY, again.vector).admitted)
+        self.assertEqual([e for e, _ in profile.design.history(KEY)],
+                         ["design.review_required", "design.verified", "design.stale", "design.review_required",
+                          "design.review_refused", "design.verified"])
+
+    def test_reviewer_invocation_cannot_reverify_after_revision_round_trip(self):
+        profile = self.profile()
+        report = self.verified(profile)
+        changed = contract()
+        changed["fields"]["invariants"] = {"value": ["a different invariant for the fixture change"]}
+        self.inspected(profile, changed, 2)
+        again = self.inspected(profile, contract(), 3)
+        self.assertEqual(again.digest, report.digest)
+        self.assertRefused(profile.design.record_review(KEY, review(again), 4), "REVIEW_NOT_FRESH")
+        self.assertFalse(profile.design_readiness.admit(KEY, again.vector).admitted)
+
+    def test_duplicate_admitted_review_is_idempotent(self):
+        profile = self.profile()
+        report = self.verified(profile)
+        self.assertIsInstance(profile.design.record_review(KEY, review(report), 2), ReviewAdmitted)
+        self.assertEqual(len(profile.design.history(KEY)), 2)
+        self.assertTrue(profile.design_readiness.admit(KEY, report.vector).admitted)
 
     def test_attributed_rejection_stands_until_repair(self):
         profile = self.profile()

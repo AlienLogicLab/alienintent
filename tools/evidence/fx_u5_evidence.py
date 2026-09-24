@@ -114,6 +114,13 @@ CONTROLS = [
             "        elif False:\n", "test_attributed_rejection_stands_until_repair"),
     control("truncated-history-accepted", "AC-05", SERVICE, '                or len(state["history"]) != version \\\n',
             "", "test_corrupted_state_is_a_hold"),
+    # Revision 2 (JC R1 repair): a historical review never renews applicability after invalidation.
+    control("historical-review-renews-applicability", REVIEW, SERVICE,
+            "        elif isinstance(result, ReviewAdmitted) and self._decided(state, review):\n", "        elif False:\n",
+            "test_historical_review_cannot_renew_invalidated_design"),
+    control("round-trip-review-reused", REVIEW, SERVICE,
+            "        elif isinstance(result, ReviewAdmitted) and self._decided(state, review):\n", "        elif False:\n",
+            "test_reviewer_invocation_cannot_reverify_after_revision_round_trip"),
 ]
 _OUTCOME = re.compile(r"^(FAIL|ERROR): (\w+) \(", re.MULTILINE)
 
