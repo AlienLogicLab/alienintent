@@ -1,0 +1,6 @@
+test_self_review_is_refused_and_downstream_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_self_review_is_refused_and_downstream_holds) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.576s
+
+OK

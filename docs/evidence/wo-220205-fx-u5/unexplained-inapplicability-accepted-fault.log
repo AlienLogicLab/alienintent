@@ -1,0 +1,19 @@
+test_unexplained_inapplicability_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unexplained_inapplicability_holds) ... FAIL
+
+======================================================================
+FAIL: test_unexplained_inapplicability_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unexplained_inapplicability_holds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cqotjb9v/tests/context_assembly/test_design_admission.py", line 307, in test_unexplained_inapplicability_holds
+    self.assertHolds(blank, "UNEXPLAINED_INAPPLICABILITY")
+  File "/tmp/fx-u5-cqotjb9v/tests/context_assembly/test_design_admission.py", line 101, in assertHolds
+    self.assertEqual(report.status, MECHANICALLY_HELD)
+AssertionError: 'REVIEW_REQUIRED' != 'MECHANICALLY_HELD'
+- REVIEW_REQUIRED
++ MECHANICALLY_HELD
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.392s
+
+FAILED (failures=1)

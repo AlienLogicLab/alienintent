@@ -1,0 +1,19 @@
+test_observed_edge_is_not_permission (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_observed_edge_is_not_permission) ... FAIL
+
+======================================================================
+FAIL: test_observed_edge_is_not_permission (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_observed_edge_is_not_permission)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cqotjb9v/tests/context_assembly/test_design_admission.py", line 176, in test_observed_edge_is_not_permission
+    self.assertHolds(report, "ARCHITECTURE_AUTHORITY_HOLD")
+  File "/tmp/fx-u5-cqotjb9v/tests/context_assembly/test_design_admission.py", line 101, in assertHolds
+    self.assertEqual(report.status, MECHANICALLY_HELD)
+AssertionError: 'REVIEW_REQUIRED' != 'MECHANICALLY_HELD'
+- REVIEW_REQUIRED
++ MECHANICALLY_HELD
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.449s
+
+FAILED (failures=1)
