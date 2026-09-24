@@ -1,0 +1,19 @@
+test_incomplete_design_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incomplete_design_holds) ... FAIL
+
+======================================================================
+FAIL: test_incomplete_design_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incomplete_design_holds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-_9vzi3s4/tests/context_assembly/test_design_admission.py", line 339, in test_incomplete_design_holds
+    self.assertHolds(report, "INCOMPLETE_DESIGN")
+  File "/tmp/fx-u5-_9vzi3s4/tests/context_assembly/test_design_admission.py", line 101, in assertHolds
+    self.assertEqual(report.status, MECHANICALLY_HELD)
+AssertionError: 'REVIEW_REQUIRED' != 'MECHANICALLY_HELD'
+- REVIEW_REQUIRED
++ MECHANICALLY_HELD
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.585s
+
+FAILED (failures=1)

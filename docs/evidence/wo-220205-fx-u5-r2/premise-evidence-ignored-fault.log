@@ -1,0 +1,19 @@
+test_impossible_premise_is_rejected_despite_complete_checklist (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_impossible_premise_is_rejected_despite_complete_checklist) ... FAIL
+
+======================================================================
+FAIL: test_impossible_premise_is_rejected_despite_complete_checklist (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_impossible_premise_is_rejected_despite_complete_checklist)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-_9vzi3s4/tests/context_assembly/test_design_admission.py", line 385, in test_impossible_premise_is_rejected_despite_complete_checklist
+    self.assertHolds(report, "INFEASIBLE_PREMISE")
+  File "/tmp/fx-u5-_9vzi3s4/tests/context_assembly/test_design_admission.py", line 101, in assertHolds
+    self.assertEqual(report.status, MECHANICALLY_HELD)
+AssertionError: 'REVIEW_REQUIRED' != 'MECHANICALLY_HELD'
+- REVIEW_REQUIRED
++ MECHANICALLY_HELD
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.502s
+
+FAILED (failures=1)

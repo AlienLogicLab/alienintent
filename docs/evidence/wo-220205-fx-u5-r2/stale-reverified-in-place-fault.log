@@ -1,0 +1,19 @@
+test_stale_design_is_not_reverified_in_place (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_is_not_reverified_in_place) ... FAIL
+
+======================================================================
+FAIL: test_stale_design_is_not_reverified_in_place (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_is_not_reverified_in_place)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-_9vzi3s4/tests/context_assembly/test_design_admission.py", line 269, in test_stale_design_is_not_reverified_in_place
+    self.assertRefused(profile.design.record_review(KEY, review(report), 3), "STALE_REVIEW")
+  File "/tmp/fx-u5-_9vzi3s4/tests/context_assembly/test_design_admission.py", line 106, in assertRefused
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'REVIEW_NOT_FRESH' != 'STALE_REVIEW'
+- REVIEW_NOT_FRESH
++ STALE_REVIEW
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.469s
+
+FAILED (failures=1)

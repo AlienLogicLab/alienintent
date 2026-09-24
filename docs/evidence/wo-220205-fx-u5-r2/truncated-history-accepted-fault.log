@@ -1,0 +1,14 @@
+test_corrupted_state_is_a_hold (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_corrupted_state_is_a_hold) ... FAIL
+
+======================================================================
+FAIL: test_corrupted_state_is_a_hold (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_corrupted_state_is_a_hold)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-_9vzi3s4/tests/context_assembly/test_design_admission.py", line 331, in test_corrupted_state_is_a_hold
+    self.assertEqual(profile.design.check(KEY, report.vector), Held("INCOMPATIBLE_DESIGN_STATE", (KEY,)))
+AssertionError: CurrentVerified(design_key='SF-REQ-900', [639 chars]a'}}) != Held(reason_code='INCOMPATIBLE_DESIGN_STA[25 chars]0',))
+
+----------------------------------------------------------------------
+Ran 1 test in 1.396s
+
+FAILED (failures=1)

@@ -1,0 +1,9 @@
+old review after invalidation: ReviewRefused ready: False
+test_duplicate_review_without_invalidation_is_idempotent (__main__.FreshnessTests.test_duplicate_review_without_invalidation_is_idempotent) ... ok
+test_new_independent_invocation_can_reverify (__main__.FreshnessTests.test_new_independent_invocation_can_reverify) ... ok
+test_old_review_cannot_reverify_invalidated_design (__main__.FreshnessTests.test_old_review_cannot_reverify_invalidated_design) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.756s
+
+OK

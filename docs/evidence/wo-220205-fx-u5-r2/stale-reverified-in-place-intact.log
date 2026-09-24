@@ -1,0 +1,6 @@
+test_stale_design_is_not_reverified_in_place (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_is_not_reverified_in_place) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.539s
+
+OK
