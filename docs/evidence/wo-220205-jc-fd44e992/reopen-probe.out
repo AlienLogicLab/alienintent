@@ -1,0 +1,2 @@
+Terminal observation (captured from exec result, exit 0):
+PASS: reopened store retains invalidation, altered historical review is refused, fresh review admits, prior verdict retained

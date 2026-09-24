@@ -1,0 +1,69 @@
+[
+  {
+    "command": [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tests"
+    ],
+    "exit_status": 0,
+    "raw_output": "pytest.out",
+    "env": {
+      "PYTHONPATH": "src:."
+    }
+  },
+  {
+    "command": [
+      "python3",
+      "tools/fitness/check_architecture.py",
+      "--root",
+      "src/alienintent",
+      "--check",
+      "all"
+    ],
+    "exit_status": 0,
+    "raw_output": "architecture.out",
+    "env": {
+      "PYTHONPATH": "src:."
+    }
+  },
+  {
+    "command": [
+      "node",
+      "scripts/check.mjs",
+      "all"
+    ],
+    "exit_status": 0,
+    "raw_output": "check-all.out",
+    "env": {
+      "PYTHONPATH": "src:."
+    }
+  },
+  {
+    "command": [
+      "python3",
+      "docs/evidence/wo-220205-fx-u5-r2/freshness_test.py"
+    ],
+    "exit_status": 0,
+    "raw_output": "freshness.out",
+    "env": {
+      "PYTHONPATH": "src:."
+    }
+  },
+  {
+    "command": [
+      "python3",
+      "tools/evidence/fx_u5_evidence.py",
+      "--output",
+      "/tmp/wo97-jc-fd44e992/fx",
+      "--invocation",
+      "AlienLogicLab/alienintent#97:VERIFIER:fd44e992-bd5a-4def-a156-f54680f913f5"
+    ],
+    "exit_status": 0,
+    "raw_output": "fx.out",
+    "env": {
+      "PYTHONPATH": "src:."
+    }
+  }
+]

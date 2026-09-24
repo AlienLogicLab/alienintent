@@ -1,0 +1,17 @@
+old review after invalidation: ReviewAdmitted ready: True
+test_duplicate_review_without_invalidation_is_idempotent (__main__.FreshnessTests.test_duplicate_review_without_invalidation_is_idempotent) ... ok
+test_new_independent_invocation_can_reverify (__main__.FreshnessTests.test_new_independent_invocation_can_reverify) ... ok
+test_old_review_cannot_reverify_invalidated_design (__main__.FreshnessTests.test_old_review_cannot_reverify_invalidated_design) ... FAIL
+
+======================================================================
+FAIL: test_old_review_cannot_reverify_invalidated_design (__main__.FreshnessTests.test_old_review_cannot_reverify_invalidated_design)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/home/netmarine/.local/state/alienintent/worktrees/e8b5c608-cc5e-41cf-bc90-2532f9b42951/docs/evidence/wo-220205-fx-u5-r2/freshness_test.py", line 31, in test_old_review_cannot_reverify_invalidated_design
+    self.assertIsInstance(result, ReviewRefused,
+AssertionError: ReviewAdmitted(review=ReviewRecord(reviewer={'actor': 'JC', 'invocation': 'verifier-invocation-1'}, producer={'actor': 'Morty', 'invocation': 'producer-invocation-1'}, design_digest='sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', mechanical_report_digest='sha256:98e1fa32a257644dc4cae9cfe8d24b102d6a06c4e3b33d01d277a50fa66f11aa', revision_vector={'design': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'requirements': {'SF-REQ-900': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, 'architecture': 'sha256:84fa867a9f3cad36daa7da1554b86a6f55bab8855706caac8b764d602383eb03', 'premises': 'sha256:129462eb22611a901a6ffc64af18a3e5cee38f69a2381ebbbb5ae1b4a93b2e4d', 'authority': 'sha256:55ee0a961ee9b2cf37f107a86c8b3b503e43198635209a4a499871ade5487873'}, findings=(), decision='VERIFIED', authority='independent VERIFIER role under the WO-220205 allocation', document={'authority': 'independent VERIFIER role under the WO-220205 allocation', 'decision': 'VERIFIED', 'design_digest': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'findings': [], 'mechanical_report_digest': 'sha256:98e1fa32a257644dc4cae9cfe8d24b102d6a06c4e3b33d01d277a50fa66f11aa', 'producer': {'actor': 'Morty', 'invocation': 'producer-invocation-1'}, 'reviewer': {'actor': 'JC', 'invocation': 'verifier-invocation-1'}, 'revision_vector': {'architecture': 'sha256:84fa867a9f3cad36daa7da1554b86a6f55bab8855706caac8b764d602383eb03', 'authority': 'sha256:55ee0a961ee9b2cf37f107a86c8b3b503e43198635209a4a499871ade5487873', 'design': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'premises': 'sha256:129462eb22611a901a6ffc64af18a3e5cee38f69a2381ebbbb5ae1b4a93b2e4d', 'requirements': {'SF-REQ-900': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}}), decision='VERIFIED') is not an instance of <class 'alienintent.context_assembly.domain.design_admission.ReviewRefused'> : A review predating invalidation must not satisfy fresh independent reverification
+
+----------------------------------------------------------------------
+Ran 3 tests in 1.886s
+
+FAILED (failures=1)

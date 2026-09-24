@@ -1,0 +1,15 @@
+{
+  "docs/work-units/wave2/WO-220205.md": "956184cdfe3ed9582d2f8254a83e96c3d08ebd5e3415257fe5b72528d53bf097",
+  "docs/evidence/wave2-execution-packets/WO-220205.packet.json": "16e3c133bbfa2c9d16cfb6ba93e7363d974b65bccebbd59b328e96ee13a8dcc8",
+  "docs/evidence/wave2-execution-packets/WO-220205.allocation.json": "df6e6dc50c10abbf3330d9fbeb8a105eac2582ddd20f92ec783d7290e0a9e386",
+  "docs/evidence/wave2-readiness-assessments/WO-220205.2026-09-24T130647.058351Z.assessment.json": "6d2848103a8fa99f134ff7c00daee861c25a3fd6f4feaba4f24600fb35d7b70b",
+  "docs/evidence/wave2-design-contracts.json": "56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242",
+  "docs/evidence/wave2-design-verification.json": "fa6a112c04aad34ea2b52dbd80391ff23f2dbb0fa1fdafb8b92073cb20d8492a",
+  "docs/evidence/wave2-dependency-dag.json": "f99c0a7a392f8dd1f7889bb99d926f0a5a9de0948cb09845686f9d7e6f2b1e8d",
+  "docs/evidence/wave2-specified-requirements.json": "332757c43b8754196e45f75a8ce2ee422e19382415e17ed22cd431f348d9b800",
+  "docs/evidence/wo-220203-fx-u3-premise-mapping.json": "598abb9c11791428069e2b5605b51f7ebf61afd537f2ca02c39e6bc8ec1bd589",
+  "tools/fitness/check_architecture.py": "ac8847c876696dd0c1ecc74b53a9180e8d649d28ccc2c70f6d1e93c5440108d9",
+  "docs/decisions/2026-09-20-design-contract-and-design-verification.md": "d799a43d7e62d865791a0655473c911aa46b169953dfe497f6851a871ce6a84f",
+  "docs/decisions/2026-09-21-sandbox-isolation-standard.md": "a70f5ca62c9934a92ce566b896a6ae4e213e3a7536649ad4de5ff929d762fccc",
+  "docs/evidence/wo-220205-fx-u5-predicate-mapping.json": "e000d1f964ce628e50370ae6db5bff62959e7dd2642ae1d089887d0f7e4fef3a"
+}

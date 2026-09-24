@@ -1,0 +1,16 @@
+test_verified_review_of_held_design_is_refused (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_verified_review_of_held_design_is_refused) ... FAIL
+
+======================================================================
+FAIL: test_verified_review_of_held_design_is_refused (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_verified_review_of_held_design_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-3vab7yvq/tests/context_assembly/test_design_admission.py", line 402, in test_verified_review_of_held_design_is_refused
+    self.assertRefused(profile.design.record_review(KEY, review(report), 1), "MECHANICAL_HOLD_OUTSTANDING")
+  File "/tmp/fx-u5-3vab7yvq/tests/context_assembly/test_design_admission.py", line 105, in assertRefused
+    self.assertIsInstance(result, ReviewRefused)
+AssertionError: ReviewAdmitted(review=ReviewRecord(reviewer={'actor': 'JC', 'invocation': 'verifier-invocation-1'}, producer={'actor': 'Morty', 'invocation': 'producer-invocation-1'}, design_digest='sha256:0e8786701687de0e0dd04982e3b673670730ee4449ffb520498ff57d3ff939b5', mechanical_report_digest='sha256:74510f522e516ccb67ddfd25492b0e3dc7956381d16592ccd00ec8835bf401e9', revision_vector={'design': 'sha256:0e8786701687de0e0dd04982e3b673670730ee4449ffb520498ff57d3ff939b5', 'requirements': {'SF-REQ-900': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, 'architecture': 'sha256:d4e946f95a926bfb88d78aa536270c1b0b02b748019f77a553a1fbfbdd6fa4be', 'premises': 'sha256:129462eb22611a901a6ffc64af18a3e5cee38f69a2381ebbbb5ae1b4a93b2e4d', 'authority': 'sha256:55ee0a961ee9b2cf37f107a86c8b3b503e43198635209a4a499871ade5487873'}, findings=(), decision='VERIFIED', authority='independent VERIFIER role under the WO-220205 allocation', document={'authority': 'independent VERIFIER role under the WO-220205 allocation', 'decision': 'VERIFIED', 'design_digest': 'sha256:0e8786701687de0e0dd04982e3b673670730ee4449ffb520498ff57d3ff939b5', 'findings': [], 'mechanical_report_digest': 'sha256:74510f522e516ccb67ddfd25492b0e3dc7956381d16592ccd00ec8835bf401e9', 'producer': {'actor': 'Morty', 'invocation': 'producer-invocation-1'}, 'reviewer': {'actor': 'JC', 'invocation': 'verifier-invocation-1'}, 'revision_vector': {'architecture': 'sha256:d4e946f95a926bfb88d78aa536270c1b0b02b748019f77a553a1fbfbdd6fa4be', 'authority': 'sha256:55ee0a961ee9b2cf37f107a86c8b3b503e43198635209a4a499871ade5487873', 'design': 'sha256:0e8786701687de0e0dd04982e3b673670730ee4449ffb520498ff57d3ff939b5', 'premises': 'sha256:129462eb22611a901a6ffc64af18a3e5cee38f69a2381ebbbb5ae1b4a93b2e4d', 'requirements': {'SF-REQ-900': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}}), decision='VERIFIED') is not an instance of <class 'alienintent.context_assembly.domain.design_admission.ReviewRefused'>
+
+----------------------------------------------------------------------
+Ran 1 test in 1.565s
+
+FAILED (failures=1)

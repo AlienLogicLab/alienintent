@@ -1,0 +1,6 @@
+test_direction_dependent_admission_holds_on_open_authority (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_direction_dependent_admission_holds_on_open_authority) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.423s
+
+OK

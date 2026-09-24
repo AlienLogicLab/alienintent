@@ -1,0 +1,19 @@
+test_forbidden_adapter_import_holds_before_review (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_adapter_import_holds_before_review) ... FAIL
+
+======================================================================
+FAIL: test_forbidden_adapter_import_holds_before_review (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_adapter_import_holds_before_review)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-3vab7yvq/tests/context_assembly/test_design_admission.py", line 183, in test_forbidden_adapter_import_holds_before_review
+    self.assertHolds(report, "ARCHITECTURE_CHECK_FAILED")
+  File "/tmp/fx-u5-3vab7yvq/tests/context_assembly/test_design_admission.py", line 101, in assertHolds
+    self.assertEqual(report.status, MECHANICALLY_HELD)
+AssertionError: 'REVIEW_REQUIRED' != 'MECHANICALLY_HELD'
+- REVIEW_REQUIRED
++ MECHANICALLY_HELD
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.380s
+
+FAILED (failures=1)

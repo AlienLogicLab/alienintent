@@ -1,0 +1,6 @@
+test_observed_edge_is_not_permission (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_observed_edge_is_not_permission) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.447s
+
+OK

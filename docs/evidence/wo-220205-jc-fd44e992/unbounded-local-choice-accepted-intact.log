@@ -1,0 +1,6 @@
+test_unbounded_local_choice_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unbounded_local_choice_holds) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.400s
+
+OK

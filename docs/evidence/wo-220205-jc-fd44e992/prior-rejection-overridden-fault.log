@@ -1,0 +1,19 @@
+test_attributed_rejection_stands_until_repair (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_attributed_rejection_stands_until_repair) ... FAIL
+
+======================================================================
+FAIL: test_attributed_rejection_stands_until_repair (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_attributed_rejection_stands_until_repair)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-3vab7yvq/tests/context_assembly/test_design_admission.py", line 320, in test_attributed_rejection_stands_until_repair
+    self.assertRefused(profile.design.record_review(KEY, review(report), 3), "BLOCKING_FINDINGS")
+  File "/tmp/fx-u5-3vab7yvq/tests/context_assembly/test_design_admission.py", line 106, in assertRefused
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'REVIEW_NOT_FRESH' != 'BLOCKING_FINDINGS'
+- REVIEW_NOT_FRESH
++ BLOCKING_FINDINGS
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.473s
+
+FAILED (failures=1)

@@ -1,0 +1,19 @@
+[
+  {
+    "command": "rtk proxy env PYTHONPATH=src:. python3 /tmp/wo97-jc-fd44e992/reopen_probe.py",
+    "exit_status": 0,
+    "output": "reopen-probe.out"
+  },
+  {
+    "command": "python3 docs/evidence/wo-220205-fx-u5-r2/freshness_test.py",
+    "setup": "Disposable copy of candidate src/tests/docs/tools, replacing only design_admission_service.py with git show c9a8699 bytes; PYTHONPATH points to disposable src and root",
+    "exit_status": 1,
+    "expected": "3 tests, 1 failure; historical replay admitted",
+    "output": "freshness-rejected-service.out"
+  },
+  {
+    "command": "rtk proxy git diff --check 1f8648b8cc3d9aa707588ab7698ef4f7f368fb4c HEAD",
+    "exit_status": 0,
+    "output": "empty"
+  }
+]

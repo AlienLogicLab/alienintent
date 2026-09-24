@@ -1,0 +1,6 @@
+test_corrupted_state_is_a_hold (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_corrupted_state_is_a_hold) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.429s
+
+OK

@@ -1,0 +1,6 @@
+test_attributed_rejection_stands_until_repair (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_attributed_rejection_stands_until_repair) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.508s
+
+OK

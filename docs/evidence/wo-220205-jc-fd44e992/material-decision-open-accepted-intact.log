@@ -1,0 +1,6 @@
+test_open_material_decision_blocks_and_bounded_local_choice_stays_open (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_open_material_decision_blocks_and_bounded_local_choice_stays_open) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.555s
+
+OK

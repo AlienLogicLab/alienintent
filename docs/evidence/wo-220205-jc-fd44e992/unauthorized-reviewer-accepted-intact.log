@@ -1,0 +1,6 @@
+test_unauthorized_reviewer_is_refused (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unauthorized_reviewer_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.450s
+
+OK

@@ -1,0 +1,6 @@
+test_blocking_finding_cannot_be_verified (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_blocking_finding_cannot_be_verified) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.818s
+
+OK
