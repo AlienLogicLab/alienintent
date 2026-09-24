@@ -1,0 +1,26 @@
+........................................................................ [ 15%]
+........................................................................ [ 30%]
+........................................................................ [ 46%]
+........................................................................ [ 61%]
+........................................................................ [ 77%]
+................................................F....................... [ 92%]
+.................................                                        [100%]
+=================================== FAILURES ===================================
+_________ test_substantial_technical_analysis_routes_to_codex_primary __________
+
+    def test_substantial_technical_analysis_routes_to_codex_primary():
+        d = route(task_type="evidence_reconciliation", risk=RiskClass.MEDIUM,
+                  deterministic_possible=False)
+        assert d.tier is Tier.CODEX_PRIMARY
+        assert d.actor == "codex-fresh"
+>       assert d.model == "gpt-6-astra"
+E       AssertionError: assert 'gpt-5.6-terra' == 'gpt-6-astra'
+E         - gpt-6-astra
+E         ?       --
+E         + gpt-5.6-terra
+E         ?     ++   ++
+
+tools/orchestration/test_director.py:62: AssertionError
+=========================== short test summary info ============================
+FAILED tools/orchestration/test_director.py::test_substantial_technical_analysis_routes_to_codex_primary
+1 failed, 464 passed in 1.59s

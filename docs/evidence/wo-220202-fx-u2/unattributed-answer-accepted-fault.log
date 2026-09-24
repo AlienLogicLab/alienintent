@@ -1,0 +1,18 @@
+test_only_matching_attributed_decision_resolves_that_question (tests.context_assembly.test_ambiguity.AmbiguityTests.test_only_matching_attributed_decision_resolves_that_question)
+SF-REQ-012-AC-02 and changed inputs becoming STALE. ... FAIL
+
+======================================================================
+FAIL: test_only_matching_attributed_decision_resolves_that_question (tests.context_assembly.test_ambiguity.AmbiguityTests.test_only_matching_attributed_decision_resolves_that_question)
+SF-REQ-012-AC-02 and changed inputs becoming STALE.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u2-6h_ybt2g/tests/context_assembly/test_ambiguity.py", line 161, in test_only_matching_attributed_decision_resolves_that_question
+    self.assertHold(h.resolve(acceptance, unrecorded), "AUTHORITY_HOLD")
+  File "/tmp/fx-u2-6h_ybt2g/tests/context_assembly/test_ambiguity.py", line 104, in assertHold
+    self.assertIsInstance(result, AnswerHold, result)
+AssertionError: QuestionResolution(resolution_id='3fdfc8b2a89c80cdf052a4495d7a59258e3836337b87a371efdbf71dff15fdbc', finding_id='94b2f5a1c63006f188a2b4efa85f469257c9485e4c9aa33441724818e6b32b93', requirement_revision='3014184bec751549b1a4b562d1fc3a91e594fe1cfd631235bd8104200b2141d7', actor='Founder', authority_reference='FD-9 answer', idempotency_key='forged', evidence_ref={'project': 'AlienLogicLab/alienintent', 'profile': 'fx-u2', 'logical_id': 'ambiguity.resolution:2d61c742b59546e60827f0543949e4df3b50a918c6a3a356fb820bb0a1a2f71d', 'revision_digest': 'sha256:88e48cf11b039af822ae8cbe496dccbc6c14a3620776bdd54a7434a4f5b71d36', 'locator': 'objects/88e48cf11b039af822ae8cbe496dccbc6c14a3620776bdd54a7434a4f5b71d36'}) is not an instance of <class 'alienintent.context_assembly.domain.ambiguity.AnswerHold'> : QuestionResolution(resolution_id='3fdfc8b2a89c80cdf052a4495d7a59258e3836337b87a371efdbf71dff15fdbc', finding_id='94b2f5a1c63006f188a2b4efa85f469257c9485e4c9aa33441724818e6b32b93', requirement_revision='3014184bec751549b1a4b562d1fc3a91e594fe1cfd631235bd8104200b2141d7', actor='Founder', authority_reference='FD-9 answer', idempotency_key='forged', evidence_ref={'project': 'AlienLogicLab/alienintent', 'profile': 'fx-u2', 'logical_id': 'ambiguity.resolution:2d61c742b59546e60827f0543949e4df3b50a918c6a3a356fb820bb0a1a2f71d', 'revision_digest': 'sha256:88e48cf11b039af822ae8cbe496dccbc6c14a3620776bdd54a7434a4f5b71d36', 'locator': 'objects/88e48cf11b039af822ae8cbe496dccbc6c14a3620776bdd54a7434a4f5b71d36'})
+
+----------------------------------------------------------------------
+Ran 1 test in 0.136s
+
+FAILED (failures=1)

@@ -1,0 +1,14 @@
+test_reopened_finding_requires_a_fresh_answer (tests.context_assembly.test_ambiguity.AmbiguityTests.test_reopened_finding_requires_a_fresh_answer) ... FAIL
+
+======================================================================
+FAIL: test_reopened_finding_requires_a_fresh_answer (tests.context_assembly.test_ambiguity.AmbiguityTests.test_reopened_finding_requires_a_fresh_answer)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u2-6h_ybt2g/tests/context_assembly/test_ambiguity.py", line 299, in test_reopened_finding_requires_a_fresh_answer
+    self.assertNotEqual(h.work_item(finding), decision.submission.work_item)
+AssertionError: 'upstream-question:3695dbddcad6e6323441b3af3b7651a72e4fcb0fdfb11c80facfba518485babc:1' == 'upstream-question:3695dbddcad6e6323441b3af3b7651a72e4fcb0fdfb11c80facfba518485babc:1'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.160s
+
+FAILED (failures=1)
