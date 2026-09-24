@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 import re
 
 from alienintent.evidence_learning.domain.premise import (
@@ -25,6 +25,8 @@ _OBSERVABLES = {o.value for o in IsolationObservable}
 
 class RetainedDoctorPremiseEvidence(PremiseEvidence):
     def __init__(self, repository_root: Path, mapping_path: Path, mapping_sha256: str, project: str, profile: str) -> None:
+        if not all(isinstance(v, str) and v.strip() for v in (project, profile, mapping_sha256)):
+            raise ValueError("project, profile and the pinned mapping sha256 must be configured")
         self._root, self._mapping_path, self._mapping_sha256 = Path(repository_root), str(mapping_path), mapping_sha256
         self._project, self._profile = project, profile
 
@@ -56,7 +58,7 @@ class RetainedDoctorPremiseEvidence(PremiseEvidence):
     def _mapping(self) -> tuple[dict | None, Ref | None]:
         try:
             body = (self._root / self._mapping_path).read_bytes()
-        except OSError:
+        except (OSError, ValueError):
             return None, None
         if sha256(body).hexdigest() != self._mapping_sha256:
             return None, None
@@ -69,7 +71,7 @@ class RetainedDoctorPremiseEvidence(PremiseEvidence):
     def _load(self, key: str, spec: dict) -> tuple[object, Ref, str | None] | None:
         try:
             body = (self._root / spec["path"]).read_bytes()
-        except OSError:
+        except (OSError, ValueError):
             return None
         if sha256(body).hexdigest() != spec["sha256"]:
             return None
@@ -89,7 +91,7 @@ class RetainedDoctorPremiseEvidence(PremiseEvidence):
         match = _DOCTOR_DETAIL.fullmatch(detail) if isinstance(detail, str) else None
         if check is None or check.get("ok") is not True or match is None:
             return False, None
-        outcomes = _json(match[3].encode())
+        outcomes = _json(match[3])
         passed = (match[1], match[2]) == ("PASS", "0") and isinstance(outcomes, dict) \
             and set(outcomes) == set(REQUIRED_CHECKS) and all(v == "PASS" for v in outcomes.values())
         return passed, _locate(ref, spec["check"])
@@ -125,13 +127,16 @@ def _valid_mapping(mapping: object) -> bool:
         return False
     for spec in artifacts.values():
         locator = spec.get("target") if isinstance(spec, dict) else None
-        if not isinstance(spec, dict) or not text(spec.get("path")) or not re.fullmatch(r"[0-9a-f]{64}", str(spec.get("sha256"))) \
-                or not isinstance(locator, dict) or not (text(locator.get("pointer")) or text(locator.get("check")) and text(locator.get("field"))):
+        if not isinstance(spec, dict) or not _repository_path(spec.get("path")) \
+                or not isinstance(spec.get("sha256"), str) or not re.fullmatch(r"[0-9a-f]{64}", spec["sha256"]) \
+                or not isinstance(locator, dict) or not (set(locator) == {"pointer"} and text(locator["pointer"])
+                                                         or set(locator) == {"check", "field"} and text(locator["check"]) and text(locator["field"])):
             return False
-    if doctor.get("artifact") not in artifacts or not text(doctor.get("check")):
+    if not text(doctor.get("artifact")) or doctor["artifact"] not in artifacts or not text(doctor.get("check")):
         return False
     for entry in entries:
-        if not isinstance(entry, dict) or entry.get("observable") not in _OBSERVABLES or entry.get("artifact") not in artifacts:
+        if not isinstance(entry, dict) or not text(entry.get("observable")) or entry["observable"] not in _OBSERVABLES \
+                or not text(entry.get("artifact")) or entry["artifact"] not in artifacts:
             return False
         requires = entry.get("detail_requires", [])
         unchanged = entry.get("unchanged")
@@ -144,7 +149,15 @@ def _valid_mapping(mapping: object) -> bool:
     return True
 
 
-def _json(body: bytes) -> object:
+def _repository_path(value: object) -> bool:
+    """Retained evidence is repository-relative: no absolute path, parent step or NUL."""
+    if not isinstance(value, str) or not value.strip() or "\x00" in value or "\\" in value:
+        return False
+    path = PurePosixPath(value)
+    return not path.is_absolute() and ".." not in path.parts
+
+
+def _json(body: bytes | str) -> object:
     def unique(pairs: list[tuple[str, object]]) -> dict:
         keys = [k for k, _ in pairs]
         if len(keys) != len(set(keys)):
@@ -152,7 +165,7 @@ def _json(body: bytes) -> object:
         return dict(pairs)
     try:
         return json.loads(body, object_pairs_hook=unique)
-    except (ValueError, UnicodeDecodeError):
+    except (ValueError, UnicodeError, RecursionError):
         return _ABSENT
 
 
@@ -175,7 +188,7 @@ def _evidence(check: dict) -> dict:
     detail = check.get("detail")
     if not isinstance(detail, str) or not detail.startswith("evidence="):
         return {}
-    value = _json(detail[len("evidence="):].encode())
+    value = _json(detail[len("evidence="):])
     return value if isinstance(value, dict) else {}
 
 

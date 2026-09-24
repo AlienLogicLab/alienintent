@@ -67,6 +67,9 @@ CONTROLS = [
      "test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception"),
     ("absent-target-accepted", ADAPTER, "elif loaded[2] is None:", "elif False:",
      "test_unreadable_artifact_target_is_a_missing_premise"),
+    # Revision 2: control for the second independent-review repair.
+    ("path-confinement-removed", ADAPTER, 'return not path.is_absolute() and ".." not in path.parts', "return True",
+     "test_malformed_mapping_is_infeasible_not_an_exception"),
 ]
 
 

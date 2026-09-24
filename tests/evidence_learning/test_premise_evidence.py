@@ -173,7 +173,8 @@ class PremiseEvidenceTests(unittest.TestCase):
     def test_premise_modules_import_no_installation_or_composition(self):
         for path in PREMISE_MODULES:
             tree = ast.parse((ROOT / path).read_text())
-            modules = ["." * n.level + (n.module or "") for n in ast.walk(tree) if isinstance(n, ast.ImportFrom)]
+            modules = ["." * n.level + (n.module or "") + "." + a.name
+                       for n in ast.walk(tree) if isinstance(n, ast.ImportFrom) for a in n.names]
             modules += [a.name for n in ast.walk(tree) if isinstance(n, ast.Import) for a in n.names]
             for module in modules:
                 with self.subTest(path=path, module=module):
@@ -198,6 +199,13 @@ class PremiseEvidenceTests(unittest.TestCase):
             "entry-without-predicate": lambda m: m["observables"][0].pop("check"),
             "no-doctor": lambda m: m.pop("doctor"),
             "not-an-object": lambda m: m.clear(),
+            "unhashable-doctor-artifact": lambda m: m["doctor"].update(artifact=["x"]),
+            "unhashable-observable": lambda m: m["observables"][0].update(observable=["x"]),
+            "unhashable-entry-artifact": lambda m: m["observables"][0].update(artifact={}),
+            "ambiguous-target-locator": lambda m: m["artifacts"]["py09b-live-checks"]["target"].update(pointer=5),
+            "absolute-artifact-path": lambda m: m["artifacts"]["py10-proof-run"].update(path=str(ROOT / PY10)),
+            "parent-artifact-path": lambda m: m["artifacts"]["py10-proof-run"].update(path="docs/../" + PY10),
+            "nul-artifact-path": lambda m: m["artifacts"]["py10-proof-run"].update(path=PY10 + "\x00"),
         }
         for name, change in changes.items():
             with self.subTest(name=name):
@@ -258,6 +266,22 @@ class PremiseEvidenceTests(unittest.TestCase):
                 self.rewrite(root, "py10-proof-run", PY10, lambda d, value=value: d.update(repository=value))
                 self.assertInfeasible(self.read(root), "MISSING_PREMISE", "target:py10-proof-run", "OUTSIDE_STATE_READBACK")
                 shutil.rmtree(root)
+
+    def test_hostile_artifact_content_is_infeasible_not_an_exception(self):
+        root = self.copy()
+
+        def surrogate(document):
+            for check in document["checks"]:
+                if check["check"] == "doctor_returns_typed_outcomes_against_the_sandbox":
+                    check["detail"] = 'disposition=PASS exit=0 outcomes={"\\ud800": "PASS"}'
+                if check["check"] == "doctor_source_control_probe_is_live":
+                    check["detail"] = 'evidence={"repository": "\\ud800"}'
+        self.rewrite(root, "py09b-live-checks", PY09B, surrogate)
+        self.assertInfeasible(self.read(root), "DOCTOR_EVIDENCE_UNAVAILABLE", "installation-doctor")
+        body = b"[" * 200000 + b"]" * 200000
+        (root / PY10).write_bytes(body)
+        self.remap(root, lambda m: m["artifacts"]["py10-proof-run"].update(sha256=sha256(body).hexdigest()))
+        self.assertInfeasible(self.read(root), "DOCTOR_EVIDENCE_UNAVAILABLE", "artifact:py10-proof-run")
 
     def test_premise_evidence_requires_a_configured_target(self):
         with self.assertRaises(ValueError):

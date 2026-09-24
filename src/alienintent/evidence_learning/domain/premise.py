@@ -76,7 +76,7 @@ def evaluate_isolation_premise(premise_id: str, target: str, requested: frozense
     if omitted:
         return InfeasibleProof(premise_id, "INCOMPLETE_PREMISE_REQUEST", tuple(omitted), refs)
     if not evidence.doctor_passed or evidence.doctor_ref is None:
-        return InfeasibleProof(premise_id, "DOCTOR_EVIDENCE_UNAVAILABLE", ("installation-doctor",), refs)
+        return InfeasibleProof(premise_id, "DOCTOR_EVIDENCE_UNAVAILABLE", ("installation-doctor",) + evidence.unavailable, refs)
     mismatched = sorted({o.target for o in evidence.observations if o.target != target} | ({evidence.target} - {target}))
     if mismatched:
         return InfeasibleProof(premise_id, "TARGET_MISMATCH", tuple(mismatched), refs)
