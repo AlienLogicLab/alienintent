@@ -1,0 +1,61 @@
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-7.4.4, pluggy-1.6.0 -- /usr/bin/python3
+rootdir: /home/netmarine/.local/state/alienintent/worktrees/4cf01d9b-1a39-498c-a90f-3ab94e9d6881
+configfile: pyproject.toml
+plugins: respx-0.23.1, anyio-4.13.0, cov-7.1.0, typeguard-4.4.3, asyncio-0.23.3
+asyncio: mode=Mode.STRICT
+collecting ... collected 50 items
+
+tools/live/test_release_admission.py::test_a_complete_release_record_is_admitted PASSED [  2%]
+tools/live/test_release_admission.py::test_release_without_a_record_authorizing_implementation_is_refused PASSED [  4%]
+tools/live/test_release_admission.py::test_release_record_must_name_a_baseline PASSED [  6%]
+tools/live/test_release_admission.py::test_a_baseline_that_does_not_resolve_is_refused PASSED [  8%]
+tools/live/test_release_admission.py::test_a_baseline_outside_the_release_point_ancestry_is_refused PASSED [ 10%]
+tools/live/test_release_admission.py::test_stale_unauthorized_wording_without_a_superseding_record_is_refused PASSED [ 12%]
+tools/live/test_release_admission.py::test_unauthorized_wording_is_accepted_when_explicitly_superseded PASSED [ 14%]
+tools/live/test_release_admission.py::test_a_biu_not_in_ready_is_refused PASSED [ 16%]
+tools/live/test_release_admission.py::test_a_biu_without_an_agent_ready_disposition_is_refused PASSED [ 18%]
+tools/live/test_release_admission.py::test_an_open_dependency_is_refused PASSED [ 20%]
+tools/live/test_release_admission.py::test_an_existing_active_invocation_is_refused PASSED [ 22%]
+tools/live/test_release_admission.py::test_an_explicitly_held_biu_is_refused PASSED [ 24%]
+tools/live/test_release_admission.py::test_every_failure_explains_itself PASSED [ 26%]
+tools/live/test_release_admission.py::test_all_failures_are_reported_not_just_the_first PASSED [ 28%]
+tools/live/test_release_admission.py::test_a_suffixed_biu_identifier_is_recognised PASSED [ 30%]
+tools/live/test_release_admission.py::test_a_plain_biu_identifier_is_still_recognised PASSED [ 32%]
+tools/live/test_release_admission.py::test_a_body_without_an_assessment_pointer_yields_none PASSED [ 34%]
+tools/live/test_release_admission.py::test_a_wave2_biu_identifier_is_recognised PASSED [ 36%]
+tools/live/test_release_admission.py::test_a_wave2_readiness_record_path_is_taken_from_the_body PASSED [ 38%]
+tools/live/test_release_admission.py::test_disposition_comes_only_from_an_assessed_agent_ready_record PASSED [ 40%]
+tools/live/test_release_admission.py::test_a_legacy_python_record_is_still_read_as_before PASSED [ 42%]
+tools/live/test_release_admission.py::test_issue_project_readback_is_authoritative_when_list_transport_omits_the_new_item PASSED [ 44%]
+tools/live/test_release_admission.py::test_native_issue_comment_receipt_requires_agent_ready_provenance_and_input_digest PASSED [ 46%]
+tools/live/test_release_admission.py::test_a_readiness_record_for_any_biu_identifier_is_recognised[ARP-01] PASSED [ 48%]
+tools/live/test_release_admission.py::test_a_readiness_record_for_any_biu_identifier_is_recognised[FDH-01] PASSED [ 50%]
+tools/live/test_release_admission.py::test_a_readiness_record_for_any_biu_identifier_is_recognised[WO-220202] PASSED [ 52%]
+tools/live/test_release_admission.py::test_the_release_record_carries_its_text_so_a_path_cited_there_is_found PASSED [ 54%]
+tools/live/test_release_admission.py::test_a_path_that_climbs_out_of_the_record_directory_is_rejected PASSED [ 56%]
+tools/live/test_release_admission.py::test_a_record_path_reached_through_a_parent_prefix_is_rejected PASSED [ 58%]
+tools/live/test_release_admission.py::test_an_identifier_containing_a_slash_is_rejected PASSED [ 60%]
+tools/live/test_release_admission.py::test_a_record_in_another_directory_is_rejected PASSED [ 62%]
+tools/live/test_release_admission.py::test_a_record_path_continued_past_the_file_is_rejected PASSED [ 64%]
+tools/live/test_release_admission.py::test_the_wave1_python_record_path_is_unchanged PASSED [ 66%]
+tools/live/test_release_admission_release_point.py::test_a_record_landed_at_the_release_point_but_absent_from_the_checkout_is_found PASSED [ 68%]
+tools/live/test_release_admission_release_point.py::test_a_record_present_only_in_the_working_tree_is_not_used PASSED [ 70%]
+tools/live/test_release_admission_release_point.py::test_a_record_committed_only_in_the_local_checkout_is_not_used PASSED [ 72%]
+tools/live/test_release_admission_release_point.py::test_a_record_for_any_biu_is_admitted_from_the_body_or_the_release_record[body-ARP-01] PASSED [ 74%]
+tools/live/test_release_admission_release_point.py::test_a_record_for_any_biu_is_admitted_from_the_body_or_the_release_record[body-FDH-01] PASSED [ 76%]
+tools/live/test_release_admission_release_point.py::test_a_record_for_any_biu_is_admitted_from_the_body_or_the_release_record[body-WO-220202] PASSED [ 78%]
+tools/live/test_release_admission_release_point.py::test_a_record_for_any_biu_is_admitted_from_the_body_or_the_release_record[release_record-ARP-01] PASSED [ 80%]
+tools/live/test_release_admission_release_point.py::test_a_record_for_any_biu_is_admitted_from_the_body_or_the_release_record[release_record-FDH-01] PASSED [ 82%]
+tools/live/test_release_admission_release_point.py::test_a_record_for_any_biu_is_admitted_from_the_body_or_the_release_record[release_record-WO-220202] PASSED [ 84%]
+tools/live/test_release_admission_release_point.py::test_an_explicit_release_point_is_read_instead_of_origin_main PASSED [ 86%]
+tools/live/test_release_admission_release_point.py::test_the_native_receipt_fallback_is_unchanged_when_no_record_is_cited PASSED [ 88%]
+tools/live/test_release_admission_release_point.py::test_the_native_receipt_fallback_is_unchanged_when_the_cited_record_is_absent PASSED [ 90%]
+tools/live/test_release_admission_release_point.py::test_a_cited_record_that_is_not_an_agent_ready_assessment_still_yields_no_disposition PASSED [ 92%]
+tools/live/test_release_admission_release_point.py::test_the_repository_is_derived_from_the_gate_location_without_an_override PASSED [ 94%]
+tools/live/test_release_admission_release_point.py::test_a_live_copy_outside_any_repository_uses_the_current_directory PASSED [ 96%]
+tools/live/test_release_admission_release_point.py::test_the_gate_only_reads_from_github PASSED [ 98%]
+tools/live/test_release_admission_release_point.py::test_a_release_point_shaped_like_an_option_is_never_passed_to_fetch PASSED [100%]
+
+============================== 50 passed in 4.18s ==============================
+exit 0

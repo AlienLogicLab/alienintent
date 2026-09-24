@@ -1,0 +1,3 @@
+# Retain BRD-83 regression logs: they are cited evidence, so the repository-wide
+# *.log ignore must not apply here.
+!*.log
