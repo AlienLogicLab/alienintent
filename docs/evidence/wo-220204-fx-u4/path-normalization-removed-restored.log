@@ -1,0 +1,6 @@
+test_disguised_implementation_sources_are_circular (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_disguised_implementation_sources_are_circular) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK

@@ -1,0 +1,6 @@
+test_supersession_without_passing_replacement_is_rejected (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_supersession_without_passing_replacement_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.063s
+
+OK
