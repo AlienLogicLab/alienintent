@@ -1,0 +1,79 @@
+{
+  "record_kind": "AllocationDecision",
+  "schema_version": "1",
+  "biu_id": "WO-220304",
+  "decided_at": "2026-09-24T11:30:18.108514+00:00",
+  "allocator": {
+    "role": "Allocator (SF-REQ-026, amended 2026-09-22)",
+    "instance": "Factory Director \u2014 deterministic policy branch (one configured eligible worker per role)",
+    "cognition_tier": "deterministic; no model consulted",
+    "authority_basis": [
+      "Founder custody direction 2026-09-23",
+      "SF-REQ-026 amendment: deterministic policy settles trivial cases"
+    ]
+  },
+  "selection": {
+    "execution_path": "existing factory lifecycle via the Node AlienIntent/B-DISP runtime; the Director transitions the Project item and the runtime launches the worker",
+    "producer": {
+      "role": "PRODUCER",
+      "adapter": "claude",
+      "configured_in": "~/.config/alienintent/self-hosting.json",
+      "worker": "Morty (morty-worker), claude --model claude-opus-5-5"
+    },
+    "verifier": {
+      "role": "VERIFIER",
+      "adapter": "codex",
+      "configured_in": "~/.config/alienintent/self-hosting.json",
+      "independence": "separate worktree; fresh verifier retrieves the exact candidate SHA",
+      "worker": "JC (jc-worker), codex --model gpt-6-astra"
+    },
+    "why": "Only configured, doctor-validated workers. The Director never launches a worker directly."
+  },
+  "limits": {
+    "policy": "SWF-09: hard dimensions wall-clock, attempts, retries, concurrency, cancellation; tokens/cost measured, never assumed zero",
+    "concurrency": {
+      "value": 1,
+      "enforcement": "bootstrap lane claim repository#issue:ROLE",
+      "status": "ENFORCED_BY_MECHANISM"
+    },
+    "wall_clock": {
+      "value": "runtime 120 min + startup 2 min + stop grace 5 min",
+      "enforcement": "execution.supervision (systemd transient unit) active in the live profile",
+      "status": "ENFORCED_BY_MECHANISM"
+    },
+    "attempts": {
+      "value": "3 execution cycles (SWF-32 semantics)",
+      "enforcement": "execution.biuLimits[AlienLogicLab/alienintent#<issue>].maxCycles (bound before release)",
+      "status": "ENFORCED_BY_MECHANISM"
+    },
+    "retries_within_phase": {
+      "value": "1 replacement worker per phase",
+      "enforcement": "execution.biuLimits maxReplacementsPerPhase",
+      "status": "ENFORCED_BY_MECHANISM"
+    },
+    "cancellation": {
+      "value": "operator stop of the active invocation",
+      "status": "AVAILABLE"
+    },
+    "tokens_and_cost": {
+      "value": "measured where the provider reports them; UNKNOWN otherwise; never zero",
+      "status": "MEASURED_NOT_CAPPED"
+    }
+  },
+  "remaining_allowance": {
+    "cycles_consumed": 0,
+    "cycles_remaining": 3
+  },
+  "escalation": {
+    "budget_exhaustion": "cycle 3 verification rejection -> HumanDecisionRequired (SF-REQ-035)",
+    "architecture_question": "Architecture Decision Required (AA A5) via Decision Inbox; branch stops",
+    "provider_capacity": "PROVIDER_CAPACITY_INTERRUPTION; one replacement worker, then hold"
+  },
+  "not_granted_here": "Release authority. Release is SWF-35 admission performed by the Director on the Project item.",
+  "provenance": {
+    "baseline_sha": "669e5f1cf8e759e1b88beacd194650ab0f6a88d8",
+    "candidate_contract_sha256": "6d90f29c820c1293954906f49e074202319260d0e96f2e2256500e67fc49f0de",
+    "candidate_ref": "docs/evidence/wave2-candidate-bius.json (WO-220304)",
+    "recorded_by": "Factory Director"
+  }
+}
