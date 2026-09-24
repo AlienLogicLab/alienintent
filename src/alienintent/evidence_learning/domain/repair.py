@@ -32,7 +32,7 @@ def evaluate_repair(prior: ProofPlan, current: ProofPlan, replay: dict[str, Repl
     preserved, superseded = [], []
     for old in prior.obligations:
         kept = current.obligation(old.obligation_id)
-        if old.obligation_id in replacements:
+        if old.obligation_id in replacements and kept is None:
             replacement = replacements[old.obligation_id].replacement_obligation_id
             if current.obligation(replacement) is None or replay.get(replacement) is not ReplayStatus.PASSED:
                 return PlanHold("REPLACEMENT_PROOF_MISSING", (old.obligation_id, replacement), required_action=RETURN_TO_REPAIR)

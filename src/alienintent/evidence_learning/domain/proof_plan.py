@@ -7,6 +7,7 @@ infeasible platform premise is the U3 InfeasibleProof, returned to source author
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 from hashlib import sha256
+from pathlib import PurePosixPath
 from typing import Callable
 
 from alienintent.evidence_learning.domain.premise import InfeasibleProof, PlatformIsolationPremise
@@ -148,14 +149,45 @@ def plan_document(plan: ProofPlan) -> dict:
             "prior_plan_digest": plan.prior_plan_digest}
 
 
+def _blank(value: object) -> bool:
+    return not isinstance(value, str) or not value.strip()
+
+
 def _missing(predicate: MappedPredicate, fields: tuple[str, ...]) -> list[str]:
-    return [f for f in fields if not isinstance(getattr(predicate, f), (str, tuple)) or not getattr(predicate, f)
-            or (isinstance(getattr(predicate, f), str) and not getattr(predicate, f).strip())]
+    """A field is missing when blank; a list field is missing when empty or when any item is blank."""
+    missing = []
+    for name in fields:
+        value = getattr(predicate, name)
+        if isinstance(value, tuple) and value and not any(_blank(v) for v in value):
+            continue
+        if not isinstance(value, tuple) and not _blank(value):
+            continue
+        missing.append(name)
+    return missing
 
 
-def _implementation_derived(source: str, roots: tuple[str, ...]) -> bool:
-    path = source.split("#", 1)[0].lstrip("./")
-    return any(path == root.rstrip("/") or path.startswith(root.rstrip("/") + "/") for root in roots)
+def _implementation_derived(source: object, roots: tuple[str, ...]) -> bool:
+    """A source must be a repository-relative authority path outside every implementation root.
+
+    Blank, absolute, escaping and locator-prefixed forms are normalized or refused, so
+    ``repository:src/x.py``, ``docs/../src/x.py`` or ``SRC/x.py`` cannot disguise code as authority.
+    """
+    if _blank(source):
+        return True
+    path = source.split("#", 1)[0].strip()
+    if path.startswith("repository:"):
+        path = path[len("repository:"):]
+    if not path or "\\" in path or "\x00" in path or ":" in path or PurePosixPath(path).is_absolute():
+        return True
+    parts: list[str] = []
+    for part in PurePosixPath(path).parts:
+        if part == "..":
+            if not parts:
+                return True  # Escapes the repository: not an authority source.
+            parts.pop()
+        elif part != ".":
+            parts.append(part)
+    return not parts or parts[0].casefold() in {r.strip("/").casefold() for r in roots}
 
 
 def derive_plan(requirement: RequirementRevision, design_ref: Ref, mapping: PredicateMapping | PlanHold | None,
@@ -168,6 +200,10 @@ def derive_plan(requirement: RequirementRevision, design_ref: Ref, mapping: Pred
         return PlanHold("MAPPING_UNAVAILABLE", ("predicate-mapping",))
     refs = (mapping.mapping_ref, mapping.review_ref)
     rid = requirement.requirement_id
+    if requirement.ref.logical_id != rid:
+        return PlanHold("REVISION_MISMATCH", (requirement.ref.logical_id,), refs)
+    if not requirement.acceptance_ids or not mapping.predicates:
+        return PlanHold("COVERAGE_HOLD", tuple(requirement.acceptance_ids) or (rid,), refs)
     if mapping.requirement_id != rid or mapping.requirement_revision != requirement.ref.revision_digest:
         return PlanHold("REVISION_MISMATCH", (mapping.requirement_id, mapping.requirement_revision), refs)
     if mapping.design_revision != design_ref.revision_digest:
@@ -215,6 +251,11 @@ def derive_plan(requirement: RequirementRevision, design_ref: Ref, mapping: Pred
                 or supersession.replacement_obligation_id not in revisions):
             return PlanHold("UNAUTHORIZED_SUPERSESSION", (supersession.prior_obligation_id,), refs)
         superseded.append(supersession)
+    # A superseded obligation must be gone: a live one is replayed, never exempted by a supersession.
+    live = [s.prior_obligation_id for s in (*(prior.superseded if prior is not None else ()), *superseded)
+            if s.prior_obligation_id in revisions or s.prior_obligation_id == s.replacement_obligation_id]
+    if live:
+        return PlanHold("INVALID_SUPERSESSION", tuple(dict.fromkeys(live)), refs)
     if prior is not None:
         if prior.requirement_id != rid:
             return PlanHold("REVISION_MISMATCH", (prior.requirement_id,), refs)

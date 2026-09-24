@@ -20,6 +20,30 @@ PLAN_EVIDENCE, HELD_EVIDENCE, PROOF_EVIDENCE = "proof.plan", "proof.plan.held", 
 _STATE_KEYS = {"schema_version", "requirement_id", "plan_ref", "plan_digest", "history"}
 
 
+def _valid_ref(value: object) -> bool:
+    try:
+        ref_from_document(value)
+    except EvidenceHold:
+        return False
+    return True
+
+
+def _valid_state(state: dict, requirement_id: str) -> bool:
+    """The pointer is exactly the latest plan event; a lost or foreign pointer is never an empty history."""
+    if type(state.get("schema_version")) is not int or state.get("schema_version") != 1 or set(state) != _STATE_KEYS \
+            or state["requirement_id"] != requirement_id or not isinstance(state["history"], list):
+        return False
+    for event in state["history"]:
+        if not isinstance(event, dict) or event.get("event") not in ("plan", "held") or not _valid_ref(event.get("ref")) \
+                or (event["event"] == "plan" and not isinstance(event.get("digest"), str)) \
+                or (event["event"] == "held" and not isinstance(event.get("reason"), str)):
+            return False
+    plans = [e for e in state["history"] if e["event"] == "plan"]
+    if not plans:
+        return state["plan_ref"] is None and state["plan_digest"] is None
+    return state["plan_ref"] == plans[-1]["ref"] and state["plan_digest"] == plans[-1]["digest"]
+
+
 class ProofPlanning:
     """ProofPlanning.derive and ProofEvidence.record for one store/profile and EvidenceRepository."""
 
@@ -38,26 +62,39 @@ class ProofPlanning:
 
     def read(self, requirement_id: str) -> tuple[int, dict]:
         version, state = self.store.read_state(self.profile, self.aggregate(requirement_id))
-        if state and (state.get("schema_version") != 1 or set(state) != _STATE_KEYS
-                      or state["requirement_id"] != requirement_id or not isinstance(state["history"], list)):
+        if state and not _valid_state(state, requirement_id):
             raise EvidenceHold("INCOMPATIBLE_PROOF_PLAN_STATE")
         return version, state
 
+    def _state(self, requirement_id: str) -> tuple[int, dict] | PlanHold:
+        try:
+            return self.read(requirement_id)
+        except EvidenceHold as hold:
+            return PlanHold(hold.reason_code, (requirement_id,), required_action="repair the operational proof-plan pointer")
+
     def current(self, requirement_id: str) -> ProofPlan | PlanHold | None:
-        _, state = self.read(requirement_id)
+        read = self._state(requirement_id)
+        if isinstance(read, PlanHold):
+            return read
+        state = read[1]
         if not state or state["plan_ref"] is None:
             return None
         return self._plan(ref_from_document(state["plan_ref"]), state["plan_digest"])
 
     def plan(self, requirement_id: str, digest: str) -> ProofPlan | PlanHold | None:
         """A retained prior plan, found through the append-only history."""
-        _, state = self.read(requirement_id)
-        entry = next((e for e in (state.get("history") or []) if e.get("event") == "plan" and e.get("digest") == digest), None)
+        read = self._state(requirement_id)
+        if isinstance(read, PlanHold):
+            return read
+        entry = next((e for e in (read[1].get("history") or []) if e["event"] == "plan" and e["digest"] == digest), None)
         return None if entry is None else self._plan(ref_from_document(entry["ref"]), digest)
 
     def derive(self, requirement: RequirementRevision, design_ref: Ref,
                expected_version: int) -> ProofPlan | PlanHold | InfeasibleProof:
-        version, state = self.read(requirement.requirement_id)
+        read = self._state(requirement.requirement_id)
+        if isinstance(read, PlanHold):
+            return read
+        version, state = read
         if version != expected_version:
             return PlanHold("STALE_INPUT", (requirement.requirement_id,), required_action="read the current version and rederive")
         prior = self.current(requirement.requirement_id)
@@ -91,7 +128,10 @@ class ProofPlanning:
                preceding: tuple[Ref, ...] = ()) -> Ref | PlanHold:
         """ProofEvidence.record: evidence identity adds candidate, fixture and invocation to the obligation."""
         requirement_id = obligation_id.split("/", 1)[0]
-        _, state = self.read(requirement_id)
+        read = self._state(requirement_id)
+        if isinstance(read, PlanHold):
+            return read
+        state = read[1]
         plan = self.current(requirement_id)
         if not isinstance(plan, ProofPlan) or plan.obligation(obligation_id) is None:
             return PlanHold("UNPLANNED_OBLIGATION", (obligation_id,), required_action="derive a plan naming this obligation first")
@@ -120,6 +160,8 @@ class ProofPlanning:
 
     def evaluate_repair(self, requirement_id: str, replay: dict[str, ReplayStatus]) -> RepairAccepted | PlanHold:
         current = self.current(requirement_id)
+        if isinstance(current, PlanHold) and current.reason_code == "INCOMPATIBLE_PROOF_PLAN_STATE":
+            return current
         if not isinstance(current, ProofPlan):
             return current if isinstance(current, PlanHold) else PlanHold("NO_CURRENT_PLAN", (requirement_id,))
         prior = None if current.prior_plan_digest is None else self.plan(requirement_id, current.prior_plan_digest)

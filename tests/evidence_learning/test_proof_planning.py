@@ -17,9 +17,9 @@ from alienintent.evidence_learning.domain.battery import ControlRun, evaluate_co
 from alienintent.evidence_learning.domain.premise import InfeasibleProof
 from alienintent.evidence_learning.domain.proof_order import ProofStep, proof_order_diagnostics
 from alienintent.evidence_learning.domain.proof_plan import (
-    MappedPredicate, PlanHold, PredicateKind, PredicateMapping, ProofPlan, RequirementRevision, derive_plan)
+    MappedPredicate, PlanHold, PredicateKind, PredicateMapping, ProofPlan, RequirementRevision, Supersession, derive_plan)
 from alienintent.evidence_learning.domain.refs import Ref
-from alienintent.evidence_learning.domain.repair import ReplayStatus
+from alienintent.evidence_learning.domain.repair import ReplayStatus, evaluate_repair
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -32,6 +32,7 @@ RETAINED = ("docs/evidence/py09b-live-checks-2026-09-21.json", "docs/evidence/py
 SPECIFICATION, DESIGN = "docs/evidence/wave2-specified-requirements.json", "docs/evidence/wave2-design-contracts.json"
 REVISION = "sha256:898c6bff3c7b2dab7257a9a416925af1034966b0e433aa6f93fe5dfe39b3c93d"
 REVIEWER, SUPERSEDER = "POSTW1-VERIFY-010", "Founder"
+REVIEW, AUTHORITY = "docs/evidence/wave2-design-verification.json", "docs/evidence/fx-u4-supersession-authority.txt"
 AC = {n: f"{REQUIREMENT}/SF-REQ-014-AC-0{n}/" for n in range(1, 5)}
 AC1, AC2, AC3 = AC[1] + "pinned-before-implementation", AC[2] + "qualified-control", AC[3] + "four-part-isolation"
 AC4, JUDGMENT = AC[4] + "judgment-attribution-and-coverage", AC[4] + "mapping-faithfulness-judgment"
@@ -57,11 +58,16 @@ def mechanical(acceptance: str, key: str, **changes) -> MappedPredicate:
 class ProofPlanDomainTests(unittest.TestCase):
     """Pure domain rules; these stay green when the composed caller is disconnected."""
 
+    def assertReason(self, result, reason, message=None):
+        """A hold is asserted as a type first, so an admitted result fails the assertion, never errors."""
+        self.assertIsInstance(result, PlanHold, message)
+        self.assertEqual(result.reason_code, reason, message)
+
     def requirement(self):
-        return RequirementRevision(REQUIREMENT, ("A1", "A2"), ref("requirement"))
+        return RequirementRevision(REQUIREMENT, ("A1", "A2"), ref(REQUIREMENT))
 
     def mapping(self, *predicates):
-        return PredicateMapping(ref("mapping"), REQUIREMENT, ref("requirement").revision_digest,
+        return PredicateMapping(ref("mapping"), REQUIREMENT, ref(REQUIREMENT).revision_digest,
                                 ref("design").revision_digest, REVIEWER, ref("review"), tuple(predicates))
 
     def derive(self, mapping, prior=None):
@@ -70,7 +76,7 @@ class ProofPlanDomainTests(unittest.TestCase):
     def test_domain_plan_links_every_obligation_to_the_requirement_revision(self):
         plan = self.derive(self.mapping(mechanical("A1", "k"), mechanical("A2", "k")))
         self.assertIsInstance(plan, ProofPlan)
-        self.assertEqual({o.requirement_revision for o in plan.obligations}, {ref("requirement").revision_digest})
+        self.assertEqual({o.requirement_revision for o in plan.obligations}, {ref(REQUIREMENT).revision_digest})
         self.assertEqual([o.obligation_id for o in plan.obligations], [f"{REQUIREMENT}/A1/k", f"{REQUIREMENT}/A2/k"])
 
     def test_obligation_revision_hashes_expected_inputs(self):
@@ -81,17 +87,55 @@ class ProofPlanDomainTests(unittest.TestCase):
 
     def test_unreviewed_mapping_and_other_design_hold(self):
         mapping = self.mapping(mechanical("A1", "k"), mechanical("A2", "k"))
-        self.assertEqual(self.derive(replace(mapping, reviewer="PRODUCER")).reason_code, "UNREVIEWED_MAPPING")
-        self.assertEqual(self.derive(replace(mapping, design_revision=ref("x").revision_digest)).reason_code, "DESIGN_MISMATCH")
-        self.assertEqual(self.derive(self.mapping(mechanical("A1", "k"), mechanical("A9", "k"))).reason_code, "UNKNOWN_ACCEPTANCE")
-        self.assertEqual(self.derive(self.mapping(mechanical("A1", "k"), mechanical("A1", "k"), mechanical("A2", "k"))).reason_code,
-                         "DUPLICATE_OBLIGATION")
+        self.assertReason(self.derive(replace(mapping, reviewer="PRODUCER")), "UNREVIEWED_MAPPING")
+        self.assertReason(self.derive(replace(mapping, design_revision=ref("x").revision_digest)), "DESIGN_MISMATCH")
+        self.assertReason(self.derive(self.mapping(mechanical("A1", "k"), mechanical("A9", "k"))), "UNKNOWN_ACCEPTANCE")
+        self.assertReason(self.derive(self.mapping(mechanical("A1", "k"), mechanical("A1", "k"), mechanical("A2", "k"))),
+                          "DUPLICATE_OBLIGATION")
+
+    def test_disguised_implementation_sources_are_circular(self):
+        for source in ("", " ", "repository:src/x.py", "docs/../src/x.py", "/repo/src/x.py", "SRC/x.py",
+                       "./tests/t.py#L1", "../outside.md"):
+            result = self.derive(self.mapping(mechanical("A1", "k", derived_from=(source,)), mechanical("A2", "k")))
+            self.assertIsInstance(result, PlanHold, source)
+            self.assertEqual(result.reason_code, "CIRCULAR_ORACLE", source)
+        plan = self.derive(self.mapping(mechanical("A1", "k", derived_from=("repository:docs/spec.md#A1",)), mechanical("A2", "k")))
+        self.assertIsInstance(plan, ProofPlan)
+
+    def test_blank_list_items_are_incomplete(self):
+        for change in ({"inputs": ("",)}, {"evidence_schema": (" ",)}):
+            result = self.derive(self.mapping(mechanical("A1", "k", **change), mechanical("A2", "k")))
+            self.assertReason(result, "INCOMPLETE_OBLIGATION", change)
+        judgment = MappedPredicate("A2", "j", PredicateKind.JUDGMENT, "statement", ("docs/spec.md",), reviewer="JC",
+                                   inspection_inputs=("",), decision_record="record")
+        self.assertReason(self.derive(self.mapping(mechanical("A1", "k"), judgment)), "UNATTRIBUTED_JUDGMENT")
+
+    def test_supersession_of_a_live_obligation_is_invalid(self):
+        prior = self.derive(self.mapping(mechanical("A1", "k"), mechanical("A2", "k")))
+        live = Supersession(f"{REQUIREMENT}/A1/k", f"{REQUIREMENT}/A2/k", SUPERSEDER, ref("authority"), "r")
+        itself = Supersession(f"{REQUIREMENT}/A1/k", f"{REQUIREMENT}/A1/k", SUPERSEDER, ref("authority"), "r")
+        for supersession in (live, itself):
+            mapping = replace(self.mapping(mechanical("A1", "k"), mechanical("A2", "k")), supersessions=(supersession,))
+            self.assertReason(self.derive(mapping, prior), "INVALID_SUPERSESSION")
+
+    def test_live_obligation_is_replayed_even_if_named_superseded(self):
+        prior = self.derive(self.mapping(mechanical("A1", "k"), mechanical("A2", "k")))
+        live = Supersession(f"{REQUIREMENT}/A1/k", f"{REQUIREMENT}/A2/k", SUPERSEDER, ref("authority"), "r")
+        current = replace(self.derive(self.mapping(mechanical("A1", "k"), mechanical("A2", "k")), prior), superseded=(live,))
+        replay = {f"{REQUIREMENT}/A1/k": ReplayStatus.FAILED, f"{REQUIREMENT}/A2/k": ReplayStatus.PASSED}
+        self.assertReason(evaluate_repair(prior, current, replay), "PRIOR_PROOF_FAILED")
+
+    def test_requirement_without_acceptance_or_predicates_is_not_a_plan(self):
+        empty = RequirementRevision(REQUIREMENT, (), ref(REQUIREMENT))
+        result = derive_plan(empty, ref("design"), self.mapping(), None, None, REVIEWER, SUPERSEDER, ("src",))
+        self.assertIsInstance(result, PlanHold)
+        self.assertEqual(result.reason_code, "COVERAGE_HOLD")
 
     def test_isolation_predicate_without_premise_reader_holds(self):
         isolation = mechanical("A2", "iso", kind=PredicateKind.PLATFORM_ISOLATION, premise_id="p",
                                premise_observables=("POSITIVE_TARGET_ACCESS",))
         result = self.derive(self.mapping(mechanical("A1", "k"), isolation))
-        self.assertEqual(result.reason_code, "PREMISE_EVIDENCE_UNAVAILABLE")
+        self.assertReason(result, "PREMISE_EVIDENCE_UNAVAILABLE")
 
     def test_battery_qualifies_a_discriminating_kill(self):
         verdict = evaluate_control("o", "g", "test_a", (run("intact"), run("fault", 1, 1, ["test_a"]), run("restored")))
@@ -99,9 +143,10 @@ class ProofPlanDomainTests(unittest.TestCase):
         self.assertEqual(verdict.reason, "QUALIFIED_KILL")
 
     def test_battery_refuses_unconditional_success(self):
-        verdict = evaluate_control("o", "g", "test_a", (run("intact"), run("fault", 0, 1), run("restored")))
-        self.assertEqual(verdict.reason, "UNCONDITIONAL_SUCCESS")
-        self.assertFalse(verdict.qualified)
+        for fault in (run("fault", 0, 1), run("fault", 0, 1, ["test_a"])):
+            verdict = evaluate_control("o", "g", "test_a", (run("intact"), fault, run("restored")))
+            self.assertEqual(verdict.reason, "UNCONDITIONAL_SUCCESS")
+            self.assertFalse(verdict.qualified)
 
     def test_battery_refuses_zero_application(self):
         verdict = evaluate_control("o", "g", "test_a", (run("intact"), run("fault", 1, 0, ["test_a"]), run("restored")))
@@ -115,7 +160,8 @@ class ProofPlanDomainTests(unittest.TestCase):
             self.assertFalse(verdict.qualified)
 
     def test_battery_refuses_unrelated_failure(self):
-        for fault in (run("fault", None, 1), run("fault", 1, 1, ["test_a"], ["ImportError"]), run("fault", 1, 1, ["test_b"])):
+        for fault in (run("fault", None, 1), run("fault", None, 1, ["test_a"]),
+                      run("fault", 1, 1, ["test_a"], ["ImportError"]), run("fault", 1, 1, ["test_b"])):
             verdict = evaluate_control("o", "g", "test_a", (run("intact"), fault, run("restored")))
             self.assertEqual(verdict.reason, "UNRELATED_FAILURE")
             self.assertFalse(verdict.qualified)
@@ -157,9 +203,10 @@ class ProofPlanningTests(unittest.TestCase):
         self.tmp = Path(tempfile.mkdtemp(prefix="fx-u4-"))
         self.addCleanup(shutil.rmtree, self.tmp)
         self.root, self.state = self.tmp / "retained", self.tmp / "state"
-        for path in (MAPPING, PREMISE_MAPPING, *RETAINED):
+        for path in (MAPPING, PREMISE_MAPPING, REVIEW, *RETAINED):
             (self.root / path).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / path, self.root / path)
+        (self.root / AUTHORITY).write_bytes(b"Fixture supersession decision by Founder for FX-U4 repair tests.\n")
         self.mapping_sha256 = MAPPING_SHA256
         self.state.mkdir()
 
@@ -286,7 +333,8 @@ class ProofPlanningTests(unittest.TestCase):
                                                                            expected="revised expected result")
             mapping["supersessions"].append({"prior_obligation_id": AC1, "replacement_obligation_id": AC1 + "-r2",
                                              "authorized_by": authorized_by, "reason": "authoritative predicate revision",
-                                             "authority": {"path": MAPPING, "sha256": "2" * 64}})
+                                             "authority": {"path": AUTHORITY, "sha256": sha256(
+                                                 (self.root / AUTHORITY).read_bytes()).hexdigest()}})
         self.remap(change)
 
     def test_unauthorized_supersession_holds(self):
@@ -378,12 +426,60 @@ class ProofPlanningTests(unittest.TestCase):
             self.remap(change)
             self.assertHold(self.derive(), "MAPPING_UNAVAILABLE")
 
+    def test_malformed_supersession_or_authority_holds_without_raising(self):
+        self.derive()
+        cases = (lambda s: s.update(replacement_obligation_id=["x"]), lambda s: s.update(prior_obligation_id={"a": 1}),
+                 lambda s: s.update(authorized_by=""), lambda s: s["authority"].update(sha256="2" * 64))
+        for case in cases:
+            self.supersede()
+            self.remap(lambda m: case(m["supersessions"][-1]))
+            self.assertHold(self.derive(), "MAPPING_UNAVAILABLE")
+            self.remap(lambda m: (m["supersessions"].clear(), self.predicate(m, "pinned-before-implementation-r2").update(
+                predicate_key="pinned-before-implementation", expected=json.loads(
+                    (ROOT / MAPPING).read_text())["predicates"][0]["expected"])))
+        self.assertIsInstance(self.derive(), ProofPlan)
+
+    def test_review_record_digest_and_schema_version_are_checked(self):
+        self.remap(lambda m: m["review"].update(sha256="5" * 64))
+        self.assertHold(self.derive(), "MAPPING_UNAVAILABLE")
+        self.setUp()
+        self.remap(lambda m: m.update(schema_version=True))
+        self.assertHold(self.derive(), "MAPPING_UNAVAILABLE")
+
+    def test_malformed_persisted_state_is_a_hold_not_an_exception(self):
+        plan = self.derive()
+        self.derive()
+        proofs = self.profile().proofs
+        version, state = proofs.read(REQUIREMENT)
+        for broken in ({**state, "plan_ref": "x"}, {**state, "plan_ref": {"project": PROJECT}},
+                       {**state, "history": ["junk", *state["history"]]}, {**state, "plan_ref": None, "plan_digest": None}):
+            proofs.store.commit(PROFILE, proofs.aggregate(REQUIREMENT), version, broken)
+            version += 1
+            self.assertHold(proofs.current(REQUIREMENT), "INCOMPATIBLE_PROOF_PLAN_STATE")
+            self.assertHold(proofs.evaluate_repair(REQUIREMENT, {}), "INCOMPATIBLE_PROOF_PLAN_STATE")
+            requirement = retained_requirement_revision(ROOT, SPECIFICATION, REQUIREMENT, PROJECT, PROFILE)
+            self.assertHold(proofs.derive(requirement, retained_design_ref(ROOT, DESIGN, REQUIREMENT, PROJECT, PROFILE), version),
+                            "INCOMPATIBLE_PROOF_PLAN_STATE")
+            self.assertHold(proofs.record(AC2, ref("candidate"), "sha256:" + "3" * 64, "i", "e", "o", 0,
+                                          control="c", phase="intact"), "INCOMPATIBLE_PROOF_PLAN_STATE")
+        self.assertIsInstance(plan, ProofPlan)
+
+    def test_lost_plan_pointer_is_not_an_empty_history(self):
+        self.derive()
+        proofs = self.profile().proofs
+        version, state = proofs.read(REQUIREMENT)
+        proofs.store.commit(PROFILE, proofs.aggregate(REQUIREMENT), version, {**state, "plan_ref": None, "plan_digest": None})
+        # Losing the pointer must not let the next derivation skip every prior-obligation check.
+        self.assertHold(proofs.current(REQUIREMENT), "INCOMPATIBLE_PROOF_PLAN_STATE")
+
     def test_tampered_persisted_plan_is_refused(self):
         self.derive()
         profile = self.profile()
         version, state = profile.proofs.read(REQUIREMENT)
+        forged = "sha256:" + "4" * 64  # A consistent pointer and history that no retained plan body matches.
+        history = [*state["history"][:-1], {**state["history"][-1], "digest": forged}]
         profile.proofs.store.commit(PROFILE, profile.proofs.aggregate(REQUIREMENT), version,
-                                    {**state, "plan_digest": "sha256:" + "4" * 64})
+                                    {**state, "plan_digest": forged, "history": history})
         self.assertHold(self.profile().proofs.current(REQUIREMENT), "PERSISTED_PLAN_INVALID")
 
     def test_proof_modules_import_no_installation_composition_or_context_assembly(self):

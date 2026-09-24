@@ -51,6 +51,7 @@ COMPOSED, UNIT = "ProofPlanningTests", "ProofPlanDomainTests"
 AC = {n: f"{REQUIREMENT}/SF-REQ-014-AC-0{n}/" for n in range(1, 5)}
 AC1, AC2, AC3 = AC[1] + "pinned-before-implementation", AC[2] + "qualified-control", AC[3] + "four-part-isolation"
 AC4 = AC[4] + "judgment-attribution-and-coverage"
+SERVICE_MODULE = "src/alienintent/evidence_learning/application/proof_planning_service.py"
 PASSED_REPLAY = "elif replay.get(old.obligation_id) is not ReplayStatus.PASSED:"
 # (control, enforcement, obligation, file, old, new, test class, test)
 CONTROLS = [
@@ -107,6 +108,23 @@ CONTROLS = [
     ("prior-proof-drop-accepted", "014-repair-preservation", AC4, REPAIR, PASSED_REPLAY,
      "elif replay.get(old.obligation_id) not in (ReplayStatus.PASSED, None):",
      COMPOSED, "test_dropped_prior_proof_is_rejected"),
+    # Revision 1: controls for the independent-review repairs.
+    ("path-normalization-removed", "AC-02", AC2, DOMAIN, '        if part == "..":\n', "        if False:\n",
+     UNIT, "test_disguised_implementation_sources_are_circular"),
+    ("blank-list-items-accepted", "AC-01", AC1, DOMAIN,
+     "if isinstance(value, tuple) and value and not any(_blank(v) for v in value):",
+     "if isinstance(value, tuple) and value:", UNIT, "test_blank_list_items_are_incomplete"),
+    ("live-supersession-accepted", "014-repair-preservation", AC4, DOMAIN, "    if live:\n", "    if False:\n",
+     UNIT, "test_supersession_of_a_live_obligation_is_invalid"),
+    ("live-obligation-exempted", "014-repair-preservation", AC4, REPAIR,
+     "if old.obligation_id in replacements and kept is None:", "if old.obligation_id in replacements:",
+     UNIT, "test_live_obligation_is_replayed_even_if_named_superseded"),
+    ("authority-digest-unchecked", "AC-04", AC4, ADAPTER,
+     'return body is not None and sha256(body).hexdigest() == record["sha256"]', "return True",
+     COMPOSED, "test_review_record_digest_and_schema_version_are_checked"),
+    ("pointer-consistency-removed", "014-repair-preservation", AC4, SERVICE_MODULE,
+     'return state["plan_ref"] == plans[-1]["ref"] and state["plan_digest"] == plans[-1]["digest"]', "return True",
+     COMPOSED, "test_lost_plan_pointer_is_not_an_empty_history"),
 ]
 _OUTCOME = re.compile(r"^(FAIL|ERROR): (\w+) \(", re.MULTILINE)
 
@@ -178,7 +196,7 @@ def main():
         root = Path(tmp)
         shutil.copytree(ROOT / "src", root / "src", ignore=shutil.ignore_patterns("__pycache__"))
         shutil.copytree(ROOT / "tests", root / "tests", ignore=shutil.ignore_patterns("__pycache__"))
-        for path in (MAPPING, PREMISE_MAPPING, SPECIFICATION, DESIGN, *RETAINED):
+        for path in (MAPPING, PREMISE_MAPPING, SPECIFICATION, DESIGN, "docs/evidence/wave2-design-verification.json", *RETAINED):
             (root / path).parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(ROOT / path, root / path)
         for control, enforcement, obligation, path, old, new, test_class, test in CONTROLS:

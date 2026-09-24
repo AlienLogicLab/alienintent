@@ -63,7 +63,8 @@ class RetainedPredicateMapping(PredicateMappingSource):
             return unavailable("schema")
 
     def _mapping(self, document: object, mapping_ref: Ref, requirement_id: str) -> PredicateMapping | None:
-        if document is _ABSENT or not isinstance(document, dict) or document.get("schema_version") != 1 \
+        if document is _ABSENT or not isinstance(document, dict) or type(document.get("schema_version")) is not int \
+                or document.get("schema_version") != 1 \
                 or document.get("record_kind") != "ProofPredicateMapping":
             return None
         requirement, design, review = document.get("requirement"), document.get("design"), document.get("review")
@@ -73,7 +74,7 @@ class RetainedPredicateMapping(PredicateMappingSource):
         if not all(isinstance(requirement.get(k), str) for k in ("requirement_id", "revision_digest")) \
                 or not isinstance(review.get("reviewer"), str):
             return None
-        if not _digest(design.get("sha256")) or not _digest(review.get("sha256")) or not _repository_path(review.get("path")):
+        if not _digest(design.get("sha256")) or not self._pinned(review):
             return None
         predicates = [_predicate(p) for p in document.get("predicates") or []]
         if not predicates or any(p is None for p in predicates) or not isinstance(document.get("supersessions"), list):
@@ -84,7 +85,9 @@ class RetainedPredicateMapping(PredicateMappingSource):
                                                              "authorized_by", "authority", "reason"}:
                 return None
             authority = entry["authority"]
-            if not isinstance(authority, dict) or not _repository_path(authority.get("path")) or not _digest(authority.get("sha256")):
+            if not self._pinned(authority) or any(
+                    not isinstance(entry[k], str) or not entry[k].strip()
+                    for k in ("prior_obligation_id", "replacement_obligation_id", "authorized_by", "reason")):
                 return None
             supersessions.append(Supersession(entry["prior_obligation_id"], entry["replacement_obligation_id"],
                                               entry["authorized_by"],
@@ -96,6 +99,14 @@ class RetainedPredicateMapping(PredicateMappingSource):
         return PredicateMapping(mapping_ref, requirement["requirement_id"], requirement["revision_digest"],
                                 "sha256:" + design["sha256"], review["reviewer"], review_ref, tuple(predicates),
                                 tuple(supersessions))
+
+
+    def _pinned(self, record: object) -> bool:
+        """A cited authority record must exist in the repository with exactly the pinned digest."""
+        if not isinstance(record, dict) or not _repository_path(record.get("path")) or not _digest(record.get("sha256")):
+            return False
+        body = _read_retained(self._root, record["path"])
+        return body is not None and sha256(body).hexdigest() == record["sha256"]
 
 
 def retained_requirement_revision(repository_root: Path, path: str, requirement_id: str, project: str,
