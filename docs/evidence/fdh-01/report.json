@@ -1,0 +1,2778 @@
+{
+  "schema_version": 1,
+  "fixture": "FDH-01",
+  "baseline": "70fa7148939dfcebbcef73d858f9f481869d7214",
+  "invocation": "AlienLogicLab/alienintent#89:PRODUCER:27e3cc45-3fb2-4c15-8270-6e7f0ac58238",
+  "candidate_revision": "efb0bdb7a213a8218b986d5c7322e10e1937b7f3",
+  "contract_sha256": "01a0ab5961dd5877531c4527620c2f2b905763f454af7dbdefb5d29ba24187d1",
+  "implementation_files": {
+    "tools/orchestration/factory_director_inputs.py": "9244c003c3cfc3da94c9b22b18e0f2154a22cd3676d7d008bfd425a97d49b1df",
+    "tools/orchestration/factory_director_host.py": "1b0da4b10a39e0fc0aa61a4f66232a014b8fc7d453f58175535fbb290d19ea83",
+    "tools/orchestration/test_factory_director_inputs.py": "e9e8bace33b7daeb7d580c5f64d35987b2f54b9c5a45be5d5432699929df3a83",
+    "tools/orchestration/test_factory_director_host.py": "3b4882bfe7734a0d7ab81f4251acd7d09033277b1852969e23857c59d8e95dca",
+    "tools/orchestration/test_factory_director_docs.py": "becccf0934b07169b4851753d1495b93685709eac4f0e74aff58455e67fdc147",
+    "docs/operations/factory-director-runtime-contract.md": "783880295b8016a8ee12d758524a14cf784ed41dabf505168af29168fd0bcecb",
+    "docs/operations/factory-director-host-live-proof.md": "d557f7ae86b47c37e49eb715bcc713b362584f995ac4cc289a8e592af839a6bb",
+    "tools/orchestration/factory-director-episode.md": "b840387014f94236ab4f0b00c0dde59ac3b5d1a9d872515f0695997c6bff3cec"
+  },
+  "tokens": null,
+  "cost": null,
+  "measurement_reason": "UNKNOWN: invocation billing telemetry unavailable to the worker",
+  "controls": [
+    {
+      "control": "board-read-failure-swallowed",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-incomplete]",
+      "discriminated": true
+    },
+    {
+      "control": "non-issue-item-ignored",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-non-issue-item]",
+      "discriminated": true
+    },
+    {
+      "control": "state-file-missing-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-missing]",
+      "discriminated": true
+    },
+    {
+      "control": "state-file-unparsable-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-unparsable]",
+      "discriminated": true
+    },
+    {
+      "control": "hold-record-absent-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-absent]",
+      "discriminated": true
+    },
+    {
+      "control": "hold-record-unparsable-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-unparsable]",
+      "discriminated": true
+    },
+    {
+      "control": "inbox-absent-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[inbox-directory-absent]",
+      "discriminated": true
+    },
+    {
+      "control": "hold-idles-everything",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_hold_on_some_ready_items_does_not_idle_while_another_ready_item_is_unheld",
+      "discriminated": true
+    },
+    {
+      "control": "hold-covers-ready-only",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_held_unclaimed_implement_issue_does_not_make_control_required",
+      "discriminated": true
+    },
+    {
+      "control": "inbox-receipts-ignored",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it",
+      "discriminated": true
+    },
+    {
+      "control": "successor-reuses-episode-id",
+      "test": "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles",
+      "discriminated": true
+    },
+    {
+      "control": "full-wip-suppresses-director-control",
+      "test": "tools/orchestration/test_factory_director_host.py::test_director_only_control_launches_even_when_worker_wip_is_full",
+      "discriminated": true
+    },
+    {
+      "control": "claude-session-continued",
+      "test": "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[claude]",
+      "discriminated": true
+    },
+    {
+      "control": "codex-session-persisted",
+      "test": "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[codex]",
+      "discriminated": true
+    },
+    {
+      "control": "isolation-check-disabled",
+      "test": "tools/orchestration/test_factory_director_host.py::test_launcher_refuses_a_workdir_that_is_not_a_linked_worktree",
+      "discriminated": true
+    },
+    {
+      "control": "provider-model-not-recorded",
+      "test": "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles",
+      "discriminated": true
+    },
+    {
+      "control": "escalation-receipt-ignored",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_escalation_is_resolved_by_a_director_receipt_for_that_exact_escalation",
+      "discriminated": true
+    },
+    {
+      "control": "assessment-provenance-ignored",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_assessment_marker_counts_only_from_an_authorized_operator",
+      "discriminated": true
+    },
+    {
+      "control": "foreign-repository-item-accepted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_other_inconsistent_sources_also_fail_closed[foreign-repository-item]",
+      "discriminated": true
+    },
+    {
+      "control": "unreadable-pause-means-unpaused",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_unreadable_pause_location_fails_closed_rather_than_unpaused",
+      "discriminated": true
+    },
+    {
+      "control": "crash-loop-guard-removed",
+      "test": "tools/orchestration/test_factory_director_host.py::test_repeated_fast_exits_back_off_instead_of_relaunching_every_second",
+      "discriminated": true
+    },
+    {
+      "control": "unleased-child-kept",
+      "test": "tools/orchestration/test_factory_director_host.py::test_pre_bind_launch_failure_kills_the_child_and_does_not_block_later_launches",
+      "discriminated": true
+    },
+    {
+      "control": "done-escalation-still-attention",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_escalation_for_an_issue_that_reached_done_is_resolved",
+      "discriminated": true
+    },
+    {
+      "control": "foreign-editor-trusted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_operator_comment_edited_by_someone_else_is_ignored",
+      "discriminated": true
+    },
+    {
+      "control": "streak-survives-idle",
+      "test": "tools/orchestration/test_factory_director_host.py::test_failure_streak_resets_when_the_factory_goes_idle",
+      "discriminated": true
+    },
+    {
+      "control": "progress-counted-as-crash",
+      "test": "tools/orchestration/test_factory_director_host.py::test_short_clean_episodes_that_changed_state_are_not_crashes",
+      "discriminated": true
+    },
+    {
+      "control": "launch-failure-not-counted",
+      "test": "tools/orchestration/test_factory_director_host.py::test_repeated_launch_failures_back_off",
+      "discriminated": true
+    },
+    {
+      "control": "late-exit-unrecorded",
+      "test": "tools/orchestration/test_factory_director_host.py::test_an_exit_between_observation_and_lease_check_is_still_recorded_and_counted",
+      "discriminated": true
+    },
+    {
+      "control": "projection-used-as-progress",
+      "test": "tools/orchestration/test_factory_director_host.py::test_short_episodes_that_advance_durable_state_under_the_same_projection_are_progress",
+      "discriminated": true
+    },
+    {
+      "control": "brief-idle-cancels-back-off",
+      "test": "tools/orchestration/test_factory_director_host.py::test_a_brief_idle_does_not_cancel_a_pending_back_off",
+      "discriminated": true
+    },
+    {
+      "control": "unknown-editor-trusted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_edited_comment_with_an_unknown_editor_is_ignored",
+      "discriminated": true
+    },
+    {
+      "control": "permission-mode-unchecked",
+      "test": "tools/orchestration/test_factory_director_host.py::test_permission_mode_must_belong_to_the_configured_provider[codex-bypassPermissions]",
+      "discriminated": true
+    }
+  ],
+  "observations": [
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "board-read-failure-swallowed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-incomplete]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "board-read-failure-swallowed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "board-read-failure-swallowed/intact",
+        "revision_digest": "sha256:8fec34ad49675b7b44c785bc888d2aa313190e5adfa50d2faee5aaa9bfdefc18",
+        "locator": "objects/8fec34ad49675b7b44c785bc888d2aa313190e5adfa50d2faee5aaa9bfdefc18"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "board-read-failure-swallowed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-incomplete]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "3af61e23e6fa50c29b14cbfbca6eee1ae5495555ec319a40c966e5718595f2d5",
+      "raw_output": "board-read-failure-swallowed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "board-read-failure-swallowed/fault",
+        "revision_digest": "sha256:05b3faa9cb1070a3e361ac23a33efdbe4b147f5a1efb089592d0b651338db9b1",
+        "locator": "objects/05b3faa9cb1070a3e361ac23a33efdbe4b147f5a1efb089592d0b651338db9b1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "board-read-failure-swallowed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-incomplete]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "4e8b6c5a89da44bf05d17100903172be04033067c113a6831bdfafbd42b7da52",
+      "raw_output": "board-read-failure-swallowed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "board-read-failure-swallowed/restored",
+        "revision_digest": "sha256:909956418a77bdc9b43daec7ee0797869d5e1b8eb2264d1a1e0443d464273927",
+        "locator": "objects/909956418a77bdc9b43daec7ee0797869d5e1b8eb2264d1a1e0443d464273927"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "non-issue-item-ignored",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-non-issue-item]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "4e8b6c5a89da44bf05d17100903172be04033067c113a6831bdfafbd42b7da52",
+      "raw_output": "non-issue-item-ignored-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "non-issue-item-ignored/intact",
+        "revision_digest": "sha256:11890fff2914b2529b45cbb3f765d5fb62aef66bd8f0606595f99817035b73ff",
+        "locator": "objects/11890fff2914b2529b45cbb3f765d5fb62aef66bd8f0606595f99817035b73ff"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "non-issue-item-ignored",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-non-issue-item]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "6ea4e7aeb53f1d4e08a0adf8080c0623e891b2f91646c5d75814b3aea57aeccd",
+      "raw_output": "non-issue-item-ignored-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "non-issue-item-ignored/fault",
+        "revision_digest": "sha256:eff8119038b26d09d579143314998c938a3459a508995e23bfe829a2180dddc9",
+        "locator": "objects/eff8119038b26d09d579143314998c938a3459a508995e23bfe829a2180dddc9"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "non-issue-item-ignored",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-non-issue-item]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "non-issue-item-ignored-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "non-issue-item-ignored/restored",
+        "revision_digest": "sha256:595fc0ea33f5c21cda3c2407e8500ef1b54310c97a1638b76215b1675503adaa",
+        "locator": "objects/595fc0ea33f5c21cda3c2407e8500ef1b54310c97a1638b76215b1675503adaa"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "state-file-missing-defaulted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-missing]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "state-file-missing-defaulted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "state-file-missing-defaulted/intact",
+        "revision_digest": "sha256:cf96bb1219f03b446508e6c5566e8e2e10605213f33e503357e16249cbb820b4",
+        "locator": "objects/cf96bb1219f03b446508e6c5566e8e2e10605213f33e503357e16249cbb820b4"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "state-file-missing-defaulted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-missing]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "b142d25284db728b21501cc50872228a8d9edd20307162313c8cf605755e72cd",
+      "raw_output": "state-file-missing-defaulted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "state-file-missing-defaulted/fault",
+        "revision_digest": "sha256:14c471fd999a0136fe02548971f1c7373fa6e2811fdb0d7f7d4d371f52c7ebc4",
+        "locator": "objects/14c471fd999a0136fe02548971f1c7373fa6e2811fdb0d7f7d4d371f52c7ebc4"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "state-file-missing-defaulted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-missing]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "state-file-missing-defaulted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "state-file-missing-defaulted/restored",
+        "revision_digest": "sha256:90e6c3272b3c3579b2aedfed752bbe41ea3f4801e127c04aa1c512094a500623",
+        "locator": "objects/90e6c3272b3c3579b2aedfed752bbe41ea3f4801e127c04aa1c512094a500623"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "state-file-unparsable-defaulted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-unparsable]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e596cce97643441f2f2c7ef01ee068b6705ce1e028a07a32ba3bd3b3d35d7353",
+      "raw_output": "state-file-unparsable-defaulted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "state-file-unparsable-defaulted/intact",
+        "revision_digest": "sha256:028778e4215779a096bea543ae5fddcc7884929a3c1885d61a4c10b2c37dee1e",
+        "locator": "objects/028778e4215779a096bea543ae5fddcc7884929a3c1885d61a4c10b2c37dee1e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "state-file-unparsable-defaulted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-unparsable]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "a074b5fecc630dbdfcdfcb3aa650f88241e7ee4bfcb6c59eaca6f6035fe3ca68",
+      "raw_output": "state-file-unparsable-defaulted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "state-file-unparsable-defaulted/fault",
+        "revision_digest": "sha256:622a05c22cec1c74385fdf01fa25d457c97c9a281a568950fc7a559746ec8196",
+        "locator": "objects/622a05c22cec1c74385fdf01fa25d457c97c9a281a568950fc7a559746ec8196"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "state-file-unparsable-defaulted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-unparsable]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "state-file-unparsable-defaulted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "state-file-unparsable-defaulted/restored",
+        "revision_digest": "sha256:93607ba35947a9ecded40825d3a00711f9126d80f5bab45901e086cddef3ead3",
+        "locator": "objects/93607ba35947a9ecded40825d3a00711f9126d80f5bab45901e086cddef3ead3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-record-absent-defaulted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-absent]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "hold-record-absent-defaulted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-record-absent-defaulted/intact",
+        "revision_digest": "sha256:1d1d054a9716eff972017f35fe1346a2a83823c8cdc83504d3e35341059cb6c1",
+        "locator": "objects/1d1d054a9716eff972017f35fe1346a2a83823c8cdc83504d3e35341059cb6c1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-record-absent-defaulted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-absent]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "40e85548ec278dc31e8e600ca21b748d5f801d5256d4d17ebdbaa8ace621550f",
+      "raw_output": "hold-record-absent-defaulted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-record-absent-defaulted/fault",
+        "revision_digest": "sha256:f6ebb69dcca43bbae909cdae66d084ea341fdcaa0072494ce5d43efbf4f23057",
+        "locator": "objects/f6ebb69dcca43bbae909cdae66d084ea341fdcaa0072494ce5d43efbf4f23057"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-record-absent-defaulted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-absent]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "hold-record-absent-defaulted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-record-absent-defaulted/restored",
+        "revision_digest": "sha256:707c33552c3e8be08dceea406d9b941e2bd19d019c42e016be3e61198e2dfa66",
+        "locator": "objects/707c33552c3e8be08dceea406d9b941e2bd19d019c42e016be3e61198e2dfa66"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-record-unparsable-defaulted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-unparsable]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "hold-record-unparsable-defaulted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-record-unparsable-defaulted/intact",
+        "revision_digest": "sha256:5aeb0ef9882f44282d8858e6317a19bf223896689783a906a01d91f54cc39da0",
+        "locator": "objects/5aeb0ef9882f44282d8858e6317a19bf223896689783a906a01d91f54cc39da0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-record-unparsable-defaulted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-unparsable]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "67596d90ec2386ee4e3bf2f5fee6b0c32769fff60fd642d9178fad2667c1fc6f",
+      "raw_output": "hold-record-unparsable-defaulted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-record-unparsable-defaulted/fault",
+        "revision_digest": "sha256:3b889e0a16197483576a914f4f72340f11cdddaf2522f34f5c2b4df7a5eb8c1a",
+        "locator": "objects/3b889e0a16197483576a914f4f72340f11cdddaf2522f34f5c2b4df7a5eb8c1a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-record-unparsable-defaulted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-unparsable]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "016a4093788648644b08006f7d1d171ca7639313677f5aa929f004d4a3e52465",
+      "raw_output": "hold-record-unparsable-defaulted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-record-unparsable-defaulted/restored",
+        "revision_digest": "sha256:42b7ae4c4aff30c313fc96c8d1fe26475056047803efcb785d0503c75f618cac",
+        "locator": "objects/42b7ae4c4aff30c313fc96c8d1fe26475056047803efcb785d0503c75f618cac"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "inbox-absent-defaulted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[inbox-directory-absent]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "inbox-absent-defaulted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "inbox-absent-defaulted/intact",
+        "revision_digest": "sha256:68ba6fb6b657fd5a3d1f16b30333470fca380a248d2cfca034b3deda368c1273",
+        "locator": "objects/68ba6fb6b657fd5a3d1f16b30333470fca380a248d2cfca034b3deda368c1273"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "inbox-absent-defaulted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[inbox-directory-absent]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "474fcc2fbfeaab89d404fb3736468323c4437093907f6136098ed4241e1dfa06",
+      "raw_output": "inbox-absent-defaulted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "inbox-absent-defaulted/fault",
+        "revision_digest": "sha256:c37fd66e458a81d91c582d7e504ed928612326fbb5a8b21edf77820cad23732a",
+        "locator": "objects/c37fd66e458a81d91c582d7e504ed928612326fbb5a8b21edf77820cad23732a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "inbox-absent-defaulted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[inbox-directory-absent]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "inbox-absent-defaulted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "inbox-absent-defaulted/restored",
+        "revision_digest": "sha256:9897951d79c185274134cc77aeafd03280a41abc25647b5122a6532dc5930957",
+        "locator": "objects/9897951d79c185274134cc77aeafd03280a41abc25647b5122a6532dc5930957"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-idles-everything",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_hold_on_some_ready_items_does_not_idle_while_another_ready_item_is_unheld"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "hold-idles-everything-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-idles-everything/intact",
+        "revision_digest": "sha256:d81fef49dd4e5a88d9854d2b526465a261482518ad96091f180446cd2e0d7725",
+        "locator": "objects/d81fef49dd4e5a88d9854d2b526465a261482518ad96091f180446cd2e0d7725"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-idles-everything",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_hold_on_some_ready_items_does_not_idle_while_another_ready_item_is_unheld"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "9a3affe7b2e69251e5b2ce0d3233f50474fbd04ede4ba8e76c9afba327ec6aaa",
+      "raw_output": "hold-idles-everything-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-idles-everything/fault",
+        "revision_digest": "sha256:6b8759e0b6987d60b762d6d9a63f47345a242dfe645e0a052053299e5548de4c",
+        "locator": "objects/6b8759e0b6987d60b762d6d9a63f47345a242dfe645e0a052053299e5548de4c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-idles-everything",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_hold_on_some_ready_items_does_not_idle_while_another_ready_item_is_unheld"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "hold-idles-everything-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-idles-everything/restored",
+        "revision_digest": "sha256:6c0c4a2eb0d76264d76f367370a1bf0110c0e8efdf1eec54820355881589af40",
+        "locator": "objects/6c0c4a2eb0d76264d76f367370a1bf0110c0e8efdf1eec54820355881589af40"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-covers-ready-only",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_held_unclaimed_implement_issue_does_not_make_control_required"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "hold-covers-ready-only-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-covers-ready-only/intact",
+        "revision_digest": "sha256:b604f1a070cb2873f323779145c7f0d8bddaf5119257c3c0862dde60e08fe05d",
+        "locator": "objects/b604f1a070cb2873f323779145c7f0d8bddaf5119257c3c0862dde60e08fe05d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-covers-ready-only",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_held_unclaimed_implement_issue_does_not_make_control_required"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "548d64bdeddfe1ef9d89bc37951afddb38b2b9b6e4ef06bfe7035e69e45823da",
+      "raw_output": "hold-covers-ready-only-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-covers-ready-only/fault",
+        "revision_digest": "sha256:fa83de841464359c9bc5bdba6404d3c02a0561828232b8df62afc0d73f3a7555",
+        "locator": "objects/fa83de841464359c9bc5bdba6404d3c02a0561828232b8df62afc0d73f3a7555"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "hold-covers-ready-only",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_held_unclaimed_implement_issue_does_not_make_control_required"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "hold-covers-ready-only-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "hold-covers-ready-only/restored",
+        "revision_digest": "sha256:99873520fd34b1e5055c844222d5942b8a6f354f9b2c679d7fc2d27e8df68c5e",
+        "locator": "objects/99873520fd34b1e5055c844222d5942b8a6f354f9b2c679d7fc2d27e8df68c5e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "inbox-receipts-ignored",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "inbox-receipts-ignored-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "inbox-receipts-ignored/intact",
+        "revision_digest": "sha256:2dbd274fefca86c72bc9cf0c620b385c1bdafba05471366cf9e375d951ed47d4",
+        "locator": "objects/2dbd274fefca86c72bc9cf0c620b385c1bdafba05471366cf9e375d951ed47d4"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "inbox-receipts-ignored",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "5589af7f04c696513d883dfde61a9db73732827ea1e751bf854af38bbf627e42",
+      "raw_output": "inbox-receipts-ignored-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "inbox-receipts-ignored/fault",
+        "revision_digest": "sha256:25ee12ede23776b97ddbdd923635cd85dc7bb232967839a8c7001a21ebec83db",
+        "locator": "objects/25ee12ede23776b97ddbdd923635cd85dc7bb232967839a8c7001a21ebec83db"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "inbox-receipts-ignored",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "inbox-receipts-ignored-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "inbox-receipts-ignored/restored",
+        "revision_digest": "sha256:8f4d1630a518a89b22155303b7242dfacea15c58a37b926dd64fa9e39bdef306",
+        "locator": "objects/8f4d1630a518a89b22155303b7242dfacea15c58a37b926dd64fa9e39bdef306"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "successor-reuses-episode-id",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "successor-reuses-episode-id-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "successor-reuses-episode-id/intact",
+        "revision_digest": "sha256:744b59715866fd8d94fb984d4b90f67059c456c14f20a2f38bbafc1e1bd260e8",
+        "locator": "objects/744b59715866fd8d94fb984d4b90f67059c456c14f20a2f38bbafc1e1bd260e8"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "successor-reuses-episode-id",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "8935ebf1e1745217f287b4b2a5bff0aba7975b79d33ecc2709aae3dcd735fb31",
+      "raw_output": "successor-reuses-episode-id-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "successor-reuses-episode-id/fault",
+        "revision_digest": "sha256:0fa8c78068618c8ed6ec21190e1f080a18ac7905f1f3b4e41260cb841fd21d96",
+        "locator": "objects/0fa8c78068618c8ed6ec21190e1f080a18ac7905f1f3b4e41260cb841fd21d96"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "successor-reuses-episode-id",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "successor-reuses-episode-id-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "successor-reuses-episode-id/restored",
+        "revision_digest": "sha256:712a6bd885009d970c1c8ed98e801520047eac9e601978b909d83254dc74c938",
+        "locator": "objects/712a6bd885009d970c1c8ed98e801520047eac9e601978b909d83254dc74c938"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "full-wip-suppresses-director-control",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_director_only_control_launches_even_when_worker_wip_is_full"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "full-wip-suppresses-director-control-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "full-wip-suppresses-director-control/intact",
+        "revision_digest": "sha256:3fd29a1db8b59b00a44b2eb021be49d992820ca85fadfdb6d3d73b0d17340070",
+        "locator": "objects/3fd29a1db8b59b00a44b2eb021be49d992820ca85fadfdb6d3d73b0d17340070"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "full-wip-suppresses-director-control",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_director_only_control_launches_even_when_worker_wip_is_full"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "82c88a73af7298577185088af84251e7c06ce156d9a4606b01de545b8c36f45b",
+      "raw_output": "full-wip-suppresses-director-control-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "full-wip-suppresses-director-control/fault",
+        "revision_digest": "sha256:06af8e2de1029ac0d2deb62c3398a80365324438a3d58e8c0333f4e388e0a225",
+        "locator": "objects/06af8e2de1029ac0d2deb62c3398a80365324438a3d58e8c0333f4e388e0a225"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "full-wip-suppresses-director-control",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_director_only_control_launches_even_when_worker_wip_is_full"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "full-wip-suppresses-director-control-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "full-wip-suppresses-director-control/restored",
+        "revision_digest": "sha256:e214e1d25cca0b9700da88805909995e5e81b33b2529cff4b2aa688180a7fb05",
+        "locator": "objects/e214e1d25cca0b9700da88805909995e5e81b33b2529cff4b2aa688180a7fb05"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "claude-session-continued",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[claude]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "claude-session-continued-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "claude-session-continued/intact",
+        "revision_digest": "sha256:e2ae75235dfa2d91cd9295f65f03001daf36440492151e5443ebda2111f07059",
+        "locator": "objects/e2ae75235dfa2d91cd9295f65f03001daf36440492151e5443ebda2111f07059"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "claude-session-continued",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[claude]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "7966de5b0564916490b5ae221a08e4c14a7f5fbaec47059b2b20836209797d00",
+      "raw_output": "claude-session-continued-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "claude-session-continued/fault",
+        "revision_digest": "sha256:7cd2d483cb172c753eba001e04a79cf3b7b68a1b63c503b1bb789ed38294d6e5",
+        "locator": "objects/7cd2d483cb172c753eba001e04a79cf3b7b68a1b63c503b1bb789ed38294d6e5"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "claude-session-continued",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[claude]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "claude-session-continued-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "claude-session-continued/restored",
+        "revision_digest": "sha256:904a35f07c447cf18c7b8e07604537ca92e68e2a8e96ab10e6822dd242f5bfe1",
+        "locator": "objects/904a35f07c447cf18c7b8e07604537ca92e68e2a8e96ab10e6822dd242f5bfe1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "codex-session-persisted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[codex]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "codex-session-persisted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "codex-session-persisted/intact",
+        "revision_digest": "sha256:4d2d06b2d6a090928812656941c9915b7c3138606111d49c1a1fbb9d00811eb8",
+        "locator": "objects/4d2d06b2d6a090928812656941c9915b7c3138606111d49c1a1fbb9d00811eb8"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "codex-session-persisted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[codex]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "a6edb8909c92fa299e8efbedb8e3d2eba5cd358d4a0452b7283145527f38ea1a",
+      "raw_output": "codex-session-persisted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "codex-session-persisted/fault",
+        "revision_digest": "sha256:6af07d5b75e640be8babbcbde9ea6aea6a98920299fc24232312a09fc32e6e5b",
+        "locator": "objects/6af07d5b75e640be8babbcbde9ea6aea6a98920299fc24232312a09fc32e6e5b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "codex-session-persisted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[codex]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "codex-session-persisted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "codex-session-persisted/restored",
+        "revision_digest": "sha256:197142ccb4b353febd67ee8e367df32fc9677af4ffe63bef5e267552b451dce4",
+        "locator": "objects/197142ccb4b353febd67ee8e367df32fc9677af4ffe63bef5e267552b451dce4"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "isolation-check-disabled",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_launcher_refuses_a_workdir_that_is_not_a_linked_worktree"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "976ea3fe6dfa65b827ec05fc16bf49cec94d3fda3b2d6ad4719708e74a38b32d",
+      "raw_output": "isolation-check-disabled-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "isolation-check-disabled/intact",
+        "revision_digest": "sha256:8a8e25170ab7361a2ecd1b74eebeeaa751896561fe5b1e6145818a94b4abd597",
+        "locator": "objects/8a8e25170ab7361a2ecd1b74eebeeaa751896561fe5b1e6145818a94b4abd597"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "isolation-check-disabled",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_launcher_refuses_a_workdir_that_is_not_a_linked_worktree"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "6fc3ca50657e9cd0ca186c9141c8776d9cab57a7fbc60440a8e2719f8ac4e393",
+      "raw_output": "isolation-check-disabled-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "isolation-check-disabled/fault",
+        "revision_digest": "sha256:a1ca08ef298b48db39196a4e889be31d5f76a3fc39d7432c71ae83c3ffe56728",
+        "locator": "objects/a1ca08ef298b48db39196a4e889be31d5f76a3fc39d7432c71ae83c3ffe56728"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "isolation-check-disabled",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_launcher_refuses_a_workdir_that_is_not_a_linked_worktree"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "976ea3fe6dfa65b827ec05fc16bf49cec94d3fda3b2d6ad4719708e74a38b32d",
+      "raw_output": "isolation-check-disabled-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "isolation-check-disabled/restored",
+        "revision_digest": "sha256:ae7b08a7944245d610edcd049dc196149a2f3f193458ec0c569022e6efe4fbdb",
+        "locator": "objects/ae7b08a7944245d610edcd049dc196149a2f3f193458ec0c569022e6efe4fbdb"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "provider-model-not-recorded",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "provider-model-not-recorded-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "provider-model-not-recorded/intact",
+        "revision_digest": "sha256:2cb8f5d92d74180ac3c1a260ebf7a9fd284f10b4fe2fa3e4cf0c4bcb0bf3d1d0",
+        "locator": "objects/2cb8f5d92d74180ac3c1a260ebf7a9fd284f10b4fe2fa3e4cf0c4bcb0bf3d1d0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "provider-model-not-recorded",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "31672041694f2f5f16ccbb56dceba0c05cff885147f25124df4cd313b5dfa1af",
+      "raw_output": "provider-model-not-recorded-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "provider-model-not-recorded/fault",
+        "revision_digest": "sha256:203115504237c3495a2e5dac71e7f852385deeb76e89ae893955b13bd1d7b5a2",
+        "locator": "objects/203115504237c3495a2e5dac71e7f852385deeb76e89ae893955b13bd1d7b5a2"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "provider-model-not-recorded",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "976ea3fe6dfa65b827ec05fc16bf49cec94d3fda3b2d6ad4719708e74a38b32d",
+      "raw_output": "provider-model-not-recorded-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "provider-model-not-recorded/restored",
+        "revision_digest": "sha256:48bb495920f000fdeeaee3dc08ffd4776f748a22a33776730654c78c645f9453",
+        "locator": "objects/48bb495920f000fdeeaee3dc08ffd4776f748a22a33776730654c78c645f9453"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "escalation-receipt-ignored",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_escalation_is_resolved_by_a_director_receipt_for_that_exact_escalation"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "escalation-receipt-ignored-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "escalation-receipt-ignored/intact",
+        "revision_digest": "sha256:fecc39e4da74fb006ec94c8683954d5311b0ebd389d5c87c1edc5586d920fabf",
+        "locator": "objects/fecc39e4da74fb006ec94c8683954d5311b0ebd389d5c87c1edc5586d920fabf"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "escalation-receipt-ignored",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_escalation_is_resolved_by_a_director_receipt_for_that_exact_escalation"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "dc0e11c3062a14c374ed883b73b64c68249ae4b455c31cf57b589cb01608f16c",
+      "raw_output": "escalation-receipt-ignored-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "escalation-receipt-ignored/fault",
+        "revision_digest": "sha256:d758f905c70b2cac78de22570c98e055146120be1fc2632a36ab395bf290127d",
+        "locator": "objects/d758f905c70b2cac78de22570c98e055146120be1fc2632a36ab395bf290127d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "escalation-receipt-ignored",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_escalation_is_resolved_by_a_director_receipt_for_that_exact_escalation"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "escalation-receipt-ignored-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "escalation-receipt-ignored/restored",
+        "revision_digest": "sha256:1d0a8d75b164608fd229844e0dc23becd4a0d5f9d468f12eb120f05e881a7e89",
+        "locator": "objects/1d0a8d75b164608fd229844e0dc23becd4a0d5f9d468f12eb120f05e881a7e89"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "assessment-provenance-ignored",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_assessment_marker_counts_only_from_an_authorized_operator"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "assessment-provenance-ignored-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "assessment-provenance-ignored/intact",
+        "revision_digest": "sha256:22e5b4ba224fb7b5ceacdd22bad04993145d602baf9d34a43001a8b9eb0d432a",
+        "locator": "objects/22e5b4ba224fb7b5ceacdd22bad04993145d602baf9d34a43001a8b9eb0d432a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "assessment-provenance-ignored",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_assessment_marker_counts_only_from_an_authorized_operator"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "f1d6bc9d26be0c74b693e23ed78226fce2023934bf0353635c1e02e49a063bac",
+      "raw_output": "assessment-provenance-ignored-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "assessment-provenance-ignored/fault",
+        "revision_digest": "sha256:f0dc18cfccd605c35679f35b245b8ea19d5b39648af22d0c8b5760869e00c9f2",
+        "locator": "objects/f0dc18cfccd605c35679f35b245b8ea19d5b39648af22d0c8b5760869e00c9f2"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "assessment-provenance-ignored",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_assessment_marker_counts_only_from_an_authorized_operator"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "09229b326b028651d725fa47cd1bae9fd8e0145ff8779bdb84ae2762c00ab737",
+      "raw_output": "assessment-provenance-ignored-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "assessment-provenance-ignored/restored",
+        "revision_digest": "sha256:37a6b6011d281b1d59d270de386895b8656501ee37d052c59ba9c2c8edec717b",
+        "locator": "objects/37a6b6011d281b1d59d270de386895b8656501ee37d052c59ba9c2c8edec717b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "foreign-repository-item-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_other_inconsistent_sources_also_fail_closed[foreign-repository-item]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "foreign-repository-item-accepted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "foreign-repository-item-accepted/intact",
+        "revision_digest": "sha256:f269dea0d38233112cd5c1f21a4c88103529a270d1cefbcd372b65fe1d0b8cb1",
+        "locator": "objects/f269dea0d38233112cd5c1f21a4c88103529a270d1cefbcd372b65fe1d0b8cb1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "foreign-repository-item-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_other_inconsistent_sources_also_fail_closed[foreign-repository-item]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "8098b76838f7912197f474f2052b55e6ddf59080fa00984c8810288232f31b34",
+      "raw_output": "foreign-repository-item-accepted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "foreign-repository-item-accepted/fault",
+        "revision_digest": "sha256:66373f0f824a6d261d8ea980a5652b7a5fc52d43bb7518c555aeacf46671f704",
+        "locator": "objects/66373f0f824a6d261d8ea980a5652b7a5fc52d43bb7518c555aeacf46671f704"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "foreign-repository-item-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_other_inconsistent_sources_also_fail_closed[foreign-repository-item]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "4e8b6c5a89da44bf05d17100903172be04033067c113a6831bdfafbd42b7da52",
+      "raw_output": "foreign-repository-item-accepted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "foreign-repository-item-accepted/restored",
+        "revision_digest": "sha256:fdf42c4b9a16d3d2fc405afb3f8ca0d42744613a2bc76673ee59ed8cb286fe9d",
+        "locator": "objects/fdf42c4b9a16d3d2fc405afb3f8ca0d42744613a2bc76673ee59ed8cb286fe9d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "unreadable-pause-means-unpaused",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_unreadable_pause_location_fails_closed_rather_than_unpaused"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "unreadable-pause-means-unpaused-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "unreadable-pause-means-unpaused/intact",
+        "revision_digest": "sha256:d933e7c08b9f266cf6c6b6cd452f412b1ce35baf0ce267a7a3ecd2a4d462e91b",
+        "locator": "objects/d933e7c08b9f266cf6c6b6cd452f412b1ce35baf0ce267a7a3ecd2a4d462e91b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "unreadable-pause-means-unpaused",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_unreadable_pause_location_fails_closed_rather_than_unpaused"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "2a97193eec0fee6723661e42d5bff96a7defb8f7bd063f72865872cb8a597293",
+      "raw_output": "unreadable-pause-means-unpaused-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "unreadable-pause-means-unpaused/fault",
+        "revision_digest": "sha256:f511b93238b6135a546103849d6860002a2237ca4bf90ad8a04f433fc83a7023",
+        "locator": "objects/f511b93238b6135a546103849d6860002a2237ca4bf90ad8a04f433fc83a7023"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "unreadable-pause-means-unpaused",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_unreadable_pause_location_fails_closed_rather_than_unpaused"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "unreadable-pause-means-unpaused-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "unreadable-pause-means-unpaused/restored",
+        "revision_digest": "sha256:335aff82801823621d711d03ef1cf27f3fad52399aae372ec7c210991148f1c0",
+        "locator": "objects/335aff82801823621d711d03ef1cf27f3fad52399aae372ec7c210991148f1c0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "crash-loop-guard-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_repeated_fast_exits_back_off_instead_of_relaunching_every_second"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "crash-loop-guard-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "crash-loop-guard-removed/intact",
+        "revision_digest": "sha256:1b1cd0006181a3a54f1b756ac95a79fbd3ddcaffc6022e8b53ef714e3c38795b",
+        "locator": "objects/1b1cd0006181a3a54f1b756ac95a79fbd3ddcaffc6022e8b53ef714e3c38795b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "crash-loop-guard-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_repeated_fast_exits_back_off_instead_of_relaunching_every_second"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "cfdd357ce9ac22d503fc5a2fa46366f43a99fed4d8003c73cdc71ec570b7f014",
+      "raw_output": "crash-loop-guard-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "crash-loop-guard-removed/fault",
+        "revision_digest": "sha256:19554b761e0566ceaea525060102834d4faed3cf716a0474ebab7bc1266d3b43",
+        "locator": "objects/19554b761e0566ceaea525060102834d4faed3cf716a0474ebab7bc1266d3b43"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "crash-loop-guard-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_repeated_fast_exits_back_off_instead_of_relaunching_every_second"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e596cce97643441f2f2c7ef01ee068b6705ce1e028a07a32ba3bd3b3d35d7353",
+      "raw_output": "crash-loop-guard-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "crash-loop-guard-removed/restored",
+        "revision_digest": "sha256:afd4eb21206462dba5241580c24b548fb839f7c65d5088fa71a0c5296c526caf",
+        "locator": "objects/afd4eb21206462dba5241580c24b548fb839f7c65d5088fa71a0c5296c526caf"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "unleased-child-kept",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_pre_bind_launch_failure_kills_the_child_and_does_not_block_later_launches"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e596cce97643441f2f2c7ef01ee068b6705ce1e028a07a32ba3bd3b3d35d7353",
+      "raw_output": "unleased-child-kept-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "unleased-child-kept/intact",
+        "revision_digest": "sha256:d9c4042dbecee666223f94ebf5d356c1c904e6e439c6577ee809306e4c95dda3",
+        "locator": "objects/d9c4042dbecee666223f94ebf5d356c1c904e6e439c6577ee809306e4c95dda3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "unleased-child-kept",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_pre_bind_launch_failure_kills_the_child_and_does_not_block_later_launches"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "56a907213364d9dc3c2f2b487246afa593e063ddd6e13d5bb18497a39ec0c9f6",
+      "raw_output": "unleased-child-kept-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "unleased-child-kept/fault",
+        "revision_digest": "sha256:e7ca506614cfc779931973d57fc058f7e00dbb39c4d360758d82a2c0e968be40",
+        "locator": "objects/e7ca506614cfc779931973d57fc058f7e00dbb39c4d360758d82a2c0e968be40"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "unleased-child-kept",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_pre_bind_launch_failure_kills_the_child_and_does_not_block_later_launches"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "unleased-child-kept-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "unleased-child-kept/restored",
+        "revision_digest": "sha256:21892f616502dbce65d7eb23cfd152a837c731e8b85eef3576ebf9d028dc4150",
+        "locator": "objects/21892f616502dbce65d7eb23cfd152a837c731e8b85eef3576ebf9d028dc4150"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "done-escalation-still-attention",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_escalation_for_an_issue_that_reached_done_is_resolved"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "done-escalation-still-attention-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "done-escalation-still-attention/intact",
+        "revision_digest": "sha256:e590cf8a042a37276582df96323c00737fcc6bbc03f76c24f626f4e5673800a7",
+        "locator": "objects/e590cf8a042a37276582df96323c00737fcc6bbc03f76c24f626f4e5673800a7"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "done-escalation-still-attention",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_escalation_for_an_issue_that_reached_done_is_resolved"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "5e1089201469d4564bba73c32ddc7d10b8ff8bf4d9dc9f0f899a9e09fb30dd00",
+      "raw_output": "done-escalation-still-attention-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "done-escalation-still-attention/fault",
+        "revision_digest": "sha256:8d6987f35282fb3b6fac4dbd4ab353ed764bed673468675c24ecffda1bdc6b9c",
+        "locator": "objects/8d6987f35282fb3b6fac4dbd4ab353ed764bed673468675c24ecffda1bdc6b9c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "done-escalation-still-attention",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_escalation_for_an_issue_that_reached_done_is_resolved"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "done-escalation-still-attention-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "done-escalation-still-attention/restored",
+        "revision_digest": "sha256:e35a287285b0d97cd3e79cf67c921e6861b865437eaf2776d85fc57c7f8b2319",
+        "locator": "objects/e35a287285b0d97cd3e79cf67c921e6861b865437eaf2776d85fc57c7f8b2319"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "foreign-editor-trusted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_operator_comment_edited_by_someone_else_is_ignored"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "foreign-editor-trusted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "foreign-editor-trusted/intact",
+        "revision_digest": "sha256:27aa8d2d00cd930b1617314d29df7e7161329862edeec113a5228f8a067ae265",
+        "locator": "objects/27aa8d2d00cd930b1617314d29df7e7161329862edeec113a5228f8a067ae265"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "foreign-editor-trusted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_operator_comment_edited_by_someone_else_is_ignored"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "887617eae64ce658df35be618de2721537dece5ad703f48183923f4070776a29",
+      "raw_output": "foreign-editor-trusted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "foreign-editor-trusted/fault",
+        "revision_digest": "sha256:1034b8f60dc5719fdb1c520c1c2438b178e164b34a3c60a8f0ec4d2da82353a8",
+        "locator": "objects/1034b8f60dc5719fdb1c520c1c2438b178e164b34a3c60a8f0ec4d2da82353a8"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "foreign-editor-trusted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_operator_comment_edited_by_someone_else_is_ignored"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "4e8b6c5a89da44bf05d17100903172be04033067c113a6831bdfafbd42b7da52",
+      "raw_output": "foreign-editor-trusted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "foreign-editor-trusted/restored",
+        "revision_digest": "sha256:309c46d01cbbf99422121cbeb22b4ebd7e452ff30b9939cbedb0d69d2379d959",
+        "locator": "objects/309c46d01cbbf99422121cbeb22b4ebd7e452ff30b9939cbedb0d69d2379d959"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "streak-survives-idle",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_failure_streak_resets_when_the_factory_goes_idle"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "streak-survives-idle-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "streak-survives-idle/intact",
+        "revision_digest": "sha256:160acd5d48abb843e1079e66380e5bf6d74b0b5d9bc352a629ff12b5ecb085c3",
+        "locator": "objects/160acd5d48abb843e1079e66380e5bf6d74b0b5d9bc352a629ff12b5ecb085c3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "streak-survives-idle",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_failure_streak_resets_when_the_factory_goes_idle"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "bf81286e400d8e981c64bd1735868ab91b6a17659840c405db023ba3da517354",
+      "raw_output": "streak-survives-idle-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "streak-survives-idle/fault",
+        "revision_digest": "sha256:559e189483dfed4c822976d8028d289c19efe188a823aa121ce6bee5ddda055a",
+        "locator": "objects/559e189483dfed4c822976d8028d289c19efe188a823aa121ce6bee5ddda055a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "streak-survives-idle",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_failure_streak_resets_when_the_factory_goes_idle"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e596cce97643441f2f2c7ef01ee068b6705ce1e028a07a32ba3bd3b3d35d7353",
+      "raw_output": "streak-survives-idle-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "streak-survives-idle/restored",
+        "revision_digest": "sha256:ed5a0c729331b9e6d3f544549585f4a10fd5710e2fd896144afc49df05919f0b",
+        "locator": "objects/ed5a0c729331b9e6d3f544549585f4a10fd5710e2fd896144afc49df05919f0b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "progress-counted-as-crash",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_short_clean_episodes_that_changed_state_are_not_crashes"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "progress-counted-as-crash-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "progress-counted-as-crash/intact",
+        "revision_digest": "sha256:d09a71283ccc9891344409b4742cb0d7408e58f7b7b05493e64bdfd1efe1d1e0",
+        "locator": "objects/d09a71283ccc9891344409b4742cb0d7408e58f7b7b05493e64bdfd1efe1d1e0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "progress-counted-as-crash",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_short_clean_episodes_that_changed_state_are_not_crashes"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "7da7e49142a13d8ab92301c4f2bf6080b84332464d3ae08eac75ce447e20f651",
+      "raw_output": "progress-counted-as-crash-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "progress-counted-as-crash/fault",
+        "revision_digest": "sha256:40134870d3abff96f7f28f10cecf2ceaf41a9c08152b0343db30ffa0250e1f39",
+        "locator": "objects/40134870d3abff96f7f28f10cecf2ceaf41a9c08152b0343db30ffa0250e1f39"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "progress-counted-as-crash",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_short_clean_episodes_that_changed_state_are_not_crashes"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e596cce97643441f2f2c7ef01ee068b6705ce1e028a07a32ba3bd3b3d35d7353",
+      "raw_output": "progress-counted-as-crash-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "progress-counted-as-crash/restored",
+        "revision_digest": "sha256:4d439ef8aa0738b9218cd3dfe4a018392e8e9f84e54324621e8d18d2b08c3044",
+        "locator": "objects/4d439ef8aa0738b9218cd3dfe4a018392e8e9f84e54324621e8d18d2b08c3044"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "launch-failure-not-counted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_repeated_launch_failures_back_off"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "976ea3fe6dfa65b827ec05fc16bf49cec94d3fda3b2d6ad4719708e74a38b32d",
+      "raw_output": "launch-failure-not-counted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "launch-failure-not-counted/intact",
+        "revision_digest": "sha256:75bfc9f1df2be3fc626642adbe7fa5bb051ba243e922478a769d20bc23584083",
+        "locator": "objects/75bfc9f1df2be3fc626642adbe7fa5bb051ba243e922478a769d20bc23584083"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "launch-failure-not-counted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_repeated_launch_failures_back_off"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "0bbaad9f2e918f4b22131667645a37e570891dad0c10d8cbd3824aa818d5d29a",
+      "raw_output": "launch-failure-not-counted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "launch-failure-not-counted/fault",
+        "revision_digest": "sha256:9fd01470beb0607ebdadde00f32bbbc3fd3ae3d684b1922672f6b574d9ae6831",
+        "locator": "objects/9fd01470beb0607ebdadde00f32bbbc3fd3ae3d684b1922672f6b574d9ae6831"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "launch-failure-not-counted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_repeated_launch_failures_back_off"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "09229b326b028651d725fa47cd1bae9fd8e0145ff8779bdb84ae2762c00ab737",
+      "raw_output": "launch-failure-not-counted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "launch-failure-not-counted/restored",
+        "revision_digest": "sha256:fee407d6938106b899e2b9a36fc2e94658ff84bd1eb60ab963037947982e2be9",
+        "locator": "objects/fee407d6938106b899e2b9a36fc2e94658ff84bd1eb60ab963037947982e2be9"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "late-exit-unrecorded",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_an_exit_between_observation_and_lease_check_is_still_recorded_and_counted"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "late-exit-unrecorded-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "late-exit-unrecorded/intact",
+        "revision_digest": "sha256:fc43dc30b630cfa3187541c35122b54e3214d1f5c1fb986a8c693bc533fdeb32",
+        "locator": "objects/fc43dc30b630cfa3187541c35122b54e3214d1f5c1fb986a8c693bc533fdeb32"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "late-exit-unrecorded",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_an_exit_between_observation_and_lease_check_is_still_recorded_and_counted"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "00b807db3672bf857c788a0a515d7765f488d365d441cc24ce3af374999f65c1",
+      "raw_output": "late-exit-unrecorded-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "late-exit-unrecorded/fault",
+        "revision_digest": "sha256:3278babb5f0ca6d5adf5e4e2e434c51bca00f0f67a10fb8a48c2906cad0376b1",
+        "locator": "objects/3278babb5f0ca6d5adf5e4e2e434c51bca00f0f67a10fb8a48c2906cad0376b1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "late-exit-unrecorded",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_an_exit_between_observation_and_lease_check_is_still_recorded_and_counted"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "late-exit-unrecorded-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "late-exit-unrecorded/restored",
+        "revision_digest": "sha256:8199d47b97ccf64296f61d93d269f39b676f997b655df08feea4e3db878ab941",
+        "locator": "objects/8199d47b97ccf64296f61d93d269f39b676f997b655df08feea4e3db878ab941"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "projection-used-as-progress",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_short_episodes_that_advance_durable_state_under_the_same_projection_are_progress"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e596cce97643441f2f2c7ef01ee068b6705ce1e028a07a32ba3bd3b3d35d7353",
+      "raw_output": "projection-used-as-progress-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "projection-used-as-progress/intact",
+        "revision_digest": "sha256:ddc2b7a0c064cb6afd47442d44034672131d4b5f927ed52032d9db7ef4465468",
+        "locator": "objects/ddc2b7a0c064cb6afd47442d44034672131d4b5f927ed52032d9db7ef4465468"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "projection-used-as-progress",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_short_episodes_that_advance_durable_state_under_the_same_projection_are_progress"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "84286eaf974999f7ce7117b49a6bebb7091491b8b0704faec5c7ebc90fc2c4dd",
+      "raw_output": "projection-used-as-progress-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "projection-used-as-progress/fault",
+        "revision_digest": "sha256:582fc56c0709387945b82a7c15dbfa9df5d222f3e77c3a5fa82fcfcd284ba61c",
+        "locator": "objects/582fc56c0709387945b82a7c15dbfa9df5d222f3e77c3a5fa82fcfcd284ba61c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "projection-used-as-progress",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_short_episodes_that_advance_durable_state_under_the_same_projection_are_progress"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "projection-used-as-progress-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "projection-used-as-progress/restored",
+        "revision_digest": "sha256:5540bfd32ec0145ec2ff25ce1e88acfb2593c14398e39971592daa97a4dfc236",
+        "locator": "objects/5540bfd32ec0145ec2ff25ce1e88acfb2593c14398e39971592daa97a4dfc236"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "brief-idle-cancels-back-off",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_a_brief_idle_does_not_cancel_a_pending_back_off"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "76af71df60bb5f93ea635e8763126ecf98e837672c9980e80aefde989b203765",
+      "raw_output": "brief-idle-cancels-back-off-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "brief-idle-cancels-back-off/intact",
+        "revision_digest": "sha256:e3e9fe26e17f4a25b112f3ab73b3c15a7a1ee4dd0832ad0a4692e772706e76a5",
+        "locator": "objects/e3e9fe26e17f4a25b112f3ab73b3c15a7a1ee4dd0832ad0a4692e772706e76a5"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "brief-idle-cancels-back-off",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_a_brief_idle_does_not_cancel_a_pending_back_off"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "c0f32f7fe41ab9988555c459879ed2fe9baf9a74d367cfaa6016c4981922934b",
+      "raw_output": "brief-idle-cancels-back-off-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "brief-idle-cancels-back-off/fault",
+        "revision_digest": "sha256:4a823e8ea65389e36e3cf65e707203af519a72aea03c69cfc6dd687eea0afed2",
+        "locator": "objects/4a823e8ea65389e36e3cf65e707203af519a72aea03c69cfc6dd687eea0afed2"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "brief-idle-cancels-back-off",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_a_brief_idle_does_not_cancel_a_pending_back_off"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3be6ffcaecf85b5bd3eef3693ab214b0e7c9eb4e36d117fcf1825652de5eb298",
+      "raw_output": "brief-idle-cancels-back-off-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "brief-idle-cancels-back-off/restored",
+        "revision_digest": "sha256:9dce960c6d2da887a354c1d437306f06845879c241e9b8175e7fefbb85cb64dd",
+        "locator": "objects/9dce960c6d2da887a354c1d437306f06845879c241e9b8175e7fefbb85cb64dd"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "unknown-editor-trusted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_edited_comment_with_an_unknown_editor_is_ignored"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "4e8b6c5a89da44bf05d17100903172be04033067c113a6831bdfafbd42b7da52",
+      "raw_output": "unknown-editor-trusted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "unknown-editor-trusted/intact",
+        "revision_digest": "sha256:f10ccf5ee0c3ab893f735df810ca2524acd10f57ea470a815d3147a885f3f707",
+        "locator": "objects/f10ccf5ee0c3ab893f735df810ca2524acd10f57ea470a815d3147a885f3f707"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "unknown-editor-trusted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_edited_comment_with_an_unknown_editor_is_ignored"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "f30bd82815529137dbf5883ee14ff942f4eca6d80be443b04beffe9547e64f5c",
+      "raw_output": "unknown-editor-trusted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "unknown-editor-trusted/fault",
+        "revision_digest": "sha256:5dd3f7ad0436ab5951883432a4117eb44d6211bb9056f6eb05a168f4faef1ee9",
+        "locator": "objects/5dd3f7ad0436ab5951883432a4117eb44d6211bb9056f6eb05a168f4faef1ee9"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "unknown-editor-trusted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_edited_comment_with_an_unknown_editor_is_ignored"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "09229b326b028651d725fa47cd1bae9fd8e0145ff8779bdb84ae2762c00ab737",
+      "raw_output": "unknown-editor-trusted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "unknown-editor-trusted/restored",
+        "revision_digest": "sha256:1dab189950f3d2713e312d196c95090e46b0a830f0c763b1aa89307ec4097eae",
+        "locator": "objects/1dab189950f3d2713e312d196c95090e46b0a830f0c763b1aa89307ec4097eae"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "permission-mode-unchecked",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_permission_mode_must_belong_to_the_configured_provider[codex-bypassPermissions]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c91dad03511eb111dba9f317cdb7962c64ec389c7d259de488e167c78aac1b31",
+      "raw_output": "permission-mode-unchecked-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "permission-mode-unchecked/intact",
+        "revision_digest": "sha256:d40837b150052d0bb2d4aaefbde682930abf3591445f66ae4f9fb74096beab3d",
+        "locator": "objects/d40837b150052d0bb2d4aaefbde682930abf3591445f66ae4f9fb74096beab3d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "permission-mode-unchecked",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_permission_mode_must_belong_to_the_configured_provider[codex-bypassPermissions]"
+      ],
+      "expected": "exit 1 with a FAILED test",
+      "exit_status": 1,
+      "raw_output_sha256": "80ba9b83d394814088ad991b625aa681b6cc74597e4a0c4b54f0d034139ee36f",
+      "raw_output": "permission-mode-unchecked-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "permission-mode-unchecked/fault",
+        "revision_digest": "sha256:6d1240a4f65912040f4f60f36fa071cd0b1972b803d826a97abdf54789501a68",
+        "locator": "objects/6d1240a4f65912040f4f60f36fa071cd0b1972b803d826a97abdf54789501a68"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FDH-01",
+      "control": "permission-mode-unchecked",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/orchestration/test_factory_director_host.py::test_permission_mode_must_belong_to_the_configured_provider[codex-bypassPermissions]"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e596cce97643441f2f2c7ef01ee068b6705ce1e028a07a32ba3bd3b3d35d7353",
+      "raw_output": "permission-mode-unchecked-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fdh-01",
+        "logical_id": "permission-mode-unchecked/restored",
+        "revision_digest": "sha256:98cbc399f1cbfeca7d6a8c8a9cfc35879613ddfa7f1ca2603af104069075ab37",
+        "locator": "objects/98cbc399f1cbfeca7d6a8c8a9cfc35879613ddfa7f1ca2603af104069075ab37"
+      }
+    }
+  ],
+  "verdict": "independent verifier pending"
+}

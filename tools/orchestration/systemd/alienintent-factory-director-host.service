@@ -1,0 +1,17 @@
+[Unit]
+Description=AlienIntent non-cognizant Factory Director Host
+After=default.target
+
+[Service]
+Type=simple
+EnvironmentFile=-%h/.config/alienintent/factory-director-host.env
+ExecStart=%h/.local/share/alienintent-bootstrap/factory-director-host/factory-director-host.sh
+Restart=on-failure
+RestartSec=2
+# A host restart must not kill a live leased episode: the restarted host re-reads the
+# lease and reports DIRECTOR_EPISODE_ACTIVE instead of launching a duplicate.
+KillMode=process
+NoNewPrivileges=yes
+
+[Install]
+WantedBy=default.target
