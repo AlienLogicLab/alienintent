@@ -1,0 +1,161 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220205",
+  "issued_at": "2026-09-24T13:06:32.989743+00:00",
+  "goal": "Deliver the bounded planned extent: Design admission and independent review mechanics \u2014 Design admission and independent review mechanics",
+  "starting_authority": {
+    "requirements": [
+      "SF-REQ-051"
+    ],
+    "dag_node": [
+      "U5"
+    ],
+    "candidate_contract_sha256": "065f59c62d046af0ea516c72cba0349fc4b58814e46b59e61cc3f82dac9c2fa3",
+    "baseline_sha": "44fd55cb0b54da0a43e77e4e3218dbb0653433ff",
+    "release_authority": "NOT YET GRANTED \u2014 SWF-35 admission required before any IMPLEMENT transition"
+  },
+  "allowed_scope": {
+    "extent": "Existing architecture checks first, then distinct reviewer invocation bound to exact design/proof/premise revisions. Missing decisions, impossible premise, self-review and stale revision hold. Open directional-authority question returns ARCHITECTURE_AUTHORITY_HOLD for affected admission; observed_edges never becomes policy.",
+    "boundary": "Only this node extent. Requirement/design references constrain execution and do not absorb sibling scopes.",
+    "dag_scope": "",
+    "owns_capabilities": [
+      "design_admission_mechanics"
+    ],
+    "non_goals": [
+      "Replanning the DAG or implementing another node; changing requirements, closing authority gaps or selecting withdrawn architecture policy.",
+      "Automatic release, live operation or retirement from a candidate or local proof result."
+    ],
+    "architecture_constraints": [
+      "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
+      "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+    ]
+  },
+  "dependencies": {
+    "WO-220202": {
+      "issue": 80,
+      "dag_node": "U2",
+      "completion_predicate": "Missing fields/conflicting sources produce OPEN questions; wrong actor/revision cannot resolve. Exact DecisionInbox authority resolves; changed inputs become STALE; independent branch remains preparable, zero worker calls.",
+      "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
+    },
+    "WO-220204": {
+      "issue": 94,
+      "dag_node": "U4",
+      "completion_predicate": "Derive stable AC/obligation, fixture, predicate, command, endpoint, expected result and evidence schema before implementation. Intact/red/restored controls discriminate target guard failure from unrelated failure. Preserve judgment reviewer inputs and previous obligations across repair; deletion without authorized supersession holds.",
+      "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
+    }
+  },
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
+    "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority.",
+    "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS."
+  ],
+  "acceptance": {
+    "criteria": [
+      "Existing architecture checks first, then distinct reviewer invocation bound to exact design/proof/premise revisions. Missing decisions, impossible premise, self-review and stale revision hold. Open directional-authority question returns ARCHITECTURE_AUTHORITY_HOLD for affected admission; observed_edges never becomes policy.",
+      "SF-REQ-051-AC-01: For a newly planned change, the design artifact identifies satisfied requirements, affected behavior/ownership/interfaces/persistence, invariants, failures/recovery, security, capabilities, evidence and non-goals; each inapplicable field has an explicit reason proportional to the change.",
+      "SF-REQ-051-AC-02: Unresolved product behavior, public API, persistence or security decisions block design verification and decomposition; only explicitly bounded implementation-local choices remain open.",
+      "SF-REQ-051-AC-04: A platform-premise review rejects a proposed permission-denial criterion when authoritative capability evidence shows it cannot be satisfied; the design cannot pass by merely matching an internally consistent checklist.",
+      "SF-REQ-051-AC-05: Changing a verified design decision or required requirement revision invalidates downstream design/readiness applicability until reverified; the prior artifact and verdict remain history.",
+      "SF-REQ-051-AC-06: An admission fixture lacking required design, a passing design verification result or resolved design authority is refused by readiness processing, without adding a Project lifecycle state."
+    ],
+    "acceptance_ids": [
+      "SF-REQ-051-AC-01",
+      "SF-REQ-051-AC-02",
+      "SF-REQ-051-AC-04",
+      "SF-REQ-051-AC-05",
+      "SF-REQ-051-AC-06"
+    ],
+    "proof_fixture": {
+      "id": "FX-U5",
+      "owner_node": "U5",
+      "status": "PLANNED_NOT_EXECUTED",
+      "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
+      "scenario": "Existing architecture checks first, then distinct reviewer invocation bound to exact design/proof/premise revisions. Missing decisions, impossible premise, self-review and stale revision hold. Open directional-authority question returns ARCHITECTURE_AUTHORITY_HOLD for affected admission; observed_edges never becomes policy.",
+      "acceptance_ids": [
+        "SF-REQ-051-AC-01",
+        "SF-REQ-051-AC-02",
+        "SF-REQ-051-AC-04",
+        "SF-REQ-051-AC-05",
+        "SF-REQ-051-AC-06"
+      ],
+      "enforcement_ids": [
+        "051-architecture-boundary",
+        "051-review-applicability"
+      ],
+      "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
+      "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL"
+    },
+    "acceptance_probes": [
+      {
+        "acceptance_id": "SF-REQ-051-AC-01",
+        "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
+        "design_probe": "Inspect complete proportional contract and explicit inapplicability reasons against pinned requirements/architecture."
+      },
+      {
+        "acceptance_id": "SF-REQ-051-AC-02",
+        "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
+        "design_probe": "Material undecided behavior/API/persistence/security blocks; bounded helper freedom allowed."
+      },
+      {
+        "acceptance_id": "SF-REQ-051-AC-04",
+        "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
+        "design_probe": "Reviewer rejects impossible premise using pinned capability evidence despite internal checklist green."
+      },
+      {
+        "acceptance_id": "SF-REQ-051-AC-05",
+        "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
+        "design_probe": "Changed required revision invalidates design/downstream applicability; old evidence retained."
+      },
+      {
+        "acceptance_id": "SF-REQ-051-AC-06",
+        "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
+        "design_probe": "No design/independent passing review/authority means readiness hold without Project mutation."
+      }
+    ],
+    "enforcement_obligations": [
+      {
+        "source_requirement": "SF-REQ-051",
+        "owner_node": "U5",
+        "fixture_ref": "FX-U5",
+        "id": "051-architecture-boundary",
+        "layer": "architecture_fitness",
+        "rule": "Apply shared_contracts.context_dependency_direction.fitness: run existing repository-wide architecture checks and composed port compatibility probes; return ARCHITECTURE_AUTHORITY_HOLD for direction-dependent admission while R2-GAP-051-EDGE-AUTHORITY is open. observed_edges is descriptive, never a permission table. Do not implement the withdrawn R1 policy against production.",
+        "proven_red_obligation": "Independently bypass the open-authority hold and require refusal assertion failure; treating observed_edges as approved policy must fail. Existing forbidden adapter/vendor import and incompatible consumer input controls still fail. Retain the R1 direction fixtures conditionally after Founder disposition and reviewed scope: execution_coordination -> context_assembly.application, evidence_learning -> installation, evidence_learning -> composition and reciprocal leaf cycle negative controls; execution_coordination -> context_assembly.domain DesignApplicability and composition-owned PremiseEvidence bridge positive controls. These conditional fixtures are not currently runnable production conformance obligations.",
+        "phase3_promotion": null,
+        "status": "DESIGNED_NOT_IMPLEMENTED",
+        "strength": "BLOCKING"
+      },
+      {
+        "source_requirement": "SF-REQ-051",
+        "owner_node": "U5",
+        "fixture_ref": "FX-U5",
+        "id": "051-review-applicability",
+        "layer": "python_unit_integration",
+        "rule": "Require fresh independent review and exact revision vector for downstream compilation/readiness.",
+        "proven_red_obligation": "Replay self-review or stale design review and require downstream hold; conforming independent control passes.",
+        "phase3_promotion": null,
+        "status": "DESIGNED_NOT_IMPLEMENTED",
+        "strength": "BLOCKING"
+      }
+    ],
+    "order": "Before implementation, pin executable fixture commands, inputs, expected outcomes and evidence schema against this node predicate; demonstrate intact/fault/restored discrimination for mechanical controls. Retain independent judgment where specified. S0 establishes the shared harness at current interfaces; all consumers wait for predecessor proof. No future fixture is claimed executed here.",
+    "conditional_proof": "Operational fixtures require their separately authorized target and actual readback. Local substitutions must be labelled and cannot satisfy operational acceptance."
+  },
+  "candidate_custody": {
+    "identity": "WO-220205",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker.",
+    "current_artifact": "Candidate specification only; no Issue, branch publication, implementation commit or worker invocation created by Phase 12."
+  },
+  "landing": "SWF-19: merge the accepted candidate branch directly into the baseline branch, preserving the accepted SHA. No pull request.",
+  "limits_ref": "WO-220205.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
+  ],
+  "escalation_condition": [
+    "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
+    "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "a fresh native Agent Ready assessment of this packet and contract is required before READY"
+}

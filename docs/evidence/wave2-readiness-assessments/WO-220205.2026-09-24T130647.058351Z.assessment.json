@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Implement design admission mechanics (SF-REQ-051) within SPECIFY/PLAN, with no new visible lifecycle state, service or approval lane. Existing architecture fitness checks run first. A distinct reviewer is then invoked, bound to exact design, proof and premise revisions. Readiness or decomposition is refused (held) when any of these apply: decisions are missing, the premise is impossible, the review is a self-review, the revision is stale, or design or authority is absent. Direction-dependent admission returns ARCHITECTURE_AUTHORITY_HOLD while the Founder-owned edge-authority gap stays open. observed_edges must never become policy.",
+    "implementation_unknowns": [
+      "Where the existing repository-wide architecture checks and composed port compatibility probes are invoked, and how to sequence them before reviewer invocation without changing their approved behavior.",
+      "The concrete representation of the revision vector (design/proof/premise/requirement revisions) and how staleness is detected and propagated to downstream compilation/readiness applicability.",
+      "How reviewer identity is compared to producer identity to detect self-review, reusing U2 DecisionInbox actor/revision semantics.",
+      "How pinned capability evidence is supplied to the platform-premise review so an internally consistent checklist cannot pass (AC-04), and which parts are mechanical versus preserved independent judgment.",
+      "How to classify material undecided behavior/API/persistence/security decisions versus explicitly bounded implementation-local choices (AC-02) in a machine-checkable way.",
+      "Pinning executable fixture commands, inputs, expected outcomes and evidence schema for FX-U5 before implementation, and demonstrating intact/fault/restored discrimination on the shared S0 harness from U4.",
+      "How to preserve prior artifacts and verdicts as history on invalidation (AC-05) within existing store contracts, without Project lifecycle mutation (AC-06)."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The stop clause 'hold on authority gap/gate' could be misread as requiring this BIU to halt because R2-GAP-051-EDGE-AUTHORITY is open. The fixed decisions instead scope that gap as a modeled ARCHITECTURE_AUTHORITY_HOLD outcome. A producer or verifier who misreads it may stall work or dispute the verdict.",
+      "A producer may be tempted to implement withdrawn R1 edge-table enforcement or treat observed_edges as a permission table. Doing so violates fixed decisions and must fail the proven-red control.",
+      "AC-02 and AC-04 involve judgment; over-mechanizing them could let a checklist-consistent but impossible premise pass.",
+      "Dependency completion (U2, U4 DONE) and shared harness availability are reported, not independently verified here. If the predecessor proof receipts are not actually retrievable, the Stop rules require a hold.",
+      "The landing rule merges directly into the baseline without a PR. An incorrect accepted SHA would land without an additional review gate.",
+      "Invalidation logic may accidentally mutate Project lifecycle state or discard prior verdict history, contrary to AC-05 and AC-06."
+    ],
+    "next_action": "Hand off to the configured PRODUCER under the bound allocation. Before implementation, the producer must verify that predecessor U2 and U4 candidate identities and proof receipts are retrievable. The producer must then pin FX-U5 fixture commands, inputs, expected outcomes and evidence schema, and demonstrate intact/fault/restored discrimination for both BLOCKING obligations. The handoff should state explicitly that the open edge-authority gap is to be implemented as an ARCHITECTURE_AUTHORITY_HOLD outcome, not treated as a stop condition for this BIU.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent and owner decisions are resolved for this node's extent. The fixed decisions settle lifecycle, service and lane boundaries, R2-over-R1 precedence, and the non-dischargeable Founder hold. The only unresolved authority question is deliberately encapsulated as specified hold behavior, so it is neither a CLARIFY trigger nor a HOLD trigger. The scope is a single owned capability forming one coupled admission pipeline, so there are no independent decision centers that justify SPLIT. According to the document, prerequisites and allocation are available, so HOLD is not indicated on the supplied text. The acceptance probes and proven-red controls support one meaningful independent verdict. The remaining unknowns are engineering research. Rework locality is MEDIUM because failures could touch the coupled areas of check ordering, reviewer binding, revision invalidation and readiness refusal, although all of them sit within one capability.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive single-capability node (design_admission_mechanics) with fixed design decisions, explicit non-goals, named acceptance IDs, per-AC probes and two BLOCKING enforcement obligations that include proven-red controls. The one open owner question, directional edge authority, does not block this work. The design turns it into required behavior: return ARCHITECTURE_AUTHORITY_HOLD and never adopt withdrawn R1 or observed_edges policy. The Founder decision is not needed to implement or verify this node. According to the document, predecessors U2 and U4 are DONE and allocation, custody and landing rules are bound. This gate has not independently verified any of that. What remains is engineering research, not owner intent.",
+    "verification_assessment": "Acceptance is observable. Each included AC (01, 02, 04, 05, 06) has a named probe against a controlled fixture or an inspected versioned artifact. There are two BLOCKING obligations with proven-red controls. The first bypasses the open-authority hold, or treats observed_edges as policy, and requires failure. The second replays a self-review or stale review and requires a downstream hold, while an independent conforming control passes. Evidence retention is specified. All of these probes exercise one admission pipeline, so a single independent verifier verdict against the exact candidate SHA is meaningful. The conditional R1 direction fixtures are explicitly not runnable conformance obligations and must not be counted toward acceptance. AC-03 is absent from this node; it is presumably owned elsewhere and should not be assumed covered."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T13:07:17.777779+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 11739,
+    "input_sha256": "956184cdfe3ed9582d2f8254a83e96c3d08ebd5e3415257fe5b72528d53bf097",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-x3rs11zs/WO-220205.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T13:06:47.058351+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220205"
+}
