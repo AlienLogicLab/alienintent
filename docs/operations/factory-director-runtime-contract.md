@@ -241,7 +241,19 @@ editor. An edit by an account GitHub no longer names is ignored. Full edit histo
 
 History records `provider` and `requested_model`, meaning the model passed explicitly
 with `--model`. The models the provider reports are recorded separately as
-`usage.observed_models`, when exposed.
+`usage.observed_models`, when exposed, and `usage.model_evidence` says which:
+`PROVIDER_REPORTED` or `NOT_EXPOSED_BY_PROVIDER`. Claude's result JSON reports the models
+used (`modelUsage`). Codex CLI 0.155.1 does not: its `exec --json` events carry token
+counts only, and the one model field it persists (`turn_context.model` in a non-ephemeral
+rollout) echoes the client configuration rather than reporting the model served. For
+Codex the actual model is therefore recorded as not exposed, never inferred from
+`requested_model` or configuration.
+
+Between reconciliations the host waits up to the configured interval, and wakes as soon
+as the leased episode exits. An episode that has already exited when the wait begins
+wakes the host at once, with no sleep. Crash-loop back-off is applied by reconciliation,
+so waking early never bypasses it. A host that does not hold the host lock, or cannot
+determine liveness, waits the full interval instead.
 
 ## 11. Replacement-safety rule
 

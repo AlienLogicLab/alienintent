@@ -387,6 +387,86 @@ def test_wait_for_change_returns_as_soon_as_the_leased_episode_exits(tmp_path):
     assert sum(slept) == 3
 
 
+def test_exit_before_wait_reconciles_at_once_without_sleeping(tmp_path):
+    # JC review F1: A exits after reconcile returns but before the wait checks liveness.
+    service, launcher = host(tmp_path)
+    first = service.reconcile()
+    launcher.finish(first.episode_id)
+    slept = []
+
+    assert service.wait_for_change(60, sleep=slept.append) == "EPISODE_EXITED"
+    assert slept == []
+    successor = service.reconcile()
+    assert successor.reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"
+    assert successor.episode_id != first.episode_id and len(launcher.launched) == 2
+
+
+def test_exit_before_wait_still_honours_crash_loop_back_off(tmp_path):
+    service, launcher = host(tmp_path)
+    first = service.reconcile()
+    launcher.finish(first.episode_id, exit_code=1)
+    second = service.reconcile()
+    launcher.finish(second.episode_id, exit_code=1)
+    slept = []
+
+    assert service.wait_for_change(60, sleep=slept.append) == "EPISODE_EXITED"
+    assert service.reconcile().reason == "DIRECTOR_EPISODE_CRASH_LOOP"
+    assert service.wait_for_change(60, sleep=slept.append) == "INTERVAL_ELAPSED"
+    assert slept == [60] and len(launcher.launched) == 2
+
+
+def test_wait_with_unknown_liveness_or_no_lease_sleeps_the_interval(tmp_path):
+    class UncertainLauncher(InMemoryDirectorLauncher):
+        def liveness(self, episode):
+            return None
+    service = FactoryDirectorHost(tmp_path / "uncertain", required, UncertainLauncher())
+    service.reconcile()
+    idle, _ = host(tmp_path / "idle", required(eligible_authorized_work=False))
+    idle.reconcile()
+    slept = []
+
+    assert service.wait_for_change(60, sleep=slept.append) == "INTERVAL_ELAPSED"
+    assert idle.wait_for_change(60, sleep=slept.append) == "INTERVAL_ELAPSED"
+    assert slept == [60, 60]
+
+
+def test_a_host_without_the_lock_waits_the_interval_for_an_exited_episode(tmp_path):
+    owner, launcher = host(tmp_path)
+    episode_id = owner.reconcile().episode_id
+    launcher.finish(episode_id)
+    other = FactoryDirectorHost(tmp_path, required, launcher)
+    assert other.reconcile().reason == "CONFLICTING_HOST_OWNERSHIP"
+    slept = []
+
+    assert other.wait_for_change(60, sleep=slept.append) == "INTERVAL_ELAPSED"
+    assert slept == [60]
+    owner.shutdown()
+
+
+LEASE_REQUIRED_KEYS = ("host_id", "episode_id", "pid", "started_at", "process_start_ticks", "status")
+
+
+@pytest.mark.parametrize("missing", LEASE_REQUIRED_KEYS)
+def test_extended_lease_missing_a_required_key_refuses_without_crash(tmp_path, missing):
+    # JC review F2: a real lease carries extra metadata, so a missing required key must be
+    # detected by containment, not by a strict-subset comparison.
+    service, launcher = host(tmp_path)
+    service.reconcile()
+    path = tmp_path / "lease.json"
+    lease = json.loads(path.read_text())
+    assert set(LEASE_REQUIRED_KEYS) < set(lease)
+    del lease[missing]
+    path.write_text(json.dumps(lease))
+    slept = []
+
+    assert service.reconcile().reason == "AMBIGUOUS_LEASE"
+    assert len(launcher.launched) == 1
+    inspection = service.inspect()
+    assert (inspection.state, inspection.last_reason) == (HostState.REFUSED, "AMBIGUOUS_LEASE")
+    assert service.wait_for_change(60, sleep=slept.append) == "INTERVAL_ELAPSED"
+    assert slept == [60]
+
+
 # --- FDH-01 acceptance: provider-neutral launcher (criterion 5) -----------------------------
 
 def test_claude_command_is_a_fresh_non_persisted_print_session(tmp_path):
@@ -494,7 +574,8 @@ def test_real_claude_episodes_are_fresh_and_record_provider_model_and_usage(tmp_
     assert calls[0]["argv"] == calls[1]["argv"] == launcher.command()[1:]
     exited = [r for r in history(tmp_path / "host") if r["reason"] == "DIRECTOR_EPISODE_EXITED"][0]
     assert (exited["provider"], exited["requested_model"], exited["exit_reason"]) == ("claude", "claude-opus-5-5", "EXIT_0")
-    assert exited["usage"] == {"measured": True, "observed_models": ["claude-opus-5-5"], "input_tokens": 120,
+    assert exited["usage"] == {"measured": True, "observed_models": ["claude-opus-5-5"],
+                               "model_evidence": "PROVIDER_REPORTED", "input_tokens": 120,
                                "output_tokens": 45, "cache_read_input_tokens": 7,
                                "cache_creation_input_tokens": 3, "cost_usd": 0.25}
     assert not (workdir / ".factory-director-host").exists()
@@ -523,7 +604,8 @@ def test_real_codex_episode_records_tokens_and_marks_model_and_cost_not_exposed(
     exited = [r for r in history(tmp_path / "host") if r["reason"] == "DIRECTOR_EPISODE_EXITED"][0]
     assert (exited["provider"], exited["requested_model"], exited["exit_reason"]) == ("codex", "gpt-6-astra", "EXIT_3")
     assert exited["usage"] == {"measured": True, "turns": 1, "input_tokens": 200, "cached_input_tokens": 50,
-                               "output_tokens": 60, "observed_models": None, "cost_usd": None}
+                               "output_tokens": 60, "observed_models": None,
+                               "model_evidence": "NOT_EXPOSED_BY_PROVIDER", "cost_usd": None}
 
 
 def test_unmeasured_usage_is_recorded_as_unmeasured_never_zero(tmp_path):

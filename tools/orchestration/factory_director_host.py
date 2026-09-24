@@ -295,7 +295,9 @@ def claude_usage(text: str) -> dict:
     try:
         result = json.loads(text)
         usage = result["usage"]
-        return {"measured": True, "observed_models": sorted(result.get("modelUsage") or {}) or None,
+        observed = sorted(result.get("modelUsage") or {}) or None
+        return {"measured": True, "observed_models": observed,
+                "model_evidence": "PROVIDER_REPORTED" if observed else "NOT_EXPOSED_BY_PROVIDER",
                 "input_tokens": usage.get("input_tokens"), "output_tokens": usage.get("output_tokens"),
                 "cache_read_input_tokens": usage.get("cache_read_input_tokens"),
                 "cache_creation_input_tokens": usage.get("cache_creation_input_tokens"),
@@ -320,7 +322,10 @@ def codex_usage(text: str) -> dict:
     if not turns:
         return {"measured": False, "reason": "PROVIDER_DID_NOT_EXPOSE_USAGE"}
     # Codex JSON events carry token counts only: model and cost are recorded as not exposed.
-    return {"measured": True, "turns": turns, **totals, "observed_models": None, "cost_usd": None}
+    # The requested model (--model) is intent, not evidence of the model actually used, so it
+    # is never copied here (runtime contract section 10).
+    return {"measured": True, "turns": turns, **totals, "observed_models": None,
+            "model_evidence": "NOT_EXPOSED_BY_PROVIDER", "cost_usd": None}
 
 
 def _parse_time(value) -> datetime | None:
@@ -370,7 +375,8 @@ class FactoryDirectorHost:
         try:
             value = json.loads(self._lease_path.read_text())
             required = {"host_id", "episode_id", "pid", "started_at", "process_start_ticks", "status"}
-            if not isinstance(value, dict) or set(value) < required:
+            # Containment, not strict subset: a real lease carries extra metadata beside the required keys.
+            if not isinstance(value, dict) or not required <= set(value):
                 raise ValueError("lease schema is incomplete")
             if not isinstance(value["host_id"], str) or not isinstance(value["episode_id"], str):
                 raise ValueError("lease identity is invalid")
@@ -594,7 +600,14 @@ class FactoryDirectorHost:
             episode = self._episode(lease) if lease and lease.get("status") == "ACTIVE" else None
         except (AmbiguousLease, KeyError):
             episode = None
-        if episode is None or self._liveness(episode) is not True:
+        liveness = self._liveness(episode) if episode is not None else None
+        if liveness is False and self._lock_file is not None:
+            # It exited before the wait began: reconcile at once. Crash-loop back-off is
+            # enforced by reconcile, not by this wait. Only the lock holder can record the
+            # exit, so any other host waits the interval rather than spinning.
+            return "EPISODE_EXITED"
+        if liveness is not True:
+            # No leased episode, liveness unknown (reconcile refuses it), or not ours to record.
             sleep(interval)
             return "INTERVAL_ELAPSED"
         waited = 0.0

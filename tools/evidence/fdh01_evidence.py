@@ -21,7 +21,7 @@ from alienintent.evidence_learning.domain.records import Header, Observation
 from alienintent.evidence_learning.domain.refs import Ref
 
 ROOT = Path(__file__).resolve().parents[2]
-INVOCATION = "AlienLogicLab/alienintent#89:PRODUCER:27e3cc45-3fb2-4c15-8270-6e7f0ac58238"
+INVOCATION = "AlienLogicLab/alienintent#89:PRODUCER:39a17230-3143-4c62-87a6-970061df9dad"
 BASELINE = "70fa7148939dfcebbcef73d858f9f481869d7214"
 CONTRACT = "docs/work-units/wave2/FDH-01.md"
 ADAPTER = "tools/orchestration/factory_director_inputs.py"
@@ -132,6 +132,14 @@ CONTROLS = [
      INPUT_TESTS + "test_marker_in_an_edited_comment_with_an_unknown_editor_is_ignored"),
     ("permission-mode-unchecked", HOST, '        if permission_mode not in PERMISSION_MODES[provider]:', '        if False:',
      HOST_TESTS + "test_permission_mode_must_belong_to_the_configured_provider[codex-bypassPermissions]"),
+    # Repairs from JC's independent verification (F1, F2).
+    ("exit-before-wait-sleeps", HOST, '        if liveness is False and self._lock_file is not None:', '        if False:',
+     HOST_TESTS + "test_exit_before_wait_reconciles_at_once_without_sleeping"),
+    ("non-holder-spins-on-exit", HOST, '        if liveness is False and self._lock_file is not None:',
+     '        if liveness is False:', HOST_TESTS + "test_a_host_without_the_lock_waits_the_interval_for_an_exited_episode"),
+    ("lease-keys-strict-subset", HOST, '            if not isinstance(value, dict) or not required <= set(value):',
+     '            if not isinstance(value, dict) or set(value) < required:',
+     HOST_TESTS + "test_extended_lease_missing_a_required_key_refuses_without_crash[pid]"),
 ]
 
 
