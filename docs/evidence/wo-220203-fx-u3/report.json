@@ -1,0 +1,1789 @@
+{
+  "schema_version": 1,
+  "fixture": "FX-U3",
+  "baseline": "06e7e0c1f384e29c304788b11e0e559d8bdacc73",
+  "invocation": "AlienLogicLab/alienintent#81:PRODUCER:b2ddac1f-5d65-45bc-9511-5e8996123534",
+  "candidate_revision": "936a9914c8cf3c950f78ac195de4bc2e46912d34",
+  "contract_sha256": "83c9e6142f9cfde3044603bbf8951d44dc2c7d6a0050920527cfdebb470dbbad",
+  "mapping_sha256": "598abb9c11791428069e2b5605b51f7ebf61afd537f2ca02c39e6bc8ec1bd589",
+  "retained_artifacts": {
+    "docs/evidence/py09b-live-checks-2026-09-21.json": "526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+    "docs/evidence/py10/proof-run.json": "d8fa0efab6bec2b26f6da129bb6c7be0e93473c37ee8e0ebd199fdfe60ec5358"
+  },
+  "implementation_files": {
+    "src/alienintent/evidence_learning/domain/premise.py": "c9dbda337ccd3af14022f25088ec9a46c8667c8d302973593a4caf3243b39769",
+    "src/alienintent/evidence_learning/ports/premise_evidence.py": "542ff35213bd41f2c8abff3db0dfe0aba72b41d1de5e4bec60b26f3f0ca43475",
+    "src/alienintent/evidence_learning/application/premise_service.py": "df493deb0838e0327e3e5d4e5b92427a70cf3c243f2bef38c74217e4b4b3e5ba",
+    "src/alienintent/composition/premise_evidence.py": "f6819afbc586e01be70799556179b21390a8fa453acc7c3e9f2ab33afcafb27a",
+    "src/alienintent/composition/upstream_profile.py": "e18995b74937f87e9b694e8125fe3bb72a464af175b5e13ca155682044503fc7",
+    "tests/evidence_learning/test_premise_evidence.py": "fe38f4ca7267f706e5703ea35a0e794713a6dd99b3c707d4c8754b1aacbe403b"
+  },
+  "tokens": null,
+  "cost": null,
+  "measurement_reason": "UNKNOWN: invocation billing telemetry unavailable",
+  "controls": [
+    {
+      "control": "missing-observable-accepted",
+      "test": "test_missing_outside_state_artifact_is_infeasible_proof",
+      "discriminated": true
+    },
+    {
+      "control": "unsatisfied-observation-accepted",
+      "test": "test_failed_out_of_scope_rejection_is_unsatisfied",
+      "discriminated": true
+    },
+    {
+      "control": "digest-pin-removed",
+      "test": "test_tampered_artifact_fails_its_digest_pin",
+      "discriminated": true
+    },
+    {
+      "control": "target-binding-removed",
+      "test": "test_evidence_for_another_target_is_a_target_mismatch",
+      "discriminated": true
+    },
+    {
+      "control": "credential-denial-premise-accepted",
+      "test": "test_credential_denial_premise_is_unachievable_not_waived",
+      "discriminated": true
+    },
+    {
+      "control": "doctor-precondition-removed",
+      "test": "test_doctor_evidence_that_is_not_a_full_pass_is_infeasible",
+      "discriminated": true
+    },
+    {
+      "control": "doctor-required-checks-removed",
+      "test": "test_doctor_evidence_that_is_not_a_full_pass_is_infeasible",
+      "discriminated": true
+    },
+    {
+      "control": "outside-state-comparison-removed",
+      "test": "test_changed_outside_state_is_unsatisfied",
+      "discriminated": true
+    },
+    {
+      "control": "absent-check-invented",
+      "test": "test_absent_mapped_check_is_a_missing_premise",
+      "discriminated": true
+    },
+    {
+      "control": "composition-disconnected",
+      "test": "test_composed_profile_reads_retained_doctor_evidence_as_isolation_premise",
+      "discriminated": true
+    },
+    {
+      "control": "premise-bridge-import-added",
+      "test": "test_premise_modules_import_no_installation_or_composition",
+      "discriminated": true
+    },
+    {
+      "control": "premise-identity-unbound",
+      "test": "test_premise_id_is_bound_to_the_pinned_mapping",
+      "discriminated": true
+    },
+    {
+      "control": "mapping-pin-removed",
+      "test": "test_unpinned_or_missing_mapping_is_infeasible",
+      "discriminated": true
+    },
+    {
+      "control": "mapping-validation-removed",
+      "test": "test_malformed_mapping_is_infeasible_not_an_exception",
+      "discriminated": true
+    },
+    {
+      "control": "empty-readback-accepted",
+      "test": "test_null_or_empty_readback_is_not_an_unchanged_state",
+      "discriminated": true
+    },
+    {
+      "control": "detail-predicate-removed",
+      "test": "test_vacuous_out_of_scope_refusal_is_unsatisfied",
+      "discriminated": true
+    },
+    {
+      "control": "duplicate-key-accepted",
+      "test": "test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception",
+      "discriminated": true
+    },
+    {
+      "control": "absent-target-accepted",
+      "test": "test_unreadable_artifact_target_is_a_missing_premise",
+      "discriminated": true
+    },
+    {
+      "control": "path-confinement-removed",
+      "test": "test_malformed_mapping_is_infeasible_not_an_exception",
+      "discriminated": true
+    },
+    {
+      "control": "symlink-confinement-removed",
+      "test": "test_artifact_paths_cannot_escape_the_root_or_block",
+      "discriminated": true
+    },
+    {
+      "control": "type-exact-comparison-removed",
+      "test": "test_readback_comparison_is_type_exact",
+      "discriminated": true
+    },
+    {
+      "control": "detail-pattern-anchoring-removed",
+      "test": "test_negated_refusal_detail_is_unsatisfied",
+      "discriminated": true
+    }
+  ],
+  "observations": [
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "missing-observable-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_missing_outside_state_artifact_is_infeasible_proof",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "324e1d1b9437c82609c93ada12e56c31928d240e71e20e365430e88acb3526d8",
+      "raw_output": "missing-observable-accepted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "missing-observable-accepted/intact",
+        "revision_digest": "sha256:338449a5529a47970649e28534b284fac3827d8af64dba4c55e3fdca02e414b5",
+        "locator": "objects/338449a5529a47970649e28534b284fac3827d8af64dba4c55e3fdca02e414b5"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "missing-observable-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_missing_outside_state_artifact_is_infeasible_proof",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "7c549c932852f7d4133adf889d98976b862c71baa74003ad0c0d4cc69f22a745",
+      "raw_output": "missing-observable-accepted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "missing-observable-accepted/fault",
+        "revision_digest": "sha256:68ecd3d5ff969077a449cc8c2ba013f9b255d6deda793388bb47af485a5cf90b",
+        "locator": "objects/68ecd3d5ff969077a449cc8c2ba013f9b255d6deda793388bb47af485a5cf90b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "missing-observable-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_missing_outside_state_artifact_is_infeasible_proof",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "7680a804ea905083ab8729f37cd89ec1c69de87ef69df925dacb670a60b45d3d",
+      "raw_output": "missing-observable-accepted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "missing-observable-accepted/restored",
+        "revision_digest": "sha256:02cc5e5811299b2988ec5eed7a3b43c9be4129a09f253a2a3bd36728849b246c",
+        "locator": "objects/02cc5e5811299b2988ec5eed7a3b43c9be4129a09f253a2a3bd36728849b246c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "unsatisfied-observation-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_failed_out_of_scope_rejection_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "d68626cbacd226d6965881912f7ccaae361ee8df8f97908755477c5fe9f3c1f2",
+      "raw_output": "unsatisfied-observation-accepted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "unsatisfied-observation-accepted/intact",
+        "revision_digest": "sha256:e95529a0d20f00e07f7e1dbe8b88db0659d32fe7978092196c7c8715f1a551c9",
+        "locator": "objects/e95529a0d20f00e07f7e1dbe8b88db0659d32fe7978092196c7c8715f1a551c9"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "unsatisfied-observation-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_failed_out_of_scope_rejection_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "937177f29014517cb393af54d15e937141f3f5125bbffd0048592dd78ad45801",
+      "raw_output": "unsatisfied-observation-accepted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "unsatisfied-observation-accepted/fault",
+        "revision_digest": "sha256:f04c76ed6ecbb39276ed7161c6a5d8d506c42b670792c195b126e911b7bcb3ca",
+        "locator": "objects/f04c76ed6ecbb39276ed7161c6a5d8d506c42b670792c195b126e911b7bcb3ca"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "unsatisfied-observation-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_failed_out_of_scope_rejection_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "cd2266d8bb4edfdee2b7810dd604b3f56335cd5edc103b2cadeba0912ecd7bda",
+      "raw_output": "unsatisfied-observation-accepted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "unsatisfied-observation-accepted/restored",
+        "revision_digest": "sha256:27c10fc16a0cd80c7f2bc6fe32af5a3e9db3bd1f234f988ef87d9e88051252f7",
+        "locator": "objects/27c10fc16a0cd80c7f2bc6fe32af5a3e9db3bd1f234f988ef87d9e88051252f7"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "digest-pin-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_tampered_artifact_fails_its_digest_pin",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "33d96b5ffa050c022a140ae0b94060b98396d9e6f5bb9dd1d59154206d707d65",
+      "raw_output": "digest-pin-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "digest-pin-removed/intact",
+        "revision_digest": "sha256:a818915bb0638f45823534b3a2e71d7959bef3f190a07b57b79f6b213840817b",
+        "locator": "objects/a818915bb0638f45823534b3a2e71d7959bef3f190a07b57b79f6b213840817b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "digest-pin-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_tampered_artifact_fails_its_digest_pin",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "3bc937d6a5938fd9fb9c54741a32867defdf765e00f806fff53a76a302d03bdb",
+      "raw_output": "digest-pin-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "digest-pin-removed/fault",
+        "revision_digest": "sha256:a5a7d1f820125fc9fbc50404e43bfc3c5249c3332837088a0f424d5224eb2dc5",
+        "locator": "objects/a5a7d1f820125fc9fbc50404e43bfc3c5249c3332837088a0f424d5224eb2dc5"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "digest-pin-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_tampered_artifact_fails_its_digest_pin",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "8423ef093feb3689e23dad56ae9d1f44ee580cde6561f84f81a348ec93e45946",
+      "raw_output": "digest-pin-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "digest-pin-removed/restored",
+        "revision_digest": "sha256:524d3053fd586dc9bb2f8a2ce79e98ec3c071517df8961ce4df85d7b50de1eb6",
+        "locator": "objects/524d3053fd586dc9bb2f8a2ce79e98ec3c071517df8961ce4df85d7b50de1eb6"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "target-binding-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_evidence_for_another_target_is_a_target_mismatch",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "78d7e0286201c80c887cbdb4cb53d86656d5c8807e8d4f20872aaea48487386b",
+      "raw_output": "target-binding-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "target-binding-removed/intact",
+        "revision_digest": "sha256:5b5bafbcdb8a6a93ca1dcd99098e7d3022d84758720d4e82ad20ee51d9162691",
+        "locator": "objects/5b5bafbcdb8a6a93ca1dcd99098e7d3022d84758720d4e82ad20ee51d9162691"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "target-binding-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_evidence_for_another_target_is_a_target_mismatch",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "7dbbe1be16df0bb9b8fb3e7d87fb12c7447771219f8caee1f8198c34d260ff62",
+      "raw_output": "target-binding-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "target-binding-removed/fault",
+        "revision_digest": "sha256:36e2ce2cdc74adbf239f85e92ac36780feaf4acb32ad5428b768820d40ab6533",
+        "locator": "objects/36e2ce2cdc74adbf239f85e92ac36780feaf4acb32ad5428b768820d40ab6533"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "target-binding-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_evidence_for_another_target_is_a_target_mismatch",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "78d7e0286201c80c887cbdb4cb53d86656d5c8807e8d4f20872aaea48487386b",
+      "raw_output": "target-binding-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "target-binding-removed/restored",
+        "revision_digest": "sha256:77da77df894b5f01ed786cec12a9d328ca70daa71782a530d6aa5c3e328a4fff",
+        "locator": "objects/77da77df894b5f01ed786cec12a9d328ca70daa71782a530d6aa5c3e328a4fff"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "credential-denial-premise-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_credential_denial_premise_is_unachievable_not_waived",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "950b81b751f40144e8c16347be08746ece5d95e2c1e4e1b30be29e6ee7120b74",
+      "raw_output": "credential-denial-premise-accepted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "credential-denial-premise-accepted/intact",
+        "revision_digest": "sha256:b9f7f6bbed6a46f91ea2fd6712970ef4c73c34e177b79564c5fae73b8b5ea7b7",
+        "locator": "objects/b9f7f6bbed6a46f91ea2fd6712970ef4c73c34e177b79564c5fae73b8b5ea7b7"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "credential-denial-premise-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_credential_denial_premise_is_unachievable_not_waived",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "537d592aa3a671421c7474c070e255fb12bc883f25b8231fab03c89090db920d",
+      "raw_output": "credential-denial-premise-accepted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "credential-denial-premise-accepted/fault",
+        "revision_digest": "sha256:aa6db7e07d9a260f75d7701ef45a1d18e9eda1628db7a1698d24d457a39d1201",
+        "locator": "objects/aa6db7e07d9a260f75d7701ef45a1d18e9eda1628db7a1698d24d457a39d1201"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "credential-denial-premise-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_credential_denial_premise_is_unachievable_not_waived",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "73e14998b22e8d50cba1fe77bee1dc4b84b86c740b2e95a3ca26b7a98da1dbf5",
+      "raw_output": "credential-denial-premise-accepted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "credential-denial-premise-accepted/restored",
+        "revision_digest": "sha256:eb57b8fc244e61aab7cf5cc654a8563c0ef3e732f793b2426477271cdb7422a9",
+        "locator": "objects/eb57b8fc244e61aab7cf5cc654a8563c0ef3e732f793b2426477271cdb7422a9"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "doctor-precondition-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_doctor_evidence_that_is_not_a_full_pass_is_infeasible",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "8d30eae9a8940001d10e825b608090b2557a6704f1fbaa157472026b3660ed21",
+      "raw_output": "doctor-precondition-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "doctor-precondition-removed/intact",
+        "revision_digest": "sha256:ab006fa5547384a8a12ee9b72aed9453fbd5a913193d0aeb45a566554da1316b",
+        "locator": "objects/ab006fa5547384a8a12ee9b72aed9453fbd5a913193d0aeb45a566554da1316b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "doctor-precondition-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_doctor_evidence_that_is_not_a_full_pass_is_infeasible",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "e3361bf3affdd6473c5bdc9af9833893d646af3ee5b5d15e688cdc17b7af1446",
+      "raw_output": "doctor-precondition-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "doctor-precondition-removed/fault",
+        "revision_digest": "sha256:c286f4538e8297c740ed795a56c9b4350de7a97ecf6951ea9f2d5fbb94c8de02",
+        "locator": "objects/c286f4538e8297c740ed795a56c9b4350de7a97ecf6951ea9f2d5fbb94c8de02"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "doctor-precondition-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_doctor_evidence_that_is_not_a_full_pass_is_infeasible",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "cddf7241d2a91ed19434382b77912eccd8afae1515a566870f4078fe356c050d",
+      "raw_output": "doctor-precondition-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "doctor-precondition-removed/restored",
+        "revision_digest": "sha256:b8d81b6b8641c0fb0344ea999afccd9e6160c36d6f759c0aa82bf4734a5b34db",
+        "locator": "objects/b8d81b6b8641c0fb0344ea999afccd9e6160c36d6f759c0aa82bf4734a5b34db"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "doctor-required-checks-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_doctor_evidence_that_is_not_a_full_pass_is_infeasible",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "29e5d28fb53e59d80e34df849eb7146749a1c2bdb24dd1fb911fb29cd8517132",
+      "raw_output": "doctor-required-checks-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "doctor-required-checks-removed/intact",
+        "revision_digest": "sha256:5d24fdd0202c538595a6f3856eb1c8ac52e4c0dfe5820606997c5999c68301a7",
+        "locator": "objects/5d24fdd0202c538595a6f3856eb1c8ac52e4c0dfe5820606997c5999c68301a7"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "doctor-required-checks-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_doctor_evidence_that_is_not_a_full_pass_is_infeasible",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "09024e9d77162a96207bc3950df2a69be597d8bbb63053fc29919e64ee7c9384",
+      "raw_output": "doctor-required-checks-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "doctor-required-checks-removed/fault",
+        "revision_digest": "sha256:2e95f6b6f586be12ed6911792cf5477cdb8919401d11ecef4832fd6e298610e1",
+        "locator": "objects/2e95f6b6f586be12ed6911792cf5477cdb8919401d11ecef4832fd6e298610e1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "doctor-required-checks-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_doctor_evidence_that_is_not_a_full_pass_is_infeasible",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "8d30eae9a8940001d10e825b608090b2557a6704f1fbaa157472026b3660ed21",
+      "raw_output": "doctor-required-checks-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "doctor-required-checks-removed/restored",
+        "revision_digest": "sha256:a3f3b7e17377401cee39fdd5239a738a2a61bef0b74d6a5b429bcfd3f489cd31",
+        "locator": "objects/a3f3b7e17377401cee39fdd5239a738a2a61bef0b74d6a5b429bcfd3f489cd31"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "outside-state-comparison-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_changed_outside_state_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "63adc7d25528c84313f55d01004be33888e1b7dca18c2f6536ced654cefe9c17",
+      "raw_output": "outside-state-comparison-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "outside-state-comparison-removed/intact",
+        "revision_digest": "sha256:a25c1e2ea25d94a43da38c5cc64b9b24a2b240ea949cae243a3110c8655cea67",
+        "locator": "objects/a25c1e2ea25d94a43da38c5cc64b9b24a2b240ea949cae243a3110c8655cea67"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "outside-state-comparison-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_changed_outside_state_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "aef247c22a78cd4175cf9443b07ec10a1b33821d9fe85d23f3016d3e480a67e8",
+      "raw_output": "outside-state-comparison-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "outside-state-comparison-removed/fault",
+        "revision_digest": "sha256:db14acc3acfebaa862d0680da79b3171dc868b324aa9cf3ca23b395eaa6c733d",
+        "locator": "objects/db14acc3acfebaa862d0680da79b3171dc868b324aa9cf3ca23b395eaa6c733d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "outside-state-comparison-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_changed_outside_state_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "a3a9b1633d269dd5557b8f85aa06be41f3eae8255677b7adda11709d9ce94ab2",
+      "raw_output": "outside-state-comparison-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "outside-state-comparison-removed/restored",
+        "revision_digest": "sha256:51ebac6ba628f4966d78b1a65fc882aafdb46aebcae419c61adff57234976980",
+        "locator": "objects/51ebac6ba628f4966d78b1a65fc882aafdb46aebcae419c61adff57234976980"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "absent-check-invented",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_absent_mapped_check_is_a_missing_premise",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "170844c944e00ff4179c926c50dd7d4de9d1c73fc206d1e7ea26500eb928b9a6",
+      "raw_output": "absent-check-invented-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "absent-check-invented/intact",
+        "revision_digest": "sha256:0fbd8c7a75443720bc608755af1485909ae28754d4f6cc62e98aea545d81eb3c",
+        "locator": "objects/0fbd8c7a75443720bc608755af1485909ae28754d4f6cc62e98aea545d81eb3c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "absent-check-invented",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_absent_mapped_check_is_a_missing_premise",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "21b6c4a7056b5fae4d6c601e3bc6bf7f0189cd9a19e91230a1eb3bd4cbc3fe7c",
+      "raw_output": "absent-check-invented-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "absent-check-invented/fault",
+        "revision_digest": "sha256:edd3a22e84a22d3b8ecd8863adf13333d4ef970ff75e17d69d13e922e9bee3a3",
+        "locator": "objects/edd3a22e84a22d3b8ecd8863adf13333d4ef970ff75e17d69d13e922e9bee3a3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "absent-check-invented",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_absent_mapped_check_is_a_missing_premise",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "b45a09cb63e3f48074a02b46cab7c4eca243f4f781ad7009ada83fe80a5fcf0d",
+      "raw_output": "absent-check-invented-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "absent-check-invented/restored",
+        "revision_digest": "sha256:e6c44293eeb1c95470495a9a2f0298cd94042d731a98d0bc0047aa117c597aed",
+        "locator": "objects/e6c44293eeb1c95470495a9a2f0298cd94042d731a98d0bc0047aa117c597aed"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "composition-disconnected",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_composed_profile_reads_retained_doctor_evidence_as_isolation_premise",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "441da74adfa3d8ea2d5d83b4aa651385c1e5a66d282e38422e76e8f4d48278a9",
+      "raw_output": "composition-disconnected-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "composition-disconnected/intact",
+        "revision_digest": "sha256:2b9a7f82cfbaf3c3619134a0f52a60a831b8a456b52804e02a76d975c8c7437b",
+        "locator": "objects/2b9a7f82cfbaf3c3619134a0f52a60a831b8a456b52804e02a76d975c8c7437b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "composition-disconnected",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_composed_profile_reads_retained_doctor_evidence_as_isolation_premise",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "45dca9547aaf28f3a60874e4009acc8471f99e89cd8b76681016d42c43143522",
+      "raw_output": "composition-disconnected-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "composition-disconnected/fault",
+        "revision_digest": "sha256:54daac41cae1ac66397c72aa4ae6fbc8a32ff33001ff50a2ddc3a7f27c0e5c60",
+        "locator": "objects/54daac41cae1ac66397c72aa4ae6fbc8a32ff33001ff50a2ddc3a7f27c0e5c60"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "composition-disconnected",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_composed_profile_reads_retained_doctor_evidence_as_isolation_premise",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c52856e1d4782085e7abf12c383c55268b5c0014ae1f0f4fb9816f356ee87f13",
+      "raw_output": "composition-disconnected-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "composition-disconnected/restored",
+        "revision_digest": "sha256:246b2d95118da538c931f78987c3199bf2a0be86a9fe093c084bbe8c2f478686",
+        "locator": "objects/246b2d95118da538c931f78987c3199bf2a0be86a9fe093c084bbe8c2f478686"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "premise-bridge-import-added",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_modules_import_no_installation_or_composition",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "0854cab026f711cbad49dd15b25f5b5a7776778b09bf3362fa291bd9904cd6c2",
+      "raw_output": "premise-bridge-import-added-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "premise-bridge-import-added/intact",
+        "revision_digest": "sha256:dbc4592169e742e0c944e9333e7e076d6daa7f58bb1fc7ee71f3ff380a98d3dc",
+        "locator": "objects/dbc4592169e742e0c944e9333e7e076d6daa7f58bb1fc7ee71f3ff380a98d3dc"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "premise-bridge-import-added",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_modules_import_no_installation_or_composition",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "6e29ec1e01543b1be5e3119d2fbb378f4de183dcee3a5732ba47bfcbbadba8d5",
+      "raw_output": "premise-bridge-import-added-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "premise-bridge-import-added/fault",
+        "revision_digest": "sha256:842234f54e958e3f43fa25de969af74c98c374fbf9464308f9e42837b447f6ad",
+        "locator": "objects/842234f54e958e3f43fa25de969af74c98c374fbf9464308f9e42837b447f6ad"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "premise-bridge-import-added",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_modules_import_no_installation_or_composition",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "0854cab026f711cbad49dd15b25f5b5a7776778b09bf3362fa291bd9904cd6c2",
+      "raw_output": "premise-bridge-import-added-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "premise-bridge-import-added/restored",
+        "revision_digest": "sha256:be879e4a004306ab9c195ad2f710ee68ce91c1e4ae890d3377845c829363c547",
+        "locator": "objects/be879e4a004306ab9c195ad2f710ee68ce91c1e4ae890d3377845c829363c547"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "premise-identity-unbound",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_id_is_bound_to_the_pinned_mapping",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e3aa7851c6283c69cb77a6843bb38df43a4d28d05205cbeffa5b983d1c2fad73",
+      "raw_output": "premise-identity-unbound-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "premise-identity-unbound/intact",
+        "revision_digest": "sha256:7ee4248b312d5469dc624e70f5d26a161b32c951f88f1b02157002fb948b664d",
+        "locator": "objects/7ee4248b312d5469dc624e70f5d26a161b32c951f88f1b02157002fb948b664d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "premise-identity-unbound",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_id_is_bound_to_the_pinned_mapping",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "cebdfd70f85227dd73a8ea48947cf394706d59315c6acccbfa4e21a9bf3f1b4a",
+      "raw_output": "premise-identity-unbound-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "premise-identity-unbound/fault",
+        "revision_digest": "sha256:cfe9f1632142ac8ebde47d4904f2a93379e9e53d1266948c2539e519414116ac",
+        "locator": "objects/cfe9f1632142ac8ebde47d4904f2a93379e9e53d1266948c2539e519414116ac"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "premise-identity-unbound",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_id_is_bound_to_the_pinned_mapping",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "f30726c699df6df1fe11e2bf7c2ccdfa9404495244771b73be4e3f7c8f91b220",
+      "raw_output": "premise-identity-unbound-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "premise-identity-unbound/restored",
+        "revision_digest": "sha256:31abb96328ca1f37e1612a576f5ee1448d53277dfe8917c2c11f7369b339a418",
+        "locator": "objects/31abb96328ca1f37e1612a576f5ee1448d53277dfe8917c2c11f7369b339a418"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "mapping-pin-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unpinned_or_missing_mapping_is_infeasible",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e88210aa2702501127f237ee490f76f4c6fe67b9bc5cb0831f68f26699193fce",
+      "raw_output": "mapping-pin-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "mapping-pin-removed/intact",
+        "revision_digest": "sha256:f70bac0e554856082ed76f901138d4632bd252c9c9a16f67451e80323385d138",
+        "locator": "objects/f70bac0e554856082ed76f901138d4632bd252c9c9a16f67451e80323385d138"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "mapping-pin-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unpinned_or_missing_mapping_is_infeasible",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "289848bc36884e73b88742f92dbc2fcd3e8ec9407e0da0071c9ed27026b93b4e",
+      "raw_output": "mapping-pin-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "mapping-pin-removed/fault",
+        "revision_digest": "sha256:3fead281579a552b7c853cf34f0447aceab5e2c82c5a8082d7d4b0bf26c9b3bb",
+        "locator": "objects/3fead281579a552b7c853cf34f0447aceab5e2c82c5a8082d7d4b0bf26c9b3bb"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "mapping-pin-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unpinned_or_missing_mapping_is_infeasible",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "59677ebf31801e326db01597746f56d49bc9875e317f64596cbfd3edd7e671a8",
+      "raw_output": "mapping-pin-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "mapping-pin-removed/restored",
+        "revision_digest": "sha256:9b4d1b480a77feaeb936c92da3164cfd1e55c90135b71211ebc336e94e9b8e08",
+        "locator": "objects/9b4d1b480a77feaeb936c92da3164cfd1e55c90135b71211ebc336e94e9b8e08"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "mapping-validation-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "dc2a849cd70f9a7049cc560b5d3d5bc88d2886cbbcc304a3ad7c4fb0daa8500f",
+      "raw_output": "mapping-validation-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "mapping-validation-removed/intact",
+        "revision_digest": "sha256:8f73fb2b66073e319d20b1b21acbadde20d15dba381b31ccb1ad6e32fe8245f0",
+        "locator": "objects/8f73fb2b66073e319d20b1b21acbadde20d15dba381b31ccb1ad6e32fe8245f0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "mapping-validation-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "f011471030876c1aa84b3ef1d27f4b73d7c2ef0f13b77380ec3acf6a772f7fda",
+      "raw_output": "mapping-validation-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "mapping-validation-removed/fault",
+        "revision_digest": "sha256:58094aad40d595ce7a9b0732715e1ec2df10ba2bc2d7e8453b70b96cee54baaa",
+        "locator": "objects/58094aad40d595ce7a9b0732715e1ec2df10ba2bc2d7e8453b70b96cee54baaa"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "mapping-validation-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "b5c8c51ab7ff7a42dab47cfcc219a9f222f88c090c5161d218b1b4cdd97e62fc",
+      "raw_output": "mapping-validation-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "mapping-validation-removed/restored",
+        "revision_digest": "sha256:a12c456c2efde730ce05e6fafd45c3f5edd828c8125df51b4ca11e168ca71fdc",
+        "locator": "objects/a12c456c2efde730ce05e6fafd45c3f5edd828c8125df51b4ca11e168ca71fdc"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "empty-readback-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_null_or_empty_readback_is_not_an_unchanged_state",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "6fb8c83c27d6bc2a40b3d65a40289ca136d4ee07cd1111c7b4af30cedc71b562",
+      "raw_output": "empty-readback-accepted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "empty-readback-accepted/intact",
+        "revision_digest": "sha256:b920b71c1c27afd762f62d3d7f9f6e4d75beec8fb6fed91d54b20c222c1c5884",
+        "locator": "objects/b920b71c1c27afd762f62d3d7f9f6e4d75beec8fb6fed91d54b20c222c1c5884"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "empty-readback-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_null_or_empty_readback_is_not_an_unchanged_state",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "f267f603f860dc817677aa4ef1bc2a9c2af9e8b97a9f17080898028ac83d2b67",
+      "raw_output": "empty-readback-accepted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "empty-readback-accepted/fault",
+        "revision_digest": "sha256:d9797ed119efda9b0794da8c82147221cff04938ac74fb959176e7184fe1bc18",
+        "locator": "objects/d9797ed119efda9b0794da8c82147221cff04938ac74fb959176e7184fe1bc18"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "empty-readback-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_null_or_empty_readback_is_not_an_unchanged_state",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "8f59f425bee5bd8baa159557b787047cbf2168e91bdec16a089265cf944e3b27",
+      "raw_output": "empty-readback-accepted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "empty-readback-accepted/restored",
+        "revision_digest": "sha256:b803c8db4d4f3256305188fa5850577db25375219b6c3d62014bb3a2424ca2c2",
+        "locator": "objects/b803c8db4d4f3256305188fa5850577db25375219b6c3d62014bb3a2424ca2c2"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "detail-predicate-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_vacuous_out_of_scope_refusal_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "785f9d5b20d1ba77989b4fac62f9f9c632be41c64ed84fbdb22251544d17005c",
+      "raw_output": "detail-predicate-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "detail-predicate-removed/intact",
+        "revision_digest": "sha256:70e300a057a096a7559d0c7b8350a8a36de16c361da10a6bc06da960491ccc7f",
+        "locator": "objects/70e300a057a096a7559d0c7b8350a8a36de16c361da10a6bc06da960491ccc7f"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "detail-predicate-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_vacuous_out_of_scope_refusal_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "1a2891d2b628e045e914c0e2517900c83b91ae2887d6bf484bd2b987c900cde7",
+      "raw_output": "detail-predicate-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "detail-predicate-removed/fault",
+        "revision_digest": "sha256:30a4f5378b13bbc3382fadb71946e13b873a6e81583e3cc19ed2949097e1af3c",
+        "locator": "objects/30a4f5378b13bbc3382fadb71946e13b873a6e81583e3cc19ed2949097e1af3c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "detail-predicate-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_vacuous_out_of_scope_refusal_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "f3827a42521b2bf30a0d0a20a4d5ad515794ba7e42730451a3f8f157f733d666",
+      "raw_output": "detail-predicate-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "detail-predicate-removed/restored",
+        "revision_digest": "sha256:89ac45e188643ff002b18d96bcde6d643373d6d8b978e57ed67cbe07e245fba8",
+        "locator": "objects/89ac45e188643ff002b18d96bcde6d643373d6d8b978e57ed67cbe07e245fba8"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "duplicate-key-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "ea61b190855ea3092de5cc2a5d072dbdefe9df123d2a8cf9bea590f5bc4e9e47",
+      "raw_output": "duplicate-key-accepted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "duplicate-key-accepted/intact",
+        "revision_digest": "sha256:26af2c888c416e93d681a2d73310de806de329b56ffedd4d83b5f8bfd0288af0",
+        "locator": "objects/26af2c888c416e93d681a2d73310de806de329b56ffedd4d83b5f8bfd0288af0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "duplicate-key-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "495860d1cebbc407c42e1183cf16ccb5148ac09c5efb4e66454d5521cc4145c7",
+      "raw_output": "duplicate-key-accepted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "duplicate-key-accepted/fault",
+        "revision_digest": "sha256:73cc4326ff4962d6884356c9370894ca7d4a884714620c00bf585f8ebb68f33d",
+        "locator": "objects/73cc4326ff4962d6884356c9370894ca7d4a884714620c00bf585f8ebb68f33d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "duplicate-key-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e7192db8eb570551b09c072b6295a4f7df83073719de0c2bcbdb0d5c7078e6c5",
+      "raw_output": "duplicate-key-accepted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "duplicate-key-accepted/restored",
+        "revision_digest": "sha256:ad59c1d89bcdfbdb64b76674d8ab2650b907fce6b59fff1fd56b63f93a52f69b",
+        "locator": "objects/ad59c1d89bcdfbdb64b76674d8ab2650b907fce6b59fff1fd56b63f93a52f69b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "absent-target-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "eef6b1660d975d69b5b8ba058ce64b378b9a548a07b67c24ba368bde566a7c01",
+      "raw_output": "absent-target-accepted-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "absent-target-accepted/intact",
+        "revision_digest": "sha256:da0227b5bf66430d5ec29fee335f2e7529ec5db5526a8c925a4e6e57e4166d1c",
+        "locator": "objects/da0227b5bf66430d5ec29fee335f2e7529ec5db5526a8c925a4e6e57e4166d1c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "absent-target-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "7a0c73e0acb7c7fcbc18e9953a78145607b6072cb59286cadffaabf263fba1e4",
+      "raw_output": "absent-target-accepted-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "absent-target-accepted/fault",
+        "revision_digest": "sha256:3e1f5b6ace804823a68eb656bffa3ab503bc7bc41a58158cfe6434aa6d1fcb0a",
+        "locator": "objects/3e1f5b6ace804823a68eb656bffa3ab503bc7bc41a58158cfe6434aa6d1fcb0a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "absent-target-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "8c60d130ff9c3597ed49d1738a2d05a9bffb80a0f8ffea20bb80dee4bd7245fe",
+      "raw_output": "absent-target-accepted-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "absent-target-accepted/restored",
+        "revision_digest": "sha256:5940e7f8d39b85665c3aecde4aabe511472a3f82945ee18c22925ad1daa4a07b",
+        "locator": "objects/5940e7f8d39b85665c3aecde4aabe511472a3f82945ee18c22925ad1daa4a07b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "path-confinement-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "7b9fd9f2c9e1004f7cf06f9709795036be28113f7f7cd7344b3e34f19a35cd54",
+      "raw_output": "path-confinement-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "path-confinement-removed/intact",
+        "revision_digest": "sha256:dd2d676936b7ee7ebdeee55b6ac73ffcc4ca748a60c029383850cd1bbc916cdc",
+        "locator": "objects/dd2d676936b7ee7ebdeee55b6ac73ffcc4ca748a60c029383850cd1bbc916cdc"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "path-confinement-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "ef0addc65fae0b03b066edac7ccdeefcac25fbe587aeeaefb1b091d7fcc5a201",
+      "raw_output": "path-confinement-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "path-confinement-removed/fault",
+        "revision_digest": "sha256:eb2acc25b2bfdf54f079ec0d4ba57e4929f5fc47b4b1853c8c0efdb2f80c62d0",
+        "locator": "objects/eb2acc25b2bfdf54f079ec0d4ba57e4929f5fc47b4b1853c8c0efdb2f80c62d0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "path-confinement-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "34acc7531fde5a7ba4c095d838cbf6e6631718cace29234b6d50241d64bcc5ed",
+      "raw_output": "path-confinement-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "path-confinement-removed/restored",
+        "revision_digest": "sha256:4d7d70cfb7260d6db008c8018a93e4b5316de6071d3df5a371bd09418fb27091",
+        "locator": "objects/4d7d70cfb7260d6db008c8018a93e4b5316de6071d3df5a371bd09418fb27091"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "symlink-confinement-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_artifact_paths_cannot_escape_the_root_or_block",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "a846bc63d01af8eeefc3e81bfe67d8c1d06756277b608af365894f261ee5f8b1",
+      "raw_output": "symlink-confinement-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "symlink-confinement-removed/intact",
+        "revision_digest": "sha256:8051a30541a4c2b8c80a8773ed140528abbd75e435f97c1c69c3bbbd88df2977",
+        "locator": "objects/8051a30541a4c2b8c80a8773ed140528abbd75e435f97c1c69c3bbbd88df2977"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "symlink-confinement-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_artifact_paths_cannot_escape_the_root_or_block",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "d38ad2d617f88322e62110d9afba2a81ebfe8e7306cea10f30a3c5c95eb918b7",
+      "raw_output": "symlink-confinement-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "symlink-confinement-removed/fault",
+        "revision_digest": "sha256:4e4d9994663e099bb663d65fa9da5ae5167a7a2ef7f119eb72d9fca9148ad519",
+        "locator": "objects/4e4d9994663e099bb663d65fa9da5ae5167a7a2ef7f119eb72d9fca9148ad519"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "symlink-confinement-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_artifact_paths_cannot_escape_the_root_or_block",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "ecc6d80d7da314a353e44e72deeed7b868c13e4e3d5ac1e73508362faf313e08",
+      "raw_output": "symlink-confinement-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "symlink-confinement-removed/restored",
+        "revision_digest": "sha256:511374bf74ecaaaa01bd43c4942f94474b96f64137c2b3749193cb1b04517a7d",
+        "locator": "objects/511374bf74ecaaaa01bd43c4942f94474b96f64137c2b3749193cb1b04517a7d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "type-exact-comparison-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_readback_comparison_is_type_exact",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "5ceafeebf12ca8f4bf2001d475f3f9d1bc7d35ffc0bfd0cbb5611fafb18ad78d",
+      "raw_output": "type-exact-comparison-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "type-exact-comparison-removed/intact",
+        "revision_digest": "sha256:257f336279dc2bb3dbd78f34687fcb0217eb7abee9981f9143c32d8891d0cb43",
+        "locator": "objects/257f336279dc2bb3dbd78f34687fcb0217eb7abee9981f9143c32d8891d0cb43"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "type-exact-comparison-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_readback_comparison_is_type_exact",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "795a7882cf51bdbf069cee7b28c592f71f5d7b572ba858ed0612b43e618ce2dc",
+      "raw_output": "type-exact-comparison-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "type-exact-comparison-removed/fault",
+        "revision_digest": "sha256:bf8aec001a707c142cdd01aa3e7f0d40580eb9ea355200b5adf59dde33fbb9fe",
+        "locator": "objects/bf8aec001a707c142cdd01aa3e7f0d40580eb9ea355200b5adf59dde33fbb9fe"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "type-exact-comparison-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_readback_comparison_is_type_exact",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "ce92852145e93fe2f7fd7b6701676858e9a5098b9c32e19eaf8189c0f4fb8552",
+      "raw_output": "type-exact-comparison-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "type-exact-comparison-removed/restored",
+        "revision_digest": "sha256:cbb908f415d4a208dae2241d1986ccffd36c2f8dc8246493ebcad4978215b78d",
+        "locator": "objects/cbb908f415d4a208dae2241d1986ccffd36c2f8dc8246493ebcad4978215b78d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "detail-pattern-anchoring-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_negated_refusal_detail_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e91ca0f4727a8a0265fe5459f1fcd2f8c280cffbe528c8feff8c9232c351f954",
+      "raw_output": "detail-pattern-anchoring-removed-intact.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "detail-pattern-anchoring-removed/intact",
+        "revision_digest": "sha256:04cdae40dcbaa8f68b49d249758b885a7903c15e263d79a716a8c0767ec2e163",
+        "locator": "objects/04cdae40dcbaa8f68b49d249758b885a7903c15e263d79a716a8c0767ec2e163"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "detail-pattern-anchoring-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_negated_refusal_detail_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "nonzero assertion failure",
+      "exit_status": 1,
+      "raw_output_sha256": "98cbd942af408a64d0309df9d21253e86808e955dd18e5a9135520c73799e6cd",
+      "raw_output": "detail-pattern-anchoring-removed-fault.log",
+      "application_count": 1,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "detail-pattern-anchoring-removed/fault",
+        "revision_digest": "sha256:37b5cf5b306822ceed06891ba963be684db65d41b6cc386b9190042dbe3bb9bd",
+        "locator": "objects/37b5cf5b306822ceed06891ba963be684db65d41b6cc386b9190042dbe3bb9bd"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U3",
+      "control": "detail-pattern-anchoring-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_negated_refusal_detail_is_unsatisfied",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "189118cf199c19835d8ecb5ebcebe4923b4002512e2b613dfee4214cbc36b671",
+      "raw_output": "detail-pattern-anchoring-removed-restored.log",
+      "application_count": 0,
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u3",
+        "logical_id": "detail-pattern-anchoring-removed/restored",
+        "revision_digest": "sha256:6bb08cc0bdb572cc70f4856ce99db0cef815416a6799d900d008d3965e444e27",
+        "locator": "objects/6bb08cc0bdb572cc70f4856ce99db0cef815416a6799d900d008d3965e444e27"
+      }
+    }
+  ],
+  "verdict": "independent verifier pending"
+}
