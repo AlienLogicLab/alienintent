@@ -1,0 +1,21 @@
+test_changed_input_keeps_an_unanswered_semantic_review_hold (tests.context_assembly.test_ambiguity.AmbiguityTests.test_changed_input_keeps_an_unanswered_semantic_review_hold) ... FAIL
+
+======================================================================
+FAIL: test_changed_input_keeps_an_unanswered_semantic_review_hold (tests.context_assembly.test_ambiguity.AmbiguityTests.test_changed_input_keeps_an_unanswered_semantic_review_hold)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u2-gwo80ilc/tests/context_assembly/test_ambiguity.py", line 280, in test_changed_input_keeps_an_unanswered_semantic_review_hold
+    self.assertEqual((entry.semantic_review_status, entry.preparation), ("UNVERIFIED", "HELD"))
+AssertionError: Tuples differ: ('NOT_RECORDED', 'ELIGIBLE_FOR_PREPARATION') != ('UNVERIFIED', 'HELD')
+
+First differing element 0:
+'NOT_RECORDED'
+'UNVERIFIED'
+
+- ('NOT_RECORDED', 'ELIGIBLE_FOR_PREPARATION')
++ ('UNVERIFIED', 'HELD')
+
+----------------------------------------------------------------------
+Ran 1 test in 0.095s
+
+FAILED (failures=1)

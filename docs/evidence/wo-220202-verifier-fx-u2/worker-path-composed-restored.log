@@ -1,0 +1,7 @@
+test_upstream_composition_has_no_worker_path (tests.context_assembly.test_ambiguity.AmbiguityTests.test_upstream_composition_has_no_worker_path)
+SF-REQ-012-AC-04: no module on the question/answer path can reach a worker or dispatcher. ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.039s
+
+OK

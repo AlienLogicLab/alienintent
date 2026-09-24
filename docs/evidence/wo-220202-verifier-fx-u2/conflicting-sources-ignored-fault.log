@@ -1,0 +1,25 @@
+test_missing_fields_and_conflicting_sources_open_source_linked_questions (tests.context_assembly.test_ambiguity.AmbiguityTests.test_missing_fields_and_conflicting_sources_open_source_linked_questions)
+SF-REQ-012-AC-01. ... 
+  test_missing_fields_and_conflicting_sources_open_source_linked_questions (tests.context_assembly.test_ambiguity.AmbiguityTests.test_missing_fields_and_conflicting_sources_open_source_linked_questions) (rid='SF-REQ-905')
+SF-REQ-012-AC-01. ... FAIL
+
+======================================================================
+FAIL: test_missing_fields_and_conflicting_sources_open_source_linked_questions (tests.context_assembly.test_ambiguity.AmbiguityTests.test_missing_fields_and_conflicting_sources_open_source_linked_questions) (rid='SF-REQ-905')
+SF-REQ-012-AC-01.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u2-gwo80ilc/tests/context_assembly/test_ambiguity.py", line 126, in test_missing_fields_and_conflicting_sources_open_source_linked_questions
+    self.assertEqual(tuple(sorted(f.rule_code for f in report.findings if f.requirement_id == rid)), (rule,))
+AssertionError: Tuples differ: () != ('CONFLICTING_SOURCES',)
+
+Second tuple contains 1 additional elements.
+First extra element 0:
+'CONFLICTING_SOURCES'
+
+- ()
++ ('CONFLICTING_SOURCES',)
+
+----------------------------------------------------------------------
+Ran 1 test in 0.086s
+
+FAILED (failures=1)

@@ -1,0 +1,27 @@
+test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent (tests.context_assembly.test_ambiguity.AmbiguityTests.test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent)
+SF-REQ-012-AC-03. ... FAIL
+
+======================================================================
+FAIL: test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent (tests.context_assembly.test_ambiguity.AmbiguityTests.test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent)
+SF-REQ-012-AC-03.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u2-gwo80ilc/tests/context_assembly/test_ambiguity.py", line 216, in test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent
+    self.assertEqual((reviewed.mechanical_status, reviewed.semantic_review_status, reviewed.preparation),
+AssertionError: Tuples differ: ('COMPLETE', 'RECORDED_FINDINGS', 'ELIGIBLE_FOR_PREPARATION') != ('COMPLETE', 'RECORDED_FINDINGS', 'HELD')
+
+First differing element 2:
+'ELIGIBLE_FOR_PREPARATION'
+'HELD'
+
+- ('COMPLETE', 'RECORDED_FINDINGS', 'ELIGIBLE_FOR_PREPARATION')
+?                                      ^^^^^^^^^^^^^^^^^^^^^^
+
++ ('COMPLETE', 'RECORDED_FINDINGS', 'HELD')
+?                                    +  ^
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.077s
+
+FAILED (failures=1)

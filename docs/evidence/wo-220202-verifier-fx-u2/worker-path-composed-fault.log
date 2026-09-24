@@ -1,0 +1,18 @@
+test_upstream_composition_has_no_worker_path (tests.context_assembly.test_ambiguity.AmbiguityTests.test_upstream_composition_has_no_worker_path)
+SF-REQ-012-AC-04: no module on the question/answer path can reach a worker or dispatcher. ... 
+  test_upstream_composition_has_no_worker_path (tests.context_assembly.test_ambiguity.AmbiguityTests.test_upstream_composition_has_no_worker_path) (path='upstream_profile.py', module='alienintent.execution_coordination.ports.worker_provider')
+SF-REQ-012-AC-04: no module on the question/answer path can reach a worker or dispatcher. ... FAIL
+
+======================================================================
+FAIL: test_upstream_composition_has_no_worker_path (tests.context_assembly.test_ambiguity.AmbiguityTests.test_upstream_composition_has_no_worker_path) (path='upstream_profile.py', module='alienintent.execution_coordination.ports.worker_provider')
+SF-REQ-012-AC-04: no module on the question/answer path can reach a worker or dispatcher.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u2-gwo80ilc/tests/context_assembly/test_ambiguity.py", line 268, in test_upstream_composition_has_no_worker_path
+    self.assertFalse(any(f in name for f in forbidden))
+AssertionError: True is not false
+
+----------------------------------------------------------------------
+Ran 1 test in 0.045s
+
+FAILED (failures=1)

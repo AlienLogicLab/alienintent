@@ -1,0 +1,18 @@
+test_only_matching_attributed_decision_resolves_that_question (tests.context_assembly.test_ambiguity.AmbiguityTests.test_only_matching_attributed_decision_resolves_that_question)
+SF-REQ-012-AC-02 and changed inputs becoming STALE. ... FAIL
+
+======================================================================
+FAIL: test_only_matching_attributed_decision_resolves_that_question (tests.context_assembly.test_ambiguity.AmbiguityTests.test_only_matching_attributed_decision_resolves_that_question)
+SF-REQ-012-AC-02 and changed inputs becoming STALE.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u2-gwo80ilc/tests/context_assembly/test_ambiguity.py", line 164, in test_only_matching_attributed_decision_resolves_that_question
+    self.assertHold(h.resolve(other, wrong_actor), "AUTHORITY_HOLD")
+  File "/tmp/fx-u2-gwo80ilc/tests/context_assembly/test_ambiguity.py", line 104, in assertHold
+    self.assertIsInstance(result, AnswerHold, result)
+AssertionError: QuestionResolution(resolution_id='d77e40f58088e94ca8e8ad697ab1484c6b1f88a3be42a9c5c1e1641b9ab00f62', finding_id='d051ebca0180bf2c0d655ba76be9decc988c226cd068da3a963688448dbcc78d', requirement_revision='d172c7028e4ded5bc1c6a5efaab659976ebf367dc629450f444b8ddb9019ec80', actor='Mallory', authority_reference='FD-9 answer', idempotency_key='k-d051ebca0180-1', evidence_ref={'project': 'AlienLogicLab/alienintent', 'profile': 'fx-u2', 'logical_id': 'ambiguity.resolution:bf972e7069fe85d55269bf5d7c3727ffb2f19e81a7f0ba2c4cfa9f36b0da9621', 'revision_digest': 'sha256:14c0db9d20126ca147c1ec5588cb616f83db31174b22e599bca4c3c726d3d2b7', 'locator': 'objects/14c0db9d20126ca147c1ec5588cb616f83db31174b22e599bca4c3c726d3d2b7'}) is not an instance of <class 'alienintent.context_assembly.domain.ambiguity.AnswerHold'> : QuestionResolution(resolution_id='d77e40f58088e94ca8e8ad697ab1484c6b1f88a3be42a9c5c1e1641b9ab00f62', finding_id='d051ebca0180bf2c0d655ba76be9decc988c226cd068da3a963688448dbcc78d', requirement_revision='d172c7028e4ded5bc1c6a5efaab659976ebf367dc629450f444b8ddb9019ec80', actor='Mallory', authority_reference='FD-9 answer', idempotency_key='k-d051ebca0180-1', evidence_ref={'project': 'AlienLogicLab/alienintent', 'profile': 'fx-u2', 'logical_id': 'ambiguity.resolution:bf972e7069fe85d55269bf5d7c3727ffb2f19e81a7f0ba2c4cfa9f36b0da9621', 'revision_digest': 'sha256:14c0db9d20126ca147c1ec5588cb616f83db31174b22e599bca4c3c726d3d2b7', 'locator': 'objects/14c0db9d20126ca147c1ec5588cb616f83db31174b22e599bca4c3c726d3d2b7'})
+
+----------------------------------------------------------------------
+Ran 1 test in 0.197s
+
+FAILED (failures=1)

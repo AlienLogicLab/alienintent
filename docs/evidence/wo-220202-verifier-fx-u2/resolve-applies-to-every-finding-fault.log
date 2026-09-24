@@ -1,0 +1,23 @@
+test_only_matching_attributed_decision_resolves_that_question (tests.context_assembly.test_ambiguity.AmbiguityTests.test_only_matching_attributed_decision_resolves_that_question)
+SF-REQ-012-AC-02 and changed inputs becoming STALE. ... FAIL
+
+======================================================================
+FAIL: test_only_matching_attributed_decision_resolves_that_question (tests.context_assembly.test_ambiguity.AmbiguityTests.test_only_matching_attributed_decision_resolves_that_question)
+SF-REQ-012-AC-02 and changed inputs becoming STALE.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u2-gwo80ilc/tests/context_assembly/test_ambiguity.py", line 171, in test_only_matching_attributed_decision_resolves_that_question
+    self.assertEqual((h.status(intent), h.status(acceptance), h.status(other)), ("RESOLVED", "OPEN", "OPEN"))
+AssertionError: Tuples differ: ('RESOLVED', 'RESOLVED', 'RESOLVED') != ('RESOLVED', 'OPEN', 'OPEN')
+
+First differing element 1:
+'RESOLVED'
+'OPEN'
+
+- ('RESOLVED', 'RESOLVED', 'RESOLVED')
++ ('RESOLVED', 'OPEN', 'OPEN')
+
+----------------------------------------------------------------------
+Ran 1 test in 0.209s
+
+FAILED (failures=1)

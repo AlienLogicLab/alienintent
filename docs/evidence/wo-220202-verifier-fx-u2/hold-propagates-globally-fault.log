@@ -1,0 +1,23 @@
+test_unrelated_requirement_stays_preparable_and_no_worker_launches (tests.context_assembly.test_ambiguity.AmbiguityTests.test_unrelated_requirement_stays_preparable_and_no_worker_launches)
+SF-REQ-012-AC-04. ... FAIL
+
+======================================================================
+FAIL: test_unrelated_requirement_stays_preparable_and_no_worker_launches (tests.context_assembly.test_ambiguity.AmbiguityTests.test_unrelated_requirement_stays_preparable_and_no_worker_launches)
+SF-REQ-012-AC-04.
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u2-gwo80ilc/tests/context_assembly/test_ambiguity.py", line 241, in test_unrelated_requirement_stays_preparable_and_no_worker_launches
+    self.assertEqual([report.requirement(r).preparation for r in ("SF-REQ-930", "SF-REQ-931", "SF-REQ-932")],
+AssertionError: Lists differ: ['HELD', 'HELD', 'HELD'] != ['HELD', 'HELD', 'ELIGIBLE_FOR_PREPARATION']
+
+First differing element 2:
+'HELD'
+'ELIGIBLE_FOR_PREPARATION'
+
+- ['HELD', 'HELD', 'HELD']
++ ['HELD', 'HELD', 'ELIGIBLE_FOR_PREPARATION']
+
+----------------------------------------------------------------------
+Ran 1 test in 0.051s
+
+FAILED (failures=1)
