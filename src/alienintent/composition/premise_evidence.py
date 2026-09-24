@@ -9,8 +9,10 @@ from __future__ import annotations
 
 from hashlib import sha256
 import json
+import os
 from pathlib import Path, PurePosixPath
 import re
+import stat
 
 from alienintent.evidence_learning.domain.premise import (
     IsolationObservable, PremiseObservation, RetainedPremiseEvidence)
@@ -21,6 +23,7 @@ from alienintent.installation.application.doctor import REQUIRED_CHECKS
 _ABSENT = object()
 _DOCTOR_DETAIL = re.compile(r"disposition=(\w+) exit=(\d+) outcomes=(\{.*\})")
 _OBSERVABLES = {o.value for o in IsolationObservable}
+MAX_RETAINED_BYTES = 10 * 1024 * 1024
 
 
 class RetainedDoctorPremiseEvidence(PremiseEvidence):
@@ -56,11 +59,8 @@ class RetainedDoctorPremiseEvidence(PremiseEvidence):
                                        tuple(observations), tuple(dict.fromkeys(unavailable)))
 
     def _mapping(self) -> tuple[dict | None, Ref | None]:
-        try:
-            body = (self._root / self._mapping_path).read_bytes()
-        except (OSError, ValueError):
-            return None, None
-        if sha256(body).hexdigest() != self._mapping_sha256:
+        body = _read_retained(self._root, self._mapping_path)
+        if body is None or sha256(body).hexdigest() != self._mapping_sha256:
             return None, None
         mapping = _json(body)
         if not _valid_mapping(mapping):
@@ -69,11 +69,8 @@ class RetainedDoctorPremiseEvidence(PremiseEvidence):
                             "repository:" + self._mapping_path)
 
     def _load(self, key: str, spec: dict) -> tuple[object, Ref, str | None] | None:
-        try:
-            body = (self._root / spec["path"]).read_bytes()
-        except (OSError, ValueError):
-            return None
-        if sha256(body).hexdigest() != spec["sha256"]:
+        body = _read_retained(self._root, spec["path"])
+        if body is None or sha256(body).hexdigest() != spec["sha256"]:
             return None
         document = _json(body)
         if document is _ABSENT:
@@ -105,11 +102,12 @@ class RetainedDoctorPremiseEvidence(PremiseEvidence):
                 return None
             detail = check.get("detail")
             detail = detail if isinstance(detail, str) else ""
-            satisfied = check.get("ok") is True and all(s in detail for s in entry.get("detail_requires", ()))
+            pattern = entry.get("detail_pattern")
+            satisfied = check.get("ok") is True and (pattern is None or re.fullmatch(pattern, detail) is not None)
             return PremiseObservation(observable, target, entry["check"], detail, satisfied, _locate(ref, entry["check"]))
         pointers = entry["unchanged"]
         pairs = [(p, _pointer(document, "/before" + p), _pointer(document, "/after" + p)) for p in pointers]
-        satisfied = all(_read_back(b) and b == a for _, b, a in pairs)
+        satisfied = all(_read_back(b) and _canonical(b) == _canonical(a) for _, b, a in pairs)
         observed = "; ".join(f"{p}: {_show(b)} -> {_show(a)}" for p, b, a in pairs)
         return PremiseObservation(observable, target, "unchanged:" + ",".join(pointers), observed, satisfied,
                                   _locate(ref, "/before,/after"))
@@ -125,6 +123,8 @@ def _valid_mapping(mapping: object) -> bool:
     if not isinstance(artifacts, dict) or not artifacts or not isinstance(doctor, dict) \
             or not isinstance(entries, list) or not entries:
         return False
+    if not all(text(key) for key in artifacts):
+        return False
     for spec in artifacts.values():
         locator = spec.get("target") if isinstance(spec, dict) else None
         if not isinstance(spec, dict) or not _repository_path(spec.get("path")) \
@@ -138,15 +138,53 @@ def _valid_mapping(mapping: object) -> bool:
         if not isinstance(entry, dict) or not text(entry.get("observable")) or entry["observable"] not in _OBSERVABLES \
                 or not text(entry.get("artifact")) or entry["artifact"] not in artifacts:
             return False
-        requires = entry.get("detail_requires", [])
         unchanged = entry.get("unchanged")
         by_check = text(entry.get("check")) and "unchanged" not in entry \
-            and isinstance(requires, list) and all(text(s) for s in requires)
+            and ("detail_pattern" not in entry or _pattern(entry["detail_pattern"]))
         by_readback = "check" not in entry and isinstance(unchanged, list) and bool(unchanged) \
             and all(text(p) and p.startswith("/") for p in unchanged)
         if not (by_check or by_readback):
             return False
     return True
+
+
+def _pattern(value: object) -> bool:
+    if not isinstance(value, str) or not value.strip():
+        return False
+    try:
+        re.compile(value)
+    except (re.error, RecursionError, OverflowError):
+        return False
+    return True
+
+
+def _read_retained(root: Path, relative: str) -> bytes | None:
+    """Read one bounded regular file that resolves inside the repository root, else a gap.
+
+    Symlinks may not lead outside the root, and devices or FIFOs are refused before open,
+    so a hostile path can neither redirect the evidence nor block or exhaust the read.
+    """
+    try:
+        base = root.resolve(strict=True)
+        path = (root / relative).resolve(strict=True)
+        if not path.is_relative_to(base):
+            return None
+        status = os.stat(path)
+        if not stat.S_ISREG(status.st_mode) or status.st_size > MAX_RETAINED_BYTES:
+            return None
+        with open(path, "rb") as handle:
+            body = handle.read(MAX_RETAINED_BYTES + 1)
+    except (OSError, ValueError, RuntimeError):
+        return None
+    return body if len(body) <= MAX_RETAINED_BYTES else None
+
+
+def _canonical(value: object) -> str | None:
+    """Type-exact comparison: ``true`` is not ``1`` and ``67`` is not ``67.0``."""
+    try:
+        return json.dumps(value, sort_keys=True)
+    except (TypeError, ValueError, RecursionError):
+        return None
 
 
 def _repository_path(value: object) -> bool:

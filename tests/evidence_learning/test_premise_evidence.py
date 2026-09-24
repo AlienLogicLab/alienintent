@@ -2,6 +2,7 @@
 import ast
 from hashlib import sha256
 import json
+import os
 from pathlib import Path
 import shutil
 import tempfile
@@ -19,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MAPPING = Path("docs/evidence/wo-220203-fx-u3-premise-mapping.json")
 PY09B, PY10 = "docs/evidence/py09b-live-checks-2026-09-21.json", "docs/evidence/py10/proof-run.json"
 PROJECT, PROFILE, TARGET, PREMISE = "AlienLogicLab/alienintent", "fx-u3", "AlienLogicLab/alienintent-sandbox", "platform-isolation:wave1-sandbox"
-MAPPING_SHA256 = "8f6c9f063a934a8c63ea724fb1c554154cdd6bf8a70b250a0d06d09480b2ba23"
+MAPPING_SHA256 = "5d8e0d4264c5e670a3f11245ddbfc27a365331b2ec6f9fbac188f642a8aba5bb"
 PREMISE_MODULES = ("src/alienintent/evidence_learning/domain/premise.py",
                    "src/alienintent/evidence_learning/ports/premise_evidence.py",
                    "src/alienintent/evidence_learning/application/premise_service.py")
@@ -206,6 +207,8 @@ class PremiseEvidenceTests(unittest.TestCase):
             "absolute-artifact-path": lambda m: m["artifacts"]["py10-proof-run"].update(path=str(ROOT / PY10)),
             "parent-artifact-path": lambda m: m["artifacts"]["py10-proof-run"].update(path="docs/../" + PY10),
             "nul-artifact-path": lambda m: m["artifacts"]["py10-proof-run"].update(path=PY10 + "\x00"),
+            "empty-artifact-key": lambda m: m["artifacts"].update({" ": m["artifacts"]["py10-proof-run"]}),
+            "uncompilable-detail-pattern": lambda m: m["observables"][5].update(detail_pattern="(unclosed"),
         }
         for name, change in changes.items():
             with self.subTest(name=name):
@@ -282,6 +285,42 @@ class PremiseEvidenceTests(unittest.TestCase):
         (root / PY10).write_bytes(body)
         self.remap(root, lambda m: m["artifacts"]["py10-proof-run"].update(sha256=sha256(body).hexdigest()))
         self.assertInfeasible(self.read(root), "DOCTOR_EVIDENCE_UNAVAILABLE", "artifact:py10-proof-run")
+
+    def test_artifact_paths_cannot_escape_the_root_or_block(self):
+        outside = self.tmp / "outside.json"
+        shutil.copyfile(ROOT / PY10, outside)
+        cases = {"symlink-outside-root": lambda path: path.symlink_to(outside),
+                 "symlink-to-device": lambda path: path.symlink_to("/dev/zero"),
+                 "fifo": lambda path: os.mkfifo(path)}
+        for name, make in cases.items():
+            with self.subTest(name=name):
+                root = self.copy()
+                (root / PY10).unlink()
+                make(root / PY10)
+                self.assertInfeasible(self.read(root), "MISSING_PREMISE", "artifact:py10-proof-run", "OUTSIDE_STATE_READBACK")
+                shutil.rmtree(root)
+
+    def test_readback_comparison_is_type_exact(self):
+        for pointer, before, after in (("observed", True, 1), ("item_count", 67, 67.0)):
+            with self.subTest(pointer=pointer):
+                root = self.copy()
+
+                def retype(document, pointer=pointer, before=before, after=after):
+                    document["before"]["production_project"][pointer] = before
+                    document["after"]["production_project"][pointer] = after
+                self.rewrite(root, "py10-proof-run", PY10, retype)
+                self.assertInfeasible(self.read(root), "UNSATISFIED_PREMISE", "OUTSIDE_STATE_READBACK")
+                shutil.rmtree(root)
+
+    def test_negated_refusal_detail_is_unsatisfied(self):
+        root = self.copy()
+
+        def negated(document):
+            for check in document["checks"]:
+                if check["check"] == "delivery_for_another_project_is_refused":
+                    check["detail"] = "NOT replayed a real delivery; status_code=4010"
+        self.rewrite(root, "py09b-live-checks", PY09B, negated)
+        self.assertInfeasible(self.read(root), "UNSATISFIED_PREMISE", "OUT_OF_SCOPE_REJECTION")
 
     def test_premise_evidence_requires_a_configured_target(self):
         with self.assertRaises(ValueError):

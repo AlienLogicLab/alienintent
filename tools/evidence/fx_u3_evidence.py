@@ -30,7 +30,7 @@ CONTROLS = [
      "test_missing_outside_state_artifact_is_infeasible_proof"),
     ("unsatisfied-observation-accepted", DOMAIN, "if unsatisfied:", "if False:",
      "test_failed_out_of_scope_rejection_is_unsatisfied"),
-    ("digest-pin-removed", ADAPTER, 'if sha256(body).hexdigest() != spec["sha256"]:', "if False:",
+    ("digest-pin-removed", ADAPTER, 'or sha256(body).hexdigest() != spec["sha256"]:', ":",
      "test_tampered_artifact_fails_its_digest_pin"),
     ("target-binding-removed", DOMAIN, "if mismatched:", "if False:",
      "test_evidence_for_another_target_is_a_target_mismatch"),
@@ -42,7 +42,8 @@ CONTROLS = [
      ' \\\n            and set(outcomes) == set(REQUIRED_CHECKS) and all(v == "PASS" for v in outcomes.values())', "",
      "test_doctor_evidence_that_is_not_a_full_pass_is_infeasible"),
     ("outside-state-comparison-removed", ADAPTER,
-     "satisfied = all(_read_back(b) and b == a for _, b, a in pairs)", "satisfied = all(_read_back(b) for _, b, a in pairs)",
+     "satisfied = all(_read_back(b) and _canonical(b) == _canonical(a) for _, b, a in pairs)",
+     "satisfied = all(_read_back(b) for _, b, a in pairs)",
      "test_changed_outside_state_is_unsatisfied"),
     ("absent-check-invented", ADAPTER, "            if check is None:\n                return None\n",
      '            if check is None:\n                check = {"ok": True}\n',
@@ -55,13 +56,13 @@ CONTROLS = [
     # Revision 1: controls for the independent-review repairs.
     ("premise-identity-unbound", DOMAIN, "if evidence.premise_id != premise_id:", "if False:",
      "test_premise_id_is_bound_to_the_pinned_mapping"),
-    ("mapping-pin-removed", ADAPTER, "if sha256(body).hexdigest() != self._mapping_sha256:", "if False:",
+    ("mapping-pin-removed", ADAPTER, "or sha256(body).hexdigest() != self._mapping_sha256:", ":",
      "test_unpinned_or_missing_mapping_is_infeasible"),
     ("mapping-validation-removed", ADAPTER, "if not _valid_mapping(mapping):", "if not isinstance(mapping, dict):",
      "test_malformed_mapping_is_infeasible_not_an_exception"),
     ("empty-readback-accepted", ADAPTER, "if value is _ABSENT or value is None or value is False:",
      "if value is _ABSENT or value is False:", "test_null_or_empty_readback_is_not_an_unchanged_state"),
-    ("detail-predicate-removed", ADAPTER, ' and all(s in detail for s in entry.get("detail_requires", ()))', "",
+    ("detail-predicate-removed", ADAPTER, " and (pattern is None or re.fullmatch(pattern, detail) is not None)", "",
      "test_vacuous_out_of_scope_refusal_is_unsatisfied"),
     ("duplicate-key-accepted", ADAPTER, "if len(keys) != len(set(keys)):", "if False:",
      "test_malformed_doctor_or_target_evidence_is_infeasible_not_an_exception"),
@@ -70,6 +71,13 @@ CONTROLS = [
     # Revision 2: control for the second independent-review repair.
     ("path-confinement-removed", ADAPTER, 'return not path.is_absolute() and ".." not in path.parts', "return True",
      "test_malformed_mapping_is_infeasible_not_an_exception"),
+    # Revision 3: controls for the third independent-review repair.
+    ("symlink-confinement-removed", ADAPTER, "if not path.is_relative_to(base):", "if False:",
+     "test_artifact_paths_cannot_escape_the_root_or_block"),
+    ("type-exact-comparison-removed", ADAPTER, "_canonical(b) == _canonical(a)", "b == a",
+     "test_readback_comparison_is_type_exact"),
+    ("detail-pattern-anchoring-removed", ADAPTER, "re.fullmatch(pattern, detail)", "re.search(pattern.split(' ')[0], detail)",
+     "test_negated_refusal_detail_is_unsatisfied"),
 ]
 
 

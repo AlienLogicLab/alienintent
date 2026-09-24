@@ -40,10 +40,10 @@
     {"observable": "PROFILE_SCOPING", "artifact": "py09b-live-checks", "check": "every_project_operation_targeted_the_configured_project",
      "authority": "SWF-34 Project boundary: every Project read and write targets the configured Project"},
     {"observable": "OUT_OF_SCOPE_REJECTION", "artifact": "py09b-live-checks", "check": "project_identity_resolution_fails_closed_on_mismatch",
-     "detail_requires": ["typed outcome ProjectAddressRejected"],
+     "detail_pattern": "typed outcome ProjectAddressRejected: .+",
      "authority": "SWF-34 Project boundary: identity resolution fails closed on mismatch (application refusal, not credential denial)"},
     {"observable": "OUT_OF_SCOPE_REJECTION", "artifact": "py09b-live-checks", "check": "delivery_for_another_project_is_refused",
-     "detail_requires": ["replayed a real delivery", "status_code=401"],
+     "detail_pattern": "replayed a real delivery for a Project this profile does not target; ingress refused it \\(GitHub recorded status_code=401\\); notifications unchanged at [0-9]+",
      "authority": "SWF-34 Project boundary: a request for a Project this profile does not target is refused by the application"},
     {"observable": "OUTSIDE_STATE_READBACK", "artifact": "py10-proof-run", "unchanged": [
        "/production_project/observed", "/production_project/state_digest", "/production_project/identity_digest",
