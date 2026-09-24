@@ -1,10 +1,12 @@
 """FX-U4 assertions: pre-implementation proof plans, qualified controls, premise, judgment and repair."""
 import ast
+from contextlib import closing
 from dataclasses import replace
 from hashlib import sha256
 import json
 from pathlib import Path
 import shutil
+import sqlite3
 import tempfile
 import unittest
 
@@ -239,6 +241,12 @@ class ProofPlanningTests(unittest.TestCase):
         body = json.dumps(mapping).encode()
         (self.root / MAPPING).write_bytes(body)
         self.mapping_sha256 = sha256(body).hexdigest()
+
+    def overwrite(self, state):
+        """Rewrite the persisted state in place at its version, so only the named field is inconsistent."""
+        with closing(sqlite3.connect(self.state / "operational.sqlite")) as db, db:
+            db.execute("UPDATE aggregates SET state=? WHERE profile=? AND identity=?",
+                       (json.dumps(state, sort_keys=True), PROFILE, "upstream:proof-plan:" + REQUIREMENT))
 
     def predicate(self, mapping, key):
         return next(p for p in mapping["predicates"] if p["predicate_key"] == key)
@@ -479,7 +487,7 @@ class ProofPlanningTests(unittest.TestCase):
         self.derive()
         proofs = self.profile().proofs
         version, state = proofs.read(REQUIREMENT)
-        proofs.store.commit(PROFILE, proofs.aggregate(REQUIREMENT), version, {**state, "plan_ref": None, "plan_digest": None})
+        self.overwrite({**state, "plan_ref": None, "plan_digest": None})
         # Losing the pointer must not let the next derivation skip every prior-obligation check.
         self.assertHold(proofs.current(REQUIREMENT), "INCOMPATIBLE_PROOF_PLAN_STATE")
 
@@ -497,14 +505,45 @@ class ProofPlanningTests(unittest.TestCase):
             self.assertHold(proofs.derive(requirement, design, version), "INCOMPATIBLE_PROOF_PLAN_STATE")
             self.assertHold(proofs.evaluate_repair(REQUIREMENT, {}), "INCOMPATIBLE_PROOF_PLAN_STATE")
 
+    def test_erased_truncated_or_padded_history_is_a_hold(self):
+        # A genuine initial held history stays admissible and later plans keep it.
+        self.remap(lambda m: self.predicate(m, "pinned-before-implementation").update(command=""))
+        self.assertHold(self.derive(), "INCOMPLETE_OBLIGATION")
+        shutil.copyfile(ROOT / MAPPING, self.root / MAPPING)
+        self.mapping_sha256 = MAPPING_SHA256
+        self.assertIsInstance(self.derive(), ProofPlan)
+        plan = self.derive()
+        self.assertIsInstance(plan, ProofPlan)
+        self.assertIsNotNone(plan.prior_plan_digest)
+        proofs = self.profile().proofs
+        version, state = proofs.read(REQUIREMENT)
+        self.assertEqual([e["event"] for e in state["history"]], ["held", "plan", "plan"])
+        # An erased, truncated or padded history must not let the judgment obligation be dropped unnoticed.
+        self.remap(lambda m: m["predicates"].remove(self.predicate(m, "mapping-faithfulness-judgment")))
+        proofs = self.profile().proofs
+        requirement = retained_requirement_revision(ROOT, SPECIFICATION, REQUIREMENT, PROJECT, PROFILE)
+        design = retained_design_ref(ROOT, DESIGN, REQUIREMENT, PROJECT, PROFILE)
+        empty = {**state, "plan_ref": None, "plan_digest": None}
+        hold, last = state["history"][0], state["history"][-1]
+        relabelled = {"event": "held", "reason": "x", "ref": last["ref"]}
+        forgeries = (lambda n: {**empty, "history": []}, lambda n: {**state, "history": [last]},
+                     # Same length as the version: repeated genuine records or a plan record relabelled as a hold.
+                     lambda n: {**empty, "history": [hold] * n}, lambda n: {**empty, "history": [relabelled] * n},
+                     lambda n: {**state, "history": [hold] * (n - 1) + [last]})
+        for forge in forgeries:
+            proofs.store.commit(PROFILE, proofs.aggregate(REQUIREMENT), version, forge(version + 1))
+            version += 1
+            self.assertHold(proofs.current(REQUIREMENT), "INCOMPATIBLE_PROOF_PLAN_STATE")
+            self.assertHold(proofs.derive(requirement, design, version), "INCOMPATIBLE_PROOF_PLAN_STATE")
+            self.assertHold(proofs.evaluate_repair(REQUIREMENT, {}), "INCOMPATIBLE_PROOF_PLAN_STATE")
+
     def test_tampered_persisted_plan_is_refused(self):
         self.derive()
         profile = self.profile()
         version, state = profile.proofs.read(REQUIREMENT)
         forged = "sha256:" + "4" * 64  # A consistent pointer and history that no retained plan body matches.
         history = [*state["history"][:-1], {**state["history"][-1], "digest": forged}]
-        profile.proofs.store.commit(PROFILE, profile.proofs.aggregate(REQUIREMENT), version,
-                                    {**state, "plan_digest": forged, "history": history})
+        self.overwrite({**state, "plan_digest": forged, "history": history})
         self.assertHold(self.profile().proofs.current(REQUIREMENT), "PERSISTED_PLAN_INVALID")
 
     def test_proof_modules_import_no_installation_composition_or_context_assembly(self):

@@ -28,10 +28,13 @@ def _valid_ref(value: object) -> bool:
     return True
 
 
-def _valid_state(state: object, requirement_id: str) -> bool:
+def _valid_state(state: object, requirement_id: str, version: int) -> bool:
     """The pointer is exactly the latest plan event; a lost or foreign pointer is never an empty history."""
     if not isinstance(state, dict) or type(state.get("schema_version")) is not int or state.get("schema_version") != 1 or set(state) != _STATE_KEYS \
             or state["requirement_id"] != requirement_id or not isinstance(state["history"], list):
+        return False
+    # Every commit appends exactly one event, so an erased or truncated history cannot pass as a shorter one.
+    if len(state["history"]) != version:
         return False
     for event in state["history"]:
         if not isinstance(event, dict) or event.get("event") not in ("plan", "held") or not _valid_ref(event.get("ref")) \
@@ -43,6 +46,11 @@ def _valid_state(state: object, requirement_id: str) -> bool:
     if not plans:
         return state["plan_ref"] is None and state["plan_digest"] is None
     return state["plan_ref"] == plans[-1]["ref"] and state["plan_digest"] == plans[-1]["digest"]
+
+
+def _preceding(plan_ref: Ref | None, previous: Ref | None) -> tuple[Ref, ...]:
+    """A plan or hold follows the current plan and the latest event, so no event can be repeated or dropped."""
+    return tuple(dict.fromkeys(r for r in (plan_ref, previous) if r is not None))
 
 
 class ProofPlanning:
@@ -64,9 +72,28 @@ class ProofPlanning:
     def read(self, requirement_id: str) -> tuple[int, dict]:
         version, state = self.store.read_state(self.profile, self.aggregate(requirement_id))
         # Only a never-written aggregate is empty; an emptied one at a later version lost its history.
-        if (version, state) != (0, {}) and not _valid_state(state, requirement_id):
+        if (version, state) != (0, {}) and not (_valid_state(state, requirement_id, version)
+                                                and self._retained_history(requirement_id, state["history"])):
             raise EvidenceHold("INCOMPATIBLE_PROOF_PLAN_STATE")
         return version, state
+
+    def _retained_history(self, requirement_id: str, history: list) -> bool:
+        """Each event is its own retained record, chained to the plan and the event before it."""
+        plan_ref = previous = None
+        for event in history:
+            ref = ref_from_document(event["ref"])
+            try:
+                record = self.repository.get(ref, self.access_scope)
+            except (EvidenceHold, ValueError, TypeError, KeyError):
+                return False
+            expected = PLAN_EVIDENCE if event["event"] == "plan" else HELD_EVIDENCE
+            if not isinstance(record, Observation) or record.evidence_id != expected \
+                    or record.header.logical_id != "proof-plan/" + requirement_id \
+                    or record.header.preceding_refs != _preceding(plan_ref, previous):
+                return False
+            plan_ref = ref if event["event"] == "plan" else plan_ref
+            previous = ref
+        return True
 
     def _state(self, requirement_id: str) -> tuple[int, dict] | PlanHold:
         try:
@@ -106,12 +133,13 @@ class ProofPlanning:
         result = derive_plan(requirement, design_ref, self.mappings.load(requirement.requirement_id), reader, prior,
                              self.mapping_reviewer, self.supersession_authority, self.implementation_roots)
         plan_ref = ref_from_document(state["plan_ref"]) if state and state["plan_ref"] else None
+        previous = ref_from_document(state["history"][-1]["ref"]) if state and state["history"] else None
         if isinstance(result, ProofPlan):
             document, evidence_id = plan_document(result), PLAN_EVIDENCE
         else:
             document, evidence_id = {"schema_version": 1, "kind": type(result).__name__, **asdict(result)}, HELD_EVIDENCE
         ref = self._put(evidence_id, "proof-plan/" + requirement.requirement_id, document,
-                        (requirement.ref, design_ref), (plan_ref,) if plan_ref else ())
+                        (requirement.ref, design_ref), _preceding(plan_ref, previous))
         event = ({"event": "plan", "digest": result.digest, "ref": asdict(ref)} if isinstance(result, ProofPlan) else
                  {"event": "held", "reason": result.reason_code, "ref": asdict(ref)})
         # A hold is appended to history; it never replaces the current plan.
