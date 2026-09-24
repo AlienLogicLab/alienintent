@@ -104,8 +104,10 @@ def looks_native_agent_ready(artifact: dict) -> bool:
         return False
     if artifact.get("disposition") not in AGENT_READY_DISPOSITIONS:
         return False
-    pe = artifact.get("provider_evidence")
-    if pe is not None and not is_native_provider_evidence(pe):
+    # Absent provider_evidence keeps its existing treatment; a present key, even JSON null, is
+    # provider evidence and must pass the shared rule.
+    if "provider_evidence" in artifact \
+            and not is_native_provider_evidence(artifact["provider_evidence"]):
         return False
     return True
 

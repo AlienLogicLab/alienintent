@@ -153,6 +153,8 @@ INVALID_PROVIDER_EVIDENCE = {
     "non_dict_list": (["claude", "2.1.281 (Claude Code)", "SUPPORTED", "REVIEWED_VERSION"],
                       "non_dict_accepted"),
     "non_dict_string": ("claude 2.1.281 (Claude Code)", "non_dict_accepted"),
+    # Found by the ARP-01 verifier (F2): a present null is provider evidence, not its absence.
+    "null": (None, "non_dict_accepted"),
 }
 
 
@@ -220,7 +222,13 @@ def _pair_type_not_checked(pe):
 UNHASHABLE_PAIR_CASES = ("compatibility_list", "compatibility_dict", "capability_probe_list",
                          "capability_probe_dict")
 
+def _envelope(inner):
+    return {"content": [], "structuredContent": inner, "isError": False}
+
+
 READERS = {"looks_native_agent_ready": lambda pe: looks_native_agent_ready(_full(pe)),
+           "looks_native_agent_ready_mcp": lambda pe: looks_native_agent_ready(
+               _envelope(_full(pe))),
            "native_provenance_only": lambda pe: native_provenance_only(_partial(pe))}
 
 
@@ -278,7 +286,7 @@ def test_unhashable_pair_values_crash_the_unguarded_rule(reader, case, monkeypat
 
 @pytest.mark.parametrize("inner", [None, [], "READY", ["disposition", "READY"]])
 def test_a_non_object_structured_content_is_rejected_not_raised(inner):
-    envelope = {"content": [], "structuredContent": inner, "isError": False}
+    envelope = _envelope(inner)
     assert looks_native_agent_ready(envelope) is False
     assert native_provenance_only(envelope) is False
 
@@ -312,7 +320,19 @@ def test_a_partial_record_still_requires_provider_evidence():
 
 
 def test_a_full_record_without_provider_evidence_is_unchanged():
+    assert "provider_evidence" not in _CONTRACT
     assert looks_native_agent_ready(dict(_CONTRACT)) is True
+    assert looks_native_agent_ready(_envelope(dict(_CONTRACT))) is True
+
+
+@pytest.mark.parametrize("reader", sorted(READERS))
+def test_present_null_provider_evidence_is_judged_by_the_shared_rule(reader, monkeypatch):
+    """F2 is discriminating: a reader that treats a present null as absent (`.get()` then
+    `is not None`, as before the repair) never consults the rule, so this fails against it."""
+    seen = []
+    monkeypatch.setattr(cap, "is_native_provider_evidence", lambda pe: seen.append(pe) or False)
+    assert READERS[reader](None) is False
+    assert seen == [None]
 
 
 RETAINED_WAVE1_SURROGATES = ("docs/work-units/python/PY-09B.assessment.json",
