@@ -1,0 +1,13 @@
+  UNIT                                LOAD   ACTIVE SUB     DESCRIPTION
+  alienintent-liveness.service        loaded active running AlienIntent bootstrap liveness reconciliation (temporary, SWF-29)
+  alienintent-observer.service        loaded active running AlienIntent bootstrap lifecycle observer (observation only)
+  alienintent-sandbox-tunnel.service  loaded active running AlienIntent PY-10 sandbox ingress tunnel (SWF-08, temporary Wave 1 infrastructure)
+  alienintent.service                 loaded active running AlienIntent Node bootstrap
+  alienintent-project-add-probe.timer loaded active waiting Run the AlienIntent Project add-path recovery probe every 3 hours
+
+Legend: LOAD   → Reflects whether the unit definition was properly loaded.
+        ACTIVE → The high-level unit activation state, i.e. generalization of SUB.
+        SUB    → The low-level unit activation state, values depend on unit type.
+
+5 loaded units listed. Pass --all to see loaded but inactive units, too.
+To show all installed unit files use 'systemctl list-unit-files'.

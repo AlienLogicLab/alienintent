@@ -1,0 +1,3 @@
+FACTORY_DIRECTOR_WORKTREE=/home/netmarine/.local/state/alienintent/factory-director/worktree
+GH_CONFIG_DIR=/home/netmarine/.config/gh
+PATH=/home/netmarine/.local/bin:/usr/local/bin:/usr/bin:/bin

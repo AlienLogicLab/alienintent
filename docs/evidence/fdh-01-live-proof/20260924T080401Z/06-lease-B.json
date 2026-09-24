@@ -1,0 +1,25 @@
+{
+  "episode_id": "factory-director-7e7fbb7bc9e043448674a2460f898ade",
+  "failure_streak": 0,
+  "host_id": "fdh-b2ea990dd06e4724b1b8c709dab461b8",
+  "keep_until_replaced": true,
+  "launch_fingerprint": "ee033be8b587baf2007e9c4883c1c596e6039acb20056bb1ed7cb62c47d4784d",
+  "launch_inputs": {
+    "attention_required": false,
+    "authoritative_state": true,
+    "eligible_authorized_work": true,
+    "executable_capacity": true,
+    "explicit_pause": false,
+    "founder_decision_pending": false,
+    "lifecycle_requires_selection": false,
+    "pending_director_inbox": false,
+    "wip_intentionally_full": false
+  },
+  "model": "claude-opus-5-5",
+  "pid": 178549,
+  "process_start_ticks": "3291504",
+  "provider": "claude",
+  "retirement": "KEEP_UNTIL_REPLACED",
+  "started_at": "2026-09-24T09:05:12.832093+00:00",
+  "status": "ACTIVE"
+}

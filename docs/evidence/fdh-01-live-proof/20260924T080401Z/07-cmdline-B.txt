@@ -1,0 +1,1 @@
+/home/netmarine/.local/bin/claude -p --no-session-persistence --output-format json --permission-mode bypassPermissions --model claude-opus-5-5 

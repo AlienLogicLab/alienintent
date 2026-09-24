@@ -1,0 +1,16 @@
+{
+  "schemaVersion": 1,
+  "kind": "FOUNDER_DIRECTION_HANDOFF",
+  "recordedBy": "Factory Director session (Claude), relaying the Founder's direction of 2026-09-24",
+  "recordedAt": "2026-09-24T08:04:42Z",
+  "direction": "Execution order after FDH-01 (#89): release #81 (WO-220203) next, then #83 (BRD-83, the #83 completion contract). WIP 1.",
+  "evidence": [
+    "https://github.com/AlienLogicLab/alienintent/issues/89#issuecomment-5810275846",
+    "docs/work-units/wave2/WO-220203.md",
+    "docs/work-units/wave2/BRD-83.md"
+  ],
+  "releaseProcedure": "#78/#80/#86/#89 practice: native receipt comment (AGENT_READY_ASSESSMENT) + 'RELEASED \u2014' record naming the current origin/main baseline; ~/.local/share/alienintent-bootstrap/release_admission.py <n> must print ADMITTED; then READY->IMPLEMENT with canonical read-back (tools/live/project_materialization.py verify).",
+  "routing": "PRODUCER Morty on Claude, VERIFIER JC on Codex (Founder routing policy 2026-09-24); limits bound in execution.biuLimits for #81 and #83.",
+  "knownBaselineDebt": "tools/orchestration/test_director.py::test_substantial_technical_analysis_routes_to_codex_primary is non-hermetic (reads live ~/.codex/config.toml); out of scope, do not modify.",
+  "noPullRequests": true
+}

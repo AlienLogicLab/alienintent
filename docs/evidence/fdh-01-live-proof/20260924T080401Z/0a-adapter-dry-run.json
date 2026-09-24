@@ -1,0 +1,30 @@
+{
+  "failure": null,
+  "inputs": {
+    "attention_required": false,
+    "authoritative_state": true,
+    "eligible_authorized_work": true,
+    "executable_capacity": true,
+    "explicit_pause": false,
+    "founder_decision_pending": false,
+    "lifecycle_requires_selection": false,
+    "pending_director_inbox": true,
+    "wip_intentionally_full": false
+  },
+  "observations": {
+    "activeClaims": 0,
+    "boardIssues": 77,
+    "controlRequiredBy": {
+      "81": "eligible:READY",
+      "83": "eligible:READY"
+    },
+    "escalationReceiptIds": {},
+    "founderExceptions": 9,
+    "heldControl": {},
+    "unprocessedInboxEntries": [
+      "founder-queue-order-20260924T080442Z"
+    ],
+    "unresolvedLimitEscalations": [],
+    "wipLimit": 1
+  }
+}

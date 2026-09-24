@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "selfHostingConfig": "/home/netmarine/.config/alienintent/self-hosting.json",
+  "wipLimit": 1,
+  "founderHoldRecord": "/home/netmarine/.local/state/alienintent/factory-director/founder-holds.json",
+  "pauseFlag": "/home/netmarine/.local/state/alienintent/factory-director/PAUSE",
+  "directorInbox": "/home/netmarine/.local/state/alienintent/factory-director/inbox",
+  "launcher": {
+    "provider": "claude",
+    "executable": "/home/netmarine/.local/bin/claude",
+    "model": "claude-opus-5-5",
+    "permissionMode": "bypassPermissions"
+  }
+}

@@ -1,0 +1,1 @@
+{"at": "2026-09-24T08:04:56.474402+00:00", "episode_id": null, "exit_reason": null, "failure": "Project board read failed: [Errno 2] No such file or directory: 'gh'", "reason": "AUTHORITATIVE_STATE_UNAVAILABLE", "state": "REFUSED"}

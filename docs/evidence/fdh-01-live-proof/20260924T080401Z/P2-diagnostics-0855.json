@@ -1,0 +1,17 @@
+{
+  "at": "2026-09-24T08:55:32.891396+00:00",
+  "failure": null,
+  "observations": {
+    "activeClaims": 2,
+    "boardIssues": 77,
+    "controlRequiredBy": {
+      "83": "eligible:READY"
+    },
+    "escalationReceiptIds": {},
+    "founderExceptions": 9,
+    "heldControl": {},
+    "unprocessedInboxEntries": [],
+    "unresolvedLimitEscalations": [],
+    "wipLimit": 1
+  }
+}

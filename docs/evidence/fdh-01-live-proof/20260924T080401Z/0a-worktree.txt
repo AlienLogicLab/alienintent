@@ -1,0 +1,2 @@
+/mnt/d/Projects/alienintent/.git/worktrees/worktree
+/mnt/d/Projects/alienintent/.git

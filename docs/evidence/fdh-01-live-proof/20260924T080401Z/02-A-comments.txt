@@ -1,0 +1,6 @@
+sanookdu 2026-09-24T08:10:46Z https://github.com/AlienLogicLab/alienintent/issues/81#issuecomment-5810383050
+**Native Agent Ready receipt, WO-220203.** Disposition **READY**, retained unchanged at `docs/evidence/wave2-readiness-assessments/WO-220203.2026-09-23T175207.676430Z.assessment.json` on `main` (`674b78d`). Producer `agent-ready-cli`, provider `codex` (`codex-cli 0.155.1`), input SHA-256 `4bbc71668a
+---
+sanookdu 2026-09-24T08:10:47Z https://github.com/AlienLogicLab/alienintent/issues/81#issuecomment-5810383359
+RELEASED — The Factory Director (host-launched episode `factory-director-eeb12163b1f84428bafed8b9f46ac7e9`) applies the binding SWF-35 standing Wave 2 authority and the Founder's 2026-09-24 execution order (#80 → #89 FDH-01 → **#81** → #83), relayed durably in Director inbox entry `founder-queue-ord
+---
