@@ -1,0 +1,396 @@
+{
+  "proven_red": true,
+  "variants": [
+    {
+      "variant": "reads_the_working_tree",
+      "test": "test_release_admission_release_point.py::test_a_record_present_only_in_the_working_tree_is_not_used",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.31s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.27s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.22s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "reads_the_local_head",
+      "test": "test_release_admission_release_point.py::test_a_record_committed_only_in_the_local_checkout_is_not_used",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.26s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.33s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.28s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "trusts_a_stale_remote_ref",
+      "test": "test_release_admission_release_point.py::test_a_record_landed_at_the_release_point_but_absent_from_the_checkout_is_found",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.34s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.27s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.29s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "fetch_takes_an_option_shaped_branch",
+      "test": "test_release_admission_release_point.py::test_a_release_point_shaped_like_an_option_is_never_passed_to_fetch",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.26s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.23s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.23s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "identifier_admits_dots_and_slashes",
+      "test": "test_release_admission.py::test_a_path_that_climbs_out_of_the_record_directory_is_rejected",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.06s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.05s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.03s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "identifier_admits_slashes",
+      "test": "test_release_admission.py::test_an_identifier_containing_a_slash_is_rejected",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.07s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.05s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.03s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "no_leading_path_boundary",
+      "test": "test_release_admission.py::test_a_record_path_reached_through_a_parent_prefix_is_rejected",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.05s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.06s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.03s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "no_trailing_path_boundary",
+      "test": "test_release_admission.py::test_a_record_path_continued_past_the_file_is_rejected",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.05s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.05s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.04s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "any_directory_under_docs_evidence",
+      "test": "test_release_admission.py::test_a_record_in_another_directory_is_rejected",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.06s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.05s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.03s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "rejected_citation_falls_back_to_wave1",
+      "test": "test_release_admission_release_point.py::test_a_rejected_citation_never_admits_through_the_wave1_record",
+      "intact": {
+        "exit": 0,
+        "summary": "6 passed in 1.59s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "6 failed in 1.63s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "6 passed in 1.58s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "wave1_any_directory",
+      "test": "test_release_admission.py::test_a_wave1_record_in_another_directory_is_rejected",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.06s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.06s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.03s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "wave1_parent_segment_allowed",
+      "test": "test_release_admission.py::test_a_wave1_record_reached_through_a_parent_segment_is_rejected",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.06s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.06s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.04s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "wave1_accepts_stamped_names",
+      "test": "test_release_admission.py::test_a_stamped_name_is_not_a_wave1_record",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.07s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.05s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.03s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "wave1_no_leading_boundary",
+      "test": "test_release_admission.py::test_a_wave1_identifier_embedded_in_a_longer_name_is_rejected",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.07s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.06s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.03s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "wave1_no_trailing_boundary",
+      "test": "test_release_admission.py::test_a_wave1_record_path_continued_past_the_file_is_rejected",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.05s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.06s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.04s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "ignores_the_explicit_release_point",
+      "test": "test_release_admission_release_point.py::test_an_explicit_release_point_is_read_instead_of_origin_main",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.30s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.31s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.29s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "accepts_any_assessment_outcome",
+      "test": "test_release_admission_release_point.py::test_a_cited_record_that_is_not_an_agent_ready_assessment_still_yields_no_disposition",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.33s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.30s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.27s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "writes_through_gh",
+      "test": "test_release_admission_release_point.py::test_the_gate_only_reads_from_github",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.28s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.28s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.34s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "native_receipt_fallback_removed",
+      "test": "test_release_admission_release_point.py::test_the_native_receipt_fallback_is_unchanged_when_the_cited_record_is_absent",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.26s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.31s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.27s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "repository_not_derived_from_the_gate",
+      "test": "test_release_admission_release_point.py::test_the_repository_is_derived_from_the_gate_location_without_an_override",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.30s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.27s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.26s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "wave1_directory_path_not_recognised",
+      "test": "test_release_admission_release_point.py::test_a_wave1_record_cited_by_its_own_path_is_still_admitted",
+      "intact": {
+        "exit": 0,
+        "summary": "1 passed in 0.29s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "1 failed in 0.34s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "1 passed in 0.26s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "wave2_identifier_is_wo_only",
+      "test": "test_release_admission.py::test_a_readiness_record_for_any_biu_identifier_is_recognised",
+      "intact": {
+        "exit": 0,
+        "summary": "3 passed in 0.06s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "2 failed, 1 passed in 0.07s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "3 passed in 0.03s"
+      },
+      "proven_red": true
+    },
+    {
+      "variant": "release_record_not_consulted",
+      "test": "test_release_admission_release_point.py::test_a_record_for_any_biu_is_admitted_from_the_body_or_the_release_record",
+      "intact": {
+        "exit": 0,
+        "summary": "6 passed in 1.53s"
+      },
+      "fault": {
+        "exit": 1,
+        "summary": "3 failed, 3 passed in 2.31s"
+      },
+      "restored": {
+        "exit": 0,
+        "summary": "6 passed in 1.76s"
+      },
+      "proven_red": true
+    }
+  ]
+}

@@ -149,3 +149,98 @@ is recorded here only as an observation.
 token`, so a live CLI run from the worker reports `status=None` for every Issue. This is
 pre-existing and credential-scoped: the Director runs the live gate under its own credential.
 It is why the #80/#81 analysis above uses the pure functions rather than the live CLI.
+
+## Repair cycle 1 — JC REJECT of `c278f04` (R1, R2)
+
+- **Invocation:** `AlienLogicLab/alienintent#83:PRODUCER:e2afdc0d-56fc-4617-9e1c-791bdfd86126`.
+- **Branch:** runtime-managed `b-disp/a367e00e-a4d6-435c-801c-4d33d5c772ed`, built on the rejected
+  candidate `c278f04` so that the import custody (`1439457`) and the earlier commits are kept.
+- **Rejection:** JC, `AlienLogicLab/alienintent#83:VERIFIER:796c5b49-250b-4c61-8c32-10e968d3fef9`.
+  Evidence is at `5edbfd1` on `b-disp/2a642ca4-c96f-4e7d-9dd5-38df7bfebbaf`
+  (`docs/evidence/brd-83-jc-796c5b49/`).
+
+### R1 (P1): a rejected citation fell through to the Wave 1 record
+
+**Cause.** `assessment_record_path` gave any text that `WAVE2_RECORD` rejected to the Wave 1
+fallback, `biu_from_body`. That fallback matches a PY/WO identifier anywhere before
+`.assessment.json`. So `docs/evidence/elsewhere/WO-220202.s.assessment.json`, the `../../../` form
+and the `ARP/` form each resolved to `docs/work-units/python/WO-220202.assessment.json`.
+
+**Repair (`775084d`).** The Wave 1 fallback now takes only a Wave 1 citation (`WAVE1_RECORD`,
+`_wave1_biu`):
+
+- the file name is exactly `<BIU>.assessment.json`, never a stamped name;
+- the path is either bare or ends in `docs/work-units/python/` (a repository path or a GitHub blob
+  URL);
+- the path has no `..` segment;
+- the path is not preceded by `[\w./-]` and not continued past the file.
+
+A rejected citation now resolves to nothing, so the native-receipt fallback decides, as for any
+uncited Issue. The following are all AST-identical to the import `1439457`:
+
+- `admit()`
+- `biu_from_body`
+- `disposition_from_record`
+- `disposition_from_native_comment`
+- `project_status_from_issue`
+
+`biu_from_body` is kept for its existing tests; the resolver no longer calls it. `main` differs
+from the import only by the stderr diagnostic line added in `7afec82`; this repair does not change it.
+
+**Proof.**
+
+- JC's `probe.py` re-run against the repair exits **0**. All three invalid citations now refuse
+  with exit 1 and resolve to `None`.
+- A new CLI fixture test, `test_a_rejected_citation_never_admits_through_the_wave1_record`,
+  covers 6 cases: JC's three paths, each with a WO- and a PY-shaped identifier. In every case a
+  READY Wave 1 record for the same identifier is committed at the release point, and there is no
+  native receipt.
+- New unit tests cover:
+  - the same 6 citations;
+  - stamped names;
+  - another directory;
+  - `..` segments;
+  - an embedded identifier;
+  - a path continued past the file.
+- A positive CLI test shows a Wave 1 record cited by its repository path is still admitted.
+- `test_every_wave1_citation_form_on_record_still_resolves` covers each Wave 1 citation form found
+  in the Issue bodies (#2, #50–#58, #68).
+- **Compatibility:** every one of the 84 live Issue bodies resolves identically under `c278f04`
+  and under the repair (15 resolve a record, 0 differ). See
+  `brd-83/repair-1/citation-compatibility.txt`, which was read-only.
+
+### R2 (P2): incomplete proven-red coverage
+
+**Repair (`247e139`).** `brd83_proven_red.py` now carries **23** variants, up from 11:
+
+- **JC R2 refusal tests:**
+  - `ignores_the_explicit_release_point` → `test_an_explicit_release_point_is_read_instead_of_origin_main`
+  - `accepts_any_assessment_outcome` → `test_a_cited_record_that_is_not_an_agent_ready_assessment_still_yields_no_disposition`
+- **Read-only `gh` test:** `writes_through_gh` → `test_the_gate_only_reads_from_github`.
+- **R1 guards:**
+  - `rejected_citation_falls_back_to_wave1`, the exact pre-repair composition
+  - `wave1_any_directory`
+  - `wave1_parent_segment_allowed`
+  - `wave1_accepts_stamped_names`
+  - `wave1_no_leading_boundary`
+  - `wave1_no_trailing_boundary`
+- **Preserved behaviour:**
+  - `native_receipt_fallback_removed`
+  - `repository_not_derived_from_the_gate`
+  - `wave1_directory_path_not_recognised`
+
+Every variant passes intact, fails under the permissive change, and passes again once restored.
+
+### Results at `247e139` (the proven revision)
+
+| Command | Exit | Result | Log (sha256) |
+|---|---|---|---|
+| `python3 -m pytest -v -p no:cacheprovider tools/live/test_release_admission.py tools/live/test_release_admission_release_point.py` | 0 | 72 passed (23 original + 49 new) | `brd-83/repair-1/release-admission-tests.log` (`34acc9d8…ca68`) |
+| `python3 tools/live/brd83_proven_red.py --json` | 0 | 23/23 proven red | `brd-83/repair-1/proven-red.json` (`031dda1e…42b6`) |
+| `python3 -m pytest -q -p no:cacheprovider tools` | 1 | 740 passed. 1 failed: only the known non-hermetic `test_director.py::test_substantial_technical_analysis_routes_to_codex_primary`, which is unmodified. | `brd-83/repair-1/python-tools.log` (`6ffcdb80…4203`) |
+| `PYTHONPATH=src python3 -m pytest -q -p no:cacheprovider tests` | 0 | 551 passed | `brd-83/repair-1/python-tests.log` (`7c306ad8…98aa`) |
+| `node scripts/check.mjs all` | 0 | 340 + 18 + 3 pass, 0 fail | `brd-83/repair-1/check-all.log` (`3c0026c1…4730`) |
+
+`git diff c278f04 247e139 --stat` touches only the four `tools/live/` files. Every other finding
+of the earlier record stands, including the #80/#81 report: they still need the native-receipt
+fallback.
