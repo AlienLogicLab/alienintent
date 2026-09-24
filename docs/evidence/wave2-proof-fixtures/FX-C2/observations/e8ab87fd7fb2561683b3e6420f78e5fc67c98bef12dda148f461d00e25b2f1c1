@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","tests/context_assembly/test_context_reconstruction.py::test_conversation_not_input"],"cwd":"/tmp/fx-c2-controls-6z96y7pp","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 1.16s\n"}
