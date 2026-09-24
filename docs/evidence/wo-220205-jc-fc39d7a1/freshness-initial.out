@@ -1,0 +1,40 @@
+test_attributed_rejection_stands_until_repair (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_attributed_rejection_stands_until_repair) ... ok
+test_blocking_finding_cannot_be_verified (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_blocking_finding_cannot_be_verified) ... ok
+test_changed_requirement_revision_is_stale (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_changed_requirement_revision_is_stale) ... ok
+test_conforming_independent_review_is_current_and_ready (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_independent_review_is_current_and_ready) ... ok
+test_corrupted_state_is_a_hold (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_corrupted_state_is_a_hold) ... ok
+test_direction_dependent_admission_holds_on_open_authority (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_direction_dependent_admission_holds_on_open_authority) ... ok
+test_forbidden_adapter_import_holds_before_review (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_adapter_import_holds_before_review) ... ok
+test_impossible_premise_is_rejected_despite_complete_checklist (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_impossible_premise_is_rejected_despite_complete_checklist) ... ok
+test_incompatible_consumer_input_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_consumer_input_holds) ... ok
+test_incomplete_design_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incomplete_design_holds) ... ok
+test_new_design_revision_invalidates_and_retains_history (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_new_design_revision_invalidates_and_retains_history) ... ok
+test_observed_edge_is_not_permission (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_observed_edge_is_not_permission) ... ok
+test_open_material_decision_blocks_and_bounded_local_choice_stays_open (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_open_material_decision_blocks_and_bounded_local_choice_stays_open) ... ok
+test_readiness_refuses_missing_design_review_and_authority_without_project_state (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_readiness_refuses_missing_design_review_and_authority_without_project_state) ... ok
+test_review_before_checks_is_refused (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_review_before_checks_is_refused) ... ok
+test_self_review_is_refused_and_downstream_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_self_review_is_refused_and_downstream_holds) ... ok
+test_shared_producer_invocation_is_self_review (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_shared_producer_invocation_is_self_review) ... ok
+test_stale_design_is_not_reverified_in_place (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_is_not_reverified_in_place) ... ok
+test_stale_design_review_replay_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_review_replay_holds) ... ok
+test_unauthorized_reviewer_is_refused (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unauthorized_reviewer_is_refused) ... ok
+test_unbounded_local_choice_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unbounded_local_choice_holds) ... ok
+test_unexplained_inapplicability_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unexplained_inapplicability_holds) ... ok
+test_verified_review_of_held_design_is_refused (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_verified_review_of_held_design_is_refused) ... ok
+test_duplicate_review_without_invalidation_is_idempotent (__main__.FreshnessTests.test_duplicate_review_without_invalidation_is_idempotent) ... ok
+test_new_independent_invocation_can_reverify (__main__.FreshnessTests.test_new_independent_invocation_can_reverify) ... ok
+test_old_review_cannot_reverify_invalidated_design (__main__.FreshnessTests.test_old_review_cannot_reverify_invalidated_design) ... old review after invalidation: ReviewAdmitted ready: True
+FAIL
+
+======================================================================
+FAIL: test_old_review_cannot_reverify_invalidated_design (__main__.FreshnessTests.test_old_review_cannot_reverify_invalidated_design)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/wo220205-jc-fc39d7a1/freshness_test.py", line 31, in test_old_review_cannot_reverify_invalidated_design
+    self.assertIsInstance(result, ReviewRefused,
+AssertionError: ReviewAdmitted(review=ReviewRecord(reviewer={'actor': 'JC', 'invocation': 'verifier-invocation-1'}, producer={'actor': 'Morty', 'invocation': 'producer-invocation-1'}, design_digest='sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', mechanical_report_digest='sha256:98e1fa32a257644dc4cae9cfe8d24b102d6a06c4e3b33d01d277a50fa66f11aa', revision_vector={'design': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'requirements': {'SF-REQ-900': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, 'architecture': 'sha256:84fa867a9f3cad36daa7da1554b86a6f55bab8855706caac8b764d602383eb03', 'premises': 'sha256:129462eb22611a901a6ffc64af18a3e5cee38f69a2381ebbbb5ae1b4a93b2e4d', 'authority': 'sha256:55ee0a961ee9b2cf37f107a86c8b3b503e43198635209a4a499871ade5487873'}, findings=(), decision='VERIFIED', authority='independent VERIFIER role under the WO-220205 allocation', document={'authority': 'independent VERIFIER role under the WO-220205 allocation', 'decision': 'VERIFIED', 'design_digest': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'findings': [], 'mechanical_report_digest': 'sha256:98e1fa32a257644dc4cae9cfe8d24b102d6a06c4e3b33d01d277a50fa66f11aa', 'producer': {'actor': 'Morty', 'invocation': 'producer-invocation-1'}, 'reviewer': {'actor': 'JC', 'invocation': 'verifier-invocation-1'}, 'revision_vector': {'architecture': 'sha256:84fa867a9f3cad36daa7da1554b86a6f55bab8855706caac8b764d602383eb03', 'authority': 'sha256:55ee0a961ee9b2cf37f107a86c8b3b503e43198635209a4a499871ade5487873', 'design': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'premises': 'sha256:129462eb22611a901a6ffc64af18a3e5cee38f69a2381ebbbb5ae1b4a93b2e4d', 'requirements': {'SF-REQ-900': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}}), decision='VERIFIED') is not an instance of <class 'alienintent.context_assembly.domain.design_admission.ReviewRefused'> : A review predating invalidation must not satisfy fresh independent reverification
+
+----------------------------------------------------------------------
+Ran 26 tests in 3.409s
+
+FAILED (failures=1)

@@ -1,0 +1,6 @@
+test_incomplete_design_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incomplete_design_holds) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.857s
+
+OK

@@ -1,0 +1,19 @@
+test_incompatible_consumer_input_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_consumer_input_holds) ... FAIL
+
+======================================================================
+FAIL: test_incompatible_consumer_input_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_consumer_input_holds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cxas7hno/tests/context_assembly/test_design_admission.py", line 192, in test_incompatible_consumer_input_holds
+    self.assertHolds(report, "INCOMPATIBLE_INTERFACE")
+  File "/tmp/fx-u5-cxas7hno/tests/context_assembly/test_design_admission.py", line 101, in assertHolds
+    self.assertEqual(report.status, MECHANICALLY_HELD)
+AssertionError: 'REVIEW_REQUIRED' != 'MECHANICALLY_HELD'
+- REVIEW_REQUIRED
++ MECHANICALLY_HELD
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.918s
+
+FAILED (failures=1)

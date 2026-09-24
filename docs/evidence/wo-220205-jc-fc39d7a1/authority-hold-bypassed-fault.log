@@ -1,0 +1,16 @@
+test_direction_dependent_admission_holds_on_open_authority (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_direction_dependent_admission_holds_on_open_authority) ... FAIL
+
+======================================================================
+FAIL: test_direction_dependent_admission_holds_on_open_authority (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_direction_dependent_admission_holds_on_open_authority)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cxas7hno/tests/context_assembly/test_design_admission.py", line 165, in test_direction_dependent_admission_holds_on_open_authority
+    self.assertHolds(report, "ARCHITECTURE_AUTHORITY_HOLD")
+  File "/tmp/fx-u5-cxas7hno/tests/context_assembly/test_design_admission.py", line 102, in assertHolds
+    self.assertIn(reason, [h.reason_code for h in report.holds])
+AssertionError: 'ARCHITECTURE_AUTHORITY_HOLD' not found in ['DIRECTION_SCOPE_UNREVIEWED']
+
+----------------------------------------------------------------------
+Ran 1 test in 1.861s
+
+FAILED (failures=1)

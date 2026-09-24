@@ -1,0 +1,2177 @@
+{
+  "schema_version": 1,
+  "fixture": "FX-U5",
+  "baseline": "7be12188edf632710fe842d95fc70b444e2ed279",
+  "invocation": "AlienLogicLab/alienintent#97:VERIFIER:fc39d7a1-7c68-40e6-9faa-dc2a68bbb905",
+  "candidate_revision": "c9a8699a8b297be21df27615ce5c8ccf6fd56a4c",
+  "contract_sha256": "74a71aa88ea60ded5b1a39de2a8d93ea4ec0361e2f6d23480443ca3f861effd9",
+  "mapping_sha256": "e000d1f964ce628e50370ae6db5bff62959e7dd2642ae1d089887d0f7e4fef3a",
+  "premise_mapping_sha256": "598abb9c11791428069e2b5605b51f7ebf61afd537f2ca02c39e6bc8ec1bd589",
+  "fixture_digest": "sha256:39806be30758051c77592c9effbe74e3d447c2da537c960bd02329dbc7fb244d",
+  "requirement_revision": "sha256:3030164a29ad9be696d023e96f5643be9631a319552db8f3fac299183132732c",
+  "plan": {
+    "digest": "sha256:2e674e6adc31a288fa49377da52b5c17e193d4fc77e93e31c13c6c5169705f43",
+    "observation_ref": {
+      "project": "AlienLogicLab/alienintent",
+      "profile": "fx-u5",
+      "logical_id": "proof-plan/SF-REQ-051",
+      "revision_digest": "sha256:ac9080d05de6c825d3f7f5a14fb6e6d7bbc7e9db8b7e08600e7f2d009d9d1e5a",
+      "locator": "objects/ac9080d05de6c825d3f7f5a14fb6e6d7bbc7e9db8b7e08600e7f2d009d9d1e5a"
+    },
+    "obligations": [
+      "SF-REQ-051/SF-REQ-051-AC-01/proportional-contract",
+      "SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block",
+      "SF-REQ-051/SF-REQ-051-AC-04/impossible-premise-rejected",
+      "SF-REQ-051/SF-REQ-051-AC-04/premise-review-judgment",
+      "SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation",
+      "SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability",
+      "SF-REQ-051/SF-REQ-051-AC-06/readiness-refusal",
+      "SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary"
+    ],
+    "premise_refs": []
+  },
+  "node_acceptance_ids": [
+    "SF-REQ-051-AC-01",
+    "SF-REQ-051-AC-02",
+    "SF-REQ-051-AC-04",
+    "SF-REQ-051-AC-05",
+    "SF-REQ-051-AC-06"
+  ],
+  "implementation_files": {
+    "src/alienintent/context_assembly/domain/design_admission.py": "1d86f96e185605f1f632d9b78fa15d91c358d2b69de4b17205f08587358c3743",
+    "src/alienintent/context_assembly/ports/design_admission.py": "29b20b2b004b17a5b414aea1669d7757c38d353b19084d113477c68a077e9364",
+    "src/alienintent/context_assembly/application/design_admission_service.py": "7b9028d81512ae4b4693e6a496c2e1dfd95f45cf34f6cdcaab67c84e2d7f94c8",
+    "src/alienintent/composition/design_admission.py": "53fdf6e36df1d054791f1a8e64d0ee4820b2e9d043412eb37063f6bc1736c3cc",
+    "src/alienintent/composition/upstream_profile.py": "469f2d57adfbd20da1f02bfad0194deeffaa8821391ca0740f37490debcefb89",
+    "tests/context_assembly/test_design_admission.py": "a55d3bbc00333a10aded81e968476ba1a9d8ff91d894ba3f3a66a60a7275e129"
+  },
+  "tokens": null,
+  "cost": null,
+  "measurement_reason": "UNKNOWN: invocation billing telemetry unavailable",
+  "controls": [
+    {
+      "control": "authority-hold-bypassed",
+      "enforcement": "051-architecture-boundary",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary",
+      "test": "DesignAdmissionTests.test_direction_dependent_admission_holds_on_open_authority",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "observed-edges-as-policy",
+      "enforcement": "051-architecture-boundary",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary",
+      "test": "DesignAdmissionTests.test_observed_edge_is_not_permission",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "architecture-check-ignored",
+      "enforcement": "051-architecture-boundary",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary",
+      "test": "DesignAdmissionTests.test_forbidden_adapter_import_holds_before_review",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "interface-compatibility-removed",
+      "enforcement": "051-architecture-boundary",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary",
+      "test": "DesignAdmissionTests.test_incompatible_consumer_input_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "review-before-checks-accepted",
+      "enforcement": "051-review-applicability",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability",
+      "test": "DesignAdmissionTests.test_review_before_checks_is_refused",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "self-review-accepted",
+      "enforcement": "051-review-applicability",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability",
+      "test": "DesignAdmissionTests.test_self_review_is_refused_and_downstream_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "shared-invocation-accepted",
+      "enforcement": "051-review-applicability",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability",
+      "test": "DesignAdmissionTests.test_shared_producer_invocation_is_self_review",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "stale-design-review-accepted",
+      "enforcement": "051-review-applicability",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability",
+      "test": "DesignAdmissionTests.test_stale_design_review_replay_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "unauthorized-reviewer-accepted",
+      "enforcement": "051-review-applicability",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability",
+      "test": "DesignAdmissionTests.test_unauthorized_reviewer_is_refused",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "stale-vector-accepted",
+      "enforcement": "AC-05",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation",
+      "test": "DesignAdmissionTests.test_changed_requirement_revision_is_stale",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "history-dropped",
+      "enforcement": "AC-05",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation",
+      "test": "DesignAdmissionTests.test_new_design_revision_invalidates_and_retains_history",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "incomplete-design-accepted",
+      "enforcement": "AC-01",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-01/proportional-contract",
+      "test": "DesignAdmissionTests.test_incomplete_design_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "unexplained-inapplicability-accepted",
+      "enforcement": "AC-01",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-01/proportional-contract",
+      "test": "DesignAdmissionTests.test_unexplained_inapplicability_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "material-decision-open-accepted",
+      "enforcement": "AC-02",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block",
+      "test": "DesignAdmissionTests.test_open_material_decision_blocks_and_bounded_local_choice_stays_open",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "unbounded-local-choice-accepted",
+      "enforcement": "AC-02",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block",
+      "test": "DesignAdmissionTests.test_unbounded_local_choice_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "blocking-finding-verified",
+      "enforcement": "AC-02",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block",
+      "test": "DesignAdmissionTests.test_blocking_finding_cannot_be_verified",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "premise-evidence-ignored",
+      "enforcement": "AC-04",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-04/impossible-premise-rejected",
+      "test": "DesignAdmissionTests.test_impossible_premise_is_rejected_despite_complete_checklist",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "held-design-verified",
+      "enforcement": "AC-04",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-04/impossible-premise-rejected",
+      "test": "DesignAdmissionTests.test_verified_review_of_held_design_is_refused",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "readiness-gate-bypassed",
+      "enforcement": "AC-06",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-06/readiness-refusal",
+      "test": "DesignAdmissionTests.test_readiness_refuses_missing_design_review_and_authority_without_project_state",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "composition-disconnected",
+      "enforcement": "AC-06",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-06/readiness-refusal",
+      "test": "DesignAdmissionTests.test_conforming_independent_review_is_current_and_ready",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": {
+        "exit_status": 0,
+        "raw_output": "composition-disconnected-fault-domain.log",
+        "raw_output_sha256": "b44059d68f34718970e7d49ab5363553f0e5e4b7cb585c01f3e11a18ba9505ea"
+      },
+      "discriminated": true
+    },
+    {
+      "control": "stale-reverified-in-place",
+      "enforcement": "051-review-applicability",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability",
+      "test": "DesignAdmissionTests.test_stale_design_is_not_reverified_in_place",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "prior-rejection-overridden",
+      "enforcement": "AC-02",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block",
+      "test": "DesignAdmissionTests.test_attributed_rejection_stands_until_repair",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "truncated-history-accepted",
+      "enforcement": "AC-05",
+      "obligation_id": "SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation",
+      "test": "DesignAdmissionTests.test_corrupted_state_is_a_hold",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    }
+  ],
+  "proof_order_diagnostics": [],
+  "observations": [
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "authority-hold-bypassed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_direction_dependent_admission_holds_on_open_authority",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "b5e96edd1e2345001015fae1040947cd6258aa39c9fdd6fad899a39334857029",
+      "raw_output": "authority-hold-bypassed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/authority-hold-bypassed/intact",
+        "revision_digest": "sha256:accef415779af4f5753578c222b08532127c36cdeb004461f0aa683593d443dd",
+        "locator": "objects/accef415779af4f5753578c222b08532127c36cdeb004461f0aa683593d443dd"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "authority-hold-bypassed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_direction_dependent_admission_holds_on_open_authority",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "ebcc90d5f7653752de40c8b3ab3cc9219aedfe222796244f1267e4d994506378",
+      "raw_output": "authority-hold-bypassed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_direction_dependent_admission_holds_on_open_authority"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/authority-hold-bypassed/fault",
+        "revision_digest": "sha256:793596dbd8c65adf7a797285407d0ff9187204392bc85803e0fd2df1997abb8f",
+        "locator": "objects/793596dbd8c65adf7a797285407d0ff9187204392bc85803e0fd2df1997abb8f"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "authority-hold-bypassed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_direction_dependent_admission_holds_on_open_authority",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e3b396b944f37a5b29388dd8302d1e32a71927396f24d4e58b78e18d11837659",
+      "raw_output": "authority-hold-bypassed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/authority-hold-bypassed/restored",
+        "revision_digest": "sha256:e5476b3d9ad370c6868b7beb1889ba1c2b9bdb8a31a9fc0ed9019e7e839fef3b",
+        "locator": "objects/e5476b3d9ad370c6868b7beb1889ba1c2b9bdb8a31a9fc0ed9019e7e839fef3b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "observed-edges-as-policy",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_observed_edge_is_not_permission",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "a23da6ed51c4857f1dd48a45084d3f1b5b9c0db0b9f995a532a557c9032ee412",
+      "raw_output": "observed-edges-as-policy-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/observed-edges-as-policy/intact",
+        "revision_digest": "sha256:5f141be4c8d354ab323ba576831a850a3e4d3e5988fa5425872db7bb572322c1",
+        "locator": "objects/5f141be4c8d354ab323ba576831a850a3e4d3e5988fa5425872db7bb572322c1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "observed-edges-as-policy",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_observed_edge_is_not_permission",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "4c13fffb27fc479946bf77f460005c91987682427016984c8e2fa247bff680dd",
+      "raw_output": "observed-edges-as-policy-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_observed_edge_is_not_permission"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/observed-edges-as-policy/fault",
+        "revision_digest": "sha256:b9d5c4c852de5d990f1e7dbe903ba2998c5db017bc5f70a7d771724b5d8039a0",
+        "locator": "objects/b9d5c4c852de5d990f1e7dbe903ba2998c5db017bc5f70a7d771724b5d8039a0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "observed-edges-as-policy",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_observed_edge_is_not_permission",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3d55577a14e94d2d83b072f1bbd0a2ed33d29dc1457508814d5b8a0c06123be9",
+      "raw_output": "observed-edges-as-policy-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/observed-edges-as-policy/restored",
+        "revision_digest": "sha256:1266682d0fdd8a2047a7da89f0a63d564ca21bea05f7437db8b735fc1599f2b9",
+        "locator": "objects/1266682d0fdd8a2047a7da89f0a63d564ca21bea05f7437db8b735fc1599f2b9"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "architecture-check-ignored",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_adapter_import_holds_before_review",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c6281dcced5f7441dda00b4f4113dd19d72360af47da3fbe4d6b11f243aad7bc",
+      "raw_output": "architecture-check-ignored-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/architecture-check-ignored/intact",
+        "revision_digest": "sha256:9c373d3d7dc3cdb03ca7636ff95db5a24ea72609cb95274c384a1ba2d585d94e",
+        "locator": "objects/9c373d3d7dc3cdb03ca7636ff95db5a24ea72609cb95274c384a1ba2d585d94e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "architecture-check-ignored",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_adapter_import_holds_before_review",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "ea6d9ce71cb1c8849022f1a8ac2715f101530829ee6ed63bd2f029bab12afc7d",
+      "raw_output": "architecture-check-ignored-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_forbidden_adapter_import_holds_before_review"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/architecture-check-ignored/fault",
+        "revision_digest": "sha256:96957af215b456df72c280fa7acfd7e46558d5146d94fc2b173b497d96427c46",
+        "locator": "objects/96957af215b456df72c280fa7acfd7e46558d5146d94fc2b173b497d96427c46"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "architecture-check-ignored",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_adapter_import_holds_before_review",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3706e4c9105eec46377c56b25ca5876638db9803b14ec58a4c4078c42863c540",
+      "raw_output": "architecture-check-ignored-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/architecture-check-ignored/restored",
+        "revision_digest": "sha256:f46296fe4d5fea5dd5548230c5cfa111edc90d48712bccd22d663d4f7da6fda1",
+        "locator": "objects/f46296fe4d5fea5dd5548230c5cfa111edc90d48712bccd22d663d4f7da6fda1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "interface-compatibility-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_consumer_input_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "6f9c2939acc83c5032dccfcafefd18c99daf1c62a71e19b7c2a3b99f2fea077f",
+      "raw_output": "interface-compatibility-removed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/interface-compatibility-removed/intact",
+        "revision_digest": "sha256:ae61f0f790d5e09468622f752c09c7262c4194177f80cf07f3f9374febd2ceca",
+        "locator": "objects/ae61f0f790d5e09468622f752c09c7262c4194177f80cf07f3f9374febd2ceca"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "interface-compatibility-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_consumer_input_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "500b2a07642c615b788eca23c91922610c5cc5d83c91536b2e58113b798f733e",
+      "raw_output": "interface-compatibility-removed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_incompatible_consumer_input_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/interface-compatibility-removed/fault",
+        "revision_digest": "sha256:399e7f9ac9c2de5f60fde38cb482d48ce129c0d7f5428a10177801b06aabdd49",
+        "locator": "objects/399e7f9ac9c2de5f60fde38cb482d48ce129c0d7f5428a10177801b06aabdd49"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "interface-compatibility-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_consumer_input_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "61ae31f47a701955d72de1a988bd63f83ed877476ed8d11225f22df1f1748174",
+      "raw_output": "interface-compatibility-removed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/051-architecture-boundary/interface-compatibility-removed/restored",
+        "revision_digest": "sha256:e55095d2024e6a1c3fe76ebcedd4b00dd6604394aea256c7c3062c3e57735d96",
+        "locator": "objects/e55095d2024e6a1c3fe76ebcedd4b00dd6604394aea256c7c3062c3e57735d96"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "review-before-checks-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_review_before_checks_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "bd615b8f399ff8858d2ee81ab509d705bae078ce6efa5c8177a2aa3ec1857eba",
+      "raw_output": "review-before-checks-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/review-before-checks-accepted/intact",
+        "revision_digest": "sha256:aad17a2364451ff848ffc5af0021b3c7756a93825d8df72159e02d65459c3dc3",
+        "locator": "objects/aad17a2364451ff848ffc5af0021b3c7756a93825d8df72159e02d65459c3dc3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "review-before-checks-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_review_before_checks_is_refused",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "5fe73d984927de3ffaaeebd9cd4d772d7e270efe6badfe772b896662b186f100",
+      "raw_output": "review-before-checks-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_review_before_checks_is_refused"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/review-before-checks-accepted/fault",
+        "revision_digest": "sha256:33bfa48cd4be0a3fb918aa9cd4dcae74f662242a39593016a3564676f99e1668",
+        "locator": "objects/33bfa48cd4be0a3fb918aa9cd4dcae74f662242a39593016a3564676f99e1668"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "review-before-checks-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_review_before_checks_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "500bf83c95ac49b58493b1d12048a5bda8b01c8ad8fbaa8b5996c8cf8090f5a7",
+      "raw_output": "review-before-checks-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/review-before-checks-accepted/restored",
+        "revision_digest": "sha256:1224977e1bfdb30fa49db0f02b1c0703eb64c1afec36c1fb0144cb203b640fe0",
+        "locator": "objects/1224977e1bfdb30fa49db0f02b1c0703eb64c1afec36c1fb0144cb203b640fe0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "self-review-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_self_review_is_refused_and_downstream_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "6fe1744521c5e24900a29c65f1e70201446851debdb68eaf4da51f1973f4749f",
+      "raw_output": "self-review-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/self-review-accepted/intact",
+        "revision_digest": "sha256:cc89a4552cef62160ff69c6912c77dfa840ad7ca635a3e118d1fb6a6e243f8da",
+        "locator": "objects/cc89a4552cef62160ff69c6912c77dfa840ad7ca635a3e118d1fb6a6e243f8da"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "self-review-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_self_review_is_refused_and_downstream_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "108c25c91b4f314d4683926a7c3590079c1bbe2aabbd4ad966479c51265ecc74",
+      "raw_output": "self-review-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_self_review_is_refused_and_downstream_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/self-review-accepted/fault",
+        "revision_digest": "sha256:ca5790e2d068331e890e097208734fad13238cbc295e343203b5cfb804dd558e",
+        "locator": "objects/ca5790e2d068331e890e097208734fad13238cbc295e343203b5cfb804dd558e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "self-review-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_self_review_is_refused_and_downstream_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "f3d255cc14054ea046237c2c38ef38a50ba5d83b8e4b602f53d4dfcf017ea693",
+      "raw_output": "self-review-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/self-review-accepted/restored",
+        "revision_digest": "sha256:aad9babaf0fb097f21a23435dd00a09a2b9df830ea63c182ea0253a56a6dacc1",
+        "locator": "objects/aad9babaf0fb097f21a23435dd00a09a2b9df830ea63c182ea0253a56a6dacc1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "shared-invocation-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_shared_producer_invocation_is_self_review",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "93c95cd0e538043e44a73443829640f2c396d8885d66c3a176c06d60947ea56b",
+      "raw_output": "shared-invocation-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/shared-invocation-accepted/intact",
+        "revision_digest": "sha256:06795ddf3efeb7951a19dcfe0dc6e15415c820d366efc7a8deaa33c1752d462c",
+        "locator": "objects/06795ddf3efeb7951a19dcfe0dc6e15415c820d366efc7a8deaa33c1752d462c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "shared-invocation-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_shared_producer_invocation_is_self_review",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "fea1806fffb75686dc4459b57e5e6dc562dc6eb34e9a05b6f5dcf1a892304084",
+      "raw_output": "shared-invocation-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_shared_producer_invocation_is_self_review"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/shared-invocation-accepted/fault",
+        "revision_digest": "sha256:93c2d39168d04c2d02ee6dda9c903d4294765653ecebcd65ec4972a890224887",
+        "locator": "objects/93c2d39168d04c2d02ee6dda9c903d4294765653ecebcd65ec4972a890224887"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "shared-invocation-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_shared_producer_invocation_is_self_review",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "1859b5374c302da34548c46bff21bb96fbc54f0c54277a90ad1e8f520b3f8dd1",
+      "raw_output": "shared-invocation-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/shared-invocation-accepted/restored",
+        "revision_digest": "sha256:8dd2818c29f93d74950b5d7ff0a155fbae5abfde928756be6b8d154eb9307562",
+        "locator": "objects/8dd2818c29f93d74950b5d7ff0a155fbae5abfde928756be6b8d154eb9307562"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "stale-design-review-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_review_replay_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "2b4603442597ac04beb266db81c5ce53101a92eb5a151b7e154557a49d5d4e3f",
+      "raw_output": "stale-design-review-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/stale-design-review-accepted/intact",
+        "revision_digest": "sha256:181c11a0a147f7945c7dc073e5ae093f54a5b9fba32793c5fbd866fe48d8c096",
+        "locator": "objects/181c11a0a147f7945c7dc073e5ae093f54a5b9fba32793c5fbd866fe48d8c096"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "stale-design-review-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_review_replay_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "12a16d56ffcd85a8681fceca6df10d74e16e93e74b8c53e1b606b0adf9b111fe",
+      "raw_output": "stale-design-review-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_stale_design_review_replay_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/stale-design-review-accepted/fault",
+        "revision_digest": "sha256:e69c745aa56a678c194dc1148feed597b0faf4fe8a5befac59d67fad7872254a",
+        "locator": "objects/e69c745aa56a678c194dc1148feed597b0faf4fe8a5befac59d67fad7872254a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "stale-design-review-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_review_replay_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "ca05fd226dfd79ff41efa8bb3275ff4738dd0143eb70faa8e79328b8beb84fed",
+      "raw_output": "stale-design-review-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/stale-design-review-accepted/restored",
+        "revision_digest": "sha256:c077c9dc371e46f34027829907e6352bcc696d105c5f7f0e52339a841c99c583",
+        "locator": "objects/c077c9dc371e46f34027829907e6352bcc696d105c5f7f0e52339a841c99c583"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "unauthorized-reviewer-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unauthorized_reviewer_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "647ba6163ecd207aabaa296cdbba4252149417f70b76d59000b375345e500464",
+      "raw_output": "unauthorized-reviewer-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/unauthorized-reviewer-accepted/intact",
+        "revision_digest": "sha256:b659777211c37f411709fa46bfb99119f4aec7ca90b847edba11d5834f830f34",
+        "locator": "objects/b659777211c37f411709fa46bfb99119f4aec7ca90b847edba11d5834f830f34"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "unauthorized-reviewer-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unauthorized_reviewer_is_refused",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "2d7a58f713760c3c30af4c0c4c16ea952d9dcc8d9674180b3917523549ff531b",
+      "raw_output": "unauthorized-reviewer-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_unauthorized_reviewer_is_refused"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/unauthorized-reviewer-accepted/fault",
+        "revision_digest": "sha256:23febf2096542b17be49c7c7ead6045a4d4d795b42c8511cb14ae43d13f5d311",
+        "locator": "objects/23febf2096542b17be49c7c7ead6045a4d4d795b42c8511cb14ae43d13f5d311"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "unauthorized-reviewer-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unauthorized_reviewer_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "0574cdaeea7cf5adc187156b477344e07a20e39a1238af31c098732f656f2f57",
+      "raw_output": "unauthorized-reviewer-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/unauthorized-reviewer-accepted/restored",
+        "revision_digest": "sha256:52c6f932ce41918878ce84726743154e4a22142e164679ea33b668c256badcd1",
+        "locator": "objects/52c6f932ce41918878ce84726743154e4a22142e164679ea33b668c256badcd1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "stale-vector-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_changed_requirement_revision_is_stale",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c0e196e6a92f2cd65daf3e16f3500a10b09d04b6d8751b59a30dd4ab0048e212",
+      "raw_output": "stale-vector-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation/stale-vector-accepted/intact",
+        "revision_digest": "sha256:9f1e9679280bf58161c450d06fad540182a3e8eed40a8f281ca6f0adabd8d78b",
+        "locator": "objects/9f1e9679280bf58161c450d06fad540182a3e8eed40a8f281ca6f0adabd8d78b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "stale-vector-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_changed_requirement_revision_is_stale",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "84faa91dceec09ce18d9297ca67743e0fe3a3150cd00c214021d8133927a3570",
+      "raw_output": "stale-vector-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_changed_requirement_revision_is_stale"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation/stale-vector-accepted/fault",
+        "revision_digest": "sha256:345918ff809ce4f4d96a2ef2d96461d5f9746cca0c7668f6a04e9cf3844aa369",
+        "locator": "objects/345918ff809ce4f4d96a2ef2d96461d5f9746cca0c7668f6a04e9cf3844aa369"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "stale-vector-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_changed_requirement_revision_is_stale",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "9150fff29c061bcfb00f2d0539d030e90aad8a1ee36437fe52e07cb9a6244549",
+      "raw_output": "stale-vector-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation/stale-vector-accepted/restored",
+        "revision_digest": "sha256:79689740fdbaf918a3091a4e4de3ea7bcff8a1509e0045ee363e9dba75da2c4b",
+        "locator": "objects/79689740fdbaf918a3091a4e4de3ea7bcff8a1509e0045ee363e9dba75da2c4b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "history-dropped",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_new_design_revision_invalidates_and_retains_history",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "00d64b6256755d05fcfd3269c3ec908046adebce9630a5a8184f13a5de5830af",
+      "raw_output": "history-dropped-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation/history-dropped/intact",
+        "revision_digest": "sha256:a8fe5ed85e671ab8d303c5cf40157d3163761e85d5cc1dc4cf3b34a195454977",
+        "locator": "objects/a8fe5ed85e671ab8d303c5cf40157d3163761e85d5cc1dc4cf3b34a195454977"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "history-dropped",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_new_design_revision_invalidates_and_retains_history",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "7b055ce6c3ec5290ca4ad8a9eb5aa4f6dbe800c1ab5ed170a8468593eea87b8b",
+      "raw_output": "history-dropped-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_new_design_revision_invalidates_and_retains_history"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation/history-dropped/fault",
+        "revision_digest": "sha256:940156a4f926bb1dc780d6ccfe21e5f83f50adc72482f6cfae289d6b2be2f310",
+        "locator": "objects/940156a4f926bb1dc780d6ccfe21e5f83f50adc72482f6cfae289d6b2be2f310"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "history-dropped",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_new_design_revision_invalidates_and_retains_history",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "a8b75a6f22a0c03ab078f224c881fe82d3c653c91a70bc3e1164d6e35bb1fe27",
+      "raw_output": "history-dropped-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation/history-dropped/restored",
+        "revision_digest": "sha256:809b5ac1691e8d53e353f3d1e93c3fb0627c52ae783e8948f18994379f69b8d8",
+        "locator": "objects/809b5ac1691e8d53e353f3d1e93c3fb0627c52ae783e8948f18994379f69b8d8"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "incomplete-design-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incomplete_design_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "0517f32ee76bbbf74c5f929ad7ba14d039169d733f50126d7491f0571d7d2404",
+      "raw_output": "incomplete-design-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-01/proportional-contract/incomplete-design-accepted/intact",
+        "revision_digest": "sha256:0887fcfc409470b2da03cee70dd6c403822cfe5bf2233e99c217e0c097c8edcc",
+        "locator": "objects/0887fcfc409470b2da03cee70dd6c403822cfe5bf2233e99c217e0c097c8edcc"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "incomplete-design-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incomplete_design_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "5af6131404d89a08fbd0861d00ea03b5b0789a5130a2f1ada7b5b2998b3f91ee",
+      "raw_output": "incomplete-design-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_incomplete_design_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-01/proportional-contract/incomplete-design-accepted/fault",
+        "revision_digest": "sha256:f814160de41bff0c0976d31ded36aa49d4525465dd8b2bb54a1307d08db03d49",
+        "locator": "objects/f814160de41bff0c0976d31ded36aa49d4525465dd8b2bb54a1307d08db03d49"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "incomplete-design-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incomplete_design_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "34873a7a1acece97eb267af6ef5b9c7a663bff9c5592d8d8fb023d1eebb2aabd",
+      "raw_output": "incomplete-design-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-01/proportional-contract/incomplete-design-accepted/restored",
+        "revision_digest": "sha256:f007a26b58fd8ff58c965bd73bd0ee3b57b1521ee2f2952f0c357137971e7c44",
+        "locator": "objects/f007a26b58fd8ff58c965bd73bd0ee3b57b1521ee2f2952f0c357137971e7c44"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "unexplained-inapplicability-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unexplained_inapplicability_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "9308f0abbb93070ffbaeab32a8fe6f902f2ebb737095a4647229f0915da39921",
+      "raw_output": "unexplained-inapplicability-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-01/proportional-contract/unexplained-inapplicability-accepted/intact",
+        "revision_digest": "sha256:dc92429aee72f32e3ac066abb76f3b88edd599a4d79a177598dde7f50598b59a",
+        "locator": "objects/dc92429aee72f32e3ac066abb76f3b88edd599a4d79a177598dde7f50598b59a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "unexplained-inapplicability-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unexplained_inapplicability_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "e3d31135c83f321b288dc88c6b9c48fd6ec95d3eeb2cda9c0b42dabccf8b4b84",
+      "raw_output": "unexplained-inapplicability-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_unexplained_inapplicability_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-01/proportional-contract/unexplained-inapplicability-accepted/fault",
+        "revision_digest": "sha256:f09663ad2aa710b82f12b24e1680b504f01479de6bfd8f3fc5b4cbee15b07c57",
+        "locator": "objects/f09663ad2aa710b82f12b24e1680b504f01479de6bfd8f3fc5b4cbee15b07c57"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "unexplained-inapplicability-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unexplained_inapplicability_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "5865ffd583338e6a192b6063086a6947ab6c53d75f6fe5b51f42b735c9505158",
+      "raw_output": "unexplained-inapplicability-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-01/proportional-contract/unexplained-inapplicability-accepted/restored",
+        "revision_digest": "sha256:56b66e89945cda60d2839882a60da93dca659024fa0ceabe7ddae5d3fc13f18e",
+        "locator": "objects/56b66e89945cda60d2839882a60da93dca659024fa0ceabe7ddae5d3fc13f18e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "material-decision-open-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_open_material_decision_blocks_and_bounded_local_choice_stays_open",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "88d950fbf95cadffd1b59dd7f57eec16cbd6580ca135c511e778908f2ca3a417",
+      "raw_output": "material-decision-open-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/material-decision-open-accepted/intact",
+        "revision_digest": "sha256:12dd2d6f062f2cb56bf2387407ee170a1a673250999b283ea2092c7095d901c3",
+        "locator": "objects/12dd2d6f062f2cb56bf2387407ee170a1a673250999b283ea2092c7095d901c3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "material-decision-open-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_open_material_decision_blocks_and_bounded_local_choice_stays_open",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "609b58a93d8f30e7e3b1f8f9bd7ebacf314ecb4cb02371d46fa9cad02c5a877c",
+      "raw_output": "material-decision-open-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_open_material_decision_blocks_and_bounded_local_choice_stays_open"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/material-decision-open-accepted/fault",
+        "revision_digest": "sha256:9777ad9d496c7e3766f606b05807bf61162339089f5f428cc6ba91040bae781c",
+        "locator": "objects/9777ad9d496c7e3766f606b05807bf61162339089f5f428cc6ba91040bae781c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "material-decision-open-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_open_material_decision_blocks_and_bounded_local_choice_stays_open",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "89d70a419a3b4d693ba6b3c82e1918c5347d9fa065527061b1be6d32b884b130",
+      "raw_output": "material-decision-open-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/material-decision-open-accepted/restored",
+        "revision_digest": "sha256:e5ed1c2964315ace39cc1a26d4f0e15f5a1c5cdc0deea9c967f5b91c29956118",
+        "locator": "objects/e5ed1c2964315ace39cc1a26d4f0e15f5a1c5cdc0deea9c967f5b91c29956118"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "unbounded-local-choice-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unbounded_local_choice_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "d16ab093106ca94e9a59e7dd8e98f784f41b96b1faac0720627a6f053692e76b",
+      "raw_output": "unbounded-local-choice-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/unbounded-local-choice-accepted/intact",
+        "revision_digest": "sha256:1854ec4b5c432156406467625619b4d8a270b5bbbc30515143c08fadfb2ef20b",
+        "locator": "objects/1854ec4b5c432156406467625619b4d8a270b5bbbc30515143c08fadfb2ef20b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "unbounded-local-choice-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unbounded_local_choice_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "87796058f2f2bd4431e27fba50b71ea5ee1a40676862f4262a99c6d2a4d12d1a",
+      "raw_output": "unbounded-local-choice-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_unbounded_local_choice_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/unbounded-local-choice-accepted/fault",
+        "revision_digest": "sha256:23b1c48de45dde30c93449988a55ad595d18fdbe9c24a1a5a80e36fa786bab9e",
+        "locator": "objects/23b1c48de45dde30c93449988a55ad595d18fdbe9c24a1a5a80e36fa786bab9e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "unbounded-local-choice-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unbounded_local_choice_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "797f398b579e28b4b50a8c10e3fe36cfd11ed1dd55387aeab0d1da6c7a6ddffd",
+      "raw_output": "unbounded-local-choice-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/unbounded-local-choice-accepted/restored",
+        "revision_digest": "sha256:279c90029301d5aa6336a246d4d32656db06833d4046b0d8ea26ddb6a9d8c89a",
+        "locator": "objects/279c90029301d5aa6336a246d4d32656db06833d4046b0d8ea26ddb6a9d8c89a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "blocking-finding-verified",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_blocking_finding_cannot_be_verified",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "20fa81a819d19745539d08294493c3fef28d382be626c668f0717043dbab193f",
+      "raw_output": "blocking-finding-verified-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/blocking-finding-verified/intact",
+        "revision_digest": "sha256:16cd03218a737446e3711e267f1a55c389a6eed29df79a378025e6dc62e0e457",
+        "locator": "objects/16cd03218a737446e3711e267f1a55c389a6eed29df79a378025e6dc62e0e457"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "blocking-finding-verified",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_blocking_finding_cannot_be_verified",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "5c89ae757d1e9f1e931957519063fcad5db3981836cb51245d5a6f3bbbd545ad",
+      "raw_output": "blocking-finding-verified-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_blocking_finding_cannot_be_verified"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/blocking-finding-verified/fault",
+        "revision_digest": "sha256:c053d2e73adfea7c800107894142b69fc52599401e88bedb9020dbdd3cc2021e",
+        "locator": "objects/c053d2e73adfea7c800107894142b69fc52599401e88bedb9020dbdd3cc2021e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "blocking-finding-verified",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_blocking_finding_cannot_be_verified",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "b95860427cd5c1a1cbc47d4dcd89ecb4b4e0fd8078b217ec1ca3797ad9970166",
+      "raw_output": "blocking-finding-verified-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/blocking-finding-verified/restored",
+        "revision_digest": "sha256:5e9ea9700d1b39bc09f5f81d154e1f822efd208a271914faf3c2a1ac40330ef5",
+        "locator": "objects/5e9ea9700d1b39bc09f5f81d154e1f822efd208a271914faf3c2a1ac40330ef5"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "premise-evidence-ignored",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_impossible_premise_is_rejected_despite_complete_checklist",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "123a2f92f9809afba76db15cd2cf855fd8229998455f3ccc0cb5457790e464dd",
+      "raw_output": "premise-evidence-ignored-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-04/impossible-premise-rejected/premise-evidence-ignored/intact",
+        "revision_digest": "sha256:cbd66b48730e9381d54fec5f00a9a6fe452cd68793fc6396628d6cd4188d30ea",
+        "locator": "objects/cbd66b48730e9381d54fec5f00a9a6fe452cd68793fc6396628d6cd4188d30ea"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "premise-evidence-ignored",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_impossible_premise_is_rejected_despite_complete_checklist",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "a2e1e242648be16557f128a44d0553885081b25ddaf9762acde1023e7815e1f2",
+      "raw_output": "premise-evidence-ignored-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_impossible_premise_is_rejected_despite_complete_checklist"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-04/impossible-premise-rejected/premise-evidence-ignored/fault",
+        "revision_digest": "sha256:9228ff23709bf2629aa64f41708f90a995def8631fe9db7fbceea2516b4ab743",
+        "locator": "objects/9228ff23709bf2629aa64f41708f90a995def8631fe9db7fbceea2516b4ab743"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "premise-evidence-ignored",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_impossible_premise_is_rejected_despite_complete_checklist",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "db461a13364d41a38cb63b8e0aa085d2366c1296b1ef49a6933652f369fe3bcb",
+      "raw_output": "premise-evidence-ignored-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-04/impossible-premise-rejected/premise-evidence-ignored/restored",
+        "revision_digest": "sha256:3e7313a61e71f97be4a95800d3cfccb03331e366de1260c61c3df764cfd691db",
+        "locator": "objects/3e7313a61e71f97be4a95800d3cfccb03331e366de1260c61c3df764cfd691db"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "held-design-verified",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_verified_review_of_held_design_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "bd05189268b1876b6ccf4889fc0fac8cc5b5d9ddb93551e02d04f8e131c58cfb",
+      "raw_output": "held-design-verified-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-04/impossible-premise-rejected/held-design-verified/intact",
+        "revision_digest": "sha256:89e219f569b8725f49da07ddd84217b700841569ec45c89733c8445dee6ee8b4",
+        "locator": "objects/89e219f569b8725f49da07ddd84217b700841569ec45c89733c8445dee6ee8b4"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "held-design-verified",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_verified_review_of_held_design_is_refused",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "306643600d198c29ba9f36b994949d507ccce9f57959a59f018d04d5715526f7",
+      "raw_output": "held-design-verified-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_verified_review_of_held_design_is_refused"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-04/impossible-premise-rejected/held-design-verified/fault",
+        "revision_digest": "sha256:a86a2f10ac83f0d2a3f2045b0f8acf0a7c108abe6b91acc81fac5c30f9793e3b",
+        "locator": "objects/a86a2f10ac83f0d2a3f2045b0f8acf0a7c108abe6b91acc81fac5c30f9793e3b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "held-design-verified",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_verified_review_of_held_design_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "669b9f6da40ba0e09c04cc780b400b17a46ac7b1d74f5f603b30d1ed7d12c086",
+      "raw_output": "held-design-verified-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-04/impossible-premise-rejected/held-design-verified/restored",
+        "revision_digest": "sha256:86bf3521f781259e27a644851224aab57975a9a76d05701aa0efbd8d873d121a",
+        "locator": "objects/86bf3521f781259e27a644851224aab57975a9a76d05701aa0efbd8d873d121a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "readiness-gate-bypassed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_readiness_refuses_missing_design_review_and_authority_without_project_state",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "1bfe17adc48b08ca0493db46f99f6372cb838843c4209ce60e88741812347b50",
+      "raw_output": "readiness-gate-bypassed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/readiness-refusal/readiness-gate-bypassed/intact",
+        "revision_digest": "sha256:8251eae5af319a0d27b10273891c0a60ca83cb0a447840d00351d6847826a668",
+        "locator": "objects/8251eae5af319a0d27b10273891c0a60ca83cb0a447840d00351d6847826a668"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "readiness-gate-bypassed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_readiness_refuses_missing_design_review_and_authority_without_project_state",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "7aa83814537e61a6507618b49455df8fb9c4ddca0a935c236c46112833f7b6c4",
+      "raw_output": "readiness-gate-bypassed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_readiness_refuses_missing_design_review_and_authority_without_project_state"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/readiness-refusal/readiness-gate-bypassed/fault",
+        "revision_digest": "sha256:137029e7ff201166a23b0173ab912949741946f24a2ba156ed7b81e550c45587",
+        "locator": "objects/137029e7ff201166a23b0173ab912949741946f24a2ba156ed7b81e550c45587"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "readiness-gate-bypassed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_readiness_refuses_missing_design_review_and_authority_without_project_state",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "ef00ebe94f802fbd23292181b489deea4bd963d354d51d83c945d78e7e21e439",
+      "raw_output": "readiness-gate-bypassed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/readiness-refusal/readiness-gate-bypassed/restored",
+        "revision_digest": "sha256:26db2ab425be633fb61b087622ec004bfcf9c0dfdee2c0b36f9a5b74a2157621",
+        "locator": "objects/26db2ab425be633fb61b087622ec004bfcf9c0dfdee2c0b36f9a5b74a2157621"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "composition-disconnected",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_independent_review_is_current_and_ready",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "0796af49434a08daec8de6681258dac9e3d7e8cb095037468a493e6ce088a137",
+      "raw_output": "composition-disconnected-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/readiness-refusal/composition-disconnected/intact",
+        "revision_digest": "sha256:c95cc7c78ab09b42c2e72f37f930091eaad359b27a1fcc5046c659d57ac0e293",
+        "locator": "objects/c95cc7c78ab09b42c2e72f37f930091eaad359b27a1fcc5046c659d57ac0e293"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "composition-disconnected",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_independent_review_is_current_and_ready",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "9d207fdcd00aa6d43b4b96bc80c5ad5b7b27be88d94de7f130e59e00cf8728c5",
+      "raw_output": "composition-disconnected-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_conforming_independent_review_is_current_and_ready"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/readiness-refusal/composition-disconnected/fault",
+        "revision_digest": "sha256:5ffd6d9c5f91db392cf1fa5009fdafbca354627660ea84ab9c5592b40640f4b2",
+        "locator": "objects/5ffd6d9c5f91db392cf1fa5009fdafbca354627660ea84ab9c5592b40640f4b2"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "composition-disconnected",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_independent_review_is_current_and_ready",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e1cce768d08efbb1e2655751bfa7e903f887a4437b92e053407a38eaab56a0d3",
+      "raw_output": "composition-disconnected-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-06/readiness-refusal/composition-disconnected/restored",
+        "revision_digest": "sha256:f4eb60ca58aac580253176756b0736aa60f79ac12f0208593cea91bb6442d0fb",
+        "locator": "objects/f4eb60ca58aac580253176756b0736aa60f79ac12f0208593cea91bb6442d0fb"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "stale-reverified-in-place",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_is_not_reverified_in_place",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "462193cc216a35923259be5725061df92531902178063b03c7d238230747d8b5",
+      "raw_output": "stale-reverified-in-place-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/stale-reverified-in-place/intact",
+        "revision_digest": "sha256:dd35590591831a72e4e7d2ea7a020520b4656fb81972f05eef6659e7f91d0651",
+        "locator": "objects/dd35590591831a72e4e7d2ea7a020520b4656fb81972f05eef6659e7f91d0651"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "stale-reverified-in-place",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_is_not_reverified_in_place",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "6415993499a299ab183b10a068eca52eb3116b0720caa2c9e3cd9cc405eef327",
+      "raw_output": "stale-reverified-in-place-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_stale_design_is_not_reverified_in_place"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/stale-reverified-in-place/fault",
+        "revision_digest": "sha256:7581b484e9f0b4743883a84c036a93cf9d29a0426ad5965c8d16cc7546c098ad",
+        "locator": "objects/7581b484e9f0b4743883a84c036a93cf9d29a0426ad5965c8d16cc7546c098ad"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "stale-reverified-in-place",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_is_not_reverified_in_place",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "11c97b0aef7dd2fecaa05583e8acfd46024f9f77ade1d89236d4227dd47a1737",
+      "raw_output": "stale-reverified-in-place-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/051-review-applicability/stale-reverified-in-place/restored",
+        "revision_digest": "sha256:db50cd296c399c249f8f6541ff07eae99a6f3e010ecf36b868b9971c01f819c5",
+        "locator": "objects/db50cd296c399c249f8f6541ff07eae99a6f3e010ecf36b868b9971c01f819c5"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "prior-rejection-overridden",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_attributed_rejection_stands_until_repair",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "d0a4816afba5e28a07abf736fc79c5b717fd2d813145cb56356e93061ca91fcd",
+      "raw_output": "prior-rejection-overridden-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/prior-rejection-overridden/intact",
+        "revision_digest": "sha256:7c6bc797ec19e15dfcbca07d820b930487e98725ee938e625378098615f8d0de",
+        "locator": "objects/7c6bc797ec19e15dfcbca07d820b930487e98725ee938e625378098615f8d0de"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "prior-rejection-overridden",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_attributed_rejection_stands_until_repair",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "1dd87f2e71c63ef98291114da8d975407eb46554b1268609349c7a6dda24ba6d",
+      "raw_output": "prior-rejection-overridden-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_attributed_rejection_stands_until_repair"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/prior-rejection-overridden/fault",
+        "revision_digest": "sha256:44925f06e1a3632f161a4415d606acd4d7014e564d2e4f9f53b5580ae72d5437",
+        "locator": "objects/44925f06e1a3632f161a4415d606acd4d7014e564d2e4f9f53b5580ae72d5437"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "prior-rejection-overridden",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_attributed_rejection_stands_until_repair",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "519e0ca3cf086d535683b8983300a3a6168b3d6b7153c0d6499e91b532908471",
+      "raw_output": "prior-rejection-overridden-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-02/material-decisions-block/prior-rejection-overridden/restored",
+        "revision_digest": "sha256:ce4727a174ffe55fe86d268fe82f8534a03d97934562a1e865fae706004e9c51",
+        "locator": "objects/ce4727a174ffe55fe86d268fe82f8534a03d97934562a1e865fae706004e9c51"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "truncated-history-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_corrupted_state_is_a_hold",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "8fab9fda221ac568ca73c6b3c39423024b12ac776d17a717bcf4bb7632e73630",
+      "raw_output": "truncated-history-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation/truncated-history-accepted/intact",
+        "revision_digest": "sha256:fdee93e160207246964d1ba6ef68ff917dcf4e96c2e312296bece6ee142816be",
+        "locator": "objects/fdee93e160207246964d1ba6ef68ff917dcf4e96c2e312296bece6ee142816be"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "truncated-history-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_corrupted_state_is_a_hold",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "c489d24c5a64b7b5e1176d333a0d1e9091ae6d612bd400f33f6185c6559d6380",
+      "raw_output": "truncated-history-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_corrupted_state_is_a_hold"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation/truncated-history-accepted/fault",
+        "revision_digest": "sha256:69a16fd0623a181f29a9a1258719cfa287e07178f39d532421506d14d3183062",
+        "locator": "objects/69a16fd0623a181f29a9a1258719cfa287e07178f39d532421506d14d3183062"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U5",
+      "control": "truncated-history-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_corrupted_state_is_a_hold",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3188d3908114215df46cdea6ed2af12514f67211fe5dc47184d4b8d24b3db660",
+      "raw_output": "truncated-history-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u5",
+        "logical_id": "proof-observation/SF-REQ-051/SF-REQ-051-AC-05/revision-invalidation/truncated-history-accepted/restored",
+        "revision_digest": "sha256:9b04a3128010e64cece7f880422bc2f14d35ef0e237a79f437cd556e03a837d3",
+        "locator": "objects/9b04a3128010e64cece7f880422bc2f14d35ef0e237a79f437cd556e03a837d3"
+      }
+    }
+  ],
+  "verdict": "independent verifier pending"
+}

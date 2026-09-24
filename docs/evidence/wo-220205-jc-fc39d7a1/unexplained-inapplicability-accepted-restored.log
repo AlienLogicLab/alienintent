@@ -1,0 +1,6 @@
+test_unexplained_inapplicability_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unexplained_inapplicability_holds) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.591s
+
+OK

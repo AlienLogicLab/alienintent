@@ -1,0 +1,6 @@
+test_new_design_revision_invalidates_and_retains_history (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_new_design_revision_invalidates_and_retains_history) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.625s
+
+OK

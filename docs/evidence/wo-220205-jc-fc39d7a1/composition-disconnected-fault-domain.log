@@ -1,0 +1,12 @@
+test_applicability_states (tests.context_assembly.test_design_admission.DesignAdmissionDomainTests.test_applicability_states) ... ok
+test_checks_run_in_order_and_all_report (tests.context_assembly.test_design_admission.DesignAdmissionDomainTests.test_checks_run_in_order_and_all_report) ... ok
+test_disposed_authority_still_never_passes_a_declared_edge (tests.context_assembly.test_design_admission.DesignAdmissionDomainTests.test_disposed_authority_still_never_passes_a_declared_edge) ... ok
+test_malformed_design_is_invalid (tests.context_assembly.test_design_admission.DesignAdmissionDomainTests.test_malformed_design_is_invalid) ... ok
+test_premises_without_evidence_hold (tests.context_assembly.test_design_admission.DesignAdmissionDomainTests.test_premises_without_evidence_hold) ... ok
+test_requirement_link_must_match (tests.context_assembly.test_design_admission.DesignAdmissionDomainTests.test_requirement_link_must_match) ... ok
+test_review_admission_rules (tests.context_assembly.test_design_admission.DesignAdmissionDomainTests.test_review_admission_rules) ... ok
+
+----------------------------------------------------------------------
+Ran 7 tests in 0.006s
+
+OK

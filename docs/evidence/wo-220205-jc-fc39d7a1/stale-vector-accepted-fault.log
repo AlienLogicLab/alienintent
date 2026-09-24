@@ -1,0 +1,14 @@
+test_changed_requirement_revision_is_stale (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_changed_requirement_revision_is_stale) ... FAIL
+
+======================================================================
+FAIL: test_changed_requirement_revision_is_stale (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_changed_requirement_revision_is_stale)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cxas7hno/tests/context_assembly/test_design_admission.py", line 243, in test_changed_requirement_revision_is_stale
+    self.assertIsInstance(result, Stale)
+AssertionError: CurrentVerified(design_key='SF-REQ-900', design_digest='sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', review_digest='sha256:e4d017923f3a8f96fe6f74f609fa81b45d296500f281b93aa39f087e58c6a896', vector={'architecture': 'sha256:07b450f88372fd7834793cb059ed687d14a7014b60e57ef0cd5093520e372730', 'authority': 'sha256:55ee0a961ee9b2cf37f107a86c8b3b503e43198635209a4a499871ade5487873', 'design': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'premises': 'sha256:129462eb22611a901a6ffc64af18a3e5cee38f69a2381ebbbb5ae1b4a93b2e4d', 'requirements': {'SF-REQ-900': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}) is not an instance of <class 'alienintent.context_assembly.domain.design_admission.Stale'>
+
+----------------------------------------------------------------------
+Ran 1 test in 1.568s
+
+FAILED (failures=1)

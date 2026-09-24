@@ -1,0 +1,19 @@
+test_open_material_decision_blocks_and_bounded_local_choice_stays_open (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_open_material_decision_blocks_and_bounded_local_choice_stays_open) ... FAIL
+
+======================================================================
+FAIL: test_open_material_decision_blocks_and_bounded_local_choice_stays_open (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_open_material_decision_blocks_and_bounded_local_choice_stays_open)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cxas7hno/tests/context_assembly/test_design_admission.py", line 319, in test_open_material_decision_blocks_and_bounded_local_choice_stays_open
+    self.assertHolds(report, "UNRESOLVED_MATERIAL_DECISION")
+  File "/tmp/fx-u5-cxas7hno/tests/context_assembly/test_design_admission.py", line 101, in assertHolds
+    self.assertEqual(report.status, MECHANICALLY_HELD)
+AssertionError: 'REVIEW_REQUIRED' != 'MECHANICALLY_HELD'
+- REVIEW_REQUIRED
++ MECHANICALLY_HELD
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.557s
+
+FAILED (failures=1)

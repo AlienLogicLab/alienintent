@@ -1,0 +1,6 @@
+test_changed_requirement_revision_is_stale (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_changed_requirement_revision_is_stale) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 2.104s
+
+OK

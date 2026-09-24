@@ -1,0 +1,2 @@
+{"probe": "stale-review-after-reinspection", "same_report_digest": true, "replayed_result": "ReviewAdmitted", "ready": true, "history": ["design.review_required", "design.verified", "design.stale", "design.review_required", "design.verified"]}
+{"probe": "empty-required-field", "status": "REVIEW_REQUIRED", "holds": []}

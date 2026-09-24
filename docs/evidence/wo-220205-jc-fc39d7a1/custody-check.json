@@ -1,0 +1,23 @@
+{
+  "candidate": "c9a8699a8b297be21df27615ce5c8ccf6fd56a4c",
+  "producer_manifest_entries_verified": 146,
+  "pinned_inputs_verified": [
+    "docs/work-units/wave2/WO-220205.md",
+    "docs/evidence/wave2-execution-packets/WO-220205.packet.json",
+    "docs/evidence/wave2-execution-packets/WO-220205.allocation.json",
+    "docs/evidence/wave2-readiness-assessments/WO-220205.2026-09-24T130647.058351Z.assessment.json",
+    "docs/evidence/wave2-design-contracts.json",
+    "docs/evidence/wave2-design-verification.json",
+    "docs/evidence/wave2-dependency-dag.json",
+    "docs/evidence/wave2-specified-requirements.json",
+    "docs/evidence/wo-220203-fx-u3-premise-mapping.json",
+    "tools/fitness/check_architecture.py",
+    "docs/decisions/2026-09-20-design-contract-and-design-verification.md",
+    "docs/decisions/2026-09-21-sandbox-isolation-standard.md",
+    "docs/evidence/wo-220205-fx-u5-predicate-mapping.json"
+  ],
+  "fresh_phase_logs_verified": 69,
+  "fresh_controls_qualified": 23,
+  "plan_digest": "sha256:2e674e6adc31a288fa49377da52b5c17e193d4fc77e93e31c13c6c5169705f43",
+  "proof_order_diagnostics": []
+}

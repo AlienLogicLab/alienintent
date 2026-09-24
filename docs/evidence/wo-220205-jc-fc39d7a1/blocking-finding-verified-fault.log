@@ -1,0 +1,16 @@
+test_blocking_finding_cannot_be_verified (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_blocking_finding_cannot_be_verified) ... FAIL
+
+======================================================================
+FAIL: test_blocking_finding_cannot_be_verified (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_blocking_finding_cannot_be_verified)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cxas7hno/tests/context_assembly/test_design_admission.py", line 335, in test_blocking_finding_cannot_be_verified
+    self.assertRefused(profile.design.record_review(KEY, review(report, findings=[finding]), 1), "BLOCKING_FINDINGS")
+  File "/tmp/fx-u5-cxas7hno/tests/context_assembly/test_design_admission.py", line 105, in assertRefused
+    self.assertIsInstance(result, ReviewRefused)
+AssertionError: ReviewAdmitted(review=ReviewRecord(reviewer={'actor': 'JC', 'invocation': 'verifier-invocation-1'}, producer={'actor': 'Morty', 'invocation': 'producer-invocation-1'}, design_digest='sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', mechanical_report_digest='sha256:54eb6967d94a1acb9315a6fd24d368c4ff2d1fbacb7c1a2c7a1e8c8713e53d30', revision_vector={'design': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'requirements': {'SF-REQ-900': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}, 'architecture': 'sha256:58064d06ef0c0f2f81e63cba263c0e5ca819171f39800d44d4265dd0616e4af0', 'premises': 'sha256:129462eb22611a901a6ffc64af18a3e5cee38f69a2381ebbbb5ae1b4a93b2e4d', 'authority': 'sha256:55ee0a961ee9b2cf37f107a86c8b3b503e43198635209a4a499871ade5487873'}, findings=({'id': 'F-1', 'blocking': True, 'disposition': 'D-LOCAL hides a persistence decision; return it to SPECIFY'},), decision='VERIFIED', authority='independent VERIFIER role under the WO-220205 allocation', document={'authority': 'independent VERIFIER role under the WO-220205 allocation', 'decision': 'VERIFIED', 'design_digest': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'findings': [{'blocking': True, 'disposition': 'D-LOCAL hides a persistence decision; return it to SPECIFY', 'id': 'F-1'}], 'mechanical_report_digest': 'sha256:54eb6967d94a1acb9315a6fd24d368c4ff2d1fbacb7c1a2c7a1e8c8713e53d30', 'producer': {'actor': 'Morty', 'invocation': 'producer-invocation-1'}, 'reviewer': {'actor': 'JC', 'invocation': 'verifier-invocation-1'}, 'revision_vector': {'architecture': 'sha256:58064d06ef0c0f2f81e63cba263c0e5ca819171f39800d44d4265dd0616e4af0', 'authority': 'sha256:55ee0a961ee9b2cf37f107a86c8b3b503e43198635209a4a499871ade5487873', 'design': 'sha256:0505f80edf45464a15f02d5b4770620dfd26227d6664889030e0d54e9a647841', 'premises': 'sha256:129462eb22611a901a6ffc64af18a3e5cee38f69a2381ebbbb5ae1b4a93b2e4d', 'requirements': {'SF-REQ-900': 'sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'}}}), decision='VERIFIED') is not an instance of <class 'alienintent.context_assembly.domain.design_admission.ReviewRefused'>
+
+----------------------------------------------------------------------
+Ran 1 test in 1.416s
+
+FAILED (failures=1)

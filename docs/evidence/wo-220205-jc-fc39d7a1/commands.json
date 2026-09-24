@@ -1,0 +1,41 @@
+{
+  "shell_prefix": "rtk proxy",
+  "candidate": "c9a8699a8b297be21df27615ce5c8ccf6fd56a4c",
+  "commands": [
+    {
+      "command": "PYTHONPATH=src python3 tools/evidence/fx_u5_evidence.py --output /tmp/wo220205-jc-fc39d7a1/controls --invocation AlienLogicLab/alienintent#97:VERIFIER:fc39d7a1-7c68-40e6-9faa-dc2a68bbb905",
+      "exit_code": 0,
+      "output": "controls.out",
+      "observation": "23/23 QUALIFIED_KILL; 69 phases; diagnostics empty"
+    },
+    {
+      "command": "PYTHONPATH=src python3 -m pytest -q tests",
+      "exit_code": 0,
+      "output": "pytest.out",
+      "observation": "632 passed in 75.52s"
+    },
+    {
+      "command": "node scripts/check.mjs all",
+      "exit_code": 0,
+      "output": "check-all.out"
+    },
+    {
+      "command": "python3 tools/fitness/check_architecture.py --root src/alienintent --check all",
+      "exit_code": 0,
+      "output": "architecture.out"
+    },
+    {
+      "command": "PYTHONPATH=src:. python3 /tmp/wo220205-jc-fc39d7a1/probes.py",
+      "exit_code": 0,
+      "output": "probes.out",
+      "observation": "diagnostic observations, not acceptance assertions"
+    },
+    {
+      "command": "PYTHONPATH=src:. python3 /tmp/wo220205-jc-fc39d7a1/freshness_test.py",
+      "exit_code": 1,
+      "output": "freshness-test.out",
+      "observation": "3 independent tests: 2 pass, 1 fail (R1)"
+    }
+  ],
+  "initial_freshness_run": "freshness-initial.out includes 23 imported candidate tests plus the 3 independent probes; 25 pass and R1 fails. Final script limits discovery to the 3 independent probes."
+}
