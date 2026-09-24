@@ -1,0 +1,14 @@
+test_conforming_independent_review_is_current_and_ready (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_independent_review_is_current_and_ready) ... FAIL
+
+======================================================================
+FAIL: test_conforming_independent_review_is_current_and_ready (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_independent_review_is_current_and_ready)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-_9vzi3s4/tests/context_assembly/test_design_admission.py", line 125, in test_conforming_independent_review_is_current_and_ready
+    self.assertIsNotNone(profile.design)
+AssertionError: unexpectedly None
+
+----------------------------------------------------------------------
+Ran 1 test in 0.013s
+
+FAILED (failures=1)

@@ -1,0 +1,19 @@
+test_review_before_checks_is_refused (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_review_before_checks_is_refused) ... FAIL
+
+======================================================================
+FAIL: test_review_before_checks_is_refused (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_review_before_checks_is_refused)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cqotjb9v/tests/context_assembly/test_design_admission.py", line 199, in test_review_before_checks_is_refused
+    self.assertRefused(profile.design.record_review(KEY, review(report), 0), "NO_MECHANICAL_REPORT")
+  File "/tmp/fx-u5-cqotjb9v/tests/context_assembly/test_design_admission.py", line 106, in assertRefused
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'STALE_REVIEW' != 'NO_MECHANICAL_REPORT'
+- STALE_REVIEW
++ NO_MECHANICAL_REPORT
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.523s
+
+FAILED (failures=1)

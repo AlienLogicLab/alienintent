@@ -1,0 +1,83 @@
+[
+  {
+    "command": [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tests"
+    ],
+    "env": {
+      "PYTHONPATH": "src:."
+    },
+    "exit_status": 0,
+    "raw_output": "pytest.out"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/fitness/check_architecture.py",
+      "--root",
+      "src/alienintent",
+      "--check",
+      "all"
+    ],
+    "env": {
+      "PYTHONPATH": "src:."
+    },
+    "exit_status": 0,
+    "raw_output": "architecture.out"
+  },
+  {
+    "command": [
+      "node",
+      "scripts/check.mjs",
+      "all"
+    ],
+    "env": {
+      "PYTHONPATH": "src:."
+    },
+    "exit_status": 0,
+    "raw_output": "check-all.out"
+  },
+  {
+    "command": [
+      "python3",
+      "tools/evidence/fx_u5_evidence.py",
+      "--output",
+      "/tmp/wo97-f5a03022/fx",
+      "--invocation",
+      "AlienLogicLab/alienintent#97:PRODUCER:f5a03022-b0dc-4643-bd35-78bc8293ad21"
+    ],
+    "env": {
+      "PYTHONPATH": "src:."
+    },
+    "exit_status": 0,
+    "raw_output": "run.out"
+  },
+  {
+    "command": [
+      "python3",
+      "freshness_test.py"
+    ],
+    "env": {
+      "PYTHONPATH": "src:."
+    },
+    "exit_status": 0,
+    "raw_output": "freshness-test.out",
+    "source": "4dab2234ca3a139d1688bb44a1b05d01450434ac:docs/evidence/wo-220205-jc-fc39d7a1/freshness_test.py"
+  },
+  {
+    "command": [
+      "python3",
+      "freshness_test.py"
+    ],
+    "env": {
+      "PYTHONPATH": "<disposable>/src:<disposable>"
+    },
+    "exit_status": 1,
+    "expected": "2 controls pass; historical replay regression fails",
+    "raw_output": "freshness-test-rejected-service.out",
+    "setup": "Copy src/tests/docs/tools into a disposable directory; replace only design_admission_service.py with git show c9a8699:src/alienintent/context_assembly/application/design_admission_service.py"
+  }
+]

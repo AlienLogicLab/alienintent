@@ -1,0 +1,6 @@
+test_incompatible_consumer_input_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_consumer_input_holds) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.443s
+
+OK

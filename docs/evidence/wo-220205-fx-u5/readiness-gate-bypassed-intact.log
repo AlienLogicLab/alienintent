@@ -1,0 +1,6 @@
+test_readiness_refuses_missing_design_review_and_authority_without_project_state (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_readiness_refuses_missing_design_review_and_authority_without_project_state) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.595s
+
+OK

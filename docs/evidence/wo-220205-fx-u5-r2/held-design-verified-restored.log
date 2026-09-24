@@ -1,0 +1,6 @@
+test_verified_review_of_held_design_is_refused (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_verified_review_of_held_design_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.418s
+
+OK

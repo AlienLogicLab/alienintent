@@ -1,0 +1,19 @@
+test_unbounded_local_choice_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unbounded_local_choice_holds) ... FAIL
+
+======================================================================
+FAIL: test_unbounded_local_choice_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_unbounded_local_choice_holds)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cqotjb9v/tests/context_assembly/test_design_admission.py", line 328, in test_unbounded_local_choice_holds
+    self.assertHolds(report, "UNBOUNDED_LOCAL_CHOICE")
+  File "/tmp/fx-u5-cqotjb9v/tests/context_assembly/test_design_admission.py", line 101, in assertHolds
+    self.assertEqual(report.status, MECHANICALLY_HELD)
+AssertionError: 'REVIEW_REQUIRED' != 'MECHANICALLY_HELD'
+- REVIEW_REQUIRED
++ MECHANICALLY_HELD
+
+
+----------------------------------------------------------------------
+Ran 1 test in 1.427s
+
+FAILED (failures=1)

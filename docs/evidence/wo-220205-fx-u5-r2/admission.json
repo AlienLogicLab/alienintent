@@ -1,0 +1,15 @@
+{
+  "pinned_inputs_verified": 13,
+  "original_producer_manifest_entries_verified": 146,
+  "prior_jc_manifest_entries_verified": 154,
+  "repair_commit": "98d60b004e9df9b415eaa9bbe85491654e06ae54",
+  "tested_revision": "e80ec9233bc2712359b4438732c6692062266141",
+  "initial_head": "1f8648b8cc3d9aa707588ab7698ef4f7f368fb4c",
+  "admission_baseline": "7be12188edf632710fe842d95fc70b444e2ed279",
+  "prior_jc_receipt": "4dab2234ca3a139d1688bb44a1b05d01450434ac",
+  "identity": {
+    "git_name": "Morty",
+    "git_email": "morty-worker@factorychecks.com",
+    "github": "morty-worker"
+  }
+}

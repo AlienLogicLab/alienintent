@@ -1,0 +1,6 @@
+test_shared_producer_invocation_is_self_review (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_shared_producer_invocation_is_self_review) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.563s
+
+OK

@@ -1,0 +1,6 @@
+test_reviewer_invocation_cannot_reverify_after_revision_round_trip (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_reviewer_invocation_cannot_reverify_after_revision_round_trip) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.488s
+
+OK

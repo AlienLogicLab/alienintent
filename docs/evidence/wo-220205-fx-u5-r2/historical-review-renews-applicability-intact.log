@@ -1,0 +1,7 @@
+test_historical_review_cannot_renew_invalidated_design (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_historical_review_cannot_renew_invalidated_design)
+JC R1: after invalidation and re-inspection the retained prior review is not a fresh review. ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.561s
+
+OK

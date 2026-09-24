@@ -1,0 +1,142 @@
+{
+  "record_kind": "ProofPredicateMapping",
+  "schema_version": 1,
+  "requirement": {
+    "requirement_id": "SF-REQ-051",
+    "source": "docs/evidence/wave2-specified-requirements.json",
+    "locator": "candidates[requirement_id=SF-REQ-051]",
+    "revision_digest": "sha256:3030164a29ad9be696d023e96f5643be9631a319552db8f3fac299183132732c",
+    "node_extent": "U5 acceptance IDs AC-01, AC-02, AC-04, AC-05, AC-06. SF-REQ-051-AC-03 is outside the U5 node extent and is neither mapped nor claimed here."
+  },
+  "design": {
+    "path": "docs/evidence/wave2-design-contracts.json",
+    "locator": "contracts[requirement_id=SF-REQ-051]",
+    "sha256": "56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242"
+  },
+  "review": {
+    "reviewer": "POSTW1-VERIFY-010",
+    "path": "docs/evidence/wave2-design-verification.json",
+    "sha256": "fa6a112c04aad34ea2b52dbd80391ff23f2dbb0fa1fdafb8b92073cb20d8492a",
+    "basis": "Predicate statements are the verified design probes of contract SF-REQ-051 (acceptance_design_trace) and its two BLOCKING enforcement obligations, independently VERIFIED by POSTW1-VERIFY-010, together with the SF-REQ-051 acceptance criteria text. Runnable bindings (fixture, command, endpoint, guard) are PRODUCER-authored for FX-U5 and are themselves a judgment obligation of the independent VERIFIER. Nothing here is inferred from implementation code or passing tests."
+  },
+  "predicates": [
+    {
+      "acceptance_id": "SF-REQ-051-AC-01",
+      "predicate_key": "proportional-contract",
+      "kind": "MECHANICAL",
+      "statement": "Inspect complete proportional contract and explicit inapplicability reasons against pinned requirements/architecture.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-051-AC-01",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-051]/acceptance_design_trace/0"],
+      "fixture": "FX-U5",
+      "inputs": ["DesignContract fixture documents with every AC-01 field present, a field missing, and a field inapplicable without a reason"],
+      "expected": "a complete contract whose satisfied requirements equal its pinned requirement revisions reaches REVIEW_REQUIRED after the existing architecture checks; a missing field holds INCOMPLETE_DESIGN, an inapplicable field without an explicit reason holds UNEXPLAINED_INAPPLICABILITY, and a requirement link mismatch holds REQUIREMENT_LINK_MISMATCH",
+      "endpoint": "UpstreamProfile.design.inspect",
+      "command": "PYTHONPATH=src python3 -m unittest tests.context_assembly.test_design_admission -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "incomplete-design-accepted; unexplained-inapplicability-accepted"
+    },
+    {
+      "acceptance_id": "SF-REQ-051-AC-02",
+      "predicate_key": "material-decisions-block",
+      "kind": "MECHANICAL",
+      "statement": "Material undecided behavior/API/persistence/security blocks; bounded helper freedom allowed.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-051-AC-02",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-051]/acceptance_design_trace/1"],
+      "fixture": "FX-U5",
+      "inputs": ["a decision inventory with an OPEN BEHAVIOR, PUBLIC_API, PERSISTENCE or SECURITY decision", "an OPEN IMPLEMENTATION_LOCAL choice with and without an explicit bound", "a review whose blocking finding names a disguised material decision"],
+      "expected": "any open material decision holds UNRESOLVED_MATERIAL_DECISION, an unbounded local choice holds UNBOUNDED_LOCAL_CHOICE, a bounded local choice stays open and reaches REVIEW_REQUIRED, and a VERIFIED review carrying a blocking finding is refused BLOCKING_FINDINGS",
+      "endpoint": "UpstreamProfile.design.inspect and UpstreamProfile.design.record_review",
+      "command": "PYTHONPATH=src python3 -m unittest tests.context_assembly.test_design_admission -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "material-decision-open-accepted; unbounded-local-choice-accepted; blocking-finding-verified"
+    },
+    {
+      "acceptance_id": "SF-REQ-051-AC-04",
+      "predicate_key": "impossible-premise-rejected",
+      "kind": "MECHANICAL",
+      "statement": "Reviewer rejects impossible premise using pinned capability evidence despite internal checklist green.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-051-AC-04",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-051]/acceptance_design_trace/3",
+                       "docs/decisions/2026-09-21-sandbox-isolation-standard.md"],
+      "fixture": "FX-U5",
+      "inputs": ["a complete, internally consistent DesignContract whose premise demands CREDENTIAL_DENIAL", "U3 pinned premise mapping docs/evidence/wo-220203-fx-u3-premise-mapping.json and its retained PY-09B and PY-10 artifacts"],
+      "expected": "the mechanical report carries the U3 InfeasibleProof(UNACHIEVABLE_PREMISE) evidence and holds INFEASIBLE_PREMISE although every checklist field is complete; a VERIFIED review of that design is refused MECHANICAL_HOLD_OUTSTANDING, and an attributed REJECTED review is retained",
+      "endpoint": "UpstreamProfile.design.inspect via UpstreamProfile.premises.read",
+      "command": "PYTHONPATH=src python3 -m unittest tests.context_assembly.test_design_admission -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "premise-evidence-ignored; held-design-verified"
+    },
+    {
+      "acceptance_id": "SF-REQ-051-AC-04",
+      "predicate_key": "premise-review-judgment",
+      "kind": "JUDGMENT",
+      "statement": "Whether a proposed criterion is a satisfiable platform premise, and whether an inapplicability reason is proportional, remains an attributed independent reviewer judgment that no mechanical result replaces.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-051-AC-04",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-051]/design_decisions/0"],
+      "reviewer": "VERIFIER (JC, independent; WO-220205 allocation)",
+      "inspection_inputs": ["docs/evidence/wo-220205-fx-u5.md", "docs/evidence/wo-220205-fx-u5-predicate-mapping.json",
+                            "docs/evidence/wave2-design-contracts.json", "docs/evidence/wo-220203-fx-u3-premise-mapping.json"],
+      "decision_record": "Issue #97 VERIFIER result comment for the exact candidate SHA"
+    },
+    {
+      "acceptance_id": "SF-REQ-051-AC-05",
+      "predicate_key": "revision-invalidation",
+      "kind": "MECHANICAL",
+      "statement": "Changed required revision invalidates design/downstream applicability; old evidence retained.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-051-AC-05",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-051]/acceptance_design_trace/4"],
+      "fixture": "FX-U5",
+      "inputs": ["a VERIFIED design, then a changed requirement revision in the downstream revision vector", "a VERIFIED design, then a new design revision changing a fixed decision"],
+      "expected": "DesignApplicability.check returns Stale naming the changed vector keys and records design.stale; a new design revision returns Held REVIEW_REQUIRED and the old vector Stale; the prior design, mechanical report and VERIFIED review stay readable in the append-only history",
+      "endpoint": "UpstreamProfile.design.check",
+      "command": "PYTHONPATH=src python3 -m unittest tests.context_assembly.test_design_admission -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "stale-vector-accepted; history-dropped"
+    },
+    {
+      "acceptance_id": "SF-REQ-051-AC-05",
+      "predicate_key": "051-review-applicability",
+      "kind": "MECHANICAL",
+      "statement": "Require fresh independent review and exact revision vector for downstream compilation/readiness. Replay self-review or stale design review and require downstream hold; conforming independent control passes.",
+      "derived_from": ["docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-051]/deterministic_enforcement_opportunities/1"],
+      "fixture": "FX-U5",
+      "inputs": ["a review whose reviewer actor or invocation equals the producer's", "a VERIFIED review replayed after the design revision changed", "a review from an actor outside the configured reviewer authority", "a conforming independent review"],
+      "expected": "self-review holds SELF_REVIEW, a shared invocation holds SELF_REVIEW, a replayed review holds STALE_REVIEW, an unauthorized reviewer holds UNAUTHORIZED_REVIEWER, a review recorded before any mechanical report holds NO_MECHANICAL_REPORT, and in every refused case downstream readiness is refused; the conforming independent review makes the design CurrentVerified and readiness admits it",
+      "endpoint": "UpstreamProfile.design.record_review and UpstreamProfile.design_readiness.admit",
+      "command": "PYTHONPATH=src python3 -m unittest tests.context_assembly.test_design_admission -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "self-review-accepted; shared-invocation-accepted; stale-design-review-accepted; unauthorized-reviewer-accepted; review-before-checks-accepted"
+    },
+    {
+      "acceptance_id": "SF-REQ-051-AC-06",
+      "predicate_key": "readiness-refusal",
+      "kind": "MECHANICAL",
+      "statement": "No design/independent passing review/authority means readiness hold without Project mutation.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-051-AC-06",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-051]/acceptance_design_trace/5"],
+      "fixture": "FX-U5",
+      "inputs": ["no design", "a design awaiting review", "a design whose admission depends on the open directional authority"],
+      "expected": "readiness processing refuses NO_DESIGN, REVIEW_REQUIRED and MECHANICALLY_HELD respectively; the operational store holds only upstream:design aggregates and LifecycleStage is unchanged (IMPLEMENT, VERIFY, REVIEW, ACCEPT, DONE)",
+      "endpoint": "UpstreamProfile.design_readiness.admit",
+      "command": "PYTHONPATH=src python3 -m unittest tests.context_assembly.test_design_admission -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "readiness-gate-bypassed; composition-disconnected"
+    },
+    {
+      "acceptance_id": "SF-REQ-051-AC-06",
+      "predicate_key": "051-architecture-boundary",
+      "kind": "MECHANICAL",
+      "statement": "Run existing repository-wide architecture checks and composed port compatibility probes; return ARCHITECTURE_AUTHORITY_HOLD for direction-dependent admission while R2-GAP-051-EDGE-AUTHORITY is open. observed_edges is descriptive, never a permission table.",
+      "derived_from": ["docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-051]/deterministic_enforcement_opportunities/0",
+                       "docs/evidence/wave2-design-contracts.json#shared_contracts/context_dependency_direction/fitness"],
+      "fixture": "FX-U5",
+      "inputs": ["tools/fitness/check_architecture.py over src/alienintent and over the existing tests/fixtures/fitness/layering fixture", "an interface manifest whose consumer requires an input the producer does not provide", "a design declaring a cross-module dependency edge, including one listed in observed_edges"],
+      "expected": "all five existing checks run before review and their results are in the report; a forbidden adapter import holds ARCHITECTURE_CHECK_FAILED and an incompatible consumer input holds INCOMPATIBLE_INTERFACE; any declared dependency edge holds ARCHITECTURE_AUTHORITY_HOLD while the gap is open, even when the edge appears in observed_edges",
+      "endpoint": "UpstreamProfile.design.inspect",
+      "command": "PYTHONPATH=src python3 -m unittest tests.context_assembly.test_design_admission -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "authority-hold-bypassed; observed-edges-as-policy; architecture-check-ignored; interface-compatibility-removed"
+    }
+  ],
+  "supersessions": []
+}

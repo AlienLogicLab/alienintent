@@ -1,0 +1,6 @@
+test_stale_design_review_replay_holds (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_stale_design_review_replay_holds) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.704s
+
+OK

@@ -1,0 +1,6 @@
+test_impossible_premise_is_rejected_despite_complete_checklist (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_impossible_premise_is_rejected_despite_complete_checklist) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 1.782s
+
+OK
