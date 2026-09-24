@@ -18,24 +18,31 @@ actually looks like:
 
 - an MCP envelope (`content` / `structuredContent` / `isError`), or
 - a CLI object with exactly the twelve contract fields, plus at most Agent Ready's own
-  `provider_evidence` — exactly `provider`, `version`, `compatibility`, `capability_probe`, with
-  `provider == "codex"` — and a disposition from `READY / CLARIFY / SPLIT / HOLD`.
+  `provider_evidence`, and a disposition from `READY / CLARIFY / SPLIT / HOLD`.
+
+Agent Ready's `provider_evidence` is host-measured and provider-generic (ARP-01). It has exactly
+the keys `provider`, `version`, `compatibility`, `capability_probe`; `provider` is one Agent Ready
+supports, declared once in `AGENT_READY_PROVIDER_VERSION_FORMATS` together with the version
+format Agent Ready accepts from that provider's CLI; `version` matches *that* provider's format;
+and (`compatibility`, `capability_probe`) is `SUPPORTED`/`REVIEWED_VERSION` or
+`COMPATIBLE_UNVERIFIED`/`PASSED`. No provider is special-cased.
 
 Anything carrying `invocation`, `adapter`, `model`, `provider_failover`, `permission_denials`
-or similar, a `claude` provider, or a bootstrap-assessor disposition, was not produced by Agent
-Ready, whatever it asserts about itself. The historical files are never modified; the manifest
-sits beside them.
+or similar, provider evidence Agent Ready does not emit, or a bootstrap-assessor disposition, was
+not produced by Agent Ready, whatever it asserts about itself. The historical files are never
+modified; the manifest sits beside them.
 
 An entry may declare `partial_record: true` (PG-00's receipt excerpt; PG-18's incomplete retained
 copy). A partial record cannot show the full shape, so it is held to native *provenance* only:
-an Agent Ready disposition, the 4-key codex `provider_evidence`, and no runner-asserted fields.
-The declaration must cite the documentation its producer claim rests on.
+an Agent Ready disposition, Agent Ready's own `provider_evidence` under the same rule, and no
+runner-asserted fields. The declaration must cite the documentation its producer claim rests on.
 
 Usage: python3 tools/evidence/check_assessment_producer.py [manifest.json]
 """
 from __future__ import annotations
 
 import json
+import re
 import sys
 from pathlib import Path
 
@@ -47,11 +54,37 @@ CONTRACT_FIELDS = frozenset((
 NATIVE_PROVIDER_EVIDENCE_KEYS = frozenset(("provider", "version", "compatibility",
                                            "capability_probe"))
 AGENT_READY_DISPOSITIONS = ("READY", "CLARIFY", "SPLIT", "HOLD")
+# The one declared source of Agent Ready's supported providers, each with the version format
+# Agent Ready's adapter accepts from that provider's CLI (agent_ready/providers.py). The
+# readiness adapter's PROVIDERS must name the same set; a test holds them together.
+_SEMVER = r"[0-9]+\.[0-9]+\.[0-9]+(?:[-+][A-Za-z0-9.-]+)?"
+AGENT_READY_PROVIDER_VERSION_FORMATS = {
+    "codex": re.compile(rf"codex-cli {_SEMVER}"),
+    "claude": re.compile(rf"{_SEMVER} \(Claude Code\)"),
+}
+# (compatibility, capability_probe) pairs Agent Ready records for a provider it ran.
+AGENT_READY_COMPATIBILITY_PAIRS = frozenset((("SUPPORTED", "REVIEWED_VERSION"),
+                                             ("COMPATIBLE_UNVERIFIED", "PASSED")))
 
 CHECKS = ("producer_declared", "declared_native_must_look_native",
           "declared_surrogate_must_not_look_native", "every_assessment_covered")
 
 NATIVE_PRODUCERS = ("agent-ready-cli", "agent-ready-mcp")
+
+
+def is_native_provider_evidence(pe) -> bool:
+    """True when `pe` is exactly the provider evidence Agent Ready emits, for any provider it
+    supports: the four keys, a declared provider, a version in that provider's own format, and a
+    compatibility/probe pair Agent Ready records."""
+    if not isinstance(pe, dict) or set(pe) != NATIVE_PROVIDER_EVIDENCE_KEYS:
+        return False
+    provider, version = pe.get("provider"), pe.get("version")
+    version_format = AGENT_READY_PROVIDER_VERSION_FORMATS.get(provider) \
+        if isinstance(provider, str) else None
+    if version_format is None or not isinstance(version, str) \
+            or not version_format.fullmatch(version):
+        return False
+    return (pe.get("compatibility"), pe.get("capability_probe")) in AGENT_READY_COMPATIBILITY_PAIRS
 
 
 def looks_native_agent_ready(artifact: dict) -> bool:
@@ -70,17 +103,14 @@ def looks_native_agent_ready(artifact: dict) -> bool:
     if artifact.get("disposition") not in AGENT_READY_DISPOSITIONS:
         return False
     pe = artifact.get("provider_evidence")
-    if pe is not None:
-        if not isinstance(pe, dict) or set(pe) != NATIVE_PROVIDER_EVIDENCE_KEYS:
-            return False
-        if pe.get("provider") != "codex":
-            return False
+    if pe is not None and not is_native_provider_evidence(pe):
+        return False
     return True
 
 
 def native_provenance_only(artifact: dict) -> bool:
     """For a declared partial record (an excerpt): the part that remains must still be Agent
-    Ready's — its own 4-key codex provider_evidence, an Agent Ready disposition, and no
+    Ready's — its own 4-key provider_evidence, an Agent Ready disposition, and no
     runner-asserted fields. The full contract shape is not required, because it is absent by
     declaration, not by substitution."""
     if not isinstance(artifact, dict):
@@ -88,9 +118,7 @@ def native_provenance_only(artifact: dict) -> bool:
     inner = artifact.get("structuredContent", artifact)
     if inner.get("disposition") not in AGENT_READY_DISPOSITIONS:
         return False
-    pe = inner.get("provider_evidence")
-    if not isinstance(pe, dict) or set(pe) != NATIVE_PROVIDER_EVIDENCE_KEYS \
-            or pe.get("provider") != "codex":
+    if not is_native_provider_evidence(inner.get("provider_evidence")):
         return False
     return not (set(inner) - CONTRACT_FIELDS - {"provider_evidence", "record_kind"})
 
@@ -118,8 +146,9 @@ def check_manifest(manifest: dict, expected_paths=None) -> tuple[bool, list[str]
             failures.append(
                 f"declared_native_must_look_native: {path} is declared produced by Agent Ready "
                 f"({producer}) but does not have Agent Ready's shape — asserted provenance, "
-                "foreign fields, a claude provider or a bootstrap-assessor disposition. A "
-                "compatible output shape is not evidence; an incompatible one is disproof")
+                "foreign fields, provider evidence Agent Ready does not emit or a "
+                "bootstrap-assessor disposition. A compatible output shape is not evidence; an "
+                "incompatible one is disproof")
         if not declared_native and native_shape and producer != "UNKNOWN":
             failures.append(
                 f"declared_surrogate_must_not_look_native: {path} is declared {producer!r} yet "
