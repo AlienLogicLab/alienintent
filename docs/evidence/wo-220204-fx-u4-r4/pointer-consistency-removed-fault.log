@@ -1,0 +1,16 @@
+test_lost_plan_pointer_is_not_an_empty_history (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_lost_plan_pointer_is_not_an_empty_history) ... FAIL
+
+======================================================================
+FAIL: test_lost_plan_pointer_is_not_an_empty_history (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_lost_plan_pointer_is_not_an_empty_history)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-345rd4ur/tests/evidence_learning/test_proof_planning.py", line 492, in test_lost_plan_pointer_is_not_an_empty_history
+    self.assertHold(proofs.current(REQUIREMENT), "INCOMPATIBLE_PROOF_PLAN_STATE")
+  File "/tmp/fx-u4-345rd4ur/tests/evidence_learning/test_proof_planning.py", line 262, in assertHold
+    self.assertIsInstance(result, PlanHold)
+AssertionError: None is not an instance of <class 'alienintent.evidence_learning.domain.proof_plan.PlanHold'>
+
+----------------------------------------------------------------------
+Ran 1 test in 0.040s
+
+FAILED (failures=1)

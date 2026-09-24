@@ -1,0 +1,6 @@
+test_erased_truncated_or_padded_history_is_a_hold (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.122s
+
+OK

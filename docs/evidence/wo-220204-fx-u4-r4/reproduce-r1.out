@@ -1,0 +1,15 @@
+# command: PYTHONPATH=src:. python3 /tmp/r1_reproduce.py  (verbatim copy of ccb80c4:docs/evidence/wo-220204-jc-c8db5337/reproduce.py)
+# candidate: 1dfbd30b8ac27aa9d1fd310dbccaa68b27674f83
+intact PlanHold PRIOR_OBLIGATION_DROPPED prior= None judgment_present= N/A
+structured-empty-history current_after_erasure= PlanHold(reason_code='INCOMPATIBLE_PROOF_PLAN_STATE', affected=('SF-REQ-014',), evidence_refs=(), required_action='repair the operational proof-plan pointer')
+Traceback (most recent call last):
+  File "/tmp/r1_reproduce.py", line 23, in <module>
+    result = fixture.derive()
+             ^^^^^^^^^^^^^^^^
+  File "/home/netmarine/.local/state/alienintent/worktrees/78edebf8-e497-4d28-ad79-0f194c86703a/tests/evidence_learning/test_proof_planning.py", line 258, in derive
+    version, _ = profile.proofs.read(REQUIREMENT)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/netmarine/.local/state/alienintent/worktrees/78edebf8-e497-4d28-ad79-0f194c86703a/src/alienintent/evidence_learning/application/proof_planning_service.py", line 77, in read
+    raise EvidenceHold("INCOMPATIBLE_PROOF_PLAN_STATE")
+alienintent.evidence_learning.domain.refs.EvidenceHold: INCOMPATIBLE_PROOF_PLAN_STATE: supply valid evidence or obtain the named source authority
+# exit_status: 1

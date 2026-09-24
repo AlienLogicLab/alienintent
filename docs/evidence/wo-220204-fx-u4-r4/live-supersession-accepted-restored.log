@@ -1,0 +1,6 @@
+test_supersession_of_a_live_obligation_is_invalid (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_supersession_of_a_live_obligation_is_invalid) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK

@@ -1,0 +1,14 @@
+test_out_of_order_evidence_is_diagnosed (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_out_of_order_evidence_is_diagnosed) ... FAIL
+
+======================================================================
+FAIL: test_out_of_order_evidence_is_diagnosed (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_out_of_order_evidence_is_diagnosed)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-345rd4ur/tests/evidence_learning/test_proof_planning.py", line 200, in test_out_of_order_evidence_is_diagnosed
+    self.assertIn("proof-order/fault-before-intact", names)
+AssertionError: 'proof-order/fault-before-intact' not found in {'proof-order/restored-before-fault'}
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)

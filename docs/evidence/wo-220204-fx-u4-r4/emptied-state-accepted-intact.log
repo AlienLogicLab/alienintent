@@ -1,0 +1,6 @@
+test_emptied_or_non_object_state_is_a_hold_not_an_empty_history (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_emptied_or_non_object_state_is_a_hold_not_an_empty_history) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.080s
+
+OK

@@ -1,0 +1,6 @@
+test_live_obligation_is_replayed_even_if_named_superseded (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_live_obligation_is_replayed_even_if_named_superseded) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK

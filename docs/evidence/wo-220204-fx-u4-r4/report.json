@@ -1,0 +1,2977 @@
+{
+  "schema_version": 1,
+  "fixture": "FX-U4",
+  "baseline": "4b94f2d1d7d40c1889af79596e8f92c737e55d7e",
+  "invocation": "AlienLogicLab/alienintent#94:PRODUCER:fb6a8f9e-c489-4734-bd1a-38bcbbf724e2",
+  "candidate_revision": "1dfbd30b8ac27aa9d1fd310dbccaa68b27674f83",
+  "contract_sha256": "5d2421cf70179f62b3c80c0b4dcf2bac16d5c04f72ec07c358f1010a47249083",
+  "mapping_sha256": "aed79fa4dcb1bed44b493b015b0a3e14e1d042fcc24d3dab3c76856874aae00c",
+  "premise_mapping_sha256": "598abb9c11791428069e2b5605b51f7ebf61afd537f2ca02c39e6bc8ec1bd589",
+  "fixture_digest": "sha256:2f9c064d16b508d3139b86cc894af8971954c8d2ad50ff152948097759b0b6cc",
+  "requirement_revision": "sha256:898c6bff3c7b2dab7257a9a416925af1034966b0e433aa6f93fe5dfe39b3c93d",
+  "plan": {
+    "digest": "sha256:b85538ecc19947ee9fa7030919ebcc95bbe24a614f1f61f214abd852db57484a",
+    "observation_ref": {
+      "project": "AlienLogicLab/alienintent",
+      "profile": "fx-u4",
+      "logical_id": "proof-plan/SF-REQ-014",
+      "revision_digest": "sha256:70c929f7e25bae21de6ae929eae3404badbb6852c8a999d91b1aac48ebb0092e",
+      "locator": "objects/70c929f7e25bae21de6ae929eae3404badbb6852c8a999d91b1aac48ebb0092e"
+    },
+    "obligations": [
+      "SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation",
+      "SF-REQ-014/SF-REQ-014-AC-02/qualified-control",
+      "SF-REQ-014/SF-REQ-014-AC-03/four-part-isolation",
+      "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "SF-REQ-014/SF-REQ-014-AC-04/mapping-faithfulness-judgment"
+    ],
+    "premise_refs": [
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "premise-mapping",
+        "revision_digest": "sha256:598abb9c11791428069e2b5605b51f7ebf61afd537f2ca02c39e6bc8ec1bd589",
+        "locator": "repository:docs/evidence/wo-220203-fx-u3-premise-mapping.json"
+      },
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "py09b-live-checks",
+        "revision_digest": "sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+        "locator": "repository:docs/evidence/py09b-live-checks-2026-09-21.json#doctor_returns_typed_outcomes_against_the_sandbox"
+      },
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "py09b-live-checks",
+        "revision_digest": "sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+        "locator": "repository:docs/evidence/py09b-live-checks-2026-09-21.json#installation_token_is_used_for_a_live_call"
+      },
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "py09b-live-checks",
+        "revision_digest": "sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+        "locator": "repository:docs/evidence/py09b-live-checks-2026-09-21.json#sandbox_repository_metadata_read_live"
+      },
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "py09b-live-checks",
+        "revision_digest": "sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+        "locator": "repository:docs/evidence/py09b-live-checks-2026-09-21.json#doctor_source_control_probe_is_live"
+      },
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "py09b-live-checks",
+        "revision_digest": "sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+        "locator": "repository:docs/evidence/py09b-live-checks-2026-09-21.json#repository_boundary_is_permission_enforced"
+      },
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "py09b-live-checks",
+        "revision_digest": "sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+        "locator": "repository:docs/evidence/py09b-live-checks-2026-09-21.json#every_project_operation_targeted_the_configured_project"
+      },
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "py09b-live-checks",
+        "revision_digest": "sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+        "locator": "repository:docs/evidence/py09b-live-checks-2026-09-21.json#project_identity_resolution_fails_closed_on_mismatch"
+      },
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "py09b-live-checks",
+        "revision_digest": "sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf",
+        "locator": "repository:docs/evidence/py09b-live-checks-2026-09-21.json#delivery_for_another_project_is_refused"
+      },
+      {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "py10-proof-run",
+        "revision_digest": "sha256:d8fa0efab6bec2b26f6da129bb6c7be0e93473c37ee8e0ebd199fdfe60ec5358",
+        "locator": "repository:docs/evidence/py10/proof-run.json#/before,/after"
+      }
+    ]
+  },
+  "implementation_files": {
+    "src/alienintent/evidence_learning/domain/proof_plan.py": "b12be981ff3540d7ac8d91235e922071d32448e53fb943cbc6c3ff96a78fff74",
+    "src/alienintent/evidence_learning/domain/battery.py": "f0bcee0e8fc759bce1fbbd37d9868800d14eb49d4da7062a7a56db643939179d",
+    "src/alienintent/evidence_learning/domain/proof_order.py": "fba6a669612c9f962cec16179ac1edf1cf6b814099610aa8249d9348004949e6",
+    "src/alienintent/evidence_learning/domain/repair.py": "ba364bf9125854537cfb66686454d2ea50c66f9d83b81b5c6cacba95d436f982",
+    "src/alienintent/evidence_learning/ports/proof_planning.py": "1df0005ff418d386abd5e2b59cc99d27ac8a2fb748f77cbf5b38af614ed464fe",
+    "src/alienintent/evidence_learning/application/proof_planning_service.py": "e12be723c39831a73b72a7ac36a7a303e3b15eb00848ce9a785273c165dbaabc",
+    "src/alienintent/composition/proof_mapping.py": "71c10c70dee1c5489f21ce1f59c531eb6076e5527d134cb16e44e9baf09d0161",
+    "src/alienintent/composition/upstream_profile.py": "e4d9b1900cb9f32db61ab85f2ae164350244585026917d95441a959b130afea5",
+    "tests/evidence_learning/test_proof_planning.py": "21b1f3f57c9c9b28b48e6419c88ac763be902bd6a5dd30ce8e746fd84ee20840"
+  },
+  "tokens": null,
+  "cost": null,
+  "measurement_reason": "UNKNOWN: invocation billing telemetry unavailable",
+  "controls": [
+    {
+      "control": "incomplete-obligation-accepted",
+      "enforcement": "AC-01",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation",
+      "test": "ProofPlanningTests.test_incomplete_mechanical_obligation_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "revision-link-removed",
+      "enforcement": "AC-01",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation",
+      "test": "ProofPlanningTests.test_mapping_for_another_requirement_revision_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "circular-oracle-accepted",
+      "enforcement": "AC-02",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-02/qualified-control",
+      "test": "ProofPlanningTests.test_implementation_derived_predicate_is_refused",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "unconditional-success-qualified",
+      "enforcement": "014-discrimination",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-02/qualified-control",
+      "test": "ProofPlanDomainTests.test_battery_refuses_unconditional_success",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "zero-application-qualified",
+      "enforcement": "014-discrimination",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-02/qualified-control",
+      "test": "ProofPlanDomainTests.test_battery_refuses_zero_application",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "overdetermined-qualified",
+      "enforcement": "014-discrimination",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-02/qualified-control",
+      "test": "ProofPlanDomainTests.test_battery_refuses_overdetermined_kill",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "unrelated-failure-qualified",
+      "enforcement": "014-discrimination",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-02/qualified-control",
+      "test": "ProofPlanDomainTests.test_battery_refuses_unrelated_failure",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "premise-check-removed",
+      "enforcement": "AC-03",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-03/four-part-isolation",
+      "test": "ProofPlanningTests.test_credential_denial_obligation_is_infeasible_proof",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "judgment-attribution-removed",
+      "enforcement": "AC-04",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_unattributed_judgment_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "judgment-mechanical-pass-accepted",
+      "enforcement": "AC-04",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_judgment_claiming_mechanical_pass_is_refused",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "coverage-hold-removed",
+      "enforcement": "AC-04",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_removed_required_predicate_blocks_admission",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "composition-disconnected",
+      "enforcement": "014-composition",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation",
+      "test": "ProofPlanningTests.test_composed_profile_derives_and_persists_the_fx_u4_plan",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": {
+        "exit_status": 0,
+        "raw_output": "composition-disconnected-fault-domain.log",
+        "raw_output_sha256": "12c4b5286a4694b9d53180ddabc73b5e1845d230d63e9d40d3b846e77d1d3b8f"
+      },
+      "discriminated": true
+    },
+    {
+      "control": "prior-obligation-drop-accepted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_dropped_prior_obligation_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "judgment-inputs-change-accepted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_changed_judgment_reviewer_inputs_hold",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "unauthorized-supersession-accepted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_unauthorized_supersession_holds",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "prior-proof-skip-accepted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_skipped_prior_proof_is_rejected",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "prior-proof-failure-accepted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_failed_prior_proof_is_rejected",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "replacement-proof-unchecked",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_supersession_without_passing_replacement_is_rejected",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "fault-before-intact-undiagnosed",
+      "enforcement": "014-proof-order",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation",
+      "test": "ProofPlanDomainTests.test_out_of_order_evidence_is_diagnosed",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "missing-plan-ancestry-undiagnosed",
+      "enforcement": "014-proof-order",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation",
+      "test": "ProofPlanDomainTests.test_missing_plan_ancestry_is_diagnosed",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "prior-proof-drop-accepted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_dropped_prior_proof_is_rejected",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "path-normalization-removed",
+      "enforcement": "AC-02",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-02/qualified-control",
+      "test": "ProofPlanDomainTests.test_disguised_implementation_sources_are_circular",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "blank-list-items-accepted",
+      "enforcement": "AC-01",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation",
+      "test": "ProofPlanDomainTests.test_blank_list_items_are_incomplete",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "live-supersession-accepted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanDomainTests.test_supersession_of_a_live_obligation_is_invalid",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "live-obligation-exempted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanDomainTests.test_live_obligation_is_replayed_even_if_named_superseded",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "authority-digest-unchecked",
+      "enforcement": "AC-04",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_review_record_digest_and_schema_version_are_checked",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "pointer-consistency-removed",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_lost_plan_pointer_is_not_an_empty_history",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "emptied-state-accepted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_emptied_or_non_object_state_is_a_hold_not_an_empty_history",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "nested-root-comparison-removed",
+      "enforcement": "AC-02",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-02/qualified-control",
+      "test": "ProofPlanDomainTests.test_nested_roots_and_prefixed_whitespace_are_circular",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "erased-history-accepted",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    },
+    {
+      "control": "history-chain-unchecked",
+      "enforcement": "014-repair-preservation",
+      "obligation_id": "SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage",
+      "test": "ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold",
+      "battery_verdict": "QUALIFIED_KILL",
+      "domain_tests_while_disconnected": null,
+      "discriminated": true
+    }
+  ],
+  "proof_order_diagnostics": [],
+  "observations": [
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "incomplete-obligation-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_incomplete_mechanical_obligation_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "825b9052feaf94dbacb762d0a1d4ca0a6b7064fa55d27542a2e521ee32b06214",
+      "raw_output": "incomplete-obligation-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/incomplete-obligation-accepted/intact",
+        "revision_digest": "sha256:795f91fc7230a0e6764411c6f018a5bc78f3023567d504cac460572c855be0a4",
+        "locator": "objects/795f91fc7230a0e6764411c6f018a5bc78f3023567d504cac460572c855be0a4"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "incomplete-obligation-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_incomplete_mechanical_obligation_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "fbda29fe4525108fe8e118639b277b664f89c163ca138b721c7b23a68e0b4f84",
+      "raw_output": "incomplete-obligation-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_incomplete_mechanical_obligation_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/incomplete-obligation-accepted/fault",
+        "revision_digest": "sha256:eb8f7beaa1cd6fe82128a99e16609ac25fd87d0db7c9109a6d1dabe2d1d88f5f",
+        "locator": "objects/eb8f7beaa1cd6fe82128a99e16609ac25fd87d0db7c9109a6d1dabe2d1d88f5f"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "incomplete-obligation-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_incomplete_mechanical_obligation_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "91c5f5190a71258da536704e75ec68136c56813802ff660015ed694de58ce8c5",
+      "raw_output": "incomplete-obligation-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/incomplete-obligation-accepted/restored",
+        "revision_digest": "sha256:1cd769d1e9ea303470fda82b2d9cf4bd98c21911478ea574605d29dfdbc73679",
+        "locator": "objects/1cd769d1e9ea303470fda82b2d9cf4bd98c21911478ea574605d29dfdbc73679"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "revision-link-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_mapping_for_another_requirement_revision_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "150b381460353385bbe86b91907388e5cb6644a4b1e1eba8a5cb96a3be0d571f",
+      "raw_output": "revision-link-removed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/revision-link-removed/intact",
+        "revision_digest": "sha256:aa0196eb309cda55e411eb72ac265bbc768573091b041c83a0699077010d364e",
+        "locator": "objects/aa0196eb309cda55e411eb72ac265bbc768573091b041c83a0699077010d364e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "revision-link-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_mapping_for_another_requirement_revision_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "16f7f4e4682c0a52583cc4d108b72b12994b1834a426c7db0503af6be47c9c9d",
+      "raw_output": "revision-link-removed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_mapping_for_another_requirement_revision_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/revision-link-removed/fault",
+        "revision_digest": "sha256:c303d235ec7b72123b7cb31be33882a963f9ebc4adb4240b8f78a60a116767f7",
+        "locator": "objects/c303d235ec7b72123b7cb31be33882a963f9ebc4adb4240b8f78a60a116767f7"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "revision-link-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_mapping_for_another_requirement_revision_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "7b03a012673a6c69baa3a9ab21b8cf87dafd2745e9e791cc25c2407e3412859d",
+      "raw_output": "revision-link-removed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/revision-link-removed/restored",
+        "revision_digest": "sha256:c4aa40271a42326fbd3c5e2a462bbfd921075c17d62c53b071cf061aff17cb9c",
+        "locator": "objects/c4aa40271a42326fbd3c5e2a462bbfd921075c17d62c53b071cf061aff17cb9c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "circular-oracle-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_implementation_derived_predicate_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "26449d719ed4cfc7550b84dbb88a03f13d0a9ee54cf55cacacbae56b68614254",
+      "raw_output": "circular-oracle-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/circular-oracle-accepted/intact",
+        "revision_digest": "sha256:63dddf2e9d3a1a7992b35fdc0797788c2305194ef8626e5cb1cdd57f32b41f76",
+        "locator": "objects/63dddf2e9d3a1a7992b35fdc0797788c2305194ef8626e5cb1cdd57f32b41f76"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "circular-oracle-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_implementation_derived_predicate_is_refused",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "188acd2a70753b4976608ac00a905f847991cd6a48d002e56a95e84ed8720046",
+      "raw_output": "circular-oracle-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_implementation_derived_predicate_is_refused"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/circular-oracle-accepted/fault",
+        "revision_digest": "sha256:9f1391f38ee4b73a353b16d3c14c41b4900de45ef9ac040a870210e16b7b273e",
+        "locator": "objects/9f1391f38ee4b73a353b16d3c14c41b4900de45ef9ac040a870210e16b7b273e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "circular-oracle-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_implementation_derived_predicate_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "0a0c8178511d8854fb342a1aaee4d2048fc85f10a1fdf6c95327154280a302e9",
+      "raw_output": "circular-oracle-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/circular-oracle-accepted/restored",
+        "revision_digest": "sha256:202384705a4843104a5593a5906201f05ae1d82a6a04593999447e572059d0e3",
+        "locator": "objects/202384705a4843104a5593a5906201f05ae1d82a6a04593999447e572059d0e3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "unconditional-success-qualified",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unconditional_success",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "14058cd56e2cbce83a9c03a220b4054218d6e552e7be38c7621e0a8dee58b7bd",
+      "raw_output": "unconditional-success-qualified-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/unconditional-success-qualified/intact",
+        "revision_digest": "sha256:e686cb6f137c52a5f462270a576247ff720850e4b444507ce643f00414865d30",
+        "locator": "objects/e686cb6f137c52a5f462270a576247ff720850e4b444507ce643f00414865d30"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "unconditional-success-qualified",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unconditional_success",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "675c22ae73a3e31df2bb452f81c81909c39af80018c06991093692b09ec430cd",
+      "raw_output": "unconditional-success-qualified-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_battery_refuses_unconditional_success"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/unconditional-success-qualified/fault",
+        "revision_digest": "sha256:4465d21e30c98375eb267f5c051211e5f52376bdd0308c30347564d391b2b5dc",
+        "locator": "objects/4465d21e30c98375eb267f5c051211e5f52376bdd0308c30347564d391b2b5dc"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "unconditional-success-qualified",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unconditional_success",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "14058cd56e2cbce83a9c03a220b4054218d6e552e7be38c7621e0a8dee58b7bd",
+      "raw_output": "unconditional-success-qualified-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/unconditional-success-qualified/restored",
+        "revision_digest": "sha256:909088d326b2f699f66b158c951ad8ecc15a5f1620341e2e60685a238dd7bb3a",
+        "locator": "objects/909088d326b2f699f66b158c951ad8ecc15a5f1620341e2e60685a238dd7bb3a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "zero-application-qualified",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_zero_application",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "9f364cff45ed3cc1f3094fceb1f24c0b88f04f4ccec14de52d0fe0f0e5b628db",
+      "raw_output": "zero-application-qualified-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/zero-application-qualified/intact",
+        "revision_digest": "sha256:8a0922dc3ab18220a61993efcb0fdc3a1f7dff5ab585f2242a95090572284790",
+        "locator": "objects/8a0922dc3ab18220a61993efcb0fdc3a1f7dff5ab585f2242a95090572284790"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "zero-application-qualified",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_zero_application",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "ca94600bbdca623bf4efce29c251c2cbb41e847e2b8de3e9b4ff0b50298103f1",
+      "raw_output": "zero-application-qualified-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_battery_refuses_zero_application"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/zero-application-qualified/fault",
+        "revision_digest": "sha256:d4922354ee7fd9c99984073b228cf49a4738a1936e2e0f176d2f432f9bf37f2b",
+        "locator": "objects/d4922354ee7fd9c99984073b228cf49a4738a1936e2e0f176d2f432f9bf37f2b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "zero-application-qualified",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_zero_application",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "9f364cff45ed3cc1f3094fceb1f24c0b88f04f4ccec14de52d0fe0f0e5b628db",
+      "raw_output": "zero-application-qualified-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/zero-application-qualified/restored",
+        "revision_digest": "sha256:c5f9f99e07961be0a1591e7e3c410faa8f145b59730b8300e3a636ff8820c417",
+        "locator": "objects/c5f9f99e07961be0a1591e7e3c410faa8f145b59730b8300e3a636ff8820c417"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "overdetermined-qualified",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_overdetermined_kill",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "9cee9be40bb2d6e88f0c86c2a1a3d11996709ebe46d854c8d3212ed81fb3bca9",
+      "raw_output": "overdetermined-qualified-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/overdetermined-qualified/intact",
+        "revision_digest": "sha256:af6dd582faa4431bc0e1123da3c5e67acbb6b713726d6a1bcd3e9fb5795dc1de",
+        "locator": "objects/af6dd582faa4431bc0e1123da3c5e67acbb6b713726d6a1bcd3e9fb5795dc1de"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "overdetermined-qualified",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_overdetermined_kill",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "0455871fa07f450661a089a1dc0f8783e9cedd781aeedb30b8f8fff81a3340cc",
+      "raw_output": "overdetermined-qualified-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_battery_refuses_overdetermined_kill"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/overdetermined-qualified/fault",
+        "revision_digest": "sha256:015c0458afc8087be58898bbb81b773343a9fa24ab2a510250599130e0014974",
+        "locator": "objects/015c0458afc8087be58898bbb81b773343a9fa24ab2a510250599130e0014974"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "overdetermined-qualified",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_overdetermined_kill",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "9cee9be40bb2d6e88f0c86c2a1a3d11996709ebe46d854c8d3212ed81fb3bca9",
+      "raw_output": "overdetermined-qualified-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/overdetermined-qualified/restored",
+        "revision_digest": "sha256:b4ede072d6591ca09d580d04fe8eb0e9596309c7092e4ed6e66dceeb865ecce3",
+        "locator": "objects/b4ede072d6591ca09d580d04fe8eb0e9596309c7092e4ed6e66dceeb865ecce3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "unrelated-failure-qualified",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unrelated_failure",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "bac90c3fbfce42b71f98509e20412442673f4a0bbce3727c3914f6e73372a1f4",
+      "raw_output": "unrelated-failure-qualified-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/unrelated-failure-qualified/intact",
+        "revision_digest": "sha256:b97b7b3afcbfb7f5883c4e1e125a7143813217803b6088427f56fc07338c067e",
+        "locator": "objects/b97b7b3afcbfb7f5883c4e1e125a7143813217803b6088427f56fc07338c067e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "unrelated-failure-qualified",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unrelated_failure",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "0e2ed778e9c30ea31ff6a310c8b8343ba9e94f85c7350df824c7c3588ee03c35",
+      "raw_output": "unrelated-failure-qualified-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_battery_refuses_unrelated_failure"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/unrelated-failure-qualified/fault",
+        "revision_digest": "sha256:7d63e096c1ac5e31cbee8653b811ab85c61e170aa0836e717e0a684977f50da3",
+        "locator": "objects/7d63e096c1ac5e31cbee8653b811ab85c61e170aa0836e717e0a684977f50da3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "unrelated-failure-qualified",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unrelated_failure",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "bac90c3fbfce42b71f98509e20412442673f4a0bbce3727c3914f6e73372a1f4",
+      "raw_output": "unrelated-failure-qualified-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/unrelated-failure-qualified/restored",
+        "revision_digest": "sha256:e076a3e63560d302f2aea6296c19f9456afaa6a02d90eee390690ea87e453aa6",
+        "locator": "objects/e076a3e63560d302f2aea6296c19f9456afaa6a02d90eee390690ea87e453aa6"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "premise-check-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_credential_denial_obligation_is_infeasible_proof",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "a6139084f068e4ea1a8f72831f77693c4a3b483ace96ce14e725cda07a7c9165",
+      "raw_output": "premise-check-removed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-03/four-part-isolation/premise-check-removed/intact",
+        "revision_digest": "sha256:ba3c2bc1abe41139d2f6da7acffe15644ef4cf69544cf9afacf54bd98b88caf5",
+        "locator": "objects/ba3c2bc1abe41139d2f6da7acffe15644ef4cf69544cf9afacf54bd98b88caf5"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "premise-check-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_credential_denial_obligation_is_infeasible_proof",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "eb709946aa020788299f061d4c4c299463922b275c572322cd870efb5dcda328",
+      "raw_output": "premise-check-removed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_credential_denial_obligation_is_infeasible_proof"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-03/four-part-isolation/premise-check-removed/fault",
+        "revision_digest": "sha256:ade75064680221908126f9f5c9bcb947c8079a7a521ee0fd4ec9fe0426f5d186",
+        "locator": "objects/ade75064680221908126f9f5c9bcb947c8079a7a521ee0fd4ec9fe0426f5d186"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "premise-check-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_credential_denial_obligation_is_infeasible_proof",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "135a8f8fd81998e042576b5acd4633f4126f9076864df27224204d8ea89290c5",
+      "raw_output": "premise-check-removed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-03/four-part-isolation/premise-check-removed/restored",
+        "revision_digest": "sha256:1317a9fb51379bbb62ec378b133d2236cbe9ae51406035af141e0779c296b641",
+        "locator": "objects/1317a9fb51379bbb62ec378b133d2236cbe9ae51406035af141e0779c296b641"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "judgment-attribution-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_unattributed_judgment_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3477f0ef65d2a46d5c293988d70b9f1918868046db33f9e4be4d3aee87cb73bc",
+      "raw_output": "judgment-attribution-removed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/judgment-attribution-removed/intact",
+        "revision_digest": "sha256:8ae07f937c38cc0441596f97d3a85cdbb2ad96ca4a6dcf7aa70557c8c480dd85",
+        "locator": "objects/8ae07f937c38cc0441596f97d3a85cdbb2ad96ca4a6dcf7aa70557c8c480dd85"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "judgment-attribution-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_unattributed_judgment_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "4cbc8502a9ffd6cd2e1814ff2c0f073827287872b059188dd56f059d53fd3535",
+      "raw_output": "judgment-attribution-removed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_unattributed_judgment_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/judgment-attribution-removed/fault",
+        "revision_digest": "sha256:3769f0856908ee351e755542f1b9d1c5423f66686b5bea0904956e599073537d",
+        "locator": "objects/3769f0856908ee351e755542f1b9d1c5423f66686b5bea0904956e599073537d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "judgment-attribution-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_unattributed_judgment_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e8e4deccf4236c36911f4add6cef50deee119393eba2b7f8c9ff8d1a1c44e8d4",
+      "raw_output": "judgment-attribution-removed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/judgment-attribution-removed/restored",
+        "revision_digest": "sha256:6f39ad79201effea2cecccccbaaa24d6ec1e0b496d68edea456f1cc340971a2a",
+        "locator": "objects/6f39ad79201effea2cecccccbaaa24d6ec1e0b496d68edea456f1cc340971a2a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "judgment-mechanical-pass-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_judgment_claiming_mechanical_pass_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "ace8a2ebc8bf12971338d0bb047cdf15a06e37fcb598fef10f4e9935f39de4bb",
+      "raw_output": "judgment-mechanical-pass-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/judgment-mechanical-pass-accepted/intact",
+        "revision_digest": "sha256:fc4dfed048cf6f7da275b5687d12402742d9a3487449b6a8405866aed0f37179",
+        "locator": "objects/fc4dfed048cf6f7da275b5687d12402742d9a3487449b6a8405866aed0f37179"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "judgment-mechanical-pass-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_judgment_claiming_mechanical_pass_is_refused",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "f89349091bd685155ed3388747c2ed25ac424bccd4a9f3e4c35e9b5ab571b181",
+      "raw_output": "judgment-mechanical-pass-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_judgment_claiming_mechanical_pass_is_refused"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/judgment-mechanical-pass-accepted/fault",
+        "revision_digest": "sha256:9eb069c1f4962584c1161f5abf642471eca61e784246828fa66d4cf5a7291b1a",
+        "locator": "objects/9eb069c1f4962584c1161f5abf642471eca61e784246828fa66d4cf5a7291b1a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "judgment-mechanical-pass-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_judgment_claiming_mechanical_pass_is_refused",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "dc2523e31978f68e30e2902f807dec22c62371099690187f370bb37f32b4cfcf",
+      "raw_output": "judgment-mechanical-pass-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/judgment-mechanical-pass-accepted/restored",
+        "revision_digest": "sha256:814b30eb4338e55d6dc7a20d9376e05da2d0df5649b858b11039c08ed3e736dc",
+        "locator": "objects/814b30eb4338e55d6dc7a20d9376e05da2d0df5649b858b11039c08ed3e736dc"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "coverage-hold-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_removed_required_predicate_blocks_admission",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e6999fa2d8ce28e94493ca3bfcc00a98b04131dadc3abd0b21165b18618455a3",
+      "raw_output": "coverage-hold-removed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/coverage-hold-removed/intact",
+        "revision_digest": "sha256:61985a410c7478d9570866beac10a0be03c9a9720133952c25dc2f53de169516",
+        "locator": "objects/61985a410c7478d9570866beac10a0be03c9a9720133952c25dc2f53de169516"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "coverage-hold-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_removed_required_predicate_blocks_admission",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "68bb0c09e3a7873858297037f31eafaaa1f6a1805ccedd141f314eecb7d1acdd",
+      "raw_output": "coverage-hold-removed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_removed_required_predicate_blocks_admission"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/coverage-hold-removed/fault",
+        "revision_digest": "sha256:846bcd0d837b66ff18e6d4f75846fb12f6e1626e108e6cf82b7efbf1a179ff6e",
+        "locator": "objects/846bcd0d837b66ff18e6d4f75846fb12f6e1626e108e6cf82b7efbf1a179ff6e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "coverage-hold-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_removed_required_predicate_blocks_admission",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "187c4d5fc191f8307ea6e9b30535ad16e582a53b7304c70efeb913e1c74c4918",
+      "raw_output": "coverage-hold-removed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/coverage-hold-removed/restored",
+        "revision_digest": "sha256:8d2848c45c823b636ce22de6421a102287d5cdd3a9bce8d9f2d252d8cf6fe21b",
+        "locator": "objects/8d2848c45c823b636ce22de6421a102287d5cdd3a9bce8d9f2d252d8cf6fe21b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "composition-disconnected",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_composed_profile_derives_and_persists_the_fx_u4_plan",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "bc0ba95ac035fc9d5e45c3962cc4045282406869f8f0a19d6cc46ff41919c6bd",
+      "raw_output": "composition-disconnected-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/composition-disconnected/intact",
+        "revision_digest": "sha256:752416cf87578c1cd39c751d3ab8e6efce52a1837c0271a7f57d0177d444f7fc",
+        "locator": "objects/752416cf87578c1cd39c751d3ab8e6efce52a1837c0271a7f57d0177d444f7fc"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "composition-disconnected",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_composed_profile_derives_and_persists_the_fx_u4_plan",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "8d71164bdaf7bf9eeb7c536db2e28695430540667a062e347a183afb8e1597bf",
+      "raw_output": "composition-disconnected-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_composed_profile_derives_and_persists_the_fx_u4_plan"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/composition-disconnected/fault",
+        "revision_digest": "sha256:7b2ae5d96d4f140619c1c4457657498532a1065dab719c0025bef9e32da08b85",
+        "locator": "objects/7b2ae5d96d4f140619c1c4457657498532a1065dab719c0025bef9e32da08b85"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "composition-disconnected",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_composed_profile_derives_and_persists_the_fx_u4_plan",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "276d209e7e4dd24829dfec49828439f8cb9211f05199340a3f2d987297e7c6a1",
+      "raw_output": "composition-disconnected-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/composition-disconnected/restored",
+        "revision_digest": "sha256:aa5ef508acaecf0064c493f3c97e99cfd12283abdaec75d8f4a1cde9bd6d44df",
+        "locator": "objects/aa5ef508acaecf0064c493f3c97e99cfd12283abdaec75d8f4a1cde9bd6d44df"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-obligation-drop-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_dropped_prior_obligation_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "f53f5dff277492b2f5d95a774ea2164ca14e53bebfe48763d49ddcb121014b10",
+      "raw_output": "prior-obligation-drop-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-obligation-drop-accepted/intact",
+        "revision_digest": "sha256:f768cbf7a6c3035e269d995e3e46392f7079cab96ee63e4ff5539ddf47554821",
+        "locator": "objects/f768cbf7a6c3035e269d995e3e46392f7079cab96ee63e4ff5539ddf47554821"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-obligation-drop-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_dropped_prior_obligation_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "9a68351c19218fd3bfa6563943890c2af19bb7e3d2e5ccb5af0c11c6ddf4e0c0",
+      "raw_output": "prior-obligation-drop-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_dropped_prior_obligation_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-obligation-drop-accepted/fault",
+        "revision_digest": "sha256:a9a7b188f8c15a97ae64e3098d1a1abac22ffdaf7b60e2d5e5198a63e4b5e507",
+        "locator": "objects/a9a7b188f8c15a97ae64e3098d1a1abac22ffdaf7b60e2d5e5198a63e4b5e507"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-obligation-drop-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_dropped_prior_obligation_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c7f4709811a2145878af735ab76df7d57ef161015b862e1fff5c2f9a9ab95aa4",
+      "raw_output": "prior-obligation-drop-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-obligation-drop-accepted/restored",
+        "revision_digest": "sha256:0ff3616dfc1daf70024eedff8c9cf2bea6575fea39f618cd616a12336fe18be0",
+        "locator": "objects/0ff3616dfc1daf70024eedff8c9cf2bea6575fea39f618cd616a12336fe18be0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "judgment-inputs-change-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_changed_judgment_reviewer_inputs_hold",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "1d90451453d127a55585baf56f621bf0986418d130dd9fdce869b48285ab6930",
+      "raw_output": "judgment-inputs-change-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/judgment-inputs-change-accepted/intact",
+        "revision_digest": "sha256:d914257230bca9be4bde6eaa5179bad50cb9cbf22394b005ff3269c6711a5b28",
+        "locator": "objects/d914257230bca9be4bde6eaa5179bad50cb9cbf22394b005ff3269c6711a5b28"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "judgment-inputs-change-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_changed_judgment_reviewer_inputs_hold",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "9c9146402a51d148152eddf002d0d8953160f94bcec4c53874573fee75b94520",
+      "raw_output": "judgment-inputs-change-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_changed_judgment_reviewer_inputs_hold"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/judgment-inputs-change-accepted/fault",
+        "revision_digest": "sha256:13a040672cb0e7eed909f973a2f49d8e257e6d62a339819d1541e0ac43fc43a0",
+        "locator": "objects/13a040672cb0e7eed909f973a2f49d8e257e6d62a339819d1541e0ac43fc43a0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "judgment-inputs-change-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_changed_judgment_reviewer_inputs_hold",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "9a533361108ab83d2837830cd6571631b2bb7eada8e59012c233b0b62cec1e6e",
+      "raw_output": "judgment-inputs-change-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/judgment-inputs-change-accepted/restored",
+        "revision_digest": "sha256:294ccdd8476839b3ed70f24e47c9aebfbe1286b33ca557a0ceb6df67fc228051",
+        "locator": "objects/294ccdd8476839b3ed70f24e47c9aebfbe1286b33ca557a0ceb6df67fc228051"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "unauthorized-supersession-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_unauthorized_supersession_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "b2f72c1ae8c931cb1980d80054fa993ab558eae453e7c23d7de0ce7281f12177",
+      "raw_output": "unauthorized-supersession-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/unauthorized-supersession-accepted/intact",
+        "revision_digest": "sha256:c846e3609b52a8b29923ff81b254f81806f73bcc82c47dcb9e92d2c3d48df245",
+        "locator": "objects/c846e3609b52a8b29923ff81b254f81806f73bcc82c47dcb9e92d2c3d48df245"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "unauthorized-supersession-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_unauthorized_supersession_holds",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "f87304b7451bbe16e769b735983ba025871af6cfcf6c9be574315d8661b24ce0",
+      "raw_output": "unauthorized-supersession-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_unauthorized_supersession_holds"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/unauthorized-supersession-accepted/fault",
+        "revision_digest": "sha256:4ff6def076ab2f2f6ff9ac1b74ef9fb175ca765ed02c95e2f2fffaf22e1c3332",
+        "locator": "objects/4ff6def076ab2f2f6ff9ac1b74ef9fb175ca765ed02c95e2f2fffaf22e1c3332"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "unauthorized-supersession-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_unauthorized_supersession_holds",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "1ef882337adb21ff2f2744489e2171391188c2bdc373c21fa6a69d2aed54e6d5",
+      "raw_output": "unauthorized-supersession-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/unauthorized-supersession-accepted/restored",
+        "revision_digest": "sha256:ab2c0722dcc47be2fec1e412ad0e0b559624556c18e52fa6aea7891f874c0d33",
+        "locator": "objects/ab2c0722dcc47be2fec1e412ad0e0b559624556c18e52fa6aea7891f874c0d33"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-proof-skip-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_skipped_prior_proof_is_rejected",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "74e5cc47a284588a369b6d074dbcc7dcc709c2ef40c29b92364c26dc09cc6aaf",
+      "raw_output": "prior-proof-skip-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-proof-skip-accepted/intact",
+        "revision_digest": "sha256:f8f66d3a38060789a0d0fc822aa3f02472f1ab02e874e64ceec314af2b3b7d8b",
+        "locator": "objects/f8f66d3a38060789a0d0fc822aa3f02472f1ab02e874e64ceec314af2b3b7d8b"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-proof-skip-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_skipped_prior_proof_is_rejected",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "2d57eac7cc66ea08c26623970de4573c4b26de8233f16b9a0c1655dcbf7d95b0",
+      "raw_output": "prior-proof-skip-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_skipped_prior_proof_is_rejected"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-proof-skip-accepted/fault",
+        "revision_digest": "sha256:223fbe9545aeac290c6033005ab91b80b82719ee742eea5c3190015b19c9f789",
+        "locator": "objects/223fbe9545aeac290c6033005ab91b80b82719ee742eea5c3190015b19c9f789"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-proof-skip-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_skipped_prior_proof_is_rejected",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "ba7d7b4086839284bda9768694f2a4a41bb890862ae2b132393542e5edf1fb76",
+      "raw_output": "prior-proof-skip-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-proof-skip-accepted/restored",
+        "revision_digest": "sha256:0a9c1a480af8d45ae47b83cd80cf5fa71f92ffaa40878ff7a107f0023dc12ea4",
+        "locator": "objects/0a9c1a480af8d45ae47b83cd80cf5fa71f92ffaa40878ff7a107f0023dc12ea4"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-proof-failure-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_failed_prior_proof_is_rejected",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "f0ad29bcd30dbda441e26e22bd0829ecaf4a344de198b2a28c7bb8d2ca990ee3",
+      "raw_output": "prior-proof-failure-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-proof-failure-accepted/intact",
+        "revision_digest": "sha256:442ac9ebbfb5aa3fde8f76583a9037d538311644a57cbd3afe84b7abfc8ffc9e",
+        "locator": "objects/442ac9ebbfb5aa3fde8f76583a9037d538311644a57cbd3afe84b7abfc8ffc9e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-proof-failure-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_failed_prior_proof_is_rejected",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "cfdf7f13fbdde85a35aa936cc26135e0d6014163c1a6752e7ea0544a5f89a2a6",
+      "raw_output": "prior-proof-failure-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_failed_prior_proof_is_rejected"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-proof-failure-accepted/fault",
+        "revision_digest": "sha256:4c78b65e3916917dc306a25901867199328e921e0659af6f7a338ff46b00e4d7",
+        "locator": "objects/4c78b65e3916917dc306a25901867199328e921e0659af6f7a338ff46b00e4d7"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-proof-failure-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_failed_prior_proof_is_rejected",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "03ab2092df0817a705919e2d60b6c9d20b306393a1b69aa1e84dbadaf4d6b66f",
+      "raw_output": "prior-proof-failure-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-proof-failure-accepted/restored",
+        "revision_digest": "sha256:1e48923f8ddec4482e16ac02281e56ee3b5249bcbe41a1e4299dbcd8aad8fdae",
+        "locator": "objects/1e48923f8ddec4482e16ac02281e56ee3b5249bcbe41a1e4299dbcd8aad8fdae"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "replacement-proof-unchecked",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_supersession_without_passing_replacement_is_rejected",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "a1173ce35f8f4ddd45a109cdbecbfd4e55867c7cf7b27b76d756a4ac3e50f560",
+      "raw_output": "replacement-proof-unchecked-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/replacement-proof-unchecked/intact",
+        "revision_digest": "sha256:68e922851d6338418a310b17966ce71c3258b71e1948b035d3b7d895ba5cefed",
+        "locator": "objects/68e922851d6338418a310b17966ce71c3258b71e1948b035d3b7d895ba5cefed"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "replacement-proof-unchecked",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_supersession_without_passing_replacement_is_rejected",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "4bdfa42218c2f24c6206af7f240cc2cf2819f62671d9e4e27b35064014261ed6",
+      "raw_output": "replacement-proof-unchecked-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_supersession_without_passing_replacement_is_rejected"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/replacement-proof-unchecked/fault",
+        "revision_digest": "sha256:8447a5a91bd2e4434b04d1be53c77f9dc9263fc1f06ea0587545b3f399f061d9",
+        "locator": "objects/8447a5a91bd2e4434b04d1be53c77f9dc9263fc1f06ea0587545b3f399f061d9"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "replacement-proof-unchecked",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_supersession_without_passing_replacement_is_rejected",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "a1173ce35f8f4ddd45a109cdbecbfd4e55867c7cf7b27b76d756a4ac3e50f560",
+      "raw_output": "replacement-proof-unchecked-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/replacement-proof-unchecked/restored",
+        "revision_digest": "sha256:af8ea98cb16a3c48bffbf3d969ee22532a9892b200ed16dbd02cd711634e9c31",
+        "locator": "objects/af8ea98cb16a3c48bffbf3d969ee22532a9892b200ed16dbd02cd711634e9c31"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "fault-before-intact-undiagnosed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_out_of_order_evidence_is_diagnosed",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "5ea80ee73998f690001763fd946f06643fa16c65b71dca7f2060ac974dcfb7b2",
+      "raw_output": "fault-before-intact-undiagnosed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/fault-before-intact-undiagnosed/intact",
+        "revision_digest": "sha256:bf2aba0fc7550843933a0a1ad981a6fa5a139094796cc35e10843f30e565bd4d",
+        "locator": "objects/bf2aba0fc7550843933a0a1ad981a6fa5a139094796cc35e10843f30e565bd4d"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "fault-before-intact-undiagnosed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_out_of_order_evidence_is_diagnosed",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "4058632a68ecbc8a5e83ae7c42a5b84079b395931fc30ca611f64527103e5c0a",
+      "raw_output": "fault-before-intact-undiagnosed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_out_of_order_evidence_is_diagnosed"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/fault-before-intact-undiagnosed/fault",
+        "revision_digest": "sha256:8df2ce54aae7d1fecb1ae2157cb6e262615370035962a1ab3c01107149bbe337",
+        "locator": "objects/8df2ce54aae7d1fecb1ae2157cb6e262615370035962a1ab3c01107149bbe337"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "fault-before-intact-undiagnosed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_out_of_order_evidence_is_diagnosed",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "5ea80ee73998f690001763fd946f06643fa16c65b71dca7f2060ac974dcfb7b2",
+      "raw_output": "fault-before-intact-undiagnosed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/fault-before-intact-undiagnosed/restored",
+        "revision_digest": "sha256:9412b6e4a507e953e99553b452dcf84e9a1f1391692d394f6d96987b04e85f33",
+        "locator": "objects/9412b6e4a507e953e99553b452dcf84e9a1f1391692d394f6d96987b04e85f33"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "missing-plan-ancestry-undiagnosed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_missing_plan_ancestry_is_diagnosed",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "55158ef9a88ac5ee246a5025369da10d51e03850445ef022058ca774ae0e2adf",
+      "raw_output": "missing-plan-ancestry-undiagnosed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/missing-plan-ancestry-undiagnosed/intact",
+        "revision_digest": "sha256:46b3fb70d8065740a88032e9862c255f7e9820e7faea5027068ce3432359c9bd",
+        "locator": "objects/46b3fb70d8065740a88032e9862c255f7e9820e7faea5027068ce3432359c9bd"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "missing-plan-ancestry-undiagnosed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_missing_plan_ancestry_is_diagnosed",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "92472d5889dfc40bef9b5a8599b811bc0746213fc4a9b2fe17916f9d6c92cef6",
+      "raw_output": "missing-plan-ancestry-undiagnosed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_missing_plan_ancestry_is_diagnosed"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/missing-plan-ancestry-undiagnosed/fault",
+        "revision_digest": "sha256:38838ffa762439a2582b0754275aaad8c9a91fc022533f4d86837ffe40294305",
+        "locator": "objects/38838ffa762439a2582b0754275aaad8c9a91fc022533f4d86837ffe40294305"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "missing-plan-ancestry-undiagnosed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_missing_plan_ancestry_is_diagnosed",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "30085f17045497be6283f0aff4959efd12f0d9df5835a3b9f30aad5c1a5ba976",
+      "raw_output": "missing-plan-ancestry-undiagnosed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/missing-plan-ancestry-undiagnosed/restored",
+        "revision_digest": "sha256:bbf26967e81b3dbd6cb979b6521fbfce829490c66749005be832f9f76c487fd6",
+        "locator": "objects/bbf26967e81b3dbd6cb979b6521fbfce829490c66749005be832f9f76c487fd6"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-proof-drop-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_dropped_prior_proof_is_rejected",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "3e949fcf81d6566da6086a7e7b27854f13e00f91d571c58bb91013c873cf4c58",
+      "raw_output": "prior-proof-drop-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-proof-drop-accepted/intact",
+        "revision_digest": "sha256:d78c7c7f529cd9c40d0502f564aeebd93374e2b83cd21bc7d508668923a94d78",
+        "locator": "objects/d78c7c7f529cd9c40d0502f564aeebd93374e2b83cd21bc7d508668923a94d78"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-proof-drop-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_dropped_prior_proof_is_rejected",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "6a41edc64604923295dcf2405317a9252e8102c9cda5905634d36931b9bd66ec",
+      "raw_output": "prior-proof-drop-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_dropped_prior_proof_is_rejected"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-proof-drop-accepted/fault",
+        "revision_digest": "sha256:7ce0be392e11c2a658cf43a138dbd9676f3a0a80e983b9c1e909ea30c526c7b6",
+        "locator": "objects/7ce0be392e11c2a658cf43a138dbd9676f3a0a80e983b9c1e909ea30c526c7b6"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "prior-proof-drop-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_dropped_prior_proof_is_rejected",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "df06abf29a9e37451c4d813449b1c9b6c88f43264fa8b8e3a8aef7d1bdf2bada",
+      "raw_output": "prior-proof-drop-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/prior-proof-drop-accepted/restored",
+        "revision_digest": "sha256:050eb3557332755097c7227f95c5201f52374dcb68c2b54b75beca364180bc0e",
+        "locator": "objects/050eb3557332755097c7227f95c5201f52374dcb68c2b54b75beca364180bc0e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "path-normalization-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_disguised_implementation_sources_are_circular",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "244afde7bcdb3e785821068e4ce1d7f4f1a136dab97c58d1cd37a77283924d97",
+      "raw_output": "path-normalization-removed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/path-normalization-removed/intact",
+        "revision_digest": "sha256:11bacb7d2486a5105176c3422eed093a4857d212bed042abff36d6f928d13203",
+        "locator": "objects/11bacb7d2486a5105176c3422eed093a4857d212bed042abff36d6f928d13203"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "path-normalization-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_disguised_implementation_sources_are_circular",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "d436e4c5dbba7be99f15ba1680cedecb5bd256ec69b54078419b8934f4b8d945",
+      "raw_output": "path-normalization-removed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_disguised_implementation_sources_are_circular"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/path-normalization-removed/fault",
+        "revision_digest": "sha256:e3e0efbc3ee3bbe2513c15f8ab5cdd6987aed71d6707ee8afd614e7f8e7ca53a",
+        "locator": "objects/e3e0efbc3ee3bbe2513c15f8ab5cdd6987aed71d6707ee8afd614e7f8e7ca53a"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "path-normalization-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_disguised_implementation_sources_are_circular",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "f61c46945e3fcf61fa2aa6ab50581981e895d68cf4c7b7794cf076bb0557d346",
+      "raw_output": "path-normalization-removed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/path-normalization-removed/restored",
+        "revision_digest": "sha256:5a8476913b5d9fbe016aa551fdc06dc4e9cd17948fae6787e391dcc15661b6c0",
+        "locator": "objects/5a8476913b5d9fbe016aa551fdc06dc4e9cd17948fae6787e391dcc15661b6c0"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "blank-list-items-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_blank_list_items_are_incomplete",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "6b46ca90f4c2209bbac140e5ad834d079a88150f5a2ea1405fc9c1e58ef7e587",
+      "raw_output": "blank-list-items-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/blank-list-items-accepted/intact",
+        "revision_digest": "sha256:ae6c30d91248a2bb5a04e184990ae8b42a6cea41e452f2cce4f3eb72562fb6a8",
+        "locator": "objects/ae6c30d91248a2bb5a04e184990ae8b42a6cea41e452f2cce4f3eb72562fb6a8"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "blank-list-items-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_blank_list_items_are_incomplete",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "4e6c953fdc96bc5891d275ff1e890867c843d19ab6cde2de5a3a9d763f5d35b6",
+      "raw_output": "blank-list-items-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_blank_list_items_are_incomplete"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/blank-list-items-accepted/fault",
+        "revision_digest": "sha256:218c1de360a956eaecc22e7bcad56423ab662d8d4f9c0a2e826529659ff57004",
+        "locator": "objects/218c1de360a956eaecc22e7bcad56423ab662d8d4f9c0a2e826529659ff57004"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "blank-list-items-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_blank_list_items_are_incomplete",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "b037bb3762be640579ce21357a3951144541e9cda832df1a49ad4827bbab799a",
+      "raw_output": "blank-list-items-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation/blank-list-items-accepted/restored",
+        "revision_digest": "sha256:36c6ddc52769a7c8af2ea10f10a1008e7efd7aa2ce0c07552b133f92082e66f4",
+        "locator": "objects/36c6ddc52769a7c8af2ea10f10a1008e7efd7aa2ce0c07552b133f92082e66f4"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "live-supersession-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_supersession_of_a_live_obligation_is_invalid",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c9f29e70fde9ee64273f4e068460b2ac91a980f3d07d8a70808986e67717c670",
+      "raw_output": "live-supersession-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/live-supersession-accepted/intact",
+        "revision_digest": "sha256:f5e7899847598a12911da5b0794402aebe466add71fd41d4ce9e69508810e0f3",
+        "locator": "objects/f5e7899847598a12911da5b0794402aebe466add71fd41d4ce9e69508810e0f3"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "live-supersession-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_supersession_of_a_live_obligation_is_invalid",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "24e56a82e3f5ce66dd468199a5ed9b50274db0846013cf46cc2d7174bbb1b195",
+      "raw_output": "live-supersession-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_supersession_of_a_live_obligation_is_invalid"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/live-supersession-accepted/fault",
+        "revision_digest": "sha256:e8d911b3102b2b5d0a018ef071de0c0bacf0875b2cb55dbc41f4e295ce09e75c",
+        "locator": "objects/e8d911b3102b2b5d0a018ef071de0c0bacf0875b2cb55dbc41f4e295ce09e75c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "live-supersession-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_supersession_of_a_live_obligation_is_invalid",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c9f29e70fde9ee64273f4e068460b2ac91a980f3d07d8a70808986e67717c670",
+      "raw_output": "live-supersession-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/live-supersession-accepted/restored",
+        "revision_digest": "sha256:d015569729cfcf9b52a836be5af160e3c60c879dffda4cc48b251f45468fec30",
+        "locator": "objects/d015569729cfcf9b52a836be5af160e3c60c879dffda4cc48b251f45468fec30"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "live-obligation-exempted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_live_obligation_is_replayed_even_if_named_superseded",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "0a3398c696036c6362292cfd658b28de332552bdeda591b43ee8ac96258fc1a4",
+      "raw_output": "live-obligation-exempted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/live-obligation-exempted/intact",
+        "revision_digest": "sha256:e75c7027e4800e4a9e762056df9c12c9151d2f903fe4430fc3efc8a08596ccfb",
+        "locator": "objects/e75c7027e4800e4a9e762056df9c12c9151d2f903fe4430fc3efc8a08596ccfb"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "live-obligation-exempted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_live_obligation_is_replayed_even_if_named_superseded",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "3284dd476222c2a12e129a6832e90d6c172e777e1287e4f5f7bb57a211e5f387",
+      "raw_output": "live-obligation-exempted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_live_obligation_is_replayed_even_if_named_superseded"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/live-obligation-exempted/fault",
+        "revision_digest": "sha256:34cfc02b96506054c66b390fc5b9a0b54a8921531f5b39f3f3d85f2b86706882",
+        "locator": "objects/34cfc02b96506054c66b390fc5b9a0b54a8921531f5b39f3f3d85f2b86706882"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "live-obligation-exempted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_live_obligation_is_replayed_even_if_named_superseded",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "0a3398c696036c6362292cfd658b28de332552bdeda591b43ee8ac96258fc1a4",
+      "raw_output": "live-obligation-exempted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/live-obligation-exempted/restored",
+        "revision_digest": "sha256:061655b4891a3363e17c3889f6349d288e8fc3ba36e7fef6086340aed02ea0da",
+        "locator": "objects/061655b4891a3363e17c3889f6349d288e8fc3ba36e7fef6086340aed02ea0da"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "authority-digest-unchecked",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_review_record_digest_and_schema_version_are_checked",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "907ad168d61fa2c47f4dfa728e08619d32d85a66d1f5108e180849196a06c609",
+      "raw_output": "authority-digest-unchecked-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/authority-digest-unchecked/intact",
+        "revision_digest": "sha256:5f7a77020ae164e85aeebb79926dbd4d4bb880a3d978b4c04e74cf4cfdefac19",
+        "locator": "objects/5f7a77020ae164e85aeebb79926dbd4d4bb880a3d978b4c04e74cf4cfdefac19"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "authority-digest-unchecked",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_review_record_digest_and_schema_version_are_checked",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "650a047593a25abb8cbfdf614ef2508c27b7be86dc10e44abbb423b918eee51c",
+      "raw_output": "authority-digest-unchecked-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_review_record_digest_and_schema_version_are_checked"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/authority-digest-unchecked/fault",
+        "revision_digest": "sha256:f3d8873ec9275cb0bc663eec0d29847816dc9ec7878221fae23b5eb23301bdc1",
+        "locator": "objects/f3d8873ec9275cb0bc663eec0d29847816dc9ec7878221fae23b5eb23301bdc1"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "authority-digest-unchecked",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_review_record_digest_and_schema_version_are_checked",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "7bb16be93832231f71948995d6fb08913abffc45abd4a18f811fd0624a84ed9c",
+      "raw_output": "authority-digest-unchecked-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/authority-digest-unchecked/restored",
+        "revision_digest": "sha256:78960861a102b5280cc3875251521ccb56ee12dbc4acf116f959dee926d70535",
+        "locator": "objects/78960861a102b5280cc3875251521ccb56ee12dbc4acf116f959dee926d70535"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "pointer-consistency-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_lost_plan_pointer_is_not_an_empty_history",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "ad974e72c875927d243c1e3432a6c49dd86f0df0939170840aec4d00828f29ae",
+      "raw_output": "pointer-consistency-removed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/pointer-consistency-removed/intact",
+        "revision_digest": "sha256:63d8f57be6fd84a0b0cdad7c829107923108d0cb0917278c894674201ba54c93",
+        "locator": "objects/63d8f57be6fd84a0b0cdad7c829107923108d0cb0917278c894674201ba54c93"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "pointer-consistency-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_lost_plan_pointer_is_not_an_empty_history",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "fb7be03a7e350d568355dbb12584517b517e6f956c1bebc333fd4a6070d20c47",
+      "raw_output": "pointer-consistency-removed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_lost_plan_pointer_is_not_an_empty_history"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/pointer-consistency-removed/fault",
+        "revision_digest": "sha256:0beae4ea0b7cb6032d9ec6a8252165110d3d8b04e1ba65735191536e4a62e894",
+        "locator": "objects/0beae4ea0b7cb6032d9ec6a8252165110d3d8b04e1ba65735191536e4a62e894"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "pointer-consistency-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_lost_plan_pointer_is_not_an_empty_history",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "bcfe7a5df338e1598f691f327318235388d14c1416532cd90c3a2142c53f8298",
+      "raw_output": "pointer-consistency-removed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/pointer-consistency-removed/restored",
+        "revision_digest": "sha256:4ddad9a5e7e9f9f17e16256906de61e29efb2618defb06bf8c484f036401f860",
+        "locator": "objects/4ddad9a5e7e9f9f17e16256906de61e29efb2618defb06bf8c484f036401f860"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "emptied-state-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_emptied_or_non_object_state_is_a_hold_not_an_empty_history",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "5120b979784b37a0ae069835e11d22acf2aacf06f8e4253e7a3835056a47063f",
+      "raw_output": "emptied-state-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/emptied-state-accepted/intact",
+        "revision_digest": "sha256:238d5e3603de963e39b2de9f345eb81b5725a327bd2fbc2bc910f01831c7e23e",
+        "locator": "objects/238d5e3603de963e39b2de9f345eb81b5725a327bd2fbc2bc910f01831c7e23e"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "emptied-state-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_emptied_or_non_object_state_is_a_hold_not_an_empty_history",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "811412528499c7abbec552cf03a04ec97aff14b2e1569de04b527df9e76148f1",
+      "raw_output": "emptied-state-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_emptied_or_non_object_state_is_a_hold_not_an_empty_history"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/emptied-state-accepted/fault",
+        "revision_digest": "sha256:5ca71cd09e52af2d3a288f24a88599b45e19d86ca5c39d59a6f72af673fa1634",
+        "locator": "objects/5ca71cd09e52af2d3a288f24a88599b45e19d86ca5c39d59a6f72af673fa1634"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "emptied-state-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_emptied_or_non_object_state_is_a_hold_not_an_empty_history",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "5980b7d78033dab6d709348dc925ff331de710962c6b4c2663f3152a0f98aafb",
+      "raw_output": "emptied-state-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/emptied-state-accepted/restored",
+        "revision_digest": "sha256:70e1ee76f13c5c8a8effd52bdaea0c9bc50fb1037a9df7b8249d9f10b159224c",
+        "locator": "objects/70e1ee76f13c5c8a8effd52bdaea0c9bc50fb1037a9df7b8249d9f10b159224c"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "nested-root-comparison-removed",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_nested_roots_and_prefixed_whitespace_are_circular",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e2aeb74b1c53bfd6b6dcb7f9eb210e40b98186d2595a1f182e28f4bb0b5b1efa",
+      "raw_output": "nested-root-comparison-removed-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/nested-root-comparison-removed/intact",
+        "revision_digest": "sha256:4104b2c53ff5aa2646e449839b05c0434a1446d6f763faad67bfa5b4dc34df37",
+        "locator": "objects/4104b2c53ff5aa2646e449839b05c0434a1446d6f763faad67bfa5b4dc34df37"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "nested-root-comparison-removed",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_nested_roots_and_prefixed_whitespace_are_circular",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "83fb075de704787d91507fd3d3b70ba1cabb63ae528ffe815556997a61b1a94d",
+      "raw_output": "nested-root-comparison-removed-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_nested_roots_and_prefixed_whitespace_are_circular"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/nested-root-comparison-removed/fault",
+        "revision_digest": "sha256:7eee98792dd1f995c991b67b1a17f54f0224321af79fffdb6878e4b7c2c03e77",
+        "locator": "objects/7eee98792dd1f995c991b67b1a17f54f0224321af79fffdb6878e4b7c2c03e77"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "nested-root-comparison-removed",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_nested_roots_and_prefixed_whitespace_are_circular",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "e2aeb74b1c53bfd6b6dcb7f9eb210e40b98186d2595a1f182e28f4bb0b5b1efa",
+      "raw_output": "nested-root-comparison-removed-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-02/qualified-control/nested-root-comparison-removed/restored",
+        "revision_digest": "sha256:564e83383be80a563f0c1fdc5a5fc4cd8845c211cfcf66a151c3b5944a293d79",
+        "locator": "objects/564e83383be80a563f0c1fdc5a5fc4cd8845c211cfcf66a151c3b5944a293d79"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "erased-history-accepted",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "cb9d2ec4a8006e8399af4c30e4c555fafbb3c2a3eacbb3cbcca53a30ce78299e",
+      "raw_output": "erased-history-accepted-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/erased-history-accepted/intact",
+        "revision_digest": "sha256:4baf911e4a91ce4f4f3123a7478ba3296fe85ec7797c60ec928a9efc06264953",
+        "locator": "objects/4baf911e4a91ce4f4f3123a7478ba3296fe85ec7797c60ec928a9efc06264953"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "erased-history-accepted",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "6713c4e45470a27496d3c1e0ee02b0682ac55f4531d641fc32bef4ee56f62810",
+      "raw_output": "erased-history-accepted-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_erased_truncated_or_padded_history_is_a_hold"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/erased-history-accepted/fault",
+        "revision_digest": "sha256:a172ff3774c1092c3efeb1c9f41bcd7edf1c9c3e4ccdcb0f64704656c275bb90",
+        "locator": "objects/a172ff3774c1092c3efeb1c9f41bcd7edf1c9c3e4ccdcb0f64704656c275bb90"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "erased-history-accepted",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "4598ba4ddbb11e5f89c11339406dfe879cfd9654688ba2bb9d6a0077c1a78130",
+      "raw_output": "erased-history-accepted-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/erased-history-accepted/restored",
+        "revision_digest": "sha256:080f3f7e97b5a216797803c80c69979549703691f4609dd5009ae2d25de686db",
+        "locator": "objects/080f3f7e97b5a216797803c80c69979549703691f4609dd5009ae2d25de686db"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "history-chain-unchecked",
+      "phase": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "c6838c5b48ad6d684849608d7e281f9d34ca4bc08d6839d874224886e3c10abc",
+      "raw_output": "history-chain-unchecked-intact.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/history-chain-unchecked/intact",
+        "revision_digest": "sha256:6f0d21150d0a979a95499a876efd53000a0c31bcf39ca0b118e0818eff11b605",
+        "locator": "objects/6f0d21150d0a979a95499a876efd53000a0c31bcf39ca0b118e0818eff11b605"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "history-chain-unchecked",
+      "phase": "fault",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold",
+        "-v"
+      ],
+      "expected": "nonzero failure of the named assertion only",
+      "exit_status": 1,
+      "raw_output_sha256": "a2ee24c9e50dd3ab84b6d9f5d29a40af54ca6346599a628a20bc54cc09e839fe",
+      "raw_output": "history-chain-unchecked-fault.log",
+      "application_count": 1,
+      "failed_assertions": [
+        "test_erased_truncated_or_padded_history_is_a_hold"
+      ],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/history-chain-unchecked/fault",
+        "revision_digest": "sha256:2c9389e9312775929e7e0967bf9f7e20dda03b64fd9d309f6d3cde38dd1a4da8",
+        "locator": "objects/2c9389e9312775929e7e0967bf9f7e20dda03b64fd9d309f6d3cde38dd1a4da8"
+      }
+    },
+    {
+      "schema_version": 1,
+      "fixture": "FX-U4",
+      "control": "history-chain-unchecked",
+      "phase": "restored",
+      "command": [
+        "/usr/bin/python3",
+        "-m",
+        "unittest",
+        "tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_erased_truncated_or_padded_history_is_a_hold",
+        "-v"
+      ],
+      "expected": "exit 0",
+      "exit_status": 0,
+      "raw_output_sha256": "70ab3dfbab071b24cd7ff72816deaef53b8d793819e1a58963adea6304edebfb",
+      "raw_output": "history-chain-unchecked-restored.log",
+      "application_count": 0,
+      "failed_assertions": [],
+      "errors": [],
+      "observation_ref": {
+        "project": "AlienLogicLab/alienintent",
+        "profile": "fx-u4",
+        "logical_id": "proof-observation/SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage/history-chain-unchecked/restored",
+        "revision_digest": "sha256:66def0f721b41f5a8016670dd9bdbbb65225a2c3cc4ba676fa24213f63c87e47",
+        "locator": "objects/66def0f721b41f5a8016670dd9bdbbb65225a2c3cc4ba676fa24213f63c87e47"
+      }
+    }
+  ],
+  "verdict": "independent verifier pending"
+}

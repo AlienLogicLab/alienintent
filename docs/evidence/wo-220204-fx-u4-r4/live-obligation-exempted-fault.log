@@ -1,0 +1,16 @@
+test_live_obligation_is_replayed_even_if_named_superseded (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_live_obligation_is_replayed_even_if_named_superseded) ... FAIL
+
+======================================================================
+FAIL: test_live_obligation_is_replayed_even_if_named_superseded (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_live_obligation_is_replayed_even_if_named_superseded)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-345rd4ur/tests/evidence_learning/test_proof_planning.py", line 139, in test_live_obligation_is_replayed_even_if_named_superseded
+    self.assertReason(evaluate_repair(prior, current, replay), "PRIOR_PROOF_FAILED")
+  File "/tmp/fx-u4-345rd4ur/tests/evidence_learning/test_proof_planning.py", line 65, in assertReason
+    self.assertIsInstance(result, PlanHold, message)
+AssertionError: RepairAccepted(prior_plan_digest='sha256:5fb363b40700ba9019fd66443dd0bb014da870f72198cee2eca81a90263c6b6c', current_plan_digest='sha256:9cb853f8aef14fca79b358b9bc91770f178ebb89485615aa95f224598ec5dc7b', preserved=('SF-REQ-014/A2/k',), superseded=('SF-REQ-014/A1/k',)) is not an instance of <class 'alienintent.evidence_learning.domain.proof_plan.PlanHold'>
+
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+FAILED (failures=1)
