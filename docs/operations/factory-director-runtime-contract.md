@@ -165,8 +165,9 @@ Director obligations on these sources:
   or a Director acknowledgement `escalations/escalation-<digest>.json` exists beneath the
   inbox directory for that exact escalation. Inbox `processed/` receipts never acknowledge
   an escalation, and `escalations/` is not an inbox entry. If `escalations/` exists, it must
-  be a directory; otherwise the adapter fails closed. FDH-01 leaves "unresolved" undefined.
-  This rule is the PRODUCER's definition and awaits Factory Director sanction. The digest is the first 32 hex characters of
+  be a directory; otherwise the adapter fails closed. This rule is the Factory Director's
+  definition of an unresolved escalation. It was sanctioned on 2026-09-24 by the D1 disposition on
+  Issue #89 (https://github.com/AlienLogicLab/alienintent/issues/89#issuecomment-5809931372). The digest is the first 32 hex characters of
   sha256(`<key>\n<outcome>\n<at>`); `inputs.diagnostics.json` lists each id under
   `escalationReceiptIds`. Write the acknowledgement only after the escalation is durably
   handled. For `EXECUTION_CYCLE_LIMIT`, the Node runtime refuses that BIU permanently, so
