@@ -162,3 +162,65 @@ def test_native_issue_comment_receipt_requires_agent_ready_provenance_and_input_
     assert disposition_from_native_comment(valid) == "READY"
     assert disposition_from_native_comment(valid.replace("agent-ready-cli", "surrogate")) is None
     assert disposition_from_native_comment(valid.replace("input_sha256\":\"abc", "input_sha256\":\"")) is None
+
+
+# --- Issue #83 (BRD-83): any BIU identifier, and nothing outside the record directory ----------
+# ARP-01 and FDH-01 had native READY records on main, yet only WO-NNNNNN paths were recognised,
+# so their release fell back to the native-receipt comment. The identifier widening must not
+# widen the directory: the path is read from the release point, and a pattern that followed
+# `..` or a `/` could be steered at a file that is not a readiness record.
+
+import pytest  # noqa: E402
+
+RECORDS = {
+    "ARP-01": "docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json",
+    "FDH-01": "docs/evidence/wave2-readiness-assessments/FDH-01.2026-09-24T055203.941687Z.assessment.json",
+    "WO-220202": "docs/evidence/wave2-readiness-assessments/WO-220202.2026-09-23T161839.955776Z.assessment.json",
+}
+
+
+@pytest.mark.parametrize("biu", sorted(RECORDS))
+def test_a_readiness_record_for_any_biu_identifier_is_recognised(biu):
+    for text in (f"readiness record `{RECORDS[biu]}`", f"record ({RECORDS[biu]}).", RECORDS[biu]):
+        assert str(assessment_record_path(text)) == RECORDS[biu]
+
+
+def test_the_release_record_carries_its_text_so_a_path_cited_there_is_found():
+    from release_admission import release_record_from
+    comment = f"RELEASED. IMPLEMENT is authorized at baseline `474343a`. Record `{RECORDS['FDH-01']}`."
+    record = release_record_from("no pointer", [{"body": comment}])
+    assert str(assessment_record_path(record["text"])) == RECORDS["FDH-01"]
+
+
+def test_a_path_that_climbs_out_of_the_record_directory_is_rejected():
+    assert assessment_record_path(
+        "`docs/evidence/wave2-readiness-assessments/../../../etc/ARP-01.s.assessment.json`") is None
+    assert assessment_record_path(
+        "`docs/evidence/wave2-readiness-assessments/ARP-01..assessment.json`") is None
+
+
+def test_a_record_path_reached_through_a_parent_prefix_is_rejected():
+    assert assessment_record_path(
+        "`../docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json`") is None
+
+
+def test_an_identifier_containing_a_slash_is_rejected():
+    assert assessment_record_path(
+        "`docs/evidence/wave2-readiness-assessments/ARP/01.2026-09-24T030043.921727Z.assessment.json`") is None
+
+
+def test_a_record_in_another_directory_is_rejected():
+    assert assessment_record_path(
+        "`docs/evidence/elsewhere/ARP-01.2026-09-24T030043.921727Z.assessment.json`") is None
+    assert assessment_record_path(
+        "`docs/evidence/wave2-readiness-assessments/sub/FDH-01.2026-09-24T055203.941687Z.assessment.json`") is None
+
+
+def test_a_record_path_continued_past_the_file_is_rejected():
+    assert assessment_record_path(
+        "`docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json/../x`") is None
+
+
+def test_the_wave1_python_record_path_is_unchanged():
+    assert str(assessment_record_path("see `PY-09B.assessment.json`")) == \
+        "docs/work-units/python/PY-09B.assessment.json"
