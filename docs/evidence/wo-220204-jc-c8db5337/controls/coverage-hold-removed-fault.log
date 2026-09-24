@@ -1,0 +1,19 @@
+test_removed_required_predicate_blocks_admission (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_removed_required_predicate_blocks_admission) ... FAIL
+
+======================================================================
+FAIL: test_removed_required_predicate_blocks_admission (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_removed_required_predicate_blocks_admission)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-xu7_1mk2/tests/evidence_learning/test_proof_planning.py", line 328, in test_removed_required_predicate_blocks_admission
+    self.assertHold(self.derive(), "COVERAGE_HOLD", "SF-REQ-014-AC-03")
+  File "/tmp/fx-u4-xu7_1mk2/tests/evidence_learning/test_proof_planning.py", line 256, in assertHold
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'PRIOR_OBLIGATION_DROPPED' != 'COVERAGE_HOLD'
+- PRIOR_OBLIGATION_DROPPED
++ COVERAGE_HOLD
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.047s
+
+FAILED (failures=1)

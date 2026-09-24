@@ -1,0 +1,17 @@
+test_battery_refuses_unrelated_failure (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unrelated_failure) ... FAIL
+
+======================================================================
+FAIL: test_battery_refuses_unrelated_failure (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unrelated_failure)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-xu7_1mk2/tests/evidence_learning/test_proof_planning.py", line 177, in test_battery_refuses_unrelated_failure
+    self.assertEqual(verdict.reason, "UNRELATED_FAILURE")
+AssertionError: 'OVERDETERMINED' != 'UNRELATED_FAILURE'
+- OVERDETERMINED
++ UNRELATED_FAILURE
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+FAILED (failures=1)

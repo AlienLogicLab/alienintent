@@ -1,0 +1,6 @@
+test_review_record_digest_and_schema_version_are_checked (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_review_record_digest_and_schema_version_are_checked) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.086s
+
+OK

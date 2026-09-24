@@ -1,0 +1,6 @@
+test_implementation_derived_predicate_is_refused (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_implementation_derived_predicate_is_refused) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.037s
+
+OK

@@ -1,0 +1,16 @@
+test_emptied_or_non_object_state_is_a_hold_not_an_empty_history (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_emptied_or_non_object_state_is_a_hold_not_an_empty_history) ... FAIL
+
+======================================================================
+FAIL: test_emptied_or_non_object_state_is_a_hold_not_an_empty_history (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_emptied_or_non_object_state_is_a_hold_not_an_empty_history)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-xu7_1mk2/tests/evidence_learning/test_proof_planning.py", line 496, in test_emptied_or_non_object_state_is_a_hold_not_an_empty_history
+    self.assertHold(proofs.current(REQUIREMENT), "INCOMPATIBLE_PROOF_PLAN_STATE")
+  File "/tmp/fx-u4-xu7_1mk2/tests/evidence_learning/test_proof_planning.py", line 254, in assertHold
+    self.assertIsInstance(result, PlanHold)
+AssertionError: None is not an instance of <class 'alienintent.evidence_learning.domain.proof_plan.PlanHold'>
+
+----------------------------------------------------------------------
+Ran 1 test in 0.063s
+
+FAILED (failures=1)

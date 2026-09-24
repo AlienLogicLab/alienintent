@@ -1,0 +1,6 @@
+test_out_of_order_evidence_is_diagnosed (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_out_of_order_evidence_is_diagnosed) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+OK

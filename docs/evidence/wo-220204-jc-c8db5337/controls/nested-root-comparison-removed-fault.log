@@ -1,0 +1,16 @@
+test_nested_roots_and_prefixed_whitespace_are_circular (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_nested_roots_and_prefixed_whitespace_are_circular) ... FAIL
+
+======================================================================
+FAIL: test_nested_roots_and_prefixed_whitespace_are_circular (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_nested_roots_and_prefixed_whitespace_are_circular)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-xu7_1mk2/tests/evidence_learning/test_proof_planning.py", line 109, in test_nested_roots_and_prefixed_whitespace_are_circular
+    self.assertReason(result, "CIRCULAR_ORACLE")
+  File "/tmp/fx-u4-xu7_1mk2/tests/evidence_learning/test_proof_planning.py", line 63, in assertReason
+    self.assertIsInstance(result, PlanHold, message)
+AssertionError: ProofPlan(requirement_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u4', logical_id='SF-REQ-014', revision_digest='sha256:9bf4dc89462fe9774797f6dd459ab64b444f252f2750cc925fb9671c72665bda', locator='fixture:SF-REQ-014'), design_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u4', logical_id='design', revision_digest='sha256:a77de8a6daa1129516b14c8ca1e233a51a8414b202eac7c8acfbb9b485046ad4', locator='fixture:design'), mapping_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u4', logical_id='mapping', revision_digest='sha256:a6375ee99716acf4635ba3c192f7578a85ad4b479d09174e7d80d01aa91443af', locator='fixture:mapping'), obligations=(Obligation(obligation_id='SF-REQ-014/A1/k', revision='sha256:0924f6d3849dee445d5d5f90affd85817c6c7981d8765c7bd817bd6d87b25db8', requirement_revision='sha256:9bf4dc89462fe9774797f6dd459ab64b444f252f2750cc925fb9671c72665bda', predicate=MappedPredicate(acceptance_id='A1', predicate_key='k', kind=<PredicateKind.MECHANICAL: 'MECHANICAL'>, statement='statement', derived_from=('src/alienintent/x.py',), fixture='FX', inputs=('input',), expected='expected', endpoint='endpoint', command='command', evidence_schema=('obligation_id',), guard='guard', reviewer='', inspection_inputs=(), decision_record='', premise_id='', premise_observables=()), premise_refs=()), Obligation(obligation_id='SF-REQ-014/A2/k', revision='sha256:b1d63ada2df694ff32cbe467ac1bc1799c4d2cc0fc65aab5a0737cb2d20f61b3', requirement_revision='sha256:9bf4dc89462fe9774797f6dd459ab64b444f252f2750cc925fb9671c72665bda', predicate=MappedPredicate(acceptance_id='A2', predicate_key='k', kind=<PredicateKind.MECHANICAL: 'MECHANICAL'>, statement='statement', derived_from=('docs/spec.md#A2',), fixture='FX', inputs=('input',), expected='expected', endpoint='endpoint', command='command', evidence_schema=('obligation_id',), guard='guard', reviewer='', inspection_inputs=(), decision_record='', premise_id='', premise_observables=()), premise_refs=())), superseded=(), prior_plan_digest=None, state='FEASIBLE_PLAN') is not an instance of <class 'alienintent.evidence_learning.domain.proof_plan.PlanHold'>
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+FAILED (failures=1)

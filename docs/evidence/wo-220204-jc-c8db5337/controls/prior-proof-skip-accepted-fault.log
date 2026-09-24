@@ -1,0 +1,16 @@
+test_skipped_prior_proof_is_rejected (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_skipped_prior_proof_is_rejected) ... FAIL
+
+======================================================================
+FAIL: test_skipped_prior_proof_is_rejected (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_skipped_prior_proof_is_rejected)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-xu7_1mk2/tests/evidence_learning/test_proof_planning.py", line 382, in test_skipped_prior_proof_is_rejected
+    self.assertHold(self.profile().proofs.evaluate_repair(REQUIREMENT, self.replay(**{AC2: ReplayStatus.SKIPPED})),
+  File "/tmp/fx-u4-xu7_1mk2/tests/evidence_learning/test_proof_planning.py", line 254, in assertHold
+    self.assertIsInstance(result, PlanHold)
+AssertionError: RepairAccepted(prior_plan_digest='sha256:b85538ecc19947ee9fa7030919ebcc95bbe24a614f1f61f214abd852db57484a', current_plan_digest='sha256:e2f68509d44a93f26ee8d5fd54f75180cc03eb165ebe418933a6ca9443754138', preserved=('SF-REQ-014/SF-REQ-014-AC-01/pinned-before-implementation', 'SF-REQ-014/SF-REQ-014-AC-02/qualified-control', 'SF-REQ-014/SF-REQ-014-AC-03/four-part-isolation', 'SF-REQ-014/SF-REQ-014-AC-04/judgment-attribution-and-coverage', 'SF-REQ-014/SF-REQ-014-AC-04/mapping-faithfulness-judgment'), superseded=()) is not an instance of <class 'alienintent.evidence_learning.domain.proof_plan.PlanHold'>
+
+----------------------------------------------------------------------
+Ran 1 test in 0.057s
+
+FAILED (failures=1)

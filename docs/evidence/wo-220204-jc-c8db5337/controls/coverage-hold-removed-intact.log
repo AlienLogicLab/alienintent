@@ -1,0 +1,6 @@
+test_removed_required_predicate_blocks_admission (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_removed_required_predicate_blocks_admission) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.057s
+
+OK

@@ -1,0 +1,5 @@
+intact PlanHold PRIOR_OBLIGATION_DROPPED prior= None judgment_present= N/A
+structured-empty-history current_after_erasure= None
+structured-empty-history ProofPlan  prior= None judgment_present= False
+restored PlanHold PRIOR_OBLIGATION_DROPPED prior= None judgment_present= N/A
+first-derivation ProofPlan  prior= None judgment_present= False

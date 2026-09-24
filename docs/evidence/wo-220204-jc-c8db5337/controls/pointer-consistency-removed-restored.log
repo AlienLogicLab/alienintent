@@ -1,0 +1,6 @@
+test_lost_plan_pointer_is_not_an_empty_history (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_lost_plan_pointer_is_not_an_empty_history) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.043s
+
+OK
