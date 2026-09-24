@@ -14,22 +14,34 @@ The invariant this enforces, from the Founder (2026-09-22):
 So every retained assessment must be covered by a provenance manifest that declares its
 producer, and the declaration must be consistent with what a native Agent Ready result actually
 looks like: an MCP envelope, or a CLI object with exactly the twelve contract fields plus, at
-most, Agent Ready's own four-key Codex-only `provider_evidence`, and a disposition from
+most, Agent Ready's own four-key `provider_evidence`, and a disposition from
 `READY / CLARIFY / SPLIT / HOLD`. Anything carrying an `invocation`, `adapter`, `model`,
-`provider_failover` or `permission_denials`, or a `claude` provider, or a bootstrap-assessor
-disposition, was not produced by Agent Ready — whatever it says about itself.
+`provider_failover` or `permission_denials`, or provider evidence Agent Ready does not emit, or a
+bootstrap-assessor disposition, was not produced by Agent Ready — whatever it says about itself.
+
+ARP-01 made the provider evidence rule provider-generic: every provider Agent Ready supports is
+accepted with its own version format, and nothing else is. Each rejection is shown killable by a
+deliberately permissive variant of the rule.
 
 Proven red against the real shapes: a real surrogate (PY-02) and a real native (PG-01) artifact.
 """
 import copy
 import json
+import re
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+import pytest
 
-from check_assessment_producer import (CHECKS, check_manifest,  # noqa: E402
-                                       looks_native_agent_ready)
+sys.path.insert(0, str(Path(__file__).parent))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "orchestration"))
+
+import check_assessment_producer as cap  # noqa: E402
+from check_assessment_producer import (AGENT_READY_COMPATIBILITY_PAIRS,  # noqa: E402
+                                       AGENT_READY_PROVIDER_VERSION_FORMATS, CHECKS,
+                                       NATIVE_PROVIDER_EVIDENCE_KEYS, check_manifest,
+                                       looks_native_agent_ready, main, native_provenance_only)
+from readiness_assessment import PROVIDERS  # noqa: E402
 
 REPO = Path(__file__).resolve().parents[2]
 REAL_SURROGATE = json.loads((REPO / "docs/work-units/python/PY-02.assessment.json").read_text())
@@ -67,17 +79,282 @@ def test_agent_readys_own_codex_provider_evidence_is_accepted():
     assert looks_native_agent_ready(a) is True
 
 
-def test_a_claude_provider_evidence_is_not_native():
-    a = dict(_CONTRACT)
-    a["provider_evidence"] = {"provider": "claude", "version": "x", "compatibility": "SUPPORTED",
-                              "capability_probe": "PASSED"}
-    assert looks_native_agent_ready(a) is False
-
-
 def test_a_bootstrap_assessor_disposition_is_not_native():
     a = dict(_CONTRACT)
     a["disposition"] = "BLOCKED"
     assert looks_native_agent_ready(a) is False
+
+
+# --- provider-generic provider evidence (ARP-01) -----------------------------------------
+
+
+def _pe(provider, version, compatibility="SUPPORTED", capability_probe="REVIEWED_VERSION"):
+    return {"provider": provider, "version": version, "compatibility": compatibility,
+            "capability_probe": capability_probe}
+
+
+def _full(pe):
+    a = dict(_CONTRACT)
+    a["provider_evidence"] = pe
+    return a
+
+
+def _partial(pe, disposition="READY"):
+    return {"disposition": disposition, "summary": "x", "record_kind": "Receipt excerpt",
+            "provider_evidence": pe}
+
+
+VALID_PROVIDER_EVIDENCE = {
+    "codex_supported_reviewed": _pe("codex", "codex-cli 0.153.4"),
+    "codex_compatible_unverified_passed": _pe("codex", "codex-cli 0.155.1",
+                                              "COMPATIBLE_UNVERIFIED", "PASSED"),
+    "codex_suffixed_version": _pe("codex", "codex-cli 0.156.0-alpha.2",
+                                  "COMPATIBLE_UNVERIFIED", "PASSED"),
+    "claude_supported_reviewed": _pe("claude", "2.1.258 (Claude Code)"),
+    "claude_compatible_unverified_passed": _pe("claude", "2.1.281 (Claude Code)",
+                                               "COMPATIBLE_UNVERIFIED", "PASSED"),
+    "claude_suffixed_version": _pe("claude", "2.2.0+build.7 (Claude Code)"),
+}
+
+_missing_key = _pe("claude", "2.1.281 (Claude Code)")
+del _missing_key["capability_probe"]
+
+# Each rejection names the permissive variant (below) that would wrongly accept it, so every
+# rejection test is shown able to fail. A check that cannot fail is not evidence.
+INVALID_PROVIDER_EVIDENCE = {
+    "unknown_provider": (_pe("gemini", "codex-cli 0.153.4"), "provider_not_checked"),
+    "non_string_provider": (_pe(["claude"], "2.1.281 (Claude Code)"), "provider_not_checked"),
+    "codex_with_claude_version_format": (_pe("codex", "2.1.281 (Claude Code)"),
+                                         "provider_not_checked"),
+    "claude_with_codex_version_format": (_pe("claude", "codex-cli 0.153.4"),
+                                         "provider_not_checked"),
+    "claude_version_x": (_pe("claude", "x"), "version_not_checked"),
+    "codex_version_trailing_text": (_pe("codex", "codex-cli 0.153.4 extra"),
+                                    "version_not_checked"),
+    "non_string_version": (_pe("claude", ["2.1.281 (Claude Code)"]), "version_not_checked"),
+    "supported_with_passed": (_pe("claude", "2.1.281 (Claude Code)", "SUPPORTED", "PASSED"),
+                              "pair_not_checked"),
+    "unverified_with_reviewed_version": (_pe("codex", "codex-cli 0.153.4",
+                                             "COMPATIBLE_UNVERIFIED", "REVIEWED_VERSION"),
+                                         "pair_not_checked"),
+    "incompatible_failed": (_pe("codex", "codex-cli 0.153.4", "INCOMPATIBLE", "FAILED"),
+                            "pair_not_checked"),
+    # Found by the ARP-01 verifier (F1): these crashed both readers instead of rejecting.
+    "compatibility_list": (_pe("claude", "2.1.281 (Claude Code)", [], "PASSED"),
+                           "pair_not_checked"),
+    "compatibility_dict": (_pe("codex", "codex-cli 0.155.1", {}, "PASSED"), "pair_not_checked"),
+    "capability_probe_list": (_pe("codex", "codex-cli 0.153.4", "SUPPORTED", []),
+                              "pair_not_checked"),
+    "capability_probe_dict": (_pe("claude", "2.1.258 (Claude Code)", "SUPPORTED", {}),
+                              "pair_not_checked"),
+    "missing_key": (_missing_key, "keys_not_exact"),
+    "extra_key": (dict(_pe("claude", "2.1.281 (Claude Code)"), model="claude-opus-5"),
+                  "keys_not_exact"),
+    "non_dict_list": (["claude", "2.1.281 (Claude Code)", "SUPPORTED", "REVIEWED_VERSION"],
+                      "non_dict_accepted"),
+    "non_dict_string": ("claude 2.1.281 (Claude Code)", "non_dict_accepted"),
+    # Found by the ARP-01 verifier (F2): a present null is provider evidence, not its absence.
+    "null": (None, "non_dict_accepted"),
+}
+
+
+def _real(pe):
+    return cap.is_native_provider_evidence(pe)
+
+
+def _provider_not_checked(pe):
+    """Any version format, for any provider name."""
+    if not isinstance(pe, dict) or set(pe) != NATIVE_PROVIDER_EVIDENCE_KEYS:
+        return False
+    v = pe.get("version")
+    return isinstance(v, str) and any(f.fullmatch(v) for f in
+                                      AGENT_READY_PROVIDER_VERSION_FORMATS.values()) \
+        and (pe["compatibility"], pe["capability_probe"]) in AGENT_READY_COMPATIBILITY_PAIRS
+
+
+def _version_not_checked(pe):
+    if not isinstance(pe, dict) or set(pe) != NATIVE_PROVIDER_EVIDENCE_KEYS:
+        return False
+    return pe["provider"] in AGENT_READY_PROVIDER_VERSION_FORMATS \
+        and (pe["compatibility"], pe["capability_probe"]) in AGENT_READY_COMPATIBILITY_PAIRS
+
+
+def _pair_not_checked(pe):
+    if not isinstance(pe, dict) or set(pe) != NATIVE_PROVIDER_EVIDENCE_KEYS:
+        return False
+    f = AGENT_READY_PROVIDER_VERSION_FORMATS.get(pe["provider"])
+    return f is not None and isinstance(pe["version"], str) and bool(f.fullmatch(pe["version"]))
+
+
+def _keys_not_exact(pe):
+    """Judges only the four keys it knows, ignoring extra and treating absent as passing."""
+    if not isinstance(pe, dict):
+        return False
+    f = AGENT_READY_PROVIDER_VERSION_FORMATS.get(pe.get("provider"))
+    v = pe.get("version")
+    if f is None or not isinstance(v, str) or not f.fullmatch(v):
+        return False
+    c, p = pe.get("compatibility"), pe.get("capability_probe")
+    return c is None or p is None or (c, p) in AGENT_READY_COMPATIBILITY_PAIRS
+
+
+def _non_dict_accepted(pe):
+    return not isinstance(pe, dict) or _real(pe)
+
+
+PERMISSIVE_VARIANTS = {"provider_not_checked": _provider_not_checked,
+                       "version_not_checked": _version_not_checked,
+                       "pair_not_checked": _pair_not_checked,
+                       "keys_not_exact": _keys_not_exact,
+                       "non_dict_accepted": _non_dict_accepted}
+
+def _pair_type_not_checked(pe):
+    """The first ARP-01 candidate (04b082c): pair membership on unchecked JSON values."""
+    if not isinstance(pe, dict) or set(pe) != NATIVE_PROVIDER_EVIDENCE_KEYS:
+        return False
+    f = AGENT_READY_PROVIDER_VERSION_FORMATS.get(pe["provider"]) \
+        if isinstance(pe["provider"], str) else None
+    if f is None or not isinstance(pe["version"], str) or not f.fullmatch(pe["version"]):
+        return False
+    return (pe["compatibility"], pe["capability_probe"]) in AGENT_READY_COMPATIBILITY_PAIRS
+
+
+UNHASHABLE_PAIR_CASES = ("compatibility_list", "compatibility_dict", "capability_probe_list",
+                         "capability_probe_dict")
+
+def _envelope(inner):
+    return {"content": [], "structuredContent": inner, "isError": False}
+
+
+READERS = {"looks_native_agent_ready": lambda pe: looks_native_agent_ready(_full(pe)),
+           "looks_native_agent_ready_mcp": lambda pe: looks_native_agent_ready(
+               _envelope(_full(pe))),
+           "native_provenance_only": lambda pe: native_provenance_only(_partial(pe))}
+
+
+def test_the_declared_providers_agree_with_the_readiness_adapter():
+    """One declared source: the reader's providers are exactly the ones the adapter runs."""
+    assert set(AGENT_READY_PROVIDER_VERSION_FORMATS) == set(PROVIDERS)
+    assert all(isinstance(f, re.Pattern) for f in AGENT_READY_PROVIDER_VERSION_FORMATS.values())
+
+
+def test_the_compatibility_pairs_are_exactly_agent_readys_two():
+    assert AGENT_READY_COMPATIBILITY_PAIRS == {("SUPPORTED", "REVIEWED_VERSION"),
+                                               ("COMPATIBLE_UNVERIFIED", "PASSED")}
+
+
+@pytest.mark.parametrize("reader", sorted(READERS))
+@pytest.mark.parametrize("case", sorted(VALID_PROVIDER_EVIDENCE))
+def test_genuine_provider_evidence_is_native_for_every_supported_provider(reader, case):
+    assert READERS[reader](copy.deepcopy(VALID_PROVIDER_EVIDENCE[case])) is True
+
+
+def test_every_supported_provider_has_an_accepted_case_for_both_pairs():
+    seen = {(pe["provider"], pe["compatibility"], pe["capability_probe"])
+            for pe in VALID_PROVIDER_EVIDENCE.values()}
+    for provider in AGENT_READY_PROVIDER_VERSION_FORMATS:
+        for pair in AGENT_READY_COMPATIBILITY_PAIRS:
+            assert (provider, *pair) in seen
+
+
+@pytest.mark.parametrize("reader", sorted(READERS))
+@pytest.mark.parametrize("case", sorted(INVALID_PROVIDER_EVIDENCE))
+def test_malformed_or_unknown_provider_evidence_is_not_native(reader, case):
+    pe, _variant = INVALID_PROVIDER_EVIDENCE[case]
+    assert READERS[reader](copy.deepcopy(pe)) is False
+
+
+@pytest.mark.parametrize("reader", sorted(READERS))
+@pytest.mark.parametrize("case", sorted(INVALID_PROVIDER_EVIDENCE))
+def test_each_rejection_fails_against_a_permissive_variant(reader, case, monkeypatch):
+    """The rejection above is discriminating: under the named permissive variant the same
+    reader accepts the same evidence, so the rejection test would fail."""
+    pe, variant = INVALID_PROVIDER_EVIDENCE[case]
+    monkeypatch.setattr(cap, "is_native_provider_evidence", PERMISSIVE_VARIANTS[variant])
+    assert READERS[reader](copy.deepcopy(pe)) is True
+
+
+@pytest.mark.parametrize("reader", sorted(READERS))
+@pytest.mark.parametrize("case", UNHASHABLE_PAIR_CASES)
+def test_unhashable_pair_values_crash_the_unguarded_rule(reader, case, monkeypatch):
+    """The rejection of a list/object compatibility or probe is also shown failing against the
+    rule it repairs: unguarded, the reader raises instead of returning False."""
+    monkeypatch.setattr(cap, "is_native_provider_evidence", _pair_type_not_checked)
+    with pytest.raises(TypeError):
+        READERS[reader](copy.deepcopy(INVALID_PROVIDER_EVIDENCE[case][0]))
+
+
+@pytest.mark.parametrize("inner", [None, [], "READY", ["disposition", "READY"]])
+def test_a_non_object_structured_content_is_rejected_not_raised(inner):
+    envelope = _envelope(inner)
+    assert looks_native_agent_ready(envelope) is False
+    assert native_provenance_only(envelope) is False
+
+
+@pytest.mark.parametrize("case", sorted(VALID_PROVIDER_EVIDENCE))
+def test_valid_evidence_with_runner_asserted_fields_is_still_not_native(case):
+    pe = VALID_PROVIDER_EVIDENCE[case]
+    for field in ("invocation", "adapter", "model", "provider_failover", "permission_denials"):
+        full = _full(copy.deepcopy(pe))
+        full[field] = "asserted"
+        assert looks_native_agent_ready(full) is False
+        part = _partial(copy.deepcopy(pe))
+        part[field] = "asserted"
+        assert native_provenance_only(part) is False
+
+
+@pytest.mark.parametrize("case", sorted(VALID_PROVIDER_EVIDENCE))
+def test_valid_evidence_with_a_bootstrap_assessor_disposition_is_still_not_native(case):
+    pe = VALID_PROVIDER_EVIDENCE[case]
+    for disposition in ("BLOCKED", "NEEDS_CLARIFICATION"):
+        full = _full(copy.deepcopy(pe))
+        full["disposition"] = disposition
+        assert looks_native_agent_ready(full) is False
+        assert native_provenance_only(_partial(copy.deepcopy(pe), disposition)) is False
+
+
+def test_a_partial_record_still_requires_provider_evidence():
+    part = _partial(None)
+    del part["provider_evidence"]
+    assert native_provenance_only(part) is False
+
+
+def test_a_full_record_without_provider_evidence_is_unchanged():
+    assert "provider_evidence" not in _CONTRACT
+    assert looks_native_agent_ready(dict(_CONTRACT)) is True
+    assert looks_native_agent_ready(_envelope(dict(_CONTRACT))) is True
+
+
+@pytest.mark.parametrize("reader", sorted(READERS))
+def test_present_null_provider_evidence_is_judged_by_the_shared_rule(reader, monkeypatch):
+    """F2 is discriminating: a reader that treats a present null as absent (`.get()` then
+    `is not None`, as before the repair) never consults the rule, so this fails against it."""
+    seen = []
+    monkeypatch.setattr(cap, "is_native_provider_evidence", lambda pe: seen.append(pe) or False)
+    assert READERS[reader](None) is False
+    assert seen == [None]
+
+
+RETAINED_WAVE1_SURROGATES = ("docs/work-units/python/PY-09B.assessment.json",
+                             "docs/work-units/python/PY-09B.assessment.2026-09-21-needs-clarification.json",
+                             "docs/work-units/python/PY-10.assessment.json")
+
+
+@pytest.mark.parametrize("path", RETAINED_WAVE1_SURROGATES)
+def test_the_retained_claude_surrogates_are_still_not_native(path):
+    """Their 16- or 17-key claude provider_evidence copies Agent Ready's words; it is not
+    Agent Ready's evidence, and a supported claude provider does not change that."""
+    artifact = json.loads((REPO / path).read_text())
+    assert artifact["provider_evidence"]["provider"] == "claude"
+    assert set(artifact["provider_evidence"]) > NATIVE_PROVIDER_EVIDENCE_KEYS
+    assert looks_native_agent_ready(artifact) is False
+    assert native_provenance_only(artifact) is False
+
+
+def test_the_committed_provenance_manifest_passes_unchanged(monkeypatch, capsys):
+    monkeypatch.chdir(REPO)
+    assert main(["docs/evidence/wave1-readiness-assessment-provenance.json"]) == 0
+    assert "result    : PASS" in capsys.readouterr().out
 
 
 # --- manifest checks ---------------------------------------------------------------------
