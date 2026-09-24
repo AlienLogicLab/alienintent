@@ -1,8 +1,12 @@
 """Upstream profile: Inventory -> AmbiguityInspection -> DecisionResolution adapter -> existing DecisionInbox,
-plus the pinned PremiseEvidence bridge and pre-implementation ProofPlanning over it."""
+plus the pinned PremiseEvidence bridge, pre-implementation ProofPlanning over it, and DesignAdmission whose
+applicability gates readiness processing."""
+from alienintent.composition.design_admission import PremiseReaderCheck
+from alienintent.context_assembly.application.design_admission_service import DesignAdmission, DesignReadiness
 from alienintent.context_assembly.adapters.decision_resolution import DecisionInboxQuestions
 from alienintent.context_assembly.application.ambiguity_service import AmbiguityService, UpstreamQuestionAdmission
 from alienintent.context_assembly.application.inventory_service import InventoryService
+from alienintent.context_assembly.ports.design_admission import ArchitectureChecks, DirectionAuthoritySource
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
 from alienintent.evidence_learning.application.premise_service import PremiseEvidenceReader
 from alienintent.evidence_learning.application.proof_planning_service import ProofPlanning
@@ -26,7 +30,9 @@ class UpstreamProfile:
                  definition_ref: Ref, invocation: str, decision_actor: str, access_scope: frozenset[str],
                  premise_evidence: PremiseEvidence | None = None, premise_target: str | None = None,
                  proof_mappings: PredicateMappingSource | None = None, mapping_reviewer: str | None = None,
-                 supersession_authority: str | None = None) -> None:
+                 supersession_authority: str | None = None, design_checks: ArchitectureChecks | None = None,
+                 design_authority: DirectionAuthoritySource | None = None,
+                 design_reviewers: frozenset[str] = frozenset()) -> None:
         self.inventory = InventoryService(repository, store, project, profile, definition_ref, invocation, access_scope)
         self.inbox = DecisionInbox(store, UpstreamQuestionAdmission(decision_actor), profile)
         self.questions = DecisionInboxQuestions(self.inbox, profile)
@@ -44,3 +50,10 @@ class UpstreamProfile:
                                      invocation, mapping_reviewer, supersession_authority, IMPLEMENTATION_ROOTS,
                                      access_scope)
                        if proof_mappings is not None else None)
+        # Existing architecture checks and pinned premise evidence feed admission; readiness consumes only its
+        # applicability, so neither the compiler nor readiness processing can bypass the design gate.
+        self.design = (DesignAdmission(repository, store, project, profile, definition_ref, invocation, access_scope,
+                                       design_checks, PremiseReaderCheck(self.premises) if self.premises else None,
+                                       design_authority, frozenset(design_reviewers))
+                       if design_reviewers else None)
+        self.design_readiness = DesignReadiness(self.design) if self.design is not None else None

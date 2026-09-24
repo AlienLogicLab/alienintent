@@ -1,0 +1,21 @@
+test_readiness_refuses_missing_design_review_and_authority_without_project_state (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_readiness_refuses_missing_design_review_and_authority_without_project_state) ... FAIL
+
+======================================================================
+FAIL: test_readiness_refuses_missing_design_review_and_authority_without_project_state (tests.context_assembly.test_design_admission.DesignAdmissionTests.test_readiness_refuses_missing_design_review_and_authority_without_project_state)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u5-cqotjb9v/tests/context_assembly/test_design_admission.py", line 141, in test_readiness_refuses_missing_design_review_and_authority_without_project_state
+    self.assertEqual((refused.admitted, refused.reason_code), (False, "NO_DESIGN"))
+AssertionError: Tuples differ: (True, 'CURRENT_VERIFIED') != (False, 'NO_DESIGN')
+
+First differing element 0:
+True
+False
+
+- (True, 'CURRENT_VERIFIED')
++ (False, 'NO_DESIGN')
+
+----------------------------------------------------------------------
+Ran 1 test in 0.013s
+
+FAILED (failures=1)
