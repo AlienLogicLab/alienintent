@@ -218,12 +218,19 @@ WAVE1_DIR = "docs/work-units/python"
 # never cited (Issue #83, JC R1).
 WAVE1_RECORD = re.compile(
     r"(?<![\w./-])([^\s`'\"()\[\]<>]*/)?(PY-\d\d[A-Z]?|WO-\d{6})\.assessment\.json(?!\.?[\w/-])")
+# The directory must be the whole prefix: WAVE1_DIR itself, or a blob URL of this repository at
+# a single-segment ref followed by WAVE1_DIR, so no `..` segment can occur. A prefix that merely ends in WAVE1_DIR
+# (`docs/evidence/elsewhere/docs/work-units/python/`) names another file (Issue #83, JC R1,
+# repair cycle 2).
+WAVE1_PREFIX = re.compile(
+    r"(?:https://github\.com/" + re.escape(REPO) + r"/blob/[A-Za-z0-9][\w.-]*/)?"
+    + re.escape(WAVE1_DIR) + r"/")
 
 
 def _wave1_biu(body: str) -> str | None:
     for match in WAVE1_RECORD.finditer(body or ""):
         prefix = match.group(1) or ""
-        if ".." not in prefix.split("/") and (not prefix or prefix.endswith(f"{WAVE1_DIR}/")):
+        if not prefix or WAVE1_PREFIX.fullmatch(prefix):
             return match.group(2)
     return None
 

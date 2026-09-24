@@ -214,6 +214,36 @@ def test_a_rejected_citation_never_admits_through_the_wave1_record(world, path):
     assert result.returncode == 1 and "agent_ready=None" in result.stdout, result.stdout
 
 
+@pytest.mark.parametrize("path", [
+    f"{where}docs/work-units/python/{biu}.assessment.json"
+    for where in ("docs/evidence/elsewhere/", "docs/evidence/wave2-readiness-assessments/ARP/",
+                  "https://github.com/Other/alienintent/blob/main/")
+    for biu in ("PY-05", "WO-220202")
+])
+def test_a_prefixed_wave1_directory_never_admits_through_the_wave1_record(world, path):
+    """JC R1, repair cycle 2: only `docs/work-units/python/<BIU>.assessment.json` is READY at the
+    release point, and no native receipt exists. A citation that merely ends in that directory
+    names another file and must refuse."""
+    biu = path.rsplit("/", 1)[1].split(".")[0]
+    world.land(f"docs/work-units/python/{biu}.assessment.json")
+    world.issue(body=f"Readiness record `{path}`.")
+
+    result = world.admit(workdir=world.work)
+
+    assert result.returncode == 1 and "agent_ready=None" in result.stdout, result.stdout
+
+
+def test_a_wave1_record_cited_by_its_blob_url_is_still_admitted(world):
+    world.land("docs/work-units/python/PY-10.assessment.json")
+    world.issue(body="https://github.com/AlienLogicLab/alienintent/blob/main/"
+                     "docs/work-units/python/PY-10.assessment.json")
+
+    result = world.admit(workdir=world.work)
+
+    assert _admitted(result), result.stdout + result.stderr
+    assert "agent_ready=READY" in result.stdout
+
+
 def test_a_wave1_record_cited_by_its_own_path_is_still_admitted(world):
     world.land("docs/work-units/python/PY-05.assessment.json")
     world.issue(body="Assessment: docs/work-units/python/PY-05.assessment.json")  # the form of #2

@@ -258,6 +258,46 @@ def test_a_wave1_record_reached_through_a_parent_segment_is_rejected():
     assert assessment_record_path("`../docs/work-units/python/PY-05.assessment.json`") is None
     assert assessment_record_path(
         "`docs/work-units/python/../../docs/work-units/python/PY-05.assessment.json`") is None
+    assert assessment_record_path(
+        "https://github.com/AlienLogicLab/alienintent/blob/main/../../docs/work-units/python/"
+        "PY-05.assessment.json") is None
+
+
+# --- Issue #83, JC R1 (repair cycle 2): WAVE1_DIR must be the whole prefix, not its suffix --------
+
+PREFIXED_WAVE1_CITATIONS = [
+    f"{where}docs/work-units/python/{biu}.assessment.json"
+    for where in ("docs/evidence/elsewhere/", "docs/evidence/wave2-readiness-assessments/ARP/",
+                  "x/", "/", "./")
+    for biu in ("PY-05", "WO-220202")
+]
+
+
+@pytest.mark.parametrize("path", PREFIXED_WAVE1_CITATIONS)
+def test_a_wave1_directory_under_another_prefix_is_rejected(path):
+    assert assessment_record_path(f"Readiness record `{path}`.") is None
+
+
+def test_a_wave1_blob_url_with_a_multi_segment_ref_is_rejected():
+    assert assessment_record_path(
+        "https://github.com/AlienLogicLab/alienintent/blob/main/sub/docs/work-units/python/"
+        "PY-05.assessment.json") is None
+
+
+@pytest.mark.parametrize("url", [
+    "https://github.com/Other/alienintent/blob/main/docs/work-units/python/PY-05.assessment.json",
+    "https://example.com/AlienLogicLab/alienintent/blob/main/docs/work-units/python/PY-05.assessment.json",
+    "https://github.com/AlienLogicLab/alienintent/tree/main/docs/work-units/python/PY-05.assessment.json",
+    "http://github.com/AlienLogicLab/alienintent/blob/main/docs/work-units/python/PY-05.assessment.json",
+])
+def test_a_wave1_url_that_is_not_a_blob_of_this_repository_is_rejected(url):
+    assert assessment_record_path(url) is None
+
+
+def test_a_wave1_blob_url_at_a_commit_still_resolves():
+    assert str(assessment_record_path(
+        "https://github.com/AlienLogicLab/alienintent/blob/474343a4142316941340762a243e965ef44bb15c/"
+        "docs/work-units/python/PY-05.assessment.json")) == "docs/work-units/python/PY-05.assessment.json"
 
 
 def test_a_wave1_identifier_embedded_in_a_longer_name_is_rejected():
