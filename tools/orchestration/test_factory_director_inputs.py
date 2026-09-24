@@ -29,8 +29,14 @@ from factory_director_inputs import (  # noqa: E402
 )
 
 REPO = "AlienLogicLab/alienintent"
-ASSESSMENT = ('**Native Agent Ready receipt.**\n<!-- AGENT_READY_ASSESSMENT: '
+OPERATOR = "sanookdu"
+ASSESSMENT_BODY = ('**Native Agent Ready receipt.**\n<!-- AGENT_READY_ASSESSMENT: '
               '{"disposition":"READY","record_kind":"ReadinessAssessment","work_unit_id":"X"} -->')
+ASSESSMENT = {"author": OPERATOR, "body": ASSESSMENT_BODY}
+
+
+def comment(body, author="someone"):
+    return {"author": author, "body": body}
 
 
 class Sources:
@@ -46,7 +52,7 @@ class Sources:
         self.config = root / "config" / "factory-director-host.json"
         self.projection = root / "host" / "inputs.json"
         self.board: list[dict] = []
-        self.comments: dict[int, list[str]] = {}
+        self.comments: dict[int, list[dict]] = {}
         self.state = {"deliveries": {}, "active": {}, "founderExceptions": {}}
         self.holds: list[dict] = []
         for directory in (self.state_file.parent, self.self_hosting.parent, self.inbox):
@@ -54,6 +60,7 @@ class Sources:
         self.self_hosting.write_text(json.dumps({
             "repository": {"owner": "AlienLogicLab", "name": "alienintent"},
             "project": {"owner": "AlienLogicLab", "number": 1},
+            "operator": {"authorizedGithubLogins": [OPERATOR]},
             "paths": {"stateFile": str(self.state_file)}}))
         self.config.write_text(json.dumps({
             "schemaVersion": 1, "selfHostingConfig": str(self.self_hosting), "wipLimit": 1,
@@ -68,7 +75,8 @@ class Sources:
         self.holds_file.write_text(json.dumps({"schemaVersion": 1, "holds": self.holds}))
 
     def issue(self, number: int, status: str) -> "Sources":
-        self.board.append({"id": f"PVTI_{number}", "type": "ISSUE", "issue": number, "status": status})
+        self.board.append({"id": f"PVTI_{number}", "type": "ISSUE", "issue": number, "status": status,
+                           "repository": REPO})
         return self
 
     def claim(self, number: int, role: str = "PRODUCER") -> "Sources":
@@ -83,9 +91,9 @@ class Sources:
         self.flush()
         return self
 
-    def escalate(self, number: int) -> "Sources":
+    def escalate(self, number: int, at: str = "2026-09-24T06:00:00.000Z") -> "Sources":
         self.state.setdefault("limitEscalations", {})[f"{REPO}#{number}"] = {
-            "outcome": "EXECUTION_CYCLE_LIMIT", "biu": f"{REPO}#{number}"}
+            "outcome": "EXECUTION_CYCLE_LIMIT", "biu": f"{REPO}#{number}", "at": at}
         self.flush()
         return self
 
@@ -153,7 +161,7 @@ def test_lifecycle_requires_selection_for_review(sources):
 
 def test_lifecycle_requires_selection_for_assessed_tasks(sources):
     sources.issue(6, "TASKS")
-    sources.comments[6] = ["an ordinary comment"]
+    sources.comments[6] = [comment("an ordinary comment")]
     assert sources.inputs().lifecycle_requires_selection is False
     sources.comments[6].append(ASSESSMENT)
     assert sources.inputs().lifecycle_requires_selection is True
@@ -236,7 +244,7 @@ class DefaultMissingInbox(AuthoritativeDirectorInputs):
         try:
             return super().read_inbox(config)
         except SourceUnavailable:
-            return ()
+            return (), frozenset()
 
 
 def board_incomplete(s):
@@ -329,12 +337,17 @@ def test_negative_control_the_same_check_fails_against_a_broken_adapter(tmp_path
     lambda s: s.holds_file.write_text(json.dumps({"schemaVersion": 1, "holds": [], "note": "x"})),
     lambda s: (s.inbox / "processed").write_text("not a directory"),
     lambda s: (s.board.append({"id": "t", "type": "ISSUE", "issue": 22, "status": "TASKS"}),
-               s.comments.__setitem__(22, ["<!-- AGENT_READY_ASSESSMENT: {broken -->"])),
+               s.comments.__setitem__(22, [comment("<!-- AGENT_READY_ASSESSMENT: {broken -->", OPERATOR)])),
+    lambda s: s.board.append({"id": "x", "type": "ISSUE", "issue": 24, "status": "READY",
+                              "repository": "Other/repo"}),
+    lambda s: s.board.append({"id": "y", "type": "ISSUE", "issue": 25, "status": "READY"}),
+    lambda s: (s.inbox / "Founder note.json").write_text("{}"),
 ], ids=["duplicate-item", "item-without-status", "unknown-status", "self-hosting-missing",
         "host-config-missing", "wip-limit-invalid", "relative-source-path", "wrong-project",
         "state-without-active", "inconsistent-claim", "malformed-escalation", "hold-without-reason",
         "duplicate-hold", "hold-schema-version", "hold-unknown-key", "processed-not-directory",
-        "unparsable-assessment"])
+        "unparsable-assessment", "foreign-repository-item", "item-without-repository",
+        "unrecognised-inbox-json"])
 def test_other_inconsistent_sources_also_fail_closed(tmp_path, fault):
     assert fails_closed(tmp_path, fault, AuthoritativeDirectorInputs)
 
@@ -474,9 +487,11 @@ def test_default_board_reader_is_the_fail_closed_materialization_read_path():
 
 
 def test_comment_reader_paginates_and_refuses_an_incomplete_answer(monkeypatch):
+    def node(body, login="u"):
+        return {"body": body, "author": {"login": login}}
     pages = [
-        {"totalCount": 3, "pageInfo": {"hasNextPage": True, "endCursor": "c1"}, "nodes": [{"body": "a"}, {"body": "b"}]},
-        {"totalCount": 3, "pageInfo": {"hasNextPage": False, "endCursor": None}, "nodes": [{"body": "c"}]},
+        {"totalCount": 3, "pageInfo": {"hasNextPage": True, "endCursor": "c1"}, "nodes": [node("a"), node("b")]},
+        {"totalCount": 3, "pageInfo": {"hasNextPage": False, "endCursor": None}, "nodes": [node("c", None)]},
     ]
     calls = []
 
@@ -485,11 +500,81 @@ def test_comment_reader_paginates_and_refuses_an_incomplete_answer(monkeypatch):
         page = pages[len(calls) - 1]
         return json.dumps({"data": {"repository": {"issue": {"comments": page}}}})
     monkeypatch.setattr(materialization, "_gh", fake_gh)
-    assert adapter_module.read_issue_comment_bodies(5) == ["a", "b", "c"]
+    assert adapter_module.read_issue_comments(5) == [
+        {"author": "u", "body": "a"}, {"author": "u", "body": "b"}, {"author": None, "body": "c"}]
     assert all(call[:2] == ("api", "graphql") for call in calls)
     assert "cursor=c1" in calls[1]
 
     calls.clear()
     pages[1]["totalCount"] = pages[0]["totalCount"] = 4
     with pytest.raises(SourceUnavailable):
-        adapter_module.read_issue_comment_bodies(5)
+        adapter_module.read_issue_comments(5)
+
+
+# --- repairs from independent review 1 ----------------------------------------------------
+
+def receipt(sources, name):
+    (sources.inbox / "processed").mkdir(exist_ok=True)
+    (sources.inbox / "processed" / f"{name}.json").write_text("{}")
+
+
+def test_escalation_is_resolved_by_a_director_receipt_for_that_exact_escalation(sources):
+    sources.issue(50, "IMPLEMENT").claim(50).escalate(50)
+    assert sources.inputs().attention_required is True
+    entry = sources.state["limitEscalations"][f"{REPO}#50"]
+    receipt(sources, adapter_module.escalation_receipt_id(f"{REPO}#50", entry))
+    assert sources.inputs().attention_required is False
+    # A newer escalation on the same BIU needs its own receipt.
+    sources.escalate(50, at="2026-09-25T00:00:00.000Z")
+    assert sources.inputs().attention_required is True
+
+
+def test_escalation_for_an_issue_that_reached_done_is_resolved(sources):
+    sources.issue(51, "DONE").escalate(51)
+    assert sources.inputs().attention_required is False
+
+
+def test_escalation_receipt_is_not_an_unprocessed_inbox_entry(sources):
+    sources.escalate(52)
+    entry = sources.state["limitEscalations"][f"{REPO}#52"]
+    receipt(sources, adapter_module.escalation_receipt_id(f"{REPO}#52", entry))
+    values = sources.inputs()
+    assert (values.attention_required, values.pending_director_inbox) == (False, False)
+
+
+def test_assessment_marker_counts_only_from_an_authorized_operator(sources):
+    sources.issue(53, "TASKS")
+    sources.comments[53] = [comment(ASSESSMENT_BODY, author="drive-by")]
+    assert sources.inputs().lifecycle_requires_selection is False
+    sources.comments[53].append(ASSESSMENT)
+    assert sources.inputs().lifecycle_requires_selection is True
+
+
+def test_malformed_marker_from_an_unauthorized_author_is_ignored_not_fatal(sources):
+    sources.issue(54, "TASKS")
+    sources.comments[54] = [comment("quoting the format: <!-- AGENT_READY_ASSESSMENT: {json} -->")]
+    values = sources.inputs()
+    assert (values.authoritative_state, values.lifecycle_requires_selection) == (True, False)
+
+
+def test_unreadable_pause_location_fails_closed_rather_than_unpaused(sources):
+    locked = sources.root / "locked"
+    locked.mkdir()
+    config = json.loads(sources.config.read_text())
+    config["pauseFlag"] = str(locked / "PAUSE")
+    sources.config.write_text(json.dumps(config))
+    locked.chmod(0)
+    try:
+        assert sources.inputs().authoritative_state is False
+    finally:
+        locked.chmod(0o755)
+
+
+def test_board_rows_from_the_read_path_carry_the_issue_repository():
+    rows = materialization.board_from_payload({
+        "totalCount": 1, "pageInfo": {"hasNextPage": False},
+        "nodes": [{"id": "PVTI_1", "type": "ISSUE", "fieldValueByName": {"name": "READY"},
+                   "content": {"__typename": "Issue", "number": 7,
+                               "repository": {"nameWithOwner": REPO}}}]})
+    assert rows == [{"id": "PVTI_1", "type": "ISSUE", "issue": 7, "status": "READY", "repository": REPO}]
+    assert "repository{nameWithOwner}" in Path(materialization.__file__).read_text()

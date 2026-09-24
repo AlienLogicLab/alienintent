@@ -35,7 +35,9 @@ def required(**overrides):
 
 
 def process_launcher(tmp_path, prompt, *, provider="codex", executable="unused", model="test-model",
-                     permission_mode="workspace-write", **kwargs):
+                     permission_mode=None, **kwargs):
+    if permission_mode is None:
+        permission_mode = {"claude": "bypassPermissions"}.get(provider, "workspace-write")
     return ProcessDirectorLauncher(tmp_path, prompt, provider=provider, executable=executable, model=model,
                                    permission_mode=permission_mode, output_dir=tmp_path / "episodes", **kwargs)
 
@@ -327,7 +329,7 @@ def test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles(tmp_pat
     assert all(r["exit_reason"] == "EXIT_0" for r in exits)
     launches = [r for r in records if r["reason"] in {"DIRECTOR_CONTINUITY_FAULT",
                                                          "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"}]
-    assert [(r["provider"], r["model"]) for r in launches] == [("claude", "claude-opus-5-5")] * 2
+    assert [(r["provider"], r["requested_model"]) for r in launches] == [("claude", "claude-opus-5-5")] * 2
     assert json.loads((tmp_path / "lease.json").read_text())["status"] == "EXITED"
 
 
@@ -491,7 +493,7 @@ def test_real_claude_episodes_are_fresh_and_record_provider_model_and_usage(tmp_
     assert all(call["cwd"] == str(workdir) for call in calls)
     assert calls[0]["argv"] == calls[1]["argv"] == launcher.command()[1:]
     exited = [r for r in history(tmp_path / "host") if r["reason"] == "DIRECTOR_EPISODE_EXITED"][0]
-    assert (exited["provider"], exited["model"], exited["exit_reason"]) == ("claude", "claude-opus-5-5", "EXIT_0")
+    assert (exited["provider"], exited["requested_model"], exited["exit_reason"]) == ("claude", "claude-opus-5-5", "EXIT_0")
     assert exited["usage"] == {"measured": True, "observed_models": ["claude-opus-5-5"], "input_tokens": 120,
                                "output_tokens": 45, "cache_read_input_tokens": 7,
                                "cache_creation_input_tokens": 3, "cost_usd": 0.25}
@@ -519,7 +521,7 @@ def test_real_codex_episode_records_tokens_and_marks_model_and_cost_not_exposed(
     assert service.reconcile().reason == "NO_ELIGIBLE_AUTHORIZED_WORK"
 
     exited = [r for r in history(tmp_path / "host") if r["reason"] == "DIRECTOR_EPISODE_EXITED"][0]
-    assert (exited["provider"], exited["model"], exited["exit_reason"]) == ("codex", "gpt-6-astra", "EXIT_3")
+    assert (exited["provider"], exited["requested_model"], exited["exit_reason"]) == ("codex", "gpt-6-astra", "EXIT_3")
     assert exited["usage"] == {"measured": True, "turns": 1, "input_tokens": 200, "cached_input_tokens": 50,
                                "output_tokens": 60, "observed_models": None, "cost_usd": None}
 
@@ -552,3 +554,118 @@ def test_unchanged_polls_do_not_grow_history_but_reason_changes_do(tmp_path):
     service.reconcile()
 
     assert [r["reason"] for r in history(tmp_path)] == ["NO_ELIGIBLE_AUTHORIZED_WORK", "FACTORY_PAUSED"]
+
+
+# --- repairs from independent review 1 ----------------------------------------------------
+
+from datetime import datetime, timedelta, timezone  # noqa: E402
+
+
+class Clock:
+    def __init__(self):
+        self.offset = timedelta()
+
+    def __call__(self):
+        return datetime.now(timezone.utc) + self.offset
+
+
+def test_repeated_fast_exits_back_off_instead_of_relaunching_every_second(tmp_path):
+    clock = Clock()
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, required, launcher, clock=clock)
+
+    first = service.reconcile()
+    launcher.finish(first.episode_id, exit_code=1)
+    second = service.reconcile()          # a single fast failure retries at once
+    assert second.reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"
+    launcher.finish(second.episode_id, exit_code=1)
+
+    refused = service.reconcile()         # the second consecutive one backs off
+    assert (refused.reason, refused.state) == ("DIRECTOR_EPISODE_CRASH_LOOP", HostState.REFUSED)
+    assert service.reconcile().reason == "DIRECTOR_EPISODE_CRASH_LOOP"
+    assert len(launcher.launched) == 2
+    lease = json.loads((tmp_path / "lease.json").read_text())
+    assert lease["failure_streak"] == 2 and lease["retry_not_before"]
+
+    clock.offset = timedelta(seconds=61)
+    assert service.reconcile().reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"
+    assert len(launcher.launched) == 3
+
+
+def test_a_long_clean_episode_resets_the_failure_streak(tmp_path):
+    clock = Clock()
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, required, launcher, clock=clock)
+    launcher.finish(service.reconcile().episode_id, exit_code=1)
+    episode = service.reconcile().episode_id
+    clock.offset = timedelta(minutes=10)
+    launcher.finish(episode, exit_code=0)
+
+    assert service.reconcile().reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"
+    assert json.loads((tmp_path / "lease.json").read_text())["failure_streak"] == 0
+
+
+@pytest.mark.parametrize("provider,mode", [("codex", "bypassPermissions"), ("claude", "workspace-write"),
+                                           ("claude", "danger-full-access"), ("codex", "plan")])
+def test_permission_mode_must_belong_to_the_configured_provider(tmp_path, provider, mode):
+    with pytest.raises(ValueError, match="permission"):
+        process_launcher(tmp_path, tmp_path / "p", provider=provider, permission_mode=mode)
+
+
+def test_pre_bind_launch_failure_kills_the_child_and_does_not_block_later_launches(tmp_path, monkeypatch):
+    fake = tmp_path / "claude"
+    fake.write_text("#!/usr/bin/env bash\nsleep 30\n")
+    fake.chmod(0o755)
+    prompt = tmp_path / "prompt.md"
+    prompt.write_text("episode {{EPISODE_ID}}")
+    launcher = process_launcher(tmp_path, prompt, provider="claude", executable=str(fake))
+    monkeypatch.setattr(launcher, "_process_start_ticks", lambda pid: None)
+    import subprocess
+    spawned, real_popen = [], subprocess.Popen
+
+    def tracking(*args, **kwargs):
+        spawned.append(real_popen(*args, **kwargs))
+        return spawned[-1]
+    monkeypatch.setattr("factory_director_host.subprocess.Popen", tracking)
+    service = FactoryDirectorHost(tmp_path / "host", required, launcher)
+
+    failed = service.reconcile()
+    assert failed.reason == "DIRECTOR_LAUNCH_FAILED"
+    assert launcher._children == {}
+    assert len(spawned) == 1 and spawned[0].poll() is not None  # the unleased child is gone
+    assert json.loads((tmp_path / "host" / "lease.json").read_text())["status"] == "LAUNCH_FAILED"
+
+    monkeypatch.undo()
+    retried = service.reconcile()
+    assert retried.reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"
+    for child in launcher._children.values():
+        child.kill()
+        child.wait()
+
+
+def test_inspection_of_an_activating_lease_is_refused_not_idle(tmp_path):
+    service, _ = host(tmp_path)
+    (tmp_path / "lease.json").write_text(json.dumps({
+        "host_id": "old", "episode_id": "reserved", "pid": None, "started_at": "2026-01-01T00:00:00+00:00",
+        "process_start_ticks": None, "status": "ACTIVATING"}))
+
+    inspection = service.inspect()
+    assert (inspection.state, inspection.last_reason) == (HostState.REFUSED, "AMBIGUOUS_LEASE")
+
+
+def test_history_records_why_state_was_unavailable_and_each_new_cause(tmp_path):
+    class Failing:
+        def __init__(self):
+            self.last_failure = "Founder-hold record is absent"
+
+        def __call__(self):
+            return required(authoritative_state=False)
+    inputs = Failing()
+    service = FactoryDirectorHost(tmp_path, inputs, InMemoryDirectorLauncher())
+    service.reconcile()
+    service.reconcile()
+    inputs.last_failure = "Director inbox directory is absent"
+    service.reconcile()
+
+    assert [r.get("failure") for r in history(tmp_path)] == [
+        "Founder-hold record is absent", "Director inbox directory is absent"]

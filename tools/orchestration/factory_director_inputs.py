@@ -31,6 +31,7 @@ import re
 import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
+from hashlib import sha256
 from pathlib import Path
 from typing import Callable
 
@@ -115,13 +116,13 @@ def load_adapter_config(path: Path | str) -> AdapterConfig:
 _COMMENTS_QUERY = (
     'query($owner:String!,$name:String!,$issue:Int!,$cursor:String){repository(owner:$owner,name:$name)'
     '{issue(number:$issue){comments(first:100,after:$cursor){totalCount pageInfo{hasNextPage endCursor}'
-    ' nodes{body}}}}}')
+    ' nodes{body author{login}}}}}}')
 
 
-def read_issue_comment_bodies(issue: int) -> list[str]:
-    """Every comment body on one Issue; refuses an incomplete answer like ``read_board``."""
+def read_issue_comments(issue: int) -> list[dict]:
+    """Every comment (author login, body) on one Issue; refuses an incomplete answer like ``read_board``."""
     owner, name = materialization.REPO.split("/")
-    bodies: list[str] = []
+    bodies: list[dict] = []
     cursor = None
     while True:
         args = ["api", "graphql", "-f", f"query={_COMMENTS_QUERY}", "-F", f"owner={owner}",
@@ -132,7 +133,7 @@ def read_issue_comment_bodies(issue: int) -> list[str]:
         nodes, info = connection["nodes"], connection["pageInfo"]
         if not isinstance(nodes, list) or not all(isinstance(node.get("body"), str) for node in nodes):
             raise SourceUnavailable(f"issue #{issue} comment page is malformed")
-        bodies += [node["body"] for node in nodes]
+        bodies += [{"author": (node.get("author") or {}).get("login"), "body": node["body"]} for node in nodes]
         if info["hasNextPage"] is False:
             break
         if info["hasNextPage"] is not True or not info.get("endCursor"):
@@ -156,6 +157,9 @@ def validate_board(rows) -> dict[int, str]:
         issue, status = row.get("issue"), row.get("status")
         if not _positive_int(issue):
             raise SourceUnavailable(f"Project item {row.get('id')!r} has no Issue number")
+        if row.get("repository") != materialization.REPO:
+            raise SourceUnavailable(f"Project item for issue #{issue} is not from {materialization.REPO}: "
+                                    f"{row.get('repository')!r}")
         if not isinstance(status, str) or status.upper() not in LIFECYCLE_STATES:
             raise SourceUnavailable(f"issue #{issue} has no recognised lifecycle Status ({status!r})")
         if issue in board:
@@ -164,8 +168,8 @@ def validate_board(rows) -> dict[int, str]:
     return board
 
 
-def validate_self_hosting(raw) -> tuple[str, Path]:
-    """The configured repository and the Node runtime state file it names."""
+def validate_self_hosting(raw) -> tuple[str, Path, frozenset[str]]:
+    """The configured repository, the Node runtime state file it names, and its operator logins."""
     if not isinstance(raw, dict):
         raise SourceUnavailable("self-hosting configuration is not an object")
     repository, project, paths = raw.get("repository"), raw.get("project"), raw.get("paths")
@@ -177,14 +181,18 @@ def validate_self_hosting(raw) -> tuple[str, Path]:
     if (project.get("owner"), project.get("number")) != (materialization.PROJECT_OWNER,
                                                          materialization.PROJECT_NUMBER):
         raise SourceUnavailable("self-hosting project is not the Project the read path verifies")
-    return full_name, _absolute_path(paths.get("stateFile"), "paths.stateFile")
+    logins = (raw.get("operator") or {}).get("authorizedGithubLogins")
+    if not isinstance(logins, list) or not all(isinstance(login, str) and login for login in logins):
+        raise SourceUnavailable("self-hosting operator.authorizedGithubLogins is not a list of logins")
+    return (full_name, _absolute_path(paths.get("stateFile"), "paths.stateFile"),
+            frozenset(login.lower() for login in logins))
 
 
 @dataclass(frozen=True)
 class RuntimeView:
     claims: int
     claimed_issues: frozenset[int]
-    unresolved_escalations: tuple[str, ...]
+    escalations: tuple[tuple[str, dict], ...]
     founder_exceptions: int
 
 
@@ -209,14 +217,32 @@ def validate_runtime_state(raw, repository: str) -> RuntimeView:
         if item["repository"] == repository:
             claimed.add(item["issue"])
     for key, entry in escalations.items():
-        if not isinstance(entry, dict) or not isinstance(entry.get("outcome"), str):
+        if (not isinstance(entry, dict) or not isinstance(entry.get("outcome"), str)
+                or not isinstance(entry.get("at"), str)):
             raise SourceUnavailable(f"runtime limitEscalations entry {key!r} is malformed")
     for key, entry in exceptions.items():
         if not isinstance(entry, dict):
             raise SourceUnavailable(f"runtime founderExceptions entry {key!r} is malformed")
-    # The Node runtime never marks an escalation resolved in place: resolution removes
-    # the entry, so every present entry is unresolved.
-    return RuntimeView(len(active), frozenset(claimed), tuple(sorted(escalations)), len(exceptions))
+    return RuntimeView(len(active), frozenset(claimed), tuple(sorted(escalations.items())), len(exceptions))
+
+
+def escalation_receipt_id(key: str, entry: dict) -> str:
+    """Director receipt id for one exact escalation (a newer escalation of the BIU needs a new one)."""
+    digest = sha256(f"{key}\n{entry['outcome']}\n{entry['at']}".encode()).hexdigest()[:32]
+    return f"escalation-{digest}"
+
+
+def unresolved_escalations(runtime: RuntimeView, board: dict[int, str], receipts: frozenset[str]) -> tuple[str, ...]:
+    """The Node runtime never removes or resolves an escalation, so resolution is read from durable
+    state: a Director receipt ``processed/<escalation id>.json`` for that exact escalation, or its
+    Issue having reached DONE."""
+    unresolved = []
+    for key, entry in runtime.escalations:
+        repository, _, number = key.rpartition("#")
+        done = repository == materialization.REPO and number.isdigit() and board.get(int(number)) == "DONE"
+        if not done and escalation_receipt_id(key, entry) not in receipts:
+            unresolved.append(key)
+    return tuple(unresolved)
 
 
 def validate_holds(raw) -> dict[int, str]:
@@ -237,26 +263,45 @@ def validate_holds(raw) -> dict[int, str]:
     return holds
 
 
-def unprocessed_inbox_entries(inbox: Path) -> tuple[str, ...]:
-    """Entry ids ``<id>.json`` directly in the inbox with no ``processed/<id>.json`` receipt."""
+def read_inbox(inbox: Path) -> tuple[tuple[str, ...], frozenset[str]]:
+    """Unprocessed entry ids (``<id>.json`` with no ``processed/<id>.json``) and all receipt ids.
+
+    A visible ``*.json`` file whose name is not a valid entry id fails closed rather than
+    being silently ignored; dot-files and non-``.json`` names (temporary files) are not entries.
+    """
     if not inbox.is_dir():
         raise SourceUnavailable(f"Director inbox directory is absent: {inbox}")
     processed = inbox / "processed"
     if processed.exists() and not processed.is_dir():
         raise SourceUnavailable("Director inbox processed/ exists but is not a directory")
     try:
-        entries = {path.stem for path in inbox.iterdir() if path.is_file() and INBOX_ENTRY.match(path.name)}
-        receipts = ({path.stem for path in processed.iterdir() if path.is_file() and INBOX_ENTRY.match(path.name)}
-                    if processed.is_dir() else set())
+        files = [path for path in inbox.iterdir() if path.is_file()]
+        receipts = frozenset(path.stem for path in processed.iterdir()
+                             if path.is_file() and INBOX_ENTRY.match(path.name)) if processed.is_dir() else frozenset()
     except OSError as exc:
         raise SourceUnavailable(f"Director inbox cannot be listed: {exc}") from exc
-    return tuple(sorted(entries - receipts))
+    unrecognised = [path.name for path in files if path.name.endswith(".json")
+                    and not path.name.startswith(".") and not INBOX_ENTRY.match(path.name)]
+    if unrecognised:
+        raise SourceUnavailable(f"Director inbox has entries with invalid ids: {sorted(unrecognised)!r}"[:240])
+    entries = {path.stem for path in files if INBOX_ENTRY.match(path.name)}
+    return tuple(sorted(entries - receipts)), receipts
 
 
-def has_retained_assessment(bodies: list[str], issue: int) -> bool:
+def has_retained_assessment(comments: list[dict], issue: int, operators: frozenset[str]) -> bool:
+    """A marker counts only in a comment by an authorized operator (self-hosting ``operator``).
+
+    Markers from anyone else are not a source at all, so quoting the format cannot mark an
+    Issue assessed or take the factory out of authoritative state.
+    """
     found = False
-    for body in bodies:
-        for match in ASSESSMENT_MARKER.finditer(body):
+    for comment in comments:
+        if not isinstance(comment, dict) or not isinstance(comment.get("body"), str):
+            raise SourceUnavailable(f"issue #{issue} comment is malformed")
+        author = comment.get("author")
+        if not isinstance(author, str) or author.lower() not in operators:
+            continue
+        for match in ASSESSMENT_MARKER.finditer(comment["body"]):
             try:
                 record = json.loads(match.group(1).strip())
             except json.JSONDecodeError as exc:
@@ -290,14 +335,16 @@ def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: se
 
 
 def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
-           unprocessed: tuple[str, ...], assessed: set[int], paused: bool, wip_limit: int) -> Evaluation:
+           unprocessed: tuple[str, ...], assessed: set[int], paused: bool, wip_limit: int,
+           receipts: frozenset[str] = frozenset()) -> Evaluation:
     reasons = {issue: reason for issue, state in board.items()
                if (reason := control_reason(issue, state, runtime.claimed_issues, assessed))}
     unheld = {issue: reason for issue, reason in reasons.items() if issue not in holds}
     held = {issue: reason for issue, reason in reasons.items() if issue in holds}
     eligible = any(reason.startswith("eligible:") for reason in unheld.values())
     selection = any(reason.startswith("selection:") for reason in unheld.values())
-    attention = bool(runtime.unresolved_escalations)
+    escalations = unresolved_escalations(runtime, board, receipts)
+    attention = bool(escalations)
     inbox = bool(unprocessed)
     inputs = DirectorInputs(
         authoritative_state=True,
@@ -314,7 +361,8 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
         "boardIssues": len(board), "activeClaims": runtime.claims, "wipLimit": wip_limit,
         "controlRequiredBy": {str(k): v for k, v in sorted(unheld.items())},
         "heldControl": {str(k): v for k, v in sorted(held.items())},
-        "unresolvedLimitEscalations": list(runtime.unresolved_escalations),
+        "unresolvedLimitEscalations": list(escalations),
+        "escalationReceiptIds": {key: escalation_receipt_id(key, entry) for key, entry in runtime.escalations},
         "founderExceptions": runtime.founder_exceptions,
         "unprocessedInboxEntries": list(unprocessed),
     }
@@ -326,7 +374,7 @@ class AuthoritativeDirectorInputs:
 
     def __init__(self, host_config: Path | str, projection: Path | str | None = None, *,
                  board_reader: Callable[[], list] = materialization.read_board,
-                 comments_reader: Callable[[int], list[str]] = read_issue_comment_bodies) -> None:
+                 comments_reader: Callable[[int], list[dict]] = read_issue_comments) -> None:
         self.host_config = Path(host_config)
         self.projection = Path(projection) if projection is not None else None
         self.board_reader, self.comments_reader = board_reader, comments_reader
@@ -341,18 +389,24 @@ class AuthoritativeDirectorInputs:
             raise SourceUnavailable(f"Project board read failed: {exc}"[:300]) from exc
 
     def read_runtime(self, config: AdapterConfig) -> RuntimeView:
-        repository, state_file = validate_self_hosting(_read_json(config.self_hosting_config,
-                                                                  "self-hosting configuration"))
+        repository, state_file, self.operators = validate_self_hosting(
+            _read_json(config.self_hosting_config, "self-hosting configuration"))
         return validate_runtime_state(_read_json(state_file, "runtime state file"), repository)
 
     def read_holds(self, config: AdapterConfig) -> dict[int, str]:
         return validate_holds(_read_json(config.founder_hold_record, "Founder-hold record"))
 
-    def read_inbox(self, config: AdapterConfig) -> tuple[str, ...]:
-        return unprocessed_inbox_entries(config.director_inbox)
+    def read_inbox(self, config: AdapterConfig) -> tuple[tuple[str, ...], frozenset[str]]:
+        return read_inbox(config.director_inbox)
 
     def read_pause(self, config: AdapterConfig) -> bool:
-        return os.path.lexists(config.pause_flag)
+        try:
+            os.lstat(config.pause_flag)
+            return True
+        except FileNotFoundError:
+            return False
+        except OSError as exc:  # unreadable is not "not paused"
+            raise SourceUnavailable(f"pause flag cannot be checked: {exc}") from exc
 
     def read_assessed(self, board: dict[int, str]) -> set[int]:
         assessed = set()
@@ -363,7 +417,7 @@ class AuthoritativeDirectorInputs:
                 raise
             except Exception as exc:
                 raise SourceUnavailable(f"issue #{issue} comments read failed: {exc}"[:300]) from exc
-            if has_retained_assessment(bodies, issue):
+            if has_retained_assessment(bodies, issue, self.operators):
                 assessed.add(issue)
         return assessed
 
@@ -372,11 +426,11 @@ class AuthoritativeDirectorInputs:
             config = load_adapter_config(self.host_config)
             runtime = self.read_runtime(config)
             holds = self.read_holds(config)
-            unprocessed = self.read_inbox(config)
+            unprocessed, receipts = self.read_inbox(config)
             paused = self.read_pause(config)
             board = self.read_board()
             assessed = self.read_assessed(board)
-            return derive(board, runtime, holds, unprocessed, assessed, paused, config.wip_limit)
+            return derive(board, runtime, holds, unprocessed, assessed, paused, config.wip_limit, receipts)
         except SourceUnavailable as exc:
             return Evaluation(UNAVAILABLE, str(exc))
         except Exception as exc:  # anything unexpected is also not authoritative
@@ -392,6 +446,7 @@ class AuthoritativeDirectorInputs:
 
     def __call__(self) -> DirectorInputs:
         evaluation = self.evaluate()
+        self.last_failure = evaluation.failure  # the host records the cause with the refusal
         self.publish(evaluation)
         return evaluation.inputs
 

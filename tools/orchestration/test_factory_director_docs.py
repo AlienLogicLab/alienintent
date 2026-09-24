@@ -112,3 +112,37 @@ def test_live_proof_names_only_files_that_exist_or_are_installed():
     installer = (ROOT / "tools/orchestration/install_factory_director_host.sh").read_text()
     for installed in set(re.findall(r"factory-director-host/([\w.-]+\.(?:py|md))", text)):
         assert installed in installer, installed
+
+
+def test_installer_the_procedure_calls_directly_is_committed_executable():
+    staged = subprocess.run(["git", "ls-files", "-s", "tools/orchestration/install_factory_director_host.sh"],
+                            cwd=ROOT, capture_output=True, text=True, check=True).stdout
+    assert staged.startswith("100755 "), staged
+
+
+def test_live_proof_commands_survive_errexit_where_a_nonzero_status_is_expected():
+    for block in live_proof_blocks():
+        for line in block.splitlines():
+            if re.match(r"\s*diff ", line):
+                assert line.rstrip().endswith("|| true"), line
+    text = LIVE_PROOF.read_text()
+    assert "set -euo" not in text and "set -e\n" not in text  # errexit would close the operator's shell
+    step_one = text.split("### 1. ", 1)[1].split("### 2. ", 1)[0]
+    assert "wait_for " in step_one and "sleep 5\ncp" not in step_one
+
+
+def test_live_proof_wait_helpers_run_against_a_real_history_file(tmp_path):
+    setup = live_proof_blocks()[0]
+    helpers = setup[setup.index("wait_for() {"):setup.index("export REPO=")]
+    history = tmp_path / "history.jsonl"
+    history.write_text(json.dumps({"reason": "DIRECTOR_EPISODE_EXITED", "episode_id": "a", "exit_reason": "EXIT_0"})
+                       + "\n" + json.dumps({"reason": "NO_ELIGIBLE_AUTHORIZED_WORK", "episode_id": None}) + "\n")
+    script = (f"set -uo pipefail\nPROOF={tmp_path}\nHOST_STATE={tmp_path}\n{helpers}\n"
+              "seq() { echo 1; }; sleep() { :; }\n"
+              "exited a | jq -r .exit_reason\n"
+              "wait_for 'exit of a' exited a && echo found-a\n"
+              "wait_for 'exit of b' exited b || echo missing-b\n")
+    result = subprocess.run(["bash", "-c", script], capture_output=True, text=True)
+    assert result.stdout.split() == ["EXIT_0", "found-a", "HOLD:", "timed", "out", "waiting", "for", "exit",
+                                     "of", "b", "missing-b"], result.stderr
+    assert (tmp_path / "HOLDS.txt").read_text() == "HOLD: timed out waiting for exit of b\n"

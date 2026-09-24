@@ -139,12 +139,12 @@ The host reads these, and only these, through the read-only adapter
 
 | Source | Default path | Schema | Absent means |
 |---|---|---|---|
-| Project #1 | GitHub, via `tools/live/project_materialization.py` `read_board` | complete board, Issue items only, one item per Issue, every item has a lifecycle Status | fail closed |
-| Retained Agent Ready assessment (TASKS only) | Issue comments containing `<!-- AGENT_READY_ASSESSMENT: {json} -->` | JSON object with a string `disposition`; an unparsable marker fails closed | not assessed |
+| Project #1 | GitHub, via `tools/live/project_materialization.py` `read_board` | complete board; Issue items of `AlienLogicLab/alienintent` only; one item per Issue; every item has a lifecycle Status | fail closed |
+| Retained Agent Ready assessment (TASKS only) | Issue comments containing `<!-- AGENT_READY_ASSESSMENT: {json} -->` (the native receipt the Factory Director posts beside the retained `docs/evidence/wave2-readiness-assessments/` record) | counted **only** in comments by a login in self-hosting `operator.authorizedGithubLogins`; JSON object with a string `disposition`. An unparsable marker from such a login fails closed. Markers from anyone else are ignored | not assessed |
 | Node runtime state | `paths.stateFile` from `selfHostingConfig` | object with an `active` map; optional `limitEscalations` and `founderExceptions` maps | fail closed |
 | Founder-hold record | `~/.local/state/alienintent/factory-director/founder-holds.json` | `{"schemaVersion": 1, "holds": [{"issue": <int>, "reason": "<text>", "recordedAt"?: "...", "recordedBy"?: "..."}]}`; no other keys; no duplicates | **fail closed**. "No holds" is written as `"holds": []` |
-| Director inbox | `~/.local/state/alienintent/factory-director/inbox/` | entry = `<id>.json` directly inside (id `[A-Za-z0-9][A-Za-z0-9._-]*`); receipt = `processed/<id>.json` | **fail closed**. "No entries" is an empty directory |
-| Explicit pause | `~/.local/state/alienintent/factory-director/PAUSE` | presence only (any file type or content) | not paused |
+| Director inbox | `~/.local/state/alienintent/factory-director/inbox/` | entry = `<id>.json` directly inside (id `[A-Za-z0-9][A-Za-z0-9._-]*`); receipt = `processed/<id>.json`. A visible `*.json` file with any other name fails closed | **fail closed**. "No entries" is an empty directory |
+| Explicit pause | `~/.local/state/alienintent/factory-director/PAUSE` | presence only (any file type or content). A location that cannot be checked (for example, permission denied) fails closed | not paused |
 | WIP limit | `wipLimit` in the host configuration | positive integer; configured value is **1** | fail closed |
 
 Director obligations on these sources:
@@ -160,8 +160,17 @@ Director obligations on these sources:
   files, for example) are not entries.
 - **Pause.** Create `PAUSE` to stop new launches. Delete it to resume. Pausing never kills
   a live episode.
-- **Escalations.** The Node runtime never marks a `limitEscalations` entry resolved in
-  place. Every present entry is unresolved until its resolution removes it.
+- **Escalations.** The Node runtime never removes or resolves a `limitEscalations` entry.
+  An entry is therefore resolved only by durable state: its Issue is `DONE` on the board,
+  or a Director receipt `processed/escalation-<digest>.json` exists in the inbox for that
+  exact escalation. The digest is the first 32 hex characters of
+  sha256(`<key>\n<outcome>\n<at>`); `inputs.diagnostics.json` lists each id under
+  `escalationReceiptIds`. Write the receipt only after acting on the escalation, for
+  example after recording a Founder hold or re-binding limits. A newer escalation of the
+  same BIU (a new `at`) needs a new receipt.
+- **Founder exceptions.** A `FOUNDER_EXCEPTION` result leaves its Issue unclaimed in a
+  worker state, so the mapping counts it as eligible work. Record a Founder hold for each
+  open Founder exception. Until you do, the host keeps launching episodes for it.
 
 ## 10. Activation predicate
 
@@ -173,7 +182,7 @@ The adapter derives nine booleans and writes them atomically to
 | `authoritative_state` | every source above was read successfully and is internally consistent. Any read failure, partial board, parse error or schema mismatch makes this and every other predicate false |
 | `eligible_authorized_work` | an unheld Issue is `READY`, or an unheld Issue is `IMPLEMENT`/`VERIFY`/`ACCEPT` with no active runtime claim |
 | `lifecycle_requires_selection` | an unheld Issue is `REVIEW`, or an unheld Issue is `TASKS` with a retained Agent Ready assessment (so it has not yet transitioned to `READY`) |
-| `attention_required` | the runtime state has any `limitEscalations` entry |
+| `attention_required` | the runtime state has an unresolved `limitEscalations` entry (section 9) |
 | `pending_director_inbox` | at least one inbox entry has no receipt |
 | `executable_capacity` | active runtime claims < WIP limit |
 | `wip_intentionally_full` | active runtime claims = WIP limit |
@@ -202,6 +211,18 @@ recorded as `DIRECTOR_EPISODE_EXITED`, with exit status, provider, model and
 provider-reported usage, and a fresh episode is launched. A lease that is ambiguous,
 activating or liveness-indeterminate is refused (`AMBIGUOUS_LEASE`,
 `EPISODE_LIVENESS_AMBIGUOUS`, `DIRECTOR_LAUNCH_HANDOFF_AMBIGUOUS`). It is never replaced.
+
+**Crash-loop guard.** An episode that exits non-zero, or within 60 seconds, is a failed
+episode. The first failure is retried at once. Each further consecutive failure is
+refused as `DIRECTOR_EPISODE_CRASH_LOOP` until a back-off has elapsed: 60 s, then 120 s,
+doubling up to one hour. The lease records `failure_streak` and `retry_not_before`. An
+episode that runs at least 60 seconds and exits 0 resets the streak. A launch that fails
+before its process is bound to the lease kills that process, and the next reconcile
+retries.
+
+History records `provider` and `requested_model`, meaning the model passed explicitly
+with `--model`. The models the provider reports are recorded separately as
+`usage.observed_models`, when exposed.
 
 ## 11. Replacement-safety rule
 

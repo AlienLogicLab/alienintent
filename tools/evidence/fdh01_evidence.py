@@ -53,7 +53,7 @@ CONTROLS = [
      FAIL_CLOSED + "[hold-record-unparsable]"),
     ("inbox-absent-defaulted", ADAPTER,
      '        raise SourceUnavailable(f"Director inbox directory is absent: {inbox}")',
-     '        return ()', FAIL_CLOSED + "[inbox-directory-absent]"),
+     '        return (), frozenset()', FAIL_CLOSED + "[inbox-directory-absent]"),
     # Criterion 3: hold and inbox semantics.
     ("hold-idles-everything", ADAPTER,
      '        founder_decision_pending=bool(held) and not unheld and not attention and not inbox,',
@@ -64,8 +64,8 @@ CONTROLS = [
      '    unheld = {issue: reason for issue, reason in reasons.items()'
      ' if issue not in holds or reason != "eligible:READY"}',
      INPUT_TESTS + "test_held_unclaimed_implement_issue_does_not_make_control_required"),
-    ("inbox-receipts-ignored", ADAPTER, '    return tuple(sorted(entries - receipts))',
-     '    return tuple(sorted(entries))',
+    ("inbox-receipts-ignored", ADAPTER, '    return tuple(sorted(entries - receipts)), receipts',
+     '    return tuple(sorted(entries)), receipts',
      INPUT_TESTS + "test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it"),
     # Criterion 4: continuity with a fresh episode id and lease.
     ("successor-reuses-episode-id", HOST, '        episode_id = f"factory-director-{uuid.uuid4().hex}"',
@@ -85,9 +85,27 @@ CONTROLS = [
     ("isolation-check-disabled", HOST, '        if require_isolated and not self._is_linked_worktree():',
      '        if False:', HOST_TESTS + "test_launcher_refuses_a_workdir_that_is_not_a_linked_worktree"),
     ("provider-model-not-recorded", HOST,
-     '        self._record(result, exit_reason=prior_exit, provider=episode.provider, model=episode.model,',
-     '        self._record(result, exit_reason=prior_exit, provider=None, model=None,',
+     '        self._record(result, exit_reason=prior_exit, provider=episode.provider, requested_model=episode.model,',
+     '        self._record(result, exit_reason=prior_exit, provider=None, requested_model=None,',
      HOST_TESTS + "test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles"),
+    # Repairs from independent review 1.
+    ("escalation-receipt-ignored", ADAPTER,
+     '        if not done and escalation_receipt_id(key, entry) not in receipts:', '        if not done:',
+     INPUT_TESTS + "test_escalation_is_resolved_by_a_director_receipt_for_that_exact_escalation"),
+    ("assessment-provenance-ignored", ADAPTER,
+     '        if not isinstance(author, str) or author.lower() not in operators:', '        if False:',
+     INPUT_TESTS + "test_assessment_marker_counts_only_from_an_authorized_operator"),
+    ("foreign-repository-item-accepted", ADAPTER, '        if row.get("repository") != materialization.REPO:',
+     '        if False:', INPUT_TESTS + "test_other_inconsistent_sources_also_fail_closed[foreign-repository-item]"),
+    ("unreadable-pause-means-unpaused", ADAPTER,
+     '            raise SourceUnavailable(f"pause flag cannot be checked: {exc}") from exc', '            return False',
+     INPUT_TESTS + "test_unreadable_pause_location_fails_closed_rather_than_unpaused"),
+    ("crash-loop-guard-removed", HOST, '            if retry and self.clock() < retry:', '            if False:',
+     HOST_TESTS + "test_repeated_fast_exits_back_off_instead_of_relaunching_every_second"),
+    ("unleased-child-kept", HOST, '            child.kill()\n', '            pass\n',
+     HOST_TESTS + "test_pre_bind_launch_failure_kills_the_child_and_does_not_block_later_launches"),
+    ("permission-mode-unchecked", HOST, '        if permission_mode not in PERMISSION_MODES[provider]:', '        if False:',
+     HOST_TESTS + "test_permission_mode_must_belong_to_the_configured_provider[codex-bypassPermissions]"),
 ]
 
 

@@ -92,7 +92,8 @@ def _gh(*args) -> str:
 
 def read_board():
     query = ('query($owner:String!,$number:Int!){organization(login:$owner){projectV2(number:$number)'
-             '{items(first:100){totalCount pageInfo{hasNextPage} nodes{id type content{__typename ... on Issue{number} '
+             '{items(first:100){totalCount pageInfo{hasNextPage} nodes{id type content{__typename '
+             '... on Issue{number repository{nameWithOwner}} '
              '... on PullRequest{number}} fieldValueByName(name:"Status")'
              '{... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}')
     payload = json.loads(_gh("api", "graphql", "-f", f"query={query}",
@@ -120,7 +121,8 @@ def board_from_payload(items):
             f"{total} items but returned {len(nodes)}; verification would be incomplete")
     return [{"id": node["id"], "type": node["type"],
              "issue": (node.get("content") or {}).get("number"),
-             "status": (node.get("fieldValueByName") or {}).get("name")}
+             "status": (node.get("fieldValueByName") or {}).get("name"),
+             "repository": ((node.get("content") or {}).get("repository") or {}).get("nameWithOwner")}
             for node in nodes]
 
 

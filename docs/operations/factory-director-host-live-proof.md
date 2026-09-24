@@ -17,7 +17,14 @@ measurement that is missing is recorded as an explicit **HOLD**, never as zero o
 ## 0. Preconditions and proof directory
 
 ```bash
-set -euo pipefail
+# No errexit: this runs in an interactive shell. A failed wait is recorded as a HOLD instead.
+set -uo pipefail
+wait_for() {  # wait_for "<description>" <command...>: retry every 2s for up to 10 minutes
+  local what=$1; shift
+  for _ in $(seq 300); do "$@" >/dev/null 2>&1 && return 0; sleep 2; done
+  echo "HOLD: timed out waiting for $what" | tee -a "$PROOF/HOLDS.txt"; return 1
+}
+exited() { jq -e --arg id "$1" 'select(.reason == "DIRECTOR_EPISODE_EXITED" and .episode_id == $id)' "$HOST_STATE/history.jsonl"; }
 export REPO=/mnt/d/Projects/alienintent
 export PROOF="$HOME/.local/state/alienintent/factory-director-live-proof/$(date -u +%Y%m%dT%H%M%SZ)"
 export HOST_STATE="$HOME/.local/state/alienintent/factory-director-host"
@@ -86,8 +93,9 @@ Substitute `<issue>` and the expected states with the workload chosen in step 0a
 
 ```bash
 systemctl --user enable --now alienintent-factory-director-host.service
-sleep 5
+wait_for "episode A lease" jq -e '.status == "ACTIVE"' "$HOST_STATE/lease.json"
 cp "$HOST_STATE/lease.json" "$PROOF/01-lease-A.json"
+A_ID=$(jq -r .episode_id "$PROOF/01-lease-A.json")
 tail -n 5 "$HOST_STATE/history.jsonl" | tee "$PROOF/01-history.jsonl"
 ```
 
@@ -108,8 +116,8 @@ Evidence: Fresh-session argv (`-p --no-session-persistence`, or `exec --ephemera
 
 ```bash
 while kill -0 "$A_PID" 2>/dev/null; do sleep 5; done
-sleep 3
-grep DIRECTOR_EPISODE_EXITED "$HOST_STATE/history.jsonl" | tail -n 1 | tee "$PROOF/03-exit-A.json"
+wait_for "exit record of A" exited "$A_ID"
+exited "$A_ID" | tee "$PROOF/03-exit-A.json"
 ```
 
 Evidence: An exit record with `exit_reason`, provider, model and `usage`. Usage has tokens and cost when measured. Otherwise it shows `measured: false` with a reason, which is a HOLD for that measurement.
@@ -127,8 +135,9 @@ Evidence: No Founder or operator event between A's exit and B's launch. The inbo
 ### 5. Host detects that Director cognition is still required
 
 ```bash
+wait_for "successor launch" jq -e --arg a "$A_ID" '.status == "ACTIVE" and .episode_id != $a' "$HOST_STATE/lease.json"
 cp "$HOST_STATE/inputs.diagnostics.json" "$PROOF/05-diagnostics.json"
-grep PRIOR_EPISODE_EXITED_CONTROL_REMAINS "$HOST_STATE/history.jsonl" | tail -n 1 | tee "$PROOF/05-relaunch.json"
+jq -c 'select(.reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS")' "$HOST_STATE/history.jsonl" | tail -n 1 | tee "$PROOF/05-relaunch.json"
 ```
 
 Evidence: Diagnostics showing why control is required (`controlRequiredBy`, inbox or escalations). The relaunch record's `at` falls within seconds of A's exit record, because the host wakes on exit.
@@ -156,7 +165,7 @@ Evidence: The same fresh-session argv as A, with no session id or resume flag. T
 
 ```bash
 while kill -0 "$B_PID" 2>/dev/null; do sleep 5; done
-sleep 3
+wait_for "exit record of B" exited "$B_ID"
 cp "$HOST_STATE/episodes/$B_ID.stdout" "$PROOF/08-output-B.json"
 cp "$HOST_STATE/episodes/$(jq -r .episode_id "$PROOF/01-lease-A.json").stdout" "$PROOF/08-output-A.json"
 ```
@@ -182,7 +191,7 @@ Evidence: A Project read-back, or a durable comment or evidence commit, showing 
 ### 11. That episode exits
 
 ```bash
-grep DIRECTOR_EPISODE_EXITED "$HOST_STATE/history.jsonl" | tail -n 1 | tee "$PROOF/11-exit-B.json"
+exited "$B_ID" | tee "$PROOF/11-exit-B.json"
 ```
 
 Evidence: An exit record for B, with provider, model and usage.
@@ -207,16 +216,16 @@ python3 "$HOME/.local/share/alienintent-bootstrap/factory-director-host/factory_
   --prompt "$HOME/.local/share/alienintent-bootstrap/factory-director-host/factory-director-episode.md" \
   --inspect | tee "$PROOF/13-inspect.json"
 systemctl --user list-units 'alienintent*' --no-pager | tee "$PROOF/13-existing-units.txt"
-diff <(awk '{print $1}' "$PROOF/00-existing-units.txt") <(awk '{print $1}' "$PROOF/13-existing-units.txt") \
-  | tee "$PROOF/13-replacement-safety.diff"
+diff <(awk '{print $1}' "$PROOF/00-existing-units.txt") <(awk '{print $1}' "$PROOF/13-existing-units.txt") > "$PROOF/13-replacement-safety.diff" || true
 sha256sum "$HOME/.config/alienintent/self-hosting.json" | tee "$PROOF/13-config-after.sha256"
 ( cd "$PROOF" && sha256sum ./* > SHA256SUMS )
 ```
 
-`13-replacement-safety.diff` may contain only the added host unit. `self-hosting.json`
+`13-replacement-safety.diff` may contain only the added host unit and the unit-count
+footer line. `self-hosting.json`
 must match its step-0a hash, because the host never writes configuration. The runtime
 state file changes during the proof because the Node runtime writes it. That is expected,
-and it is not a host write.
+and it is not a host write. Any line in `HOLDS.txt` is a HOLD on the step that wrote it.
 
 To stop the proof at any point: `touch "$FD_STATE/PAUSE"`. New launches stop and any live
 episode is left to finish. To disable the host:
