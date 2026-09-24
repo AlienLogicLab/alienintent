@@ -176,7 +176,7 @@ def _implementation_derived(source: object, roots: tuple[str, ...]) -> bool:
         return True
     path = source.split("#", 1)[0].strip()
     if path.startswith("repository:"):
-        path = path[len("repository:"):]
+        path = path[len("repository:"):].strip()
     if not path or "\\" in path or "\x00" in path or ":" in path or PurePosixPath(path).is_absolute():
         return True
     parts: list[str] = []
@@ -187,7 +187,14 @@ def _implementation_derived(source: object, roots: tuple[str, ...]) -> bool:
             parts.pop()
         elif part != ".":
             parts.append(part)
-    return not parts or parts[0].casefold() in {r.strip("/").casefold() for r in roots}
+    if not parts:
+        return True
+    folded = [p.casefold() for p in parts]
+    for root in roots:
+        prefix = [p.casefold() for p in PurePosixPath(root.strip("/")).parts]
+        if prefix and folded[:len(prefix)] == prefix:
+            return True  # Nested roots such as ``src/alienintent`` compare component-wise.
+    return False
 
 
 def derive_plan(requirement: RequirementRevision, design_ref: Ref, mapping: PredicateMapping | PlanHold | None,

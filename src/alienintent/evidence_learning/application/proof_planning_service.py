@@ -28,13 +28,14 @@ def _valid_ref(value: object) -> bool:
     return True
 
 
-def _valid_state(state: dict, requirement_id: str) -> bool:
+def _valid_state(state: object, requirement_id: str) -> bool:
     """The pointer is exactly the latest plan event; a lost or foreign pointer is never an empty history."""
-    if type(state.get("schema_version")) is not int or state.get("schema_version") != 1 or set(state) != _STATE_KEYS \
+    if not isinstance(state, dict) or type(state.get("schema_version")) is not int or state.get("schema_version") != 1 or set(state) != _STATE_KEYS \
             or state["requirement_id"] != requirement_id or not isinstance(state["history"], list):
         return False
     for event in state["history"]:
         if not isinstance(event, dict) or event.get("event") not in ("plan", "held") or not _valid_ref(event.get("ref")) \
+                or set(event) != ({"event", "digest", "ref"} if event["event"] == "plan" else {"event", "reason", "ref"}) \
                 or (event["event"] == "plan" and not isinstance(event.get("digest"), str)) \
                 or (event["event"] == "held" and not isinstance(event.get("reason"), str)):
             return False
@@ -62,7 +63,8 @@ class ProofPlanning:
 
     def read(self, requirement_id: str) -> tuple[int, dict]:
         version, state = self.store.read_state(self.profile, self.aggregate(requirement_id))
-        if state and not _valid_state(state, requirement_id):
+        # Only a never-written aggregate is empty; an emptied one at a later version lost its history.
+        if (version, state) != (0, {}) and not _valid_state(state, requirement_id):
             raise EvidenceHold("INCOMPATIBLE_PROOF_PLAN_STATE")
         return version, state
 

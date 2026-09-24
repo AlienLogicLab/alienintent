@@ -102,6 +102,17 @@ class ProofPlanDomainTests(unittest.TestCase):
         plan = self.derive(self.mapping(mechanical("A1", "k", derived_from=("repository:docs/spec.md#A1",)), mechanical("A2", "k")))
         self.assertIsInstance(plan, ProofPlan)
 
+    def test_nested_roots_and_prefixed_whitespace_are_circular(self):
+        nested = mechanical("A1", "k", derived_from=("src/alienintent/x.py",))
+        result = derive_plan(self.requirement(), ref("design"), self.mapping(nested, mechanical("A2", "k")), None, None,
+                             REVIEWER, SUPERSEDER, ("src/alienintent",))
+        self.assertReason(result, "CIRCULAR_ORACLE")
+        spaced = mechanical("A1", "k", derived_from=("repository: src/x.py",))
+        self.assertReason(self.derive(self.mapping(spaced, mechanical("A2", "k"))), "CIRCULAR_ORACLE")
+        sibling = mechanical("A1", "k", derived_from=("src-docs/x.md",))
+        self.assertIsInstance(derive_plan(self.requirement(), ref("design"), self.mapping(sibling, mechanical("A2", "k")),
+                                          None, None, REVIEWER, SUPERSEDER, ("src",)), ProofPlan)
+
     def test_blank_list_items_are_incomplete(self):
         for change in ({"inputs": ("",)}, {"evidence_schema": (" ",)}):
             result = self.derive(self.mapping(mechanical("A1", "k", **change), mechanical("A2", "k")))
@@ -471,6 +482,20 @@ class ProofPlanningTests(unittest.TestCase):
         proofs.store.commit(PROFILE, proofs.aggregate(REQUIREMENT), version, {**state, "plan_ref": None, "plan_digest": None})
         # Losing the pointer must not let the next derivation skip every prior-obligation check.
         self.assertHold(proofs.current(REQUIREMENT), "INCOMPATIBLE_PROOF_PLAN_STATE")
+
+    def test_emptied_or_non_object_state_is_a_hold_not_an_empty_history(self):
+        self.derive()
+        self.derive()
+        proofs = self.profile().proofs
+        version, _ = proofs.read(REQUIREMENT)
+        requirement = retained_requirement_revision(ROOT, SPECIFICATION, REQUIREMENT, PROJECT, PROFILE)
+        design = retained_design_ref(ROOT, DESIGN, REQUIREMENT, PROJECT, PROFILE)
+        for broken in ({}, [1], "x"):
+            proofs.store.commit(PROFILE, proofs.aggregate(REQUIREMENT), version, broken)
+            version += 1
+            self.assertHold(proofs.current(REQUIREMENT), "INCOMPATIBLE_PROOF_PLAN_STATE")
+            self.assertHold(proofs.derive(requirement, design, version), "INCOMPATIBLE_PROOF_PLAN_STATE")
+            self.assertHold(proofs.evaluate_repair(REQUIREMENT, {}), "INCOMPATIBLE_PROOF_PLAN_STATE")
 
     def test_tampered_persisted_plan_is_refused(self):
         self.derive()
