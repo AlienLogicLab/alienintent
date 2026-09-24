@@ -1,0 +1,68 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Repair AlienIntent's native Agent Ready provenance reader so genuine Agent Ready results are accepted for any supported provider, including Claude, while preserving strict rejection of surrogate or runner-asserted evidence.",
+    "implementation_unknowns": [
+      "Where the single declared provider/version-format source should live while respecting the stated scope and ensuring agreement with tools/orchestration/readiness_assessment.py PROVIDERS.",
+      "Whether the existing orchestration PROVIDERS already includes the full intended supported provider set and how best to assert agreement without broadening scope.",
+      "How the current tests are structured for retained surrogate fixtures, partial records, provenance manifest checks, and deliberately permissive negative-control variants.",
+      "Whether the repository already has helpers/constants for Agent Ready dispositions, MCP envelope validation, runner-asserted fields, or compatibility/probe enums that should be reused rather than duplicated."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "A provider-generic rule could accidentally accept shape-compatible surrogate evidence if key exactness, provider/version matching, compatibility/probe pairs, or runner-asserted-field refusal are weakened.",
+      "Creating a second provider list without enforcing agreement with orchestration PROVIDERS could introduce future provider drift.",
+      "The requirement for tests to fail against a deliberately permissive variant may be implemented ceremonially unless the negative controls are genuinely discriminating.",
+      "Historical evidence or manifests could be modified despite the explicit preservation requirement.",
+      "The scope restriction may be stressed if no suitable declared provider/version-format source exists outside the touched files."
+    ],
+    "next_action": "Proceed with a bounded implementation and verification handoff against the specified baseline, keeping changes localized to the provenance reader documentation/tests unless existing code structure makes a narrowly justified provider declaration adjustment necessary.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "rationale": "READY is the controlling disposition because the governing product and architecture decisions are already made: accept genuine native Agent Ready evidence from supported providers, reject surrogates, preserve existing provenance rules, avoid unrelated systems, and do not alter historical records. The remaining unknowns concern how to implement and test those decisions in the repository. There are not multiple independent decision centers requiring semantic decomposition, and no supplied external prerequisite blocks candidate production or independent verification.",
+    "semantic_split_recommendation": [],
+    "summary": "The work is a bounded compatibility repair focused on provider-generic validation of Agent Ready provider evidence in the provenance reader and its tests. The intent, authority, scope boundaries, non-goals, acceptance criteria, verification obligations, and stop conditions are explicit. Remaining uncertainty is primarily implementation research, not unresolved owner intent.",
+    "verification_assessment": "Acceptance is observable: provider evidence examples can be accepted or rejected deterministically; retained historical surrogate fixtures can be checked to remain non-native; partial-record behavior can be tested; provenance manifest checks and specified Python/Node commands provide an integrated verdict. One independent verification pass on the exact candidate SHA is meaningful because the change is localized and the negative controls are explicit, including malformed provider evidence, runner-asserted fields, bootstrap-assessor dispositions, historical surrogate records, and unchanged docs evidence files."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "6b056813f6e3643219b4fac50be2d2f2785536a7",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T03:01:13.166699+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 6596,
+    "input_sha256": "9670f6e2e4970a2779d8ea78329d1b12c61b6a4aad0cafe053481c5b4a7b6c48",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-crr5c0p2/ARP-01.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "started_at": "2026-09-24T03:00:43.921727+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "ARP-01"
+}
