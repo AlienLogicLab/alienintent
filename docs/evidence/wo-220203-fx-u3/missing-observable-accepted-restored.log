@@ -1,0 +1,6 @@
+test_missing_outside_state_artifact_is_infeasible_proof (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_missing_outside_state_artifact_is_infeasible_proof) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.014s
+
+OK

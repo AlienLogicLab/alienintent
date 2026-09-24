@@ -1,0 +1,19 @@
+test_unpinned_or_missing_mapping_is_infeasible (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unpinned_or_missing_mapping_is_infeasible) ... FAIL
+
+======================================================================
+FAIL: test_unpinned_or_missing_mapping_is_infeasible (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unpinned_or_missing_mapping_is_infeasible)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 191, in test_unpinned_or_missing_mapping_is_infeasible
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 77, in assertInfeasible
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'MISSING_PREMISE' != 'MAPPING_UNAVAILABLE'
+- MISSING_PREMISE
++ MAPPING_UNAVAILABLE
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.016s
+
+FAILED (failures=1)

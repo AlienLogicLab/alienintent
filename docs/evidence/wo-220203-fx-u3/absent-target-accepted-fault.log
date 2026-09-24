@@ -1,0 +1,48 @@
+test_unreadable_artifact_target_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise) ... 
+  test_unreadable_artifact_target_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise) (value='') ... FAIL
+  test_unreadable_artifact_target_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise) (value=None) ... FAIL
+  test_unreadable_artifact_target_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise) (value=5) ... FAIL
+
+======================================================================
+FAIL: test_unreadable_artifact_target_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise) (value='')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 270, in test_unreadable_artifact_target_is_a_missing_premise
+    self.assertInfeasible(self.read(root), "MISSING_PREMISE", "target:py10-proof-run", "OUTSIDE_STATE_READBACK")
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 77, in assertInfeasible
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'TARGET_MISMATCH' != 'MISSING_PREMISE'
+- TARGET_MISMATCH
++ MISSING_PREMISE
+
+
+======================================================================
+FAIL: test_unreadable_artifact_target_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise) (value=None)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 270, in test_unreadable_artifact_target_is_a_missing_premise
+    self.assertInfeasible(self.read(root), "MISSING_PREMISE", "target:py10-proof-run", "OUTSIDE_STATE_READBACK")
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 77, in assertInfeasible
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'TARGET_MISMATCH' != 'MISSING_PREMISE'
+- TARGET_MISMATCH
++ MISSING_PREMISE
+
+
+======================================================================
+FAIL: test_unreadable_artifact_target_is_a_missing_premise (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_unreadable_artifact_target_is_a_missing_premise) (value=5)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 270, in test_unreadable_artifact_target_is_a_missing_premise
+    self.assertInfeasible(self.read(root), "MISSING_PREMISE", "target:py10-proof-run", "OUTSIDE_STATE_READBACK")
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 77, in assertInfeasible
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'TARGET_MISMATCH' != 'MISSING_PREMISE'
+- TARGET_MISMATCH
++ MISSING_PREMISE
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.046s
+
+FAILED (failures=3)

@@ -1,0 +1,6 @@
+test_premise_id_is_bound_to_the_pinned_mapping (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_id_is_bound_to_the_pinned_mapping) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.013s
+
+OK

@@ -1,0 +1,15 @@
+test_premise_modules_import_no_installation_or_composition (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_modules_import_no_installation_or_composition) ... 
+  test_premise_modules_import_no_installation_or_composition (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_modules_import_no_installation_or_composition) (path='src/alienintent/evidence_learning/domain/premise.py', module='alienintent.installation.application.doctor.REQUIRED_CHECKS') ... FAIL
+
+======================================================================
+FAIL: test_premise_modules_import_no_installation_or_composition (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_premise_modules_import_no_installation_or_composition) (path='src/alienintent/evidence_learning/domain/premise.py', module='alienintent.installation.application.doctor.REQUIRED_CHECKS')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 182, in test_premise_modules_import_no_installation_or_composition
+    self.assertFalse({"installation", "composition"} & set(module.split(".")))
+AssertionError: {'installation'} is not false
+
+----------------------------------------------------------------------
+Ran 1 test in 0.005s
+
+FAILED (failures=1)

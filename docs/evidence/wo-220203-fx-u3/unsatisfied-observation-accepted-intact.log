@@ -1,0 +1,6 @@
+test_failed_out_of_scope_rejection_is_unsatisfied (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_failed_out_of_scope_rejection_is_unsatisfied) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.017s
+
+OK

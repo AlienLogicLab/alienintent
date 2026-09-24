@@ -1,0 +1,306 @@
+test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) ... 
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='credential-denial-observable') ... ERROR
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='undeclared-artifact') ... FAIL
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='entry-without-predicate') ... ERROR
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='no-doctor') ... ERROR
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='not-an-object') ... ERROR
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='unhashable-doctor-artifact') ... ERROR
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='unhashable-observable') ... ERROR
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='unhashable-entry-artifact') ... ERROR
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='ambiguous-target-locator') ... ERROR
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='absolute-artifact-path') ... FAIL
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='parent-artifact-path') ... FAIL
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='nul-artifact-path') ... FAIL
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='empty-artifact-key') ... ERROR
+  test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='uncompilable-detail-pattern') ... ERROR
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='credential-denial-observable')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 52, in observe
+    observation = self._observe(entry, *artifacts[entry["artifact"]]) if entry["artifact"] in artifacts else None
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 98, in _observe
+    observable = IsolationObservable(entry["observable"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/enum.py", line 757, in __call__
+    return cls.__new__(cls, value)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/enum.py", line 1171, in __new__
+    raise ve_exc
+ValueError: 'CREDENTIAL_DENIAL' is not a valid IsolationObservable
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='entry-without-predicate')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 52, in observe
+    observation = self._observe(entry, *artifacts[entry["artifact"]]) if entry["artifact"] in artifacts else None
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 108, in _observe
+    pointers = entry["unchanged"]
+               ~~~~~^^^^^^^^^^^^^
+KeyError: 'unchanged'
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='no-doctor')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 49, in observe
+    doctor_passed, doctor_ref = self._doctor(mapping["doctor"], artifacts)
+                                             ~~~~~~~^^^^^^^^^^
+KeyError: 'doctor'
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='not-an-object')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 41, in observe
+    for key, spec in mapping["artifacts"].items():
+                     ~~~~~~~^^^^^^^^^^^^^
+KeyError: 'artifacts'
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='unhashable-doctor-artifact')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 49, in observe
+    doctor_passed, doctor_ref = self._doctor(mapping["doctor"], artifacts)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 83, in _doctor
+    if spec["artifact"] not in artifacts:
+       ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: unhashable type: 'list'
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='unhashable-observable')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 52, in observe
+    observation = self._observe(entry, *artifacts[entry["artifact"]]) if entry["artifact"] in artifacts else None
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 98, in _observe
+    observable = IsolationObservable(entry["observable"])
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/enum.py", line 757, in __call__
+    return cls.__new__(cls, value)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/enum.py", line 1171, in __new__
+    raise ve_exc
+ValueError: ['x'] is not a valid IsolationObservable
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='unhashable-entry-artifact')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 52, in observe
+    observation = self._observe(entry, *artifacts[entry["artifact"]]) if entry["artifact"] in artifacts else None
+                                                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+TypeError: unhashable type: 'dict'
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='ambiguous-target-locator')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 42, in observe
+    loaded = self._load(key, spec)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 79, in _load
+    return document, ref, _artifact_target(document, spec["target"])
+                          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 218, in _artifact_target
+    value = _pointer(document, locator["pointer"])
+            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 241, in _pointer
+    for part in pointer.strip("/").split("/"):
+                ^^^^^^^^^^^^^
+AttributeError: 'int' object has no attribute 'strip'
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='empty-artifact-key')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 42, in observe
+    loaded = self._load(key, spec)
+             ^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 78, in _load
+    ref = Ref(self._project, self._profile, key, "sha256:" + spec["sha256"], "repository:" + spec["path"])
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 8, in __init__
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/domain/refs.py", line 17, in __post_init__
+    raise EvidenceHold("INVALID_REF", required_action="supply nonempty reference identity")
+alienintent.evidence_learning.domain.refs.EvidenceHold: INVALID_REF: supply nonempty reference identity
+
+======================================================================
+ERROR: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='uncompilable-detail-pattern')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+                          ^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 72, in read
+    return profile.premises.read(PREMISE, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/evidence_learning/application/premise_service.py", line 13, in read
+    return evaluate_isolation_premise(premise_id, self._target, frozenset(requested), self._source.observe())
+                                                                                      ^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 52, in observe
+    observation = self._observe(entry, *artifacts[entry["artifact"]]) if entry["artifact"] in artifacts else None
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/tmp/fx-u3-4pg7tgbs/src/alienintent/composition/premise_evidence.py", line 106, in _observe
+    satisfied = check.get("ok") is True and (pattern is None or re.fullmatch(pattern, detail) is not None)
+                                                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/re/__init__.py", line 172, in fullmatch
+    return _compile(pattern, flags).fullmatch(string)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/re/__init__.py", line 307, in _compile
+    p = _compiler.compile(pattern, flags)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/re/_compiler.py", line 745, in compile
+    p = _parser.parse(p, flags)
+        ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/re/_parser.py", line 979, in parse
+    p = _parse_sub(source, state, flags & SRE_FLAG_VERBOSE, 0)
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/re/_parser.py", line 460, in _parse_sub
+    itemsappend(_parse(source, state, verbose, nested + 1,
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/lib/python3.12/re/_parser.py", line 864, in _parse
+    raise source.error("missing ), unterminated subpattern",
+re.error: missing ), unterminated subpattern at position 0
+
+======================================================================
+FAIL: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='undeclared-artifact')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 77, in assertInfeasible
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'MISSING_PREMISE' != 'MAPPING_UNAVAILABLE'
+- MISSING_PREMISE
++ MAPPING_UNAVAILABLE
+
+
+======================================================================
+FAIL: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='absolute-artifact-path')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 77, in assertInfeasible
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'MISSING_PREMISE' != 'MAPPING_UNAVAILABLE'
+- MISSING_PREMISE
++ MAPPING_UNAVAILABLE
+
+
+======================================================================
+FAIL: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='parent-artifact-path')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 75, in assertInfeasible
+    self.assertIsInstance(result, InfeasibleProof)
+AssertionError: PlatformIsolationPremise(premise_id='platform-isolation:wave1-sandbox', target='AlienLogicLab/alienintent-sandbox', observations=(PremiseObservation(observable=<IsolationObservable.POSITIVE_TARGET_ACCESS: 'POSITIVE_TARGET_ACCESS'>, target='AlienLogicLab/alienintent-sandbox', predicate='installation_token_is_used_for_a_live_call', observed="installation repositories=['AlienLogicLab/alienintent-sandbox']", satisfied=True, source_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='py09b-live-checks', revision_digest='sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf', locator='repository:docs/evidence/py09b-live-checks-2026-09-21.json#installation_token_is_used_for_a_live_call')), PremiseObservation(observable=<IsolationObservable.POSITIVE_TARGET_ACCESS: 'POSITIVE_TARGET_ACCESS'>, target='AlienLogicLab/alienintent-sandbox', predicate='sandbox_repository_metadata_read_live', observed='full_name=AlienLogicLab/alienintent-sandbox private=True default_branch=main', satisfied=True, source_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='py09b-live-checks', revision_digest='sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf', locator='repository:docs/evidence/py09b-live-checks-2026-09-21.json#sandbox_repository_metadata_read_live')), PremiseObservation(observable=<IsolationObservable.POSITIVE_TARGET_ACCESS: 'POSITIVE_TARGET_ACCESS'>, target='AlienLogicLab/alienintent-sandbox', predicate='doctor_source_control_probe_is_live', observed='evidence={"repository": "AlienLogicLab/alienintent-sandbox", "baseline": "ab68d3a0797a92fe64e7b3dea8b37021fe12cd9b", "publication_permissions": ["contents:write"]}', satisfied=True, source_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='py09b-live-checks', revision_digest='sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf', locator='repository:docs/evidence/py09b-live-checks-2026-09-21.json#doctor_source_control_probe_is_live')), PremiseObservation(observable=<IsolationObservable.PROFILE_SCOPING: 'PROFILE_SCOPING'>, target='AlienLogicLab/alienintent-sandbox', predicate='repository_boundary_is_permission_enforced', observed="repository_selection=selected; repositories=['AlienLogicLab/alienintent-sandbox']; findings=[]", satisfied=True, source_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='py09b-live-checks', revision_digest='sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf', locator='repository:docs/evidence/py09b-live-checks-2026-09-21.json#repository_boundary_is_permission_enforced')), PremiseObservation(observable=<IsolationObservable.PROFILE_SCOPING: 'PROFILE_SCOPING'>, target='AlienLogicLab/alienintent-sandbox', predicate='every_project_operation_targeted_the_configured_project', observed='1 Project operation(s), all addressed to PVT_kwDOEcrpC84BkIEX', satisfied=True, source_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='py09b-live-checks', revision_digest='sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf', locator='repository:docs/evidence/py09b-live-checks-2026-09-21.json#every_project_operation_targeted_the_configured_project')), PremiseObservation(observable=<IsolationObservable.OUT_OF_SCOPE_REJECTION: 'OUT_OF_SCOPE_REJECTION'>, target='AlienLogicLab/alienintent-sandbox', predicate='project_identity_resolution_fails_closed_on_mismatch', observed='typed outcome ProjectAddressRejected: observed project is not the configured project', satisfied=True, source_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='py09b-live-checks', revision_digest='sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf', locator='repository:docs/evidence/py09b-live-checks-2026-09-21.json#project_identity_resolution_fails_closed_on_mismatch')), PremiseObservation(observable=<IsolationObservable.OUT_OF_SCOPE_REJECTION: 'OUT_OF_SCOPE_REJECTION'>, target='AlienLogicLab/alienintent-sandbox', predicate='delivery_for_another_project_is_refused', observed='replayed a real delivery for a Project this profile does not target; ingress refused it (GitHub recorded status_code=401); notifications unchanged at 2', satisfied=True, source_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='py09b-live-checks', revision_digest='sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf', locator='repository:docs/evidence/py09b-live-checks-2026-09-21.json#delivery_for_another_project_is_refused')), PremiseObservation(observable=<IsolationObservable.OUTSIDE_STATE_READBACK: 'OUTSIDE_STATE_READBACK'>, target='AlienLogicLab/alienintent-sandbox', predicate='unchanged:/production_project/observed,/production_project/state_digest,/production_project/identity_digest,/production_project/item_count,/production_project/project_updated_at,/node_bootstrap/bootstrap_port_answers', observed='/production_project/observed: true -> true; /production_project/state_digest: "sha256:c12bbd148801ca45bf4a3e70f9394902c704e2e87970040c9818d77e46ec4712" -> "sha256:c12bbd148801ca45bf4a3e70f9394902c704e2e87970040c9818d77e46ec4712"; /production_project/identity_digest: "sha256:e15c281f3f5a03bf228c75c119f998e127180aeaa92baedd1f971b12944c39c2" -> "sha256:e15c281f3f5a03bf228c75c119f998e127180aeaa92baedd1f971b12944c39c2"; /production_project/item_count: 67 -> 67; /production_project/project_updated_at: "2026-09-21T10:45:23Z" -> "2026-09-21T10:45:23Z"; /node_bootstrap/bootstrap_port_answers: {"8787": "000", "8788": "401"} -> {"8787": "000", "8788": "401"}', satisfied=True, source_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='py10-proof-run', revision_digest='sha256:d8fa0efab6bec2b26f6da129bb6c7be0e93473c37ee8e0ebd199fdfe60ec5358', locator='repository:docs/../docs/evidence/py10/proof-run.json#/before,/after'))), doctor_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='py09b-live-checks', revision_digest='sha256:526435a058a7b5d68c1c504fd18015e6d3fa87da9356d7b7555a564b21acffaf', locator='repository:docs/evidence/py09b-live-checks-2026-09-21.json#doctor_returns_typed_outcomes_against_the_sandbox'), mapping_ref=Ref(project='AlienLogicLab/alienintent', profile='fx-u3', logical_id='premise-mapping', revision_digest='sha256:c4c091939272d5d7ade40aefe9943f1e3d1b8085cabeccfd98ef34539e53fe71', locator='repository:docs/evidence/wo-220203-fx-u3-premise-mapping.json')) is not an instance of <class 'alienintent.evidence_learning.domain.premise.InfeasibleProof'>
+
+======================================================================
+FAIL: test_malformed_mapping_is_infeasible_not_an_exception (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_malformed_mapping_is_infeasible_not_an_exception) (name='nul-artifact-path')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 217, in test_malformed_mapping_is_infeasible_not_an_exception
+    self.assertInfeasible(self.read(root), "MAPPING_UNAVAILABLE", "predicate-mapping")
+  File "/tmp/fx-u3-4pg7tgbs/tests/evidence_learning/test_premise_evidence.py", line 77, in assertInfeasible
+    self.assertEqual(result.reason_code, reason)
+AssertionError: 'MISSING_PREMISE' != 'MAPPING_UNAVAILABLE'
+- MISSING_PREMISE
++ MAPPING_UNAVAILABLE
+
+
+----------------------------------------------------------------------
+Ran 1 test in 0.181s
+
+FAILED (failures=4, errors=10)

@@ -1,0 +1,6 @@
+test_tampered_artifact_fails_its_digest_pin (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_tampered_artifact_fails_its_digest_pin) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.016s
+
+OK

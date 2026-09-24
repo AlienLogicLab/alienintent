@@ -180,3 +180,31 @@ intact and restored phases:
 - **Semantic truth:** architecture fitness checks and FX-U3 do not certify premise truth.
 - **Independent verdict:** pending the separate VERIFIER invocation (JC on Codex). The VERIFIER
   must retrieve the exact published SHA and judge the predicate mapping independently.
+
+## Repair cycle 2: raw-log custody (JC R1)
+
+This section supplements the record above and removes none of it.
+
+- **Finding.** The JC verification of `dcdc4aaa14640fe631bb363f8fe91a615d7e2476` (invocation
+  `AlienLogicLab/alienintent#81:VERIFIER:ae92c58f-a092-49db-9235-5ce338b607c1`, receipt
+  `docs/evidence/wo-220203-jc-verification.md` at `36aec44`) rejected R1. The 66 phase logs
+  named in `report.json` and the 6 regression logs cited above were missing from the published
+  candidate. The repository-wide `*.log` rule in `.gitignore` had kept them out of the commit.
+- **Originals, not reruns.** The original files still existed, untracked and ignored, in the
+  cycle-1 PRODUCER worktree `b-disp/7603a51e-bcd3-4f98-b44a-45bd7cf7b205`. Their mtimes
+  (15:43:10–15:45:08 +0700) fall between the proven revision `936a991` (15:43:02) and the
+  evidence commit `dcdc4aa` (15:46:26). They were copied with `cp -p`. Nothing was rerun,
+  regenerated or edited.
+- **Byte check before commit.**
+  - All 66 phase logs: `sha256(file)` equals the observation's `raw_output_sha256` in
+    `report.json`. Each digest also appears inside the matching immutable object under
+    `evidence/objects/`. Result: 66 match, 0 mismatch.
+  - All 6 regression logs: each full sha256 matches the abbreviated digest in the table above
+    (`e79666a1…21ac`, `2851aa04…ece0`, `395cf0ad…d57ba`, `89302e38…d818`, `70d4fff6…387e`,
+    `ce6f1923…a511`).
+- **Durable fix.** `docs/evidence/wo-220203-fx-u3/.gitignore` adds `!*.log`, so the cited logs
+  in this directory can no longer be silently ignored.
+- **Unchanged.** `report.json`, the 66 immutable objects, the contract, the frozen mapping, the
+  implementation, the tests and S1 are byte-identical to `dcdc4aa`. This repair adds files only.
+- **Tokens and cost:** UNKNOWN, not zero. This is PRODUCER cycle 2 of 3, invocation
+  `AlienLogicLab/alienintent#81:PRODUCER:256beca2-8401-4672-9cef-f92057ec53e9`.

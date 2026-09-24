@@ -1,0 +1,6 @@
+test_doctor_evidence_that_is_not_a_full_pass_is_infeasible (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_doctor_evidence_that_is_not_a_full_pass_is_infeasible) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.036s
+
+OK

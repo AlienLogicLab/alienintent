@@ -1,0 +1,6 @@
+test_evidence_for_another_target_is_a_target_mismatch (tests.evidence_learning.test_premise_evidence.PremiseEvidenceTests.test_evidence_for_another_target_is_a_target_mismatch) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.017s
+
+OK
