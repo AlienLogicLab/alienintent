@@ -1,0 +1,38 @@
+--- 669e5f1/tools/orchestration/factory_director_inputs.py	2026-09-24 18:05:16.000000000 +0700
++++ nopreflight/tools/orchestration/factory_director_inputs.py	2026-09-24 18:20:13.649095016 +0700
+@@ -28,6 +28,7 @@
+ import json
+ import os
+ import re
++import shutil
+ import sys
+ from dataclasses import asdict, dataclass, field
+ from datetime import datetime, timezone
+@@ -113,6 +114,18 @@
+ 
+ # --- GitHub reads (read-only; queries only) ------------------------------------------------
+ 
++def require_gh() -> None:
++    """Fail closed, naming the tool and the PATH searched, when ``gh`` cannot be resolved.
++
++    A systemd user unit does not inherit the login shell's PATH (FDH-91), so this is checked
++    before the first GitHub read rather than surfacing as a raw ``FileNotFoundError``.
++    """
++    searched = os.environ.get("PATH", os.defpath)
++    if shutil.which("gh", path=searched) is None:
++        raise SourceUnavailable(f"required executable 'gh' is not resolvable on PATH={searched!r}; "
++                                "set PATH in factory-director-host.env")
++
++
+ _COMMENTS_QUERY = (
+     'query($owner:String!,$name:String!,$issue:Int!,$cursor:String){repository(owner:$owner,name:$name)'
+     '{issue(number:$issue){comments(first:100,after:$cursor){totalCount pageInfo{hasNextPage endCursor}'
+@@ -404,6 +417,8 @@
+ 
+     # Each reader is a separate method so a negative control can break exactly one source.
+     def read_board(self) -> dict[int, str]:
++        if self.board_reader is materialization.read_board or self.comments_reader is read_issue_comments:
++            pass
+         try:
+             return validate_board(self.board_reader())
+         except SourceUnavailable:
