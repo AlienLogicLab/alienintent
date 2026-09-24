@@ -169,10 +169,12 @@ def _read_retained(root: Path, relative: str) -> bytes | None:
         path = (root / relative).resolve(strict=True)
         if not path.is_relative_to(base):
             return None
-        status = os.stat(path)
-        if not stat.S_ISREG(status.st_mode) or status.st_size > MAX_RETAINED_BYTES:
-            return None
-        with open(path, "rb") as handle:
+        # Non-blocking, no-follow open, then fstat: the checked file is the file read.
+        descriptor = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+        with open(descriptor, "rb") as handle:
+            status = os.fstat(handle.fileno())
+            if not stat.S_ISREG(status.st_mode) or status.st_size > MAX_RETAINED_BYTES:
+                return None
             body = handle.read(MAX_RETAINED_BYTES + 1)
     except (OSError, ValueError, RuntimeError):
         return None
@@ -202,9 +204,13 @@ def _json(body: bytes | str) -> object:
             raise ValueError("duplicate key")
         return dict(pairs)
     try:
-        return json.loads(body, object_pairs_hook=unique)
+        return json.loads(body, object_pairs_hook=unique, parse_constant=_non_json)
     except (ValueError, UnicodeError, RecursionError):
         return _ABSENT
+
+
+def _non_json(name: str) -> object:
+    raise ValueError("non-standard JSON constant " + name)
 
 
 def _artifact_target(document: object, locator: dict) -> str | None:

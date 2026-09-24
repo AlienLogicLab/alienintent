@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MAPPING = Path("docs/evidence/wo-220203-fx-u3-premise-mapping.json")
 PY09B, PY10 = "docs/evidence/py09b-live-checks-2026-09-21.json", "docs/evidence/py10/proof-run.json"
 PROJECT, PROFILE, TARGET, PREMISE = "AlienLogicLab/alienintent", "fx-u3", "AlienLogicLab/alienintent-sandbox", "platform-isolation:wave1-sandbox"
-MAPPING_SHA256 = "5d8e0d4264c5e670a3f11245ddbfc27a365331b2ec6f9fbac188f642a8aba5bb"
+MAPPING_SHA256 = "598abb9c11791428069e2b5605b51f7ebf61afd537f2ca02c39e6bc8ec1bd589"
 PREMISE_MODULES = ("src/alienintent/evidence_learning/domain/premise.py",
                    "src/alienintent/evidence_learning/ports/premise_evidence.py",
                    "src/alienintent/evidence_learning/application/premise_service.py")
@@ -313,14 +313,26 @@ class PremiseEvidenceTests(unittest.TestCase):
                 shutil.rmtree(root)
 
     def test_negated_refusal_detail_is_unsatisfied(self):
-        root = self.copy()
+        for name, detail in (("delivery_for_another_project_is_refused", "NOT replayed a real delivery; status_code=4010"),
+                             ("project_identity_resolution_fails_closed_on_mismatch",
+                              "typed outcome ProjectAddressRejected: x not refused")):
+            with self.subTest(check=name):
+                root = self.copy()
 
-        def negated(document):
-            for check in document["checks"]:
-                if check["check"] == "delivery_for_another_project_is_refused":
-                    check["detail"] = "NOT replayed a real delivery; status_code=4010"
-        self.rewrite(root, "py09b-live-checks", PY09B, negated)
-        self.assertInfeasible(self.read(root), "UNSATISFIED_PREMISE", "OUT_OF_SCOPE_REJECTION")
+                def negated(document, name=name, detail=detail):
+                    for check in document["checks"]:
+                        if check["check"] == name:
+                            check["detail"] = detail
+                self.rewrite(root, "py09b-live-checks", PY09B, negated)
+                self.assertInfeasible(self.read(root), "UNSATISFIED_PREMISE", "OUT_OF_SCOPE_REJECTION")
+                shutil.rmtree(root)
+
+    def test_non_standard_json_constants_are_not_a_readback(self):
+        root = self.copy()
+        body = (root / PY10).read_bytes().replace(b'"observed": true', b'"observed": NaN')
+        (root / PY10).write_bytes(body)
+        self.remap(root, lambda m: m["artifacts"]["py10-proof-run"].update(sha256=sha256(body).hexdigest()))
+        self.assertInfeasible(self.read(root), "MISSING_PREMISE", "artifact:py10-proof-run")
 
     def test_premise_evidence_requires_a_configured_target(self):
         with self.assertRaises(ValueError):
