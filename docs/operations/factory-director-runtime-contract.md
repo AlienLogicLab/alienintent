@@ -162,12 +162,17 @@ Director obligations on these sources:
   a live episode.
 - **Escalations.** The Node runtime never removes or resolves a `limitEscalations` entry.
   An entry is therefore resolved only by durable state: its Issue is `DONE` on the board,
-  or a Director receipt `processed/escalation-<digest>.json` exists in the inbox for that
-  exact escalation. The digest is the first 32 hex characters of
+  or a Director acknowledgement `escalations/escalation-<digest>.json` exists beneath the
+  inbox directory for that exact escalation. Inbox `processed/` receipts never acknowledge
+  an escalation, and `escalations/` is not an inbox entry. If `escalations/` exists, it must
+  be a directory; otherwise the adapter fails closed. FDH-01 leaves "unresolved" undefined.
+  This rule is the PRODUCER's definition and awaits Factory Director sanction. The digest is the first 32 hex characters of
   sha256(`<key>\n<outcome>\n<at>`); `inputs.diagnostics.json` lists each id under
-  `escalationReceiptIds`. Write the receipt only after acting on the escalation, for
-  example after recording a Founder hold or re-binding limits. A newer escalation of the
-  same BIU (a new `at`) needs a new receipt.
+  `escalationReceiptIds`. Write the acknowledgement only after the escalation is durably
+  handled. For `EXECUTION_CYCLE_LIMIT`, the Node runtime refuses that BIU permanently, so
+  first record a Founder hold on its Issue. Without the hold, the Issue stays eligible work
+  and episodes keep launching. A newer escalation of the same BIU (a new `at`) needs a new
+  acknowledgement.
 - **Founder exceptions.** A `FOUNDER_EXCEPTION` result leaves its Issue unclaimed in a
   worker state, so the mapping counts it as eligible work. Record a Founder hold for each
   open Founder exception. Until you do, the host keeps launching episodes for it.
@@ -212,13 +217,19 @@ provider-reported usage, and a fresh episode is launched. A lease that is ambigu
 activating or liveness-indeterminate is refused (`AMBIGUOUS_LEASE`,
 `EPISODE_LIVENESS_AMBIGUOUS`, `DIRECTOR_LAUNCH_HANDOFF_AMBIGUOUS`). It is never replaced.
 
-**Crash-loop guard.** An episode that exits non-zero, or within 60 seconds, is a failed
-episode. The first failure is retried at once. Each further consecutive failure is
-refused as `DIRECTOR_EPISODE_CRASH_LOOP` until a back-off has elapsed: 60 s, then 120 s,
-doubling up to one hour. The lease records `failure_streak` and `retry_not_before`. An
-episode that runs at least 60 seconds and exits 0 resets the streak. A launch that fails
-before its process is bound to the lease kills that process, and the next reconcile
-retries.
+**Crash-loop guard.** A failed episode is one of these:
+
+- an episode that exits non-zero or is signalled;
+- an episode that exits within 60 seconds and leaves the nine-boolean projection exactly
+  as it was at launch.
+
+A launch that fails before its process is bound to the lease also counts as a failure;
+the host kills that process. The first failure is retried at once. Each further
+consecutive failure is refused as `DIRECTOR_EPISODE_CRASH_LOOP` until a back-off has
+elapsed: 60 s, then 120 s, doubling up to one hour. The lease records `failure_streak` and
+`retry_not_before`. The streak resets in two cases: an episode exits cleanly after at
+least 60 seconds, or a short episode changes durable state. Any legitimate idle
+(terminal conditions 1–4) also resets it.
 
 History records `provider` and `requested_model`, meaning the model passed explicitly
 with `--model`. The models the provider reports are recorded separately as

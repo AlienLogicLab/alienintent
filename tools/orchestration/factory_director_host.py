@@ -423,7 +423,14 @@ class FactoryDirectorHost:
             return "EXECUTION_CAPACITY_UNAVAILABLE"
         return None
 
-    def _observe_exit(self) -> None:
+    def _retry_not_before(self, streak: int, now: datetime) -> str | None:
+        """Crash-loop guard: the first failure retries at once; each further consecutive one
+        doubles the wait from BACKOFF_BASE_SECONDS up to BACKOFF_CAP_SECONDS."""
+        if streak < 2:
+            return None
+        return (now + timedelta(seconds=min(BACKOFF_BASE_SECONDS * 2 ** (streak - 2), BACKOFF_CAP_SECONDS))).isoformat()
+
+    def _observe_exit(self, values: DirectorInputs | None = None) -> None:
         """Record a leased episode's exit, provider, model and usage once, whatever happens next."""
         try:
             lease = self._lease()
@@ -440,19 +447,29 @@ class FactoryDirectorHost:
         observed = self.clock()
         started = _parse_time(lease["started_at"])
         runtime = (observed - started).total_seconds() if started else 0.0
-        # A non-zero exit, or any exit sooner than FAST_EXIT_SECONDS, is a failed episode. The
-        # first retries at once; each further consecutive one doubles the wait (crash-loop guard).
-        failed = (exit_reason.startswith(("EXIT_", "SIGNAL_")) and exit_reason != "EXIT_0") or runtime < FAST_EXIT_SECONDS
+        # A failed episode is a non-zero or signalled exit, or a fast exit that left the
+        # predicate projection exactly as it was at launch. A fast exit that changed durable
+        # state (it handled something) is progress, not a crash.
+        unchanged = values is None or lease.get("launch_inputs") in (None, asdict(values))
+        failed = ((exit_reason.startswith(("EXIT_", "SIGNAL_")) and exit_reason != "EXIT_0")
+                  or (runtime < FAST_EXIT_SECONDS and unchanged))
         streak = int(lease.get("failure_streak") or 0) + 1 if failed else 0
-        retry = (observed + timedelta(seconds=min(BACKOFF_BASE_SECONDS * 2 ** (streak - 2), BACKOFF_CAP_SECONDS))
-                 if streak >= 2 else None)
+        retry = self._retry_not_before(streak, observed)
         _atomic_json(self._lease_path, {**lease, "status": "EXITED", "exit_reason": exit_reason,
                                         "exited_observed_at": observed.isoformat(), "runtime_seconds": runtime,
-                                        "failure_streak": streak,
-                                        "retry_not_before": retry.isoformat() if retry else None})
+                                        "failure_streak": streak, "retry_not_before": retry})
         self._record(Reconciliation(HostState.IDLE, "DIRECTOR_EPISODE_EXITED", episode.episode_id),
                      exit_reason=exit_reason, provider=episode.provider, requested_model=episode.model,
                      usage=usage, runtime_seconds=runtime, failure_streak=streak)
+
+    def _reset_failure_streak(self) -> None:
+        """A legitimate idle ends a failure run: a later failure starts from the first retry again."""
+        try:
+            lease = self._lease()
+        except AmbiguousLease:
+            return
+        if lease and lease["status"] in {"EXITED", "LAUNCH_FAILED"} and lease.get("failure_streak"):
+            _atomic_json(self._lease_path, {**lease, "failure_streak": 0, "retry_not_before": None})
 
     def _refuse(self, reason: str, episode_id: str | None = None, **details) -> Reconciliation:
         result = Reconciliation(HostState.REFUSED, reason, episode_id)
@@ -462,11 +479,13 @@ class FactoryDirectorHost:
     def reconcile(self) -> Reconciliation:
         if not self.start():
             return self._refuse("CONFLICTING_HOST_OWNERSHIP")
-        self._observe_exit()
         values = self.inputs()
+        self._observe_exit(values)
         idle = self._idle_reason(values)
         if idle:
             result = Reconciliation(HostState.IDLE if idle in IDLE_REASONS else HostState.REFUSED, idle)
+            if idle in IDLE_REASONS:
+                self._reset_failure_streak()
             failure = getattr(self.inputs, "last_failure", None) if idle == "AUTHORITATIVE_STATE_UNAVAILABLE" else None
             self._record(result, **({"failure": failure} if failure else {}))
             return result
@@ -474,19 +493,9 @@ class FactoryDirectorHost:
             lease = self._lease()
         except AmbiguousLease:
             return self._refuse("AMBIGUOUS_LEASE")
-        prior_exit = None
-        streak = int(lease.get("failure_streak") or 0) if lease else 0
-        if lease and lease.get("status") == "EXITED":
-            retry = _parse_time(lease.get("retry_not_before")) if lease.get("retry_not_before") else None
-            if retry and self.clock() < retry:
-                return self._refuse("DIRECTOR_EPISODE_CRASH_LOOP", lease["episode_id"],
-                                    failure_streak=streak, retry_not_before=lease["retry_not_before"])
-            prior_exit = lease.get("exit_reason") or "PROCESS_EXITED"
-        elif lease and lease.get("status") == "LAUNCH_FAILED":
-            prior_exit = "LAUNCH_FAILED"  # Its child was killed at failure; nothing is leased.
-        elif lease:
-            if lease.get("status") == "ACTIVATING":
-                return self._refuse("AMBIGUOUS_LEASE")
+        if lease and lease.get("status") == "ACTIVATING":
+            return self._refuse("AMBIGUOUS_LEASE")
+        if lease and lease.get("status") == "ACTIVE":
             try:
                 prior = self._episode(lease)
             except KeyError:
@@ -500,8 +509,26 @@ class FactoryDirectorHost:
                 result = Reconciliation(HostState.ACTIVE, "DIRECTOR_EPISODE_ACTIVE", prior.episode_id)
                 self._record(result)
                 return result
-            prior_exit = self.launcher.exit_reason(prior) or "EPISODE_LIVENESS_AMBIGUOUS"
+            # It exited after this reconcile's observation: record and count it like any exit.
+            self._observe_exit(values)
+            try:
+                lease = self._lease()
+            except AmbiguousLease:
+                return self._refuse("AMBIGUOUS_LEASE")
+            if not lease or lease.get("status") != "EXITED":
+                return self._refuse("EPISODE_LIVENESS_AMBIGUOUS", prior.episode_id)
+        streak = int(lease.get("failure_streak") or 0) if lease else 0
+        prior_exit = None
+        if lease:
+            retry = _parse_time(lease.get("retry_not_before")) if lease.get("retry_not_before") else None
+            if retry and self.clock() < retry:
+                return self._refuse("DIRECTOR_EPISODE_CRASH_LOOP", lease["episode_id"],
+                                    failure_streak=streak, retry_not_before=lease["retry_not_before"])
+            # LAUNCH_FAILED: its child was killed at failure, so nothing is leased.
+            prior_exit = (lease.get("exit_reason") or "PROCESS_EXITED") if lease["status"] == "EXITED" \
+                else "LAUNCH_FAILED"
         episode_id = f"factory-director-{uuid.uuid4().hex}"
+        launch_inputs = asdict(values)
         # Reserve before spawning. A crash in the hand-off window stays visibly
         # ambiguous rather than creating an unleased child and a duplicate successor.
         _atomic_json(self._lease_path, {"host_id": self.host_id, "episode_id": episode_id,
@@ -517,7 +544,8 @@ class FactoryDirectorHost:
                 raise AmbiguousLease("spawned episode identity is invalid")
             _atomic_json(self._lease_path, {"host_id": self.host_id, **asdict(spawned),
                                             "status": "ACTIVE", "keep_until_replaced": True,
-                                            "retirement": "KEEP_UNTIL_REPLACED", "failure_streak": streak})
+                                            "retirement": "KEEP_UNTIL_REPLACED", "failure_streak": streak,
+                                            "launch_inputs": launch_inputs})
             bound_episode = spawned
 
         try:
@@ -530,15 +558,17 @@ class FactoryDirectorHost:
                                             "pid": None, "started_at": _now(), "process_start_ticks": None,
                                             "status": "LAUNCH_FAILED", "failure": str(exc)[:240],
                                             "keep_until_replaced": True, "retirement": "KEEP_UNTIL_REPLACED",
-                                            "failure_streak": streak})
-            return self._refuse("DIRECTOR_LAUNCH_FAILED", episode_id)
+                                            "failure_streak": streak + 1,
+                                            "retry_not_before": self._retry_not_before(streak + 1, self.clock())})
+            return self._refuse("DIRECTOR_LAUNCH_FAILED", episode_id, failure=str(exc)[:240])
         reason = "PRIOR_EPISODE_EXITED_CONTROL_REMAINS" if lease else "DIRECTOR_CONTINUITY_FAULT"
         _atomic_json(self._lease_path, {"host_id": self.host_id, **asdict(episode),
                                         "status": "ACTIVE", "keep_until_replaced": True,
-                                        "retirement": "KEEP_UNTIL_REPLACED", "failure_streak": streak})
+                                        "retirement": "KEEP_UNTIL_REPLACED", "failure_streak": streak,
+                                        "launch_inputs": launch_inputs})
         result = Reconciliation(HostState.ACTIVE, reason, episode.episode_id)
         self._record(result, exit_reason=prior_exit, provider=episode.provider, requested_model=episode.model,
-                     inputs=asdict(values))
+                     inputs=launch_inputs)
         return result
 
     def wait_for_change(self, interval: float, poll: float = 1.0,

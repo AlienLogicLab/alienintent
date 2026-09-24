@@ -669,3 +669,72 @@ def test_history_records_why_state_was_unavailable_and_each_new_cause(tmp_path):
 
     assert [r.get("failure") for r in history(tmp_path)] == [
         "Founder-hold record is absent", "Director inbox directory is absent"]
+
+
+def test_failure_streak_resets_when_the_factory_goes_idle(tmp_path):
+    clock = Clock()
+    inputs = MutableInputs(required())
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, inputs, launcher, clock=clock)
+    launcher.finish(service.reconcile().episode_id, exit_code=1)
+    launcher.finish(service.reconcile().episode_id, exit_code=1)
+    inputs.values = required(eligible_authorized_work=False)
+    assert service.reconcile().reason == "NO_ELIGIBLE_AUTHORIZED_WORK"
+    assert json.loads((tmp_path / "lease.json").read_text())["failure_streak"] == 0
+
+    inputs.values = required()
+    third = service.reconcile()
+    assert third.reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"
+    launcher.finish(third.episode_id, exit_code=1)
+    assert service.reconcile().reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"  # first failure retries at once
+
+
+def test_short_clean_episodes_that_changed_state_are_not_crashes(tmp_path):
+    clock = Clock()
+    inputs = MutableInputs(required(pending_director_inbox=True))
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, inputs, launcher, clock=clock)
+    for flip in range(4):
+        episode = service.reconcile()
+        assert episode.reason in {"DIRECTOR_CONTINUITY_FAULT", "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"}, flip
+        launcher.finish(episode.episode_id, exit_code=0)
+        inputs.values = required(pending_director_inbox=flip % 2 == 0, lifecycle_requires_selection=True)
+    assert len(launcher.launched) == 4
+
+
+def test_short_clean_episodes_that_change_nothing_do_back_off(tmp_path):
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, required, launcher, clock=Clock())
+    launcher.finish(service.reconcile().episode_id, exit_code=0)
+    launcher.finish(service.reconcile().episode_id, exit_code=0)
+    assert service.reconcile().reason == "DIRECTOR_EPISODE_CRASH_LOOP"
+
+
+def test_an_exit_between_observation_and_lease_check_is_still_recorded_and_counted(tmp_path):
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, required, launcher, clock=Clock())
+    first = service.reconcile()
+    real_observe = service._observe_exit
+
+    def exits_during_reconcile(values=None):
+        real_observe(values)
+        launcher.finish(first.episode_id, exit_code=1)  # after observation, before the lease check
+    service._observe_exit = exits_during_reconcile
+    service.reconcile()
+
+    exits = [r for r in history(tmp_path) if r["reason"] == "DIRECTOR_EPISODE_EXITED"]
+    assert [r["episode_id"] for r in exits] == [first.episode_id]
+    assert json.loads((tmp_path / "lease.json").read_text())["failure_streak"] == 1
+
+
+def test_repeated_launch_failures_back_off(tmp_path):
+    class Broken(InMemoryDirectorLauncher):
+        def launch(self, episode_id, on_spawned=None):
+            raise OSError("prompt file missing")
+    clock = Clock()
+    service = FactoryDirectorHost(tmp_path, required, Broken(), clock=clock)
+    assert service.reconcile().reason == "DIRECTOR_LAUNCH_FAILED"
+    assert service.reconcile().reason == "DIRECTOR_LAUNCH_FAILED"
+    assert service.reconcile().reason == "DIRECTOR_EPISODE_CRASH_LOOP"
+    clock.offset = timedelta(seconds=61)
+    assert service.reconcile().reason == "DIRECTOR_LAUNCH_FAILED"

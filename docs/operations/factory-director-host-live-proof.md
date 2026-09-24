@@ -99,7 +99,7 @@ A_ID=$(jq -r .episode_id "$PROOF/01-lease-A.json")
 tail -n 5 "$HOST_STATE/history.jsonl" | tee "$PROOF/01-history.jsonl"
 ```
 
-Evidence: Lease A (`status: ACTIVE`, episode id, pid, `process_start_ticks`, provider, model). A history record `DIRECTOR_CONTINUITY_FAULT` with its `inputs`.
+Evidence: Lease A (`status: ACTIVE`, episode id, pid, `process_start_ticks`, provider, model, `launch_inputs`). A history record `DIRECTOR_CONTINUITY_FAULT` with its `inputs`.
 
 ### 2. Let it advance real authorized factory work
 
@@ -120,7 +120,7 @@ wait_for "exit record of A" exited "$A_ID"
 exited "$A_ID" | tee "$PROOF/03-exit-A.json"
 ```
 
-Evidence: An exit record with `exit_reason`, provider, model and `usage`. Usage has tokens and cost when measured. Otherwise it shows `measured: false` with a reason, which is a HOLD for that measurement.
+Evidence: An exit record with `exit_reason`, `provider`, `requested_model`, `runtime_seconds`, `failure_streak` and `usage`. Usage has tokens and cost when measured. Otherwise it shows `measured: false` with a reason, which is a HOLD for that measurement.
 
 ### 4. Provide no Founder intervention
 
@@ -194,7 +194,7 @@ Evidence: A Project read-back, or a durable comment or evidence commit, showing 
 exited "$B_ID" | tee "$PROOF/11-exit-B.json"
 ```
 
-Evidence: An exit record for B, with provider, model and usage.
+Evidence: An exit record for B, with `provider`, `requested_model` and `usage`.
 
 ### 12. Host repeats the process successfully
 
@@ -204,7 +204,7 @@ tail -n 3 "$HOST_STATE/history.jsonl" | tee "$PROOF/12-history-tail.jsonl"
 cp "$HOST_STATE/lease.json" "$PROOF/12-lease.json"
 ```
 
-Evidence: Either a third fresh episode C (`PRIOR_EPISODE_EXITED_CONTROL_REMAINS`) while control remains, or an idle record whose reason is a terminal condition that agrees with `inputs.diagnostics.json`.
+Evidence: Either a third fresh episode C (`PRIOR_EPISODE_EXITED_CONTROL_REMAINS`) while control remains, or an idle record whose reason is a terminal condition that agrees with `inputs.diagnostics.json`. A `DIRECTOR_EPISODE_CRASH_LOOP` or `DIRECTOR_LAUNCH_FAILED` record is neither outcome: it is a HOLD on this step, and the proof is not passed.
 
 ## 13. Closing checks
 

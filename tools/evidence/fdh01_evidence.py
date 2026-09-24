@@ -64,8 +64,8 @@ CONTROLS = [
      '    unheld = {issue: reason for issue, reason in reasons.items()'
      ' if issue not in holds or reason != "eligible:READY"}',
      INPUT_TESTS + "test_held_unclaimed_implement_issue_does_not_make_control_required"),
-    ("inbox-receipts-ignored", ADAPTER, '    return tuple(sorted(entries - receipts)), receipts',
-     '    return tuple(sorted(entries)), receipts',
+    ("inbox-receipts-ignored", ADAPTER, '    return tuple(sorted(entries - receipts)), acknowledgements',
+     '    return tuple(sorted(entries)), acknowledgements',
      INPUT_TESTS + "test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it"),
     # Criterion 4: continuity with a fresh episode id and lease.
     ("successor-reuses-episode-id", HOST, '        episode_id = f"factory-director-{uuid.uuid4().hex}"',
@@ -90,7 +90,7 @@ CONTROLS = [
      HOST_TESTS + "test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles"),
     # Repairs from independent review 1.
     ("escalation-receipt-ignored", ADAPTER,
-     '        if not done and escalation_receipt_id(key, entry) not in receipts:', '        if not done:',
+     '        if not done and escalation_receipt_id(key, entry) not in acknowledgements:', '        if not done:',
      INPUT_TESTS + "test_escalation_is_resolved_by_a_director_receipt_for_that_exact_escalation"),
     ("assessment-provenance-ignored", ADAPTER,
      '        if not isinstance(author, str) or author.lower() not in operators:', '        if False:',
@@ -104,6 +104,23 @@ CONTROLS = [
      HOST_TESTS + "test_repeated_fast_exits_back_off_instead_of_relaunching_every_second"),
     ("unleased-child-kept", HOST, '            child.kill()\n', '            pass\n',
      HOST_TESTS + "test_pre_bind_launch_failure_kills_the_child_and_does_not_block_later_launches"),
+    # Repairs from independent review 2.
+    ("done-escalation-still-attention", ADAPTER,
+     '        done = repository == materialization.REPO and number.isdigit() and board.get(int(number)) == "DONE"',
+     '        done = False', INPUT_TESTS + "test_escalation_for_an_issue_that_reached_done_is_resolved"),
+    ("foreign-editor-trusted", ADAPTER,
+     '        if editor is not None and (not isinstance(editor, str) or editor.lower() not in operators):',
+     '        if False:', INPUT_TESTS + "test_marker_in_an_operator_comment_edited_by_someone_else_is_ignored"),
+    ("streak-survives-idle", HOST, '            if idle in IDLE_REASONS:\n                self._reset_failure_streak()',
+     '            pass', HOST_TESTS + "test_failure_streak_resets_when_the_factory_goes_idle"),
+    ("progress-counted-as-crash", HOST,
+     '                  or (runtime < FAST_EXIT_SECONDS and unchanged))', '                  or runtime < FAST_EXIT_SECONDS)',
+     HOST_TESTS + "test_short_clean_episodes_that_changed_state_are_not_crashes"),
+    ("launch-failure-not-counted", HOST, '                                            "failure_streak": streak + 1,',
+     '                                            "failure_streak": 0,', HOST_TESTS + "test_repeated_launch_failures_back_off"),
+    ("late-exit-unrecorded", HOST,
+     '            # It exited after this reconcile\'s observation: record and count it like any exit.\n            self._observe_exit(values)',
+     '            pass', HOST_TESTS + "test_an_exit_between_observation_and_lease_check_is_still_recorded_and_counted"),
     ("permission-mode-unchecked", HOST, '        if permission_mode not in PERMISSION_MODES[provider]:', '        if False:',
      HOST_TESTS + "test_permission_mode_must_belong_to_the_configured_provider[codex-bypassPermissions]"),
 ]

@@ -116,7 +116,7 @@ def load_adapter_config(path: Path | str) -> AdapterConfig:
 _COMMENTS_QUERY = (
     'query($owner:String!,$name:String!,$issue:Int!,$cursor:String){repository(owner:$owner,name:$name)'
     '{issue(number:$issue){comments(first:100,after:$cursor){totalCount pageInfo{hasNextPage endCursor}'
-    ' nodes{body author{login}}}}}}')
+    ' nodes{body author{login} editor{login}}}}}}')
 
 
 def read_issue_comments(issue: int) -> list[dict]:
@@ -133,7 +133,8 @@ def read_issue_comments(issue: int) -> list[dict]:
         nodes, info = connection["nodes"], connection["pageInfo"]
         if not isinstance(nodes, list) or not all(isinstance(node.get("body"), str) for node in nodes):
             raise SourceUnavailable(f"issue #{issue} comment page is malformed")
-        bodies += [{"author": (node.get("author") or {}).get("login"), "body": node["body"]} for node in nodes]
+        bodies += [{"author": (node.get("author") or {}).get("login"),
+                    "editor": (node.get("editor") or {}).get("login"), "body": node["body"]} for node in nodes]
         if info["hasNextPage"] is False:
             break
         if info["hasNextPage"] is not True or not info.get("endCursor"):
@@ -232,15 +233,16 @@ def escalation_receipt_id(key: str, entry: dict) -> str:
     return f"escalation-{digest}"
 
 
-def unresolved_escalations(runtime: RuntimeView, board: dict[int, str], receipts: frozenset[str]) -> tuple[str, ...]:
+def unresolved_escalations(runtime: RuntimeView, board: dict[int, str],
+                           acknowledgements: frozenset[str]) -> tuple[str, ...]:
     """The Node runtime never removes or resolves an escalation, so resolution is read from durable
-    state: a Director receipt ``processed/<escalation id>.json`` for that exact escalation, or its
-    Issue having reached DONE."""
+    state: a Director acknowledgement ``<inbox>/escalations/<escalation id>.json`` for that exact
+    escalation, or its Issue having reached DONE. Inbox ``processed/`` receipts never count."""
     unresolved = []
     for key, entry in runtime.escalations:
         repository, _, number = key.rpartition("#")
         done = repository == materialization.REPO and number.isdigit() and board.get(int(number)) == "DONE"
-        if not done and escalation_receipt_id(key, entry) not in receipts:
+        if not done and escalation_receipt_id(key, entry) not in acknowledgements:
             unresolved.append(key)
     return tuple(unresolved)
 
@@ -263,21 +265,27 @@ def validate_holds(raw) -> dict[int, str]:
     return holds
 
 
+def _ids(directory: Path) -> frozenset[str]:
+    return frozenset(path.stem for path in directory.iterdir() if path.is_file() and INBOX_ENTRY.match(path.name))
+
+
 def read_inbox(inbox: Path) -> tuple[tuple[str, ...], frozenset[str]]:
-    """Unprocessed entry ids (``<id>.json`` with no ``processed/<id>.json``) and all receipt ids.
+    """Unprocessed entry ids (``<id>.json`` with no ``processed/<id>.json``) and the escalation
+    acknowledgement ids in ``escalations/``.
 
     A visible ``*.json`` file whose name is not a valid entry id fails closed rather than
     being silently ignored; dot-files and non-``.json`` names (temporary files) are not entries.
     """
     if not inbox.is_dir():
         raise SourceUnavailable(f"Director inbox directory is absent: {inbox}")
-    processed = inbox / "processed"
-    if processed.exists() and not processed.is_dir():
-        raise SourceUnavailable("Director inbox processed/ exists but is not a directory")
+    processed, escalations = inbox / "processed", inbox / "escalations"
+    for directory in (processed, escalations):
+        if directory.exists() and not directory.is_dir():
+            raise SourceUnavailable(f"Director inbox {directory.name}/ exists but is not a directory")
     try:
         files = [path for path in inbox.iterdir() if path.is_file()]
-        receipts = frozenset(path.stem for path in processed.iterdir()
-                             if path.is_file() and INBOX_ENTRY.match(path.name)) if processed.is_dir() else frozenset()
+        receipts = _ids(processed) if processed.is_dir() else frozenset()
+        acknowledgements = _ids(escalations) if escalations.is_dir() else frozenset()
     except OSError as exc:
         raise SourceUnavailable(f"Director inbox cannot be listed: {exc}") from exc
     unrecognised = [path.name for path in files if path.name.endswith(".json")
@@ -285,7 +293,7 @@ def read_inbox(inbox: Path) -> tuple[tuple[str, ...], frozenset[str]]:
     if unrecognised:
         raise SourceUnavailable(f"Director inbox has entries with invalid ids: {sorted(unrecognised)!r}"[:240])
     entries = {path.stem for path in files if INBOX_ENTRY.match(path.name)}
-    return tuple(sorted(entries - receipts)), receipts
+    return tuple(sorted(entries - receipts)), acknowledgements
 
 
 def has_retained_assessment(comments: list[dict], issue: int, operators: frozenset[str]) -> bool:
@@ -298,9 +306,11 @@ def has_retained_assessment(comments: list[dict], issue: int, operators: frozens
     for comment in comments:
         if not isinstance(comment, dict) or not isinstance(comment.get("body"), str):
             raise SourceUnavailable(f"issue #{issue} comment is malformed")
-        author = comment.get("author")
+        author, editor = comment.get("author"), comment.get("editor")
         if not isinstance(author, str) or author.lower() not in operators:
             continue
+        if editor is not None and (not isinstance(editor, str) or editor.lower() not in operators):
+            continue  # an operator's comment rewritten by someone else is no longer the operator's
         for match in ASSESSMENT_MARKER.finditer(comment["body"]):
             try:
                 record = json.loads(match.group(1).strip())
@@ -336,14 +346,14 @@ def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: se
 
 def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
            unprocessed: tuple[str, ...], assessed: set[int], paused: bool, wip_limit: int,
-           receipts: frozenset[str] = frozenset()) -> Evaluation:
+           acknowledgements: frozenset[str] = frozenset()) -> Evaluation:
     reasons = {issue: reason for issue, state in board.items()
                if (reason := control_reason(issue, state, runtime.claimed_issues, assessed))}
     unheld = {issue: reason for issue, reason in reasons.items() if issue not in holds}
     held = {issue: reason for issue, reason in reasons.items() if issue in holds}
     eligible = any(reason.startswith("eligible:") for reason in unheld.values())
     selection = any(reason.startswith("selection:") for reason in unheld.values())
-    escalations = unresolved_escalations(runtime, board, receipts)
+    escalations = unresolved_escalations(runtime, board, acknowledgements)
     attention = bool(escalations)
     inbox = bool(unprocessed)
     inputs = DirectorInputs(
@@ -426,11 +436,11 @@ class AuthoritativeDirectorInputs:
             config = load_adapter_config(self.host_config)
             runtime = self.read_runtime(config)
             holds = self.read_holds(config)
-            unprocessed, receipts = self.read_inbox(config)
+            unprocessed, acknowledgements = self.read_inbox(config)
             paused = self.read_pause(config)
             board = self.read_board()
             assessed = self.read_assessed(board)
-            return derive(board, runtime, holds, unprocessed, assessed, paused, config.wip_limit, receipts)
+            return derive(board, runtime, holds, unprocessed, assessed, paused, config.wip_limit, acknowledgements)
         except SourceUnavailable as exc:
             return Evaluation(UNAVAILABLE, str(exc))
         except Exception as exc:  # anything unexpected is also not authoritative

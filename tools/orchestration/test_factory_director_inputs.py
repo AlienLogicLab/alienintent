@@ -488,7 +488,7 @@ def test_default_board_reader_is_the_fail_closed_materialization_read_path():
 
 def test_comment_reader_paginates_and_refuses_an_incomplete_answer(monkeypatch):
     def node(body, login="u"):
-        return {"body": body, "author": {"login": login}}
+        return {"body": body, "author": {"login": login}, "editor": None}
     pages = [
         {"totalCount": 3, "pageInfo": {"hasNextPage": True, "endCursor": "c1"}, "nodes": [node("a"), node("b")]},
         {"totalCount": 3, "pageInfo": {"hasNextPage": False, "endCursor": None}, "nodes": [node("c", None)]},
@@ -501,7 +501,8 @@ def test_comment_reader_paginates_and_refuses_an_incomplete_answer(monkeypatch):
         return json.dumps({"data": {"repository": {"issue": {"comments": page}}}})
     monkeypatch.setattr(materialization, "_gh", fake_gh)
     assert adapter_module.read_issue_comments(5) == [
-        {"author": "u", "body": "a"}, {"author": "u", "body": "b"}, {"author": None, "body": "c"}]
+        {"author": "u", "editor": None, "body": "a"}, {"author": "u", "editor": None, "body": "b"},
+        {"author": None, "editor": None, "body": "c"}]
     assert all(call[:2] == ("api", "graphql") for call in calls)
     assert "cursor=c1" in calls[1]
 
@@ -513,16 +514,16 @@ def test_comment_reader_paginates_and_refuses_an_incomplete_answer(monkeypatch):
 
 # --- repairs from independent review 1 ----------------------------------------------------
 
-def receipt(sources, name):
-    (sources.inbox / "processed").mkdir(exist_ok=True)
-    (sources.inbox / "processed" / f"{name}.json").write_text("{}")
+def acknowledge(sources, name):
+    (sources.inbox / "escalations").mkdir(exist_ok=True)
+    (sources.inbox / "escalations" / f"{name}.json").write_text("{}")
 
 
 def test_escalation_is_resolved_by_a_director_receipt_for_that_exact_escalation(sources):
     sources.issue(50, "IMPLEMENT").claim(50).escalate(50)
     assert sources.inputs().attention_required is True
     entry = sources.state["limitEscalations"][f"{REPO}#50"]
-    receipt(sources, adapter_module.escalation_receipt_id(f"{REPO}#50", entry))
+    acknowledge(sources, adapter_module.escalation_receipt_id(f"{REPO}#50", entry))
     assert sources.inputs().attention_required is False
     # A newer escalation on the same BIU needs its own receipt.
     sources.escalate(50, at="2026-09-25T00:00:00.000Z")
@@ -534,10 +535,23 @@ def test_escalation_for_an_issue_that_reached_done_is_resolved(sources):
     assert sources.inputs().attention_required is False
 
 
+def test_inbox_processed_receipt_does_not_acknowledge_an_escalation(sources):
+    sources.escalate(55)
+    entry = sources.state["limitEscalations"][f"{REPO}#55"]
+    (sources.inbox / "processed").mkdir()
+    (sources.inbox / "processed" / f"{adapter_module.escalation_receipt_id(f'{REPO}#55', entry)}.json").write_text("{}")
+    assert sources.inputs().attention_required is True
+
+
+def test_escalations_directory_that_is_not_a_directory_fails_closed(sources):
+    (sources.inbox / "escalations").write_text("x")
+    assert sources.inputs().authoritative_state is False
+
+
 def test_escalation_receipt_is_not_an_unprocessed_inbox_entry(sources):
     sources.escalate(52)
     entry = sources.state["limitEscalations"][f"{REPO}#52"]
-    receipt(sources, adapter_module.escalation_receipt_id(f"{REPO}#52", entry))
+    acknowledge(sources, adapter_module.escalation_receipt_id(f"{REPO}#52", entry))
     values = sources.inputs()
     assert (values.attention_required, values.pending_director_inbox) == (False, False)
 
@@ -578,3 +592,11 @@ def test_board_rows_from_the_read_path_carry_the_issue_repository():
                                "repository": {"nameWithOwner": REPO}}}]})
     assert rows == [{"id": "PVTI_1", "type": "ISSUE", "issue": 7, "status": "READY", "repository": REPO}]
     assert "repository{nameWithOwner}" in Path(materialization.__file__).read_text()
+
+
+def test_marker_in_an_operator_comment_edited_by_someone_else_is_ignored(sources):
+    sources.issue(56, "TASKS")
+    sources.comments[56] = [{**ASSESSMENT, "editor": "morty-worker"}]
+    assert sources.inputs().lifecycle_requires_selection is False
+    sources.comments[56] = [{**ASSESSMENT, "editor": OPERATOR}]
+    assert sources.inputs().lifecycle_requires_selection is True
