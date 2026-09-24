@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "When active runtime claims are at or above the WIP limit, for example during a transient PRODUCER\u2192VERIFIER handoff overlap, the Factory Director Host must classify the idle state as WIP_INTENTIONALLY_FULL. It must not classify it as a refusal (EXECUTION_CAPACITY_UNAVAILABLE) or as NO_ELIGIBLE_AUTHORIZED_WORK. Precedence stays unchanged, Director-only control is never suppressed, and discriminating tests prove the fix. This clears one of the two remaining conditions on the Factory Director Host retirement threshold.",
+    "implementation_unknowns": [
+      "Whether any other consumer reads wip_intentionally_full or executable_capacity and assumes the old equality semantics. Examples are diagnostics serialization, history records, other tools or tests. This needs a repository search.",
+      "Whether EXECUTION_CAPACITY_UNAVAILABLE becomes provably unreachable once the predicates are exact complements. The exact wording of the code comment and contract note depends on the actual _idle_reason branch structure.",
+      "Where the criterion-3 negative control should be applied. The 'full WIP suppresses Director-only control' variant is only discriminating when applied to the candidate code, where claims > wipLimit actually reaches the WIP_INTENTIONALLY_FULL branch. On the baseline that branch is not reached for claims=2, wipLimit=1. The producer and verifier should apply it to the candidate and state this explicitly.",
+      "Whether test_factory_director_docs.py pins the \u00a710 predicate-table or precedence-item-6 wording and needs updating.",
+      "How best to run the baseline and '==' variant runs, for example a worktree at 0eda915 versus a temporary patch, while still recording commands, exit statuses and counts reproducibly.",
+      "How to fixture the three reported live scenarios (activeClaims=2, wipLimit=1) in the existing adapter and host test harnesses."
+    ],
+    "independent_decision_centers": [
+      "Reason classification for claims >= wipLimit: the adapter predicate, the documenting contract text and the tests. These form one cohesive decision. The post-landing deployment and live observation are explicitly assigned to the Factory Director and are outside worker scope."
+    ],
+    "material_risks": [
+      "Execution preconditions are not established by this document. Release authority is explicitly not granted, and the 3-cycle, 1-replacement limits must be bound in execution.biuLimits for #92 before release. Handoff must wait for those lifecycle steps.",
+      "The criterion-3 negative control could be applied to the baseline, where it would not discriminate because the WIP branch is unreachable for claims > limit there. That would produce a stop-condition trigger or a misleading proof.",
+      "Unknown downstream consumers of wip_intentionally_full or executable_capacity may silently change behaviour with the new semantics. This includes history.jsonl readers and diagnostics.",
+      "Contract text and code could drift, particularly the precedence-item-6 wording about claims exceeding the limit and the unreachable-reason note, if the docs test does not pin the updated wording.",
+      "The known non-hermetic failure in test_director.py depends on the live ~/.codex/config.toml. Differing environments between producer and verifier could produce other spurious failures that must be distinguished from real regressions.",
+      "The retirement-threshold 'DONE with proof' depends on a future live overlap and a correctly performed host refresh and restart. If that observation does not occur promptly, the Founder report may be delayed even though the code work is accepted."
+    ],
+    "next_action": "Once release authority is granted and the #92 execution.biuLimits are bound, hand the packet to PRODUCER Morty at baseline 0eda915. Add one explicit note to the packet: the Director-only-control suppressing variant must be applied to the candidate code so that it discriminates. The independent VERIFIER (JC) then re-runs criteria 1\u20137 and the negative controls on the exact candidate SHA and records the results under docs/evidence/fdh-92/.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent, scope and all material owner decisions are already resolved in the text. These cover compatibility of the persisted reason identifier, the contract versioning policy, unchanged precedence, non-suppression of Director-only control and exclusion of deployment. The change is one cohesive decision centre spanning a predicate, its documentation and its tests, so SPLIT is inappropriate. No owner question would materially change the implementation, so CLARIFY is unwarranted. The remaining unknowns are engineering research: consumer search, unreachability wording, docs-test pinning and negative-control mechanics. The missing release authority and biuLimits binding are normal lifecycle gates before execution. They are not an unavailable artifact or environment the work depends on, so they are noted as a precondition rather than treated as HOLD. Acceptance is concrete, discriminating and independently re-runnable, and any rework would be confined to two Python modules, their tests and one contract section.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a narrowly bounded reason-classification fix. The adapter predicate changes from `==` to `>=` so it is the exact complement of executable_capacity. Runtime contract \u00a710 is corrected to 'at or above the limit' without a version bump. Tests cover claims > wipLimit in three cases, and negative controls are recorded. The owner has already decided the material policy questions: EXECUTION_CAPACITY_UNAVAILABLE is kept as a persisted compatibility marker, contract version stays 1, precedence order is unchanged, and the scope is fenced from wipLimit, Node claim behaviour and deployment. Acceptance is concrete and testable, with an independent verifier re-running it. What remains is engineering detail, not owner intent.",
+    "verification_assessment": "Acceptance is observable and discriminating. Criteria 1\u20133 specify exact inputs (claims=2, wipLimit=1) and expected predicate values and reasons. Criterion 4 guards the equal and below-limit behaviour through existing tests. Criterion 5 requires fail-on-baseline or fail-on-'==' evidence for the new tests, and fail-on-suppressing-variant evidence for the regression guards. Criterion 6 ties the contract text to the code through the docs test. Criterion 7 requires the full check suite and pytest, with one reported non-hermetic baseline failure named and excluded. A single independent verifier verdict on the candidate SHA is meaningful, because all criteria concern one coherent behaviour change. One caveat: the Founder-facing 'DONE with proof' also looks for a live handoff overlap classified by the deployed host. That observation is post-landing, Factory-Director-owned and opportunistic. It is not part of the worker's verification verdict and should not be conflated with it. All evidence locations and live occurrences are reported by the task text and have not been independently verified here."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T10:46:05.902548+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 7861,
+    "input_sha256": "f42237e29b2f29992fca8ba2c20a088f306f65399030f928c40b0366160e9183",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-g7rgt0qh/FDH-92.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T10:45:34.225986+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "FDH-92"
+}

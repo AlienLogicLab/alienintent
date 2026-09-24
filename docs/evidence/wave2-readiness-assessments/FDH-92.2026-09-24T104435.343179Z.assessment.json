@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Fix the reason classification in the Factory Director Host so that runtime claims at or above the WIP limit (a transient worker handoff overlap) produce the idle reason WIP_INTENTIONALLY_FULL. They must not produce EXECUTION_CAPACITY_UNAVAILABLE (REFUSED) or NO_ELIGIBLE_AUTHORIZED_WORK. Director-only control must never be suppressed, and the fix must be proven with discriminating tests. This clears one of the two remaining conditions on the Factory Director Host retirement threshold.",
+    "implementation_unknowns": [
+      "Whether _idle_reason evaluates Director-only control (inbox, attention, unresolved escalation, selection) before the WIP-full check in every path. This determines whether the criterion-3 cases already return None at claims > wipLimit on the baseline.",
+      "Whether EXECUTION_CAPACITY_UNAVAILABLE becomes strictly unreachable once executable_capacity and wip_intentionally_full are exact complements. Any remaining path must be identified before writing the code comment and contract note.",
+      "Whether test_factory_director_docs.py pins the exact \u00a710 predicate-table or precedence-item-6 text, and therefore needs updating.",
+      "Existing test fixtures and helpers for constructing runtime state with claims > wipLimit in both the adapter and host test modules.",
+      "The exact form of the '==' negative-control variant, such as a patch or a temporary revert, so that the VERIFIER can reproduce it independently.",
+      "Whether other consumers of wip_intentionally_full or executable_capacity, such as diagnostics or history serialization, observe the changed value in ways that existing tests pin."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Criterion 5 and the stop condition may conflict for the criterion-3 tests (Director-only control at claims > wipLimit). If these already return None on the baseline, they cannot be shown failing. A literal reading would force a stop and escalation even though the fix is correct.",
+      "Documenting EXECUTION_CAPACITY_UNAVAILABLE as unreachable could be wrong if another code path still reaches it. That would leave the contract and code in disagreement.",
+      "Changing wip_intentionally_full to >= could alter other consumers or persisted diagnostics that currently rely on the equality semantics.",
+      "The known non-hermetic baseline failure in test_director.py reads live ~/.codex/config.toml. It could mask or be confused with new failures if pytest results are not compared carefully against the baseline.",
+      "Execution requires release authority and execution.biuLimits binding for #92, and this document does not grant them. Handoff must wait for that separate release step.",
+      "The fix has no live effect until the Factory Director reinstalls and restarts the host. The retirement-threshold condition therefore stays open until deployment and an observed overlap are recorded."
+    ],
+    "next_action": "Release #92 to the PRODUCER (Morty on Claude) at baseline 0eda915 once release authority is granted and execution.biuLimits are bound. Before release, the Factory Director should state in the execution packet whether the criterion-3 control-pending tests are required to be discriminating or may be recorded as baseline-passing regression guards. The PRODUCER should first confirm _idle_reason precedence and all paths to EXECUTION_CAPACITY_UNAVAILABLE, implement the >= change with contract \u00a710 and tests, and record the negative-control evidence under docs/evidence/fdh-92/. The candidate then goes to the VERIFIER (JC on Codex).",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "Intent is explicit and singular: correct one reason classification. The owner-level decisions are already made in the text, covering contract versioning, identifier compatibility, precedence preservation, non-goals, deployment ownership and landing method. The remaining unknowns are engineering research, such as code paths, test fixtures and docs-test pinning, and belong to the PRODUCER. There is one decision center, a predicate change with its documentation and tests, so splitting is unwarranted. Acceptance is observable, and one independent VERIFIER verdict is meaningful. Rework would be localized to derive(), the \u00a710 text and the tests. The possible criterion-3 discriminating-test tension is the main coherence risk. The task's own stop-and-escalate path to the Factory Director bounds it, so it does not rise to unresolved owner intent requiring CLARIFY. Release authority is a normal pre-execution gate, not an unavailable prerequisite, so HOLD does not apply. READY recommends handoff; it does not authorize execution.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a single, cohesive, well-bounded defect fix. It changes one predicate in derive() from == to >=, keeps _idle_reason precedence unchanged, and retains EXECUTION_CAPACITY_UNAVAILABLE as a persisted compatibility identifier that may become unreachable. It updates runtime contract \u00a710 wording without a version bump, and adds adapter and host tests for claims > wipLimit in three scenarios. The owner decisions are explicitly made in the text: contract version stays 1, the identifier is kept, precedence is unchanged, and non-goals are listed. Deployment and live observation are assigned to the Factory Director after landing, outside the worker's scope. The reported evidence (three live occurrences with activeClaims=2, wipLimit=1) is taken as stated and has not been independently verified.",
+    "verification_assessment": "Acceptance is concrete and observable. There are specific input tuples (claims=2, wipLimit=1) with expected derived predicates and reason identifiers, and regression requirements for claims == and < wipLimit. There is a failing-on-baseline / passing-on-candidate negative control, a docs-consistency test, `node scripts/check.mjs all` exit 0, and a pytest run with one explicitly dispositioned non-hermetic baseline failure. A single independent VERIFIER verdict is meaningful: the VERIFIER re-runs criteria 1\u20137 on the exact SHA in its own worktree and applies the == control itself. One coherence tension exists. Criterion 5 requires each new test from criteria 1\u20133 to fail on the baseline, and the stop list halts on a discriminating test that does not fail on the baseline. The criterion-3 cases are non-suppression preservation checks and may already pass on the baseline if control precedence precedes the WIP checks. If so, they are regression guards rather than discriminators. The post-landing live observation of a WIP_INTENTIONALLY_FULL handoff overlap belongs to the Factory Director's 'DONE with proof' reporting, not to the worker verdict."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T10:45:08.274918+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 7348,
+    "input_sha256": "41fa67e27fa5349719539bc1af026c17954136133c21aa97decfafd386ba9aef",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-_golt3jy/FDH-92.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T10:44:35.343179+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "FDH-92"
+}

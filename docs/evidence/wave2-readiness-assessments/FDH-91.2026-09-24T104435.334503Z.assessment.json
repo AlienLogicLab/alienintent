@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Make the repository's Factory Director Host procedure and installer produce a host whose env file sets a PATH that resolves its tools. When the adapter cannot resolve `gh`, it must fail closed through its existing SourceUnavailable path with a diagnostic naming `gh` and the searched PATH. Host behaviour and predicates stay otherwise unchanged.",
+    "implementation_unknowns": [
+      "Where in `factory_director_inputs.py` `gh` is invoked, and whether one resolution check such as `shutil.which` with the effective PATH covers every invocation site.",
+      "How `SourceUnavailable` is currently raised and recorded as the host's `failure`. The new diagnostic must flow through that path without changing `authoritative_state` semantics or exit codes.",
+      "Whether a docs test harness exists that can assert the PATH requirement in both operations documents, so that criterion 1 has a discriminating test.",
+      "How existing installer tests stub `systemctl` and redirect `HOME`, if they do, and how to assert that an existing env file stays byte-identical.",
+      "Which exact wording and example value the docs use for PATH guidance, given that hard-coded user paths are prohibited in code but allowed as documentation examples."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The `gh` preflight could alter adapter behaviour beyond the diagnostic text, for example exit code, ordering, or when `authoritative_state` is computed. That would breach the non-goal and trigger a stop condition.",
+      "If `gh` is invoked through several code paths, a preflight covering only one could leave a residual `FileNotFoundError` traceback on another.",
+      "A discriminating test might pass on the baseline, for example a docs assertion that is too loose. That is an explicit stop condition and would require the test to be redesigned.",
+      "The known non-hermetic baseline failure could be confused with a new regression unless it is clearly separated in the evidence.",
+      "Release authority and the execution.biuLimits binding are not granted by this document. Handoff must wait for them to be recorded.",
+      "Live env file edits and service restarts are out of scope. A worker acting on the live host would violate the stated boundaries."
+    ],
+    "next_action": "Before releasing #91 to PRODUCER Morty, record release authority and bind execution.biuLimits (3 cycles, 1 replacement per phase) for #91. Then hand off against baseline `0eda915`, with independent VERIFIER JC re-running criteria 1\u20136 and evidence retained under `docs/evidence/fdh-91/`.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "READY is the controlling condition because the governing intent is clear and every owner-level decision is explicitly resolved. Those decisions are: document and seed PATH but never edit live config; name `gh` only in the adapter preflight; stay within the existing failure path; hard-code no user paths; defer deployment; land by direct merge with no PR. The three scope items are one decision center, making the documented and installed host configuration resolve its tools with a fail-closed diagnostic. Splitting would add ceremony without allowing meaningful independent rejection. CLARIFY does not apply because no material owner ambiguity remains. HOLD does not apply because the document establishes that the baseline, evidence references and routing exist. The pending release authority and biuLimits binding are the normal release gate described in the document, noted in next_action, rather than an unavailable prerequisite. Rework is localized to the adapter preflight, the installer seed block or the doc passages.",
+    "semantic_split_recommendation": [],
+    "summary": "Issue #91 is a cohesive, bounded follow-up with three coupled parts serving one outcome, a configurable host that can run its tools. The parts are: documentation that requires a PATH line and says why; installer seeding of commented PATH guidance without overwriting existing files; and a `gh` resolution preflight in `factory_director_inputs.py` that stays within the existing failure path. The following are all stated explicitly: intent, authority, non-goals, acceptance criteria, discriminating-proof obligations, baseline SHA, stop conditions and landing method. No owner decision appears unresolved. The remaining unknowns are engineering research. The document says release authority and biuLimits binding happen separately before release. That is a handoff-time gate, not a gap in intent.",
+    "verification_assessment": "The acceptance criteria are observable and mechanically checkable. Criterion 1 is document content. Criterion 2 is installer output under a temporary HOME with stubbed systemctl, plus a byte-identity check. Criterion 3 is the adapter's non-zero exit, `authoritative_state` false, a failure message naming `gh` and PATH, and no traceback. Criterion 4 is unchanged behaviour with a fake `gh`. Criterion 5 is fail-on-baseline/pass-on-candidate discrimination against `0eda915`. Criterion 6 is the repo checks, with one pre-dispositioned non-hermetic failure. All three parts serve one outcome and share one test and evidence regime. A single independent VERIFIER re-running criteria 1\u20136 on the candidate SHA therefore gives one meaningful verdict. Criterion 5 is conditional for docs ('any docs test'). The verifier should confirm how criterion 1 was proven if no discriminating docs test exists."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T10:44:58.610256+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 6743,
+    "input_sha256": "54e6d99dd7a39a86f93fa3df9914648423804963cf2d3bc20d14da4df4f0aaa1",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-t8ppow9x/FDH-91.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T10:44:35.334503+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "FDH-91"
+}
