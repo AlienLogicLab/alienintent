@@ -1,0 +1,6 @@
+test_nested_roots_and_prefixed_whitespace_are_circular (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_nested_roots_and_prefixed_whitespace_are_circular) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK

@@ -1,0 +1,17 @@
+test_composed_profile_derives_and_persists_the_fx_u4_plan (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_composed_profile_derives_and_persists_the_fx_u4_plan) ... FAIL
+
+======================================================================
+FAIL: test_composed_profile_derives_and_persists_the_fx_u4_plan (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_composed_profile_derives_and_persists_the_fx_u4_plan)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/tmp/fx-u4-345rd4ur/tests/evidence_learning/test_proof_planning.py", line 269, in test_composed_profile_derives_and_persists_the_fx_u4_plan
+    plan = self.derive()
+           ^^^^^^^^^^^^^
+  File "/tmp/fx-u4-345rd4ur/tests/evidence_learning/test_proof_planning.py", line 256, in derive
+    self.assertIsNotNone(profile.proofs, "UpstreamProfile must compose ProofPlanning")
+AssertionError: unexpectedly None : UpstreamProfile must compose ProofPlanning
+
+----------------------------------------------------------------------
+Ran 1 test in 0.069s
+
+FAILED (failures=1)

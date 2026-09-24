@@ -1,0 +1,6 @@
+test_missing_plan_ancestry_is_diagnosed (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_missing_plan_ancestry_is_diagnosed) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.001s
+
+OK

@@ -1,0 +1,4 @@
+# command: PYTHONPATH=src python3 -m pytest -q tests
+# candidate: 1dfbd30b8ac27aa9d1fd310dbccaa68b27674f83
+602 passed in 63.63s (0:01:03)
+# exit_status: 0

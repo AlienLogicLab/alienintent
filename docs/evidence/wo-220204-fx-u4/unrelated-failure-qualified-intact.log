@@ -1,0 +1,6 @@
+test_battery_refuses_unrelated_failure (tests.evidence_learning.test_proof_planning.ProofPlanDomainTests.test_battery_refuses_unrelated_failure) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.000s
+
+OK

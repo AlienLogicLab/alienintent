@@ -1,0 +1,6 @@
+test_failed_prior_proof_is_rejected (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_failed_prior_proof_is_rejected) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.058s
+
+OK

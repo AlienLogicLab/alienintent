@@ -1,14 +1,18 @@
 """Upstream profile: Inventory -> AmbiguityInspection -> DecisionResolution adapter -> existing DecisionInbox,
-plus the pinned PremiseEvidence bridge."""
+plus the pinned PremiseEvidence bridge and pre-implementation ProofPlanning over it."""
 from alienintent.context_assembly.adapters.decision_resolution import DecisionInboxQuestions
 from alienintent.context_assembly.application.ambiguity_service import AmbiguityService, UpstreamQuestionAdmission
 from alienintent.context_assembly.application.inventory_service import InventoryService
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
 from alienintent.evidence_learning.application.premise_service import PremiseEvidenceReader
+from alienintent.evidence_learning.application.proof_planning_service import ProofPlanning
 from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
 from alienintent.evidence_learning.ports.premise_evidence import PremiseEvidence
+from alienintent.evidence_learning.ports.proof_planning import PredicateMappingSource
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
+
+IMPLEMENTATION_ROOTS = ("src", "tests", "tools")
 
 
 class UpstreamProfile:
@@ -20,7 +24,9 @@ class UpstreamProfile:
 
     def __init__(self, repository: EvidenceRepository, store: OperationalStore, project: str, profile: str,
                  definition_ref: Ref, invocation: str, decision_actor: str, access_scope: frozenset[str],
-                 premise_evidence: PremiseEvidence | None = None, premise_target: str | None = None) -> None:
+                 premise_evidence: PremiseEvidence | None = None, premise_target: str | None = None,
+                 proof_mappings: PredicateMappingSource | None = None, mapping_reviewer: str | None = None,
+                 supersession_authority: str | None = None) -> None:
         self.inventory = InventoryService(repository, store, project, profile, definition_ref, invocation, access_scope)
         self.inbox = DecisionInbox(store, UpstreamQuestionAdmission(decision_actor), profile)
         self.questions = DecisionInboxQuestions(self.inbox, profile)
@@ -31,3 +37,10 @@ class UpstreamProfile:
             raise ValueError("premise_evidence and premise_target must be configured together")
         self.premises = (PremiseEvidenceReader(premise_evidence, premise_target)
                          if premise_evidence is not None and premise_target is not None else None)
+        # Proof plans are derived from reviewed mappings and the premise reader above, never from code.
+        if proof_mappings is not None and not (mapping_reviewer and supersession_authority):
+            raise ValueError("proof_mappings requires a mapping reviewer and a supersession authority")
+        self.proofs = (ProofPlanning(repository, store, proof_mappings, self.premises, project, profile, definition_ref,
+                                     invocation, mapping_reviewer, supersession_authority, IMPLEMENTATION_ROOTS,
+                                     access_scope)
+                       if proof_mappings is not None else None)

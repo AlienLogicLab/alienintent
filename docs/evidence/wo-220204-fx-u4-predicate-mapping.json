@@ -1,0 +1,99 @@
+{
+  "record_kind": "ProofPredicateMapping",
+  "schema_version": 1,
+  "requirement": {
+    "requirement_id": "SF-REQ-014",
+    "source": "docs/evidence/wave2-specified-requirements.json",
+    "locator": "candidates[requirement_id=SF-REQ-014]",
+    "revision_digest": "sha256:898c6bff3c7b2dab7257a9a416925af1034966b0e433aa6f93fe5dfe39b3c93d"
+  },
+  "design": {
+    "path": "docs/evidence/wave2-design-contracts.json",
+    "locator": "contracts[requirement_id=SF-REQ-014]",
+    "sha256": "56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242"
+  },
+  "review": {
+    "reviewer": "POSTW1-VERIFY-010",
+    "path": "docs/evidence/wave2-design-verification.json",
+    "sha256": "fa6a112c04aad34ea2b52dbd80391ff23f2dbb0fa1fdafb8b92073cb20d8492a",
+    "basis": "Predicate statements are the verified design probes of contract SF-REQ-014 (acceptance_design_trace), independently VERIFIED by POSTW1-VERIFY-010, and the SF-REQ-014 acceptance criteria text. Runnable bindings (fixture, command, endpoint, guard) are PRODUCER-authored for FX-U4 and are themselves a judgment obligation of the independent VERIFIER. Nothing here is inferred from implementation code or passing tests."
+  },
+  "predicates": [
+    {
+      "acceptance_id": "SF-REQ-014-AC-01",
+      "predicate_key": "pinned-before-implementation",
+      "kind": "MECHANICAL",
+      "statement": "Pinned predicate and fixture/expected output exist before implementation evidence.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-014-AC-01",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-014]/acceptance_design_trace/0"],
+      "fixture": "FX-U4",
+      "inputs": ["SF-REQ-014 requirement revision", "FX-U4 predicate mapping", "SF-REQ-014 design contract revision"],
+      "expected": "FEASIBLE_PLAN whose every mechanical obligation carries controlled inputs, expected result, endpoint, command, evidence schema and named guard, linked to the requirement revision; an obligation lacking any of them holds INCOMPLETE_OBLIGATION and a mapping for another revision holds REVISION_MISMATCH",
+      "endpoint": "UpstreamProfile.proofs.derive",
+      "command": "PYTHONPATH=src python3 -m unittest tests.evidence_learning.test_proof_planning -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "incomplete-obligation-accepted; revision-link-removed"
+    },
+    {
+      "acceptance_id": "SF-REQ-014-AC-02",
+      "predicate_key": "qualified-control",
+      "kind": "MECHANICAL",
+      "statement": "Qualified intact/red/restored control rejects constant success and unrelated failure.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-014-AC-02",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-014]/acceptance_design_trace/1"],
+      "fixture": "FX-U4",
+      "inputs": ["intact, fault and restored control runs with exit status, application count, failed assertions and errors"],
+      "expected": "QUALIFIED_KILL only for intact exit 0, exactly one application whose fault fails nonzero on the named assertion alone, and restored exit 0; UNCONDITIONAL_SUCCESS, ZERO_APPLICATION, OVERDETERMINED and UNRELATED_FAILURE otherwise; an implementation-derived predicate is CIRCULAR_ORACLE",
+      "endpoint": "evidence_learning.domain.battery.evaluate_control",
+      "command": "PYTHONPATH=src python3 -m unittest tests.evidence_learning.test_proof_planning -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "unconditional-success-qualified; zero-application-qualified; overdetermined-qualified; unrelated-failure-qualified; circular-oracle-accepted"
+    },
+    {
+      "acceptance_id": "SF-REQ-014-AC-03",
+      "predicate_key": "four-part-isolation",
+      "kind": "PLATFORM_ISOLATION",
+      "statement": "Four-part isolation fixture plus pinned platform capability premise avoids impossible credential-denial oracle.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-014-AC-03",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-014]/acceptance_design_trace/2",
+                       "docs/decisions/2026-09-21-sandbox-isolation-standard.md"],
+      "fixture": "FX-U4",
+      "inputs": ["U3 pinned premise mapping docs/evidence/wo-220203-fx-u3-premise-mapping.json", "retained PY-09B and PY-10 artifacts"],
+      "expected": "the plan pins the U3 PlatformIsolationPremise refs for the four observables; an obligation demanding CREDENTIAL_DENIAL or omitting an observable is U3 InfeasibleProof returned to source authority, never a plan",
+      "endpoint": "UpstreamProfile.proofs.derive via UpstreamProfile.premises.read",
+      "command": "PYTHONPATH=src python3 -m unittest tests.evidence_learning.test_proof_planning -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "premise-check-removed",
+      "premise_id": "platform-isolation:wave1-sandbox",
+      "premise_observables": ["OUTSIDE_STATE_READBACK", "OUT_OF_SCOPE_REJECTION", "POSITIVE_TARGET_ACCESS", "PROFILE_SCOPING"]
+    },
+    {
+      "acceptance_id": "SF-REQ-014-AC-04",
+      "predicate_key": "judgment-attribution-and-coverage",
+      "kind": "MECHANICAL",
+      "statement": "Judgment obligations name reviewer/inputs; deletion is a coverage hold.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-014-AC-04",
+                       "docs/evidence/wave2-design-contracts.json#contracts[SF-REQ-014]/acceptance_design_trace/3"],
+      "fixture": "FX-U4",
+      "inputs": ["a mapping with a judgment predicate", "the same mapping with a required predicate removed"],
+      "expected": "a judgment obligation without reviewer, inspection inputs or decision record holds UNATTRIBUTED_JUDGMENT; one claiming a mechanical command or PASS holds JUDGMENT_CLAIMS_MECHANICAL_PASS; an acceptance ID without a predicate holds COVERAGE_HOLD",
+      "endpoint": "UpstreamProfile.proofs.derive",
+      "command": "PYTHONPATH=src python3 -m unittest tests.evidence_learning.test_proof_planning -v",
+      "evidence_schema": ["obligation_id", "candidate_ref", "fixture_digest", "invocation", "expected", "observed", "exit_code"],
+      "guard": "judgment-attribution-removed; judgment-mechanical-pass-accepted; coverage-hold-removed"
+    },
+    {
+      "acceptance_id": "SF-REQ-014-AC-04",
+      "predicate_key": "mapping-faithfulness-judgment",
+      "kind": "JUDGMENT",
+      "statement": "The FX-U4 runnable bindings faithfully realize the verified SF-REQ-014 design probes and infer nothing from implementation.",
+      "derived_from": ["docs/evidence/wave2-specified-requirements.json#SF-REQ-014-AC-04",
+                       "docs/work-units/wave2/WO-220204.md#verification-obligations"],
+      "reviewer": "VERIFIER (JC, independent; WO-220204 allocation)",
+      "inspection_inputs": ["docs/evidence/wo-220204-fx-u4-predicate-mapping.json", "docs/evidence/wo-220204-fx-u4.md",
+                            "docs/evidence/wave2-design-contracts.json", "docs/evidence/wave2-specified-requirements.json"],
+      "decision_record": "Issue #94 VERIFIER result comment for the exact candidate SHA"
+    }
+  ],
+  "supersessions": []
+}

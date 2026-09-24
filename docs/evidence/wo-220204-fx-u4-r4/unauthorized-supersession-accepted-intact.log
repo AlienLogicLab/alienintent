@@ -1,0 +1,6 @@
+test_unauthorized_supersession_holds (tests.evidence_learning.test_proof_planning.ProofPlanningTests.test_unauthorized_supersession_holds) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.058s
+
+OK
