@@ -309,3 +309,59 @@ def test_unavailable_state_holds(tmp_path, case):
     status, output = successor(root, pointer, cwd, case)
     assert status == 2 and output["status"] == "HOLD" and output["reason"] == reason, output
     assert "document" not in output, "a hold never carries an action set"
+
+
+def _plant_manifest(profile, value):
+    from alienintent.evidence_learning.domain.records import Header, Observation
+    definition = profile.context.definition_ref
+    ref = profile.evidence.put(Observation(Header("project", "fixture", "context.manifest:planted", "planted",
+        (definition,)), definition, "context.manifest", "context-manifest/v1", (), value, None, "planted", "fx-c2"))
+    pointer = "context:manifest:" + "0" * 64
+    profile.store.commit("fixture", pointer, 0, {"schema_version": 1, "manifest_ref": asdict(ref),
+                                                 "manifest_digest": "sha256:" + "0" * 64})
+    return pointer
+
+
+@pytest.mark.parametrize("case", ["inbox_option_type", "manifest_not_json", "manifest_nan"])
+def test_malformed_inputs_hold_rather_than_raise(tmp_path, case):
+    profile = seed(tmp_path)
+    if case == "inbox_option_type":
+        version, raw = profile.store.read_state("fixture", "decision-inbox")
+        broken = json.loads(json.dumps(raw))
+        broken["open"]["item-blocked"]["options"] = ["authorize", 1]
+        profile.store.commit("fixture", "decision-inbox", version, broken)
+        assert_hold(profile.context.reconstruct(profile.context.pin()), "MALFORMED_DECISION_INBOX", "decision-inbox")
+    else:
+        pointer = _plant_manifest(profile, "not json" if case == "manifest_not_json" else "NaN")
+        assert_hold(profile.context.reconstruct(pointer), "INVALID_MANIFEST", pointer)
+
+
+def test_concurrent_pin_of_identical_state_is_equivalent(tmp_path):
+    from alienintent.context_assembly.application.reconstruction_service import ContextReconstructionService
+    profile = seed(tmp_path)
+    pointer = profile.context.pin()
+
+    class LateReader:
+        """The other pinner commits between this pinner's read and its CAS."""
+        hidden = True
+
+        def __getattr__(self, name):
+            return getattr(profile.store, name)
+
+        def read_state(self, profile_name, aggregate):
+            if aggregate == pointer and self.hidden:
+                self.hidden = False
+                return 0, {}
+            return profile.store.read_state(profile_name, aggregate)
+
+    racer = ContextReconstructionService(LateReader(), profile.evidence, project="project", profile="fixture",
+                                         invocation="fx-c2-racer")
+    assert racer.pin() == pointer
+    assert racer.reconstruct(pointer).digest == profile.context.reconstruct(pointer).digest
+
+
+def test_runner_errors_are_not_mismatches(tmp_path):
+    (tmp_path / "broken.json").write_text("{")
+    status, output = launch(["-m", "alienintent.composition.context_reconstruction", "compare",
+                             str(tmp_path / "broken.json"), str(tmp_path / "broken.json")], tmp_path)
+    assert status == 2 and output["verdict"] == "HOLD"

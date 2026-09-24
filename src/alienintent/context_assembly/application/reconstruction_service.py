@@ -13,9 +13,18 @@ from alienintent.context_assembly.ports.context_assembler import ContextAssemble
 from alienintent.evidence_learning.domain.records import Header, Observation, ref_from_document
 from alienintent.evidence_learning.domain.refs import EvidenceHold, Ref
 from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
-from alienintent.execution_coordination.ports.operational_store import OperationalStore, SchemaIncompatible, StoreUnavailable
+from alienintent.execution_coordination.ports.operational_store import (
+    OperationalStore, SchemaIncompatible, StoreUnavailable, VersionConflict,
+)
 
 _SCOPE = frozenset({"public", "private"})
+
+
+def _decoded(value: str, reason: HoldReason, ref: str) -> object:
+    try:
+        return json.loads(value)
+    except ValueError as error:
+        raise ContextHold(reason, (ref,), "undecodable body") from error
 
 
 class ContextReconstructionService(ContextAssembler):
@@ -54,12 +63,17 @@ class ContextReconstructionService(ContextAssembler):
             reader.read()
         except (InventoryHold, EvidenceHold, KeyError, TypeError, ValueError) as error:
             raise ContextHold(HoldReason.INVENTORY_UNAVAILABLE, (INVENTORY,), str(error)) from error
+        except (StoreUnavailable, SchemaIncompatible) as error:
+            raise ContextHold(HoldReason.STORE_UNAVAILABLE, (INVENTORY,), str(error)) from error
 
     def pin(self) -> str:
+        """Return the pointer for the current durable state; raises ContextHold rather than pinning a guess."""
         try:
             return self._pin()
         except EvidenceHold as error:
             raise ContextHold(HoldReason.EVIDENCE_UNAVAILABLE, (), str(error)) from error
+        except (StoreUnavailable, SchemaIncompatible) as error:
+            raise ContextHold(HoldReason.STORE_UNAVAILABLE, (), str(error)) from error
 
     def _pin(self) -> str:
         manifest = pin_manifest(self.project, self.profile, self._enumerate())
@@ -81,7 +95,13 @@ class ContextReconstructionService(ContextAssembler):
         ref = self.evidence.put(record)
         self._get(ref, pointer)
         wanted = {"schema_version": 1, "manifest_ref": asdict(ref), "manifest_digest": manifest_digest}
-        self.store.commit(self.profile, pointer, 0, wanted)
+        try:
+            self.store.commit(self.profile, pointer, 0, wanted)
+        except VersionConflict as error:
+            # A concurrent pinner of the same content is equivalent; anything else is a stale-input hold.
+            if self._read(pointer)[1].get("manifest_digest") == manifest_digest:
+                return pointer
+            raise ContextHold(HoldReason.VERSION_DRIFT, (pointer,), "concurrent pointer install") from error
         if self._read(pointer)[1] != wanted:
             raise ContextHold(HoldReason.DIGEST_MISMATCH, (pointer,), "pointer read-back differs")
         return pointer
@@ -107,8 +127,12 @@ class ContextReconstructionService(ContextAssembler):
         record = self._get(observation_ref, manifest_ref)
         if not isinstance(record, Observation) or record.evidence_id != "context.manifest" or not isinstance(record.value, str):
             raise ContextHold(HoldReason.INVALID_MANIFEST, (manifest_ref,), "manifest observation")
-        manifest = json.loads(record.value)
-        if digest(manifest) != pointer["manifest_digest"] or manifest_ref != POINTER_PREFIX + digest(manifest).removeprefix("sha256:"):
+        manifest = _decoded(record.value, HoldReason.INVALID_MANIFEST, manifest_ref)
+        try:
+            manifest_digest = digest(manifest)
+        except ValueError as error:
+            raise ContextHold(HoldReason.INVALID_MANIFEST, (manifest_ref,), "noncanonical manifest") from error
+        if manifest_digest != pointer["manifest_digest"] or manifest_ref != POINTER_PREFIX + manifest_digest.removeprefix("sha256:"):
             raise ContextHold(HoldReason.DIGEST_MISMATCH, (manifest_ref,), "manifest digest")
         manifest = validate_manifest(manifest, self.project, self.profile)
         records, versions = {}, {}
@@ -140,7 +164,8 @@ class ContextReconstructionService(ContextAssembler):
                         or body.header.logical_id != owner or body.header.revision != str(versions[owner])
                         or not isinstance(body.value, str)):
                     raise ContextHold(HoldReason.MALFORMED_RECORD, (owner,), "attention history")
-                attention.append(decode_attention(owner, versions[owner], json.loads(body.value)))
+                attention.append(decode_attention(owner, versions[owner],
+                                                  _decoded(body.value, HoldReason.MALFORMED_RECORD, owner)))
         missing = sorted(a for a, state in records.items() if a.startswith("attention:") and state
                          and a not in {e["owner"] for e in manifest["evidence"]})
         if missing:

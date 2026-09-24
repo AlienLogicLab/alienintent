@@ -231,7 +231,9 @@ def run(output, invocation):
     report["exit_status"] = 1 if report["holds"] else 0
     mapping = {"SF-REQ-053-AC-01": ["test_fresh_invocations_equal", "test_mismatch_is_failure",
         "test_conversation_not_input", "test_list_order_independent", "test_derivation_rule_uses_lifecycle",
-        "test_seen_is_not_resolved", "test_unavailable_state_holds"]}
+        "test_seen_is_not_resolved", "test_unavailable_state_holds"],
+        "supporting_hold_and_race_probes": ["test_malformed_inputs_hold_rather_than_raise",
+        "test_concurrent_pin_of_identical_state_is_equivalent", "test_runner_errors_are_not_mismatches"]}
     (output / "execution-record.json").write_text(json.dumps(report, indent=2) + "\n")
     (output / "run-report.json").write_text(json.dumps({"acceptance_to_probes": mapping,
         "focused_command": report["commands"][0], "readback_ref": report.get("readback_ref"), **probe,

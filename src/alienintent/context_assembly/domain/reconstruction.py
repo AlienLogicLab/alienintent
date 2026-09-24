@@ -16,10 +16,13 @@ EPISODE_SUBSTITUTE = "LOCAL_PROCESS_BOUNDARY_SUBSTITUTE_FOR_EPISODE"
 RULE_TEXT = (
     "LABELLED_DERIVATION_RULE_v1: for each factory:/release: item, authorized_next_action_set holds the "
     "actions execution_coordination.domain.lifecycle.transition accepts from the item's current "
-    "ExecutionState, probed on the pure value (never committed) with each action's own admission witness; "
-    "items with an open DecisionInbox entry, a PENDING/SEEN attention item or an authority block go to "
-    "blocked_set with typed reasons instead; terminal items (FactoryCoordinator.guard_account) have "
-    "neither. Output is canonically sorted."
+    "ExecutionState, probed on the pure value (never committed). Each probe supplies that action's own "
+    "admission witness (an independently read-back candidate for verify, an ACCEPT verdict for accept), so "
+    "the set names stage-permitted actions whose guards still apply when executed; close needs a bound "
+    "contract, which durable factory state does not carry, so it is never offered. Items with an open "
+    "DecisionInbox entry, a PENDING/SEEN attention item or an authority block go to blocked_set with typed "
+    "reasons instead; terminal items (FactoryCoordinator.guard_account) have neither. Output is canonically "
+    "sorted."
 )
 FIELDS = ("authorized_next_action_set", "blocked_set", "current_work", "unresolved_decisions",
           "pending_attention", "evidence_refs", "lifecycle")
@@ -138,7 +141,8 @@ def validate_manifest(manifest: object, project: str, profile: str) -> dict[str,
                 or entry["aggregate"] in aggregates):
             raise _hold(HoldReason.INVALID_MANIFEST, detail="manifest entry")
         aggregates.add(entry["aggregate"])
-    if any(not isinstance(e, dict) or set(e) != {"owner", "ref"} or e["owner"] not in aggregates
+    if any(not isinstance(e, dict) or set(e) != {"owner", "ref"} or not isinstance(e["owner"], str)
+           or e["owner"] not in aggregates
            or not isinstance(e["ref"], dict) for e in manifest["evidence"]):
         raise _hold(HoldReason.INVALID_MANIFEST, detail="manifest evidence")
     return manifest
@@ -151,7 +155,9 @@ def _valid_inbox(raw: Mapping[str, object]) -> bool:
     return (set(raw) == {"open"} and isinstance(entries, dict)
             and all(isinstance(key, str) and isinstance(value, dict) and set(value) == ESCALATION_FIELDS
                     and value["work_item"] == key and type(value["biu_version"]) is int
-                    and isinstance(value["options"], list) for key, value in entries.items()))
+                    and isinstance(value["decision"], str) and isinstance(value["reason"], str)
+                    and isinstance(value["options"], list) and all(isinstance(o, str) for o in value["options"])
+                    for key, value in entries.items()))
 
 
 def decode_decision_inbox(raw: Mapping[str, object]) -> tuple[dict[str, object], ...]:
@@ -160,7 +166,7 @@ def decode_decision_inbox(raw: Mapping[str, object]) -> tuple[dict[str, object],
         raise _hold(HoldReason.MALFORMED_DECISION_INBOX, "decision-inbox")
     entries = raw.get("open", {})
     return tuple({"work_item": key, "biu_version": value["biu_version"], "decision": value["decision"],
-                  "reason": value["reason"], "options": sorted(value["options"])}
+                  "reason": value["reason"], "options": list(value["options"])}
                  for key, value in sorted(entries.items()))
 
 
