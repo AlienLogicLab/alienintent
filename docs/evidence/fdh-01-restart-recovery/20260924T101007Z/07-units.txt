@@ -1,0 +1,6 @@
+alienintent-factory-director-host.service active running
+alienintent-liveness.service active running
+alienintent-observer.service active running
+alienintent-sandbox-tunnel.service active running
+alienintent.service active running
+alienintent-project-add-probe.timer active waiting

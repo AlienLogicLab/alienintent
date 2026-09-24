@@ -1,0 +1,1 @@
+D not alive after restart (may have exited normally; see exit record)

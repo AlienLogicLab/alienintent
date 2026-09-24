@@ -1,0 +1,5 @@
+alienintent-factory-director-host.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+alienintent-factory-director-host.service: Found left-over process 300344 (raindrop) in control group while starting unit. Ignoring.
+alienintent-factory-director-host.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+Started alienintent-factory-director-host.service - AlienIntent non-cognizant Factory Director Host.
+{"episode_id": "factory-director-2fedb264af7b40339c273d775bef46ee", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}

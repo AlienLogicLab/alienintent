@@ -1,0 +1,126 @@
+Started alienintent-factory-director-host.service - AlienIntent non-cognizant Factory Director Host.
+{"episode_id": null, "reason": "AUTHORITATIVE_STATE_UNAVAILABLE", "state": "REFUSED"}
+{"episode_id": null, "reason": "AUTHORITATIVE_STATE_UNAVAILABLE", "state": "REFUSED"}
+{"episode_id": null, "reason": "AUTHORITATIVE_STATE_UNAVAILABLE", "state": "REFUSED"}
+Stopping alienintent-factory-director-host.service - AlienIntent non-cognizant Factory Director Host...
+Stopped alienintent-factory-director-host.service - AlienIntent non-cognizant Factory Director Host.
+Started alienintent-factory-director-host.service - AlienIntent non-cognizant Factory Director Host.
+{"episode_id": "factory-director-eeb12163b1f84428bafed8b9f46ac7e9", "reason": "DIRECTOR_CONTINUITY_FAULT", "state": "ACTIVE"}
+{"episode_id": "factory-director-eeb12163b1f84428bafed8b9f46ac7e9", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": "factory-director-eeb12163b1f84428bafed8b9f46ac7e9", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": "factory-director-eeb12163b1f84428bafed8b9f46ac7e9", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "EXECUTION_CAPACITY_UNAVAILABLE", "state": "REFUSED"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "EXECUTION_CAPACITY_UNAVAILABLE", "state": "REFUSED"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": "factory-director-7e7fbb7bc9e043448674a2460f898ade", "reason": "PRIOR_EPISODE_EXITED_CONTROL_REMAINS", "state": "ACTIVE"}
+{"episode_id": "factory-director-7e7fbb7bc9e043448674a2460f898ade", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": "factory-director-7e7fbb7bc9e043448674a2460f898ade", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": "factory-director-7e7fbb7bc9e043448674a2460f898ade", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": "factory-director-2337f1d97818428596ff751ca5a389b0", "reason": "PRIOR_EPISODE_EXITED_CONTROL_REMAINS", "state": "ACTIVE"}
+{"episode_id": "factory-director-2337f1d97818428596ff751ca5a389b0", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": "factory-director-2337f1d97818428596ff751ca5a389b0", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "NO_ELIGIBLE_AUTHORIZED_WORK", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": "factory-director-129e5313714742efa0eedfdbd6781f45", "reason": "PRIOR_EPISODE_EXITED_CONTROL_REMAINS", "state": "ACTIVE"}
+{"episode_id": "factory-director-129e5313714742efa0eedfdbd6781f45", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "NO_ELIGIBLE_AUTHORIZED_WORK", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "WIP_INTENTIONALLY_FULL", "state": "IDLE"}
+{"episode_id": null, "reason": "NO_ELIGIBLE_AUTHORIZED_WORK", "state": "IDLE"}
+{"episode_id": "factory-director-2fedb264af7b40339c273d775bef46ee", "reason": "PRIOR_EPISODE_EXITED_CONTROL_REMAINS", "state": "ACTIVE"}
+Stopping alienintent-factory-director-host.service - AlienIntent non-cognizant Factory Director Host...
+alienintent-factory-director-host.service: Unit process 300296 (claude) remains running after unit stopped.
+alienintent-factory-director-host.service: Unit process 300343 (MainThread) remains running after unit stopped.
+alienintent-factory-director-host.service: Unit process 300344 (raindrop) remains running after unit stopped.
+Stopped alienintent-factory-director-host.service - AlienIntent non-cognizant Factory Director Host.
+alienintent-factory-director-host.service: Consumed 4min 17.428s CPU time, 412.8M memory peak, 0B memory swap peak.
+alienintent-factory-director-host.service: Found left-over process 300296 (claude) in control group while starting unit. Ignoring.
+alienintent-factory-director-host.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+alienintent-factory-director-host.service: Found left-over process 300343 (MainThread) in control group while starting unit. Ignoring.
+alienintent-factory-director-host.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+alienintent-factory-director-host.service: Found left-over process 300344 (raindrop) in control group while starting unit. Ignoring.
+alienintent-factory-director-host.service: This usually indicates unclean termination of a previous run, or service implementation deficiencies.
+Started alienintent-factory-director-host.service - AlienIntent non-cognizant Factory Director Host.
+{"episode_id": "factory-director-2fedb264af7b40339c273d775bef46ee", "reason": "DIRECTOR_EPISODE_ACTIVE", "state": "ACTIVE"}
+{"episode_id": null, "reason": "NO_ELIGIBLE_AUTHORIZED_WORK", "state": "IDLE"}
