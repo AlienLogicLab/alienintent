@@ -103,7 +103,7 @@ These pins stay valid for their own units. Each one pins the baseline revision i
 
 These consumers need updating, but that is the Director's re-compilation step and out of scope here: `docs/work-units/wave2/WO-220207.md` and `docs/evidence/wave2-execution-packets/WO-220207.{packet,allocation}.json`, plus the WO-220207 draft proof packet. They carry the pre-repair candidate (digest `b2c56f51…dcb6`) and the stale AUTHORITY_GAP_HOLD text. They are stale by design until WO-220207 is re-compiled. They were not touched.
 
-`docs/evidence/wave2-founder-approval-packet.json`, `wave2-agent-ready-assessments.json` and `wave2-design-verification.json` embed the Phase 11/12 text as historical snapshots. They are not digest pins. The 2026-09-22 re-specification left them unchanged, and this repair does the same.
+`docs/evidence/wave2-founder-approval-packet.json`, `wave2-agent-ready-assessments.json` and `wave2-design-verification.json` embed the Phase 11/12 text as historical snapshots. `wave2-agent-ready-assessments.json` and `wave2-founder-approval-packet.json` also carry `contract_sha256: b2c56f51…` for the bound historical assessment `POSTW1-READY-013:WO-220207:1` (baseline `01af974`, disposition BLOCKED). That assessment stays valid as history for its own baseline. It does not apply to the repaired candidate, which needs a fresh native Agent Ready run. The 2026-09-22 re-specification left them unchanged, and this repair does the same.
 
 ## Recorded, not repaired (other units; DV-19 rule)
 
@@ -136,3 +136,18 @@ A structural comparison against `710da90` found changes only at the pointers lis
 ## Next action
 
 The next step is an independent review of this repair, as the candidate stop rule requires. After that review, the Factory Director re-compiles WO-220207, re-checks U-1 to U-11, pins the FX-U7 packet and runs native Agent Ready. The WO-220207 contract has no dependency on the Issue #101 title, but the Issue title still reads "explicit allocation hold" and the Director may align it.
+
+## Independent review
+
+A fresh read-only reviewer who did not author the change gave the verdict **ACCEPT_WITH_NOTES**, with no blocking defects.
+
+The reviewer:
+- matched every changed pointer exactly against `D#/nodes/9`, `S#/candidates/2` and `C#/contracts/2`;
+- ran a recursive structural diff, which showed only the claimed pointers moved;
+- checked that re-serialization is byte-identical;
+- recomputed the digests;
+- ran all five checkers (PASS) and `pytest tools/evidence` (351 passed).
+
+The title/intent change was judged within the repair, because it is the verbatim node title. Note N1, the assessment-digest wording above, is corrected here. Note N2 (the full old digest at line 18 of the WO-220207 draft proof packet) is superseded at re-compile. Note N3 covers the deferred items for U8/A, which are already listed above.
+
+Landed by Factory Director episode `factory-director-4370af4e4d824430a4f3a580cf207686`.
