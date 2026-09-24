@@ -1,0 +1,27 @@
+[
+  {
+    "path": "docs/evidence/elsewhere/WO-220202.s.assessment.json",
+    "resolved_path": "None",
+    "expected_exit": 1,
+    "observed_exit": 1,
+    "stdout": "BIU #901: status=READY agent_ready=None baseline=6db812abfed01bf8a99b573ab2543fe6b3c170f5 resolves=True ancestral=True\nREFUSED: do not transition and do not launch a worker.\n  - agent_ready: Agent-Ready disposition is None, not READY.\n",
+    "stderr": "release point origin/main -> a5912b8821e3fd8cf14cb27ac60593a6bf82d270 (fetched) in /tmp/brd83-jc-path-y7wz4w9c/work\n"
+  },
+  {
+    "path": "docs/evidence/wave2-readiness-assessments/../../../WO-220202.s.assessment.json",
+    "resolved_path": "None",
+    "expected_exit": 1,
+    "observed_exit": 1,
+    "stdout": "BIU #901: status=READY agent_ready=None baseline=6db812abfed01bf8a99b573ab2543fe6b3c170f5 resolves=True ancestral=True\nREFUSED: do not transition and do not launch a worker.\n  - agent_ready: Agent-Ready disposition is None, not READY.\n",
+    "stderr": "release point origin/main -> a5912b8821e3fd8cf14cb27ac60593a6bf82d270 (fetched) in /tmp/brd83-jc-path-y7wz4w9c/work\n"
+  },
+  {
+    "path": "docs/evidence/wave2-readiness-assessments/ARP/WO-220202.s.assessment.json",
+    "resolved_path": "None",
+    "expected_exit": 1,
+    "observed_exit": 1,
+    "stdout": "BIU #901: status=READY agent_ready=None baseline=6db812abfed01bf8a99b573ab2543fe6b3c170f5 resolves=True ancestral=True\nREFUSED: do not transition and do not launch a worker.\n  - agent_ready: Agent-Ready disposition is None, not READY.\n",
+    "stderr": "release point origin/main -> a5912b8821e3fd8cf14cb27ac60593a6bf82d270 (fetched) in /tmp/brd83-jc-path-y7wz4w9c/work\n"
+  }
+]
+original=0

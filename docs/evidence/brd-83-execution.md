@@ -244,3 +244,86 @@ Every variant passes intact, fails under the permissive change, and passes again
 `git diff c278f04 247e139 --stat` touches only the four `tools/live/` files. Every other finding
 of the earlier record stands, including the #80/#81 report: they still need the native-receipt
 fallback.
+
+## Repair cycle 2 — JC REJECT of `9b42ad5` (R1, prefixed Wave 1 directory)
+
+- **Invocation:** `AlienLogicLab/alienintent#83:PRODUCER:f552e39b-2477-4052-9d30-17112e3158a8`.
+- **Branch:** runtime-managed `b-disp/3dac0d9e-88fc-45cf-a499-e6e298726ebd`, built on the rejected
+  candidate `9b42ad5`. The import custody (`1439457`) and all earlier commits are kept.
+- **Rejection:** JC, `AlienLogicLab/alienintent#83:VERIFIER:12961a6a-6f0c-41c3-b217-179f1ea0ba43`.
+  Evidence is at `7878265` on `b-disp/a5106d95-091b-4c98-8141-c4b1492677e8`
+  (`docs/evidence/brd-83-jc-12961a6a/`).
+
+### Cause
+
+`_wave1_biu` accepted any prefix that *ended* in `docs/work-units/python/` and then substituted
+the canonical Wave 1 path. So `docs/evidence/elsewhere/docs/work-units/python/PY-05.assessment.json`
+and `docs/evidence/wave2-readiness-assessments/ARP/docs/work-units/python/PY-05.assessment.json`
+both resolved to `docs/work-units/python/PY-05.assessment.json` and admitted it, although neither
+citation names that file.
+
+### Repair (`5b98a61`)
+
+`WAVE1_PREFIX` must match the **whole** prefix (`fullmatch`). Only two forms are accepted:
+
+- exactly `docs/work-units/python/` (the repository path); or
+- `https://github.com/AlienLogicLab/alienintent/blob/<ref>/docs/work-units/python/`, where `<ref>`
+  is one segment, `[A-Za-z0-9][\w.-]*` (a branch name such as `main`, or a commit SHA).
+
+A bare `<BIU>.assessment.json` is still accepted, as before. The separate `..` segment check is
+removed because the exact prefix subsumes it: no accepted prefix can contain a `..` segment. Its
+proven-red variant now targets the ref grammar. `_wave1_biu` is the only function changed since
+`9b42ad5`. `admit`, `biu_from_body`, `disposition_from_record`, `disposition_from_native_comment` and
+`project_status_from_issue` remain AST-identical to the import `1439457`. `main` is unchanged since
+`9b42ad5`. See `brd-83/repair-2/ast-identity.txt`, produced by `ast-identity.py`.
+
+Now rejected: any other leading path (`x/`, `/`, `./`, `docs/evidence/elsewhere/`, `…/ARP/`), a blob
+URL with a multi-segment ref or a `..` segment, and a URL of another repository, host, scheme or
+view (`/tree/`). Refs containing `/` are not accepted because they cannot be told apart from a
+path. No Issue on record uses one.
+
+### Proof
+
+- JC's `prefix-probe.py` (from `7878265`) exits **0**: both citations refuse with exit 1 and resolve
+  to `None`. JC's original three-path probe also still exits 0. Both are retained, with logs, as
+  `brd-83/repair-2/jc-*-probe.{py,log}`.
+- A new whole-CLI fixture test, `test_a_prefixed_wave1_directory_never_admits_through_the_wave1_record`,
+  covers 6 cases: JC's two prefixes and a foreign-repository blob URL, each with a PY- and a
+  WO-shaped identifier. In each case the canonical Wave 1 record is READY at the release point and
+  no native receipt exists.
+- A positive CLI test, `test_a_wave1_record_cited_by_its_blob_url_is_still_admitted`, and a unit
+  test for a blob URL at a commit SHA cover the preserved form.
+- New unit tests: `test_a_wave1_directory_under_another_prefix_is_rejected` (10 cases),
+  `test_a_wave1_blob_url_with_a_multi_segment_ref_is_rejected`,
+  `test_a_wave1_url_that_is_not_a_blob_of_this_repository_is_rejected` (4 cases), and a blob-URL
+  `..` case added to `test_a_wave1_record_reached_through_a_parent_segment_is_rejected`.
+- **Proven red (`aee90b8`): 30/30.** Three variants are retargeted because their guard source
+  changed (`wave1_any_directory`, `wave1_parent_segment_allowed` and
+  `wave1_directory_path_not_recognised`). Seven are new:
+  - `wave1_directory_is_a_suffix`: the exact rejected cycle-1 composition, against the whole CLI;
+  - `wave1_directory_is_a_suffix_unit`: the same composition, against the unit test;
+  - `wave1_prefix_is_searched`;
+  - `wave1_blob_ref_multi_segment`;
+  - `wave1_any_blob_url`;
+  - `wave1_blob_url_not_recognised`;
+  - `wave1_blob_url_at_a_commit_not_recognised`.
+- **Compatibility:** `citation-compatibility.py` read every Issue body **and every Issue comment**
+  (84 bodies, 256 comments; read-only `gh api`) and compared `9b42ad5` with the repair. 39 texts
+  resolve a record and **0 differ**. That includes every Wave 1 body (#2, #50–#58, #68). The #80/#81
+  report is unchanged: they still need the native-receipt fallback.
+
+### Results at `aee90b8` (the proven revision; the evidence commit touches only `docs/`)
+
+| Command | Exit | Result | Log (sha256) |
+|---|---|---|---|
+| `python3 -m pytest -q -p no:cacheprovider tools/live/test_release_admission.py tools/live/test_release_admission_release_point.py` | 0 | 95 passed (72 before + 23 new) | `brd-83/repair-2/release-admission-tests.log` (`c48ce162…a4ce`) |
+| `python3 tools/live/brd83_proven_red.py --json` | 0 | 30/30 proven red | `brd-83/repair-2/proven-red.json` (`984636f4…706a`) |
+| `python3 docs/evidence/brd-83/repair-2/jc-prefix-probe.py` | 0 | both prefixed citations refuse, exit 1 | `brd-83/repair-2/jc-prefix-probe.log` (`a9ace551…14cb`) |
+| `python3 -m pytest -q -p no:cacheprovider tools` | 1 | 763 passed. 1 failed: only the known non-hermetic `test_director.py::test_substantial_technical_analysis_routes_to_codex_primary`, which is unmodified. | `brd-83/repair-2/python-tools.log` (`0e3d4931…5a87`) |
+| `PYTHONPATH=src python3 -m pytest -q -p no:cacheprovider tests` | 0 | 551 passed | `brd-83/repair-2/python-tests.log` (`d2a0796c…8671`) |
+| `node scripts/check.mjs all` | 0 | 340 + 18 + 3 pass, 0 fail | `brd-83/repair-2/check-all.log` (`a0bf1599…a24`) |
+| `python3 -m pytest -q -p no:cacheprovider tools/live/test_project_materialization.py` | 0 | 12 passed | `brd-83/repair-2/project-materialization.log` (`c9055288…b633`) |
+
+`git diff 9b42ad5 aee90b8 --stat` touches only the four `tools/live/` files (127 insertions, 6
+deletions). I opened no pull request, pushed nothing to `main`, made no Project or Issue mutation
+and did not switch the live gate.
