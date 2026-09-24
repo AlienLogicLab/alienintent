@@ -109,9 +109,12 @@ def refresh_release_point(root, release_point: str) -> bool | None:
     """Fetch a remote-tracking release point before reading it: a stale origin/main in the
     shared checkout hides a newly landed record exactly as the working tree did. None when
     the release point is not `<remote>/<branch>`; otherwise whether the fetch succeeded. A
-    failed fetch is reported, not fatal: the gate then reads the local ref as it stands."""
+    failed fetch is reported, not fatal: the gate then reads the local ref as it stands.
+    Neither part may start with `-`: `git fetch` would take it as an option."""
     remote, _, branch = release_point.partition("/")
-    if not branch or _git(root, "remote", "get-url", remote).returncode != 0:
+    if not branch or remote.startswith("-") or branch.startswith("-"):
+        return None
+    if _git(root, "remote", "get-url", remote).returncode != 0:
         return None
     return _git(root, "fetch", "--quiet", remote, branch).returncode == 0
 

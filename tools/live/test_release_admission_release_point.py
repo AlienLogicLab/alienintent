@@ -264,3 +264,15 @@ def test_the_gate_only_reads_from_github(world):
     assert verbs and all(v in (["issue", "view"], ["project", "item-list"]) or v[0] == "api"
                          for v in verbs), verbs
     assert all("-X" not in call and "--method" not in call for call in world.gh_calls())
+
+
+def test_a_release_point_shaped_like_an_option_is_never_passed_to_fetch(world):
+    world.issue(body="no record path here")
+
+    result = subprocess.run([sys.executable, str(GATE), str(ISSUE), "origin/--upload-pack=touch PWNED"],
+                            cwd=world.root, env={**world.env, "ALIENINTENT_WORKDIR": str(world.work)},
+                            capture_output=True, text=True)
+
+    assert result.returncode == 1, result.stdout
+    assert not (world.work / "PWNED").exists()
+    assert "(not a remote ref)" in result.stderr

@@ -50,6 +50,12 @@ VARIANTS: tuple[tuple[str, str, str, str], ...] = (
         f"{FIXTURE}::test_a_record_landed_at_the_release_point_but_absent_from_the_checkout_is_found",
     ),
     (
+        "fetch_takes_an_option_shaped_branch",
+        '    if not branch or remote.startswith("-") or branch.startswith("-"):\n',
+        "    if not branch:\n",
+        f"{FIXTURE}::test_a_release_point_shaped_like_an_option_is_never_passed_to_fetch",
+    ),
+    (
         "identifier_admits_dots_and_slashes",
         'r"([A-Za-z0-9-]+\\.',
         'r"([A-Za-z0-9./-]+\\.',
