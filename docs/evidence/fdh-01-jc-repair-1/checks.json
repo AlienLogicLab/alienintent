@@ -1,0 +1,198 @@
+{
+  "candidate_revision": "b0c66a72aaa799c865ffe759749395a2ddff0e6a",
+  "invocation": "AlienLogicLab/alienintent#89:VERIFIER:fd9c0f9a-bd8a-4363-9a79-f7c3bb2ca15d",
+  "contract_sha256": "01a0ab5961dd5877531c4527620c2f2b905763f454af7dbdefb5d29ba24187d1",
+  "controls": [
+    {
+      "control": "board-read-failure-swallowed",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-incomplete]",
+      "discriminated": true
+    },
+    {
+      "control": "non-issue-item-ignored",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[board-non-issue-item]",
+      "discriminated": true
+    },
+    {
+      "control": "state-file-missing-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-missing]",
+      "discriminated": true
+    },
+    {
+      "control": "state-file-unparsable-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[state-file-unparsable]",
+      "discriminated": true
+    },
+    {
+      "control": "hold-record-absent-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-absent]",
+      "discriminated": true
+    },
+    {
+      "control": "hold-record-unparsable-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[hold-record-unparsable]",
+      "discriminated": true
+    },
+    {
+      "control": "inbox-absent-defaulted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_malformed_or_unavailable_source_fails_closed[inbox-directory-absent]",
+      "discriminated": true
+    },
+    {
+      "control": "hold-idles-everything",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_hold_on_some_ready_items_does_not_idle_while_another_ready_item_is_unheld",
+      "discriminated": true
+    },
+    {
+      "control": "hold-covers-ready-only",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_held_unclaimed_implement_issue_does_not_make_control_required",
+      "discriminated": true
+    },
+    {
+      "control": "inbox-receipts-ignored",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it",
+      "discriminated": true
+    },
+    {
+      "control": "successor-reuses-episode-id",
+      "test": "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles",
+      "discriminated": true
+    },
+    {
+      "control": "full-wip-suppresses-director-control",
+      "test": "tools/orchestration/test_factory_director_host.py::test_director_only_control_launches_even_when_worker_wip_is_full",
+      "discriminated": true
+    },
+    {
+      "control": "claude-session-continued",
+      "test": "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[claude]",
+      "discriminated": true
+    },
+    {
+      "control": "codex-session-persisted",
+      "test": "tools/orchestration/test_factory_director_host.py::test_no_command_resumes_or_continues_a_conversation[codex]",
+      "discriminated": true
+    },
+    {
+      "control": "isolation-check-disabled",
+      "test": "tools/orchestration/test_factory_director_host.py::test_launcher_refuses_a_workdir_that_is_not_a_linked_worktree",
+      "discriminated": true
+    },
+    {
+      "control": "provider-model-not-recorded",
+      "test": "tools/orchestration/test_factory_director_host.py::test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles",
+      "discriminated": true
+    },
+    {
+      "control": "escalation-receipt-ignored",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_escalation_is_resolved_by_a_director_receipt_for_that_exact_escalation",
+      "discriminated": true
+    },
+    {
+      "control": "assessment-provenance-ignored",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_assessment_marker_counts_only_from_an_authorized_operator",
+      "discriminated": true
+    },
+    {
+      "control": "foreign-repository-item-accepted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_other_inconsistent_sources_also_fail_closed[foreign-repository-item]",
+      "discriminated": true
+    },
+    {
+      "control": "unreadable-pause-means-unpaused",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_unreadable_pause_location_fails_closed_rather_than_unpaused",
+      "discriminated": true
+    },
+    {
+      "control": "crash-loop-guard-removed",
+      "test": "tools/orchestration/test_factory_director_host.py::test_repeated_fast_exits_back_off_instead_of_relaunching_every_second",
+      "discriminated": true
+    },
+    {
+      "control": "unleased-child-kept",
+      "test": "tools/orchestration/test_factory_director_host.py::test_pre_bind_launch_failure_kills_the_child_and_does_not_block_later_launches",
+      "discriminated": true
+    },
+    {
+      "control": "done-escalation-still-attention",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_escalation_for_an_issue_that_reached_done_is_resolved",
+      "discriminated": true
+    },
+    {
+      "control": "foreign-editor-trusted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_operator_comment_edited_by_someone_else_is_ignored",
+      "discriminated": true
+    },
+    {
+      "control": "streak-survives-idle",
+      "test": "tools/orchestration/test_factory_director_host.py::test_failure_streak_resets_when_the_factory_goes_idle",
+      "discriminated": true
+    },
+    {
+      "control": "progress-counted-as-crash",
+      "test": "tools/orchestration/test_factory_director_host.py::test_short_clean_episodes_that_changed_state_are_not_crashes",
+      "discriminated": true
+    },
+    {
+      "control": "launch-failure-not-counted",
+      "test": "tools/orchestration/test_factory_director_host.py::test_repeated_launch_failures_back_off",
+      "discriminated": true
+    },
+    {
+      "control": "late-exit-unrecorded",
+      "test": "tools/orchestration/test_factory_director_host.py::test_an_exit_between_observation_and_lease_check_is_still_recorded_and_counted",
+      "discriminated": true
+    },
+    {
+      "control": "projection-used-as-progress",
+      "test": "tools/orchestration/test_factory_director_host.py::test_short_episodes_that_advance_durable_state_under_the_same_projection_are_progress",
+      "discriminated": true
+    },
+    {
+      "control": "brief-idle-cancels-back-off",
+      "test": "tools/orchestration/test_factory_director_host.py::test_a_brief_idle_does_not_cancel_a_pending_back_off",
+      "discriminated": true
+    },
+    {
+      "control": "unknown-editor-trusted",
+      "test": "tools/orchestration/test_factory_director_inputs.py::test_marker_in_an_edited_comment_with_an_unknown_editor_is_ignored",
+      "discriminated": true
+    },
+    {
+      "control": "permission-mode-unchecked",
+      "test": "tools/orchestration/test_factory_director_host.py::test_permission_mode_must_belong_to_the_configured_provider[codex-bypassPermissions]",
+      "discriminated": true
+    },
+    {
+      "control": "exit-before-wait-sleeps",
+      "test": "tools/orchestration/test_factory_director_host.py::test_exit_before_wait_reconciles_at_once_without_sleeping",
+      "discriminated": true
+    },
+    {
+      "control": "non-holder-spins-on-exit",
+      "test": "tools/orchestration/test_factory_director_host.py::test_a_host_without_the_lock_waits_the_interval_for_an_exited_episode",
+      "discriminated": true
+    },
+    {
+      "control": "lease-keys-strict-subset",
+      "test": "tools/orchestration/test_factory_director_host.py::test_extended_lease_missing_a_required_key_refuses_without_crash[pid]",
+      "discriminated": true
+    }
+  ],
+  "actor": "JC",
+  "observations": 105,
+  "fault_applications": 35,
+  "exit_statuses": {
+    "intact": [
+      0
+    ],
+    "fault": [
+      1
+    ],
+    "restored": [
+      0
+    ]
+  },
+  "capture_source": "/tmp/fdh89-codex-probe2.jsonl",
+  "capture_sha256": "5be49f59282d2fc5656acbf0ba0a6239e35167252c83932a936b9c2935e770f5"
+}
