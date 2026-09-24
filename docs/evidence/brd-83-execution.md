@@ -316,12 +316,12 @@ path. No Issue on record uses one.
 
 | Command | Exit | Result | Log (sha256) |
 |---|---|---|---|
-| `python3 -m pytest -q -p no:cacheprovider tools/live/test_release_admission.py tools/live/test_release_admission_release_point.py` | 0 | 95 passed (72 before + 23 new) | `brd-83/repair-2/release-admission-tests.log` (`c48ce162…a4ce`) |
+| `python3 -m pytest -q -p no:cacheprovider tools/live/test_release_admission.py tools/live/test_release_admission_release_point.py` | 0 | 95 passed (72 before + 23 new) | `brd-83/repair-2/release-admission-tests.log` (`c48ce162…dd8c`) |
 | `python3 tools/live/brd83_proven_red.py --json` | 0 | 30/30 proven red | `brd-83/repair-2/proven-red.json` (`984636f4…706a`) |
 | `python3 docs/evidence/brd-83/repair-2/jc-prefix-probe.py` | 0 | both prefixed citations refuse, exit 1 | `brd-83/repair-2/jc-prefix-probe.log` (`a9ace551…14cb`) |
 | `python3 -m pytest -q -p no:cacheprovider tools` | 1 | 763 passed. 1 failed: only the known non-hermetic `test_director.py::test_substantial_technical_analysis_routes_to_codex_primary`, which is unmodified. | `brd-83/repair-2/python-tools.log` (`0e3d4931…5a87`) |
 | `PYTHONPATH=src python3 -m pytest -q -p no:cacheprovider tests` | 0 | 551 passed | `brd-83/repair-2/python-tests.log` (`d2a0796c…8671`) |
-| `node scripts/check.mjs all` | 0 | 340 + 18 + 3 pass, 0 fail | `brd-83/repair-2/check-all.log` (`a0bf1599…a24`) |
+| `node scripts/check.mjs all` | 0 | 340 + 18 + 3 pass, 0 fail | `brd-83/repair-2/check-all.log` (`a0bf1599…2a24`) |
 | `python3 -m pytest -q -p no:cacheprovider tools/live/test_project_materialization.py` | 0 | 12 passed | `brd-83/repair-2/project-materialization.log` (`c9055288…b633`) |
 
 `git diff 9b42ad5 aee90b8 --stat` touches only the four `tools/live/` files (127 insertions, 6
