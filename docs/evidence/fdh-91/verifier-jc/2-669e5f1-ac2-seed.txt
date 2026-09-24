@@ -1,0 +1,20 @@
+F                                                                        [100%]
+=================================== FAILURES ===================================
+_______ test_installer_seeds_a_new_env_file_with_commented_path_guidance _______
+
+tmp_path = PosixPath('/tmp/pytest-of-netmarine/pytest-1687/test_installer_seeds_a_new_env0')
+
+    def test_installer_seeds_a_new_env_file_with_commented_path_guidance(tmp_path):
+        result = run_installer(tmp_path)
+        assert result.returncode == 0, result.stderr
+        env_file = tmp_path / ".config/alienintent/factory-director-host.env"
+        lines = env_file.read_text().splitlines()
+        assert all(line.startswith("#") for line in lines), lines  # guidance only: sets nothing
+>       assert f"# PATH={tmp_path}/.local/bin:/usr/local/bin:/usr/bin:/bin" in lines
+E       AssertionError: assert '# PATH=/tmp/pytest-of-netmarine/pytest-1687/test_installer_seeds_a_new_env0/.local/bin:/usr/local/bin:/usr/bin:/bin' in ['# Set FACTORY_DIRECTOR_WORKTREE to a dedicated linked worktree, never main.', '# Set GH_CONFIG_DIR to a gh configuration that can read Project #1 and Issue comments.']
+
+tools/orchestration/test_factory_director_docs.py:199: AssertionError
+=========================== short test summary info ============================
+FAILED tools/orchestration/test_factory_director_docs.py::test_installer_seeds_a_new_env_file_with_commented_path_guidance
+1 failed in 0.11s
+exit=1

@@ -1,0 +1,50 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+______ test_unresolvable_gh_fails_closed_naming_gh_and_the_searched_path _______
+
+sources = <test_factory_director_inputs.Sources object at 0x7d760834f080>
+tmp_path = PosixPath('/tmp/pytest-of-netmarine/pytest-1688/test_unresolvable_gh_fails_clo0')
+
+    def test_unresolvable_gh_fails_closed_naming_gh_and_the_searched_path(sources, tmp_path):
+        sources.issue(60, "READY")
+        empty = tmp_path / "no-gh-here"
+        empty.mkdir()
+
+        result = run_adapter_cli(sources, str(empty))
+
+        assert result.returncode != 0
+        assert "Traceback" not in result.stdout + result.stderr
+        output = json.loads(result.stdout)
+        assert output["inputs"]["authoritative_state"] is False
+        assert not any(output["inputs"].values())
+>       assert "'gh'" in output["failure"] and f"PATH={str(empty)!r}" in output["failure"]
+E       assert ("'gh'" in "Project board read failed: [Errno 2] No such file or directory: 'gh'" and "PATH='/tmp/pytest-of-netmarine/pytest-1688/test_unresolvable_gh_fails_clo0/no-gh-here'" in "Project board read failed: [Errno 2] No such file or directory: 'gh'")
+
+tools/orchestration/test_factory_director_inputs.py:715: AssertionError
+________ test_host_records_the_unresolvable_gh_failure_with_the_refusal ________
+
+sources = <test_factory_director_inputs.Sources object at 0x7d7608351820>
+tmp_path = PosixPath('/tmp/pytest-of-netmarine/pytest-1688/test_host_records_the_unresolv0')
+monkeypatch = <_pytest.monkeypatch.MonkeyPatch object at 0x7d7608351670>
+
+    def test_host_records_the_unresolvable_gh_failure_with_the_refusal(sources, tmp_path, monkeypatch):
+        sources.issue(61, "READY")
+        empty = tmp_path / "no-gh-here"
+        empty.mkdir()
+        monkeypatch.setenv("PATH", str(empty))
+        host_root = sources.root / "host-state"
+
+        result = FactoryDirectorHost(host_root, AuthoritativeDirectorInputs(sources.config, sources.projection),
+                                     InMemoryDirectorLauncher()).reconcile()
+
+        assert result.reason == "AUTHORITATIVE_STATE_UNAVAILABLE"
+        record = json.loads((host_root / "history.jsonl").read_text().splitlines()[-1])
+>       assert "'gh'" in record["failure"] and f"PATH={str(empty)!r}" in record["failure"]
+E       assert ("'gh'" in "Project board read failed: [Errno 2] No such file or directory: 'gh'" and "PATH='/tmp/pytest-of-netmarine/pytest-1688/test_host_records_the_unresolv0/no-gh-here'" in "Project board read failed: [Errno 2] No such file or directory: 'gh'")
+
+tools/orchestration/test_factory_director_inputs.py:732: AssertionError
+=========================== short test summary info ============================
+FAILED tools/orchestration/test_factory_director_inputs.py::test_unresolvable_gh_fails_closed_naming_gh_and_the_searched_path
+FAILED tools/orchestration/test_factory_director_inputs.py::test_host_records_the_unresolvable_gh_failure_with_the_refusal
+2 failed in 0.46s
+exit=1

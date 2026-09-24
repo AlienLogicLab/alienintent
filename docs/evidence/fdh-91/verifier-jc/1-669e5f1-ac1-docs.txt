@@ -1,0 +1,43 @@
+FF                                                                       [100%]
+=================================== FAILURES ===================================
+_ test_env_file_guidance_requires_a_path_that_resolves_every_host_tool[live-proof-0a] _
+
+text = <function step_0a_env_guidance at 0x74f7d473b920>
+
+    @pytest.mark.parametrize("text", [step_0a_env_guidance, lambda: HOST_DOC.read_text()], ids=["live-proof-0a", "host-doc"])
+    def test_env_file_guidance_requires_a_path_that_resolves_every_host_tool(text):
+        body = text()
+>       assert re.search(r"^PATH=/\S*\.local/bin:\S*/usr/bin\S*$", body, re.MULTILINE) or \
+            re.search(r"`PATH=/\S*\.local/bin:\S*/usr/bin\S*`", body), "no absolute PATH example"
+E       AssertionError: no absolute PATH example
+E       assert (None or None)
+E        +  where None = <function search at 0x74f7d63a4540>('^PATH=/\\S*\\.local/bin:\\S*/usr/bin\\S*$', 'Dedicated linked worktree, Director-owned sources and installation\n\n```bash\ngit -C "$REPO" worktree add --detach "...`\n\nIf `controlRequiredBy` is empty and there is no attention or inbox entry, stop. The proof\nneeds real workload.\n', re.MULTILINE)
+E        +    where <function search at 0x74f7d63a4540> = re.search
+E        +    and   re.MULTILINE = re.MULTILINE
+E        +  and   None = <function search at 0x74f7d63a4540>('`PATH=/\\S*\\.local/bin:\\S*/usr/bin\\S*`', 'Dedicated linked worktree, Director-owned sources and installation\n\n```bash\ngit -C "$REPO" worktree add --detach "...`\n\nIf `controlRequiredBy` is empty and there is no attention or inbox entry, stop. The proof\nneeds real workload.\n')
+E        +    where <function search at 0x74f7d63a4540> = re.search
+
+tools/orchestration/test_factory_director_docs.py:175: AssertionError
+_ test_env_file_guidance_requires_a_path_that_resolves_every_host_tool[host-doc] _
+
+text = <function <lambda> at 0x74f7d473b9c0>
+
+    @pytest.mark.parametrize("text", [step_0a_env_guidance, lambda: HOST_DOC.read_text()], ids=["live-proof-0a", "host-doc"])
+    def test_env_file_guidance_requires_a_path_that_resolves_every_host_tool(text):
+        body = text()
+>       assert re.search(r"^PATH=/\S*\.local/bin:\S*/usr/bin\S*$", body, re.MULTILINE) or \
+            re.search(r"`PATH=/\S*\.local/bin:\S*/usr/bin\S*`", body), "no absolute PATH example"
+E       AssertionError: no absolute PATH example
+E       assert (None or None)
+E        +  where None = <function search at 0x74f7d63a4540>('^PATH=/\\S*\\.local/bin:\\S*/usr/bin\\S*$', '# Factory Director Host\n\nStatus: **KEEP_UNTIL_REPLACED.** Non-cognizant host infrastructure (FDH-01, Issue #89,\nSF.... The replacement-safety rule (runtime contract §11) requires the\ntwelve-step live proof under real workload first.\n', re.MULTILINE)
+E        +    where <function search at 0x74f7d63a4540> = re.search
+E        +    and   re.MULTILINE = re.MULTILINE
+E        +  and   None = <function search at 0x74f7d63a4540>('`PATH=/\\S*\\.local/bin:\\S*/usr/bin\\S*`', '# Factory Director Host\n\nStatus: **KEEP_UNTIL_REPLACED.** Non-cognizant host infrastructure (FDH-01, Issue #89,\nSF.... The replacement-safety rule (runtime contract §11) requires the\ntwelve-step live proof under real workload first.\n')
+E        +    where <function search at 0x74f7d63a4540> = re.search
+
+tools/orchestration/test_factory_director_docs.py:175: AssertionError
+=========================== short test summary info ============================
+FAILED tools/orchestration/test_factory_director_docs.py::test_env_file_guidance_requires_a_path_that_resolves_every_host_tool[live-proof-0a]
+FAILED tools/orchestration/test_factory_director_docs.py::test_env_file_guidance_requires_a_path_that_resolves_every_host_tool[host-doc]
+2 failed in 0.15s
+exit=1
