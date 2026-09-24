@@ -121,6 +121,15 @@ CONTROLS = [
     ("late-exit-unrecorded", HOST,
      '            # It exited after this reconcile\'s observation: record and count it like any exit.\n            self._observe_exit(values)',
      '            pass', HOST_TESTS + "test_an_exit_between_observation_and_lease_check_is_still_recorded_and_counted"),
+    # Repairs from independent review 3.
+    ("projection-used-as-progress", HOST,
+     '        return published if published is not None else json.dumps(asdict(values), sort_keys=True)',
+     '        return json.dumps(asdict(values), sort_keys=True)',
+     HOST_TESTS + "test_short_episodes_that_advance_durable_state_under_the_same_projection_are_progress"),
+    ("brief-idle-cancels-back-off", HOST, '        if retry and self.clock() < retry:\n            return\n', '',
+     HOST_TESTS + "test_a_brief_idle_does_not_cancel_a_pending_back_off"),
+    ("unknown-editor-trusted", ADAPTER, '        if editor is None and comment.get("lastEditedAt"):', '        if False:',
+     INPUT_TESTS + "test_marker_in_an_edited_comment_with_an_unknown_editor_is_ignored"),
     ("permission-mode-unchecked", HOST, '        if permission_mode not in PERMISSION_MODES[provider]:', '        if False:',
      HOST_TESTS + "test_permission_mode_must_belong_to_the_configured_provider[codex-bypassPermissions]"),
 ]

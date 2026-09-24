@@ -447,10 +447,11 @@ class FactoryDirectorHost:
         observed = self.clock()
         started = _parse_time(lease["started_at"])
         runtime = (observed - started).total_seconds() if started else 0.0
-        # A failed episode is a non-zero or signalled exit, or a fast exit that left the
-        # predicate projection exactly as it was at launch. A fast exit that changed durable
-        # state (it handled something) is progress, not a crash.
-        unchanged = values is None or lease.get("launch_inputs") in (None, asdict(values))
+        # A failed episode is a non-zero or signalled exit, or a fast exit that left the durable
+        # state fingerprint exactly as it was at launch. A fast exit that advanced durable state
+        # (it handled something) is progress, not a crash. Unavailable state proves nothing.
+        current = self._fingerprint(values) if values is not None else None
+        unchanged = current is None or current == lease.get("launch_fingerprint")
         failed = ((exit_reason.startswith(("EXIT_", "SIGNAL_")) and exit_reason != "EXIT_0")
                   or (runtime < FAST_EXIT_SECONDS and unchanged))
         streak = int(lease.get("failure_streak") or 0) + 1 if failed else 0
@@ -462,11 +463,21 @@ class FactoryDirectorHost:
                      exit_reason=exit_reason, provider=episode.provider, requested_model=episode.model,
                      usage=usage, runtime_seconds=runtime, failure_streak=streak)
 
+    def _fingerprint(self, values: DirectorInputs) -> str | None:
+        if not values.authoritative_state:
+            return None
+        published = getattr(self.inputs, "last_fingerprint", None)
+        return published if published is not None else json.dumps(asdict(values), sort_keys=True)
+
     def _reset_failure_streak(self) -> None:
-        """A legitimate idle ends a failure run: a later failure starts from the first retry again."""
+        """A legitimate idle after any pending back-off ends a failure run; a brief idle inside the
+        back-off window does not."""
         try:
             lease = self._lease()
         except AmbiguousLease:
+            return
+        retry = _parse_time(lease.get("retry_not_before")) if lease and lease.get("retry_not_before") else None
+        if retry and self.clock() < retry:
             return
         if lease and lease["status"] in {"EXITED", "LAUNCH_FAILED"} and lease.get("failure_streak"):
             _atomic_json(self._lease_path, {**lease, "failure_streak": 0, "retry_not_before": None})
@@ -528,7 +539,7 @@ class FactoryDirectorHost:
             prior_exit = (lease.get("exit_reason") or "PROCESS_EXITED") if lease["status"] == "EXITED" \
                 else "LAUNCH_FAILED"
         episode_id = f"factory-director-{uuid.uuid4().hex}"
-        launch_inputs = asdict(values)
+        launch_inputs, launch_fingerprint = asdict(values), self._fingerprint(values)
         # Reserve before spawning. A crash in the hand-off window stays visibly
         # ambiguous rather than creating an unleased child and a duplicate successor.
         _atomic_json(self._lease_path, {"host_id": self.host_id, "episode_id": episode_id,
@@ -545,7 +556,7 @@ class FactoryDirectorHost:
             _atomic_json(self._lease_path, {"host_id": self.host_id, **asdict(spawned),
                                             "status": "ACTIVE", "keep_until_replaced": True,
                                             "retirement": "KEEP_UNTIL_REPLACED", "failure_streak": streak,
-                                            "launch_inputs": launch_inputs})
+                                            "launch_inputs": launch_inputs, "launch_fingerprint": launch_fingerprint})
             bound_episode = spawned
 
         try:
@@ -565,7 +576,7 @@ class FactoryDirectorHost:
         _atomic_json(self._lease_path, {"host_id": self.host_id, **asdict(episode),
                                         "status": "ACTIVE", "keep_until_replaced": True,
                                         "retirement": "KEEP_UNTIL_REPLACED", "failure_streak": streak,
-                                        "launch_inputs": launch_inputs})
+                                        "launch_inputs": launch_inputs, "launch_fingerprint": launch_fingerprint})
         result = Reconciliation(HostState.ACTIVE, reason, episode.episode_id)
         self._record(result, exit_reason=prior_exit, provider=episode.provider, requested_model=episode.model,
                      inputs=launch_inputs)

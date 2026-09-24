@@ -501,8 +501,9 @@ def test_comment_reader_paginates_and_refuses_an_incomplete_answer(monkeypatch):
         return json.dumps({"data": {"repository": {"issue": {"comments": page}}}})
     monkeypatch.setattr(materialization, "_gh", fake_gh)
     assert adapter_module.read_issue_comments(5) == [
-        {"author": "u", "editor": None, "body": "a"}, {"author": "u", "editor": None, "body": "b"},
-        {"author": None, "editor": None, "body": "c"}]
+        {"author": "u", "editor": None, "lastEditedAt": None, "body": "a"},
+        {"author": "u", "editor": None, "lastEditedAt": None, "body": "b"},
+        {"author": None, "editor": None, "lastEditedAt": None, "body": "c"}]
     assert all(call[:2] == ("api", "graphql") for call in calls)
     assert "cursor=c1" in calls[1]
 
@@ -600,3 +601,27 @@ def test_marker_in_an_operator_comment_edited_by_someone_else_is_ignored(sources
     assert sources.inputs().lifecycle_requires_selection is False
     sources.comments[56] = [{**ASSESSMENT, "editor": OPERATOR}]
     assert sources.inputs().lifecycle_requires_selection is True
+
+
+def test_marker_in_an_edited_comment_with_an_unknown_editor_is_ignored(sources):
+    sources.issue(57, "TASKS")
+    sources.comments[57] = [{**ASSESSMENT, "editor": None, "lastEditedAt": "2026-09-24T07:00:00Z"}]
+    assert sources.inputs().lifecycle_requires_selection is False
+
+
+def test_fingerprint_tracks_durable_progress_but_not_worker_claims(sources):
+    sources.issue(58, "READY").inbox_entry("a").inbox_entry("b")
+    adapter = sources.adapter()
+    adapter()
+    first = adapter.last_fingerprint
+    sources.claim(59)
+    adapter()
+    assert adapter.last_fingerprint == first
+    receipt_dir = sources.inbox / "processed"
+    receipt_dir.mkdir()
+    (receipt_dir / "a.json").write_text("{}")
+    adapter()
+    assert adapter.last_fingerprint != first and adapter().pending_director_inbox is True
+    sources.state_file.unlink()
+    adapter()
+    assert adapter.last_fingerprint is None

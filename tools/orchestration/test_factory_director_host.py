@@ -678,6 +678,8 @@ def test_failure_streak_resets_when_the_factory_goes_idle(tmp_path):
     service = FactoryDirectorHost(tmp_path, inputs, launcher, clock=clock)
     launcher.finish(service.reconcile().episode_id, exit_code=1)
     launcher.finish(service.reconcile().episode_id, exit_code=1)
+    assert service.reconcile().reason == "DIRECTOR_EPISODE_CRASH_LOOP"  # the exit is observed now
+    clock.offset = timedelta(seconds=61)  # the pending back-off has elapsed
     inputs.values = required(eligible_authorized_work=False)
     assert service.reconcile().reason == "NO_ELIGIBLE_AUTHORIZED_WORK"
     assert json.loads((tmp_path / "lease.json").read_text())["failure_streak"] == 0
@@ -738,3 +740,61 @@ def test_repeated_launch_failures_back_off(tmp_path):
     assert service.reconcile().reason == "DIRECTOR_EPISODE_CRASH_LOOP"
     clock.offset = timedelta(seconds=61)
     assert service.reconcile().reason == "DIRECTOR_LAUNCH_FAILED"
+
+
+# --- repairs from independent review 3 ----------------------------------------------------
+
+class FingerprintedInputs(MutableInputs):
+    def __init__(self, values, fingerprint="f0"):
+        super().__init__(values)
+        self.last_fingerprint = fingerprint
+
+
+def test_short_episodes_that_advance_durable_state_under_the_same_projection_are_progress(tmp_path):
+    inputs = FingerprintedInputs(required(pending_director_inbox=True))
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, inputs, launcher, clock=Clock())
+    for handled in range(5):  # five inbox entries, one per short episode; the booleans never change
+        episode = service.reconcile()
+        assert episode.reason != "DIRECTOR_EPISODE_CRASH_LOOP", handled
+        launcher.finish(episode.episode_id, exit_code=0)
+        inputs.last_fingerprint = f"f{handled + 1}"
+    assert len(launcher.launched) == 5
+
+
+def test_same_fingerprint_short_exits_back_off_even_if_worker_capacity_flips(tmp_path):
+    inputs = FingerprintedInputs(required())
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, inputs, launcher, clock=Clock())
+    launcher.finish(service.reconcile().episode_id, exit_code=0)
+    inputs.values = required(executable_capacity=False, pending_director_inbox=True)
+    launcher.finish(service.reconcile().episode_id, exit_code=0)
+    inputs.values = required()
+    assert service.reconcile().reason == "DIRECTOR_EPISODE_CRASH_LOOP"
+
+
+def test_exit_observed_while_state_is_unavailable_counts_as_unchanged(tmp_path):
+    inputs = FingerprintedInputs(required())
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, inputs, launcher, clock=Clock())
+    launcher.finish(service.reconcile().episode_id, exit_code=0)
+    inputs.values, inputs.last_fingerprint = required(authoritative_state=False), None
+    service.reconcile()
+    assert json.loads((tmp_path / "lease.json").read_text())["failure_streak"] == 1
+
+
+def test_a_brief_idle_does_not_cancel_a_pending_back_off(tmp_path):
+    clock = Clock()
+    inputs = MutableInputs(required())
+    launcher = InMemoryDirectorLauncher()
+    service = FactoryDirectorHost(tmp_path, inputs, launcher, clock=clock)
+    launcher.finish(service.reconcile().episode_id, exit_code=1)
+    launcher.finish(service.reconcile().episode_id, exit_code=1)
+    inputs.values = required(explicit_pause=True)
+    service.reconcile()
+    inputs.values = required()
+    assert service.reconcile().reason == "DIRECTOR_EPISODE_CRASH_LOOP"
+    clock.offset = timedelta(seconds=61)
+    inputs.values = required(explicit_pause=True)
+    service.reconcile()                    # idle after the back-off elapsed: the run is over
+    assert json.loads((tmp_path / "lease.json").read_text())["failure_streak"] == 0

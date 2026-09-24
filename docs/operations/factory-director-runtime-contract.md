@@ -220,16 +220,24 @@ activating or liveness-indeterminate is refused (`AMBIGUOUS_LEASE`,
 **Crash-loop guard.** A failed episode is one of these:
 
 - an episode that exits non-zero or is signalled;
-- an episode that exits within 60 seconds and leaves the nine-boolean projection exactly
-  as it was at launch.
+- an episode that exits within 60 seconds and leaves the durable-state fingerprint
+  exactly as it was at launch.
+
+The fingerprint is a digest of board states, Founder holds, unprocessed inbox entries,
+unresolved escalations and assessed Issues. It deliberately excludes worker claims. An
+exit observed while state is unavailable counts as unchanged.
 
 A launch that fails before its process is bound to the lease also counts as a failure;
 the host kills that process. The first failure is retried at once. Each further
 consecutive failure is refused as `DIRECTOR_EPISODE_CRASH_LOOP` until a back-off has
 elapsed: 60 s, then 120 s, doubling up to one hour. The lease records `failure_streak` and
 `retry_not_before`. The streak resets in two cases: an episode exits cleanly after at
-least 60 seconds, or a short episode changes durable state. Any legitimate idle
-(terminal conditions 1–4) also resets it.
+least 60 seconds, or a short episode changes the fingerprint. A legitimate idle (terminal
+conditions 1–4) also resets it, but only once any pending back-off has elapsed.
+
+A marker in an edited comment counts only when GitHub names an operator as its last
+editor. An edit by an account GitHub no longer names is ignored. Full edit history
+(`userContentEdits`) is not checked.
 
 History records `provider` and `requested_model`, meaning the model passed explicitly
 with `--model`. The models the provider reports are recorded separately as

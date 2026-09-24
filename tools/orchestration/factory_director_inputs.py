@@ -116,7 +116,7 @@ def load_adapter_config(path: Path | str) -> AdapterConfig:
 _COMMENTS_QUERY = (
     'query($owner:String!,$name:String!,$issue:Int!,$cursor:String){repository(owner:$owner,name:$name)'
     '{issue(number:$issue){comments(first:100,after:$cursor){totalCount pageInfo{hasNextPage endCursor}'
-    ' nodes{body author{login} editor{login}}}}}}')
+    ' nodes{body lastEditedAt author{login} editor{login}}}}}}')
 
 
 def read_issue_comments(issue: int) -> list[dict]:
@@ -134,7 +134,8 @@ def read_issue_comments(issue: int) -> list[dict]:
         if not isinstance(nodes, list) or not all(isinstance(node.get("body"), str) for node in nodes):
             raise SourceUnavailable(f"issue #{issue} comment page is malformed")
         bodies += [{"author": (node.get("author") or {}).get("login"),
-                    "editor": (node.get("editor") or {}).get("login"), "body": node["body"]} for node in nodes]
+                    "editor": (node.get("editor") or {}).get("login"), "lastEditedAt": node.get("lastEditedAt"),
+                    "body": node["body"]} for node in nodes]
         if info["hasNextPage"] is False:
             break
         if info["hasNextPage"] is not True or not info.get("endCursor"):
@@ -311,6 +312,8 @@ def has_retained_assessment(comments: list[dict], issue: int, operators: frozens
             continue
         if editor is not None and (not isinstance(editor, str) or editor.lower() not in operators):
             continue  # an operator's comment rewritten by someone else is no longer the operator's
+        if editor is None and comment.get("lastEditedAt"):
+            continue  # edited by an account GitHub no longer names: provenance unknown
         for match in ASSESSMENT_MARKER.finditer(comment["body"]):
             try:
                 record = json.loads(match.group(1).strip())
@@ -329,6 +332,10 @@ class Evaluation:
     inputs: DirectorInputs
     failure: str | None = None
     observations: dict = field(default_factory=dict)
+    # Digest of the durable state a Director episode advances (board states, holds, unprocessed
+    # inbox entries, unresolved escalations, assessed Issues). Worker claims are deliberately
+    # excluded. The host compares it across a short episode to tell progress from a crash.
+    fingerprint: str | None = None
 
 
 def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: set[int]) -> str | None:
@@ -376,7 +383,11 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
         "founderExceptions": runtime.founder_exceptions,
         "unprocessedInboxEntries": list(unprocessed),
     }
-    return Evaluation(inputs, None, observations)
+    fingerprint = sha256(json.dumps({
+        "board": {str(k): v for k, v in sorted(board.items())}, "holds": sorted(holds),
+        "inbox": list(unprocessed), "escalations": list(escalations), "assessed": sorted(assessed),
+    }, sort_keys=True).encode()).hexdigest()
+    return Evaluation(inputs, None, observations, fingerprint)
 
 
 class AuthoritativeDirectorInputs:
@@ -457,6 +468,7 @@ class AuthoritativeDirectorInputs:
     def __call__(self) -> DirectorInputs:
         evaluation = self.evaluate()
         self.last_failure = evaluation.failure  # the host records the cause with the refusal
+        self.last_fingerprint = evaluation.fingerprint
         self.publish(evaluation)
         return evaluation.inputs
 
