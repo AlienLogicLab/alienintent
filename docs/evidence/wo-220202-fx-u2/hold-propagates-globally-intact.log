@@ -1,0 +1,7 @@
+test_unrelated_requirement_stays_preparable_and_no_worker_launches (tests.context_assembly.test_ambiguity.AmbiguityTests.test_unrelated_requirement_stays_preparable_and_no_worker_launches)
+SF-REQ-012-AC-04. ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.090s
+
+OK

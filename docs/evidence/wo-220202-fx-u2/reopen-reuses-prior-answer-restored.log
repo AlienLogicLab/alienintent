@@ -1,0 +1,6 @@
+test_reopened_finding_requires_a_fresh_answer (tests.context_assembly.test_ambiguity.AmbiguityTests.test_reopened_finding_requires_a_fresh_answer) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.217s
+
+OK

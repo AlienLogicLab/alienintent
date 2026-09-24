@@ -1,0 +1,7 @@
+test_missing_fields_and_conflicting_sources_open_source_linked_questions (tests.context_assembly.test_ambiguity.AmbiguityTests.test_missing_fields_and_conflicting_sources_open_source_linked_questions)
+SF-REQ-012-AC-01. ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.088s
+
+OK

@@ -1,0 +1,7 @@
+test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent (tests.context_assembly.test_ambiguity.AmbiguityTests.test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent)
+SF-REQ-012-AC-03. ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.121s
+
+OK

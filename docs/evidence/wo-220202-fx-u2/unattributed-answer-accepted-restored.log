@@ -1,0 +1,7 @@
+test_only_matching_attributed_decision_resolves_that_question (tests.context_assembly.test_ambiguity.AmbiguityTests.test_only_matching_attributed_decision_resolves_that_question)
+SF-REQ-012-AC-02 and changed inputs becoming STALE. ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.458s
+
+OK

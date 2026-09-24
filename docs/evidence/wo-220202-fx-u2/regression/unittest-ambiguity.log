@@ -1,0 +1,23 @@
+test_changed_input_keeps_an_unanswered_semantic_review_hold (tests.context_assembly.test_ambiguity.AmbiguityTests.test_changed_input_keeps_an_unanswered_semantic_review_hold) ... ok
+test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent (tests.context_assembly.test_ambiguity.AmbiguityTests.test_complete_requirement_passes_and_semantic_review_holds_without_editing_intent)
+SF-REQ-012-AC-03. ... ok
+test_deferred_answer_does_not_resolve (tests.context_assembly.test_ambiguity.AmbiguityTests.test_deferred_answer_does_not_resolve) ... ok
+test_invalid_review_is_rejected_and_early_review_is_retained (tests.context_assembly.test_ambiguity.AmbiguityTests.test_invalid_review_is_rejected_and_early_review_is_retained) ... ok
+test_malformed_persisted_history_holds (tests.context_assembly.test_ambiguity.AmbiguityTests.test_malformed_persisted_history_holds) ... ok
+test_missing_fields_and_conflicting_sources_open_source_linked_questions (tests.context_assembly.test_ambiguity.AmbiguityTests.test_missing_fields_and_conflicting_sources_open_source_linked_questions)
+SF-REQ-012-AC-01. ... ok
+test_no_decision_channel_keeps_a_durable_open_finding (tests.context_assembly.test_ambiguity.AmbiguityTests.test_no_decision_channel_keeps_a_durable_open_finding) ... ok
+test_only_matching_attributed_decision_resolves_that_question (tests.context_assembly.test_ambiguity.AmbiguityTests.test_only_matching_attributed_decision_resolves_that_question)
+SF-REQ-012-AC-02 and changed inputs becoming STALE. ... ok
+test_reopened_finding_requires_a_fresh_answer (tests.context_assembly.test_ambiguity.AmbiguityTests.test_reopened_finding_requires_a_fresh_answer) ... ok
+test_replay_is_idempotent_and_conflicts_hold (tests.context_assembly.test_ambiguity.AmbiguityTests.test_replay_is_idempotent_and_conflicts_hold) ... ok
+test_stale_review_replay_holds_only_its_requirement (tests.context_assembly.test_ambiguity.AmbiguityTests.test_stale_review_replay_holds_only_its_requirement) ... ok
+test_unrelated_requirement_stays_preparable_and_no_worker_launches (tests.context_assembly.test_ambiguity.AmbiguityTests.test_unrelated_requirement_stays_preparable_and_no_worker_launches)
+SF-REQ-012-AC-04. ... ok
+test_upstream_composition_has_no_worker_path (tests.context_assembly.test_ambiguity.AmbiguityTests.test_upstream_composition_has_no_worker_path)
+SF-REQ-012-AC-04: no module on the question/answer path can reach a worker or dispatcher. ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 1.448s
+
+OK
