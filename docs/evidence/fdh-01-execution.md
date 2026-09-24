@@ -177,3 +177,65 @@ Each review ran in a fresh read-only subagent session and is not the BIU verifie
   `userContentEdits` history.
 - **Fingerprint:** it can change because of worker-driven board transitions. A fast
   Director exit then counts as progress.
+
+## Repair cycle 1 (after JC's REJECT)
+
+PRODUCER invocation `AlienLogicLab/alienintent#89:PRODUCER:39a17230-3143-4c62-87a6-970061df9dad`
+(Morty, Claude `claude-opus-5-5`). Input: rejected candidate `8da68f7` and JC's review
+evidence `6c38427` (`docs/evidence/fdh-01-jc/review.md`), merged into this branch
+unchanged so the review and its reproducers travel with the candidate. The admission
+baseline `70fa714` equals `origin/main`, and the contract hash is unchanged.
+
+| Finding | Disposition | Where |
+|---|---|---|
+| F1 exit-before-wait sleeps the interval | **Repaired.** `wait_for_change` returns `EPISODE_EXITED` with no sleep when the leased episode has already exited before the wait begins. Crash-loop back-off stays in `reconcile`, so waking early never bypasses it. A host without the host lock, or with unknown liveness, still waits the interval (no spin) | `factory_director_host.py` `wait_for_change`; runtime contract §10 |
+| F2 extended lease missing a key crashes | **Repaired.** Lease validation checks required-key containment (`required <= set(value)`), so every required key is enforced whatever extra metadata is present | `factory_director_host.py` `_lease` |
+| F3 Codex actual model | **Evidence recorded, Director disposition requested.** See below | `codex_usage`; runtime contract §10 |
+| D1 escalation-resolution rule | **Unchanged, awaiting Factory Director sanction.** Defining "unresolved" is a Director decision; the PRODUCER does not self-sanction it | runtime contract §9 |
+
+**F3 probe (Codex CLI 0.155.1, this host, 2026-09-24).** Two minimal `codex exec` runs in
+`/tmp` with `--sandbox read-only`:
+
+- `codex exec --ephemeral --json`, the launcher's form. The JSONL events were
+  `thread.started` (`thread_id`), `turn.started`, `item.*` and `turn.completed`
+  (`usage` token counts only). No event names a model.
+- `codex exec --json` without `--ephemeral`. The persisted rollout has
+  `session_meta.model_provider` (`openai`) and `turn_context.model`, which equalled the
+  client configuration's model. That field records what the client asked for, not what
+  was served, so it is no stronger evidence than `requested_model`. Adopting it would
+  also give up the `--ephemeral` non-persistence property.
+
+So Codex does not expose the model actually used. The host records
+`usage.observed_models: null` with `usage.model_evidence: "NOT_EXPOSED_BY_PROVIDER"` and
+never copies `requested_model` into it. Claude records `PROVIDER_REPORTED` from
+`modelUsage`. Criterion 5's "model actually used" is therefore satisfiable for Claude
+and structurally UNKNOWN for Codex. Accepting that gap, or requiring Claude-only Director
+episodes until Codex exposes the model, is a Factory Director disposition.
+
+**Tests added to the maintained host suite** (78 total, was 68):
+`test_exit_before_wait_reconciles_at_once_without_sleeping`,
+`test_exit_before_wait_still_honours_crash_loop_back_off`,
+`test_wait_with_unknown_liveness_or_no_lease_sleeps_the_interval`,
+`test_a_host_without_the_lock_waits_the_interval_for_an_exited_episode` and
+`test_extended_lease_missing_a_required_key_refuses_without_crash` (one case per
+required key). Against the unrepaired host at `8da68f7`, 9 host tests fail: the two
+F1 tests, five of the six F2 cases (a missing `started_at` was already refused), and the
+two usage-shape assertions. All pass on the repair.
+
+**Source-mutation controls added:** `exit-before-wait-sleeps`, `non-holder-spins-on-exit`
+and `lease-keys-strict-subset`. Report: `docs/evidence/fdh-01-repair-1/report.json`.
+The earlier report in `docs/evidence/fdh-01/` is kept unchanged.
+
+| Check | Result |
+|---|---|
+| `python3 -m pytest -q tools/orchestration/test_factory_director_inputs.py tools/orchestration/test_factory_director_host.py tools/orchestration/test_factory_director_docs.py` | exit 0, **204 passed** (87 / 78 / 39) |
+| `python3 -m pytest -q docs/evidence/fdh-01-jc/reproduce.py` (JC's reproducers) | exit 0, **2 passed** (were 2 failed at `8da68f7`) |
+| `PYTHONPATH=src python3 tools/evidence/fdh01_evidence.py --output <tmp>` | exit 0, **35/35 controls discriminated** (105 observations) |
+| `node scripts/check.mjs all` | exit 0 |
+| `python3 -m pytest -q tests` | exit 0, **526 passed** |
+| `python3 -m pytest -q tools/orchestration tools/live` | exit 1, **317 passed, 1 failed**: the unmodified baseline `test_director.py::test_substantial_technical_analysis_routes_to_codex_primary` |
+| `git diff --check 70fa714 HEAD` | exit 0 |
+
+**Measurements.** Tokens and cost of this invocation: UNKNOWN; billing telemetry is not
+available to the worker. This is not zero. The two F3 probes consumed a small, unmeasured
+amount of Codex usage.
