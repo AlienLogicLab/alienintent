@@ -29,6 +29,11 @@ OPEN, RESOLVED, STALE = "OPEN", "RESOLVED", "STALE"
 ELIGIBLE, HELD, RETIRED = "ELIGIBLE_FOR_PREPARATION", "HELD", "RETIRED"
 
 
+def _locator(value: object) -> bool:
+    return (isinstance(value, tuple) and len(value) == 3 and isinstance(value[0], str) and bool(value[0])
+            and type(value[1]) is int and type(value[2]) is int and 1 <= value[1] <= value[2])
+
+
 @dataclass(frozen=True)
 class SemanticQuestion:
     question: str
@@ -48,8 +53,9 @@ class SemanticReview:
         if (any(not isinstance(v, str) or not v.strip() for v in
                 (self.reviewer, self.review_ref, self.requirement_id, self.requirement_revision))
                 or not isinstance(self.questions, tuple)
-                or any(not isinstance(q, SemanticQuestion) or not q.question.strip() or len(q.question) > 2000
-                       or not isinstance(q.locators, tuple) or not q.locators for q in self.questions)):
+                or any(not isinstance(q, SemanticQuestion) or not isinstance(q.question, str) or not q.question.strip()
+                       or len(q.question) > 2000 or not isinstance(q.locators, tuple) or not q.locators
+                       or not all(_locator(l) for l in q.locators) for q in self.questions)):
             raise AmbiguityHold("INVALID_SEMANTIC_REVIEW")
 
     @property

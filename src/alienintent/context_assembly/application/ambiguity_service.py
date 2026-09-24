@@ -22,6 +22,19 @@ def _work_item(history: list | tuple) -> str:
     return next(e["work_item"] for e in reversed(history) if e["event"] in _OPENING)
 
 
+def _valid_findings(findings: object) -> bool:
+    if not isinstance(findings, dict):
+        return False
+    for entry in findings.values():
+        history = entry.get("history") if isinstance(entry, dict) else None
+        if (not isinstance(entry.get("finding") if isinstance(entry, dict) else None, dict) or not isinstance(history, list)
+                or not history or any(not isinstance(e, dict) or e.get("status") not in (OPEN, RESOLVED, STALE) for e in history)
+                or history[0].get("event") != "inspection"
+                or any(e.get("event") in _OPENING and not isinstance(e.get("work_item"), str) for e in history)):
+            return False
+    return True
+
+
 class UpstreamQuestionAdmission:
     """Decision Inbox admission for upstream questions: validate attribution, never resume workers."""
 
@@ -54,7 +67,8 @@ class AmbiguityService:
     def read(self) -> tuple[int, dict]:
         version, state = self.store.read_state(self.profile, self.aggregate)
         if state and (state.get("schema_version") != 1 or set(state) != {
-                "schema_version", "inventory_digest", "report_ref", "report_digest", "findings", "reviews"}):
+                "schema_version", "inventory_digest", "report_ref", "report_digest", "findings", "reviews"}
+                or not _valid_findings(state["findings"]) or not isinstance(state["reviews"], dict)):
             raise AmbiguityHold("INCOMPATIBLE_AMBIGUITY_STATE")
         return version, state
 
@@ -187,12 +201,13 @@ class AmbiguityService:
         statuses = {fid: e["history"][-1]["status"] for fid, e in findings.items()}
         report = inspect(snapshot, tuple(reviews.values()), self.decision_actor, statuses)
         preceding = (Ref(**state["report_ref"]),) if state else ()
-        if state and state["report_digest"] == report.digest and state["findings"] == findings:
+        encoded = {k: asdict(r) for k, r in sorted(reviews.items())}
+        if state and state["report_digest"] == report.digest and state["findings"] == findings and state["reviews"] == encoded:
             return report
         ref = self._put("ambiguity.report", asdict(report), preceding)
         new_state = {"schema_version": 1, "inventory_digest": snapshot.digest, "report_ref": asdict(ref),
                      "report_digest": report.digest, "findings": findings,
-                     "reviews": {k: asdict(r) for k, r in sorted(reviews.items())}}
+                     "reviews": encoded}
         try:
             self.store.commit(self.profile, self.aggregate, version, new_state)
         except VersionConflict:

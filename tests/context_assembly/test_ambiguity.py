@@ -316,6 +316,33 @@ class AmbiguityTests(unittest.TestCase):
         other = h.finding(report, "SF-REQ-971", "MISSING_SCOPE")
         self.assertIsInstance(h.resolve(other, h.answer(other)), QuestionResolution)
 
+    def test_invalid_review_is_rejected_and_early_review_is_retained(self):
+        h = self.h
+        for locators in ((("980.md", "2", "2"),), (("980.md", 2),), (("980.md", 3, 2),), (("", 1, 1),)):
+            with self.subTest(locators=locators), self.assertRaises(AmbiguityHold):
+                SemanticReview("reviewer-jc", "review:bad", "SF-REQ-980", "r", (SemanticQuestion("Q?", locators),))
+        h.publish(record("SF-REQ-981", "981.md", body("SF-REQ-981")))
+        h.inspect()
+        early = SemanticReview("reviewer-jc", "review:early", "SF-REQ-980", "unknown-yet", (SemanticQuestion("Q?", (("980.md", 2, 2),)),))
+        version = h.service.read()[0]
+        h.inspect((early,))
+        self.assertGreater(h.service.read()[0], version)
+        h.publish(record("SF-REQ-981", "981.md", body("SF-REQ-981")), record("SF-REQ-980", "980.md", body("SF-REQ-980")))
+        entry = h.inspect().requirement("SF-REQ-980")
+        self.assertEqual((entry.semantic_review_status, entry.preparation), ("UNVERIFIED", "HELD"))
+        self.assertEqual(h.inspect().requirement("SF-REQ-981").preparation, "ELIGIBLE_FOR_PREPARATION")
+
+    def test_malformed_persisted_history_holds(self):
+        h = self.h
+        h.publish(record("SF-REQ-985", "985.md", body("SF-REQ-985", Intent=None)))
+        h.inspect()
+        version, state = h.service.read()
+        for entry in state["findings"].values():
+            entry["history"] = [{k: v for k, v in e.items() if k != "work_item"} for e in entry["history"]]
+        h.store.commit(PROFILE, h.service.aggregate, version, state)
+        with self.assertRaises(AmbiguityHold):
+            h.service.read()
+
     def test_deferred_answer_does_not_resolve(self):
         h = self.h
         h.publish(record("SF-REQ-975", "975.md", body("SF-REQ-975", Intent=None)))
