@@ -176,8 +176,13 @@ phase (bound in `execution.biuLimits` before release); wall-clock bounded by sys
 Landing: SWF-19 — merge the accepted candidate branch directly into the baseline branch, preserving
 the accepted SHA. **Do not open a pull request.** AlienIntent does not use pull requests.
 
-Release authority is not granted by this document. Release is additionally held behind the open
-worker-credential hold recorded on Issues #80 and #81 (worker accounts still hold pull-request write).
+Release authority is not granted by this document. The worker-credential hold recorded on Issues #80
+and #81 was **cleared on 2026-09-24 at 05:12Z**. Both workers now use fine-grained tokens with
+pull-request access refused (HTTP 403), and `worker_credential_probe.sh` exits 0 for both. Current
+routing (Founder, 2026-09-24): PRODUCER Morty on Claude, independent VERIFIER JC on Codex. The
+Agent Ready provenance reader that FDH-01's Claude-backed assessment depends on landed as ARP-01
+(`5d3d14a`). FDH-01 still needs an Issue that passes the canonical materialization read-back, a
+bound `execution.biuLimits` entry, and a Factory Director release record before IMPLEMENT.
 
 ## Candidate custody
 

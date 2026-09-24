@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Make Factory Director continuity structural. A deterministic, non-cognizant host must launch a fresh, bounded, provider-neutral Director episode whenever durable factory state requires Director cognition and no valid lease is held. It must re-evaluate after every episode exit, so no model episode ever decides that no further Director episode is needed. The host adds no authority, stays read-only toward GitHub and runtime state, and retires no existing mechanism.",
+    "implementation_unknowns": [
+      "Where the 'retained Agent Ready assessment' for TASKS Issues lives. It could be a board field, an Issue comment or a repository artifact, and it must be read from a durable source that the fail-closed path covers. The enumerated sources do not name it explicitly.",
+      "How the Node runtime state represents an 'unresolved' limitEscalations entry, and how an active claim maps to an Issue number, both at baseline 674b78d2db17.",
+      "How the fixed mapping table's wording of founder_decision_pending ('every item... covered') reconciles with the later Factory Director semantics, which also require attention_required and pending_director_inbox to be false. The later semantics are stated to govern and should be encoded that way.",
+      "Which parts of the prior branch c14aba15 (lease validation, launch handoff, systemd unit, install script) survive a merge with the current baseline, and which must be replaced with recorded reasons.",
+      "The exact fresh-session, non-resuming CLI flags for the claude and codex providers, and how the model actually used is reported by each.",
+      "How to make the inbox receipt check and the atomic write of the DirectorInputs projection robust against partially written files.",
+      "How the interaction between executable_capacity/wip_intentionally_full and the host's launch decision is already encoded in the existing host logic."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Release is explicitly blocked by the open worker-credential hold on Issues #80 and #81. Worker accounts that retain pull-request write conflict with the no-pull-request SWF-19 landing rule.",
+      "Release authority is not granted by the document, and execution.biuLimits (3 cycles, 1 replacement per phase) must be bound before release.",
+      "The prior branch was authored outside the lifecycle and has no verification. Silently carrying over its behavior (lease or launch semantics) could embed unreviewed decisions.",
+      "Scope 3 and Scope 5 depend on chat record \u00a713\u2013\u00a717 content. This gate has not verified that content, and it may be ambiguous about the five terminal conditions or the twelve-step live proof.",
+      "A mistaken predicate mapping could cause runaway episode launches (cost and token burn) or false idling, which would defeat continuity. The fail-closed behavior and the lease checks are the main safeguards.",
+      "Provider CLI behavior could silently resume or inherit a session and violate the fresh-context requirement.",
+      "The adapter must remain strictly read-only. An accidental write path through shared helpers in project_materialization.py would breach authority boundaries."
+    ],
+    "next_action": "Resolve the worker-credential hold recorded on Issues #80 and #81 by removing pull-request write from worker accounts. Obtain explicit release authority from the Factory Director, and bind execution.biuLimits (3 cycles, 1 replacement per phase). Then re-run this gate and hand the unchanged FDH-01 contract to the configured PRODUCER as a single unit.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "Owner intent is coherent and the previously open owner questions are reported as resolved. The work is one decision center: every component serves structural Director continuity and would be accepted or rejected together, so SPLIT is not warranted despite its breadth. Remaining uncertainties are engineering research, not owner decisions, so CLARIFY is not warranted. Acceptance is observable, one independent verdict is meaningful, and rework would be localized. The controlling condition is external. The document states that release authority is not granted and that release is held behind the open credential hold on #80/#81. This is an unavailable authority or prerequisite established by the supplied text itself, not one this gate inferred. Once it clears and the execution limits are bound, the task appears READY for handoff.",
+    "semantic_split_recommendation": [],
+    "summary": "FDH-01 is one cohesive unit of work with one governing intent. It covers a read-only predicate adapter with a nine-predicate mapping, a claude/codex launcher, a runtime contract document, an offline continuity proof, and a live-proof procedure that is written but not executed. The earlier owner clarifications are reported as answered by the Factory Director: hold coverage across all states, absent hold record or inbox treated as non-authoritative, and inbox receipt semantics. Acceptance is concrete and includes negative controls. However, the task text itself says release authority is not granted. It also says release is held behind the open worker-credential hold on Issues #80 and #81, because worker accounts still hold pull-request write. The execution limits must also be bound in execution.biuLimits before release. The work is ready in substance, but handoff is gated on these external prerequisites.",
+    "verification_assessment": "Acceptance is observable and discriminating. It includes per-predicate true and false fixture tests, and negative controls for each malformed or absent source that are shown failing against a deliberately broken adapter. It also includes hold, inbox and receipt launch cases, an offline A\u2192B continuity sequence with idle reasons, launcher command-line and isolation checks, document coverage, and `node scripts/check.mjs all` plus the Python tests. It adds a static read-only audit (no GitHub, runtime-state or configuration writes, no Issue transitions). One independent VERIFIER verdict on the exact candidate SHA is meaningful, because all criteria serve the single continuity intent. Document coverage in criterion 6 relies on reviewer judgment against chat record \u00a713\u2013\u00a717, which this gate has not inspected."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T05:49:48.548101+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 12664,
+    "input_sha256": "862e12603d9878ddad86321ab4644c8486b94384d0ca2e16c302288c80ed7695",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-nyeuv_4g/FDH-01.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T05:49:20.772415+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "FDH-01"
+}

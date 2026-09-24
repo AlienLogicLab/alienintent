@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Bring the out-of-repository release-admission gate under version control, verbatim first. Then change it so that it (a) reads readiness assessment records from a git release point (default origin/main) rather than the shared working tree, and (b) recognises readiness-record paths for any safe single-segment BIU identifier. Admission conditions, the native-receipt fallback and the CLI contract stay unchanged. This closes Issue #83's recorded regression.",
+    "implementation_unknowns": [
+      "How to derive the repository root when the gate may later run from a live copy outside the repository. Options include git rev-parse from the script location, from the CWD, or an override. The choice must still fall within the stated contract of no hard-coded path.",
+      "Whether the gate should fetch before resolving origin/main, or trust the local remote-tracking ref. A stale origin/main ref in the shared checkout could reproduce the invisibility the task aims to fix. The scope names only `git show <release-point>:<path>`.",
+      "The exact grammar of `<stamp>` in `<ID>.<stamp>.assessment.json`. It is not specified and must be inferred from existing records and the current WAVE2_RECORD pattern.",
+      "Precedence and tie-breaking when the Issue body and the Director release record cite different records, or when several records exist for one ID. Existing behaviour presumably governs and should be preserved.",
+      "Where the Director release record is read from, and whether it too must now be read from the release point or stays as currently implemented.",
+      "How to structure the fake `gh` responses and the temporary git repository fixture for AC3/AC5, and how to build the deliberately permissive variants for AC6.",
+      "How to express the 'record present only in the working tree is not used' distinction in the fixture. For example: an uncommitted file versus a committed-on-another-ref file."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Intent gap: Issues #80 and #81 were the observed failures, yet their bodies do not cite a record path. Under scope item 3 they will be admitted without the native receipt only if a Director release record cites the path. The fix may therefore not remove the manual receipt for those exact cases. The Producer should report this outcome rather than widen the scope, for example by adding discovery through directory listing.",
+      "If origin/main is resolved without a fetch, a stale remote-tracking ref can still hide newly landed records. Operationally this looks the same as the original bug.",
+      "The identifier grammar (letters, digits, hyphens) and the traversal rejection are security-relevant. An overly permissive regex could admit records from unintended paths. AC6 negative controls mitigate this risk.",
+      "The verbatim-import custody depends on the live files still matching the pinned digests at execution time. A mismatch is a defined stop condition.",
+      "The attached review of landed commits may surface defects outside this task's bounded scope. Handling is defined: report, do not modify. Any change to landed code needs a separate decision.",
+      "The work depends on lifecycle prerequisites outside the task: execution.biuLimits must be bound for #83 and release authority must be granted. This document explicitly does not grant release.",
+      "The baseline test failure is non-hermetic and environment-dependent. The Verifier must tell it apart from new failures, or it may cause false rejection."
+    ],
+    "next_action": "Hand off to the #83 lifecycle for release. First, the Factory Director binds execution.biuLimits and grants release. Then the Producer starts with the verbatim digest-checked import commit, followed by the release-point resolver and identifier-recognition changes with fixture and negative-control tests. The Producer should record the fetch/staleness and repository-root decisions, and should explicitly report whether #80/#81 are admitted via the release-record path or still need the fallback.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "READY is the controlling disposition. The owner decisions are made: read from the release point, not the working tree; accept any safe single-segment ID; leave admission conditions, fallback and CLI unchanged; use offline fixtures only; do not switch live operation over. Scope is bounded by explicit non-goals and stop conditions. The work forms one coherent change to the gate's record resolution, and one test suite and fixture yield a single meaningful verdict. It is not a SPLIT case: the import, the release-point reading and the ID recognition all touch the same resolver and share a verification harness. The landed-commit review belongs to the Verifier and is read-only, so it does not create a second producer decision center. It is not a CLARIFY case: the remaining unknowns are engineering choices, or behaviour gaps the Producer can report within the stated scope. It is not a HOLD case: nothing in the text says the source files, repository or tooling are unavailable, and the pending release and biuLimits binding are ordinary lifecycle steps. Rework would stay local to the resolver and its tests.",
+    "semantic_split_recommendation": [],
+    "summary": "The owner's intent, authority, scope, non-goals and acceptance criteria are stated concretely. They include byte-level custody of the import, explicit positive and negative path cases, an offline fixture requirement and negative-control demonstrations. There is one cohesive decision center: the gate's record-resolution path. The work splits into an import step and two tightly coupled behavioural changes to the same resolver, all verified by one test suite and fixture. The remaining unknowns are engineering matters: how to derive the repository root, how to shape the stamp regex, how to fake gh, and whether to fetch before resolving. None needs a new owner decision. Two items appear alongside the core work but do not block it. The first is an attached read-only review of already-landed commits, which the Verifier performs for #83 closure. The second is the pre-release binding of execution.biuLimits, which is a normal lifecycle step. Neither is producer work.",
+    "verification_assessment": "Acceptance is observable and mechanically checkable. The checks are: sha256 equality of the first commit's two files against the pinned digests; the 23 existing tests passing in place; fixture tests showing release-point records found and working-tree-only records ignored; recognition of the ARP-01, FDH-01 and WO-220202 cases and rejection of traversal, embedded-slash and wrong-directory cases; unchanged fallback behaviour; negative controls shown failing before passing; `node scripts/check.mjs all` exiting 0; and no new failures beyond the named non-hermetic baseline. One independent verdict on the candidate SHA is meaningful. The Verifier also carries an attached read-only review of 62b85e0/aa2b263 against #83 AC2/AC4. This review targets landed code, not the candidate. Its findings should be recorded separately, so that a defect in landed code does not blur the candidate's accept/reject verdict. The pinned digests come from the task text; this gate has not independently verified them."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T05:51:08.894728+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 6145,
+    "input_sha256": "9f92673e6573cc86eb35723e4e0aa8ffad68babd929f39344121ac29c113eb0b",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-p_4vbshm/BRD-83.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T05:50:35.450917+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "BRD-83"
+}
