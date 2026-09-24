@@ -1,0 +1,12 @@
+{
+  "command": [
+    "python3",
+    "-m",
+    "pytest",
+    "-q",
+    "tools/live/test_release_admission.py",
+    "tools/live/test_release_admission_release_point.py"
+  ],
+  "exit": 0,
+  "tail": "........................................................................ [100%]\n72 passed in 7.93s\n"
+}

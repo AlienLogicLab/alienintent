@@ -1,0 +1,9 @@
+{
+  "command": [
+    "node",
+    "scripts/check.mjs",
+    "all"
+  ],
+  "exit": 0,
+  "tail": "S cannot coexist with active actionable findings (0.362329ms)\n\u2714 PASS is valid after actionable finding has evidence-backed disposition (0.2236ms)\n\u2714 CHANGES_REQUIRED requires an active actionable finding (0.275062ms)\n\u2714 STOP requires all actionable findings to be dispositioned (0.322834ms)\n\u2714 actionable findings require explicit repair authority (1.248454ms)\n\u2714 CONTINUE for active actionable findings within explicit authority (0.284238ms)\n\u2714 ESCALATE when active repair explicitly exceeds authority (0.13803ms)\n\u2714 manual review pass is bounded to three active actionable findings (0.353553ms)\n\u2139 tests 18\n\u2139 suites 0\n\u2139 pass 18\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 27.888572\nRequired test group: policy\n\u2714 future agents and new work packets reach the durable repository-state authority (2.281385ms)\n\u2714 active operator admission distinguishes authorized changes from conflicting changes (0.484701ms)\n\u2714 repository-changing work has isolated, non-conflicting mutation ownership (0.513723ms)\n\u2139 tests 3\n\u2139 suites 0\n\u2139 pass 3\n\u2139 fail 0\n\u2139 cancelled 0\n\u2139 skipped 0\n\u2139 todo 0\n\u2139 duration_ms 17.565121\n"
+}

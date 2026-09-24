@@ -1,0 +1,16 @@
+[
+  {
+    "citation": "docs/evidence/elsewhere/docs/work-units/python/PY-05.assessment.json",
+    "resolved": "docs/work-units/python/PY-05.assessment.json",
+    "expected_exit": 1,
+    "actual_exit": 0,
+    "stdout": "BIU #901: status=READY agent_ready=READY baseline=e1efebfc828969c0bbf6aff050b7b433506a12ae resolves=True ancestral=True\nADMITTED: release record complete; READY -> IMPLEMENT may proceed.\n"
+  },
+  {
+    "citation": "docs/evidence/wave2-readiness-assessments/ARP/docs/work-units/python/PY-05.assessment.json",
+    "resolved": "docs/work-units/python/PY-05.assessment.json",
+    "expected_exit": 1,
+    "actual_exit": 0,
+    "stdout": "BIU #901: status=READY agent_ready=READY baseline=e1efebfc828969c0bbf6aff050b7b433506a12ae resolves=True ancestral=True\nADMITTED: release record complete; READY -> IMPLEMENT may proceed.\n"
+  }
+]

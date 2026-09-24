@@ -1,0 +1,7 @@
+{
+  "admit": true,
+  "biu_from_body": true,
+  "disposition_from_record": true,
+  "disposition_from_native_comment": true,
+  "project_status_from_issue": true
+}

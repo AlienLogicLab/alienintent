@@ -1,0 +1,9 @@
+{
+  "command": [
+    "python3",
+    "tools/live/brd83_proven_red.py",
+    "--json"
+  ],
+  "exit": 0,
+  "tail": "ry\": \"1 failed in 0.29s\"\n      },\n      \"restored\": {\n        \"exit\": 0,\n        \"summary\": \"1 passed in 0.30s\"\n      },\n      \"proven_red\": true\n    },\n    {\n      \"variant\": \"wave2_identifier_is_wo_only\",\n      \"test\": \"test_release_admission.py::test_a_readiness_record_for_any_biu_identifier_is_recognised\",\n      \"intact\": {\n        \"exit\": 0,\n        \"summary\": \"3 passed in 0.06s\"\n      },\n      \"fault\": {\n        \"exit\": 1,\n        \"summary\": \"2 failed, 1 passed in 0.06s\"\n      },\n      \"restored\": {\n        \"exit\": 0,\n        \"summary\": \"3 passed in 0.03s\"\n      },\n      \"proven_red\": true\n    },\n    {\n      \"variant\": \"release_record_not_consulted\",\n      \"test\": \"test_release_admission_release_point.py::test_a_record_for_any_biu_is_admitted_from_the_body_or_the_release_record\",\n      \"intact\": {\n        \"exit\": 0,\n        \"summary\": \"6 passed in 1.50s\"\n      },\n      \"fault\": {\n        \"exit\": 1,\n        \"summary\": \"3 failed, 3 passed in 1.64s\"\n      },\n      \"restored\": {\n        \"exit\": 0,\n        \"summary\": \"6 passed in 1.56s\"\n      },\n      \"proven_red\": true\n    }\n  ]\n}\n"
+}

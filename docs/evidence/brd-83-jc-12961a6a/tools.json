@@ -1,0 +1,11 @@
+{
+  "command": [
+    "python3",
+    "-m",
+    "pytest",
+    "-q",
+    "tools"
+  ],
+  "exit": 1,
+  "tail": "............... [ 87%]\n........................................................................ [ 97%]\n.....................                                                    [100%]\n=================================== FAILURES ===================================\n_________ test_substantial_technical_analysis_routes_to_codex_primary __________\n\n    def test_substantial_technical_analysis_routes_to_codex_primary():\n        d = route(task_type=\"evidence_reconciliation\", risk=RiskClass.MEDIUM,\n                  deterministic_possible=False)\n        assert d.tier is Tier.CODEX_PRIMARY\n        assert d.actor == \"codex-fresh\"\n>       assert d.model == \"gpt-6-astra\"\nE       AssertionError: assert 'gpt-5.6-terra' == 'gpt-6-astra'\nE         - gpt-6-astra\nE         ?       --\nE         + gpt-5.6-terra\nE         ?     ++   ++\n\ntools/orchestration/test_director.py:62: AssertionError\n=========================== short test summary info ============================\nFAILED tools/orchestration/test_director.py::test_substantial_technical_analysis_routes_to_codex_primary\n1 failed, 740 passed in 11.85s\n"
+}
