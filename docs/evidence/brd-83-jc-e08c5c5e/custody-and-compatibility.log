@@ -1,0 +1,13 @@
+release_admission.py: fb8758cecb4db13073be71e39f37c77250b018406d7c968e45d1fa57231b9b1b MATCH
+test_release_admission.py: e8000ad29d07d6a6064a7f4982b760ca957376e9d518991b8c8497a2954e5e4e MATCH
+Extracted import tests exit 0
+.......................                                                  [100%]
+23 passed in 0.06s
+
+admit: AST identical
+biu_from_body: AST identical
+disposition_from_record: AST identical
+disposition_from_native_comment: AST identical
+project_status_from_issue: AST identical
+Issue #80: body/release pointers [None, None]; native READY receipt present: True
+Issue #81: body/release pointers [None, None]; native READY receipt present: True

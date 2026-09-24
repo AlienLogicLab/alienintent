@@ -1,0 +1,83 @@
+[
+  {
+    "check": "release-tests",
+    "command": [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tools/live/test_release_admission.py",
+      "tools/live/test_release_admission_release_point.py"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "proven-red",
+    "command": [
+      "python3",
+      "tools/live/brd83_proven_red.py",
+      "--json"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "python-tools",
+    "command": [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tools"
+    ],
+    "exit": 1
+  },
+  {
+    "check": "python-tests",
+    "command": [
+      "env",
+      "PYTHONPATH=src",
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tests"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "check-all",
+    "command": [
+      "node",
+      "scripts/check.mjs",
+      "all"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "materialization",
+    "command": [
+      "python3",
+      "-m",
+      "pytest",
+      "-q",
+      "tools/live/test_project_materialization.py"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "original-probe",
+    "command": [
+      "python3",
+      "docs/evidence/brd-83/repair-2/jc-original-probe.py"
+    ],
+    "exit": 0
+  },
+  {
+    "check": "prefix-probe",
+    "command": [
+      "python3",
+      "docs/evidence/brd-83/repair-2/jc-prefix-probe.py"
+    ],
+    "exit": 0
+  }
+]
