@@ -425,6 +425,9 @@ class FactoryDirectorHost:
             return "WIP_INTENTIONALLY_FULL"
         if not values.control_required(): return "NO_ELIGIBLE_AUTHORIZED_WORK"
         # Attention, inbox and selection need Director cognition, not a worker WIP slot.
+        # Unreachable for adapter-derived inputs: executable_capacity and wip_intentionally_full are
+        # exact complements there (FDH-92), so no capacity means full WIP, which matched above. Kept
+        # as a recognised reason because history.jsonl persists it; it applies only to other inputs.
         if not values.executable_capacity and not values.director_only_control():
             return "EXECUTION_CAPACITY_UNAVAILABLE"
         return None

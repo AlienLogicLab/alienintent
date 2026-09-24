@@ -73,6 +73,17 @@ def test_documented_idle_precedence_is_the_order_the_host_applies(tmp_path):
     assert documented == observed
 
 
+def test_documented_wip_predicates_are_the_ones_the_adapter_derives():
+    from factory_director_inputs import RuntimeView, derive
+    text = CONTRACT.read_text()
+    assert "| `executable_capacity` | active runtime claims < WIP limit |" in text
+    assert "| `wip_intentionally_full` | active runtime claims ≥ WIP limit (at or above the limit" in text
+    for claims in (0, 1, 2):
+        runtime = RuntimeView(claims, frozenset(), (), 0)
+        values = derive({}, runtime, {}, (), set(), False, 1).inputs
+        assert (values.executable_capacity, values.wip_intentionally_full) == (claims < 1, claims >= 1), claims
+
+
 def test_episode_prompt_points_to_the_contract_rather_than_restating_it():
     prompt = PROMPT.read_text()
     assert "docs/operations/factory-director-runtime-contract.md" in prompt

@@ -189,9 +189,9 @@ def test_wip_intentionally_full(sources):
     assert sources.inputs().wip_intentionally_full is False
     sources.claim(9)
     assert sources.inputs().wip_intentionally_full is True
-    sources.claim(10)  # over the limit is neither capacity nor "intentionally full"
+    sources.claim(10)  # over the limit (a handoff overlap) is still intentionally full (FDH-92)
     values = sources.inputs()
-    assert (values.executable_capacity, values.wip_intentionally_full) == (False, False)
+    assert (values.executable_capacity, values.wip_intentionally_full) == (False, True)
 
 
 def test_founder_decision_pending(sources):
@@ -434,6 +434,46 @@ def test_receipt_without_entry_is_ignored_and_partial_files_are_not_entries(sour
     (sources.inbox / "note.json.partial").write_text("{}")
     (sources.inbox / "README.txt").write_text("")
     assert sources.inputs().pending_director_inbox is False
+
+
+# --- FDH-92: a handoff overlap (claims > wipLimit) is full WIP -----------------------------
+# Each case reproduces a live occurrence: activeClaims=2, wipLimit=1, the outgoing and incoming
+# worker claims on one Issue overlapping.
+
+def overlap(sources, issue, state):
+    sources.issue(issue, state).claim(issue, "PRODUCER").claim(issue, "VERIFIER")
+    return sources
+
+
+def test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full(sources):
+    overlap(sources, 81, "VERIFY").issue(50, "READY")  # criterion 1: the #81 08:55:32Z case
+    values = sources.inputs()
+    assert (values.executable_capacity, values.wip_intentionally_full) == (False, True)
+    assert values.eligible_authorized_work and not values.director_only_control()
+    result, launcher = reconcile(sources)
+    assert (result.reason, result.state) == ("WIP_INTENTIONALLY_FULL", HostState.IDLE)
+    assert launcher.launched == []
+
+
+def test_overlap_with_no_control_required_idles_wip_intentionally_full(sources):
+    overlap(sources, 83, "VERIFY")  # criterion 2: the #83 09:29:48Z case
+    values = sources.inputs()
+    assert not values.control_required() and values.wip_intentionally_full
+    result, launcher = reconcile(sources)
+    assert (result.reason, result.state) == ("WIP_INTENTIONALLY_FULL", HostState.IDLE)
+    assert launcher.launched == []
+
+
+@pytest.mark.parametrize("control", ["inbox", "escalation", "selection"])
+def test_overlap_never_suppresses_director_only_control(sources, control):
+    overlap(sources, 83, "VERIFY").issue(50, "READY")  # criterion 3: a regression guard
+    {"inbox": lambda: sources.inbox_entry("founder-2026-09-24"),
+     "escalation": lambda: sources.escalate(83),
+     "selection": lambda: sources.issue(51, "REVIEW")}[control]()
+    values = sources.inputs()
+    assert values.executable_capacity is False and values.director_only_control()
+    result, launcher = reconcile(sources)
+    assert result.reason == "DIRECTOR_CONTINUITY_FAULT" and len(launcher.launched) == 1
 
 
 # --- publication and the read-only audit ---------------------------------------------------

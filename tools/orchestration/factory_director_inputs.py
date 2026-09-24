@@ -370,7 +370,9 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
         attention_required=attention,
         pending_director_inbox=inbox,
         lifecycle_requires_selection=selection,
-        wip_intentionally_full=runtime.claims == wip_limit,
+        # At or above the limit, not only equal: a worker handoff briefly overlaps two claims
+        # (FDH-92), and that is full WIP, not a refusal. The two predicates stay exact complements.
+        wip_intentionally_full=runtime.claims >= wip_limit,
         founder_decision_pending=bool(held) and not unheld and not attention and not inbox,
         explicit_pause=paused,
     )

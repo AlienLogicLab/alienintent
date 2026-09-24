@@ -191,7 +191,7 @@ The adapter derives nine booleans and writes them atomically to
 | `attention_required` | the runtime state has an unresolved `limitEscalations` entry (section 9) |
 | `pending_director_inbox` | at least one inbox entry has no receipt |
 | `executable_capacity` | active runtime claims < WIP limit |
-| `wip_intentionally_full` | active runtime claims = WIP limit |
+| `wip_intentionally_full` | active runtime claims ≥ WIP limit (at or above the limit: a worker handoff can briefly overlap two claims). It is the exact complement of `executable_capacity` |
 | `founder_decision_pending` | the hold record covers at least one Issue that would otherwise require control, **and** no unheld Issue requires control, **and** `attention_required` and `pending_director_inbox` are both false |
 | `explicit_pause` | the pause flag exists |
 
@@ -208,8 +208,11 @@ neither is per-Issue.
 3. `FOUNDER_DECISION_PENDING`: `founder_decision_pending`.
 4. `WIP_INTENTIONALLY_FULL`: `wip_intentionally_full` and no Director-only control.
 5. `NO_ELIGIBLE_AUTHORIZED_WORK`: control is not required.
-6. `EXECUTION_CAPACITY_UNAVAILABLE` (refused): no capacity, WIP is not exactly full
-   (claims exceed the limit), and only worker work is pending.
+6. `EXECUTION_CAPACITY_UNAVAILABLE` (refused): no capacity, WIP is not full, and only
+   worker work is pending. Because `wip_intentionally_full` is true whenever claims are at or
+   above the limit, the adapter never produces this combination, so this reason is unreachable
+   from authoritative inputs. It remains a recognised reason identifier because `history.jsonl`
+   persists it.
 
 Otherwise the host checks the lease. A live leased episode gives
 `DIRECTOR_EPISODE_ACTIVE`, and no second episode is launched. An exited episode is
