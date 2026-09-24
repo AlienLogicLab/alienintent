@@ -28,6 +28,7 @@ import argparse
 import json
 import os
 import re
+import shutil
 import sys
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -112,6 +113,18 @@ def load_adapter_config(path: Path | str) -> AdapterConfig:
 
 
 # --- GitHub reads (read-only; queries only) ------------------------------------------------
+
+def require_gh() -> None:
+    """Fail closed, naming the tool and the PATH searched, when ``gh`` cannot be resolved.
+
+    A systemd user unit does not inherit the login shell's PATH (FDH-91), so this is checked
+    before the first GitHub read rather than surfacing as a raw ``FileNotFoundError``.
+    """
+    searched = os.environ.get("PATH", os.defpath)
+    if shutil.which("gh", path=searched) is None:
+        raise SourceUnavailable(f"required executable 'gh' is not resolvable on PATH={searched!r}; "
+                                "set PATH in factory-director-host.env")
+
 
 _COMMENTS_QUERY = (
     'query($owner:String!,$name:String!,$issue:Int!,$cursor:String){repository(owner:$owner,name:$name)'
@@ -404,6 +417,8 @@ class AuthoritativeDirectorInputs:
 
     # Each reader is a separate method so a negative control can break exactly one source.
     def read_board(self) -> dict[int, str]:
+        if self.board_reader is materialization.read_board or self.comments_reader is read_issue_comments:
+            require_gh()  # the default readers run gh; injected readers do not
         try:
             return validate_board(self.board_reader())
         except SourceUnavailable:

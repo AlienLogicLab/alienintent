@@ -157,3 +157,64 @@ def test_live_proof_wait_helpers_run_against_a_real_history_file(tmp_path):
     assert result.stdout.split() == ["EXIT_0", "found-a", "HOLD:", "timed", "out", "waiting", "for", "exit",
                                      "of", "b", "missing-b"], result.stderr
     assert (tmp_path / "HOLDS.txt").read_text() == "HOLD: timed out waiting for exit of b\n"
+
+
+# --- FDH-91: the host env file must set a PATH that resolves the host's tools ---------------
+
+HOST_DOC = ROOT / "docs/operations/factory-director-host.md"
+INSTALLER = ROOT / "tools/orchestration/install_factory_director_host.sh"
+
+
+def step_0a_env_guidance():
+    return LIVE_PROOF.read_text().split("## 0a. ", 1)[1].split("\n## ", 1)[0]
+
+
+@pytest.mark.parametrize("text", [step_0a_env_guidance, lambda: HOST_DOC.read_text()], ids=["live-proof-0a", "host-doc"])
+def test_env_file_guidance_requires_a_path_that_resolves_every_host_tool(text):
+    body = text()
+    assert re.search(r"^PATH=/\S*\.local/bin:\S*/usr/bin\S*$", body, re.MULTILINE) or \
+        re.search(r"`PATH=/\S*\.local/bin:\S*/usr/bin\S*`", body), "no absolute PATH example"
+    assert "`PATH` is required" in body
+    assert "does not inherit the login shell's `PATH`" in body  # why
+    for tool in ("`gh`", "`python3`", "`git`", "`claude`", "`codex`"):
+        assert tool in body, tool
+    assert "factory-director-host.env" in body
+
+
+def run_installer(home):
+    stubs = home / "stubs"
+    stubs.mkdir(exist_ok=True)
+    (stubs / "systemctl").write_text('#!/bin/sh\necho "$@" >> "$HOME/systemctl.calls"\n')
+    (stubs / "systemctl").chmod(0o755)
+    env = {"HOME": str(home), "PATH": f"{stubs}:/usr/local/bin:/usr/bin:/bin"}
+    return subprocess.run(["bash", str(INSTALLER)], env=env, capture_output=True, text=True, timeout=60)
+
+
+def test_installer_seeds_a_new_env_file_with_commented_path_guidance(tmp_path):
+    result = run_installer(tmp_path)
+    assert result.returncode == 0, result.stderr
+    env_file = tmp_path / ".config/alienintent/factory-director-host.env"
+    lines = env_file.read_text().splitlines()
+    assert all(line.startswith("#") for line in lines), lines  # guidance only: sets nothing
+    assert f"# PATH={tmp_path}/.local/bin:/usr/local/bin:/usr/bin:/bin" in lines
+    guidance = "\n".join(lines)
+    for tool in ("gh", "python3", "git", "claude", "codex", "does not inherit the login shell PATH"):
+        assert tool in guidance, tool
+    assert (env_file.stat().st_mode & 0o777) == 0o600
+    assert (tmp_path / "systemctl.calls").read_text() == "--user daemon-reload\n"  # never enables or starts
+
+
+def test_installer_leaves_an_existing_env_file_byte_identical(tmp_path):
+    env_file = tmp_path / ".config/alienintent/factory-director-host.env"
+    env_file.parent.mkdir(parents=True)
+    original = b"FACTORY_DIRECTOR_WORKTREE=/w\nGH_CONFIG_DIR=/g\n# operator note \xe2\x80\x94 kept\n"
+    env_file.write_bytes(original)
+    env_file.chmod(0o640)
+    before = env_file.stat()
+
+    result = run_installer(tmp_path)
+
+    assert result.returncode == 0, result.stderr
+    assert env_file.read_bytes() == original
+    after = env_file.stat()
+    assert (after.st_mode, after.st_mtime_ns, after.st_ino) == (before.st_mode, before.st_mtime_ns, before.st_ino)
