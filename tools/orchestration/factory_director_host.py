@@ -1,9 +1,12 @@
 #!/usr/bin/env python3
-"""Temporary non-cognizant supervision for bounded Factory Director episodes.
+"""Non-cognizant supervision for bounded Factory Director episodes (FDH-01).
 
 This is intentionally infrastructure, not a second Director: it only evaluates a
-closed activation predicate, keeps one durable lease, and starts a fresh Codex
-episode.  The episode reconstructs and decides from authoritative state.
+closed activation predicate, keeps one durable lease, and starts a fresh,
+provider-neutral (Claude or Codex) episode.  The episode reconstructs and decides
+from authoritative state; the host re-evaluates after every episode exit.
+
+Runtime contract: docs/operations/factory-director-runtime-contract.md
 """
 from __future__ import annotations
 
@@ -48,12 +51,15 @@ class DirectorInputs:
         return any((self.eligible_authorized_work, self.attention_required,
                     self.pending_director_inbox, self.lifecycle_requires_selection))
 
+    def director_only_control(self) -> bool:
+        """Control work that needs Director cognition but no worker WIP slot."""
+        return any((self.attention_required, self.pending_director_inbox, self.lifecycle_requires_selection))
+
 
 class JsonDirectorInputs:
-    """Strict adapter for a durable, externally-produced factory state projection.
+    """Strict reader for a published nine-boolean projection.
 
-    The host does not infer missing authority from a queue or process list.  An operator
-    or existing control-plane adapter must publish every predicate atomically; malformed,
+    The host does not infer missing authority from a queue or process list.  Malformed,
     incomplete, or absent data deliberately becomes ``authoritative_state=False``.
     """
     def __init__(self, path: Path | str) -> None:
@@ -76,6 +82,8 @@ class Episode:
     pid: int | None
     started_at: str
     process_start_ticks: str | None = None
+    provider: str | None = None
+    model: str | None = None
 
 
 class HostState(Enum):
@@ -106,9 +114,16 @@ class Inspection:
     last_reason: str | None
 
 
+# Legitimate terminal conditions (runtime contract, chat record §15) idle the host.
+IDLE_REASONS = frozenset({"FACTORY_PAUSED", "FOUNDER_DECISION_PENDING", "WIP_INTENTIONALLY_FULL",
+                          "NO_ELIGIBLE_AUTHORIZED_WORK"})
+ACTIVATION_REASONS = frozenset({"DIRECTOR_CONTINUITY_FAULT", "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"})
+
+
 class InMemoryDirectorLauncher:
     """Test-only launch port; production uses a process launcher."""
-    def __init__(self) -> None:
+    def __init__(self, provider: str = "memory", model: str = "memory-model") -> None:
+        self.provider, self.model = provider, model
         self.launched: list[Episode] = []
         self._active: dict[str, bool] = {}
         self._exits: dict[str, int] = {}
@@ -117,7 +132,7 @@ class InMemoryDirectorLauncher:
     def launch(self, episode_id: str, on_spawned: Callable[[Episode], None] | None = None) -> Episode:
         pid = self._next_pid
         self._next_pid += 1
-        episode = Episode(episode_id, pid, _now(), f"memory-{pid}")
+        episode = Episode(episode_id, pid, _now(), f"memory-{pid}", self.provider, self.model)
         self.launched.append(episode)
         self._active[episode_id] = True
         if on_spawned is not None:
@@ -131,18 +146,37 @@ class InMemoryDirectorLauncher:
         code = self._exits.get(episode.episode_id)
         return None if code is None else f"EXIT_{code}"
 
+    def usage(self, episode: Episode) -> dict:
+        return {"measured": False, "reason": "IN_MEMORY_LAUNCHER"}
+
     def finish(self, episode_id: str, exit_code: int = 0) -> None:
         self._active[episode_id] = False
         self._exits[episode_id] = exit_code
 
 
+PROVIDERS = ("claude", "codex")
+
+
 class ProcessDirectorLauncher:
-    """Starts a fresh bounded Codex episode; no conversation is resumed or inherited."""
-    def __init__(self, workdir: Path | str, prompt_file: Path | str,
-                 codex: str | None = None, model: str | None = None,
-                 require_isolated: bool = False) -> None:
-        self.workdir, self.prompt_file = Path(workdir), Path(prompt_file)
-        self.codex, self.model = codex or str(Path.home() / ".local/bin/codex"), model
+    """Starts a fresh bounded Factory Director episode with the configured provider.
+
+    Every launch is a new process with no resumed or inherited conversation:
+    ``claude -p --no-session-persistence`` or ``codex exec --ephemeral`` (the same
+    fresh-session flags the Node runtime uses for workers).  Switching provider is a
+    configuration change.  The prompt goes on stdin; provider output is retained under
+    the host state root, never in the Director worktree.
+    """
+    def __init__(self, workdir: Path | str, prompt_file: Path | str, *, provider: str,
+                 executable: str, model: str, permission_mode: str,
+                 output_dir: Path | str, require_isolated: bool = False) -> None:
+        if provider not in PROVIDERS:
+            raise ValueError(f"unsupported Factory Director provider {provider!r}")
+        for label, value in (("executable", executable), ("model", model), ("permission_mode", permission_mode)):
+            if not isinstance(value, str) or not value:
+                raise ValueError(f"Factory Director launcher {label} must be configured explicitly")
+        self.workdir, self.prompt_file, self.output_dir = Path(workdir), Path(prompt_file), Path(output_dir)
+        self.provider, self.executable, self.model, self.permission_mode = provider, executable, model, permission_mode
+        self._children: dict[str, subprocess.Popen] = {}
         if require_isolated and not self._is_linked_worktree():
             raise ValueError("Factory Director workspace must be an isolated linked worktree")
 
@@ -156,19 +190,32 @@ class ProcessDirectorLauncher:
         except (OSError, subprocess.SubprocessError):
             return False
 
+    def command(self) -> list[str]:
+        if self.provider == "claude":
+            return [self.executable, "-p", "--no-session-persistence", "--output-format", "json",
+                    "--permission-mode", self.permission_mode, "--model", self.model]
+        return [self.executable, "exec", "--ephemeral", "--json", "--sandbox", self.permission_mode,
+                "-C", str(self.workdir), "--model", self.model, "-"]
+
+    def environment(self) -> dict[str, str]:
+        if self.provider == "codex":
+            from codex_session import FILTERED_ENV
+            return {k: v for k, v in os.environ.items() if k not in FILTERED_ENV}
+        return dict(os.environ)
+
+    def _output(self, episode_id: str, stream: str) -> Path:
+        return self.output_dir / f"{episode_id}.{stream}"
+
     def launch(self, episode_id: str, on_spawned: Callable[[Episode], None] | None = None) -> Episode:
-        from codex_session import FILTERED_ENV
-        from director import resolved_codex_model
-        output = self.workdir / ".factory-director-host" / f"{episode_id}.last-message.txt"
-        output.parent.mkdir(parents=True, exist_ok=True)
-        model = self.model or resolved_codex_model()
         prompt = self.prompt_file.read_text().replace("{{EPISODE_ID}}", episode_id)
-        argv = [self.codex, "exec", "--cd", str(self.workdir), "--ephemeral",
-                "--sandbox", "workspace-write", "--model", model,
-                "--output-last-message", str(output), "-"]
-        env = {k: v for k, v in os.environ.items() if k not in FILTERED_ENV}
-        child = subprocess.Popen(argv, stdin=subprocess.PIPE, text=True, env=env)
-        episode = Episode(episode_id, child.pid, _now(), self._process_start_ticks(child.pid))
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        with self._output(episode_id, "stdout").open("w") as stdout, \
+                self._output(episode_id, "stderr").open("w") as stderr:
+            child = subprocess.Popen(self.command(), cwd=str(self.workdir), stdin=subprocess.PIPE,
+                                     stdout=stdout, stderr=stderr, text=True, env=self.environment())
+        self._children[episode_id] = child
+        episode = Episode(episode_id, child.pid, _now(), self._process_start_ticks(child.pid),
+                          self.provider, self.model)
         if on_spawned is not None:
             if not isinstance(episode.process_start_ticks, str) or not episode.process_start_ticks:
                 raise RuntimeError("spawned child process identity is unavailable")
@@ -192,6 +239,9 @@ class ProcessDirectorLauncher:
         return self.liveness(episode) is True
 
     def liveness(self, episode: Episode) -> bool | None:
+        child = self._children.get(episode.episode_id)
+        if child is not None:
+            return child.poll() is None  # poll() also reaps the exited child.
         if episode.pid is None:
             return False
         try:
@@ -206,7 +256,52 @@ class ProcessDirectorLauncher:
             return None
 
     def exit_reason(self, episode: Episode) -> str | None:
-        return "PROCESS_EXITED" if not self.is_active(episode) else None
+        if self.is_active(episode):
+            return None
+        child = self._children.get(episode.episode_id)
+        if child is None or child.returncode is None:
+            return "PROCESS_EXITED"  # Launched before a host restart; the status is not ours to read.
+        return f"EXIT_{child.returncode}" if child.returncode >= 0 else f"SIGNAL_{-child.returncode}"
+
+    def usage(self, episode: Episode) -> dict:
+        """Tokens, cost and model as reported by the provider; never assumed."""
+        try:
+            text = self._output(episode.episode_id, "stdout").read_text()
+        except OSError:
+            return {"measured": False, "reason": "PROVIDER_OUTPUT_UNAVAILABLE"}
+        return (claude_usage if episode.provider == "claude" else codex_usage)(text)
+
+
+def claude_usage(text: str) -> dict:
+    try:
+        result = json.loads(text)
+        usage = result["usage"]
+        return {"measured": True, "observed_models": sorted(result.get("modelUsage") or {}) or None,
+                "input_tokens": usage.get("input_tokens"), "output_tokens": usage.get("output_tokens"),
+                "cache_read_input_tokens": usage.get("cache_read_input_tokens"),
+                "cache_creation_input_tokens": usage.get("cache_creation_input_tokens"),
+                "cost_usd": result.get("total_cost_usd")}
+    except (ValueError, KeyError, TypeError, AttributeError):
+        return {"measured": False, "reason": "PROVIDER_DID_NOT_EXPOSE_USAGE"}
+
+
+def codex_usage(text: str) -> dict:
+    totals = {"input_tokens": 0, "cached_input_tokens": 0, "output_tokens": 0}
+    turns = 0
+    for line in text.splitlines():
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if isinstance(event, dict) and event.get("type") == "turn.completed" and isinstance(event.get("usage"), dict):
+            turns += 1
+            for key in totals:
+                if isinstance(event["usage"].get(key), int):
+                    totals[key] += event["usage"][key]
+    if not turns:
+        return {"measured": False, "reason": "PROVIDER_DID_NOT_EXPOSE_USAGE"}
+    # Codex JSON events carry token counts only: model and cost are recorded as not exposed.
+    return {"measured": True, "turns": turns, **totals, "observed_models": None, "cost_usd": None}
 
 
 class FactoryDirectorHost:
@@ -214,6 +309,7 @@ class FactoryDirectorHost:
         self.root, self.inputs, self.launcher = Path(state_root), inputs, launcher
         self.host_id = f"fdh-{uuid.uuid4().hex}"
         self._lock_file = None
+        self._last_recorded: tuple | None = None
 
     @property
     def _lease_path(self) -> Path: return self.root / "lease.json"
@@ -251,7 +347,7 @@ class FactoryDirectorHost:
                 raise ValueError("lease identity is invalid")
             if value["pid"] is not None and not isinstance(value["pid"], int):
                 raise ValueError("lease pid is invalid")
-            if value["status"] not in {"ACTIVATING", "ACTIVE", "LAUNCH_FAILED"}:
+            if value["status"] not in {"ACTIVATING", "ACTIVE", "EXITED", "LAUNCH_FAILED"}:
                 raise ValueError("lease status is invalid")
             if value["status"] == "ACTIVE":
                 if isinstance(value["pid"], bool) or not isinstance(value["pid"], int) or value["pid"] <= 0:
@@ -266,64 +362,90 @@ class FactoryDirectorHost:
 
     def _episode(self, lease: dict) -> Episode:
         return Episode(lease["episode_id"], lease.get("pid"), lease["started_at"],
-                       lease.get("process_start_ticks"))
+                       lease.get("process_start_ticks"), lease.get("provider"), lease.get("model"))
 
-    def _record(self, reconciliation: Reconciliation, *, exit_reason: str | None = None) -> None:
+    def _liveness(self, episode: Episode) -> bool | None:
+        return (self.launcher.liveness(episode) if hasattr(self.launcher, "liveness")
+                else self.launcher.is_active(episode))
+
+    def _record(self, reconciliation: Reconciliation, *, exit_reason: str | None = None, **details) -> None:
+        # Unchanged polls are not new evidence; launches, exits and reason changes always are.
+        key = (reconciliation.reason, reconciliation.state, reconciliation.episode_id)
+        if key == self._last_recorded and exit_reason is None and not details:
+            return
+        self._last_recorded = key
         record = {"at": _now(), "reason": reconciliation.reason, "state": reconciliation.state.value,
-                  "episode_id": reconciliation.episode_id, "exit_reason": exit_reason}
+                  "episode_id": reconciliation.episode_id, "exit_reason": exit_reason, **details}
         self._history_path.parent.mkdir(parents=True, exist_ok=True)
         with self._history_path.open("a") as stream:
             stream.write(json.dumps(record, sort_keys=True) + "\n")
 
     def _idle_reason(self, values: DirectorInputs) -> str | None:
+        """Idle-reason precedence; documented in the runtime contract."""
         if not values.authoritative_state: return "AUTHORITATIVE_STATE_UNAVAILABLE"
         if values.explicit_pause: return "FACTORY_PAUSED"
         if values.founder_decision_pending: return "FOUNDER_DECISION_PENDING"
-        if values.wip_intentionally_full and not any((values.attention_required, values.pending_director_inbox,
-                                                       values.lifecycle_requires_selection)):
+        if values.wip_intentionally_full and not values.director_only_control():
             return "WIP_INTENTIONALLY_FULL"
         if not values.control_required(): return "NO_ELIGIBLE_AUTHORIZED_WORK"
-        if not values.executable_capacity: return "EXECUTION_CAPACITY_UNAVAILABLE"
+        # Attention, inbox and selection need Director cognition, not a worker WIP slot.
+        if not values.executable_capacity and not values.director_only_control():
+            return "EXECUTION_CAPACITY_UNAVAILABLE"
         return None
+
+    def _observe_exit(self) -> None:
+        """Record a leased episode's exit, provider, model and usage once, whatever happens next."""
+        try:
+            lease = self._lease()
+            if not lease or lease["status"] != "ACTIVE":
+                return
+            episode = self._episode(lease)
+        except (AmbiguousLease, KeyError):
+            return  # Left for reconcile to refuse if control is required.
+        if self._liveness(episode) is not False:
+            return
+        exit_reason = self.launcher.exit_reason(episode) or "PROCESS_EXITED"
+        usage = self.launcher.usage(episode) if hasattr(self.launcher, "usage") else {
+            "measured": False, "reason": "LAUNCHER_DOES_NOT_REPORT_USAGE"}
+        _atomic_json(self._lease_path, {**lease, "status": "EXITED", "exit_reason": exit_reason,
+                                        "exited_observed_at": _now()})
+        self._record(Reconciliation(HostState.IDLE, "DIRECTOR_EPISODE_EXITED", episode.episode_id),
+                     exit_reason=exit_reason, provider=episode.provider, model=episode.model, usage=usage)
+
+    def _refuse(self, reason: str, episode_id: str | None = None, **details) -> Reconciliation:
+        result = Reconciliation(HostState.REFUSED, reason, episode_id)
+        self._record(result, **details)
+        return result
 
     def reconcile(self) -> Reconciliation:
         if not self.start():
-            result = Reconciliation(HostState.REFUSED, "CONFLICTING_HOST_OWNERSHIP")
-            self._record(result)
-            return result
+            return self._refuse("CONFLICTING_HOST_OWNERSHIP")
+        self._observe_exit()
         values = self.inputs()
         idle = self._idle_reason(values)
         if idle:
-            result = Reconciliation(HostState.IDLE if idle in {"FACTORY_PAUSED", "FOUNDER_DECISION_PENDING", "WIP_INTENTIONALLY_FULL", "NO_ELIGIBLE_AUTHORIZED_WORK"} else HostState.REFUSED, idle)
+            result = Reconciliation(HostState.IDLE if idle in IDLE_REASONS else HostState.REFUSED, idle)
             self._record(result)
             return result
         try:
             lease = self._lease()
         except AmbiguousLease:
-            result = Reconciliation(HostState.REFUSED, "AMBIGUOUS_LEASE")
-            self._record(result)
-            return result
+            return self._refuse("AMBIGUOUS_LEASE")
         prior_exit = None
-        if lease:
+        if lease and lease.get("status") == "EXITED":
+            prior_exit = lease.get("exit_reason") or "PROCESS_EXITED"
+        elif lease:
             if lease.get("status") == "ACTIVATING":
-                result = Reconciliation(HostState.REFUSED, "AMBIGUOUS_LEASE")
-                self._record(result)
-                return result
+                return self._refuse("AMBIGUOUS_LEASE")
             try:
                 prior = self._episode(lease)
             except KeyError:
-                result = Reconciliation(HostState.REFUSED, "AMBIGUOUS_LEASE")
-                self._record(result)
-                return result
+                return self._refuse("AMBIGUOUS_LEASE")
             if prior.pid is not None and prior.process_start_ticks is None:
-                result = Reconciliation(HostState.REFUSED, "AMBIGUOUS_LEASE")
-                self._record(result)
-                return result
-            liveness = self.launcher.liveness(prior) if hasattr(self.launcher, "liveness") else self.launcher.is_active(prior)
+                return self._refuse("AMBIGUOUS_LEASE")
+            liveness = self._liveness(prior)
             if liveness is None:
-                result = Reconciliation(HostState.REFUSED, "EPISODE_LIVENESS_AMBIGUOUS", prior.episode_id)
-                self._record(result)
-                return result
+                return self._refuse("EPISODE_LIVENESS_AMBIGUOUS", prior.episode_id)
             if liveness:
                 result = Reconciliation(HostState.ACTIVE, "DIRECTOR_EPISODE_ACTIVE", prior.episode_id)
                 self._record(result)
@@ -352,23 +474,45 @@ class FactoryDirectorHost:
             episode = self.launcher.launch(episode_id, on_spawned=bind_spawned)
         except Exception as exc:
             if bound_episode is not None:
-                result = Reconciliation(HostState.REFUSED, "DIRECTOR_LAUNCH_HANDOFF_AMBIGUOUS", episode_id)
-                self._record(result)
-                return result
+                return self._refuse("DIRECTOR_LAUNCH_HANDOFF_AMBIGUOUS", episode_id,
+                                    provider=bound_episode.provider, model=bound_episode.model)
             _atomic_json(self._lease_path, {"host_id": self.host_id, "episode_id": episode_id,
                                             "pid": None, "started_at": _now(), "process_start_ticks": None,
                                             "status": "LAUNCH_FAILED", "failure": str(exc)[:240],
                                             "keep_until_replaced": True, "retirement": "KEEP_UNTIL_REPLACED"})
-            result = Reconciliation(HostState.REFUSED, "DIRECTOR_LAUNCH_FAILED", episode_id)
-            self._record(result)
-            return result
+            return self._refuse("DIRECTOR_LAUNCH_FAILED", episode_id)
         reason = "PRIOR_EPISODE_EXITED_CONTROL_REMAINS" if lease else "DIRECTOR_CONTINUITY_FAULT"
         _atomic_json(self._lease_path, {"host_id": self.host_id, **asdict(episode),
                                         "status": "ACTIVE", "keep_until_replaced": True,
                                         "retirement": "KEEP_UNTIL_REPLACED"})
         result = Reconciliation(HostState.ACTIVE, reason, episode.episode_id)
-        self._record(result, exit_reason=prior_exit)
+        self._record(result, exit_reason=prior_exit, provider=episode.provider, model=episode.model,
+                     inputs=asdict(values))
         return result
+
+    def wait_for_change(self, interval: float, poll: float = 1.0,
+                        sleep: Callable[[float], None] = time.sleep) -> str:
+        """Sleep up to ``interval``, returning early when the leased episode exits.
+
+        This is what makes re-evaluation immediate after an episode exit without
+        polling GitHub every second: only the cheap local liveness check repeats.
+        """
+        try:
+            lease = self._lease()
+            episode = self._episode(lease) if lease and lease.get("status") == "ACTIVE" else None
+        except (AmbiguousLease, KeyError):
+            episode = None
+        if episode is None or self._liveness(episode) is not True:
+            sleep(interval)
+            return "INTERVAL_ELAPSED"
+        waited = 0.0
+        while waited < interval:
+            step = min(poll, interval - waited)
+            sleep(step)
+            waited += step
+            if self._liveness(episode) is not True:
+                return "EPISODE_EXITED"
+        return "INTERVAL_ELAPSED"
 
     def inspect(self) -> Inspection:
         try:
@@ -381,8 +525,7 @@ class FactoryDirectorHost:
                 try: history.append(json.loads(line))
                 except json.JSONDecodeError: pass
         try:
-            liveness = (self.launcher.liveness(self._episode(lease)) if lease and hasattr(self.launcher, "liveness")
-                        else self.launcher.is_active(self._episode(lease)) if lease else False)
+            liveness = self._liveness(self._episode(lease)) if lease else False
         except KeyError:
             return Inspection(HostState.REFUSED, False, None, None, None, None, "AMBIGUOUS_LEASE")
         if liveness is None:
@@ -390,25 +533,39 @@ class FactoryDirectorHost:
                               None, None, "EPISODE_LIVENESS_AMBIGUOUS")
         active = bool(liveness)
         latest = history[-1] if history else {}
-        activation = next((r["reason"] for r in reversed(history) if r["reason"] in {"DIRECTOR_CONTINUITY_FAULT", "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"}), None)
+        activation = next((r["reason"] for r in reversed(history) if r["reason"] in ACTIVATION_REASONS), None)
         exit_reason = next((r.get("exit_reason") for r in reversed(history) if r.get("exit_reason")), None)
         return Inspection(HostState.ACTIVE if active else HostState.IDLE, active,
                           lease.get("host_id") if lease else None, lease.get("episode_id") if lease else None,
                           activation, exit_reason, latest.get("reason"))
 
 
+def load_launcher(config_path: Path | str, workdir: Path | str, prompt: Path | str,
+                  state_root: Path | str) -> ProcessDirectorLauncher:
+    raw = json.loads(Path(config_path).read_text())
+    launcher = raw.get("launcher") if isinstance(raw, dict) else None
+    if not isinstance(launcher, dict):
+        raise ValueError("host configuration has no launcher section")
+    return ProcessDirectorLauncher(workdir, prompt, provider=launcher.get("provider"),
+                                   executable=launcher.get("executable"), model=launcher.get("model"),
+                                   permission_mode=launcher.get("permissionMode"),
+                                   output_dir=Path(state_root) / "episodes", require_isolated=True)
+
+
 def main(argv: list[str] | None = None) -> int:
-    parser = argparse.ArgumentParser(description="temporary non-cognizant Factory Director Host")
+    parser = argparse.ArgumentParser(description="non-cognizant Factory Director Host")
     parser.add_argument("--state-root", required=True, help="durable host state directory")
-    parser.add_argument("--inputs", required=True, help="atomic authoritative predicate projection")
-    parser.add_argument("--workdir", required=True, help="canonical AlienIntent checkout")
+    parser.add_argument("--config", required=True, help="Factory Director Host configuration JSON")
+    parser.add_argument("--workdir", required=True, help="dedicated linked Factory Director worktree")
     parser.add_argument("--prompt", required=True, help="Factory Director episode prompt")
-    parser.add_argument("--interval-seconds", type=float, default=2.0)
+    parser.add_argument("--interval-seconds", type=float, default=60.0)
     parser.add_argument("--once", action="store_true")
     parser.add_argument("--inspect", action="store_true")
     args = parser.parse_args(argv)
-    host = FactoryDirectorHost(args.state_root, JsonDirectorInputs(args.inputs),
-                               ProcessDirectorLauncher(args.workdir, args.prompt, require_isolated=True))
+    from factory_director_inputs import AuthoritativeDirectorInputs
+    inputs = AuthoritativeDirectorInputs(args.config, Path(args.state_root) / "inputs.json")
+    host = FactoryDirectorHost(args.state_root, inputs,
+                               load_launcher(args.config, args.workdir, args.prompt, args.state_root))
     if args.inspect:
         print(json.dumps(asdict(host.inspect()), default=lambda value: value.value, sort_keys=True))
         return 0
@@ -418,7 +575,7 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps(asdict(result), default=lambda value: value.value, sort_keys=True), flush=True)
             if args.once:
                 return 0
-            time.sleep(args.interval_seconds)
+            host.wait_for_change(args.interval_seconds)
     finally:
         host.shutdown()
 

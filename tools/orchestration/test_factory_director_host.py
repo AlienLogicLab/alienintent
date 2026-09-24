@@ -1,4 +1,4 @@
-"""Contract tests for the temporary, non-cognizant Factory Director Host."""
+"""Contract tests for the non-cognizant Factory Director Host (FDH-01)."""
 from pathlib import Path
 import json
 import sys
@@ -32,6 +32,12 @@ def required(**overrides):
     )
     values.update(overrides)
     return DirectorInputs(**values)
+
+
+def process_launcher(tmp_path, prompt, *, provider="codex", executable="unused", model="test-model",
+                     permission_mode="workspace-write", **kwargs):
+    return ProcessDirectorLauncher(tmp_path, prompt, provider=provider, executable=executable, model=model,
+                                   permission_mode=permission_mode, output_dir=tmp_path / "episodes", **kwargs)
 
 
 def host(tmp_path, inputs=None):
@@ -187,7 +193,7 @@ def test_prompt_handoff_failure_keeps_spawned_pid_leased_and_prevents_successor(
     monkeypatch.setattr("factory_director_host.subprocess.Popen", spawned_then_handoff_fails)
     prompt = tmp_path / "prompt.md"
     prompt.write_text("episode {{EPISODE_ID}}")
-    launcher = ProcessDirectorLauncher(tmp_path, prompt, codex="unused", model="test")
+    launcher = process_launcher(tmp_path, prompt, executable="unused")
     monkeypatch.setattr(launcher, "_process_start_ticks", lambda pid: "987654")
     monkeypatch.setattr(launcher, "liveness", lambda episode: True)
     service = FactoryDirectorHost(tmp_path / "host", required, launcher)
@@ -246,7 +252,7 @@ def test_process_launcher_treats_an_exited_child_as_inactive_even_before_reap(tm
     fake_codex.chmod(0o755)
     prompt = tmp_path / "prompt.md"
     prompt.write_text("episode {{EPISODE_ID}}")
-    launcher = ProcessDirectorLauncher(tmp_path, prompt, codex=str(fake_codex), model="test")
+    launcher = process_launcher(tmp_path, prompt, executable=str(fake_codex))
 
     episode = launcher.launch("episode-1")
     time.sleep(0.05)
@@ -262,7 +268,7 @@ def test_real_child_exit_is_reconciled_to_a_successor_without_human_prompt(tmp_p
     prompt.write_text("episode {{EPISODE_ID}}")
     service = FactoryDirectorHost(
         tmp_path / "host", required,
-        ProcessDirectorLauncher(tmp_path, prompt, codex=str(fake_codex), model="test"),
+        process_launcher(tmp_path, prompt, executable=str(fake_codex)),
     )
 
     first = service.reconcile()
@@ -272,3 +278,277 @@ def test_real_child_exit_is_reconciled_to_a_successor_without_human_prompt(tmp_p
     assert first.reason == "DIRECTOR_CONTINUITY_FAULT"
     assert second.reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"
     assert first.episode_id != second.episode_id
+
+
+# --- FDH-01 acceptance: offline continuity (criterion 4) ------------------------------------
+
+class MutableInputs:
+    def __init__(self, values):
+        self.values = values
+
+    def __call__(self):
+        return self.values
+
+
+def history(root):
+    return [json.loads(line) for line in (root / "history.jsonl").read_text().splitlines()]
+
+
+def test_continuity_a_exits_fresh_b_launches_then_b_exits_and_host_idles(tmp_path):
+    inputs = MutableInputs(required())
+    launcher = InMemoryDirectorLauncher(provider="claude", model="claude-opus-5-5")
+    service = FactoryDirectorHost(tmp_path, inputs, launcher)
+
+    first = service.reconcile()
+    lease_a = json.loads((tmp_path / "lease.json").read_text())
+    launcher.finish(first.episode_id, exit_code=0)
+    second = service.reconcile()
+    lease_b = json.loads((tmp_path / "lease.json").read_text())
+
+    assert first.reason == "DIRECTOR_CONTINUITY_FAULT"
+    assert second.reason == "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"
+    assert second.episode_id != first.episode_id
+    assert (lease_a["episode_id"], lease_a["pid"]) != (lease_b["episode_id"], lease_b["pid"])
+    assert lease_b["episode_id"] == second.episode_id and lease_b["status"] == "ACTIVE"
+
+    assert service.reconcile().reason == "DIRECTOR_EPISODE_ACTIVE"
+    assert service.reconcile().reason == "DIRECTOR_EPISODE_ACTIVE"
+    assert len(launcher.launched) == 2
+
+    inputs.values = required(eligible_authorized_work=False)
+    launcher.finish(second.episode_id, exit_code=0)
+    last = service.reconcile()
+
+    assert last.reason == "NO_ELIGIBLE_AUTHORIZED_WORK" and last.state is HostState.IDLE
+    assert len(launcher.launched) == 2
+    records = history(tmp_path)
+    exits = [r for r in records if r["reason"] == "DIRECTOR_EPISODE_EXITED"]
+    assert [r["episode_id"] for r in exits] == [first.episode_id, second.episode_id]
+    assert all(r["exit_reason"] == "EXIT_0" for r in exits)
+    launches = [r for r in records if r["reason"] in {"DIRECTOR_CONTINUITY_FAULT",
+                                                         "PRIOR_EPISODE_EXITED_CONTROL_REMAINS"}]
+    assert [(r["provider"], r["model"]) for r in launches] == [("claude", "claude-opus-5-5")] * 2
+    assert json.loads((tmp_path / "lease.json").read_text())["status"] == "EXITED"
+
+
+def test_director_only_control_launches_even_when_worker_wip_is_full(tmp_path):
+    for flag in ("attention_required", "pending_director_inbox", "lifecycle_requires_selection"):
+        root = tmp_path / flag
+        service, launcher = host(root, required(eligible_authorized_work=False, executable_capacity=False,
+                                                 wip_intentionally_full=True, **{flag: True}))
+        assert service.reconcile().reason == "DIRECTOR_CONTINUITY_FAULT", flag
+        assert len(launcher.launched) == 1
+
+
+def test_overfull_wip_with_only_worker_work_refuses_as_capacity_unavailable(tmp_path):
+    service, launcher = host(tmp_path, required(executable_capacity=False, wip_intentionally_full=False))
+
+    result = service.reconcile()
+
+    assert (result.reason, result.state) == ("EXECUTION_CAPACITY_UNAVAILABLE", HostState.REFUSED)
+    assert launcher.launched == []
+
+
+# Each row clears the condition that won the row before, so every step proves one ordering edge.
+PRECEDENCE = [
+    (dict(authoritative_state=False, explicit_pause=True, founder_decision_pending=True,
+          wip_intentionally_full=True, executable_capacity=False), "AUTHORITATIVE_STATE_UNAVAILABLE"),
+    (dict(explicit_pause=True, founder_decision_pending=True, wip_intentionally_full=True,
+          executable_capacity=False), "FACTORY_PAUSED"),
+    (dict(founder_decision_pending=True, wip_intentionally_full=True, executable_capacity=False),
+     "FOUNDER_DECISION_PENDING"),
+    (dict(wip_intentionally_full=True, executable_capacity=False), "WIP_INTENTIONALLY_FULL"),
+    (dict(eligible_authorized_work=False, executable_capacity=False), "NO_ELIGIBLE_AUTHORIZED_WORK"),
+    (dict(executable_capacity=False), "EXECUTION_CAPACITY_UNAVAILABLE"),
+]
+
+
+@pytest.mark.parametrize("overrides,reason", PRECEDENCE)
+def test_idle_reason_precedence_is_the_documented_order(tmp_path, overrides, reason):
+    service, launcher = host(tmp_path, required(**overrides))
+
+    assert service.reconcile().reason == reason
+    assert launcher.launched == []
+
+
+def test_wait_for_change_returns_as_soon_as_the_leased_episode_exits(tmp_path):
+    service, launcher = host(tmp_path)
+    episode_id = service.reconcile().episode_id
+    slept = []
+
+    def sleep(seconds):
+        slept.append(seconds)
+        if len(slept) == 3:
+            launcher.finish(episode_id)
+
+    assert service.wait_for_change(60, poll=1, sleep=sleep) == "EPISODE_EXITED"
+    assert sum(slept) == 3
+
+
+# --- FDH-01 acceptance: provider-neutral launcher (criterion 5) -----------------------------
+
+def test_claude_command_is_a_fresh_non_persisted_print_session(tmp_path):
+    launcher = process_launcher(tmp_path, tmp_path / "prompt.md", provider="claude", executable="/bin/claude",
+                                model="claude-opus-5-5", permission_mode="bypassPermissions")
+
+    assert launcher.command() == ["/bin/claude", "-p", "--no-session-persistence", "--output-format", "json",
+                                  "--permission-mode", "bypassPermissions", "--model", "claude-opus-5-5"]
+
+
+def test_codex_command_is_a_fresh_ephemeral_exec_session(tmp_path):
+    launcher = process_launcher(tmp_path, tmp_path / "prompt.md", provider="codex", executable="/bin/codex",
+                                model="gpt-6-astra", permission_mode="workspace-write")
+
+    assert launcher.command() == ["/bin/codex", "exec", "--ephemeral", "--json", "--sandbox", "workspace-write",
+                                  "-C", str(tmp_path), "--model", "gpt-6-astra", "-"]
+
+
+@pytest.mark.parametrize("provider", ["claude", "codex"])
+def test_no_command_resumes_or_continues_a_conversation(tmp_path, provider):
+    argv = process_launcher(tmp_path, tmp_path / "p", provider=provider).command()
+
+    assert not {"--resume", "-r", "--continue", "-c", "resume", "--last", "--session-id"} & set(argv)
+
+
+@pytest.mark.parametrize("override", [{"provider": "gemini"}, {"model": ""}, {"model": None},
+                                      {"executable": ""}, {"permission_mode": ""}])
+def test_launcher_refuses_unsupported_provider_or_unconfigured_model(tmp_path, override):
+    with pytest.raises(ValueError):
+        process_launcher(tmp_path, tmp_path / "p", **override)
+
+
+def test_launcher_refuses_a_workdir_that_is_not_a_linked_worktree(tmp_path):
+    import subprocess
+    plain = tmp_path / "plain"
+    plain.mkdir()
+    main_checkout = tmp_path / "main"
+    subprocess.run(["git", "init", "-q", str(main_checkout)], check=True)
+    subprocess.run(["git", "-C", str(main_checkout), "-c", "user.name=t", "-c", "user.email=t@t",
+                    "commit", "-q", "--allow-empty", "-m", "root"], check=True)
+    linked = tmp_path / "linked"
+    subprocess.run(["git", "-C", str(main_checkout), "worktree", "add", "-q", str(linked)], check=True)
+
+    for refused in (plain, main_checkout):
+        with pytest.raises(ValueError, match="isolated linked worktree"):
+            ProcessDirectorLauncher(refused, tmp_path / "p", provider="claude", executable="x", model="m",
+                                    permission_mode="bypassPermissions", output_dir=tmp_path / "o",
+                                    require_isolated=True)
+    assert ProcessDirectorLauncher(linked, tmp_path / "p", provider="claude", executable="x", model="m",
+                                   permission_mode="bypassPermissions", output_dir=tmp_path / "o",
+                                   require_isolated=True).workdir == linked
+
+
+FAKE_CLAUDE = """#!/usr/bin/env bash
+log="$(dirname "$0")/calls.jsonl"
+prompt=$(cat)
+printf '%s\\n' "$(python3 -c 'import json,os,sys; print(json.dumps({"argv": sys.argv[2:], "cwd": os.getcwd(), "prompt": sys.argv[1]}))' "$prompt" "$@")" >> "$log"
+printf '%s' '{"type":"result","total_cost_usd":0.25,"usage":{"input_tokens":120,"output_tokens":45,"cache_read_input_tokens":7,"cache_creation_input_tokens":3},"modelUsage":{"claude-opus-5-5":{}}}'
+exit 0
+"""
+
+FAKE_CODEX = """#!/usr/bin/env bash
+cat >/dev/null
+echo '{"type":"thread.started","thread_id":"t"}'
+echo '{"type":"turn.completed","usage":{"input_tokens":200,"cached_input_tokens":50,"output_tokens":60}}'
+exit 3
+"""
+
+
+def wait_until(predicate, timeout=5.0):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
+        if predicate():
+            return True
+        time.sleep(0.02)
+    return False
+
+
+def test_real_claude_episodes_are_fresh_and_record_provider_model_and_usage(tmp_path):
+    bin_dir = tmp_path / "bin"
+    bin_dir.mkdir()
+    fake = bin_dir / "claude"
+    fake.write_text(FAKE_CLAUDE)
+    fake.chmod(0o755)
+    workdir = tmp_path / "work"
+    workdir.mkdir()
+    prompt = tmp_path / "prompt.md"
+    prompt.write_text("Read docs/operations/factory-director-runtime-contract.md. Episode {{EPISODE_ID}}.")
+    launcher = ProcessDirectorLauncher(workdir, prompt, provider="claude", executable=str(fake),
+                                       model="claude-opus-5-5", permission_mode="bypassPermissions",
+                                       output_dir=tmp_path / "host" / "episodes")
+    service = FactoryDirectorHost(tmp_path / "host", required, launcher)
+
+    first = service.reconcile()
+    assert wait_until(lambda: launcher.liveness(launcher_episode(service)) is False)
+    second = service.reconcile()
+    assert wait_until(lambda: len((bin_dir / "calls.jsonl").read_text().splitlines()) == 2
+                      if (bin_dir / "calls.jsonl").exists() else False)
+
+    calls = [json.loads(line) for line in (bin_dir / "calls.jsonl").read_text().splitlines()]
+    assert [call["prompt"] for call in calls] == [
+        f"Read docs/operations/factory-director-runtime-contract.md. Episode {first.episode_id}.",
+        f"Read docs/operations/factory-director-runtime-contract.md. Episode {second.episode_id}."]
+    assert all(call["cwd"] == str(workdir) for call in calls)
+    assert calls[0]["argv"] == calls[1]["argv"] == launcher.command()[1:]
+    exited = [r for r in history(tmp_path / "host") if r["reason"] == "DIRECTOR_EPISODE_EXITED"][0]
+    assert (exited["provider"], exited["model"], exited["exit_reason"]) == ("claude", "claude-opus-5-5", "EXIT_0")
+    assert exited["usage"] == {"measured": True, "observed_models": ["claude-opus-5-5"], "input_tokens": 120,
+                               "output_tokens": 45, "cache_read_input_tokens": 7,
+                               "cache_creation_input_tokens": 3, "cost_usd": 0.25}
+    assert not (workdir / ".factory-director-host").exists()
+
+
+def launcher_episode(service):
+    lease = json.loads((service.root / "lease.json").read_text())
+    return service._episode(lease)
+
+
+def test_real_codex_episode_records_tokens_and_marks_model_and_cost_not_exposed(tmp_path):
+    fake = tmp_path / "codex"
+    fake.write_text(FAKE_CODEX)
+    fake.chmod(0o755)
+    prompt = tmp_path / "prompt.md"
+    prompt.write_text("episode {{EPISODE_ID}}")
+    launcher = process_launcher(tmp_path, prompt, provider="codex", executable=str(fake), model="gpt-6-astra")
+    inputs = MutableInputs(required())
+    service = FactoryDirectorHost(tmp_path / "host", inputs, launcher)
+
+    service.reconcile()
+    assert wait_until(lambda: launcher.liveness(launcher_episode(service)) is False)
+    inputs.values = required(eligible_authorized_work=False)
+    assert service.reconcile().reason == "NO_ELIGIBLE_AUTHORIZED_WORK"
+
+    exited = [r for r in history(tmp_path / "host") if r["reason"] == "DIRECTOR_EPISODE_EXITED"][0]
+    assert (exited["provider"], exited["model"], exited["exit_reason"]) == ("codex", "gpt-6-astra", "EXIT_3")
+    assert exited["usage"] == {"measured": True, "turns": 1, "input_tokens": 200, "cached_input_tokens": 50,
+                               "output_tokens": 60, "observed_models": None, "cost_usd": None}
+
+
+def test_unmeasured_usage_is_recorded_as_unmeasured_never_zero(tmp_path):
+    fake = tmp_path / "claude"
+    fake.write_text("#!/usr/bin/env bash\ncat >/dev/null\necho 'not json'\n")
+    fake.chmod(0o755)
+    prompt = tmp_path / "prompt.md"
+    prompt.write_text("episode {{EPISODE_ID}}")
+    launcher = process_launcher(tmp_path, prompt, provider="claude", executable=str(fake))
+    inputs = MutableInputs(required())
+    service = FactoryDirectorHost(tmp_path / "host", inputs, launcher)
+
+    service.reconcile()
+    assert wait_until(lambda: launcher.liveness(launcher_episode(service)) is False)
+    inputs.values = required(eligible_authorized_work=False)
+    service.reconcile()
+
+    exited = [r for r in history(tmp_path / "host") if r["reason"] == "DIRECTOR_EPISODE_EXITED"][0]
+    assert exited["usage"] == {"measured": False, "reason": "PROVIDER_DID_NOT_EXPOSE_USAGE"}
+
+
+def test_unchanged_polls_do_not_grow_history_but_reason_changes_do(tmp_path):
+    inputs = MutableInputs(required(eligible_authorized_work=False))
+    service = FactoryDirectorHost(tmp_path, inputs, InMemoryDirectorLauncher())
+    for _ in range(5):
+        service.reconcile()
+    inputs.values = required(explicit_pause=True)
+    service.reconcile()
+
+    assert [r["reason"] for r in history(tmp_path)] == ["NO_ELIGIBLE_AUTHORIZED_WORK", "FACTORY_PAUSED"]
