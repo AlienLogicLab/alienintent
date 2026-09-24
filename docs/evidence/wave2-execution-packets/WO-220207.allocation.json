@@ -2,7 +2,7 @@
   "record_kind": "AllocationDecision",
   "schema_version": "1",
   "biu_id": "WO-220207",
-  "decided_at": "2026-09-24T23:01:47.746752+00:00",
+  "decided_at": "2026-09-24T23:57:40.415699+00:00",
   "allocator": {
     "role": "Allocator (SF-REQ-026, amended 2026-09-22)",
     "instance": "Factory Director \u2014 deterministic policy branch (one configured eligible worker per role)",
@@ -71,8 +71,8 @@
   },
   "not_granted_here": "Release authority. Release is SWF-35 admission performed by the Director on the Project item.",
   "provenance": {
-    "baseline_sha": "036c5fc2d2c7f1699b23ac171e9e019aa8d4fc98",
-    "candidate_contract_sha256": "b2c56f51c99e006a4fef35d082a12585b806a2b46403fec06c20d76042aedcb6",
+    "baseline_sha": "7a18e0b6e98b356c4e3eec8282caab31722d17d2",
+    "candidate_contract_sha256": "00148ba18b4466cb0d30f18ba50af44226210a0c564d15d2f50045af4c3a1ec7",
     "candidate_ref": "docs/evidence/wave2-candidate-bius.json (WO-220207)",
     "recorded_by": "Factory Director"
   }

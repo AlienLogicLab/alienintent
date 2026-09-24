@@ -2,8 +2,8 @@
   "record_kind": "ExecutionPacket",
   "schema_version": "1",
   "biu_id": "WO-220207",
-  "issued_at": "2026-09-24T23:01:47.746752+00:00",
-  "goal": "Deliver the bounded planned extent: Compiler validation and explicit allocation hold \u2014 Compiler validation and explicit allocation hold",
+  "issued_at": "2026-09-24T23:57:40.415699+00:00",
+  "goal": "Deliver the bounded planned extent: Compiler validation and conserved obligation mapping \u2014 Compiler validation and conserved obligation mapping",
   "starting_authority": {
     "requirements": [
       "SF-REQ-013"
@@ -11,14 +11,14 @@
     "dag_node": [
       "U7"
     ],
-    "candidate_contract_sha256": "b2c56f51c99e006a4fef35d082a12585b806a2b46403fec06c20d76042aedcb6",
-    "baseline_sha": "036c5fc2d2c7f1699b23ac171e9e019aa8d4fc98",
+    "candidate_contract_sha256": "00148ba18b4466cb0d30f18ba50af44226210a0c564d15d2f50045af4c3a1ec7",
+    "baseline_sha": "7a18e0b6e98b356c4e3eec8282caab31722d17d2",
     "release_authority": "NOT YET GRANTED \u2014 SWF-35 admission required before any IMPLEMENT transition"
   },
   "allowed_scope": {
-    "extent": "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+    "extent": "Reject incomplete contract, uncovered requirement/acceptance/verification/evidence obligation, cyclic/missing/predicate-free edge, stale design or unauthorized/nonconserving replan. Validate deterministic identity rewrites, preserved predicates, lineage and immutable stale-assessment history. A hand-authored mapping fixture proves validation only; U8 must derive initial decomposition.",
     "boundary": "Only this node extent. Requirement/design references constrain execution and do not absorb sibling scopes.",
-    "dag_scope": "",
+    "dag_scope": "Validation of compiler-derived initial candidates and conserved split/replan candidates: contract completeness, obligation mapping, graph predicates, identity and authority bounds.",
     "owns_capabilities": [
       "compilation_validation_hold"
     ],
@@ -46,10 +46,10 @@
   ],
   "acceptance": {
     "criteria": [
-      "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+      "Reject incomplete contract, uncovered requirement/acceptance/verification/evidence obligation, cyclic/missing/predicate-free edge, stale design or unauthorized/nonconserving replan. Validate deterministic identity rewrites, preserved predicates, lineage and immutable stale-assessment history. A hand-authored mapping fixture proves validation only; U8 must derive initial decomposition.",
       "SF-REQ-013-AC-03: Fixtures with a cyclic dependency, missing endpoint or dependency whose satisfaction predicate is unspecified are refused with the offending edge identified; an acyclic fully resolved graph is admitted for assessment.",
       "SF-REQ-013-AC-04: Missing design verification, unresolved product authority or conflicting fixed decisions produces a hold and no READY or IMPLEMENT transition.",
-      "SF-REQ-013-AC-05: A request to rewrite an existing approved decomposition is identified as outside this initial-compilation scope and retained for the pending split/replan decision; it must not mutate existing BIUs."
+      "SF-REQ-013-AC-05: Given an authorized split of a pinned existing decomposition, freeze all original obligations and conserve 100% in resulting units or a retained Integration Parent. Reject loss, invented intent, weakened proof, budget/capability expansion, stale authority and partial mapping before applying a mutation. Preserve existing identities/history and integration proof."
     ],
     "acceptance_ids": [
       "SF-REQ-013-AC-03",
@@ -61,7 +61,7 @@
       "owner_node": "U7",
       "status": "PLANNED_NOT_EXECUTED",
       "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-      "scenario": "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+      "scenario": "Reject incomplete contract, uncovered requirement/acceptance/verification/evidence obligation, cyclic/missing/predicate-free edge, stale design or unauthorized/nonconserving replan. Validate deterministic identity rewrites, preserved predicates, lineage and immutable stale-assessment history. A hand-authored mapping fixture proves validation only; U8 must derive initial decomposition.",
       "acceptance_ids": [
         "SF-REQ-013-AC-03",
         "SF-REQ-013-AC-04",
@@ -86,8 +86,8 @@
       },
       {
         "acceptance_id": "SF-REQ-013-AC-05",
-        "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
-        "design_probe": "Approved decomposition identity refuses rewrite without mutating prior candidate/BIUs."
+        "specified_verification": "Replay the SWF-33 PY-10 / PY-09B precedent as a historical contract fixture, not a live mutation; compare exact original clauses, resulting extents and retained integration duties. Proven-red omissions, weaker clauses and invented obligations must refuse admission.",
+        "design_probe": "Freeze original clauses, conserve all obligation extents in child/Integration Parent, preserve intent/proof and budget; reject stale/unauthorized or weakening mutation before atomic apply."
       }
     ],
     "enforcement_obligations": [
