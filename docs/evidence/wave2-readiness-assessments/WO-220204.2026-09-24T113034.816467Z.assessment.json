@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Implement the proof_plan_derivation capability for SF-REQ-014. Before any fixture implementation exists, it must produce stable, authority-linked proof plans: AC/obligation, fixture, predicate, command, endpoint, expected result and evidence schema. Those plans must discriminate real guard failure from unrelated failure through intact/red/restored controls, use the four-observable platform isolation model instead of impossible credential denial, record human-judgment predicates as reviewer-attributed decisions, and preserve prior obligations across repair unless supersession is authorized.",
+    "implementation_unknowns": [
+      "Where the approved qualified intact/red/restored mutation battery, CLI/composition reachability probes, attributable harness/red-ancestry diagnostics and prior-obligation replay/supersession comparison live. Also, whether they expose interfaces that proof_plan_derivation can reuse unchanged, since the obligations say 'reuse'.",
+      "The concrete shape of the pinned Phase 9 shared value/evidence/store/failure/composition contracts, and how the proof-plan evidence schema maps onto them without adding new service boundaries.",
+      "How the authority-reviewed semantic predicate mappings are supplied to the derivation: format, location, and revision linkage to the authorized requirement revision.",
+      "How U3's retained installation-doctor capability evidence and InfeasibleProof typed inputs are consumed at composition for AC-03 plans.",
+      "How 'deletion without authorized supersession holds' and 'removing a required predicate blocks plan admission' are represented in existing admission/state models. This includes interaction with U2's DecisionInbox OPEN/STALE semantics.",
+      "How to build the proven-red fixtures: unconditional-success, zero-application, overdetermined and disconnected-caller variants against real temporary SQLite."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The enforcement obligations assume approved batteries and harnesses exist for reuse. If S0's shared harness or these components are absent or incompatible, the Stop policy requires a hold and return to the owner rather than in-node repair.",
+      "Predicate mappings must be authority-reviewed input. The producer might instead infer mappings from source code or passing tests, which the fixed decision explicitly forbids, or fabricate mappings where reviewed input is missing.",
+      "Vacuous proof risk: plans or fixtures that pass unconditionally, never trigger the guard, or reference themselves would appear green without discriminating. The proven-red obligations mitigate this only if they are actually demonstrated.",
+      "Scope creep into sibling nodes or prerequisite repair is a risk, particularly U3 capability-evidence handling or U2 decision semantics. Both are non-goals and must be escalated.",
+      "The dependency DONE status and the bound allocation are reported by the task text, not independently verified by this gate. Admission still requires the exact verified predecessor candidates and receipts.",
+      "Landing merges directly into the baseline branch without a pull request. That makes the independent verifier's exact-SHA verdict the sole review gate before merge. Release authority is not granted."
+    ],
+    "next_action": "Hand off to the configured PRODUCER under the bound allocation, subject to three conditions: (1) first confirm admission by retrieving the exact verified U1\u2013U3 predecessor candidates and proof receipts and the authority-reviewed predicate mappings; (2) locate the reusable batteries, harnesses and shared contracts; (3) pin fixture commands, inputs, expected outcomes and evidence schema, demonstrating intact/red/restored discrimination before implementation. If any prerequisite is missing, hold and escalate per the Stop/Escalate rules rather than substituting.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "rationale": "READY is the controlling condition for five reasons:\n- **Owner intent is resolved:** the governing intent and the material owner decisions are fixed by a verified design contract, and non-goals and boundaries are explicit.\n- **One decision center:** the four acceptance criteria are facets of a single capability (proof_plan_derivation), sharing one evidence contract and one verification path, so splitting would fragment a cohesive unit without creating independently acceptable deliverables.\n- **Acceptance is observable:** a single independent verdict is meaningful, and rework would be localized to specific plan or fixture elements.\n- **Prerequisites are reported available:** dependencies and allocation are stated as DONE and bound. Nothing in the text establishes unavailability, so HOLD is not warranted merely because this gate cannot inspect them.\n- **Remaining unknowns are engineering research:** locating reusable harnesses, mapping schemas and consuming typed inputs are implementation work and do not justify CLARIFY.\n\nThe landing instruction was treated as task data describing the work's policy, not as a directive to this gate.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive single-capability work order for node U4, SF-REQ-014. The owner-level decisions are stated as fixed from a verified Design Contract: the four isolation observables, no credential-denial oracle, plans derived before implementation, and predicate mappings treated as authority-reviewed input rather than inferred. The four acceptance criteria are concrete and each has a probe. Four enforcement obligations are defined, three BLOCKING and one ADVISORY, each with a proven-red requirement. The task reports that dependencies U1\u2013U3 are DONE and that allocation, producer/verifier roles, budget and landing policy are bound. Remaining uncertainty is engineering research: locating and reusing the approved harnesses, batteries and contract artifacts. No unresolved owner intent was found. The work is substantial but forms a single decision center.",
+    "verification_assessment": "Acceptance is observable and mechanically checkable for the most part:\n- AC-01: pinned predicate/fixture/expected output exist and are revision-linked before implementation evidence.\n- AC-02: an intact case passes, a discriminating mutation fails nonzero, and constant-success or self-referential checks are refused.\n- AC-03: a four-part isolation plan with a pinned capability premise and no credential-denial oracle.\n- AC-04: judgment predicates name reviewer, inputs and decision record, and predicate removal blocks admission.\nThe BLOCKING enforcement obligations each carry a proven-red control, which lets a verifier distinguish real guards from vacuous ones. A single independent verdict from the configured VERIFIER, retrieving the exact candidate SHA in its own worktree, is meaningful because all criteria concern one capability and one evidence contract. The 014-proof-order check is advisory and should not gate the verdict. All evidence is local (LOCAL_COMPOSED_OR_MECHANICAL). No operational acceptance is claimed or available from this work."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-24T11:31:10.717812+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 11510,
+    "input_sha256": "2a00cf54cad894bcca9e76cd7e6a07517b708976eaa95d722f465eacd365854a",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-9y59fz37/WO-220204.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.281 (Claude Code)"
+    },
+    "started_at": "2026-09-24T11:30:34.816467+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220204"
+}
