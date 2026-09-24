@@ -196,6 +196,35 @@ def test_an_explicit_release_point_is_read_instead_of_origin_main(world):
     assert older.returncode == 1 and "agent_ready=None" in older.stdout, older.stdout
 
 
+@pytest.mark.parametrize("path", [
+    f"{where}{biu}.s.assessment.json"
+    for where in ("docs/evidence/elsewhere/", "docs/evidence/wave2-readiness-assessments/../../../",
+                  "docs/evidence/wave2-readiness-assessments/ARP/")
+    for biu in ("WO-220202", "PY-05")
+])
+def test_a_rejected_citation_never_admits_through_the_wave1_record(world, path):
+    """JC R1: the Wave 1 record for the same identifier is READY at the release point, and no
+    native receipt exists. A rejected citation must refuse, not resolve to that record."""
+    biu = path.rsplit("/", 1)[1].split(".")[0]
+    world.land(f"docs/work-units/python/{biu}.assessment.json")
+    world.issue(body=f"Readiness record `{path}`.")
+
+    result = world.admit(workdir=world.work)
+
+    assert result.returncode == 1 and "agent_ready=None" in result.stdout, result.stdout
+
+
+def test_a_wave1_record_cited_by_its_own_path_is_still_admitted(world):
+    world.land("docs/work-units/python/PY-05.assessment.json")
+    world.issue(body="see [`PY-05.assessment.json`](https://github.com/AlienLogicLab/alienintent/"
+                     "blob/main/docs/work-units/python/PY-05.assessment.json)")
+
+    result = world.admit(workdir=world.work)
+
+    assert _admitted(result), result.stdout + result.stderr
+    assert "agent_ready=READY" in result.stdout
+
+
 def test_the_native_receipt_fallback_is_unchanged_when_no_record_is_cited(world):
     receipt = ("<!-- AGENT_READY_ASSESSMENT: " + json.dumps(READY_RECORD) + " -->")
     world.issue(body="no record path here", comments=(receipt,))

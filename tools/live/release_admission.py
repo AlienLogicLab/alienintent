@@ -210,6 +210,23 @@ WAVE2_RECORD = re.compile(
     r"([A-Za-z0-9-]+\.[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*?\.assessment\.json)"
     r"(?!\.?[\w/-])")
 
+WAVE1_DIR = "docs/work-units/python"
+# A Wave 1 citation names the file `<BIU>.assessment.json` exactly: bare, or under WAVE1_DIR
+# (a repository path or a GitHub blob URL). Anything else carrying a PY/WO identifier (a stamped
+# Wave 2 name, another directory, a `..` segment) is not a Wave 1 record: reinterpreting a
+# rejected Wave 2 citation as `WAVE1_DIR/<BIU>.assessment.json` admitted a record the Issue
+# never cited (Issue #83, JC R1).
+WAVE1_RECORD = re.compile(
+    r"(?<![\w./-])([^\s`'\"()\[\]<>]*/)?(PY-\d\d[A-Z]?|WO-\d{6})\.assessment\.json(?!\.?[\w/-])")
+
+
+def _wave1_biu(body: str) -> str | None:
+    for match in WAVE1_RECORD.finditer(body or ""):
+        prefix = match.group(1) or ""
+        if ".." not in prefix.split("/") and (not prefix or prefix.endswith(f"{WAVE1_DIR}/")):
+            return match.group(2)
+    return None
+
 
 def assessment_record_path(body: str) -> PurePosixPath | None:
     """Wave 2 (2026-09-22): the retained record is a ReadinessAssessment envelope produced by
@@ -218,8 +235,8 @@ def assessment_record_path(body: str) -> PurePosixPath | None:
     match = WAVE2_RECORD.search(body or "")
     if match:
         return PurePosixPath(WAVE2_DIR) / match.group(1)
-    biu = biu_from_body(body)
-    return PurePosixPath("docs/work-units/python") / f"{biu}.assessment.json" if biu else None
+    biu = _wave1_biu(body)
+    return PurePosixPath(WAVE1_DIR) / f"{biu}.assessment.json" if biu else None
 
 
 def disposition_from_record(record: dict) -> str | None:

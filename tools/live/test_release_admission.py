@@ -224,3 +224,59 @@ def test_a_record_path_continued_past_the_file_is_rejected():
 def test_the_wave1_python_record_path_is_unchanged():
     assert str(assessment_record_path("see `PY-09B.assessment.json`")) == \
         "docs/work-units/python/PY-09B.assessment.json"
+
+
+# --- Issue #83, JC R1: a rejected citation is not reinterpreted as a Wave 1 record ----------------
+# A Wave 2-shaped path that the Wave 2 pattern rejected still carried a PY/WO identifier, and the
+# Wave 1 fallback turned it into `docs/work-units/python/<BIU>.assessment.json`: a record the Issue
+# never cited. Each of these must resolve to nothing, for WO- and PY-shaped identifiers alike.
+
+REJECTED_CITATIONS = [
+    f"{where}{biu}.s.assessment.json"
+    for where in ("docs/evidence/elsewhere/", "docs/evidence/wave2-readiness-assessments/../../../",
+                  "docs/evidence/wave2-readiness-assessments/ARP/")
+    for biu in ("WO-220202", "PY-05")
+]
+
+
+@pytest.mark.parametrize("path", REJECTED_CITATIONS)
+def test_a_rejected_wave2_citation_is_not_reinterpreted_as_a_wave1_record(path):
+    assert assessment_record_path(f"Readiness record `{path}`.") is None
+
+
+def test_a_stamped_name_is_not_a_wave1_record():
+    assert assessment_record_path("`WO-220202.s.assessment.json`") is None
+    assert assessment_record_path("`PY-05.2026-09-24.assessment.json`") is None
+
+
+def test_a_wave1_record_in_another_directory_is_rejected():
+    assert assessment_record_path("`docs/evidence/elsewhere/PY-05.assessment.json`") is None
+    assert assessment_record_path("`docs/evidence/wave2-readiness-assessments/WO-220202.assessment.json`") is None
+
+
+def test_a_wave1_record_reached_through_a_parent_segment_is_rejected():
+    assert assessment_record_path("`../docs/work-units/python/PY-05.assessment.json`") is None
+    assert assessment_record_path(
+        "`docs/work-units/python/../../docs/work-units/python/PY-05.assessment.json`") is None
+
+
+def test_a_wave1_identifier_embedded_in_a_longer_name_is_rejected():
+    assert assessment_record_path("`XPY-05.assessment.json`") is None
+    assert assessment_record_path("`v1.PY-05.assessment.json`") is None
+
+
+def test_a_wave1_record_path_continued_past_the_file_is_rejected():
+    assert assessment_record_path("`docs/work-units/python/PY-05.assessment.json/../x`") is None
+
+
+@pytest.mark.parametrize("text, biu", [
+    # The citation forms of every Wave 1 Issue body on record (#2, #50-#58, #68).
+    ("docs/work-units/python/PY-01.assessment.json", "PY-01"),
+    ("[`PY-09B.assessment.json`](https://github.com/AlienLogicLab/alienintent/blob/main/"
+     "docs/work-units/python/PY-09B.assessment.json)", "PY-09B"),
+    ("https://github.com/AlienLogicLab/alienintent/blob/main/docs/work-units/python/PY-10.assessment.json",
+     "PY-10"),
+    ("see [`PY-10.assessment.json`](.../PY-10.assessment.json)", "PY-10"),
+])
+def test_every_wave1_citation_form_on_record_still_resolves(text, biu):
+    assert str(assessment_record_path(text)) == f"docs/work-units/python/{biu}.assessment.json"
