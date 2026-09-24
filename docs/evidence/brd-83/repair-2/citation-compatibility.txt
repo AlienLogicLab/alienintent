@@ -1,0 +1,40 @@
+#86 body: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json -> docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+#78 body: SAME docs/evidence/wave2-readiness-assessments/WO-220301.2026-09-23T110734.066409Z.assessment.json -> docs/evidence/wave2-readiness-assessments/WO-220301.2026-09-23T110734.066409Z.assessment.json
+#71 body: SAME docs/evidence/wave2-readiness-assessments/WO-220102.2026-09-23T053013.882036Z.assessment.json -> docs/evidence/wave2-readiness-assessments/WO-220102.2026-09-23T053013.882036Z.assessment.json
+#69 body: SAME docs/evidence/wave2-readiness-assessments/WO-220101.2026-09-22T110109.877043Z.assessment.json -> docs/evidence/wave2-readiness-assessments/WO-220101.2026-09-22T110109.877043Z.assessment.json
+#68 body: SAME docs/work-units/python/PY-09B.assessment.json -> docs/work-units/python/PY-09B.assessment.json
+#58 body: SAME docs/work-units/python/PY-10.assessment.json -> docs/work-units/python/PY-10.assessment.json
+#57 body: SAME docs/work-units/python/PY-09.assessment.json -> docs/work-units/python/PY-09.assessment.json
+#56 body: SAME docs/work-units/python/PY-08.assessment.json -> docs/work-units/python/PY-08.assessment.json
+#55 body: SAME docs/work-units/python/PY-07.assessment.json -> docs/work-units/python/PY-07.assessment.json
+#54 body: SAME docs/work-units/python/PY-06.assessment.json -> docs/work-units/python/PY-06.assessment.json
+#53 body: SAME docs/work-units/python/PY-05.assessment.json -> docs/work-units/python/PY-05.assessment.json
+#52 body: SAME docs/work-units/python/PY-04.assessment.json -> docs/work-units/python/PY-04.assessment.json
+#51 body: SAME docs/work-units/python/PY-03.assessment.json -> docs/work-units/python/PY-03.assessment.json
+#50 body: SAME docs/work-units/python/PY-02.assessment.json -> docs/work-units/python/PY-02.assessment.json
+#2 body: SAME docs/work-units/python/PY-01.assessment.json -> docs/work-units/python/PY-01.assessment.json
+#55 comment 5751316370: SAME docs/work-units/python/PY-07.assessment.json -> docs/work-units/python/PY-07.assessment.json
+#56 comment 5752923312: SAME docs/work-units/python/PY-08.assessment.json -> docs/work-units/python/PY-08.assessment.json
+#57 comment 5754091845: SAME docs/work-units/python/PY-09.assessment.json -> docs/work-units/python/PY-09.assessment.json
+#68 comment 5758348400: SAME docs/work-units/python/PY-09B.assessment.json -> docs/work-units/python/PY-09B.assessment.json
+#58 comment 5759231468: SAME docs/work-units/python/PY-10.assessment.json -> docs/work-units/python/PY-10.assessment.json
+#71 comment 5789648516: SAME docs/evidence/wave2-readiness-assessments/WO-220102.2026-09-23T053013.882036Z.assessment.json -> docs/evidence/wave2-readiness-assessments/WO-220102.2026-09-23T053013.882036Z.assessment.json
+#78 comment 5793363559: SAME docs/evidence/wave2-readiness-assessments/WO-220301.2026-09-23T103505.604741Z.assessment.json -> docs/evidence/wave2-readiness-assessments/WO-220301.2026-09-23T103505.604741Z.assessment.json
+#78 comment 5793830383: SAME docs/evidence/wave2-readiness-assessments/WO-220301.2026-09-23T110734.066409Z.assessment.json -> docs/evidence/wave2-readiness-assessments/WO-220301.2026-09-23T110734.066409Z.assessment.json
+#78 comment 5793842466: SAME docs/evidence/wave2-readiness-assessments/WO-220301.2026-09-23T110734.066409Z.assessment.json -> docs/evidence/wave2-readiness-assessments/WO-220301.2026-09-23T110734.066409Z.assessment.json
+#86 comment 5808156780: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json -> docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+#86 comment 5808239419: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json -> docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+#86 comment 5808283120: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json -> docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+#86 comment 5808327840: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json -> docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+#86 comment 5808362062: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json -> docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+#86 comment 5808388372: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json -> docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+#86 comment 5808416096: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json -> docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+#86 comment 5808452589: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json -> docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+#80 comment 5808500898: SAME docs/evidence/wave2-readiness-assessments/WO-220202.2026-09-23T161839.955776Z.assessment.json -> docs/evidence/wave2-readiness-assessments/WO-220202.2026-09-23T161839.955776Z.assessment.json
+#89 comment 5809045271: SAME docs/evidence/wave2-readiness-assessments/FDH-01.2026-09-24T055203.941687Z.assessment.json -> docs/evidence/wave2-readiness-assessments/FDH-01.2026-09-24T055203.941687Z.assessment.json
+#81 comment 5810383050: SAME docs/evidence/wave2-readiness-assessments/WO-220203.2026-09-23T175207.676430Z.assessment.json -> docs/evidence/wave2-readiness-assessments/WO-220203.2026-09-23T175207.676430Z.assessment.json
+#83 comment 5811210927: SAME docs/evidence/wave2-readiness-assessments/BRD-83.2026-09-24T055035.450917Z.assessment.json -> docs/evidence/wave2-readiness-assessments/BRD-83.2026-09-24T055035.450917Z.assessment.json
+#83 comment 5811219183: SAME docs/evidence/wave2-readiness-assessments/BRD-83.2026-09-24T055035.450917Z.assessment.json -> docs/evidence/wave2-readiness-assessments/BRD-83.2026-09-24T055035.450917Z.assessment.json
+#83 comment 5811522023: SAME docs/work-units/python/WO-220202.assessment.json -> docs/work-units/python/WO-220202.assessment.json
+#83 comment 5811761861: SAME docs/work-units/python/PY-05.assessment.json -> docs/work-units/python/PY-05.assessment.json
+84 Issue bodies and 256 comments; 39 resolve a record; 0 differ between 9b42ad5 and the repair

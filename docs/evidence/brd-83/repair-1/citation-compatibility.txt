@@ -1,0 +1,16 @@
+#2: SAME docs/work-units/python/PY-01.assessment.json
+#50: SAME docs/work-units/python/PY-02.assessment.json
+#51: SAME docs/work-units/python/PY-03.assessment.json
+#52: SAME docs/work-units/python/PY-04.assessment.json
+#53: SAME docs/work-units/python/PY-05.assessment.json
+#54: SAME docs/work-units/python/PY-06.assessment.json
+#55: SAME docs/work-units/python/PY-07.assessment.json
+#56: SAME docs/work-units/python/PY-08.assessment.json
+#57: SAME docs/work-units/python/PY-09.assessment.json
+#58: SAME docs/work-units/python/PY-10.assessment.json
+#68: SAME docs/work-units/python/PY-09B.assessment.json
+#69: SAME docs/evidence/wave2-readiness-assessments/WO-220101.2026-09-22T110109.877043Z.assessment.json
+#71: SAME docs/evidence/wave2-readiness-assessments/WO-220102.2026-09-23T053013.882036Z.assessment.json
+#78: SAME docs/evidence/wave2-readiness-assessments/WO-220301.2026-09-23T110734.066409Z.assessment.json
+#86: SAME docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json
+84 Issue bodies; 15 resolve a record; 0 differ between c278f04 and the repair

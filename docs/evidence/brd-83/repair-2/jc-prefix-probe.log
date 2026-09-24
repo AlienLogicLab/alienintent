@@ -1,0 +1,17 @@
+[
+  {
+    "citation": "docs/evidence/elsewhere/docs/work-units/python/PY-05.assessment.json",
+    "resolved": "None",
+    "expected_exit": 1,
+    "actual_exit": 1,
+    "stdout": "BIU #901: status=READY agent_ready=None baseline=bdc8423856d2d1897f586d0bc96a39148761c233 resolves=True ancestral=True\nREFUSED: do not transition and do not launch a worker.\n  - agent_ready: Agent-Ready disposition is None, not READY.\n"
+  },
+  {
+    "citation": "docs/evidence/wave2-readiness-assessments/ARP/docs/work-units/python/PY-05.assessment.json",
+    "resolved": "None",
+    "expected_exit": 1,
+    "actual_exit": 1,
+    "stdout": "BIU #901: status=READY agent_ready=None baseline=bdc8423856d2d1897f586d0bc96a39148761c233 resolves=True ancestral=True\nREFUSED: do not transition and do not launch a worker.\n  - agent_ready: Agent-Ready disposition is None, not READY.\n"
+  }
+]
+prefix=0
