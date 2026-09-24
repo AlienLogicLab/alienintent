@@ -16,6 +16,7 @@ from factory_director_host import (  # noqa: E402
     JsonDirectorInputs,
     ProcessDirectorLauncher,
 )
+from factory_director_inputs import RuntimeView, derive  # noqa: E402
 
 
 def required(**overrides):
@@ -342,13 +343,47 @@ def test_director_only_control_launches_even_when_worker_wip_is_full(tmp_path):
         assert len(launcher.launched) == 1
 
 
-def test_overfull_wip_with_only_worker_work_refuses_as_capacity_unavailable(tmp_path):
+def test_no_capacity_without_full_wip_refuses_as_capacity_unavailable(tmp_path):
+    # Not a combination the adapter derives since FDH-92; the persisted reason is still applied.
     service, launcher = host(tmp_path, required(executable_capacity=False, wip_intentionally_full=False))
 
     result = service.reconcile()
 
     assert (result.reason, result.state) == ("EXECUTION_CAPACITY_UNAVAILABLE", HostState.REFUSED)
     assert launcher.launched == []
+
+
+def overlap_inputs(board, *, unprocessed=(), escalations=()):
+    """Adapter-derived inputs for a handoff overlap: two claims on #83 against wipLimit 1 (FDH-92)."""
+    runtime = RuntimeView(claims=2, claimed_issues=frozenset({83}), escalations=escalations, founder_exceptions=0)
+    return derive({83: "VERIFY", **board}, runtime, {}, unprocessed, set(), False, 1).inputs
+
+
+@pytest.mark.parametrize("board", [{50: "READY"}, {}], ids=["worker-work-pending", "no-control-required"])
+def test_claims_above_the_wip_limit_idle_as_wip_intentionally_full(tmp_path, board):
+    values = overlap_inputs(board)
+    assert (values.executable_capacity, values.wip_intentionally_full) == (False, True)
+    service, launcher = host(tmp_path, values)
+
+    result = service.reconcile()
+
+    assert (result.reason, result.state) == ("WIP_INTENTIONALLY_FULL", HostState.IDLE)
+    assert launcher.launched == []
+
+
+@pytest.mark.parametrize("control", [
+    dict(board={50: "READY"}, unprocessed=("founder-note",)),
+    dict(board={50: "READY"}, escalations=(("AlienLogicLab/alienintent#83",
+                                            {"outcome": "EXECUTION_CYCLE_LIMIT", "at": "2026-09-24T09:29:05Z"}),)),
+    dict(board={51: "REVIEW"}),
+], ids=["inbox", "escalation", "selection"])
+def test_claims_above_the_wip_limit_never_suppress_director_only_control(tmp_path, control):
+    values = overlap_inputs(**control)
+    assert values.executable_capacity is False and values.director_only_control()
+    service, launcher = host(tmp_path, values)
+
+    assert service.reconcile().reason == "DIRECTOR_CONTINUITY_FAULT"
+    assert len(launcher.launched) == 1
 
 
 # Each row clears the condition that won the row before, so every step proves one ordering edge.
