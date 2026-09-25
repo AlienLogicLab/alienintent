@@ -6382,7 +6382,7 @@
             "Policy defaults: G=300 seconds, I=60 seconds, confirmation bound C=90 seconds; all configurable positive finite durations, persisted with policy digest and tested just below/at boundaries. These are design defaults, not a claim that historical bootstrap 5 minutes is a canonical invariant. Missing/invalid policy blocks startup.",
             "Periodic scan is limited to SF-REQ-056 explicitly specified reconciliation of known active state; it is not a general polling integration or work discovery loop.",
             "Effectively-once action requires idempotent/fenced consumer and durable readback; physically exactly-once network delivery is not promised. If an existing provider cannot prove these, park rather than relax the boundary.",
-            "Depends on POSTW1-DECIDE-008A ratification. Pending SF-REQ-008 and SF-REQ-022 amendments are excluded; no new nonterminal retries or budget reset. Operational replacement and SWF-29 retirement remain separately gated."
+            "SF-REQ-056 is already binding P0/Wave 2 authority under SWF-29. L1 local/composed liveness reconciliation may proceed without a second ratification decision. Operational replacement of the bootstrap liveness service, monitor-host supervision, live transport proof and retirement remain separately gated; no new nonterminal retry semantics or budget reset are introduced."
           ],
           "binding_sections": [
             "ports",
@@ -6397,7 +6397,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply SF-REQ-056 only where C5 consumes liveness/monitor semantics. L1 authority is already binding; C5 does not claim liveness-service replacement or retirement."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
