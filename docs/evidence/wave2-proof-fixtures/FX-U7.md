@@ -169,7 +169,11 @@ A runner defect was also found in this invocation's first evidence run and repai
 before the retained run. `FX_U7_FIXTURE_INPUTS` was passed as a relative path, while the
 controls run with the disposable copy as their working directory, so every control
 exited 4 at collection. The runner now resolves the path. That first run was discarded
-and was never retained.
+and was never retained. A confirmation reviewer (R3, fresh read-only) accepted the B1
+repair with notes. R3 also found that pytest truncates `FAILED <node> - AssertionError`
+summary lines at 80 columns when writing to a pipe, so long node IDs could not be
+matched. A second, interrupted run showed exactly that: correct `0 1 0` exits judged
+non-discriminating. The runner now sets `COLUMNS=400`. That run was also discarded.
 
 Additional residuals:
 - `EXPECTED_VERSIONS_APPLY_TIME_NOT_CHECKED`: `expected_versions` is carried but

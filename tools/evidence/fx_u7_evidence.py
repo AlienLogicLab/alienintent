@@ -231,7 +231,9 @@ def retain(output: Path, record) -> dict:
 
 
 def execute(cwd: Path, argv: list[str], inputs: Path | None) -> dict:
-    environment = {**os.environ, "PYTHONPATH": str(cwd / "src") + os.pathsep + str(cwd), "PYTHONDONTWRITEBYTECODE": "1"}
+    # A wide terminal keeps pytest's "FAILED <node> - AssertionError" summary untruncated for long node IDs.
+    environment = {**os.environ, "PYTHONPATH": str(cwd / "src") + os.pathsep + str(cwd), "PYTHONDONTWRITEBYTECODE": "1",
+                   "COLUMNS": "400"}
     if inputs is not None:
         environment["FX_U7_FIXTURE_INPUTS"] = str(Path(inputs).resolve())  # Controls run with another cwd.
     try:
