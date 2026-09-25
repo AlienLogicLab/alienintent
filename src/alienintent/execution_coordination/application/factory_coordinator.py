@@ -217,10 +217,12 @@ class FactoryCoordinator:
             return StopReason.CAPACITY_UNAVAILABLE
         read_back = False
         try:
-            prepared = self._encode(current) | self._carried(raw) | {"role": role}
+            invocation = self._invocation(item, correlation, role, current)
+            # The invocation's own candidate is retained: a later rework clears
+            # the state's candidate, and recovery must re-ask the same question.
+            prepared = self._encode(current) | self._carried(raw) | {"role": role, "invocation_candidate": self._encode_candidate(invocation.candidate)}
             self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, prepared, correlation, {"correlation": correlation, "work": item.identity, "role": role})
             self._store.claim_effect(self._profile, correlation)
-            invocation = self._invocation(item, correlation, role, current)
             outcome = self._worker.start(invocation, item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
             if not self._correlated(invocation, outcome):
                 return StopReason.BLOCKED if self._park_unknown_effect(item, reservation) else StopReason.CAPACITY_UNAVAILABLE
@@ -236,7 +238,7 @@ class FactoryCoordinator:
                 self._block_dependents(item, self._work.import_ready_snapshot())
                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
                 return StopReason.BLOCKED
-            read_back = self._record_result(item, advanced.state, correlation, advanced.outcome, advanced.fields | {"role": role, "outcome_kind": outcome.kind})
+            read_back = self._record_result(item, advanced.state, correlation, advanced.outcome, advanced.fields | {"role": role, "outcome_kind": outcome.kind, "invocation_candidate": prepared["invocation_candidate"]})
             if advanced.outcome == "authority-block":
                 self._register_escalation(outcome.escalation or self._authority_request(
                     item, current.version, advanced.hold or "The worker raised an authority block that requires a durable decision."
@@ -356,7 +358,8 @@ class FactoryCoordinator:
             _, raw = self._store.read_state(self._profile, self._aggregate(identity))
             current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
             role = str(raw.get("role") or PRODUCER)
-            invocation = self._invocation(item, reservation.owner, role, current)
+            given = raw.get("invocation_candidate")
+            invocation = WorkerInvocation(identity, reservation.owner, item.contract.content_digest, role, self._decode_candidate(given) if isinstance(given, dict) else None)
             outcome = self._worker.read_back(invocation)
             if outcome is None:
                 if not self._park_unknown_effect(item, reservation):
@@ -375,7 +378,7 @@ class FactoryCoordinator:
                 self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
                 continue
             advanced = self._advance(item, current, raw, invocation, outcome)
-            if not self._record_result(item, advanced.state, reservation.owner, advanced.outcome, advanced.fields | {"role": role, "outcome_kind": outcome.kind}):
+            if not self._record_result(item, advanced.state, reservation.owner, advanced.outcome, advanced.fields | {"role": role, "outcome_kind": outcome.kind, "invocation_candidate": given}):
                 return False
             if advanced.outcome == "authority-block":
                 self._restore_authority_block(item, current, outcome, reservation.owner, items, role, advanced.hold)
@@ -472,15 +475,21 @@ class FactoryCoordinator:
     def _release_aggregate(identity: str) -> str: return f"release:{identity}"
 
     @staticmethod
-    def _encode(state: ExecutionState) -> dict[str, object]:
-        candidate = state.candidate
-        encoded = None if candidate is None else {"kind": candidate.kind, "identity": candidate.identity, "content_digest": candidate.content_digest, "locator": candidate.locator, "provenance": candidate.provenance, "independent_read_back_proven": candidate.independent_read_back_proven}
-        return {"stage": state.stage, "version": state.version, "accepted": state.accepted, "closure": sorted(state.completed_closure_actions), "candidate": encoded}
+    def _encode_candidate(candidate: CandidateRef | None) -> dict[str, object] | None:
+        return None if candidate is None else {"kind": candidate.kind, "identity": candidate.identity, "content_digest": candidate.content_digest, "locator": candidate.locator, "provenance": candidate.provenance, "independent_read_back_proven": candidate.independent_read_back_proven}
 
     @staticmethod
-    def _decode(raw: dict[str, object]) -> ExecutionState:
+    def _decode_candidate(record: dict[str, object]) -> CandidateRef:
+        return CandidateRef(CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]), str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"]))
+
+    @classmethod
+    def _encode(cls, state: ExecutionState) -> dict[str, object]:
+        return {"stage": state.stage, "version": state.version, "accepted": state.accepted, "closure": sorted(state.completed_closure_actions), "candidate": cls._encode_candidate(state.candidate)}
+
+    @classmethod
+    def _decode(cls, raw: dict[str, object]) -> ExecutionState:
         record = raw.get("candidate")
-        candidate = CandidateRef(CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]), str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"])) if isinstance(record, dict) else None
+        candidate = cls._decode_candidate(record) if isinstance(record, dict) else None
         return ExecutionState(LifecycleStage(str(raw["stage"])), int(raw["version"]), candidate, bool(raw["accepted"]), frozenset(raw["closure"]), None)
 
     def _register_escalation(self, escalation: HumanDecisionRequired) -> None:

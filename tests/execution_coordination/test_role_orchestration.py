@@ -270,3 +270,27 @@ def test_deterministic_and_real_workers_share_the_production_boundary(tmp_path: 
 def test_no_parallel_role_outcome_state_owner_exists_in_source() -> None:
     source = "\n".join(path.read_text(encoding="utf-8") for path in (ROOT / "src").rglob("*.py"))
     assert not re.search(r"\bRoleOutcomeRecord\b", source)
+
+
+def test_restart_after_a_recorded_rejection_recovers_without_wedging_the_profile(tmp_path: Path) -> None:
+    """The rework clears the candidate; recovery must still correlate the verifier invocation it made."""
+    fixture = compose(tmp_path, ("success", "reject"))
+    release = fixture.store.release
+
+    def crash_on_verifier_release(profile, scope, key, owner, fence):
+        if owner != "launch:K2-PROBE:0":
+            raise RuntimeError("simulated crash before the verifier reservation is released")
+        return release(profile, scope, key, owner, fence)
+
+    fixture.store.release = crash_on_verifier_release  # type: ignore[method-assign]
+    with pytest.raises(RuntimeError, match="simulated crash"):
+        fixture.coordinator.start()
+    assert fixture.state().stage is LifecycleStage.IMPLEMENT and fixture.store.recovery_reservations(fixture.profile.name) != ()
+
+    reopened = compose(tmp_path, ("success", "accept"))
+    summary = reopened.coordinator.start()
+
+    assert summary.stop_reason.value == "eligible-backlog-exhausted" and summary.dispatched == (WORK,)
+    state = reopened.state()
+    assert state.stage is LifecycleStage.DONE and state.record["rejections"] == 1
+    assert reopened.store.recovery_reservations(reopened.profile.name) == ()
