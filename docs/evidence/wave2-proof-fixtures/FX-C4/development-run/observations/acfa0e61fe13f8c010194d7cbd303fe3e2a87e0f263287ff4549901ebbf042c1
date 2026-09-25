@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","tools/fitness/check_architecture.py","--root","src/alienintent","--check","all"],"cwd":"/tmp/fx-c4-controls-sn7kush9","exit_status":0,"stderr":"","stdout":"PASS: all architecture fitness checks\n"}

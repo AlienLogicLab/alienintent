@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","tools/fitness/check_architecture.py","--root","src/alienintent","--check","all"],"cwd":"/tmp/fx-c4-controls-sn7kush9","exit_status":1,"stderr":"","stdout":"control_plane/application/monitor_health.py:14: application imports adapters\n"}

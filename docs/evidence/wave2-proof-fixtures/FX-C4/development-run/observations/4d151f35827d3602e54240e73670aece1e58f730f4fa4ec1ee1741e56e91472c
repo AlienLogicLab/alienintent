@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/test_architecture_fitness.py"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/471ea09d-9c6c-416f-8baf-7959a44a1056","exit_status":0,"stderr":"","stdout":"......                                                                   [100%]\n6 passed in 1.48s\n"}
