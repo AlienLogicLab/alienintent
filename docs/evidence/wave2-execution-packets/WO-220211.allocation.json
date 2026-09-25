@@ -1,0 +1,69 @@
+{
+  "record_kind": "AllocationDecision",
+  "schema_version": "1",
+  "biu_id": "WO-220211",
+  "decided_at": "2026-09-25T12:18:20.496336+00:00",
+  "allocator": {
+    "role": "Factory Director",
+    "authority_basis": [
+      "SF-REQ-026 deterministic trivial allocation policy",
+      "active self-hosting worker configuration",
+      "SWF-09 hard execution limits"
+    ]
+  },
+  "selection": {
+    "execution_path": "Project READY -> normal release admission -> retained runtime launches workers",
+    "producer": {
+      "role": "PRODUCER",
+      "worker": "Morty",
+      "adapter": "claude",
+      "model": "claude-opus-5-5",
+      "configured_in": "~/.config/alienintent/self-hosting.json"
+    },
+    "verifier": {
+      "role": "VERIFIER",
+      "worker": "JC",
+      "adapter": "codex",
+      "model": "gpt-reserve",
+      "configured_in": "~/.config/alienintent/self-hosting.json",
+      "independence": "fresh worktree retrieves exact candidate SHA"
+    },
+    "why": "Use current configured role bindings; no provider/model change."
+  },
+  "limits": {
+    "concurrency": {
+      "value": 1,
+      "status": "GOVERNED_BY_ACTIVE_PROFILE"
+    },
+    "execution_cycles": {
+      "value": 3,
+      "status": "MUST_BE_BOUND_TO_EXACT_ISSUE_BEFORE_RELEASE"
+    },
+    "replacements_per_phase": {
+      "value": 1,
+      "status": "MUST_BE_BOUND_TO_EXACT_ISSUE_BEFORE_RELEASE"
+    },
+    "wall_clock": {
+      "runtime_milliseconds": 7200000,
+      "startup_milliseconds": 120000,
+      "stop_grace_milliseconds": 300000,
+      "status": "ENFORCED_BY_SYSTEMD_SUPERVISION"
+    },
+    "tokens_and_cost": {
+      "value": "measured where exposed; UNKNOWN otherwise; never zero",
+      "status": "MEASURED_NOT_CAPPED"
+    }
+  },
+  "remaining_allowance": {
+    "cycles_consumed": 0,
+    "cycles_remaining": 3,
+    "replacements_remaining_per_phase": 1
+  },
+  "not_granted_here": "Release authority.",
+  "provenance": {
+    "baseline_sha": "ffadf3d30eb4de557906a913d80efafc62607b6a",
+    "candidate_contract_sha256": "7ee71c5e3de6841789b932fc3a770af9d965c3f2dd8d9e0cf771c62d366a3a77",
+    "candidate_ref": "docs/evidence/wave2-candidate-bius.json (WO-220211)",
+    "recorded_by": "20-BIU supply-buffer preparation"
+  }
+}

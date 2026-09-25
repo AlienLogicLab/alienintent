@@ -1,0 +1,92 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220211",
+  "issued_at": "2026-09-25T12:18:20.496336+00:00",
+  "goal": "Integrate and verify: Wave 2A upstream integration",
+  "starting_authority": {
+    "requirements": [
+      "SF-REQ-011",
+      "SF-REQ-012",
+      "SF-REQ-013",
+      "SF-REQ-014",
+      "SF-REQ-015",
+      "SF-REQ-016",
+      "SF-REQ-051"
+    ],
+    "dag_node": [
+      "A"
+    ],
+    "candidate_contract_sha256": "7ee71c5e3de6841789b932fc3a770af9d965c3f2dd8d9e0cf771c62d366a3a77",
+    "baseline_sha": "ffadf3d30eb4de557906a913d80efafc62607b6a",
+    "release_authority": "NOT GRANTED"
+  },
+  "allowed_scope": {
+    "extent": "Integrate inventory -> ambiguity -> premise/proof -> independent design applicability -> compiler-derived initial compilation -> lint/retained assessment consumption. Mutate a source, decision or design revision and prove the downstream hold without lifecycle/Project mutation. No output asserts release.",
+    "boundary": "Only this node extent. Requirement/design references constrain execution and do not absorb sibling scopes.",
+    "non_goals": [
+      "Replanning the DAG or implementing another node; changing requirements, closing authority gaps or selecting withdrawn architecture policy.",
+      "Automatic release, live operation or retirement from a candidate or local proof result.",
+      "Inventing or repairing upstream capabilities inside this capstone; return defects to their named provider."
+    ],
+    "architecture_constraints": [
+      "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
+      "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+    ]
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220208",
+      "issue": null,
+      "project_status": "UNMATERIALIZED",
+      "completion_predicate": "Derive the initial BiuContract candidate deterministically from exact requirements/design/proof under the SF-REQ-013 amendment. Cover every acceptance obligation with explicit extent, preserve identity/graph constraints, and reject validator-only behavior that merely checks a supplied allocation. Existing decomposition remains immutable."
+    },
+    {
+      "biu_id": "WO-220209",
+      "issue": 105,
+      "project_status": "DONE",
+      "completion_predicate": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 historical bootstrap-assessor immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs, never label as Agent Ready. At actual profile boundary unbound/unauthorized stub yields CAPABILITY_PROVENANCE_HOLD before launch. Require established producer/package provenance, not schema shape; CLARIFY routes via SF-REQ-035 then reassessment; SPLIT routes to the SplitTransaction port and U9 refuses to proceed without a materialized result set; the transaction itself is U8 (DV-7), after which U9 lints/reassesses each result."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
+    "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority.",
+    "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS."
+  ],
+  "acceptance": {
+    "criteria": [
+      "Integrate inventory -> ambiguity -> premise/proof -> independent design applicability -> compiler-derived initial compilation -> lint/retained assessment consumption. Mutate a source, decision or design revision and prove the downstream hold without lifecycle/Project mutation. No output asserts release."
+    ],
+    "proof_fixture": "FX-A",
+    "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+    "material_failure_classes": [
+      "Inventory, ambiguity and premise evidence must pass before design applicability and compiler-derived initial compilation.",
+      "A source, decision or design revision mismatch invalidates downstream applicability/readiness rather than reusing stale evidence.",
+      "Compilation and retained Agent Ready consumption remain separate typed boundaries and cannot bypass design applicability or lint/provenance.",
+      "Integration produces no lifecycle/Project mutation and cannot assert release."
+    ],
+    "bounded_commands": [
+      "python3 -m pytest -q tests/context_assembly/test_design_admission.py tests/context_assembly/test_compilation_validation.py tests/context_assembly/test_readiness_consumer.py"
+    ],
+    "non_claims": [
+      "No release/execution admission follows from Wave 2A integration.",
+      "No Agent Ready implementation or rubric is copied."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220211",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker.",
+    "current_artifact": "Candidate specification only; no Issue, branch publication, implementation commit or worker invocation created by Phase 12."
+  },
+  "landing": "SWF-19: merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220211.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
+  ],
+  "escalation_condition": [
+    "Hold on failed integration discrimination, stale/missing source revision, or a genuine current authority conflict.",
+    "Do not reopen settled allocation, Agent Ready ownership, or historical edge-table questions."
+  ],
+  "readiness": "Remain TASKS until all predecessors are DONE and fresh native Agent Ready returns READY; no release authority."
+}
