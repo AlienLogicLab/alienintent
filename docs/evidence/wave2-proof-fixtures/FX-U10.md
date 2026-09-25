@@ -8,7 +8,13 @@ PRODUCER invocation `…#111:PRODUCER:d39380a8-…` refused.
 The pinned proof packet is `docs/evidence/wave2-execution-packets/WO-220210.proof-packet.md`. The work unit is
 SF-REQ-015, node U10, capability `assigned_assessment_binding`. Worker Morty authored this through PRODUCER invocation
 `AlienLogicLab/alienintent#111:PRODUCER:1ad8a070-67f1-4d68-94d5-8c3f434474c8`, on branch
-`b-disp/2be43995-e898-4b49-8345-91f49cd7dcd9`.
+`b-disp/2be43995-e898-4b49-8345-91f49cd7dcd9` (commits `2d7e135`, `3b8437f`).
+
+That invocation ended at runtime outcome `DURABLE_RESULT_MISSING`: its session finished while the evidence runner
+was still going, so it published no branch and no result. Its partial proof output was never committed and is not
+evidence. The next PRODUCER invocation, `AlienLogicLab/alienintent#111:PRODUCER:3dc6d26a-05e7-4e4f-806d-9db6084e2983`
+(Morty, branch `b-disp/4e175835-044f-4bed-b9cb-87c01c0c8ba1`), adopted both commits unchanged by fast-forward from the
+same RELEASED baseline. It re-ran the probes, ran the evidence runner to completion and published the candidate.
 
 Proof level is `LOCAL_COMPOSED_OR_MECHANICAL`. Nothing here authorizes release, lifecycle transition or live
 operation.
