@@ -1,0 +1,141 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-C4",
+  "invocation": "AlienLogicLab/alienintent#96:PRODUCER:052b49ff-2fa1-4c9e-b2c0-bc3ca5f1e24d",
+  "source_revision": "fb543e32d82702b8ce08d9ec1df26f1780dd7ea7",
+  "source_status": "",
+  "admission_baseline": "710da9053eafa7d0cebe8ee33525aa2f8a9ebdf9",
+  "input_digests": {
+    "docs/evidence/wave2-proof-fixtures/FX-C4/FX-C4.md": "sha256:a66fac8d48675377afe6e4a0150aae216a9a1cbe4d8445187340445c85ded319",
+    "docs/work-units/wave2/WO-220304.md": "sha256:9cdc643d3f699a6adc7446d78459663ca30561f87bf4a9d04225562962c9036a",
+    "docs/evidence/wave2-design-contracts.json": "sha256:56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242",
+    "docs/evidence/wave2-dependency-dag.json": "sha256:f99c0a7a392f8dd1f7889bb99d926f0a5a9de0948cb09845686f9d7e6f2b1e8d",
+    "docs/evidence/wave2-candidate-bius.json": "sha256:61f9324e7d1b7f0937bbc1aff7cbaba77c50192204e109cad5d78edb04f677f7",
+    "docs/evidence/wave2-execution-packets/WO-220304.packet.json": "sha256:110e3b442f69774ce87b098df7a521343b33935d78e412837660388daac79e19",
+    "docs/evidence/wave2-execution-packets/WO-220304.allocation.json": "sha256:b8c1ba4857459e3458fc77f36b50b9d5ed762da4ece7b2c6ba97e890c68aca46",
+    "docs/evidence/wave2-proof-fixtures/FX-C1/execution-record.json": "sha256:da3c79511fbbe571b1a9ae4bd4e6b245bfa99a04787b221bf59360f5ea34be55",
+    "tests/control_plane/test_monitor_health.py": "sha256:5a70e0c17045e79d901edd08d74c4e889785be647a743eb6e75a95eedb3ca332",
+    "tools/evidence/fx_c4_evidence.py": "sha256:459c26e46e57878336ff8f0da4a8ce09eac35261b0ed8dd019adbc1a72a937ff",
+    "src/alienintent/control_plane/domain/monitor_health.py": "sha256:86dd9b7cd60b5a1d56c78f4abbdd6006ff27cfe190c75d61284671f6e9434ae9",
+    "src/alienintent/control_plane/application/monitor_health.py": "sha256:8040fadef4892b34fbc2862e276062b278a1b09f4c33eb1fe03af90b26f07262",
+    "src/alienintent/control_plane/adapters/monitor_health_repository.py": "sha256:c866e45fccd475b7fcf2e1c1499c7f0b15c0a3c4d2fb8cad1e5c62496bc518be",
+    "src/alienintent/composition/control_plane_profile.py": "sha256:fa49256caf7e020167a85d560813caf8565e3afe8fe89300de3f1e854b514a6e",
+    "src/alienintent/control_plane/ports/monitor_health.py": "sha256:bc2c122512e71c8924601eadb199d2edd4c59ae2821df311d75e9e087dbcbfeb",
+    "src/alienintent/execution_coordination/ports/scan_progress.py": "sha256:974b98f2b914d71ab2e820f9751b291c5d2e234a24945f0ea7cf48253f4c8eba"
+  },
+  "labels": [
+    "LOCAL_EPISODE_END_STAND_IN",
+    "SCAN_AGE_FROM_LAST_COMPLETION"
+  ],
+  "commands": [
+    {
+      "id": "focused",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_monitor_health.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:67677d05880e4ec2bec8be61fc0dee906f1a6241ca1768db8fdc7cd61b450ccd",
+        "locator": "observations/67677d05880e4ec2bec8be61fc0dee906f1a6241ca1768db8fdc7cd61b450ccd"
+      }
+    },
+    {
+      "id": "python_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:d75deabdd0e8d765f3aa46f4f8c154da820e4c29ba1998732f9ce6c245de1bca",
+        "locator": "observations/d75deabdd0e8d765f3aa46f4f8c154da820e4c29ba1998732f9ce6c245de1bca"
+      }
+    },
+    {
+      "id": "architecture",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:5a8af1cb34fc71b70f307098cfe4c9f2b7ef0fd77f1c3e12ecf348420cdf42e8",
+        "locator": "observations/5a8af1cb34fc71b70f307098cfe4c9f2b7ef0fd77f1c3e12ecf348420cdf42e8"
+      }
+    },
+    {
+      "id": "architecture_fitness_tests",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_architecture_fitness.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:304c95362ac910588d9aebfe1736a13ae11f252dc56d0b65020c406ecf0d23be",
+        "locator": "observations/304c95362ac910588d9aebfe1736a13ae11f252dc56d0b65020c406ecf0d23be"
+      }
+    },
+    {
+      "id": "node_regression",
+      "command": [
+        "node",
+        "scripts/check.mjs",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:9360065f25d6851a4903eebc5fec1ada59edf0b6cc8720dfc26e2d7242ea0922",
+        "locator": "observations/9360065f25d6851a4903eebc5fec1ada59edf0b6cc8720dfc26e2d7242ea0922"
+      }
+    }
+  ],
+  "holds": [],
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": null,
+    "reason": "UNKNOWN: provider usage is unavailable to this local fixture"
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:5ea1c25450514b541d9b3917612d3fa6b6b7e953385845f33bf63b75e7a35c96",
+    "locator": "observations/5ea1c25450514b541d9b3917612d3fa6b6b7e953385845f33bf63b75e7a35c96"
+  },
+  "profile_ref": {
+    "revision_digest": "sha256:cf8e6fdb54ef58d7443762143c8d5280b6c96561726fd2db44379577520ee64c",
+    "locator": "observations/cf8e6fdb54ef58d7443762143c8d5280b6c96561726fd2db44379577520ee64c"
+  },
+  "model_launch_count": 0,
+  "policy": {
+    "interval_seconds": 60,
+    "policy_digest": "sha256:7bfef2f3e5f0269167f6ae83ff28b4adef7904a2281a80a513fbc2fc48f63227"
+  },
+  "profile_digest": "sha256:cf8e6fdb54ef58d7443762143c8d5280b6c96561726fd2db44379577520ee64c",
+  "exit_status": 0
+}

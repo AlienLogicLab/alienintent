@@ -1,0 +1,119 @@
+{
+  "acceptance_to_probes": {
+    "persist instance/generation, tick and scan outcomes": [
+      "test_restart_new_generation",
+      "test_stale_instance_cannot_write",
+      "test_monitor_profile_composed",
+      "test_concurrent_writer_cas"
+    ],
+    "independent of model life/workload": [
+      "test_quiet_work_is_not_health",
+      "test_independent_of_model_and_workload"
+    ],
+    "at 2*I remains in bound, above becomes STALE": [
+      "test_tick_age_boundary",
+      "test_interval_from_policy",
+      "test_scan_overdue_boundary",
+      "test_tick_overdue_with_recent_scan",
+      "test_frozen_monitor_while_work_quiet"
+    ],
+    "failed/incomplete scan DEGRADED": [
+      "test_failed_or_incomplete_scan",
+      "test_stale_precedes_degraded"
+    ],
+    "absent/unreadable/regressing clock UNVERIFIED": [
+      "test_clock",
+      "test_clock_invalid_reading",
+      "test_store_unavailable",
+      "test_malformed_pointer_unverified",
+      "test_no_record"
+    ],
+    "end episode without losing local monitor state": [
+      "test_episode_end_preserves_monitor"
+    ],
+    "missing/invalid policy blocks startup": [
+      "test_policy_invalid_blocks_start"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/control_plane/test_monitor_health.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:67677d05880e4ec2bec8be61fc0dee906f1a6241ca1768db8fdc7cd61b450ccd",
+      "locator": "observations/67677d05880e4ec2bec8be61fc0dee906f1a6241ca1768db8fdc7cd61b450ccd"
+    }
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:5ea1c25450514b541d9b3917612d3fa6b6b7e953385845f33bf63b75e7a35c96",
+    "locator": "observations/5ea1c25450514b541d9b3917612d3fa6b6b7e953385845f33bf63b75e7a35c96"
+  },
+  "composed_observations": [
+    {
+      "step": "before_start",
+      "now": 1790000000000000,
+      "status": "UNVERIFIED",
+      "reason": "NO_RECORD"
+    },
+    {
+      "step": "at_2I",
+      "now": 1790000120000000,
+      "status": "HEALTHY",
+      "reason": "IN_BOUND"
+    },
+    {
+      "step": "above_2I",
+      "now": 1790000120000001,
+      "status": "STALE",
+      "reason": "TICK_OVERDUE"
+    },
+    {
+      "step": "recovered",
+      "now": 1790000120000001,
+      "status": "HEALTHY",
+      "reason": "IN_BOUND"
+    },
+    {
+      "step": "failed_scan",
+      "now": 1790000120000003,
+      "status": "DEGRADED",
+      "reason": "SCAN_FAILED"
+    },
+    {
+      "step": "after_episode_end",
+      "now": 1790000182000000,
+      "status": "HEALTHY",
+      "reason": "IN_BOUND"
+    },
+    {
+      "step": "restart_generation_2",
+      "now": 1790000241000000,
+      "status": "HEALTHY",
+      "reason": "IN_BOUND"
+    },
+    {
+      "step": "clock_regression",
+      "now": 1790000239000000,
+      "status": "UNVERIFIED",
+      "reason": "CLOCK_REGRESSION"
+    }
+  ],
+  "model_launch_count": 0,
+  "labels": {
+    "LOCAL_EPISODE_END_STAND_IN": "episode end = discard service/activation objects and reopen from the store; not C3 EpisodeControl",
+    "SCAN_AGE_FROM_LAST_COMPLETION": "scan staleness is now - last_scan_completed_at > 2*I; next_scan_due is recorded only"
+  },
+  "boundaries": "service/inspection fixture only; host unassigned (R1-GAP-MONITOR-HOST); no supervision, G/C policy, reconciliation or trajectory capture",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}
