@@ -8312,12 +8312,12 @@
       "dependency_predicates": {
         "WO-220501": {
           "dag_node": "B0",
-          "completion_predicate": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
+          "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220403": {
           "dag_node": "K3",
-          "completion_predicate": "Before any shared-kernel activation/landing, actual sandbox_run_profile and github_profile constructors with local transports refuse missing assigned authority/real sidecar binding before worker launch. Bound real adapter reaches correlated outcome readback on success/rejection/restart. Independently disconnect emission and bypass binding gate to kill expected assertions.",
+          "completion_predicate": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220103": {
@@ -8706,7 +8706,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply current reviewed Design Contract within this BIU extent. Explicit live/replacement authority gates remain unchanged."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -8739,12 +8739,12 @@
       "dependency_predicates": {
         "WO-220501": {
           "dag_node": "B0",
-          "completion_predicate": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
+          "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220305": {
           "dag_node": "C5",
-          "completion_predicate": "SPECIFY assigns host owner and supervision/restart policy, then reviewed host design is proven independently: terminate/stall monitor and scanner, observe external health detection/alert and authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting.",
+          "completion_predicate": "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting. No operational replacement or bootstrap retirement is claimed.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220102": {
@@ -8919,7 +8919,7 @@
             "Policy defaults: G=300 seconds, I=60 seconds, confirmation bound C=90 seconds; all configurable positive finite durations, persisted with policy digest and tested just below/at boundaries. These are design defaults, not a claim that historical bootstrap 5 minutes is a canonical invariant. Missing/invalid policy blocks startup.",
             "Periodic scan is limited to SF-REQ-056 explicitly specified reconciliation of known active state; it is not a general polling integration or work discovery loop.",
             "Effectively-once action requires idempotent/fenced consumer and durable readback; physically exactly-once network delivery is not promised. If an existing provider cannot prove these, park rather than relax the boundary.",
-            "Depends on POSTW1-DECIDE-008A ratification. Pending SF-REQ-008 and SF-REQ-022 amendments are excluded; no new nonterminal retries or budget reset. Operational replacement and SWF-29 retirement remain separately gated."
+            "SF-REQ-056 is already binding P0/Wave 2 authority under SWF-29. L1 local/composed liveness reconciliation may proceed without a second ratification decision. Operational replacement of the bootstrap liveness service, monitor-host supervision, live transport proof and retirement remain separately gated; no new nonterminal retry semantics or budget reset are introduced."
           ],
           "binding_sections": [
             "ports",
@@ -8934,7 +8934,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply current reviewed Design Contract within this BIU extent. Explicit live/replacement authority gates remain unchanged."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -8967,22 +8967,22 @@
       "dependency_predicates": {
         "WO-220501": {
           "dag_node": "B0",
-          "completion_predicate": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
+          "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220306": {
           "dag_node": "L1",
-          "completion_predicate": "Conditional on 056 ratification: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, unavailable evidence holds. Delayed original plus two contenders and crash/restart retains one effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries.",
+          "completion_predicate": "With binding SF-REQ-056 authority: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, and unavailable-evidence holds. Delayed original plus two contenders and crash/restart retain one authorized effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries. Local proof does not claim operational monitor-host replacement.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220305": {
           "dag_node": "C5",
-          "completion_predicate": "SPECIFY assigns host owner and supervision/restart policy, then reviewed host design is proven independently: terminate/stall monitor and scanner, observe external health detection/alert and authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting.",
+          "completion_predicate": "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting. No operational replacement or bootstrap retirement is claimed.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220403": {
           "dag_node": "K3",
-          "completion_predicate": "Before any shared-kernel activation/landing, actual sandbox_run_profile and github_profile constructors with local transports refuse missing assigned authority/real sidecar binding before worker launch. Bound real adapter reaches correlated outcome readback on success/rejection/restart. Independently disconnect emission and bypass binding gate to kill expected assertions.",
+          "completion_predicate": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220502": {
@@ -9456,7 +9456,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply current reviewed Design Contract within this BIU extent. Explicit live/replacement authority gates remain unchanged."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -9488,7 +9488,7 @@
       "dependency_predicates": {
         "WO-220501": {
           "dag_node": "B0",
-          "completion_predicate": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
+          "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220302": {
@@ -9664,7 +9664,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply current reviewed Design Contract within this BIU extent. Explicit live/replacement authority gates remain unchanged."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -9696,7 +9696,7 @@
       "dependency_predicates": {
         "WO-220501": {
           "dag_node": "B0",
-          "completion_predicate": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
+          "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220301": {
@@ -9706,7 +9706,7 @@
         },
         "WO-220305": {
           "dag_node": "C5",
-          "completion_predicate": "SPECIFY assigns host owner and supervision/restart policy, then reviewed host design is proven independently: terminate/stall monitor and scanner, observe external health detection/alert and authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting.",
+          "completion_predicate": "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting. No operational replacement or bootstrap retirement is claimed.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         }
       },
@@ -10152,7 +10152,7 @@
       "dependency_predicates": {
         "WO-220501": {
           "dag_node": "B0",
-          "completion_predicate": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
+          "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         }
       },
@@ -10295,7 +10295,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply current reviewed Design Contract within this BIU extent. Explicit live/replacement authority gates remain unchanged."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -10338,7 +10338,7 @@
       "dependency_predicates": {
         "WO-220501": {
           "dag_node": "B0",
-          "completion_predicate": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
+          "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220302": {
@@ -10509,7 +10509,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply current reviewed Design Contract within this BIU extent. Explicit live/replacement authority gates remain unchanged."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
