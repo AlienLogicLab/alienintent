@@ -71,6 +71,17 @@ a producer addition. `forged_identity_accepted`, `grant_authority_ignored`, `cla
 `blocked_not_observed_on_results` guard the repairs made after an independent pre-verification review of the first
 candidate (`732b88a`).
 
+## Retained run
+
+`FX-C3/` holds the run for invocation `AlienLogicLab/alienintent#99:PRODUCER:1965556d-3b42-4d19-93fd-986110da3347`, taken
+against clean committed source `aaa16fb2d1c2bbc9adaeee78b50939bced2cffe7` with code baseline
+`fa24a72f7d7930e89dfdb9f42b5917c3b24fde4a`. Exit 0 and no holds. The focused suite, architecture check, architecture
+fitness tests and `node scripts/check.mjs all` all exit 0. All 23 controls discriminate (intact 0, fault 1, restored
+0), and the model-launch count is 0. The full pytest suite has 27 failing nodes
+(`tests/context_assembly/test_design_admission.py`, `tests/evidence_learning/test_proof_planning.py`). The same 27 nodes
+fail at the code baseline in its own detached worktree, so there are no new failures. These are recorded as the
+residual `PREEXISTING_BASELINE_FAILURES`, outside the C3 extent. The independent verdict is pending.
+
 ## Residuals and boundaries
 
 - The episode counter update after admission is a second transaction. A concurrent pointer write is retried on
