@@ -1,0 +1,74 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "governing_intent": "Implement the bounded_episode_control capability (SF-REQ-053, DAG node C3). Coordinator episodes must end tenure explicitly when any fixed limit or termination cause is reached: 3600s age, 32 transitions, 300s blocked, one accepted contradiction, a state-vector, authority, objective, provider or model change, a terminal outcome, an explicit request, or a BOUND usage ratio >= 0.8. Episodes must never silently renew. Stale or obsolete-revision coordinator results must be refused without overwriting newer authoritative state. All of this must be proven by a discriminating local fixture (FX-C3) and accepted by an independent verifier.",
+    "summary": "The work unit is a cohesive, single-capability implementation: new control_plane episode domain, port, application and adapter modules plus an additive composition profile, built on existing fenced-store substrate. All owner-level policy values and semantics are recorded as fixed decisions, and a Director pin resolves the questions U-1 through U-11. The pin classifies the remaining open items as delegated engineering, grounded in cited landed source. The text reports all three dependencies (C2, U5, S2) and C1 as DONE, with accepted candidates, merges and verifier receipts. Acceptance is specific and observable: named probes, a BLOCKING python unit/integration obligation, and proven-red discriminating controls. A producer/verifier allocation with custody and landing rules is specified. The main caveat is a baseline-identifier inconsistency: the header says 7be1218, while the pin re-verifies against 555b76e. The producer should reconcile this under the existing stop rules before implementing. These facts are reported by the document and have not been independently verified here.",
+    "owner_clarifications": [],
+    "implementation_unknowns": [
+      "Choose the concrete carrier for the durable applicability revision observed by guarded admission (U-6, delegated to design_decisions[3]).",
+      "Choose the provider/model change signal source without relying on excluded SF-REQ-029 normalized telemetry (U-5).",
+      "Design the operator surface for recording contradiction judgments, following the C1 ResolverGrant precedent without adding a new authenticated surface (U-7).",
+      "Define how budget accounting is carried across an authorized new epoch without a reset (U-10).",
+      "Implement the durable blocked_since interval against the C2 derive() blocked_set/authorized_next_action_set shapes, as pinned in U-3.",
+      "Build the injected deadline timer and restart handling: persisted UTC deadline, monotonic clock within the process, and a hold on clock regression.",
+      "Build the same-invocation evidence adapter injection for the BOUND usage fixture, with labelled substitution.",
+      "Confirm the exact fixture commands, inputs and evidence schema in the referenced proof-packet draft before implementation. These sections are only referenced, not reproduced in this text."
+    ],
+    "independent_decision_centers": [],
+    "semantic_split_recommendation": [],
+    "verification_assessment": "Acceptance is observable and discriminating:\n- SF-REQ-053-AC-02 requires a policy fixture for every tenure cause, including below/at boundaries for each numeric limit, UNBOUND composition, BOUND valid/unavailable/stale/wrong-invocation/invalid cases, an explicit context-exhausted event, and accepted versus invalid contradiction judgments.\n- SF-REQ-053-AC-03 requires that an obsolete-revision result is refused while a current-revision result still undergoes authority validation.\n- The BLOCKING obligation 053-tenure-fence specifies proven-red controls that must make the corresponding assertions fail: old epoch accepted, context item omitted, UNBOUND treated as zero, UNBOUND auto-terminating, BOUND unavailable ignored, and unauthorized contradiction accepted.\n\nOne independent verifier verdict (JC, Codex, fresh worktree at the exact candidate SHA) is meaningful because the extent is one capability with one fixture set. Semantic truth of contradictions is explicitly excluded from mechanical proof and remains operator judgment. The proof level is local only and cannot satisfy operational acceptance.",
+    "expected_rework_locality": "HIGH",
+    "material_risks": [
+      "Baseline identifier inconsistency: the header pins baseline 7be12188\u2026, which the pin describes as the pre-C2 draft baseline. The pin itself re-verifies at 555b76e, and the C2/U5 merges are claimed as ancestors of 'this baseline'. Working from the wrong baseline would trigger the source-revision-mismatch stop.",
+      "The fixture commands, inputs, probes and evidence layout live in a referenced draft file (status DRAFT_SUPERSEDED_BY_PIN) rather than in this text. Divergence between that draft and the pinned U-3/U-4 dispositions could cause a verifier rejection.",
+      "The self-hash convention leaves contract/packet/allocation digests to be re-pinned from the landing commit. Custody errors here could invalidate the evidence.",
+      "The U-9 binding condition must hold throughout implementation: no new cross-context module pair, with context_assembly imported only in the composition layer. A violation would raise a directional-authority hold routed to the Founder.",
+      "Risk of silently representing UNBOUND usage as zero or measured-safe, or of fabricating cancellation of already-admitted workers on epoch expiry. The spec explicitly forbids both.",
+      "Clock handling across restart and monotonic/UTC boundaries is subtle. Regression must hold rather than extend tenure.",
+      "Budget: 3 cycles, 120-minute runtime, concurrency 1. A substantial new module set plus a large discriminating test matrix may pressure cycle limits."
+    ],
+    "next_action": "Hand off to the configured PRODUCER. Before writing code, reconcile the operative baseline, which the pin states is 555b76e rather than the header's 7be1218. Also confirm that the C2, U5, S2 and C1 merges are its ancestors and re-verify the pinned input digests. If any mismatch is found, stop per the rules and return it to the Factory Director. Otherwise, pin executable FX-C3 commands, inputs, expected outcomes and evidence schema from the proof-packet draft as amended by the U-3/U-4 dispositions. Demonstrate intact/fault/restored discrimination for each named control, then implement the planned episode surface and publish the candidate SHA to the Issue for independent verification.",
+    "rationale": "READY is the controlling condition for five reasons:\n- **Owner intent is resolved.** Policy values, termination semantics, UNBOUND/BOUND usage behavior, contradiction ownership, no-renewal and budget-carryover rules are all recorded as fixed decisions from the verified Design Contract. The Director pin marks every triage question as DECIDED or DELEGATED-to-engineering, with cited grounding. No material owner question remains; the leftover items are engineering research.\n- **The work is one decision center.** It is a single cohesive capability with one fixture set and one verification verdict. Its size (several new modules and a broad test matrix) is not a split criterion, so SPLIT does not apply.\n- **Prerequisites are reported as available.** Predecessors are reported DONE with accepted candidates, merges and verifier receipts, and admission is marked DISCHARGED. The allocation, producer/verifier roles and landing rules are bound, so HOLD is not warranted on the supplied text.\n- **The baseline discrepancy does not block handoff.** It appears to be a stale header rather than missing authority, and the document's own stop rules cover it. It is flagged as the producer's first check rather than escalated to HOLD.\n- **Rework should stay local.** Proven-red controls tie each failure to a specific cause, so rework should remain within the new episode modules and fixtures.",
+    "provider_evidence": {
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "capability_probe": "PASSED"
+    }
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T05:55:53.994509+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 27390,
+    "input_sha256": "03360e75447fb9444816201114f3dca2bcbfe2803f496ec1104e5cf0e4af5241",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-xMhoKHQQ/WO-220303.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "capability_probe": "PASSED"
+    },
+    "started_at": "2026-09-25T05:55:15.101126+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220303"
+}
