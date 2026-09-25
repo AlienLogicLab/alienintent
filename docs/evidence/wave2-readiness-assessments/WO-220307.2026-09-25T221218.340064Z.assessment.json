@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce a local, fake-time integration proof (fixture FX-C) that composes the already-delivered C3 (bounded coordinator episodes / tenure), C4 (durable attention and monitor-health inspection) and L1 (SF-REQ-056 liveness reconciliation) capabilities. The proof must show four things: (1) ending an episode amid duplicate or delayed outcomes lets a fresh context reconstruct identical authorized actions; (2) attention survives, and completed judgment suppresses recovery; (3) a stale epoch cannot send; (4) stopped scans surface as DEGRADED/STALE. It must make no operational, deployment, cutover or retirement claim.",
+    "implementation_unknowns": [
+      "How to compose the C3, C4 and L1 surfaces (via src/alienintent/composition/control_plane_profile.py) into one fake-clock fixture FX-C that drives duplicate/delayed outcomes across an episode end and a fresh-context reconstruction.",
+      "What observable equality means for 'identical authorized actions' after reconstruction. Candidates include action identities, epoch/applicability revision, and effect/readback identity. This must be chosen and asserted precisely.",
+      "Designing exactly one discriminating negative control for each of the four stated failure classes: reconstruction/stale-epoch send, attention survival plus completed-judgment suppression, explicit stopped/stale/degraded health, and a single effect/readback under duplicates.",
+      "Whether the existing per-component test files are enough as building blocks, or whether a new capstone test module is needed. A new module seems likely, since the listed proof surfaces are component-level.",
+      "Whether composing the components exposes seam defects in predecessor behavior. Per the text, such defects are returned to the owning BIU, not repaired here."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Predecessor completion is taken from the text. WO-220303 and WO-220304 are reported DONE without the landed-SHA and verifier receipts given for WO-220306. If their proof or revisions do not match, the stop rules require a hold.",
+      "The composed fixture may expose integration-seam defects in C3, C4 or L1. The capstone must not patch these locally, so progress could stall on upstream rework.",
+      "Weak or tautological negative controls, such as controls that fail for reasons unrelated to the invariant, could produce a false ACCEPT for the composed guarantees.",
+      "A local fake-time proof could be misread as evidence of operational readiness. The non-claims and evidence obligations must be kept in the recorded result.",
+      "An ambiguous definition of 'identical authorized actions' could cause disagreement between producer and verifier."
+    ],
+    "next_action": "Hand off to the assigned PRODUCER once the stated custody preconditions are met. Those are: confirm the predecessor candidate identities and proof receipts, and pin the contract, baseline, profile and branch/SHA. The PRODUCER then builds FX-C with one discriminating negative control per failure class, defines the reconstruction-equality predicate explicitly, runs the focused tests followed by one broad regression, publishes the candidate SHA, and requests independent verification. This READY is handoff eligibility only; release/IMPLEMENT authorization remains governed by the work order's own gates.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "READY is the controlling condition for four reasons.\n- Owner intent is thoroughly fixed. Every policy value, semantic boundary and authority question relevant to this node (tenure, context usage, contradiction ownership, G/I/C, scan scope, effectively-once, SF-REQ-056 authority) is decided, and the remaining gates are explicitly out of scope.\n- The work is one decision center: a composed proof over existing capabilities. Splitting it would fragment a single integration verdict.\n- Acceptance is observable, and one independent verdict is meaningful.\n- Rework is bounded to the fixture, because upstream defects are routed elsewhere.\n\nNo external prerequisite is shown as unavailable: all dependencies are reported DONE. That is a reported fact, not something independently verified here. The remaining uncertainties are engineering research, not owner questions.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive integration capstone with an unusually complete set of fixed decisions: tenure limits, the UNBOUND/BOUND context-usage policy, contradiction semantics, G/I/C defaults, effectively-once semantics, scan scope and SF-REQ-056 authority. Scope is explicitly limited to composition and proof; upstream defects go back to their owning BIUs. All three predecessors are reported DONE, and WO-220306 comes with landed and verifier receipts. The text does not leave any material owner-intent question open. The remaining work is engineering: building the composed fixture and its discriminating negative controls. That work supports one meaningful independent verdict.",
+    "verification_assessment": "Acceptance is observable under local fake time. The verifier can check that:\n- episode termination and restart reconstruct identical authorized actions;\n- a stale-epoch send is refused;\n- attention persists across restart;\n- completed judgment suppresses liveness recovery;\n- stopped or stale scans report DEGRADED/STALE rather than healthy;\n- duplicate/delayed outcomes yield one effect/readback identity.\nThe four failure classes each have a required discriminating negative control, and there is a bounded pytest command, so a fresh verifier on the exact candidate SHA can reach one coherent ACCEPT/REJECT verdict. The explicit non-claims (no host supervision, live transport, cutover or retirement) keep the verdict scoped to local proof. The 'identical authorized actions' predicate should be made concrete in the fixture so the verdict is not subjective."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T22:12:43.435621+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 11916,
+    "input_sha256": "a5199d8d60075eca1bb41b6d8247f0ecef263b130bf0777cee8845575640eeef",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-7sbs94cy/WO-220307.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T22:12:18.340064+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220307"
+}

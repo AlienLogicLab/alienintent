@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce a local, fake-time integration capstone (proof fixture FX-C) that composes the already-built C3/C4/L1 capabilities: bounded coordinator episode tenure, durable attention, monitor-health inspection and SF-REQ-056 liveness reconciliation. It must show four things. First, ending a coordinator episode during duplicate or delayed outcomes lets a fresh context reconstruct identical authorized actions, and a stale epoch cannot send. Second, attention survives, and a completed judgment suppresses recovery. Third, stopped scans surface DEGRADED/STALE health. Fourth, one authorized effect/readback identity is preserved. The work must not claim supervised-host deployment, live transport, cutover or retirement.",
+    "implementation_unknowns": [
+      "How the existing test files (test_episode_control.py, test_attention.py, test_monitor_health.py) and control_plane_profile.py expose composition seams for a single end-to-end fixture, and whether the FX-C fixture needs a new test module or extends existing ones.",
+      "Which fake/injected clock and deadline-timer abstractions the C3/C4/L1 providers share, and how to drive them coherently across episode tenure, monitor scan intervals and G/I/C reconciliation bounds in one scenario.",
+      "How the existing store/consumer/readback surfaces expose effect identity, so that the proof can assert exactly one authorized effect/readback across duplicate, delayed and restart paths.",
+      "How to construct one discriminating negative control per failure class (e.g., removing epoch fencing, suppression or the health staleness check) without creating a mutation matrix.",
+      "The location and invocation of the broad regression suite that runs once after the focused proof is green."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "WO-220306 is reported as READY, not DONE. Proceeding now risks building the capstone against unproven or changing liveness reconciliation behavior, which would invalidate the capstone proof.",
+      "Temptation to repair C3/C4/L1 defects inside the capstone, which the non-goals forbid. Defects must be returned to the owning BIU.",
+      "A local fake-time result could be misread as operational monitor-host supervision, bootstrap replacement or retirement evidence. The non-claims must be carried into the evidence records.",
+      "Coordinating fake time across three providers' clock abstractions may produce false-green results if the timers are not driven consistently, especially at the 2*I staleness boundary and the G/I/C boundaries.",
+      "Existing providers may be unable to prove the idempotent/fenced consumer plus durable readback needed for effectively-once behavior. The task directs parking rather than relaxing the boundary, which could park the capstone.",
+      "Source-revision drift: the contract pins baseline ffadf3d and a candidate contract hash, and any mismatch requires a hold."
+    ],
+    "next_action": "Keep WO-220307 in TASKS. Complete WO-220306 (Issue #112) through independent verification to DONE, with its proof receipts retained. Confirm that WO-220303 and WO-220304 DONE proofs are still valid at the pinned baseline. Then request a fresh Agent Ready assessment of this exact WO-220307 revision. If nothing else changes, that assessment is expected to support a READY handoff.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is a missing external prerequisite, not unresolved intent or independent decision centers. Owner intent is thoroughly fixed: tenure policy, context-usage semantics, contradiction ownership, timing defaults, authority for SF-REQ-056, exclusions and non-claims are all decided, so CLARIFY does not apply. The work is a single cohesive composition with one acceptance predicate and one meaningful independent verdict, so SPLIT would fragment it artificially. It would otherwise meet READY criteria. However, the task's own text reports predecessor WO-220306 as READY rather than DONE. The task explicitly conditions eligibility on every predecessor being DONE and instructs a hold on unmet dependency proof. Because the capstone composes L1 liveness reconciliation as a proven input and forbids repairing upstream capabilities, that predecessor's completed proof is a necessary prerequisite that is currently unavailable. HOLD is therefore the appropriate disposition until it is DONE.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive, well-specified integration and verification capstone. Owner-level decisions are explicitly fixed: tenure defaults, UNBOUND/BOUND context-usage semantics, contradiction as operator judgment, G/I/C defaults, effectively-once semantics, SF-REQ-056 authority, and exclusions. Scope, non-goals, failure classes, the proof-policy constraint, evidence obligations and independent-verifier custody are all stated. The task's own text reports that one predecessor, WO-220306 (Issue #112), is READY rather than DONE. The task's readiness clause requires every predecessor BIU to be DONE, and its stop rules require a hold on unmet dependency proof. The L1 liveness reconciliation behavior this capstone composes is therefore not yet an available, proven artifact. This gate did not independently verify any dependency state; it relies on the statuses reported in the text.",
+    "verification_assessment": "Acceptance is observable and discriminating. It rests on four named material failure classes, one negative control per class, fake time, and explicit health states (DEGRADED/STALE/UNVERIFIED). There are also concrete pytest commands and explicit non-claims. A single independent verdict is meaningful: a fresh verifier retrieving the exact candidate SHA in its own worktree can judge the whole composed path at once, because the failure classes all exercise one composed local path rather than separable deliverables. That verdict is only meaningful once the L1 predecessor (WO-220306) has DONE proof. Until then, a capstone verdict would conflate integration defects with unfinished upstream behavior."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T22:10:31.326809+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 11711,
+    "input_sha256": "753057158cf9d136b5b0a6e53c2193a8a04d3315e3eaeb32625f1fa445322f30",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-__iomy29/WO-220307.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T22:10:07.387981+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220307"
+}
