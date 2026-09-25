@@ -1888,7 +1888,7 @@
       "requirement_id": "SF-REQ-039",
       "title": "Deterministic Test Worker",
       "bounded_context": "composition",
-      "domain_owner": "Offline proof composition assembles the real execution_coordination kernel; scripts own external outcomes only.",
+      "domain_owner": "Execution Coordination owns released-BIU lifecycle, independent verification/review/acceptance/closure guards and durable result correlation. Invocation Runtime owns worker/resource execution behind the common WorkerProvider boundary. Offline proof composition substitutes deterministic worker behavior only; it does not create a second lifecycle or state owner.",
       "ubiquitous_language": {
         "Scenario": "Pinned input/event/outcome schedule.",
         "ScriptedWorker": "Implementation role for Deterministic Test Worker; deterministic protocol behavior only, not model intelligence.",
@@ -1896,15 +1896,15 @@
         "Worker Port": "Abstract WorkerPort; existing compatible WorkerProvider code interface is retained."
       },
       "ports": [
-        "Reuse WorkManagement, WorkerProvider, SourceControl, WorkspaceManager and OperationalStore ports. Scripted WorkerProvider.start/read_back/cancel retains outcome by invocation ID. Worker Port (abstract WorkerPort) is the same worker-facing port/protocol used by production: WorkerPort → Test Worker Adapter → deterministic scenarios, beside WorkerPort → Real Worker Adapter → provider. Existing code interface WorkerProvider.start/read_back/cancel and WorkerOutcome compatibility remain; no rename is required. It does not simulate model intelligence or frontier-model intelligence; no model inference, provider credentials or token spend. No test-specific lifecycle shortcuts or script-driven mark_done. Split recommendation carrier (DV-6): a scripted split recommendation is emitted through the existing escalation outcome (authority-block / HumanDecisionRequired route) carrying the recommendation as structured evidence; no new WorkerOutcome.kind is introduced under SF-REQ-039. If a structured recommendation proves to need a protocol change, SF-REQ-039-AC-09 becomes conditional on R1-GAP-039-REAL-OUTCOME like AC-01.",
+        "Reuse WorkManagement, WorkerProvider, SourceControl, WorkspaceManager and OperationalStore ports. WorkerProvider.start/read_back/cancel is the single worker boundary for both deterministic and real workers; observable results carry attributable invocation/role/candidate correlation through existing execution/evidence ownership. Split recommendation carrier remains the existing escalation outcome (authority-block / HumanDecisionRequired) with structured recommendation evidence; no new WorkerOutcome.kind is introduced unless separately authorized.",
         "ScenarioRunner.run(scenario_manifest, injected_clock, profile) -> ordered observations/effect receipts and terminal/hold snapshot. It may deliver inputs but cannot set lifecycle stage.",
-        "Proposed OutcomeEvidencePort.get(correlation_id) -> immutable RoleOutcomeRecord | Missing. RoleOutcomeRecord fields: role, invocation ID, attempt, exact contract/candidate refs, findings, observation refs, outcome kind, terminal flag, and closure receipts. WorkerOutcome stays compatible; it is insufficient alone for role-specific evidence. Conditional target only after R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME are resolved: the application validates the sidecar before transition. A scripted adapter may model it, but no real-path producer is assigned or presumed here."
+        "Execution Coordination consumes correlated WorkerOutcome/readback plus candidate/evidence references to drive canonical producer -> VERIFY -> independent verifier -> REVIEW/ACCEPT/closure transitions. If current WorkerOutcome is insufficient for a required observable, the revised design may add a backward-compatible typed field/value object at the existing WorkerProvider boundary; no parallel sidecar store."
       ],
       "adapters": [
         "Extend existing composition/offline_profile.py; use real SQLiteOperationalStore, local_artifact_custody and Git source-control/worktree adapters against disposable local bare remote and worktrees.",
         "Proposed invocation_runtime/adapters/scripted_worker.py and execution_coordination/adapters/local_work_management.py substitute provider and Work Management transport only. The verifier uses a distinct invocation/process and freshly retrieved candidate/worktree."
       ],
-      "state": "Scenario manifest includes authorized BiuContract, exact expected transitions, ordered events, scripted outcome per role/attempt, fake clock and seed. Durable fixture state contains real operational store, local Work Management receipts and worker outcome journal.",
+      "state": "Scenario manifest includes authorized BiuContract, exact expected transitions, ordered events, scripted outcome per role/attempt, fake clock and seed. Durable fixture state contains the real operational store, local Work Management receipts, worker invocation/effect journal, exact candidate identity, verifier findings and closure receipts under existing execution/evidence identities.",
       "transitions": [
         "Seed authorized contract -> normal release admission -> producer candidate publication/readback -> VERIFY -> independent scripted verifier result -> REVIEW/ACCEPT policy -> required closure -> DONE.",
         "Verifier rejection follows canonical rework transition with findings; subsequent producer uses a distinct authorized attempt.",
@@ -1939,8 +1939,8 @@
         {
           "id": "039-composed-lifecycle",
           "layer": "python_unit_integration",
-          "rule": "Reuse LRN-002 composed-path promotion for OfflineProfile with actual store/adapters and fresh verifier; cover success, rejection, result/custody gaps, duplicate/restart, judgment hold. Full multi-role proof remains blocked on both 039 gaps. After resolution, exercise actual sandbox/github profile constructors with local transport substitutes: absent authority/real outcome binding holds before launch; bound real-worker adapter persists/readbacks correctly correlated RoleOutcomeRecord through success, verifier rejection and restart. Offline scripted records alone cannot discharge the real-path probe. Complete the scenario matrix in acceptance_design_trace; S0 supplies only fixtures. Simulate faults through the production port; do not call a model or emit purported native readiness assessments.",
-          "proven_red_obligation": "Disconnect verifier invocation or custody readback while unit tests stay green; targeted end-to-end assertion must fail. Bypass construction binding validation or disconnect real-worker record emission independently; pre-launch refusal or correlated real-path outcome assertion must fail.",
+          "rule": "Exercise OfflineProfile with the actual execution store/adapters and distinct producer/verifier invocations behind the common WorkerProvider port. Cover success, verifier rejection -> repair -> fresh candidate, malformed/missing/miscorrelated result, custody gaps, duplicate/restart and judgment hold. Producer success alone must never synthesize VERIFY/REVIEW/ACCEPT/closure. Real-worker and deterministic-worker adapters must produce equivalent observable lifecycle/result correlation through the same port contract. Live replacement/sovereignty remains separate.",
+          "proven_red_obligation": "Reintroduce producer-success lifecycle collapse and require the separate-verifier assertion to fail. Separately disconnect verifier candidate retrieval/correlation and require the exact-candidate assertion to fail. Disconnect durable worker readback or permit process-success-without-correlated-result and require the hold/recovery assertion to fail.",
           "phase3_promotion": "LRN-002",
           "status": "DESIGNED_NOT_IMPLEMENTED",
           "strength": "BLOCKING"
@@ -1952,15 +1952,15 @@
         "Internal iteration order only where canonical output ordering and effect order stay unchanged.",
         "Test fixture helper decomposition; no changes to predicates, boundary semantics, identity, persistence or authority."
       ],
-      "composition": "OfflineProfile owns scenario adapter construction around the existing FactoryCoordinator. _completed_for_outcome currently collapses success through verify/review/accept/close; the proposed separate-role path is blocked by R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME. Current-interface fixtures remain valid, but full multi-role acceptance is blocked, not passed by a parallel mock. ScenarioRunner may not change lifecycle stage.",
+      "composition": "OfflineProfile owns scenario adapter construction around the existing Execution Coordination lifecycle. The current FactoryCoordinator._completed_for_outcome success-collapse is the implementation defect to replace: producer success must not synthesize verification/review/accept/closure. Production and deterministic workers are injected through the same WorkerProvider boundary; ScenarioRunner may not change lifecycle stage. Local proof does not imply live sovereignty or bootstrap retirement.",
       "design_decisions": [
-        "The following multi-role target decisions are conditional design constraints, not implementation authorization. SPECIFY must first identify existing requirement authority and owners for orchestration and real-path outcome emission. Do not replace FactoryCoordinator._completed_for_outcome under SF-REQ-039 alone; current worker/lifecycle contracts remain untouched.",
-        "Closure records only actions actually performed/read back by local adapters; never populate all required_closure_actions merely because producer succeeded.",
+        "SF-REQ-039 already authorizes deterministic Test Worker coverage of the canonical producer/verifier lifecycle. Execution Coordination owns lifecycle orchestration; Invocation Runtime owns real/test worker invocation behind WorkerProvider. No new owner is required.",
+        "Closure records only actions actually performed/read back by local adapters; never populate required_closure_actions merely because a producer succeeded.",
         "Offline tests exercise the production orchestration path through composition, not a second mocked lifecycle.",
-        "A composed role router resolves PRODUCER/VERIFIER/CLOSURE from the durable invocation record keyed by correlation_id and injects the role-specific worker implementation. Existing WorkerProvider signatures stay intact; verifier output must reference retrieved candidate and independent invocation. Missing RoleOutcomeRecord holds even when WorkerOutcome.kind is success.",
-        "On verifier rejection, persist finding refs and invoke existing transition(action=rework) at the current lifecycle version; enforce remaining authorized attempts/budget before producer allocation. REVIEW evaluates exactly required trusted evidence through evaluate_verdict. ACCEPT performs each required closure action and consumes its receipt; no synthesized closure evidence.",
-        "Before any shared-kernel change lands, both sandbox_run_profile and github_profile constructors must validate assigned authority plus real OutcomeEvidencePort binding for multi-role mode. Missing binding/authority returns ROLE_OUTCOME_BINDING_HOLD before any worker launch, not after every producer success. Existing unmodified profiles are not claimed to enforce this future gate. No mode may claim 039 multi-role proof by falling back to the current success-collapse path. After activation, a missing/miscorrelated sidecar holds the affected transition even on WorkerOutcome success.",
-        "Worker Port (abstract WorkerPort) is the same worker-facing port/protocol used by production: WorkerPort → Test Worker Adapter → deterministic scenarios, beside WorkerPort → Real Worker Adapter → provider. Existing code interface WorkerProvider.start/read_back/cancel and WorkerOutcome compatibility remain; no rename is required. It does not simulate model intelligence or frontier-model intelligence; no model inference, provider credentials or token spend. No test-specific lifecycle shortcuts or script-driven mark_done. S0 owns current-interface substrate only; scenario assertions and full multi-role proof are allocated to K1/K2/K3/O below, conditional on surviving authority holds."
+        "Refactor the current success-collapse path inside Execution Coordination so producer success publishes an exact candidate and advances to VERIFY, where a distinct independent verifier invocation evaluates that candidate. Verifier rejection records findings and returns to IMPLEMENT under existing attempt/budget policy; acceptance/review/closure remain canonical lifecycle operations.",
+        "WorkerProvider.start/read_back/cancel remains the common worker boundary for Real Worker and Deterministic Test Worker. Durable role, invocation, attempt, contract/candidate and finding/receipt correlation is retained in existing invocation/effect/execution evidence records. Extend the typed result contract only if revised Design Verification proves current WorkerOutcome cannot carry a required observable; do not introduce a separate RoleOutcomeRecord state owner by default.",
+        "Before activating multi-role behavior in shared/live profiles, composition must prove the configured worker adapter and durable correlation/readback path. Missing/miscorrelated outcome holds the transition even if the worker process exits successfully. Existing unmodified profiles are not claimed to satisfy future multi-role proof until their revised design is implemented.",
+        "Worker Port is the same worker-facing port/protocol used by production: WorkerProvider -> Deterministic Test Worker for scripted scenarios, beside WorkerProvider -> Real Worker -> provider. No test-specific lifecycle shortcuts or script-driven mark_done."
       ],
       "source_specification": {
         "path": "docs/evidence/wave2-specified-requirements.json",
@@ -1982,7 +1982,7 @@
       },
       "ratification_dependency": [],
       "pending_amendment_dependencies": [],
-      "authority_status": "DESIGN_CANDIDATE_WITH_SPECIFY_HOLD; independent repair review outstanding; affected capability is not implementation-ready",
+      "authority_status": "DESIGN_CANDIDATE_REVISED_TO_EXISTING_EXECUTION_OWNERSHIP; independent scoped revision review required",
       "acceptance_design_trace": [
         {
           "acceptance_id": "SF-REQ-039-AC-01",
@@ -2297,10 +2297,7 @@
           "authority_condition": "K1/K2/K3/O full multi-role proof remains conditional on R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME; offline scripts never discharge real-worker emission proof."
         }
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "revision_2026_09_22": {
         "reason": "Session B: reconcile SF-REQ-015/039 with binding 2026-09-22 amendments; not implementation or independent Design Verification.",
         "delta_ref": "/tmp/claude-1000/-mnt-d-Projects-alienintent/98be9ff8-7334-433b-86cf-c9b80a665408/scratchpad/wave2-recon.codex.md",
@@ -2366,13 +2363,13 @@
         ],
         "phase_interpretation": "Phase-relative exclusions in Phase 8 mean no design authored during SPECIFY; this Phase 9 authors design only. No implementation, BIUs, verification verdict or operational adoption is performed."
       },
-      "architecture_fitness": "Retain existing repository-wide layering, vendor-signature, port-contract, configuration and determinism checks and composed compatibility probes. Direction-policy fixtures are explicitly conditional under shared_contracts.context_dependency_direction; the open Founder gap holds affected admission, not execution of existing checks. Do not enforce withdrawn_r1_proposal against production.",
+      "architecture_fitness": "Retain existing repository-wide layering, vendor-signature, port-contract, configuration and determinism checks and composed compatibility probes. Add scoped coupling checks where mechanically reliable: detect cross-module dependency cycles; inventory cross-module domain imports for explicit stable-value/port versus domain-leakage classification; assert persistence/table ownership where ownership metadata exists. Ubiquitous Language consistency remains independent design judgment unless a reliable mechanical representation exists. Never enforce the withdrawn R1 allowed_edges table.",
       "deterministic_enforcement_opportunities": [
         {
           "id": "051-architecture-boundary",
           "layer": "architecture_fitness",
-          "rule": "Apply shared_contracts.context_dependency_direction.fitness: run existing repository-wide architecture checks and composed port compatibility probes; return ARCHITECTURE_AUTHORITY_HOLD for direction-dependent admission while R2-GAP-051-EDGE-AUTHORITY is open. observed_edges is descriptive, never a permission table. Do not implement the withdrawn R1 policy against production.",
-          "proven_red_obligation": "Independently bypass the open-authority hold and require refusal assertion failure; treating observed_edges as approved policy must fail. Existing forbidden adapter/vendor import and incompatible consumer input controls still fail. Retain the R1 direction fixtures conditionally after Founder disposition and reviewed scope: execution_coordination -> context_assembly.application, evidence_learning -> installation, evidence_learning -> composition and reciprocal leaf cycle negative controls; execution_coordination -> context_assembly.domain DesignApplicability and composition-owned PremiseEvidence bridge positive controls. These conditional fixtures are not currently runnable production conformance obligations.",
+          "rule": "Run existing architecture fitness and composed compatibility checks first, then the scoped coupling checks approved by the 2026-09-25 Founder disposition: cross-module cycle detection, cross-module domain-import inventory/classification, and persistence ownership assertions where mechanically expressible. A forbidden dependency or incompatible interface must fail before independent review. Observed dependencies are not automatically forbidden, and the withdrawn R1 allowed_edges table is never used as production policy.",
+          "proven_red_obligation": "Introduce one materially forbidden dependency/interface violation under an approved rule and require the mechanical check to fail; separately disable/bypass the new cycle/domain-import/persistence check that is applicable to the fixture and require its negative control to fail. Existing adapter/vendor/import-direction violations remain proven-red. Do not manufacture a failure by comparing source to the withdrawn R1 table.",
           "phase3_promotion": null,
           "status": "DESIGNED_NOT_IMPLEMENTED",
           "strength": "BLOCKING"
@@ -2397,7 +2394,7 @@
       "design_decisions": [
         "Existing architecture fitness checks are necessary but cannot certify premise truth or semantic compatibility; independent judgment remains required.",
         "No new visible lifecycle state, service or approval lane; internal states implement SWF-25 semantic gates within SPECIFY/PLAN.",
-        "R2 supersedes R1 normative edge-table enforcement under the explicit authority-gap alternative. Existing architecture checks are retained; no successful mechanical result can discharge the Founder hold."
+        "Founder disposition 2026-09-25 declines the historical R1 allowed_edges table as policy. Existing approved architecture checks remain normative. Direction/coupling assurance is narrowed to evidence-driven checks: cross-module cycle detection; cross-module domain-object import inventory/classification against bounded-context ownership; persistence/table ownership checks where mechanically expressible; and qualitative Ubiquitous Language/domain-ownership review where semantics cannot be decided mechanically. A detected dependency is evidence for classification, not an automatic defect."
       ],
       "source_specification": {
         "path": "docs/evidence/wave2-specified-requirements.json",
@@ -2416,7 +2413,7 @@
       },
       "ratification_dependency": [],
       "pending_amendment_dependencies": [],
-      "authority_status": "DESIGN_CANDIDATE_WITH_FOUNDER_HOLD; normative direction unresolved, independent review outstanding.",
+      "authority_status": "DESIGN_CANDIDATE_REVISED_AFTER_FOUNDER_DISPOSITION; independent scoped revision review required",
       "acceptance_design_trace": [
         {
           "acceptance_id": "SF-REQ-051-AC-01",
@@ -2485,9 +2482,7 @@
           ]
         }
       ],
-      "authority_gap_refs": [
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ]
+      "authority_gap_refs": []
     },
     {
       "requirement_id": "SF-REQ-053",
@@ -2763,12 +2758,12 @@
         "Internal iteration order only where canonical output ordering and effect order stay unchanged.",
         "Test fixture helper decomposition; no changes to predicates, boundary semantics, identity, persistence or authority."
       ],
-      "composition": "composition/control_plane_profile.py binds Liveness, real store observation adapter, FactoryCoordinator canonical effect admission, EffectExecutor and 053 AttentionPort. It scans only already-known active records. OfflineProfile uses identical services with fake clock/local effects. Ratification flag is validated authority input, never a config boolean that confers authorization. Hosting/supervision remains unassigned under R1-GAP-MONITOR-HOST; the profile constructor is not a supervisor. Publish independent scan progress/health per shared_contracts.monitor_liveness.",
+      "composition": "composition/control_plane_profile.py binds Liveness, real store observation adapter, FactoryCoordinator canonical effect admission, EffectExecutor and 053 AttentionPort. It scans only already-known active records. OfflineProfile uses identical services with fake clock/local effects. Product authority comes from binding SWF-29/SF-REQ-056, not a configuration boolean. A concrete independent monitor/scanner host, restart policy, self-health observation and Doctor validation are separate operational-proof obligations under SF-REQ-053/037/038; L1 local proof does not claim that live host replacement. Publish scan progress/health per shared_contracts.monitor_liveness.",
       "design_decisions": [
         "Policy defaults: G=300 seconds, I=60 seconds, confirmation bound C=90 seconds; all configurable positive finite durations, persisted with policy digest and tested just below/at boundaries. These are design defaults, not a claim that historical bootstrap 5 minutes is a canonical invariant. Missing/invalid policy blocks startup.",
         "Periodic scan is limited to SF-REQ-056 explicitly specified reconciliation of known active state; it is not a general polling integration or work discovery loop.",
         "Effectively-once action requires idempotent/fenced consumer and durable readback; physically exactly-once network delivery is not promised. If an existing provider cannot prove these, park rather than relax the boundary.",
-        "Depends on POSTW1-DECIDE-008A ratification. Pending SF-REQ-008 and SF-REQ-022 amendments are excluded; no new nonterminal retries or budget reset. Operational replacement and SWF-29 retirement remain separately gated."
+        "SF-REQ-056 is already binding P0/Wave 2 authority under SWF-29. L1 local/composed liveness reconciliation may proceed without a second ratification decision. Operational replacement of the bootstrap liveness service, monitor-host supervision, live transport proof and retirement remain separately gated; no new nonterminal retry semantics or budget reset are introduced."
       ],
       "source_specification": {
         "path": "docs/evidence/wave2-specified-requirements.json",
@@ -2793,7 +2788,7 @@
         "POSTW1-DECIDE-008A: SF-REQ-056"
       ],
       "pending_amendment_dependencies": [],
-      "authority_status": "DESIGN_CANDIDATE_WITH_SPECIFY_HOLD; independent repair review outstanding; affected capability is not implementation-ready",
+      "authority_status": "DESIGN_CANDIDATE_REVISED_AFTER_BINDING_SF_REQ_056_AUTHORITY; independent scoped revision review required",
       "acceptance_design_trace": [
         {
           "acceptance_id": "SF-REQ-056-AC-01",
@@ -2884,9 +2879,7 @@
           ]
         }
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ]
+      "authority_gap_refs": []
     }
   ],
   "disposition": {
@@ -3005,7 +2998,13 @@
       "question": "Which existing requirement authorizes canonical multi-role orchestration and which domain owner maintains it?",
       "evidence": "Phase 8 SF-REQ-039 scopes offline proof over SF-REQ-001..010 interfaces; FactoryCoordinator._completed_for_outcome currently collapses successful production through closure. The selected ten contracts do not assign the proposed kernel replacement.",
       "design_disposition": "Return requirement/owner mapping to SPECIFY; execution_coordination is the candidate location, not an assigned capability owner. Withdraw permission to implement the replacement under the offline harness requirement.",
-      "blocks": "Shared-kernel role router/orchestration changes and claims that full 039 scenarios are implementable."
+      "blocks": "Shared-kernel role router/orchestration changes and claims that full 039 scenarios are implementable.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "Binding FD-01/FD-02 execution ownership + SF-REQ-039 WorkerProvider requirement; docs/evidence/2026-09-25-wave2-authority-blocker-grooming.md",
+        "disposition": "Use existing Execution Coordination lifecycle ownership and Invocation Runtime WorkerProvider ownership; revise the overcomplicated sidecar design rather than create a new owner.",
+        "note": "Original question/evidence retained above as design history."
+      }
     },
     {
       "id": "R1-GAP-039-REAL-OUTCOME",
@@ -3015,7 +3014,13 @@
       "question": "Which existing requirement and owner supply durable RoleOutcomeRecord on the non-scripted worker path, with compatible readback and consumer semantics?",
       "evidence": "sandbox_run_profile.py constructs RealWorkerProvider and the shared FactoryCoordinator; github_profile.py uses that coordinator. WorkerOutcome alone supplies no proposed role sidecar binding.",
       "design_disposition": "Return to SPECIFY; invocation_runtime is a candidate adapter location only. No worker contract amendment or new Product Requirement here.",
-      "blocks": "OutcomeEvidencePort activation in shared/live profiles and live-path readiness claims."
+      "blocks": "OutcomeEvidencePort activation in shared/live profiles and live-path readiness claims.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "Binding FD-01/FD-02 execution ownership + SF-REQ-039 WorkerProvider requirement; docs/evidence/2026-09-25-wave2-authority-blocker-grooming.md",
+        "disposition": "Use existing Execution Coordination lifecycle ownership and Invocation Runtime WorkerProvider ownership; revise the overcomplicated sidecar design rather than create a new owner.",
+        "note": "Original question/evidence retained above as design history."
+      }
     },
     {
       "id": "R1-GAP-013-ALLOCATION",
@@ -3041,7 +3046,13 @@
       "question": "Who owns the persistent monitor/periodic-scan host, supervision and restart policy independent of model invocation?",
       "evidence": "SWF-27 and 053 require persistence beyond episodes; 056 G+I assumes functioning scans. Neither this design nor its composition constructor supplies a deployment host/supervisor owner.",
       "design_disposition": "Explicit out-of-scope operational ownership gap returned to SPECIFY/Product authority, routed by Program Director. Local service design and fixtures may proceed, but no background shell process or bootstrap waiter is adopted as supervisor.",
-      "blocks": "Live monitor/scanner adoption and an operational G+I guarantee until host ownership and independent supervision are assigned."
+      "blocks": "Live monitor/scanner adoption and an operational G+I guarantee until host ownership and independent supervision are assigned.",
+      "resolution_2026_09_25": {
+        "status": "SETTLED",
+        "authority": "SWF-27 / SF-REQ-053 with SF-REQ-037/038 installation and Doctor ownership; retained classification report 2026-09-22",
+        "disposition": "Not a Founder ownership decision. Remaining obligation is engineering/operational proof of the configured independent supervisor, restart and health/Doctor behavior.",
+        "note": "Original question/evidence retained above as design history; live replacement proof remains separate."
+      }
     },
     {
       "id": "R2-GAP-051-EDGE-AUTHORITY",
@@ -3051,7 +3062,13 @@
       "question": "Does the R1 directional restriction merely refine approved internal module design, or materially change the approved responsibility boundary? Is adoption authorized, and under what scope?",
       "evidence": "Architecture authority section 44 lists pre-Python modeling work; later docs/architecture/pre-python-gate/gate-reclassification.md G03 cites binding FD-02 approving internal modules and Control Plane application orchestration. That resolves the module classification, not explicit adoption of R1 allowed_edges. The five imports in four named files demonstrate the practical impact.",
       "design_disposition": "Withdraw R1 allowed_edges as a normative gate. Record observed_edges and the four importing-file violations descriptively. No requirement is created, amended or weakened; no product boundary is decided here.",
-      "blocks": "Adoption of the proposed directional extension and affected SF-REQ-051 design-conformity claims until Founder disposition and reviewed scoped design; does not block running existing approved checks or certify the current source against the withdrawn table."
+      "blocks": "Adoption of the proposed directional extension and affected SF-REQ-051 design-conformity claims until Founder disposition and reviewed scoped design; does not block running existing approved checks or certify the current source against the withdrawn table.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "docs/decisions/2026-09-25-cross-module-coupling-risk-disposition.md",
+        "disposition": "Do not adopt historical R1 allowed_edges; use existing architecture rules plus scoped evidence-driven coupling checks.",
+        "note": "Original question/evidence retained above as design history."
+      }
     }
   ],
   "repair_r2": {

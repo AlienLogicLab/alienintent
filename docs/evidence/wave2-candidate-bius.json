@@ -3814,7 +3814,7 @@
           "decisions": [
             "Existing architecture fitness checks are necessary but cannot certify premise truth or semantic compatibility; independent judgment remains required.",
             "No new visible lifecycle state, service or approval lane; internal states implement SWF-25 semantic gates within SPECIFY/PLAN.",
-            "R2 supersedes R1 normative edge-table enforcement under the explicit authority-gap alternative. Existing architecture checks are retained; no successful mechanical result can discharge the Founder hold."
+            "Founder disposition 2026-09-25 declines the historical R1 allowed_edges table as policy. Existing approved architecture checks remain normative. Direction/coupling assurance is narrowed to evidence-driven checks: cross-module cycle detection; cross-module domain-object import inventory/classification against bounded-context ownership; persistence/table ownership checks where mechanically expressible; and qualitative Ubiquitous Language/domain-ownership review where semantics cannot be decided mechanically. A detected dependency is evidence for classification, not an automatic defect."
           ],
           "binding_sections": [
             "ports",
@@ -3839,7 +3839,7 @@
       ],
       "scope": {
         "dag_scope": "",
-        "extent": "Only a pinned Founder disposition and independently reviewed scoped design can enable affected design-conformity claims. Execute the resulting approved probes; if authority declines extension, record that scoped disposition without inventing an edge rule. Never enforce withdrawn_r1_proposal or certify source from observed_edges.",
+        "extent": "Use the 2026-09-25 Founder coupling disposition. Existing architecture checks plus scoped cycle/domain-import/persistence ownership checks run before fresh independent design review. A materially forbidden dependency or incompatible interface fails mechanically; a conforming fixture records those results and a separate attributable independent review. Do not enforce withdrawn_r1_proposal.",
         "node_kind": "authority_blocked_prerequisite",
         "owns_capabilities": [
           "direction_disposed_applicability"
@@ -3863,7 +3863,7 @@
         }
       },
       "acceptance_criteria": [
-        "Only a pinned Founder disposition and independently reviewed scoped design can enable affected design-conformity claims. Execute the resulting approved probes; if authority declines extension, record that scoped disposition without inventing an edge rule. Never enforce withdrawn_r1_proposal or certify source from observed_edges.",
+        "Use the 2026-09-25 Founder coupling disposition. Existing architecture checks plus scoped cycle/domain-import/persistence ownership checks run before fresh independent design review. A materially forbidden dependency or incompatible interface fails mechanically; a conforming fixture records those results and a separate attributable independent review. Do not enforce withdrawn_r1_proposal.",
         "SF-REQ-051-AC-03: A forbidden dependency or incompatible interface fixture fails mechanical design checks before independent review; a conforming fixture records those results and a separate attributable independent review."
       ],
       "acceptance_ids": [
@@ -3891,7 +3891,7 @@
           "owner_node": "U6",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "Only a pinned Founder disposition and independently reviewed scoped design can enable affected design-conformity claims. Execute the resulting approved probes; if authority declines extension, record that scoped disposition without inventing an edge rule. Never enforce withdrawn_r1_proposal or certify source from observed_edges.",
+          "scenario": "Use the 2026-09-25 Founder coupling disposition. Existing architecture checks plus scoped cycle/domain-import/persistence ownership checks run before fresh independent design review. A materially forbidden dependency or incompatible interface fails mechanically; a conforming fixture records those results and a separate attributable independent review. Do not enforce withdrawn_r1_proposal.",
           "acceptance_ids": [
             "SF-REQ-051-AC-03"
           ],
@@ -3975,25 +3975,29 @@
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R2-GAP-051-EDGE-AUTHORITY"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
-      "direct_authority_gap_refs": [
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
+      "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
-      "planning_eligibility": "GAP_BLOCKED",
+      "planning_eligibility": "PROCEEDS_REGARDLESS",
       "assessment_status": "NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE",
-      "partial_work_that_proceeds": "U5 continues; U6 may exercise refusal only. No choice of Founder outcome is assumed.",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "partial_work_that_proceeds": "The Founder disposed the edge-policy question on 2026-09-25. Revise and independently review the scoped coupling checks, then execute FX-U6 against a genuinely forbidden dependency/incompatible-interface fixture. No withdrawn edge table.",
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_25_cohort_prep": {
+        "status": "REVISED_PENDING_INDEPENDENT_DESIGN_REVIEW",
+        "authority": [
+          "docs/decisions/2026-09-25-cross-module-coupling-risk-disposition.md",
+          "docs/evidence/2026-09-25-wave2-authority-blocker-grooming.md"
+        ],
+        "scope": "Only stale authority/ownership assumptions and directly derived node/candidate/proof text for this BIU were revised; dependencies/topology/requirement identity are unchanged.",
+        "next": "Independent scoped design review, then compile/pin executable proof packet and run native Agent Ready."
+      }
     },
     {
       "biu_id": "WO-220207",
@@ -4918,7 +4922,8 @@
           "requirement_id": "SF-REQ-015",
           "decisions": [
             "Known MCP parsing: isError=true is failure; collect structuredContent disposition and parseable JSON text-content dispositions. Require at least one recognized terminal value and agreement among every supplied value. Unknown/malformed/conflicting purported result is failure. Preserve wrappers.",
-            "This fixes intended consumer semantics only. No external versioned serialization, implementation maintainer or CLI is invented; implementation/migration of that boundary requires G1/G2 authority."
+            "Ownership per #/contracts/4/ownership_statement (DV-5). Producer/version provenance per #/contracts/4/provenance_contract (DV-5).",
+            "Reuse Before Build: the public Agent Ready product already exists; use its CLI/MCP, never raw model prompts shaped as its schema. check_assessment_producer.py supplies negative shape evidence, not positive producer authentication. tools/orchestration/readiness_assessment.py is an interim programme adapter/provenance example, not the product implementation or proof of trustworthy provenance by itself. Require configured invocation-to-result custody and independent producer checks at admission."
           ],
           "binding_sections": [
             "ports",
@@ -4943,7 +4948,7 @@
       ],
       "scope": {
         "dag_scope": "",
-        "extent": "POSTW1-DECIDE-004A assigns G1/G2 and verifies provider contract before binding transport/schema. Prove authorized binding reaches consumer, unbound and unauthorized READY stub refuse before release; raw response retained. No new assessment engine or external serialization selected by this plan.",
+        "extent": "Ownership per wave2-design-contracts.json#/contracts/4/ownership_statement (DV-5). Prove ReadinessAssessment CLI/MCP adapters reach the consumer with raw response and configured invocation-to-result provenance. Unbound, unestablished producer/version, incompatible public contract or surrogate READY refuses admission. Record contract version limitation agent-ready#1; no duplicate engine or copied rubric. Producer/version provenance per wave2-design-contracts.json#/contracts/4/provenance_contract (DV-5).",
         "node_kind": "external_prerequisite",
         "owns_capabilities": [
           "assigned_assessment_binding"
@@ -4962,12 +4967,12 @@
       "dependency_predicates": {
         "WO-220209": {
           "dag_node": "U9",
-          "completion_predicate": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs. At actual profile boundary unbound/unauthorized stub yields OWNER_ASSIGNMENT_HOLD before launch.",
+          "completion_predicate": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 historical bootstrap-assessor immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs, never label as Agent Ready. At actual profile boundary unbound/unauthorized stub yields CAPABILITY_PROVENANCE_HOLD before launch. Require established producer/package provenance, not schema shape; CLARIFY routes via SF-REQ-035 then reassessment; SPLIT routes to the SplitTransaction port and U9 refuses to proceed without a materialized result set; the transaction itself is U8 (DV-7), after which U9 lints/reassesses each result.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         }
       },
       "acceptance_criteria": [
-        "POSTW1-DECIDE-004A assigns G1/G2 and verifies provider contract before binding transport/schema. Prove authorized binding reaches consumer, unbound and unauthorized READY stub refuse before release; raw response retained. No new assessment engine or external serialization selected by this plan."
+        "Ownership per wave2-design-contracts.json#/contracts/4/ownership_statement (DV-5). Prove ReadinessAssessment CLI/MCP adapters reach the consumer with raw response and configured invocation-to-result provenance. Unbound, unestablished producer/version, incompatible public contract or surrogate READY refuses admission. Record contract version limitation agent-ready#1; no duplicate engine or copied rubric. Producer/version provenance per wave2-design-contracts.json#/contracts/4/provenance_contract (DV-5)."
       ],
       "acceptance_ids": [],
       "acceptance_extents": [],
@@ -4977,7 +4982,7 @@
           "owner_node": "U10",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "POSTW1-DECIDE-004A assigns G1/G2 and verifies provider contract before binding transport/schema. Prove authorized binding reaches consumer, unbound and unauthorized READY stub refuse before release; raw response retained. No new assessment engine or external serialization selected by this plan.",
+          "scenario": "Ownership per wave2-design-contracts.json#/contracts/4/ownership_statement (DV-5). Prove ReadinessAssessment CLI/MCP adapters reach the consumer with raw response and configured invocation-to-result provenance. Unbound, unestablished producer/version, incompatible public contract or surrogate READY refuses admission. Record contract version limitation agent-ready#1; no duplicate engine or copied rubric. Producer/version provenance per wave2-design-contracts.json#/contracts/4/provenance_contract (DV-5).",
           "acceptance_ids": [],
           "enforcement_ids": [],
           "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
@@ -5057,8 +5062,7 @@
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Separate authority required: POSTW1-DECIDE-004A"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
@@ -5066,14 +5070,22 @@
       ],
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
-      "authority_gate_refs": [
-        "POSTW1-DECIDE-004A"
-      ],
+      "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
-      "planning_eligibility": "SEPARATE_AUTHORITY_REQUIRED",
+      "planning_eligibility": "PROCEEDS_REGARDLESS",
       "assessment_status": "NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE",
-      "partial_work_that_proceeds": "U9 consumer/hold tests; transport/schema implementation waits on assigned owner.",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "partial_work_that_proceeds": "Agent Ready product ownership is settled by Architecture Authority A1. U10 binds only the supported public CLI/MCP interfaces behind AlienIntent ReadinessAssessment integration, preserving raw response and invocation provenance. No AlienIntent-owned duplicate schema.",
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_25_cohort_prep": {
+        "status": "REVISED_PENDING_INDEPENDENT_DESIGN_REVIEW",
+        "authority": [
+          "docs/architecture/alienintent-architecture-authority-2026-09-19.md \u2014 Amendment 2026-09-22 A1 Agent Ready product boundary",
+          "docs/decisions/alienintent-agent-ready-founder-decisions-and-ubiquitous-language-v0.1.md \u2014 Founder Architecture Decisions \u00a77 / Agent Ready ownership",
+          "docs/evidence/2026-09-25-wave2-authority-blocker-grooming.md"
+        ],
+        "scope": "Only stale authority/ownership assumptions and directly derived node/candidate/proof text for this BIU were revised; dependencies/topology/requirement identity are unchanged.",
+        "next": "Independent scoped design review, then compile/pin executable proof packet and run native Agent Ready."
+      }
     },
     {
       "biu_id": "WO-220211",
@@ -6547,7 +6559,7 @@
             "Policy defaults: G=300 seconds, I=60 seconds, confirmation bound C=90 seconds; all configurable positive finite durations, persisted with policy digest and tested just below/at boundaries. These are design defaults, not a claim that historical bootstrap 5 minutes is a canonical invariant. Missing/invalid policy blocks startup.",
             "Periodic scan is limited to SF-REQ-056 explicitly specified reconciliation of known active state; it is not a general polling integration or work discovery loop.",
             "Effectively-once action requires idempotent/fenced consumer and durable readback; physically exactly-once network delivery is not promised. If an existing provider cannot prove these, park rather than relax the boundary.",
-            "Depends on POSTW1-DECIDE-008A ratification. Pending SF-REQ-008 and SF-REQ-022 amendments are excluded; no new nonterminal retries or budget reset. Operational replacement and SWF-29 retirement remain separately gated."
+            "SF-REQ-056 is already binding P0/Wave 2 authority under SWF-29. L1 local/composed liveness reconciliation may proceed without a second ratification decision. Operational replacement of the bootstrap liveness service, monitor-host supervision, live transport proof and retirement remain separately gated; no new nonterminal retry semantics or budget reset are introduced."
           ],
           "binding_sections": [
             "ports",
@@ -6572,7 +6584,7 @@
       ],
       "scope": {
         "dag_scope": "",
-        "extent": "Conditional on 056 ratification: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, unavailable evidence holds. Delayed original plus two contenders and crash/restart retains one effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries.",
+        "extent": "With binding SF-REQ-056 authority: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, and unavailable-evidence holds. Delayed original plus two contenders and crash/restart retain one authorized effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries. Local proof does not claim operational monitor-host replacement.",
         "node_kind": "capability",
         "owns_capabilities": [
           "liveness_reconciliation"
@@ -6608,7 +6620,7 @@
         }
       },
       "acceptance_criteria": [
-        "Conditional on 056 ratification: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, unavailable evidence holds. Delayed original plus two contenders and crash/restart retains one effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries.",
+        "With binding SF-REQ-056 authority: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, and unavailable-evidence holds. Delayed original plus two contenders and crash/restart retain one authorized effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries. Local proof does not claim operational monitor-host replacement.",
         "SF-REQ-056-AC-01: Drop the original trigger for an authorized known BIU whose state age exceeds configured grace G: at the next reconciliation scan (interval I), identify the expected missing effect and submit one authorized recovery intent. Before G, do not recover. Under a progressing test clock the detection bound is G + I after entry.",
         "SF-REQ-056-AC-02: Fixtures with an active matching invocation, pending claim/effect or correlated completion awaiting projection yield no recovery invocation. ACCEPT without a required closure effect and terminal BIUs yield none.",
         "SF-REQ-056-AC-03: Race delayed original delivery, duplicate recovery scans and two reconciler attempts for the same effect identity; restart between durable intent and effect completion. The fixture must show one effective authorized action and correlated readback, with stale claims refused. A watcher-only absence check is insufficient.",
@@ -6732,7 +6744,7 @@
           "owner_node": "L1",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "Conditional on 056 ratification: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, unavailable evidence holds. Delayed original plus two contenders and crash/restart retains one effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries.",
+          "scenario": "With binding SF-REQ-056 authority: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, and unavailable-evidence holds. Delayed original plus two contenders and crash/restart retain one authorized effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries. Local proof does not claim operational monitor-host replacement.",
           "acceptance_ids": [
             "SF-REQ-056-AC-01",
             "SF-REQ-056-AC-02",
@@ -6878,8 +6890,7 @@
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Separate authority required: POSTW1-DECIDE-008A"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
@@ -6887,14 +6898,23 @@
       ],
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
-      "authority_gate_refs": [
-        "POSTW1-DECIDE-008A"
-      ],
+      "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
-      "planning_eligibility": "SEPARATE_AUTHORITY_REQUIRED",
+      "planning_eligibility": "PROCEEDS_REGARDLESS",
       "assessment_status": "NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE",
-      "partial_work_that_proceeds": "Conditional design and fixture preparation; generic C1/C4 work continues. No implementation/adoption of unratified 056 or operational bound claim.",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "partial_work_that_proceeds": "SF-REQ-056 ratification is already binding under SWF-29. Local/composed L1 proof proceeds; operational monitor-host/replacement/live transport proof remains separate and cannot be claimed by this node.",
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_25_cohort_prep": {
+        "status": "REVISED_PENDING_INDEPENDENT_DESIGN_REVIEW",
+        "authority": [
+          "docs/decisions/2026-09-20-liveness-reconciliation.md \u2014 SWF-29 Part 2 canonical SF-REQ-056 authority",
+          "docs/architecture/alienintent-architecture-authority-2026-09-19.md \u2014 Amendment 2026-09-22 A6 persistent deterministic monitoring",
+          "docs/operations/post-wave1-program/reports/2026-09-22-founder-decision-bundle-classification.md \u2014 R1-GAP-MONITOR-HOST classification",
+          "docs/evidence/2026-09-25-wave2-authority-blocker-grooming.md"
+        ],
+        "scope": "Only stale authority/ownership assumptions and directly derived node/candidate/proof text for this BIU were revised; dependencies/topology/requirement identity are unchanged.",
+        "next": "Independent scoped design review, then compile/pin executable proof packet and run native Agent Ready."
+      }
     },
     {
       "biu_id": "WO-220401",
@@ -6917,12 +6937,13 @@
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/6",
           "requirement_id": "SF-REQ-039",
           "decisions": [
-            "The following multi-role target decisions are conditional design constraints, not implementation authorization. SPECIFY must first identify existing requirement authority and owners for orchestration and real-path outcome emission. Do not replace FactoryCoordinator._completed_for_outcome under SF-REQ-039 alone; current worker/lifecycle contracts remain untouched.",
-            "Closure records only actions actually performed/read back by local adapters; never populate all required_closure_actions merely because producer succeeded.",
+            "SF-REQ-039 already authorizes deterministic Test Worker coverage of the canonical producer/verifier lifecycle. Execution Coordination owns lifecycle orchestration; Invocation Runtime owns real/test worker invocation behind WorkerProvider. No new owner is required.",
+            "Closure records only actions actually performed/read back by local adapters; never populate required_closure_actions merely because a producer succeeded.",
             "Offline tests exercise the production orchestration path through composition, not a second mocked lifecycle.",
-            "A composed role router resolves PRODUCER/VERIFIER/CLOSURE from the durable invocation record keyed by correlation_id and injects the role-specific worker implementation. Existing WorkerProvider signatures stay intact; verifier output must reference retrieved candidate and independent invocation. Missing RoleOutcomeRecord holds even when WorkerOutcome.kind is success.",
-            "On verifier rejection, persist finding refs and invoke existing transition(action=rework) at the current lifecycle version; enforce remaining authorized attempts/budget before producer allocation. REVIEW evaluates exactly required trusted evidence through evaluate_verdict. ACCEPT performs each required closure action and consumes its receipt; no synthesized closure evidence.",
-            "Before any shared-kernel change lands, both sandbox_run_profile and github_profile constructors must validate assigned authority plus real OutcomeEvidencePort binding for multi-role mode. Missing binding/authority returns ROLE_OUTCOME_BINDING_HOLD before any worker launch, not after every producer success. Existing unmodified profiles are not claimed to enforce this future gate. No mode may claim 039 multi-role proof by falling back to the current success-collapse path. After activation, a missing/miscorrelated sidecar holds the affected transition even on WorkerOutcome success."
+            "Refactor the current success-collapse path inside Execution Coordination so producer success publishes an exact candidate and advances to VERIFY, where a distinct independent verifier invocation evaluates that candidate. Verifier rejection records findings and returns to IMPLEMENT under existing attempt/budget policy; acceptance/review/closure remain canonical lifecycle operations.",
+            "WorkerProvider.start/read_back/cancel remains the common worker boundary for Real Worker and Deterministic Test Worker. Durable role, invocation, attempt, contract/candidate and finding/receipt correlation is retained in existing invocation/effect/execution evidence records. Extend the typed result contract only if revised Design Verification proves current WorkerOutcome cannot carry a required observable; do not introduce a separate RoleOutcomeRecord state owner by default.",
+            "Before activating multi-role behavior in shared/live profiles, composition must prove the configured worker adapter and durable correlation/readback path. Missing/miscorrelated outcome holds the transition even if the worker process exits successfully. Existing unmodified profiles are not claimed to satisfy future multi-role proof until their revised design is implemented.",
+            "Worker Port is the same worker-facing port/protocol used by production: WorkerProvider -> Deterministic Test Worker for scripted scenarios, beside WorkerProvider -> Real Worker -> provider. No test-specific lifecycle shortcuts or script-driven mark_done."
           ],
           "binding_sections": [
             "ports",
@@ -6946,9 +6967,9 @@
         }
       ],
       "scope": {
-        "dag_scope": "039 is the consumer requirement, not authority to implement this substrate. invocation_runtime is a candidate location only; domain owner is unassigned.",
-        "extent": "SPECIFY names existing requirement and actual owner before worker-path change. Then bound non-scripted adapter with local transport emits/persists/reads RoleOutcomeRecord keyed to role, invocation, attempt, contract/candidate and closure receipts across restart. Missing/miscorrelated record holds despite process success. WorkerOutcome signatures remain compatible.",
-        "node_kind": "authority_blocked_prerequisite",
+        "dag_scope": "SF-REQ-039 consumes this prerequisite. Binding FD-01/FD-02 assign released-execution lifecycle/result correlation to Execution Coordination and worker/resource invocation behind WorkerProvider to Invocation Runtime. K1 is scoped to proving the real WorkerProvider outcome/readback seam under those owners; it creates no new bounded context or state owner.",
+        "extent": "Under existing Execution Coordination and Invocation Runtime ownership, the non-scripted WorkerProvider path durably retains and reads back attributable role/invocation/attempt/contract/candidate outcome evidence across restart. Missing or miscorrelated durable result holds despite process success. The result remains compatible with the common WorkerProvider/WorkerOutcome contract; no parallel sidecar state owner.",
+        "node_kind": "planned_prerequisite",
         "owns_capabilities": [
           "real_role_outcome_readback"
         ],
@@ -6977,7 +6998,7 @@
         }
       },
       "acceptance_criteria": [
-        "SPECIFY names existing requirement and actual owner before worker-path change. Then bound non-scripted adapter with local transport emits/persists/reads RoleOutcomeRecord keyed to role, invocation, attempt, contract/candidate and closure receipts across restart. Missing/miscorrelated record holds despite process success. WorkerOutcome signatures remain compatible."
+        "Under existing Execution Coordination and Invocation Runtime ownership, the non-scripted WorkerProvider path durably retains and reads back attributable role/invocation/attempt/contract/candidate outcome evidence across restart. Missing or miscorrelated durable result holds despite process success. The result remains compatible with the common WorkerProvider/WorkerOutcome contract; no parallel sidecar state owner."
       ],
       "acceptance_ids": [],
       "acceptance_extents": [],
@@ -6987,7 +7008,7 @@
           "owner_node": "K1",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "SPECIFY names existing requirement and actual owner before worker-path change. Then bound non-scripted adapter with local transport emits/persists/reads RoleOutcomeRecord keyed to role, invocation, attempt, contract/candidate and closure receipts across restart. Missing/miscorrelated record holds despite process success. WorkerOutcome signatures remain compatible.",
+          "scenario": "Under existing Execution Coordination and Invocation Runtime ownership, the non-scripted WorkerProvider path durably retains and reads back attributable role/invocation/attempt/contract/candidate outcome evidence across restart. Missing or miscorrelated durable result holds despite process success. The result remains compatible with the common WorkerProvider/WorkerOutcome contract; no parallel sidecar state owner.",
           "acceptance_ids": [],
           "enforcement_ids": [],
           "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
@@ -7017,7 +7038,7 @@
         "provides": [
           "real_role_outcome_readback"
         ],
-        "ownership": "Exact DAG planning ownership; conditional/external providers remain held pending actual authority assignment. Empty provider list means integration/proof gate, not hidden substrate."
+        "ownership": "K1 owns only the planned real_role_outcome_readback capability within the existing Invocation Runtime WorkerProvider / Execution Coordination result-correlation boundary. It does not own a new sidecar store or lifecycle."
       },
       "needs_capabilities": [
         "existing_kernel_fixture",
@@ -7054,25 +7075,32 @@
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-REAL-OUTCOME"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
-      "direct_authority_gap_refs": [
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
+      "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
-      "planning_eligibility": "GAP_BLOCKED",
+      "planning_eligibility": "PROCEEDS_REGARDLESS",
       "assessment_status": "NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE",
-      "partial_work_that_proceeds": "S0 scripted/current-interface fixtures; no real-path emission assumption.",
-      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+      "partial_work_that_proceeds": "Existing FD-01/FD-02 ownership answers orchestration/result ownership. K1 proves the real WorkerProvider path emits durable attributable outcomes compatible with the deterministic worker path; no separate RoleOutcomeRecord owner is required.",
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
+      "revision_2026_09_25_cohort_prep": {
+        "status": "REVISED_PENDING_INDEPENDENT_DESIGN_REVIEW",
+        "authority": [
+          "docs/decisions/2026-09-19-alienintent-work-management-execution-authority.md \u2014 binding FD-01",
+          "docs/decisions/2026-09-19-pre-python-gate-founder-decisions-fd02-fd06.md \u2014 binding FD-02",
+          "docs/architecture/pre-python-gate/domain-model.md \u2014 approved FD-01/FD-02 ownership/decomposition rendering",
+          "docs/architecture/pre-python-gate/hexagonal-contracts.md \u2014 WorkerProvider boundary",
+          "docs/evidence/2026-09-25-wave2-authority-blocker-grooming.md"
+        ],
+        "scope": "Only stale authority/ownership assumptions and directly derived node/candidate/proof text for this BIU were revised; dependencies/topology/requirement identity are unchanged. The existing split-recommendation carrier remains the authority-block/HumanDecisionRequired route with structured evidence.",
+        "next": "Independent scoped design review, then compile/pin executable proof packet and run native Agent Ready."
+      }
     },
     {
       "biu_id": "WO-220402",
