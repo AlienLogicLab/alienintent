@@ -1,0 +1,76 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Implement and prove (FX-U7, local/mechanical level) a deterministic, validation-only compiler checker for SF-REQ-013 (U7). It must admit or refuse hand-authored INITIAL candidates and frozen SPLIT_REPLAN proposals by checking contract completeness, four-category obligation coverage, graph predicates (cycle, missing endpoint, predicate-free edge), design-gate staleness, unresolved authority, decision conflict, dependency authority, conservation, bounds, split-authority binding, identity grammar and collisions, lineage, and immutable stale-assessment history. Each refusal must be a typed hold naming the offending refs and must write no lifecycle, release, reservation or decomposition state. Derivation and apply stay with U8.",
+    "implementation_unknowns": [
+      "Exact shape of CompilationCandidate / FrozenSplitProposal / ValidationReport / CompilationHold values and canonical serialization. They must be derived from C#/contracts/2/state and ports while keeping reports byte-deterministic under permutation (P23).",
+      "Algorithm for reporting every cycle edge deterministically (P02 requires every cycle edge listed), including multiple or overlapping cycles.",
+      "How to build the DependencyLifecycle adapter over FactoryCoordinator.state(identity).stage and the AssessmentHistory adapter over EvidenceRepository. It must be injected in composition/upstream_profile.py without adding any context_assembly import of execution_coordination.application/adapters (D-1 condition).",
+      "Construction of the SWF-33 replay runner: git cat-file blob extraction, digest pre-check exiting 2 on mismatch, loading the 69-row P5 conservation mapping, and the elaboration-approval binding format for the P13[bound] run.",
+      "Representation of family-B synthetic BiuContract split candidates: authority record, payload digest binding, reserved/retired/active identity snapshot, invalidation set, and prior-assessment refs.",
+      "Mechanics for applying each of K01\u2013K34 exactly once to a disposable source copy, and for recording intact/fault/restored exits in proven-red.json, following the fx_u5_evidence.py precedent.",
+      "Exact byte-level before/after snapshot comparison for P09, covering all non-upstream:compilation: aggregates, work-management receipts, the reservation table and prior-assessment digests.",
+      "Reconciling the work-order header baseline (7a18e0b\u2026) with the proof-packet pin baseline (e36e335) before the PRODUCER pins source revisions."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Baseline ambiguity. The header baseline is 7a18e0b\u2026, while the pinned input digests and interface citations are verified at e36e335. A source-revision mismatch is a stop condition, so the PRODUCER must pin a consistent baseline and confirm the input digests before implementing.",
+      "Scope creep into U8. Implementing prepare/apply, reservation allocation, invalidation records or initial derivation would violate the boundary. Presenting a hand-authored admission as derivation would also misclaim scope.",
+      "Import-direction violation. Any new cross-group import from context_assembly (beyond execution_coordination domain/ports and evidence_learning) is a stop that returns the directional question to the Founder.",
+      "Phase 5 mechanisms are encoded as candidate rules that are not yet independently design-verified. A later Design Verification may change the rules and force re-proof. Mislabelling them as approved would be a false claim.",
+      "The N-3 byte-exact rule makes P13[unbound] an expected HOLD. Implementers might relax the comparison to force an ADMIT, which K15 is designed to catch. The semantic adequacy of the SWF-33 elaboration binding remains residual.",
+      "The AC-06..08 trace ownership is unassigned in the DAG. Counting FX-U7 probes toward those criteria would misrepresent coverage.",
+      "Hidden nondeterminism, such as set iteration or dict ordering, could break P23. Incomplete P09 snapshots could mask stray writes.",
+      "Prior-proof preservation and immutable observation collisions must be respected across the three execution cycles. Repairs must not overwrite earlier evidence.",
+      "The Project #1 DONE status of U5 and the input digests are reported by the Director, not independently verified here. The PRODUCER's admission step must re-confirm them."
+    ],
+    "next_action": "Hand off to the configured PRODUCER (Morty, Claude) under the WO-220207 allocation, which is to be confirmed.\n1. Pin contract, inputs, baseline and profile, and reconcile the 7a18e0b vs e36e335 baseline. Stop and escalate if the input digests or source revision do not match the pinned proof packet.\n2. Pin executable fixture commands, expected outcomes and evidence schema per FX-U7 before implementation.\n3. Implement the validation-only compilation domain, ports, service, adapter and composition addition within the D-1 import condition.\n4. Build fixture families A and B and run probes P01\u2013P24 plus controls K01\u2013K34.\n5. Retain evidence under docs/evidence/wave2-proof-fixtures/FX-U7/.\n6. Publish the candidate branch and full SHA on the Issue for fresh independent verification by JC. Land via SWF-19 only after ACCEPT.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that owner intent and the U7/U8 decision boundary are resolved as reported.\n- The Director disposition table decides or delegates every raised question. N-1, N-3 and N-10 were the potential CLARIFY triggers.\n- The only Founder-reserved item (N-6) is explicitly non-blocking because FX-U7 uses a synthetic issuer.\n- The pending Phase 5 Design Verification is handled by the node's PROCEEDS_REGARDLESS status plus labelling, not by blocking.\n\nHOLD is not warranted on the supplied text. The prerequisite U5 is reported DONE with a verdict and closure receipts, execution allocation and custody are specified, and no live resource is required.\n\nSPLIT is not warranted. INITIAL and SPLIT_REPLAN validation share one validator surface, one hold vocabulary, one no-transition observable and one proof packet. They form one coherent decision center whose acceptance a single verifier can judge. Separating them would duplicate the harness and gate logic without creating independently rejectable intent.\n\nWhat remains is engineering construction work, and a probe-level failure would be repaired locally in the offending validator rule. The main caution is the baseline-hash discrepancy. The work order's own stop rules already cover it, and it is recorded as a first-step risk rather than an owner question.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a large but cohesive work order. It covers one validator domain (the compilation.py values and validators, ports, an application service, an adapter and a composition addition) with one pinned proof packet: 24 probes, 34 discriminating controls and a defined evidence layout.\n\nAs reported, the owner decisions that would otherwise block are dispositioned by the Factory Director:\n- N-1: proceeds regardless of the pending Phase 5 Design Verification, with candidate-mechanism labelling.\n- N-3: byte-exact clause rule with bound and unbound SWF-33 outcomes.\n- N-6: Founder authority is non-blocking.\n- N-10: active invocation is scoped out.\n- D-1: directional import condition.\n- U-1/U-2: discharged.\n\nThe U7/U8 boundary, the non-goals, and the residuals (AC-06..08 trace ownership, budget partition, active-invocation fence, interpretive elaboration binding) are explicit and are not claimed.\n\nAs reported, the dependency (U5, WO-220205) is DONE with an independent ACCEPT and closure receipts. Execution allocation (3 cycles, producer/verifier, systemd bounds) and landing rule SWF-19 are stated. Remaining work is engineering implementation and fixture construction against cited existing interfaces.",
+    "verification_assessment": "Acceptance is observable and pinned at the probe level.\n- AC-03 is covered by P01\u2013P03.\n- AC-04 is covered by P06\u2013P09.\n- AC-05 is covered by P09 and P13\u2013P22.\n- 013-dependency-authority is covered by P10\u2013P12 with BLOCKING controls K01/K02.\n- Every U7 predicate clause maps to named probes, with typed reason codes and offending refs.\n- Discriminating controls K01\u2013K34 require intact exit 0, fault exit 1 at a named assertion, and restored exit 0, with application_count 1. The digest-mismatch HOLD asserts exit 2.\n- Regression uses existing commands: pytest, the architecture fitness check and scripts/check.mjs.\n\nThe evidence contract specifies execution-record, run-report and proven-red files, immutable observations and residual labels. A single fresh independent verifier (JC, Codex) retrieving the exact candidate SHA can issue one meaningful ACCEPT/REJECT verdict over this coherent validation extent.\n\nThe verdict is explicitly local/mechanical (LOCAL_COMPOSED_OR_MECHANICAL). It does not establish operational acceptance, derivation, apply, or AC-06..08. The packet states this, and the verifier must hold the PRODUCER to those non-claims."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T00:17:34.939936+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 65208,
+    "input_sha256": "0e05a12001ee303b5d7eebb4d57afe536def5f2f323c7946a69d1b30390e9525",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-rsbok3qi/WO-220207.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T00:16:54.663618+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220207"
+}

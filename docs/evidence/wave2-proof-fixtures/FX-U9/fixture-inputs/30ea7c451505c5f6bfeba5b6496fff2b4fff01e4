@@ -1,0 +1,88 @@
+{
+ "disposition": "READY",
+ "governing_intent": "Prove the Wave 1 product statement once, live, on the dedicated SWF-08 sandbox: given a prioritized READY backlog and sufficient execution authority, canonical Python AlienIntent continuously consumes eligible READY BIUs to exhaustion \u2014 with WIP=1, FIFO among equals, a respected dependency, one genuine human decision, one mid-run restart, custody proven before every VERIFY \u2014 while the live AlienIntent Project and the Node bootstrap remain demonstrably untouched.",
+ "summary": "The structural defect that produced the 2026-09-21 SPLIT_RECOMMENDED is closed. SWF-33 split the unowned live-transport work into PY-09B; PY-09B is contracted, assessed, implemented, accepted and merged into main at 93dd8b1, and its evidence (docs/evidence/PY-09B-live-transport.md) records 308 offline tests, 35/35 bounded live checks, 13/13 guards proven red, and doctor PASS exit 0 against the sandbox with work_management, source_control, provider and transport each PASS from live evidence. The substrate PY-10 Scope \u00a71 says it consumes now exists in the accepted tree: installation-token minting and refresh (installation/application/installation_credentials.py, adapters/app_jwt.py), live repository access (adapters/github_repository_api.py), Projects v2 read and fenced projection write (adapters/github_projects_v2.py), resident signature-verifying ingress (adapters/github_webhook.py), sandbox profile composition (composition/sandbox_profile.py) and live doctor probes (composition/doctor_probes.py). The SWF-08 environment is provisioned and preflighted 17/17, and the SWF-34 isolation standard resolves the org-scoped Projects residue by assigning repository isolation to permission enforcement, Project isolation to configuration enforcement, and end-to-end assurance to PY-10 AC 16. What remains between the accepted tree and the seventeen acceptance criteria is last-mile work-management plumbing plus the run harness: the live snapshot in sandbox_profile.py:115-128 hardcodes dependencies to [], passes the Status string as the readiness digest, and GitHubProjectsWorkManagement takes a single shared BiuContract \u2014 so admit_release (release.py:69, readiness_digest must equal contract.content_digest) currently refuses every live item, and AC 3, 4, 7, 8 and 13 cannot be attempted until a per-item contract, its readiness digest, dependency edges and a FIFO key are resolved from the sandbox. There is also no CLI-loadable sandbox factory: cli.py:92-101 needs an object exposing .name/.store/.work/.coordinator/.readiness and a zero-argument .doctor with .run(), which SandboxProfileComposition does not provide. That is category-B design detail the approved plan already assigns to the BIUs themselves ('Remaining gaps are category-B design detail completed inside the BIUs above: port signatures; FIFO key: upstream READY-entry time observed through the ACL, falling back to receipt order; dependency webhook event mapping; schema details', sf-wave1-plan.md), and it is directly entailed by PY-10's own Scope \u00a72 and \u00a73. No Founder decision is missing.",
+ "owner_clarifications": [],
+ "implementation_unknowns": [
+  "Resolve a per-item BiuContract and a readiness digest for each seeded Project item so admit_release can admit it (release.py:69). GitHubProjectsWorkManagement.__init__ currently binds one contract for all rows, and the adapter already carries a 'contract_location' metadata field that anticipates a per-item contract document in the sandbox repository, reachable with the installation credential PY-09B proved.",
+  "Source dependency edges for the live snapshot. ReadyWorkItem.dependencies and row['dependencies'] are already modelled end to end (github_work_management.py:66-70); only composition/sandbox_profile.py:123 hardcodes []. The approved plan fixes the representation as native GitHub blocked-by links and lists dependency event mapping as category-B detail.",
+  "Establish the FIFO key. The plan decides it \u2014 upstream READY-entry time observed through the ACL, falling back to receipt order \u2014 but the _ITEMS_QUERY in github_projects_v2.py fetches no timestamp, so the ordering evidence AC 3 needs must be derived (extend the query, or use a deterministic receipt order that the evidence can defend).",
+  "Build the CLI-loadable sandbox run profile: bind SandboxProfileComposition's store/work/ingress to a FactoryCoordinator, a RealWorkerProvider (remote from authenticated_remote(), branch policy, GitWorktreeAdapter workspace manager, capability grant, reservation book), LocalArtifactStore roots, the readiness gate and a zero-argument doctor attribute. OfflineProfile (composition/offline_profile.py) is the shape to mirror.",
+  "Choose the seeded backlog topology that satisfies AC 2, 3, 4, 7, 8 and 13 simultaneously under WIP=1, including the escalating BIU. RealWorkerProvider never emits an 'authority-block' outcome, so the genuine HumanDecisionRequired must come from release admission \u2014 a contract requiring a capability outside {python, filesystem, process-control}, which the 'authorize' decision then grants (factory_coordinator.py:167-179, 352-364).",
+  "Choose the seeded contracts' budget policy so the provider can enforce every hard-required dimension (SWF-09/D-2: wall-clock, attempts, retries, concurrency, cancellation), and hard_wall_clock_seconds and cancellation_limit are set \u2014 otherwise RealWorkerProvider returns 'ineligible' and the item never completes.",
+  "Decide where in the run the restart is taken and how no-duplicate-effect is proven: RealWorkerProvider.read_back reads an in-memory dict (real_worker.py:108), so a restart while an invocation is in flight yields an unreadable effect, a parked authority block and a re-dispatch under a new correlation after authorization; a restart between dispatches recovers cleanly through _recover().",
+  "Design AC 16's negative evidence \u2014 that no Python-originated event, projection or dispatch reached the live Project or the Node bootstrap \u2014 consistent with SWF-34, where the control is configuration-enforced addressing plus end-to-end observation rather than token scope. isolation_findings() and the ProjectAddress fail-closed resolution are the starting material.",
+  "Define the retained evidence manifest, its redaction (PY-09B's mechanical check across 130 files is the precedent for satisfying AC 17 without destroying the isolation proof), the machine-readable proof summary, and the separate verifier invocation that re-reads the evidence against the acceptance list \u2014 the tools/live/py09b_live_checks.py pattern is the model.",
+  "Create docs/verification/ (the contract mandates the report location; the repository's existing convention is docs/evidence/, with a schema directory at docs/evidence/schema/) and decide how the report cross-references retained evidence."
+ ],
+ "independent_decision_centers": [
+  "Residual and judged not split-worthy: the contract still couples a small amount of live backlog-resolution engineering (per-item contract, readiness digest, dependencies, FIFO key, run profile factory) with a single expensive, largely non-repeatable acceptance run. Unlike the transport layer SWF-33 removed, this residue is tens of lines inside existing, live-proven adapters, is fully constrained by approved ports and the plan's category-B list, and can be rehearsed against disposable sandbox seeds before the coherent run \u2014 so it does not constitute a second work unit."
+ ],
+ "semantic_split_recommendation": [],
+ "verification_assessment": "Real executable proof, not description, and materially stronger than at the last assessment. SWF-11's list is binding and complete and is reproduced faithfully; mocks are excluded from every item; doctor-before-start must be evidenced; custody must be proven before every VERIFY; restart and no-duplicate-effect are explicit; isolation and redaction are acceptance criteria rather than hopes; and independent verification by a separate verifier invocation against the retained evidence is required. The day-one unsatisfiability of the contract's own verification-first repair sequencing is gone: the live-capable system it presumes now exists in the accepted tree and is itself independently re-runnable (py09b_live_checks.py 35/35, py09b_proven_red.py 13/13 on the provisioned host). What PY-10 must still stand up before the run is the evidence-capture and verifier-read harness for the seventeen criteria \u2014 which is exactly what the contract's own PY-08 lesson says to build first. Two caveats remain, both benign. 'Evidence reproducible' can only mean the environment, commands and revisions are reconstructible, since a second run is a different run; the provisioning note already supports that reading. And several criteria (5 WIP=1, 6 refill) are satisfied structurally by the single-repository reservation scope rather than by contention, so the evidence should state what was actually observed rather than implying a contested slot.",
+ "expected_rework_locality": "MEDIUM",
+ "material_risks": [
+  "The drain loop has no terminal handling for a non-success worker outcome. _completed_for_outcome returns the state unchanged for 'ineligible', 'rework', or a success whose required budget dimensions were unreported, _record_result stores an outcome that _eligible does not exclude (factory_coordinator.py:155-166, 221-233), so the same item is re-dispatched indefinitely with real provider spend and no run-level wall clock. A misconfigured seeded budget policy turns the coherent run into a spend loop; the run needs an external bound and a watched first rehearsal.",
+  "Restart handling: with RealWorkerProvider.read_back backed by an in-memory dict, a restart during an in-flight invocation parks an unknown effect as an authority block; authorizing it makes the item eligible again and re-dispatches it under a new correlation, which is a second worker execution. AC 11 depends on the implementer restarting at a boundary the store can reconcile, and on evidencing the absence of a duplicate external effect rather than asserting it.",
+  "AC 3, 4, 7, 8 and 13 all require changes inside files PY-09B owns (composition/sandbox_profile.py, adapters/github_work_management.py) under a Scope clause that says 'PY-10 builds none of it'. The work is necessary and entailed by Scope \u00a72 and \u00a73, but SWF-20 makes mechanically detectable over-scope a verification finding, so each touched file needs a recorded necessity justification, and PY-09B's accepted evidence must remain valid or be explicitly superseded under SWF-23.",
+  "A one-shot acceptance run over seventeen coupled behaviours fails as a unit: a defect surfacing at criterion 11 or 13 invalidates the coherent run and forces a re-seed and re-run with real provider spend. Nothing forbids rehearsal on disposable seeds, and the contract's own recorded PY-08 lesson argues for building the evidence harness and rehearsing before the single accepted run.",
+  "AC 16's compensating control carries an inherent tension: the sandbox installation token can read production Project #1 (verified read-only, recorded in operations/py10-sandbox.md and accepted under SWF-34), so evidence that production was unaffected must rest on configuration-enforced addressing plus end-to-end observation, and must not be stated as token-level Project isolation.",
+  "Binding rule 6 and AC 17 require evidence free of App ID, installation ID and hostname while that evidence must still prove the sandbox identity was used; PY-09B solved this with a mechanical redaction check, and the same standard must be reapplied to a much larger run trace including worker output and an authenticated remote URL whose userinfo must never be recorded.",
+  "docs/verification/ does not exist and the repository's established convention is docs/evidence/ with a schema directory; the report location is decided by the contract, but the machine-readable summary schema must be created consistent with the existing evidence schema rather than invented in a parallel format.",
+  "Provider token and monetary cost may be unreported by the CLI adapter; SWF-09 requires recording them as UNKNOWN and never zero, and a contract that hard-requires those dimensions will make every item ineligible.",
+  "The Readiness section of the contract still reads as an open prerequisite ('PY-09B must be accepted') and points at PY-10.assessment.json, which is the superseded SPLIT_RECOMMENDED result at baseline 85b6060; both should be refreshed in the release pass so the released contract does not carry a stale gate."
+ ],
+ "next_action": "Release PY-10 through normal SWF-21 admission on current main (93dd8b1), refreshing the Readiness paragraph and the assessment pointer in the same pass to record PY-09B accepted and this assessment as controlling. Direct the implementation agent to sequence it as the contract's own verification-first rule requires: first build the evidence-capture and verifier-read harness for the seventeen criteria and the CLI-loadable sandbox run profile; then close the live backlog resolution (per-item contract and readiness digest, dependency edges, FIFO key) and prove each with a discriminating check; rehearse end to end on disposable sandbox seeds under an external wall-clock bound; only then seed the proof backlog and take the single coherent run, restarting at a reconcilable boundary and recording the necessity justification for every PY-09B-owned file touched.",
+ "rationale": "No product or architecture decision is missing. SWF-08 fixes the isolated target and it is provisioned and preflighted; SWF-09 fixes budget policy; SWF-11 fixes acceptance and the contract reproduces it faithfully; SWF-33 resolved the scope defect the last assessment found by creating PY-09B rather than broadening PY-10; SWF-34 settles the isolation standard and assigns the org-scoped Projects residue to PY-10 AC 16 as a compensating control; FD-01 through FD-06, EOS v1.0 and the Architecture Authority constrain the implementation. The dependency chain is discharged in fact, not merely in sequencing: PY-05, PY-06, PY-08, PY-09 and now PY-09B are accepted and landed, and PY-09B's live evidence shows the substrate working against the real sandbox, including the doctor probes and a fenced projection read back. The requirement links stay honest about extent \u2014 SF-REQ-003 is narrowed to 'WIP = 1 demonstrated live' rather than claiming Solve-for-N, and SF-REQ-005's 'Live against a real GitHub Project' is now a claim the accepted code can actually make. What is left is bounded engineering inside approved ports: the live snapshot must carry a per-item contract, a matching readiness digest, dependency edges and a defensible FIFO key, and the control plane needs a sandbox profile factory of the shape cli.py already specifies. The approved plan names precisely these as category-B detail to be completed inside the BIUs, and PY-10's own Scope \u00a72 and \u00a73 entail them, so treating them as owner clarifications would manufacture a gate the Founder has already closed. The honest residual exposure is not authority but blast radius: a synchronous drain that re-dispatches any non-terminal outcome, an in-memory worker read-back that makes restart placement consequential, and a single non-repeatable run that fails as a unit \u2014 all of which the implementer can de-risk by building the harness and rehearsing before the accepted run, which is exactly what this contract already instructs.",
+ "provider_evidence": {
+  "provider": "claude",
+  "adapter": "claude (Claude Code CLI)",
+  "model": "claude-opus-5[1m]",
+  "version": "claude-code CLI (headless --print)",
+  "invocation": "claude -p --no-session-persistence --output-format json --permission-mode plan --disallowed-tools Edit Write NotebookEdit",
+  "compatibility": "COMPATIBLE_UNVERIFIED",
+  "capability_probe": "PASSED",
+  "baseline": "93dd8b1",
+  "assessed": "2026-09-21",
+  "request": "PY-10.request.md",
+  "turns": 32,
+  "duration_s": 396,
+  "permission_denials": [
+   {
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_01GLsLo2gG8cpxN14SX6fpHM",
+    "tool_input": {
+     "command": "git status --short && git log --oneline -3 && ls docs/work-units/python/",
+     "description": "Check repo state and list work units"
+    }
+   },
+   {
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_01VHHPqHAp89eLiLCcA2u76T",
+    "tool_input": {
+     "command": "rtk ls docs/work-units/python/ ; rtk ls docs/verification/ 2>/dev/null | head -60; rtk ls docs/operations/ 2>/dev/null",
+     "description": "List work unit and verification docs"
+    }
+   }
+  ],
+  "provider_failover": {
+   "authorized_by": "Founder decision 2026-09-21 \u2014 Agent-Ready reassessment provider failover",
+   "provenance_difference": "PY-01..PY-09 were assessed with codex-cli 0.155.1; not provider-identical."
+  },
+  "assessment_history": [
+   {
+    "disposition": "BLOCKED",
+    "baseline": "e25da1f",
+    "cause": "sandbox unprovisioned, predecessors unaccepted"
+   },
+   {
+    "disposition": "SPLIT_RECOMMENDED",
+    "baseline": "85b6060",
+    "cause": "live transport owned by no BIU; one coupled 14-criterion run with no iteration surface",
+    "resolved_by": "SWF-33 split into PY-09B, now DONE"
+   }
+  ],
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN"
+ }
+}

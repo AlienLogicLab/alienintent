@@ -1,0 +1,94 @@
+{
+ "disposition": "SPLIT_RECOMMENDED",
+ "governing_intent": "Prove the Wave 1 product statement once, live, on the dedicated SWF-08 sandbox: given a prioritized READY backlog and sufficient authority, Python AlienIntent continuously consumes eligible READY BIUs to exhaustion, with the live AlienIntent Project and the Node bootstrap demonstrably untouched.",
+ "summary": "The contract's intent, binding rules, non-goals and seventeen acceptance criteria are bounded, observable and authority-complete, and the environment prerequisite that blocked the prior assessment is now satisfied (docs/operations/py10-sandbox.md records repository, Project 2 with Status+Priority, profile, App 5014629 / installation 163346526, isolated ingress, 17/17 preflight with a live signed webhook delivery and a negative control). The unresolved problem is scope, not authority. PY-05, PY-06, PY-08 and PY-09 each explicitly deferred live execution to PY-10 by name ('live execution against a real Project (PY-10)', 'live GitHub execution (PY-10)', 'the real-target execution of doctor is evidenced in PY-10'), but PY-10's Scope section names only the sandbox environment, the seeded backlog, the run, evidence capture and the written report \u2014 it never names the deferred implementation. The accepted tree contains no authenticated GitHub transport at all: no installation-token or App-JWT minting, no Projects v2 read or write path (src/alienintent/composition/github_profile.py takes `snapshot` and `projection_write` as injected callables and is referenced only from tests/execution_coordination/test_github_work_management.py), no resident webhook listener (src/alienintent/execution_coordination/adapters/github_webhook.py:99 binds 127.0.0.1:0 inside a test-helper context manager, and GitHubProfile carries no ingress host or port), no live doctor probes (src/alienintent/installation/application/doctor.py consumes profile-supplied evidence callables; src/alienintent/composition/doctor_probes.py covers only Git worktrees and the worker executable), and no live profile factory for `alienintent --profile-factory`. So an implementation agent must build the first live-capable adapter and composition layer before acceptance criterion 15 ('doctor passes against the sandbox') can even be attempted, while the same contract's SWF-20 clause makes mechanically detectable unnamed work a verification finding. That is two work units in one contract, not a missing Founder decision about the product.",
+ "owner_clarifications": [
+  "Where the first live GitHub transport and live-profile composition are owned. Every predecessor deferred it to PY-10, but PY-10's Scope does not name it, and SWF-20/SF-REQ-048 turns unnamed work into a verification finding. Either PY-10's Scope is amended to state it explicitly, or it becomes its own Wave 1 BIU ahead of PY-10 \u2014 and both amend the PY-02..PY-10 decomposition approved by SWF-08\u201311, which SWF-21 forbids the coordinator from deciding on its own."
+ ],
+ "implementation_unknowns": [
+  "Design the authenticated GitHub path the proof needs \u2014 App JWT to installation token, Projects v2 reads for Status/Priority/blocked-by, fenced projection writes, and a configurable resident webhook listener \u2014 inside the PY-05 ports and the hexagonal-contracts adapter rules, which already constrain it.",
+  "Choose the sandbox backlog topology that satisfies AC 2, 3, 4, 8 and 13 together under WIP = 1: the stated minimum of three READY BIUs must simultaneously carry two equal priorities, a differing priority, a real dependency, and an escalating BIU whose block leaves independent eligible work to continue. The contract says 'at least three', so a larger seed is permitted.",
+  "Realize AC 9's 'automatically unblocks and resumes' and AC 10's mid-run restart across CLI process boundaries, given that FactoryCoordinator.start() (src/alienintent/execution_coordination/application/factory_coordinator.py:56) is a single synchronous drain that returns a RunSummary rather than a resident service.",
+  "Design AC 16's negative evidence \u2014 proving no Python-originated event, projection or dispatch reached the live Project or the Node bootstrap \u2014 which is also the compensating control for the org-wide Projects grant recorded in the provisioning note.",
+  "Define the redacted evidence manifest and the machine-readable proof summary from the custody, lifecycle, decision and projection records the predecessors already persist.",
+  "Settle the docs/verification/ location the contract mandates against the repository's established docs/evidence/ convention; the directory does not yet exist."
+ ],
+ "independent_decision_centers": [
+  "Building the first live-capable adapter and composition layer (transport, credentials, resident ingress, live doctor probes, sandbox profile factory) \u2014 module-local engineering, verifiable by repeatable integration tests against the sandbox, and expected to need repair cycles.",
+  "Executing and evidencing the one coherent acceptance run \u2014 a single, expensive, largely non-repeatable operational event whose verification is an independent read of retained evidence, and whose failure invalidates the whole run rather than one module."
+ ],
+ "semantic_split_recommendation": [
+  "A predecessor BIU owning live-capable operation: authenticated GitHub transport (installation token, Projects v2 read and fenced projection write), a resident webhook ingress bound to the configured host/port with profile fields to carry it, the live doctor probes for work management, source control, transport and provider, and the sandbox profile factory the control plane loads. Acceptance: doctor exits 0 against the sandbox on real calls, a real webhook delivery reaches the running service and is admitted once, and a projection write is read back \u2014 each with a failing counterpart.",
+  "PY-10 proper, reduced to what it already says it is: seed the sandbox backlog, run doctor then run, submit one Decision Inbox decision, restart once mid-run, capture evidence, and publish the proof report \u2014 asserting the SWF-11 acceptance list against that run."
+ ],
+ "verification_assessment": "Real, not descriptive, and among the strongest in the cohort: SWF-11's list is binding and complete, mocks are expressly excluded from every item, doctor-before-start must be evidenced, custody must be proven before every VERIFY, restart and no-duplicate-effect are explicit, isolation and redaction are acceptance criteria rather than hopes, and a separate verifier invocation must independently check the retained evidence against the list. Two caveats. First, the harness this verification presumes \u2014 a live-capable system that can be pointed at the sandbox \u2014 does not exist in the accepted tree, so the contract's own verification-first repair sequencing section is unsatisfiable on day one: it demands the required proof be present and executable before broad implementation, while the implementation that makes any live proof possible is itself unstarted and unnamed. Second, 'evidence reproducible' sits in mild tension with 'one coherent run': a second run is a different run, so reproducibility can only mean the environment and commands are reconstructible, which the provisioning note already supports.",
+ "expected_rework_locality": "HIGH",
+ "material_risks": [
+  "The live transport, credentials, resident ingress and live doctor probes are all first-of-kind and unnamed in scope; building them inside a BIU whose SWF-20 clause penalizes unnamed work puts the implementer between under-delivering and failing REVIEW for scope expansion.",
+  "A one-shot acceptance run over fourteen coupled behaviours fails as a unit: a defect surfacing at criterion 11 invalidates the coherent run and forces a full re-seed and re-run, with real provider spend each time. PY-05 through PY-09 each needed repair cycles for adapter work; this contract offers no equivalent iteration surface.",
+  "Recorded but unresolved isolation residue: `organization_projects` is an organization-level grant, so the sandbox installation token can reach production Project #1 (verified read-only in docs/operations/py10-sandbox.md). The Founder record names a separate organization as the only stronger option and explicitly does not take that decision; binding rule 1 is non-delegated, and AC 16 is the compensating control.",
+  "Binding rule 6 and AC 17 require retained evidence free of App ID, hostname and installation detail, while those identifiers are exactly what proves the run used the sandbox identity \u2014 the redaction scheme must not destroy the isolation proof it is protecting.",
+  "The contract's Readiness section is stale on clean main: it still says the sandbox 'remains to be scheduled' and points at PY-10.assessment.json, which is the superseded BLOCKED assessment taken at baseline e25da1f before provisioning and before PY-09 landed.",
+  "Provider token and monetary cost may be unreported by the CLI adapter; SWF-09 requires recording them as unknown, never zero."
+ ],
+ "next_action": "Put the scope question to the Founder: amend PY-10 to name the live transport, ingress, live doctor probes and sandbox profile factory as in-scope implementation, or split that work into a preceding Wave 1 BIU \u2014 the recommended course, since it restores an iterable verification surface ahead of a single non-repeatable proof run. Refresh the stale Readiness paragraph and the assessment pointer in the same pass, then reassess PY-10 against the amended contract before release.",
+ "rationale": "No product or architecture decision is missing. SWF-08 fixes the isolated target and it is now provisioned and preflighted; SWF-09 fixes budget policy; SWF-11 fixes acceptance and is reproduced faithfully; FD-01 fixes ownership; FD-02\u2013FD-06, EOS v1.0 and the Architecture Authority constrain the implementation; the dependency predecessors PY-05 through PY-09 are all accepted and landed on main. The requirement links are mostly honest about extent \u2014 SF-REQ-003 is narrowed to 'WIP = 1 demonstrated live' rather than claiming Solve-for-N \u2014 though SF-REQ-005's 'Live against a real GitHub Project' is precisely the claim no accepted code can currently make. The defect is structural: the plan's chain of deferrals terminates at PY-10, and PY-10's Scope does not catch it. That leaves an implementation agent with an unbounded, unnamed adapter surface that it cannot self-authorize without amending a Founder-approved decomposition, bundled with a single expensive acceptance run whose failure mode is total. Splitting the live-capability work out and leaving PY-10 as the proof it declares itself to be resolves both, and matches the contract's own recorded lesson from PY-08 that building the missing verification first is cheaper than the defect churn its absence causes.",
+ "provider_evidence": {
+  "provider": "claude",
+  "adapter": "claude (Claude Code CLI)",
+  "model": "claude-opus-5[1m]",
+  "version": "claude-code CLI (headless --print)",
+  "invocation": "claude -p --no-session-persistence --output-format json --permission-mode plan --disallowed-tools Edit Write NotebookEdit",
+  "compatibility": "COMPATIBLE_UNVERIFIED",
+  "capability_probe": "PASSED",
+  "baseline": "85b606037e144e977c1bc1f7b0aa795d97e19d83",
+  "assessed": "2026-09-21",
+  "request": "PY-10.request.md",
+  "turns": 44,
+  "duration_s": 401,
+  "permission_denials": [
+   {
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_01KbjRCrb2ryShejdeFMjxf6",
+    "tool_input": {
+     "command": "git log --oneline -3 && git status --short && ls docs/work-units/python/",
+     "description": "Check repo state and list Python work units"
+    }
+   },
+   {
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_01LviJKF8WX8oCbiqMwtfpoQ",
+    "tool_input": {
+     "command": "rtk git log --oneline -3; rtk git status --short; find docs/work-units/python -maxdepth 1 -type f | sort",
+     "description": "Check repo state and list Python work unit files"
+    }
+   },
+   {
+    "tool_name": "Bash",
+    "tool_use_id": "toolu_01X5wqRwYNG8RM2jG6oJVXy8",
+    "tool_input": {
+     "command": "rtk ls docs/work-units/python && rtk ls docs/verification 2>/dev/null | head -50 && rtk git log --oneline -5",
+     "description": "List work unit and verification files"
+    }
+   }
+  ],
+  "provider_failover": {
+   "authorized_by": "Founder decision 2026-09-21 \u2014 PY-10 Agent-Ready reassessment provider failover",
+   "reason": "codex reassessment failed on provider quota exhaustion (turn.failed, 'usage limit'), a provider-capacity interruption rather than a readiness disposition",
+   "provenance_difference": "PY-01..PY-09 were all assessed with codex-cli 0.155.1. This assessment is not provider-identical to them. Assessment semantics, readiness criteria, disposition contract and the SWF-21 release gate are unchanged."
+  },
+  "provider_limitations": [
+   "Read-only enforced by --permission-mode plan plus disallowed Edit/Write/NotebookEdit, rather than by a sandbox flag as with codex --sandbox read-only; no permission denials were recorded.",
+   "An ambient ANTHROPIC_API_KEY in the coordinator environment took precedence over the subscription login and produced a 401 until filtered with `env -u` \u2014 the same ambient-secret filtering the dispatcher's worker launcher performs.",
+   "Token and monetary cost are not reported by this invocation path; recorded as UNKNOWN, never zero (SWF-09)."
+  ],
+  "supersedes": {
+   "disposition": "BLOCKED",
+   "baseline": "e25da1f",
+   "assessed": "2026-09-20",
+   "reason": "blockers named by that assessment (sandbox provisioning, predecessor acceptance) are now resolved; a fresh assessment was mandatory"
+  },
+  "token_usage": "UNKNOWN",
+  "cost": "UNKNOWN"
+ }
+}

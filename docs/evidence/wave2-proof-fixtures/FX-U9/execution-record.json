@@ -1,0 +1,195 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-U9",
+  "work_unit_id": "WO-220209",
+  "invocation": "AlienLogicLab/alienintent#105:PRODUCER:55583f93-b75f-4ac6-b73c-fbbc1475c8da",
+  "source_revision": "8ad5f5bee043cc144929434af3b128333b29615c",
+  "source_status": "",
+  "admission_baseline": "04cdd8cddaeb1bc19a34b2fae3d988678aaca28d",
+  "pin_baseline": "0588eae74bbbdddfd8650e349fff472f0db20eff",
+  "candidate_contract_sha256": "0adf1ddfc35b430c91275b54faf26c40445c45b8d80c314d294ef96261add0f0",
+  "input_digests": {
+    "contract": "sha256:23f5b2eebbc1ece64bc8e6635b0c45dcffc36908888ecd5e709d445a342f5e5b",
+    "draft_as_superseded": "sha256:75a37ddfac412833b171cd994729e557ac101aac85b35a93ccbba30f68965e87",
+    "packet": "sha256:91b972424f1ae8338ed0c235abddf026f792bb79b706ebc9ef48c302527288bb",
+    "allocation": "sha256:47b3a0ff9b7857a53ac50690c8baa4591b156eb7e76fa17774424777e961d13d",
+    "B": "sha256:5515b6ce24286dd83a40cd295f61dd74a6c55a5b1c407597c0a65db36504d1f1",
+    "D": "sha256:be5f39f8d6d8c319dfd990ae9f52c32e84e7db6af13ef87f9d45b6cbeff20476",
+    "S": "sha256:332757c43b8754196e45f75a8ce2ee422e19382415e17ed22cd431f348d9b800",
+    "C": "sha256:56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242",
+    "REPAIR": "sha256:59ea62bd68bd0371cb03f2c9ebb17ad23736ac774511fb99c214ebb0d30e42f6",
+    "RESP": "sha256:ad7308bbdcb45dd303bee44a44b4c29cb0a17e783b0f67501d1e88a913495a60",
+    "M": "sha256:f9730f9eccf4022e314f74bdf3d3ac257c0e07d00c76d6cf87419e472fe4e145",
+    "PM": "sha256:a8f977e0bb26bd7f0b599042ccce853ff5d76dd9e00adff033990550408a8f21",
+    "T": "sha256:101ffc18714a16f9096bd559fcfa7b15814b80b31dc47c84e1de9fd392cff282",
+    "U7_contract": "sha256:0e05a12001ee303b5d7eebb4d57afe536def5f2f323c7946a69d1b30390e9525",
+    "U7_evidence": "sha256:7d72d6bfbc4b54255017200eafad958246689ed01e34daf9d6d383079536acaf",
+    "py10:30ea7c451505c5f6bfeba5b6496fff2b4fff01e4": "sha256:9561bf71baaea6d0c6caf26eee87a23ab03beb6c83be68bbc5847447cde6e694",
+    "py10:3c53cd3dc751c76eb167bb142d30f61825d3259a": "sha256:093a9d2c212593812e67edb5a7b04a36ac075970cfe970c60ade16cb3506c232",
+    "py10:fe1e3efe3523f4376b2de66a650dca31fecdbfad": "sha256:1fc95f25b6c2d928fcb325525b46c1850bb56463c2428f0ea56afc99f181ebb4",
+    "retained:FDH-01.2026-09-24T021848.446095Z.assessment.json": "sha256:b4f70369c8066a097b012e45a48c4a3b7f54942d8fc4c45c64bc5d236d6356d6",
+    "retained:WO-220102.2026-09-23T041739.192319Z.assessment.json": "sha256:e8c6d3da41ee96843e93f6f1149a65874cefc7a9f88eb7be4d1f7f0af98a3a71",
+    "retained:WO-220102.2026-09-23T053013.882036Z.assessment.json": "sha256:4df4717c74b957c6f4b21d527c8ec3c93471ecc64e0db56e70d6352641fcb167",
+    "retained:WO-220207.2026-09-25T001654.663618Z.assessment.json": "sha256:2862acb88dec9d240bd2c436cc2aae63ec704c0ef7663beeb5b96240948bd1ff",
+    "docs/evidence/wave2-proof-fixtures/FX-U9.md": "sha256:373b2faf3543a401189744d093724153374470a741e8ccbc0b28ded7b1fce9b1",
+    "tests/context_assembly/test_readiness_consumer.py": "sha256:a66e8453d73e8b01c01d18d36f8e89669d9b80564b8aa0a3241c4d4fca1207e5",
+    "tools/evidence/fx_u9_evidence.py": "sha256:e970c86ea92f3721435eb52b113ff7e46af75357d04724caf4e4bfaf9c79fe03",
+    "src/alienintent/execution_coordination/domain/readiness.py": "sha256:37e998ac450ec24d1a1f6cb246147042a15f0919a31c0d92dfde6778d6e90fd6",
+    "src/alienintent/execution_coordination/ports/readiness.py": "sha256:08846b13cb982be65bb84778407c22c764ee5ed29bd7cb585449d604f7a7ad03",
+    "src/alienintent/execution_coordination/adapters/assessment_consumer.py": "sha256:9d6bf484eaed8114d2f0994988f3db3dbb0bb5f4605792614ed7fc9f6beebc1d",
+    "src/alienintent/context_assembly/domain/readiness.py": "sha256:b7de00c6426a0987dd3135349545bf53b7eb5343ff2ced9b625f9d5501595806",
+    "src/alienintent/context_assembly/ports/readiness.py": "sha256:301f036188f09d1969226de4659765724101975272e3b9f47345ea63b2b14b7a",
+    "src/alienintent/context_assembly/application/readiness_service.py": "sha256:d881fe497bc9b25045125db8193e2c6b77e42fcc886bfddc69766ed4a39ff28e",
+    "src/alienintent/context_assembly/adapters/readiness_clarification.py": "sha256:30656e9629347bfa7fc0f8bc9d9ffec223e976cbae3d9bb6dbaece572148959c",
+    "src/alienintent/composition/readiness.py": "sha256:48779966594c6144bf02aa629619a60feed1f7735ece8378abc60243dc5624e7",
+    "src/alienintent/composition/upstream_profile.py": "sha256:078a45ce5427b064667482891471cd152f4bc7b4e63b58faa91f8c7bec0a5431",
+    "tools/fitness/check_architecture.py": "sha256:bddb7b630af313e8ebc16e77015efbd2a406f8d01aaf0dc01b98754006f25de5",
+    "tests/test_architecture_fitness.py": "sha256:6e43b2f4b719cf293e9e0b5b61b25671bef589bd20f8a6459e658aefbee37e27"
+  },
+  "baseline_reconciliation_ref": {
+    "revision_digest": "sha256:a5064babc3485da39b5840b4516f80286c450828216ad077684c152ab6cc0cfe",
+    "locator": "observations/a5064babc3485da39b5840b4516f80286c450828216ad077684c152ab6cc0cfe"
+  },
+  "commands": [
+    {
+      "id": "focused",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_readiness_consumer.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:da7d456721fa9b890614afc3216c3de942ac76fcef9e4c41b0aebd4a9af42ef6",
+        "locator": "observations/da7d456721fa9b890614afc3216c3de942ac76fcef9e4c41b0aebd4a9af42ef6"
+      }
+    },
+    {
+      "id": "python_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:40a8b6921662d04b50417e87de64fe91474323706c63f315960595a8a9aa8493",
+        "locator": "observations/40a8b6921662d04b50417e87de64fe91474323706c63f315960595a8a9aa8493"
+      }
+    },
+    {
+      "id": "architecture",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:8a6b103efb24f0c7ffbce6ab391766c0895cdf183f90a367f8df1630e187c743",
+        "locator": "observations/8a6b103efb24f0c7ffbce6ab391766c0895cdf183f90a367f8df1630e187c743"
+      }
+    },
+    {
+      "id": "architecture_fitness_tests",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/test_architecture_fitness.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:705666940d731f3fc0a7cdec1a537eeaea2f93a9f335255c4fd94d89ca130225",
+        "locator": "observations/705666940d731f3fc0a7cdec1a537eeaea2f93a9f335255c4fd94d89ca130225"
+      }
+    },
+    {
+      "id": "node_regression",
+      "command": [
+        "node",
+        "scripts/check.mjs",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:598d42c83bb46debd1ac4fe339b5fa7badceb7fc0bbf1df632614068f8747faa",
+        "locator": "observations/598d42c83bb46debd1ac4fe339b5fa7badceb7fc0bbf1df632614068f8747faa"
+      }
+    },
+    {
+      "id": "input_digest_mismatch_hold",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/evidence/fx_u9_evidence.py",
+        "--verify-inputs",
+        "/tmp/fx-u9-corrupt-xitjh6ov/fixture-inputs"
+      ],
+      "expected_exit": 2,
+      "exit_status": 2,
+      "observation_ref": {
+        "revision_digest": "sha256:124c532cde2d94dc4d4e226262388794103c7e18ee39be84745a6162c03e42b4",
+        "locator": "observations/124c532cde2d94dc4d4e226262388794103c7e18ee39be84745a6162c03e42b4"
+      }
+    }
+  ],
+  "holds": [],
+  "labels": [
+    "SYNTHETIC_MCP_ENVELOPE_FROM_RETAINED_DIRECT",
+    "FIXTURE_PRODUCER_NOT_NATIVE",
+    "FIXTURE_MATERIALIZED_RESULT_SET_NOT_U8_PROOF",
+    "SURROGATE_READINESS_HISTORY_NOT_AGENT_READY",
+    "CONTRACT4_NOT_INDEPENDENTLY_DESIGN_VERIFIED",
+    "FIXTURE_PACKAGE_NOT_AGENT_READY",
+    "INTACT_BINDING_WITHOUT_LIVE_INVOCATION_v1",
+    "LINT_DUTY_SOURCES_v1",
+    "FX_U9_FIXTURE_SOURCES_v1",
+    "CLARIFY_ROUTE_v1",
+    "SPLIT_HANDOFF_CONSUMER_PORT_v1",
+    "READINESS_CONSUMER_HOLD_CODES_v1",
+    "NO_RELEASE_OBSERVABLE_v1",
+    "FX_C1_EVIDENCE_LAYOUT",
+    "COMPILATION_VALIDATION_HOLD_NOT_CONSUMED_BY_LINT"
+  ],
+  "residuals": [
+    "NATIVE_PRODUCER_POSITIVE_PROOF_U10_EXTENT",
+    "SPLIT_TRANSACTION_U8_EXTENT",
+    "AC_06_07_TRACE_OWNERSHIP_UNASSIGNED_IN_DAG",
+    "SF_REQ_029_SERIALIZATION_NOT_CLAIMED",
+    "RUBRIC_COPY_AND_DUPLICATE_ENGINE_NOT_MECHANICALLY_DETECTED",
+    "OPERATOR_SURFACE_NOT_BUILT",
+    "EDITABLE_CHECKOUT_REVISION_FROM_DIRECT_URL_ONLY",
+    "PRODUCER_ADAPTER_NOT_CONSTRUCTED_FROM_BINDING_U10",
+    "SPLIT_HANDOFF_NOT_RETRIED_AFTER_UNMATERIALIZED",
+    "UNKNOWN_INVOCATION_COMPLETION_HELD"
+  ],
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "measurements": {
+    "model_launches": 0,
+    "provider_calls": 0,
+    "agent_ready_invocations": 0,
+    "tokens": null,
+    "cost": null,
+    "reason": "UNKNOWN: no provider or model is invoked by this local fixture; the producing session's own usage is not measured here"
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:deb5fab988ec77cb2e9abe0d0c1472105ee9ebb2a2862199cc6ec349cf83988c",
+    "locator": "observations/deb5fab988ec77cb2e9abe0d0c1472105ee9ebb2a2862199cc6ec349cf83988c"
+  },
+  "exit_status": 0
+}
