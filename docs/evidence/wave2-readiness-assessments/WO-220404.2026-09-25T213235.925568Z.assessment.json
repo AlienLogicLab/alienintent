@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "CLARIFY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Produce an offline, denied-network capstone proof (fixture FX-O) for SF-REQ-039. It must show the canonical producer -> independent verifier -> rework/review/accept/closure lifecycle running through the production composition and WorkerProvider path over K3/S0/C1. The proof must use actual local Git custody, durable outcome correlation, exactly one authorized effect, actual closure receipts, discriminating negative controls and no live claims. Per the 2026-09-25 founder amendment, it must also prove invocation-ownership and missing-durable-result recovery semantics (AC-08).",
+    "implementation_unknowns": [
+      "Whether the existing tests/composition/test_offline_proof.py fixture already supports fresh-verifier retrieval from the disposable bare remote, or needs FX-O extensions.",
+      "Whether the current WorkerOutcome can carry every observable needed for AC-07/AC-08 correlation. The work order already defines the escalation path: extend the contract only if revised Design Verification proves it cannot.",
+      "How to deterministically simulate crash-before-output, progress-then-crash, delayed readback, and owned background work that is still active, using the Deterministic Test Worker without test-specific lifecycle shortcuts.",
+      "Mapping the S0 and C1 DAG labels to WO-220101 and WO-220301, and confirming that the K1/K2 predecessor proof cited by K3 is retained.",
+      "The exact set of discriminating negative controls, one per materially distinct failure class, and how to record their application counts."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The capstone boundary may drift into modifying Invocation Runtime / Execution Coordination internals, violating one-writer ownership and the non-goal against repairing upstream capabilities.",
+      "AC-08 recovery tests may be satisfied through scripted lifecycle transitions or Director retriggers rather than the production path, producing a false proof.",
+      "A replacement actor may launch while ownership is UNKNOWN, leading to duplicate effects and violating the 'exactly one authorized effect' requirement.",
+      "Offline or local results may be misrepresented as live, shared-profile or sovereignty proof.",
+      "Predecessor proof identities are only reported; a source revision mismatch against baseline ffadf3d or K3 commit 57099f0 would trigger a hold.",
+      "Budget is limited to 3 cycles and 1 replacement per phase, with a single mutating slot, so scope confusion could exhaust attempts."
+    ],
+    "next_action": "Ask the founder/owner to state whether the amendment authorizes this BIU to implement the AC-08 invocation-ownership and deterministic-recovery behavior, or only to prove it and return defects. If the latter, name the owning provider. Then revise the work order's scope, capabilities and non-goals to be consistent, and rerun the Agent Ready assessment on that exact revision.",
+    "owner_clarifications": [
+      "The founder amendment routes the #94/#101/#110 incident to this BIU and adds AC-08. Does this capstone own implementing any missing invocation-ownership and recovery behavior in Invocation Runtime / Execution Coordination? That behavior covers supervised background work extending invocation ownership, non-terminal session exit, UNKNOWN-blocks-replacement, and deterministic bounded recovery after conclusive death plus a confirmed missing result. Or is the capstone limited to proving that behavior, and returning a defect and holding if the proof fails, as the 'integration/capstone only' boundary and non-goals state?",
+      "If the capstone must not implement it, which provider node (K1, K2, K3 or another) is the named owner for AC-08 defects? Is AC-08 behavior already claimed as delivered by a DONE predecessor, or should this BIU hold until that owner delivers it?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "Intent, dependencies (reported DONE), custody, verification and evidence are well specified. Engineering research such as fixture extensions and failure simulation does not block readiness. The controlling condition is a material owner-intent conflict: the base scope forbids implementing or repairing upstream capabilities, while the founder amendment routes a runtime incident here and adds behavioral acceptance (AC-08). Resolving it changes what the producer builds, which components it may write, and how the verifier judges the result. This requires owner authority, not engineering discovery, so the disposition is CLARIFY. SPLIT is not appropriate because the lifecycle proof is cohesive and the scope question must be resolved first. HOLD is not appropriate because no prerequisite is reported unavailable.",
+    "semantic_split_recommendation": [],
+    "summary": "The work order is detailed and mostly coherent. It fixes ownership: Execution Coordination owns orchestration, Invocation Runtime owns WorkerProvider, and no RoleOutcomeRecord sidecar is allowed. It also defines custody and verifier independence, the proof policy, evidence obligations, non-claims and stop rules. All three listed predecessors (WO-220403 K3, WO-220101, WO-220301) are reported DONE, with retained candidate identities and verifier verdicts. These are reported facts, not independently verified. One material scope conflict remains. The base scope declares 'Owns capabilities: integration/capstone only' and names 'inventing or repairing upstream capabilities inside this capstone' as a non-goal. The founder amendment instead routes the recurring #94/#101/#110 worker-exit-without-durable-result incident 'here under existing SF-REQ-039 authority' and adds new behavioral semantics through AC-08. Those semantics are: supervised background work counts toward invocation ownership, session exit is not terminal while owned work is active, UNKNOWN ownership blocks replacement, and recovery after conclusive death must be deterministic without a Director or status event. Nothing states that K1/K2/K3 already implement these semantics. If they do not, the producer could either implement them in Invocation Runtime/Execution Coordination (contradicting the capstone-only boundary) or treat the gap as an upstream defect and hold. Only the owner can decide which path the amendment authorizes.",
+    "verification_assessment": "Acceptance is observable and largely coherent: a named fixture (FX-O), enumerated failure classes, AC-07/AC-08, bounded pytest commands, a negative-control policy, and explicit non-claims. A single independent verifier verdict against an exact candidate SHA is meaningful for the integration proof. However, the AC-08 verdict is ambiguous until scope is settled. A verifier cannot tell whether a failing AC-08 probe should be accepted as correctly returned to its owner, rejected as missing capstone implementation, or rejected as scope creep into upstream capabilities."
+  },
+  "disposition": "CLARIFY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T21:33:08.794456+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 11662,
+    "input_sha256": "b385de54fc8ee48040566fd75bcc1bb2b83a07bb6613128b4e598fffa2729001",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-rgploncw/WO-220404.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T21:32:35.925568+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220404"
+}
