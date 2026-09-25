@@ -23,6 +23,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import subprocess
 import sys
 
@@ -31,6 +32,8 @@ PROJECT_OWNER = "AlienLogicLab"
 PROJECT_NUMBER = 1
 PROJECT_ID = "PVT_kwDOEcrpC84Bj5i_"
 STATUS_FIELD = "PVTSSF_lADOEcrpC84Bj5i_zhisMnY"
+PRIORITY_FIELD = "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ"
+PRIORITY_OPTIONS = {"P0":"92998478","P1":"ae42b437","P2":"1da6e4a3","P3":"f10b964a","P4":"65e330b9","P5":"c29e1f42"}
 
 # Lifecycle option ids. IMPLEMENT/VERIFY/ACCEPT launch workers; the rest are inert, which
 # is not a licence to skip them.
@@ -95,8 +98,10 @@ def read_board():
              '{projectV2(number:$number){items(first:100,after:$cursor){totalCount '
              'pageInfo{hasNextPage endCursor} nodes{id type content{__typename '
              '... on Issue{number repository{nameWithOwner}} '
-             '... on PullRequest{number}} fieldValueByName(name:"Status")'
-             '{... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}')
+             '... on PullRequest{number}} '
+             'status:fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}} '
+             'priority:fieldValueByName(name:"Priority"){... on ProjectV2ItemFieldSingleSelectValue{name}}'
+             '}}}}}')
     nodes = []
     expected_total = None
     cursor = None
@@ -157,7 +162,8 @@ def board_from_payload(items):
             f"{total} items but returned {len(nodes)}; verification would be incomplete")
     return [{"id": node["id"], "type": node["type"],
              "issue": (node.get("content") or {}).get("number"),
-             "status": (node.get("fieldValueByName") or {}).get("name"),
+             "status": (node.get("status") or node.get("fieldValueByName") or {}).get("name"),
+             "priority": (node.get("priority") or {}).get("name"),
              "repository": ((node.get("content") or {}).get("repository") or {}).get("nameWithOwner")}
             for node in nodes]
 
@@ -172,6 +178,47 @@ def read_issue_side(issue: int):
     return [node["id"] for node in nodes if (node.get("project") or {}).get("number") == PROJECT_NUMBER]
 
 
+def requirement_priority(parent_issue: int) -> str:
+    rows = [row for row in read_board() if row.get("issue") == parent_issue and row.get("type") == "ISSUE"]
+    if len(rows) != 1:
+        raise MaterializationFailed(f"parent requirement #{parent_issue} is not uniquely materialized")
+    priority = rows[0].get("priority")
+    if priority not in PRIORITY_OPTIONS:
+        raise MaterializationFailed(f"parent requirement #{parent_issue} has no valid Priority")
+    return str(priority)
+
+
+def issue_database_id(issue: int) -> int:
+    owner, name = REPO.split("/")
+    value = json.loads(_gh("api", f"repos/{owner}/{name}/issues/{issue}")).get("id")
+    if not isinstance(value, int):
+        raise MaterializationFailed(f"issue #{issue} has no database id")
+    return value
+
+
+def attach_parent(parent_issue: int, child_issue: int) -> None:
+    owner, name = REPO.split("/")
+    existing = json.loads(_gh("api", f"repos/{owner}/{name}/issues/{parent_issue}/sub_issues"))
+    if any(row.get("number") == child_issue for row in existing):
+        return
+    _gh("api", "--method", "POST", f"repos/{owner}/{name}/issues/{parent_issue}/sub_issues",
+        "-F", f"sub_issue_id={issue_database_id(child_issue)}")
+
+
+def verify_parent(parent_issue: int, child_issue: int) -> None:
+    owner, name = REPO.split("/")
+    children = json.loads(_gh("api", f"repos/{owner}/{name}/issues/{parent_issue}/sub_issues"))
+    if not any(row.get("number") == child_issue for row in children):
+        raise MaterializationFailed(f"issue #{child_issue} is not a sub-issue of parent requirement #{parent_issue}")
+
+
+def verify_priority(issue: int, expected_priority: str) -> None:
+    rows = [row for row in read_board() if row.get("issue") == issue and row.get("type") == "ISSUE"]
+    if len(rows) != 1 or rows[0].get("priority") != expected_priority:
+        observed = None if len(rows) != 1 else rows[0].get("priority")
+        raise MaterializationFailed(f"issue #{issue} has Priority {observed!r}, expected {expected_priority!r}")
+
+
 def verify(issue: int, expected_status: str) -> None:
     verify_materialization(issue=issue, expected_status=expected_status, board=read_board(),
                            issue_side_items=read_issue_side(issue))
@@ -179,9 +226,13 @@ def verify(issue: int, expected_status: str) -> None:
           f"at {expected_status.upper()}, exactly one item, no board pollution")
 
 
-def materialize(title: str, body_file: str, status: str) -> None:
+def materialize(title: str, body_file: str, status: str, parent_issue: int | None = None) -> None:
     if status.upper() not in STATUS_OPTIONS:
         raise MaterializationFailed(f"unknown lifecycle state {status!r}")
+    is_biu = re.match(r"^WO-\d+\b", title) is not None
+    if is_biu and parent_issue is None:
+        raise MaterializationFailed("BIU materialization requires --parent-issue")
+    inherited_priority = requirement_priority(parent_issue) if parent_issue is not None else None
     url = _gh("issue", "create", "--repo", REPO, "--title", title, "--body-file", body_file).strip()
     issue = int(url.rstrip("/").rsplit("/", 1)[-1])
     print(f"created {url}")
@@ -191,7 +242,15 @@ def materialize(title: str, body_file: str, status: str) -> None:
     _gh("project", "item-edit", "--project-id", PROJECT_ID, "--id", item,
         "--field-id", STATUS_FIELD, "--single-select-option-id", STATUS_OPTIONS[status.upper()])
     print(f"set status {status.upper()}")
+    if inherited_priority is not None:
+        _gh("project", "item-edit", "--project-id", PROJECT_ID, "--id", item,
+            "--field-id", PRIORITY_FIELD, "--single-select-option-id", PRIORITY_OPTIONS[inherited_priority])
+        attach_parent(parent_issue, issue)
+        print(f"inherited {inherited_priority} from parent requirement #{parent_issue}")
     verify(issue, status)
+    if inherited_priority is not None:
+        verify_priority(issue, inherited_priority)
+        verify_parent(parent_issue, issue)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -204,12 +263,13 @@ def main(argv: list[str] | None = None) -> int:
     make.add_argument("--title", required=True)
     make.add_argument("--body-file", required=True)
     make.add_argument("--status", default="CAPTURE")
+    make.add_argument("--parent-issue", type=int)
     args = parser.parse_args(argv)
     try:
         if args.command == "verify":
             verify(args.issue, args.expect_status)
         else:
-            materialize(args.title, args.body_file, args.status)
+            materialize(args.title, args.body_file, args.status, args.parent_issue)
     except MaterializationFailed as failure:
         print(failure, file=sys.stderr)
         return 1

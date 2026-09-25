@@ -186,3 +186,46 @@ def test_read_board_rejects_missing_or_repeated_cursor(monkeypatch):
                         lambda *args: __import__("json").dumps(pages.pop(0)))
     with pytest.raises(MaterializationFailed):
         read_board()
+
+
+def test_biu_materialization_requires_parent_requirement(tmp_path, monkeypatch):
+    body = tmp_path / "body.md"
+    body.write_text("body")
+    with pytest.raises(MaterializationFailed, match="parent-issue"):
+        project_materialization.materialize("WO-999999 — child", str(body), "TASKS")
+
+
+def test_biu_materialization_inherits_parent_priority_and_relationship(tmp_path, monkeypatch):
+    body = tmp_path / "body.md"
+    body.write_text("body")
+    calls = []
+    verified = []
+
+    monkeypatch.setattr(project_materialization, "requirement_priority", lambda parent: "P0")
+
+    def fake_gh(*args):
+        calls.append(args)
+        if args[:2] == ("issue", "create"):
+            return "https://github.com/AlienLogicLab/alienintent/issues/999"
+        if args[:2] == ("project", "item-add"):
+            return '{"id":"PVTI_child"}'
+        return "{}"
+
+    monkeypatch.setattr(project_materialization, "_gh", fake_gh)
+    monkeypatch.setattr(project_materialization, "attach_parent",
+                        lambda parent, child: verified.append(("attach", parent, child)))
+    monkeypatch.setattr(project_materialization, "verify",
+                        lambda issue, status: verified.append(("status", issue, status)))
+    monkeypatch.setattr(project_materialization, "verify_priority",
+                        lambda issue, priority: verified.append(("priority", issue, priority)))
+    monkeypatch.setattr(project_materialization, "verify_parent",
+                        lambda parent, child: verified.append(("parent", parent, child)))
+
+    project_materialization.materialize("WO-999999 — child", str(body), "TASKS", 23)
+
+    edits = [args for args in calls if args[:2] == ("project", "item-edit")]
+    assert any(project_materialization.PRIORITY_FIELD in args and
+               project_materialization.PRIORITY_OPTIONS["P0"] in args for args in edits)
+    assert ("attach", 23, 999) in verified
+    assert ("priority", 999, "P0") in verified
+    assert ("parent", 23, 999) in verified
