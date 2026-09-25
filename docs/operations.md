@@ -80,6 +80,22 @@ closure after ACCEPT on the path to DONE, when authorized by the work packet.
 The bootstrap's existing VERIFY worker and result routing are unchanged; the full
 board vocabulary does not introduce a separate REVIEW worker or new handoff.
 
+### Feature-level regression accumulation
+
+Known feature behavior is a VERIFY asset, not optional implementation-local
+test selection. `tools/verification/feature_regressions.json` maps protected
+feature surfaces to deterministic regression packs. For a candidate entering
+VERIFY, the invocation runtime selects packs from the candidate diff and runs
+them before launching the verifier model. A failing pack blocks verifier launch
+and therefore avoids spending cognition on a mechanically known regression.
+
+A passing run writes `.alienintent/feature-regressions.json`, bound to the exact
+candidate revision and a digest of the registry. The real worker/verifier path
+will not admit an ACCEPT or REJECT verdict without a valid exact-candidate
+feature-regression receipt. This is cumulative: once a feature regression is
+registered, later work touching its owned surfaces keeps running it until an
+authorized supersession changes the protected behavior.
+
 **REVIEW explores; VERIFY accumulates.** VERIFY proves what AlienIntent already
 knows how to check; REVIEW discovers what it does not yet know how to check, and
 deterministic failure-class promotion converts suitable REVIEW discoveries into

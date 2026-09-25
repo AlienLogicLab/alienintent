@@ -32,6 +32,16 @@ publication in the release sense and does not authorize merge, deployment, live
 operation, or any change to a protected branch. Those remain separately
 authorized.
 
+**VERIFY accumulates feature regressions.** Before a VERIFIER process is allowed
+to spend model cognition, the invocation runtime runs every registered
+feature-regression pack applicable to the candidate's changed paths via
+`tools/verification/run_feature_regressions.py`. Failure prevents verifier
+launch. A verifier verdict is inadmissible unless the exact candidate carries a
+valid passing `.alienintent/feature-regressions.json` receipt. Do not delete,
+weaken, bypass, or omit an applicable regression pack to make a candidate pass;
+change or supersede a regression only under the same authority that owns the
+feature behavior it protects.
+
 Every repository-changing task also has a closure obligation, including work
 outside the BIU lifecycle. Before declaring such a task complete, validate and
 disposition its temporary branch/worktree as LANDED, DISCARDED, or PARKED with a

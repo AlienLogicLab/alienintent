@@ -15,6 +15,7 @@ class InvocationRole(StrEnum):
 # Where a verifier process leaves its verdict inside its own fresh workspace:
 # {"verdict": "accept"|"reject", "revision": <evaluated 40-hex revision>, "findings": [..]}.
 VERDICT_PATH = ".alienintent/verdict.json"
+FEATURE_REGRESSION_RECEIPT_PATH = ".alienintent/feature-regressions.json"
 
 
 class CapabilityDenied(PermissionError):

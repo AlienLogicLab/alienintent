@@ -23,7 +23,7 @@ from alienintent.execution_coordination.domain.contract import BiuContract, Budg
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.invocation_runtime.adapters.invocation_journal import journal_append, journal_records
 from alienintent.invocation_runtime.application.real_worker import decode_candidate, encode_candidate
-from alienintent.invocation_runtime.domain.runtime import VERDICT_PATH, BudgetRecord, InvocationRole, ProcessResult, ProviderCapabilities, ScriptRejected
+from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetRecord, InvocationRole, ProcessResult, ProviderCapabilities, ScriptRejected
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 
 SCRIPTED_PROVIDER = "scripted"
@@ -163,6 +163,16 @@ class ScriptedWorkerProcess(WorkerProcess):
         findings = [] if step == "accept" else [f"{work}: scripted rejection under {invocation_id}"]
         verdict = workspace / VERDICT_PATH
         verdict.parent.mkdir(parents=True, exist_ok=True)
+        receipt_body = {
+            "schema_version": 1, "kind": "FeatureRegressionReceipt", "base": "SCRIPTED_FIXTURE",
+            "candidate": revision, "changed_paths": [], "manifest_digest": "SCRIPTED_FIXTURE",
+            "packs": [{"id": "scripted-fixture", "passed": True}], "passed": True,
+        }
+        import hashlib
+        encoded = json.dumps(receipt_body, sort_keys=True, separators=(",", ":")).encode()
+        receipt_body["receipt_digest"] = "sha256:" + hashlib.sha256(encoded).hexdigest()
+        (workspace / FEATURE_REGRESSION_RECEIPT_PATH).write_text(
+            json.dumps(receipt_body, sort_keys=True), encoding="utf-8")
         verdict.write_text(json.dumps({"verdict": step, "revision": revision, "findings": findings}), encoding="utf-8")
 
     def _attempt_provider(self, workspace: Path) -> int:

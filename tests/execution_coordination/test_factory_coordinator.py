@@ -73,7 +73,7 @@ class ScriptedWorker:
         if invocation.role == provider.VERIFIER:
             steps = self.verdicts.get(identity)
             step = steps.pop(0) if steps else "accept"
-            outcome = provider.WorkerOutcome.accept(invocation.candidate) if step == "accept" else (
+            outcome = provider.WorkerOutcome.accept(invocation.candidate, receipts=("feature-regressions:sha256:" + "a" * 64,)) if step == "accept" else (
                 provider.WorkerOutcome.reject(invocation.candidate, (f"{identity}: rejected under {invocation.correlation_id}",)) if step == "reject" else provider.WorkerOutcome(step))
         elif invocation.role == provider.CLOSURE:
             performed = self.closures.get(identity, context.required_closure_actions)

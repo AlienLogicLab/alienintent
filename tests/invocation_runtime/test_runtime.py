@@ -430,3 +430,57 @@ def test_control_plane_rejects_reachable_remote_without_the_exact_advertised_rev
 
     with pytest.raises(CandidateUnavailable, match="not published"):
         verify_in_fresh_process(candidate, tmp_path / "verifier")
+
+
+def test_verifier_model_is_not_launched_when_feature_regressions_fail(tmp_path: Path, monkeypatch) -> None:
+    from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import BudgetRecord, InvocationRole, ProcessResult
+
+    provider = CliWorkerProvider("python", sys.executable, ("-c", "raise AssertionError('model launched')"),
+                                 "explicit", frozenset({"wall-clock", "cancellation"}))
+    monkeypatch.setattr(
+        provider, "_feature_regressions",
+        lambda workspace, timeout: ProcessResult("failure", 1, True, BudgetRecord.unknown()),
+    )
+    result = provider.run("verify-1", InvocationRole.VERIFIER, tmp_path, 5)
+    assert result.kind == "failure"
+    assert "verify-1" not in provider._active
+
+
+def test_verifier_verdict_requires_exact_candidate_feature_regression_receipt(tmp_path: Path) -> None:
+    import hashlib
+    import json
+
+    from alienintent.execution_coordination.domain.custody import CandidateRef
+    from alienintent.invocation_runtime.application.real_worker import read_verdict
+
+    revision = "a" * 40
+    digest = "sha256:" + hashlib.sha256(revision.encode()).hexdigest()
+    candidate = CandidateRef.source_revision(
+        digest, f"git:fixture#candidate@{revision}",
+        identity=f"revision:fixture@{revision}@{digest}",
+    ).with_independent_read_back()
+    verdict = tmp_path / ".alienintent" / "verdict.json"
+    verdict.parent.mkdir(parents=True)
+    verdict.write_text(json.dumps({"verdict": "accept", "revision": revision, "findings": []}))
+
+    assert read_verdict(verdict, candidate).kind == "feature-regressions-missing"
+
+    body = {
+        "schema_version": 1,
+        "kind": "FeatureRegressionReceipt",
+        "base": "b" * 40,
+        "candidate": revision,
+        "changed_paths": ["src/alienintent/execution_coordination/application/factory_coordinator.py"],
+        "manifest_digest": "sha256:" + "c" * 64,
+        "packs": [{"id": "requirement-priority-continuity", "command": ["pytest"],
+                   "exit_code": 0, "passed": True}],
+        "passed": True,
+    }
+    encoded = json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+    body["receipt_digest"] = "sha256:" + hashlib.sha256(encoded).hexdigest()
+    (verdict.parent / "feature-regressions.json").write_text(json.dumps(body))
+
+    outcome = read_verdict(verdict, candidate)
+    assert outcome.kind == "accept"
+    assert outcome.receipts == ("feature-regressions:" + body["receipt_digest"],)

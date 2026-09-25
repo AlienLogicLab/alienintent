@@ -365,6 +365,12 @@ class FactoryCoordinator:
             ):
                 return _Advance(current, "authority-block", {"hold_reason": f"verifier-outcome-not-attributable:{outcome.kind}"},
                                 "The verifier outcome does not attest the exact custodied candidate from an independent invocation.")
+            feature_receipts = tuple(receipt for receipt in outcome.receipts
+                                     if receipt.startswith("feature-regressions:sha256:"))
+            if not feature_receipts:
+                return _Advance(current, "authority-block",
+                                {"hold_reason": "feature-regressions-missing"},
+                                "VERIFY did not retain a passing feature-regression receipt for the exact candidate.")
             if outcome.kind == "reject":
                 return self._rework(item, current, prior, invocation, "verifier", outcome.findings)
             reviewed = transition(current, current.version, "review")

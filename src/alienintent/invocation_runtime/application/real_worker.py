@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import json
+from hashlib import sha256
 from pathlib import Path
 from collections.abc import Callable, Mapping, Sequence
 
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
-from alienintent.invocation_runtime.domain.runtime import VERDICT_PATH, BudgetIneligible, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
+from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
 from alienintent.invocation_runtime.ports.source_control import SourceControl
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
@@ -95,6 +96,29 @@ def _revision_of(candidate: CandidateRef) -> str | None:
     return candidate.locator.rsplit("@", 1)[1]
 
 
+def _feature_regression_receipt(path: Path, candidate: CandidateRef) -> str | None:
+    try:
+        document = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    if not isinstance(document, Mapping) or document.get("kind") != "FeatureRegressionReceipt" or document.get("passed") is not True:
+        return None
+    if document.get("candidate") != _revision_of(candidate):
+        return None
+    packs = document.get("packs")
+    if not isinstance(packs, list) or any(not isinstance(pack, Mapping) or pack.get("passed") is not True for pack in packs):
+        return None
+    digest = document.get("receipt_digest")
+    if not isinstance(digest, str) or not digest.startswith("sha256:"):
+        return None
+    body = dict(document)
+    del body["receipt_digest"]
+    encoded = json.dumps(body, sort_keys=True, separators=(",", ":")).encode()
+    if digest != "sha256:" + sha256(encoded).hexdigest():
+        return None
+    return "feature-regressions:" + digest
+
+
 def read_verdict(path: Path, candidate: CandidateRef) -> WorkerOutcome:
     """The verdict a verifier process left for exactly ``candidate``.
 
@@ -112,10 +136,14 @@ def read_verdict(path: Path, candidate: CandidateRef) -> WorkerOutcome:
     findings = _strings(document.get("findings", []))
     if findings is None:
         return WorkerOutcome("verdict-malformed")
+    regression_receipt = _feature_regression_receipt(path.parent / "feature-regressions.json", candidate)
+    if regression_receipt is None:
+        return WorkerOutcome("feature-regressions-missing")
+    receipts = (regression_receipt,)
     if document.get("verdict") == "accept":
-        return WorkerOutcome.accept(candidate, findings)
+        return WorkerOutcome.accept(candidate, findings, receipts)
     if document.get("verdict") == "reject" and findings:
-        return WorkerOutcome.reject(candidate, findings)
+        return WorkerOutcome.reject(candidate, findings, receipts)
     return WorkerOutcome("verdict-malformed")
 
 

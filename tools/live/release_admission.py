@@ -78,7 +78,7 @@ def admit(facts: dict) -> list[dict]:
         fail("not_held", "The BIU is explicitly held.")
 
     priority = facts.get("priority_reconciliation") or {}
-    if priority.get("status") == "UNRESOLVED":
+    if priority.get("status") in {"UNAVAILABLE", "UNRESOLVED"}:
         fail("priority_inheritance_reconciled",
              f"BIU priority could not be deterministically reconciled: {priority}.")
 

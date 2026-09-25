@@ -32,7 +32,9 @@ with open(os.environ["FAKE_GH_LOG"], "a") as log:
 if args[:2] == ["issue", "view"]:
     print(open(os.environ["FAKE_GH_ISSUE"]).read())
 elif args[:2] == ["project", "item-list"]:
-    print(json.dumps({{"items": []}}))
+    print(open(os.environ["FAKE_GH_PROJECT"]).read())
+elif args[:2] == ["api", "graphql"]:
+    print(json.dumps({{"data": {{"repository": {{"issue": {{"parent": {{"number": 23}}}}}}}}}}))
 elif args[:1] == ["api"] and args[1].endswith("/dependencies/blocked_by"):
     print("[]")
 else:
@@ -54,6 +56,7 @@ class World:
                     "GIT_COMMITTER_NAME": "fixture", "GIT_COMMITTER_EMAIL": "fixture@invalid",
                     "PATH": f"{root / 'bin'}{os.pathsep}{os.environ['PATH']}",
                     "FAKE_GH_ISSUE": str(root / "issue.json"),
+                    "FAKE_GH_PROJECT": str(root / "project.json"),
                     "FAKE_GH_LOG": str(root / "gh.log")}
         self.env.pop("ALIENINTENT_WORKDIR", None)
         (root / "home").mkdir()
@@ -61,6 +64,10 @@ class World:
         gh = root / "bin" / "gh"
         gh.write_text(FAKE_GH.format(python=sys.executable))
         gh.chmod(0o755)
+        (root / "project.json").write_text(json.dumps({"items": [
+            {"id": "PVTI_parent", "content": {"number": 23}, "priority": "P1", "status": "PLAN"},
+            {"id": "PVTI_child", "content": {"number": ISSUE}, "priority": "P1", "status": "READY"},
+        ]}))
 
         self.origin, self.seed, self.work = root / "origin.git", root / "seed", root / "work"
         self.git(root, "init", "-q", "--bare", "-b", "main", str(self.origin))

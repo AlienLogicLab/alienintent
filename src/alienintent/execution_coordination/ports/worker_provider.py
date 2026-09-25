@@ -47,12 +47,14 @@ class WorkerOutcome:
         return cls("authority-block", escalation=escalation)
 
     @classmethod
-    def accept(cls, candidate: CandidateRef, findings: tuple[str, ...] = ()) -> "WorkerOutcome":
-        return cls("accept", candidate, findings=tuple(findings))
+    def accept(cls, candidate: CandidateRef, findings: tuple[str, ...] = (),
+               receipts: tuple[str, ...] = ()) -> "WorkerOutcome":
+        return cls("accept", candidate, findings=tuple(findings), receipts=tuple(receipts))
 
     @classmethod
-    def reject(cls, candidate: CandidateRef, findings: tuple[str, ...]) -> "WorkerOutcome":
-        return cls("reject", candidate, findings=tuple(findings))
+    def reject(cls, candidate: CandidateRef, findings: tuple[str, ...],
+               receipts: tuple[str, ...] = ()) -> "WorkerOutcome":
+        return cls("reject", candidate, findings=tuple(findings), receipts=tuple(receipts))
 
     @classmethod
     def closed(cls, candidate: CandidateRef, receipts: tuple[str, ...]) -> "WorkerOutcome":

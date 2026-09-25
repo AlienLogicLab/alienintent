@@ -1,0 +1,27 @@
+{
+  "schema_version": 1,
+  "packs": [
+    {
+      "id": "requirement-priority-continuity",
+      "description": "Requirement identity/priority survives decomposition and materialization; READY repair is deterministic; scheduling remains requirement-first.",
+      "paths": [
+        "src/alienintent/context_assembly/**",
+        "src/alienintent/execution_coordination/adapters/github_work_management.py",
+        "src/alienintent/execution_coordination/application/factory_coordinator.py",
+        "tools/live/project_materialization.py",
+        "tools/live/release_admission.py",
+        "tools/evidence/check_wave2_bius.py"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tools/live/test_project_materialization.py",
+        "tools/live/test_release_admission_release_point.py",
+        "tests/execution_coordination/test_github_work_management.py",
+        "tests/execution_coordination/test_factory_coordinator.py"
+      ]
+    }
+  ]
+}

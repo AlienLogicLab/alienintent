@@ -4,9 +4,10 @@ from __future__ import annotations
 
 from pathlib import Path
 import subprocess
+import sys
 from typing import Final, Mapping
 
-from alienintent.invocation_runtime.domain.runtime import BudgetRecord, InvocationRole, ProcessResult, ProviderCapabilities, require_eligible
+from alienintent.invocation_runtime.domain.runtime import BudgetRecord, FEATURE_REGRESSION_RECEIPT_PATH, InvocationRole, ProcessResult, ProviderCapabilities, require_eligible
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 
 
@@ -35,8 +36,34 @@ class CliWorkerProvider(WorkerProcess):
             return None
         return self._environment | {"ALIENINTENT_INVOCATION_ID": invocation_id, "ALIENINTENT_ROLE": str(role)}
 
+    def _feature_regressions(self, workspace: Path, wall_clock_seconds: float) -> ProcessResult:
+        runner = workspace / "tools/verification/run_feature_regressions.py"
+        manifest = workspace / "tools/verification/feature_regressions.json"
+        if not runner.is_file() or not manifest.is_file():
+            return ProcessResult("failure", 2, True, BudgetRecord.unknown())
+        base = subprocess.run(["git", "merge-base", "HEAD", "origin/main"], cwd=workspace,
+                              capture_output=True, text=True, check=False)
+        if base.returncode != 0 or not base.stdout.strip():
+            return ProcessResult("failure", base.returncode, True, BudgetRecord.unknown())
+        receipt = workspace / FEATURE_REGRESSION_RECEIPT_PATH
+        try:
+            done = subprocess.run(
+                [sys.executable, str(runner), "--base", base.stdout.strip(), "--candidate", "HEAD",
+                 "--receipt", str(receipt)],
+                cwd=workspace, capture_output=True, text=True, timeout=wall_clock_seconds, check=False,
+            )
+        except subprocess.TimeoutExpired:
+            return ProcessResult("timeout", None, True, BudgetRecord.unknown())
+        return ProcessResult("success" if done.returncode == 0 else "failure",
+                             done.returncode, True, BudgetRecord.unknown())
+
     def run(self, invocation_id: str, role: InvocationRole, workspace: Path, wall_clock_seconds: float) -> ProcessResult:
         require_eligible(self.capabilities, frozenset({"wall-clock", "cancellation"}))
+        if role is InvocationRole.VERIFIER:
+            regression = self._feature_regressions(workspace, wall_clock_seconds)
+            if regression.kind != "success":
+                self._completed.add(invocation_id)
+                return regression
         process = subprocess.Popen([self._executable, *self._arguments], cwd=workspace, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=self._child_environment(invocation_id, role))
         self._active[invocation_id] = process
         try:
