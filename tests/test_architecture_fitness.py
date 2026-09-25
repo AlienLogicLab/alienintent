@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import subprocess
 import sys
 import unittest
@@ -13,9 +14,10 @@ CHECKER = ROOT / "tools" / "fitness" / "check_architecture.py"
 FIXTURES = ROOT / "tests" / "fixtures" / "fitness"
 
 
-def run_check(root: Path, check: str = "all") -> subprocess.CompletedProcess[str]:
+def run_check(root: Path, check: str = "all", register: Path | None = None) -> subprocess.CompletedProcess[str]:
     return subprocess.run(
-        [sys.executable, str(CHECKER), "--root", str(root), "--check", check],
+        [sys.executable, str(CHECKER), "--root", str(root), "--check", check,
+         *(("--register", str(register)) if register else ())],
         cwd=ROOT,
         text=True,
         capture_output=True,
@@ -90,6 +92,60 @@ class ArchitectureFitnessTests(unittest.TestCase):
         """Treating a standard-library type as a vendor type breaks valid domain values."""
         result = run_check(FIXTURES / "stdlib-signature", "vendor-signature")
         self.assertEqual(result.returncode, 0, result.stdout)
+
+
+class CouplingFitnessTests(unittest.TestCase):
+    """FX-U6 scoped coupling checks (2026-09-25 Founder disposition); the withdrawn R1 table is never consulted."""
+
+    def fixture(self, check: str, register: str) -> subprocess.CompletedProcess[str]:
+        return run_check(FIXTURES / check / "alienintent", check, FIXTURES / check / f"{register}.json")
+
+    def test_introduced_cross_module_cycle_fails(self):
+        """Removing the cycle check lets the fixture's alpha/beta back edge pass silently."""
+        result = self.fixture("module-cycle", "undeclared")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("undeclared cross-module cycle edge beta -> alpha in cycle alpha, beta", result.stdout)
+
+    def test_cycle_declared_edge_for_edge_is_explicit_not_a_defect(self):
+        result = self.fixture("module-cycle", "declared")
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_unclassified_domain_import_fails(self):
+        """A raw cross-module domain import is never silently treated as policy."""
+        result = self.fixture("domain-import", "unclassified")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("unclassified cross-module domain import alienintent.beta.domain.model", result.stdout)
+        self.assertEqual(self.fixture("domain-import", "classified").returncode, 0)
+
+    def test_classification_of_an_absent_import_is_stale(self):
+        """A register entry that matches no import would otherwise grow into an allow-list."""
+        result = self.fixture("domain-import", "stale")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("classified domain import not observed: alpha -> alienintent.beta.domain.retired", result.stdout)
+
+    def test_table_mutated_outside_its_owner_fails(self):
+        result = self.fixture("persistence-ownership", "register")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("table ledger owned by alpha/adapters/store.py is mutated outside its owner", result.stdout)
+        self.assertNotIn("alpha/adapters/store.py:", result.stdout)
+
+    def test_missing_register_fails_closed(self):
+        for check in ("module-cycle", "domain-import", "persistence-ownership"):
+            with self.subTest(check=check):
+                result = run_check(ROOT / "src" / "alienintent", check, FIXTURES / "absent-register.json")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("coupling register unavailable", result.stdout)
+
+    def test_inventory_is_the_observed_graph_plus_the_register(self):
+        completed = subprocess.run([sys.executable, str(CHECKER), "--root", str(ROOT / "src" / "alienintent"),
+                                    "--inventory"], cwd=ROOT, text=True, capture_output=True, check=False)
+        self.assertEqual(completed.returncode, 0, completed.stdout)
+        inventory = json.loads(completed.stdout)
+        register = json.loads((ROOT / "tools" / "fitness" / "coupling_register.json").read_text())
+        self.assertIn(["execution_coordination", "installation"], inventory["edges"])
+        self.assertEqual(inventory["cycles"], [sorted(c["edges"]) for c in register["cycles"]])
+        self.assertNotIn("withdrawn_r1_proposal", completed.stdout)
+        self.assertNotIn("allowed_edges", json.dumps(register))
 
 
 if __name__ == "__main__":

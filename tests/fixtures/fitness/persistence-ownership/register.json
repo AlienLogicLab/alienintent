@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "record_kind": "CouplingRegister",
+  "authority": "FX-U6 fixture register",
+  "package": "alienintent",
+  "cycles": [],
+  "domain_imports": [],
+  "persistence": [
+    {
+      "owner": "alpha",
+      "path": "alpha/adapters/store.py",
+      "tables": [
+        "ledger"
+      ],
+      "basis": "fixture: alpha owns the ledger table"
+    }
+  ]
+}

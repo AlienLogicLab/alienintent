@@ -1,0 +1,9 @@
+{
+  "schema_version": 1,
+  "record_kind": "CouplingRegister",
+  "authority": "FX-U6 fixture register",
+  "package": "alienintent",
+  "cycles": [],
+  "domain_imports": [],
+  "persistence": []
+}

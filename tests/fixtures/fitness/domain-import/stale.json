@@ -1,0 +1,24 @@
+{
+  "schema_version": 1,
+  "record_kind": "CouplingRegister",
+  "authority": "FX-U6 fixture register",
+  "package": "alienintent",
+  "cycles": [],
+  "domain_imports": [
+    {
+      "consumer": "alpha",
+      "target": "alienintent.beta.domain.model",
+      "owner": "beta",
+      "classification": "STABLE_VALUE",
+      "basis": "fixture: beta publishes Model as a deliberately shared stable value"
+    },
+    {
+      "consumer": "alpha",
+      "target": "alienintent.beta.domain.retired",
+      "owner": "beta",
+      "classification": "STABLE_VALUE",
+      "basis": "fixture: beta publishes Model as a deliberately shared stable value"
+    }
+  ],
+  "persistence": []
+}

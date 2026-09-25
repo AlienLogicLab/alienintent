@@ -1,0 +1,562 @@
+{
+  "schema_version": 1,
+  "record_kind": "ProofFixtureReport",
+  "fixture": "FX-U6",
+  "biu": "WO-220206",
+  "invocation": "AlienLogicLab/alienintent#110:PRODUCER:0dcd5fde-ad5e-4d85-b336-74e7c564bd3f",
+  "baseline": "23c408d6bea3cabea49c0f02e3157b3470f16416",
+  "candidate_source_revision": "2def53659fa8475f432aed97430ea7d71229e0a1",
+  "authority": "docs/decisions/2026-09-25-cross-module-coupling-risk-disposition.md",
+  "files_sha256": {
+    "src/alienintent/context_assembly/domain/design_admission.py": "e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+    "src/alienintent/composition/design_admission.py": "7accbd2bbbef75d790558b10926078ceb80562762e12aa0d720e1b4935d389a0",
+    "tools/fitness/check_architecture.py": "64a1f67ea6570a5679fb25984aa41ac256957c39d0aeff0b886c5dd8950a451d",
+    "tools/fitness/coupling_register.json": "176e1535c55a667b0262a9e1eadad0ca92e61537c911ea5030b6885b178f852e",
+    "tests/context_assembly/test_design_admission.py": "230755d6733d5bc4765c3cc9b5b2a34e963f17433325e2c3749e23efdb49c445",
+    "tests/test_architecture_fitness.py": "cc4d1ec244649a2f11f6e4c7c4a990eae9b2e20bfe9edc8914a8e45844685d67",
+    "docs/decisions/2026-09-25-cross-module-coupling-risk-disposition.md": "9518ea0ffdb02c6f2bda8d0dc83841d1c96882a6b80ece33e51a7cc510e902bd",
+    "docs/evidence/wave2-design-contracts.json": "1cd1fe512e6d24cb7e90d813fd01eb0532e17564d95c99cdf63f63addbe05e80",
+    "tools/evidence/fx_u6_evidence.py": "d639d73b47e5b9481f3e85e7d1e3751f192cd366816470c2a71bf63ed7e40468"
+  },
+  "bounded_commands": [
+    {
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_design_admission.py",
+        "tests/test_architecture_fitness.py"
+      ],
+      "exit_status": 0,
+      "raw_output": "bounded-1.log",
+      "raw_output_sha256": "fe03bd6379a36fb87bdfa54218fef9611aae90ab09ec6dcf35c74f220bdb7f8a"
+    },
+    {
+      "command": [
+        "python3",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "raw_output": "bounded-2.log",
+      "raw_output_sha256": "395cf0add3d245e1216e83a91b206f625ce25a4b2c8baa6000ab0bb0444d57ba"
+    }
+  ],
+  "controls": [
+    {
+      "control": "forbidden-dependency-ignored",
+      "material_class": "forbidden-dependency-or-interface",
+      "file": "src/alienintent/context_assembly/domain/design_admission.py",
+      "mutation": [
+        "        elif INNER_LAYERS & set(source[1:2]) and \"adapters\" in target:\n",
+        "        elif False:\n"
+      ],
+      "test": "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_dependency_fails_before_review",
+      "phases": {
+        "intact": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_dependency_fails_before_review",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "forbidden-dependency-ignored-intact.log",
+          "raw_output_sha256": "eb75185b195c5c047b0425a2f8ba0276be50da77bd584500c0e3ead230107240",
+          "application_count": 0,
+          "file_sha256": "e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        },
+        "fault": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_dependency_fails_before_review",
+            "-v"
+          ],
+          "exit_status": 1,
+          "raw_output": "forbidden-dependency-ignored-fault.log",
+          "raw_output_sha256": "23774247a7f03f9d7b46d9fe2fbf8b04c9bc0ec0e695e855ed87e5862dab0583",
+          "application_count": 1,
+          "file_sha256": "78ed13c622770672ee0e40cc2f2851290f091a7e4d7168f5b9469532044f121a",
+          "failed_assertions": [
+            "test_forbidden_dependency_fails_before_review"
+          ],
+          "expected": "nonzero: the named assertion fails"
+        },
+        "restored": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_forbidden_dependency_fails_before_review",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "forbidden-dependency-ignored-restored.log",
+          "raw_output_sha256": "e17f653e60a9229e3f64dea5e81d80b684cb64665b00f6292cc8bdadf3647f6e",
+          "application_count": 0,
+          "file_sha256": "e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        }
+      },
+      "discriminated": true
+    },
+    {
+      "control": "incompatible-interface-ignored",
+      "material_class": "forbidden-dependency-or-interface",
+      "file": "src/alienintent/context_assembly/domain/design_admission.py",
+      "mutation": [
+        "    if unmet:\n",
+        "    if False:\n"
+      ],
+      "test": "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_interface_fails_before_review",
+      "phases": {
+        "intact": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_interface_fails_before_review",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "incompatible-interface-ignored-intact.log",
+          "raw_output_sha256": "a16e55428791e003f481fc36293d53fa59d5db47be2e2f9575b6ec28ad3e1ccd",
+          "application_count": 0,
+          "file_sha256": "e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        },
+        "fault": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_interface_fails_before_review",
+            "-v"
+          ],
+          "exit_status": 1,
+          "raw_output": "incompatible-interface-ignored-fault.log",
+          "raw_output_sha256": "1e7a52c45967d088dccdfb6b58115a73f454f6f5c84fe507bb4a09998eae0834",
+          "application_count": 1,
+          "file_sha256": "80ebc2b387f689edf4f9b47a0071418cf9a4186985825c2cde97907b932893b8",
+          "failed_assertions": [
+            "test_incompatible_interface_fails_before_review"
+          ],
+          "expected": "nonzero: the named assertion fails"
+        },
+        "restored": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_incompatible_interface_fails_before_review",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "incompatible-interface-ignored-restored.log",
+          "raw_output_sha256": "5b95f0c41c199d694dca4497b7bef119b3aa6d67fc7c1d8f42aa4b05ef58e0ab",
+          "application_count": 0,
+          "file_sha256": "e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        }
+      },
+      "discriminated": true
+    },
+    {
+      "control": "design-cycle-check-bypassed",
+      "material_class": "introduced-cycle",
+      "file": "src/alienintent/context_assembly/domain/design_admission.py",
+      "mutation": [
+        "        if inner not in coupling.cycles:  # A cycle must be declared exactly, edge for edge.\n",
+        "        if False:\n"
+      ],
+      "test": "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_introduced_cross_module_cycle_fails_before_review",
+      "phases": {
+        "intact": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_introduced_cross_module_cycle_fails_before_review",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "design-cycle-check-bypassed-intact.log",
+          "raw_output_sha256": "43524207436c0377d76fc63ac93ccfa40ccf0d6be05512bfbeb1d94e24cb91a1",
+          "application_count": 0,
+          "file_sha256": "e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        },
+        "fault": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_introduced_cross_module_cycle_fails_before_review",
+            "-v"
+          ],
+          "exit_status": 1,
+          "raw_output": "design-cycle-check-bypassed-fault.log",
+          "raw_output_sha256": "bf454aa3048e3f59523170cf9eb98ae08a84edab10d18ad18bf7ac08b8a2a723",
+          "application_count": 1,
+          "file_sha256": "6e4a02668ff5d0ff26daef947ce39f01d695344ffa1ccecd0960120bd046483d",
+          "failed_assertions": [
+            "test_introduced_cross_module_cycle_fails_before_review"
+          ],
+          "expected": "nonzero: the named assertion fails"
+        },
+        "restored": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_introduced_cross_module_cycle_fails_before_review",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "design-cycle-check-bypassed-restored.log",
+          "raw_output_sha256": "9fef8e9a7da87ca31bf3370a98bb2e9270d790e877471d17023588843e71d74d",
+          "application_count": 0,
+          "file_sha256": "e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        }
+      },
+      "discriminated": true
+    },
+    {
+      "control": "source-cycle-check-bypassed",
+      "material_class": "introduced-cycle",
+      "file": "tools/fitness/check_architecture.py",
+      "mutation": [
+        "    for group in cycles(set(graph)):\n",
+        "    for group in []:\n"
+      ],
+      "test": "tests.test_architecture_fitness.CouplingFitnessTests.test_introduced_cross_module_cycle_fails",
+      "phases": {
+        "intact": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_architecture_fitness.CouplingFitnessTests.test_introduced_cross_module_cycle_fails",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "source-cycle-check-bypassed-intact.log",
+          "raw_output_sha256": "9c9d84eb5e9afcfa9ad1bd53f9927113a1b6e7b0b1af4472a40a237f63b0f6ec",
+          "application_count": 0,
+          "file_sha256": "64a1f67ea6570a5679fb25984aa41ac256957c39d0aeff0b886c5dd8950a451d",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        },
+        "fault": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_architecture_fitness.CouplingFitnessTests.test_introduced_cross_module_cycle_fails",
+            "-v"
+          ],
+          "exit_status": 1,
+          "raw_output": "source-cycle-check-bypassed-fault.log",
+          "raw_output_sha256": "938b27ed778528021fa7ba95be5c22f8d3d01014a5d7c2d63bee22f9b99704b7",
+          "application_count": 1,
+          "file_sha256": "10f4950fd8cd723c4d62f7eb89039e3bba2525c2c245706876659985504f579f",
+          "failed_assertions": [
+            "test_introduced_cross_module_cycle_fails"
+          ],
+          "expected": "nonzero: the named assertion fails"
+        },
+        "restored": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_architecture_fitness.CouplingFitnessTests.test_introduced_cross_module_cycle_fails",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "source-cycle-check-bypassed-restored.log",
+          "raw_output_sha256": "672657509d5c4eab1067153f817a44a056b4c9ec674021d8b17f1a3924e05971",
+          "application_count": 0,
+          "file_sha256": "64a1f67ea6570a5679fb25984aa41ac256957c39d0aeff0b886c5dd8950a451d",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        }
+      },
+      "discriminated": true
+    },
+    {
+      "control": "design-domain-classification-bypassed",
+      "material_class": "domain-import-classification",
+      "file": "src/alienintent/context_assembly/domain/design_admission.py",
+      "mutation": [
+        "            if source[0] != COMPOSITION_ROOT and target[1:2] == (\"domain\",):\n",
+        "            if False:\n"
+      ],
+      "test": "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_cross_module_domain_import_is_classified_or_held",
+      "phases": {
+        "intact": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_cross_module_domain_import_is_classified_or_held",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "design-domain-classification-bypassed-intact.log",
+          "raw_output_sha256": "2e098daaed8c3eed7b13d0cbd179f3096937b953b0b54ac7729a33013392febc",
+          "application_count": 0,
+          "file_sha256": "e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        },
+        "fault": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_cross_module_domain_import_is_classified_or_held",
+            "-v"
+          ],
+          "exit_status": 1,
+          "raw_output": "design-domain-classification-bypassed-fault.log",
+          "raw_output_sha256": "03d3c631f2b4246f44a3bc7be9ede28c391b065be87b131ec0d5d2c12fafbcf3",
+          "application_count": 1,
+          "file_sha256": "fefb61892f11be1cab947fcba16fae2d9f219fc10e511d58754f46992d916f10",
+          "failed_assertions": [
+            "test_cross_module_domain_import_is_classified_or_held"
+          ],
+          "expected": "nonzero: the named assertion fails"
+        },
+        "restored": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_cross_module_domain_import_is_classified_or_held",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "design-domain-classification-bypassed-restored.log",
+          "raw_output_sha256": "dc460dae599d79d5214888f90882d6a1ab7caef793817dbe498a94813a5fc831",
+          "application_count": 0,
+          "file_sha256": "e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        }
+      },
+      "discriminated": true
+    },
+    {
+      "control": "source-unclassified-import-accepted",
+      "material_class": "domain-import-classification",
+      "file": "tools/fitness/check_architecture.py",
+      "mutation": [
+        "for key, sites in sorted(observed.items(), key=lambda item: item[0]) if key not in classified]",
+        "for key, sites in sorted(observed.items(), key=lambda item: item[0]) if False]"
+      ],
+      "test": "tests.test_architecture_fitness.CouplingFitnessTests.test_unclassified_domain_import_fails",
+      "phases": {
+        "intact": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_architecture_fitness.CouplingFitnessTests.test_unclassified_domain_import_fails",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "source-unclassified-import-accepted-intact.log",
+          "raw_output_sha256": "64cf9e1b704bfce59382fb1219d4ffb21fc2127abfe82782b43a44b39cf8499f",
+          "application_count": 0,
+          "file_sha256": "64a1f67ea6570a5679fb25984aa41ac256957c39d0aeff0b886c5dd8950a451d",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        },
+        "fault": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_architecture_fitness.CouplingFitnessTests.test_unclassified_domain_import_fails",
+            "-v"
+          ],
+          "exit_status": 1,
+          "raw_output": "source-unclassified-import-accepted-fault.log",
+          "raw_output_sha256": "949e88c90a5e637f089e48fb35de4e0536740933dc94c511fee12feb97c8f5d6",
+          "application_count": 1,
+          "file_sha256": "4495c7b741d1bf8e7b251d613a6f0832d82534f62de51fac98a2487a2837431d",
+          "failed_assertions": [
+            "test_unclassified_domain_import_fails"
+          ],
+          "expected": "nonzero: the named assertion fails"
+        },
+        "restored": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_architecture_fitness.CouplingFitnessTests.test_unclassified_domain_import_fails",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "source-unclassified-import-accepted-restored.log",
+          "raw_output_sha256": "ec774f7e7697d474b221083faa09688bca05b66955c7bb3cc7d6800dd0c1e52e",
+          "application_count": 0,
+          "file_sha256": "64a1f67ea6570a5679fb25984aa41ac256957c39d0aeff0b886c5dd8950a451d",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        }
+      },
+      "discriminated": true
+    },
+    {
+      "control": "coupling-checks-not-run",
+      "material_class": "conforming-mechanical-pass-and-review",
+      "file": "src/alienintent/composition/design_admission.py",
+      "mutation": [
+        "        for name in (*EXISTING_CHECKS, *COUPLING_CHECKS):\n",
+        "        for name in EXISTING_CHECKS:\n"
+      ],
+      "test": "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_design_records_mechanical_pass_and_separate_attributable_review",
+      "phases": {
+        "intact": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_design_records_mechanical_pass_and_separate_attributable_review",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "coupling-checks-not-run-intact.log",
+          "raw_output_sha256": "a4eee9aa9f688b00acaea7b0e11aab24cbeaf8e3750b9adee9d6dbdd932f4a63",
+          "application_count": 0,
+          "file_sha256": "7accbd2bbbef75d790558b10926078ceb80562762e12aa0d720e1b4935d389a0",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        },
+        "fault": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_design_records_mechanical_pass_and_separate_attributable_review",
+            "-v"
+          ],
+          "exit_status": 1,
+          "raw_output": "coupling-checks-not-run-fault.log",
+          "raw_output_sha256": "839f45981320c57aabfca48ced0ba8040e88b9dd22e78798c0543690f00a3ab2",
+          "application_count": 1,
+          "file_sha256": "0d9463ab0c55d5af96c146cc054838f41d9e967e09aecffb36567224ae4f7014",
+          "failed_assertions": [
+            "test_conforming_design_records_mechanical_pass_and_separate_attributable_review"
+          ],
+          "expected": "nonzero: the named assertion fails"
+        },
+        "restored": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.context_assembly.test_design_admission.DesignAdmissionTests.test_conforming_design_records_mechanical_pass_and_separate_attributable_review",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "coupling-checks-not-run-restored.log",
+          "raw_output_sha256": "5f25fba8cf879ca4f677b8f2e9815590093417a896be028c7773ce774628963f",
+          "application_count": 0,
+          "file_sha256": "7accbd2bbbef75d790558b10926078ceb80562762e12aa0d720e1b4935d389a0",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        }
+      },
+      "discriminated": true
+    },
+    {
+      "control": "table-owner-unchecked",
+      "material_class": "persistence-ownership",
+      "file": "tools/fitness/check_architecture.py",
+      "mutation": [
+        "            elif owners[table] != relative:\n",
+        "            elif False:\n"
+      ],
+      "test": "tests.test_architecture_fitness.CouplingFitnessTests.test_table_mutated_outside_its_owner_fails",
+      "phases": {
+        "intact": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_architecture_fitness.CouplingFitnessTests.test_table_mutated_outside_its_owner_fails",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "table-owner-unchecked-intact.log",
+          "raw_output_sha256": "8622635c1d465caa28947d0f1ae6c1174d4fe8828bba28a37a1a25a0b0f4990e",
+          "application_count": 0,
+          "file_sha256": "64a1f67ea6570a5679fb25984aa41ac256957c39d0aeff0b886c5dd8950a451d",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        },
+        "fault": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_architecture_fitness.CouplingFitnessTests.test_table_mutated_outside_its_owner_fails",
+            "-v"
+          ],
+          "exit_status": 1,
+          "raw_output": "table-owner-unchecked-fault.log",
+          "raw_output_sha256": "f896e02756e2ea6139e2c3c4eaa4315a8abca4e6de3682febdc2cffdcfc8e38a",
+          "application_count": 1,
+          "file_sha256": "efc8d06fa679ae15b9b5e196f090a8f4c660771afa713f2cb03ac4ffee5cea4f",
+          "failed_assertions": [
+            "test_table_mutated_outside_its_owner_fails"
+          ],
+          "expected": "nonzero: the named assertion fails"
+        },
+        "restored": {
+          "command": [
+            "python3",
+            "-m",
+            "unittest",
+            "tests.test_architecture_fitness.CouplingFitnessTests.test_table_mutated_outside_its_owner_fails",
+            "-v"
+          ],
+          "exit_status": 0,
+          "raw_output": "table-owner-unchecked-restored.log",
+          "raw_output_sha256": "11069ad3cfc5969bfc34d9a88f5b97eac416930d418ba3b3376eebc9353e7c08",
+          "application_count": 0,
+          "file_sha256": "64a1f67ea6570a5679fb25984aa41ac256957c39d0aeff0b886c5dd8950a451d",
+          "failed_assertions": [],
+          "expected": "exit 0"
+        }
+      },
+      "discriminated": true
+    }
+  ],
+  "negative_control_applications": 8,
+  "tokens": null,
+  "cost": null,
+  "measurement_reason": "UNKNOWN: invocation billing telemetry unavailable",
+  "verdict": "independent verifier pending"
+}

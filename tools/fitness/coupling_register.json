@@ -1,0 +1,236 @@
+{
+  "schema_version": 1,
+  "record_kind": "CouplingRegister",
+  "authority": "docs/decisions/2026-09-25-cross-module-coupling-risk-disposition.md",
+  "package": "alienintent",
+  "cycles": [
+    {
+      "modules": [
+        "control_plane",
+        "evidence_learning",
+        "execution_coordination",
+        "installation",
+        "invocation_runtime"
+      ],
+      "edges": [
+        [
+          "control_plane",
+          "evidence_learning"
+        ],
+        [
+          "control_plane",
+          "execution_coordination"
+        ],
+        [
+          "evidence_learning",
+          "execution_coordination"
+        ],
+        [
+          "execution_coordination",
+          "control_plane"
+        ],
+        [
+          "execution_coordination",
+          "evidence_learning"
+        ],
+        [
+          "execution_coordination",
+          "installation"
+        ],
+        [
+          "execution_coordination",
+          "invocation_runtime"
+        ],
+        [
+          "installation",
+          "execution_coordination"
+        ],
+        [
+          "invocation_runtime",
+          "execution_coordination"
+        ]
+      ],
+      "status": "ACKNOWLEDGED_EXISTING",
+      "justification": "Present at the 2026-09-25 baseline (Founder disposition finding 4). Declared edge for edge so that it is explicit and cannot grow silently; any new edge into or out of this group that closes a cycle fails. Minimization and justification against bounded-context ownership remain open review work; no broad refactor is authorized."
+    }
+  ],
+  "domain_imports": [
+    {
+      "consumer": "context_assembly",
+      "target": "alienintent.evidence_learning.domain.records",
+      "owner": "evidence_learning",
+      "classification": "PORT_CONTRACT",
+      "basis": "EvidenceRepository port value types: EvidenceRepository is a port owned by evidence_learning (docs/evidence/wave2-design-contracts.json#/shared_contracts/evidence_storage); these immutable records are its signature values."
+    },
+    {
+      "consumer": "context_assembly",
+      "target": "alienintent.evidence_learning.domain.refs",
+      "owner": "evidence_learning",
+      "classification": "STABLE_VALUE",
+      "basis": "Shared neutral Ref value: docs/evidence/wave2-design-contracts.json#/shared_contracts/value_contract and #/shared_contracts/cross_contract_cycles (modules share neutral Ref values)."
+    },
+    {
+      "consumer": "context_assembly",
+      "target": "alienintent.execution_coordination.domain.contract",
+      "owner": "execution_coordination",
+      "classification": "STABLE_VALUE",
+      "basis": "Existing BiuContract execution-contract values, kept as the shared contract: docs/evidence/wave2-design-contracts.json#/shared_contracts/value_contract (existing BiuContract is not replaced)."
+    },
+    {
+      "consumer": "context_assembly",
+      "target": "alienintent.execution_coordination.domain.custody",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "context_assembly",
+      "target": "alienintent.execution_coordination.domain.escalation",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "context_assembly",
+      "target": "alienintent.execution_coordination.domain.lifecycle",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "context_assembly",
+      "target": "alienintent.execution_coordination.domain.readiness",
+      "owner": "execution_coordination",
+      "classification": "PORT_CONTRACT",
+      "basis": "ReadinessAssessment port values of the Requirements / Planning context, located in execution_coordination: docs/evidence/wave2-design-contracts.json#/shared_contracts/architecture_scope (FD-02 follow-up DV-4)."
+    },
+    {
+      "consumer": "context_assembly",
+      "target": "alienintent.execution_coordination.domain.verdict",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "control_plane",
+      "target": "alienintent.evidence_learning.domain.records",
+      "owner": "evidence_learning",
+      "classification": "PORT_CONTRACT",
+      "basis": "EvidenceRepository port value types: EvidenceRepository is a port owned by evidence_learning (docs/evidence/wave2-design-contracts.json#/shared_contracts/evidence_storage); these immutable records are its signature values."
+    },
+    {
+      "consumer": "control_plane",
+      "target": "alienintent.evidence_learning.domain.refs",
+      "owner": "evidence_learning",
+      "classification": "STABLE_VALUE",
+      "basis": "Shared neutral Ref value: docs/evidence/wave2-design-contracts.json#/shared_contracts/value_contract and #/shared_contracts/cross_contract_cycles (modules share neutral Ref values)."
+    },
+    {
+      "consumer": "control_plane",
+      "target": "alienintent.execution_coordination.domain.custody",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "control_plane",
+      "target": "alienintent.execution_coordination.domain.escalation",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "control_plane",
+      "target": "alienintent.execution_coordination.domain.lifecycle",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "control_plane",
+      "target": "alienintent.execution_coordination.domain.verdict",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "execution_coordination",
+      "target": "alienintent.evidence_learning.domain.admission",
+      "owner": "evidence_learning",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "execution_coordination",
+      "target": "alienintent.evidence_learning.domain.catalog",
+      "owner": "evidence_learning",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "execution_coordination",
+      "target": "alienintent.evidence_learning.domain.records",
+      "owner": "evidence_learning",
+      "classification": "PORT_CONTRACT",
+      "basis": "EvidenceRepository port value types: EvidenceRepository is a port owned by evidence_learning (docs/evidence/wave2-design-contracts.json#/shared_contracts/evidence_storage); these immutable records are its signature values."
+    },
+    {
+      "consumer": "execution_coordination",
+      "target": "alienintent.evidence_learning.domain.refs",
+      "owner": "evidence_learning",
+      "classification": "STABLE_VALUE",
+      "basis": "Shared neutral Ref value: docs/evidence/wave2-design-contracts.json#/shared_contracts/value_contract and #/shared_contracts/cross_contract_cycles (modules share neutral Ref values)."
+    },
+    {
+      "consumer": "execution_coordination",
+      "target": "alienintent.installation.domain.project_identity",
+      "owner": "installation",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "execution_coordination",
+      "target": "alienintent.invocation_runtime.domain.runtime",
+      "owner": "invocation_runtime",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "installation",
+      "target": "alienintent.execution_coordination.domain.webhook_authenticity",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "invocation_runtime",
+      "target": "alienintent.execution_coordination.domain.contract",
+      "owner": "execution_coordination",
+      "classification": "STABLE_VALUE",
+      "basis": "Existing BiuContract execution-contract values, kept as the shared contract: docs/evidence/wave2-design-contracts.json#/shared_contracts/value_contract (existing BiuContract is not replaced)."
+    },
+    {
+      "consumer": "invocation_runtime",
+      "target": "alienintent.execution_coordination.domain.custody",
+      "owner": "execution_coordination",
+      "classification": "DOMAIN_LEAKAGE_HELD",
+      "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    }
+  ],
+  "persistence": [
+    {
+      "owner": "execution_coordination",
+      "path": "execution_coordination/adapters/sqlite_store.py",
+      "tables": [
+        "aggregates",
+        "effects",
+        "fences",
+        "operational_schema",
+        "receipts",
+        "reservations",
+        "schema_migrations"
+      ],
+      "basis": "SQLiteOperationalStore behind the OperationalStore port is the single operational store (docs/evidence/wave2-design-contracts.json#/shared_contracts/operational_storage); other modules persist only through the port. Namespaced aggregate payload ownership is not asserted mechanically here and stays an independent review item."
+    }
+  ]
+}
