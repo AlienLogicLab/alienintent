@@ -1,0 +1,904 @@
+{
+  "controls": [
+    {
+      "control": "old_epoch_accepted",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        if (result.epoch, result.invocation, self.invocation) != (record.epoch, record.invocation, record.invocation):\n            return None\n        return result.epoch, result.invocation",
+        "replace_with": "        return record.epoch, record.invocation"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_competing_epochs_cannot_overwrite"
+      ],
+      "assertions": [
+        "STALE_EPOCH"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:dbae3cf88ed49e454e593084cbd68e59f1f23400663858887b9f5c6875ca2451",
+        "locator": "observations/dbae3cf88ed49e454e593084cbd68e59f1f23400663858887b9f5c6875ca2451"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:d8a401aa30c5d9d7faaf76fded76d45aa168de1caafcbfdc3f9125da7342ced6",
+        "locator": "observations/d8a401aa30c5d9d7faaf76fded76d45aa168de1caafcbfdc3f9125da7342ced6"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:b44823c53787f5b3d027017f558ca70eaad6523010efd8f3cd16428784037cc9",
+        "locator": "observations/b44823c53787f5b3d027017f558ca70eaad6523010efd8f3cd16428784037cc9"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "context_item_omitted",
+      "file": "src/alienintent/composition/control_plane_profile.py",
+      "application_count": 1,
+      "source_digest": "sha256:d6e10434baf8fa6069f7aa180669515daf11a256696780d34e6080fc1fc900a9",
+      "mutation": {
+        "remove": "        document = dict(result.document)\n",
+        "replace_with": "        document = {**result.document, \"current_work\": list(result.document[\"current_work\"])[1:]}\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_replacement_equivalence"
+      ],
+      "assertions": [
+        "the successor reconstructs equal"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:96017185d7052d3c37f9e3a02819029e6664d2032f750f8dfc6b56e0dd579382",
+        "locator": "observations/96017185d7052d3c37f9e3a02819029e6664d2032f750f8dfc6b56e0dd579382"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:512a40bf514d19c57117f46e616618f0ebcd98d12e1eb38c0ec9f5ea73647d05",
+        "locator": "observations/512a40bf514d19c57117f46e616618f0ebcd98d12e1eb38c0ec9f5ea73647d05"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:b1b74d06a2aad3b9675b434d5b5acf6e0b5e0939d3e346b82bee41e5f870d8f2",
+        "locator": "observations/b1b74d06a2aad3b9675b434d5b5acf6e0b5e0939d3e346b82bee41e5f870d8f2"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "unbound_as_zero",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "        return UsageVerdict(None, \"UNBOUND\", None)",
+        "replace_with": "        return UsageVerdict(None, \"MEASURED_SAFE\", 0.0)"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_usage_unbound"
+      ],
+      "assertions": [
+        "UNBOUND is recorded explicitly"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:e197328ccba7d7d7afba939d2c38396950c01a5e35bf76a95102bc56820a6332",
+        "locator": "observations/e197328ccba7d7d7afba939d2c38396950c01a5e35bf76a95102bc56820a6332"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:c70e4e3f92f7005ac37898897ee177a50292b7cb8aaf8830715247759012d0f9",
+        "locator": "observations/c70e4e3f92f7005ac37898897ee177a50292b7cb8aaf8830715247759012d0f9"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:26b48f7382a5c90b080397627d5a2b079f1cdd6eae2cf23772b106ed611babce",
+        "locator": "observations/26b48f7382a5c90b080397627d5a2b079f1cdd6eae2cf23772b106ed611babce"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "unbound_auto_terminates",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "        return UsageVerdict(None, \"UNBOUND\", None)",
+        "replace_with": "        return UsageVerdict(EndCause.CONTEXT_USAGE_UNAVAILABLE, \"UNBOUND\", None)"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_usage_unbound"
+      ],
+      "assertions": [
+        "a missing usage binding alone does not end tenure"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:8f9061d63ba565c37809d2bf2760eda39f263974543037882d28765f34a3f858",
+        "locator": "observations/8f9061d63ba565c37809d2bf2760eda39f263974543037882d28765f34a3f858"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:6f393324841d0665a50b2cd236da6410af5135f2713709149ac3259fa4c14f26",
+        "locator": "observations/6f393324841d0665a50b2cd236da6410af5135f2713709149ac3259fa4c14f26"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:851b3a690004769d4ac958c1972b9add3a9664682046f07a4c930bc3f0bec961",
+        "locator": "observations/851b3a690004769d4ac958c1972b9add3a9664682046f07a4c930bc3f0bec961"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "bound_unavailable_ignored",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "        return UsageVerdict(EndCause.CONTEXT_USAGE_UNAVAILABLE, \"unavailable\", None)",
+        "replace_with": "        return UsageVerdict(None, \"unavailable\", None)"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_usage_bound_invalid[unavailable]"
+      ],
+      "assertions": [
+        "expected ENDED CONTEXT_USAGE_UNAVAILABLE"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:6273c8f0fe025a571611cdde61d6d464489915ad55891763753b29d45fa7a67c",
+        "locator": "observations/6273c8f0fe025a571611cdde61d6d464489915ad55891763753b29d45fa7a67c"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:f07d6a79fdad20452d34007d283c9a45127d3dbfb6678ce16931a11aa91c35ef",
+        "locator": "observations/f07d6a79fdad20452d34007d283c9a45127d3dbfb6678ce16931a11aa91c35ef"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:6273c8f0fe025a571611cdde61d6d464489915ad55891763753b29d45fa7a67c",
+        "locator": "observations/6273c8f0fe025a571611cdde61d6d464489915ad55891763753b29d45fa7a67c"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "unauthorized_contradiction_accepted",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "    grant = authorized(grants, judgment.actor, objective, authority)\n    if grant is None:\n        return InvalidJudgment(\"UNAUTHORIZED\")\n",
+        "replace_with": "    grant = authorized(grants, judgment.actor, objective, authority) or OperatorGrant(judgment.actor, authority, objective)\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_contradiction[unauthorized]"
+      ],
+      "assertions": [
+        "expected InvalidJudgment(UNAUTHORIZED)"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ed5fa604eb36a0b9d3391e59fbc2fac10f33f13c881bf9670363e5dc0c84336a",
+        "locator": "observations/ed5fa604eb36a0b9d3391e59fbc2fac10f33f13c881bf9670363e5dc0c84336a"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:fad1bab80a48b61ee0a7668094394652d1d4933795f2c1f7f27986fc160989ae",
+        "locator": "observations/fad1bab80a48b61ee0a7668094394652d1d4933795f2c1f7f27986fc160989ae"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:f206e637dccbfb5d559b8ed48e632930360b1825f8689f854085f494afc00d54",
+        "locator": "observations/f206e637dccbfb5d559b8ed48e632930360b1825f8689f854085f494afc00d54"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "age_boundary",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "    if now_us - record.began_us >= policy.max_age_s * SECOND:",
+        "replace_with": "    if now_us - record.began_us > policy.max_age_s * SECOND:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_age_limit[at]"
+      ],
+      "assertions": [
+        "expected ENDED AGE_LIMIT"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:10d9b55be5d4777e8ecf537cafc1dd6a926b159b59a8f1669cafb71d16644d57",
+        "locator": "observations/10d9b55be5d4777e8ecf537cafc1dd6a926b159b59a8f1669cafb71d16644d57"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:964f7c39b20dbbec35ccb02cc374d4ee6bc9144db237d45dba0e634450a95bb7",
+        "locator": "observations/964f7c39b20dbbec35ccb02cc374d4ee6bc9144db237d45dba0e634450a95bb7"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:95c037019673268e5f7481cf8e670c20dc9e3aa31455d741b5af8e06d215eb4a",
+        "locator": "observations/95c037019673268e5f7481cf8e670c20dc9e3aa31455d741b5af8e06d215eb4a"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "transition_boundary",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "    if record.transitions >= policy.max_transitions:",
+        "replace_with": "    if record.transitions >= policy.max_transitions + 1:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_transition_limit[32]"
+      ],
+      "assertions": [
+        "the 32nd admission reaches the limit"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:b724084958445fa4ab297531c6989717c211f65ddaf2e189f9012b751385453b",
+        "locator": "observations/b724084958445fa4ab297531c6989717c211f65ddaf2e189f9012b751385453b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:93425c70059a8172380e04e4dadcf416bc1d8f2d1551122cc8b4a9e745a0a6c8",
+        "locator": "observations/93425c70059a8172380e04e4dadcf416bc1d8f2d1551122cc8b4a9e745a0a6c8"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:b4ce178115387ee1248b8a929e29be453e5232fc2ef72a75706afafe833b1d14",
+        "locator": "observations/b4ce178115387ee1248b8a929e29be453e5232fc2ef72a75706afafe833b1d14"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "blocked_limit_removed",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "    if record.blocked_since_us is not None and now_us - record.blocked_since_us >= policy.max_blocked_s * SECOND:",
+        "replace_with": "    if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_blocked_limit[at]"
+      ],
+      "assertions": [
+        "expected ENDED BLOCKED_LIMIT"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:afafee00af5136d5eceed4e274b4266389120c216ef74590c9c858d43b419fab",
+        "locator": "observations/afafee00af5136d5eceed4e274b4266389120c216ef74590c9c858d43b419fab"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:10b6e1c944c865ca0821d4795fec4d5bd1286bf7a1f925e06ee56428bcd73635",
+        "locator": "observations/10b6e1c944c865ca0821d4795fec4d5bd1286bf7a1f925e06ee56428bcd73635"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:6fb81566ee8ef8cb2fdfd7aef33e6c52348faca0aafa0a3f4a8eab74bc93daac",
+        "locator": "observations/6fb81566ee8ef8cb2fdfd7aef33e6c52348faca0aafa0a3f4a8eab74bc93daac"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "threshold_boundary",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "    if ratio >= policy.threshold:",
+        "replace_with": "    if ratio > policy.threshold:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_usage_bound_threshold[at]"
+      ],
+      "assertions": [
+        "expected ENDED CONTEXT_USAGE_LIMIT"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:2bcfc6011602376f5cfba3ebf2e4e4ea963f0a69851aee6901d19660f05beac0",
+        "locator": "observations/2bcfc6011602376f5cfba3ebf2e4e4ea963f0a69851aee6901d19660f05beac0"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:3c8a762ef7d185e16754877df3d99c0cd236c880d6ac9a39bbb8f1bddee9e1a5",
+        "locator": "observations/3c8a762ef7d185e16754877df3d99c0cd236c880d6ac9a39bbb8f1bddee9e1a5"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:98bb515977e6d52d703f0edf72b4c3e952ee9683411498cac2a384f1223f2a2e",
+        "locator": "observations/98bb515977e6d52d703f0edf72b4c3e952ee9683411498cac2a384f1223f2a2e"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "prior_check_accepted",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "    if observation.check_id != check_id:\n        return UsageVerdict(EndCause.CONTEXT_USAGE_UNAVAILABLE, \"prior-check\", None)\n",
+        "replace_with": ""
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_usage_bound_invalid[prior_check]"
+      ],
+      "assertions": [
+        "prior-check"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:c401f0383ca8a4c72df960ed4a7264f19c1f74f9cae698d42a864f919f610cae",
+        "locator": "observations/c401f0383ca8a4c72df960ed4a7264f19c1f74f9cae698d42a864f919f610cae"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:e9adf9a79df0ed4671007789690d86b749de2733ef8a1962752f629111325faf",
+        "locator": "observations/e9adf9a79df0ed4671007789690d86b749de2733ef8a1962752f629111325faf"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:63a91ed74f773f2bef67a1178b7eda7c1f178743ecf962ec323b40207ab53e17",
+        "locator": "observations/63a91ed74f773f2bef67a1178b7eda7c1f178743ecf962ec323b40207ab53e17"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "vector_check_removed",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        if stale:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_obsolete_revision_refused",
+        "tests/control_plane/test_episode_control.py::test_state_vector_mismatch"
+      ],
+      "assertions": [
+        "STALE_VECTOR"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ff454efa0524558b706636f128255c56a3d7dd0759d0dad1af6b461212ae6b22",
+        "locator": "observations/ff454efa0524558b706636f128255c56a3d7dd0759d0dad1af6b461212ae6b22"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:89b634a8db9500a108b881f6113446be63c4536f5875729d1b0673e8d2108c74",
+        "locator": "observations/89b634a8db9500a108b881f6113446be63c4536f5875729d1b0673e8d2108c74"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:91758bd3cdfb7a67314036c562ca241dcf1ca3613665e2aa1fa4792098bb23ef",
+        "locator": "observations/91758bd3cdfb7a67314036c562ca241dcf1ca3613665e2aa1fa4792098bb23ef"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "authority_skipped_on_current",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        if (result.work, result.action, result.expected_version) not in offered:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_current_revision_still_authority_checked[blocked_item]"
+      ],
+      "assertions": [
+        "a current-revision result still requires authority"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:cd903bdbd24d92459b38593af017bbe086fc6c750d902bdbd11f41bcee9f3c8e",
+        "locator": "observations/cd903bdbd24d92459b38593af017bbe086fc6c750d902bdbd11f41bcee9f3c8e"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:1efedbe7b89ecd54c00a66cbeb838d392564633e45960e4acbc98b8d3de2e8e3",
+        "locator": "observations/1efedbe7b89ecd54c00a66cbeb838d392564633e45960e4acbc98b8d3de2e8e3"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:2c3d25db4d134bd1a5774b8d6b15cdbc7b9d6ee580e306fb2c9002accdce1b9b",
+        "locator": "observations/2c3d25db4d134bd1a5774b8d6b15cdbc7b9d6ee580e306fb2c9002accdce1b9b"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "immediate_cause_ignored",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        if identity != bound:\n",
+        "replace_with": "        if identity != bound and kind != \"provider\":\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_immediate_end[provider]"
+      ],
+      "assertions": [
+        "expected ENDED PROVIDER_CHANGE"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:a87c075bcab06db90777858e0db5496d0c6323302d79f2a95e2bfc74addf8f27",
+        "locator": "observations/a87c075bcab06db90777858e0db5496d0c6323302d79f2a95e2bfc74addf8f27"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:61669e319b200e164f077700977a9c7e468a31d66d99e45b101a6bb26bb8e105",
+        "locator": "observations/61669e319b200e164f077700977a9c7e468a31d66d99e45b101a6bb26bb8e105"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:fed59bf2dcdcbd5ca026c71656a926e484fa9c37927cb34a966bf53c5c435541",
+        "locator": "observations/fed59bf2dcdcbd5ca026c71656a926e484fa9c37927cb34a966bf53c5c435541"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "auto_renew",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        ended = replace(record, state=EpisodeState.ENDED, cause=cause, last_check_us=now)\n",
+        "replace_with": "        ended = replace(record, epoch=record.epoch + 1, began_us=now, deadline_us=now + self.policy.max_age_s * SECOND, transitions=0, blocked_since_us=None, accepted_contradictions=0, last_check_us=now)\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_no_automatic_renewal"
+      ],
+      "assertions": [
+        "ending never starts a new epoch"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:45ab482c8c0caf279b5423b45a2a97f6504b4849bebc423a58f9ea8b54aa5cb5",
+        "locator": "observations/45ab482c8c0caf279b5423b45a2a97f6504b4849bebc423a58f9ea8b54aa5cb5"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:e510c5ecb747ae08e0142e7d28a56df0f722ef2c3cedcabcafb02c0b32333a9c",
+        "locator": "observations/e510c5ecb747ae08e0142e7d28a56df0f722ef2c3cedcabcafb02c0b32333a9c"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:45ab482c8c0caf279b5423b45a2a97f6504b4849bebc423a58f9ea8b54aa5cb5",
+        "locator": "observations/45ab482c8c0caf279b5423b45a2a97f6504b4849bebc423a58f9ea8b54aa5cb5"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "budget_reset",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "            admitted_total=0 if prior is None else prior.admitted_total,\n",
+        "replace_with": "            admitted_total=0,\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_renewal_new_epoch_retains_budget"
+      ],
+      "assertions": [
+        "carries budget accounting"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:63e8b01dab8236f20462a2a600e35c0755e7ea241feb9a6c0cc463312651624e",
+        "locator": "observations/63e8b01dab8236f20462a2a600e35c0755e7ea241feb9a6c0cc463312651624e"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:ad168a851220bcc34b211a471068a344aba793af3f28b4193fa257c70f6126bb",
+        "locator": "observations/ad168a851220bcc34b211a471068a344aba793af3f28b4193fa257c70f6126bb"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:de98d3b1207b6adbab3457265d7229018c2c49fca00243d1b29160e932b5e39e",
+        "locator": "observations/de98d3b1207b6adbab3457265d7229018c2c49fca00243d1b29160e932b5e39e"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "clock_regression_accepted",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        if record is not None and now < record.last_check_us:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_restart_utc_deadline[regression]"
+      ],
+      "assertions": [
+        "CLOCK_REGRESSION"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:4c3678e13665fec0e626a8936b41fe997c375a7aa5f2f315f8c02bb02606b695",
+        "locator": "observations/4c3678e13665fec0e626a8936b41fe997c375a7aa5f2f315f8c02bb02606b695"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:278589db517591f04f8ce47dafd8e6815a69813e92a4786f602baef054e9a737",
+        "locator": "observations/278589db517591f04f8ce47dafd8e6815a69813e92a4786f602baef054e9a737"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:87459342954b1498d038b2159889d7a58b2b1eff811a1f6d5880a219a2b70478",
+        "locator": "observations/87459342954b1498d038b2159889d7a58b2b1eff811a1f6d5880a219a2b70478"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "adapter_import_added",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "from alienintent.control_plane.ports.episode import (\n",
+        "replace_with": "from alienintent.control_plane.adapters.episode_repository import DurableEpisodeRepository\nfrom alienintent.control_plane.ports.episode import (\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "assertions": [
+        "application imports adapters"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:75f4b218a117ef0cd2e7c77f974823b5aefe02ef834690b5c153231bd07ab8a4",
+        "locator": "observations/75f4b218a117ef0cd2e7c77f974823b5aefe02ef834690b5c153231bd07ab8a4"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:d2e028c6ad3ef08209cc1839370565a10850032eaddfbebafb9f4c1385f0ff6c",
+        "locator": "observations/d2e028c6ad3ef08209cc1839370565a10850032eaddfbebafb9f4c1385f0ff6c"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:75f4b218a117ef0cd2e7c77f974823b5aefe02ef834690b5c153231bd07ab8a4",
+        "locator": "observations/75f4b218a117ef0cd2e7c77f974823b5aefe02ef834690b5c153231bd07ab8a4"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "one_biu_removed",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        if result.work != record.objective:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_one_bius_only"
+      ],
+      "assertions": [
+        "ONE_BIU"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:151589989c6558bb8b505e76d249acea8f5e74289605a99433a4484dd2c0e5ff",
+        "locator": "observations/151589989c6558bb8b505e76d249acea8f5e74289605a99433a4484dd2c0e5ff"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:d1b048b99a624a26df0e3b9410f8c4bf21c45c56c3797b56a4c2640288d84241",
+        "locator": "observations/d1b048b99a624a26df0e3b9410f8c4bf21c45c56c3797b56a4c2640288d84241"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:035bb2d583a429b950d8cba32000a3e018b020c930a84df16b6dc1cc3e543bf6",
+        "locator": "observations/035bb2d583a429b950d8cba32000a3e018b020c930a84df16b6dc1cc3e543bf6"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "forged_identity_accepted",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "(record.epoch, record.invocation, record.invocation)",
+        "replace_with": "(record.epoch, record.invocation, self.invocation)"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_old_epoch_process_cannot_use_current_identity",
+        "tests/control_plane/test_episode_control.py::test_competing_epochs_cannot_overwrite"
+      ],
+      "assertions": [
+        "STALE_EPOCH"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:0c24f1c6449bbd71aa12180d196e4fc7a78ef4669b5c25b8d789c7733534613e",
+        "locator": "observations/0c24f1c6449bbd71aa12180d196e4fc7a78ef4669b5c25b8d789c7733534613e"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:4eb35ddd793772913ec47fc1949edb70226b33f0dedfb437d34522519bed25c0",
+        "locator": "observations/4eb35ddd793772913ec47fc1949edb70226b33f0dedfb437d34522519bed25c0"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:bd538ca9897871782901ca3d9bb049aea1d1667daa6698005ee7ce4d9181089d",
+        "locator": "observations/bd538ca9897871782901ca3d9bb049aea1d1667daa6698005ee7ce4d9181089d"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "grant_authority_ignored",
+      "file": "src/alienintent/control_plane/domain/episode.py",
+      "application_count": 1,
+      "source_digest": "sha256:99935ed3ac7ff822ddd67542384ae66c7d4b33644326fd632bf27d723599df2e",
+      "mutation": {
+        "remove": "    return next((g for g in grants if (g.actor, g.objective, g.authority) == (actor, objective, authority)), None)",
+        "replace_with": "    return next((g for g in grants if (g.actor, g.objective) == (actor, objective)), None)"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_contradiction[wrong_authority]",
+        "tests/control_plane/test_episode_control.py::test_begin_requires_matching_authority"
+      ],
+      "assertions": [
+        "expected InvalidJudgment(UNAUTHORIZED)"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:5f46f7aeff83a1853fd0c0834af1f3c80d9473992d5e129dae02d8828680d3fc",
+        "locator": "observations/5f46f7aeff83a1853fd0c0834af1f3c80d9473992d5e129dae02d8828680d3fc"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:81b18b4b7d1343896cd6ae6d80ff6ee056568492b6aadcb46efd8a55e2f05161",
+        "locator": "observations/81b18b4b7d1343896cd6ae6d80ff6ee056568492b6aadcb46efd8a55e2f05161"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:4a37aef67b016309f874ed46bcb50d885798732136f8dc9ac8bb38f35ab59878",
+        "locator": "observations/4a37aef67b016309f874ed46bcb50d885798732136f8dc9ac8bb38f35ab59878"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "claim_conflict_uncaught",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        except (ReservationRejected, StoreUnavailable, VersionConflict):\n",
+        "replace_with": "        except (ReservationRejected, StoreUnavailable):\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_interrupted_claim_still_counts"
+      ],
+      "assertions": [
+        "a delivery conflict escaped after admission"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:828568ed20d5fddcae2bfb85ae7818c372b362dbfecbe3e3fb39d302eb8fc5a0",
+        "locator": "observations/828568ed20d5fddcae2bfb85ae7818c372b362dbfecbe3e3fb39d302eb8fc5a0"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:b911cc8fc8878ee81360dc8e92d409d4803db353cdd6975b9b66b2174e246bb6",
+        "locator": "observations/b911cc8fc8878ee81360dc8e92d409d4803db353cdd6975b9b66b2174e246bb6"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:1c19ac33efead0b1ae40631d9d2785799535bda47ac6634158c81b6480b7d977",
+        "locator": "observations/1c19ac33efead0b1ae40631d9d2785799535bda47ac6634158c81b6480b7d977"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "blocked_not_observed_on_results",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        if observed.blocked_since_us != record.blocked_since_us:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py::test_blocked_observed_on_results"
+      ],
+      "assertions": [
+        "a result observes and persists the block"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:5ece655e8a36facd3af7ccd4b854b7e896ee5a35f86ebf03dbd8ab386a01523b",
+        "locator": "observations/5ece655e8a36facd3af7ccd4b854b7e896ee5a35f86ebf03dbd8ab386a01523b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:923a028124737531ea0b6f6e7362f92b6eec8c7a9b7ddbcfe6671e9b85b7eaf9",
+        "locator": "observations/923a028124737531ea0b6f6e7362f92b6eec8c7a9b7ddbcfe6671e9b85b7eaf9"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:5ece655e8a36facd3af7ccd4b854b7e896ee5a35f86ebf03dbd8ab386a01523b",
+        "locator": "observations/5ece655e8a36facd3af7ccd4b854b7e896ee5a35f86ebf03dbd8ab386a01523b"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}

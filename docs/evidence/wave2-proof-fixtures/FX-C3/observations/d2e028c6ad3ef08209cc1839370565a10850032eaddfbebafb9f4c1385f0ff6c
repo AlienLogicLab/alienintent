@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","tools/fitness/check_architecture.py","--root","src/alienintent","--check","all"],"cwd":"/tmp/fx-c3-controls-87ckp8d5","exit_status":1,"stderr":"","stdout":"control_plane/application/episode_control.py:18: application imports adapters\n"}

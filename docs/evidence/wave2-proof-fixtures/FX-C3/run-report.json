@@ -1,0 +1,147 @@
+{
+  "acceptance_to_probes": {
+    "SF-REQ-053-AC-02": [
+      "test_age_limit",
+      "test_transition_limit",
+      "test_blocked_limit",
+      "test_immediate_end",
+      "test_contradiction",
+      "test_usage_unbound",
+      "test_usage_bound_threshold",
+      "test_usage_bound_invalid",
+      "test_deadline_timer_independent_of_model",
+      "test_restart_utc_deadline",
+      "test_no_automatic_renewal",
+      "test_renewal_new_epoch_retains_budget",
+      "test_one_bius_only",
+      "test_begin_requires_matching_authority",
+      "test_blocked_observed_on_results"
+    ],
+    "SF-REQ-053-AC-03": [
+      "test_competing_epochs_cannot_overwrite",
+      "test_old_epoch_process_cannot_use_current_identity",
+      "test_obsolete_revision_refused",
+      "test_state_vector_mismatch",
+      "test_current_revision_still_authority_checked"
+    ],
+    "053-tenure-fence": [
+      "test_replacement_equivalence",
+      "test_expiry_does_not_cancel_admitted",
+      "test_interrupted_claim_still_counts",
+      "test_episode_profile_composed",
+      "old_epoch_accepted",
+      "context_item_omitted",
+      "unbound_as_zero",
+      "unbound_auto_terminates",
+      "bound_unavailable_ignored",
+      "unauthorized_contradiction_accepted",
+      "age_boundary",
+      "transition_boundary",
+      "blocked_limit_removed",
+      "threshold_boundary",
+      "prior_check_accepted",
+      "vector_check_removed",
+      "authority_skipped_on_current",
+      "immediate_cause_ignored",
+      "auto_renew",
+      "budget_reset",
+      "clock_regression_accepted",
+      "adapter_import_added",
+      "one_biu_removed",
+      "forged_identity_accepted",
+      "grant_authority_ignored",
+      "claim_conflict_uncaught",
+      "blocked_not_observed_on_results"
+    ]
+  },
+  "end_cause_table": {
+    "AGE_LIMIT": [
+      "test_age_limit[at]",
+      "test_deadline_timer_independent_of_model",
+      "test_restart_utc_deadline[expired]"
+    ],
+    "TRANSITION_LIMIT": [
+      "test_transition_limit[32]",
+      "test_transition_limit[33]"
+    ],
+    "BLOCKED_LIMIT": [
+      "test_blocked_limit[at]",
+      "test_blocked_observed_on_results"
+    ],
+    "CONTRADICTION": [
+      "test_contradiction[accepted]"
+    ],
+    "STALE_VECTOR": [
+      "test_state_vector_mismatch",
+      "test_obsolete_revision_refused"
+    ],
+    "CONTEXT_USAGE_LIMIT": [
+      "test_usage_bound_threshold[at]"
+    ],
+    "CONTEXT_USAGE_UNAVAILABLE": [
+      "test_usage_bound_invalid[unavailable]",
+      "test_usage_bound_invalid[prior_check]"
+    ],
+    "CONTEXT_USAGE_INVALID": [
+      "test_usage_bound_invalid[wrong_invocation]",
+      "test_usage_bound_invalid[nan_used]",
+      "test_usage_bound_invalid[negative_used]",
+      "test_usage_bound_invalid[zero_limit]",
+      "test_usage_bound_invalid[inf_limit]"
+    ],
+    "CONTEXT_EXHAUSTED": [
+      "test_immediate_end[context_exhausted]"
+    ],
+    "TERMINAL_OUTCOME": [
+      "test_immediate_end[terminal]"
+    ],
+    "OBJECTIVE_CHANGE": [
+      "test_immediate_end[objective]"
+    ],
+    "AUTHORITY_CHANGE": [
+      "test_immediate_end[authority]"
+    ],
+    "PROVIDER_CHANGE": [
+      "test_immediate_end[provider]"
+    ],
+    "MODEL_CHANGE": [
+      "test_immediate_end[model]"
+    ],
+    "EXPLICIT_REQUEST": [
+      "test_immediate_end[explicit]"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/control_plane/test_episode_control.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:ed94b225336589186c2fb8aaf2958f8d0aad0ac2b7abca4b3026bc0b990b5229",
+      "locator": "observations/ed94b225336589186c2fb8aaf2958f8d0aad0ac2b7abca4b3026bc0b990b5229"
+    }
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:94fdae99406b53ff78bf63f2f0bf41138a319550a600f1837dc63a3fb728d9a4",
+    "locator": "observations/94fdae99406b53ff78bf63f2f0bf41138a319550a600f1837dc63a3fb728d9a4"
+  },
+  "model_launch_count": 0,
+  "labels": {
+    "LOCAL_SUBSTITUTE_USAGE_SOURCE": "BOUND usage comes from a scripted same-invocation source (U-8); does not close LRN-023",
+    "LOCAL_OPERATOR_GRANT_TABLE": "contradiction/begin/end authority is an injected OperatorGrant table (U-7, ResolverGrant precedent)",
+    "INJECTED_INTEGER_MICROSECOND_CLOCKS": "UTC anchor read once per process plus injected monotonic progress; integer microseconds",
+    "LOCAL_JOURNAL_DELIVERY": "an admitted effect is delivered to the S2 local durable journal, not a remote consumer"
+  },
+  "boundaries": "no bootstrap handoff (POSTW1-DECIDE-006A), host activation, monitor work, SF-REQ-008/029 amendments or C1/C2/S2/U5 change; contradiction truth stays operator judgment",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}
