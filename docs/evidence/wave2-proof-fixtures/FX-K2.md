@@ -209,3 +209,18 @@ It raised these findings:
 - No live or shared-profile activation. No new lifecycle owner or sidecar outcome state subsystem.
 - No closure action other than `candidate-published` is claimed as performable by the real adapter.
 - Token and cost are UNKNOWN, never zero. No provider is composed.
+
+## Retained run
+
+`FX-K2/` holds the harness run for invocation `AlienLogicLab/alienintent#115:PRODUCER:3bb0bafe-3a4a-4b71-b428-416160e01ecb`.
+
+- Source: clean committed revision `90f7fb9546c0e94c04c5d470d7ea0a104c5df5d5`. Code baseline `e49aed5`.
+- Result: exit 0, no holds.
+- Checks: the focused suite, `check_architecture.py --check all`, the architecture fitness tests and
+  `node scripts/check.mjs all` all exit 0.
+- Controls: all 5 discriminate (intact 0, fault 1, restored 0, with the named assertion in the fault output).
+- Full suite: 25 nodes fail, all in `tests/evidence_learning/test_proof_planning.py`. The same 25 nodes fail at the
+  code baseline in a detached worktree, so they are recorded as the residual `PREEXISTING_BASELINE_FAILURES`, outside
+  the K2 extent.
+- Provider calls: 0. Tokens and cost: UNKNOWN.
+- Independent verdict: pending (fresh BIU verifier).

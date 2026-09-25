@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/execution_coordination/test_role_orchestration.py::test_closure_records_only_actions_actually_read_back"],"cwd":"/tmp/fx-k2-controls-3ydueekw","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.57s\n"}
