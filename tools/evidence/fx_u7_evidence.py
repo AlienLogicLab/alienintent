@@ -69,11 +69,13 @@ LABELS = ["VALIDATION_ONLY_HAND_AUTHORED_CANDIDATES", "SWF33_HISTORICAL_CONTRACT
           "BUDGET_CAPABILITY_BOUND_RULE_v1", "SPLIT_AUTHORITY_BINDING_v1", "IDENTITY_BOUNDS_VALIDATION_v1",
           "ASSESSMENT_HISTORY_VALIDATION_v1", "COMPILATION_HOLD_CODES_v1", "ACTIVE_INVOCATION_OUT_OF_FX_U7",
           "EXISTING_IMPLEMENTATION_INVENTORY_v1", "SYNTHETIC_SPLIT_ISSUER_N5", "DEPENDENCY_SATISFACTION_INITIAL_ONLY",
-          "REVIEW_R1_REPAIR_CONTROLS_K35_K42"]
+          "REVIEW_R1_REPAIR_CONTROLS_K35_K42", "REVIEW_R2_REPAIR_CONTROL_K43"]
 RESIDUALS = ["SPLIT_APPLY_AND_DERIVATION_NOT_PROVEN_U8_EXTENT", "AC_06_08_TRACE_OWNERSHIP_UNASSIGNED_IN_DAG",
              "BUDGET_ENVELOPE_PARTITION_UNPROVEN", "ACTIVE_INVOCATION_FENCE_NOT_PROVEN_BY_FX_U7",
              "SWF33_ELABORATION_BINDING_INTERPRETIVE", "ORIGINAL_INVENTORY_SUPPLIED_FOR_MARKDOWN_ORIGINAL",
-             "EXPECTED_VERSIONS_APPLY_TIME_NOT_CHECKED", "GRAPH_REVISION_BINDING_WITHIN_PAYLOAD_DIGEST"]
+             "EXPECTED_VERSIONS_APPLY_TIME_NOT_CHECKED", "GRAPH_REVISION_BINDING_WITHIN_PAYLOAD_DIGEST",
+             "DOWNSTREAM_EDGES_SUPPLIED_BY_PROPOSAL", "ELABORATION_APPROVAL_DIGEST_NOT_RECOMPUTED",
+             "CHILD_EXTENT_ACCEPTS_OBLIGATION_ID", "MALFORMED_INPUT_HOLD_REF_ORDER_DEPENDENT"]
 
 
 def node(name: str) -> str:
@@ -195,6 +197,10 @@ CONTROLS = (
      "    return verbatim(clause, _body(unit))\n", probes("test_review_r1_refusals[split:frozen_clause_truncated]")),
     ("K42-split_requires_done_predecessors", DOMAIN, "    for edge in edges if require_done else ():\n",
      "    for edge in edges:\n", probes("test_split_does_not_require_done_predecessors")),
+    # Review R2 repair control.
+    ("K43-result_contract_optional", DOMAIN, "        if uncontracted:\n", "        if False:\n",
+     probes("test_review_r2_result_without_contract_refused[split:result_contract_as_body]",
+            "test_review_r2_result_without_contract_refused[split:result_contract_absent]")),
 )
 ARCHITECTURE = ["-B", "tools/fitness/check_architecture.py", "--root", "src/alienintent", "--check", "all"]
 _FAILED = re.compile(r"^FAILED (\S+) - (AssertionError|assert )", re.MULTILINE)
@@ -227,7 +233,7 @@ def retain(output: Path, record) -> dict:
 def execute(cwd: Path, argv: list[str], inputs: Path | None) -> dict:
     environment = {**os.environ, "PYTHONPATH": str(cwd / "src") + os.pathsep + str(cwd), "PYTHONDONTWRITEBYTECODE": "1"}
     if inputs is not None:
-        environment["FX_U7_FIXTURE_INPUTS"] = str(inputs)
+        environment["FX_U7_FIXTURE_INPUTS"] = str(Path(inputs).resolve())  # Controls run with another cwd.
     try:
         result = subprocess.run(argv, cwd=cwd, env=environment, text=True, capture_output=True, timeout=900)
         return {"argv": argv, "cwd": str(cwd), "exit_status": result.returncode, "stdout": result.stdout,
@@ -299,7 +305,7 @@ def reconcile_baseline() -> dict:
 
 def readback(output: Path, inputs: Path) -> dict:
     """Every scenario through the composed profile on a fresh disposable root; observed reports and holds."""
-    os.environ["FX_U7_FIXTURE_INPUTS"] = str(inputs)
+    os.environ["FX_U7_FIXTURE_INPUTS"] = str(Path(inputs).resolve())
     sys.path[:0] = [str(ROOT / "src"), str(ROOT)]
     from tests.context_assembly import test_compilation_validation as fixture
     observed = {}
@@ -359,6 +365,9 @@ def acceptance_map() -> dict:
                                   "test_review_r1_refusals[split:frozen_clause_truncated]"],
                               "omitted dependencies": ["test_review_r1_refusals[initial:dependencies_omitted]"],
                               "operation_id required": ["test_review_r1_refusals[split:operation_id_absent]"],
+                              "result contract required under a contract original (R2)": [
+                                  "test_review_r2_result_without_contract_refused[split:result_contract_as_body]",
+                                  "test_review_r2_result_without_contract_refused[split:result_contract_absent]"],
                               "split predecessors": ["test_split_does_not_require_done_predecessors"],
                               "malformed input is a typed hold": ["test_malformed_split_is_a_typed_hold",
                                                                   "test_malformed_initial_is_a_typed_hold",

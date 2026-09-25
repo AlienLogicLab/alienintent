@@ -478,6 +478,21 @@ def truncate_frozen_clause(proposal):
     weaken_parent_b(proposal)
 
 
+def child_contract_as_body(proposal):
+    """C2 carries its clauses as an unvalidated body instead of a BiuContract (review R2, B1)."""
+    result = next(r for r in proposal["results"] if r["identity"] == C2)
+    del result["contract"]
+    result["body"] = "\n".join((AC_O2, KEY, VO_O1, EV_O1))
+
+
+def child_contract_absent(proposal):
+    """C2 carries no contract at all and is removed from the mapping (review R2, B1)."""
+    del next(r for r in proposal["results"] if r["identity"] == C2)["contract"]
+    for m in proposal["mapping"]:
+        m["maps_to"] = [d for d in m["maps_to"] if d != C2]
+    proposal["reverse"] = [r for r in proposal["reverse"] if r["destination"] != C2]
+
+
 def absent_operation_id(proposal):
     proposal["operation_id"] = ""
     for result in proposal["results"]:
@@ -632,6 +647,11 @@ SCENARIOS = {
     "initial:dependencies_omitted": (run_initial(lambda d: unit(d, B).pop("dependencies")), "EDGE_DISAGREEMENT",
                                      (f"{B}:{A}",)),
     "split:operation_id_absent": (run_split_b(absent_operation_id), "INVALID_CANDIDATE", ("operation_id",)),
+    # Review R2 repair: with a contract original, every result must carry a BiuContract.
+    "split:result_contract_as_body": (run_split_b(child_contract_as_body), "INCOMPLETE_CONTRACT",
+                                      (f"{C2}:contract",)),
+    "split:result_contract_absent": (run_split_b(child_contract_absent), "INCOMPLETE_CONTRACT",
+                                     (f"{C2}:contract",)),
 }
 
 
@@ -956,6 +976,13 @@ def test_review_r1_refusals(run, name):
         assert ("CLAUSE_NOT_VERBATIM", ("AC-O-1",)) in result.findings
     if name == "initial:unresolved_authority_via_contract":
         assert h.profile.ambiguity.show(result.affected_refs[0])[0].requirement_id == "SF-REQ-903"
+
+
+@pytest.mark.parametrize("name", ["split:result_contract_as_body", "split:result_contract_absent"])
+def test_review_r2_result_without_contract_refused(run, name):
+    """A contract original anchors bounds and declared edges; a result without a BiuContract cannot be admitted."""
+    result, _ = run(name)
+    assert_hold(result, name)
 
 
 def test_duplicate_edge_refused_in_any_order(tmp_path):

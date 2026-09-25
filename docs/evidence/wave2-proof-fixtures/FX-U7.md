@@ -98,7 +98,7 @@ authorizes release, split apply, Issue allocation or live operation.
    `node scripts/check.mjs all`.
 
 Controls K01–K34 are the packet's table. K35–K42 are repair controls added after the
-independent review (below). The mutation sites are in the runner's
+first independent review (R1), and K43 after the re-review (R2), both below. The mutation sites are in the runner's
 `CONTROLS`. Each control applies exactly one mutation, and each is judged on the named
 failing test IDs, or on the checker's `domain imports adapters` for K34. A control that
 does not discriminate, a count other than 1, or a missing observation is a HOLD.
@@ -137,6 +137,40 @@ Non-blocking repairs:
 - K23's mutation now genuinely accepts the redirect.
 - The D-1 test also inspects plain `import` statements.
 
+## Independent re-review (R2) and repair
+
+A second fresh read-only reviewer (Claude subagent, not the producer's context)
+confirmed that all four R1 blocking findings are repaired. It returned **REJECT**
+for one new blocking defect:
+
+- **B1.** Take a split whose original is a contract, and give one result no
+  `BiuContract` (either a plain `body`, or no contract and no mapping rows). That
+  result was admitted, and `bounds: WITHIN_ORIGINAL` was reported without ever checking
+  its budget, capabilities, scope or declared edges. Now every result under a contract
+  original must carry a contract; otherwise the hold is `INCOMPLETE_CONTRACT`
+  (`<unit>:contract`). Both variants were watched failing first
+  (`test_review_r2_result_without_contract_refused`). The discriminating control is K43.
+
+R2's non-blocking notes are recorded as residuals, not claimed as repaired:
+- `DOWNSTREAM_EDGES_SUPPLIED_BY_PROPOSAL`: a contract original carries no outgoing
+  edges, so downstream edges come from the proposal and are bound only by
+  `graph_revision` inside the authority digest.
+- `ELABORATION_APPROVAL_DIGEST_NOT_RECOMPUTED`: the validator does not recompute an
+  approval's decision digest from the decision file. The pinned file does match
+  `71c2fce2…`.
+- `CHILD_EXTENT_ACCEPTS_OBLIGATION_ID`: a child extent passes if it contains the
+  obligation ID. The integration parent must still hold every non-approved clause
+  byte-exactly.
+- `MALFORMED_INPUT_HOLD_REF_ORDER_DEPENDENT`: with more than one malformed edge, the
+  `INVALID_CANDIDATE` ref names the first one. Well-formed inputs are
+  permutation-independent (P23).
+
+A runner defect was also found in this invocation's first evidence run and repaired
+before the retained run. `FX_U7_FIXTURE_INPUTS` was passed as a relative path, while the
+controls run with the disposable copy as their working directory, so every control
+exited 4 at collection. The runner now resolves the path. That first run was discarded
+and was never retained.
+
 Additional residuals:
 - `EXPECTED_VERSIONS_APPLY_TIME_NOT_CHECKED`: `expected_versions` is carried but
   checked only at apply time (U8).
@@ -164,4 +198,5 @@ The following are not claimed:
 
 Residuals: `SPLIT_APPLY_AND_DERIVATION_NOT_PROVEN_U8_EXTENT`,
 `AC_06_08_TRACE_OWNERSHIP_UNASSIGNED_IN_DAG`, `BUDGET_ENVELOPE_PARTITION_UNPROVEN`,
-`ACTIVE_INVOCATION_FENCE_NOT_PROVEN_BY_FX_U7`, `SWF33_ELABORATION_BINDING_INTERPRETIVE`.
+`ACTIVE_INVOCATION_FENCE_NOT_PROVEN_BY_FX_U7`, `SWF33_ELABORATION_BINDING_INTERPRETIVE`,
+plus the R1/R2 residuals above.

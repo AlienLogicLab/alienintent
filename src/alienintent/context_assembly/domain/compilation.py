@@ -574,6 +574,11 @@ def _validate_split(proposal: object, original: object, authority_limits: Mappin
         findings.append(("LINEAGE_INCONSISTENT", _ordered(inconsistent)))
 
     contracts = _contracts({u: r["contract"] for u, r in results.items() if "contract" in r}, findings)
+    if anchor is not None:
+        # A contract original anchors bounds and declared edges, so every result must be a BiuContract.
+        uncontracted = [f"{u}:contract" for u, r in results.items() if "contract" not in r]
+        if uncontracted:
+            findings.append(("INCOMPLETE_CONTRACT", _ordered(uncontracted)))
 
     known = set(taken["active"]) | {i for i, s in stages.items() if s is not None}
     predicated = semantics == PREDICATED
