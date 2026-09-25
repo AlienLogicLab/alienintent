@@ -1146,6 +1146,11 @@ Requirements: SF-REQ-029 through SF-REQ-033.
 
 Outcome: real execution evidence produces quality/routing/context proposals without uncontrolled policy mutation.
 
+**Founder roadmap clarification (2026-09-25) — REVIEW-derived factory learning.**
+Proposal Intake [#109](https://github.com/AlienLogicLab/alienintent/issues/109) is placed in Wave 5 as an integration proposal across the existing learning owners, not as a new Product Requirement. Engineering Trajectory remains factual and is captured continuously; Quality Evidence derives measurements/findings while preserving fact-versus-interpretation separation; REVIEW is the canonical lifecycle point that interprets those records and emits durable candidate findings and factory-learning findings; generalizable learning remains proposal-gated and deterministic promotion remains owned by SF-REQ-050. A factory-learning-only REVIEW finding must not materially delay ACCEPT unless the same finding also demonstrates that the candidate, its evidence, or its acceptance obligations are materially invalid.
+
+This roadmap placement does not require useful REVIEW learning to wait until Wave 5. The REVIEW output contract should be exercised as soon as canonical REVIEW execution exists and may consume current Wave 2/3 trajectories and Quality Evidence. Wave 5 owns complete automation/productization, durable retrieval/recurrence analysis, governed learning-proposal integration and measurement of learning effectiveness. #109 grants no implementation/release authority by itself.
+
 ## Wave 6 — Productize installation and operations
 Requirements: SF-REQ-036, SF-REQ-037, advanced Control Plane UX.
 
