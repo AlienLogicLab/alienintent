@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/invocation_runtime/test_real_worker_outcome.py::test_process_success_without_a_durable_result_holds_the_transition"],"cwd":"/tmp/fx-k1-controls-jh8ni263","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.43s\n"}

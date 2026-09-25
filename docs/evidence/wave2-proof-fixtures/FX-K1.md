@@ -107,8 +107,19 @@ the fakes above. That run is superseded by the retained run and was not retained
 
 ## Retained run
 
-The `FX-K1/` directory holds the harness output for the invocation and clean candidate revision recorded in
-`FX-K1/execution-record.json`. The independent verdict is pending until a fresh VERIFIER runs.
+`FX-K1/` holds the run for invocation `AlienLogicLab/alienintent#113:PRODUCER:948a9918-30b9-433e-b80e-c324a4076e9b`.
+
+- Source: clean committed revision `db4585ace3d2df5eac535c8d4c4e80ceafe72191`. Code baseline `fc5c0a7`.
+- Result: exit 0, no holds.
+- Checks: the focused suite, `check_architecture.py --check all`, the architecture fitness tests and
+  `node scripts/check.mjs all` all exit 0.
+- Controls: all 4 discriminate (intact 0, fault 1, restored 0).
+- Full suite: 27 nodes fail (`tests/context_assembly/test_design_admission.py`,
+  `tests/evidence_learning/test_proof_planning.py`). The same 27 nodes fail at the code baseline in a detached
+  worktree, so they are recorded as the residual `PREEXISTING_BASELINE_FAILURES`, outside the K1 extent. This is
+  the same residual FX-C3 recorded.
+- Provider calls: 0. Tokens and cost: UNKNOWN.
+- Independent verdict: pending.
 
 ## Non-claims
 

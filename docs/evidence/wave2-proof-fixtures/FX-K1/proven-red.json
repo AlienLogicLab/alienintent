@@ -1,0 +1,165 @@
+{
+  "controls": [
+    {
+      "control": "readback_not_durable",
+      "material_class": "durable-correlated-readback-across-restart",
+      "file": "src/alienintent/invocation_runtime/application/real_worker.py",
+      "application_count": 1,
+      "source_digest": "sha256:4702be10f10ed7edea60807b7d3c9a3f89f6e87cc1baff312cb73dd803e2caf7",
+      "mutation": {
+        "remove": "        \"\"\"With a journal, answer only from durable, correlated evidence; this survives a restart.\"\"\"\n        if self._journal is None:\n",
+        "replace_with": "        \"\"\"With a journal, answer only from durable, correlated evidence; this survives a restart.\"\"\"\n        if True:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/invocation_runtime/test_real_worker_outcome.py::test_real_path_durably_retains_attributable_outcome_and_reads_it_back_after_restart"
+      ],
+      "assertions": [
+        "reopened.worker.read_back(invocation) == WorkerOutcome.success(candidate)"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:b456062d679140c664d50b4f6388a79a5116b1799d4052d0b9626c68bca3f42e",
+        "locator": "observations/b456062d679140c664d50b4f6388a79a5116b1799d4052d0b9626c68bca3f42e"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:a70717135d8c83712cfd860ea49e1d10ef81c2c43d6f6fc51da3f3d3bab00aa9",
+        "locator": "observations/a70717135d8c83712cfd860ea49e1d10ef81c2c43d6f6fc51da3f3d3bab00aa9"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:45c17458efbd9bf85e5a9d5c83248a96df6c62adc766a6569486b2784f86b347",
+        "locator": "observations/45c17458efbd9bf85e5a9d5c83248a96df6c62adc766a6569486b2784f86b347"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "transition_gate_removed",
+      "material_class": "process-success-without-durable-result-holds",
+      "file": "src/alienintent/execution_coordination/application/factory_coordinator.py",
+      "application_count": 1,
+      "source_digest": "sha256:48f46906bd8176fc3ac550396cf5b605a8b407a72b5a17c795887d6118dd57d7",
+      "mutation": {
+        "remove": "        return durable is not None and (durable.kind, durable.candidate) == (outcome.kind, outcome.candidate)\n",
+        "replace_with": "        return True\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/invocation_runtime/test_real_worker_outcome.py::test_process_success_without_a_durable_result_holds_the_transition"
+      ],
+      "assertions": [
+        "summary.dispatched == ()"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:2e71e76bb778e8c2e22c5c61586db1ca3ffd89b67c99d1f8c432583c34f04b3b",
+        "locator": "observations/2e71e76bb778e8c2e22c5c61586db1ca3ffd89b67c99d1f8c432583c34f04b3b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:b929b04eba732fa141c52cb753b0e74f0f788e4768a479b246c0219ca893ff93",
+        "locator": "observations/b929b04eba732fa141c52cb753b0e74f0f788e4768a479b246c0219ca893ff93"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:b1ab60dd630a61977aa3740dc8fa158eeac8225dd39fb47216edccd5a64ce527",
+        "locator": "observations/b1ab60dd630a61977aa3740dc8fa158eeac8225dd39fb47216edccd5a64ce527"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "role_correlation_unchecked",
+      "material_class": "wrong-correlation-holds",
+      "file": "src/alienintent/invocation_runtime/application/real_worker.py",
+      "application_count": 1,
+      "source_digest": "sha256:4702be10f10ed7edea60807b7d3c9a3f89f6e87cc1baff312cb73dd803e2caf7",
+      "mutation": {
+        "remove": "        if entry.get(\"work_identity\") != invocation.work_identity or entry.get(\"role\") != str(InvocationRole.PRODUCER):\n",
+        "replace_with": "        if entry.get(\"work_identity\") != invocation.work_identity:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/invocation_runtime/test_real_worker_outcome.py::test_miscorrelated_durable_result_holds_rather_than_being_accepted[role]"
+      ],
+      "assertions": [
+        "summary.dispatched == ()"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:facb9b12caa9a0ab428d8fea075fc47b7cd6d31043c913a004badbc389ca6e7b",
+        "locator": "observations/facb9b12caa9a0ab428d8fea075fc47b7cd6d31043c913a004badbc389ca6e7b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:0c9eecd8cdefae4a05a168dac233a6e0fa92d58927c0c39554e9eaa1c769d89b",
+        "locator": "observations/0c9eecd8cdefae4a05a168dac233a6e0fa92d58927c0c39554e9eaa1c769d89b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:290f090c1876f1c1cb2ff082a984f48a2c324cf36169b8b2233443589459f41e",
+        "locator": "observations/290f090c1876f1c1cb2ff082a984f48a2c324cf36169b8b2233443589459f41e"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "recovery_identity_replaced",
+      "material_class": "restart-preserves-identity-without-duplication",
+      "file": "src/alienintent/execution_coordination/application/factory_coordinator.py",
+      "application_count": 1,
+      "source_digest": "sha256:48f46906bd8176fc3ac550396cf5b605a8b407a72b5a17c795887d6118dd57d7",
+      "mutation": {
+        "remove": "            outcome = self._worker.read_back(WorkerInvocation(identity, reservation.owner, item.contract.content_digest))\n",
+        "replace_with": "            outcome = self._worker.read_back(WorkerInvocation(identity, f\"launch:{identity}:restarted\", item.contract.content_digest))\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/invocation_runtime/test_real_worker_outcome.py::test_restart_after_crash_reads_back_the_original_identity_without_duplicating_the_result"
+      ],
+      "assertions": [
+        "state.stage is LifecycleStage.DONE"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:c74eed1c03c4588fbd67b7105690258eda06b182d9786c794aad3e6495a23e68",
+        "locator": "observations/c74eed1c03c4588fbd67b7105690258eda06b182d9786c794aad3e6495a23e68"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:f6a509b360e66f990cfd29bb9d8323719554f687735e8d228c6519f574d73b50",
+        "locator": "observations/f6a509b360e66f990cfd29bb9d8323719554f687735e8d228c6519f574d73b50"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:17bb2237837758acf83bf579deaa4288fcc863a24ca6061477ea40215ad2f6d8",
+        "locator": "observations/17bb2237837758acf83bf579deaa4288fcc863a24ca6061477ea40215ad2f6d8"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}
