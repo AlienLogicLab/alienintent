@@ -12,6 +12,7 @@ import json
 import os
 from pathlib import Path
 import sys
+import time
 
 import pytest
 
@@ -35,10 +36,14 @@ SCRIPTS = {"cli": "agent-ready", "mcp": "agent-ready-mcp"}
 
 STAND_IN = r'''#!{python}
 # FIXTURE_EXECUTABLE_NOT_AGENT_READY: an FX-U10 stand-in speaking the pinned public contract; not Agent Ready.
-import hashlib, json, sys, time
+import hashlib, json, subprocess, sys, time
 from pathlib import Path
 HOME = Path(__file__).resolve().parent.parent
 behavior = json.loads((HOME / "behavior.json").read_text())
+if behavior.get("grandchild"):  # A provider-like descendant that outlives its parent unless its group is killed.
+    child = subprocess.Popen(["sleep", "300"], stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                             stderr=subprocess.DEVNULL)
+    (HOME / "grandchild.pid").write_text(str(child.pid))
 def log(entry):
     with (HOME / "calls.jsonl").open("a") as stream:
         stream.write(json.dumps(entry) + "\n")
@@ -57,6 +62,8 @@ for line in sys.stdin:
         send(json.dumps({"jsonrpc": "2.0", "id": message["id"], "result": {
             "protocolVersion": message["params"]["protocolVersion"], "capabilities": {"tools": {}},
             "serverInfo": {"name": "agent-ready", "version": "1.29.1"}}}))
+        if behavior.get("stall_after_initialize"):
+            time.sleep(3600)  # Wedged: never reads its input again.
     elif message.get("method") == "tools/call":
         arguments = message["params"]["arguments"]
         log({"name": message["params"]["name"], "keys": sorted(arguments), "provider": arguments.get("provider"),
@@ -279,6 +286,46 @@ def test_timeout_is_an_attempt_failure(compose, transport):
     result = c.h.service.assess(candidate(c.vector), PLAN)
     [entry] = c.h.consumer.history(X)
     assert result == Hold(ATTEMPT_FAILURE, X, entry["attempt_id"], TIMEOUT)
+
+
+def test_wedged_mcp_server_cannot_outlive_the_deadline(compose):
+    """A server that stops reading must not block an oversized request write past the deadline."""
+    c = compose("mcp", {"stall_after_initialize": True})
+    c.h.service.producer = compose_producer(c.h.profile.readiness_binding, "claude", timeout_s=2)
+    started = time.monotonic()
+    result = c.h.service.assess(candidate(c.vector, text="# WO-990900\n\n" + "\u00e9" * 100000), PLAN)
+    [entry] = c.h.consumer.history(X)
+    assert result == Hold(ATTEMPT_FAILURE, X, entry["attempt_id"], TIMEOUT)
+    assert time.monotonic() - started < 20
+
+
+def _alive(pid: int) -> bool:
+    try:
+        os.kill(pid, 0)
+    except ProcessLookupError:
+        return False
+    return Path(f"/proc/{pid}/stat").exists() and Path(f"/proc/{pid}/stat").read_text().split()[2] != "Z"
+
+
+@pytest.mark.parametrize("transport", ["cli", "mcp"])
+def test_timeout_leaves_no_descendant_running(compose, transport):
+    behavior = (cli(ready_bytes(), sleep=30) if transport == "cli"
+                else mcp(envelope(record("ready")["assessment"]), sleep=30))
+    c = compose(transport, {**behavior, "grandchild": True})
+    c.h.service.producer = compose_producer(c.h.profile.readiness_binding, "claude", timeout_s=2)
+    result = c.h.service.assess(candidate(c.vector), PLAN)
+    assert isinstance(result, Hold) and result.detail == TIMEOUT
+    pid = int((c.home / "grandchild.pid").read_text())
+    try:
+        deadline = time.monotonic() + 5
+        while _alive(pid) and time.monotonic() < deadline:
+            time.sleep(0.1)
+        assert not _alive(pid)
+    finally:
+        try:
+            os.kill(pid, 9)  # Never leave the probe's own descendant behind, whatever the verdict.
+        except ProcessLookupError:
+            pass
 
 
 def test_json_rpc_wrapper_parity_and_malformed_wrappers():

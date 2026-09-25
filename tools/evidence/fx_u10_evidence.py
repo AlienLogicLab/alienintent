@@ -49,7 +49,7 @@ PINNED = (("contract", "docs/work-units/wave2/WO-220210.md",
            "373b2faf3543a401189744d093724153374470a741e8ccbc0b28ded7b1fce9b1"))
 LABELS = ["FIXTURE_EXECUTABLE_NOT_AGENT_READY", "NATIVE_AGENT_READY_OPT_IN", "PUBLIC_CONTRACT_PINNED_BY_FIXTURE",
           "JSON_RPC_WRAPPER_PRESERVED", "SDK_VERSION_NOT_PRODUCT_VERSION"]
-RESIDUALS = ["CONTRACT_VERSION_LIMITATION_AGENT_READY_1", "MODEL_PROVENANCE_UNKNOWN",
+RESIDUALS = ["JSON_RPC_ID_CORRELATED_BY_ADAPTER_NOT_DOMAIN", "CONTRACT_VERSION_LIMITATION_AGENT_READY_1", "MODEL_PROVENANCE_UNKNOWN",
              "PROVIDER_EVIDENCE_CODEX_ONLY_UNTRUSTED", "INJECTED_FIXTURE_PRODUCER_PATH_RETAINED_FOR_U9",
              "UNKNOWN_INVOCATION_COMPLETION_HELD", "OPERATOR_SURFACE_NOT_BUILT"]
 
@@ -81,6 +81,11 @@ CONTROLS = (
      '            self.store.commit(self.profile, aggregate, self.store.read_state(self.profile, aggregate)[0], '
      '{"released": identity})\n',
      (node("test_transport_ready_is_eligibility_only[cli]"), node("test_transport_ready_is_eligibility_only[mcp]"))),
+    ("C5-cli_session_not_isolated", "repair R1-4: a timed-out attempt leaves no provider descendant running",
+     PRODUCER,
+     "        os.killpg(process.pid, signal.SIGKILL)\n",
+     "        process.kill()\n",
+     (node("test_timeout_leaves_no_descendant_running[cli]"),)),
 )
 
 
@@ -212,7 +217,7 @@ def run(output: Path, invocation: str, agent_ready_bin: Path | None, native_asse
     controls = []
     with tempfile.TemporaryDirectory(prefix="fx-u10-controls-") as temporary:
         copy = Path(temporary)
-        for name in ("src", "tests"):
+        for name in ("src", "tests", "tools/fitness"):
             shutil.copytree(ROOT / name, copy / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         for path in (*COPIED, CONFORMANCE):
             (copy / path).parent.mkdir(parents=True, exist_ok=True)

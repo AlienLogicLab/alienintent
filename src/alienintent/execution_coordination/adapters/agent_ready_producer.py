@@ -7,13 +7,17 @@ response answers, the digest of the text actually submitted, the arguments or to
 custody is correlated by the process launched for the attempt; MCP custody names the JSON-RPC id the response
 itself carries, so a response to another request cannot be attributed to this attempt. Input limits are the
 product's: text is never truncated here. Syntax, tool name and limits are pinned by the FX-U10 conformance fixture.
+Each launch gets its own process group, killed at the deadline and on return, so no provider descendant outlives
+its attempt.
 """
 from __future__ import annotations
 
 from datetime import datetime, timezone
 import json
+import os
 from pathlib import Path
 import queue
+import signal
 import subprocess
 from tempfile import TemporaryDirectory
 import threading
@@ -31,6 +35,14 @@ CLIENT_INFO = {"name": "alienintent-readiness", "version": "1"}
 
 def _now() -> str:
     return datetime.now(timezone.utc).isoformat()
+
+
+def _kill_group(process: subprocess.Popen) -> None:
+    """Kill the launched process and every descendant still in its session's process group."""
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except (ProcessLookupError, PermissionError):
+        pass
 
 
 class _Producer(ReadinessAssessment):
@@ -59,13 +71,20 @@ class AgentReadyCliAssessment(_Producer, ReadinessAssessment):
             arguments = (self.binding.executable, "assess", str(source), "--provider", self.provider, "--json")
             raw, status, timed_out = None, None, False
             try:
-                completed = subprocess.run(arguments, capture_output=True, env=self._environment,
-                                           timeout=self.timeout_s, cwd=directory)
-                raw, status = completed.stdout, completed.returncode
-            except subprocess.TimeoutExpired as expired:
-                raw, timed_out = expired.stdout, True
+                process = subprocess.Popen(arguments, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+                                           env=self._environment, cwd=directory, start_new_session=True)
             except OSError:
-                pass  # No process and no output: an attempt failure with nothing to attribute.
+                process = None  # No process and no output: an attempt failure with nothing to attribute.
+            if process is not None:
+                try:
+                    raw, _ = process.communicate(timeout=self.timeout_s)
+                    status = process.returncode
+                except subprocess.TimeoutExpired:
+                    timed_out = True
+                    _kill_group(process)
+                    raw, _ = process.communicate()  # Partial output only; a timeout is never a result.
+                finally:
+                    _kill_group(process)
         return ProducerResponse(raw, status, timed_out, DIRECT,
                                 self._custody(unit.attempt_id, submitted, arguments, started))
 
@@ -89,12 +108,17 @@ class AgentReadyMcpAssessment(_Producer, ReadinessAssessment):
         raw, answered, sdk_version, timed_out = None, "", None, False
         try:
             process = subprocess.Popen([self.binding.executable], stdin=subprocess.PIPE, stdout=subprocess.PIPE,
-                                       stderr=subprocess.DEVNULL, env=self._environment)
+                                       stderr=subprocess.DEVNULL, env=self._environment, start_new_session=True)
         except OSError:
             return ProducerResponse(None, None, False, MCP, self._custody("", submitted, arguments, started))
         lines: queue.Queue = queue.Queue()
         threading.Thread(target=self._pump, args=(process, lines), daemon=True).start()
         deadline = time.monotonic() + self.timeout_s
+        expired = threading.Event()
+        # A write to a server that stopped reading blocks; the watchdog ends the session at the deadline instead.
+        watchdog = threading.Timer(self.timeout_s, lambda: (expired.set(), _kill_group(process)))
+        watchdog.daemon = True
+        watchdog.start()
         try:
             initialize = {"jsonrpc": "2.0", "id": "initialize:" + unit.attempt_id, "method": "initialize",
                           "params": {"protocolVersion": MCP_PROTOCOL_VERSION, "capabilities": {},
@@ -118,14 +142,19 @@ class AgentReadyMcpAssessment(_Producer, ReadinessAssessment):
         except OSError:
             pass  # The server closed its input; whatever it answered is already held above.
         finally:
+            watchdog.cancel()
             self._stop(process)
+        timed_out = timed_out or (expired.is_set() and raw is None)  # A complete answer that raced it stands.
         return ProducerResponse(raw, None, timed_out, MCP,
                                 self._custody(answered, submitted, arguments, started, sdk_version))
 
     @staticmethod
     def _pump(process: subprocess.Popen, lines: queue.Queue) -> None:
-        for line in process.stdout:
-            lines.put(line)
+        try:
+            for line in process.stdout:
+                lines.put(line)
+        except (OSError, ValueError):
+            pass  # The session was ended and its output closed.
         lines.put(None)
 
     @staticmethod
@@ -164,5 +193,7 @@ class AgentReadyMcpAssessment(_Producer, ReadinessAssessment):
         try:
             process.wait(timeout=5)
         except subprocess.TimeoutExpired:
-            process.kill()
-            process.wait()
+            pass
+        _kill_group(process)
+        process.wait()
+        process.stdout.close()
