@@ -47,11 +47,48 @@ function authority(overrides = {}) {
   return { subject: new GitHubAuthority({ workerLogins: { PRODUCER: "producer-bot", VERIFIER: "verifier-bot" }, gh, owner: "ExampleOrg", projectNumber: 1, repository: "ExampleOrg/sample-project", ...overrides }), calls };
 }
 
+
+test("listItems paginates the complete Project before returning authority", () => {
+  const calls = [];
+  const item = (id, issue) => ({ id, content: { __typename: "Issue", number: issue, repository: { nameWithOwner: "ExampleOrg/sample-project" } },
+    fieldValues: { pageInfo: { hasNextPage: false }, nodes: [{ name: "Implement", field: { name: "Status" } }] } });
+  const pages = [
+    { data: { organization: { projectV2: { items: { pageInfo: { hasNextPage: true, endCursor: "cursor-1" }, nodes: [item("PVTI_1", 301)] } } } } },
+    { data: { organization: { projectV2: { items: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [item("PVTI_2", 302)] } } } } },
+  ];
+  const { subject } = authority({ gh: args => { calls.push(args); return JSON.stringify(pages.shift()); } });
+  assert.deepEqual(subject.listItems().map(value => value.issue), [301, 302]);
+  assert.equal(calls.length, 2);
+  assert.equal(calls[0].some(arg => arg.startsWith("cursor=")), false);
+  assert.ok(calls[1].includes("cursor=cursor-1"));
+});
+
+for (const failure of ["missing cursor", "repeated cursor", "duplicate item"]) {
+  test(`listItems rejects ${failure} while paginating`, () => {
+    const item = id => ({ id, content: { __typename: "Issue", number: 301, repository: { nameWithOwner: "ExampleOrg/sample-project" } },
+      fieldValues: { pageInfo: { hasNextPage: false }, nodes: [{ name: "Implement", field: { name: "Status" } }] } });
+    let pages;
+    if (failure === "missing cursor") pages = [
+      { data: { organization: { projectV2: { items: { pageInfo: { hasNextPage: true, endCursor: null }, nodes: [item("PVTI_1")] } } } } },
+    ];
+    else if (failure === "repeated cursor") pages = [
+      { data: { organization: { projectV2: { items: { pageInfo: { hasNextPage: true, endCursor: "same" }, nodes: [item("PVTI_1")] } } } } },
+      { data: { organization: { projectV2: { items: { pageInfo: { hasNextPage: true, endCursor: "same" }, nodes: [item("PVTI_2")] } } } } },
+    ];
+    else pages = [
+      { data: { organization: { projectV2: { items: { pageInfo: { hasNextPage: true, endCursor: "next" }, nodes: [item("PVTI_1")] } } } } },
+      { data: { organization: { projectV2: { items: { pageInfo: { hasNextPage: false, endCursor: null }, nodes: [item("PVTI_1")] } } } } },
+    ];
+    const { subject } = authority({ gh: () => JSON.stringify(pages.shift()) });
+    assert.throws(() => subject.listItems(), /unavailable or incomplete/);
+  });
+}
+
 test("maps organization Project V2 Issue items through GraphQL while preserving status and item ID", () => {
   const { subject, calls } = authority();
   assert.deepEqual(subject.listItems(), [{ repository: "ExampleOrg/sample-project", issue: 301, itemId: "PVTI_1", status: "VERIFY", dependencies: [], founderException: false }]);
   assert.equal(calls.length, 1);
-  assert.equal((calls[0][3].match(/pageInfo \{ hasNextPage \}/g) ?? []).length, 2);
+  assert.equal((calls[0][3].match(/pageInfo \{ hasNextPage/g) ?? []).length, 2);
   assert.equal(calls[0][0], "api"); assert.equal(calls[0][1], "graphql");
   assert.equal(calls.some((args) => args[0] === "project" && args[1] === "item-list"), false);
   assert.match(calls[0].find((argument) => argument.startsWith("query=")), /organization\(login: \$owner\).*projectV2\(number: \$number\)/s);

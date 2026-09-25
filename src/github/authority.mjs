@@ -45,13 +45,32 @@ export class GitHubAuthority {
   }
 
   listItems() {
-    const query = "query($owner: String!, $number: Int!) { organization(login: $owner) { projectV2(number: $number) { items(first: 100) { pageInfo { hasNextPage } nodes { id content { __typename ... on Issue { number repository { nameWithOwner } } } fieldValues(first: 100) { pageInfo { hasNextPage } nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2SingleSelectField { name } } } } } } } } } }";
-    const response = JSON.parse(this.gh(["api", "graphql", "-f", `query=${query}`, "-F", `owner=${this.owner}`, "-F", `number=${this.projectNumber}`]));
-    const connection = response.data?.organization?.projectV2?.items;
-    if (response.errors?.length || !Array.isArray(connection?.nodes) || connection.pageInfo?.hasNextPage !== false) {
-      throw new Error("Project items are unavailable or incomplete");
+    const query = "query($owner: String!, $number: Int!, $cursor: String) { organization(login: $owner) { projectV2(number: $number) { items(first: 100, after: $cursor) { pageInfo { hasNextPage endCursor } nodes { id content { __typename ... on Issue { number repository { nameWithOwner } } } fieldValues(first: 100) { pageInfo { hasNextPage } nodes { ... on ProjectV2ItemFieldSingleSelectValue { name field { ... on ProjectV2SingleSelectField { name } } } } } } } } } }";
+    const nodes = [];
+    const seenIds = new Set();
+    const seenCursors = new Set();
+    let cursor = null;
+    while (true) {
+      const args = ["api", "graphql", "-f", `query=${query}`, "-F", `owner=${this.owner}`, "-F", `number=${this.projectNumber}`];
+      if (cursor !== null) args.push("-f", `cursor=${cursor}`);
+      const response = JSON.parse(this.gh(args));
+      const connection = response.data?.organization?.projectV2?.items;
+      if (response.errors?.length || !Array.isArray(connection?.nodes) || !connection.pageInfo
+          || typeof connection.pageInfo.hasNextPage !== "boolean") {
+        throw new Error("Project items are unavailable or incomplete");
+      }
+      for (const item of connection.nodes) {
+        if (typeof item?.id !== "string" || seenIds.has(item.id)) throw new Error("Project items are unavailable or incomplete");
+        seenIds.add(item.id);
+        nodes.push(item);
+      }
+      if (connection.pageInfo.hasNextPage === false) break;
+      const next = connection.pageInfo.endCursor;
+      if (typeof next !== "string" || !next || seenCursors.has(next)) throw new Error("Project items are unavailable or incomplete");
+      seenCursors.add(next);
+      cursor = next;
     }
-    const items = connection.nodes.filter((item) => item.content?.__typename === "Issue" && item.content.repository?.nameWithOwner === this.repository);
+    const items = nodes.filter((item) => item.content?.__typename === "Issue" && item.content.repository?.nameWithOwner === this.repository);
     if (items.some(item => !Array.isArray(item.fieldValues?.nodes) || item.fieldValues.pageInfo?.hasNextPage !== false)) {
       throw new Error("Project item field values are unavailable or incomplete");
     }
