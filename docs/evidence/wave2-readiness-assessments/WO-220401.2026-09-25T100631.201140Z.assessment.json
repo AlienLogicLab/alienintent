@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Under existing Execution Coordination and Invocation Runtime ownership, make the non-scripted (real) WorkerProvider path durably retain and read back attributable role/invocation/attempt/contract/candidate outcome evidence across restart. Missing or miscorrelated durable results must hold the transition even when the worker process succeeds. The work stays within the common WorkerProvider/WorkerOutcome contract and adds no sidecar state owner. The seam is what K2's canonical multi-role orchestration will later consume.",
+    "implementation_unknowns": [
+      "Whether the current WorkerOutcome type can carry every required correlation observable (role, invocation, attempt, contract digest, exact candidate SHA) or whether revised Design Verification will show an extension is needed. If an interface change is needed, the document routes it to the named owner rather than resolving it locally.",
+      "Which existing invocation/effect/execution evidence records, and which fields, will hold durable correlation, and how readback after restart finds them without duplicating the result or effect.",
+      "Where in the current kernel's success-collapse path the 'hold on missing/miscorrelated result' check is enforced, given that K2, not K1, removes the success-collapse fallback.",
+      "How to exercise the real WorkerProvider path offline (for example a composed Real Worker with a local or fake provider transport) while keeping zero outbound network and not replacing the production lifecycle with a mocked one.",
+      "How the WO-220101 disposable SQLite/Git fixture and the WO-220102 admission/verdict bridge are reused in fixture FX-K1."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The producer might extend WorkerOutcome or add a correlation store without the required Design Verification proof, creating an unauthorized interface or state-owner change.",
+      "The hold-on-missing-result behavior could be undermined by the existing success-collapse fallback, which K1 must not remove, so a process exit could still advance the lifecycle. Tests must show the hold at the transition, not only at the adapter.",
+      "Offline tests could drift into a scripted or mocked lifecycle, or use the Deterministic Test Worker in place of the real path, falsely satisfying acceptance.",
+      "Restart readback could duplicate effects or records if idempotency keys are not tied to invocation/attempt identity.",
+      "Scope creep into K2 orchestration (the VERIFY/IMPLEMENT loop, independent verifier evaluation) under the same change.",
+      "Verifier capacity (Codex) may be unavailable at execution time. The document requires a safe hold rather than substitution."
+    ],
+    "next_action": "Record this assessment as READY eligibility for WO-220401 at the stated contract digest and baseline 308188c. Then obtain separate release authorization before any IMPLEMENT phase. The producer's first step on release should be Design Verification of WorkerOutcome's capacity to carry the required correlation fields, escalating any needed interface extension to its owner before coding.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that the material owner decisions are stated as already fixed:\n- Ownership boundaries (FD-01/FD-02).\n- No new state owner.\n- Fail-closed hold semantics.\n- The K1/K2 boundary.\n- The shared worker port.\n- Escalation paths for interface changes.\nNo product, compatibility or policy question remains that the producer would need to guess. The work is one decision center, the real outcome readback seam, and its acceptance classes are tightly coupled, so splitting would create microtasks rather than independently rejectable units. Dependencies are reported DONE; this is not independently verified. No required artifact or authority is stated as unavailable, and the conditional contract extension has a default plus an escalation route, so HOLD is not warranted. Remaining uncertainties (field placement, hold enforcement point, offline real-path composition) are engineering research. Rework should stay local to the WorkerProvider/real worker adapter and the correlation/readback code in existing evidence records.",
+    "semantic_split_recommendation": [],
+    "summary": "WO-220401 (K1) is a single cohesive seam: durable, correlated, restart-safe outcome readback on the real WorkerProvider path, with fail-closed holding on missing or miscorrelated results. The owner decisions are stated as fixed: ownership under FD-01/FD-02, no RoleOutcomeRecord by default, no test-specific lifecycle shortcuts, K2 owns success-collapse removal, and extending the contract only if Design Verification proves it necessary, with interface changes escalated. Both dependencies are reported DONE. The proof plan names four failure classes, existing proof surfaces and a bounded command. Remaining uncertainty is engineering research, not owner intent. The document says release/IMPLEMENT is not authorized, so READY here means handoff eligibility only.",
+    "verification_assessment": "Acceptance is observable through four named failure classes, each suited to one discriminating negative control:\n1. Correlated durable retain/readback across restart.\n2. Process success without a durable result holds.\n3. Wrong role/invocation/candidate correlation holds.\n4. Restart preserves identity without duplicating the result or effect.\nThese are checkable locally through composed tests on the real provider path, followed by architecture checks and a terminal full regression. A single independent verdict on the exact published candidate SHA is meaningful, because all four classes test one seam under one contract. Verification must confirm three things: tests go through production composition rather than a parallel mocked lifecycle, no RoleOutcomeRecord or sidecar owner was introduced, and intact/fault/restored evidence is retained for each selected control. The listed initial command covers existing surfaces only; the verifier should expect new focused tests for the real path."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T10:06:58.934967+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10941,
+    "input_sha256": "f45d0024238d4dd54d7c7074ec6043256bacaa66978a2b6484f6e636a05df93d",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-y8u0k7x8/WO-220401.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T10:06:31.201140+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220401"
+}
