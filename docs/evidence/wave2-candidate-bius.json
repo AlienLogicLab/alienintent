@@ -4332,8 +4332,12 @@
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/2",
           "requirement_id": "SF-REQ-013",
           "decisions": [
-            "Supersedes the mandatory external-allocation design choice. On current evidence SF-REQ-013 must derive initial decomposition from requirements/design; return the allocation-source question and constraints to SPECIFY via R1-GAP-013-ALLOCATION. A validator-only implementation does not satisfy this requirement. No new planner owner or requirement is invented.",
-            "SF-REQ-013 pending split/replan amendment (POSTW1-DECIDE-005A/-007A) is expressly excluded, not a dependency of initial compilation."
+            "R1-GAP-013-ALLOCATION is resolved by the SF-REQ-013 amendment: compiler-derived initial decomposition and obligation mapping; mandatory external hand-authored mapping is rejected. A validator-only implementation does not satisfy this requirement. No new planner owner, requirement, priority or Wave.",
+            "SPLIT-G1 is resolved by the same amendment: SF-REQ-013 owns Split Transactions. Phase 5 is the named candidate design; SWF-33 is the worked retained-Integration-Parent precedent. Neither reference approves every proposed mechanism or grants blanket mutation authority.",
+            "Design Verification must ask whether an authoritative implementation already exists in the configured project / Alien Logic Lab / tool ecosystem before implementing, emulating or prompting around each capability. Consume its supported interface unless explicit authority records unsuitability. Record and check producer identity and version; matching output shape is not producer proof. Existing BiuContract, OperationalStore and EvidenceRepository boundaries are reused; Agent Ready is consumed through SF-REQ-015, never copied or replaced.",
+            "Requirements / Planning is the semantic owner under Architecture Authority A2. The legacy bounded_context value and proposed context_assembly paths are retained as implementation-location references only; their mapping to the semantic context remains Design Contract work under FD-02 refinement, not decided in this re-SPECIFY session and not implementation-local freedom.",
+            "Reconcile Phase 5 as follows: carry forward as candidate mechanisms the retained Integration Parent, frozen/reverse mapping, conservative identity-preserving graph rules, fixed-width grammar/reservations, exact-payload authorization, atomic apply/readback and recovery. Preserve incoming prerequisites on parent and copy to each child with identical predicates; preserve old downstream parent edges; add child -> parent DONE edges and only explicitly authorized inter-child edges. No transitive pruning or judgment redirection. Retain original integration proof and budget partition; a new prerequisite must have an existing requirement owner and exact planning authority. Review these mechanisms independently; this revision records no implementation or approval verdict.",
+            "Do not carry forward Phase 5 ownership-gap or bootstrap assessment semantics as current authority. Historical bootstrap-assessor BLOCKED -> SPLIT_RECOMMENDED -> READY is retained only as history; current Agent Ready dispositions are exactly READY / CLARIFY / SPLIT / HOLD. Hold release during replan; do not cancel active invocations or reopen DONE work. Candidate external projection uses WorkManagement, versioned delivery/readback and configured bindings; no new fields/statuses or live writes are authorized. Missing required projection consistency holds affected release, not unrelated work."
           ],
           "binding_sections": [
             "ports",
@@ -4348,7 +4352,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -4357,8 +4361,8 @@
         }
       ],
       "scope": {
-        "dag_scope": "Planning ownership only. Product authority must resolve derivation versus explicitly owned external producer/interface; if external producer is chosen, revise this DAG before implementation.",
-        "extent": "After SPECIFY resolves allocation mechanism and identity constraints, derive initial candidate from exact requirements/design/proof under that reviewed design; cover every AC with explicit extents and complete BiuContract fields. No supplied-allocation validator may masquerade as compiler. Existing decomposition remains immutable.",
+        "dag_scope": "SF-REQ-013's binding amendment assigns compiler-derived initial decomposition to Requirements / Planning. U8 derives the initial candidate from exact requirements, reviewed design and proof obligations; no external allocation owner or hand-authored allocation input is required.",
+        "extent": "Derive the initial BiuContract candidate deterministically from exact requirements/design/proof under the SF-REQ-013 amendment. Cover every acceptance obligation with explicit extent, preserve identity/graph constraints, and reject validator-only behavior that merely checks a supplied allocation. Existing decomposition remains immutable.",
         "node_kind": "planned_prerequisite",
         "owns_capabilities": [
           "initial_compilation"
@@ -4378,19 +4382,17 @@
       "dependency_predicates": {
         "WO-220207": {
           "dag_node": "U7",
-          "completion_predicate": "Reject incomplete contract, uncovered obligation, cyclic/missing/predicate-free edge, stale design and rewrite of existing decomposition. With allocation gap open, composed initial compile returns AUTHORITY_GAP_HOLD and emits no successful candidate. Hand-authored allocation fixtures prove validation only.",
+          "completion_predicate": "Reject incomplete contract, uncovered requirement/acceptance/verification/evidence obligation, cyclic/missing/predicate-free edge, stale design or unauthorized/nonconserving replan. Validate deterministic identity rewrites, preserved predicates, lineage and immutable stale-assessment history. A hand-authored mapping fixture proves validation only; U8 must derive initial decomposition.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220206": {
           "dag_node": "U6",
-          "completion_predicate": "Only a pinned Founder disposition and independently reviewed scoped design can enable affected design-conformity claims. Execute the resulting approved probes; if authority declines extension, record that scoped disposition without inventing an edge rule. Never enforce withdrawn_r1_proposal or certify source from observed_edges.",
+          "completion_predicate": "Use the 2026-09-25 Founder coupling disposition. Existing architecture checks plus scoped cycle/domain-import/persistence ownership checks run before fresh independent design review. A materially forbidden dependency or incompatible interface fails mechanically; a conforming fixture records those results and a separate attributable independent review. Do not enforce withdrawn_r1_proposal.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         }
       },
       "acceptance_criteria": [
-        "After SPECIFY resolves allocation mechanism and identity constraints, derive initial candidate from exact requirements/design/proof under that reviewed design; cover every AC with explicit extents and complete BiuContract fields. No supplied-allocation validator may masquerade as compiler. Existing decomposition remains immutable.",
-        "SF-REQ-013-AC-01: For a specified fixture with named requirements and an approved design, each emitted BIU links its exact requirement and design revisions and carries every SF-REQ-010 contract field; an omitted boundary or evidence obligation blocks output admission.",
-        "SF-REQ-013-AC-02: A coverage report maps each input acceptance/verification obligation to one or more explicit BIU extents. An unmapped obligation blocks compilation acceptance; mapping alone never claims satisfaction."
+        "Derive the initial BiuContract candidate deterministically from exact requirements/design/proof under the SF-REQ-013 amendment. Cover every acceptance obligation with explicit extent, preserve identity/graph constraints, and reject validator-only behavior that merely checks a supplied allocation. Existing decomposition remains immutable."
       ],
       "acceptance_ids": [
         "SF-REQ-013-AC-01",
@@ -4432,7 +4434,7 @@
           "owner_node": "U8",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "After SPECIFY resolves allocation mechanism and identity constraints, derive initial candidate from exact requirements/design/proof under that reviewed design; cover every AC with explicit extents and complete BiuContract fields. No supplied-allocation validator may masquerade as compiler. Existing decomposition remains immutable.",
+          "scenario": "Derive the initial BiuContract candidate deterministically from exact requirements/design/proof under the SF-REQ-013 amendment. Cover every acceptance obligation with explicit extent, preserve identity/graph constraints, and reject validator-only behavior that merely checks a supplied allocation. Existing decomposition remains immutable.",
           "acceptance_ids": [
             "SF-REQ-013-AC-01",
             "SF-REQ-013-AC-02"
@@ -4462,7 +4464,7 @@
             "fixture_ref": "FX-U8",
             "id": "013-graph-coverage",
             "layer": "python_unit_integration",
-            "rule": "BiuContract validation plus total obligation coverage and deterministic DAG check precede proposal admission. With R1-GAP-013-ALLOCATION open, composed compilation must return AUTHORITY_GAP_HOLD and no candidate; graph validators remain separately testable.",
+            "rule": "BiuContract validation plus total obligation coverage and deterministic DAG check precede proposal admission. Initial compilation is compiler-derived under the settled SF-REQ-013 amendment; graph validators remain separately testable. Any unmapped or invented obligation holds rather than producing a candidate.",
             "proven_red_obligation": "Drop an obligation, edge endpoint or fixed decision independently; each named refusal must fire. Bypass the authority-gap gate with a complete hand-authored allocation and require the no-candidate assertion to fail.",
             "phase3_promotion": null,
             "status": "DESIGNED_NOT_IMPLEMENTED",
@@ -4480,7 +4482,7 @@
       "architecture_constraints": [
         "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
         "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
-        "Planning ownership only. Product authority must resolve derivation versus explicitly owned external producer/interface; if external producer is chosen, revise this DAG before implementation."
+        "Requirements / Planning is the semantic owner under Architecture Authority A2; consume existing BiuContract/OperationalStore/EvidenceRepository/Agent Ready interfaces rather than duplicating them."
       ],
       "capabilities": {
         "needs": [
@@ -4543,8 +4545,8 @@
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
-        "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
-        "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+        "Hold on incomplete predecessor proof, inability to map a frozen obligation without invention, or an actual conflict in current SF-REQ-013 authority.",
+        "Do not reopen the resolved allocation-source or withdrawn edge-policy questions."
       ],
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
@@ -5138,7 +5140,9 @@
           "decisions": [
             "Compilation accepts only exact unambiguous authorized revisions, never the inventory status alone.",
             "No requirements-authoring or planning LLM is introduced: this is import/projection under the selected factory-plan SF-REQ-011.",
-            "identifier_contract fixes grammar, token capture, namespace validation and typed failures identically across all three prose forms. Grammar changes require reviewed design revision; identity is never inferred from sorted position."
+            "identifier_contract fixes grammar, token capture, namespace validation and typed failures identically across all three prose forms. Grammar changes require reviewed design revision; identity is never inferred from sorted position.",
+            "Design Verification must ask whether an authoritative implementation already exists in the configured project / Alien Logic Lab / tool ecosystem before implementing, emulating or prompting around each capability. Consume its supported interface unless explicit authority records unsuitability. Record and check producer identity and version; matching output shape is not producer proof. Existing BiuContract, OperationalStore and EvidenceRepository boundaries are reused; Agent Ready is consumed through SF-REQ-015, never copied or replaced.",
+            "Requirements / Planning is the semantic owner under Architecture Authority A2. The legacy bounded_context value and proposed context_assembly paths are retained as implementation-location references only; their mapping to the semantic context remains Design Contract work under FD-02 refinement, not decided in this re-SPECIFY session and not implementation-local freedom."
           ],
           "binding_sections": [
             "ports",
@@ -5153,7 +5157,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/1",
@@ -5174,14 +5178,18 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/2",
           "requirement_id": "SF-REQ-013",
           "decisions": [
-            "Supersedes the mandatory external-allocation design choice. On current evidence SF-REQ-013 must derive initial decomposition from requirements/design; return the allocation-source question and constraints to SPECIFY via R1-GAP-013-ALLOCATION. A validator-only implementation does not satisfy this requirement. No new planner owner or requirement is invented.",
-            "SF-REQ-013 pending split/replan amendment (POSTW1-DECIDE-005A/-007A) is expressly excluded, not a dependency of initial compilation."
+            "R1-GAP-013-ALLOCATION is resolved by the SF-REQ-013 amendment: compiler-derived initial decomposition and obligation mapping; mandatory external hand-authored mapping is rejected. A validator-only implementation does not satisfy this requirement. No new planner owner, requirement, priority or Wave.",
+            "SPLIT-G1 is resolved by the same amendment: SF-REQ-013 owns Split Transactions. Phase 5 is the named candidate design; SWF-33 is the worked retained-Integration-Parent precedent. Neither reference approves every proposed mechanism or grants blanket mutation authority.",
+            "Design Verification must ask whether an authoritative implementation already exists in the configured project / Alien Logic Lab / tool ecosystem before implementing, emulating or prompting around each capability. Consume its supported interface unless explicit authority records unsuitability. Record and check producer identity and version; matching output shape is not producer proof. Existing BiuContract, OperationalStore and EvidenceRepository boundaries are reused; Agent Ready is consumed through SF-REQ-015, never copied or replaced.",
+            "Requirements / Planning is the semantic owner under Architecture Authority A2. The legacy bounded_context value and proposed context_assembly paths are retained as implementation-location references only; their mapping to the semantic context remains Design Contract work under FD-02 refinement, not decided in this re-SPECIFY session and not implementation-local freedom.",
+            "Reconcile Phase 5 as follows: carry forward as candidate mechanisms the retained Integration Parent, frozen/reverse mapping, conservative identity-preserving graph rules, fixed-width grammar/reservations, exact-payload authorization, atomic apply/readback and recovery. Preserve incoming prerequisites on parent and copy to each child with identical predicates; preserve old downstream parent edges; add child -> parent DONE edges and only explicitly authorized inter-child edges. No transitive pruning or judgment redirection. Retain original integration proof and budget partition; a new prerequisite must have an existing requirement owner and exact planning authority. Review these mechanisms independently; this revision records no implementation or approval verdict.",
+            "Do not carry forward Phase 5 ownership-gap or bootstrap assessment semantics as current authority. Historical bootstrap-assessor BLOCKED -> SPLIT_RECOMMENDED -> READY is retained only as history; current Agent Ready dispositions are exactly READY / CLARIFY / SPLIT / HOLD. Hold release during replan; do not cancel active invocations or reopen DONE work. Candidate external projection uses WorkManagement, versioned delivery/readback and configured bindings; no new fields/statuses or live writes are authorized. Missing required projection consistency holds affected release, not unrelated work."
           ],
           "binding_sections": [
             "ports",
@@ -5196,7 +5204,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/3",
@@ -5218,14 +5226,15 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/4",
           "requirement_id": "SF-REQ-015",
           "decisions": [
             "Known MCP parsing: isError=true is failure; collect structuredContent disposition and parseable JSON text-content dispositions. Require at least one recognized terminal value and agreement among every supplied value. Unknown/malformed/conflicting purported result is failure. Preserve wrappers.",
-            "This fixes intended consumer semantics only. No external versioned serialization, implementation maintainer or CLI is invented; implementation/migration of that boundary requires G1/G2 authority."
+            "Ownership per #/contracts/4/ownership_statement (DV-5). Producer/version provenance per #/contracts/4/provenance_contract (DV-5).",
+            "Reuse Before Build: the public Agent Ready product already exists; use its CLI/MCP, never raw model prompts shaped as its schema. check_assessment_producer.py supplies negative shape evidence, not positive producer authentication. tools/orchestration/readiness_assessment.py is an interim programme adapter/provenance example, not the product implementation or proof of trustworthy provenance by itself. Require configured invocation-to-result custody and independent producer checks at admission."
           ],
           "binding_sections": [
             "ports",
@@ -5240,7 +5249,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/5",
@@ -5262,7 +5271,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/7",
@@ -5270,7 +5279,7 @@
           "decisions": [
             "Existing architecture fitness checks are necessary but cannot certify premise truth or semantic compatibility; independent judgment remains required.",
             "No new visible lifecycle state, service or approval lane; internal states implement SWF-25 semantic gates within SPECIFY/PLAN.",
-            "R2 supersedes R1 normative edge-table enforcement under the explicit authority-gap alternative. Existing architecture checks are retained; no successful mechanical result can discharge the Founder hold."
+            "Founder disposition 2026-09-25 declines the historical R1 allowed_edges table as policy. Existing approved architecture checks remain normative. Direction/coupling assurance is narrowed to evidence-driven checks: cross-module cycle detection; cross-module domain-object import inventory/classification against bounded-context ownership; persistence/table ownership checks where mechanically expressible; and qualitative Ubiquitous Language/domain-ownership review where semantics cannot be decided mechanically. A detected dependency is evidence for classification, not an automatic defect."
           ],
           "binding_sections": [
             "ports",
@@ -5285,7 +5294,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -5294,9 +5303,9 @@
         }
       ],
       "scope": {
-        "dag_scope": "",
-        "extent": "Integrate already-proven inventory -> ambiguity -> premise/proof -> independent design applicability -> initial compilation -> lint/retained assessment consumption. Mutate a source/decision/design revision and prove downstream hold without lifecycle/Project mutation. No output asserts release. Allocation hold blocks Wave 2A completion even if every helper passes.",
-        "node_kind": "capability",
+        "dag_scope": "Wave 2A integration of already-proven inventory, ambiguity, premise/proof, design applicability, initial compilation, lint and retained Agent Ready assessment consumption. Allocation and edge-policy authority questions are settled; this capstone does not grant release.",
+        "extent": "Integrate inventory -> ambiguity -> premise/proof -> independent design applicability -> compiler-derived initial compilation -> lint/retained assessment consumption. Mutate a source, decision or design revision and prove the downstream hold without lifecycle/Project mutation. No output asserts release.",
+        "node_kind": "planned_capstone",
         "owns_capabilities": [],
         "migration": null,
         "bootstrap_replacement_for": [],
@@ -5314,17 +5323,17 @@
       "dependency_predicates": {
         "WO-220208": {
           "dag_node": "U8",
-          "completion_predicate": "After SPECIFY resolves allocation mechanism and identity constraints, derive initial candidate from exact requirements/design/proof under that reviewed design; cover every AC with explicit extents and complete BiuContract fields. No supplied-allocation validator may masquerade as compiler. Existing decomposition remains immutable.",
+          "completion_predicate": "Derive the initial BiuContract candidate deterministically from exact requirements/design/proof under the SF-REQ-013 amendment. Cover every acceptance obligation with explicit extent, preserve identity/graph constraints, and reject validator-only behavior that merely checks a supplied allocation. Existing decomposition remains immutable.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220209": {
           "dag_node": "U9",
-          "completion_predicate": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs. At actual profile boundary unbound/unauthorized stub yields OWNER_ASSIGNMENT_HOLD before launch.",
+          "completion_predicate": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 historical bootstrap-assessor immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs, never label as Agent Ready. At actual profile boundary unbound/unauthorized stub yields CAPABILITY_PROVENANCE_HOLD before launch. Require established producer/package provenance, not schema shape; CLARIFY routes via SF-REQ-035 then reassessment; SPLIT routes to the SplitTransaction port and U9 refuses to proceed without a materialized result set; the transaction itself is U8 (DV-7), after which U9 lints/reassesses each result.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         }
       },
       "acceptance_criteria": [
-        "Integrate already-proven inventory -> ambiguity -> premise/proof -> independent design applicability -> initial compilation -> lint/retained assessment consumption. Mutate a source/decision/design revision and prove downstream hold without lifecycle/Project mutation. No output asserts release. Allocation hold blocks Wave 2A completion even if every helper passes."
+        "Integrate inventory -> ambiguity -> premise/proof -> independent design applicability -> compiler-derived initial compilation -> lint/retained assessment consumption. Mutate a source, decision or design revision and prove the downstream hold without lifecycle/Project mutation. No output asserts release."
       ],
       "acceptance_ids": [],
       "acceptance_extents": [],
@@ -5334,7 +5343,7 @@
           "owner_node": "A",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "Integrate already-proven inventory -> ambiguity -> premise/proof -> independent design applicability -> initial compilation -> lint/retained assessment consumption. Mutate a source/decision/design revision and prove downstream hold without lifecycle/Project mutation. No output asserts release. Allocation hold blocks Wave 2A completion even if every helper passes.",
+          "scenario": "Integrate inventory -> ambiguity -> premise/proof -> independent design applicability -> compiler-derived initial compilation -> lint/retained assessment consumption. Mutate a source, decision or design revision and prove the downstream hold without lifecycle/Project mutation. No output asserts release.",
           "acceptance_ids": [],
           "enforcement_ids": [],
           "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
@@ -5415,8 +5424,8 @@
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
-        "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
-        "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+        "Hold on failed integration discrimination, stale/missing source revision, or a genuine current authority conflict.",
+        "Do not reopen settled allocation, Agent Ready ownership, or historical edge-table questions."
       ],
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
@@ -7316,12 +7325,13 @@
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/6",
           "requirement_id": "SF-REQ-039",
           "decisions": [
-            "The following multi-role target decisions are conditional design constraints, not implementation authorization. SPECIFY must first identify existing requirement authority and owners for orchestration and real-path outcome emission. Do not replace FactoryCoordinator._completed_for_outcome under SF-REQ-039 alone; current worker/lifecycle contracts remain untouched.",
-            "Closure records only actions actually performed/read back by local adapters; never populate all required_closure_actions merely because producer succeeded.",
+            "SF-REQ-039 already authorizes deterministic Test Worker coverage of the canonical producer/verifier lifecycle. Execution Coordination owns lifecycle orchestration; Invocation Runtime owns real/test worker invocation behind WorkerProvider. No new owner is required.",
+            "Closure records only actions actually performed/read back by local adapters; never populate required_closure_actions merely because a producer succeeded.",
             "Offline tests exercise the production orchestration path through composition, not a second mocked lifecycle.",
-            "A composed role router resolves PRODUCER/VERIFIER/CLOSURE from the durable invocation record keyed by correlation_id and injects the role-specific worker implementation. Existing WorkerProvider signatures stay intact; verifier output must reference retrieved candidate and independent invocation. Missing RoleOutcomeRecord holds even when WorkerOutcome.kind is success.",
-            "On verifier rejection, persist finding refs and invoke existing transition(action=rework) at the current lifecycle version; enforce remaining authorized attempts/budget before producer allocation. REVIEW evaluates exactly required trusted evidence through evaluate_verdict. ACCEPT performs each required closure action and consumes its receipt; no synthesized closure evidence.",
-            "Before any shared-kernel change lands, both sandbox_run_profile and github_profile constructors must validate assigned authority plus real OutcomeEvidencePort binding for multi-role mode. Missing binding/authority returns ROLE_OUTCOME_BINDING_HOLD before any worker launch, not after every producer success. Existing unmodified profiles are not claimed to enforce this future gate. No mode may claim 039 multi-role proof by falling back to the current success-collapse path. After activation, a missing/miscorrelated sidecar holds the affected transition even on WorkerOutcome success."
+            "K2 / canonical_role_orchestration owns the broader success-collapse replacement inside Execution Coordination: producer success advances only to VERIFY, a distinct independent verifier evaluates the exact candidate, verifier rejection records findings and returns to IMPLEMENT under existing attempt/budget policy, and acceptance/review/closure remain canonical lifecycle operations. K1 does not implement that orchestration; K1 supplies only the durable real WorkerProvider outcome/readback seam that K2 consumes.",
+            "WorkerProvider.start/read_back/cancel remains the common worker boundary for Real Worker and Deterministic Test Worker. Durable role, invocation, attempt, contract/candidate and finding/receipt correlation is retained in existing invocation/effect/execution evidence records. Extend the typed result contract only if revised Design Verification proves current WorkerOutcome cannot carry a required observable; do not introduce a separate RoleOutcomeRecord state owner by default.",
+            "Before activating multi-role behavior in shared/live profiles, composition must prove the configured worker adapter and durable correlation/readback path. Missing/miscorrelated outcome holds the transition even if the worker process exits successfully. Existing unmodified profiles are not claimed to satisfy future multi-role proof until their revised design is implemented.",
+            "Worker Port is the same worker-facing port/protocol used by production: WorkerProvider -> Deterministic Test Worker for scripted scenarios, beside WorkerProvider -> Real Worker -> provider. No test-specific lifecycle shortcuts or script-driven mark_done."
           ],
           "binding_sections": [
             "ports",
@@ -7336,7 +7346,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -7345,9 +7355,9 @@
         }
       ],
       "scope": {
-        "dag_scope": "",
-        "extent": "Before any shared-kernel activation/landing, actual sandbox_run_profile and github_profile constructors with local transports refuse missing assigned authority/real sidecar binding before worker launch. Bound real adapter reaches correlated outcome readback on success/rejection/restart. Independently disconnect emission and bypass binding gate to kill expected assertions.",
-        "node_kind": "capability",
+        "dag_scope": "K3 proves shared-profile composition compatibility after K1 durable outcome/readback and K2 canonical orchestration. sandbox_run_profile/github_profile must bind the configured WorkerProvider and durable role/candidate/result correlation before multi-role worker launch; no parallel sidecar state owner.",
+        "extent": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed.",
+        "node_kind": "planned_prerequisite",
         "owns_capabilities": [
           "composed_role_bindings"
         ],
@@ -7355,12 +7365,11 @@
           "id": "M-ROLE-BINDING",
           "mode": "conditional_shared_profile_adoption",
           "sequence": [
-            "Resolve both 039 owner/requirement gaps and review scoped design",
-            "Prove K1 real record producer",
-            "Require constructor guards and K2 routing in one compatible activation boundary",
-            "Only then admit shared multi-role mode"
+            "Consume completed K1 real outcome/readback proof and K2 canonical orchestration proof",
+            "Require constructor guards and configured WorkerProvider/result-correlation bindings in one compatible composition boundary",
+            "Demonstrate local/shared-profile compatibility without activating live multi-role authority"
           ],
-          "rollback": "No live mode activation while binding absent; reconcile active work before reverting. Do not silently fall back to success-collapse."
+          "rollback": "No live mode is activated by K3. A missing/miscorrelated binding holds before worker launch; never fall back to success-collapse."
         },
         "bootstrap_replacement_for": [],
         "boundary": "Only this node extent. Requirement/design references constrain execution and do not absorb sibling scopes."
@@ -7376,17 +7385,17 @@
       "dependency_predicates": {
         "WO-220402": {
           "dag_node": "K2",
-          "completion_predicate": "SPECIFY identifies existing requirement and domain owner first. After K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, canonical rework and remaining budget, trusted REVIEW verdict and actual closure receipts. No success-collapse fallback or scenario-written lifecycle state.",
+          "completion_predicate": "Under existing Execution Coordination / Invocation Runtime ownership and after K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, exact candidate custody, canonical verifier rejection -> IMPLEMENT repair, remaining attempt/budget enforcement, trusted REVIEW verdict, and actual closure receipts. No success-collapse fallback, scenario-written lifecycle state, or parallel RoleOutcomeRecord state owner.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220209": {
           "dag_node": "U9",
-          "completion_predicate": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs. At actual profile boundary unbound/unauthorized stub yields OWNER_ASSIGNMENT_HOLD before launch.",
+          "completion_predicate": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 historical bootstrap-assessor immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs, never label as Agent Ready. At actual profile boundary unbound/unauthorized stub yields CAPABILITY_PROVENANCE_HOLD before launch. Require established producer/package provenance, not schema shape; CLARIFY routes via SF-REQ-035 then reassessment; SPLIT routes to the SplitTransaction port and U9 refuses to proceed without a materialized result set; the transaction itself is U8 (DV-7), after which U9 lints/reassesses each result.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         }
       },
       "acceptance_criteria": [
-        "Before any shared-kernel activation/landing, actual sandbox_run_profile and github_profile constructors with local transports refuse missing assigned authority/real sidecar binding before worker launch. Bound real adapter reaches correlated outcome readback on success/rejection/restart. Independently disconnect emission and bypass binding gate to kill expected assertions."
+        "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed."
       ],
       "acceptance_ids": [],
       "acceptance_extents": [],
@@ -7396,7 +7405,7 @@
           "owner_node": "K3",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "Before any shared-kernel activation/landing, actual sandbox_run_profile and github_profile constructors with local transports refuse missing assigned authority/real sidecar binding before worker launch. Bound real adapter reaches correlated outcome readback on success/rejection/restart. Independently disconnect emission and bypass binding gate to kill expected assertions.",
+          "scenario": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed.",
           "acceptance_ids": [],
           "enforcement_ids": [],
           "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
@@ -7414,7 +7423,8 @@
       ],
       "architecture_constraints": [
         "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
-        "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+        "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
+        "Use existing WorkerProvider and invocation/effect/execution evidence ownership; do not create OutcomeEvidencePort/RoleOutcomeRecord sidecar state unless separately reviewed as necessary."
       ],
       "capabilities": {
         "needs": [
@@ -7487,8 +7497,8 @@
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
-        "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
-        "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+        "Return a genuine interface incompatibility to K1/K2's existing owner; do not create a new role/outcome state owner.",
+        "Any live/shared-profile activation remains separately authorized and is not satisfied by K3 compatibility proof."
       ],
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
@@ -7520,12 +7530,13 @@
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/6",
           "requirement_id": "SF-REQ-039",
           "decisions": [
-            "The following multi-role target decisions are conditional design constraints, not implementation authorization. SPECIFY must first identify existing requirement authority and owners for orchestration and real-path outcome emission. Do not replace FactoryCoordinator._completed_for_outcome under SF-REQ-039 alone; current worker/lifecycle contracts remain untouched.",
-            "Closure records only actions actually performed/read back by local adapters; never populate all required_closure_actions merely because producer succeeded.",
+            "SF-REQ-039 already authorizes deterministic Test Worker coverage of the canonical producer/verifier lifecycle. Execution Coordination owns lifecycle orchestration; Invocation Runtime owns real/test worker invocation behind WorkerProvider. No new owner is required.",
+            "Closure records only actions actually performed/read back by local adapters; never populate required_closure_actions merely because a producer succeeded.",
             "Offline tests exercise the production orchestration path through composition, not a second mocked lifecycle.",
-            "A composed role router resolves PRODUCER/VERIFIER/CLOSURE from the durable invocation record keyed by correlation_id and injects the role-specific worker implementation. Existing WorkerProvider signatures stay intact; verifier output must reference retrieved candidate and independent invocation. Missing RoleOutcomeRecord holds even when WorkerOutcome.kind is success.",
-            "On verifier rejection, persist finding refs and invoke existing transition(action=rework) at the current lifecycle version; enforce remaining authorized attempts/budget before producer allocation. REVIEW evaluates exactly required trusted evidence through evaluate_verdict. ACCEPT performs each required closure action and consumes its receipt; no synthesized closure evidence.",
-            "Before any shared-kernel change lands, both sandbox_run_profile and github_profile constructors must validate assigned authority plus real OutcomeEvidencePort binding for multi-role mode. Missing binding/authority returns ROLE_OUTCOME_BINDING_HOLD before any worker launch, not after every producer success. Existing unmodified profiles are not claimed to enforce this future gate. No mode may claim 039 multi-role proof by falling back to the current success-collapse path. After activation, a missing/miscorrelated sidecar holds the affected transition even on WorkerOutcome success."
+            "K2 / canonical_role_orchestration owns the broader success-collapse replacement inside Execution Coordination: producer success advances only to VERIFY, a distinct independent verifier evaluates the exact candidate, verifier rejection records findings and returns to IMPLEMENT under existing attempt/budget policy, and acceptance/review/closure remain canonical lifecycle operations. K1 does not implement that orchestration; K1 supplies only the durable real WorkerProvider outcome/readback seam that K2 consumes.",
+            "WorkerProvider.start/read_back/cancel remains the common worker boundary for Real Worker and Deterministic Test Worker. Durable role, invocation, attempt, contract/candidate and finding/receipt correlation is retained in existing invocation/effect/execution evidence records. Extend the typed result contract only if revised Design Verification proves current WorkerOutcome cannot carry a required observable; do not introduce a separate RoleOutcomeRecord state owner by default.",
+            "Before activating multi-role behavior in shared/live profiles, composition must prove the configured worker adapter and durable correlation/readback path. Missing/miscorrelated outcome holds the transition even if the worker process exits successfully. Existing unmodified profiles are not claimed to satisfy future multi-role proof until their revised design is implemented.",
+            "Worker Port is the same worker-facing port/protocol used by production: WorkerProvider -> Deterministic Test Worker for scripted scenarios, beside WorkerProvider -> Real Worker -> provider. No test-specific lifecycle shortcuts or script-driven mark_done."
           ],
           "binding_sections": [
             "ports",
@@ -7540,7 +7551,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -7549,9 +7560,9 @@
         }
       ],
       "scope": {
-        "dag_scope": "",
-        "extent": "Denied-network complete lifecycle with fresh verifier and actual Git publication/retrieval, rejection/rework, wrong candidate, missing sidecar, duplicate/restart and judgment hold. One authorized effect and real closure receipts. Custody/verifier/binding/emission mutations must fail. Reports label every external substitution and do not claim live proof.",
-        "node_kind": "capability",
+        "dag_scope": "Offline SF-REQ-039 lifecycle capstone over K3/S0/C1 using the canonical producer -> independent verifier -> rework/review/accept/closure path, exact Git custody and durable result correlation. No live authority.",
+        "extent": "Denied-network complete lifecycle with fresh verifier and actual local Git publication/retrieval, rejection/rework, wrong-candidate refusal, missing/miscorrelated durable role outcome, duplicate/restart and judgment hold. Exactly one authorized effect and actual closure receipts. Custody/verifier/binding/correlation mutations must fail. Label every external substitution and make no live proof claim.",
+        "node_kind": "planned_capstone",
         "owns_capabilities": [],
         "migration": null,
         "bootstrap_replacement_for": [],
@@ -7570,7 +7581,7 @@
       "dependency_predicates": {
         "WO-220403": {
           "dag_node": "K3",
-          "completion_predicate": "Before any shared-kernel activation/landing, actual sandbox_run_profile and github_profile constructors with local transports refuse missing assigned authority/real sidecar binding before worker launch. Bound real adapter reaches correlated outcome readback on success/rejection/restart. Independently disconnect emission and bypass binding gate to kill expected assertions.",
+          "completion_predicate": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         },
         "WO-220101": {
@@ -7585,13 +7596,7 @@
         }
       },
       "acceptance_criteria": [
-        "Denied-network complete lifecycle with fresh verifier and actual Git publication/retrieval, rejection/rework, wrong candidate, missing sidecar, duplicate/restart and judgment hold. One authorized effect and real closure receipts. Custody/verifier/binding/emission mutations must fail. Reports label every external substitution and do not claim live proof.",
-        "SF-REQ-039-AC-01: With provider credentials absent and outbound networking denied in a test environment, a seeded authorized fixture reaches its required terminal lifecycle state using scripted producer and fresh verifier invocations, and records zero provider calls.",
-        "SF-REQ-039-AC-02: A verifier-rejection script returns the same BIU to implementation with findings and a subsequent passing candidate can proceed through normal closure; lifecycle transitions come from the real kernel, not the script.",
-        "SF-REQ-039-AC-03: An unpublished or wrong-identity candidate and a missing durable work result each prevent VERIFY/acceptance as applicable, even if the scripted worker exits zero.",
-        "SF-REQ-039-AC-04: Replay a duplicate trigger and restart from saved durable fixture state: retain one authorized effect for the same identity and the same reconstructed lifecycle state.",
-        "SF-REQ-039-AC-05: A completed judgment-required outcome produces a hold/attention and no automatic replacement actor until resolved. The fixture records observed invocations and retained outcomes.",
-        "SF-REQ-039-AC-06: Disable the tested custody guard in an isolated negative control: the corresponding test must fail. Test documentation identifies which external effects were substituted and does not label offline success as live proof."
+        "Denied-network complete lifecycle with fresh verifier and actual local Git publication/retrieval, rejection/rework, wrong-candidate refusal, missing/miscorrelated durable role outcome, duplicate/restart and judgment hold. Exactly one authorized effect and actual closure receipts. Custody/verifier/binding/correlation mutations must fail. Label every external substitution and make no live proof claim."
       ],
       "acceptance_ids": [
         "SF-REQ-039-AC-01",
@@ -7635,7 +7640,7 @@
           "requirement_id": "SF-REQ-039",
           "proof_owner_node": "O",
           "fixture_ref": "FX-O",
-          "source_design_probe": "Unpublished/wrong candidate and missing RoleOutcomeRecord fail despite process success.",
+          "source_design_probe": "Unpublished/wrong candidate and missing, stale or miscorrelated durable role/invocation/candidate outcome evidence fail despite process success.",
           "source_contract_sections": [
             "ports",
             "transitions",
@@ -7693,7 +7698,7 @@
           "owner_node": "O",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "Denied-network complete lifecycle with fresh verifier and actual Git publication/retrieval, rejection/rework, wrong candidate, missing sidecar, duplicate/restart and judgment hold. One authorized effect and real closure receipts. Custody/verifier/binding/emission mutations must fail. Reports label every external substitution and do not claim live proof.",
+          "scenario": "Denied-network complete lifecycle with fresh verifier and actual local Git publication/retrieval, rejection/rework, wrong-candidate refusal, missing/miscorrelated durable role outcome, duplicate/restart and judgment hold. Exactly one authorized effect and actual closure receipts. Custody/verifier/binding/correlation mutations must fail. Label every external substitution and make no live proof claim.",
           "acceptance_ids": [
             "SF-REQ-039-AC-01",
             "SF-REQ-039-AC-02",
@@ -7722,7 +7727,7 @@
           {
             "acceptance_id": "SF-REQ-039-AC-03",
             "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
-            "design_probe": "Unpublished/wrong candidate and missing RoleOutcomeRecord fail despite process success."
+            "design_probe": "Unpublished/wrong candidate and missing, stale or miscorrelated durable role/invocation/candidate outcome evidence fail despite process success."
           },
           {
             "acceptance_id": "SF-REQ-039-AC-04",
@@ -7747,7 +7752,7 @@
             "fixture_ref": "FX-O",
             "id": "039-composed-lifecycle",
             "layer": "python_unit_integration",
-            "rule": "Reuse LRN-002 composed-path promotion for OfflineProfile with actual store/adapters and fresh verifier; cover success, rejection, result/custody gaps, duplicate/restart, judgment hold. Full multi-role proof remains blocked on both 039 gaps. After resolution, exercise actual sandbox/github profile constructors with local transport substitutes: absent authority/real outcome binding holds before launch; bound real-worker adapter persists/readbacks correctly correlated RoleOutcomeRecord through success, verifier rejection and restart. Offline scripted records alone cannot discharge the real-path probe.",
+            "rule": "Reuse LRN-002 composed-path promotion for OfflineProfile with actual store/adapters and a fresh verifier; cover success, verifier rejection/rework, result/custody/correlation gaps, duplicate/restart and judgment hold. Exercise the actual sandbox/github composition constructors with local transport substitutes: absent or miscorrelated role/candidate/result binding holds before launch or transition; the bound real-worker path persists and reads back the existing durable invocation/effect/execution evidence through success, rejection and restart. Offline scripted lifecycle shortcuts cannot discharge this probe.",
             "proven_red_obligation": "Disconnect verifier invocation or custody readback while unit tests stay green; targeted end-to-end assertion must fail. Bypass construction binding validation or disconnect real-worker record emission independently; pre-launch refusal or correlated real-path outcome assertion must fail.",
             "phase3_promotion": "LRN-002",
             "status": "DESIGNED_NOT_IMPLEMENTED",
@@ -7764,7 +7769,8 @@
       ],
       "architecture_constraints": [
         "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
-        "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+        "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
+        "Use canonical WorkerProvider and durable invocation/effect/execution evidence. Missing/miscorrelated outcome holds; no RoleOutcomeRecord sidecar or scenario-written lifecycle state."
       ],
       "capabilities": {
         "needs": [
@@ -7835,8 +7841,8 @@
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
-        "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
-        "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+        "Return a defect in K3/S0/C1 to its owner; preserve unrelated completed proof.",
+        "Any live transport, shared-profile activation, sovereignty or retirement claim remains outside this offline capstone."
       ],
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
@@ -7890,7 +7896,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/9",
@@ -7899,7 +7905,7 @@
             "Policy defaults: G=300 seconds, I=60 seconds, confirmation bound C=90 seconds; all configurable positive finite durations, persisted with policy digest and tested just below/at boundaries. These are design defaults, not a claim that historical bootstrap 5 minutes is a canonical invariant. Missing/invalid policy blocks startup.",
             "Periodic scan is limited to SF-REQ-056 explicitly specified reconciliation of known active state; it is not a general polling integration or work discovery loop.",
             "Effectively-once action requires idempotent/fenced consumer and durable readback; physically exactly-once network delivery is not promised. If an existing provider cannot prove these, park rather than relax the boundary.",
-            "Depends on POSTW1-DECIDE-008A ratification. Pending SF-REQ-008 and SF-REQ-022 amendments are excluded; no new nonterminal retries or budget reset. Operational replacement and SWF-29 retirement remain separately gated."
+            "SF-REQ-056 is already binding P0/Wave 2 authority under SWF-29. L1 local/composed liveness reconciliation may proceed without a second ratification decision. Operational replacement of the bootstrap liveness service, monitor-host supervision, live transport proof and retirement remain separately gated; no new nonterminal retry semantics or budget reset are introduced."
           ],
           "binding_sections": [
             "ports",
@@ -7914,7 +7920,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply the current reviewed Design Contract for this requirement only within this BIU extent; no sibling scope or live authority is implied."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -7923,9 +7929,9 @@
         }
       ],
       "scope": {
-        "dag_scope": "",
-        "extent": "End coordinator episode during duplicate/delayed outcomes; fresh context has identical actions, attention survives and completed judgment suppresses recovery; stale epoch cannot send. Use proven store/consumer/readback and fake time; stopped scans surface degraded/stale health. This local result cannot discharge host or live retirement gates.",
-        "node_kind": "capability",
+        "dag_scope": "Local bounded-control integration capstone over C3/C4/L1. Compose bounded coordinator episodes, durable attention, monitor-health inspection and liveness reconciliation under fake/local time; no monitor-host deployment or bootstrap retirement claim.",
+        "extent": "End a coordinator episode during duplicate/delayed outcomes; a fresh context reconstructs identical authorized actions, attention survives, completed judgment suppresses recovery, and stale epoch cannot send. Use proven store/consumer/readback plus fake time; stopped scans surface DEGRADED/STALE health. Local proof cannot discharge supervised-host, live transport, cutover or retirement gates.",
+        "node_kind": "planned_capstone",
         "owns_capabilities": [],
         "migration": null,
         "bootstrap_replacement_for": [],
@@ -7954,13 +7960,12 @@
         },
         "WO-220306": {
           "dag_node": "L1",
-          "completion_predicate": "Conditional on 056 ratification: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, unavailable evidence holds. Delayed original plus two contenders and crash/restart retains one effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries.",
+          "completion_predicate": "With binding SF-REQ-056 authority: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, and unavailable-evidence holds. Delayed original plus two contenders and crash/restart retain one authorized effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries. Local proof does not claim operational monitor-host replacement.",
           "admission": "Consume exact independently verified predecessor candidate and retained proof receipts; predecessor authority holds must be discharged by their named actor. A planned capability is not available execution substrate."
         }
       },
       "acceptance_criteria": [
-        "End coordinator episode during duplicate/delayed outcomes; fresh context has identical actions, attention survives and completed judgment suppresses recovery; stale epoch cannot send. Use proven store/consumer/readback and fake time; stopped scans surface degraded/stale health. This local result cannot discharge host or live retirement gates.",
-        "SF-REQ-053-AC-04: A DONE event requiring next-work judgment and a judgment-required blocking outcome each create durable attention. Duplicate observation/restart retains the same item identity; monitor operation continues after the model episode ends."
+        "End a coordinator episode during duplicate/delayed outcomes; a fresh context reconstructs identical authorized actions, attention survives, completed judgment suppresses recovery, and stale epoch cannot send. Use proven store/consumer/readback plus fake time; stopped scans surface DEGRADED/STALE health. Local proof cannot discharge supervised-host, live transport, cutover or retirement gates."
       ],
       "acceptance_ids": [
         "SF-REQ-053-AC-04"
@@ -7987,7 +7992,7 @@
           "owner_node": "C",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "End coordinator episode during duplicate/delayed outcomes; fresh context has identical actions, attention survives and completed judgment suppresses recovery; stale epoch cannot send. Use proven store/consumer/readback and fake time; stopped scans surface degraded/stale health. This local result cannot discharge host or live retirement gates.",
+          "scenario": "End a coordinator episode during duplicate/delayed outcomes; a fresh context reconstructs identical authorized actions, attention survives, completed judgment suppresses recovery, and stale epoch cannot send. Use proven store/consumer/readback plus fake time; stopped scans surface DEGRADED/STALE health. Local proof cannot discharge supervised-host, live transport, cutover or retirement gates.",
           "acceptance_ids": [
             "SF-REQ-053-AC-04"
           ],
@@ -8082,8 +8087,8 @@
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
-        "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
-        "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+        "Return defects in C3/C4/L1 predecessor behavior to the owning BIU; preserve completed proof.",
+        "Hold rather than infer operational supervision or retirement from this local capstone."
       ],
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
