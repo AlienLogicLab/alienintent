@@ -35,7 +35,7 @@ class EscalatingWorker(ScriptedWorker):
         self.escalation = escalation
 
     def start(self, invocation, context, grants, budget):
-        if self.outcomes[invocation.work_identity][0] == "authority-block":
+        if invocation.role == "PRODUCER" and self.outcomes[invocation.work_identity][0] == "authority-block":
             self.outcomes[invocation.work_identity].pop(0)
             from alienintent.execution_coordination.ports.worker_provider import WorkerOutcome
             self.dispatched.append(invocation.work_identity)

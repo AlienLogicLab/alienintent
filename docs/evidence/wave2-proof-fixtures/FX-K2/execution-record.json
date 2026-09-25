@@ -1,0 +1,194 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-K2",
+  "biu_id": "WO-220402",
+  "invocation": "AlienLogicLab/alienintent#115:PRODUCER:3bb0bafe-3a4a-4b71-b428-416160e01ecb",
+  "source_revision": "90f7fb9546c0e94c04c5d470d7ea0a104c5df5d5",
+  "source_status": "",
+  "admission_baseline": "e3371827223d1a9abd3c4a1144667de1c61f3778",
+  "code_baseline": "e49aed5039e6395cb1bb190c729ebcd176e1bf8b",
+  "input_digests": {
+    "docs/evidence/wave2-proof-fixtures/FX-K2.md": "sha256:751e348f22f67249631c9a6f06c48288c93769178e5ab7118cccdfd07e465cda",
+    "docs/work-units/wave2/WO-220402.md": "sha256:e6d5d1dcffd36ebfb5fb07a9f098739ef0c41df2331462eb446bbcb3da202af2",
+    "docs/evidence/wave2-execution-packets/WO-220402.packet.json": "sha256:5021e814e5a156e56896b299e989ad8b984a793fa7508375eeed7421342abf17",
+    "docs/evidence/wave2-execution-packets/WO-220402.allocation.json": "sha256:974bb830a8b48ed1d0dbb34da6e8b45b7309f29af1497fb4310ba0cbe219a9d2",
+    "docs/evidence/wave2-execution-packets/WO-220402.proof-packet.md": "sha256:9584179a4b9b45a6686cc4f19452ec5556227f8e60eda4fb0d69fe4473132aed",
+    "docs/evidence/wave2-readiness-assessments/WO-220402.2026-09-25T120043.382139Z.assessment.json": "sha256:64cdcc06759ea285c0a5b81cb389cb51d077669d11baafe0cb957df7af094697",
+    "docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json": "sha256:7c75584ee21da52d85ab2d3f722f1acdbaaa7956d591d62de2125f347cdde167",
+    "tests/execution_coordination/test_role_orchestration.py": "sha256:7d6b80b8e64786f615e4fb344316fbd9dfd1fd5bd6f2d0f3297365d02a4507b3",
+    "tests/execution_coordination/k2_fixture.py": "sha256:7e256040201365b3acc27fff11870f29c3e4ea2602a522425ad5c5c5feb65e30",
+    "tools/evidence/fx_k2_evidence.py": "sha256:f917ff04f544c4bff511b11d2abcacf94c966dd71a374400173eb6e34ff57f0e",
+    "src/alienintent/execution_coordination/application/factory_coordinator.py": "sha256:3e94fb11a1fa2bd7131b43078a0f7323406b37690cc98cd6b60462b341db8441",
+    "src/alienintent/execution_coordination/ports/worker_provider.py": "sha256:d434fc8b2ecf522978c93a1fe709e211d07285085070e8b9e4f74d27eac4aab1",
+    "src/alienintent/invocation_runtime/application/real_worker.py": "sha256:313b4ac8d916bcecaaf5207a6a85e7e848991926c00f30a90133d13a12a1b46e",
+    "src/alienintent/invocation_runtime/adapters/scripted_worker.py": "sha256:cb7b047d85a873e313ff29e2caf6fe7cae90cac048eb15fd354ef1d0721b9562",
+    "src/alienintent/invocation_runtime/adapters/git_source_control.py": "sha256:9de093794545e2d4e7b620249b039b081e27cb73b048da7a3278b6d60f2a5d3d",
+    "src/alienintent/invocation_runtime/domain/runtime.py": "sha256:38c4320e7361674330036764d3c1591ffbcfb1a7f1061ab8f6b2ce196afdd853"
+  },
+  "commands": [
+    {
+      "id": "focused",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_role_orchestration.py",
+        "tests/execution_coordination/test_factory_coordinator.py",
+        "tests/invocation_runtime/test_real_worker_outcome.py",
+        "tests/composition/test_sandbox_run_profile.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:945394baead14f92b33f62bd98cc95dfe179860d479082d7b58da144829aa77e",
+        "locator": "observations/945394baead14f92b33f62bd98cc95dfe179860d479082d7b58da144829aa77e"
+      }
+    },
+    {
+      "id": "architecture",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:907271ba0584926ab19b05b13db4065ccf2e1b0b397fad03f874b2937d939e4d",
+        "locator": "observations/907271ba0584926ab19b05b13db4065ccf2e1b0b397fad03f874b2937d939e4d"
+      }
+    },
+    {
+      "id": "architecture_fitness_tests",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_architecture_fitness.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:9c5a86ef4ef2c558348a89205d1a3b39e6af22916939d358c209a95e3e41afa3",
+        "locator": "observations/9c5a86ef4ef2c558348a89205d1a3b39e6af22916939d358c209a95e3e41afa3"
+      }
+    },
+    {
+      "id": "python_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_status": 1,
+      "observation_ref": {
+        "revision_digest": "sha256:b3dd0d2878addc898d233760ff65663ee309475eb2485d23b8813c593b00cbcd",
+        "locator": "observations/b3dd0d2878addc898d233760ff65663ee309475eb2485d23b8813c593b00cbcd"
+      },
+      "baseline_comparison": {
+        "baseline": "e49aed5039e6395cb1bb190c729ebcd176e1bf8b",
+        "baseline_exit_status": 1,
+        "baseline_observation_ref": {
+          "revision_digest": "sha256:867818c325c445b63526eb6b509a80031e49ba5f809e4f1938ec51dca703ce6f",
+          "locator": "observations/867818c325c445b63526eb6b509a80031e49ba5f809e4f1938ec51dca703ce6f"
+        },
+        "candidate_failed": [
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_authorized_supersession_with_passing_replacement_is_accepted",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_changed_judgment_reviewer_inputs_hold",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_plan_pins_the_four_observable_premise",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_profile_derives_and_persists_the_fx_u4_plan",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_credential_denial_obligation_is_infeasible_proof",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_obligation_holds",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_proof_is_rejected",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_erased_truncated_or_padded_history_is_a_hold",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_failed_prior_proof_is_rejected",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_implementation_derived_predicate_is_refused",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_incomplete_mechanical_obligation_holds",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_isolation_obligation_omitting_an_observable_is_infeasible",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_claiming_mechanical_pass_is_refused",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_obligation_names_reviewer_inputs_and_decision_record",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_lost_plan_pointer_is_not_an_empty_history",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_persisted_state_is_a_hold_not_an_exception",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_supersession_or_authority_holds_without_raising",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_recorded_proof_evidence_is_ordered_and_clean",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_removed_required_predicate_blocks_admission",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_replayed_prior_proof_is_accepted",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_skipped_prior_proof_is_rejected",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_supersession_without_passing_replacement_is_rejected",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_tampered_persisted_plan_is_refused",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unattributed_judgment_holds",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unauthorized_supersession_holds"
+        ],
+        "baseline_failed": [
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_authorized_supersession_with_passing_replacement_is_accepted",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_changed_judgment_reviewer_inputs_hold",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_plan_pins_the_four_observable_premise",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_profile_derives_and_persists_the_fx_u4_plan",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_credential_denial_obligation_is_infeasible_proof",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_obligation_holds",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_proof_is_rejected",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_erased_truncated_or_padded_history_is_a_hold",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_failed_prior_proof_is_rejected",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_implementation_derived_predicate_is_refused",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_incomplete_mechanical_obligation_holds",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_isolation_obligation_omitting_an_observable_is_infeasible",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_claiming_mechanical_pass_is_refused",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_obligation_names_reviewer_inputs_and_decision_record",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_lost_plan_pointer_is_not_an_empty_history",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_persisted_state_is_a_hold_not_an_exception",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_supersession_or_authority_holds_without_raising",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_recorded_proof_evidence_is_ordered_and_clean",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_removed_required_predicate_blocks_admission",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_replayed_prior_proof_is_accepted",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_skipped_prior_proof_is_rejected",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_supersession_without_passing_replacement_is_rejected",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_tampered_persisted_plan_is_refused",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unattributed_judgment_holds",
+          "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unauthorized_supersession_holds"
+        ],
+        "new_failures": []
+      }
+    },
+    {
+      "id": "node_regression",
+      "command": [
+        "node",
+        "scripts/check.mjs",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:36bb8c8ee688172b8815893797843da291a8fc74828e37bb5696b8c84f879bad",
+        "locator": "observations/36bb8c8ee688172b8815893797843da291a8fc74828e37bb5696b8c84f879bad"
+      }
+    }
+  ],
+  "holds": [],
+  "residuals": [
+    "PREEXISTING_BASELINE_FAILURES: 25 nodes fail identically at code baseline e49aed5039e6395cb1bb190c729ebcd176e1bf8b; outside the K2 extent, returned to their owners"
+  ],
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": 0,
+    "reason": "no provider or model is composed; the workers are the deterministic scripted process and a local python child. Token/cost UNKNOWN, not zero"
+  },
+  "exit_status": 0
+}

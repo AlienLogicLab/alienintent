@@ -1,0 +1,52 @@
+{
+  "material_class_to_probes": {
+    "producer-success-advances-only-to-verify": [
+      "test_producer_success_advances_only_to_verify",
+      "test_the_full_lifecycle_is_three_distinct_role_invocations_with_exact_custody"
+    ],
+    "verifier-rejection-returns-to-implement-under-budget": [
+      "test_verifier_rejection_records_findings_and_repairs_through_implement",
+      "test_rejection_beyond_the_attempt_budget_is_terminal_failure",
+      "test_a_candidate_that_carries_its_own_verdict_is_not_self_approved"
+    ],
+    "acceptance-through-review-and-closure-receipts-only": [
+      "test_closure_records_only_actions_actually_read_back",
+      "test_accepted_closure_carries_the_read_back_receipts"
+    ],
+    "missing-duplicate-stale-miscorrelated-evidence-holds": [
+      "test_missing_duplicate_stale_or_miscorrelated_role_evidence_holds",
+      "test_restart_after_the_verifier_outcome_recovers_its_role_without_re_running_it",
+      "test_restart_after_a_recorded_rejection_recovers_without_wedging_the_profile"
+    ],
+    "shared-worker-boundary-no-shortcut-or-sidecar-owner": [
+      "test_deterministic_and_real_workers_share_the_production_boundary",
+      "test_no_parallel_role_outcome_state_owner_exists_in_source",
+      "tests/invocation_runtime/test_real_worker_outcome.py (real CLI child worker through the same boundary)"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/execution_coordination/test_role_orchestration.py",
+      "tests/execution_coordination/test_factory_coordinator.py",
+      "tests/invocation_runtime/test_real_worker_outcome.py",
+      "tests/composition/test_sandbox_run_profile.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:945394baead14f92b33f62bd98cc95dfe179860d479082d7b58da144829aa77e",
+      "locator": "observations/945394baead14f92b33f62bd98cc95dfe179860d479082d7b58da144829aa77e"
+    }
+  },
+  "boundaries": "K2 canonical_role_orchestration only: local composed proof; no live/shared-profile activation; no RoleOutcomeRecord or sidecar owner",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}

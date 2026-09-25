@@ -1,0 +1,205 @@
+{
+  "controls": [
+    {
+      "control": "success_collapse_restored",
+      "material_class": "producer-success-advances-only-to-verify",
+      "file": "src/alienintent/execution_coordination/application/factory_coordinator.py",
+      "application_count": 1,
+      "source_digest": "sha256:3e94fb11a1fa2bd7131b43078a0f7323406b37690cc98cd6b60462b341db8441",
+      "mutation": {
+        "remove": "            return _Advance(transition(current, current.version, \"verify\", candidate=verified), \"success\", {\"producer_correlation\": invocation.correlation_id})\n",
+        "replace_with": "            verified_state = transition(current, current.version, \"verify\", candidate=verified)\n            reviewed = transition(verified_state, verified_state.version, \"review\")\n            verdict = evaluate_verdict(EvidenceDefinition(frozenset(item.contract.required_evidence)), (Observation(\"artifact-verified\", True, True),), worker_claimed_success=True)\n            accepted = transition(reviewed, reviewed.version, \"accept\", verdict=verdict)\n            return _Advance(transition(accepted, accepted.version, \"close\", completed_closure_actions=frozenset(item.contract.required_closure_actions)), \"success\", {\"producer_correlation\": invocation.correlation_id})\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_role_orchestration.py::test_producer_success_advances_only_to_verify"
+      ],
+      "assertions": [
+        "state.stage is LifecycleStage.VERIFY"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ed027d65c153da69b24d7221c52c0ef8b0cbfc04a05bd2385500176cdcc67a8a",
+        "locator": "observations/ed027d65c153da69b24d7221c52c0ef8b0cbfc04a05bd2385500176cdcc67a8a"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:3adb72fb199d805e97e57ddfd2ea9e7cc24d3dc8bb475dfcbffd39d2640c8ca0",
+        "locator": "observations/3adb72fb199d805e97e57ddfd2ea9e7cc24d3dc8bb475dfcbffd39d2640c8ca0"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:8e1be95979998a4d9d60b22f3f387d4b038a1ad398998a25dc9120d88ecadb23",
+        "locator": "observations/8e1be95979998a4d9d60b22f3f387d4b038a1ad398998a25dc9120d88ecadb23"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "rejection_budget_unenforced",
+      "material_class": "verifier-rejection-returns-to-implement-under-budget",
+      "file": "src/alienintent/execution_coordination/application/factory_coordinator.py",
+      "application_count": 1,
+      "source_digest": "sha256:3e94fb11a1fa2bd7131b43078a0f7323406b37690cc98cd6b60462b341db8441",
+      "mutation": {
+        "remove": "        if rejections >= item.contract.budget_policy.maximum_attempts:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_role_orchestration.py::test_rejection_beyond_the_attempt_budget_is_terminal_failure"
+      ],
+      "assertions": [
+        "state.outcome == \"failure\""
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:7193948c841756badfecc7c8012e53eae1ab0a28b75e05eeb3783b00fca53aa7",
+        "locator": "observations/7193948c841756badfecc7c8012e53eae1ab0a28b75e05eeb3783b00fca53aa7"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:e1b596c137d83f2f0cf34fca33f1d27d8686c52a72b80407a8c52962939a8e1b",
+        "locator": "observations/e1b596c137d83f2f0cf34fca33f1d27d8686c52a72b80407a8c52962939a8e1b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:e4d5de8e5eb4df4359a9e73bd52e4d79d2238e5fe7c2d4336e16f1a88e347419",
+        "locator": "observations/e4d5de8e5eb4df4359a9e73bd52e4d79d2238e5fe7c2d4336e16f1a88e347419"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "closure_inferred_from_contract",
+      "material_class": "acceptance-through-review-and-closure-receipts-only",
+      "file": "src/alienintent/execution_coordination/application/factory_coordinator.py",
+      "application_count": 1,
+      "source_digest": "sha256:3e94fb11a1fa2bd7131b43078a0f7323406b37690cc98cd6b60462b341db8441",
+      "mutation": {
+        "remove": "        receipts = frozenset(outcome.receipts)\n",
+        "replace_with": "        receipts = frozenset(outcome.receipts) | frozenset(item.contract.required_closure_actions)\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_role_orchestration.py::test_closure_records_only_actions_actually_read_back"
+      ],
+      "assertions": [
+        "state.completed_closure_actions == frozenset()"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:cfbeefb07662188ce1c9e9b6a5bd88cadaa8e709fed3a6b2a30bfe16a97c8d25",
+        "locator": "observations/cfbeefb07662188ce1c9e9b6a5bd88cadaa8e709fed3a6b2a30bfe16a97c8d25"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:0e9f6ee52c5116050a07ab88a7d35c37d54319ed7183521597c6e16195ef6349",
+        "locator": "observations/0e9f6ee52c5116050a07ab88a7d35c37d54319ed7183521597c6e16195ef6349"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:a26241c9217596ef754225678c67e144f0ed530d13f8e2a6be14540bce2855a2",
+        "locator": "observations/a26241c9217596ef754225678c67e144f0ed530d13f8e2a6be14540bce2855a2"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "role_observables_narrowed",
+      "material_class": "missing-duplicate-stale-miscorrelated-evidence-holds",
+      "file": "src/alienintent/execution_coordination/application/factory_coordinator.py",
+      "application_count": 1,
+      "source_digest": "sha256:3e94fb11a1fa2bd7131b43078a0f7323406b37690cc98cd6b60462b341db8441",
+      "mutation": {
+        "remove": "        return outcome.kind, outcome.candidate, tuple(outcome.findings), tuple(outcome.receipts)\n",
+        "replace_with": "        return outcome.kind, outcome.candidate\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_role_orchestration.py::test_missing_duplicate_stale_or_miscorrelated_role_evidence_holds[closure-receipts]"
+      ],
+      "assertions": [
+        "summary.stop_reason.value == \"dependencies-or-authority-blocked\""
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:aad28dbca6fd23ed841b277c640a51422e7b5e1af780de005a9c463cd80cb7e8",
+        "locator": "observations/aad28dbca6fd23ed841b277c640a51422e7b5e1af780de005a9c463cd80cb7e8"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:fc71ed96729587abb8dde66464e569bf65590243bb11fcc5dc93ce51f68abc25",
+        "locator": "observations/fc71ed96729587abb8dde66464e569bf65590243bb11fcc5dc93ce51f68abc25"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:f6b8812a125d884b9d51674f2bec5ec51cc0a705d8e2c91bd30b01df5132ee60",
+        "locator": "observations/f6b8812a125d884b9d51674f2bec5ec51cc0a705d8e2c91bd30b01df5132ee60"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "scripted_lifecycle_write",
+      "material_class": "shared-worker-boundary-no-shortcut-or-sidecar-owner",
+      "file": "src/alienintent/invocation_runtime/adapters/scripted_worker.py",
+      "application_count": 1,
+      "source_digest": "sha256:cb7b047d85a873e313ff29e2caf6fe7cae90cac048eb15fd354ef1d0721b9562",
+      "mutation": {
+        "remove": "            \"provider_calls\": provider_calls, \"wall_clock_seconds\": wall_clock_seconds,\n",
+        "replace_with": "            \"provider_calls\": provider_calls, \"wall_clock_seconds\": wall_clock_seconds, \"stage\": \"DONE\",\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_role_orchestration.py::test_deterministic_and_real_workers_share_the_production_boundary"
+      ],
+      "assertions": [
+        "not any(\"stage\" in entry"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:c5453f17a1a33785c37df7c7778f997024e1554633ee43002f3a7ac1cfee5005",
+        "locator": "observations/c5453f17a1a33785c37df7c7778f997024e1554633ee43002f3a7ac1cfee5005"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:378cfba1167fce96625d4f485ee1dadac40cfdc4f334986e3a88d46e288588db",
+        "locator": "observations/378cfba1167fce96625d4f485ee1dadac40cfdc4f334986e3a88d46e288588db"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:5aeb384d829503edd40d2af7b3c9c775f43a6bf36246210f7a7be8c339d0ccd0",
+        "locator": "observations/5aeb384d829503edd40d2af7b3c9c775f43a6bf36246210f7a7be8c339d0ccd0"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}

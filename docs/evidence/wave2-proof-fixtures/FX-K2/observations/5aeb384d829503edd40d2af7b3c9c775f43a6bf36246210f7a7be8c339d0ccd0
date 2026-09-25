@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/execution_coordination/test_role_orchestration.py::test_deterministic_and_real_workers_share_the_production_boundary"],"cwd":"/tmp/fx-k2-controls-3ydueekw","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.56s\n"}

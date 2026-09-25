@@ -52,6 +52,12 @@ invocation="${ALIENINTENT_INVOCATION_ID:?the worker is not told which invocation
 biu="${invocation#launch:}"
 biu="${biu%:*}"
 test -z "${GIT_CONFIG_COUNT:-}" || { echo "worker inherited a publication credential" >&2; exit 3; }
+if [ "${ALIENINTENT_ROLE:-}" = VERIFIER ]; then
+  # K2: the verifier accepts the exact revision checked out in its fresh workspace.
+  mkdir -p .alienintent
+  printf '{"verdict": "accept", "revision": "%s", "findings": []}\n' "$(git rev-parse HEAD)" > .alienintent/verdict.json
+  exit 0
+fi
 mkdir -p docs
 printf '%s completed by the factory under %s\\n' "$biu" "$invocation" >> "docs/${biu}.md"
 git add -A
@@ -533,7 +539,8 @@ def test_the_profile_drains_a_prioritised_backlog_with_a_dependency_and_an_escal
     original = profile.worker.start
 
     def observed(invocation, context, grants, budget):
-        dispatched.append(invocation.work_identity)
+        if invocation.role == "PRODUCER":
+            dispatched.append(invocation.work_identity)
         reserved_at_dispatch.append(len(profile.store.recovery_reservations(profile.name)))
         return original(invocation, context, grants, budget)
 
@@ -601,7 +608,8 @@ def test_a_crash_mid_dispatch_parks_the_unknown_effect_rather_than_re_executing_
     resumed = restarted.worker.start
 
     def observed(invocation, context, grants, budget):
-        dispatched.append(invocation.work_identity)
+        if invocation.role == "PRODUCER":
+            dispatched.append(invocation.work_identity)
         return resumed(invocation, context, grants, budget)
 
     restarted.worker.start = observed  # type: ignore[method-assign]

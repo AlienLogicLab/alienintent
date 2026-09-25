@@ -11,11 +11,25 @@ from alienintent.execution_coordination.domain.custody import CandidateKind, Can
 from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired, SupersededDecision
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
 from alienintent.execution_coordination.domain.release import ReleaseRequest, ReleaseSource, admit_release
-from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, evaluate_verdict
+from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, VerdictKind, evaluate_verdict
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
-from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.execution_coordination.ports.worker_provider import CLOSURE, PRODUCER, VERIFIER, WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
+
+# K2: each nonterminal stage is advanced by exactly one canonical role.
+ROLE_BY_STAGE = {LifecycleStage.IMPLEMENT: PRODUCER, LifecycleStage.VERIFY: VERIFIER, LifecycleStage.ACCEPT: CLOSURE}
+VERIFIER_EVIDENCE = "independent-verifier-accepted"
+# Execution-record fields that survive every later commit of the same aggregate.
+CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict")
+
+
+@dataclass(frozen=True)
+class _Advance:
+    state: ExecutionState
+    outcome: str
+    fields: dict[str, object]
+    hold: str | None = None
 
 
 class StopReason(StrEnum):
@@ -40,6 +54,7 @@ class RunSummary:
 class ProjectedState:
     state: ExecutionState
     outcome: str | None
+    record: dict[str, object] | None = None
 
     def __getattr__(self, name: str):
         return getattr(self.state, name)
@@ -59,10 +74,11 @@ class FactoryCoordinator:
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
         dispatched: list[str] = []
         while (item := self._next_item(items)) is not None:
+            producing = self._role(item.identity) == PRODUCER
             result = self._run(item)
             if result is StopReason.CAPACITY_UNAVAILABLE:
                 return RunSummary(result, tuple(dispatched))
-            if result is None:
+            if result is None and producing:
                 dispatched.append(item.identity)
         return RunSummary(
             self._stop_reason(items), tuple(dispatched),
@@ -81,7 +97,13 @@ class FactoryCoordinator:
         _, raw = self._store.read_state(self._profile, self._aggregate(identity))
         if not raw:
             raise KeyError(identity)
-        return ProjectedState(self._decode(raw), raw.get("outcome") if isinstance(raw.get("outcome"), str) else None)
+        return ProjectedState(self._decode(raw), raw.get("outcome") if isinstance(raw.get("outcome"), str) else None, dict(raw))
+
+    def _role(self, identity: str) -> str | None:
+        try:
+            return ROLE_BY_STAGE.get(self.state(identity).stage)
+        except KeyError:
+            return PRODUCER
 
     def guard_account(self, identity: str) -> dict[str, object]:
         """Expose the same eligibility decision the scheduler applies, read-only."""
@@ -160,26 +182,34 @@ class FactoryCoordinator:
             projected = self.state(item.identity)
             if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"}:
                 return False
+            if projected.stage not in ROLE_BY_STAGE:
+                return False
         except KeyError:
             pass
         return (self._is_automatic(item) or self._is_released(item.identity)) and all(self._is_done(dep) for dep in item.dependencies)
 
     def _run(self, item: ReadyWorkItem) -> StopReason | None:
-        source = ReleaseSource.AUTOMATIC_POLICY if self._is_automatic(item) else ReleaseSource.EXPLICIT_HUMAN
-        try:
-            capabilities = {"python", "filesystem", "process-control"}
-            if self._has_authorizing_decision(item.identity):
-                capabilities.update(item.contract.required_capabilities)
-            admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset(capabilities), {dimension: 1 for dimension in item.contract.budget_policy.required_dimensions}, "offline-profile", source))
-        except ValueError:
-            state = ExecutionState.for_contract(item.contract)
-            self._record_result(item, state, "release", "authority-block")
-            self._register_escalation(self._authority_request(item, state.version, "Release admission requires authority not present in this profile."))
-            self._block_dependents(item, self._work.import_ready_snapshot())
-            return StopReason.BLOCKED
-        self._work.propose_release(item)
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
         current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+        role = ROLE_BY_STAGE.get(current.stage)
+        if role is None:
+            return StopReason.BLOCKED
+        if role == PRODUCER:
+            # Release admission guards only the producer; a verifier or closure
+            # invocation acts on work already admitted and never resets it.
+            source = ReleaseSource.AUTOMATIC_POLICY if self._is_automatic(item) else ReleaseSource.EXPLICIT_HUMAN
+            try:
+                capabilities = {"python", "filesystem", "process-control"}
+                if self._has_authorizing_decision(item.identity):
+                    capabilities.update(item.contract.required_capabilities)
+                admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset(capabilities), {dimension: 1 for dimension in item.contract.budget_policy.required_dimensions}, "offline-profile", source))
+            except ValueError:
+                self._record_result(item, current, "release", "authority-block")
+                self._register_escalation(self._authority_request(item, current.version, "Release admission requires authority not present in this profile."))
+                self._block_dependents(item, self._work.import_ready_snapshot())
+                return StopReason.BLOCKED
+            self._work.propose_release(item)
+            version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
         correlation = f"launch:{item.identity}:{version}"
         try:
             reservation = self._store.acquire(self._profile, "repository", item.repository, correlation)
@@ -187,10 +217,12 @@ class FactoryCoordinator:
             return StopReason.CAPACITY_UNAVAILABLE
         read_back = False
         try:
-            prepared = self._encode(current) | {key: raw[key] for key in ("decision_key", "decision_choice") if key in raw}
-            self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, prepared, correlation, {"correlation": correlation, "work": item.identity})
+            invocation = self._invocation(item, correlation, role, current)
+            # The invocation's own candidate is retained: a later rework clears
+            # the state's candidate, and recovery must re-ask the same question.
+            prepared = self._encode(current) | self._carried(raw) | {"role": role, "invocation_candidate": self._encode_candidate(invocation.candidate)}
+            self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, prepared, correlation, {"correlation": correlation, "work": item.identity, "role": role})
             self._store.claim_effect(self._profile, correlation)
-            invocation = WorkerInvocation(item.identity, correlation, item.contract.content_digest)
             outcome = self._worker.start(invocation, item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
             if not self._correlated(invocation, outcome):
                 return StopReason.BLOCKED if self._park_unknown_effect(item, reservation) else StopReason.CAPACITY_UNAVAILABLE
@@ -198,7 +230,7 @@ class FactoryCoordinator:
                 self._store.confirm_effect(self._profile, correlation, f"outcome:{outcome.kind}")
             except ReservationRejected:
                 return StopReason.BLOCKED if self._park_unknown_effect(item, reservation) else StopReason.CAPACITY_UNAVAILABLE
-            completed = self._completed_for_outcome(item, current, outcome)
+            advanced = self._advance(item, current, prepared, invocation, outcome)
             unresolved = self._has_unresolved_effect(item.identity)
             if unresolved:
                 self._record_result(item, current, correlation, "authority-block")
@@ -206,50 +238,109 @@ class FactoryCoordinator:
                 self._block_dependents(item, self._work.import_ready_snapshot())
                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
                 return StopReason.BLOCKED
-            read_back = self._record_result(item, completed, correlation, outcome.kind)
-            if outcome.kind == "authority-block":
+            read_back = self._record_result(item, advanced.state, correlation, advanced.outcome, advanced.fields | {"role": role, "outcome_kind": outcome.kind, "invocation_candidate": prepared["invocation_candidate"]})
+            if advanced.outcome == "authority-block":
                 self._register_escalation(outcome.escalation or self._authority_request(
-                    item, current.version, "The worker raised an authority block that requires a durable decision."
+                    item, current.version, advanced.hold or "The worker raised an authority block that requires a durable decision."
                 ))
                 self._block_dependents(item, self._work.import_ready_snapshot())
-                self._finalize_workspace(item.identity, correlation, retain=True)
-            elif read_back:
+                if role == PRODUCER:
+                    self._finalize_workspace(item.identity, correlation, retain=True)
+            elif read_back and role == PRODUCER:
                 self._finalize_workspace(item.identity, correlation, retain=False)
-            self._work.project_execution_state(item.identity, completed.stage, completed.version)
+            self._work.project_execution_state(item.identity, advanced.state.stage, advanced.state.version)
             return None
         finally:
             if read_back and not self._has_unresolved_effect(item.identity):
                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
 
+    @staticmethod
+    def _invocation(item: ReadyWorkItem, correlation: str, role: str, state: ExecutionState) -> WorkerInvocation:
+        """One role invocation; verifier and closure act on the exact custodied candidate."""
+        return WorkerInvocation(item.identity, correlation, item.contract.content_digest, role, None if role == PRODUCER else state.candidate)
+
     def _correlated(self, invocation: WorkerInvocation, outcome: WorkerOutcome) -> bool:
         """Only an outcome the worker durably reads back for this invocation is execution truth.
 
         A process that exits successfully without a correlated durable result,
-        or whose result reads back as another kind or candidate, holds here.
+        or whose result reads back as another kind, candidate, finding or
+        receipt, holds here.
         """
         durable = self._worker.read_back(invocation)
-        return durable is not None and (durable.kind, durable.candidate) == (outcome.kind, outcome.candidate)
+        return durable is not None and self._observables(durable) == self._observables(outcome)
 
-    def _completed_for_outcome(self, item: ReadyWorkItem, current: ExecutionState, outcome: WorkerOutcome) -> ExecutionState:
-        if outcome.kind == "rework":
-            return current
-        if outcome.kind != "success" or outcome.candidate is None:
-            return current
-        # The custody gate is control-plane enforcement: it always rechecks
-        # candidate retrieval rather than trusting a producer-set assertion.
-        verified = verify_in_fresh_process(outcome.candidate, self._artifacts.verifier_root)
-        verified_state = transition(current, current.version, "verify", candidate=verified)
-        reviewed = transition(verified_state, verified_state.version, "review")
-        verdict = evaluate_verdict(EvidenceDefinition(frozenset(item.contract.required_evidence)), (Observation("artifact-verified", True, True),), worker_claimed_success=True)
-        accepted = transition(reviewed, reviewed.version, "accept", verdict=verdict)
-        return transition(accepted, accepted.version, "close", completed_closure_actions=frozenset(item.contract.required_closure_actions))
+    @staticmethod
+    def _observables(outcome: WorkerOutcome) -> tuple[object, ...]:
+        return outcome.kind, outcome.candidate, tuple(outcome.findings), tuple(outcome.receipts)
 
-    def _record_result(self, item: ReadyWorkItem, state: ExecutionState, correlation: str, outcome: str) -> bool:
+    def _advance(self, item: ReadyWorkItem, current: ExecutionState, prior: dict[str, object], invocation: WorkerInvocation, outcome: WorkerOutcome) -> _Advance:
+        """The canonical lifecycle consequence of one correlated role outcome.
+
+        Producer success advances only to VERIFY. Only a distinct verifier's
+        verdict on the exact custodied candidate reaches REVIEW, and only a
+        trusted policy verdict reaches ACCEPT. DONE requires read-back receipts
+        for every required closure action. Anything else holds or reworks.
+        """
+        if outcome.kind == "authority-block":
+            return _Advance(current, "authority-block", {})
+        if invocation.role == PRODUCER:
+            if outcome.kind != "success" or outcome.candidate is None:
+                return _Advance(current, outcome.kind, {})
+            # The custody gate is control-plane enforcement: it always rechecks
+            # candidate retrieval rather than trusting a producer-set assertion.
+            verified = verify_in_fresh_process(outcome.candidate, self._artifacts.verifier_root)
+            return _Advance(transition(current, current.version, "verify", candidate=verified), "success", {"producer_correlation": invocation.correlation_id})
+        if invocation.role == VERIFIER:
+            if outcome.kind in {"failure", "timeout"}:
+                return _Advance(current, outcome.kind, {})
+            producer = prior.get("producer_correlation")
+            if (
+                outcome.kind not in {"accept", "reject"}
+                or not self._same_candidate(outcome.candidate, current.candidate)
+                or not isinstance(producer, str) or producer == invocation.correlation_id
+                or (outcome.kind == "reject" and not outcome.findings)
+            ):
+                return _Advance(current, "authority-block", {"hold_reason": f"verifier-outcome-not-attributable:{outcome.kind}"},
+                                "The verifier outcome does not attest the exact custodied candidate from an independent invocation.")
+            if outcome.kind == "reject":
+                return self._rework(item, current, prior, invocation, "verifier", outcome.findings)
+            reviewed = transition(current, current.version, "review")
+            observations = (Observation("artifact-verified", True, bool(current.candidate and current.candidate.verify_admissible)), Observation(VERIFIER_EVIDENCE, True, True))
+            verdict = evaluate_verdict(EvidenceDefinition(frozenset(item.contract.required_evidence) | {VERIFIER_EVIDENCE}), observations, worker_claimed_success=True)
+            if verdict.kind is not VerdictKind.ACCEPT:
+                return self._rework(item, reviewed, prior, invocation, "review", (verdict.reason,))
+            accepted = transition(reviewed, reviewed.version, "accept", verdict=verdict)
+            return _Advance(accepted, "accept", {"verdict": {"kind": str(verdict.kind), "reason": verdict.reason, "verifier_correlation": invocation.correlation_id}})
+        receipts = frozenset(outcome.receipts)
+        if outcome.kind != "closed" or not self._same_candidate(outcome.candidate, current.candidate) or not set(item.contract.required_closure_actions) <= receipts:
+            return _Advance(current, "authority-block", {"hold_reason": "closure-receipts-incomplete", "receipts": sorted(receipts)},
+                            "Closure did not read back every required closure action for the accepted candidate.")
+        return _Advance(transition(current, current.version, "close", completed_closure_actions=receipts), "closed", {"receipts": sorted(receipts)})
+
+    @staticmethod
+    def _same_candidate(reported: CandidateRef | None, custodied: CandidateRef | None) -> bool:
+        return reported is not None and custodied is not None and (reported.kind, reported.identity, reported.content_digest) == (custodied.kind, custodied.identity, custodied.content_digest)
+
+    def _rework(self, item: ReadyWorkItem, state: ExecutionState, prior: dict[str, object], invocation: WorkerInvocation, source: str, findings: tuple[str, ...]) -> _Advance:
+        """Record attributable findings and return to IMPLEMENT within the attempt budget."""
+        rejections = int(prior.get("rejections", 0) or 0) + 1
+        recorded = [*prior.get("findings", ()), {
+            "source": source, "correlation": invocation.correlation_id,
+            "candidate": None if state.candidate is None else state.candidate.identity, "findings": list(findings),
+        }]
+        reworked = transition(state, state.version, "rework")
+        fields: dict[str, object] = {"rejections": rejections, "findings": recorded}
+        if rejections >= item.contract.budget_policy.maximum_attempts:
+            return _Advance(reworked, "failure", fields | {"hold_reason": "attempt-budget-exhausted"})
+        return _Advance(reworked, "rework", fields)
+
+    @staticmethod
+    def _carried(raw: dict[str, object]) -> dict[str, object]:
+        return {key: raw[key] for key in CARRIED if key in raw}
+
+    def _record_result(self, item: ReadyWorkItem, state: ExecutionState, correlation: str, outcome: str, fields: dict[str, object] | None = None) -> bool:
         version, prior = self._store.read_state(self._profile, self._aggregate(item.identity))
-        persisted = self._encode(state) | {"correlation": correlation, "outcome": outcome}
-        for key in ("decision_key", "decision_choice"):
-            if key in prior:
-                persisted[key] = prior[key]
+        persisted = self._encode(state) | self._carried(prior) | (fields or {}) | {"correlation": correlation, "outcome": outcome}
         self._store.commit(self._profile, self._aggregate(item.identity), version, persisted)
         _, read_back = self._store.read_state(self._profile, self._aggregate(item.identity))
         return read_back.get("correlation") == correlation and read_back.get("outcome") == outcome
@@ -264,7 +355,12 @@ class FactoryCoordinator:
                 item = by_identity[identity]
             except (ValueError, KeyError):
                 return False
-            outcome = self._worker.read_back(WorkerInvocation(identity, reservation.owner, item.contract.content_digest))
+            _, raw = self._store.read_state(self._profile, self._aggregate(identity))
+            current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+            role = str(raw.get("role") or PRODUCER)
+            given = raw.get("invocation_candidate")
+            invocation = WorkerInvocation(identity, reservation.owner, item.contract.content_digest, role, self._decode_candidate(given) if isinstance(given, dict) else None)
+            outcome = self._worker.read_back(invocation)
             if outcome is None:
                 if not self._park_unknown_effect(item, reservation):
                     return False
@@ -276,34 +372,32 @@ class FactoryCoordinator:
                 # but before the correlated domain result was recorded.  The held
                 # reservation and worker read-back still make reconciliation safe.
                 pass
-            _, raw = self._store.read_state(self._profile, self._aggregate(identity))
-            if raw.get("correlation") == reservation.owner and raw.get("outcome") == outcome.kind:
-                if outcome.kind == "authority-block":
-                    self._restore_authority_block(
-                        item, replace(self._decode(raw), contract=item.contract), outcome, reservation.owner, items
-                    )
+            if raw.get("correlation") == reservation.owner and raw.get("outcome_kind", raw.get("outcome")) == outcome.kind:
+                if raw.get("outcome") == "authority-block":
+                    self._restore_authority_block(item, current, outcome, reservation.owner, items, role)
                 self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
                 continue
-            current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
-            if not self._record_result(item, self._completed_for_outcome(item, current, outcome), reservation.owner, outcome.kind):
+            advanced = self._advance(item, current, raw, invocation, outcome)
+            if not self._record_result(item, advanced.state, reservation.owner, advanced.outcome, advanced.fields | {"role": role, "outcome_kind": outcome.kind, "invocation_candidate": given}):
                 return False
-            if outcome.kind == "authority-block":
-                self._restore_authority_block(item, current, outcome, reservation.owner, items)
+            if advanced.outcome == "authority-block":
+                self._restore_authority_block(item, current, outcome, reservation.owner, items, role, advanced.hold)
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
         return True
 
-    def _restore_authority_block(self, item: ReadyWorkItem, state: ExecutionState, outcome: WorkerOutcome, correlation: str, items: Iterable[ReadyWorkItem]) -> None:
+    def _restore_authority_block(self, item: ReadyWorkItem, state: ExecutionState, outcome: WorkerOutcome, correlation: str, items: Iterable[ReadyWorkItem], role: str = PRODUCER, hold: str | None = None) -> None:
         self._register_escalation(outcome.escalation or self._authority_request(
-            item, state.version, "The worker raised an authority block that requires a durable decision."
+            item, state.version, hold or "The worker raised an authority block that requires a durable decision."
         ))
         self._block_dependents(item, items)
-        self._finalize_workspace(item.identity, correlation, retain=True)
+        if role == PRODUCER:
+            self._finalize_workspace(item.identity, correlation, retain=True)
 
     def _park_unknown_effect(self, item: ReadyWorkItem, reservation) -> bool:
         """Turn an unreadable FD-05 effect into a scoped, durable authority block."""
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
         current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
-        blocked = self._encode(current) | {"correlation": reservation.owner, "outcome": "authority-block"}
+        blocked = self._encode(current) | self._carried(raw) | {"correlation": reservation.owner, "outcome": "authority-block"}
         try:
             self._store.park_unknown_effect(self._profile, reservation.owner, version, blocked)
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
@@ -381,15 +475,21 @@ class FactoryCoordinator:
     def _release_aggregate(identity: str) -> str: return f"release:{identity}"
 
     @staticmethod
-    def _encode(state: ExecutionState) -> dict[str, object]:
-        candidate = state.candidate
-        encoded = None if candidate is None else {"kind": candidate.kind, "identity": candidate.identity, "content_digest": candidate.content_digest, "locator": candidate.locator, "provenance": candidate.provenance, "independent_read_back_proven": candidate.independent_read_back_proven}
-        return {"stage": state.stage, "version": state.version, "accepted": state.accepted, "closure": sorted(state.completed_closure_actions), "candidate": encoded}
+    def _encode_candidate(candidate: CandidateRef | None) -> dict[str, object] | None:
+        return None if candidate is None else {"kind": candidate.kind, "identity": candidate.identity, "content_digest": candidate.content_digest, "locator": candidate.locator, "provenance": candidate.provenance, "independent_read_back_proven": candidate.independent_read_back_proven}
 
     @staticmethod
-    def _decode(raw: dict[str, object]) -> ExecutionState:
+    def _decode_candidate(record: dict[str, object]) -> CandidateRef:
+        return CandidateRef(CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]), str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"]))
+
+    @classmethod
+    def _encode(cls, state: ExecutionState) -> dict[str, object]:
+        return {"stage": state.stage, "version": state.version, "accepted": state.accepted, "closure": sorted(state.completed_closure_actions), "candidate": cls._encode_candidate(state.candidate)}
+
+    @classmethod
+    def _decode(cls, raw: dict[str, object]) -> ExecutionState:
         record = raw.get("candidate")
-        candidate = CandidateRef(CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]), str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"])) if isinstance(record, dict) else None
+        candidate = cls._decode_candidate(record) if isinstance(record, dict) else None
         return ExecutionState(LifecycleStage(str(raw["stage"])), int(raw["version"]), candidate, bool(raw["accepted"]), frozenset(raw["closure"]), None)
 
     def _register_escalation(self, escalation: HumanDecisionRequired) -> None:
@@ -452,7 +552,7 @@ class FactoryCoordinator:
         items = self._work.import_ready_snapshot()
         if not already_recorded:
             outcome = "cancelled-by-decision" if record.submission.choice == "cancel" else "decision-recorded"
-            decision_state = self._encode(state) | {"outcome": outcome, "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice}
+            decision_state = self._encode(state) | self._carried(raw) | {"outcome": outcome, "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice}
             if record.submission.choice == "cancel":
                 self._store.commit(self._profile, self._aggregate(record.event.work_item), version, decision_state)
             else:

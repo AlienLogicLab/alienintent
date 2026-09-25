@@ -76,4 +76,6 @@ class GitSourceControl(SourceControl):
         expected_digest = f"sha256:{sha256(revision.encode()).hexdigest()}"
         if candidate.content_digest != expected_digest:
             raise CandidateUnavailable("candidate digest does not match immutable revision")
+        # The verifier evaluates the exact revision's tree, not an empty clone.
+        self._git("checkout", "-q", "--detach", revision, cwd=verifier_workspace)
         return candidate.with_independent_read_back()

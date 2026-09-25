@@ -15,6 +15,7 @@ so a restart reopens the same journal and reads back the same truth.
 from __future__ import annotations
 
 from pathlib import Path
+import json
 import subprocess
 from typing import Callable, Mapping, Sequence
 
@@ -22,12 +23,16 @@ from alienintent.execution_coordination.domain.contract import BiuContract, Budg
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.invocation_runtime.adapters.invocation_journal import journal_append, journal_records
 from alienintent.invocation_runtime.application.real_worker import decode_candidate, encode_candidate
-from alienintent.invocation_runtime.domain.runtime import BudgetRecord, InvocationRole, ProcessResult, ProviderCapabilities, ScriptRejected
+from alienintent.invocation_runtime.domain.runtime import VERDICT_PATH, BudgetRecord, InvocationRole, ProcessResult, ProviderCapabilities, ScriptRejected
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 
 SCRIPTED_PROVIDER = "scripted"
 SCRIPTED_DIMENSIONS = frozenset({"wall-clock", "attempts", "retries", "concurrency", "cancellation"})
-SCRIPTED_STEPS = frozenset({"success", "failure", "timeout", "authority-block", "provider-call"})
+PRODUCER_STEPS = frozenset({"success", "failure", "timeout", "authority-block", "provider-call"})
+# A verifier step renders (or, for ``no-verdict``, withholds) a verdict on the
+# exact revision checked out in the verifier's own fresh workspace.
+VERIFIER_STEPS = frozenset({"accept", "reject", "no-verdict"})
+SCRIPTED_STEPS = PRODUCER_STEPS | VERIFIER_STEPS
 PROVIDER_NOT_CONFIGURED = "alienintent-provider-not-configured"
 
 
@@ -49,7 +54,10 @@ def journal_outcome(path: Path, correlation_id: str) -> WorkerOutcome | None:
     for entry in reversed(journal_records(path)):
         if entry.get("event") == "invocation-outcome" and entry.get("correlation_id") == correlation_id:
             candidate = entry.get("candidate")
-            return WorkerOutcome(str(entry["kind"]), decode_candidate(candidate if isinstance(candidate, dict) else None))
+            return WorkerOutcome(
+                str(entry["kind"]), decode_candidate(candidate if isinstance(candidate, dict) else None),
+                findings=tuple(entry.get("findings") or ()), receipts=tuple(entry.get("receipts") or ()),
+            )
     return None
 
 
@@ -66,7 +74,9 @@ class ScriptedWorkerProcess(WorkerProcess):
     the injected clock as author and committer date, so the same script and
     clock reproduce the same revision. A ``provider-call`` step *attempts* to
     execute a provider executable that is not configured; it exists so the
-    zero-provider-call counter can be shown to move.
+    zero-provider-call counter can be shown to move. Verifier steps write a
+    verdict for the checked-out revision; a verifier with no remaining step
+    renders none, which the production path holds on.
     """
 
     def __init__(
@@ -95,13 +105,20 @@ class ScriptedWorkerProcess(WorkerProcess):
     def run(self, invocation_id: str, role: InvocationRole, workspace: Path, wall_clock_seconds: float) -> ProcessResult:
         work = work_identity_of(invocation_id)
         steps = self._remaining.get(work)
-        if not steps:
+        verifying = role is InvocationRole.VERIFIER
+        if not steps and not verifying:
             raise ScriptRejected(f"no scripted step remains for {work}")
-        step = steps.pop(0)
+        step = steps.pop(0) if steps else "no-verdict"
+        if (step in VERIFIER_STEPS) != verifying:
+            raise ScriptRejected(f"scripted step {step} cannot run as {role}")
         attempt = self._attempts[work] = self._attempts.get(work, 0) + 1
         provider_calls = 0
         if step == "success":
             self._commit(work, invocation_id, workspace)
+            result = ProcessResult("success", 0, True, BudgetRecord.unknown())
+        elif verifying:
+            if step != "no-verdict":
+                self._verdict(work, invocation_id, workspace, step)
             result = ProcessResult("success", 0, True, BudgetRecord.unknown())
         elif step == "provider-call":
             provider_calls = 1
@@ -141,6 +158,13 @@ class ScriptedWorkerProcess(WorkerProcess):
         self._git("add", "-A", cwd=workspace)
         self._git("commit", "-q", "-m", f"{work}: scripted candidate", cwd=workspace)
 
+    def _verdict(self, work: str, invocation_id: str, workspace: Path, step: str) -> None:
+        revision = subprocess.run(["git", "rev-parse", "HEAD"], cwd=workspace, env=self._environment, capture_output=True, text=True, check=False).stdout.strip()
+        findings = [] if step == "accept" else [f"{work}: scripted rejection under {invocation_id}"]
+        verdict = workspace / VERDICT_PATH
+        verdict.parent.mkdir(parents=True, exist_ok=True)
+        verdict.write_text(json.dumps({"verdict": step, "revision": revision, "findings": findings}), encoding="utf-8")
+
     def _attempt_provider(self, workspace: Path) -> int:
         try:
             completed = subprocess.run([self._provider_executable, "--version"], cwd=workspace, env=self._environment, capture_output=True, text=True, timeout=5, check=False)
@@ -168,12 +192,13 @@ class ScriptedWorkerProvider(WorkerProvider):
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         self._append({
             "event": "invocation-started", "correlation_id": invocation.correlation_id, "work_identity": invocation.work_identity,
-            "role": str(InvocationRole.PRODUCER), "contract_digest": None if context is None else context.content_digest,
+            "role": invocation.role, "contract_digest": None if context is None else context.content_digest,
         })
         outcome = self._inner.start(invocation, context, grants, budget)
         self._append({
             "event": "invocation-outcome", "correlation_id": invocation.correlation_id, "work_identity": invocation.work_identity,
-            "kind": outcome.kind, "candidate": encode_candidate(outcome.candidate),
+            "role": invocation.role, "kind": outcome.kind, "candidate": encode_candidate(outcome.candidate),
+            "findings": list(outcome.findings), "receipts": list(outcome.receipts),
         })
         return outcome
 

@@ -9,6 +9,12 @@ from enum import StrEnum
 class InvocationRole(StrEnum):
     PRODUCER = "PRODUCER"
     VERIFIER = "VERIFIER"
+    CLOSURE = "CLOSURE"
+
+
+# Where a verifier process leaves its verdict inside its own fresh workspace:
+# {"verdict": "accept"|"reject", "revision": <evaluated 40-hex revision>, "findings": [..]}.
+VERDICT_PATH = ".alienintent/verdict.json"
 
 
 class CapabilityDenied(PermissionError):

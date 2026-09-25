@@ -48,9 +48,19 @@ class MemoryWorkManagement:
 
 
 class ScriptedWorker:
-    def __init__(self, artifacts, outcomes: dict[str, list[str]], *, durable: bool = False) -> None:
+    """Worker-port double: producers follow ``outcomes``; verifier and closure roles are scripted too.
+
+    A verifier accepts the exact candidate it is given unless ``verdicts`` names
+    another step; closure reports receipts for the required closure actions
+    unless ``closures`` names what was actually performed. ``dispatched`` counts
+    producer dispatches; ``invocations`` records every role invocation.
+    """
+
+    def __init__(self, artifacts, outcomes: dict[str, list[str]], *, durable: bool = False, verdicts: dict[str, list[str]] | None = None, closures: dict[str, tuple[str, ...]] | None = None) -> None:
         self.artifacts, self.outcomes, self.durable = artifacts, outcomes, durable
+        self.verdicts, self.closures = verdicts or {}, closures or {}
         self.dispatched: list[str] = []
+        self.invocations: list[tuple[str, str, str]] = []
         self.observed: dict[str, object] = {}
 
     def _path(self, correlation: str) -> Path:
@@ -59,15 +69,25 @@ class ScriptedWorker:
     def start(self, invocation, context, grants, budget):
         _, _, _, provider = _api()
         identity = invocation.work_identity
-        self.dispatched.append(identity)
-        kind = self.outcomes[identity].pop(0)
-        outcome = provider.WorkerOutcome.success(self.artifacts.write(f"artifact:{identity}".encode())) if kind == "success" else provider.WorkerOutcome(kind)
+        self.invocations.append((identity, invocation.role, invocation.correlation_id))
+        if invocation.role == provider.VERIFIER:
+            steps = self.verdicts.get(identity)
+            step = steps.pop(0) if steps else "accept"
+            outcome = provider.WorkerOutcome.accept(invocation.candidate) if step == "accept" else (
+                provider.WorkerOutcome.reject(invocation.candidate, (f"{identity}: rejected under {invocation.correlation_id}",)) if step == "reject" else provider.WorkerOutcome(step))
+        elif invocation.role == provider.CLOSURE:
+            performed = self.closures.get(identity, context.required_closure_actions)
+            outcome = provider.WorkerOutcome.closed(invocation.candidate, tuple(performed))
+        else:
+            self.dispatched.append(identity)
+            kind = self.outcomes[identity].pop(0)
+            outcome = provider.WorkerOutcome.success(self.artifacts.write(f"artifact:{identity}".encode())) if kind == "success" else provider.WorkerOutcome(kind)
         self.observed[invocation.correlation_id] = outcome
         if self.durable:
             path = self._path(invocation.correlation_id)
             path.parent.mkdir(parents=True, exist_ok=True)
             candidate = outcome.candidate
-            path.write_text(json.dumps({"kind": outcome.kind, "candidate": None if candidate is None else candidate.__dict__}))
+            path.write_text(json.dumps({"kind": outcome.kind, "candidate": None if candidate is None else candidate.__dict__, "findings": list(outcome.findings), "receipts": list(outcome.receipts)}))
         return outcome
 
     def read_back(self, invocation):
@@ -78,10 +98,8 @@ class ScriptedWorker:
             return None
         _, custody, _, provider = _api()
         record = json.loads(path.read_text())
-        if record["kind"] != "success":
-            return provider.WorkerOutcome(record["kind"])
-        candidate = record["candidate"]
-        return provider.WorkerOutcome.success(custody.candidate_from_record(candidate))
+        candidate = None if record["candidate"] is None else replace(custody.candidate_from_record(record["candidate"]), independent_read_back_proven=record["candidate"]["independent_read_back_proven"])
+        return provider.WorkerOutcome(record["kind"], candidate, findings=tuple(record.get("findings", ())), receipts=tuple(record.get("receipts", ())))
 
 
 def _item(identity: str, fifo: int, priority: int | None, dependencies: tuple[str, ...] = (), *, automatic: bool = True):
@@ -131,7 +149,8 @@ def test_projection_type_error_does_not_retry_without_the_execution_revision(tmp
 
     with pytest.raises(TypeError, match="provider implementation fault"):
         coordinator.start()
-    assert work.revisions == [4]
+    # VERIFY (1) and ACCEPT (3) project first; the fault at DONE (4) is not retried.
+    assert work.revisions == [1, 3, 4]
 
 
 def test_unavailable_projection_does_not_change_internal_execution_truth(tmp_path: Path) -> None:
@@ -212,12 +231,17 @@ def test_wip_refusal_and_explicit_release_are_reported(tmp_path: Path) -> None:
 
 
 def test_success_requires_policy_evidence_and_readback(tmp_path: Path) -> None:
+    """A REVIEW verdict without trusted required evidence reworks; it never accepts."""
     coordinator, worker, _ = _coordinator(tmp_path, [_item("evidence", 1, 1)], {"evidence": ["success"]})
     item = coordinator._work.items[0]
     contract = replace(item.contract, required_evidence=("missing",))
     coordinator._work.items[0] = replace(item, contract=contract, readiness_digest=contract.content_digest)
-    with pytest.raises(ValueError, match="ACCEPT requires"):
-        coordinator.start()
+    coordinator.start()
+    state = coordinator.state("evidence")
+    assert state.stage is LifecycleStage.IMPLEMENT and not state.accepted and state.candidate is None
+    assert state.outcome == "failure" and state.record["hold_reason"] == "attempt-budget-exhausted"
+    assert [entry["source"] for entry in state.record["findings"]] == ["review"]
+    assert worker.dispatched == ["evidence"]
 
 
 def test_real_process_restart_reconciles_durable_outcome(tmp_path: Path) -> None:
