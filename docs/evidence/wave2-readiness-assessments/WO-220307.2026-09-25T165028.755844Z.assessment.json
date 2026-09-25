@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce a local, fake-time integration capstone (fixture FX-C) that composes the C3 bounded coordinator episodes, C4 durable attention/monitor-health inspection, and L1 SF-REQ-056 liveness reconciliation. It must show four things: an episode ended during duplicate or delayed outcomes is reconstructed identically by a fresh context; attention survives restart; completed judgment suppresses recovery; and a stale epoch cannot send. Stopped scans must surface as DEGRADED/STALE health. The capstone must make no claim of supervised-host deployment, live transport, cutover or retirement.",
+    "implementation_unknowns": [
+      "Whether the existing proof surfaces (test_episode_control.py, test_attention.py, test_monitor_health.py, control_plane_profile.py) already expose composition seams for injecting shared fake time and a common store/consumer/readback across C3/C4/L1, or whether capstone-local wiring is needed within the composition profile.",
+      "Where the FX-C fixture should live and how to structure it so the four failure classes are each discriminated by exactly one negative control without a branch-by-branch mutation matrix.",
+      "How to drive a duplicate/delayed outcome concurrently with episode termination deterministically under fake time, so that a fresh-context reconstruction can be compared for identical authorized actions.",
+      "Which command constitutes the single broad regression run after focused proof is green.",
+      "Whether predecessor interfaces as landed in WO-220303/WO-220304, and eventually WO-220306, match the pinned Phase 9 contracts closely enough for composition. Any mismatch is a defect to return to the owning BIU, not to repair here."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Predecessor WO-220306 is reported READY, not DONE. Starting now would either compose unproven L1 behavior or tempt the capstone to implement or repair L1 internally, which the non-goals prohibit.",
+      "Predecessor defects surfaced during composition could be patched inside the capstone instead of being returned to the owning C3/C4/L1 BIU.",
+      "A local fake-time result could be over-read as operational monitor-host supervision, live G+I, cutover or bootstrap retirement evidence, contrary to the explicit non-claims.",
+      "Missing or unavailable measurements (e.g. context usage when BOUND, scan outcomes) could be recorded as zero or PASS instead of explicit holds.",
+      "Negative controls could proliferate into a mutation matrix, or be too weak to discriminate a class, especially for the combined duplicate/delayed plus termination scenario.",
+      "Nondeterminism between the injected deadline timer and event-driven tenure checks could make the reconstruction-equality assertion flaky."
+    ],
+    "next_action": "Keep WO-220307 in TASKS. Wait until WO-220306 (Issue #112) reaches DONE with retained proof and an independent verdict. Then confirm that the WO-220303 and WO-220304 DONE receipts are retained. Finally, re-run a fresh Agent Ready assessment on the exact revision of this work order before any PRODUCER assignment.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "Intent, fixed decisions, scope, non-goals, acceptance and verification are sufficiently specified, so CLARIFY is not warranted. The work is a single cohesive composition over one path with one independent verdict, so SPLIT would fragment it artificially. The deciding condition is an unavailable prerequisite: the L1 liveness reconciliation predecessor is reported as not DONE. The work order itself makes predecessor completion a precondition and directs a hold on unmet dependency proof. This is a missing external prerequisite rather than unresolved intent, which makes HOLD the controlling disposition. Once that dependency is satisfied, the text as supplied would plausibly support READY, with only engineering research remaining.",
+    "semantic_split_recommendation": [],
+    "summary": "The owner intent is detailed and internally coherent. Tenure limits, context-usage BOUND/UNBOUND semantics, contradiction judgment ownership, G/I/C defaults, effectively-once boundaries, non-claims and custody are all fixed as decisions. Acceptance is one cohesive composed-path proof with four named failure classes, one discriminating negative control each, and one independent verifier. There are no unresolved owner questions and no independent decision centers that would justify a split. The controlling problem is a prerequisite. The task text reports dependency WO-220306 (Issue #112), which provides the L1 liveness reconciliation this capstone composes, as READY, not DONE. The work order's own readiness and stop rules require every predecessor BIU to be DONE and say to hold on unmet dependency proof. This is based on the reported status in the text; it has not been independently verified.",
+    "verification_assessment": "Acceptance is observable and falsifiable through four stated failure classes, each with an intended discriminating negative control:\n- identical reconstruction and stale-epoch send prevention;\n- attention durability and completed-judgment suppression;\n- explicit DEGRADED/STALE/UNVERIFIED health that never becomes a healthy claim;\n- one authorized effect/readback identity under duplicate/delayed outcomes.\n\nThese all exercise one composed local path under fake time, so a single fresh independent verifier verdict on the exact candidate SHA is meaningful. Evidence obligations (exact revisions, commands, exit status, negative-control application counts, retained receipts) support that verdict. The verdict cannot be meaningfully produced until the L1 predecessor (WO-220306) is DONE, because the liveness reconciliation and suppression behavior it would compose is not yet reported as proven."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T16:50:53.755733+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 11711,
+    "input_sha256": "753057158cf9d136b5b0a6e53c2193a8a04d3315e3eaeb32625f1fa445322f30",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-vu0cluco/WO-220307.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T16:50:28.755844+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220307"
+}

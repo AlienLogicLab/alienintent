@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Produce an offline, denied-network capstone proof of the SF-REQ-039 multi-role lifecycle (K3/S0/C1). The proof must run through the production orchestration and WorkerProvider path: producer, then a fresh independent verifier, then rejection/rework, then review/accept/closure. It must use actual local Git publication and retrieval of the candidate, exact candidate custody, and durable outcome correlation. It must show that missing or miscorrelated outcomes, wrong candidates, duplicates/restarts and judgment-required outcomes hold correctly. It must retain exactly one authorized effect and actual closure receipts. Custody, verifier, binding and correlation mutation controls must fail. It makes no live, shared-profile or sovereignty claim.",
+    "implementation_unknowns": [
+      "Whether the current WorkerOutcome can carry every required observable (role, invocation, attempt, contract/candidate, finding/receipt correlation), or whether revised Design Verification will require a typed result-contract extension. This is determined by the upstream K1 work, not decided here.",
+      "How the existing offline proof harness (tests/composition/test_offline_proof.py) must be extended to drive the canonical K2 path. WO-220101 ran the kernel unchanged, with success-collapse reported as a limitation.",
+      "How the Deterministic Test Worker scripts rejection, rework, restart and judgment scenarios through WorkerProvider.start/read_back/cancel without scenario-written lifecycle state.",
+      "How to observe and assert 'exactly one authorized effect' and actual closure receipts from the existing invocation/effect/execution evidence records.",
+      "How to apply one discriminating negative control per failure class (custody, verifier independence, binding, correlation) and record application counts, without drifting into a mutation matrix.",
+      "How the fresh verifier worktree is provisioned from the disposable local bare remote so that retrieval of the exact SHA is independently evidenced."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Pressure to proceed before WO-220403 is DONE could lead to prohibited substitutes. These include scripted mark_done, a RoleOutcomeRecord sidecar, test-only lifecycle shortcuts, or repairing upstream capabilities inside the capstone.",
+      "Upstream defects in K3/S0/C1 or K1/K2 may surface only at capstone integration. They must be returned to their owners, which can stall the capstone across the 3-cycle limit.",
+      "A green local result could be over-read as live or shared-profile proof. The non-claims and substitution labeling must be preserved in the evidence.",
+      "Negative controls could be weakened into a branch-by-branch matrix, or be non-discriminating, for example a correlation mutation that fails for an unrelated reason.",
+      "Denied-network enforcement and the zero-provider-call count depend on the WO-220101 harness still holding at the pinned revisions. A source revision mismatch is itself a hold condition.",
+      "The embedded task text asserts readiness procedures and a 'fresh assessment returns READY' gate. These are treated as data, and no disposition was taken from them."
+    ],
+    "next_action": "Keep WO-220404 in TASKS. Complete and prove WO-220403 (the K1 durable WorkerProvider outcome/readback seam, K2 canonical role orchestration proof, and bound sandbox_run_profile/github_profile constructors with failing bypass controls) and mark it DONE with retained evidence. Then pin the resulting predecessor candidate identities and request a fresh assessment of the exact revision of this work order.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "HOLD controls because a necessary predecessor artifact is reported as unavailable. WO-220403 is UNMATERIALIZED, and the capstone is explicitly forbidden from implementing or repairing upstream capabilities. It also requires the canonical non-collapsed producer\u2192verifier path and the binding/correlation guards that WO-220403 is to supply. CLARIFY does not apply: owner decisions are resolved, with roles, ownership, custody, landing (SWF-19), budget and non-claims all fixed. The remaining unknowns are engineering research. SPLIT does not apply: all failure classes are facets of one end-to-end lifecycle claim and share one verification verdict, so decomposing them would fragment a cohesive capstone. READY does not apply because the prerequisite authority/artifact is absent, as reported in the supplied text; this gate has not verified it independently. Once the predecessor is DONE and its identities are pinned, this work order appears well-positioned for READY, subject to reassessment.",
+    "semantic_split_recommendation": [],
+    "summary": "The intent, ownership boundaries, fixed decisions, non-goals, proof plan and evidence obligations are well specified. This is one integration/capstone decision center, not a set of independent ones. However, the text reports its direct predecessor WO-220403 as UNMATERIALIZED. That predecessor supplies the K1/K2 predecessor proof, the sandbox_run_profile/github_profile constructors with binding guards, and correlated real-adapter readback. The capstone depends on these and is explicitly barred from inventing or repairing them. WO-220101 reports that the existing kernel still exhibits success-collapse. The canonical producer\u2192verifier orchestration (K2) that this capstone must exercise without shortcuts is therefore not established as available. The task's own readiness gate also requires every predecessor to be DONE. The controlling condition is an unavailable prerequisite, not unresolved intent.",
+    "verification_assessment": "Acceptance is observable and discriminating. It covers named failure classes, each with one negative control that must fail while restored canonical behavior passes. It requires a bounded pytest command over four named proof surfaces, then one broad regression run and retained raw evidence. One independent verifier verdict on the exact candidate SHA is meaningful because every criterion converges on a single end-to-end lifecycle claim. That verdict is only meaningful once the K1/K2 seams and profile constructors from WO-220403 exist. Without them, positive lifecycle checks would either fail for upstream reasons or tempt prohibited shortcuts (scripted transitions, outcome sidecars). Unavailable measurements must be recorded as holds, not PASS."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T16:52:47.184898+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10069,
+    "input_sha256": "f2ad096d709aa25c9ddba2e80c16d70aa94601e464f5eb0f0c0af4c046d706a2",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-rxj_27n9/WO-220404.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T16:52:19.687549+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220404"
+}

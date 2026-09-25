@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce a Wave 2A integration/capstone proof for already-proven upstream capabilities. The capabilities are, in order: inventory, ambiguity, premise/proof, independent design applicability, compiler-derived initial compilation, and lint/retained Agent Ready assessment consumption. The proof must show that a source, decision or design revision mismatch holds downstream readiness without mutating lifecycle or Project state, and that no output asserts release.",
+    "implementation_unknowns": [
+      "Whether the existing tests under tests/context_assembly and src/alienintent/composition/upstream_profile.py already cover the chained end-to-end path, or need an integration harness added over FX-A.",
+      "How to inject a source, decision or design revision mutation into FX-A so it discriminates stale-evidence reuse without touching lifecycle or Project state.",
+      "How to observe that no lifecycle or Project mutation occurred, for example through an outside-state readback, using existing OperationalStore/EvidenceRepository boundaries.",
+      "Which of the four material failure classes the existing tests already exercise as discriminating negative controls, and which need exactly one new control each.",
+      "Whether the retained Agent Ready consumption boundary from WO-220209 exposes a stable typed interface the integration can consume without copying the rubric.",
+      "The exact interface and output identity of the WO-220208 compiler once it is materialized, needed to bind compilation into the chain and record producer/version provenance."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Proceeding before WO-220208 materializes invites emulating or stubbing the compiler inside the capstone. That violates the non-goals and Reuse Before Build, and it would produce proof that does not reflect the real producer.",
+      "A green local result could be misread as release or execution admission, despite the explicit non-claims.",
+      "Stale evidence reuse across revisions if revision pins (fixture, source, profile, candidate) are not captured exactly.",
+      "Implementation-location paths (context_assembly, legacy bounded_context) could be treated as semantic ownership decisions. The task says FD-02 refinement leaves that mapping undecided.",
+      "Shape-matching Agent Ready output could be mistaken for producer provenance. Producer identity and version must be checked independently.",
+      "Fixed decisions are duplicated verbatim in the task text. This is harmless now but indicates compilation noise that could hide a real divergence in later revisions."
+    ],
+    "next_action": "Hold this BIU until WO-220208 is materialized, proven and DONE, with its candidate SHA and producer/version provenance recorded. Then confirm WO-220209's DONE evidence, and request a fresh native Agent Ready assessment of the exact revision before assigning the PRODUCER.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "Governing intent is clear and the owner decisions this node needs are recorded as settled. Allocation, edge policy, Agent Ready ownership and the dispositions are fixed. The FD-02 mapping is explicitly outside this node, so CLARIFY is not warranted. The work is a single cohesive integration concern with one fixture and one verdict, so SPLIT would be artificial decomposition. The controlling condition is an unavailable external prerequisite. The task text reports WO-220208 as UNMATERIALIZED, yet its output (compiler-derived initial compilation) is an integral stage of the chain being integrated. The task forbids implementing or repairing upstream capabilities here and requires all predecessors to be DONE. That is a HOLD on a missing artifact, not unresolved intent. Once WO-220208 is available, the remaining unknowns are engineering research and the task would likely qualify as READY.",
+    "semantic_split_recommendation": [],
+    "summary": "Intent, scope, non-goals, fixed decisions and proof policy are coherent and detailed. The work is one integration concern with a single fixture (FX-A), named existing proof surfaces and an initial bounded command. The controlling problem is a missing prerequisite rather than unclear intent. The task text reports that dependency WO-220208 is UNMATERIALIZED. WO-220208 is the compiler-derived initial BiuContract compilation under the SF-REQ-013 amendment, and it is one of the stages this capstone must integrate. The task's own non-goals forbid building or repairing that capability inside the capstone, and its readiness section requires every predecessor BIU to be DONE. WO-220209 is reported DONE (Issue #105); this gate has not independently verified that.",
+    "verification_assessment": "Acceptance is observable and supports one meaningful independent verdict. The verifier can check that the chained stages run in order on FX-A, and that each failure class (ordering gate, revision-mismatch invalidation, typed separation of compilation from assessment consumption, no mutation or release assertion) has a discriminating negative control. The verifier can also check that outside-state readback is unchanged and that evidence and provenance receipts are retained. Custody (exact SHA, fresh verifier worktree) is well specified. However, the compiler-derived initial compilation stage cannot be observed until WO-220208 exists. Any verdict produced now would either be incomplete or rely on a stub, and the task forbids a stub as a substitute for the provider."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T16:51:31.361001+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 14092,
+    "input_sha256": "e6ddedb62126fd536391a7b72a5b28b0777b61442bebe69686782d1abe96876a",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-mljawnv6/WO-220211.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T16:51:08.771119+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220211"
+}

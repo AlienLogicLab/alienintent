@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Implement a compiler (U8, capability initial_compilation) under the SF-REQ-013 amendment. It must deterministically derive the initial BiuContract candidate from pinned requirements, reviewed design and proof obligations. Every acceptance/proof obligation must be conserved with explicit extent and reverse trace, and identity/graph/custody constraints preserved. A validator-only path that merely checks a supplied allocation must be unable to satisfy completion. Existing decomposition stays immutable, and existing BiuContract/OperationalStore/EvidenceRepository/Agent Ready interfaces are reused.",
+    "implementation_unknowns": [
+      "Where the existing compilation/validation logic in src/alienintent/context_assembly/domain/compilation.py ends and new derivation logic should begin, and how the WO-220207 validator is reused as a post-derivation check rather than as the completion path.",
+      "How pinned requirements, reviewed design and proof obligations are represented and loaded as exact, revision-pinned inputs, and which existing helpers provide deterministic identity generation (fixed-width grammar/reservations).",
+      "How upstream_profile.py supplies profile/producer identity and version for provenance recording, since output shape alone is not producer proof.",
+      "Whether an authoritative existing implementation in the project, Alien Logic Lab or tool ecosystem already provides parts of decomposition or obligation mapping (Design Verification must check this before implementing).",
+      "Design of FX-U8 negative controls: one discriminating control each for supplied-mapping acceptance, obligation omission/weakening/invention, and nondeterministic or invalid identity/dependency/custody/budget fields."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "WO-220206 is reported as ACCEPT rather than DONE. Proceeding would violate the stated readiness gate, and its design-review and architecture-check results may still change.",
+      "The FD-02 Design Contract mapping of the legacy bounded_context/context_assembly locations to the Requirements/Planning semantic context is undecided. Placing the compiler there could be rejected as implementation-local resolution of an architecture question.",
+      "Phase 5 mechanisms (identity-preserving graph rules, fixed-width grammar, reverse mapping) are unapproved candidates. Adopting them in the compiler may preempt their independent review.",
+      "The existing hand-authored mapping fixture from WO-220207 could let a validator-only implementation appear green unless negative controls specifically discriminate derivation from acceptance.",
+      "Status and dependency facts are reported by the task text and have not been independently verified by this gate."
+    ],
+    "next_action": "Resolve two prerequisites, then request a fresh Agent Ready assessment of the updated revision. (1) Bring WO-220206 to DONE, or have the owning authority record that ACCEPT satisfies the predecessor-DONE gate. (2) Confirm that the reviewed design input exists and is pinned: either the FD-02 Design Contract refinement placing initial_compilation relative to context_assembly, or an explicit statement that the retained paths are authorized locations for this node. Also pin which reviewed design content, if any, governs identity/grammar rules the compiler must emit.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "Owner intent is not the blocker: the allocation-source, validator-only, ownership and disposition questions are explicitly resolved and must not be reopened. The work is one cohesive compiler capability with a single verification verdict, so SPLIT is inappropriate. READY requires available prerequisites, but the task text shows a predecessor in ACCEPT rather than the DONE state its own readiness clause demands. It also shows that a required design input (the FD-02 context mapping and reviewed design for the derivation rules) is deferred Design Contract work outside this node's authority. These are missing external prerequisites and authority, which is the HOLD condition. Once they are available, the remaining unknowns are ordinary engineering research and the task would likely qualify as READY.",
+    "semantic_split_recommendation": [],
+    "summary": "The intent is clear and cohesive, and most owner decisions are recorded as fixed: the allocation source is resolved, validator-only is rejected, Agent Ready is consumed via SF-REQ-015, dispositions are READY/CLARIFY/SPLIT/HOLD, and the task makes no replan or release mutation. The failure classes and proof plan are observable and support one independent verifier verdict. Two prerequisites are not established as available. First, predecessor WO-220206 is reported as ACCEPT, not DONE, yet the work order's own readiness clause requires every predecessor BIU to be DONE. Second, the 'reviewed design' input the compiler must derive from appears to be partly outstanding. The FD-02 mapping of the legacy bounded_context/context_assembly paths to the semantic context is explicitly deferred Design Contract work and is not implementation-local freedom. The Phase 5 mechanisms are carried forward only as candidates with no approval verdict. These are unavailable prerequisites rather than unresolved owner intent, so HOLD controls.",
+    "verification_assessment": "Acceptance is observable through the FX-U8 fixture and the four named failure classes, each paired with a discriminating negative control. Named test surfaces and an initial pytest command are given, and broad regression runs once after focused proof. A single fresh, independent verifier verdict on the exact published SHA is meaningful because all criteria concern one compiler behavior against one fixture. Determinism, conservation with reverse trace, and rejection of a validator-only path are each mechanically checkable. The verdict depends on the design inputs being pinned and reviewed; without them, 'derived from reviewed design' cannot be verified."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T16:49:44.432124+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 9929,
+    "input_sha256": "ca8966cb7eb11613e3eedec0a462973a6a2b4d73e6c5931f143567aee5f2857a",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-0_eox02l/WO-220208.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T16:49:12.821548+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220208"
+}

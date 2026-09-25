@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove that the actual sandbox_run_profile and github_profile constructors, using local transports, bind the configured WorkerProvider and durable role, candidate and result correlation before any multi-role worker launch. The profiles must refuse missing or miscorrelated role authority, candidate custody or outcome binding before launch. A correctly bound real adapter must reach correlated success, rejection and restart readback through existing WorkerProvider and evidence ownership. The work must introduce no sidecar state owner and claim no live or shared-profile activation.",
+    "implementation_unknowns": [
+      "Where the binding guard should sit in sandbox_run_profile and github_profile composition so that it runs strictly before worker launch.",
+      "Whether the current WorkerOutcome can carry every observable needed for correlated success, rejection and restart readback. The fixed decisions allow extending the contract only if revised Design Verification proves it is necessary.",
+      "How the existing invocation, effect and execution evidence records expose role, attempt and candidate correlation for readback assertions in the FX-K3 fixture.",
+      "How to build the discriminating negative controls for guard bypass and disconnected correlation, one per failure class, without constructing a mocked second lifecycle.",
+      "Whether github_profile can be constructed with local transports in the existing test surfaces, or whether fixture support must be added."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "K2 (WO-220402) is reported READY, not DONE. Its canonical orchestration seams may change before landing and invalidate K3 composition assumptions.",
+      "The text does not clearly establish K1's durable outcome/readback proof as DONE. The listed DONE dependency, WO-220209, does not obviously correspond to K1.",
+      "A genuine interface incompatibility with K1 or K2 must be escalated to their owner. The producer might instead be tempted to add a local sidecar state owner or widen WorkerOutcome without Design Verification.",
+      "Negative controls could pass trivially if the guard is exercised through test-only shortcuts rather than the actual profile constructors.",
+      "Local proof could be misread as authorizing live or shared-profile multi-role activation, which is an explicit non-claim."
+    ],
+    "next_action": "Keep WO-220403 in TASKS until WO-220402 (K2) is DONE and the K1 durable WorkerProvider outcome/readback BIU is identified and DONE, each with retained candidate SHAs and proof receipts. Then rerun a fresh Agent Ready assessment on the exact revision that pins those predecessor identities.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "Owner intent is resolved. The fixed decisions settle ownership, the no-sidecar rule, reuse of the worker port and the non-activation boundaries, so CLARIFY is not warranted. The work is one cohesive composition proof across two profile constructors that share a single binding invariant, so SPLIT is not warranted. Verification and rework locality would support READY. However, both the scope and the acceptance criteria are conditioned on 'K1/K2 predecessor proof', and the task's own readiness section requires every predecessor to be DONE. The supplied text reports K2 as READY only and does not clearly establish K1 as DONE. The missing prerequisite is necessary and external to this node, so HOLD is the controlling disposition.",
+    "semantic_split_recommendation": [],
+    "summary": "K3 is a cohesive compatibility proof with clear intent. Its fixed decisions resolve ownership: Execution Coordination owns orchestration, Invocation Runtime owns WorkerProvider, and no RoleOutcomeRecord is added. Acceptance is observable through positive and negative controls. The work depends explicitly on predecessor proof from K1 (durable outcome/readback) and K2 (canonical orchestration). The task reports its K2 dependency, WO-220402, as READY, not DONE. The task's own readiness clause requires every predecessor BIU to be DONE. The listed DONE dependency, WO-220209, describes disposition and provenance handling. The text does not clearly identify it as K1's durable WorkerProvider outcome/readback seam. The controlling condition is therefore an unavailable prerequisite, not unresolved intent or independent decision centers.",
+    "verification_assessment": "Acceptance is observable. There are four named failure classes: refusal before launch on missing or miscorrelated binding, correlated readback through the real adapter, failure when the guard is bypassed or correlation is disconnected, and the absence of a sidecar owner or live activation. Each has a discriminating negative control and uses existing test surfaces and a bounded pytest command. One independent verifier verdict on the exact candidate SHA is meaningful, because the claims form a single composition-compatibility property. That verdict is only meaningful, however, against landed K1 and K2 candidates. Until those predecessors are DONE with retained proof, the verdict would lack its required baseline, and the task's evidence obligations would be an explicit hold."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T16:52:06.802134+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10069,
+    "input_sha256": "2097721d456bae9102b9c9f68acddc8fa174db515e21a2a356dc0e61f94c41be",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-3tq018b3/WO-220403.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T16:51:44.730665+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220403"
+}
