@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","tools/fitness/check_architecture.py","--root","src/alienintent","--check","all"],"cwd":"/tmp/fx-u7-controls-zaxf8zr6","exit_status":1,"stderr":"","stdout":"context_assembly/domain/compilation.py:18: domain imports adapters\n"}

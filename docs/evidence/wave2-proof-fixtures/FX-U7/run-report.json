@@ -1,0 +1,1100 @@
+{
+  "fixture_id": "FX-U7",
+  "work_unit_id": "WO-220207",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "acceptance_to_probes": {
+    "SF-REQ-013-AC-03": {
+      "P01": [
+        "test_valid_initial_graph_admitted_for_assessment"
+      ],
+      "P02": [
+        "test_graph_refusal_names_edge"
+      ],
+      "P03": [
+        "test_split_graph_refusal_names_edge"
+      ]
+    },
+    "SF-REQ-013-AC-04": {
+      "P06": [
+        "test_design_gate_holds"
+      ],
+      "P07": [
+        "test_unresolved_authority_holds"
+      ],
+      "P08": [
+        "test_conflicting_decisions_hold"
+      ],
+      "P09": [
+        "test_hold_writes_no_transition"
+      ]
+    },
+    "SF-REQ-013-AC-05": {
+      "P09": [
+        "test_hold_writes_no_transition"
+      ],
+      "P13": [
+        "test_swf33_replay"
+      ],
+      "P14": [
+        "test_split_nonconserving_refused"
+      ],
+      "P15": [
+        "test_split_bounds_expansion_refused"
+      ],
+      "P16": [
+        "test_split_authority_refused"
+      ]
+    },
+    "013-dependency-authority": {
+      "P10": [
+        "test_open_done_predecessor_satisfied"
+      ],
+      "P11": [
+        "test_closed_nonterminal_predecessor_unsatisfied"
+      ],
+      "P12": [
+        "test_declared_edge_disagreement_refused"
+      ]
+    },
+    "U7-PREDICATE": {
+      "incomplete contract": [
+        "P04 test_incomplete_contract_refused"
+      ],
+      "uncovered obligation": [
+        "P05 test_uncovered_obligation_refused"
+      ],
+      "cyclic/missing/predicate-free edge": [
+        "P02",
+        "P03"
+      ],
+      "stale design": [
+        "P06 test_design_gate_holds"
+      ],
+      "unauthorized replan": [
+        "P16",
+        "P17 test_split_of_done_original_refused"
+      ],
+      "nonconserving replan": [
+        "P13",
+        "P14",
+        "P15"
+      ],
+      "deterministic identity rewrites": [
+        "P18 test_valid_split_candidate_admitted_for_assessment",
+        "P19 test_dependency_rewrite_refused",
+        "P23 test_validation_deterministic_under_permutation"
+      ],
+      "preserved predicates": [
+        "P19"
+      ],
+      "identity and authority bounds": [
+        "P16",
+        "P20 test_identity_bounds_refused"
+      ],
+      "lineage": [
+        "P21 test_lineage_refused"
+      ],
+      "immutable stale-assessment history": [
+        "P13",
+        "P22 test_stale_assessment_history_refused"
+      ],
+      "validation only": [
+        "P01",
+        "P13",
+        "P18"
+      ]
+    },
+    "REVIEW_R1_REPAIRS": {
+      "duplicate edge": [
+        "test_review_r1_refusals[split:duplicate_edge]",
+        "test_duplicate_edge_refused_in_any_order"
+      ],
+      "requirement linked through a contract": [
+        "test_review_r1_refusals[initial:unresolved_authority_via_contract]"
+      ],
+      "original graph/inventory anchored": [
+        "test_review_r1_refusals[split:original_graph_omitted]",
+        "test_review_r1_refusals[split:original_obligation_omitted]",
+        "test_review_r1_refusals[split:frozen_clause_truncated]"
+      ],
+      "omitted dependencies": [
+        "test_review_r1_refusals[initial:dependencies_omitted]"
+      ],
+      "operation_id required": [
+        "test_review_r1_refusals[split:operation_id_absent]"
+      ],
+      "result contract required under a contract original (R2)": [
+        "test_review_r2_result_without_contract_refused[split:result_contract_as_body]",
+        "test_review_r2_result_without_contract_refused[split:result_contract_absent]"
+      ],
+      "split predecessors": [
+        "test_split_does_not_require_done_predecessors"
+      ],
+      "malformed input is a typed hold": [
+        "test_malformed_split_is_a_typed_hold",
+        "test_malformed_initial_is_a_typed_hold",
+        "test_malformed_original_and_policy_are_typed_holds"
+      ]
+    },
+    "C#/contracts/2/architecture_fitness": {
+      "P24": [
+        "tools/fitness/check_architecture.py --check all",
+        "test_context_assembly_adds_no_cross_group_import_pair (D-1)"
+      ]
+    }
+  },
+  "ac_06_08_trace_ownership": "UNASSIGNED_IN_DAG",
+  "observed": {
+    "initial:closed_nonterminal_predecessor": {
+      "record_kind": "CompilationHold",
+      "reason_code": "DEPENDENCY_UNSATISFIED",
+      "affected_refs": [
+        "WO-990002"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:cycle": {
+      "record_kind": "CompilationHold",
+      "reason_code": "CYCLE",
+      "affected_refs": [
+        "WO-990101->WO-990102",
+        "WO-990102->WO-990103",
+        "WO-990103->WO-990101"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:decision_conflict": {
+      "record_kind": "CompilationHold",
+      "reason_code": "DECISION_CONFLICT",
+      "affected_refs": [
+        "WO-990102:D-API: check(design_key) <> design:D-API: check(design_key, vector)",
+        "WO-990102:D-NEW: invented decision <> design:ABSENT"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:declared_edge_disagreement": {
+      "record_kind": "CompilationHold",
+      "reason_code": "EDGE_DISAGREEMENT",
+      "affected_refs": [
+        "WO-990101:WO-990003"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:dependencies_omitted": {
+      "record_kind": "CompilationHold",
+      "reason_code": "EDGE_DISAGREEMENT",
+      "affected_refs": [
+        "WO-990102:WO-990101"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:design_absent": {
+      "record_kind": "CompilationHold",
+      "reason_code": "DESIGN_HOLD",
+      "affected_refs": [
+        "SF-REQ-900"
+      ],
+      "detail": "NO_DESIGN",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:design_stale": {
+      "record_kind": "CompilationHold",
+      "reason_code": "DESIGN_HOLD",
+      "affected_refs": [
+        "SF-REQ-900"
+      ],
+      "detail": "STALE",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:design_unreviewed": {
+      "record_kind": "CompilationHold",
+      "reason_code": "DESIGN_HOLD",
+      "affected_refs": [
+        "SF-REQ-900"
+      ],
+      "detail": "REVIEW_REQUIRED",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:incomplete_contract": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INCOMPLETE_CONTRACT",
+      "affected_refs": [
+        "WO-990102:required_evidence"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:missing_endpoint": {
+      "record_kind": "CompilationHold",
+      "reason_code": "MISSING_ENDPOINT",
+      "affected_refs": [
+        "WO-990103->WO-990199"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:no_predicate": {
+      "record_kind": "CompilationHold",
+      "reason_code": "UNSPECIFIED_PREDICATE",
+      "affected_refs": [
+        "WO-990101->WO-990102"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:uncovered_acceptance": {
+      "record_kind": "CompilationHold",
+      "reason_code": "UNMAPPED_OBLIGATION",
+      "affected_refs": [
+        "SF-REQ-900-AC-02"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:uncovered_evidence": {
+      "record_kind": "CompilationHold",
+      "reason_code": "UNMAPPED_OBLIGATION",
+      "affected_refs": [
+        "EV-900-01"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:uncovered_requirement": {
+      "record_kind": "CompilationHold",
+      "reason_code": "UNMAPPED_OBLIGATION",
+      "affected_refs": [
+        "SF-REQ-903"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:uncovered_verification": {
+      "record_kind": "CompilationHold",
+      "reason_code": "UNMAPPED_OBLIGATION",
+      "affected_refs": [
+        "VO-900-01"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:unresolved_authority": {
+      "record_kind": "CompilationHold",
+      "reason_code": "UNRESOLVED_AUTHORITY",
+      "affected_refs": [
+        "4ffd333f77e228613f8bf75f3279993d93b3c37f8c249a382c703cc87b68ecb2"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:unresolved_authority_via_contract": {
+      "record_kind": "CompilationHold",
+      "reason_code": "UNRESOLVED_AUTHORITY",
+      "affected_refs": [
+        "901968d019d3425d392dd8e2b00f5d386de1e54cfef32d08c99ab71995cd19ef"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "initial:valid": {
+      "record_kind": "ValidationReport",
+      "reason_code": null,
+      "affected_refs": null,
+      "detail": null,
+      "admitted_for_assessment": true,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:authority_absent": {
+      "record_kind": "CompilationHold",
+      "reason_code": "SPLIT_UNAUTHORIZED",
+      "affected_refs": [
+        "issuer:None"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:bounds_budget_dimension": {
+      "record_kind": "CompilationHold",
+      "reason_code": "BOUNDS_WIDENED",
+      "affected_refs": [
+        "WO-990101:budget_policy.concurrency_limit:1->2",
+        "WO-990101:budget_policy.hard_wall_clock_seconds:7200->9000",
+        "WO-990101:budget_policy.maximum_attempts:3->4",
+        "WO-990101:budget_policy.retry_limit:1->2"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:bounds_capability": {
+      "record_kind": "CompilationHold",
+      "reason_code": "BOUNDS_WIDENED",
+      "affected_refs": [
+        "WO-990101:required_capabilities:['python', 'sqlite']->['network']"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:bounds_repository_scope": {
+      "record_kind": "CompilationHold",
+      "reason_code": "BOUNDS_WIDENED",
+      "affected_refs": [
+        "WO-990101:target_repositories:['AlienLogicLab/alienintent']->['AlienLogicLab/alienintent-sandbox']"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:collision_active": {
+      "record_kind": "CompilationHold",
+      "reason_code": "IDENTITY_COLLISION",
+      "affected_refs": [
+        "WO-990103:active"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:collision_reserved": {
+      "record_kind": "CompilationHold",
+      "reason_code": "IDENTITY_COLLISION",
+      "affected_refs": [
+        "WO-990099:reserved"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:collision_retired": {
+      "record_kind": "CompilationHold",
+      "reason_code": "IDENTITY_COLLISION",
+      "affected_refs": [
+        "WO-990098:retired"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:cycle": {
+      "record_kind": "CompilationHold",
+      "reason_code": "CYCLE",
+      "affected_refs": [
+        "WO-990100->WO-990101",
+        "WO-990101->WO-990100"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:design_absent": {
+      "record_kind": "CompilationHold",
+      "reason_code": "DESIGN_HOLD",
+      "affected_refs": [
+        "SF-REQ-900"
+      ],
+      "detail": "NO_DESIGN",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:design_stale": {
+      "record_kind": "CompilationHold",
+      "reason_code": "DESIGN_HOLD",
+      "affected_refs": [
+        "SF-REQ-900"
+      ],
+      "detail": "STALE",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:design_unreviewed": {
+      "record_kind": "CompilationHold",
+      "reason_code": "DESIGN_HOLD",
+      "affected_refs": [
+        "SF-REQ-900"
+      ],
+      "detail": "REVIEW_REQUIRED",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:done_original": {
+      "record_kind": "CompilationHold",
+      "reason_code": "DONE_ORIGINAL",
+      "affected_refs": [
+        "WO-990100"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:downstream_redirected": {
+      "record_kind": "CompilationHold",
+      "reason_code": "EDGE_REDIRECTED",
+      "affected_refs": [
+        "WO-990100->WO-990110"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:duplicate_edge": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INVALID_CANDIDATE",
+      "affected_refs": [
+        "result_edges:duplicate:WO-990001->WO-990101"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:edge_pruned": {
+      "record_kind": "CompilationHold",
+      "reason_code": "EDGE_PRUNED",
+      "affected_refs": [
+        "WO-990002->WO-990100"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:existing_identity_rewritten": {
+      "record_kind": "CompilationHold",
+      "reason_code": "IDENTITY_REWRITTEN",
+      "affected_refs": [
+        "WO-990100"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:frozen_clause_truncated": {
+      "record_kind": "CompilationHold",
+      "reason_code": "OBLIGATION_LOST",
+      "affected_refs": [
+        "WO-990100:AC-O-1: the validator refuses every unauthorized split and names each offending edge"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:grammar_short": {
+      "record_kind": "CompilationHold",
+      "reason_code": "IDENTITY_GRAMMAR",
+      "affected_refs": [
+        "WO-99010"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:grammar_suffix": {
+      "record_kind": "CompilationHold",
+      "reason_code": "IDENTITY_GRAMMAR",
+      "affected_refs": [
+        "WO-990101AA"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:history_bytes_altered": {
+      "record_kind": "CompilationHold",
+      "reason_code": "ASSESSMENT_HISTORY_MUTATED",
+      "affected_refs": [
+        "objects/60c64d088d62df5d595237e2ea047296e157b51ea24107e423353498c6e646b5:expected=sha256:6eefd9374428bbc6a32b7df8f7921c015d8ebfcc4463a5db08639c6d0ba566af:observed=sha256:3e99f23ec98ed46866625a6b2a948927e99c366255cd3133be69f9ad1de8a0ac"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:integration_duty_dropped": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INTEGRATION_DUTY_DROPPED",
+      "affected_refs": [
+        "AC-O-1"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:invalidation_missing_changed_dependent": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INVALIDATION_INCOMPLETE",
+      "affected_refs": [
+        "WO-990110"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:invalidation_missing_parent": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INVALIDATION_INCOMPLETE",
+      "affected_refs": [
+        "WO-990100"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:invented_obligation": {
+      "record_kind": "CompilationHold",
+      "reason_code": "OBLIGATION_INVENTED",
+      "affected_refs": [
+        "AC-C1-9"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:issuer_outside_limits": {
+      "record_kind": "CompilationHold",
+      "reason_code": "SPLIT_UNAUTHORIZED",
+      "affected_refs": [
+        "issuer:fixture:unlisted-issuer"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:missing_child_parent_done_edge": {
+      "record_kind": "CompilationHold",
+      "reason_code": "CHILD_PARENT_EDGE_MISSING",
+      "affected_refs": [
+        "WO-990102->WO-990100"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:missing_endpoint": {
+      "record_kind": "CompilationHold",
+      "reason_code": "MISSING_ENDPOINT",
+      "affected_refs": [
+        "WO-990101->WO-990199"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:missing_split_from": {
+      "record_kind": "CompilationHold",
+      "reason_code": "LINEAGE_MISSING",
+      "affected_refs": [
+        "WO-990102"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:no_predicate": {
+      "record_kind": "CompilationHold",
+      "reason_code": "UNSPECIFIED_PREDICATE",
+      "affected_refs": [
+        "WO-990102->WO-990100"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:omission": {
+      "record_kind": "CompilationHold",
+      "reason_code": "OBLIGATION_LOST",
+      "affected_refs": [
+        "EV-O-1"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:operation_id_absent": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INVALID_CANDIDATE",
+      "affected_refs": [
+        "operation_id"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:operation_id_mismatch": {
+      "record_kind": "CompilationHold",
+      "reason_code": "LINEAGE_INCONSISTENT",
+      "affected_refs": [
+        "WO-990102"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:original_graph_omitted": {
+      "record_kind": "CompilationHold",
+      "reason_code": "ORIGINAL_GRAPH_MISMATCH",
+      "affected_refs": [
+        "WO-990100:WO-990002"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:original_obligation_omitted": {
+      "record_kind": "CompilationHold",
+      "reason_code": "OBLIGATION_LOST",
+      "affected_refs": [
+        "WO-990100:EV-O-1: an immutable observation retains each report and hold"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:parent_missing_child": {
+      "record_kind": "CompilationHold",
+      "reason_code": "LINEAGE_INCONSISTENT",
+      "affected_refs": [
+        "WO-990102"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:partial_mapping": {
+      "record_kind": "CompilationHold",
+      "reason_code": "PARTIAL_MAPPING",
+      "affected_refs": [
+        "AC-O-1"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:payload_digest_mismatch": {
+      "record_kind": "CompilationHold",
+      "reason_code": "SPLIT_AUTHORITY_STALE",
+      "affected_refs": [
+        "payload_digest:expected=sha256:2973874c1bee0f84a4662d33957017c840695ef7fd00a1b2fd8225341c537a77:observed=sha256:082655b564f8804690120680c031afc67997675542072e5e2cba3a9b23531c35"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:prerequisite_not_copied": {
+      "record_kind": "CompilationHold",
+      "reason_code": "PREREQUISITE_NOT_COPIED",
+      "affected_refs": [
+        "WO-990002->WO-990102"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:result_contract_absent": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INCOMPLETE_CONTRACT",
+      "affected_refs": [
+        "WO-990102:contract"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:result_contract_as_body": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INCOMPLETE_CONTRACT",
+      "affected_refs": [
+        "WO-990102:contract"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:stale_original_revision": {
+      "record_kind": "CompilationHold",
+      "reason_code": "SPLIT_AUTHORITY_STALE",
+      "affected_refs": [
+        "original_revision:expected=sha256:e85ebe11cbb4ebfbb7d3288817add0f5e5f2d711b7e4d82fc5e0af82afa3f3e0:observed=sha256:0c753dcd31228f6f4773a006bc4268bfb0ff1899d04708c5613e0c5ba3f934b8"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:stale_ready_as_current": {
+      "record_kind": "CompilationHold",
+      "reason_code": "STALE_ASSESSMENT_AS_CURRENT",
+      "affected_refs": [
+        "WO-990100"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:suffix_only_lineage": {
+      "record_kind": "CompilationHold",
+      "reason_code": "LINEAGE_MISSING",
+      "affected_refs": [
+        "WO-990100A"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:unauthorized_inter_child_edge": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INTER_CHILD_EDGE_UNAUTHORIZED",
+      "affected_refs": [
+        "WO-990101->WO-990102"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:valid": {
+      "record_kind": "ValidationReport",
+      "reason_code": null,
+      "affected_refs": null,
+      "detail": null,
+      "admitted_for_assessment": true,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:weakened_clause": {
+      "record_kind": "CompilationHold",
+      "reason_code": "CLAUSE_NOT_VERBATIM",
+      "affected_refs": [
+        "AC-O-1"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "split:weakened_predicate": {
+      "record_kind": "CompilationHold",
+      "reason_code": "PREDICATE_WEAKENED",
+      "affected_refs": [
+        "WO-990001->WO-990101"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "swf33:bound": {
+      "record_kind": "ValidationReport",
+      "reason_code": null,
+      "affected_refs": null,
+      "detail": null,
+      "admitted_for_assessment": true,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "swf33:history_bytes_altered": {
+      "record_kind": "CompilationHold",
+      "reason_code": "ASSESSMENT_HISTORY_MUTATED",
+      "affected_refs": [
+        "objects/4618b48a43f4657aceebc5fd895c312ea602c1c01f335d7af65be69dff21a532:expected=sha256:1fc95f25b6c2d928fcb325525b46c1850bb56463c2428f0ea56afc99f181ebb4:observed=sha256:8bbb4212f393f5a986c18ddd7d0b05f1e01285ddd4d46c0b63707ecf46a21d89"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "swf33:integration_duty_dropped": {
+      "record_kind": "CompilationHold",
+      "reason_code": "INTEGRATION_DUTY_DROPPED",
+      "affected_refs": [
+        "SF-REQ-005"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "swf33:invented_obligation": {
+      "record_kind": "CompilationHold",
+      "reason_code": "OBLIGATION_INVENTED",
+      "affected_refs": [
+        "PY-10-INVENTED-01"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "swf33:omission": {
+      "record_kind": "CompilationHold",
+      "reason_code": "OBLIGATION_LOST",
+      "affected_refs": [
+        "SF-REQ-001"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "swf33:partial_mapping": {
+      "record_kind": "CompilationHold",
+      "reason_code": "PARTIAL_MAPPING",
+      "affected_refs": [
+        "SF-REQ-001"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "swf33:unbound": {
+      "record_kind": "CompilationHold",
+      "reason_code": "CLAUSE_NOT_VERBATIM",
+      "affected_refs": [
+        "PY-10-READINESS-PREREQUISITES",
+        "PY-10-SCOPE-01"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    },
+    "swf33:weakened_clause": {
+      "record_kind": "CompilationHold",
+      "reason_code": "CLAUSE_NOT_VERBATIM",
+      "affected_refs": [
+        "PY-10-AC-09"
+      ],
+      "detail": "",
+      "admitted_for_assessment": false,
+      "non_compilation_state_unchanged": true,
+      "work_management_receipts": 0,
+      "release_states": []
+    }
+  },
+  "swf33_replay": {
+    "unbound_hold": {
+      "reason_code": "CLAUSE_NOT_VERBATIM",
+      "affected_refs": [
+        "PY-10-READINESS-PREREQUISITES",
+        "PY-10-SCOPE-01"
+      ]
+    },
+    "bound": {
+      "forward": {
+        "mapped": 69,
+        "total": 69
+      },
+      "reverse": {
+        "entries": 72,
+        "complete": true
+      },
+      "shared_rows": [
+        "SF-REQ-005",
+        "SF-REQ-007",
+        "SF-REQ-038"
+      ],
+      "elaboration_bound": [
+        {
+          "obligation_id": "PY-10-READINESS-PREREQUISITES",
+          "decision_ref": "docs/decisions/2026-09-21-py10-transport-split.md",
+          "decision_digest": "sha256:71c2fce2c889551115ecbae8d3912fdde20fdb130a5eff1d2bf64abff10e27e0"
+        },
+        {
+          "obligation_id": "PY-10-SCOPE-01",
+          "decision_ref": "docs/decisions/2026-09-21-py10-transport-split.md",
+          "decision_digest": "sha256:71c2fce2c889551115ecbae8d3912fdde20fdb130a5eff1d2bf64abff10e27e0"
+        }
+      ],
+      "prior_assessments": [
+        {
+          "unit": "PY-10",
+          "locator": "objects/b4f534436f719e30a4a252e68fade90fba0caa1fcc1b46f027fb210c0f10018b",
+          "digest": "sha256:1fc95f25b6c2d928fcb325525b46c1850bb56463c2428f0ea56afc99f181ebb4",
+          "unchanged": true,
+          "disposition": "SPLIT_RECOMMENDED",
+          "applicability": "INAPPLICABLE",
+          "inapplicable_to": [
+            "PY-09B",
+            "PY-10"
+          ]
+        }
+      ]
+    },
+    "non_verbatim_rows": [
+      "PY-10-READINESS-PREREQUISITES",
+      "PY-10-SCOPE-01"
+    ],
+    "residual": "SWF33_ELABORATION_BINDING_INTERPRETIVE"
+  },
+  "non_claims": [
+    "initial decomposition derivation (U8)",
+    "SplitTransaction.prepare/apply, identity reservation/allocation, invalidation records, atomic apply/readback, recovery (U8)",
+    "SF-REQ-015 lint/submission/reassessment",
+    "013-graph-coverage (U8)",
+    "SF-REQ-013-AC-06, AC-07 and AC-08",
+    "Phase 5 mechanism approval",
+    "operational acceptance"
+  ],
+  "prior_art_not_imported": [
+    "tools/evidence/check_split_design.py",
+    "tools/evidence/check_wave2_dag.py"
+  ],
+  "readback_ref": {
+    "revision_digest": "sha256:7b0c2a8675fbcb39cfac26e1a5bed7fd957b0a3b58ae3422f2ae18853b66ca1e",
+    "locator": "observations/7b0c2a8675fbcb39cfac26e1a5bed7fd957b0a3b58ae3422f2ae18853b66ca1e"
+  },
+  "exit_status": 0
+}

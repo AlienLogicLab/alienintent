@@ -1,0 +1,1613 @@
+{
+  "controls": [
+    {
+      "control": "K01-issue_closure_trusted",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if stages.get(edge.source) != DONE:\n",
+        "replace_with": "        if projection.get(edge.source) != \"CLOSED\":\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_open_done_predecessor_satisfied",
+        "tests/context_assembly/test_compilation_validation.py::test_closed_nonterminal_predecessor_unsatisfied"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_open_done_predecessor_satisfied - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_closed_nonterminal_predecessor_unsatisfied - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:3bfced14d9914b16c4aea2b8e2d6459b79dfcf65872b4cb4ce4bb0bac5bdee61",
+        "locator": "observations/3bfced14d9914b16c4aea2b8e2d6459b79dfcf65872b4cb4ce4bb0bac5bdee61"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:09ca669ef5251e88ca923470d9a8c8b6e935149b3eb379450a1db4947620cc5f",
+        "locator": "observations/09ca669ef5251e88ca923470d9a8c8b6e935149b3eb379450a1db4947620cc5f"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:3efa2fd23a38f6f03aaf85727d7e73d944832b2517c11705aa2147af61246a12",
+        "locator": "observations/3efa2fd23a38f6f03aaf85727d7e73d944832b2517c11705aa2147af61246a12"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K02-declared_edge_omitted",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if disagreement:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_declared_edge_disagreement_refused"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_declared_edge_disagreement_refused - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:54b737ee671be265a3c527ec085bfae7d4e8fa05edafe6a7ac69d544b673fee8",
+        "locator": "observations/54b737ee671be265a3c527ec085bfae7d4e8fa05edafe6a7ac69d544b673fee8"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:627007c169ac6dd3e5a637143538946b3e7baa84b649dd6ac234c8f6fd6dc547",
+        "locator": "observations/627007c169ac6dd3e5a637143538946b3e7baa84b649dd6ac234c8f6fd6dc547"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:0295d4f9c379904a55db1fb04ef7ef08060480c0f9dc66b4ebfc6a1531ad70db",
+        "locator": "observations/0295d4f9c379904a55db1fb04ef7ef08060480c0f9dc66b4ebfc6a1531ad70db"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K03-cycle_check_removed",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    if cyclic:\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[cycle]",
+        "tests/context_assembly/test_compilation_validation.py::test_split_graph_refusal_names_edge[cycle]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[cycle] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_split_graph_refusal_names_edge[cycle] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:6f8201949c0bb04b31ce8910ad6304f40dbaee7e57ff5384537d78363fa92592",
+        "locator": "observations/6f8201949c0bb04b31ce8910ad6304f40dbaee7e57ff5384537d78363fa92592"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:519df3bbcc51748b3f8a3dbf90c37d683e796f581326fdd0b9fcf768dd49ab59",
+        "locator": "observations/519df3bbcc51748b3f8a3dbf90c37d683e796f581326fdd0b9fcf768dd49ab59"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:a3554172854320b93f73535064ca3265bfe88e9dde38a767d2a05b40668bf4dc",
+        "locator": "observations/a3554172854320b93f73535064ca3265bfe88e9dde38a767d2a05b40668bf4dc"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K04-endpoint_check_removed",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "findings.append((\"MISSING_ENDPOINT\", _ordered(missing)))",
+        "replace_with": "pass"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[missing_endpoint]",
+        "tests/context_assembly/test_compilation_validation.py::test_split_graph_refusal_names_edge[missing_endpoint]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[missing_endpoint] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_split_graph_refusal_names_edge[missing_endpoint] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:55790f3019b64f0475df8d1eb118feac2abd72b9d12bc9d8894891191086444b",
+        "locator": "observations/55790f3019b64f0475df8d1eb118feac2abd72b9d12bc9d8894891191086444b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:154be47266f5f0fa4b8602dfa21419133283e50078140fdebea8f9aa134b20e9",
+        "locator": "observations/154be47266f5f0fa4b8602dfa21419133283e50078140fdebea8f9aa134b20e9"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:577645e416cbf687064a32481d3524d725509ef46e644d2e37cc731d6119ce88",
+        "locator": "observations/577645e416cbf687064a32481d3524d725509ef46e644d2e37cc731d6119ce88"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K05-predicate_check_removed",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    if predicates_required and unspecified:\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[no_predicate]",
+        "tests/context_assembly/test_compilation_validation.py::test_split_graph_refusal_names_edge[no_predicate]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[no_predicate] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_split_graph_refusal_names_edge[no_predicate] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:9fdeb581b979e266d7d394f68f03e32bfb435a68853aa3d948d18a9641f5f48b",
+        "locator": "observations/9fdeb581b979e266d7d394f68f03e32bfb435a68853aa3d948d18a9641f5f48b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:23f583b9eabe26de455485255d4c4624ac2eef0669408792c8f0554e0d57f9d4",
+        "locator": "observations/23f583b9eabe26de455485255d4c4624ac2eef0669408792c8f0554e0d57f9d4"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:041ac29e87416f2ab0b1685d2562ac7b38f919ea98713fa55cc47b1f1b237916",
+        "locator": "observations/041ac29e87416f2ab0b1685d2562ac7b38f919ea98713fa55cc47b1f1b237916"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K06-offending_edge_dropped",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    return CompilationHold(ranked[0][0], ranked[0][1], mode, candidate, detail, ranked)",
+        "replace_with": "    return CompilationHold(ranked[0][0], (), mode, candidate, detail, ranked)"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[cycle]",
+        "tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[missing_endpoint]",
+        "tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[no_predicate]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[cycle] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[missing_endpoint] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_graph_refusal_names_edge[no_predicate] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:b1664eb9f1b24be85c92cb7501a9d09dee410f0d7ac193869fee62e87d5aecb3",
+        "locator": "observations/b1664eb9f1b24be85c92cb7501a9d09dee410f0d7ac193869fee62e87d5aecb3"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:14c4c313e85cc3e2b0d8eb6c477bbe1a72ead06a91ae7bd3920e70d42176d8e6",
+        "locator": "observations/14c4c313e85cc3e2b0d8eb6c477bbe1a72ead06a91ae7bd3920e70d42176d8e6"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:e5a0a7b6a9c50e9149cf63a92184fdf8cbf839e3fbdf9e431d8a6afbd30f13f8",
+        "locator": "observations/e5a0a7b6a9c50e9149cf63a92184fdf8cbf839e3fbdf9e431d8a6afbd30f13f8"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K07-contract_validation_swallowed",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "findings.append((\"INCOMPLETE_CONTRACT\", (f\"{identity}:{_field(error)}\",)))",
+        "replace_with": "pass"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_incomplete_contract_refused"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_incomplete_contract_refused - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:c4f2d1ea51be2d7e3f5e05f6e1f4c2e46599ca01e2fdd3bdb9bdddbab820ba50",
+        "locator": "observations/c4f2d1ea51be2d7e3f5e05f6e1f4c2e46599ca01e2fdd3bdb9bdddbab820ba50"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:545ffef08fb59510989da084d12b0fef9aec92e1dc7c0317e24d5c7a8d56f858",
+        "locator": "observations/545ffef08fb59510989da084d12b0fef9aec92e1dc7c0317e24d5c7a8d56f858"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:08c5fd34a594ce80078be951885ed886f01add9a3906df6ceeabdf61caecda5b",
+        "locator": "observations/08c5fd34a594ce80078be951885ed886f01add9a3906df6ceeabdf61caecda5b"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K08-coverage_category_dropped",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    for category, field in CATEGORY_FIELDS:\n",
+        "replace_with": "    for category, field in CATEGORY_FIELDS[:-1]:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_uncovered_obligation_refused[evidence]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_uncovered_obligation_refused[evidence] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:7e9a2f2e4fa3bb3225594e6e62e3ccfe11fa8f8e9af0e5599877ee9954070926",
+        "locator": "observations/7e9a2f2e4fa3bb3225594e6e62e3ccfe11fa8f8e9af0e5599877ee9954070926"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:81d37c8969d1b18d301a4ae561c357b412fb719fb67a1cee6c348d92abb90ec4",
+        "locator": "observations/81d37c8969d1b18d301a4ae561c357b412fb719fb67a1cee6c348d92abb90ec4"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:ad30f38742036b55f1ac4fafb3f703c9a8f64664ddd786d938992952a245d201",
+        "locator": "observations/ad30f38742036b55f1ac4fafb3f703c9a8f64664ddd786d938992952a245d201"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K09-design_gate_bypassed",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/application/compilation_validation_service.py",
+      "source_digest": "sha256:78a85b6be38c705104eeaeff0bdfbbdb489f7385cd5d92c94f27a857ee631200",
+      "mutation": {
+        "remove": "        if not decision.admitted:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_design_gate_holds[stale-STALE]",
+        "tests/context_assembly/test_compilation_validation.py::test_design_gate_holds[unreviewed-REVIEW_REQUIRED]",
+        "tests/context_assembly/test_compilation_validation.py::test_design_gate_holds[absent-NO_DESIGN]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_design_gate_holds[stale-STALE] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_design_gate_holds[unreviewed-REVIEW_REQUIRED] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_design_gate_holds[absent-NO_DESIGN] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:a19cdf413bb58b6fe834b3b53b2599a9aeb4a7584bfb06332ded459177c7b83b",
+        "locator": "observations/a19cdf413bb58b6fe834b3b53b2599a9aeb4a7584bfb06332ded459177c7b83b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:9c7d300fa5c60e70d3e40a622ffeb768d8c4dbda303f3bf5d364cc369c2aa2f2",
+        "locator": "observations/9c7d300fa5c60e70d3e40a622ffeb768d8c4dbda303f3bf5d364cc369c2aa2f2"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:a2214517df37e34ca5cd7d5de5f7b53d0a8e05a103ac2bf8b2a5d3e9de3e28b2",
+        "locator": "observations/a2214517df37e34ca5cd7d5de5f7b53d0a8e05a103ac2bf8b2a5d3e9de3e28b2"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K10-authority_check_removed",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/application/compilation_validation_service.py",
+      "source_digest": "sha256:78a85b6be38c705104eeaeff0bdfbbdb489f7385cd5d92c94f27a857ee631200",
+      "mutation": {
+        "remove": "        if unresolved:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_unresolved_authority_holds"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_unresolved_authority_holds - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:9b73531664bfcec996b23c79e8fe79383bc062ef2cd5f430c186febacb499e1b",
+        "locator": "observations/9b73531664bfcec996b23c79e8fe79383bc062ef2cd5f430c186febacb499e1b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:ca5fd471884bb166826ee7a9dbe18e11392e7712478930ee74e0890e593d280b",
+        "locator": "observations/ca5fd471884bb166826ee7a9dbe18e11392e7712478930ee74e0890e593d280b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:6a900beea0dbd59b1e925afc2b802a838bd0c77fed1c51a30038baabf69dd534",
+        "locator": "observations/6a900beea0dbd59b1e925afc2b802a838bd0c77fed1c51a30038baabf69dd534"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K11-decision_conflict_ignored",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    return [(\"DECISION_CONFLICT\", _ordered(conflicts))] if conflicts else []",
+        "replace_with": "    return []"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_conflicting_decisions_hold"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_conflicting_decisions_hold - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:6f1d4e267543e560f837319e8872abbe633045fab350173007f2946a7846cde9",
+        "locator": "observations/6f1d4e267543e560f837319e8872abbe633045fab350173007f2946a7846cde9"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:7cf550db16aeac123f38561aaa6afbebd637ac753794d113b5bcd4771205c02f",
+        "locator": "observations/7cf550db16aeac123f38561aaa6afbebd637ac753794d113b5bcd4771205c02f"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:fba8e982d2700ad147655cc49e831d4929ae3d5b86a9f9c996b1926da9d55833",
+        "locator": "observations/fba8e982d2700ad147655cc49e831d4929ae3d5b86a9f9c996b1926da9d55833"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K12-hold_writes_transition",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/application/compilation_validation_service.py",
+      "source_digest": "sha256:78a85b6be38c705104eeaeff0bdfbbdb489f7385cd5d92c94f27a857ee631200",
+      "mutation": {
+        "remove": "            event, status = HELD_EVENT, \"HELD\"\n",
+        "replace_with": "            event, status = HELD_EVENT, \"HELD\"\n            self.store.commit(self.profile, \"factory:\" + mode, self.store.read_state(self.profile, \"factory:\" + mode)[0], {\"stage\": \"READY\"})\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_hold_writes_no_transition"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_hold_writes_no_transition - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:e4926adbcf66f297fb3c8fb82581893e026600005ca6f4db9cb84a62f95461d3",
+        "locator": "observations/e4926adbcf66f297fb3c8fb82581893e026600005ca6f4db9cb84a62f95461d3"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:b432841ceff7e2ba0143d66aea40c8ea0f804aedd998c986902907db6098abe7",
+        "locator": "observations/b432841ceff7e2ba0143d66aea40c8ea0f804aedd998c986902907db6098abe7"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:1d55a6b4d41400644e49c463361d3baeb86ee5aed8723218597b7050d7a8d9ac",
+        "locator": "observations/1d55a6b4d41400644e49c463361d3baeb86ee5aed8723218597b7050d7a8d9ac"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K13-forward_conservation_skipped",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    lost = [o for o in obligations if o not in rows]\n",
+        "replace_with": "    lost = []\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[omission]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[omission] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:8235346fcefa615a9b75e1e2228c27c11606289d1dce3a8a79cbfb917b2fd022",
+        "locator": "observations/8235346fcefa615a9b75e1e2228c27c11606289d1dce3a8a79cbfb917b2fd022"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:f2b6526cb8aaf214ebab6f160e4b60686de1f6a70ca258aad7d910f12229347d",
+        "locator": "observations/f2b6526cb8aaf214ebab6f160e4b60686de1f6a70ca258aad7d910f12229347d"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:35bd93ac33cb33c48314a049ff24485f9641a9dbcd8bd8a733b43ff4e5b34c4f",
+        "locator": "observations/35bd93ac33cb33c48314a049ff24485f9641a9dbcd8bd8a733b43ff4e5b34c4f"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K14-reverse_trace_skipped",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if entry.get(\"origin\") not in obligations or bound(entry.get(\"destination\")) is None:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[invented_obligation]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[invented_obligation] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ac9df472acce91ded8abf611169cfc5425455d684ee0227f63aa47b6c45459bb",
+        "locator": "observations/ac9df472acce91ded8abf611169cfc5425455d684ee0227f63aa47b6c45459bb"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:74834e71cf83fe6c0240399e2afa4034ae2b4b1acbd5c26b5ed98a6ab68fcd02",
+        "locator": "observations/74834e71cf83fe6c0240399e2afa4034ae2b4b1acbd5c26b5ed98a6ab68fcd02"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:2f6190af19f6b52b1f61aec609a65125857ad2e46d5e4039f87de815688d2103",
+        "locator": "observations/2f6190af19f6b52b1f61aec609a65125857ad2e46d5e4039f87de815688d2103"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K15-clause_comparison_relaxed",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    return clause in body\n",
+        "replace_with": "    return \" \".join(clause.split())[:20] in \" \".join(body.split())\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[weakened_clause]",
+        "tests/context_assembly/test_compilation_validation.py::test_swf33_replay[unbound]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[weakened_clause] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_swf33_replay[unbound] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:871c6cd6f0f67d4ab613f81151722f7bbdab0427808fc08ebac168f553bb3050",
+        "locator": "observations/871c6cd6f0f67d4ab613f81151722f7bbdab0427808fc08ebac168f553bb3050"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:ff406af689af90b09f8e3b18b769fbb556f4d5781f14626f1459cc1a3a9910ee",
+        "locator": "observations/ff406af689af90b09f8e3b18b769fbb556f4d5781f14626f1459cc1a3a9910ee"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:fab39753671c449ce361a9506da8dbce403b388adee5680f5275fa7b6e9926eb",
+        "locator": "observations/fab39753671c449ce361a9506da8dbce403b388adee5680f5275fa7b6e9926eb"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K16-partial_mapping_accepted",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if not destinations or None in targets:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[partial_mapping]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[partial_mapping] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:b4c2f5d4d4def486b76b5efc46084f6d0f4e72ed1e6b4b792ff94bd4f986a3fb",
+        "locator": "observations/b4c2f5d4d4def486b76b5efc46084f6d0f4e72ed1e6b4b792ff94bd4f986a3fb"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:44d9720c89221db6d1b6d6beeb2563632bfe7aef7fedb76688a4e47239c7323b",
+        "locator": "observations/44d9720c89221db6d1b6d6beeb2563632bfe7aef7fedb76688a4e47239c7323b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:36d0a553b1796904cb6a227a3c47426d6848410f995f74a1d5799b6f2714e323",
+        "locator": "observations/36d0a553b1796904cb6a227a3c47426d6848410f995f74a1d5799b6f2714e323"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K17-shared_mapping_as_or",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if origin not in resolved:\n",
+        "replace_with": "        if not resolved:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[integration_duty_dropped]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_nonconserving_refused[integration_duty_dropped] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:7ee3a6d122d83aeadf1162901984b6c86a0dbc0cef86e1807bf6b4b320c3c105",
+        "locator": "observations/7ee3a6d122d83aeadf1162901984b6c86a0dbc0cef86e1807bf6b4b320c3c105"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:6bdc3bd5424865011629cef97f4ea381bd571eb1fb35e387ab598dcf7912e40f",
+        "locator": "observations/6bdc3bd5424865011629cef97f4ea381bd571eb1fb35e387ab598dcf7912e40f"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:1b159e61b96bc2c8ce54e7bbf65c2e59e20239c133dabbc6c56124c1e444d2b0",
+        "locator": "observations/1b159e61b96bc2c8ce54e7bbf65c2e59e20239c133dabbc6c56124c1e444d2b0"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K18-bounds_clipped",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    if widened:\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_bounds_expansion_refused[capability]",
+        "tests/context_assembly/test_compilation_validation.py::test_split_bounds_expansion_refused[budget_dimension]",
+        "tests/context_assembly/test_compilation_validation.py::test_split_bounds_expansion_refused[repository_scope]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_bounds_expansion_refused[capability] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_split_bounds_expansion_refused[budget_dimension] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_split_bounds_expansion_refused[repository_scope] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:c586837b34f19db59cbb615b485ed016afc874a8bf2bc63d2e74d3bbb42c57c5",
+        "locator": "observations/c586837b34f19db59cbb615b485ed016afc874a8bf2bc63d2e74d3bbb42c57c5"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:39d68a7b225e5ab5f02a054d3f145f66fbacd1b4f34fb26ce8e97674ad082b97",
+        "locator": "observations/39d68a7b225e5ab5f02a054d3f145f66fbacd1b4f34fb26ce8e97674ad082b97"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:49c4c66576466b4357b8db60f0a5a5fda7ab10c039d10e602e0d37b2f286f607",
+        "locator": "observations/49c4c66576466b4357b8db60f0a5a5fda7ab10c039d10e602e0d37b2f286f607"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K19-split_authority_unchecked",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    if not authority or authority.get(\"issuer\") not in (authority_limits.get(\"issuers\") or ()):\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_authority_refused[absent]",
+        "tests/context_assembly/test_compilation_validation.py::test_split_authority_refused[issuer_outside_limits]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_authority_refused[absent] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_split_authority_refused[issuer_outside_limits] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:6a4c8520aa8b38438e5294b7b1dd5af0a7128e5525157808c1f359d8a027c9fb",
+        "locator": "observations/6a4c8520aa8b38438e5294b7b1dd5af0a7128e5525157808c1f359d8a027c9fb"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:044c16a8db84e5ec99288261c6517bfd6528b3aa45b158581dbee2af88d8bd9e",
+        "locator": "observations/044c16a8db84e5ec99288261c6517bfd6528b3aa45b158581dbee2af88d8bd9e"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:a517cd3af4b79e01eb7e7a6194c55cb7cd3078c98d3c8f8329d499d9bd8b1e23",
+        "locator": "observations/a517cd3af4b79e01eb7e7a6194c55cb7cd3078c98d3c8f8329d499d9bd8b1e23"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K20-authority_binding_unchecked",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    if stale:\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_authority_refused[payload_digest_mismatch]",
+        "tests/context_assembly/test_compilation_validation.py::test_split_authority_refused[stale_original_revision]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_authority_refused[payload_digest_mismatch] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_split_authority_refused[stale_original_revision] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ab1f506e15a01903cf68e4ea12db916b52af1eef3882526399287aedd4009df3",
+        "locator": "observations/ab1f506e15a01903cf68e4ea12db916b52af1eef3882526399287aedd4009df3"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:807941a90c34491b0c918010b3406db54a88e84d646fe00772d328f55a8151c6",
+        "locator": "observations/807941a90c34491b0c918010b3406db54a88e84d646fe00772d328f55a8151c6"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:bcdcbdf0d562908be8e00ad8e5538c666921db5f22f7f2401f45348a16b6d9d7",
+        "locator": "observations/bcdcbdf0d562908be8e00ad8e5538c666921db5f22f7f2401f45348a16b6d9d7"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K21-done_original_accepted",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    if stages.get(origin) == DONE:\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_of_done_original_refused"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_of_done_original_refused - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:12b9ef568972d350cadb55df3b3624b42cb22dd447b564aea9e1e9723c0a65af",
+        "locator": "observations/12b9ef568972d350cadb55df3b3624b42cb22dd447b564aea9e1e9723c0a65af"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:51d9ef4210755bd613c27105c937485a29fbc083485335ff39191d18c43ded83",
+        "locator": "observations/51d9ef4210755bd613c27105c937485a29fbc083485335ff39191d18c43ded83"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:6ef9d1ac542692f473090f41c3c9fdd73556e02ea6ce0c8c59b6830fadc69a23",
+        "locator": "observations/6ef9d1ac542692f473090f41c3c9fdd73556e02ea6ce0c8c59b6830fadc69a23"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K22-predicate_weakening_ignored",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    same = (lambda a, b: a == b) if predicated else (lambda a, b: True)\n",
+        "replace_with": "    same = lambda a, b: True\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[weakened_predicate]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[weakened_predicate] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:dc8a0f990ae922e19c9d372ca0c17f4b2bf3974940c9068772682adf45e81b03",
+        "locator": "observations/dc8a0f990ae922e19c9d372ca0c17f4b2bf3974940c9068772682adf45e81b03"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:836aacffc2a88601c80e022066f9b1d1c6efaaf73c35f2276cea34c8f41e7b91",
+        "locator": "observations/836aacffc2a88601c80e022066f9b1d1c6efaaf73c35f2276cea34c8f41e7b91"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:117aeb8def72b97da5066bbb04ffdb8ecda1bbd2961564d1e8616623223c89aa",
+        "locator": "observations/117aeb8def72b97da5066bbb04ffdb8ecda1bbd2961564d1e8616623223c89aa"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K23-downstream_redirect_accepted",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "                redirected.append(edge.ref)\n",
+        "replace_with": "                authorized = (*authorized, *(DependencyEdge(c, edge.target, edge.predicate) for c in children\n                                             if (c, edge.target) in result))\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[downstream_redirected]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[downstream_redirected] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:96998346a255245d940607840caefa2f0a58a203b0f79cbac61d25e55aa89b07",
+        "locator": "observations/96998346a255245d940607840caefa2f0a58a203b0f79cbac61d25e55aa89b07"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:168f8328a4561c6072bef49e8e16685b346bd81f7c6f6435bdba60161064f4cb",
+        "locator": "observations/168f8328a4561c6072bef49e8e16685b346bd81f7c6f6435bdba60161064f4cb"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:6e4661ea89ab82aebfc382e285783d0c478dfccacf6295ce406626576098a9de",
+        "locator": "observations/6e4661ea89ab82aebfc382e285783d0c478dfccacf6295ce406626576098a9de"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K24-prerequisite_copy_unchecked",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "                not_copied.append(f\"{edge.source}->{child}\")\n",
+        "replace_with": "                pass\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[prerequisite_not_copied]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[prerequisite_not_copied] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:64b2719fafa418f212bdd0adb2da7f30973e312a0c3378d9a18a923091b1e428",
+        "locator": "observations/64b2719fafa418f212bdd0adb2da7f30973e312a0c3378d9a18a923091b1e428"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:d297bfe644a3b668c12c6cfd1771a80b73bc8292a818d7ab48f1c71f91097d66",
+        "locator": "observations/d297bfe644a3b668c12c6cfd1771a80b73bc8292a818d7ab48f1c71f91097d66"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:e1380bdb15b5bd0d25d6b4ade03ac8e926728f113ad5e12e9c465e830fbf385b",
+        "locator": "observations/e1380bdb15b5bd0d25d6b4ade03ac8e926728f113ad5e12e9c465e830fbf385b"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K25-edge_set_superset_only",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "                pruned.append(edge.ref)\n",
+        "replace_with": "                pass\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[edge_pruned]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[edge_pruned] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:78cae7a720ec6edec9458d5fef1a4f0c5160e24184bbe2e26bfceea0ea968bc4",
+        "locator": "observations/78cae7a720ec6edec9458d5fef1a4f0c5160e24184bbe2e26bfceea0ea968bc4"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:5283789ba00e97ba53e8cce7f5f788cc66571eaf5d9622f48f5d41c25e62f969",
+        "locator": "observations/5283789ba00e97ba53e8cce7f5f788cc66571eaf5d9622f48f5d41c25e62f969"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:676f9c7d5c229a49b7f9d06a5235ca1f345c8e2077f256820bce5a9f5f76d20d",
+        "locator": "observations/676f9c7d5c229a49b7f9d06a5235ca1f345c8e2077f256820bce5a9f5f76d20d"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K26-inter_child_edge_unchecked",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "            inter_child.append(edge.ref)\n",
+        "replace_with": "            pass\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[unauthorized_inter_child_edge]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_dependency_rewrite_refused[unauthorized_inter_child_edge] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:eb4ae4d667297ccd3200389b5fccd16af63dfcb4ff5f7b92886564e418700c92",
+        "locator": "observations/eb4ae4d667297ccd3200389b5fccd16af63dfcb4ff5f7b92886564e418700c92"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:66856a7859f22f8f358abdd01fe00999869b2d92718da2c3b9d8c6ac813a33fa",
+        "locator": "observations/66856a7859f22f8f358abdd01fe00999869b2d92718da2c3b9d8c6ac813a33fa"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:06837ab8e1ab9b149f19d543b86b7700f766cceb88ae8f0f937ffc44cc0d2532",
+        "locator": "observations/06837ab8e1ab9b149f19d543b86b7700f766cceb88ae8f0f937ffc44cc0d2532"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K27-identity_grammar_relaxed",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "(?:[A-Z])?\\Z\"\n",
+        "replace_with": "(?:[A-Z])?\"\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_identity_bounds_refused[grammar_invalid]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_identity_bounds_refused[grammar_invalid] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:7a7efae804e1a04bfc51799be6b7e6bcffd6c431cd25afb3a947901c361c16bc",
+        "locator": "observations/7a7efae804e1a04bfc51799be6b7e6bcffd6c431cd25afb3a947901c361c16bc"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:5d4bba87c9399ca09e3520f2e034808b501ebddc262f3f77bca7b2512d57612d",
+        "locator": "observations/5d4bba87c9399ca09e3520f2e034808b501ebddc262f3f77bca7b2512d57612d"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:1ecbbff6cbe5caa72a3ecca3ffba848c87ccf05273f6bc047f833ecabd7f6b45",
+        "locator": "observations/1ecbbff6cbe5caa72a3ecca3ffba848c87ccf05273f6bc047f833ecabd7f6b45"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K28-identity_collision_ignored",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    if collisions:\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_identity_bounds_refused[collision_active]",
+        "tests/context_assembly/test_compilation_validation.py::test_identity_bounds_refused[collision_retired]",
+        "tests/context_assembly/test_compilation_validation.py::test_identity_bounds_refused[collision_reserved]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_identity_bounds_refused[collision_active] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_identity_bounds_refused[collision_retired] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_identity_bounds_refused[collision_reserved] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:3e55fbe806b34654610e73cde45905d599aa831029798c570d76f1429a13e91f",
+        "locator": "observations/3e55fbe806b34654610e73cde45905d599aa831029798c570d76f1429a13e91f"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:857b3c42bc25c0a0fcfc0c209f85d046b5ba20518d05a3ba6645d34fc23482f6",
+        "locator": "observations/857b3c42bc25c0a0fcfc0c209f85d046b5ba20518d05a3ba6645d34fc23482f6"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:52636066f3cf009a0c10eac2ff401d876a6d16a286f880303154a5b95181afd2",
+        "locator": "observations/52636066f3cf009a0c10eac2ff401d876a6d16a286f880303154a5b95181afd2"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K29-lineage_inferred_from_suffix",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        split_from = results[child].get(\"split_from\")\n",
+        "replace_with": "        split_from = results[child].get(\"split_from\") or (child[:-1] if child[-1].isalpha() else None)\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_lineage_refused[suffix_only_lineage]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_lineage_refused[suffix_only_lineage] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:8687221583895afc88a208ecba73b863dd51a571315e8fa25911d110e8701f91",
+        "locator": "observations/8687221583895afc88a208ecba73b863dd51a571315e8fa25911d110e8701f91"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:039eb3f68bd3be7c9c1f78dce41be66941c7f0dd8b148a8ca5f1ac1a06dd644f",
+        "locator": "observations/039eb3f68bd3be7c9c1f78dce41be66941c7f0dd8b148a8ca5f1ac1a06dd644f"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:be508423b44e926db2bfea521d2bd64c7dce0f441fd8f731e78dcf6a0bd0f312",
+        "locator": "observations/be508423b44e926db2bfea521d2bd64c7dce0f441fd8f731e78dcf6a0bd0f312"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K30-invalidation_set_unchecked",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "findings.append((\"INVALIDATION_INCOMPLETE\", _ordered(missing)))",
+        "replace_with": "pass"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_stale_assessment_history_refused[invalidation_missing_parent]",
+        "tests/context_assembly/test_compilation_validation.py::test_stale_assessment_history_refused[invalidation_missing_changed_dependent]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_stale_assessment_history_refused[invalidation_missing_parent] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_stale_assessment_history_refused[invalidation_missing_changed_dependent] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:b3b73b333eff560ae28e36f22407ca847a4b8ce03ffda68e3fa4afa598f096d2",
+        "locator": "observations/b3b73b333eff560ae28e36f22407ca847a4b8ce03ffda68e3fa4afa598f096d2"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:a5768a0a2323898a7aaf512b3d9a328330057f0cd301ee5d8285e133e3a5d54e",
+        "locator": "observations/a5768a0a2323898a7aaf512b3d9a328330057f0cd301ee5d8285e133e3a5d54e"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:f3c47be0b7aa84efb95d9a3e9658a1ad8534e724c1bbf46e5502e2f41346ea19",
+        "locator": "observations/f3c47be0b7aa84efb95d9a3e9658a1ad8534e724c1bbf46e5502e2f41346ea19"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K31-assessment_history_digest_unchecked",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if observed is None or observed != expected:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_stale_assessment_history_refused[history_bytes_altered]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_stale_assessment_history_refused[history_bytes_altered] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:fdf57be16aa4eb439f43438c3d42a682fa597ea2a4f6a944f8c7a19fde4d32f4",
+        "locator": "observations/fdf57be16aa4eb439f43438c3d42a682fa597ea2a4f6a944f8c7a19fde4d32f4"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:48bd877fcff3b2c3bb0e129631881be19b40152a049d9f9b891b786792cd96c0",
+        "locator": "observations/48bd877fcff3b2c3bb0e129631881be19b40152a049d9f9b891b786792cd96c0"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:62ba861d295419bf687040b873fff8bd5dc0313c4814db289acedffee6066a3e",
+        "locator": "observations/62ba861d295419bf687040b873fff8bd5dc0313c4814db289acedffee6066a3e"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K32-stale_ready_as_current",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "            current.append(str(entry.get(\"unit\")))\n",
+        "replace_with": "            pass\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_stale_assessment_history_refused[stale_ready_as_current]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_stale_assessment_history_refused[stale_ready_as_current] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:44e5850e79116f08bbf4f96bc8e1dc6978c9eefcb85ccf400df674198e4bb392",
+        "locator": "observations/44e5850e79116f08bbf4f96bc8e1dc6978c9eefcb85ccf400df674198e4bb392"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:0095fe781ea2d771a4609b11167659ccb38074fc7f361a4f67b1e96bf2b3b5d3",
+        "locator": "observations/0095fe781ea2d771a4609b11167659ccb38074fc7f361a4f67b1e96bf2b3b5d3"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:9aa948f82d6c31179ce3a68e6a2f2a25cca2722d74ca59adbd859f75041eb813",
+        "locator": "observations/9aa948f82d6c31179ce3a68e6a2f2a25cca2722d74ca59adbd859f75041eb813"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K33-order_dependent_output",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    return tuple(sorted(set(values)))\n",
+        "replace_with": "    return tuple(dict.fromkeys(values))\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_validation_deterministic_under_permutation"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_validation_deterministic_under_permutation - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:c7a24334dde883e3fdb285761e9e4a964a176222fe7bbc8cb91b6cd32ea63c1e",
+        "locator": "observations/c7a24334dde883e3fdb285761e9e4a964a176222fe7bbc8cb91b6cd32ea63c1e"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:b2e378c70367cfe087fb501582023d0b6ce18a7834804ae97590af4e80c9dccd",
+        "locator": "observations/b2e378c70367cfe087fb501582023d0b6ce18a7834804ae97590af4e80c9dccd"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:e7ba400533daa16e0a1b35cdefe3a720cf0784fb0d957d74389646a74b99f158",
+        "locator": "observations/e7ba400533daa16e0a1b35cdefe3a720cf0784fb0d957d74389646a74b99f158"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K34-adapter_import_added",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "from typing import Mapping\n",
+        "replace_with": "from typing import Mapping\nfrom alienintent.context_assembly.adapters.compilation_repository import EvidenceAssessmentHistory\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "assertion": "domain imports adapters",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:d45abfdf4e77ea22cf37b03a8452e26eada6c8ba7c355014afff67649cbdb014",
+        "locator": "observations/d45abfdf4e77ea22cf37b03a8452e26eada6c8ba7c355014afff67649cbdb014"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:98dddb739f4284cfe5e485c801510963652ee2d17caa09e05d804ec11c49101a",
+        "locator": "observations/98dddb739f4284cfe5e485c801510963652ee2d17caa09e05d804ec11c49101a"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:d45abfdf4e77ea22cf37b03a8452e26eada6c8ba7c355014afff67649cbdb014",
+        "locator": "observations/d45abfdf4e77ea22cf37b03a8452e26eada6c8ba7c355014afff67649cbdb014"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K35-duplicate_edge_accepted",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if key in seen:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:duplicate_edge]",
+        "tests/context_assembly/test_compilation_validation.py::test_duplicate_edge_refused_in_any_order"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:duplicate_edge] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_duplicate_edge_refused_in_any_order - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:81a5f16a5a04b2b556be03f24a743135ea63b8c8bb8ca3e7a1f601d230c40a17",
+        "locator": "observations/81a5f16a5a04b2b556be03f24a743135ea63b8c8bb8ca3e7a1f601d230c40a17"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:fa18d463439fbbc93effd7405234d598b650f239364c1def85c04c6ec8ded88d",
+        "locator": "observations/fa18d463439fbbc93effd7405234d598b650f239364c1def85c04c6ec8ded88d"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:2cd6792a246f08c4b2eb68b5c9564a594a75812eb9593e4bae552549c3ace374",
+        "locator": "observations/2cd6792a246f08c4b2eb68b5c9564a594a75812eb9593e4bae552549c3ace374"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K36-contract_requirements_unlinked",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    for contract in contracts:\n",
+        "replace_with": "    for contract in ():\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[initial:unresolved_authority_via_contract]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[initial:unresolved_authority_via_contract] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:0cb875d09815dfb67730bdff90e104199fbe98736bb430215897113d3194439d",
+        "locator": "observations/0cb875d09815dfb67730bdff90e104199fbe98736bb430215897113d3194439d"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:91abdc1869a3589c44e24669b2c7e65fff37947e73352ec6da49923c4f00b527",
+        "locator": "observations/91abdc1869a3589c44e24669b2c7e65fff37947e73352ec6da49923c4f00b527"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:2f3d16cc59bc06a3dc65a6d0ac29504f4cd91dac63c3343296006af28e1f87a3",
+        "locator": "observations/2f3d16cc59bc06a3dc65a6d0ac29504f4cd91dac63c3343296006af28e1f87a3"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K37-original_graph_unanchored",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if graph:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:original_graph_omitted]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:original_graph_omitted] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:2f75aff82970aac4cca3d1bc54b19e1bcd8d3ab530582f887b1c236eed6d0362",
+        "locator": "observations/2f75aff82970aac4cca3d1bc54b19e1bcd8d3ab530582f887b1c236eed6d0362"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:32861f3560c3d92e46749c478b7769000d2de4fba70c1f4a085ccde18cb06bb2",
+        "locator": "observations/32861f3560c3d92e46749c478b7769000d2de4fba70c1f4a085ccde18cb06bb2"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:3cdfe24ffff7deabdf50faf96e3ee0339796b9edc0a216870c9ec4f602f57aad",
+        "locator": "observations/3cdfe24ffff7deabdf50faf96e3ee0339796b9edc0a216870c9ec4f602f57aad"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K38-original_inventory_unanchored",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if lost_clauses:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:original_obligation_omitted]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:original_obligation_omitted] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:2a125d1b362a52bb9e28dcefe41cd0477726a15de661c5b7718acb7f5e368067",
+        "locator": "observations/2a125d1b362a52bb9e28dcefe41cd0477726a15de661c5b7718acb7f5e368067"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:70b7356682395139013704128bb2d979607af856116dddf4245a572d942fe1fc",
+        "locator": "observations/70b7356682395139013704128bb2d979607af856116dddf4245a572d942fe1fc"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:40b5603d36dd029356925dc15c8918b813f97f96ecc04ff4a192c765567afe29",
+        "locator": "observations/40b5603d36dd029356925dc15c8918b813f97f96ecc04ff4a192c765567afe29"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K39-omitted_dependencies_skipped",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        declared = unit.get(\"dependencies\", [])\n",
+        "replace_with": "        declared = unit.get(\"dependencies\")\n        if declared is None:\n            continue\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[initial:dependencies_omitted]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[initial:dependencies_omitted] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ffc0b34091b3b431b65f11813075a6a90559869fba6daa029e4c9e717370c834",
+        "locator": "observations/ffc0b34091b3b431b65f11813075a6a90559869fba6daa029e4c9e717370c834"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:bfa86dd8c3df70ddf0668c1192612855a687d98a17cdd2e2002948ed7a36b074",
+        "locator": "observations/bfa86dd8c3df70ddf0668c1192612855a687d98a17cdd2e2002948ed7a36b074"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:774ec95b381cd546b8031b54088b5d7d309625eaba1c55f31cf17a27f81b8277",
+        "locator": "observations/774ec95b381cd546b8031b54088b5d7d309625eaba1c55f31cf17a27f81b8277"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K40-operation_id_optional",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if not _text(proposal.get(\"operation_id\")):\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:operation_id_absent]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:operation_id_absent] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:266b6e4e40b4412630c1caa4dc816b4340fe7c1622ff86b081448714c54431b7",
+        "locator": "observations/266b6e4e40b4412630c1caa4dc816b4340fe7c1622ff86b081448714c54431b7"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:c65a190c6a3ed18e21b8210c2f45505309b3c1a12114327a97f4a09f951b7bfd",
+        "locator": "observations/c65a190c6a3ed18e21b8210c2f45505309b3c1a12114327a97f4a09f951b7bfd"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:8b78b28d92f79e488b13c201fb4fd253e5637f523284cc651723614ae169325d",
+        "locator": "observations/8b78b28d92f79e488b13c201fb4fd253e5637f523284cc651723614ae169325d"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K41-contract_clause_substring",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    return verbatim(\"\\n\" + clause + \"\\n\", \"\\n\" + _body(unit) + \"\\n\")\n",
+        "replace_with": "    return verbatim(clause, _body(unit))\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:frozen_clause_truncated]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_review_r1_refusals[split:frozen_clause_truncated] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:4b0a9f35443cf2b81ddfac30f478a1708a8a77bc0af94429e29a75069fffc29e",
+        "locator": "observations/4b0a9f35443cf2b81ddfac30f478a1708a8a77bc0af94429e29a75069fffc29e"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:d7b8684d2572dc67e62e7977451814be24888de0d96d2f797b341941ab523208",
+        "locator": "observations/d7b8684d2572dc67e62e7977451814be24888de0d96d2f797b341941ab523208"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:a1ed167fe529f52ec24d79be6c7a91f9d5bc2b6ea49e98afbadd61ace13fe7e0",
+        "locator": "observations/a1ed167fe529f52ec24d79be6c7a91f9d5bc2b6ea49e98afbadd61ace13fe7e0"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K42-split_requires_done_predecessors",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "    for edge in edges if require_done else ():\n",
+        "replace_with": "    for edge in edges:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_split_does_not_require_done_predecessors"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_split_does_not_require_done_predecessors - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ce6345ad8578f7dbbec92d7723cc33119c16cd34bbeb8fea60c4f82c90d708f3",
+        "locator": "observations/ce6345ad8578f7dbbec92d7723cc33119c16cd34bbeb8fea60c4f82c90d708f3"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:2ebe3f5028defc5e0a2f1aaac1b3582dd781c4bff0cfe92923b41c5510585baf",
+        "locator": "observations/2ebe3f5028defc5e0a2f1aaac1b3582dd781c4bff0cfe92923b41c5510585baf"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:5b5f6881d5f62fa190d38edcdd093e299d81164ae560e7659d28816d64883774",
+        "locator": "observations/5b5f6881d5f62fa190d38edcdd093e299d81164ae560e7659d28816d64883774"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "K43-result_contract_optional",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/compilation.py",
+      "source_digest": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+      "mutation": {
+        "remove": "        if uncontracted:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_compilation_validation.py::test_review_r2_result_without_contract_refused[split:result_contract_as_body]",
+        "tests/context_assembly/test_compilation_validation.py::test_review_r2_result_without_contract_refused[split:result_contract_absent]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_compilation_validation.py::test_review_r2_result_without_contract_refused[split:result_contract_as_body] - AssertionError ; FAILED tests/context_assembly/test_compilation_validation.py::test_review_r2_result_without_contract_refused[split:result_contract_absent] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ae8c874ef88c8ba322b502993b5e56139915ebabd2b5ff32b8ff303446f5ff0b",
+        "locator": "observations/ae8c874ef88c8ba322b502993b5e56139915ebabd2b5ff32b8ff303446f5ff0b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:388785248bddaf881eb872cac506ff186b9f884e9a1bec888ceab041f31b7a87",
+        "locator": "observations/388785248bddaf881eb872cac506ff186b9f884e9a1bec888ceab041f31b7a87"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:27a10e069869403870a105db8852feaca49b0a47aeac3c7eaab395b37c95512e",
+        "locator": "observations/27a10e069869403870a105db8852feaca49b0a47aeac3c7eaab395b37c95512e"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}

@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","tools/evidence/fx_u7_evidence.py","--verify-inputs","/tmp/fx-u7-corrupt-l9mkr6ob/fixture-inputs"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/d48a98bd-ac48-4f98-9745-2622c4e57064","exit_status":2,"stderr":"","stdout":"{\"hold\": \"SWF33_INPUT_DIGEST_MISMATCH\", \"blobs\": [\"4f864b94191705953cf625fd34d203f0313b602e\"]}\n"}

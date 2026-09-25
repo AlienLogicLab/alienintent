@@ -1,0 +1,171 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-U7",
+  "work_unit_id": "WO-220207",
+  "invocation": "AlienLogicLab/alienintent#101:PRODUCER:9a062e63-2fd1-4e7a-aa36-904db870a5f1",
+  "source_revision": "b00d7d4a678f145f22cc1ccfd9660ec3c91cb835",
+  "source_status": "",
+  "admission_baseline": "7b6e19c4a17f1d797f61c99edafadd4857940dd6",
+  "pin_baseline": "e36e335",
+  "candidate_contract_sha256": "00148ba18b4466cb0d30f18ba50af44226210a0c564d15d2f50045af4c3a1ec7",
+  "input_digests": {
+    "contract": "sha256:0e05a12001ee303b5d7eebb4d57afe536def5f2f323c7946a69d1b30390e9525",
+    "packet": "sha256:5c4a88ebd9c1b2e5f2d14a00f3de26c99e3eee95d91a8f456cffd0949532efde",
+    "allocation": "sha256:2e297c63f2568abc22144a2432f33577cc5ad5b279825dbd160031ad6f810ac9",
+    "C": "sha256:56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242",
+    "D": "sha256:b767305fde58e503bfacac95f3ea8c8eb23c6aabd7bb0211c93d5c6af16402af",
+    "B": "sha256:6c6e530059a0c076b43ac10750fb313a04b5f5dcd9db7959edc1c6c4c7487fd3",
+    "S": "sha256:332757c43b8754196e45f75a8ce2ee422e19382415e17ed22cd431f348d9b800",
+    "P5": "sha256:0796f8eb18c853e1c349bc93b4ed8093e56bd2681f7fd968fb518167687bd8d2",
+    "swf33:4f864b94191705953cf625fd34d203f0313b602e": "sha256:7caa6a3c0b2440691c65ab8e95cfd79b449787435f4db63a239066a61d671ed0",
+    "swf33:78b5e01b9aa08bcc0c8977e73768efb62410746f": "sha256:cfd06a35e7eb65a7dcf9f9e8ca5175fa611666bf0cdabc9d5da6e8923c5a9428",
+    "swf33:b9e246f2c905af7f3c58e3d4c1b97548ce3fc452": "sha256:197b05fcc837afbf866bced3c2aaaf849d5d21133935d31f23747c1215b2dbfa",
+    "swf33:fe1e3efe3523f4376b2de66a650dca31fecdbfad": "sha256:1fc95f25b6c2d928fcb325525b46c1850bb56463c2428f0ea56afc99f181ebb4",
+    "docs/work-units/wave2/WO-220207.md": "sha256:0e05a12001ee303b5d7eebb4d57afe536def5f2f323c7946a69d1b30390e9525",
+    "docs/evidence/wave2-proof-fixtures/FX-U7.md": "sha256:7d72d6bfbc4b54255017200eafad958246689ed01e34daf9d6d383079536acaf",
+    "tests/context_assembly/test_compilation_validation.py": "sha256:78628c3cdc2bcea766d8243477a01fdee42fc298924e301039ebc083fd2652fa",
+    "tools/evidence/fx_u7_evidence.py": "sha256:0f21a09f5230707b9e5d71b85cad10b787727738d28f5feb158acc24b1c10d00",
+    "src/alienintent/context_assembly/domain/compilation.py": "sha256:87a49866b081eddc1cf3f1908ed70fb8a86d6c1d86d5ae1cccdb9d7b07a717c1",
+    "src/alienintent/context_assembly/ports/compilation.py": "sha256:57192498a9f68c51cbba4e0bd79e78b6443f03b3ca5fbfa8b7365c0537078534",
+    "src/alienintent/context_assembly/application/compilation_validation_service.py": "sha256:78a85b6be38c705104eeaeff0bdfbbdb489f7385cd5d92c94f27a857ee631200",
+    "src/alienintent/context_assembly/adapters/compilation_repository.py": "sha256:f77f793d2ed4e21c6d80af038281a1a88c6bc6accd6b68b671a39d191f4588e0",
+    "src/alienintent/composition/compilation.py": "sha256:426851722672716934006866cb47c9453587fe0692ff442c2a4d23527c9e2c77",
+    "src/alienintent/composition/upstream_profile.py": "sha256:ea2fb60e19de5786583434ae53d4c0d50048032fe80d04d4431a69d6ff4039a2"
+  },
+  "baseline_reconciliation_ref": {
+    "revision_digest": "sha256:ce3cac48b12f7c8ca5712232863d2f76ecaa74aa78fc7dd732063ada42193697",
+    "locator": "observations/ce3cac48b12f7c8ca5712232863d2f76ecaa74aa78fc7dd732063ada42193697"
+  },
+  "commands": [
+    {
+      "id": "focused",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_compilation_validation.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:be5e6346c6c3adc0a70f1ea7165b94d3d1b43acd7c6be3e0ead21768007ae0df",
+        "locator": "observations/be5e6346c6c3adc0a70f1ea7165b94d3d1b43acd7c6be3e0ead21768007ae0df"
+      }
+    },
+    {
+      "id": "python_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:d34cdf8603aeb81ab84a14198784729e131a88ff9c582e5915ac6a71e7fb84e4",
+        "locator": "observations/d34cdf8603aeb81ab84a14198784729e131a88ff9c582e5915ac6a71e7fb84e4"
+      }
+    },
+    {
+      "id": "architecture",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:f59172dbded3de8c3a7c137626787807039ec165dde4939ebd9391a645f6ed28",
+        "locator": "observations/f59172dbded3de8c3a7c137626787807039ec165dde4939ebd9391a645f6ed28"
+      }
+    },
+    {
+      "id": "node_regression",
+      "command": [
+        "node",
+        "scripts/check.mjs",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:296ee9a04ae4918a153538d3de4021c0ded9e707d1d1c6118defb931a0f8edd1",
+        "locator": "observations/296ee9a04ae4918a153538d3de4021c0ded9e707d1d1c6118defb931a0f8edd1"
+      }
+    },
+    {
+      "id": "swf33_digest_mismatch_hold",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/evidence/fx_u7_evidence.py",
+        "--verify-inputs",
+        "/tmp/fx-u7-corrupt-l9mkr6ob/fixture-inputs"
+      ],
+      "expected_exit": 2,
+      "exit_status": 2,
+      "observation_ref": {
+        "revision_digest": "sha256:4b0911177a0b8e82aac0f1f5f01412c3ef3de1a3fd41679b20767f8087ed0a37",
+        "locator": "observations/4b0911177a0b8e82aac0f1f5f01412c3ef3de1a3fd41679b20767f8087ed0a37"
+      }
+    }
+  ],
+  "holds": [],
+  "labels": [
+    "VALIDATION_ONLY_HAND_AUTHORED_CANDIDATES",
+    "SWF33_HISTORICAL_CONTRACT_FIXTURE_NOT_LIVE_MUTATION",
+    "PHASE5_CANDIDATE_MECHANISMS_NOT_INDEPENDENTLY_DESIGN_VERIFIED",
+    "DEPENDENCY_AUTHORITY_REUSE_v1",
+    "UNRESOLVED_AUTHORITY_SOURCE_v1",
+    "FIXED_DECISION_CONFLICT_RULE_v1",
+    "NO_TRANSITION_OBSERVABLE_v2",
+    "FX_C1_EVIDENCE_LAYOUT",
+    "SPLIT_FIXTURE_FAMILIES_v1",
+    "SWF33_REPLAY_EXACT_CLAUSE_RULE_v1",
+    "BUDGET_CAPABILITY_BOUND_RULE_v1",
+    "SPLIT_AUTHORITY_BINDING_v1",
+    "IDENTITY_BOUNDS_VALIDATION_v1",
+    "ASSESSMENT_HISTORY_VALIDATION_v1",
+    "COMPILATION_HOLD_CODES_v1",
+    "ACTIVE_INVOCATION_OUT_OF_FX_U7",
+    "EXISTING_IMPLEMENTATION_INVENTORY_v1",
+    "SYNTHETIC_SPLIT_ISSUER_N5",
+    "DEPENDENCY_SATISFACTION_INITIAL_ONLY",
+    "REVIEW_R1_REPAIR_CONTROLS_K35_K42",
+    "REVIEW_R2_REPAIR_CONTROL_K43"
+  ],
+  "residuals": [
+    "SPLIT_APPLY_AND_DERIVATION_NOT_PROVEN_U8_EXTENT",
+    "AC_06_08_TRACE_OWNERSHIP_UNASSIGNED_IN_DAG",
+    "BUDGET_ENVELOPE_PARTITION_UNPROVEN",
+    "ACTIVE_INVOCATION_FENCE_NOT_PROVEN_BY_FX_U7",
+    "SWF33_ELABORATION_BINDING_INTERPRETIVE",
+    "ORIGINAL_INVENTORY_SUPPLIED_FOR_MARKDOWN_ORIGINAL",
+    "EXPECTED_VERSIONS_APPLY_TIME_NOT_CHECKED",
+    "GRAPH_REVISION_BINDING_WITHIN_PAYLOAD_DIGEST",
+    "DOWNSTREAM_EDGES_SUPPLIED_BY_PROPOSAL",
+    "ELABORATION_APPROVAL_DIGEST_NOT_RECOMPUTED",
+    "CHILD_EXTENT_ACCEPTS_OBLIGATION_ID",
+    "MALFORMED_INPUT_HOLD_REF_ORDER_DEPENDENT"
+  ],
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": null,
+    "reason": "UNKNOWN: provider usage is unavailable to this local fixture"
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:7b0c2a8675fbcb39cfac26e1a5bed7fd957b0a3b58ae3422f2ae18853b66ca1e",
+    "locator": "observations/7b0c2a8675fbcb39cfac26e1a5bed7fd957b0a3b58ae3422f2ae18853b66ca1e"
+  },
+  "exit_status": 0
+}
