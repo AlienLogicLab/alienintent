@@ -1,0 +1,346 @@
+{
+  "acceptance_to_probes": {
+    "fixed choices: G=300/I=60/C=90 configurable, digest persisted, missing/invalid policy blocks startup": [
+      "test_policy_defaults_and_digest",
+      "test_policy_invalid_blocks_startup",
+      "test_policy_digest_persisted_at_start"
+    ],
+    "SF-REQ-056-AC-01": [
+      "test_grace_boundary",
+      "test_detection_bound_g_plus_i"
+    ],
+    "SF-REQ-056-AC-02": [
+      "test_correlated_evidence_yields_no_recovery",
+      "test_accept_recovers_each_missing_required_closure_effect",
+      "test_unknown_effect_holds_at_confirmation_bound",
+      "test_unavailable_observation_is_evidence_hold"
+    ],
+    "SF-REQ-056-AC-03": [
+      "test_race_delayed_original_contenders_and_restart",
+      "test_stale_lifecycle_snapshot_refused",
+      "test_pending_unsent_intent_past_c_executes_by_canonical_claim",
+      "test_unknown_effect_with_durable_receipt_confirms_by_readback"
+    ],
+    "SF-REQ-056-AC-04": [
+      "test_completed_judgment_suppresses_relaunch_indefinitely"
+    ],
+    "SF-REQ-056-AC-05": [
+      "test_seen_only_leaves_suppression",
+      "test_valid_resolution_permits_reinspection_only",
+      "test_newer_nonjudgment_outcome_permits_reevaluation",
+      "test_out_of_lane_resolution_keeps_suppression",
+      "test_stale_resolution_keeps_suppression"
+    ],
+    "SF-REQ-056-AC-06": [
+      "test_missing_authority_budget_or_custody_records_hold",
+      "test_confirmed_legacy_launch_holds_instead_of_relaunching",
+      "test_unrecorded_hold_fails_the_scan",
+      "test_crash_after_reservation_before_intent_is_released_at_start",
+      "test_store_failure_after_reservation_does_not_strand_it",
+      "test_release_failure_after_confirmation_does_not_escape",
+      "test_recovery_uses_canonical_effect_path_without_status_toggling",
+      "test_scanner_cannot_create_generation",
+      "test_effect_key_excludes_delivery_and_scan_time"
+    ],
+    "SF-REQ-056-AC-07": [
+      "proven-red.json: identity_fence_removed, judgment_suppression_removed"
+    ],
+    "monitor-health evidence withdraws the G+I claim": [
+      "test_bound_claim_requires_healthy_monitor",
+      "test_scan_progress_reported_to_monitor",
+      "test_monitor_failure_withdraws_claim_but_reconciliation_continues"
+    ],
+    "non-claim: no work-discovery polling": [
+      "test_unknown_record_outside_known_active_is_not_discovered"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/execution_coordination/test_liveness_reconciliation.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:19befc74a5c1468db15a6f2c4d62a54cccd7eff093cbd18a82a975ffd5d14074",
+      "locator": "observations/19befc74a5c1468db15a6f2c4d62a54cccd7eff093cbd18a82a975ffd5d14074"
+    }
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:b3d3542f877996d38b2ff0cc67cc54223ad4f12815f54b418506713fe585a213",
+    "locator": "observations/b3d3542f877996d38b2ff0cc67cc54223ad4f12815f54b418506713fe585a213"
+  },
+  "composed_readback": {
+    "steps": [
+      {
+        "scenario": "lost-trigger",
+        "now": 1790000299000000,
+        "outcome": "COMPLETE",
+        "bound_claim": "G_PLUS_I_CLAIMED",
+        "events": [
+          {
+            "kind": "liveness.no_action",
+            "biu": "WO-L1",
+            "effect_key": null,
+            "reason": "WITHIN_GRACE",
+            "attention": null
+          }
+        ]
+      },
+      {
+        "scenario": "lost-trigger",
+        "now": 1790000300000000,
+        "outcome": "COMPLETE",
+        "bound_claim": "G_PLUS_I_CLAIMED",
+        "events": [
+          {
+            "kind": "liveness.gap",
+            "biu": "WO-L1",
+            "effect_key": "liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+            "reason": "MISSING:producer",
+            "attention": null
+          },
+          {
+            "kind": "liveness.recovery_intent",
+            "biu": "WO-L1",
+            "effect_key": "liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+            "reason": "producer",
+            "attention": null
+          },
+          {
+            "kind": "liveness.readback_confirmed",
+            "biu": "WO-L1",
+            "effect_key": "liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+            "reason": "sha256:b96d5b09c789da749a2c7f00b1e52bd261c51e8b756b485c239102072ea7a29e",
+            "attention": null
+          }
+        ]
+      },
+      {
+        "scenario": "lost-trigger",
+        "now": 1790000600000000,
+        "outcome": "COMPLETE",
+        "bound_claim": "G_PLUS_I_CLAIMED",
+        "events": [
+          {
+            "kind": "liveness.no_action",
+            "biu": "WO-L1",
+            "effect_key": null,
+            "reason": "COMPLETED_AWAITING_PROJECTION",
+            "attention": null
+          }
+        ]
+      },
+      {
+        "scenario": "judgment",
+        "now": 1790000300000000,
+        "outcome": "COMPLETE",
+        "bound_claim": "G_PLUS_I_CLAIMED",
+        "events": [
+          {
+            "kind": "liveness.suppressed",
+            "biu": "WO-L1",
+            "effect_key": null,
+            "reason": "JUDGMENT_UNRESOLVED",
+            "attention": "attention:6faba2ba4a8690ece4cfa8049e53b7b77071e7e1c4c1b98a14682fcedbe60615"
+          }
+        ]
+      },
+      {
+        "scenario": "judgment",
+        "now": 1790000900000000,
+        "outcome": "COMPLETE",
+        "bound_claim": "G_PLUS_I_CLAIMED",
+        "events": [
+          {
+            "kind": "liveness.suppressed",
+            "biu": "WO-L1",
+            "effect_key": null,
+            "reason": "JUDGMENT_UNRESOLVED",
+            "attention": "attention:6faba2ba4a8690ece4cfa8049e53b7b77071e7e1c4c1b98a14682fcedbe60615"
+          }
+        ]
+      },
+      {
+        "scenario": "judgment",
+        "now": 1790003000000000,
+        "outcome": "COMPLETE",
+        "bound_claim": "G_PLUS_I_CLAIMED",
+        "events": [
+          {
+            "kind": "liveness.suppressed",
+            "biu": "WO-L1",
+            "effect_key": null,
+            "reason": "JUDGMENT_UNRESOLVED",
+            "attention": "attention:6faba2ba4a8690ece4cfa8049e53b7b77071e7e1c4c1b98a14682fcedbe60615"
+          }
+        ]
+      },
+      {
+        "scenario": "monitor-overdue",
+        "now": 1790003180000000,
+        "outcome": "COMPLETE",
+        "bound_claim": "WITHDRAWN:STALE:TICK_OVERDUE"
+      }
+    ],
+    "delayed_original": {
+      "type": "Refused",
+      "reason": "EFFECT_IDENTITY_USED"
+    },
+    "consumer_outcomes": [
+      {
+        "aggregate": "liveness-lane:liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+        "effect_id": "liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+        "invocation": "dispatcher-1",
+        "outcome": {
+          "payload": {
+            "biu": "WO-L1",
+            "candidate": null,
+            "effect_key": "liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+            "generation": 1,
+            "kind": "liveness-canonical-effect",
+            "role_key": "producer"
+          },
+          "status": "accepted"
+        },
+        "payload_digest": "sha256:5f1150872e656adb9ec1996bd17e3cd65b7a5d30854159c7e11b4d9fad63fb32",
+        "profile": "fixture",
+        "reservations": [
+          [
+            "liveness-lane",
+            "liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+            "dispatcher-1",
+            1
+          ]
+        ],
+        "schema_version": 1,
+        "vector": {
+          "authority": "authority:dispatch",
+          "epoch": 1,
+          "invocation": "dispatcher-1",
+          "versions": [
+            [
+              "authority:dispatch",
+              1
+            ],
+            [
+              "liveness-active:WO-L1",
+              1
+            ],
+            [
+              "liveness-lane:liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+              1
+            ]
+          ]
+        }
+      }
+    ],
+    "readback_receipt": {
+      "effect_id": "liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+      "invocation": "dispatcher-1",
+      "digest": "sha256:b96d5b09c789da749a2c7f00b1e52bd261c51e8b756b485c239102072ea7a29e"
+    },
+    "lane": [
+      1,
+      {
+        "active_revision": 1,
+        "authority": "authority:dispatch",
+        "authority_version": 1,
+        "biu": "WO-L1",
+        "effect_key": "liveness-effect:80d12666503af34fb5221b3169433daeeb165a8bc72ac192ea3be6a24c38bbae",
+        "epoch": 1,
+        "generation": 1,
+        "intended_at": 1790000300000000,
+        "invocation": "dispatcher-1",
+        "role_key": "producer",
+        "schema_version": 1,
+        "source": "liveness-scan"
+      }
+    ],
+    "lifecycle": [
+      1,
+      {
+        "authority": "authority:dispatch",
+        "biu": "WO-L1",
+        "budget_admitted": true,
+        "candidate": null,
+        "closure_actions": [],
+        "contract_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+        "entered_at": 1790000000000000,
+        "generation": 1,
+        "repository": "repo:alienintent",
+        "schema_version": 1,
+        "stage": "IMPLEMENT"
+      }
+    ],
+    "policy": [
+      1,
+      {
+        "policy": {
+          "confirmation_seconds": 90,
+          "grace_seconds": 300,
+          "interval_seconds": 60
+        },
+        "policy_digest": "sha256:04610ebf7dce627d8eea88d46b47a8474d46aaa5c5cfefdbf48a4f1ee6222745",
+        "schema_version": 1
+      }
+    ],
+    "judgment_consumer_outcomes": [],
+    "attention": [
+      {
+        "identity": "attention:6faba2ba4a8690ece4cfa8049e53b7b77071e7e1c4c1b98a14682fcedbe60615",
+        "version": 1,
+        "origin": {
+          "work_ref": "WO-L1",
+          "event_identity": "outcome-1",
+          "kind": "JUDGMENT",
+          "work_revision": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc:generation:1",
+          "lane": "producer",
+          "required_authority": "founder-judgment",
+          "producer": "liveness-reconciler",
+          "source_ref": {
+            "project": "project",
+            "profile": "fixture",
+            "logical_id": "outcome-1",
+            "revision_digest": "sha256:0aecb37d69229c340d9f4c555cef20c679d10fd9844938c8a83a85bdf80faad2",
+            "locator": "liveness-outcome:WO-L1"
+          }
+        },
+        "status": "PENDING",
+        "attempts": [],
+        "handler": null,
+        "resolution_ref": null,
+        "history_ref": {
+          "project": "project",
+          "profile": "fixture",
+          "logical_id": "attention:6faba2ba4a8690ece4cfa8049e53b7b77071e7e1c4c1b98a14682fcedbe60615",
+          "revision_digest": "sha256:4ee2897a3747e1e6b2634d1b194a6234ace9fccb25e178d6eb89bb163bd28b08",
+          "locator": "objects/4ee2897a3747e1e6b2634d1b194a6234ace9fccb25e178d6eb89bb163bd28b08"
+        }
+      }
+    ],
+    "monitor": {
+      "profile": "fixture",
+      "instance_id": "monitor-1",
+      "generation": 1,
+      "policy_digest": "sha256:7bfef2f3e5f0269167f6ae83ff28b4adef7904a2281a80a513fbc2fc48f63227",
+      "started_at": 1790000000000000,
+      "last_monitor_tick": 1790003000000000,
+      "last_scan_started_at": 1790003180000000,
+      "last_scan_completed_at": 1790003180000000,
+      "last_scan_outcome": "COMPLETE",
+      "next_scan_due": 1790003240000000,
+      "last_error": null
+    }
+  },
+  "boundaries": "local/composed fixture only; host unassigned (R1-GAP-MONITOR-HOST); no bootstrap liveness retirement, live monitor-host replacement, remote provider binding or work-discovery polling; SF-REQ-056-AC-08 live exercise not attempted",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}

@@ -1,0 +1,205 @@
+{
+  "controls": [
+    {
+      "control": "grace_ignored",
+      "failure_class": "missing effect after configured grace G yields one gap",
+      "file": "src/alienintent/execution_coordination/domain/liveness.py",
+      "application_count": 1,
+      "source_digest": "sha256:21ac2a61df27b4e94d1a4931d0831077243d179c1b07baf3f0f5e9148d52b856",
+      "mutation": {
+        "remove": "    if age < policy.grace_micros:",
+        "replace_with": "    if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_liveness_reconciliation.py::test_grace_boundary[below]"
+      ],
+      "assertions": [
+        "before G nothing is recovered"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:32cb6cc1775362b4e440a87f0650d88a8c13305d127ad9561378ef4193ec31a7",
+        "locator": "observations/32cb6cc1775362b4e440a87f0650d88a8c13305d127ad9561378ef4193ec31a7"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:5aff93fb3f87a05d67d0d1d7d35973f6aa8286c1b4f58b40eb1c1e0eac0603cf",
+        "locator": "observations/5aff93fb3f87a05d67d0d1d7d35973f6aa8286c1b4f58b40eb1c1e0eac0603cf"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:5f06dd29a420578d7060cad85ae356f49812bf1dabea17f36147e9775c9cbe96",
+        "locator": "observations/5f06dd29a420578d7060cad85ae356f49812bf1dabea17f36147e9775c9cbe96"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "unknown_as_absent",
+      "failure_class": "unknown correlated evidence holds rather than fabricating absence",
+      "file": "src/alienintent/execution_coordination/domain/liveness.py",
+      "application_count": 1,
+      "source_digest": "sha256:21ac2a61df27b4e94d1a4931d0831077243d179c1b07baf3f0f5e9148d52b856",
+      "mutation": {
+        "remove": "        if evidence.status in (\"PENDING\", \"UNKNOWN\"):",
+        "replace_with": "        if evidence.status == \"PENDING\":"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_liveness_reconciliation.py::test_unknown_effect_holds_at_confirmation_bound[below]"
+      ],
+      "assertions": [
+        "unknown evidence must hold rather than launch"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:61fb21c34960638598e7d374219350fbdc203f2ff28c07ca9259c613ba53ed54",
+        "locator": "observations/61fb21c34960638598e7d374219350fbdc203f2ff28c07ca9259c613ba53ed54"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:fade72326b577c6dc133807bd6baf9ac1295259500d53a485dd8ecfede03455f",
+        "locator": "observations/fade72326b577c6dc133807bd6baf9ac1295259500d53a485dd8ecfede03455f"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:d7dd439b8b0a0d9e6e34050389b34c6710d0a57da44568943263ac9ac561c115",
+        "locator": "observations/d7dd439b8b0a0d9e6e34050389b34c6710d0a57da44568943263ac9ac561c115"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "judgment_suppression_removed",
+      "failure_class": "AC-07: completed judgment suppresses relaunch until resolution",
+      "file": "src/alienintent/execution_coordination/domain/liveness.py",
+      "application_count": 1,
+      "source_digest": "sha256:21ac2a61df27b4e94d1a4931d0831077243d179c1b07baf3f0f5e9148d52b856",
+      "mutation": {
+        "remove": "    if latest is not None and latest.judgment and judgment_resolved is not True:",
+        "replace_with": "    if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_liveness_reconciliation.py::test_completed_judgment_suppresses_relaunch_indefinitely[FOUNDER_EXCEPTION]"
+      ],
+      "assertions": [
+        "a completed judgment outcome must suppress relaunch"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:3206ad690995ad7c55fb6f9b8ae6b8b47098455fd9b5c0389e363005816521dc",
+        "locator": "observations/3206ad690995ad7c55fb6f9b8ae6b8b47098455fd9b5c0389e363005816521dc"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:1b994b3b87a77cac0d81acf269d680ebd2e8ec05eaa2766f7383493390e1ea8b",
+        "locator": "observations/1b994b3b87a77cac0d81acf269d680ebd2e8ec05eaa2766f7383493390e1ea8b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:d086daa8432a8063121e1312253a407eb19bfec78fe6c8fc704824f1636cce2f",
+        "locator": "observations/d086daa8432a8063121e1312253a407eb19bfec78fe6c8fc704824f1636cce2f"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "identity_fence_removed",
+      "failure_class": "AC-07: delayed original + contenders + restart keep one effect identity",
+      "file": "src/alienintent/execution_coordination/application/liveness.py",
+      "application_count": 1,
+      "source_digest": "sha256:5c75e886c369ee0968a41bbd87d8ca37c928f34aa7c41eb111cbf786f75f8cac",
+      "mutation": {
+        "remove": "        key = expected.effect_key\n",
+        "replace_with": "        key = expected.effect_key + \":\" + source\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_liveness_reconciliation.py::test_race_delayed_original_contenders_and_restart"
+      ],
+      "assertions": [
+        "delayed original must not act again"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:fe182450f506338358280b2bc477eaadf6dd779100e66c75964cda88b2aa4b5e",
+        "locator": "observations/fe182450f506338358280b2bc477eaadf6dd779100e66c75964cda88b2aa4b5e"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:83770eab8d01271cb97908a32bd2c28c3be56d728815ba758e4b27b43839c19b",
+        "locator": "observations/83770eab8d01271cb97908a32bd2c28c3be56d728815ba758e4b27b43839c19b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:22b3a3cca97c396d8d31ba7cf274ea7df97c4cd85590a4e48b112096f5d2a468",
+        "locator": "observations/22b3a3cca97c396d8d31ba7cf274ea7df97c4cd85590a4e48b112096f5d2a468"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "bound_claim_unconditional",
+      "failure_class": "stale/unavailable monitor health withdraws the G+I claim",
+      "file": "src/alienintent/execution_coordination/application/liveness.py",
+      "application_count": 1,
+      "source_digest": "sha256:5c75e886c369ee0968a41bbd87d8ca37c928f34aa7c41eb111cbf786f75f8cac",
+      "mutation": {
+        "remove": "        return BOUND_CLAIMED if status == \"HEALTHY\" else f\"WITHDRAWN:{status}:{reason}\"",
+        "replace_with": "        return BOUND_CLAIMED"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_liveness_reconciliation.py::test_bound_claim_requires_healthy_monitor"
+      ],
+      "assertions": [
+        "a scan must not claim G+I on unhealthy monitor evidence"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:89039683e7ab777523a513e8ba007a7c71e2bce9a8ec3405df6361aef1975703",
+        "locator": "observations/89039683e7ab777523a513e8ba007a7c71e2bce9a8ec3405df6361aef1975703"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:8797176b61049006e80d32aa5cdc188c0938bd042943949337bc0969d7535b2d",
+        "locator": "observations/8797176b61049006e80d32aa5cdc188c0938bd042943949337bc0969d7535b2d"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:89039683e7ab777523a513e8ba007a7c71e2bce9a8ec3405df6361aef1975703",
+        "locator": "observations/89039683e7ab777523a513e8ba007a7c71e2bce9a8ec3405df6361aef1975703"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}

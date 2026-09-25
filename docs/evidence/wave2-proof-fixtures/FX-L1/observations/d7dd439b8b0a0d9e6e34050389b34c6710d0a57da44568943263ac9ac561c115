@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/execution_coordination/test_liveness_reconciliation.py::test_unknown_effect_holds_at_confirmation_bound[below]"],"cwd":"/tmp/fx-l1-controls-_5xk019j","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.38s\n"}

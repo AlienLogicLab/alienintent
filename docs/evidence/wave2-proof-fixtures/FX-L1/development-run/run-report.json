@@ -1,0 +1,75 @@
+{
+  "acceptance_to_probes": {
+    "fixed choices: G=300/I=60/C=90 configurable, digest persisted, missing/invalid policy blocks startup": [
+      "test_policy_defaults_and_digest",
+      "test_policy_invalid_blocks_startup",
+      "test_policy_digest_persisted_at_start"
+    ],
+    "SF-REQ-056-AC-01": [
+      "test_grace_boundary",
+      "test_detection_bound_g_plus_i"
+    ],
+    "SF-REQ-056-AC-02": [
+      "test_correlated_evidence_yields_no_recovery",
+      "test_accept_recovers_each_missing_required_closure_effect",
+      "test_unknown_effect_holds_at_confirmation_bound",
+      "test_unavailable_observation_is_evidence_hold"
+    ],
+    "SF-REQ-056-AC-03": [
+      "test_race_delayed_original_contenders_and_restart",
+      "test_stale_lifecycle_snapshot_refused",
+      "test_pending_unsent_intent_past_c_executes_by_canonical_claim",
+      "test_unknown_effect_with_durable_receipt_confirms_by_readback"
+    ],
+    "SF-REQ-056-AC-04": [
+      "test_completed_judgment_suppresses_relaunch_indefinitely"
+    ],
+    "SF-REQ-056-AC-05": [
+      "test_seen_only_leaves_suppression",
+      "test_valid_resolution_permits_reinspection_only",
+      "test_newer_nonjudgment_outcome_permits_reevaluation",
+      "test_out_of_lane_resolution_keeps_suppression",
+      "test_stale_resolution_keeps_suppression"
+    ],
+    "SF-REQ-056-AC-06": [
+      "test_missing_authority_budget_or_custody_records_hold",
+      "test_recovery_uses_canonical_effect_path_without_status_toggling",
+      "test_scanner_cannot_create_generation",
+      "test_effect_key_excludes_delivery_and_scan_time"
+    ],
+    "SF-REQ-056-AC-07": [
+      "proven-red.json: identity_fence_removed, judgment_suppression_removed"
+    ],
+    "monitor-health evidence withdraws the G+I claim": [
+      "test_bound_claim_requires_healthy_monitor",
+      "test_scan_progress_reported_to_monitor"
+    ],
+    "non-claim: no work-discovery polling": [
+      "test_unknown_record_outside_known_active_is_not_discovered"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/execution_coordination/test_liveness_reconciliation.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:071828010c89a3699e9b86bf343c2c441cec0feff5de8dd65ed008ac5e8e8d35",
+      "locator": "observations/071828010c89a3699e9b86bf343c2c441cec0feff5de8dd65ed008ac5e8e8d35"
+    }
+  },
+  "readback_ref": null,
+  "composed_readback": null,
+  "boundaries": "local/composed fixture only; host unassigned (R1-GAP-MONITOR-HOST); no bootstrap liveness retirement, live monitor-host replacement, remote provider binding or work-discovery polling; SF-REQ-056-AC-08 live exercise not attempted",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 1
+}
