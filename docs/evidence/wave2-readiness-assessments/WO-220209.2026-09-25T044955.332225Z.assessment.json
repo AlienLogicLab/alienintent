@@ -1,0 +1,75 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Build the U9 readiness consumer for node D#/nodes/11 at the local composed-proof level. It covers five things. First, lint candidate BIUs before assessment, raising attributable LintHolds. Second, consume direct and known-MCP Agent Ready results with identical semantics, failing closed on error, conflicting, unknown, malformed or missing terminal payloads regardless of exit status. Third, retain raw bytes and immutable predecessor attempts, with stale-input invalidation of READY. Fourth, route the four dispositions only up to their handoff boundaries: SF-REQ-002 release gate, SF-REQ-035 Decision Inbox, the U8 SplitTransaction port, and prerequisite reassessment. Fifth, refuse unbound or unestablished producer provenance with CAPABILITY_PROVENANCE_HOLD at the UpstreamProfile composition boundary, and replay PY-10 surrogate history verbatim without relabeling it. The work must not claim U8, U10, AC-06/07, SF-REQ-029, release or live operation.",
+    "implementation_unknowns": [
+      "Reconcile the document's baselines before any work. The header cites baseline ffbc993 and states WO-220207 is 'READY and not released', while the pinned packet asserts baseline 0588eae with WO-220207 DONE. The PRODUCER must pin the landing commit, reconcile it against current origin/main, and re-verify every listed input digest in its own worktree.",
+      "The probe table P01\u2013P24, hold/failure codes (U-12) and discriminating controls K01\u2013K30 are incorporated by reference from WO-220209.proof-packet.draft.md rather than reproduced. The PRODUCER must bind to that exact reviewed draft digest (9c0f20c5\u2026), noting that only its status line changed afterward.",
+      "Whether U9's lint additionally consumes a compilation_validation_hold from the landed CompilationValidation service; this is explicitly delegated to the PRODUCER.",
+      "Exact locations of the new ReadinessAdmission lint and CLARIFY/SPLIT routing within context_assembly, and of the AssessmentConsumer port and adapter within execution_coordination, without introducing a new cross-group module pair.",
+      "Design of the AssessmentAttempt record: persisting the attempt UUID before invocation, the separately versioned applicability pointer per candidate, and storing raw bytes before normalization in the real temporary SQLite store and evidence repository.",
+      "The composition addition to upstream_profile.py that validates product identity, package and schema binding against provenance values (executable path, distribution metadata, correlated attempt UUID and input fingerprint) without a live invocation.",
+      "Building fx_u9_evidence.py on the FX-C1/FX-U5/FX-U7 harness pattern, including single-application fault/restore controls and the exit-2 digest-mismatch control.",
+      "Extending architecture fitness checks as required by C#/contracts/4/architecture_fitness.",
+      "Re-pinning the contract, packet and allocation digests from the commit that lands this pin, since the contract cannot hash itself."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Baseline drift or stale text: the pre-pin sections describe an older dependency state. A PRODUCER working from the wrong baseline, or finding digest mismatches, must stop rather than proceed.",
+      "The CAPABILITY_PROVENANCE_HOLD path could degenerate into schema-shape checking. The proven-red surrogate and copied-evidence controls are the main defence and must be genuinely discriminating.",
+      "Scope bleed: implementing SplitTransaction behaviour, calling validate_split, touching U5, U7, BiuContract, DecisionInbox or admit_release, or relabeling PY-10 history as Agent Ready would violate the stated boundaries.",
+      "Any new cross-group import pair is a hard stop that escalates to the Founder under R2-GAP-051-EDGE-AUTHORITY, and could force mid-work replanning.",
+      "Contract 4 is not independently design-verified; the work proceeds regardless by D#/nodes/11/proceeds_regardless. Later design verification could require rework.",
+      "Probes and controls incorporated by reference from the draft could diverge from what the PRODUCER implements if the draft is not read at its pinned digest.",
+      "Tokens and cost must be recorded as unknown or measured, never zero, and the budget is limited to 3 execution cycles. Rework loops could exhaust the allocation."
+    ],
+    "next_action": "Hand off to the configured PRODUCER for execution under the existing allocation. The PRODUCER should first pin the source revision, reconcile it against origin/main, and re-verify all listed input digests including the draft proof packet. It should then pin the executable FX-U9 commands and demonstrate intact/fault/restored discrimination before implementing, stopping on any digest mismatch or new cross-group pair. Release remains a separate SF-REQ-002 gate that this handoff does not grant.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that the owner decisions are recorded as resolved and the prerequisites are reported as satisfied. Every owner question carries a Director disposition. The only reserved authority, the directional edge question, is fenced by a binding stop condition rather than left open. Dependencies WO-220205 and WO-220207 are reported DONE with independent ACCEPT and merge receipts. The execution allocation, producer/verifier roles and custody rules are defined, and release is explicitly excluded, which is consistent with READY meaning handoff eligibility rather than release. The work is technically substantial and touches lint, consumer, store, composition and replay. However, these parts share one completion predicate, one fixture and one verdict, and none can be accepted meaningfully alone, so SPLIT would fragment a cohesive unit. CLARIFY does not apply because the remaining unknowns are engineering choices explicitly delegated to the PRODUCER. HOLD does not apply because the text establishes the needed artifacts and predecessors as available; the gap between the stale header and the pinned packet is a reconciliation step with a defined stop, not a missing prerequisite. These facts are as reported in the submission and were not independently verified by this gate.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a large but cohesive single-node work unit with one governing predicate, one proof fixture (FX-U9) and two blocking enforcement obligations. The text reports that the proof packet is pinned by a Factory Director episode. It also reports that both predecessors are DONE with independent ACCEPT receipts: WO-220205 at merge 036c5fc and WO-220207 at merge 0588eae. The owner questions U-1 through U-15 and Admission are all recorded as DECIDED, DELEGATED or DISCHARGED. Module placement and the no-new-cross-group-pair constraint are fixed, and any violation is a defined stop that returns to the Founder, not an open question. The work uses local fixtures only, with explicit labels for synthetic and fixture producers and explicit residual non-claims. The remaining uncertainty is engineering research and baseline reconciliation, not owner intent. This gate has not independently verified these reported facts: dependency completion, digests, file/line citations and draft contents.",
+    "verification_assessment": "Acceptance is observable and traceable. Five acceptance IDs map to a clause map that covers every predicate clause (P05\u2013P24). Two BLOCKING python_unit_integration obligations carry proven-red requirements: top-level-only parsing, trusting exit zero, overwriting prior outcomes, schema-perfect surrogates, copied provider_evidence, wrong package identity, disconnected responses, and bypassed provenance checks. Thirty intact/fault/restored controls and a digest-mismatch exit-2 control are specified, with a defined evidence layout and explicit non-claim labels and residuals. The regression commands are concrete. A single fresh independent VERIFIER (JC) retrieving the exact candidate SHA can render one meaningful verdict on the local composed proof. That verdict must not be counted toward U8, U10, AC-06/07, SF-REQ-029, native-producer positive proof or operational acceptance. Part of the probe detail lives in the referenced draft, so the verifier must check it at its pinned digest."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T04:50:34.405058+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 45865,
+    "input_sha256": "23f5b2eebbc1ece64bc8e6635b0c45dcffc36908888ecd5e709d445a342f5e5b",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-t9yb3yp9/WO-220209.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T04:49:55.332225+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220209"
+}
