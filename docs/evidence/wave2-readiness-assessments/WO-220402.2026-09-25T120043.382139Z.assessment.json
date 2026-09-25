@@ -1,0 +1,75 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Within Execution Coordination, replace the producer success-collapse path with canonical multi-role orchestration. Producer success advances only to VERIFY. A distinct independent verifier evaluates the exact published candidate. Verifier rejection records findings and returns to IMPLEMENT under the existing attempt and budget policy. Acceptance proceeds through a trusted REVIEW verdict and canonical ACCEPT. Closure records only actual attributable receipts. All of this consumes the K1 durable WorkerProvider outcome and readback seam, and introduces no new state owner, no parallel RoleOutcomeRecord, and no test-only lifecycle shortcut.",
+    "implementation_unknowns": [
+      "Where and how the current success-collapse path in factory_coordinator.py advances past VERIFY, and how to reroute it without breaking existing callers or architecture checks.",
+      "Whether the current WorkerOutcome contract can carry every required correlation observable (role, invocation, attempt, contract, candidate, finding/receipt) as delivered by K1. If it cannot, a revised Design Verification is required before the typed contract is extended, which would trigger the documented escalation rather than an ad hoc change.",
+      "How 'closure invocation' is realized: as a distinct WorkerProvider invocation, or as local adapter actions with read-back receipts. Either way, closure must record only performed and read-back actions.",
+      "How the Deterministic Test Worker scripts producer success, verifier rejection and verifier acceptance through the production composition path without writing lifecycle state or calling mark_done.",
+      "How existing attempt/budget policy is looked up and enforced on the verifier-rejection\u2192IMPLEMENT loop, including exhaustion behavior.",
+      "What source supplies the trusted REVIEW verdict within the existing canonical lifecycle, and how its trust and correlation are checked in local proof.",
+      "How duplicate, stale and miscorrelated outcome evidence are distinguished from missing evidence so that each holds the transition. The discriminating negative controls must be designed per the proof-policy constraint."
+    ],
+    "independent_decision_centers": [
+      "Canonical role-routed lifecycle orchestration in Execution Coordination (producer\u2192VERIFY\u2192verifier\u2192REVIEW/ACCEPT\u2192closure, with rejection\u2192IMPLEMENT), consuming the existing K1 WorkerProvider outcome/readback seam."
+    ],
+    "material_risks": [
+      "WorkerOutcome may prove insufficient for a required observable. That would require revised Design Verification and could stall or force escalation mid-implementation.",
+      "The K1 seam's DONE status is reported, not verified. If the durable readback is incomplete, K2 must hold rather than work around it; working around it would risk a sidecar state owner.",
+      "Deterministic Test Worker scenarios could drift into test-specific lifecycle shortcuts or scenario-written state, which would invalidate the proof.",
+      "Removing the success-collapse path may break existing tests or profiles that implicitly relied on it. Unmodified profiles are not claimed to satisfy multi-role proof, but regressions must still be avoided.",
+      "Landing policy SWF-19 merges directly into the baseline branch without a pull request. The accepted-SHA custody and verifier receipts are the only gate, so custody errors land directly.",
+      "Budget exhaustion on the rejection loop (maximum 3 cycles, 1 replacement worker per phase) needs a defined hold/terminal outcome. A mis-implementation could loop or silently accept.",
+      "Verifier independence depends on a fresh worktree and a distinct provider identity. Mistakes in custody retrieval or correlation would undermine the independent verdict."
+    ],
+    "next_action": "Hand off to the configured PRODUCER, subject to separate release/IMPLEMENT authorization, which this assessment does not grant.\n1. Pin the contract, baseline and candidate branch.\n2. Confirm that the K1 WorkerProvider readback seam is present at the pinned baseline, and hold if it is not.\n3. Inspect the success-collapse path in factory_coordinator.py and whether WorkerOutcome is sufficient; escalate to Design Verification if it is not.\n4. Implement role-routed orchestration with one discriminating negative control per failure class, run the focused pytest command and architecture checks, then publish the exact candidate SHA for fresh independent verification.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that owner intent and authority are resolved. The fixed decisions assign lifecycle ownership, the worker boundary, the state-owner prohibition, closure semantics, K1/K2 separation and test-path constraints, so no material product, policy or architecture question remains for an owner. The remaining uncertainties are engineering research, and the document provides explicit escalation and hold paths for them, including the conditional WorkerOutcome extension. This rules out CLARIFY. Producer, verifier, closure and rejection routing are facets of one lifecycle transition path in one owner. They cannot be accepted or rejected independently without leaving the success-collapse replacement incoherent, so SPLIT is not warranted. Prerequisites are reported DONE and execution allocation, custody and budgets are bound, so there is no evident unavailability that would justify HOLD; if K1 proof turns out to be missing, the work unit's own stop rules require a hold. Rework locality is MEDIUM because repairs may span the coordinator, runtime correlation and composition wiring, although they stay within one concern. The document's statements about readiness and authorization were treated as data. This READY is handoff eligibility only.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive orchestration change with explicit ownership. Execution Coordination owns the lifecycle and Invocation Runtime owns worker invocation behind WorkerProvider. The K1 prerequisite (WO-220401) and the event-dedupe dependency (WO-220301) are reported DONE; this gate has not verified that. Acceptance is expressed as five material failure classes with existing proof surfaces and a bounded focused pytest command. Custody, execution allocation, budgets, landing and stop/escalation rules are stated. The remaining uncertainty is engineering: how the coordinator wires role routing, and whether WorkerOutcome carries every required observable. The document already routes that second question through Design Verification and escalation rather than leaving it as owner intent. The work is large but has one decision center: the canonical role-routed lifecycle transition path.",
+    "verification_assessment": "Acceptance is observable through five named material failure classes:\n- no collapse past VERIFY on producer success;\n- distinct verifier evaluates the exact candidate, with rejection\u2192IMPLEMENT under budget;\n- canonical REVIEW/ACCEPT with actual closure receipts only;\n- missing, duplicate, stale or miscorrelated evidence holds despite process success;\n- shared WorkerProvider boundary with no test shortcut or sidecar owner.\n\nEach class admits one discriminating negative control exercised through the production composition path, plus architecture checks and a terminal full regression. One independent verifier verdict on the exact candidate SHA is meaningful because the classes all concern a single lifecycle path. Explicit non-claims exclude live/shared-profile activation, which keeps the verdict scoped to local proof. Two caveats: the acceptance criterion restates the scope text rather than listing checks, so the failure-class list must serve as the operative predicate; and dependency DONE status is reported, not independently verified here."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T12:01:17.627045+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10612,
+    "input_sha256": "e6d5d1dcffd36ebfb5fb07a9f098739ef0c41df2331462eb446bbcb3da202af2",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-nzh0ar68/WO-220402.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T12:00:43.382139+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220402"
+}

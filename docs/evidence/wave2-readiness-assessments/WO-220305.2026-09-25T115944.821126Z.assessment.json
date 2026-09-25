@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Under existing SWF-27 / SF-REQ-053 ownership, prove through local or composed fixture FX-C5 that the deterministic monitor/scanner runs under a supervisor external to the model session. When the monitor is terminated or stalled, external health detection must observe the failure and raise an alert. An authorized restart must then preserve the persisted generation and pending state rather than fabricate a clean start. Restarts or observations with the wrong identity must be refused. Missing or invalid supervision or Doctor configuration must hold before launch or restart. The work must not claim live cutover, operational replacement or bootstrap retirement.",
+    "implementation_unknowns": [
+      "Whether the existing src/runtime/systemd-supervision.mjs and its tests already model external supervision of the monitor/scanner, or only of other hosts such as the factory director. Also, what gap remains between the current code and the C5 predicate.",
+      "How a local or composed fixture can exercise real external supervision (a systemd user unit, a transient unit, or a faithful supervisor harness) without degenerating into a profile constructor or shell background waiter, which the task explicitly rejects.",
+      "Which persisted artifact from WO-220304 constitutes the pending state that restart must preserve. Also, how restart proves continuity of generation rather than reinitialization.",
+      "What mechanism durably binds supervisor ownership to the intended monitor/scanner invocation identity, so that wrong-unit or wrong-invocation restart and observation can be refused, and duplicate host ownership detected.",
+      "Which surface counts as the external alert for health detection, and how its observation is retained as an immutable evidence reference.",
+      "How authorization of a restart is represented and checked within existing authority contracts, without introducing new nonterminal retry semantics or budget reset.",
+      "How a missing or invalid supervision or Doctor configuration is detected pre-launch while leaving Doctor configuration itself under SF-REQ-037/038.",
+      "Stall detection thresholds relative to the policy defaults (I=60s, 2*I bound, G=300s) and how boundary tests are made deterministic with an injected clock."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Scope bleed: the extensive tenure, context-usage and contradiction fixed decisions could be misread as C5 deliverables. The producer should treat them as constraints and must not implement tenure machinery beyond what the supervision boundary touches.",
+      "A local environment may lack a usable systemd user instance or equivalent. A weaker harness could then be substituted that the acceptance explicitly disqualifies. If genuine external supervision cannot be exercised, the correct outcome is to park or hold, not to relax the criterion.",
+      "A restart may silently reinitialize generation or drop pending state while tests still pass. Restored-state evidence must compare persisted identities before and after.",
+      "Local proof results could be over-claimed as operational replacement or bootstrap retirement.",
+      "Doctor configuration coupling (SF-REQ-037/038): if the pre-launch hold depends on Doctor surfaces that do not yet exist, this is an escalation or hold condition rather than a reason to implement Doctor scope inside C5.",
+      "The predecessor WO-220304 completion and the pinned Phase 9 contracts are reported facts from the work order and were not independently verified by this gate."
+    ],
+    "next_action": "Hand off WO-220305 at this exact revision to the configured PRODUCER, subject to the document's separate IMPLEMENT authorization. The producer should first:\n1. Inventory the existing systemd supervision, monitor health and director-host surfaces against the four FX-C5 failure classes.\n2. Confirm that a genuine external supervisor can be exercised in the local or composed environment, and that the WO-220304 persisted state is present at the pinned baseline. If either is absent, hold per the stop rules instead of substituting a weaker harness.\nThe candidate is then verified by the fresh independent VERIFIER on the exact SHA.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent, ownership and boundaries are already resolved in the text:\n- Ownership is fixed as SWF-27 / SF-REQ-053, and the document states that monitor-host supervision is an engineering proof, not a new owner decision.\n- Doctor configuration and cutover or retirement are explicitly excluded.\n- Authority for SF-REQ-056 reconciliation is asserted as binding.\n\nThe remaining uncertainties are engineering research: how existing supervision code composes, where pending state lives, and how identity binding and alert observation are realized. Under the rubric these belong in implementation unknowns, not owner questions, so CLARIFY is not warranted.\n\nThe work forms a single decision center, one supervised host boundary proven by one fixture. Its failure classes are facets of one invariant rather than independently rejectable deliverables, so SPLIT would only produce microtasks.\n\nNo necessary prerequisite is established as unavailable. The dependency is reported DONE, and the proof surfaces and commands are named. Environment or Doctor gaps are covered by the work order's own hold rules, so HOLD is not the controlling condition.\n\nAcceptance supports a single meaningful independent verdict, and failures would localize to the supervision boundary.\n\nREADY here recommends handoff only; it does not authorize implementation or release.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a single cohesive proof of a supervision boundary for one capability, supervised_monitor_host. Ownership is stated as settled under SWF-27 / SF-REQ-053. Doctor and installation configuration are explicitly excluded and belong to SF-REQ-037/038. Live cutover and retirement are separately gated. The reported predecessor, WO-220304, is DONE and supplies persisted instance/generation, tick/scan outcomes and STALE/DEGRADED/UNVERIFIED health states. Acceptance is framed as four material failure classes, each with a discriminating negative control. Existing proof surfaces and initial commands are named: systemd supervision runtime and tests, monitor health tests, and a factory director host test. Many fixed decisions (tenure policy, context-usage binding, contradiction judgment) read as shared composition constraints that bound behavior rather than extra deliverables. Treated that way, no unresolved owner decision prevents handoff. The remaining uncertainty is engineering research about how the existing supervision and health surfaces compose.",
+    "verification_assessment": "Acceptance is observable and discriminating, and one independent verifier verdict on the exact candidate SHA is meaningful. The verdict covers four failure classes, each with an intact, fault and restored control:\n(1) supervisor ownership is external to the model session and durably attributable to the monitor invocation;\n(2) killing or stalling the monitor yields external detection and alert, and an authorized restart preserves generation and pending state;\n(3) restart or observation with the wrong identity is refused, with no duplicate ownership;\n(4) missing or invalid supervision or Doctor configuration holds before launch or restart.\nThe named pytest and node test commands give a starting surface; a full regression run is terminal only. Explicit non-claims (no live cutover or retirement) make over-claiming checkable. The key verifier judgment is whether the fixture uses genuine external supervision rather than an in-process or background-waiter stand-in, and the text states that criterion explicitly. The predecessor's DONE status is reported, not independently verified here."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T12:00:20.569053+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 12089,
+    "input_sha256": "eced974bf8636a135f1c7cf26933d58c8acef2b8599f01da332dc01daf047d23",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-0xnylosp/WO-220305.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T11:59:44.821126+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220305"
+}

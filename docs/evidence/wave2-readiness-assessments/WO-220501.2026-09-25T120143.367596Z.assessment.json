@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce a current, read-only bootstrap custody manifest. It should cover every discovered external bootstrap asset, including the newly found shell helpers and the Factory Director Host. For each asset, record its exact path and revision/hash, its consumers and service references, its test/evidence provenance, and a truthful custody class. Any uncertainty is marked UNKNOWN for that component only. No migration, deletion, service change, cutover, replacement or retirement is performed.",
+    "implementation_unknowns": [
+      "Where the current external bootstrap surface lives and how far it extends, since the historical 18-module list is explicitly not authoritative. This must be discovered, including locations outside the obvious directory such as shell helpers and the Factory Director Host unit.",
+      "Whether tools/evidence/test_bootstrap_custody_manifest.py and any manifest generator already exist or must be written, and where the manifest artifact should be stored and in what format (e.g., JSON under docs/evidence).",
+      "How to reliably attribute consumers and service references: static references in the repo, systemd units, scripts. Some may only be observable on a live host and would then be classified UNKNOWN.",
+      "How far the existing evidence (2026-09-25 custody refresh, wave1 retirement matrix) can be reused as provenance, versus being current observations that must be re-derived.",
+      "How to show zero side effects mechanically. Options include hashing the bootstrap files before and after, and a negative control confirming that the proof detects a mutation or a service invocation.",
+      "How to form one discriminating negative control per failure class. Candidates: an extra undiscovered asset, a missing hash, an invented retirement class, an UNKNOWN that spreads beyond its component, and a mutation effect."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Incomplete discovery: the producer may reproduce the historical 18-file list or the prior evidence documents instead of truly rediscovering the current surface.",
+      "Overclaiming custody: assets could be labeled historical or replacement candidates without evidence, which would implicitly invent retirement authority. When evidence is thin, the correct class is KEEP_UNTIL_REPLACED or UNKNOWN.",
+      "Accidental side effects while probing live services, such as systemctl operations on the Factory Director Host. Inspection must stay limited to reading files and unit definitions.",
+      "Differences between the producer's and verifier's environments (host-only assets, sandbox with network denied) could produce disagreements about completeness or consumers.",
+      "Landing directly into the baseline without a PR (SWF-19) puts the whole burden on the independent verifier and exact-SHA custody. Any mismatch in SHA or baseline should trigger a hold."
+    ],
+    "next_action": "Hand off to the PRODUCER under the stated execution allocation, which covers read-only inventory and classification only. Pin the baseline e337182 and the candidate contract hash. Discover the current bootstrap surface, generate the custody manifest with per-component UNKNOWN locality, and implement or extend tools/evidence/test_bootstrap_custody_manifest.py with one negative control per listed failure class, including a before/after zero-mutation check. Publish the exact candidate SHA for fresh independent verification. Release or IMPLEMENT still requires separate authorization.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent and authority are settled for a read-only scope. The document records the owner decisions that would otherwise need clarification: the custody taxonomy, the treatment of unknowns, the exclusion of all mutating actions, and the narrowing of the B0 gate. The remaining uncertainty is engineering discovery, which belongs in implementation unknowns. The work has a single decision center, producing a truthful manifest, so a split would only create microtasks. The reported dependency is DONE and no external artifact is stated as unavailable, so HOLD does not apply. Acceptance and negative controls support one meaningful independent verdict, and any rework would be local to the manifest, its generator or its test. Instructions inside the task text about readiness procedure were treated as data, not directives.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive, read-only inventory and classification task with an explicit capability boundary (bootstrap_custody_manifest). The owner has already fixed the material decisions. The custody taxonomy is given: KEEP_UNTIL_REPLACED, historical/provenance utility, replacement-proof candidate, UNKNOWN. The document states that the B0 gate was too broad and that read-only inventory may proceed. Unknowns are to be handled locally per component. All mutating work is excluded. The only dependency, WO-220101, is reported as DONE; this gate has not verified that. What remains is engineering research: finding the current bootstrap surface, consumers and provenance, and building the manifest and its test. There is no unresolved owner intent.",
+    "verification_assessment": "Acceptance is observable. The manifest content, hashes and revisions, custody classes, UNKNOWN locality and the absence of mutation can all be checked mechanically. The named failure classes map to focused tests plus one negative control each. A single independent verdict is meaningful: the verifier retrieves the exact candidate SHA, reruns the focused test, independently rediscovers the current asset surface to check completeness, and confirms that no bootstrap file or service was changed. The one limit is that consumers visible only on a live host may not be observable in the verifier's sandbox. The contract allows these to be recorded as UNKNOWN or 'where observable', so they do not make the verdict meaningless, but the verifier should check that such entries are marked UNKNOWN rather than asserted."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T12:02:12.505456+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 8444,
+    "input_sha256": "006f5a7641cd2edb603886134586fb2cd7283f572d85759ea25e068c73cbfb00",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-4k8oplpv/WO-220501.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T12:01:43.367596+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220501"
+}
