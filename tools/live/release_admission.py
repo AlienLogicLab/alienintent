@@ -27,6 +27,9 @@ from pathlib import Path, PurePosixPath
 REPO = "AlienLogicLab/alienintent"
 WORKDIR_ENV = "ALIENINTENT_WORKDIR"
 STATE = Path.home() / ".local/state/alienintent/state.json"
+PROJECT_ID = "PVT_kwDOEcrpC84Bj5i_"
+PRIORITY_FIELD = "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ"
+PRIORITY_OPTIONS = {"P0":"92998478","P1":"ae42b437","P2":"1da6e4a3","P3":"f10b964a","P4":"65e330b9","P5":"c29e1f42"}
 
 UNAUTHORIZED_WORDING = re.compile(r"implementation is\s+\*{0,2}not\*{0,2}\s+authorized", re.I)
 SUPERSEDING_WORDING = re.compile(r"\bRELEASED\b.*\bauthoriz", re.I | re.S)
@@ -74,6 +77,11 @@ def admit(facts: dict) -> list[dict]:
     if facts.get("held"):
         fail("not_held", "The BIU is explicitly held.")
 
+    priority = facts.get("priority_reconciliation") or {}
+    if priority.get("status") == "UNRESOLVED":
+        fail("priority_inheritance_reconciled",
+             f"BIU priority could not be deterministically reconciled: {priority}.")
+
     return failures
 
 
@@ -103,6 +111,60 @@ def _git(root, *args) -> subprocess.CompletedProcess:
 def _gh_json(root, *args):
     out = subprocess.run(["gh", *args], cwd=root, capture_output=True, text=True).stdout
     return json.loads(out) if out.strip() else {}
+
+
+def _parent_issue_number(root: str, issue: int) -> int | None:
+    owner, name = REPO.split("/")
+    query = ("query($owner:String!,$name:String!,$issue:Int!){repository(owner:$owner,name:$name)"
+             "{issue(number:$issue){parent{number}}}}")
+    payload = _gh_json(root, "api", "graphql", "-f", f"query={query}",
+                       "-F", f"owner={owner}", "-F", f"name={name}", "-F", f"issue={issue}")
+    parent = (((payload.get("data") or {}).get("repository") or {}).get("issue") or {}).get("parent")
+    number = parent.get("number") if isinstance(parent, dict) else None
+    return number if isinstance(number, int) else None
+
+
+def reconcile_inherited_priority(root: str, issue: int, items: list[dict]) -> dict:
+    """Repair deterministic child Priority drift from its native parent requirement.
+
+    No model chooses the value. If the child already matches, this is read-only.
+    If a parent exists and the child is blank/drifted, copy the parent's Project
+    Priority, then independently read the Project back. Missing/ambiguous parent
+    evidence is never guessed.
+    """
+    child = next((row for row in items if (row.get("content") or {}).get("number") == issue), None)
+    if not child:
+        return {"status": "UNAVAILABLE", "reason": "child-not-on-project"}
+
+    parent_issue = _parent_issue_number(root, issue)
+    if parent_issue is None:
+        if child.get("priority") in PRIORITY_OPTIONS:
+            return {"status": "UNCHANGED_NO_PARENT", "priority": child.get("priority")}
+        return {"status": "UNRESOLVED", "reason": "missing-parent-and-priority"}
+
+    parent = next((row for row in items if (row.get("content") or {}).get("number") == parent_issue), None)
+    if not parent:
+        return {"status": "UNRESOLVED", "reason": "parent-not-on-project", "parent_issue": parent_issue}
+    expected = parent.get("priority")
+    if expected not in PRIORITY_OPTIONS:
+        return {"status": "UNRESOLVED", "reason": "parent-priority-invalid", "parent_issue": parent_issue}
+
+    if child.get("priority") == expected:
+        return {"status": "ALREADY_MATCHED", "priority": expected, "parent_issue": parent_issue}
+
+    subprocess.run(
+        ["gh", "project", "item-edit", "--id", child["id"], "--project-id", PROJECT_ID,
+         "--field-id", PRIORITY_FIELD, "--single-select-option-id", PRIORITY_OPTIONS[expected]],
+        cwd=root, check=True, capture_output=True, text=True,
+    )
+    refreshed = _gh_json(root, "project", "item-list", "1", "--owner", "AlienLogicLab",
+                         "--format", "json", "-L", "500").get("items", [])
+    observed = next((row.get("priority") for row in refreshed
+                     if (row.get("content") or {}).get("number") == issue), None)
+    if observed != expected:
+        return {"status": "UNRESOLVED", "reason": "priority-readback-mismatch",
+                "parent_issue": parent_issue, "expected": expected, "observed": observed}
+    return {"status": "REPAIRED", "priority": expected, "parent_issue": parent_issue}
 
 
 def refresh_release_point(root, release_point: str) -> bool | None:
@@ -157,6 +219,10 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
 
     items = _gh_json(root, "project", "item-list", "1", "--owner", "AlienLogicLab",
                      "--format", "json", "-L", "500").get("items", [])
+    priority_reconciliation = reconcile_inherited_priority(root, issue, items)
+    if priority_reconciliation.get("status") == "REPAIRED":
+        items = _gh_json(root, "project", "item-list", "1", "--owner", "AlienLogicLab",
+                         "--format", "json", "-L", "500").get("items", [])
     mine = next((i for i in items if (i.get("content") or {}).get("number") == issue), {})
 
     blocked_by = _gh_json(root, "api", f"repos/{REPO}/issues/{issue}/dependencies/blocked_by")
@@ -185,6 +251,7 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
         "release_point": release_point,
         "release_commit": release_commit,
         "release_point_fetched": fetched,
+        "priority_reconciliation": priority_reconciliation,
     }
 
 

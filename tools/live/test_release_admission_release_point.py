@@ -334,3 +334,82 @@ def test_a_release_point_shaped_like_an_option_is_never_passed_to_fetch(world):
     assert result.returncode == 1, result.stdout
     assert not (world.work / "PWNED").exists()
     assert "(not a remote ref)" in result.stderr
+
+
+def _gate_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("release_admission_under_test", GATE)
+    module = importlib.util.module_from_spec(spec)
+    assert spec.loader is not None
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_priority_reconciliation_repairs_blank_child_from_parent(monkeypatch):
+    gate = _gate_module()
+    items = [
+        {"id": "PVTI_parent", "content": {"number": 23}, "priority": "P0"},
+        {"id": "PVTI_child", "content": {"number": 120}, "priority": None},
+    ]
+    refreshed = [
+        {"id": "PVTI_parent", "content": {"number": 23}, "priority": "P0"},
+        {"id": "PVTI_child", "content": {"number": 120}, "priority": "P0"},
+    ]
+    monkeypatch.setattr(gate, "_parent_issue_number", lambda root, issue: 23)
+    monkeypatch.setattr(gate, "_gh_json", lambda *args: {"items": refreshed})
+    writes = []
+
+    class Done:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    monkeypatch.setattr(gate.subprocess, "run", lambda args, **kwargs: writes.append(args) or Done())
+    result = gate.reconcile_inherited_priority("/repo", 120, items)
+
+    assert result == {"status": "REPAIRED", "priority": "P0", "parent_issue": 23}
+    assert len(writes) == 1
+    assert gate.PRIORITY_FIELD in writes[0]
+    assert gate.PRIORITY_OPTIONS["P0"] in writes[0]
+
+
+def test_priority_reconciliation_is_zero_write_when_already_correct(monkeypatch):
+    gate = _gate_module()
+    items = [
+        {"id": "PVTI_parent", "content": {"number": 23}, "priority": "P0"},
+        {"id": "PVTI_child", "content": {"number": 120}, "priority": "P0"},
+    ]
+    monkeypatch.setattr(gate, "_parent_issue_number", lambda root, issue: 23)
+    monkeypatch.setattr(gate.subprocess, "run",
+                        lambda *args, **kwargs: pytest.fail("matching priority must not write"))
+    assert gate.reconcile_inherited_priority("/repo", 120, items) == {
+        "status": "ALREADY_MATCHED", "priority": "P0", "parent_issue": 23}
+
+
+def test_priority_reconciliation_repairs_drifted_child(monkeypatch):
+    gate = _gate_module()
+    items = [
+        {"id": "PVTI_parent", "content": {"number": 23}, "priority": "P0"},
+        {"id": "PVTI_child", "content": {"number": 120}, "priority": "P3"},
+    ]
+    monkeypatch.setattr(gate, "_parent_issue_number", lambda root, issue: 23)
+    monkeypatch.setattr(gate, "_gh_json", lambda *args: {"items": [
+        {"id": "PVTI_parent", "content": {"number": 23}, "priority": "P0"},
+        {"id": "PVTI_child", "content": {"number": 120}, "priority": "P0"},
+    ]})
+
+    class Done:
+        returncode = 0
+        stdout = ""
+        stderr = ""
+
+    monkeypatch.setattr(gate.subprocess, "run", lambda *args, **kwargs: Done())
+    assert gate.reconcile_inherited_priority("/repo", 120, items)["status"] == "REPAIRED"
+
+
+def test_priority_reconciliation_refuses_to_invent_without_parent(monkeypatch):
+    gate = _gate_module()
+    items = [{"id": "PVTI_child", "content": {"number": 120}, "priority": None}]
+    monkeypatch.setattr(gate, "_parent_issue_number", lambda root, issue: None)
+    result = gate.reconcile_inherited_priority("/repo", 120, items)
+    assert result == {"status": "UNRESOLVED", "reason": "missing-parent-and-priority"}
