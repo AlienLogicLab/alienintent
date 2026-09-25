@@ -125,7 +125,11 @@ private import", any layer). `tests/test_architecture_fitness.py` has deliberate
 - **K01–K30** follow the draft's table. K02 is split per duty and K14 per fingerprint component, so each duty and
   each component has its own discriminating control.
 - **K31** proves the U-4 import test is discriminating.
-- **K32–K36** are repair controls from the independent review below.
+- **K32–K36** are repair controls from the first independent review (R1) below.
+- **K37–K42** are repair controls from the second review (R2).
+- **K43–K44** are repair controls from the third review (R3). K44 mutates two sites together: it removes both
+  independent `RecursionError` defences at once.
+- **K45–K46** are repair controls from the fourth review (R4), and **K47** from the fifth (R5).
 
 Each control applies exactly one mutation to a disposable copy and is judged on the named test IDs failing by
 assertion, or on the checker message for K29/K30. The mutation sites are the runner's `CONTROLS`.
@@ -159,6 +163,88 @@ Non-blocking findings repaired:
 - The editable revision now comes from parsed PEP 610 `direct_url.json`.
 
 The remaining non-blocking findings are recorded as residuals.
+
+## Confirmation review (R2) and repairs
+
+A second fresh read-only reviewer confirmed that all four R1 repairs hold under further variants:
+- duplicate keys nested in clarification objects or in the envelope itself;
+- `isError: null`;
+- `±Infinity`;
+- equal bodies serialized differently.
+
+It returned **REJECT** with two new blocking findings. Both were reproduced as failing probes first:
+
+1. **Deeply nested JSON** raised `RecursionError`, which escaped `observe` and left the attempt open. Both the
+   domain parse and the adapter's recognition catch now fail it as MALFORMED. These are two independent defences,
+   so its control K44 removes both.
+2. **A malformed MCP part dropped out in favour of a READY elsewhere**, for example a non-object
+   `structuredContent`, or a non-string `disposition` in either part. Every present part must now be well formed
+   (K37, K38).
+
+Non-blocking findings repaired:
+- a present non-list `content` (K40);
+- a top-level `disposition` on the envelope (K39);
+- a non-list `owner_clarifications`, which a string would otherwise split into character questions (K41);
+- an outcome commit that lost a pointer race now re-reads once and binds the immutable outcome (K42).
+
+Recorded, not repaired: a text item that is plain prose is MALFORMED, which fails closed. Whether native Agent
+Ready MCP output carries prose alongside `structuredContent` is for U10 conformance to confirm.
+
+## Confirmation review (R3) and repair
+
+A third fresh read-only reviewer confirmed that every R2 repair holds end to end, including:
+- 200000-deep nesting inside text items;
+- null, list or numeric dispositions;
+- a lowercase `ready`;
+- a 5000-digit integer;
+- bad UTF-8.
+
+It also confirmed that K37–K42 represent the faults they name.
+
+It returned **REJECT** for one blocking finding of the R2-1 class. Recording the outcome serialized
+producer-supplied custody, and could raise after recognition, leaving the attempt open. Two inputs triggered it:
+- `provider_evidence` nested 1200 deep, which exceeds `asdict` recursion;
+- `provider_evidence` containing NaN.
+
+Both were reproduced as failing probes first (`test_unrecordable_producer_evidence_fails_attempt`). `observe` now
+builds and proves the outcome document under a guard. Unrecordable producer evidence fails the attempt as
+MALFORMED with a minimal record, and the same inputs can be reassessed afterwards (K43). R3's non-blocking note, a
+control for the two-defence `RecursionError` repair, is now K44.
+
+## Confirmation review (R4) and repair
+
+A fourth fresh read-only reviewer confirmed the R3 repair. It then audited every statement between
+`consumer.open` and the outcome commit against wrong-typed producer input, and found no fail-open to READY.
+
+It returned **REJECT** because wrong-typed response fields could still escape after `open`. Examples: a `str` or
+`bytearray` raw output, a bytes, boolean or NaN exit status, a non-boolean `timed_out`, a bytes shape, a custody
+that is a dict or has list arguments, and a non-`ProducerResponse` return. Each left the attempt without an
+outcome, except a boolean `False` exit, which compared equal to 0.
+
+The repair is one boundary rule. The consumer type-checks the response before using any field
+(`response_problem`), and a wrong-typed response is recorded as MALFORMED from consumer-controlled values only
+(K45). A non-`ProducerResponse` return is a `PROVIDER_FAILURE` (K46). The outcome-document guard now catches any
+`Exception`. All twelve variants were reproduced first (`test_wrong_typed_response_fails_attempt`), and each also
+proves that the same inputs can be reassessed afterwards.
+
+## Final confirmation review (R5) and repair
+
+A fifth fresh read-only reviewer confirmed the R4 repair end to end, including the fidelity of K45 and K46. It
+found no fail-open to READY, no rewritten record, no release or lifecycle write, no scope bleed and no new
+cross-group pair.
+
+It returned **REJECT** for one blocking finding. The response class check used `isinstance`, so a hostile
+`ProducerResponse` subclass whose field reads raise could still escape. The check is now an exact type
+(`type(response) is ProducerResponse`, K47), matching the custody check, and the finding was reproduced first
+(`[response_subclass_raising]`).
+
+Its non-blocking note was also repaired. A CLARIFY that routed no question, whether it was empty or its routing
+failed, used to hold even after its inputs changed. A changed input fingerprint now re-opens assessment
+(`test_clarify_without_questions_reopens_on_changed_inputs`).
+
+**Discarded run.** An evidence run on the pre-R2 candidate `c07e9c6` completed with exit 0 (46/46 controls)
+before the R2 verdict arrived. It was deleted unretained, because R2 found that the candidate itself was
+defective. Only the run on the repaired candidate is retained.
 
 ## Evidence layout (`FX-U9/`, FX-C1 layout)
 

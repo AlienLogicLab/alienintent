@@ -195,16 +195,27 @@ def _loads(text: str) -> object:
     return json.loads(text, object_pairs_hook=_members, parse_constant=_constant)
 
 
+def _value(document: dict) -> tuple[str, ...] | None:
+    """The disposition a result object supplies: none, exactly one string, or None when the key is malformed."""
+    if "disposition" not in document:
+        return ()
+    value = document["disposition"]
+    return (value,) if isinstance(value, str) else None
+
+
 def _direct(document: object) -> tuple[tuple[str, ...], list, str | None]:
-    if not isinstance(document, dict):
+    if not isinstance(document, dict) or _value(document) is None:
         return (), [], MALFORMED
-    value = document.get("disposition")
-    return ((value,) if isinstance(value, str) else ()), [document], None
+    return _value(document), [document], None
 
 
 def _envelope(document: object) -> tuple[tuple[str, ...], list, str | None]:
-    """Known MCP parsing: structuredContent and every parseable JSON text content item supply values and bodies."""
-    if not isinstance(document, dict) or not {"content", "structuredContent", "isError"} & set(document):
+    """Known MCP parsing: structuredContent and every JSON text content item supply values and bodies.
+
+    Every supplied part must itself be well formed; a malformed part never drops out in favour of another part.
+    """
+    if not isinstance(document, dict) or not {"content", "structuredContent", "isError"} & set(document) \
+            or "disposition" in document:
         return (), [], MALFORMED
     error = document.get("isError", False)
     if not isinstance(error, bool):
@@ -212,11 +223,14 @@ def _envelope(document: object) -> tuple[tuple[str, ...], list, str | None]:
     if error:
         return (), [], MCP_ERROR
     values, bodies = [], []
-    structured = document.get("structuredContent")
-    if isinstance(structured, dict) and isinstance(structured.get("disposition"), str):
-        values.append(structured["disposition"])
-        bodies.append(structured)
-    content = document.get("content") or []
+    if "structuredContent" in document:
+        structured = document["structuredContent"]
+        if not isinstance(structured, dict) or _value(structured) is None:
+            return (), [], MALFORMED
+        if _value(structured):
+            values.extend(_value(structured))
+            bodies.append(structured)
+    content = document.get("content", [])
     if not isinstance(content, list):
         return (), [], MALFORMED
     for item in content:
@@ -224,10 +238,12 @@ def _envelope(document: object) -> tuple[tuple[str, ...], list, str | None]:
             continue
         try:
             parsed = _loads(item.get("text"))
-        except (TypeError, ValueError):
+        except (TypeError, ValueError, RecursionError):
             return tuple(values), [], MALFORMED
-        if isinstance(parsed, dict) and isinstance(parsed.get("disposition"), str):
-            values.append(parsed["disposition"])
+        if not isinstance(parsed, dict) or _value(parsed) is None:
+            return tuple(values), [], MALFORMED
+        if _value(parsed):
+            values.extend(_value(parsed))
             bodies.append(parsed)
     return tuple(values), bodies, None
 
@@ -244,7 +260,7 @@ def recognize(raw: bytes | None, exit_status: int | None, timed_out: bool,
         return AttemptFailure(NO_TERMINAL_RESULT if exited else PROVIDER_FAILURE, (), "no output", raw_digest)
     try:
         document = _loads(raw.decode("utf-8"))
-    except (UnicodeDecodeError, ValueError):
+    except (UnicodeDecodeError, ValueError, RecursionError):
         return AttemptFailure(MALFORMED, (), "output is not unambiguous JSON", raw_digest)
     if shape == MCP:
         values, bodies, failure = _envelope(document)
@@ -264,9 +280,38 @@ def recognize(raw: bytes | None, exit_status: int | None, timed_out: bool,
     if not exited:
         return AttemptFailure(PROVIDER_FAILURE, values, f"exit status {exit_status}", raw_digest)
     body = bodies[0]
-    clarifications = body.get("owner_clarifications")
-    return SemanticAssessment(disposition, canonical(body), tuple(str(c) for c in clarifications or ()), values,
+    clarifications = body.get("owner_clarifications", [])
+    if not isinstance(clarifications, list):
+        return AttemptFailure(MALFORMED, values, "owner_clarifications is not a list", raw_digest)
+    return SemanticAssessment(disposition, canonical(body),
+                              tuple(c if isinstance(c, str) else canonical(c) for c in clarifications), values,
                               shape, raw_digest)
+
+
+_CUSTODY_TEXT = ("attempt_id", "input_sha256", "product", "product_version", "executable", "provider", "started_at",
+                 "ended_at")
+
+
+def response_problem(raw: object, metadata: AttemptMetadata, shape: object) -> str | None:
+    """Why an untrusted adapter's response is not well typed; then none of its fields is trusted."""
+    if raw is not None and type(raw) is not bytes:
+        return "raw output is not bytes"
+    if metadata.exit_status is not None and type(metadata.exit_status) is not int:
+        return "exit status is not an integer"
+    if type(metadata.timed_out) is not bool:
+        return "timed_out is not a boolean"
+    if type(shape) is not str:
+        return "result shape is not text"
+    custody = metadata.custody
+    if custody is None:
+        return None
+    if type(custody) is not InvocationCustody or any(type(getattr(custody, n)) is not str for n in _CUSTODY_TEXT):
+        return "invocation custody is not well typed"
+    if type(custody.arguments) is not tuple or any(type(a) is not str for a in custody.arguments):
+        return "invocation arguments are not text"
+    if custody.provider_evidence is not None and type(custody.provider_evidence) is not dict:
+        return "provider_evidence is not an object"
+    return None
 
 
 def provenance_failure(binding: ProducerBinding | None, metadata: AttemptMetadata, body: object) -> str | None:

@@ -6,7 +6,7 @@ append-only for attempts and commits only by expected version. Applicability is 
 separately; no old assessment is ever rewritten. Nothing here writes factory:* or release:* state.
 """
 import base64
-from dataclasses import asdict
+from dataclasses import asdict, replace
 import json
 from typing import Callable
 import uuid
@@ -17,7 +17,8 @@ from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepo
 from alienintent.execution_coordination.domain.readiness import (
     ATTEMPT_CONFLICT, ATTEMPT_IN_PROGRESS, CONTRACT_VERSION, MALFORMED, NO_ASSESSMENT, PERSISTENCE_CONFLICT, PROVENANCE,
     RAW_EVIDENCE_NOT_RETAINED, STALE_ASSESSMENT, UNKNOWN, AttemptFailure, AttemptMetadata, Hold, ProducerBinding, ReadinessEligibility,
-    SemanticAssessment, binding_refusal, canonical, decide, digest, provenance_failure, recognize)
+    SemanticAssessment, binding_refusal, canonical, decide, digest, provenance_failure, recognize,
+    response_problem)
 from alienintent.execution_coordination.domain.readiness import HistoricalAssessment
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, VersionConflict
 from alienintent.execution_coordination.ports.readiness import AssessmentConsumer, SurrogateHistoryReplay
@@ -114,6 +115,10 @@ class RetainedAssessmentConsumer(AssessmentConsumer):
     def observe(self, raw_artifact: bytes | None, attempt_metadata: AttemptMetadata,
                 recognized_shape: str) -> SemanticAssessment | AttemptFailure | Hold:
         identity, attempt = attempt_metadata.identity, attempt_metadata.attempt_id
+        problem = response_problem(raw_artifact, attempt_metadata, recognized_shape)
+        if problem:  # Trust none of a wrong-typed response; the failure is built from consumer values only.
+            raw_artifact, recognized_shape = None, "invalid"
+            attempt_metadata = replace(attempt_metadata, exit_status=None, timed_out=False, custody=None)
         version, state = self.read(identity)
         entry = next((a for a in state["attempts"] if a["attempt_id"] == attempt), None)
         if entry is None:
@@ -131,36 +136,59 @@ class RetainedAssessmentConsumer(AssessmentConsumer):
         except EvidenceHold as hold:
             unretained = hold.reason_code  # Unretained bytes can never supply readiness.
         try:
-            result = (AttemptFailure(RAW_EVIDENCE_NOT_RETAINED, (), unretained, raw_digest) if unretained else
+            result = (AttemptFailure(MALFORMED, (), problem, None) if problem else
+                      AttemptFailure(RAW_EVIDENCE_NOT_RETAINED, (), unretained, raw_digest) if unretained else
                       recognize(raw_artifact, attempt_metadata.exit_status, attempt_metadata.timed_out,
                                 recognized_shape))
-        except (TypeError, ValueError) as error:  # Anything unrecognizable fails the attempt; it never stays open.
+        except (TypeError, ValueError, RecursionError) as error:  # Unrecognizable fails the attempt; never open.
             result = AttemptFailure(MALFORMED, (), type(error).__name__, raw_digest)
         body = json.loads(result.body) if isinstance(result, SemanticAssessment) else None
         if isinstance(result, SemanticAssessment):
             reason = provenance_failure(attempt_metadata.binding, attempt_metadata, body)
             if reason:
                 result = AttemptFailure(PROVENANCE, result.values, reason, result.raw_digest)
+        try:
+            document = self._outcome(result, attempt_metadata, recognized_shape, raw_digest, body)
+            canonical(document)  # Proves the record is writable before anything depends on it.
+        except Exception as error:  # Unrecordable producer evidence fails closed.
+            result = AttemptFailure(MALFORMED, tuple(v for v in result.values if isinstance(v, str)),
+                                    "producer evidence is not recordable: " + type(error).__name__, raw_digest)
+            document = self._outcome(result, replace(attempt_metadata, custody=None), recognized_shape, raw_digest,
+                                     None)
+        preceding = (ref_from_document(entry["opened_ref"]), *((raw_ref,) if raw_ref else ()))
+        event = OBSERVED if isinstance(result, SemanticAssessment) else FAILED
+        outcome_ref = _document(self, event, f"readiness/{identity}/{attempt}/outcome", document, preceding)
+        outcome = {"raw_digest": raw_digest, "disposition": document.get("disposition"),
+                   "failure_class": document.get("failure_class")}
+        hold = None
+        for _ in range(2):  # The outcome record is immutable; one re-read binds it after a moved pointer.
+            if hold is not None:
+                version, state = self.read(identity)
+                current = next((a for a in state["attempts"] if a["attempt_id"] == attempt), None)
+                if current is None or current["outcome"] is not None:
+                    return Hold(ATTEMPT_CONFLICT, identity, attempt, "the attempt changed while it was observed")
+            attempts = [{**a, "raw_ref": asdict(raw_ref) if raw_ref else None, "outcome_ref": asdict(outcome_ref),
+                         "outcome": outcome} if a["attempt_id"] == attempt else a for a in state["attempts"]]
+            hold = self._commit(identity, version, {**state, "attempts": attempts,
+                                                    "events": self._event(state, event, attempt, outcome_ref)},
+                                attempt)
+            if hold is None:
+                return result
+        return hold
+
+    def _outcome(self, result: SemanticAssessment | AttemptFailure, metadata: AttemptMetadata, shape: str,
+                 raw_digest: str | None, body: object) -> dict:
         document = {"record_kind": "ReadinessObservation" if isinstance(result, SemanticAssessment)
-                    else "AttemptFailure", "attempt_id": attempt, "identity": identity, "shape": recognized_shape,
-                    "raw_digest": raw_digest, "values": list(result.values),
-                    "exit_status": attempt_metadata.exit_status, "timed_out": attempt_metadata.timed_out,
-                    "provenance": self._provenance(attempt_metadata, body)}
+                    else "AttemptFailure", "attempt_id": metadata.attempt_id, "identity": metadata.identity,
+                    "shape": shape, "raw_digest": raw_digest, "values": list(result.values),
+                    "exit_status": metadata.exit_status, "timed_out": metadata.timed_out,
+                    "provenance": self._provenance(metadata, body)}
         if isinstance(result, SemanticAssessment):
             document.update(disposition=result.disposition, body=result.body,
                             owner_clarifications=list(result.owner_clarifications))
         else:
             document.update(failure_class=result.failure_class, detail=result.detail)
-        preceding = (ref_from_document(entry["opened_ref"]), *((raw_ref,) if raw_ref else ()))
-        event = OBSERVED if isinstance(result, SemanticAssessment) else FAILED
-        outcome_ref = _document(self, event, f"readiness/{identity}/{attempt}/outcome", document, preceding)
-        updated = {**entry, "raw_ref": asdict(raw_ref) if raw_ref else None, "outcome_ref": asdict(outcome_ref),
-                   "outcome": {"raw_digest": raw_digest, "disposition": document.get("disposition"),
-                               "failure_class": document.get("failure_class")}}
-        attempts = [updated if a["attempt_id"] == attempt else a for a in state["attempts"]]
-        hold = self._commit(identity, version, {**state, "attempts": attempts,
-                                                "events": self._event(state, event, attempt, outcome_ref)}, attempt)
-        return hold or result
+        return document
 
     @staticmethod
     def _provenance(metadata: AttemptMetadata, body: object) -> dict:

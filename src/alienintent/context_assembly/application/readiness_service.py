@@ -85,7 +85,7 @@ class ReadinessAdmission:
         if disposition == CLARIFY:
             routed = latest.get("clarifications") or []
             pending = [w for w in routed if self.clarifications.resolved(w) is not None] or \
-                ([] if routed else ["NO_CLARIFICATION_ROUTED"])
+                ([] if routed or latest["input_fingerprint"] != fingerprint else ["NO_CLARIFICATION_ROUTED"])
             if pending:
                 return Hold(CLARIFY_PENDING_DECISION, identity, attempt, ",".join(pending))
         if disposition == HOLD and latest["input_fingerprint"] == fingerprint:
@@ -110,6 +110,8 @@ class ReadinessAdmission:
             response = self.producer.assess(CandidateWorkUnit(identity, text, attempt, fingerprint))
         except Exception as error:  # A raising adapter fails the opened attempt; it never leaves it open.
             response = ProducerResponse(None, None, False, "raised:" + type(error).__name__, None)
+        if type(response) is not ProducerResponse:  # Exactly the frozen value: no subclass can intercept reads.
+            response = ProducerResponse(None, None, False, "invalid:" + type(response).__name__, None)
         metadata = AttemptMetadata(identity, attempt, fingerprint, input_sha256, response.exit_status,
                                    response.timed_out, response.custody, self.binding)
         observed = self.consumer.observe(response.raw, metadata, response.shape)

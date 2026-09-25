@@ -9,7 +9,7 @@ Readiness Assessments (SURROGATE_READINESS_HISTORY_NOT_AGENT_READY), never an Ag
 """
 import ast
 from copy import deepcopy
-from dataclasses import replace
+from dataclasses import asdict, replace
 from functools import lru_cache
 from hashlib import sha256
 import importlib.util
@@ -742,6 +742,23 @@ AMBIGUOUS = {  # Review R1 repairs: payloads whose bytes carry an ambiguous or m
     "body_conflict": (MCP, lambda: encode({**envelope(body("CLARIFY", owner_clarifications=["A?"]), "structured"),
                                             "content": [{"type": "text", "text": json.dumps(
                                                 body("CLARIFY", owner_clarifications=["B?"]))}]}), CONFLICTING),
+    # Review R2 repairs: malformed parts of a response never drop out in favour of a READY elsewhere.
+    "deeply_nested": (DIRECT, lambda: _appended(body("READY"), ', "x": ' + "[" * 200000 + "]" * 200000).encode(),
+                      MALFORMED),
+    "structured_disposition_not_string": (MCP, lambda: encode({
+        "structuredContent": {**body("HOLD"), "disposition": {"v": "HOLD"}},
+        "content": [{"type": "text", "text": json.dumps(body("READY"))}], "isError": False}), MALFORMED),
+    "structured_not_object": (MCP, lambda: encode({"structuredContent": "HOLD", "isError": False,
+                                                   "content": [{"type": "text", "text": json.dumps(body("READY"))}]}),
+                              MALFORMED),
+    "text_disposition_not_string": (MCP, lambda: encode({**envelope(body("READY"), "structured"), "content": [
+        {"type": "text", "text": json.dumps({**body("READY"), "disposition": ["HOLD"]})}]}), MALFORMED),
+    "text_not_object": (MCP, lambda: encode({**envelope(body("READY"), "structured"),
+                                             "content": [{"type": "text", "text": json.dumps("HOLD")}]}), MALFORMED),
+    "content_not_list": (MCP, lambda: encode({**envelope(body("READY"), "structured"), "content": {}}), MALFORMED),
+    "envelope_disposition": (MCP, lambda: encode({**envelope(body("READY"), "structured"), "disposition": "HOLD"}),
+                             MALFORMED),
+    "clarifications_not_list": (DIRECT, lambda: encode(body("CLARIFY", owner_clarifications="abc")), MALFORMED),
 }
 
 
@@ -751,7 +768,10 @@ def test_ambiguous_payload_fails(make, variant):
     raw = build()
     producer = FixtureProducer(lambda p, u: respond(p, u, raw, shape, 0))
     h, vector = make(producer)
-    result = h.service.assess(candidate(vector), PLAN)
+    try:
+        result = h.service.assess(candidate(vector), PLAN)
+    except (RecursionError, ValueError, TypeError) as error:  # Escaping would leave the attempt without outcome.
+        result = error
     assert isinstance(result, Hold) and result.reason_code == ATTEMPT_FAILURE, result
     assert h.outcome(X)["failure_class"] == expected and h.raw(h.consumer.latest(X)).encode() == raw
     assert not isinstance(h.service.current(candidate(vector), PLAN), ReadinessEligibility)
@@ -771,6 +791,110 @@ def test_raising_producer_records_attempt_failure(make):
     assert isinstance(result, Hold) and (result.reason_code, result.detail) == (ATTEMPT_FAILURE, PROVIDER_FAILURE)
     assert h.consumer.latest(X)["outcome"]["failure_class"] == PROVIDER_FAILURE  # Never left open.
     assert isinstance(h.service.assess(candidate(vector), PLAN), ReadinessEligibility)  # A fresh attempt may follow.
+
+
+def test_observe_survives_one_pointer_conflict(make):
+    h, vector = make(ready_producer())
+    commit, raced = h.store.commit, []
+
+    def racing(profile, aggregate, expected, state):
+        if aggregate.startswith("readiness:") and any(a.get("outcome") for a in state.get("attempts", [])) \
+                and not raced:
+            raced.append(aggregate)
+            commit(profile, aggregate, expected, {**h.consumer.read(X)[1]})  # Another writer moves the pointer.
+            raise VersionConflict("moved")
+        return commit(profile, aggregate, expected, state)
+    h.store.commit = racing
+    result = h.service.assess(candidate(vector), PLAN)
+    assert raced and isinstance(result, ReadinessEligibility), result
+    assert (h.consumer.latest(X)["outcome"] or {}).get("disposition") == "READY"  # Never left open.
+
+
+def _deep(levels: int) -> dict:
+    value: dict = {}
+    for _ in range(levels):
+        value = {"nested": value}
+    return value
+
+
+UNRECORDABLE = {  # Review R3: producer-supplied evidence that cannot be serialized never leaves an attempt open.
+    "deep_provider_evidence": lambda p, u: respond(p, u, body("READY", provider_evidence=_deep(1200))),
+    "nan_provider_evidence": lambda p, u: ProducerResponse(
+        _appended(body("READY"), ', "cost": NaN').encode(), 0, False, DIRECT,
+        custody(p.binding, u, {"cost": float("nan")})),
+}
+
+
+@pytest.mark.parametrize("variant", list(UNRECORDABLE))
+def test_unrecordable_producer_evidence_fails_attempt(make, variant):
+    script = UNRECORDABLE[variant]
+    producer = FixtureProducer(lambda p, u: script(p, u) if len(p.calls) == 1 else respond(p, u, body("READY")))
+    h, vector = make(producer)
+    try:
+        result = h.service.assess(candidate(vector), PLAN)
+    except (RecursionError, ValueError, TypeError) as error:  # Escaping would leave the attempt without outcome.
+        result = error
+    assert isinstance(result, Hold) and (result.reason_code, result.detail) == (ATTEMPT_FAILURE, MALFORMED), result
+    assert (h.consumer.latest(X)["outcome"] or {}).get("failure_class") == MALFORMED
+    assert isinstance(h.service.assess(candidate(vector), PLAN), ReadinessEligibility)  # Never wedged in progress.
+
+
+def _typed(p, u, **fields) -> ProducerResponse:
+    return replace(respond(p, u, body("READY")), **fields)
+
+
+class _HostileResponse(ProducerResponse):
+    """A subclass whose field reads raise (review R5)."""
+
+    def __getattribute__(self, name):
+        if name in ("raw", "exit_status"):
+            raise RuntimeError("hostile field read")
+        return super().__getattribute__(name)
+
+
+WRONG_TYPED = {  # Review R4: an untrusted adapter's wrong-typed response fails the attempt; it never stays open.
+    "raw_str": (lambda p, u: _typed(p, u, raw=encode(body("READY")).decode()), MALFORMED),
+    "raw_bytearray": (lambda p, u: _typed(p, u, raw=bytearray(encode(body("READY")))), MALFORMED),
+    "exit_bytes": (lambda p, u: _typed(p, u, exit_status=b"0"), MALFORMED),
+    "exit_bool": (lambda p, u: _typed(p, u, exit_status=False), MALFORMED),
+    "exit_nan": (lambda p, u: _typed(p, u, exit_status=float("nan")), MALFORMED),
+    "timed_out_object": (lambda p, u: _typed(p, u, timed_out=object()), MALFORMED),
+    "shape_bytes": (lambda p, u: _typed(p, u, shape=b"direct"), MALFORMED),
+    "custody_dict": (lambda p, u: _typed(p, u, custody=asdict(custody(p.binding, u))), MALFORMED),
+    "custody_arguments_list": (lambda p, u: _typed(p, u, custody=replace(custody(p.binding, u), arguments=["a"])),
+                               MALFORMED),
+    "provider_evidence_list": (lambda p, u: _typed(p, u, custody=replace(custody(p.binding, u),
+                                                                           provider_evidence=[1])), MALFORMED),
+    "response_none": (lambda p, u: None, PROVIDER_FAILURE),
+    "response_dict": (lambda p, u: {"raw": encode(body("READY")), "exit_status": 0}, PROVIDER_FAILURE),
+    "response_subclass_raising": (lambda p, u: _HostileResponse(encode(body("READY")), 0, False, DIRECT, None),
+                                  PROVIDER_FAILURE),
+}
+
+
+@pytest.mark.parametrize("variant", list(WRONG_TYPED))
+def test_wrong_typed_response_fails_attempt(make, variant):
+    script, expected = WRONG_TYPED[variant]
+    producer = FixtureProducer(lambda p, u: script(p, u) if len(p.calls) == 1 else respond(p, u, body("READY")))
+    h, vector = make(producer)
+    try:
+        result = h.service.assess(candidate(vector), PLAN)
+    except Exception as error:  # Escaping would leave the attempt without outcome.
+        result = error
+    assert isinstance(result, Hold) and (result.reason_code, result.detail) == (ATTEMPT_FAILURE, expected), result
+    assert (h.consumer.latest(X)["outcome"] or {}).get("failure_class") == expected
+    assert isinstance(h.service.assess(candidate(vector), PLAN), ReadinessEligibility)  # Never wedged in progress.
+
+
+def test_clarify_without_questions_reopens_on_changed_inputs(make):
+    producer = ready_producer(**{X: [body("CLARIFY", owner_clarifications=[]), body("READY")]})
+    h, vector = make(producer)
+    held = h.service.assess(candidate(vector), PLAN)
+    assert isinstance(held, Hold) and held.reason_code == CLARIFY_PENDING_DECISION
+    again = h.service.assess(candidate(vector), PLAN)
+    assert isinstance(again, Hold) and again.detail == "NO_CLARIFICATION_ROUTED" and len(producer.calls) == 1
+    changed = candidate(vector, intent="A materially different intent")
+    assert isinstance(h.service.assess(changed, PLAN), ReadinessEligibility) and len(producer.calls) == 2
 
 
 def test_mcp_without_process_exit_is_recognized(make):

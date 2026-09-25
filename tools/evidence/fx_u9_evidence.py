@@ -247,10 +247,57 @@ CONTROLS = (
     ("K34-producer_exception_escapes", SERVICE,
      '            response = ProducerResponse(None, None, False, "raised:" + type(error).__name__, None)\n',
      "            raise\n", probes("test_raising_producer_records_attempt_failure")),
-    ("K35-annotation_not_retried", ADAPTER, "        for _ in range(2):", "        for _ in range(1):",
+    ("K35-annotation_not_retried", ADAPTER, "        for _ in range(2):  # The annotation is idempotent",
+     "        for _ in range(1):  # The annotation is idempotent",
      probes("test_clarify_annotation_survives_one_pointer_conflict")),
     ("K36-mcp_exit_required", EC_DOMAIN, "    exited = exit_status == 0 or (shape == MCP and exit_status is None)\n",
      "    exited = exit_status == 0\n", probes("test_mcp_without_process_exit_is_recognized")),
+    # Review R2 repair controls (confirmation review REJECT; each defect was reproduced first).
+    ("K37-malformed_structured_part_dropped", EC_DOMAIN,
+     "        if not isinstance(structured, dict) or _value(structured) is None:\n            return (), [], MALFORMED\n",
+     "        if not isinstance(structured, dict) or _value(structured) is None:\n            structured = {}\n",
+     probes("test_ambiguous_payload_fails[structured_disposition_not_string]",
+            "test_ambiguous_payload_fails[structured_not_object]")),
+    ("K38-malformed_text_part_dropped", EC_DOMAIN,
+     "        if not isinstance(parsed, dict) or _value(parsed) is None:\n            return tuple(values), [], MALFORMED\n",
+     "        if not isinstance(parsed, dict) or _value(parsed) is None:\n            continue\n",
+     probes("test_ambiguous_payload_fails[text_disposition_not_string]",
+            "test_ambiguous_payload_fails[text_not_object]")),
+    ("K39-envelope_disposition_ignored", EC_DOMAIN, ' \\\n            or "disposition" in document:\n', ":\n",
+     probes("test_ambiguous_payload_fails[envelope_disposition]")),
+    ("K40-content_type_unchecked", EC_DOMAIN, '    content = document.get("content", [])\n',
+     '    content = document.get("content") or []\n', probes("test_ambiguous_payload_fails[content_not_list]")),
+    ("K41-clarifications_shape_unchecked", EC_DOMAIN,
+     "    if not isinstance(clarifications, list):\n"
+     '        return AttemptFailure(MALFORMED, values, "owner_clarifications is not a list", raw_digest)\n', "",
+     probes("test_ambiguous_payload_fails[clarifications_not_list]")),
+    ("K42-observe_conflict_not_retried", ADAPTER, "        for _ in range(2):  # The outcome record is immutable",
+     "        for _ in range(1):  # The outcome record is immutable",
+     probes("test_observe_survives_one_pointer_conflict")),
+    # Review R3 repair controls. K44 removes both independent RecursionError defences at once (two sites).
+    ("K43-unrecordable_evidence_escapes", ADAPTER,
+     "        except Exception as error:  # Unrecordable producer evidence fails closed.",
+     "        except ZeroDivisionError as error:  # Unrecordable producer evidence fails closed.",
+     probes("test_unrecordable_producer_evidence_fails_attempt[deep_provider_evidence]",
+            "test_unrecordable_producer_evidence_fails_attempt[nan_provider_evidence]")),
+    ("K44-recursion_escapes", ((EC_DOMAIN, "    except (UnicodeDecodeError, ValueError, RecursionError):\n",
+                                "    except (UnicodeDecodeError, ValueError):\n"),
+                               (ADAPTER, "        except (TypeError, ValueError, RecursionError) as error:  # Unrecognizable",
+                                "        except (TypeError, ValueError) as error:  # Unrecognizable")), None, None,
+     probes("test_ambiguous_payload_fails[deeply_nested]")),
+    # Review R4 repair controls: the producer port boundary is type-checked before any field is used.
+    ("K45-response_fields_unchecked", ADAPTER,
+     "        problem = response_problem(raw_artifact, attempt_metadata, recognized_shape)\n", "        problem = None\n",
+     probes(*(f"test_wrong_typed_response_fails_attempt[{v}]" for v in (
+         "raw_str", "raw_bytearray", "exit_bytes", "exit_bool", "exit_nan", "timed_out_object", "shape_bytes",
+         "custody_dict", "custody_arguments_list", "provider_evidence_list")))),
+    ("K46-response_class_unchecked", SERVICE, "        if type(response) is not ProducerResponse:",
+     "        if False:", probes("test_wrong_typed_response_fails_attempt[response_none]",
+                              "test_wrong_typed_response_fails_attempt[response_dict]")),
+    # Review R5 repair control: an exact type check, so a subclass cannot intercept field reads.
+    ("K47-response_subclass_accepted", SERVICE, "        if type(response) is not ProducerResponse:",
+     "        if not isinstance(response, ProducerResponse):",
+     probes("test_wrong_typed_response_fails_attempt[response_subclass_raising]")),
 )
 ARCHITECTURE = ["-B", "tools/fitness/check_architecture.py", "--root", "src/alienintent", "--check", "all"]
 _FAILED = re.compile(r"^FAILED (\S+) - (AssertionError|assert )", re.MULTILINE)
@@ -419,7 +466,10 @@ def acceptance_map() -> dict:
         "SF-REQ-015-AC-04": {"P15": ["test_direct_mcp_parity", "test_mcp_without_process_exit_is_recognized"],
                              "P16": ["test_mcp_failure_cases", "test_ambiguous_payload_fails"],
                              "P17": ["test_timeout_and_provider_failure_hold",
-                                     "test_raising_producer_records_attempt_failure"],
+                                     "test_raising_producer_records_attempt_failure",
+                                     "test_observe_survives_one_pointer_conflict",
+                                     "test_unrecordable_producer_evidence_fails_attempt",
+                                     "test_wrong_typed_response_fails_attempt"],
                              "P18": ["test_zero_exit_without_semantic_result_fails"]},
         "SF-REQ-015-AC-05": {"P19": ["test_py10_history_replay", "test_py10_history_digest_mismatch_holds"]},
         "015-envelope-applicability": {"probes": ["P11", "P12", "P13", "P15", "P16", "P17", "P18"],
@@ -518,18 +568,25 @@ def run(output: Path, invocation: str) -> int:
             (copy / path).parent.mkdir(parents=True, exist_ok=True)
             shutil.copy2(ROOT / path, copy / path)
         for control, path, remove, replace_with, nodes in CONTROLS:
-            target = copy / path
-            original = target.read_text()
-            count = original.count(remove)
-            if count != 1:
-                raise RuntimeError(f"{control}: mutation count {count}, expected exactly one")
+            # One site, or several sites mutated together; every site must match exactly once.
+            sites = path if isinstance(path, tuple) else ((path, remove, replace_with),)
+            originals = {site: (copy / site).read_text() for site, _, _ in sites}
+            counts = [originals[site].count(old) for site, old, _ in sites]
+            if counts != [1] * len(sites):
+                raise RuntimeError(f"{control}: mutation counts {counts}, expected exactly one per site")
+            count = 1
             architecture = nodes[0] == "ARCHITECTURE"
             argv = ([sys.executable, *ARCHITECTURE] if architecture
                     else [sys.executable, "-B", "-m", "pytest", "-q", "-p", "no:cacheprovider", *nodes])
             intact = execute(copy, argv, inputs)
-            target.write_text(original.replace(remove, replace_with, 1))
+            mutated = dict(originals)
+            for site, old, new in sites:
+                mutated[site] = mutated[site].replace(old, new, 1)
+            for site, text in mutated.items():
+                (copy / site).write_text(text)
             fault = execute(copy, argv, inputs)
-            target.write_text(original)
+            for site, text in originals.items():
+                (copy / site).write_text(text)
             restored = execute(copy, argv, inputs)
             if architecture:
                 assertion = nodes[1]
@@ -540,11 +597,13 @@ def run(output: Path, invocation: str) -> int:
                 errors = _ERROR.findall(fault["stdout"])
                 assertion = "FAILED " + " ; FAILED ".join(f"{n} - AssertionError" for n in nodes)
                 named = set(nodes) <= failed and not errors
+            unchanged = all((copy / site).read_text() == text for site, text in originals.items())
             discriminates = (intact["exit_status"] == 0 and fault["exit_status"] == 1 and named
-                             and restored["exit_status"] == 0 and target.read_text() == original)
-            controls.append({"control": control, "application_count": count, "file": path,
-                             "source_digest": digest(original.encode()),
-                             "mutation": {"remove": remove, "replace_with": replace_with}, "command": argv,
+                             and restored["exit_status"] == 0 and unchanged)
+            controls.append({"control": control, "application_count": count, "file": [s for s, _, _ in sites],
+                             "source_digest": [digest(originals[s].encode()) for s, _, _ in sites],
+                             "mutation": [{"file": s, "remove": old, "replace_with": new} for s, old, new in sites],
+                             "command": argv,
                              "assertion": assertion, "intact_exit": intact["exit_status"],
                              "fault_exit": fault["exit_status"], "restored_exit": restored["exit_status"],
                              "intact_ref": retain(output, intact), "fault_ref": retain(output, fault),
