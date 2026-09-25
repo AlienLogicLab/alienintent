@@ -33,7 +33,7 @@ def test_real_path_durably_retains_attributable_outcome_and_reads_it_back_after_
 
     assert summary.dispatched == (WORK,)
     state = fixture.coordinator.state(WORK)
-    assert state.stage is LifecycleStage.DONE and state.outcome == "success"
+    assert state.stage is LifecycleStage.DONE and state.outcome == "closed"
     [record] = fixture.outcome_records()
     revision = fixture.remote_advertises(BRANCH)
     assert revision is not None and fixture.runs() == [CORRELATION]
@@ -124,7 +124,8 @@ def test_miscorrelated_durable_result_holds_rather_than_being_accepted(tmp_path:
     summary = fixture.coordinator.start()
 
     assert summary.dispatched == ()
-    assert fixture.runs() == [CORRELATION] and len(fixture.outcome_records()) == (2 if field == "duplicate" else 1)
+    # Every outcome record, whatever role it (mis)names: the lifecycle held, so no other role ran.
+    assert fixture.runs() == [CORRELATION] and len(fixture.outcome_records(None)) == (2 if field == "duplicate" else 1)
     _assert_held(fixture)
 
 
@@ -145,10 +146,10 @@ def test_restart_after_crash_reads_back_the_original_identity_without_duplicatin
 
     assert summary.dispatched == ()
     state = fixture.coordinator.state(WORK)
-    assert state.stage is LifecycleStage.DONE and state.outcome == "success"
+    assert state.stage is LifecycleStage.DONE and state.outcome == "closed"
     assert state.candidate.identity == decode_candidate(record["candidate"]).identity
     _, raw = fixture.store.read_state(fixture.profile.name, f"factory:{WORK}")
-    assert raw["correlation"] == CORRELATION
+    assert raw["producer_correlation"] == CORRELATION
     assert fixture.runs() == [CORRELATION] and len(fixture.outcome_records()) == 1
     assert fixture.store.unresolved_effects(fixture.profile.name) == ()
     assert fixture.store.recovery_reservations(fixture.profile.name) == ()
@@ -169,7 +170,7 @@ def test_restart_read_back_holds_on_a_miscorrelated_record(tmp_path: Path, field
     assert fixture.coordinator.start().dispatched == (WORK,)
     path = fixture.journal.path
     lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
-    path.write_text("".join(json.dumps(_rewrite(line, field) if line.get("event") == "invocation-outcome" else line) + "\n" for line in lines), encoding="utf-8")
+    path.write_text("".join(json.dumps(_rewrite(line, field) if line.get("event") == "invocation-outcome" and line.get("role") == "PRODUCER" else line) + "\n" for line in lines), encoding="utf-8")
 
     reopened = compose(tmp_path)
 

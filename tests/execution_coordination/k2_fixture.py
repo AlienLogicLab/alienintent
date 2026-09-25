@@ -1,17 +1,19 @@
-"""FX-K1 composition: the non-scripted WorkerProvider path over one disposable root.
+"""FX-K2 composition: canonical multi-role orchestration over one disposable root.
 
-The production ``OfflineProfile`` composes the unchanged coordinator, a real
-SQLite store and a local Work Management transport with ``RealWorkerProvider``
-over ``CliWorkerProvider`` (a real child process that commits into its
-allocated worktree), ``GitSourceControl`` publishing to a local bare remote,
-``GitWorktreeAdapter`` and the durable ``JsonlInvocationJournal``. No model,
-provider, network or credential is involved. Reopening the same root is a
-restart: every object is rebuilt and only the store, journal, remote and
-worktrees persist.
+The production ``OfflineProfile`` composes the unchanged ``FactoryCoordinator``,
+a real SQLite store and a local Work Management transport with the production
+``RealWorkerProvider`` and its durable ``JsonlInvocationJournal`` (the K1
+seam). Behind that one Worker Port sits the Deterministic Test Worker:
+``ScriptedWorkerProcess``, which commits real revisions as producer and writes
+real verdict files as verifier. ``GitSourceControl`` publishes to a local bare
+remote and retrieves each candidate into fresh clones. No model, provider,
+network or credential is involved; the script drives worker outcomes only and
+never touches the store or the lifecycle.
 
-Run as ``python -m tests.invocation_runtime.k1_fixture crash-after-outcome --root <root>``
-to compose in a child process that dies right after the worker outcome is
-durably journaled and before the coordinator confirms it.
+Reopening the same root is a restart. Run as
+``python -m tests.execution_coordination.k2_fixture crash-after-verifier-outcome --root <root>``
+to compose in a child process that dies right after the verifier outcome is
+durably journaled and before the coordinator records it.
 """
 
 from __future__ import annotations
@@ -22,72 +24,54 @@ import json
 import os
 from pathlib import Path
 import subprocess
-import sys
-from typing import Callable, Mapping
+from typing import Callable, Mapping, Sequence
 
 from alienintent.composition.offline_profile import OfflineProfile
 from alienintent.composition.sandbox_run_profile import contract_from_document
 from alienintent.execution_coordination.adapters.local_work_management import LocalWorkManagement
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
-from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
 from alienintent.invocation_runtime.adapters.git_worktree import GitWorktreeAdapter, ref_safe
-from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
+from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal, journal_records
+from alienintent.invocation_runtime.adapters.scripted_worker import ScriptedWorkerProcess
 from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
 from alienintent.invocation_runtime.domain.runtime import CapabilityGrant, InvocationRole, ReservationBook
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
+from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 
 ROOT = Path(__file__).resolve().parents[2]
 S0_MANIFEST = ROOT / "docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json"
-WORK = "K1-PROBE"
-PROFILE = "fx-k1"
-REPOSITORY = "local:fx-k1"
+WORK = "K2-PROBE"
+PROFILE = "fx-k2"
+REPOSITORY = "local:fx-k2"
 EPOCH = 1758542400
 CRASH_EXIT = 17
-IDENTITY = ("FX-K1 worker", "k1-worker@alienintent.invalid")
-
-# The worker is a real child process. As producer it records each run outside
-# its workspace (so a re-run is observable) and commits one note. As verifier
-# (K2) it accepts the exact revision checked out in its fresh workspace.
-WORKER_SCRIPT = """
-import json, os, pathlib, subprocess
-invocation = os.environ["ALIENINTENT_INVOCATION_ID"]
-if os.environ.get("ALIENINTENT_ROLE") == "VERIFIER":
-    revision = subprocess.run(["git", "rev-parse", "HEAD"], check=True, capture_output=True, text=True).stdout.strip()
-    verdict = pathlib.Path(".alienintent/verdict.json")
-    verdict.parent.mkdir(parents=True, exist_ok=True)
-    verdict.write_text(json.dumps({"verdict": "accept", "revision": revision, "findings": []}), encoding="utf-8")
-    raise SystemExit(0)
-with open(os.environ["K1_RUN_LOG"], "a", encoding="utf-8") as log:
-    log.write(invocation + "\\n")
-note = pathlib.Path("docs/K1-PROBE.md")
-note.parent.mkdir(parents=True, exist_ok=True)
-note.write_text("K1-PROBE produced under " + invocation + "\\n", encoding="utf-8")
-subprocess.run(["git", "add", "-A"], check=True)
-subprocess.run(["git", "commit", "-q", "-m", "K1-PROBE: candidate"], check=True)
-"""
+IDENTITY = ("FX-K2 worker", "k2-worker@alienintent.invalid")
+NOTE = "docs/K2-PROBE.md"
 
 
-def contract_document() -> dict[str, object]:
-    """The S0 probe contract re-pinned to the K1 probe, with a CLI-enforceable budget."""
+def contract_document(*, closure_actions: Sequence[str] = ("candidate-published",), maximum_attempts: int = 2) -> dict[str, object]:
+    """The S0 probe contract re-pinned to the K2 probe with a two-attempt budget."""
     manifest = json.loads(S0_MANIFEST.read_text(encoding="utf-8"))
     document = dict(manifest["work_items"][0]["contract"])
+    budget = dict(document["budget_policy"]) | {"maximum_attempts": maximum_attempts}
     document.update({
-        "identity": WORK, "authority_issuer": "FX-K1 proof fixture", "authority_references": ["WO-220401"],
-        "authorized_scope": ["docs/K1-PROBE.md"], "completion_criteria": ["docs/K1-PROBE.md records the invocation"],
-        "intent": "prove the real WorkerProvider path durably correlates and reads back its outcome",
-        "fixed_decisions": ["K1 real outcome/readback seam only"],
-        "budget_policy": {"cancellation_limit": 1, "hard_wall_clock_seconds": 60, "maximum_attempts": 1, "retry_limit": 0},
+        "identity": WORK, "authority_issuer": "FX-K2 proof fixture", "authority_references": ["WO-220402"],
+        "authorized_scope": [NOTE], "completion_criteria": [f"{NOTE} records the invocation"],
+        "intent": "prove canonical producer, verifier and closure role routing over the shared WorkerProvider boundary",
+        "fixed_decisions": ["K2 canonical_role_orchestration only"], "target_repositories": [REPOSITORY],
+        "required_closure_actions": list(closure_actions), "budget_policy": budget,
     })
     return document
 
 
 @dataclass
-class K1Fixture:
+class K2Fixture:
     root: Path
     profile: OfflineProfile
     worker: RealWorkerProvider
+    process: WorkerProcess
     journal: JsonlInvocationJournal
     item: ReadyWorkItem
 
@@ -99,12 +83,18 @@ class K1Fixture:
     def store(self):
         return self.profile.store
 
-    def runs(self) -> list[str]:
-        log = self.root / "runs.log"
-        return log.read_text(encoding="utf-8").splitlines() if log.exists() else []
+    def state(self):
+        return self.coordinator.state(WORK)
 
-    def outcome_records(self, role: str | None = "PRODUCER") -> list[dict[str, object]]:
-        return [record for record in self.journal.records() if record.get("event") == "invocation-outcome" and role in (None, record.get("role"))]
+    def invocations(self) -> list[tuple[str, str, str | None]]:
+        """(role, correlation, kind) of every durably journaled invocation outcome, in order."""
+        return [(str(r["role"]), str(r["correlation_id"]), r.get("kind")) for r in self.journal.records() if r.get("event") == "invocation-outcome"]
+
+    def process_runs(self) -> list[dict[str, object]]:
+        return [r for r in journal_records(self.root / "process-journal.jsonl") if r.get("event") == "process-run"]
+
+    def projections(self) -> list[str]:
+        return [str(r.get("state")) for r in self.profile.work.receipts() if r.get("receipt") == "execution-state-projected"]
 
     def remote_advertises(self, branch: str) -> str | None:
         advertised = _git("ls-remote", str(self.root / "remote.git"), f"refs/heads/{branch}", cwd=self.root)
@@ -130,9 +120,9 @@ def _seed(root: Path) -> None:
     (root / "home").mkdir(parents=True, exist_ok=True)
     _git("init", "-q", "--bare", "--initial-branch=main", str(root / "remote.git"), cwd=root, environment=environment)
     _git("init", "-q", "--initial-branch=main", str(root / "checkout"), cwd=root, environment=environment)
-    (root / "checkout" / "README.md").write_text("FX-K1 disposable baseline\n", encoding="utf-8")
+    (root / "checkout" / "README.md").write_text("FX-K2 disposable baseline\n", encoding="utf-8")
     _git("add", "-A", cwd=root / "checkout", environment=environment)
-    _git("commit", "-q", "-m", "FX-K1 baseline", cwd=root / "checkout", environment=environment)
+    _git("commit", "-q", "-m", "FX-K2 baseline", cwd=root / "checkout", environment=environment)
     _git("remote", "add", "origin", str(root / "remote.git"), cwd=root / "checkout", environment=environment)
     _git("push", "-q", "origin", "main", cwd=root / "checkout", environment=environment)
 
@@ -141,42 +131,45 @@ def candidate_branch(invocation: WorkerInvocation) -> str:
     return f"candidate/{ref_safe(invocation.correlation_id)}"
 
 
-def compose(root: Path, *, journal: Callable[[JsonlInvocationJournal], InvocationJournal] | None = None) -> K1Fixture:
+def compose(
+    root: Path, script: Sequence[str] = ("success", "accept"), *, note: str = NOTE,
+    closure_actions: Sequence[str] = ("candidate-published",), maximum_attempts: int = 2,
+    journal: Callable[[JsonlInvocationJournal], InvocationJournal] | None = None,
+    process: Callable[[ScriptedWorkerProcess], WorkerProcess] | None = None,
+) -> K2Fixture:
     """Compose over ``root``; an existing root is reopened, which is a restart."""
     root = Path(root).resolve()
     if not (root / "remote.git").exists():
         _seed(root)
     clock = lambda: float(EPOCH)  # noqa: E731
     durable = JsonlInvocationJournal(root / "invocation-journal.jsonl", clock)
-    contract = contract_from_document(contract_document())
-    item = ReadyWorkItem(WORK, 0, REPOSITORY, PROFILE, None, (), contract, contract.content_digest, "seeded by FX-K1", True)
+    contract = contract_from_document(contract_document(closure_actions=closure_actions, maximum_attempts=maximum_attempts))
+    item = ReadyWorkItem(WORK, 0, REPOSITORY, PROFILE, None, (), contract, contract.content_digest, "seeded by FX-K2", True)
     grant = lambda invocation: CapabilityGrant(  # noqa: E731
-        f"FX-K1-{invocation.work_identity}", "1", invocation.correlation_id, InvocationRole.PRODUCER, PROFILE, REPOSITORY,
+        f"FX-K2-{invocation.work_identity}", "1", invocation.correlation_id, InvocationRole.PRODUCER, PROFILE, REPOSITORY,
         frozenset({"process-control", "git-write"}), EPOCH + 3600,
     )
-    process = CliWorkerProvider(
-        "local-python", sys.executable, ("-c", WORKER_SCRIPT), "explicit", frozenset({"wall-clock", "cancellation"}),
-        git_environment(root) | {"K1_RUN_LOG": str(root / "runs.log")},
-    )
+    scripted = ScriptedWorkerProcess({WORK: tuple(script)}, {WORK: note}, clock, root / "process-journal.jsonl", git_environment(root))
+    behind_port = scripted if process is None else process(scripted)
     worker = RealWorkerProvider(
-        process, GitSourceControl(), root / "checkout", "origin", candidate_branch, root / "producer-read-back", grant, REPOSITORY,
+        behind_port, GitSourceControl(), root / "checkout", "origin", candidate_branch, root / "worker-read-back", grant, REPOSITORY,
         GitWorktreeAdapter(root / "checkout", root / "workspaces"), ReservationBook(1, 2), now=clock, sleep=lambda _: None,
         journal=durable if journal is None else journal(durable),
     )
     work = LocalWorkManagement(root / "work-management", PROFILE, REPOSITORY, (item,), clock)
     profile = OfflineProfile(root / "state.sqlite", work, worker, root / "artifacts", root / "verifier-evidence", name=PROFILE)
-    return K1Fixture(root, profile, worker, durable, item)
+    return K2Fixture(root, profile, worker, behind_port, durable, item)
 
 
-class CrashAfterOutcome:
-    """Dies immediately after the worker outcome is durably journaled."""
+class CrashAfterVerifierOutcome:
+    """Dies immediately after the verifier outcome is durably journaled."""
 
     def __init__(self, inner: JsonlInvocationJournal) -> None:
         self._inner = inner
 
     def append(self, record):
         entry = self._inner.append(record)
-        if record.get("event") == "invocation-outcome":
+        if record.get("event") == "invocation-outcome" and record.get("role") == "VERIFIER":
             os._exit(CRASH_EXIT)
         return entry
 
@@ -186,10 +179,10 @@ class CrashAfterOutcome:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("command", choices=("crash-after-outcome",))
+    parser.add_argument("command", choices=("crash-after-verifier-outcome",))
     parser.add_argument("--root", required=True, type=Path)
     arguments = parser.parse_args()
-    compose(arguments.root, journal=CrashAfterOutcome).coordinator.start()
+    compose(arguments.root, journal=CrashAfterVerifierOutcome).coordinator.start()
     return 0
 
 

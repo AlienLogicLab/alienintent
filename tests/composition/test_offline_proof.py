@@ -33,8 +33,17 @@ def manifest_document(**overrides) -> dict:
     return document
 
 
-def substrate(root: Path, **overrides) -> OfflineProofSubstrate:
-    return OfflineProofSubstrate(root, manifest_from_document(manifest_document(**overrides)), os.environ)
+def substrate(root: Path, *, script: tuple[str, ...] = ("success", "accept"), **overrides) -> OfflineProofSubstrate:
+    """The S0 substrate over the current kernel.
+
+    K2 (WO-220402) routes a distinct verifier invocation after producer
+    success, so the in-process probes script the verifier's verdict too. The
+    immutable S0 manifest scripts only the producer; over the current kernel
+    it holds at VERIFY (see the frozen-kernel guard below).
+    """
+    document = manifest_document(**overrides)
+    document["work_items"][0]["script"] = list(script)
+    return OfflineProofSubstrate(root, manifest_from_document(document), os.environ)
 
 
 def unshare_available() -> bool:
@@ -107,8 +116,14 @@ def test_the_existing_kernel_drains_the_seeded_item_through_the_local_substrate(
     assert (composed.producer_read_back / "producer-launch:S0-PROBE:0" / ".git").exists()
     assert (composed.verifier_root / revision / ".git").exists()
     assert composed.commit_dates(revision) == (1758542400, 1758542400)
-    assert [(r["receipt"], r.get("state")) for r in composed.work.receipts()] == [("release-proposed", None), ("execution-state-projected", "DONE")]
-    assert [e["event"] for e in journal_records(composed.journal_path)] == ["invocation-started", "process-run", "invocation-outcome", "workspace-finalized"]
+    assert [(r["receipt"], r.get("state")) for r in composed.work.receipts()] == [
+        ("release-proposed", None), ("execution-state-projected", "VERIFY"), ("execution-state-projected", "ACCEPT"), ("execution-state-projected", "DONE"),
+    ]
+    assert [(e["event"], e.get("role")) for e in journal_records(composed.journal_path)] == [
+        ("invocation-started", "PRODUCER"), ("process-run", "PRODUCER"), ("invocation-outcome", "PRODUCER"), ("workspace-finalized", None),
+        ("invocation-started", "VERIFIER"), ("process-run", "VERIFIER"), ("invocation-outcome", "VERIFIER"),
+        ("invocation-started", "CLOSURE"), ("invocation-outcome", "CLOSURE"),
+    ]
     assert journal_provider_calls(composed.journal_path) == 0
     assert not hasattr(composed.process, "_store") and not hasattr(composed.worker, "_store")
     assert not any("stage" in e or "lifecycle" in e for e in journal_records(composed.journal_path))
@@ -141,7 +156,7 @@ def test_reopening_the_same_root_reads_back_the_same_truth_and_dispatches_nothin
     assert summary.dispatched == () and reopened.coordinator.state("S0-PROBE").candidate == done.candidate
     outcome = reopened.worker.read_back(WorkerInvocation("S0-PROBE", "launch:S0-PROBE:0"))
     assert outcome is not None and outcome.candidate is not None and outcome.candidate.locator == done.candidate.locator
-    assert len(journal_records(reopened.journal_path)) == 4
+    assert len(journal_records(reopened.journal_path)) == 9
     assert journal_outcome(substrate(tmp_path / "fresh").journal_path, "launch:S0-PROBE:0") is None
 
 
@@ -192,15 +207,22 @@ def test_s0_frozen_kernel_guard_rejects_authorized_s2_store_extension(tmp_path: 
     kernel = report["kernel_unchanged"]
     changed = subprocess.check_output(["git", "diff", "--name-only", kernel["baseline"], "--", *kernel["paths"]], cwd=ROOT, text=True).splitlines()
     # S2 extends the store; K1 (WO-220401) adds the durable outcome correlation
-    # gate and the real worker's journaled read-back.
+    # gate and the real worker's journaled read-back; K2 (WO-220402) replaces
+    # the success collapse with role-routed invocations and checks the exact
+    # candidate out for the verifier.
     assert changed == [
         "src/alienintent/execution_coordination/adapters/sqlite_store.py",
         "src/alienintent/execution_coordination/application/factory_coordinator.py",
+        "src/alienintent/invocation_runtime/adapters/git_source_control.py",
         "src/alienintent/invocation_runtime/application/real_worker.py",
     ]
     assert {c["id"] for c in report["checks"]} == {"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P10", "P11", "P12", "P13"}
-    assert [c["id"] for c in report["checks"] if c["status"] != "PASS"] == ["P11"]
-    assert report["success_collapse_limitation"]["independent_verifier_invocation"] == "NOT_ESTABLISHED"
+    # S0's manifest scripts no verifier verdict. Without the collapse the probe
+    # holds at VERIFY, so every DONE-shaped S0 check and the collapse
+    # observation itself (P12) no longer hold over the current kernel.
+    assert [c["id"] for c in report["checks"] if c["status"] != "PASS"] == ["P1", "P3", "P4", "P7", "P11", "P12", "P13"]
+    assert report["lifecycle_terminal_stage"] == {"S0-PROBE": "VERIFY"}
+    assert report["success_collapse_limitation"]["observed"] is False
 
 
 def test_the_proof_command_holds_when_network_denial_is_not_enforced(tmp_path: Path) -> None:
