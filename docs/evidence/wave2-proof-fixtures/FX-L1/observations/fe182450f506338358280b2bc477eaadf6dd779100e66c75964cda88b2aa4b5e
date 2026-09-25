@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/execution_coordination/test_liveness_reconciliation.py::test_race_delayed_original_contenders_and_restart"],"cwd":"/tmp/fx-l1-controls-_5xk019j","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.68s\n"}

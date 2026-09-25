@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/execution_coordination/test_liveness_reconciliation.py"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/4dfa671d-4975-4be3-81c0-48fe4daf1bca","exit_status":0,"stderr":"","stdout":"...............................................                          [100%]\n47 passed in 7.08s\n"}

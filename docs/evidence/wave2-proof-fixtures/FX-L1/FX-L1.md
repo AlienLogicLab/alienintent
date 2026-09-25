@@ -167,5 +167,12 @@ The evidence is in this directory, following the FX-C1 and FX-C4 conventions:
 - `observations/`, named by sha256 and written with `xb`
 - `digest-manifest.json`
 
+The acceptance run is `/tmp/fx-l1-run-59e817b`, copied here verbatim. It ran on clean source candidate
+`59e817b7d9eeb373de5ba8816008d2955a5242db` with invocation
+`AlienLogicLab/alienintent#112:PRODUCER:5ff935cd-fbf3-4787-ba80-d35e0eac3cfb`. Result: exit 0, no holds, all 5
+controls discriminating, and one `PRE_EXISTING_BASELINE_FAILURE` (25 identical node ids). `development-run/` holds the
+earlier harness run on `74e1a82`. That run failed its readback (a shared-clock `CLOCK_REGRESSION` in the harness) and
+predates the review repair. It is kept as history, and it is not acceptance evidence.
+
 Tokens, cost and provider calls are `null` with reason `UNKNOWN`. A dirty source, failed command, non-discriminating
 control or missing readback is recorded as a HOLD, never as a PASS.
