@@ -1,16 +1,23 @@
 """Upstream profile: Inventory -> AmbiguityInspection -> DecisionResolution adapter -> existing DecisionInbox,
 plus the pinned PremiseEvidence bridge, pre-implementation ProofPlanning over it, DesignAdmission whose
-applicability gates readiness processing, and compiler validation behind that gate."""
+applicability gates readiness processing, compiler validation behind that gate, and the SF-REQ-015 readiness
+consumer (lint, bound ReadinessAssessment producer and retained-evidence consumer)."""
+from pathlib import Path
+
 from alienintent.composition.compilation import VerifiedDesignDecisions
 from alienintent.composition.design_admission import PremiseReaderCheck
+from alienintent.composition.readiness import resolve_binding
 from alienintent.context_assembly.application.design_admission_service import DesignAdmission, DesignReadiness
 from alienintent.context_assembly.adapters.compilation_repository import EvidenceAssessmentHistory
 from alienintent.context_assembly.adapters.decision_resolution import DecisionInboxQuestions
+from alienintent.context_assembly.adapters.readiness_clarification import InboxClarifications
 from alienintent.context_assembly.application.compilation_validation_service import CompilationValidation
 from alienintent.context_assembly.application.ambiguity_service import AmbiguityService, UpstreamQuestionAdmission
 from alienintent.context_assembly.application.inventory_service import InventoryService
+from alienintent.context_assembly.application.readiness_service import ReadinessAdmission
 from alienintent.context_assembly.ports.compilation import DependencyLifecycle
 from alienintent.context_assembly.ports.design_admission import ArchitectureChecks, DirectionAuthoritySource
+from alienintent.context_assembly.ports.readiness import SplitTransactionHandoff
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
 from alienintent.evidence_learning.application.premise_service import PremiseEvidenceReader
 from alienintent.evidence_learning.application.proof_planning_service import ProofPlanning
@@ -18,7 +25,10 @@ from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
 from alienintent.evidence_learning.ports.premise_evidence import PremiseEvidence
 from alienintent.evidence_learning.ports.proof_planning import PredicateMappingSource
+from alienintent.execution_coordination.adapters.assessment_consumer import (
+    RetainedAssessmentConsumer, RetainedSurrogateHistory)
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
+from alienintent.execution_coordination.ports.readiness import ReadinessAssessment
 
 IMPLEMENTATION_ROOTS = ("src", "tests", "tools")
 
@@ -37,7 +47,9 @@ class UpstreamProfile:
                  supersession_authority: str | None = None, design_checks: ArchitectureChecks | None = None,
                  design_authority: DirectionAuthoritySource | None = None,
                  design_reviewers: frozenset[str] = frozenset(),
-                 dependency_lifecycle: DependencyLifecycle | None = None) -> None:
+                 dependency_lifecycle: DependencyLifecycle | None = None,
+                 readiness_producer: ReadinessAssessment | None = None, readiness_executable: Path | None = None,
+                 readiness_transport: str = "cli", split_handoff: SplitTransactionHandoff | None = None) -> None:
         self.inventory = InventoryService(repository, store, project, profile, definition_ref, invocation, access_scope)
         self.inbox = DecisionInbox(store, UpstreamQuestionAdmission(decision_actor), profile)
         self.questions = DecisionInboxQuestions(self.inbox, profile)
@@ -70,3 +82,16 @@ class UpstreamProfile:
                                                   dependency_lifecycle,
                                                   EvidenceAssessmentHistory(repository, access_scope))
                             if self.design_readiness is not None and dependency_lifecycle is not None else None)
+        # Readiness admission sits behind the same design gate and lifecycle. The producer binding is resolved here,
+        # from the configured executable's installed metadata; unbound or unestablished provenance holds before
+        # launch. READY is eligibility for the existing release gate only; nothing here releases.
+        self.readiness_binding = resolve_binding(readiness_executable, readiness_transport)
+        self.readiness_consumer = RetainedAssessmentConsumer(repository, store, project, profile, definition_ref,
+                                                             invocation, access_scope)
+        self.readiness_history = RetainedSurrogateHistory(repository, project, profile, definition_ref, invocation,
+                                                          access_scope)
+        self.readiness = (ReadinessAdmission(self.readiness_consumer, readiness_producer, self.readiness_binding,
+                                             self.design_readiness, dependency_lifecycle,
+                                             InboxClarifications(self.inbox, profile, project, decision_actor),
+                                             split_handoff)
+                          if self.design_readiness is not None and dependency_lifecycle is not None else None)

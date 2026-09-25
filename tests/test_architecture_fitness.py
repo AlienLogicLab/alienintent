@@ -38,6 +38,7 @@ class ArchitectureFitnessTests(unittest.TestCase):
             "port-contract": "adapter class has no declared port contract",
             "configuration": "configuration read outside composition",
             "determinism": "direct nondeterministic facility import",
+            "private-product": "Agent Ready private import",
         }
         for check, expected in cases.items():
             with self.subTest(check=check):
@@ -76,6 +77,14 @@ class ArchitectureFitnessTests(unittest.TestCase):
         result = run_check(root, "port-contract")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("adapter class has no declared port contract", result.stdout)
+
+    def test_private_product_import_fails_in_every_layer(self) -> None:
+        """Agent Ready is bound through its CLI/MCP contract; importing its implementation fails in any layer."""
+        for fixture in ("adapter-import", "aliased-submodule-import"):
+            with self.subTest(fixture=fixture):
+                result = run_check(FIXTURES / "private-product" / fixture, "private-product")
+                self.assertNotEqual(result.returncode, 0)
+                self.assertIn("Agent Ready private import", result.stdout)
 
     def test_standard_library_signature_is_not_a_vendor_violation(self) -> None:
         """Treating a standard-library type as a vendor type breaks valid domain values."""

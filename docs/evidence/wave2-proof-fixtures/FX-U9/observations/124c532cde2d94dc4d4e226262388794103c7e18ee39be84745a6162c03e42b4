@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","tools/evidence/fx_u9_evidence.py","--verify-inputs","/tmp/fx-u9-corrupt-xitjh6ov/fixture-inputs"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/bebbc42b-95c5-48db-a219-154d68b11087","exit_status":2,"stderr":"","stdout":"{\"hold\": \"INPUT_DIGEST_MISMATCH\", \"inputs\": [\"30ea7c451505c5f6bfeba5b6496fff2b4fff01e4\"]}\n"}

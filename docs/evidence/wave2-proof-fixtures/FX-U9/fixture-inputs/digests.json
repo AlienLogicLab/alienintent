@@ -1,0 +1,41 @@
+{
+  "30ea7c451505c5f6bfeba5b6496fff2b4fff01e4": {
+    "expected_sha256": "9561bf71baaea6d0c6caf26eee87a23ab03beb6c83be68bbc5847447cde6e694",
+    "sha256": "9561bf71baaea6d0c6caf26eee87a23ab03beb6c83be68bbc5847447cde6e694",
+    "source": "693fef995f03ab3eca43cb74ad5692cdcd69ffcf:docs/work-units/python/PY-10.assessment.json"
+  },
+  "3c53cd3dc751c76eb167bb142d30f61825d3259a": {
+    "expected_sha256": "093a9d2c212593812e67edb5a7b04a36ac075970cfe970c60ade16cb3506c232",
+    "sha256": "093a9d2c212593812e67edb5a7b04a36ac075970cfe970c60ade16cb3506c232",
+    "source": "c32830b931a06562fa12f273d83e55f4b7c1816c:docs/work-units/python/PY-10.assessment.json"
+  },
+  "FDH-01.2026-09-24T021848.446095Z.assessment.json": {
+    "expected_sha256": "b4f70369c8066a097b012e45a48c4a3b7f54942d8fc4c45c64bc5d236d6356d6",
+    "sha256": "b4f70369c8066a097b012e45a48c4a3b7f54942d8fc4c45c64bc5d236d6356d6",
+    "source": "docs/evidence/wave2-readiness-assessments/FDH-01.2026-09-24T021848.446095Z.assessment.json"
+  },
+  "WO-220102.2026-09-23T041739.192319Z.assessment.json": {
+    "expected_sha256": "e8c6d3da41ee96843e93f6f1149a65874cefc7a9f88eb7be4d1f7f0af98a3a71",
+    "sha256": "e8c6d3da41ee96843e93f6f1149a65874cefc7a9f88eb7be4d1f7f0af98a3a71",
+    "source": "docs/evidence/wave2-readiness-assessments/WO-220102.2026-09-23T041739.192319Z.assessment.json"
+  },
+  "WO-220102.2026-09-23T053013.882036Z.assessment.json": {
+    "expected_sha256": "4df4717c74b957c6f4b21d527c8ec3c93471ecc64e0db56e70d6352641fcb167",
+    "sha256": "4df4717c74b957c6f4b21d527c8ec3c93471ecc64e0db56e70d6352641fcb167",
+    "source": "docs/evidence/wave2-readiness-assessments/WO-220102.2026-09-23T053013.882036Z.assessment.json"
+  },
+  "WO-220207.2026-09-25T001654.663618Z.assessment.json": {
+    "expected_sha256": "2862acb88dec9d240bd2c436cc2aae63ec704c0ef7663beeb5b96240948bd1ff",
+    "sha256": "2862acb88dec9d240bd2c436cc2aae63ec704c0ef7663beeb5b96240948bd1ff",
+    "source": "docs/evidence/wave2-readiness-assessments/WO-220207.2026-09-25T001654.663618Z.assessment.json"
+  },
+  "fe1e3efe3523f4376b2de66a650dca31fecdbfad": {
+    "expected_sha256": "1fc95f25b6c2d928fcb325525b46c1850bb56463c2428f0ea56afc99f181ebb4",
+    "sha256": "1fc95f25b6c2d928fcb325525b46c1850bb56463c2428f0ea56afc99f181ebb4",
+    "source": "1f16b816cb0d30681eacbb2ea178eb2cf92ddd02:docs/work-units/python/PY-10.assessment.json"
+  },
+  "git-facts.json": {
+    "sha256": "caf8d6650dee78d8de6559cdfe49094ec7c768b2c42a742d66537e23ef3eb870",
+    "source": "git log/merge-base/show at the candidate revision"
+  }
+}

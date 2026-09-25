@@ -1,0 +1,33 @@
+{
+  "disposition": "BLOCKED",
+  "governing_intent": "Run one isolated, real-infrastructure Wave 1 proof that continuously consumes eligible READY sandbox BIUs to executable-backlog exhaustion without affecting the Node bootstrap or live AlienIntent Project.",
+  "summary": "The contract is bounded, authority-complete, and has observable live acceptance criteria. It is blocked only by explicit sequencing and environment prerequisites: PY-05, PY-06, PY-08, and PY-09 must be accepted, and the dedicated sandbox repository, Project, Python profile, App installation, and webhook route must exist.",
+  "owner_clarifications": [],
+  "implementation_unknowns": [
+    "Choose the minimal sandbox BIU fixture topology and run choreography that jointly demonstrates priority, FIFO, dependency, decision blocking, restart, and refill.",
+    "Define the redacted evidence manifest and machine-readable proof summary using the evidence, custody, projection, and lifecycle records supplied by predecessors.",
+    "Select the deliberate restart boundary and evidence queries that prove no duplicate execution or external effect."
+  ],
+  "independent_decision_centers": [],
+  "semantic_split_recommendation": [],
+  "verification_assessment": "Strong: SWF-11 supplies a complete binding acceptance list requiring one coherent live run, real infrastructure, doctor-before-start evidence, exact candidate custody before VERIFY, restart/no-duplicate proof, isolation proof, retained redacted evidence, and independent verifier review. Mocks are expressly insufficient. The evidence packaging details are normal implementation work constrained by PY-05 through PY-09, not missing product or architecture authority.",
+  "expected_rework_locality": "LOW",
+  "material_risks": [
+    "The dedicated sandbox is an external operational prerequisite and is explicitly not created by this BIU.",
+    "Live proof depends on predecessor behavior being accepted, especially custody, restart recovery, CLI decision handling, and doctor gating.",
+    "Evidence must prove isolation and redact credentials, App identifiers, hostnames, and private installation details without losing verification value.",
+    "Provider token and monetary measurements may be unknown, but must be recorded as unknown rather than zero."
+  ],
+  "next_action": "Provision the SWF-08 dedicated sandbox, accept PY-05/PY-06/PY-08/PY-09, then reassess and release PY-10 against the resulting pinned main baseline.",
+  "rationale": "No Founder or architecture decision remains: SWF-08 fixes the isolated target, SWF-09 fixes budget policy, SWF-11 fixes acceptance, FD-01 fixes ownership, FD-02 through FD-06 and EOS v1.0 constrain implementation, and the Architecture Authority fixes isolation, verifier independence, control-plane, and coexistence boundaries. The remaining blocker is explicitly scheduled operational provisioning plus dependency acceptance, not ambiguity or a reason to split the BIU.",
+  "provider_evidence": {
+    "provider": "codex",
+    "version": "codex-cli 0.155.1",
+    "compatibility": "COMPATIBLE_UNVERIFIED",
+    "capability_probe": "PASSED",
+    "invocation": "codex exec --ephemeral --json --sandbox read-only",
+    "baseline": "e25da1f",
+    "assessed": "2026-09-20",
+    "request": "PY-10.request.md"
+  }
+}

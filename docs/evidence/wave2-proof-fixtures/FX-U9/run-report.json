@@ -1,0 +1,519 @@
+{
+  "fixture_id": "FX-U9",
+  "work_unit_id": "WO-220209",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "acceptance_to_probes": {
+    "SF-REQ-015-AC-01": {
+      "P01": [
+        "test_complete_candidate_proceeds_to_assessment"
+      ],
+      "P02": [
+        "test_missing_duty_lint_hold",
+        "test_incomplete_contract_lint_hold"
+      ],
+      "P03": [
+        "test_lint_hold_is_not_agent_ready_hold"
+      ],
+      "P04": [
+        "covered by P20-P23"
+      ]
+    },
+    "SF-REQ-015-AC-02": {
+      "P05": [
+        "test_ready_yields_eligibility_only"
+      ],
+      "P06": [
+        "test_clarify_routes_to_decision_inbox_then_reassess",
+        "test_clarify_annotation_survives_one_pointer_conflict"
+      ],
+      "P07": [
+        "test_split_without_result_set_refuses"
+      ],
+      "P08": [
+        "test_split_result_set_linted_and_reassessed_each"
+      ],
+      "P09": [
+        "test_hold_requires_prerequisite_then_reassess"
+      ],
+      "P10": [
+        "test_no_non_ready_authorizes_implementation"
+      ]
+    },
+    "SF-REQ-015-AC-03": {
+      "P11": [
+        "test_fingerprint_change_invalidates_ready"
+      ],
+      "P12": [
+        "test_fresh_assessment_links_predecessor",
+        "test_pointer_commit_is_compare_and_swap"
+      ],
+      "P13": [
+        "test_resolved_blocker_cannot_rewrite_verdict"
+      ],
+      "P14": [
+        "test_duplicate_and_conflicting_response"
+      ]
+    },
+    "SF-REQ-015-AC-04": {
+      "P15": [
+        "test_direct_mcp_parity",
+        "test_mcp_without_process_exit_is_recognized"
+      ],
+      "P16": [
+        "test_mcp_failure_cases",
+        "test_ambiguous_payload_fails"
+      ],
+      "P17": [
+        "test_timeout_and_provider_failure_hold",
+        "test_raising_producer_records_attempt_failure",
+        "test_observe_survives_one_pointer_conflict",
+        "test_unrecordable_producer_evidence_fails_attempt",
+        "test_wrong_typed_response_fails_attempt"
+      ],
+      "P18": [
+        "test_zero_exit_without_semantic_result_fails"
+      ]
+    },
+    "SF-REQ-015-AC-05": {
+      "P19": [
+        "test_py10_history_replay",
+        "test_py10_history_digest_mismatch_holds"
+      ]
+    },
+    "015-envelope-applicability": {
+      "probes": [
+        "P11",
+        "P12",
+        "P13",
+        "P15",
+        "P16",
+        "P17",
+        "P18"
+      ],
+      "proven_red": {
+        "top-level-only parsing": "K17",
+        "trust exit zero": "K18",
+        "overwrite prior outcome": "K15"
+      }
+    },
+    "015-composed-authority": {
+      "P20": [
+        "test_unbound_or_unestablished_provenance_holds_before_launch",
+        "test_unknown_product_version_holds",
+        "test_no_producer_configured_holds"
+      ],
+      "P21": [
+        "test_surrogate_and_copied_evidence_refused"
+      ],
+      "P22": [
+        "test_intact_binding_reaches_consumer_without_release_bypass"
+      ],
+      "P23": [
+        "test_composition_path_executed"
+      ],
+      "P24": [
+        "tools/fitness/check_architecture.py --check all",
+        "tests/test_architecture_fitness.py",
+        "test_no_new_cross_group_import_pair (U-4)",
+        "test_readiness_modules_never_release_or_import_agent_ready"
+      ],
+      "proven_red": {
+        "schema-perfect surrogate READY": "K25",
+        "copied provider_evidence": "K26",
+        "wrong package identity": "K24 (P20[wrong_package])",
+        "response disconnected from its invocation": "K27",
+        "provenance checking bypassed": "K24",
+        "composition disconnected": "K28"
+      }
+    },
+    "D#/nodes/11/completion_predicate": {
+      "four dispositions": [
+        "P05",
+        "P06",
+        "P07",
+        "P08",
+        "P09",
+        "P10"
+      ],
+      "MCP failure regardless of exit status": [
+        "P16",
+        "P18"
+      ],
+      "raw bytes and predecessor attempts": [
+        "P12",
+        "P15",
+        "P17"
+      ],
+      "changed inputs invalidate READY": [
+        "P11"
+      ],
+      "separate release gate": [
+        "P05",
+        "P22"
+      ],
+      "PY-10 replay, never Agent Ready": [
+        "P19"
+      ],
+      "CAPABILITY_PROVENANCE_HOLD before launch": [
+        "P20"
+      ],
+      "provenance, not schema shape": [
+        "P21"
+      ],
+      "CLARIFY via SF-REQ-035": [
+        "P06"
+      ],
+      "SPLIT port and refusal without a result set": [
+        "P07"
+      ],
+      "lint and reassessment of each result": [
+        "P08"
+      ]
+    }
+  },
+  "ac_06_07_trace_ownership": "UNASSIGNED_IN_DAG",
+  "observability": "READY semantics are counted separately from released work: eligibility only, zero admit_release calls and no release:/factory: writes by U9",
+  "observed": {
+    "clarify": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "CLARIFY_PENDING_DECISION",
+        "identity": "WO-990900",
+        "attempt_id": "b203d98c-0ed8-4019-99aa-493b397acf68",
+        "detail": "upstream-question:readiness-clarify:WO-990900:b203d98c-0ed8-4019-99aa-493b397acf68:0,upstream-question:readiness-clarify:WO-990900:b203d98c-0ed8-4019-99aa-493b397acf68:1"
+      },
+      "producer_calls": 1,
+      "failure_class": null,
+      "failure_detail": null,
+      "disposition": "CLARIFY",
+      "inbox_open": [
+        "Which retry budget governs the second phase?",
+        "May the adapter write outside the profile root?"
+      ],
+      "factory_and_release_unchanged": true
+    },
+    "hold": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "PREREQUISITE_PENDING",
+        "identity": "WO-990900",
+        "attempt_id": "37fa4c3f-afb5-48eb-b7a0-fa0683b14b5d",
+        "detail": "satisfy the prerequisite, then reassess"
+      },
+      "producer_calls": 1,
+      "failure_class": null,
+      "failure_detail": null,
+      "disposition": "HOLD",
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "lint:missing_decision": {
+      "result": {
+        "type": "LintHold",
+        "identity": "WO-990900",
+        "duty": "decision",
+        "field": "fixed_decisions",
+        "detail": "fixed_decisions is missing or empty"
+      },
+      "producer_calls": 0,
+      "failure_class": null,
+      "failure_detail": null,
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "lint:missing_dependency": {
+      "result": {
+        "type": "LintHold",
+        "identity": "WO-990900",
+        "duty": "dependency",
+        "field": "dependencies",
+        "detail": "absent from the dependency snapshot: WO-990999"
+      },
+      "producer_calls": 0,
+      "failure_class": null,
+      "failure_detail": null,
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "mcp_failure:conflict_struct_text": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "ATTEMPT_FAILURE",
+        "identity": "WO-990900",
+        "attempt_id": "2664adf3-2e65-41f0-a116-cef1a02261fa",
+        "detail": "CONFLICTING"
+      },
+      "producer_calls": 1,
+      "failure_class": "CONFLICTING",
+      "failure_detail": "supplied disposition values or result bodies disagree",
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "mcp_failure:conflict_two_texts": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "ATTEMPT_FAILURE",
+        "identity": "WO-990900",
+        "attempt_id": "51315b6d-6dfe-4b73-9fc1-0aefe5962f1e",
+        "detail": "CONFLICTING"
+      },
+      "producer_calls": 1,
+      "failure_class": "CONFLICTING",
+      "failure_detail": "supplied disposition values or result bodies disagree",
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "mcp_failure:is_error": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "ATTEMPT_FAILURE",
+        "identity": "WO-990900",
+        "attempt_id": "c5b00b53-2d94-401d-90e9-38754ba01c22",
+        "detail": "MCP_ERROR"
+      },
+      "producer_calls": 1,
+      "failure_class": "MCP_ERROR",
+      "failure_detail": "purported result is not a recognized terminal value",
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "mcp_failure:malformed_text": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "ATTEMPT_FAILURE",
+        "identity": "WO-990900",
+        "attempt_id": "2b99131e-f1b6-40df-a550-520d3064148a",
+        "detail": "MALFORMED"
+      },
+      "producer_calls": 1,
+      "failure_class": "MALFORMED",
+      "failure_detail": "purported result is not a recognized terminal value",
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "mcp_failure:no_terminal": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "ATTEMPT_FAILURE",
+        "identity": "WO-990900",
+        "attempt_id": "1a7f4b16-9534-407e-88bc-c88d9eeb65b3",
+        "detail": "NO_TERMINAL_RESULT"
+      },
+      "producer_calls": 1,
+      "failure_class": "NO_TERMINAL_RESULT",
+      "failure_detail": "no disposition value",
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "mcp_failure:unknown_disposition": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "ATTEMPT_FAILURE",
+        "identity": "WO-990900",
+        "attempt_id": "256e49d5-ea2a-4b8e-837a-0dee3cd4c765",
+        "detail": "UNKNOWN_DISPOSITION"
+      },
+      "producer_calls": 1,
+      "failure_class": "UNKNOWN_DISPOSITION",
+      "failure_detail": "not an Agent Ready disposition",
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "provenance:unbound": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "CAPABILITY_PROVENANCE_HOLD",
+        "identity": "WO-990900",
+        "attempt_id": null,
+        "detail": "UNBOUND"
+      },
+      "producer_calls": 0,
+      "failure_class": null,
+      "failure_detail": null,
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "provenance:version_unknown": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "CAPABILITY_PROVENANCE_HOLD",
+        "identity": "WO-990900",
+        "attempt_id": null,
+        "detail": "PRODUCT_VERSION_UNKNOWN"
+      },
+      "producer_calls": 0,
+      "failure_class": null,
+      "failure_detail": null,
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "provenance:wrong_package": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "CAPABILITY_PROVENANCE_HOLD",
+        "identity": "WO-990900",
+        "attempt_id": null,
+        "detail": "WRONG_PACKAGE"
+      },
+      "producer_calls": 0,
+      "failure_class": null,
+      "failure_detail": null,
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "ready:intact_binding": {
+      "result": {
+        "type": "ReadinessEligibility",
+        "identity": "WO-990900",
+        "attempt_id": "c1677c3d-4214-4f24-a4ba-facf28842f2c",
+        "contract_digest": "sha256:729d54f36d9e451c9d92858751d0834468ecc331681addfb3e5af9a25f0225ae",
+        "input_fingerprint": "sha256:e8d71049c0c72d8a81f7b0e0e62a697c00e38c988101f7b2baa2eb4a7388d976"
+      },
+      "producer_calls": 1,
+      "failure_class": null,
+      "failure_detail": null,
+      "disposition": "READY",
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "refused:copied_provider_evidence": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "ATTEMPT_FAILURE",
+        "identity": "WO-990900",
+        "attempt_id": "9d1a7b86-16d4-4774-bcf3-818913dda957",
+        "detail": "PROVENANCE"
+      },
+      "producer_calls": 1,
+      "failure_class": "PROVENANCE",
+      "failure_detail": "PRODUCER_NOT_BOUND",
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "refused:disconnected_response": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "ATTEMPT_FAILURE",
+        "identity": "WO-990900",
+        "attempt_id": "c1161e66-a332-43b2-9018-d23d18eeef6e",
+        "detail": "PROVENANCE"
+      },
+      "producer_calls": 1,
+      "failure_class": "PROVENANCE",
+      "failure_detail": "RESPONSE_NOT_CORRELATED",
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "refused:schema_perfect_surrogate": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "ATTEMPT_FAILURE",
+        "identity": "WO-990900",
+        "attempt_id": "da47ce07-8a30-417e-a451-575cd8f91dc1",
+        "detail": "PROVENANCE"
+      },
+      "producer_calls": 1,
+      "failure_class": "PROVENANCE",
+      "failure_detail": "NO_INVOCATION_CUSTODY",
+      "disposition": null,
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    },
+    "split:no_result_set": {
+      "result": {
+        "type": "Hold",
+        "reason_code": "SPLIT_RESULT_SET_NOT_MATERIALIZED",
+        "identity": "WO-990900",
+        "attempt_id": "d3a5f99f-5631-4b5f-b0b2-75198ad6f6a6",
+        "detail": "U8 supplied no materialized result set"
+      },
+      "producer_calls": 1,
+      "failure_class": null,
+      "failure_detail": null,
+      "disposition": "SPLIT",
+      "inbox_open": [],
+      "factory_and_release_unchanged": true
+    }
+  },
+  "py10_replay": {
+    "records": [
+      {
+        "record_kind": "SurrogateReadinessAssessment",
+        "producer": "surrogate-bootstrap-assessor",
+        "native_agent_ready": false,
+        "disposition": "BLOCKED",
+        "revision": "c32830b931a06562fa12f273d83e55f4b7c1816c",
+        "path": "docs/work-units/python/PY-10.assessment.json",
+        "blob": "3c53cd3dc751c76eb167bb142d30f61825d3259a",
+        "raw_sha256": "093a9d2c212593812e67edb5a7b04a36ac075970cfe970c60ade16cb3506c232",
+        "assessed_baseline": "e25da1f",
+        "label": "SURROGATE_READINESS_HISTORY_NOT_AGENT_READY"
+      },
+      {
+        "record_kind": "SurrogateReadinessAssessment",
+        "producer": "surrogate-bootstrap-assessor",
+        "native_agent_ready": false,
+        "disposition": "SPLIT_RECOMMENDED",
+        "revision": "1f16b816cb0d30681eacbb2ea178eb2cf92ddd02",
+        "path": "docs/work-units/python/PY-10.assessment.json",
+        "blob": "fe1e3efe3523f4376b2de66a650dca31fecdbfad",
+        "raw_sha256": "1fc95f25b6c2d928fcb325525b46c1850bb56463c2428f0ea56afc99f181ebb4",
+        "assessed_baseline": "85b606037e144e977c1bc1f7b0aa795d97e19d83",
+        "label": "SURROGATE_READINESS_HISTORY_NOT_AGENT_READY"
+      },
+      {
+        "record_kind": "SurrogateReadinessAssessment",
+        "producer": "surrogate-bootstrap-assessor",
+        "native_agent_ready": false,
+        "disposition": "READY",
+        "revision": "693fef995f03ab3eca43cb74ad5692cdcd69ffcf",
+        "path": "docs/work-units/python/PY-10.assessment.json",
+        "blob": "30ea7c451505c5f6bfeba5b6496fff2b4fff01e4",
+        "raw_sha256": "9561bf71baaea6d0c6caf26eee87a23ab03beb6c83be68bbc5847447cde6e694",
+        "assessed_baseline": "93dd8b1",
+        "label": "SURROGATE_READINESS_HISTORY_NOT_AGENT_READY"
+      }
+    ]
+  },
+  "py10_digest_mismatch": {
+    "type": "Hold",
+    "reason_code": "HISTORY_DIGEST_MISMATCH",
+    "identity": "docs/work-units/python/PY-10.assessment.json",
+    "attempt_id": null,
+    "detail": "fe1e3efe3523f4376b2de66a650dca31fecdbfad"
+  },
+  "non_claims": [
+    "U8 SplitTransaction prepare/apply and result materialization",
+    "U10 native CLI/MCP adapter conformance and positive native-producer proof",
+    "SF-REQ-015-AC-06 and AC-07",
+    "SF-REQ-029 retained-assessment serialization",
+    "release or lifecycle transition",
+    "anything about Agent Ready itself",
+    "re-verification of the landed WO-220207 checker",
+    "operational acceptance"
+  ],
+  "prior_art_not_imported": [
+    "tools/orchestration/readiness_assessment.py",
+    "tools/orchestration/factory_director_inputs.py",
+    "tools/live/release_admission.py",
+    "tools/evidence/check_assessment_producer.py (test-side negative shape evidence)"
+  ],
+  "readback_ref": {
+    "revision_digest": "sha256:deb5fab988ec77cb2e9abe0d0c1472105ee9ebb2a2862199cc6ec349cf83988c",
+    "locator": "observations/deb5fab988ec77cb2e9abe0d0c1472105ee9ebb2a2862199cc6ec349cf83988c"
+  },
+  "exit_status": 0
+}

@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","tools/fitness/check_architecture.py","--root","src/alienintent","--check","all"],"cwd":"/tmp/fx-u9-controls-s3zqfm95","exit_status":1,"stderr":"","stdout":"composition/readiness.py:9: Agent Ready private import\n"}

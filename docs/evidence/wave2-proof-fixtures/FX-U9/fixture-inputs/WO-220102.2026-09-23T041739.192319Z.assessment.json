@@ -1,0 +1,68 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Deliver the bounded Wave 2 node extent for typed immutable evidence and neutral references: typed Definition/Observation/Verdict admission, immutable digest-backed evidence objects, CAS operational pointers after durable writes, neutral references, and integration with the existing verdict evaluator without creating new policy or absorbing sibling scopes.",
+    "implementation_unknowns": [
+      "Exact repository locations and current interfaces for the evidence_learning port/local adapter, shared neutral Ref values, composition/evidence_profile.py, and existing evaluate_verdict bridge are not established by the packet.",
+      "The concrete durable-write mechanism, fsync/install ordering, CAS pointer implementation, and crash-before/crash-after fixture approach require engineering discovery against the codebase.",
+      "The exact executable fixture commands, inputs, expected outputs, evidence schema, and negative-control mutation points must be pinned before implementation as the packet requires.",
+      "The migration details for creating version-1 immutable external objects and validating typed links need implementation-level mapping to the existing persistence model."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Required predecessor completion for WO-220101/S0 is a stated dependency, and the supplied packet does not include the exact independently verified predecessor proof receipts it requires.",
+      "Release/work-management admission is expressly separate and not granted by the packet; attempting implementation without those gates would violate the packet\u2019s own custody and authority constraints.",
+      "Incorrect handling of role, authority, revision, or digest validation could allow unauthorized PASS verdicts, which is the central safety property of the work.",
+      "Crash-ordering and durable-write behavior may be platform-sensitive and must be tested with discriminating fixtures rather than inferred from local success.",
+      "Migration/rollback errors could leave incompatible schemas, stale pointers, or unverifiable evidence references if additive object creation and CAS pointer updates are not strictly ordered."
+    ],
+    "next_action": "Hold implementation until the exact WO-220101/S0 independently verified predecessor candidate and proof receipts, required harness capabilities, and release/work-management admission artifacts are available; then pin the executable fixture commands and evidence schema before handing the cohesive node to implementation.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "rationale": "The governing intent and acceptance criteria are sufficiently specific, and the work forms one coherent decision center around typed immutable evidence storage and verdict reference integrity. The remaining unknowns are mostly engineering discovery and fixture design, not owner intent. However, the packet explicitly makes predecessor proof and admission checks prerequisites and says consumers must wait for predecessor proof. Because that required external prerequisite is not present in the supplied task text, HOLD is the controlling disposition rather than READY, CLARIFY, or SPLIT.",
+    "semantic_split_recommendation": [],
+    "summary": "The work is a cohesive implementation candidate with clear scope, fixed design decisions, observable acceptance criteria, and a coherent verification plan. The controlling issue is not ambiguity or an obvious need to split; the supplied packet itself states that execution depends on WO-220101/S0 exact independently verified predecessor evidence and that consumers must wait for predecessor proof. That prerequisite proof and related release-admission readiness are not supplied in the task text, so the work should be held until those prerequisites are available.",
+    "verification_assessment": "Acceptance is observable: the packet defines role-preserving admission checks, refusal of missing or hash-mismatched records, preservation of conflicting observations, rejection of observation-to-definition promotion, crash-ordering behavior, and negative controls for kind/authority/revision validation. A single independent verifier verdict would be meaningful for this cohesive node once the S0 prerequisite proof, executable fixtures, and retained evidence receipts are available. At present, verification cannot coherently proceed because the predecessor proof required by the packet is not demonstrated in the supplied text."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "6b056813f6e3643219b4fac50be2d2f2785536a7",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-23T04:18:06.136277+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 9764,
+    "input_sha256": "101ce73d9cb96eecf4a9a1c8e26a7f95e10673c1938e2efe0bfd444e455b8308",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-03cltk0u/WO-220102.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.155.1"
+    },
+    "started_at": "2026-09-23T04:17:39.192319+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220102"
+}
