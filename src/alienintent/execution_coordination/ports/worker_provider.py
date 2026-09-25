@@ -14,6 +14,7 @@ from alienintent.execution_coordination.domain.escalation import HumanDecisionRe
 class WorkerInvocation:
     work_identity: str
     correlation_id: str
+    contract_digest: str | None = None
 
 
 @dataclass(frozen=True)

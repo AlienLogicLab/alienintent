@@ -190,7 +190,10 @@ class FactoryCoordinator:
             prepared = self._encode(current) | {key: raw[key] for key in ("decision_key", "decision_choice") if key in raw}
             self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, prepared, correlation, {"correlation": correlation, "work": item.identity})
             self._store.claim_effect(self._profile, correlation)
-            outcome = self._worker.start(WorkerInvocation(item.identity, correlation), item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
+            invocation = WorkerInvocation(item.identity, correlation, item.contract.content_digest)
+            outcome = self._worker.start(invocation, item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
+            if not self._correlated(invocation, outcome):
+                return StopReason.BLOCKED if self._park_unknown_effect(item, reservation) else StopReason.CAPACITY_UNAVAILABLE
             try:
                 self._store.confirm_effect(self._profile, correlation, f"outcome:{outcome.kind}")
             except ReservationRejected:
@@ -217,6 +220,15 @@ class FactoryCoordinator:
         finally:
             if read_back and not self._has_unresolved_effect(item.identity):
                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
+
+    def _correlated(self, invocation: WorkerInvocation, outcome: WorkerOutcome) -> bool:
+        """Only an outcome the worker durably reads back for this invocation is execution truth.
+
+        A process that exits successfully without a correlated durable result,
+        or whose result reads back as another kind or candidate, holds here.
+        """
+        durable = self._worker.read_back(invocation)
+        return durable is not None and (durable.kind, durable.candidate) == (outcome.kind, outcome.candidate)
 
     def _completed_for_outcome(self, item: ReadyWorkItem, current: ExecutionState, outcome: WorkerOutcome) -> ExecutionState:
         if outcome.kind == "rework":
@@ -252,7 +264,7 @@ class FactoryCoordinator:
                 item = by_identity[identity]
             except (ValueError, KeyError):
                 return False
-            outcome = self._worker.read_back(WorkerInvocation(identity, reservation.owner))
+            outcome = self._worker.read_back(WorkerInvocation(identity, reservation.owner, item.contract.content_digest))
             if outcome is None:
                 if not self._park_unknown_effect(item, reservation):
                     return False

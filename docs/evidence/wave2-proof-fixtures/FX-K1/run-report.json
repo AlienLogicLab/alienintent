@@ -1,0 +1,40 @@
+{
+  "material_class_to_probes": {
+    "durable-correlated-readback-across-restart": [
+      "test_real_path_durably_retains_attributable_outcome_and_reads_it_back_after_restart"
+    ],
+    "process-success-without-durable-result-holds": [
+      "test_process_success_without_a_durable_result_holds_the_transition"
+    ],
+    "wrong-correlation-holds": [
+      "test_miscorrelated_durable_result_holds_rather_than_being_accepted"
+    ],
+    "restart-preserves-identity-without-duplication": [
+      "test_restart_after_crash_reads_back_the_original_identity_without_duplicating_the_result"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/invocation_runtime/test_real_worker_outcome.py",
+      "tests/execution_coordination/test_factory_coordinator.py",
+      "tests/invocation_runtime/test_scripted_worker.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:a6eb3486b706f346393ca0e5625b3518ed40c1f879984749c250d58599a352e3",
+      "locator": "observations/a6eb3486b706f346393ca0e5625b3518ed40c1f879984749c250d58599a352e3"
+    }
+  },
+  "boundaries": "K1 seam only: no success-collapse removal, VERIFY/IMPLEMENT loop or verifier invocation (K2); no RoleOutcomeRecord or sidecar owner",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}

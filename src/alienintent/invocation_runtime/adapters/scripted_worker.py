@@ -14,16 +14,15 @@ so a restart reopens the same journal and reads back the same truth.
 
 from __future__ import annotations
 
-import json
-import os
 from pathlib import Path
 import subprocess
 from typing import Callable, Mapping, Sequence
 
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
-from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
-from alienintent.invocation_runtime.domain.runtime import BudgetRecord, InvocationRole, JournalUnreadable, ProcessResult, ProviderCapabilities, ScriptRejected
+from alienintent.invocation_runtime.adapters.invocation_journal import journal_append, journal_records
+from alienintent.invocation_runtime.application.real_worker import decode_candidate, encode_candidate
+from alienintent.invocation_runtime.domain.runtime import BudgetRecord, InvocationRole, ProcessResult, ProviderCapabilities, ScriptRejected
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 
 SCRIPTED_PROVIDER = "scripted"
@@ -31,25 +30,6 @@ SCRIPTED_DIMENSIONS = frozenset({"wall-clock", "attempts", "retries", "concurren
 SCRIPTED_STEPS = frozenset({"success", "failure", "timeout", "authority-block", "provider-call"})
 PROVIDER_NOT_CONFIGURED = "alienintent-provider-not-configured"
 
-
-
-def encode_candidate(candidate: CandidateRef | None) -> dict[str, object] | None:
-    if candidate is None:
-        return None
-    return {
-        "kind": str(candidate.kind), "identity": candidate.identity, "content_digest": candidate.content_digest,
-        "locator": candidate.locator, "provenance": candidate.provenance,
-        "independent_read_back_proven": candidate.independent_read_back_proven,
-    }
-
-
-def decode_candidate(record: Mapping[str, object] | None) -> CandidateRef | None:
-    if record is None:
-        return None
-    return CandidateRef(
-        CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]),
-        str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"]),
-    )
 
 
 def work_identity_of(invocation_id: str) -> str:
@@ -62,28 +42,6 @@ def work_identity_of(invocation_id: str) -> str:
         _, identity, _ = invocation_id.rsplit(":", 2)
         return identity
     return invocation_id
-
-
-def journal_records(path: Path) -> tuple[dict[str, object], ...]:
-    """Every record of the durable JSONL worker journal at ``path``."""
-    if not path.exists():
-        return ()
-    return tuple(json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
-
-
-def journal_append(path: Path, clock: Callable[[], float], record: Mapping[str, object]) -> dict[str, object]:
-    """Append one record and read it back before reporting it; the journal is append-only."""
-    path.parent.mkdir(parents=True, exist_ok=True)
-    entry = dict(record) | {"sequence": len(journal_records(path)), "at": clock()}
-    line = json.dumps(entry, sort_keys=True)
-    with path.open("a", encoding="utf-8") as sink:
-        sink.write(line + "\n")
-        sink.flush()
-        os.fsync(sink.fileno())
-    read_back = journal_records(path)
-    if not read_back or read_back[-1] != json.loads(line):
-        raise JournalUnreadable("journal append did not read back identically")
-    return entry
 
 
 def journal_outcome(path: Path, correlation_id: str) -> WorkerOutcome | None:
