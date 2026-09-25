@@ -3,18 +3,80 @@
 from __future__ import annotations
 
 from pathlib import Path
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
+from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
-from alienintent.invocation_runtime.domain.runtime import BudgetIneligible, CandidateUnavailable, CapabilityGrant, InvocationRole, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
+from alienintent.invocation_runtime.domain.runtime import BudgetIneligible, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
+from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
 from alienintent.invocation_runtime.ports.source_control import SourceControl
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 from alienintent.invocation_runtime.ports.workspace import WorkspaceManager
 
 
+def encode_candidate(candidate: CandidateRef | None) -> dict[str, object] | None:
+    if candidate is None:
+        return None
+    return {
+        "kind": str(candidate.kind), "identity": candidate.identity, "content_digest": candidate.content_digest,
+        "locator": candidate.locator, "provenance": candidate.provenance,
+        "independent_read_back_proven": candidate.independent_read_back_proven,
+    }
+
+
+def decode_candidate(record: Mapping[str, object] | None) -> CandidateRef | None:
+    if record is None:
+        return None
+    return CandidateRef(
+        CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]),
+        str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"]),
+    )
+
+
+def correlated_outcome(records: Sequence[Mapping[str, object]], invocation: WorkerInvocation, branch: str) -> WorkerOutcome | None:
+    """The one durable producer outcome attributable to ``invocation``, or None.
+
+    None is a hold, not a failure: no record, a duplicate record, or a record
+    naming another work item, role, contract or candidate branch is not this
+    invocation's result, however its process exited.
+    """
+    own = [record for record in records if record.get("correlation_id") == invocation.correlation_id]
+    started = [record for record in own if record.get("event") == "invocation-started"]
+    finished = [record for record in own if record.get("event") == "invocation-outcome"]
+    if len(started) != 1 or len(finished) != 1:
+        return None
+    begun, record = started[0], finished[0]
+    for entry in (begun, record):
+        if entry.get("work_identity") != invocation.work_identity or entry.get("role") != str(InvocationRole.PRODUCER):
+            return None
+    if record.get("contract_digest") != begun.get("contract_digest"):
+        return None
+    if invocation.contract_digest is not None and record.get("contract_digest") != invocation.contract_digest:
+        return None
+    kind, attempt, encoded = record.get("kind"), record.get("attempt"), record.get("candidate")
+    if not isinstance(kind, str) or not (encoded is None or isinstance(encoded, Mapping)):
+        return None
+    try:
+        candidate = decode_candidate(encoded)
+    except (KeyError, TypeError, ValueError):
+        return None
+    if kind == "success":
+        if candidate is None or not isinstance(attempt, int) or attempt < 1 or not _publishes_to(candidate, branch):
+            return None
+    elif candidate is not None:
+        return None
+    return WorkerOutcome(kind, candidate)
+
+
+def _publishes_to(candidate: CandidateRef, branch: str) -> bool:
+    if candidate.kind is not CandidateKind.SOURCE_REVISION or "#" not in candidate.locator:
+        return False
+    return candidate.locator.rsplit("#", 1)[1].rsplit("@", 1)[0] == branch
+
+
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None]) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -27,8 +89,25 @@ class RealWorkerProvider(WorkerProvider):
         self.verifier_provenance: dict[str, str] = {}
         self._now = now
         self._sleep = sleep
+        self._journal = journal
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
+        """Run one producer invocation; with a journal, retain its attributable outcome durably first."""
+        if self._journal is None:
+            return self._start(invocation, context, grants, budget)
+        attribution = {
+            "correlation_id": invocation.correlation_id, "work_identity": invocation.work_identity, "role": str(InvocationRole.PRODUCER),
+            "contract_digest": None if context is None else context.content_digest,
+        }
+        self._journal.append({"event": "invocation-started"} | attribution)
+        outcome = self._start(invocation, context, grants, budget)
+        retry = self.retry_evidence.get(invocation.correlation_id)
+        self._journal.append({"event": "invocation-outcome"} | attribution | {
+            "attempt": None if retry is None else retry.attempts, "kind": outcome.kind, "candidate": encode_candidate(outcome.candidate),
+        })
+        return outcome
+
+    def _start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         grant = self._grant_for(invocation)
         if budget.hard_wall_clock_seconds is None or budget.cancellation_limit is None or grant.invocation_id != invocation.correlation_id:
             return WorkerOutcome("ineligible")
@@ -136,7 +215,14 @@ class RealWorkerProvider(WorkerProvider):
         return result
 
     def read_back(self, invocation: WorkerInvocation) -> WorkerOutcome | None:
-        return self._outcomes.get(invocation.correlation_id)
+        """With a journal, answer only from durable, correlated evidence; this survives a restart."""
+        if self._journal is None:
+            return self._outcomes.get(invocation.correlation_id)
+        try:
+            records = self._journal.records()
+        except JournalUnreadable:
+            return None
+        return correlated_outcome(records, invocation, self._candidate_branch(invocation))
 
     def verify(self, candidate, producer_invocation_id: str, verifier_invocation_id: str) -> WorkerOutcome:
         try:

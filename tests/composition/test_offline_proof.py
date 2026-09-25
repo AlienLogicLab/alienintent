@@ -191,7 +191,13 @@ def test_s0_frozen_kernel_guard_rejects_authorized_s2_store_extension(tmp_path: 
     assert report["kernel_unchanged"]["status"] == "CHANGED"
     kernel = report["kernel_unchanged"]
     changed = subprocess.check_output(["git", "diff", "--name-only", kernel["baseline"], "--", *kernel["paths"]], cwd=ROOT, text=True).splitlines()
-    assert changed == ["src/alienintent/execution_coordination/adapters/sqlite_store.py"]
+    # S2 extends the store; K1 (WO-220401) adds the durable outcome correlation
+    # gate and the real worker's journaled read-back.
+    assert changed == [
+        "src/alienintent/execution_coordination/adapters/sqlite_store.py",
+        "src/alienintent/execution_coordination/application/factory_coordinator.py",
+        "src/alienintent/invocation_runtime/application/real_worker.py",
+    ]
     assert {c["id"] for c in report["checks"]} == {"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P10", "P11", "P12", "P13"}
     assert [c["id"] for c in report["checks"] if c["status"] != "PASS"] == ["P11"]
     assert report["success_collapse_limitation"]["independent_verifier_invocation"] == "NOT_ESTABLISHED"

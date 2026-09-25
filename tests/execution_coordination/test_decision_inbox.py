@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import replace
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -40,6 +41,10 @@ class EscalatingWorker(ScriptedWorker):
             self.dispatched.append(invocation.work_identity)
             outcome = WorkerOutcome.authority_block(replace(self.escalation, work_item=invocation.work_identity))
             self.observed[invocation.correlation_id] = outcome
+            # The coordinator admits only an outcome it can durably read back.
+            path = self._path(invocation.correlation_id)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({"kind": outcome.kind, "candidate": None}))
             return outcome
         return super().start(invocation, context, grants, budget)
 
