@@ -1,0 +1,121 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-C2",
+  "invocation": "AlienLogicLab/alienintent#95:PRODUCER:4a2582db-0aaf-4794-94a1-ad6ae61bc1c6",
+  "source_revision": "459f825cd9d8a922837b9b20f053e3285eb47de4",
+  "source_status": "",
+  "admission_baseline": "036c5fc2d2c7f1699b23ac171e9e019aa8d4fc98",
+  "input_digests": {
+    "docs/evidence/wave2-design-contracts.json": "sha256:56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242",
+    "docs/evidence/wave2-dependency-dag.json": "sha256:f99c0a7a392f8dd1f7889bb99d926f0a5a9de0948cb09845686f9d7e6f2b1e8d",
+    "docs/evidence/wave2-candidate-bius.json": "sha256:61f9324e7d1b7f0937bbc1aff7cbaba77c50192204e109cad5d78edb04f677f7",
+    "docs/evidence/wave2-execution-packets/WO-220302.packet.json": "sha256:9ae65adb52efc2ddb38dced645cd826e294035fd4c5a685a9384594eae202944",
+    "docs/evidence/wave2-execution-packets/WO-220302.allocation.json": "sha256:bbaac7bc38cea2c819eb7c7e2a2a22cc691e2ee35ae18fb8672d6680c05ca37e",
+    "docs/work-units/wave2/WO-220302.md": "sha256:ddfb512eb8e478ca69067f131f52f663edc5882ab4eccfef4239d9a350e80059",
+    "docs/evidence/wave2-proof-fixtures/FX-C1/execution-record.json": "sha256:da3c79511fbbe571b1a9ae4bd4e6b245bfa99a04787b221bf59360f5ea34be55",
+    "docs/evidence/wave2-proof-fixtures/FX-C2/implementation-plan.md": "sha256:26703b80d7e457a72f303884626b9e35a5b36bd1b70b53786908309526e00412",
+    "tests/context_assembly/test_context_reconstruction.py": "sha256:b9c878adf3f73773009706befab4f45e42312109cd62e158bd456def610a1d50",
+    "tests/context_assembly/context_episode.py": "sha256:05874b5948179e9a5db64e16613516b4217a47b58714455bc6d626be1d027826",
+    "tools/evidence/fx_c2_evidence.py": "sha256:43c3b23cbc24136789b945615e2443b7efa67d4c6c94dc7790334456b890d19b",
+    "src/alienintent/context_assembly/domain/reconstruction.py": "sha256:638994edae4ff373497991a554f996cfc95ef53e191cfa0b4e170bca538a35c3",
+    "src/alienintent/context_assembly/application/reconstruction_service.py": "sha256:5613b88dc3672aa1d17df35d9c8363142225d2de27023b1a7744c955b5ec5a36",
+    "src/alienintent/composition/context_reconstruction.py": "sha256:1f27303c3dca1d7d07c3dfbbc224385578ba29819ccdcc16dc63486823edb34b",
+    "src/alienintent/context_assembly/ports/context_assembler.py": "sha256:59755d1dbb3770e41d2a12680247eb7bffa8ada1a336bc71d46579a20e3582e0",
+    "src/alienintent/composition/control_plane_profile.py": "sha256:5142b8a7525d5a3b79e22b1aaaea5ed1f1f03dc1865bfca85f49a50e1417cc5e"
+  },
+  "commands": [
+    {
+      "id": "intact",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:ac41030e9d19f60e43ac0b4a788b2933f4620160740eae20346ba3a8a9714534",
+        "locator": "observations/ac41030e9d19f60e43ac0b4a788b2933f4620160740eae20346ba3a8a9714534"
+      }
+    },
+    {
+      "id": "python_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:588e9e0866e1e247389999be4ece1c4561fdbb6d58ced31adccf5b2d7fbe3b41",
+        "locator": "observations/588e9e0866e1e247389999be4ece1c4561fdbb6d58ced31adccf5b2d7fbe3b41"
+      }
+    },
+    {
+      "id": "architecture",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:c552a776f394221bc8e38000159fea479a3b0a795ad61d9cff2e3bb65ed8413b",
+        "locator": "observations/c552a776f394221bc8e38000159fea479a3b0a795ad61d9cff2e3bb65ed8413b"
+      }
+    },
+    {
+      "id": "node_regression",
+      "command": [
+        "node",
+        "scripts/check.mjs",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:ae5ef4a983a2de9fe053aa4e3ea869afebb22c6a16ad3f6471082816c2fc6647",
+        "locator": "observations/ae5ef4a983a2de9fe053aa4e3ea869afebb22c6a16ad3f6471082816c2fc6647"
+      }
+    }
+  ],
+  "holds": [],
+  "labels": [
+    "LABELLED_DERIVATION_RULE_v1",
+    "LOCAL_PROCESS_BOUNDARY_SUBSTITUTE_FOR_EPISODE"
+  ],
+  "residuals": [
+    {
+      "id": "M_CONTEXT_SHADOW_DEFERRED",
+      "owner": "R5 (FX-R5) under POSTW1-DECIDE-006A",
+      "note": "No comparison with the live bootstrap checkpoint, handoff or retirement; operational state needs a separately authorized target."
+    },
+    {
+      "id": "DECISION_INBOX_LIST_OPEN_SILENT_EMPTY",
+      "owner": "C1 (DecisionInbox owner)",
+      "note": "DecisionInbox.list_open still returns () for a malformed aggregate; the context adapter validates the raw aggregate itself and holds instead. Not repaired here."
+    }
+  ],
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": null,
+    "reason": "UNKNOWN: provider usage is unavailable to this local fixture"
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:7309c51c104206beb6e99fe56f80a729207fe293b7842a2dc8f4676d9cbcfe71",
+    "locator": "observations/7309c51c104206beb6e99fe56f80a729207fe293b7842a2dc8f4676d9cbcfe71"
+  },
+  "exit_status": 0
+}

@@ -1,0 +1,108 @@
+{
+  "acceptance_to_probes": {
+    "SF-REQ-053-AC-01": [
+      "test_fresh_invocations_equal",
+      "test_mismatch_is_failure",
+      "test_conversation_not_input",
+      "test_list_order_independent",
+      "test_derivation_rule_uses_lifecycle",
+      "test_seen_is_not_resolved",
+      "test_unavailable_state_holds"
+    ],
+    "supporting_hold_and_race_probes": [
+      "test_malformed_inputs_hold_rather_than_raise",
+      "test_concurrent_pin_of_identical_state_is_equivalent",
+      "test_runner_errors_are_not_mismatches"
+    ]
+  },
+  "focused_command": {
+    "id": "intact",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "tests/context_assembly/test_context_reconstruction.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:ac41030e9d19f60e43ac0b4a788b2933f4620160740eae20346ba3a8a9714534",
+      "locator": "observations/ac41030e9d19f60e43ac0b4a788b2933f4620160740eae20346ba3a8a9714534"
+    }
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:7309c51c104206beb6e99fe56f80a729207fe293b7842a2dc8f4676d9cbcfe71",
+    "locator": "observations/7309c51c104206beb6e99fe56f80a729207fe293b7842a2dc8f4676d9cbcfe71"
+  },
+  "predecessor_and_successor_digests": {
+    "predecessor": "sha256:7055676e6f5ca1df6f99dd61766f47a7d8fa38df281d6ea7115e889b140b6790",
+    "successor_a": "sha256:7055676e6f5ca1df6f99dd61766f47a7d8fa38df281d6ea7115e889b140b6790",
+    "successor_b": "sha256:7055676e6f5ca1df6f99dd61766f47a7d8fa38df281d6ea7115e889b140b6790"
+  },
+  "exit_statuses": {
+    "predecessor": 0,
+    "successor_a": 0,
+    "successor_b": 0
+  },
+  "field_equality": {
+    "differing_fields": [],
+    "digests": {
+      "/tmp/fx-c2-readback-tif6uqht/cwd/output-0.json": "sha256:7055676e6f5ca1df6f99dd61766f47a7d8fa38df281d6ea7115e889b140b6790",
+      "/tmp/fx-c2-readback-tif6uqht/cwd/output-1.json": "sha256:7055676e6f5ca1df6f99dd61766f47a7d8fa38df281d6ea7115e889b140b6790",
+      "/tmp/fx-c2-readback-tif6uqht/cwd/output-2.json": "sha256:7055676e6f5ca1df6f99dd61766f47a7d8fa38df281d6ea7115e889b140b6790"
+    },
+    "verdict": "EQUAL"
+  },
+  "compare_exit": 0,
+  "hold_reason_codes": {
+    "missing": {
+      "expected": "MISSING_RECORD",
+      "observed": "MISSING_RECORD",
+      "exit_status": 2
+    },
+    "drift": {
+      "expected": "VERSION_DRIFT",
+      "observed": "VERSION_DRIFT",
+      "exit_status": 2
+    },
+    "digest": {
+      "expected": "DIGEST_MISMATCH",
+      "observed": "DIGEST_MISMATCH",
+      "exit_status": 2
+    },
+    "evidence": {
+      "expected": "EVIDENCE_UNAVAILABLE",
+      "observed": "EVIDENCE_UNAVAILABLE",
+      "exit_status": 2
+    },
+    "store": {
+      "expected": "STORE_UNAVAILABLE",
+      "observed": "STORE_UNAVAILABLE",
+      "exit_status": 2
+    },
+    "malformed_inbox": {
+      "expected": "MALFORMED_DECISION_INBOX",
+      "observed": "MALFORMED_DECISION_INBOX",
+      "exit_status": 2
+    },
+    "inventory": {
+      "expected": "INVENTORY_UNAVAILABLE",
+      "observed": "INVENTORY_UNAVAILABLE",
+      "exit_status": 2
+    }
+  },
+  "derivation_rule": "LABELLED_DERIVATION_RULE_v1",
+  "episode_boundary": "LOCAL_PROCESS_BOUNDARY_SUBSTITUTE_FOR_EPISODE",
+  "labels": [
+    "LABELLED_DERIVATION_RULE_v1",
+    "LOCAL_PROCESS_BOUNDARY_SUBSTITUTE_FOR_EPISODE"
+  ],
+  "residuals": [
+    "M_CONTEXT_SHADOW_DEFERRED",
+    "DECISION_INBOX_LIST_OPEN_SILENT_EMPTY"
+  ],
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}

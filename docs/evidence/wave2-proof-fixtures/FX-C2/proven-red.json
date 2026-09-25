@@ -1,0 +1,396 @@
+{
+  "controls": [
+    {
+      "control": "manifest_digest_pin",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/application/reconstruction_service.py",
+      "source_digest": "sha256:5613b88dc3672aa1d17df35d9c8363142225d2de27023b1a7744c955b5ec5a36",
+      "mutation": {
+        "remove": "            if digest(state) != entry[\"digest\"]:",
+        "replace_with": "            if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_unavailable_state_holds[digest]"
+      ],
+      "assertion": "expected typed hold DIGEST_MISMATCH",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:d3c241db20c82244c1558db23c3ae78c7307031a9ad0c0a66aa6a00a4ec0b178",
+        "locator": "observations/d3c241db20c82244c1558db23c3ae78c7307031a9ad0c0a66aa6a00a4ec0b178"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:1f8bc740378e0287a899fe77f8770a46381c01eae3c3374a93484b50d930ff15",
+        "locator": "observations/1f8bc740378e0287a899fe77f8770a46381c01eae3c3374a93484b50d930ff15"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "missing_record_hold",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/application/reconstruction_service.py",
+      "source_digest": "sha256:5613b88dc3672aa1d17df35d9c8363142225d2de27023b1a7744c955b5ec5a36",
+      "mutation": {
+        "remove": "            if entry[\"version\"] > 0 and version == 0 and not state:",
+        "replace_with": "            if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_unavailable_state_holds[missing]"
+      ],
+      "assertion": "expected typed hold MISSING_RECORD",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:0c06c264a47aac0255c7d5e22ddc2ec9c229d2a033d20125d25ff5bcf3a8cd82",
+        "locator": "observations/0c06c264a47aac0255c7d5e22ddc2ec9c229d2a033d20125d25ff5bcf3a8cd82"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:acc05951a0375704471a6209d05b45d589c1f6166b28a0e08be069365017a40a",
+        "locator": "observations/acc05951a0375704471a6209d05b45d589c1f6166b28a0e08be069365017a40a"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "store_unavailable_hold",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/application/reconstruction_service.py",
+      "source_digest": "sha256:5613b88dc3672aa1d17df35d9c8363142225d2de27023b1a7744c955b5ec5a36",
+      "mutation": {
+        "remove": "            raise ContextHold(HoldReason.STORE_UNAVAILABLE, (aggregate,), str(error)) from error",
+        "replace_with": "            return 0, {}"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_unavailable_state_holds[store]"
+      ],
+      "assertion": "expected typed hold STORE_UNAVAILABLE",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:972ab0245c9855ac6381bc0f6670c41d90590a9ceb7b3073e47e3d153150ca3f",
+        "locator": "observations/972ab0245c9855ac6381bc0f6670c41d90590a9ceb7b3073e47e3d153150ca3f"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:52a61600bef9cde8cac766928409daf6624c2f74db7f4d116e82182e8b8331e4",
+        "locator": "observations/52a61600bef9cde8cac766928409daf6624c2f74db7f4d116e82182e8b8331e4"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "version_fence",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/application/reconstruction_service.py",
+      "source_digest": "sha256:5613b88dc3672aa1d17df35d9c8363142225d2de27023b1a7744c955b5ec5a36",
+      "mutation": {
+        "remove": "            if version != entry[\"version\"]:",
+        "replace_with": "            if False:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_unavailable_state_holds[drift]"
+      ],
+      "assertion": "expected typed hold VERSION_DRIFT",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:06b865a625fa321366cde7fb0060547742352174c5a5828c5cecbe9f4a937781",
+        "locator": "observations/06b865a625fa321366cde7fb0060547742352174c5a5828c5cecbe9f4a937781"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:417afc27c979ab51dd34c2755f84cdb7ed3e623efae730ec7475e9104ff8b325",
+        "locator": "observations/417afc27c979ab51dd34c2755f84cdb7ed3e623efae730ec7475e9104ff8b325"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "malformed_inbox_hold",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/reconstruction.py",
+      "source_digest": "sha256:638994edae4ff373497991a554f996cfc95ef53e191cfa0b4e170bca538a35c3",
+      "mutation": {
+        "remove": "        raise _hold(HoldReason.MALFORMED_DECISION_INBOX, \"decision-inbox\")",
+        "replace_with": "        return ()"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_unavailable_state_holds[malformed_inbox]"
+      ],
+      "assertion": "expected typed hold MALFORMED_DECISION_INBOX",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:65620e6aa762873ef092c209d06db32c4a7eb736379bd9ed2f2b2010ea189cd7",
+        "locator": "observations/65620e6aa762873ef092c209d06db32c4a7eb736379bd9ed2f2b2010ea189cd7"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:a45af64311ac6465d823b6282a8454b904f9f8e72911b0d363a4373e57fa7fe3",
+        "locator": "observations/a45af64311ac6465d823b6282a8454b904f9f8e72911b0d363a4373e57fa7fe3"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "canonical_order",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/reconstruction.py",
+      "source_digest": "sha256:638994edae4ff373497991a554f996cfc95ef53e191cfa0b4e170bca538a35c3",
+      "mutation": {
+        "remove": "    entries = sorted(entries, key=lambda entry: entry[\"aggregate\"])",
+        "replace_with": "    entries = list(entries)"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_list_order_independent"
+      ],
+      "assertion": "reversed list_states changed the pinned manifest",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:86b4a407a8156345c67b2f7312092015291fc95ad579262e3d3b8e18140f4e00",
+        "locator": "observations/86b4a407a8156345c67b2f7312092015291fc95ad579262e3d3b8e18140f4e00"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:97dd9ebb398609587e636af931f087443edff631e2c4fd3f8f5873fa7e169ffb",
+        "locator": "observations/97dd9ebb398609587e636af931f087443edff631e2c4fd3f8f5873fa7e169ffb"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "conversation_isolation",
+      "application_count": 1,
+      "file": "src/alienintent/composition/context_reconstruction.py",
+      "source_digest": "sha256:1f27303c3dca1d7d07c3dfbbc224385578ba29819ccdcc16dc63486823edb34b",
+      "mutation": {
+        "remove": "    inputs = {\"manifest_ref\": arguments.manifest, \"project\": arguments.project, \"profile\": arguments.profile}",
+        "replace_with": "    inputs = {\"manifest_ref\": arguments.manifest, \"project\": arguments.project, \"profile\": arguments.profile, \"conversation\": __import__(\"os\").environ.get(\"ALIENINTENT_CONVERSATION\")}"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_conversation_not_input"
+      ],
+      "assertion": "conversation must be neither an input nor authority",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:93d543d76f927887dc4e148d2cfb53e27b6041850cc197d768cd2f92b6384b89",
+        "locator": "observations/93d543d76f927887dc4e148d2cfb53e27b6041850cc197d768cd2f92b6384b89"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:e8ab87fd7fb2561683b3e6420f78e5fc67c98bef12dda148f461d00e25b2f1c1",
+        "locator": "observations/e8ab87fd7fb2561683b3e6420f78e5fc67c98bef12dda148f461d00e25b2f1c1"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "context_item_omitted",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/reconstruction.py",
+      "source_digest": "sha256:638994edae4ff373497991a554f996cfc95ef53e191cfa0b4e170bca538a35c3",
+      "mutation": {
+        "remove": "        \"evidence_refs\": list(manifest[\"evidence\"]),\n",
+        "replace_with": ""
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_fresh_invocations_equal"
+      ],
+      "assertion": "context item omitted",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:c4ae83e64d432a06f45ca857c4968607cf9c077525b7e0dc1f9eee3cabb1e5c7",
+        "locator": "observations/c4ae83e64d432a06f45ca857c4968607cf9c077525b7e0dc1f9eee3cabb1e5c7"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:48bafa25ad75c39d041a6a4dd782df468946e8c358a254dc252c0d8398c952ae",
+        "locator": "observations/48bafa25ad75c39d041a6a4dd782df468946e8c358a254dc252c0d8398c952ae"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "mismatch_as_failure",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/reconstruction.py",
+      "source_digest": "sha256:638994edae4ff373497991a554f996cfc95ef53e191cfa0b4e170bca538a35c3",
+      "mutation": {
+        "remove": "    differing = sorted(f for f in FIELDS if any(canonical(d.get(f)) != canonical(first.get(f)) for d in rest))",
+        "replace_with": "    differing = []"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_mismatch_is_failure"
+      ],
+      "assertion": "mismatch must be a failure",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:70f894ab51997d218b6fc8bfa56c2abedb71feda6f8efcc1da17b4ca74c18699",
+        "locator": "observations/70f894ab51997d218b6fc8bfa56c2abedb71feda6f8efcc1da17b4ca74c18699"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:474268b3f19db207b155bc4d0329179238d6fbe18ce834ba86cb2b10b2b82d8c",
+        "locator": "observations/474268b3f19db207b155bc4d0329179238d6fbe18ce834ba86cb2b10b2b82d8c"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "lifecycle_rule_bypassed",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/reconstruction.py",
+      "source_digest": "sha256:638994edae4ff373497991a554f996cfc95ef53e191cfa0b4e170bca538a35c3",
+      "mutation": {
+        "remove": "            if accepts(state, action):",
+        "replace_with": "            if True:"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_derivation_rule_uses_lifecycle"
+      ],
+      "assertion": "lifecycle rejects authorized action",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:c4bf8982cb2c601ff8836ac44d737703f1756b4baada204c6d3b58adfcdb492c",
+        "locator": "observations/c4bf8982cb2c601ff8836ac44d737703f1756b4baada204c6d3b58adfcdb492c"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:9658f2c41c12581c02b48583a74ada09b9130c5db3190d91fb573ae7a2b592ce",
+        "locator": "observations/9658f2c41c12581c02b48583a74ada09b9130c5db3190d91fb573ae7a2b592ce"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "seen_not_resolved",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/reconstruction.py",
+      "source_digest": "sha256:638994edae4ff373497991a554f996cfc95ef53e191cfa0b4e170bca538a35c3",
+      "mutation": {
+        "remove": "a[\"status\"] != \"RESOLVED\"",
+        "replace_with": "a[\"status\"] not in {\"RESOLVED\", \"SEEN\"}"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_seen_is_not_resolved"
+      ],
+      "assertion": "SEEN attention must stay pending",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:3928d3b5559dfd49fd507674e2a1e1799d837032d0d32f21d1d0af6debf335ac",
+        "locator": "observations/3928d3b5559dfd49fd507674e2a1e1799d837032d0d32f21d1d0af6debf335ac"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:f64c93593482d6cd33dd7c567076f0cc192ef1375266ace4e4b8a55a2448f4bc",
+        "locator": "observations/f64c93593482d6cd33dd7c567076f0cc192ef1375266ace4e4b8a55a2448f4bc"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "queue_distinct",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/reconstruction.py",
+      "source_digest": "sha256:638994edae4ff373497991a554f996cfc95ef53e191cfa0b4e170bca538a35c3",
+      "mutation": {
+        "remove": "        \"unresolved_decisions\": list(decisions),",
+        "replace_with": "        \"unresolved_decisions\": list(decisions) + pending,"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/context_assembly/test_context_reconstruction.py::test_seen_is_not_resolved"
+      ],
+      "assertion": "attention must not enter the DecisionInbox queue",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:6d534616b2b18417e00e6a01f04146a84602e85a370e1cb6e2f175f77dc61a41",
+        "locator": "observations/6d534616b2b18417e00e6a01f04146a84602e85a370e1cb6e2f175f77dc61a41"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:478fe591ee1ecaf2b0d8258191ab58716ed15d424ef08a051c82c4c2534167b0",
+        "locator": "observations/478fe591ee1ecaf2b0d8258191ab58716ed15d424ef08a051c82c4c2534167b0"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "adapter_import_added",
+      "application_count": 1,
+      "file": "src/alienintent/context_assembly/domain/reconstruction.py",
+      "source_digest": "sha256:638994edae4ff373497991a554f996cfc95ef53e191cfa0b4e170bca538a35c3",
+      "mutation": {
+        "remove": "from __future__ import annotations\n",
+        "replace_with": "from __future__ import annotations\nfrom alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "assertion": "domain imports adapters",
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_ref": {
+        "revision_digest": "sha256:761a4a027c0cc4bf4258b5a796ccdcceabdacf4388e257b8b3cc50d3ca8d66e1",
+        "locator": "observations/761a4a027c0cc4bf4258b5a796ccdcceabdacf4388e257b8b3cc50d3ca8d66e1"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:7ab8293dc0308bc45bd57ed80c1a0d0c751df80f086617583da6a03b44cb2356",
+        "locator": "observations/7ab8293dc0308bc45bd57ed80c1a0d0c751df80f086617583da6a03b44cb2356"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}
