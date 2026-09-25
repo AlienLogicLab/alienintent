@@ -268,7 +268,8 @@ class RecordingSplit:
 class Harness:
     """One disposable profile: store, evidence, coordinator lifecycle and the composed UpstreamProfile."""
 
-    def __init__(self, root: Path, producer=None, executable="package", split=None, package=None):
+    def __init__(self, root: Path, producer=None, executable="package", split=None, package=None, provider=None,
+                 transport="cli"):
         root.mkdir(mode=0o700)
         self.store = SQLiteOperationalStore(root / "operational.sqlite")
         self.repository = LocalEvidenceRepository(root / "evidence", PROJECT, PROFILE)
@@ -286,7 +287,8 @@ class Harness:
             design_authority=RetainedDirectionAuthority(ROOT, DESIGN, DESIGN_SHA256, EDGE_AUTHORITY_GAP, PROJECT,
                                                         PROFILE),
             design_reviewers=REVIEWERS, dependency_lifecycle=CoordinatorDependencyLifecycle(coordinator),
-            readiness_producer=producer, readiness_executable=self.executable, split_handoff=split)
+            readiness_producer=producer, readiness_executable=self.executable, split_handoff=split,
+            readiness_provider=provider, readiness_transport=transport)
         self.service = self.profile.readiness
         self.consumer = self.profile.readiness_consumer
         if producer is not None:

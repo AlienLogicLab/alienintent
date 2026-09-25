@@ -109,6 +109,7 @@ class InvocationCustody:
     started_at: str
     ended_at: str
     provider_evidence: dict | None = None
+    sdk_version: str | None = None  # MCP initialize serverInfo.version: the SDK's, never the product's (agent-ready#1).
 
 
 @dataclass(frozen=True)
@@ -209,11 +210,22 @@ def _direct(document: object) -> tuple[tuple[str, ...], list, str | None]:
     return _value(document), [document], None
 
 
+_JSON_RPC = frozenset({"jsonrpc", "id", "result", "error"})
+
+
 def _envelope(document: object) -> tuple[tuple[str, ...], list, str | None]:
     """Known MCP parsing: structuredContent and every JSON text content item supply values and bodies.
 
-    Every supplied part must itself be well formed; a malformed part never drops out in favour of another part.
+    The tool result may arrive inside its preserved JSON-RPC response; an error member fails the attempt even when a
+    result is also supplied. Every supplied part must itself be well formed; a malformed part never drops out in
+    favour of another part.
     """
+    if isinstance(document, dict) and "jsonrpc" in document:
+        if document["jsonrpc"] != "2.0" or not set(document) <= _JSON_RPC:
+            return (), [], MALFORMED
+        if "error" in document or "result" not in document:
+            return (), [], MCP_ERROR if "error" in document else MALFORMED
+        document = document["result"]
     if not isinstance(document, dict) or not {"content", "structuredContent", "isError"} & set(document) \
             or "disposition" in document:
         return (), [], MALFORMED
@@ -311,6 +323,8 @@ def response_problem(raw: object, metadata: AttemptMetadata, shape: object) -> s
         return "invocation arguments are not text"
     if custody.provider_evidence is not None and type(custody.provider_evidence) is not dict:
         return "provider_evidence is not an object"
+    if custody.sdk_version is not None and type(custody.sdk_version) is not str:
+        return "sdk_version is not text"
     return None
 
 

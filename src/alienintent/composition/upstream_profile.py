@@ -6,7 +6,7 @@ from pathlib import Path
 
 from alienintent.composition.compilation import VerifiedDesignDecisions
 from alienintent.composition.design_admission import PremiseReaderCheck
-from alienintent.composition.readiness import resolve_binding
+from alienintent.composition.readiness import compose_producer, resolve_binding
 from alienintent.context_assembly.application.design_admission_service import DesignAdmission, DesignReadiness
 from alienintent.context_assembly.adapters.compilation_repository import EvidenceAssessmentHistory
 from alienintent.context_assembly.adapters.decision_resolution import DecisionInboxQuestions
@@ -49,7 +49,8 @@ class UpstreamProfile:
                  design_reviewers: frozenset[str] = frozenset(),
                  dependency_lifecycle: DependencyLifecycle | None = None,
                  readiness_producer: ReadinessAssessment | None = None, readiness_executable: Path | None = None,
-                 readiness_transport: str = "cli", split_handoff: SplitTransactionHandoff | None = None) -> None:
+                 readiness_transport: str = "cli", split_handoff: SplitTransactionHandoff | None = None,
+                 readiness_provider: str | None = None) -> None:
         self.inventory = InventoryService(repository, store, project, profile, definition_ref, invocation, access_scope)
         self.inbox = DecisionInbox(store, UpstreamQuestionAdmission(decision_actor), profile)
         self.questions = DecisionInboxQuestions(self.inbox, profile)
@@ -84,8 +85,14 @@ class UpstreamProfile:
                             if self.design_readiness is not None and dependency_lifecycle is not None else None)
         # Readiness admission sits behind the same design gate and lifecycle. The producer binding is resolved here,
         # from the configured executable's installed metadata; unbound or unestablished provenance holds before
-        # launch. READY is eligibility for the existing release gate only; nothing here releases.
+        # launch. READY is eligibility for the existing release gate only; nothing here releases. A configured
+        # provider constructs the CLI or MCP adapter from that same binding; an injected producer is a fixture path.
         self.readiness_binding = resolve_binding(readiness_executable, readiness_transport)
+        if readiness_producer is not None and readiness_provider is not None:
+            raise ValueError("configure readiness_provider or inject readiness_producer, not both")
+        if readiness_producer is None:
+            readiness_producer = compose_producer(self.readiness_binding, readiness_provider)
+        self.readiness_producer = readiness_producer
         self.readiness_consumer = RetainedAssessmentConsumer(repository, store, project, profile, definition_ref,
                                                              invocation, access_scope)
         self.readiness_history = RetainedSurrogateHistory(repository, project, profile, definition_ref, invocation,
