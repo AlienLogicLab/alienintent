@@ -1351,9 +1351,7 @@
         "R6",
         "R8"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [
         "R1-GAP-MONITOR-HOST"
       ],
@@ -1362,11 +1360,11 @@
       "bootstrap_replacement_for": [],
       "track": "control",
       "node_kind": "authority_blocked_prerequisite",
-      "scope": "",
-      "proceeds_regardless": "C4 local health/inspection; no operational G+I claim or host implementation choice.",
-      "completion_predicate": "SPECIFY assigns host owner and supervision/restart policy, then reviewed host design is proven independently: terminate/stall monitor and scanner, observe external health detection/alert and authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting.",
+      "scope": "SWF-27 / SF-REQ-053 already owns persistent deterministic monitoring. C5 proves the independently supervised host boundary for monitor/scanner execution: external health detection and authorized restart preserve generation and pending state. Installation/Doctor configuration remains under SF-REQ-037/038; live replacement/cutover remains separately gated.",
+      "proceeds_regardless": "R1-GAP-MONITOR-HOST is not a Founder decision. Existing authority assigns persistent monitoring to SWF-27 / SF-REQ-053; C5 still requires concrete supervisor/restart/self-health/Doctor proof.",
+      "completion_predicate": "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting. No operational replacement or bootstrap retirement is claimed.",
       "inherited_authority_gate_refs": [],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "PROCEEDS_REGARDLESS",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -1565,10 +1563,7 @@
         "B9",
         "R9"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [
         "R1-GAP-039-ORCHESTRATION"
       ],
@@ -1577,11 +1572,11 @@
       "bootstrap_replacement_for": [],
       "track": "lifecycle",
       "node_kind": "authority_blocked_prerequisite",
-      "scope": "039 consumes this capability but does not authorize replacement of FactoryCoordinator._completed_for_outcome. execution_coordination is only a candidate owner until decision.",
-      "proceeds_regardless": "Document current kernel limitation; do not substitute a parallel mock.",
-      "completion_predicate": "SPECIFY identifies existing requirement and domain owner first. After K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, canonical rework and remaining budget, trusted REVIEW verdict and actual closure receipts. No success-collapse fallback or scenario-written lifecycle state.",
+      "scope": "Binding FD-01/FD-02 assign released-BIU lifecycle/result correlation to Execution Coordination and worker/resource execution behind WorkerProvider to Invocation Runtime. K2 owns canonical_role_orchestration: replace the success-collapse path with distinct producer and independent verifier invocations using existing lifecycle/evidence ownership; no new state owner.",
+      "proceeds_regardless": "R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME are resolved by FD-01/FD-02 existing ownership. K2 still requires revised implementation/proof of canonical multi-role orchestration.",
+      "completion_predicate": "Under existing Execution Coordination / Invocation Runtime ownership and after K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, exact candidate custody, canonical verifier rejection -> IMPLEMENT repair, remaining attempt/budget enforcement, trusted REVIEW verdict, and actual closure receipts. No success-collapse fallback, scenario-written lifecycle state, or parallel RoleOutcomeRecord state owner.",
       "inherited_authority_gate_refs": [],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "PROCEEDS_REGARDLESS",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -1887,11 +1882,11 @@
       "bootstrap_replacement_for": [],
       "track": "replacement",
       "node_kind": "external_prerequisite",
-      "scope": "",
-      "proceeds_regardless": "Plan and local inspection only; external custody evidence is not presumed.",
-      "completion_predicate": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
+      "scope": "Read-only current external-bootstrap inventory and custody classification. Inventory the current directory (not a fixed historical 18-file assumption), exact revisions/hashes, consumers, service references and provenance; classify each component's custody/replacement status truthfully. Unknowns hold only the affected component path. No migration, deletion, service change, cutover or retirement.",
+      "proceeds_regardless": "Read-only inventory and custody classification proceed under existing operational/read authority. Live replacement proof and explicit retirement/risk decisions remain separate downstream gates.",
+      "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
       "inherited_authority_gate_refs": [],
-      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
+      "completion_status": "PROCEEDS_REGARDLESS",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -5933,14 +5928,15 @@
     "unowned": 0,
     "parallel_tracks": 5,
     "bootstrap_replacements_sequenced": 9,
-    "gap_blocked_nodes": 21,
-    "proceeds_regardless": 18,
-    "separate_authority_only_nodes": 7,
+    "gap_blocked_nodes": 19,
+    "proceeds_regardless": 21,
+    "separate_authority_only_nodes": 6,
     "proof_fixtures": 46,
     "migrations": 18,
     "acceptance_criteria": 53,
     "enforcement_obligations": 18,
     "recounted_2026_09_22": "DV-1: recomputed from nodes[*].completion_status; enforced by check_wave2_dag.py root_register_consistent",
-    "recounted_2026_09_25_cohort_prep": "Recounted after targeted U6/U10/L1/K1 stale-gate repair; downstream inherited stale copies intentionally not rescheduled."
+    "recounted_2026_09_25_cohort_prep": "Recounted after targeted U6/U10/L1/K1 stale-gate repair; downstream inherited stale copies intentionally not rescheduled.",
+    "recounted_2026_09_25_supply_buffer": "Recounted after C5/K2/B0 stale/broad authority-gate repair for READY-lane supply."
   }
 }

@@ -6403,12 +6403,17 @@
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
           "binding_ref": "#/fixed_design_baseline/shared_contracts",
           "rule": "Pinned Phase 9 shared value, evidence, store, failure and composition contracts apply within node scope. Descriptive imports and withdrawn R1 policy remain non-normative; retain all authority boundaries."
+        },
+        {
+          "source": "docs/architecture/alienintent-architecture-authority-2026-09-19.md#persistent-monitoring",
+          "decision": "Persistent monitoring is operational infrastructure; cognition may be episodic while deterministic monitoring is durable.",
+          "rule": "Owner is SWF-27 / SF-REQ-053. Monitor-host supervision is engineering/operational proof, not a new Founder ownership decision."
         }
       ],
       "scope": {
-        "dag_scope": "",
-        "extent": "SPECIFY assigns host owner and supervision/restart policy, then reviewed host design is proven independently: terminate/stall monitor and scanner, observe external health detection/alert and authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting.",
-        "node_kind": "authority_blocked_prerequisite",
+        "dag_scope": "SWF-27 / SF-REQ-053 already owns persistent deterministic monitoring. C5 proves the independently supervised host boundary for monitor/scanner execution: external health detection and authorized restart preserve generation and pending state. Installation/Doctor configuration remains under SF-REQ-037/038; live replacement/cutover remains separately gated.",
+        "extent": "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting. No operational replacement or bootstrap retirement is claimed.",
+        "node_kind": "planned_prerequisite",
         "owns_capabilities": [
           "supervised_monitor_host"
         ],
@@ -6431,7 +6436,7 @@
         }
       },
       "acceptance_criteria": [
-        "SPECIFY assigns host owner and supervision/restart policy, then reviewed host design is proven independently: terminate/stall monitor and scanner, observe external health detection/alert and authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting."
+        "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting. No operational replacement or bootstrap retirement is claimed."
       ],
       "acceptance_ids": [],
       "acceptance_extents": [],
@@ -6441,7 +6446,7 @@
           "owner_node": "C5",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "SPECIFY assigns host owner and supervision/restart policy, then reviewed host design is proven independently: terminate/stall monitor and scanner, observe external health detection/alert and authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting.",
+          "scenario": "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting. No operational replacement or bootstrap retirement is claimed.",
           "acceptance_ids": [],
           "enforcement_ids": [],
           "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
@@ -6459,7 +6464,8 @@
       ],
       "architecture_constraints": [
         "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
-        "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+        "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
+        "Persistent monitoring ownership is already SWF-27 / SF-REQ-053; Installation/Doctor configuration is SF-REQ-037/038. C5 may implement/prove only the supervised host boundary and must not claim live replacement or retirement."
       ],
       "capabilities": {
         "needs": [
@@ -6507,27 +6513,20 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-MONITOR-HOST"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
-        "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
-        "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+        "Hold only on missing supervisor/restart/self-health/Doctor proof, incompatible existing interfaces, or unavailable evidence. Do not reopen monitor-host ownership.",
+        "Operational replacement, service cutover, or retirement remains separately gated and is outside C5 local/composed proof."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
-      "direct_authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
+      "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
       "planning_eligibility": "GAP_BLOCKED",
@@ -7132,12 +7131,13 @@
           "source": "docs/evidence/wave2-design-contracts.json#/contracts/6",
           "requirement_id": "SF-REQ-039",
           "decisions": [
-            "The following multi-role target decisions are conditional design constraints, not implementation authorization. SPECIFY must first identify existing requirement authority and owners for orchestration and real-path outcome emission. Do not replace FactoryCoordinator._completed_for_outcome under SF-REQ-039 alone; current worker/lifecycle contracts remain untouched.",
-            "Closure records only actions actually performed/read back by local adapters; never populate all required_closure_actions merely because producer succeeded.",
+            "SF-REQ-039 already authorizes deterministic Test Worker coverage of the canonical producer/verifier lifecycle. Execution Coordination owns lifecycle orchestration; Invocation Runtime owns real/test worker invocation behind WorkerProvider. No new owner is required.",
+            "Closure records only actions actually performed/read back by local adapters; never populate required_closure_actions merely because a producer succeeded.",
             "Offline tests exercise the production orchestration path through composition, not a second mocked lifecycle.",
-            "A composed role router resolves PRODUCER/VERIFIER/CLOSURE from the durable invocation record keyed by correlation_id and injects the role-specific worker implementation. Existing WorkerProvider signatures stay intact; verifier output must reference retrieved candidate and independent invocation. Missing RoleOutcomeRecord holds even when WorkerOutcome.kind is success.",
-            "On verifier rejection, persist finding refs and invoke existing transition(action=rework) at the current lifecycle version; enforce remaining authorized attempts/budget before producer allocation. REVIEW evaluates exactly required trusted evidence through evaluate_verdict. ACCEPT performs each required closure action and consumes its receipt; no synthesized closure evidence.",
-            "Before any shared-kernel change lands, both sandbox_run_profile and github_profile constructors must validate assigned authority plus real OutcomeEvidencePort binding for multi-role mode. Missing binding/authority returns ROLE_OUTCOME_BINDING_HOLD before any worker launch, not after every producer success. Existing unmodified profiles are not claimed to enforce this future gate. No mode may claim 039 multi-role proof by falling back to the current success-collapse path. After activation, a missing/miscorrelated sidecar holds the affected transition even on WorkerOutcome success."
+            "K2 / canonical_role_orchestration owns the broader success-collapse replacement inside Execution Coordination: producer success advances only to VERIFY, a distinct independent verifier evaluates the exact candidate, verifier rejection records findings and returns to IMPLEMENT under existing attempt/budget policy, and acceptance/review/closure remain canonical lifecycle operations. K1 does not implement that orchestration; K1 supplies only the durable real WorkerProvider outcome/readback seam that K2 consumes.",
+            "WorkerProvider.start/read_back/cancel remains the common worker boundary for Real Worker and Deterministic Test Worker. Durable role, invocation, attempt, contract/candidate and finding/receipt correlation is retained in existing invocation/effect/execution evidence records. Extend the typed result contract only if revised Design Verification proves current WorkerOutcome cannot carry a required observable; do not introduce a separate RoleOutcomeRecord state owner by default.",
+            "Before activating multi-role behavior in shared/live profiles, composition must prove the configured worker adapter and durable correlation/readback path. Missing/miscorrelated outcome holds the transition even if the worker process exits successfully. Existing unmodified profiles are not claimed to satisfy future multi-role proof until their revised design is implemented.",
+            "Worker Port is the same worker-facing port/protocol used by production: WorkerProvider -> Deterministic Test Worker for scripted scenarios, beside WorkerProvider -> Real Worker -> provider. No test-specific lifecycle shortcuts or script-driven mark_done."
           ],
           "binding_sections": [
             "ports",
@@ -7152,7 +7152,7 @@
             "composition",
             "architecture_fitness"
           ],
-          "applicability": "Apply to this DAG node extent only; conditional decisions remain conditional. This is not ownership of the entire requirement."
+          "applicability": "Apply to K2 canonical_role_orchestration only. FD-01/FD-02 existing owners are binding; K1 supplies durable real outcome/readback and K2 supplies lifecycle orchestration."
         },
         {
           "source": "docs/evidence/wave2-design-contracts.json#/shared_contracts",
@@ -7161,9 +7161,9 @@
         }
       ],
       "scope": {
-        "dag_scope": "039 consumes this capability but does not authorize replacement of FactoryCoordinator._completed_for_outcome. execution_coordination is only a candidate owner until decision.",
-        "extent": "SPECIFY identifies existing requirement and domain owner first. After K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, canonical rework and remaining budget, trusted REVIEW verdict and actual closure receipts. No success-collapse fallback or scenario-written lifecycle state.",
-        "node_kind": "authority_blocked_prerequisite",
+        "dag_scope": "Binding FD-01/FD-02 assign released-BIU lifecycle/result correlation to Execution Coordination and worker/resource execution behind WorkerProvider to Invocation Runtime. K2 owns canonical_role_orchestration: replace the success-collapse path with distinct producer and independent verifier invocations using existing lifecycle/evidence ownership; no new state owner.",
+        "extent": "Under existing Execution Coordination / Invocation Runtime ownership and after K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, exact candidate custody, canonical verifier rejection -> IMPLEMENT repair, remaining attempt/budget enforcement, trusted REVIEW verdict, and actual closure receipts. No success-collapse fallback, scenario-written lifecycle state, or parallel RoleOutcomeRecord state owner.",
+        "node_kind": "planned_prerequisite",
         "owns_capabilities": [
           "canonical_role_orchestration"
         ],
@@ -7192,7 +7192,7 @@
         }
       },
       "acceptance_criteria": [
-        "SPECIFY identifies existing requirement and domain owner first. After K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, canonical rework and remaining budget, trusted REVIEW verdict and actual closure receipts. No success-collapse fallback or scenario-written lifecycle state."
+        "Under existing Execution Coordination / Invocation Runtime ownership and after K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, exact candidate custody, canonical verifier rejection -> IMPLEMENT repair, remaining attempt/budget enforcement, trusted REVIEW verdict, and actual closure receipts. No success-collapse fallback, scenario-written lifecycle state, or parallel RoleOutcomeRecord state owner."
       ],
       "acceptance_ids": [],
       "acceptance_extents": [],
@@ -7202,7 +7202,7 @@
           "owner_node": "K2",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "SPECIFY identifies existing requirement and domain owner first. After K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, canonical rework and remaining budget, trusted REVIEW verdict and actual closure receipts. No success-collapse fallback or scenario-written lifecycle state.",
+          "scenario": "Under existing Execution Coordination / Invocation Runtime ownership and after K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, exact candidate custody, canonical verifier rejection -> IMPLEMENT repair, remaining attempt/budget enforcement, trusted REVIEW verdict, and actual closure receipts. No success-collapse fallback, scenario-written lifecycle state, or parallel RoleOutcomeRecord state owner.",
           "acceptance_ids": [],
           "enforcement_ids": [],
           "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
@@ -7221,7 +7221,7 @@
       "architecture_constraints": [
         "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
         "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
-        "039 consumes this capability but does not authorize replacement of FactoryCoordinator._completed_for_outcome. execution_coordination is only a candidate owner until decision."
+        "Execution Coordination is the existing lifecycle/orchestration owner; Invocation Runtime owns worker/resource execution behind WorkerProvider. Preserve current ports/evidence ownership; no parallel sidecar state owner unless revised Design Verification proves necessity."
       ],
       "capabilities": {
         "needs": [
@@ -7269,29 +7269,20 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
-        "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
-        "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+        "Return a genuine interface or authority conflict to its named existing owner; do not create a new owner or sidecar subsystem.",
+        "Hold on missing K1 proof, unavailable independent-verifier custody/readback, failing lifecycle discrimination, or unbound execution allocation."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
-      "direct_authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION"
-      ],
+      "authority_gap_refs": [],
+      "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
       "planning_eligibility": "GAP_BLOCKED",
@@ -8150,12 +8141,17 @@
           "source": "docs/evidence/wave1-bootstrap-retirement-matrix.json#/transition_plan/1",
           "decision": "No bulk import or deletion; preserve release, monitoring, attention, notification and evidence dependencies.",
           "rule": "Preserve external protection until proof and authority; missing implementation returns to its existing owner. Selected contracts do not authorize external scope."
+        },
+        {
+          "source": "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md#grooming-disposition-for-b0",
+          "decision": "B0 authority gate was too broad; read-only current inventory/custody classification may proceed.",
+          "rule": "Separate inventory, provenance-preserving migration, live replacement proof, and explicit retirement/risk decisions. Unknowns block only the affected component path."
         }
       ],
       "scope": {
-        "dag_scope": "",
-        "extent": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
-        "node_kind": "external_prerequisite",
+        "dag_scope": "Read-only current external-bootstrap inventory and custody classification. Inventory the current directory (not a fixed historical 18-file assumption), exact revisions/hashes, consumers, service references and provenance; classify each component's custody/replacement status truthfully. Unknowns hold only the affected component path. No migration, deletion, service change, cutover or retirement.",
+        "extent": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
+        "node_kind": "planned_prerequisite",
         "owns_capabilities": [
           "bootstrap_custody_manifest"
         ],
@@ -8178,7 +8174,7 @@
         }
       },
       "acceptance_criteria": [
-        "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion."
+        "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement."
       ],
       "acceptance_ids": [],
       "acceptance_extents": [],
@@ -8188,7 +8184,7 @@
           "owner_node": "B0",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "Authorized bootstrap operator inventories all 18 named external modules, exact revisions, consumers and test provenance, then obtains per-component custody decisions. Inventory release, monitor, queue, notification, mailbox and ingress dependencies; unknowns hold affected replacement. No bulk import/deletion.",
+          "scenario": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
           "acceptance_ids": [],
           "enforcement_ids": [],
           "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
@@ -8206,7 +8202,8 @@
       ],
       "architecture_constraints": [
         "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
-        "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+        "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
+        "Do not assume the historical eighteen-module list is complete. Discover current assets and consumers read-only; preserve KEEP_UNTIL_REPLACED protections."
       ],
       "capabilities": {
         "needs": [
@@ -8245,25 +8242,20 @@
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
         "authority_gap_refs": [],
-        "authority_gate_refs": [
-          "POSTW1-DECIDE-006A"
-        ],
+        "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Separate authority required: POSTW1-DECIDE-006A"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
-        "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
-        "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+        "Inventory/classification uncertainty is recorded as UNKNOWN for the affected component and does not block unrelated inventory.",
+        "Any migration, deletion, service change, live replacement, cutover or retirement requires its separately authorized proof/decision and is outside B0."
       ],
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
-      "authority_gate_refs": [
-        "POSTW1-DECIDE-006A"
-      ],
+      "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
       "planning_eligibility": "SEPARATE_AUTHORITY_REQUIRED",
       "assessment_status": "NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE",
