@@ -1,8 +1,12 @@
 """Design admission: existing architecture checks first, then an independent review bound to exact revisions.
 
-Mechanical results are named observations, never approval. Directional module policy is an open
-Founder authority question (R2-GAP-051-EDGE-AUTHORITY): direction-dependent admission holds, and the
-descriptive observed_edges graph is never read as a permission table.
+Mechanical results are named observations, never approval. Directional module policy was the Founder
+authority question R2-GAP-051-EDGE-AUTHORITY: while it is not disposed, direction-dependent admission holds.
+Once disposed (2026-09-25 coupling disposition), a declared dependency is judged by the approved rules and the
+scoped coupling evidence: an inner-layer adapter import, a private product import or an undeclared cross-module
+cycle fails mechanically; an unclassified or leakage-held cross-module domain import holds for classification.
+Any other dependency passes to independent review. The withdrawn R1 allowed_edges table and the descriptive
+observed_edges graph are never read as a permission table.
 """
 from dataclasses import asdict, dataclass
 from hashlib import sha256
@@ -13,6 +17,14 @@ from alienintent.evidence_learning.domain.refs import Ref
 MECHANICALLY_HELD, REVIEW_REQUIRED, VERIFIED, STALE = "MECHANICALLY_HELD", "REVIEW_REQUIRED", "VERIFIED", "STALE"
 REJECTED = "REJECTED"
 EXISTING_CHECKS = ("layering", "vendor-signature", "port-contract", "configuration", "determinism")
+COUPLING_CHECKS = ("module-cycle", "domain-import", "persistence-ownership")
+# Reasons that mean an approved rule is violated, not that classification or evidence is missing.
+FAILING = frozenset({"ARCHITECTURE_CHECK_FAILED", "COUPLING_CHECK_FAILED", "INCOMPATIBLE_INTERFACE",
+                     "FORBIDDEN_DEPENDENCY", "UNDECLARED_CYCLE"})
+INNER_LAYERS = frozenset({"domain", "application"})
+PRIVATE_PRODUCTS = frozenset({"agent_ready"})
+COMPOSITION_ROOT = "composition"
+PERMITTED_DOMAIN_USE = frozenset({"STABLE_VALUE", "PORT_CONTRACT"})
 DESIGN_FIELDS = ("satisfied_requirements", "affected_behavior", "ownership", "interfaces", "persistence", "invariants",
                  "failures_recovery", "security", "capabilities", "evidence", "non_goals")
 MATERIAL = frozenset({"BEHAVIOR", "PUBLIC_API", "PERSISTENCE", "SECURITY"})
@@ -111,10 +123,25 @@ class CheckResult:
 
 
 @dataclass(frozen=True)
+class CouplingEvidence:
+    """Observed cross-module source edges plus the explicit coupling register; descriptive, never permission.
+
+    cycles holds each declared cycle as its exact edge set; classifications maps (consumer, target) of each
+    registered cross-module domain import to STABLE_VALUE, PORT_CONTRACT or DOMAIN_LEAKAGE_HELD.
+    """
+    package: str
+    edges: frozenset[tuple[str, str]]
+    cycles: tuple[frozenset[tuple[str, str]], ...]
+    classifications: dict
+
+
+@dataclass(frozen=True)
 class ArchitectureReport:
-    """Results of the existing approved checks and the digest of the baseline they ran over."""
+    """Results of the existing and scoped coupling checks, the digest of the baseline they ran over, and the
+    coupling evidence read from that same baseline."""
     baseline: str
     results: tuple[CheckResult, ...]
+    coupling: CouplingEvidence | None = None
 
 
 @dataclass(frozen=True)
@@ -128,17 +155,23 @@ class PremiseResult:
 
 @dataclass(frozen=True)
 class DirectionAuthority:
-    """The authority snapshot for directional module policy; observed_edges is descriptive only."""
+    """The authority snapshot for directional module policy; observed_edges is descriptive only.
+
+    disposition_ref names the recorded resolution actor's decision when the question is disposed."""
     gap_id: str
     status: str
     resolution_actor: str
     source_ref: Ref | None
     observed_edges: dict
+    disposition_ref: Ref | None = None
 
     @property
     def digest(self) -> str:
-        return digest({"gap_id": self.gap_id, "status": self.status, "resolution_actor": self.resolution_actor,
-                       "source_ref": asdict(self.source_ref) if self.source_ref else None})
+        document = {"gap_id": self.gap_id, "status": self.status, "resolution_actor": self.resolution_actor,
+                    "source_ref": asdict(self.source_ref) if self.source_ref else None}
+        if self.disposition_ref is not None:
+            document["disposition_ref"] = asdict(self.disposition_ref)
+        return digest(document)
 
 
 @dataclass(frozen=True)
@@ -177,9 +210,25 @@ def _architecture(architecture: ArchitectureReport | None) -> list[Hold]:
     absent = tuple(c for c in EXISTING_CHECKS if c not in names)
     if absent:
         return [Hold("existing-architecture", "ARCHITECTURE_CHECK_UNAVAILABLE", absent)]
-    failed = tuple(f"{r.name}: {v}" for r in architecture.results if not r.passed for v in (r.violations or ("failed",)))
+    failed = tuple(f"{r.name}: {v}" for r in architecture.results if r.name in EXISTING_CHECKS and not r.passed
+                   for v in (r.violations or ("failed",)))
     if failed:
         return [Hold("existing-architecture", "ARCHITECTURE_CHECK_FAILED", failed)]
+    return []
+
+
+def _coupling(architecture: ArchitectureReport | None) -> list[Hold]:
+    """The scoped coupling checks over the same baseline; missing results are a hold, never a PASS."""
+    names = {r.name for r in architecture.results} if architecture is not None else set()
+    absent = tuple(c for c in COUPLING_CHECKS if c not in names)
+    if absent:
+        return [Hold("scoped-coupling", "COUPLING_CHECK_UNAVAILABLE", absent)]
+    failed = tuple(f"{r.name}: {v}" for r in architecture.results if r.name in COUPLING_CHECKS and not r.passed
+                   for v in (r.violations or ("failed",)))
+    if failed:
+        return [Hold("scoped-coupling", "COUPLING_CHECK_FAILED", failed)]
+    if architecture.coupling is None:
+        return [Hold("scoped-coupling", "COUPLING_EVIDENCE_UNAVAILABLE", COUPLING_CHECKS)]
     return []
 
 
@@ -231,14 +280,74 @@ def _premises(design: DesignContract, results: tuple[PremiseResult, ...] | None)
     return []
 
 
-def _direction(design: DesignContract, authority: DirectionAuthority | None) -> list[Hold]:
+def _cycles(edges: set[tuple[str, str]]) -> list[frozenset[str]]:
+    """Strongly connected module groups of more than one module."""
+    successors: dict[str, set[str]] = {}
+    for source, target in edges:
+        successors.setdefault(source, set()).add(target)
+    reach: dict[str, set[str]] = {}
+    for start in {m for edge in edges for m in edge}:
+        seen, pending = set(), [start]
+        while pending:
+            for target in successors.get(pending.pop(), ()):
+                if target not in seen:
+                    seen.add(target)
+                    pending.append(target)
+        reach[start] = seen
+    groups = {frozenset(m for m in reach if m == start or m in reach[start] and start in reach[m]) for start in reach}
+    return [g for g in groups if len(g) > 1]
+
+
+def _endpoint(value: str, package: str) -> tuple[str, ...] | None:
+    parts = value.split(".")
+    parts = parts[1:] if parts[0] == package else parts
+    return tuple(parts) if parts and all(p.isidentifier() for p in parts) else None
+
+
+def _coupled(design: DesignContract, coupling: CouplingEvidence) -> list[Hold]:
+    """Judge declared edges by the approved rules and the scoped coupling evidence, never an edge table."""
+    forbidden, unresolved, unclassified, leakage, declared = [], [], [], [], []
+    for edge in design.dependency_edges:
+        label = f"{edge['source']} -> {edge['target']}"
+        source, target = _endpoint(edge["source"], coupling.package), _endpoint(edge["target"], coupling.package)
+        if source is None or target is None:
+            unresolved.append(label)
+            continue
+        if target[0] in PRIVATE_PRODUCTS:
+            forbidden.append(f"private-product: {label}")
+        elif INNER_LAYERS & set(source[1:2]) and "adapters" in target:
+            forbidden.append(f"layering: {label}")
+        elif source[0] != target[0]:
+            declared.append(((source[0], target[0]), label))
+            if source[0] != COMPOSITION_ROOT and target[1:2] == ("domain",):
+                use = coupling.classifications.get((source[0], ".".join((coupling.package, *target))))
+                if use is None:
+                    unclassified.append(label)
+                elif use not in PERMITTED_DOMAIN_USE:
+                    leakage.append(f"{label}: {use}")
+    graph = set(coupling.edges) | {pair for pair, _ in declared}
+    undeclared = []
+    for group in _cycles(graph):
+        inner = frozenset(e for e in graph if e[0] in group and e[1] in group)
+        if inner not in coupling.cycles:  # A cycle must be declared exactly, edge for edge.
+            undeclared.extend(f"{label} closes cycle {', '.join(sorted(group))}" for pair, label in declared
+                              if pair in inner)
+    return [Hold("direction-authority", code, tuple(dict.fromkeys(affected))) for code, affected in (
+        ("FORBIDDEN_DEPENDENCY", forbidden), ("UNDECLARED_CYCLE", undeclared), ("UNRESOLVABLE_DEPENDENCY", unresolved),
+        ("UNCLASSIFIED_DOMAIN_IMPORT", unclassified), ("DOMAIN_LEAKAGE", leakage)) if affected]
+
+
+def _direction(design: DesignContract, authority: DirectionAuthority | None,
+               architecture: ArchitectureReport | None) -> list[Hold]:
     # observed_edges is a source-import snapshot: it neither permits nor forbids a declared edge.
     affected = tuple(f"{e['source']} -> {e['target']}" for e in design.dependency_edges)
     if not affected:
         return []
     if authority is None or authority.status != DISPOSED:
         return [Hold("direction-authority", "ARCHITECTURE_AUTHORITY_HOLD", affected)]
-    return [Hold("direction-authority", "DIRECTION_SCOPE_UNREVIEWED", affected)]
+    if architecture is None or architecture.coupling is None:
+        return [Hold("direction-authority", "COUPLING_EVIDENCE_UNAVAILABLE", affected)]
+    return _coupled(design, architecture.coupling)
 
 
 def premise_document(result: PremiseResult) -> dict:
@@ -249,15 +358,18 @@ def premise_document(result: PremiseResult) -> dict:
 def inspect_design(design: DesignContract, architecture: ArchitectureReport | None,
                    authority: DirectionAuthority | None, premises: tuple[PremiseResult, ...] | None) -> MechanicalReport:
     """Every check runs and reports in order; the existing architecture checks always come first."""
-    ordered = (("existing-architecture", _architecture(architecture)), ("interface-compatibility", _interfaces(design)),
-               ("contract-completeness", _completeness(design)), ("decisions", _decisions(design)),
-               ("platform-premise", _premises(design, premises)), ("direction-authority", _direction(design, authority)))
+    ordered = (("existing-architecture", _architecture(architecture)), ("scoped-coupling", _coupling(architecture)),
+               ("interface-compatibility", _interfaces(design)), ("contract-completeness", _completeness(design)),
+               ("decisions", _decisions(design)), ("platform-premise", _premises(design, premises)),
+               ("direction-authority", _direction(design, authority, architecture)))
     holds = tuple(h for _, found in ordered for h in found)
-    checks = [{"check": name, "result": "HOLD" if found else "PASS", "reasons": [h.reason_code for h in found]}
-              for name, found in ordered]
+    checks = [{"check": name, "result": "FAIL" if FAILING & {h.reason_code for h in found} else "HOLD" if found
+               else "PASS", "reasons": [h.reason_code for h in found]} for name, found in ordered]
     if architecture is not None:
         checks[0]["existing"] = [{"name": r.name, "passed": r.passed, "violations": list(r.violations)}
-                                 for r in architecture.results]
+                                 for r in architecture.results if r.name in EXISTING_CHECKS]
+        checks[1]["coupling"] = [{"name": r.name, "passed": r.passed, "violations": list(r.violations)}
+                                 for r in architecture.results if r.name in COUPLING_CHECKS]
     premise_docs = tuple(premise_document(r) for r in premises or ())
     vector = {"design": design.digest, "requirements": dict(sorted(design.requirements.items())),
               "architecture": architecture.baseline if architecture else None,

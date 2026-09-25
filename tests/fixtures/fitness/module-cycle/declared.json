@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "record_kind": "CouplingRegister",
+  "authority": "FX-U6 fixture register",
+  "package": "alienintent",
+  "cycles": [
+    {
+      "modules": [
+        "alpha",
+        "beta"
+      ],
+      "edges": [
+        [
+          "alpha",
+          "beta"
+        ],
+        [
+          "beta",
+          "alpha"
+        ]
+      ],
+      "status": "ACKNOWLEDGED_EXISTING",
+      "justification": "fixture: the cycle is explicit, edge for edge"
+    }
+  ],
+  "domain_imports": [],
+  "persistence": []
+}
