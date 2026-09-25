@@ -10,7 +10,9 @@ from sys import stdlib_module_names
 from typing import Callable, Iterable
 
 
-CHECKS = ("layering", "vendor-signature", "port-contract", "configuration", "determinism")
+CHECKS = ("layering", "vendor-signature", "port-contract", "configuration", "determinism", "private-product")
+# Products AlienIntent integrates only through their published interfaces (C#/contracts/4/architecture_fitness).
+PRIVATE_PRODUCT_MODULES = {"agent_ready": "Agent Ready private import"}
 INNER_LAYERS = {"domain", "application"}
 SIGNATURE_LAYERS = {"domain", "ports"}
 STDLIB_MODULES = set(stdlib_module_names)
@@ -179,12 +181,29 @@ def check_determinism(path: Path, tree: ast.Module, root: Path) -> list[Violatio
     return violations
 
 
+def check_private_product(path: Path, tree: ast.Module, root: Path) -> list[Violation]:
+    """No layer imports a product's implementation; its CLI/MCP contract is bound through composition instead."""
+    violations = []
+    for node in ast.walk(tree):
+        modules: list[str] = []
+        if isinstance(node, ast.Import):
+            modules = [alias.name for alias in node.names]
+        elif isinstance(node, ast.ImportFrom) and node.level == 0 and node.module:
+            modules = [node.module]
+        for module in modules:
+            message = PRIVATE_PRODUCT_MODULES.get(module.split(".")[0])
+            if message:
+                violations.append(Violation(path, node.lineno, message))
+    return violations
+
+
 CHECK_FUNCTIONS: dict[str, Callable[[Path, ast.Module, Path], list[Violation]]] = {
     "layering": check_layering,
     "vendor-signature": check_vendor_signature,
     "port-contract": check_port_contract,
     "configuration": check_configuration,
     "determinism": check_determinism,
+    "private-product": check_private_product,
 }
 
 
