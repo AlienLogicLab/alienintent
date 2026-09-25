@@ -561,7 +561,7 @@
       "migration": null,
       "bootstrap_replacement_for": [],
       "track": "upstream",
-      "node_kind": "authority_blocked_prerequisite",
+      "node_kind": "planned_prerequisite",
       "scope": "",
       "proceeds_regardless": "The Founder disposed the edge-policy question on 2026-09-25. Revise and independently review the scoped coupling checks, then execute FX-U6 against a genuinely forbidden dependency/incompatible-interface fixture. No withdrawn edge table.",
       "completion_predicate": "Use the 2026-09-25 Founder coupling disposition. Existing architecture checks plus scoped cycle/domain-import/persistence ownership checks run before fresh independent design review. A materially forbidden dependency or incompatible interface fails mechanically; a conforming fixture records those results and a separate attributable independent review. Do not enforce withdrawn_r1_proposal.",
@@ -709,20 +709,18 @@
         "B9",
         "R9"
       ],
-      "authority_gap_refs": [
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "migration": null,
       "bootstrap_replacement_for": [],
       "track": "upstream",
-      "node_kind": "authority_blocked_prerequisite",
+      "node_kind": "planned_prerequisite",
       "scope": "SF-REQ-013 owns compiler-derived initial decomposition and authorized conserved Split Transactions. The amendment settles derivation and ownership; existing independent design and edge-authority gates remain.",
       "proceeds_regardless": "U7 validation/refusal continues while unresolved design/edge authority holds affected admission; no helper-only Wave 2A completion claim.",
       "completion_predicate": "Derive initial candidates from exact requirements/design/proof without a mandatory external hand-authored mapping; cover all four obligation categories and complete BiuContract fields. Prove authorized split/replan with frozen obligations, 100% mapping to resulting units/Integration Parent, deterministic graph identity rewrites without weaker predicates or cycles, grammar-based identities independent of sort order, lineage, stale-assessment invalidation and materialization/submission of each result through SF-REQ-015. Preserve immutable original history. Agent Ready judgment never performs mutation or authorizes release.",
       "inherited_authority_gate_refs": [],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "PROCEEDS_REGARDLESS",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
       "revision_2026_09_22": {
         "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
@@ -989,9 +987,7 @@
         "B9",
         "R9"
       ],
-      "authority_gap_refs": [
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "migration": null,
@@ -1002,7 +998,7 @@
       "proceeds_regardless": "Partial integration of U1-U5/U7/U9 is useful but cannot satisfy this capstone.",
       "completion_predicate": "Integrate already-proven inventory -> ambiguity -> premise/proof -> independent design applicability -> initial compilation -> lint/retained assessment consumption. Mutate a source/decision/design revision and prove downstream hold without lifecycle/Project mutation. No output asserts release. Integrate U8 conserved split/replan with per-result lint/assessment submission and obligation/lineage evidence; helper-only validation cannot satisfy compiler or transaction proof. Existing design-edge and readiness integration gates still apply; compiler derivation is settled.",
       "inherited_authority_gate_refs": [],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "PROCEEDS_REGARDLESS",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
       "revision_2026_09_22": {
         "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
@@ -1352,14 +1348,12 @@
         "R8"
       ],
       "authority_gap_refs": [],
-      "direct_authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "migration": null,
       "bootstrap_replacement_for": [],
       "track": "control",
-      "node_kind": "authority_blocked_prerequisite",
+      "node_kind": "planned_prerequisite",
       "scope": "SWF-27 / SF-REQ-053 already owns persistent deterministic monitoring. C5 proves the independently supervised host boundary for monitor/scanner execution: external health detection and authorized restart preserve generation and pending state. Installation/Doctor configuration remains under SF-REQ-037/038; live replacement/cutover remains separately gated.",
       "proceeds_regardless": "R1-GAP-MONITOR-HOST is not a Founder decision. Existing authority assigns persistent monitoring to SWF-27 / SF-REQ-053; C5 still requires concrete supervisor/restart/self-health/Doctor proof.",
       "completion_predicate": "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting. No operational replacement or bootstrap retirement is claimed.",
@@ -1500,7 +1494,7 @@
       "migration": null,
       "bootstrap_replacement_for": [],
       "track": "lifecycle",
-      "node_kind": "authority_blocked_prerequisite",
+      "node_kind": "planned_prerequisite",
       "scope": "039 is the consumer requirement, not authority to implement this substrate. invocation_runtime is a candidate location only; domain owner is unassigned.",
       "proceeds_regardless": "Existing FD-01/FD-02 ownership answers orchestration/result ownership. K1 proves the real WorkerProvider path emits durable attributable outcomes compatible with the deterministic worker path; no separate RoleOutcomeRecord owner is required.",
       "completion_predicate": "Under existing Execution Coordination and Invocation Runtime ownership, the non-scripted WorkerProvider path durably retains and reads back attributable role/invocation/attempt/contract/candidate outcome evidence across restart. Missing or miscorrelated durable result holds despite process success. The result remains compatible with the common WorkerProvider/WorkerOutcome contract; no parallel sidecar state owner.",
@@ -1564,14 +1558,12 @@
         "R9"
       ],
       "authority_gap_refs": [],
-      "direct_authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION"
-      ],
+      "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "migration": null,
       "bootstrap_replacement_for": [],
       "track": "lifecycle",
-      "node_kind": "authority_blocked_prerequisite",
+      "node_kind": "planned_prerequisite",
       "scope": "Binding FD-01/FD-02 assign released-BIU lifecycle/result correlation to Execution Coordination and worker/resource execution behind WorkerProvider to Invocation Runtime. K2 owns canonical_role_orchestration: replace the success-collapse path with distinct producer and independent verifier invocations using existing lifecycle/evidence ownership; no new state owner.",
       "proceeds_regardless": "R1-GAP-039-ORCHESTRATION and R1-GAP-039-REAL-OUTCOME are resolved by FD-01/FD-02 existing ownership. K2 still requires revised implementation/proof of canonical multi-role orchestration.",
       "completion_predicate": "Under existing Execution Coordination / Invocation Runtime ownership and after K1 proof, exercise durable role routing with distinct producer/verifier/closure invocations, exact candidate custody, canonical verifier rejection -> IMPLEMENT repair, remaining attempt/budget enforcement, trusted REVIEW verdict, and actual closure receipts. No success-collapse fallback, scenario-written lifecycle state, or parallel RoleOutcomeRecord state owner.",
@@ -1635,10 +1627,7 @@
         "B9",
         "R9"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "migration": {
@@ -1659,7 +1648,7 @@
       "proceeds_regardless": "Prepare refusal fixtures against current APIs; full composed proof waits on both 039 gaps.",
       "completion_predicate": "Before any shared-kernel activation/landing, actual sandbox_run_profile and github_profile constructors with local transports refuse missing assigned authority/real sidecar binding before worker launch. Bound real adapter reaches correlated outcome readback on success/rejection/restart. Independently disconnect emission and bypass binding gate to kill expected assertions.",
       "inherited_authority_gate_refs": [],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "PROCEEDS_REGARDLESS",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -1729,10 +1718,7 @@
         "B9",
         "R9"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "migration": null,
@@ -1743,7 +1729,7 @@
       "proceeds_regardless": "S0 current-interface checks remain valid, not full 039 satisfaction.",
       "completion_predicate": "Denied-network complete lifecycle with fresh verifier and actual Git publication/retrieval, rejection/rework, wrong candidate, missing sidecar, duplicate/restart and judgment hold. One authorized effect and real closure receipts. Custody/verifier/binding/emission mutations must fail. Reports label every external substitution and do not claim live proof.",
       "inherited_authority_gate_refs": [],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "PROCEEDS_REGARDLESS",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -1823,10 +1809,8 @@
       "scope": "",
       "proceeds_regardless": "053-only integration of C1-C4 proceeds; full 056-dependent integration waits for ratification.",
       "completion_predicate": "End coordinator episode during duplicate/delayed outcomes; fresh context has identical actions, attention survives and completed judgment suppresses recovery; stale epoch cannot send. Use proven store/consumer/readback and fake time; stopped scans surface degraded/stale health. This local result cannot discharge host or live retirement gates.",
-      "inherited_authority_gate_refs": [
-        "POSTW1-DECIDE-008A"
-      ],
-      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
+      "inherited_authority_gate_refs": [],
+      "completion_status": "PROCEEDS_REGARDLESS",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -1886,7 +1870,7 @@
       "proceeds_regardless": "Read-only inventory and custody classification proceed under existing operational/read authority. Live replacement proof and explicit retirement/risk decisions remain separate downstream gates.",
       "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement.",
       "inherited_authority_gate_refs": [],
-      "completion_status": "PROCEEDS_REGARDLESS",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -1938,10 +1922,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
@@ -1956,7 +1937,7 @@
       "inherited_authority_gate_refs": [
         "POSTW1-DECIDE-006A"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -2008,10 +1989,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY"
@@ -2037,7 +2015,7 @@
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "POSTW1-DECIDE-006A"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -2094,11 +2072,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -2114,7 +2088,7 @@
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "POSTW1-DECIDE-006A"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -2171,11 +2145,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -2189,10 +2159,9 @@
       "completion_predicate": "Authorized live workload: dropped trigger recovered within G+I only with healthy independent scans and available evidence; provider/judgment block suppressed, attributed resolution, delayed delivery and restart duplicate-safe, exact real outcome readback. Confirm one writer and retained attention linkage. Offline success alone fails.",
       "inherited_authority_gate_refs": [
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-        "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A"
+        "POSTW1-DECIDE-006A"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -2250,11 +2219,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A",
@@ -2271,7 +2236,7 @@
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "POSTW1-DECIDE-006A"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
       "release_preconditions": [
         "Durable release record explicitly authorizes IMPLEMENT",
@@ -2429,9 +2394,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A",
@@ -2448,7 +2411,7 @@
       "inherited_authority_gate_refs": [
         "POSTW1-DECIDE-006A"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -2511,12 +2474,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A",
@@ -2535,10 +2493,9 @@
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
         "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A",
         "WINDOWS_NOTIFICATION_DISPOSITION"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
       "revision_2026_09_22": {
         "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
@@ -2858,9 +2815,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A",
@@ -2879,7 +2834,7 @@
         "POSTW1-DECIDE-006A",
         "WINDOWS_NOTIFICATION_DISPOSITION"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -2931,11 +2886,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -2962,10 +2913,9 @@
       "completion_predicate": "Prove dropped-event recovery, suppression during provider/judgment block, explicit resolution, delayed delivery and restart duplicate safety. Preserve one writer and queue linkage; specification or sandbox-only tests fail this gate.",
       "inherited_authority_gate_refs": [
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-        "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A"
+        "POSTW1-DECIDE-006A"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -3018,11 +2968,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -3051,7 +2997,7 @@
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "POSTW1-DECIDE-006A"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -3114,11 +3060,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -3147,12 +3089,11 @@
         "ATTENTION_ACTIVATION_AUTHORITY",
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A",
         "RESIDENT_TENURE_DECISION",
         "SWF-21_SCOPE_DISPOSITION",
         "WINDOWS_NOTIFICATION_DISPOSITION"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -3205,11 +3146,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -3239,7 +3176,7 @@
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "POSTW1-DECIDE-006A"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
       "revision_2026_09_22": {
         "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
@@ -3329,12 +3266,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -3365,12 +3297,11 @@
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
         "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A",
         "RESIDENT_TENURE_DECISION",
         "SWF-21_SCOPE_DISPOSITION",
         "WINDOWS_NOTIFICATION_DISPOSITION"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission.",
       "revision_2026_09_22": {
         "reason": "Reconcile amended source/provenance and conserved compilation/split obligations within session A scope; preserve unrelated authority and historical evidence.",
@@ -3534,9 +3465,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "PROGRAMME_COMPLETION_OR_SUCCESSOR_AUTHORITY"
@@ -3555,7 +3484,7 @@
         "SWF-21_SCOPE_DISPOSITION",
         "WINDOWS_NOTIFICATION_DISPOSITION"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
@@ -3610,9 +3539,7 @@
         "O",
         "C"
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -3636,7 +3563,7 @@
       "node_kind": "retirement_gate",
       "scope": "KEEP_UNTIL_REPLACED. This is a future proof/authority gate, not a scheduled removal or execution instruction.",
       "proceeds_regardless": "Keep mechanism active; unrelated technical tracks continue.",
-      "completion_predicate": "Amendment §15 completion evidence, reviews and decision branches resolved/dispositioned; mailbox and artifacts preserved. No Phase 7 or later work is performed by this audit.",
+      "completion_predicate": "Amendment \u00a715 completion evidence, reviews and decision branches resolved/dispositioned; mailbox and artifacts preserved. No Phase 7 or later work is performed by this audit.",
       "inherited_authority_gate_refs": [
         "ATTENTION_ACTIVATION_AUTHORITY",
         "POSTW1-DECIDE-006A",
@@ -3645,7 +3572,7 @@
         "SWF-21_SCOPE_DISPOSITION",
         "WINDOWS_NOTIFICATION_DISPOSITION"
       ],
-      "completion_status": "GAP_BLOCKED",
+      "completion_status": "SEPARATE_AUTHORITY_REQUIRED",
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     }
   ],
@@ -3658,7 +3585,12 @@
       "question": "Which existing requirement authorizes canonical multi-role orchestration and which domain owner maintains it?",
       "evidence": "Phase 8 SF-REQ-039 scopes offline proof over SF-REQ-001..010 interfaces; FactoryCoordinator._completed_for_outcome currently collapses successful production through closure. The selected ten contracts do not assign the proposed kernel replacement.",
       "design_disposition": "Return requirement/owner mapping to SPECIFY; execution_coordination is the candidate location, not an assigned capability owner. Withdraw permission to implement the replacement under the offline harness requirement.",
-      "blocks": "Shared-kernel role router/orchestration changes and claims that full 039 scenarios are implementable."
+      "blocks": "Shared-kernel role router/orchestration changes and claims that full 039 scenarios are implementable.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "FD-01/FD-02 existing architecture ownership",
+        "note": "Execution Coordination owns released-BIU lifecycle/orchestration. K2 implements/proves canonical multi-role orchestration under that owner; no new state owner."
+      }
     },
     {
       "id": "R1-GAP-039-REAL-OUTCOME",
@@ -3668,7 +3600,12 @@
       "question": "Which existing requirement and owner supply durable RoleOutcomeRecord on the non-scripted worker path, with compatible readback and consumer semantics?",
       "evidence": "sandbox_run_profile.py constructs RealWorkerProvider and the shared FactoryCoordinator; github_profile.py uses that coordinator. WorkerOutcome alone supplies no proposed role sidecar binding.",
       "design_disposition": "Return to SPECIFY; invocation_runtime is a candidate adapter location only. No worker contract amendment or new Product Requirement here.",
-      "blocks": "OutcomeEvidencePort activation in shared/live profiles and live-path readiness claims."
+      "blocks": "OutcomeEvidencePort activation in shared/live profiles and live-path readiness claims.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "FD-01/FD-02 existing architecture ownership",
+        "note": "Invocation Runtime owns worker/resource execution behind WorkerProvider; Execution Coordination owns durable lifecycle/result correlation. No RoleOutcomeRecord sidecar is required by default."
+      }
     },
     {
       "id": "R1-GAP-013-ALLOCATION",
@@ -3682,8 +3619,7 @@
       "resolution_2026_09_22": {
         "status": "SETTLED_BY_AMENDMENT",
         "authority": "factory plan SF-REQ-013 amendment 2026-09-22 (compiler-derived initial decomposition; conserved split/replan)",
-        "note": "Original question, evidence and disposition retained above verbatim as Phase 9/11 history; no node carries this gap since session A (bd38510).",
-        "dv_finding": "DV-1"
+        "note": "Original question/evidence remain historical; no current node may use this as an authority blocker."
       }
     },
     {
@@ -3694,7 +3630,12 @@
       "question": "Who owns the persistent monitor/periodic-scan host, supervision and restart policy independent of model invocation?",
       "evidence": "SWF-27 and 053 require persistence beyond episodes; 056 G+I assumes functioning scans. Neither this design nor its composition constructor supplies a deployment host/supervisor owner.",
       "design_disposition": "Explicit out-of-scope operational ownership gap returned to SPECIFY/Product authority, routed by Program Director. Local service design and fixtures may proceed, but no background shell process or bootstrap waiter is adopted as supervisor.",
-      "blocks": "Live monitor/scanner adoption and an operational G+I guarantee until host ownership and independent supervision are assigned."
+      "blocks": "Live monitor/scanner adoption and an operational G+I guarantee until host ownership and independent supervision are assigned.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "SWF-27 / SF-REQ-053 persistent monitoring ownership; 2026-09-25 authority-blocker grooming",
+        "note": "Monitor-host ownership is not a Founder decision. Concrete supervisor/restart/self-health/Doctor proof remains required; live cutover/retirement remains separately gated."
+      }
     },
     {
       "id": "R2-GAP-051-EDGE-AUTHORITY",
@@ -3704,17 +3645,24 @@
       "question": "Does the R1 directional restriction merely refine approved internal module design, or materially change the approved responsibility boundary? Is adoption authorized, and under what scope?",
       "evidence": "Architecture authority section 44 lists pre-Python modeling work; later docs/architecture/pre-python-gate/gate-reclassification.md G03 cites binding FD-02 approving internal modules and Control Plane application orchestration. That resolves the module classification, not explicit adoption of R1 allowed_edges. The five imports in four named files demonstrate the practical impact.",
       "design_disposition": "Withdraw R1 allowed_edges as a normative gate. Record observed_edges and the four importing-file violations descriptively. No requirement is created, amended or weakened; no product boundary is decided here.",
-      "blocks": "Adoption of the proposed directional extension and affected SF-REQ-051 design-conformity claims until Founder disposition and reviewed scoped design; does not block running existing approved checks or certify the current source against the withdrawn table."
+      "blocks": "Adoption of the proposed directional extension and affected SF-REQ-051 design-conformity claims until Founder disposition and reviewed scoped design; does not block running existing approved checks or certify the current source against the withdrawn table.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "docs/decisions/2026-09-25-cross-module-coupling-risk-disposition.md",
+        "note": "Historical blanket allowed_edges policy remains withdrawn. Existing architecture checks plus evidence-driven coupling classification govern; no current node may use this gap as a blocker."
+      }
     }
   ],
   "authority_policy": {
-    "wave2a_completion_blocker": "R2-GAP-051-EDGE-AUTHORITY",
+    "wave2a_completion_blocker": null,
     "propagation": "authority_gap_refs includes direct and all transitive dependency gaps; separate existing authority decisions are in authority_gate_refs and inherited_authority_gate_refs.",
-    "proceeds_regardless_definition": "Node completion has neither a dependency on one of the five gaps nor a separate unfulfilled authority gate. Other nodes list partial work that proceeds, without claiming completion.",
+    "proceeds_regardless_definition": "Node completion has no unresolved authority gap and no separate unfulfilled authority gate. Dependencies still govern execution order.",
     "new_decision_handling": "Preserve unaffected proof; pin disposition; revise affected design/DAG and obtain independent review before dependent implementation. No presumed favorable decision.",
     "wave2a_completion_blocker_history": {
       "until_2026_09_22": "R1-GAP-013-ALLOCATION",
-      "dv_finding": "DV-1"
+      "dv_finding": "DV-1",
+      "until_2026_09_25": "R2-GAP-051-EDGE-AUTHORITY",
+      "current": "NONE \u2014 allocation and edge-authority questions are settled; ordinary dependencies and explicit authority gates govern."
     },
     "wave2a_completion_node": "A"
   },
@@ -4406,7 +4354,7 @@
       "owner_node": "R9",
       "status": "PLANNED_NOT_EXECUTED",
       "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-      "scenario": "Amendment §15 completion evidence, reviews and decision branches resolved/dispositioned; mailbox and artifacts preserved. No Phase 7 or later work is performed by this audit.",
+      "scenario": "Amendment \u00a715 completion evidence, reviews and decision branches resolved/dispositioned; mailbox and artifacts preserved. No Phase 7 or later work is performed by this audit.",
       "acceptance_ids": [],
       "enforcement_ids": [],
       "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
@@ -4728,7 +4676,7 @@
       "requirement_id": "SF-REQ-015",
       "proof_owner_node": "U9",
       "fixture_ref": "FX-U9",
-      "source_design_probe": "Replaying the retained PY-10 bootstrap-assessor history preserves verbatim BLOCKED → SPLIT_RECOMMENDED → READY, with READY a distinct fresh assessment after prerequisite completion and all prior revision references retrievable. These are historical Surrogate Readiness Assessments, not an Agent Ready sequence; retention does not coerce or relabel historical verdicts.",
+      "source_design_probe": "Replaying the retained PY-10 bootstrap-assessor history preserves verbatim BLOCKED \u2192 SPLIT_RECOMMENDED \u2192 READY, with READY a distinct fresh assessment after prerequisite completion and all prior revision references retrievable. These are historical Surrogate Readiness Assessments, not an Agent Ready sequence; retention does not coerce or relabel historical verdicts.",
       "source_contract_sections": [
         "ports",
         "transitions",
@@ -5184,7 +5132,7 @@
       "fixture_ref": "FX-U1",
       "id": "011-inventory",
       "layer": "python_unit_integration",
-      "rule": "Use identifier_contract.historical_fixture_manifest (POSTW1-011-HISTORICAL-CORPUS-R2), asserting exact referenced and definition ID sets, forms and locators, not counts alone. All three definition forms yield baseline 56 references/53 definitions, one 050, retired 054 and unresolved 048/052/056; format aliases retain identity. In each prose form, synthetic fixtures retain SF-REQ-011A, SF-REQ-1000 and authorized TEAM-X-REQ-011 exactly; reject SF-REQ-01, SF-REQ-011AA and SF-REQ-011-extra with UNRECOGNIZED_REQUIREMENT_ID. Unknown namespace has its distinct reason; empty/ambiguous slots retain typed issues. Permuting input order preserves identities. Fixtures are not Product Requirements. Add SF-REQ-053-AC-01, SF-REQ-001/SF-REQ-002, SF-REQ-030/054 and SF-REQ-001–010 in reference spans: exact AcceptanceCriterionId/CompoundReference, zero shape conflicts and zero definitions. The same kinds in a definition slot yield WRONG_IDENTIFIER_KIND. An unmanifested report containing malformed tokens has no effect; manifesting a requirement span containing SF-REQ-011-extra must yield a blocking issue. Recognize SF-REQ-007's and SF-REQ-018’s as PossessiveReference in reference spans only; Markdown [SF-REQ-007](target) contributes its full label token, not URL punctuation. Unknown suffixes still fail.",
+      "rule": "Use identifier_contract.historical_fixture_manifest (POSTW1-011-HISTORICAL-CORPUS-R2), asserting exact referenced and definition ID sets, forms and locators, not counts alone. All three definition forms yield baseline 56 references/53 definitions, one 050, retired 054 and unresolved 048/052/056; format aliases retain identity. In each prose form, synthetic fixtures retain SF-REQ-011A, SF-REQ-1000 and authorized TEAM-X-REQ-011 exactly; reject SF-REQ-01, SF-REQ-011AA and SF-REQ-011-extra with UNRECOGNIZED_REQUIREMENT_ID. Unknown namespace has its distinct reason; empty/ambiguous slots retain typed issues. Permuting input order preserves identities. Fixtures are not Product Requirements. Add SF-REQ-053-AC-01, SF-REQ-001/SF-REQ-002, SF-REQ-030/054 and SF-REQ-001\u2013010 in reference spans: exact AcceptanceCriterionId/CompoundReference, zero shape conflicts and zero definitions. The same kinds in a definition slot yield WRONG_IDENTIFIER_KIND. An unmanifested report containing malformed tokens has no effect; manifesting a requirement span containing SF-REQ-011-extra must yield a blocking issue. Recognize SF-REQ-007's and SF-REQ-018\u2019s as PossessiveReference in reference spans only; Markdown [SF-REQ-007](target) contributes its full label token, not URL punctuation. Unknown suffixes still fail.",
       "proven_red_obligation": "Disable either prose parser and require count/identity assertion failure; introduce conflicting definitions and require no effective definition. Replace full-token grammar with SF-REQ-[0-9]{3}, strip a suffix, or silently drop a malformed token separately: exact identity/typed-reason assertions fail even if baseline 56/53 counts pass. Misclassify an AC as a requirement, drop compound operands, scan an excluded document, or suppress an in-scope malformed token: the corresponding category/scope/exact-ledger assertion must fail. Fixture-source digest mismatch must hold rather than pass by count.",
       "phase3_promotion": null,
       "status": "DESIGNED_NOT_IMPLEMENTED",
@@ -5607,7 +5555,7 @@
         13,
         14
       ],
-      "replacement_requirement": "Full sovereignty evidence, approved one-writer live-profile migration, active-work/effect reconciliation, backup and nonduplicating rollback; conformance S1–S7 is a design elaboration, not current operational proof.",
+      "replacement_requirement": "Full sovereignty evidence, approved one-writer live-profile migration, active-work/effect reconciliation, backup and nonduplicating rollback; conformance S1\u2013S7 is a design elaboration, not current operational proof.",
       "dependency_path": [
         "A",
         "B0",
@@ -5857,7 +5805,7 @@
         7,
         10
       ],
-      "release_gate": "Amendment §15 completion evidence, reviews and decision branches resolved/dispositioned; mailbox and artifacts preserved. No Phase 7 or later work is performed by this audit.",
+      "release_gate": "Amendment \u00a715 completion evidence, reviews and decision branches resolved/dispositioned; mailbox and artifacts preserved. No Phase 7 or later work is performed by this audit.",
       "plan_disposition": "Preserved condition only; no action executed"
     }
   ],
@@ -5928,15 +5876,16 @@
     "unowned": 0,
     "parallel_tracks": 5,
     "bootstrap_replacements_sequenced": 9,
-    "gap_blocked_nodes": 19,
-    "proceeds_regardless": 21,
-    "separate_authority_only_nodes": 6,
+    "gap_blocked_nodes": 0,
+    "proceeds_regardless": 25,
+    "separate_authority_only_nodes": 21,
     "proof_fixtures": 46,
     "migrations": 18,
     "acceptance_criteria": 53,
     "enforcement_obligations": 18,
     "recounted_2026_09_22": "DV-1: recomputed from nodes[*].completion_status; enforced by check_wave2_dag.py root_register_consistent",
     "recounted_2026_09_25_cohort_prep": "Recounted after targeted U6/U10/L1/K1 stale-gate repair; downstream inherited stale copies intentionally not rescheduled.",
-    "recounted_2026_09_25_supply_buffer": "Recounted after C5/K2/B0 stale/broad authority-gate repair for READY-lane supply."
+    "recounted_2026_09_25_supply_buffer": "Recounted after C5/K2/B0 stale/broad authority-gate repair for READY-lane supply.",
+    "recounted_2026_09_25_global_stale_gap_cleanup": "Removed only authority blockers already dispositioned by 2026-09-25 grooming; explicit live/cutover gates remain."
   }
 }

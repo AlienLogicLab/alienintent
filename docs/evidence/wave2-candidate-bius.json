@@ -421,7 +421,12 @@
       "question": "Which existing requirement authorizes canonical multi-role orchestration and which domain owner maintains it?",
       "evidence": "Phase 8 SF-REQ-039 scopes offline proof over SF-REQ-001..010 interfaces; FactoryCoordinator._completed_for_outcome currently collapses successful production through closure. The selected ten contracts do not assign the proposed kernel replacement.",
       "design_disposition": "Return requirement/owner mapping to SPECIFY; execution_coordination is the candidate location, not an assigned capability owner. Withdraw permission to implement the replacement under the offline harness requirement.",
-      "blocks": "Shared-kernel role router/orchestration changes and claims that full 039 scenarios are implementable."
+      "blocks": "Shared-kernel role router/orchestration changes and claims that full 039 scenarios are implementable.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "FD-01/FD-02 existing architecture ownership",
+        "note": "Execution Coordination owns released-BIU lifecycle/orchestration. K2 implements/proves canonical multi-role orchestration under that owner; no new state owner."
+      }
     },
     {
       "id": "R1-GAP-039-REAL-OUTCOME",
@@ -431,7 +436,12 @@
       "question": "Which existing requirement and owner supply durable RoleOutcomeRecord on the non-scripted worker path, with compatible readback and consumer semantics?",
       "evidence": "sandbox_run_profile.py constructs RealWorkerProvider and the shared FactoryCoordinator; github_profile.py uses that coordinator. WorkerOutcome alone supplies no proposed role sidecar binding.",
       "design_disposition": "Return to SPECIFY; invocation_runtime is a candidate adapter location only. No worker contract amendment or new Product Requirement here.",
-      "blocks": "OutcomeEvidencePort activation in shared/live profiles and live-path readiness claims."
+      "blocks": "OutcomeEvidencePort activation in shared/live profiles and live-path readiness claims.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "FD-01/FD-02 existing architecture ownership",
+        "note": "Invocation Runtime owns worker/resource execution behind WorkerProvider; Execution Coordination owns durable lifecycle/result correlation. No RoleOutcomeRecord sidecar is required by default."
+      }
     },
     {
       "id": "R1-GAP-013-ALLOCATION",
@@ -441,7 +451,12 @@
       "question": "Does an authorized upstream allocation producer exist, or must SF-REQ-013 derive initial decomposition under explicit constraints?",
       "evidence": "Phase 8 scope and AC-01 start from specified requirements and verified design; dependencies name no allocation producer. canonical-architecture excludes a general task decomposition engine, not the explicitly selected bounded initial compilation obligation.",
       "design_disposition": "Evidence selects: SF-REQ-013 must derive the initial decomposition itself; no supported external allocation owner/interface exists. Withdraw mandatory hand-authored allocation input. Return to SPECIFY for authoritative confirmation and decomposition/identity constraints; do not close that product-authority question in design. If authority instead chooses an external producer it must name its owner and interface explicitly.",
-      "blocks": "Initial decomposition implementation and Wave 2A completion claims; validating allocated candidates alone cannot satisfy 013."
+      "blocks": "Initial decomposition implementation and Wave 2A completion claims; validating allocated candidates alone cannot satisfy 013.",
+      "resolution_2026_09_22": {
+        "status": "SETTLED_BY_AMENDMENT",
+        "authority": "factory plan SF-REQ-013 amendment 2026-09-22 (compiler-derived initial decomposition; conserved split/replan)",
+        "note": "Original question/evidence remain historical; no current node may use this as an authority blocker."
+      }
     },
     {
       "id": "R1-GAP-MONITOR-HOST",
@@ -451,7 +466,12 @@
       "question": "Who owns the persistent monitor/periodic-scan host, supervision and restart policy independent of model invocation?",
       "evidence": "SWF-27 and 053 require persistence beyond episodes; 056 G+I assumes functioning scans. Neither this design nor its composition constructor supplies a deployment host/supervisor owner.",
       "design_disposition": "Explicit out-of-scope operational ownership gap returned to SPECIFY/Product authority, routed by Program Director. Local service design and fixtures may proceed, but no background shell process or bootstrap waiter is adopted as supervisor.",
-      "blocks": "Live monitor/scanner adoption and an operational G+I guarantee until host ownership and independent supervision are assigned."
+      "blocks": "Live monitor/scanner adoption and an operational G+I guarantee until host ownership and independent supervision are assigned.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "SWF-27 / SF-REQ-053 persistent monitoring ownership; 2026-09-25 authority-blocker grooming",
+        "note": "Monitor-host ownership is not a Founder decision. Concrete supervisor/restart/self-health/Doctor proof remains required; live cutover/retirement remains separately gated."
+      }
     },
     {
       "id": "R2-GAP-051-EDGE-AUTHORITY",
@@ -461,14 +481,23 @@
       "question": "Does the R1 directional restriction merely refine approved internal module design, or materially change the approved responsibility boundary? Is adoption authorized, and under what scope?",
       "evidence": "Architecture authority section 44 lists pre-Python modeling work; later docs/architecture/pre-python-gate/gate-reclassification.md G03 cites binding FD-02 approving internal modules and Control Plane application orchestration. That resolves the module classification, not explicit adoption of R1 allowed_edges. The five imports in four named files demonstrate the practical impact.",
       "design_disposition": "Withdraw R1 allowed_edges as a normative gate. Record observed_edges and the four importing-file violations descriptively. No requirement is created, amended or weakened; no product boundary is decided here.",
-      "blocks": "Adoption of the proposed directional extension and affected SF-REQ-051 design-conformity claims until Founder disposition and reviewed scoped design; does not block running existing approved checks or certify the current source against the withdrawn table."
+      "blocks": "Adoption of the proposed directional extension and affected SF-REQ-051 design-conformity claims until Founder disposition and reviewed scoped design; does not block running existing approved checks or certify the current source against the withdrawn table.",
+      "resolution_2026_09_25": {
+        "status": "RESOLVED",
+        "authority": "docs/decisions/2026-09-25-cross-module-coupling-risk-disposition.md",
+        "note": "Historical blanket allowed_edges policy remains withdrawn. Existing architecture checks plus evidence-driven coupling classification govern; no current node may use this gap as a blocker."
+      }
     }
   ],
   "authority_policy": {
-    "wave2a_completion_blocker": "R1-GAP-013-ALLOCATION",
+    "wave2a_completion_blocker": null,
     "propagation": "authority_gap_refs includes direct and all transitive dependency gaps; separate existing authority decisions are in authority_gate_refs and inherited_authority_gate_refs.",
-    "proceeds_regardless_definition": "Node completion has neither a dependency on one of the five gaps nor a separate unfulfilled authority gate. Other nodes list partial work that proceeds, without claiming completion.",
-    "new_decision_handling": "Preserve unaffected proof; pin disposition; revise affected design/DAG and obtain independent review before dependent implementation. No presumed favorable decision."
+    "proceeds_regardless_definition": "Node completion has no unresolved authority gap and no separate unfulfilled authority gate. Dependencies still govern execution order.",
+    "new_decision_handling": "Preserve unaffected proof; pin disposition; revise affected design/DAG and obtain independent review before dependent implementation. No presumed favorable decision.",
+    "wave2a_completion_blocker_history": {
+      "until_2026_09_25": "R1-GAP-013-ALLOCATION",
+      "current": "NONE \u2014 allocation and edge-authority questions are settled; ordinary dependencies and explicit authority gates govern."
+    }
   },
   "acceptance_conservation": [
     {
@@ -3840,7 +3869,7 @@
       "scope": {
         "dag_scope": "",
         "extent": "Use the 2026-09-25 Founder coupling disposition. Existing architecture checks plus scoped cycle/domain-import/persistence ownership checks run before fresh independent design review. A materially forbidden dependency or incompatible interface fails mechanically; a conforming fixture records those results and a separate attributable independent review. Do not enforce withdrawn_r1_proposal.",
-        "node_kind": "authority_blocked_prerequisite",
+        "node_kind": "planned_prerequisite",
         "owns_capabilities": [
           "direction_disposed_applicability"
         ],
@@ -3967,9 +3996,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R2-GAP-051-EDGE-AUTHORITY"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
@@ -4332,7 +4359,7 @@
       "scope": {
         "dag_scope": "Planning ownership only. Product authority must resolve derivation versus explicitly owned external producer/interface; if external producer is chosen, revise this DAG before implementation.",
         "extent": "After SPECIFY resolves allocation mechanism and identity constraints, derive initial candidate from exact requirements/design/proof under that reviewed design; cover every AC with explicit extents and complete BiuContract fields. No supplied-allocation validator may masquerade as compiler. Existing decomposition remains immutable.",
-        "node_kind": "authority_blocked_prerequisite",
+        "node_kind": "planned_prerequisite",
         "owns_capabilities": [
           "initial_compilation"
         ],
@@ -4507,29 +4534,20 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-013-ALLOCATION",
-          "R2-GAP-051-EDGE-AUTHORITY"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-013-ALLOCATION, R2-GAP-051-EDGE-AUTHORITY"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
-      "direct_authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION"
-      ],
+      "authority_gap_refs": [],
+      "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
       "planning_eligibility": "GAP_BLOCKED",
@@ -5055,9 +5073,7 @@
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
         "authority_gap_refs": [],
-        "authority_gate_refs": [
-          "POSTW1-DECIDE-004A"
-        ],
+        "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
@@ -5390,26 +5406,19 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-013-ALLOCATION",
-          "R2-GAP-051-EDGE-AUTHORITY"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-013-ALLOCATION, R2-GAP-051-EDGE-AUTHORITY"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
@@ -6882,9 +6891,7 @@
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
         "authority_gap_refs": [],
-        "authority_gate_refs": [
-          "POSTW1-DECIDE-008A"
-        ],
+        "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
@@ -7066,9 +7073,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-REAL-OUTCOME"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
@@ -7473,26 +7478,19 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
@@ -7828,26 +7826,19 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
       "inherited_authority_gate_refs": [],
@@ -8083,15 +8074,12 @@
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
         "authority_gap_refs": [],
-        "authority_gate_refs": [
-          "POSTW1-DECIDE-008A"
-        ],
+        "authority_gate_refs": [],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
-        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Separate authority required: POSTW1-DECIDE-008A"
+        "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
@@ -8100,9 +8088,7 @@
       "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [],
-      "inherited_authority_gate_refs": [
-        "POSTW1-DECIDE-008A"
-      ],
+      "inherited_authority_gate_refs": [],
       "planning_eligibility": "SEPARATE_AUTHORITY_REQUIRED",
       "assessment_status": "NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE",
       "partial_work_that_proceeds": "053-only integration of C1-C4 proceeds; full 056-dependent integration waits for ratification.",
@@ -8435,10 +8421,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
           "POSTW1-DECIDE-006A"
@@ -8448,17 +8431,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME",
         "Separate authority required: EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-006A"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
@@ -8650,10 +8629,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
@@ -8664,17 +8640,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME",
         "Separate authority required: EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-006A"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY"
@@ -8888,11 +8860,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME",
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
@@ -8902,18 +8870,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, R1-GAP-MONITOR-HOST",
         "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -9156,41 +9119,30 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME",
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
-          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-          "POSTW1-DECIDE-008A"
+          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
         ],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, R1-GAP-MONITOR-HOST",
-        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-008A"
+        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
       ],
       "inherited_authority_gate_refs": [
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-        "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A"
+        "POSTW1-DECIDE-006A"
       ],
       "planning_eligibility": "GAP_BLOCKED",
       "assessment_status": "NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE",
@@ -9426,36 +9378,24 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-013-ALLOCATION",
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME",
-          "R2-GAP-051-EDGE-AUTHORITY"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
-          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-          "POSTW1-DECIDE-004A"
+          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
         ],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-013-ALLOCATION, R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, R2-GAP-051-EDGE-AUTHORITY",
-        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_FUTURE_RELEASE_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-004A"
+        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_FUTURE_RELEASE_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A",
@@ -9463,7 +9403,6 @@
       ],
       "inherited_authority_gate_refs": [
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-        "POSTW1-DECIDE-004A",
         "POSTW1-DECIDE-006A"
       ],
       "planning_eligibility": "GAP_BLOCKED",
@@ -9849,9 +9788,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "WINDOWS_NOTIFICATION_DISPOSITION",
@@ -9862,16 +9799,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-MONITOR-HOST",
         "Separate authority required: POSTW1-DECIDE-006A, WINDOWS_NOTIFICATION_DISPOSITION, ATTENTION_ACTIVATION_AUTHORITY"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A",
@@ -10109,21 +10043,13 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-013-ALLOCATION",
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME",
-          "R1-GAP-MONITOR-HOST",
-          "R2-GAP-051-EDGE-AUTHORITY"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
           "ATTENTION_ACTIVATION_AUTHORITY",
           "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-          "POSTW1-DECIDE-004A",
-          "POSTW1-DECIDE-008A",
           "WINDOWS_NOTIFICATION_DISPOSITION"
         ],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
@@ -10131,20 +10057,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-013-ALLOCATION, R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, R1-GAP-MONITOR-HOST, R2-GAP-051-EDGE-AUTHORITY",
-        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY, ATTENTION_ACTIVATION_AUTHORITY, EXPLICIT_FUTURE_RELEASE_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-004A, POSTW1-DECIDE-008A, WINDOWS_NOTIFICATION_DISPOSITION"
+        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY, ATTENTION_ACTIVATION_AUTHORITY, EXPLICIT_FUTURE_RELEASE_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, WINDOWS_NOTIFICATION_DISPOSITION"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A",
@@ -10155,9 +10074,7 @@
         "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
-        "POSTW1-DECIDE-004A",
         "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A",
         "WINDOWS_NOTIFICATION_DISPOSITION"
       ],
       "planning_eligibility": "GAP_BLOCKED",
@@ -10953,9 +10870,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "SWF-21_SCOPE_DISPOSITION",
@@ -10968,16 +10883,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-MONITOR-HOST",
         "Separate authority required: POSTW1-DECIDE-006A, SWF-21_SCOPE_DISPOSITION, RESIDENT_TENURE_DECISION, ATTENTION_ACTIVATION_AUTHORITY, WINDOWS_NOTIFICATION_DISPOSITION"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A",
@@ -11184,41 +11096,30 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME",
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
-          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-          "POSTW1-DECIDE-008A"
+          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
         ],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, R1-GAP-MONITOR-HOST",
-        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-008A"
+        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
       ],
       "inherited_authority_gate_refs": [
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-        "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A"
+        "POSTW1-DECIDE-006A"
       ],
       "planning_eligibility": "GAP_BLOCKED",
       "assessment_status": "NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE",
@@ -11417,11 +11318,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME",
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
@@ -11431,18 +11328,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, R1-GAP-MONITOR-HOST",
         "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -11736,16 +11628,11 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME",
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "ATTENTION_ACTIVATION_AUTHORITY",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-          "POSTW1-DECIDE-008A",
           "RESIDENT_TENURE_DECISION",
           "SWF-21_SCOPE_DISPOSITION",
           "WINDOWS_NOTIFICATION_DISPOSITION"
@@ -11755,18 +11642,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, R1-GAP-MONITOR-HOST",
-        "Separate authority required: POSTW1-DECIDE-006A, ATTENTION_ACTIVATION_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-008A, RESIDENT_TENURE_DECISION, SWF-21_SCOPE_DISPOSITION, WINDOWS_NOTIFICATION_DISPOSITION"
+        "Separate authority required: POSTW1-DECIDE-006A, ATTENTION_ACTIVATION_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, RESIDENT_TENURE_DECISION, SWF-21_SCOPE_DISPOSITION, WINDOWS_NOTIFICATION_DISPOSITION"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -11775,7 +11657,6 @@
         "ATTENTION_ACTIVATION_AUTHORITY",
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A",
         "RESIDENT_TENURE_DECISION",
         "SWF-21_SCOPE_DISPOSITION",
         "WINDOWS_NOTIFICATION_DISPOSITION"
@@ -12000,36 +11881,24 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-013-ALLOCATION",
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME",
-          "R2-GAP-051-EDGE-AUTHORITY"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
-          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-          "POSTW1-DECIDE-004A"
+          "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
         ],
         "bootstrap": "KEEP_UNTIL_REPLACED; preserve source transition order, explicit operational approval, migration rollback and consumer readback.",
         "current_phase": "No release, assessment, network, commit, push, lifecycle or Project mutation."
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-013-ALLOCATION, R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, R2-GAP-051-EDGE-AUTHORITY",
-        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_FUTURE_RELEASE_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-004A"
+        "Separate authority required: POSTW1-DECIDE-006A, EXPLICIT_FUTURE_RELEASE_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -12037,7 +11906,6 @@
       "inherited_authority_gate_refs": [
         "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
-        "POSTW1-DECIDE-004A",
         "POSTW1-DECIDE-006A"
       ],
       "planning_eligibility": "GAP_BLOCKED",
@@ -12279,21 +12147,13 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-013-ALLOCATION",
-          "R1-GAP-039-ORCHESTRATION",
-          "R1-GAP-039-REAL-OUTCOME",
-          "R1-GAP-MONITOR-HOST",
-          "R2-GAP-051-EDGE-AUTHORITY"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "ATTENTION_ACTIVATION_AUTHORITY",
           "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
           "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
           "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
-          "POSTW1-DECIDE-004A",
-          "POSTW1-DECIDE-008A",
           "RESIDENT_TENURE_DECISION",
           "SWF-21_SCOPE_DISPOSITION",
           "WINDOWS_NOTIFICATION_DISPOSITION"
@@ -12303,20 +12163,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-013-ALLOCATION, R1-GAP-039-ORCHESTRATION, R1-GAP-039-REAL-OUTCOME, R1-GAP-MONITOR-HOST, R2-GAP-051-EDGE-AUTHORITY",
-        "Separate authority required: POSTW1-DECIDE-006A, ATTENTION_ACTIVATION_AUTHORITY, EXPLICIT_FUTURE_RELEASE_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY, POSTW1-DECIDE-004A, POSTW1-DECIDE-008A, RESIDENT_TENURE_DECISION, SWF-21_SCOPE_DISPOSITION, WINDOWS_NOTIFICATION_DISPOSITION"
+        "Separate authority required: POSTW1-DECIDE-006A, ATTENTION_ACTIVATION_AUTHORITY, EXPLICIT_FUTURE_RELEASE_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY, RESIDENT_TENURE_DECISION, SWF-21_SCOPE_DISPOSITION, WINDOWS_NOTIFICATION_DISPOSITION"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-013-ALLOCATION",
-        "R1-GAP-039-ORCHESTRATION",
-        "R1-GAP-039-REAL-OUTCOME",
-        "R1-GAP-MONITOR-HOST",
-        "R2-GAP-051-EDGE-AUTHORITY"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
@@ -12326,9 +12179,7 @@
         "EXPLICIT_FUTURE_RELEASE_AUTHORITY",
         "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
         "EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY",
-        "POSTW1-DECIDE-004A",
         "POSTW1-DECIDE-006A",
-        "POSTW1-DECIDE-008A",
         "RESIDENT_TENURE_DECISION",
         "SWF-21_SCOPE_DISPOSITION",
         "WINDOWS_NOTIFICATION_DISPOSITION"
@@ -12679,9 +12530,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "PROGRAMME_COMPLETION_OR_SUCCESSOR_AUTHORITY",
           "ATTENTION_ACTIVATION_AUTHORITY",
@@ -12695,16 +12544,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-MONITOR-HOST",
         "Separate authority required: PROGRAMME_COMPLETION_OR_SUCCESSOR_AUTHORITY, ATTENTION_ACTIVATION_AUTHORITY, POSTW1-DECIDE-006A, RESIDENT_TENURE_DECISION, SWF-21_SCOPE_DISPOSITION, WINDOWS_NOTIFICATION_DISPOSITION"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "PROGRAMME_COMPLETION_OR_SUCCESSOR_AUTHORITY"
@@ -12909,9 +12755,7 @@
       },
       "release_policy": {
         "rule": "Candidate compilation and READY are not release. Require all existing release preconditions and eligibility plus exact authority, budget, predecessor evidence and custody. Explicit future authority is needed for Wave 2 operational use; no carryover of SWF-21 Wave 1 release grant.",
-        "authority_gap_refs": [
-          "R1-GAP-MONITOR-HOST"
-        ],
+        "authority_gap_refs": [],
         "authority_gate_refs": [
           "POSTW1-DECIDE-006A",
           "ATTENTION_ACTIVATION_AUTHORITY",
@@ -12925,16 +12769,13 @@
       },
       "stop_condition": [
         "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
-        "Cannot reach READY while any of these gaps remains open: R1-GAP-MONITOR-HOST",
         "Separate authority required: POSTW1-DECIDE-006A, ATTENTION_ACTIVATION_AUTHORITY, PROGRAMME_COMPLETION_OR_SUCCESSOR_AUTHORITY, RESIDENT_TENURE_DECISION, SWF-21_SCOPE_DISPOSITION, WINDOWS_NOTIFICATION_DISPOSITION"
       ],
       "escalation_condition": [
         "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
         "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
       ],
-      "authority_gap_refs": [
-        "R1-GAP-MONITOR-HOST"
-      ],
+      "authority_gap_refs": [],
       "direct_authority_gap_refs": [],
       "authority_gate_refs": [
         "POSTW1-DECIDE-006A"
