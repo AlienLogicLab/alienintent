@@ -11,8 +11,8 @@
     "dag_node": [
       "K1"
     ],
-    "candidate_contract_sha256": "9278b86536ec290fc9b18241682ddc64ebfd42e4e9cdffad4884538799956fd4",
-    "baseline_sha": "6ea9284d2c1e5a5b4000e2102e8dd3a809ba18e9",
+    "candidate_contract_sha256": "e9c556e1492a9ee2a7f08d33cd9c4c5377d778dd8cd752f65fe8f9bb24272408",
+    "baseline_sha": "308188c9bce7eb5557d1307bf4d017d907ade16a",
     "release_authority": "NOT GRANTED \u2014 normal Wave 2 release admission required before IMPLEMENT"
   },
   "allowed_scope": {
@@ -25,7 +25,7 @@
     "architecture_constraints": [
       "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
       "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
-      "039 is the consumer requirement, not authority to implement this substrate. invocation_runtime is a candidate location only; domain owner is unassigned."
+      "Binding FD-01/FD-02 assign released-execution lifecycle/result correlation to Execution Coordination and worker/resource invocation behind WorkerProvider to Invocation Runtime. K1 implements only the real outcome/readback seam under those owners; K2 owns canonical multi-role orchestration and removal of the success-collapse fallback."
     ]
   },
   "dependencies": [
@@ -57,14 +57,15 @@
       "The real WorkerProvider path durably correlates role, invocation, attempt, contract and exact candidate outcome evidence and reads it back across restart.",
       "Process success without a correlated durable result holds; it cannot advance lifecycle.",
       "Wrong role/invocation/candidate correlation holds rather than being accepted.",
-      "Restart/readback preserves the original attributable identity and does not duplicate the result/effect.",
-      "Split recommendation continues through the existing authority-block / HumanDecisionRequired carrier with structured evidence; no new WorkerOutcome kind."
+      "Restart/readback preserves the original attributable identity and does not duplicate the result/effect."
     ],
     "bounded_commands": [
       "python3 -m pytest -q tests/execution_coordination/test_factory_coordinator.py tests/invocation_runtime/test_scripted_worker.py"
     ],
     "non_claims": [
       "No new RoleOutcomeRecord sidecar/state owner is created by default.",
+      "K1 does not implement canonical multi-role orchestration or remove the success-collapse fallback; that broader capability is K2.",
+      "Split recommendation remains a compatibility constraint through the existing authority-block / HumanDecisionRequired carrier; K1 does not add a dedicated acceptance control for it.",
       "No full SF-REQ-039 capstone or live sovereignty claim is made."
     ]
   },

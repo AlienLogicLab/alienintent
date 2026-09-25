@@ -61,8 +61,8 @@
   },
   "not_granted_here": "Release authority.",
   "provenance": {
-    "baseline_sha": "6ea9284d2c1e5a5b4000e2102e8dd3a809ba18e9",
-    "candidate_contract_sha256": "9278b86536ec290fc9b18241682ddc64ebfd42e4e9cdffad4884538799956fd4",
+    "baseline_sha": "308188c9bce7eb5557d1307bf4d017d907ade16a",
+    "candidate_contract_sha256": "e9c556e1492a9ee2a7f08d33cd9c4c5377d778dd8cd752f65fe8f9bb24272408",
     "candidate_ref": "docs/evidence/wave2-candidate-bius.json (WO-220401)",
     "recorded_by": "backlog cohort preparation under Founder direction"
   }
