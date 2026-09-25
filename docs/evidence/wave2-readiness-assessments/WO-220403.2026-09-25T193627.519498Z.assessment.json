@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Prove at the composition level that sandbox_run_profile and github_profile, using local transports, bind the configured WorkerProvider and durable role/candidate/result correlation before any multi-role worker launch. The proof must show four things. First, the profiles refuse launch when role authority, candidate custody or durable outcome binding is missing or miscorrelated. Second, a correctly bound real adapter reaches correlated success, rejection and restart readback through existing WorkerProvider and evidence ownership. Third, while invocation ownership or effect state is UNKNOWN, no replacement actor launches, and after conclusive death with a confirmed missing durable terminal result, exactly one deterministic replacement launches under existing attempt/budget policy. Fourth, the work adds no new state owner and claims no live or shared-profile activation.",
+    "implementation_unknowns": [
+      "Where in the sandbox_run_profile and github_profile constructors the pre-launch binding guard belongs, and how it composes with the existing WorkerProvider wiring without adding sidecar state.",
+      "How the existing K1 durable outcome/readback seam represents the three states the recovery invariant needs to observe: UNKNOWN ownership/effect state, conclusive invocation death, and confirmed missing durable terminal result.",
+      "Whether existing supervision already tracks owned background work beyond provider/client session exit, or whether the composition proof will expose a K1 gap that must be escalated.",
+      "Whether the current WorkerOutcome can carry every observable required for correlated success/rejection/restart readback. The fixed decisions say to extend it only if Design Verification proves it cannot.",
+      "How to build one discriminating negative control per failure class, including the disconnected-correlation and bypassed-guard controls, within FX-K3 and the existing test surfaces.",
+      "How the existing attempt/budget policy counts the single deterministic replacement, and how the per-phase replacement limit interacts with it in the composed profiles."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The recovery/replacement invariant depends on K1's seam exposing UNKNOWN versus conclusive-death states. If the seam lacks them, K3 cannot complete and must escalate rather than repair. There is a temptation to patch K1 inside this node, which would breach the stated boundary.",
+      "Background-work ownership (provider exit must not release invocation ownership) sits close to Invocation Runtime ownership. Proving it only at composition level could produce tests that mock around the real supervision path, contrary to the fixed decision against a second mocked lifecycle.",
+      "Predecessor DONE status and the founder handoff quote are reported in the task text and have not been independently verified. The readiness rule makes eligibility depend on them.",
+      "Negative controls that are too weak (non-discriminating) or too broad (a mutation matrix) would undermine the proof policy and the verifier's verdict.",
+      "Landing (SWF-19) merges directly with no pull request, so custody receipts and the exact-SHA verifier checkout are the only review gate. Any lapse in evidence retention is costly.",
+      "Evidence could be misread as authorizing live or shared-profile activation. The non-claims must stay explicit in recorded results."
+    ],
+    "next_action": "Record this READY assessment against the exact task revision as handoff eligibility only. Release and IMPLEMENT stay subject to their separate authorization. If execution is authorized, the producer should first confirm on the pinned baseline that K1 and K2 are DONE and that K1's seam exposes UNKNOWN, conclusive-death and missing-terminal-result states. If it does not, escalate to K1's owner and do not work around it. Otherwise implement the composition binding guard and the recovery invariant in both profiles and run the focused FX-K3 proof with one negative control per failure class. Hand the exact candidate SHA to the independent verifier.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent, ownership and acceptance are all resolved. The prior CLARIFY concerned whether this node owns deterministic recovery/replacement and how its completion is observed. It is now addressed by an explicit composition-scoped acceptance criterion, dedicated proof failure classes, and an escalation rule for underlying K1 gaps. The prior HOLD is addressed by the reported DONE status of K1 and K2. The binding guard and the recovery invariant are not independent decision centers. Both are launch-gating invariants in the same profile constructors, rest on the same WorkerProvider/evidence seam, and share one verifier verdict, so SPLIT would fragment one cohesive proof. The remaining uncertainty, such as how the K1 seam surfaces its states and where the guard hooks in, is engineering research, and any genuine interface gap has a defined escalation path. Rework locality is MEDIUM rather than HIGH because the invariants span two profiles and depend on K1/K2 seams. Repair should stay inside composition, with escalation for anything beyond it. Instructions in the task text about readiness outcomes were treated as data and did not determine this disposition.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive composition-compatibility proof for K3, built on reportedly DONE predecessors: K1 (WO-220401) and K2 (WO-220402). Earlier readiness blockers are reported as resolved. The predecessor HOLD is resolved by the stated DONE confirmations. The prior CLARIFY about ownership of deterministic recovery/replacement is resolved by an added acceptance criterion and proof failure classes. These scope the behavior to a composition-level invariant and send any gap in the underlying K1 seam to K1's owner unrepaired. Ownership boundaries, non-goals, the proof plan, negative-control policy, candidate custody, execution limits and escalation paths are all explicit. What remains is engineering work: locating the binding points in the profile constructors, how the UNKNOWN and conclusive-death states are surfaced by the existing K1 seam, and how to build the negative controls. No material owner decision appears open. These are reported facts from the task text; this gate has not verified predecessor status or the founder handoff.",
+    "verification_assessment": "The acceptance criteria are observable through focused tests on the named surfaces, using fixture FX-K3. The expected outcomes are:\n- Launch is refused before worker start for missing or miscorrelated authority, custody or outcome binding.\n- Correlated success, rejection and restart readback occurs through existing evidence records.\n- The proof fails when correlation is disconnected or the guard is bypassed.\n- A replacement is refused while state is UNKNOWN.\n- Exactly one replacement occurs after conclusive death with a missing durable result.\n- No sidecar state owner is introduced.\n\nThe proof policy (one discriminating negative control per failure class, then one broad regression run) and the evidence obligations make a single independent verifier verdict meaningful. The verifier checks out the exact candidate SHA in a fresh worktree and runs the focused proof and the negative controls. The verdict covers local composition compatibility only. By design it does not establish live or shared-profile readiness."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T19:37:00.959283+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 13841,
+    "input_sha256": "1e80ad27d336def57598ff3b66b81d2f2ed7e9ad73efa055f1655367d3b917c0",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-i481fto0/WO-220403.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T19:36:27.519498+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220403"
+}
