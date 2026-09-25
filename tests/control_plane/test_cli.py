@@ -118,6 +118,7 @@ class Work:
     def project_execution_state(self, *_): pass
 class Worker:
     def start(self, *_): return WorkerOutcome('authority-block')
+    def read_back(self, *_): return WorkerOutcome('authority-block')
 def make():
     profile = OfflineProfile(Path(__file__).with_name('state.db'), Work(), Worker(), Path(__file__).parent / 'artifacts')
     assert profile.coordinator.start().authority_blocked == ('PY-08',)

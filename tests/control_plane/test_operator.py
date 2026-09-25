@@ -243,6 +243,7 @@ def test_explain_matches_a_real_kernel_authority_block(tmp_path: Path) -> None:
         def project_execution_state(self, *_): pass
     class Worker:
         def start(self, *_): return WorkerOutcome("authority-block")
+        def read_back(self, *_): return WorkerOutcome("authority-block")
 
     profile = OfflineProfile(tmp_path / "state.db", Work(), Worker(), tmp_path / "artifacts")
     summary = profile.coordinator.start()

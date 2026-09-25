@@ -158,3 +158,31 @@ def test_restart_after_crash_reads_back_the_original_identity_without_duplicatin
     assert again.coordinator.start().dispatched == ()
     assert again.store.read_state(again.profile.name, f"factory:{WORK}")[0] == version
     assert again.runs() == [CORRELATION] and len(again.outcome_records()) == 1
+
+
+@pytest.mark.parametrize("field", ["role", "candidate"])
+def test_restart_read_back_holds_on_a_miscorrelated_record(tmp_path: Path, field: str) -> None:
+    """Class 3 on the restart path: with no in-memory outcome to compare, the durable record alone must correlate."""
+    import json
+
+    fixture = compose(tmp_path)
+    assert fixture.coordinator.start().dispatched == (WORK,)
+    path = fixture.journal.path
+    lines = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+    path.write_text("".join(json.dumps(_rewrite(line, field) if line.get("event") == "invocation-outcome" else line) + "\n" for line in lines), encoding="utf-8")
+
+    reopened = compose(tmp_path)
+
+    assert reopened.worker.read_back(WorkerInvocation(WORK, CORRELATION, fixture.item.contract.content_digest)) is None
+
+
+def test_ineligible_outcome_reads_back_without_a_journal(tmp_path: Path) -> None:
+    """An in-memory provider must read back every outcome it returned, or the coordinator parks a plain refusal."""
+    from alienintent.execution_coordination.domain.contract import BudgetPolicy
+
+    fixture = compose(tmp_path, journal=lambda _: None)
+    invocation = WorkerInvocation(WORK, CORRELATION)
+
+    outcome = fixture.worker.start(invocation, None, frozenset(), BudgetPolicy())
+
+    assert outcome.kind == "ineligible" and fixture.worker.read_back(invocation) == outcome

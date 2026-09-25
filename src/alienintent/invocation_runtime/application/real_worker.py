@@ -94,7 +94,10 @@ class RealWorkerProvider(WorkerProvider):
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one producer invocation; with a journal, retain its attributable outcome durably first."""
         if self._journal is None:
-            return self._start(invocation, context, grants, budget)
+            outcome = self._start(invocation, context, grants, budget)
+            # Every returned outcome, including an early refusal, must read back.
+            self._outcomes[invocation.correlation_id] = outcome
+            return outcome
         attribution = {
             "correlation_id": invocation.correlation_id, "work_identity": invocation.work_identity, "role": str(InvocationRole.PRODUCER),
             "contract_digest": None if context is None else context.content_digest,

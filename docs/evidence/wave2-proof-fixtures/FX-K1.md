@@ -61,7 +61,7 @@ crash-after-outcome`, exit 17 right after the durable outcome).
 |---|---|---|
 | Durable correlated read-back across restart | `test_real_path_durably_retains_attributable_outcome_and_reads_it_back_after_restart` | `readback_not_durable`: `read_back` answers from memory |
 | Process success without a durable result holds | `test_process_success_without_a_durable_result_holds_the_transition`: exit 0, published candidate, outcome record lost → `IMPLEMENT`, `authority-block`, unknown effect, decision-inbox entry | `transition_gate_removed` |
-| Wrong correlation holds | `test_miscorrelated_durable_result_holds_rather_than_being_accepted[role\|work_identity\|contract_digest\|candidate\|duplicate]` | `role_correlation_unchecked` (applied to `[role]`) |
+| Wrong correlation holds | `test_miscorrelated_durable_result_holds_rather_than_being_accepted[role\|work_identity\|contract_digest\|candidate\|duplicate]` (in-run); `test_restart_read_back_holds_on_a_miscorrelated_record[role\|candidate]` (restart path, no in-memory outcome to compare) | `role_correlation_unchecked` (applied to `[role]`) |
 | Restart keeps identity, no duplication | `test_restart_after_crash_reads_back_the_original_identity_without_duplicating_the_result`: the child is killed after the durable outcome; the restart recovers it once under `launch:K1-PROBE:0`, with one run, one outcome record, no unresolved effect or reservation, and an idempotent second restart | `recovery_identity_replaced` |
 
 The split recommendation stays a compatibility constraint through the existing authority-block carrier. There is no
@@ -77,10 +77,33 @@ dedicated control for it.
 
 ## Compatibility edits outside the new surface
 
+- `tests/control_plane/test_cli.py` and `tests/control_plane/test_operator.py`: two `Worker` fakes implemented `start`
+  but not the Protocol's `read_back`. The gate now calls `read_back`, so each fake returns its outcome.
+
 - `tests/execution_coordination/test_decision_inbox.py`: `EscalatingWorker` is declared `durable=True` but did not
   persist its authority-block outcome. Under the K1 gate an unrecorded outcome holds, so the fake now records it.
 - `tests/composition/test_offline_proof.py`: the S0 frozen-kernel guard lists the kernel paths changed since
   `ade44cb`. K1's two authorized kernel edits are added. S0's historical proof and immutable manifest are unchanged.
+
+## Independent pre-verification review and repairs
+
+A read-only reviewer checked the first candidate `989facf`. It found no path to DONE without a correlated durable
+result and no accepted miscorrelation. It raised these findings:
+
+- **Repaired.** Without a journal, `RealWorkerProvider` stored no in-memory outcome for its early `ineligible`
+  returns. The gate would then have parked a plain refusal as an authority block in profiles that pass no journal,
+  such as the sandbox profile. `start` now records every returned outcome. Probe:
+  `test_ineligible_outcome_reads_back_without_a_journal`.
+- **Repaired.** On the in-run path, `(kind, candidate)` equality already masks the candidate-branch check. The new
+  restart-path probe `[candidate]` goes red when `_publishes_to` is disabled. That check was run once by hand; it
+  is not added to the harness, which keeps one control per class.
+- **Repaired.** The harness output was not yet retained; it is now under `FX-K1/`.
+- **Disclosed; no change.** The durable path is opt-in, and no existing profile opts in (see Surface).
+- **Disclosed; no change.** Wrapping a journal-enabled `RealWorkerProvider` in `ScriptedWorkerProvider` on the same
+  file would hold every run as a duplicate. That fails safe, and no composition does it.
+
+The first harness run over `989facf` held on two full-suite nodes, `test_cli`/`test_operator`, which failed through
+the fakes above. That run is superseded by the retained run and was not retained.
 
 ## Retained run
 
