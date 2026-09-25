@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Make design applicability depend on direction and coupling evidence under the 2026-09-25 Founder coupling disposition. Existing approved architecture checks, plus scoped cross-module cycle detection, domain-import classification and persistence-ownership checks, must run mechanically before a fresh independent design review. A forbidden dependency or incompatible interface must fail mechanically. A conforming fixture must record the mechanical results and a separate attributable independent review. The withdrawn R1 allowed_edges table must not be enforced (SF-REQ-051, AC-03).",
+    "implementation_unknowns": [
+      "Where bounded-context ownership and the permitted stable value/port contracts are machine-readably defined (the pinned Phase 9 shared contracts), so domain imports can be classified against them rather than against raw import presence.",
+      "How the existing tools/fitness/check_architecture.py structures its checks, and whether cycle detection, import inventory and persistence ownership should extend it or sit beside it while leaving existing approved checks unchanged.",
+      "Which persistence/table ownership rules are 'mechanically expressible' from existing sources. The rest must be routed to qualitative independent review rather than silently skipped.",
+      "How a held (unclassified or leakage) domain import is represented in the design-admission flow, and how it differs from a mechanical FAIL. The text says a detected dependency is evidence for classification, not an automatic defect.",
+      "How FX-U6 fixtures (forbidden dependency, incompatible interface, introduced cycle, unclassified domain import, conforming design) are constructed without changing real cross-module imports in src/alienintent.",
+      "How the separate attributable independent review is recorded alongside the mechanical PASS in the design-admission evidence, reusing the WO-220205 mechanics."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Implicitly re-introducing the withdrawn R1 allowed_edges policy through a hard-coded allowlist when classifying domain imports. The verifier should check that classification cites bounded-context ownership and pinned contracts, not a reconstructed edge table.",
+      "New checks run against src/alienintent may flag existing cross-module imports. A broad refactor is explicitly not authorized, so these must be classified or held, not rewritten or treated as automatic defects.",
+      "Changing the behavior or strictness of existing approved architecture checks, which must remain normative and unchanged.",
+      "Reported, not independently verified: the escalation clause requires a pinned decision and a reviewed affected design/DAG revision before implementation. The text says the BIU was compiled from an independently reviewed planning revision and lists the same-day Founder disposition as a fixed decision. If that reviewed revision does not actually incorporate the 2026-09-25 disposition, this becomes a HOLD.",
+      "Persistence ownership checks may be only partly expressible mechanically. Coverage gaps could be misreported as PASS instead of explicit holds or qualitative-review items.",
+      "Verifier availability (Codex capacity) is an execution-time concern. Release must hold safely if the verifier is unavailable."
+    ],
+    "next_action": "Hand off to PRODUCER as eligible (not release-authorized). First confirm that the pinned baseline 6ea9284 and candidate contract sha aa3598d6\u2026 correspond to a reviewed design revision incorporating the 2026-09-25 Founder coupling disposition, and hold if they do not. Then locate the bounded-context ownership sources and extend the architecture fitness and design-admission surfaces with cycle, domain-import-classification and persistence-ownership checks. Build FX-U6 with one negative control per material failure class, run the focused commands, and publish the exact candidate SHA for JC's independent verification.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "READY is the controlling disposition because the one owner-level question that shaped this node, directional/coupling authority, is stated as disposed by the Founder with a concrete narrowed policy. The non-goals also exclude replanning, the withdrawn policy and broad refactors. The work is a single capability under one requirement and acceptance criterion, so there are no independent decision centers that would justify SPLIT. The remaining unknowns are engineering research: locating ownership contracts, extending existing checks and fixture design. Prerequisites are reported available (WO-220205 DONE, existing proof surfaces, allocated producer/verifier, custody and landing rules), so HOLD is not warranted on the text supplied, though the reviewed-design-revision condition is flagged as a risk to confirm. Acceptance is observable through discriminating negative controls and named commands, one independent verdict can assess the whole extent, and failures should be repairable locally within the check/fixture surfaces. This assessment recommends eligibility only; it does not authorize implementation or release.",
+    "semantic_split_recommendation": [],
+    "summary": "This is one cohesive capability, direction_disposed_applicability, with a single governing requirement. The owner decision that previously blocked it (directional authority) is reported as disposed by the Founder on 2026-09-25, and the text narrows it to evidence-driven checks. Scope, non-goals, proof fixture FX-U6, material failure classes, negative-control policy, existing proof surfaces, bounded commands, custody, verifier allocation and landing are all stated. The remaining uncertainty is engineering work: how to build the import classification and the persistence-ownership checks from existing artifacts. It is not unresolved owner intent. The predecessor WO-220205 is reported DONE, and its proof is consumed without reopening it.",
+    "verification_assessment": "Acceptance is observable and one independent verdict is meaningful. Each of the four material failure classes has a discriminating negative control: forbidden dependency or incompatible interface fails before review; an introduced cycle is detected, and the negative control fails if the check is bypassed; a domain import is either classified or held; a conforming fixture records mechanical PASS plus a separate attributable review. Each control has intact/fault/restored evidence. The named focused pytest targets and the check_architecture.py --check all invocation give concrete, reproducible commands, with full regression as a terminal check. A fresh verifier working on the exact candidate SHA can judge the whole extent coherently. The main judgment call is whether the domain-import classification is grounded in real ownership contracts rather than an implicit re-creation of the withdrawn R1 edge table."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T09:02:44.394909+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 8352,
+    "input_sha256": "592a855628ebbe7cc46b044979084ba9f905f69c5e8b02a38901406a189078e2",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-cn7bu3v_/WO-220206.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T09:02:15.498848+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220206"
+}

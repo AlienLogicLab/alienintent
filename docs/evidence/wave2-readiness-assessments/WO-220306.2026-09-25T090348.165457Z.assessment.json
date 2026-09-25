@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Implement local/composed (L1) known-active liveness reconciliation for SF-REQ-056. After a configurable grace G, a periodic scan at interval I detects a missing expected effect for an authorized known-active BIU. It submits exactly one authorized, fenced, idempotent recovery intent with durable readback. It suppresses recovery when correlated evidence is active, pending, completed, unknown or terminal, and suppresses relaunch after judgment-blocking outcomes until a valid resolution. It records holds or attention items instead of launching speculatively. Negative controls must prove that the fencing and suppression guards discriminate. It does not claim operational monitor-host replacement, retirement or work-discovery polling.",
+    "implementation_unknowns": [
+      "Where the reconciliation scan should sit relative to the existing monitor_health service and tick/scan persistence from WO-220304, without becoming a general polling or work-discovery loop.",
+      "How to derive the expected-effect identity for a known-active BIU so it matches the unique intent/reservation/epoch fencing from WO-220103.",
+      "Whether the existing effect providers and consumers can demonstrate idempotent/fenced consumption with durable readback. The fixed decision says to park any that cannot, so the implementer must determine which providers qualify.",
+      "Which existing result types count as 'equivalent judgment-blocking' outcomes alongside FOUNDER_EXCEPTION and HumanDecisionRequired, and how to correlate them with attention items from WO-220301.",
+      "How to persist and validate the policy digest, and which existing startup paths and test fixtures must supply a valid policy now that missing or invalid policy blocks startup.",
+      "How the confirmation bound C interacts with readback and receipt validation at confirmation time.",
+      "How to express the rule that stale or unavailable monitor-health evidence (STALE/DEGRADED/UNVERIFIED) prevents claiming the G+I bound, both in the reconciler output and in the evidence records."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Dependency completion (WO-220103, WO-220301, WO-220304 reported DONE) is asserted rather than verified here. A defect in one of those prerequisites must be returned to its owner rather than repaired inside this unit, which could force a HOLD during execution.",
+      "Blocking startup on missing or invalid policy may break existing startup paths or tests that currently run without a liveness policy. This is a compatibility risk to the preserved interfaces.",
+      "Wall-clock or fake-clock race fixtures can become flaky. The concurrency proof should use deterministic interleavings over real SQLite connections or processes.",
+      "There is a risk of scope creep: the periodic scan could turn into general polling, or local proof could be presented as the operational G+I guarantee. Both are explicit non-claims.",
+      "If no existing provider can prove fenced idempotent consumption, the required outcome is to park, which could leave AC-03 or AC-06 only partially demonstrable for some effect paths.",
+      "The configured verifier's (Codex) capacity at execution time could delay the independent verdict. The document says release must hold safely in that case.",
+      "The document states that release/IMPLEMENT is not authorized. READY here signals eligibility only, and separate release authorization is still required."
+    ],
+    "next_action": "Record this assessment as READY eligibility for WO-220306 at the stated contract hash and baseline 6ea9284. Obtain the separate release/IMPLEMENT authorization the document requires. Then have the PRODUCER pin the baseline and contract, and confirm that the dependency proofs referenced by WO-220103, WO-220301 and WO-220304 exist at the baseline before adding the reconciliation fixtures and negative controls.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent and owner decisions are resolved in the text. Timing policy, the delivery semantics boundary, the authority basis, the park-versus-relax choice, retry and budget constraints, and the non-claims are all fixed. The remaining unknowns concern integrating with existing fencing, attention and monitor-health components, which is engineering research, so CLARIFY does not apply. SPLIT does not apply because detection timing, evidence-based suppression, judgment suppression and fenced single-effect recovery all feed one reconciler decision (whether to launch recovery). They share fixtures and one verification verdict, so splitting them would create coupled microtasks. HOLD is not warranted because the text reports the prerequisites as DONE and defines execution allocation and custody. Nothing in the supplied text establishes that a required artifact or authority is unavailable, beyond the separate release authorization that this document says READY does not grant. Acceptance is observable and discriminating through negative controls, and repair is expected to stay within the single liveness_reconciliation capability.",
+    "semantic_split_recommendation": [],
+    "summary": "The work unit is cohesive and specific. The owner-level decisions are stated as fixed: policy defaults G=300s, I=60s and C=90s, configurable and persisted with a digest, with missing or invalid policy blocking startup; effectively-once delivery rather than physically exactly-once; park rather than relax the boundary if a provider cannot prove fencing; SF-REQ-056 treated as binding authority for L1 work; and no new retry semantics or budget resets. Seven acceptance criteria map to concrete fixtures, including fake-clock boundaries, a race with crash/restart, suppression and resolution, and two negative controls. Execution roles, custody, cycle limits and landing are defined. All three dependencies (WO-220103 fencing/SQLite claim, WO-220301 judgment/attention dedupe, WO-220304 monitor-health persistence) are reported DONE. That status is taken from the document and has not been independently verified. The remaining uncertainty is engineering integration, not owner intent.",
+    "verification_assessment": "Acceptance is observable through deterministic local fixtures: fake-clock boundary tests just below and at G, I and C; case matrices for active, pending, completed, unknown, terminal and no-closure states; a race combining a delayed original, two contenders and crash/restart that must show a single effect and readback; suppression and resolution fixtures; and two isolated negative controls (fencing removal and suppression removal) with retained red and restored-green evidence. One independent verdict is meaningful. All criteria concern a single reconciliation decision, and a fresh verifier can retrieve the exact candidate SHA and re-run focused tests, the negative controls and the terminal regression. The initial bounded commands only cover existing monitor_health and attention tests, so the new reconciliation fixtures must be added and named in the evidence."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T09:04:21.638855+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 11265,
+    "input_sha256": "5364dc7b6349d3246f3cf58b92792d253d36c8d870fffd35398388695a488293",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-8l_yehwn/WO-220306.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T09:03:48.165457+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220306"
+}

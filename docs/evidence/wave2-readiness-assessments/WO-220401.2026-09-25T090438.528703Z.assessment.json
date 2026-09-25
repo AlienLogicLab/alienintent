@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "CLARIFY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Under existing Execution Coordination and Invocation Runtime ownership, the non-scripted (real) WorkerProvider path must durably retain and read back attributable role, invocation, attempt, contract and candidate outcome evidence across restart. Missing or miscorrelated durable results must hold lifecycle advancement even when the worker process succeeds. The work must stay compatible with the common WorkerProvider/WorkerOutcome contract and must not create a parallel sidecar state owner.",
+    "implementation_unknowns": [
+      "Where and how the current real_worker.py / WorkerProvider path persists invocation, effect and execution evidence, and whether existing records can carry role, attempt, contract and exact-candidate correlation without extending WorkerOutcome. The document conditions any extension on a 'revised Design Verification', whose current status is not stated here.",
+      "How restart and readback are currently exercised in the factory coordinator tests, and how to add an idempotent readback that does not duplicate results or effects.",
+      "How the dependency fixtures (WO-220101 local SQLite, git remote, denied network; WO-220102 verdict admission) compose into the FX-K1 fixture for the non-scripted path while counting zero provider calls offline.",
+      "Which existing architecture checks must pass, and how the one-writer ownership check applies to any new correlation fields."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Implementing under disputed ownership could violate one-writer or bounded-context rules and be rejected on authority grounds rather than technical merit.",
+      "Scope creep: the success-collapse lifecycle refactor could absorb a sibling node's extent or change canonical lifecycle behavior beyond what acceptance verifies.",
+      "A pressure to extend WorkerOutcome or add correlation state could drift into a de facto sidecar RoleOutcomeRecord owner, which is explicitly disallowed.",
+      "Restart and readback logic may duplicate effects or accept stale or miscorrelated results if idempotency keys are mis-chosen.",
+      "The configured Codex verifier may be unavailable at execution time; release must hold safely rather than proceed.",
+      "Direct merge to the baseline without a pull request (SWF-19) raises the cost of an incorrectly scoped acceptance."
+    ],
+    "next_action": "Route the ownership and authority contradiction through Program Director to the appropriate authority, per the document's escalation path. That authority should confirm whether FD-01/FD-02 bind this node to Execution Coordination and Invocation Runtime, and should confirm whether the success-collapse refactor and the split-recommendation carrier are in this node's scope. Then publish a revised, re-pinned work-unit revision that removes the contradictory architecture-constraint sentence and aligns the acceptance predicate with the confirmed scope, and request a fresh Agent Ready assessment of that exact revision.",
+    "owner_clarifications": [
+      "Ownership and authority conflict. 'Architecture constraints' states that 039 is not authority to implement this substrate, that invocation_runtime is a candidate location only, and that the domain owner is unassigned. 'Fixed decisions' and 'DAG scope' state that binding FD-01/FD-02 assign this work to Execution Coordination and Invocation Runtime and that no new owner is required. Which statement is authoritative for this revision? If FD-01/FD-02 govern, can the contradictory architecture-constraint sentence be struck or marked superseded in a re-pinned revision?",
+      "Scope of the success-collapse refactor. Is refactoring Execution Coordination's success-collapse path into producer -> exact candidate -> VERIFY -> independent verifier -> reject-to-IMPLEMENT within this node's extent and acceptance? Or is it a sibling node's responsibility, with this node limited to proving durable real-path outcome correlation and readback plus hold-on-missing or miscorrelated results?",
+      "Is the 'split recommendation via authority-block / HumanDecisionRequired carrier' failure class in scope for this node's acceptance? Or is it a constraint only (no new WorkerOutcome kind) that needs no dedicated negative control here?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is unresolved owner intent about authority and scope, not missing engineering knowledge. The document's own architecture constraints deny that 039 authorizes the substrate and state that the domain owner is unassigned. The fixed decisions assert the opposite, and the document's stop rules treat an authority gap or conflicting ownership as blocking. An implementer cannot resolve this by research. CLARIFY is chosen over HOLD because the conflict appears to be an inconsistency in the text, answerable by the named owner, rather than a confirmed unavailable external prerequisite; both dependencies are reported DONE. SPLIT is not warranted because readback correlation, hold-on-missing results and restart idempotency form one cohesive seam with a single meaningful verdict. If the owner places the success-collapse refactor out of scope, or confirms it as intentionally coupled with the acceptance updated to match, the work should become READY. All statements about dependency status, baselines and prior reviews are reported by the document and not independently verified.",
+    "semantic_split_recommendation": [],
+    "summary": "The outcome is well described and the proof plan is observable. The work unit contradicts itself on who owns and authorizes the work. 'Fixed decisions' and 'DAG scope' say SF-REQ-039 authorizes the work, name binding FD-01/FD-02 owners and state that no new owner is required. 'Architecture constraints' says 039 is not authority to implement this substrate, that invocation_runtime is only a candidate location, and that the domain owner is unassigned. The document's own stop rules treat an authority gap or conflicting ownership as a hold. A second, smaller ambiguity: 'Fixed decisions' mandates refactoring the Execution Coordination success-collapse path (producer -> VERIFY -> verifier -> IMPLEMENT loop), which is broader than the stated extent and acceptance predicate (real-path durable outcome readback). Resolving both requires owner authority, not engineering research. The implementation itself is cohesive and does not warrant splitting.",
+    "verification_assessment": "Acceptance is observable. The work unit names discriminating failure classes: correlated durable readback across restart; process success without a durable result holds; wrong role, invocation or candidate correlation holds; restart does not duplicate results; no new WorkerOutcome kind. It also names existing test surfaces, a bounded pytest command, and a one-negative-control-per-class policy. A single independent verifier verdict on the exact candidate SHA is meaningful once scope is settled. If the success-collapse refactor is included, the verdict would cover two coupled but distinct behaviors (lifecycle routing and outcome readback) against an acceptance predicate that currently mentions only the latter. The predicate should be aligned with whatever scope the owner confirms."
+  },
+  "disposition": "CLARIFY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T09:05:08.995699+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10469,
+    "input_sha256": "026f2b8840e6252a61e90943dd26f3885be31d6b96ae589e6bce5aac54b6e16c",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-183e713p/WO-220401.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T09:04:38.528703+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220401"
+}

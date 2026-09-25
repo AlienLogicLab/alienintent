@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Bind AlienIntent's existing readiness consumer to the existing public Agent Ready product through its CLI/MCP interfaces. The consumer must receive the raw response together with configured invocation-to-result and producer/version provenance. Any result that is unbound, has unestablished provenance, uses an incompatible contract, is a surrogate, or is malformed, conflicting, missing or an error must be refused or treated as a failed attempt, never admitted as READY. A READY result must remain eligibility only and must not bypass the separate release gate.",
+    "implementation_unknowns": [
+      "What exact producer/version provenance fields and establishment mechanism #/contracts/4/provenance_contract requires. The contract is referenced but not inlined here, so the producer must read it from the pinned revision.",
+      "How the configured Agent Ready CLI/MCP binding is declared in the active profile, and how invocation-to-result custody is captured end to end (for example, invocation identity linked to the retained raw response bytes).",
+      "Where in src/alienintent/execution_coordination/adapters/assessment_consumer.py and src/alienintent/composition/readiness.py the admission refusal should sit, and which existing hold type (for example, CAPABILITY_PROVENANCE_HOLD from WO-220209) to reuse.",
+      "How to construct discriminating negative-control fixtures for the four failure classes: a surrogate READY, a wrong product/version/contract, a disconnected response, and malformed/conflicting/provider-error payloads.",
+      "The form and location for recording contract version limitation agent-ready#1."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Provenance could be established by schema shape or local metadata instead of genuine producer authentication. The text explicitly forbids this, and an adapter that passes shape checks could still admit a surrogate.",
+      "If the referenced provenance or ownership contract does not actually define how producer/version provenance is established, the work hits an authority gap. The text requires this to be escalated through Program Director to SPECIFY, not resolved locally.",
+      "The configured Agent Ready binding may be absent or misconfigured in the execution environment. The text does not state it is unavailable, but if it is, the correct result is a hold, not a stubbed binding.",
+      "A live Agent Ready call could make tests nondeterministic. Fixtures should capture raw responses while keeping custody semantics honest.",
+      "Scope could drift into sibling nodes (split/clarify routing, the release gate) that WO-220209 or other units own."
+    ],
+    "next_action": "Hand off to the configured PRODUCER. Start by reading the pinned wave2-design-contracts.json#/contracts/4 ownership and provenance sections and the existing consumer and adapter surfaces. Then implement the CLI/MCP binding with raw-response and invocation-custody retention, add one discriminating negative control per material failure class under FX-U10, and publish the exact candidate SHA for independent verification. Execution itself still requires the separate release/IMPLEMENT authorization, which this document explicitly withholds.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that the owner has already fixed the material decisions: parsing semantics, refusal classes, reuse-not-rebuild, evidence limits, custody, landing and escalation paths. What remains is locating code and applying pinned contracts, which is engineering research and does not warrant CLARIFY. The work has one decision center, the admission boundary for externally produced assessments, so a SPLIT would fragment one coherent verification verdict. No prerequisite is stated as unavailable: the dependency is reported DONE, the product is reported to exist, and the contracts are reported as pinned, though none of this is independently verified. HOLD is therefore not established by the supplied text. Rework should stay localized to the adapter and admission path. READY here is a handoff recommendation only; it grants no execution or release authority.",
+    "semantic_split_recommendation": [],
+    "summary": "This work unit is a single cohesive integration: an adapter plus an admission boundary around the existing Agent Ready product, scoped to the capability assigned_assessment_binding. The owner has already fixed the material semantics: MCP result parsing rules (isError, structuredContent and JSON text-content agreement, at least one recognized terminal value, preserved wrappers), reuse of the public product rather than a copied rubric or engine, the limits of check_assessment_producer.py and readiness_assessment.py as evidence, the refusal classes, and the READY-is-not-release rule. Ownership and provenance semantics are delegated to the pinned wave2-design-contracts.json#/contracts/4 (DV-5). The text reports the prerequisite WO-220209 as DONE, and this assessment does not independently verify that. The proof plan lists four material failure classes, a named fixture (FX-U10), existing test surfaces and an initial command, which gives one meaningful independent verification verdict. The remaining uncertainty is engineering research, not owner intent.",
+    "verification_assessment": "Acceptance is observable through four enumerated failure classes:\n1. A configured public binding reaches the consumer with the raw response and provenance retained.\n2. Unbound, wrong-product/version/contract, surrogate or disconnected responses produce a provenance/capability hold before admission.\n3. Malformed, conflicting, missing or error results become attempt failures and are never READY.\n4. READY cannot bypass the release gate.\n\nThe proof fixture FX-U10, existing tests and the command `python3 -m pytest -q tests/context_assembly/test_readiness_consumer.py` give a focused entry point, and a policy of one discriminating negative control per class keeps proof bounded. A single independent verifier retrieving the exact candidate SHA can render one meaningful verdict over the whole boundary.\n\nThe written acceptance-criteria section mostly restates scope and defers details to the referenced contracts, so the verifier must evaluate provenance conformance against the pinned contract revision rather than against the work-unit text alone."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-25T09:03:31.127652+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 8752,
+    "input_sha256": "f545ad4b5de451793ce0e4b22d354d725934db7c81500930d3b620fab4a09cbc",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-xym0n9uk/WO-220210.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.282 (Claude Code)"
+    },
+    "started_at": "2026-09-25T09:03:03.988150+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220210"
+}
