@@ -41,12 +41,18 @@ def adapter(items: list[dict[str, object]], projection=lambda identity, field, s
 
 
 def test_import_maps_priority_dependencies_and_keeps_wave_as_metadata() -> None:
-    imported = adapter([item(dependencies=("PY-04",)), item("PY-06", priority=None)]).import_ready_snapshot()
+    imported = adapter([item(dependencies=("PY-04",))]).import_ready_snapshot()
 
     assert imported[0].priority == 1
     assert imported[0].dependencies == ("PY-04",)
     assert imported[0].metadata["wave"] == "1"
-    assert imported[1].priority is None
+
+
+def test_ready_item_without_inherited_requirement_priority_fails_closed() -> None:
+    from alienintent.execution_coordination.ports.work_management import WorkRejected
+
+    with pytest.raises(WorkRejected, match="inherited requirement priority"):
+        adapter([item(priority=None)]).import_ready_snapshot()
 
 
 @pytest.mark.parametrize("bad", [item(status="MYSTERY"), item(complete=False), item(membership=False)])

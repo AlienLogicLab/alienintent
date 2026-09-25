@@ -102,9 +102,12 @@ class ScriptedWorker:
         return provider.WorkerOutcome(record["kind"], candidate, findings=tuple(record.get("findings", ())), receipts=tuple(record.get("receipts", ())))
 
 
-def _item(identity: str, fifo: int, priority: int | None, dependencies: tuple[str, ...] = (), *, automatic: bool = True):
+def _item(identity: str, fifo: int, priority: int | None, dependencies: tuple[str, ...] = (), *, automatic: bool = True, requirement: str = "SF-REQ-001"):
     _, _, ports, _ = _api()
-    contract = valid_contract(identity=identity, dependencies=dependencies, release_policy="automatic-on" if automatic else EXPLICIT_HUMAN_OFF, budget_policy=BudgetPolicy(hard_required_dimensions=("attempts",)), required_evidence=("artifact-verified",))
+    contract = valid_contract(identity=identity, dependencies=dependencies, satisfied_requirement_ids=(requirement,),
+                              release_policy="automatic-on" if automatic else EXPLICIT_HUMAN_OFF,
+                              budget_policy=BudgetPolicy(hard_required_dimensions=("attempts",)),
+                              required_evidence=("artifact-verified",))
     return ports.ReadyWorkItem(identity, fifo, "repo", "offline", priority, dependencies, contract, contract.content_digest, "ready", automatic)
 
 
@@ -618,3 +621,68 @@ def test_recovery_refuses_a_result_that_does_not_read_back(tmp_path: Path) -> No
     summary = coordinator_module.FactoryCoordinator(store, MemoryWorkManagement([item]), worker, artifacts, "offline").start()
     assert summary.stop_reason.value == "capacity-unavailable"
     assert store.recovery_reservations("offline") != ()
+
+
+def test_scheduler_finishes_focused_requirement_before_equal_priority_peer(tmp_path: Path) -> None:
+    items = [
+        _item("A1", 1, 1, requirement="SF-REQ-A"),
+        _item("B1", 2, 1, requirement="SF-REQ-B"),
+        _item("A2", 3, 1, dependencies=("A1",), requirement="SF-REQ-A"),
+        _item("B2", 4, 1, dependencies=("B1",), requirement="SF-REQ-B"),
+    ]
+    coordinator, worker, _ = _coordinator(
+        tmp_path, items,
+        {"A1": ["success"], "A2": ["success"], "B1": ["success"], "B2": ["success"]},
+    )
+    coordinator.start()
+    assert worker.dispatched == ["A1", "A2", "B1", "B2"]
+
+
+def test_scheduler_borrows_work_when_focused_requirement_is_blocked(tmp_path: Path) -> None:
+    items = [
+        _item("A1", 1, 1, dependencies=("missing"), requirement="SF-REQ-A"),
+        _item("B1", 2, 1, requirement="SF-REQ-B"),
+    ]
+    coordinator, worker, _ = _coordinator(tmp_path, items, {"A1": ["success"], "B1": ["success"]})
+    coordinator._set_requirement_focus("SF-REQ-A", 1)
+    coordinator.start()
+    assert worker.dispatched == ["B1"]
+    assert coordinator._requirement_focus() == ("SF-REQ-A", 1)
+
+
+def test_scheduler_focus_survives_restart_and_prevents_equal_priority_hopping(tmp_path: Path) -> None:
+    first_items = [
+        _item("A1", 1, 1, requirement="SF-REQ-A"),
+        _item("B1", 2, 1, requirement="SF-REQ-B"),
+    ]
+    coordinator, worker, artifacts = _coordinator(
+        tmp_path, first_items, {"A1": ["success"], "B1": ["success"]},
+    )
+    coordinator._set_requirement_focus("SF-REQ-A", 1)
+
+    # Reconstruct the coordinator over the same durable store with a later
+    # snapshot where A's next child arrived after B.
+    store = coordinator._store
+    _, _, ports, _ = _api()
+    later = [
+        _item("B1", 2, 1, requirement="SF-REQ-B"),
+        _item("A2", 5, 1, requirement="SF-REQ-A"),
+    ]
+    restarted_worker = ScriptedWorker(artifacts, {"A2": ["success"], "B1": ["success"]})
+    restarted = __import__("alienintent.execution_coordination.application.factory_coordinator", fromlist=["FactoryCoordinator"]).FactoryCoordinator(
+        store, MemoryWorkManagement(later), restarted_worker, artifacts, "offline"
+    )
+    restarted.start()
+    assert restarted_worker.dispatched[0] == "A2"
+
+
+def test_higher_priority_requirement_preempts_existing_focus(tmp_path: Path) -> None:
+    items = [
+        _item("A1", 1, 1, requirement="SF-REQ-A"),
+        _item("B0", 2, 0, requirement="SF-REQ-B"),
+    ]
+    coordinator, worker, _ = _coordinator(tmp_path, items, {"A1": ["success"], "B0": ["success"]})
+    coordinator._set_requirement_focus("SF-REQ-A", 1)
+    coordinator.start()
+    assert worker.dispatched[0] == "B0"
+    assert coordinator._requirement_focus() == ("SF-REQ-B", 0)

@@ -70,6 +70,8 @@ class GitHubProjectsWorkManagement(WorkManagement):
             priority_value: int | None = int(priority[1:])
         else:
             priority_value = None
+        if self._status_mapping[status] == "READY" and priority_value is None:
+            raise WorkRejected("READY item is missing inherited requirement priority")
         dependencies = row.get("dependencies", ())
         if not isinstance(dependencies, list) or any(not isinstance(dep, str) or not dep for dep in dependencies):
             raise WorkRejected("unsupported dependency evidence")

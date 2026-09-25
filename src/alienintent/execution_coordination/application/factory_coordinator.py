@@ -173,9 +173,68 @@ class FactoryCoordinator:
         stopped = [self.cancel(identity.removeprefix("factory:"), actor, authority, version, reason, f"{idempotency_key}:{identity}") for identity, version in candidates]
         return {"stopped": stopped}
 
+    def _requirement_ids(self, item: ReadyWorkItem) -> tuple[str, ...]:
+        return tuple(dict.fromkeys(item.contract.satisfied_requirement_ids))
+
+    def _single_requirement(self, item: ReadyWorkItem) -> str | None:
+        requirements = self._requirement_ids(item)
+        return requirements[0] if len(requirements) == 1 else None
+
+    def _focus_aggregate(self) -> str:
+        return "scheduler:requirement-focus"
+
+    def _requirement_focus(self) -> tuple[str, int | None] | None:
+        _, raw = self._store.read_state(self._profile, self._focus_aggregate())
+        requirement = raw.get("requirement") if raw else None
+        priority = raw.get("priority") if raw else None
+        if not isinstance(requirement, str) or not requirement:
+            return None
+        if priority is not None and (not isinstance(priority, int) or isinstance(priority, bool) or priority < 0):
+            return None
+        return requirement, priority
+
+    def _set_requirement_focus(self, requirement: str, priority: int | None) -> None:
+        version, raw = self._store.read_state(self._profile, self._focus_aggregate())
+        if raw.get("requirement") == requirement and raw.get("priority") == priority:
+            return
+        self._store.commit(self._profile, self._focus_aggregate(), version, {
+            "requirement": requirement,
+            "priority": priority,
+        })
+
+    @staticmethod
+    def _priority_key(item: ReadyWorkItem) -> tuple[bool, int, int]:
+        return (item.priority is None, item.priority if item.priority is not None else 0, item.fifo)
+
     def _next_item(self, items: Iterable[ReadyWorkItem]) -> ReadyWorkItem | None:
         eligible = [item for item in items if self._eligible(item)]
-        return min(eligible, key=lambda item: (item.priority is None, item.priority if item.priority is not None else 0, item.fifo), default=None)
+        if not eligible:
+            return None
+
+        best = min(eligible, key=self._priority_key)
+        focus = self._requirement_focus()
+        if focus is not None:
+            requirement, focus_priority = focus
+            # A genuinely higher-priority requirement preempts the current focus.
+            if best.priority is not None and (focus_priority is None or best.priority < focus_priority):
+                parent = self._single_requirement(best)
+                if parent is not None:
+                    self._set_requirement_focus(parent, best.priority)
+                return best
+
+            focused = [item for item in eligible if requirement in self._requirement_ids(item)]
+            if focused:
+                return min(focused, key=self._priority_key)
+
+            # The focused requirement is currently blocked/unavailable. Borrow
+            # another eligible BIU without forgetting the product requirement
+            # we are trying to finish.
+            return best
+
+        parent = self._single_requirement(best)
+        if parent is not None:
+            self._set_requirement_focus(parent, best.priority)
+        return best
 
     def _eligible(self, item: ReadyWorkItem) -> bool:
         try:
