@@ -1,0 +1,153 @@
+# PY-10 — Wave 1 live proof on the dedicated sandbox
+
+**BIU:** PY-10 — Wave 1 S9, the Wave 1 acceptance proof.
+**Predecessor:** **PY-09B** (and PY-05, PY-06, PY-08, PY-09). **Baseline:** `main` at release, containing this contract and the accepted PY-09B tree.
+**Plan:** [Wave 1 PLAN](../sf-wave1-plan.md), approved by [SWF-08–11](../../decisions/2026-09-20-wave1-plan-approval-d1-d2.md).
+
+## Satisfies
+
+| Requirement | Issue | Extent |
+|---|---|---|
+| SF-REQ-001 Continuous factory execution | #3 | Live end-to-end proof |
+| SF-REQ-002 READY scheduling | #4 | Live |
+| SF-REQ-003 Solve for N | #5 | WIP = 1 demonstrated live |
+| SF-REQ-004 Rolling slot refill | #6 | Live |
+| SF-REQ-005 Work Management abstraction | #7 | Live against a real GitHub Project |
+| SF-REQ-006 Human decision escalation | #8 | Live |
+| SF-REQ-007 Candidate custody | #9 | Live, before VERIFY |
+| SF-REQ-008 Crash-safe execution | #10 | Live restart mid-run |
+| SF-REQ-009 Deterministic kernel | #11 | Live |
+| SF-REQ-010 BIU contract model | #12 | Live |
+| SF-REQ-034 Control Plane (P0 minimum) | #13 | Operated live |
+| SF-REQ-035 Decision Inbox | #14 | Live decision recorded |
+| SF-REQ-038 Doctor / validation | #16 | Live gate before start |
+
+## Intent
+
+Demonstrate the Wave 1 product statement on real infrastructure, in one coherent run:
+
+> Given a prioritized backlog, sufficient execution authority, and no unresolved blockers, AlienIntent continuously consumes eligible READY BIUs until the executable backlog is exhausted.
+
+## Architecture references
+
+- **SWF-33** — the live transport substrate is built and independently verified by PY-09B before this proof begins; PY-10's acceptance obligation is unchanged and is not weakened by that split.
+- **SWF-08 (D-1)** — the proof runs on a dedicated AlienIntent sandbox environment. The Node bootstrap is not stopped, and the two control planes never share a Project/profile in a way that could dispatch the same work.
+- **SWF-11** — the acceptance list below is binding and complete.
+- **Architecture Authority** §1 deployment topology and profile isolation, §42 Node→Python coexistence, §43 Python Sovereignty (not claimed here).
+- `docs/architecture/pre-python-gate/conformance-and-sovereignty.md` — never give both implementations mutation authority over the same profile; mocks alone cannot establish live behaviour; sovereignty requires far more than this proof.
+
+## Binding rules — not delegated
+
+1. **Isolation.** The sandbox repository, its GitHub Project, its Python profile and its GitHub App installation/webhook identity are separate from the live AlienIntent Project and the Node bootstrap's profile. No shared state, workspace root, store or webhook route.
+2. The Node bootstrap keeps running and is not modified, paused or reconfigured to enable this proof.
+3. This is test/integration infrastructure, not a second product deployment, and not a cutover. No Python Sovereignty claim, no Node retirement, no migration of live work.
+4. Sandbox content is deliberately minimal but sufficient to exercise the factory; the backlog BIUs are trivial engineering tasks whose purpose is to exercise the loop.
+5. No human moves any individual BIU into IMPLEMENT during the run.
+6. Credentials for the sandbox App are referenced through the SecretProvider and never committed; no private installation detail, App ID, hostname or secret appears in the retained evidence.
+
+## Scope
+
+1. **Sandbox environment and live transport — consumed, not built.** The environment is provisioned ([operations/py10-sandbox.md](../../operations/py10-sandbox.md)) and the live GitHub transport and projection substrate is implemented and independently verified by **[PY-09B](PY-09B.md)** under [SWF-33](../../decisions/2026-09-21-py10-transport-split.md): installation-token acquisition, live repository access, Projects v2 read, fenced projection write, resident webhook ingress with signature handling, sandbox profile composition and the live `doctor` transport probes. **PY-10 builds none of it.** PY-10 consumes that proven substrate and remains obliged to verify it end to end inside the integrated live proof — a transport failure during the run is a PY-10 failure, not an excuse.
+2. **Seeded backlog**: at least three READY BIUs, including at least two of equal priority and at least one dependency, plus one BIU constructed to raise a genuine `HumanDecisionRequired`.
+3. **The run**: `doctor`, then `run`, one operator decision submitted through the Decision Inbox, one deliberate process restart mid-run, through to exhaustion of the executable backlog.
+4. **Evidence capture**: ordering trace, refill events, reservations, exact candidate revisions and read-back proof, verification results, escalation payload and decision record, restart boundary, projection delivery health and final states.
+5. **Written proof report** under `docs/verification/`, with a machine-readable summary, referencing the retained evidence.
+
+## Non-goals / excluded
+
+Running AlienIntent's own backlog on Python; cutover; Node retirement or pause; Python Sovereignty claims (that needs the full S1–S7 matrix); deployment capabilities; performance or cost optimization; Wave 2+ capability. No FactoryChecks change. No Node change except an unrelated §42 critical bootstrap repair, which would be its own BIU.
+
+## Required closure actions
+
+Evaluated under the standing ACCEPT → DONE policy ([SWF-17, SWF-19](../../decisions/2026-09-20-wave1-closure-policy.md)). Closure performs only the minimum remaining actions needed to reach DONE.
+
+- **Landing: required.** A **normal merge commit** of the accepted candidate into `main`, preserving the accepted SHA in `main` ancestry, is **authorized as routine closure** under SWF-19; no separate Founder exception is needed. No rebase, no squash, no rewrite of the accepted SHA, no change to accepted candidate content. If landing would alter accepted content or amounts to a material implementation change, stop and `RETURN_TO_IMPLEMENT`. After landing, run only the required post-merge checks and confirm required CI on the merge result. Merge is a closure operation, not a lifecycle state.
+- **Deployment: not required.** No deployable artifact or environment is in scope.
+- **Publication/release: not required.** Candidate-branch publication is completed before verification.
+- **Live verification: required.** The live proof *is* this BIU's deliverable and is already established by its acceptance evidence; closure records that evidence and performs no new run.
+- **BIU-specific: required.** Retain the redacted evidence manifest and publish the written proof report under `docs/verification/`, as scope requires. The sandbox environment is not dismantled by closure.
+
+Closure must not perform opportunistic refactoring, unrelated cleanup, speculative abstraction, unrelated documentation or tests, architecture redesign, additional feature work, or repeated verification already supported by trusted accepted evidence.
+
+**Minimum necessary work (SWF-20 / SF-REQ-048).** At IMPLEMENT, VERIFY, REVIEW, ACCEPT and closure, perform only the work necessary to satisfy this BIU, its lifecycle obligations, applicable architecture/policy and required evidence. Mechanically detectable over-scope work is a verification finding; REVIEW/ACCEPT assesses unnecessary work, unnecessary abstraction, scope expansion and whether a simpler correct implementation was available.
+
+**Closure evidence (SWF-18).** Record what is available without building new telemetry: closure start/end time; actions evaluated, performed and determined unnecessary; tool/command count; changed files; token/cost where reported; authority interruptions; time blocked awaiting human authority; and any `RETURN_TO_IMPLEMENT` occurrence.
+
+## Repair cycles (SWF-23)
+
+> **Repairs must converge monotonically unless authority explicitly changes the target.**
+
+Any repair cycle on this BIU carries, alongside this contract:
+
+- **findings to fix** — the specific findings being addressed;
+- **previously satisfied acceptance criteria** — criteria already proven in the prior candidate;
+- **evidence that must be preserved** — the proof artifacts carrying those criteria;
+- **evidence explicitly superseded** — listed item by item, never silently dropped;
+- **supersession authority** — the decision or requirement change authorizing it;
+- **replacement proof obligations** — what must newly prove the changed target.
+
+Previously verified behavior must remain correct, and previously valid evidence must remain valid or be explicitly superseded. A repair must not fix one defect by regressing another verified property, and must not remove, weaken, bypass or discard proof for a previously satisfied acceptance criterion — tests, negative controls, mutation/proven-red checks, architecture fitness, CI checks, custody evidence, lifecycle proof, dependency proof or operational verification. Evidence disappearance without explicit supersession is a regression and a verification failure. See [SWF-23](../../decisions/2026-09-20-convergent-repair-monotonic-progress.md).
+
+### Verification-first repair sequencing (Founder decision, 2026-09-21)
+
+Before any broad implementation repair on this BIU, in this order:
+
+1. **Confirm the required verification harness exists.** The proof this contract's acceptance criteria and verification requirements demand must be present and executable — not planned, not deferred to a later cycle.
+2. **Confirm changed paths are covered by discriminating proof.** A check that cannot fail is not evidence ([SWF-24](../../decisions/2026-09-20-deterministic-failure-class-promotion.md)): coverage of a changed path must be able to go red when that path breaks.
+3. **Preserve prior proven criteria.** Everything already satisfied stays satisfied, with its evidence intact or explicitly superseded.
+4. **Then repair remaining implementation defects.**
+
+A repair cycle that widens implementation while the harness for what it touches is still missing is out of order, and the coordinator will say so rather than waiting for the defect it predicts.
+
+**Evidence.** PY-08 ran five repair cycles that closed findings and shipped new defects each time, while AC 4's proof and the contract's verification requirements went untouched for five and four cycles respectively. One cycle spent building that proof closed both obligations *and* the two-cycle regression the harness existed to catch, with zero new defects. The missing verification was the cause of the defect churn, not a parallel debt.
+
+## Acceptance criteria (SWF-11 — all in one coherent run)
+
+1. At least 3 READY BIUs are consumed.
+2. Different priorities are present and respected.
+3. At least two equal-priority BIUs prove FIFO ordering.
+4. At least one dependency is respected: the dependent starts only after its blocker reaches DONE.
+5. WIP = 1 is enforced throughout.
+6. Slot refill is automatic on capacity release.
+7. One `HumanDecisionRequired` event is emitted with complete context.
+8. Only the affected BIU blocks; independent eligible work continues during the block.
+9. A durable human decision automatically unblocks and resumes the affected work.
+10. A Python process restart occurs during the run.
+11. No duplicate execution or duplicate external effect after the restart.
+12. Exact candidate custody is proven before every VERIFY.
+13. All executable work reaches DONE.
+14. No human moves an individual BIU into IMPLEMENT at any point.
+
+Additionally:
+
+15. `doctor` passes against the sandbox before autonomous start, evidenced.
+16. The live AlienIntent Project and the Node bootstrap are demonstrably unaffected: no Python-originated event, projection or dispatch touches them.
+17. Retained evidence contains no secret, credential, App ID, hostname or private installation detail.
+
+## Verification requirements
+
+- Live executable proof on real infrastructure. Mocks cannot satisfy any acceptance item.
+- Independent verification of the retained evidence against the acceptance list by a separate verifier invocation.
+- Evidence reproducible and retained with the invocation, including exact revisions and exit statuses.
+
+## Capabilities and budget
+
+Capabilities: sandbox repository workspace, Git, Python toolchain, process control, provider CLI execution, network access to GitHub for the sandbox installation, sandbox GitHub App credentials via SecretProvider. No authority over the live AlienIntent Project, the Node profile, FactoryChecks, or any deployment target.
+Budget per SWF-09: hard wall-clock, attempts, retries, concurrency and cancellation; token and monetary cost measured and recorded, never assumed zero. Provider spend is bounded to the minimum needed for the proof.
+
+## Readiness
+
+Agent-Ready assessment: [PY-10.assessment.json](PY-10.assessment.json). Dependencies: **PY-09B**, PY-05, PY-06, PY-08 and PY-09 accepted, and the SWF-08 sandbox environment provisioned.
+
+**Sandbox prerequisite: satisfied 2026-09-21.** The SWF-08 environment is provisioned and verified —
+repository, Project, profile, dedicated tunnel, ingress and GitHub App identity, with preflight passing
+17/17 including a live webhook delivery whose signature validates under the sandbox secret. Identities
+and residual risks: [operations/py10-sandbox.md](../../operations/py10-sandbox.md).
+
+**Open prerequisite: a Founder scope decision.** The 2026-09-21 reassessment at baseline `85b6060`
+returned **`SPLIT_RECOMMENDED`**, superseding the earlier `BLOCKED` result taken before provisioning.
+It finds that the first live GitHub transport, resident webhook ingress, live doctor probes and sandbox
+profile composition are deferred here by every predecessor but named in no BIU's scope — including this
+one. Resolving that amends the PY-02…PY-10 decomposition approved by SWF-08–11, which SWF-21 forbids the
+coordinator from deciding. **This BIU is not releasable until that decision is made.** Dependencies
+PY-05, PY-06, PY-08 and PY-09 are all accepted and closed.

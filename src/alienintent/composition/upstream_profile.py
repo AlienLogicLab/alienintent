@@ -1,11 +1,15 @@
 """Upstream profile: Inventory -> AmbiguityInspection -> DecisionResolution adapter -> existing DecisionInbox,
-plus the pinned PremiseEvidence bridge, pre-implementation ProofPlanning over it, and DesignAdmission whose
-applicability gates readiness processing."""
+plus the pinned PremiseEvidence bridge, pre-implementation ProofPlanning over it, DesignAdmission whose
+applicability gates readiness processing, and compiler validation behind that gate."""
+from alienintent.composition.compilation import VerifiedDesignDecisions
 from alienintent.composition.design_admission import PremiseReaderCheck
 from alienintent.context_assembly.application.design_admission_service import DesignAdmission, DesignReadiness
+from alienintent.context_assembly.adapters.compilation_repository import EvidenceAssessmentHistory
 from alienintent.context_assembly.adapters.decision_resolution import DecisionInboxQuestions
+from alienintent.context_assembly.application.compilation_validation_service import CompilationValidation
 from alienintent.context_assembly.application.ambiguity_service import AmbiguityService, UpstreamQuestionAdmission
 from alienintent.context_assembly.application.inventory_service import InventoryService
+from alienintent.context_assembly.ports.compilation import DependencyLifecycle
 from alienintent.context_assembly.ports.design_admission import ArchitectureChecks, DirectionAuthoritySource
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
 from alienintent.evidence_learning.application.premise_service import PremiseEvidenceReader
@@ -32,7 +36,8 @@ class UpstreamProfile:
                  proof_mappings: PredicateMappingSource | None = None, mapping_reviewer: str | None = None,
                  supersession_authority: str | None = None, design_checks: ArchitectureChecks | None = None,
                  design_authority: DirectionAuthoritySource | None = None,
-                 design_reviewers: frozenset[str] = frozenset()) -> None:
+                 design_reviewers: frozenset[str] = frozenset(),
+                 dependency_lifecycle: DependencyLifecycle | None = None) -> None:
         self.inventory = InventoryService(repository, store, project, profile, definition_ref, invocation, access_scope)
         self.inbox = DecisionInbox(store, UpstreamQuestionAdmission(decision_actor), profile)
         self.questions = DecisionInboxQuestions(self.inbox, profile)
@@ -57,3 +62,11 @@ class UpstreamProfile:
                                        design_authority, frozenset(design_reviewers))
                        if design_reviewers else None)
         self.design_readiness = DesignReadiness(self.design) if self.design is not None else None
+        # Compiler validation consumes that gate, the open questions and the execution lifecycle; it writes only its
+        # own upstream:compilation: pointers and immutable records, never lifecycle, release or projection state.
+        self.compilation = (CompilationValidation(repository, store, project, profile, definition_ref, invocation,
+                                                  access_scope, self.design_readiness,
+                                                  VerifiedDesignDecisions(self.design), self.ambiguity,
+                                                  dependency_lifecycle,
+                                                  EvidenceAssessmentHistory(repository, access_scope))
+                            if self.design_readiness is not None and dependency_lifecycle is not None else None)
