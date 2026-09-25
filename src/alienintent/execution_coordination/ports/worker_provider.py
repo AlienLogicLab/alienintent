@@ -10,6 +10,11 @@ from alienintent.execution_coordination.domain.custody import CandidateRef
 from alienintent.execution_coordination.domain.escalation import HumanDecisionRequired
 
 PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
+# K3: the durable terminal outcome retained against an invocation whose
+# ownership ended conclusively without any result of its own. It is not a
+# verdict, candidate or failure: the stage is unchanged and its role may be
+# re-dispatched once under the composed replacement allowance.
+MISSING_TERMINAL_RESULT = "missing-terminal-result"
 
 
 @dataclass(frozen=True)

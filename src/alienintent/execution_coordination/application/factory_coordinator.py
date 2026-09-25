@@ -14,7 +14,7 @@ from alienintent.execution_coordination.domain.release import ReleaseRequest, Re
 from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, VerdictKind, evaluate_verdict
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
-from alienintent.execution_coordination.ports.worker_provider import CLOSURE, PRODUCER, VERIFIER, WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, PRODUCER, VERIFIER, WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
 
 # K2: each nonterminal stage is advanced by exactly one canonical role.
@@ -342,6 +342,10 @@ class FactoryCoordinator:
         """
         if outcome.kind == "authority-block":
             return _Advance(current, "authority-block", {})
+        if outcome.kind == MISSING_TERMINAL_RESULT:
+            # No lifecycle consequence: the unchanged stage re-dispatches its
+            # own role on the same custodied candidate, bounded at launch.
+            return _Advance(current, outcome.kind, {})
         if invocation.role == PRODUCER:
             if outcome.kind != "success" or outcome.candidate is None:
                 return _Advance(current, outcome.kind, {})
