@@ -1,0 +1,99 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220306",
+  "issued_at": "2026-09-25T08:55:36.890894+00:00",
+  "goal": "Deliver the bounded planned extent: Known-active liveness reconciliation",
+  "starting_authority": {
+    "requirements": [
+      "SF-REQ-056"
+    ],
+    "dag_node": [
+      "L1"
+    ],
+    "candidate_contract_sha256": "26d556a0adf1bf39c90e51c0a93ff68e8c7984b94616f9611d080918865f2628",
+    "baseline_sha": "6ea9284d2c1e5a5b4000e2102e8dd3a809ba18e9",
+    "release_authority": "NOT GRANTED \u2014 normal Wave 2 release admission required before IMPLEMENT"
+  },
+  "allowed_scope": {
+    "extent": "With binding SF-REQ-056 authority: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, and unavailable-evidence holds. Delayed original plus two contenders and crash/restart retain one authorized effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries. Local proof does not claim operational monitor-host replacement.",
+    "boundary": "Only this node extent. Requirement/design references constrain execution and do not absorb sibling scopes.",
+    "non_goals": [
+      "Replanning the DAG or implementing another node; changing requirements, closing authority gaps or selecting withdrawn architecture policy.",
+      "Automatic release, live operation or retirement from a candidate or local proof result."
+    ],
+    "architecture_constraints": [
+      "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
+      "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+    ]
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220103",
+      "issue": 74,
+      "project_status": "DONE",
+      "completion_predicate": "Two SQLite connections/processes compete; remove fence guard to kill assertion. BEGIN IMMEDIATE checks vector, reservation, epoch/authority and unique intent atomically at intent and claim; validate receipt at confirmation. Crash around intent/send/readback, delayed sender, sorted multi-reservation locking, unknown outcome retain ownership. Consumer dedupes and fences or refuses reassignment until confirmed death/completion."
+    },
+    {
+      "biu_id": "WO-220301",
+      "issue": 78,
+      "project_status": "DONE",
+      "completion_predicate": "DONE/judgment events dedupe across restart; notification failure preserves pending. SEEN is not RESOLVED; wrong actor/revision/lane cannot resolve. DecisionInbox remains distinct. Unbound activation causes zero model launches. Preserve origin IDs, history and handler attribution."
+    },
+    {
+      "biu_id": "WO-220304",
+      "issue": 96,
+      "project_status": "DONE",
+      "completion_predicate": "Persist instance/generation, tick and scan outcomes independently of model life/workload. At 2*I remains in bound, above becomes STALE; failed/incomplete scan DEGRADED, absent/unreadable/regressing clock UNVERIFIED. End episode without losing local monitor state; this is a service/inspection fixture, not deployment supervision."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
+    "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority.",
+    "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS."
+  ],
+  "acceptance": {
+    "criteria": [
+      "With binding SF-REQ-056 authority: fake-clock G=300/I=60/C=90 boundaries, active/pending/completed/unknown/terminal/no-closure cases, and unavailable-evidence holds. Delayed original plus two contenders and crash/restart retain one authorized effect/readback. Completed judgment suppresses indefinitely; valid resolution permits reinspection only. Guard- and suppression-removal controls fail. No status toggles/new retries. Local proof does not claim operational monitor-host replacement.",
+      "SF-REQ-056-AC-01: Drop the original trigger for an authorized known BIU whose state age exceeds configured grace G: at the next reconciliation scan (interval I), identify the expected missing effect and submit one authorized recovery intent. Before G, do not recover. Under a progressing test clock the detection bound is G + I after entry.",
+      "SF-REQ-056-AC-02: Fixtures with an active matching invocation, pending claim/effect or correlated completion awaiting projection yield no recovery invocation. ACCEPT without a required closure effect and terminal BIUs yield none.",
+      "SF-REQ-056-AC-03: Race delayed original delivery, duplicate recovery scans and two reconciler attempts for the same effect identity; restart between durable intent and effect completion. The fixture must show one effective authorized action and correlated readback, with stale claims refused. A watcher-only absence check is insufficient.",
+      "SF-REQ-056-AC-04: A completed FOUNDER_EXCEPTION, HumanDecisionRequired or equivalent judgment-blocking result suppresses relaunch after any number of grace periods and creates or retains one attributable durable attention item.",
+      "SF-REQ-056-AC-05: A seen-only notification leaves suppression in place. Explicit resolution under applicable authority (including an attributable resolving acknowledgment) or a newer correlated non-judgment outcome permits reevaluation; stale/out-of-lane resolutions do not.",
+      "SF-REQ-056-AC-06: Recovery follows canonical effect paths and retains lifecycle meaning without status toggling. If required authority/custody/fencing evidence is unavailable or inconsistent, record a hold/attention rather than launching speculatively.",
+      "SF-REQ-056-AC-07: An isolated negative control removing durable identity fencing fails the concurrent/duplicate fixture, and removing judgment suppression fails the completed-outcome fixture. Retain proven-red output plus restored passing evidence."
+    ],
+    "proof_fixture": "FX-L1",
+    "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+    "material_failure_classes": [
+      "After configured grace, a known active lifecycle state with complete evidence of a missing expected actor/effect yields one reconcilable liveness gap.",
+      "Active, pending, completed or unknown correlated effect evidence suppresses duplicate recovery; unknown evidence holds rather than fabricating absence.",
+      "A completed judgment-required outcome suppresses relaunch until matching resolution/supersession.",
+      "Delayed original delivery plus competing recovery and restart still yields one authorized effect/readback identity.",
+      "Stale/unavailable monitor-health evidence prevents claiming the bounded G+I operational guarantee."
+    ],
+    "bounded_commands": [
+      "python3 -m pytest -q tests/control_plane/test_monitor_health.py tests/control_plane/test_attention.py"
+    ],
+    "non_claims": [
+      "No work-discovery polling is introduced.",
+      "No bootstrap liveness service retirement or live monitor-host replacement is claimed."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220306",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker.",
+    "current_artifact": "Candidate specification only; no Issue, branch publication, implementation commit or worker invocation created by Phase 12."
+  },
+  "landing": "SWF-19: normal merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220306.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof."
+  ],
+  "escalation_condition": [
+    "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
+    "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "fresh native Agent Ready assessment of this exact work-unit revision required before READY; no release authority"
+}
