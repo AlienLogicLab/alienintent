@@ -66,7 +66,15 @@ worker provider and performs no live action. The host remains unassigned (`R1-GA
   - A newer non-judgment outcome also lifts suppression.
   - SEEN, out-of-lane and stale (older-outcome) resolutions keep suppression.
 - **Holds.** Missing or inactive authority, unknown budget (`budget_admitted` false), missing custody for verifier or
-  closure, and unavailable observation or attention evidence are durable holds, never launches.
+  closure, and unavailable observation, attention or store evidence during a scan are holds, never launches. Each is
+  written to `liveness-hold:<biu>`. If that write itself fails, the scan reports FAILED, never quiet success.
+- **Reservations.** A reservation never outlives a failed admission. If an admission fails after reserving and before
+  a durable intent exists, the reservation is released. `start()` releases orphan lane reservations left by a crash
+  before intent. It also reopens lanes whose confirmed effect still retains a reservation. A live contender whose
+  reservation is released this way is refused by its stale fence.
+- **Monitor failure.** If C4 scan progress or the health read fails (for example `NOT_STARTED` or
+  `CLOCK_REGRESSION`), reconciliation continues and the claim is withdrawn as
+  `WITHDRAWN:PROGRESS_UNRECORDED:<cause>`.
 - **G+I claim.** `ScanReport.bound_claim` is `G_PLUS_I_CLAIMED` only while C4 health is HEALTHY. Otherwise it is
   `WITHDRAWN:<status>:<reason>`. With no monitor bound it is `WITHDRAWN:UNVERIFIED:MONITOR_UNBOUND`. Each scan reports
   COMPLETE, EVIDENCE_HOLD or FAILED through C4 `ScanProgress`.
@@ -78,8 +86,11 @@ worker provider and performs no live action. The host remains unassigned (`R1-GA
   fixed decision to park rather than relax, binding one is left to a provider that can prove the same contract.
 - **`FACTORY_COORDINATOR_NOT_MIGRATED`.** `FactoryCoordinator` still dispatches through its legacy unguarded
   `launch:<identity>:<version>` path, and this node does not rename or adopt in-flight legacy effects. A pending or
-  unknown legacy `launch:` effect for the same work is observed read-only and suppresses or holds recovery. Routing the
-  coordinator's dispatch through `CanonicalEffectAdmission` belongs to the capstone `C` integration.
+  unknown legacy `launch:` effect for the same work is observed read-only: a pending one suppresses recovery, and an
+  unknown one holds it. A settled legacy launch has no immutable generation alias yet. When one is projected on
+  `factory:<work>` in the same store, the reconciler holds with `LEGACY_EFFECT_UNALIASED` rather than relaunching.
+  Routing the coordinator's dispatch through `CanonicalEffectAdmission`, with the alias binding, belongs to the
+  capstone `C` integration.
 - **`LOCAL_LIFECYCLE_JOURNAL_STAND_IN`.** Known-active entries, running invocations and correlated outcomes are
   written by `StoreLifecycleJournal`. They are not read from WorkManagement or worker `read_back`.
 - **Not provided:**
@@ -108,7 +119,7 @@ This is one control per material failure class, and two of them are the AC-07 pi
 | `grace_ignored` | a missing effect after G yields one gap |
 | `unknown_as_absent` | unknown evidence holds rather than fabricating absence |
 | `judgment_suppression_removed` | AC-07 judgment suppression |
-| `identity_fence_removed` | AC-07 durable identity fencing (delayed original + contenders + restart) |
+| `identity_fence_removed` | AC-07 durable identity fencing (delayed original + contenders + restart). The control removes this node's identity binding: the delivery source enters the admission key, so paths no longer share one canonical key. The store-side identity and fence guards belong to WO-220103 and keep their own FX-S2 proven-red controls. |
 | `bound_claim_unconditional` | unhealthy monitor evidence withdraws the G+I claim |
 
 Each control records intact 0, fault 1 with the named assertion, and restored 0. Finally, the harness performs a
@@ -120,6 +131,31 @@ At the admission baseline `98a56bf`, 25 tests in `tests/evidence_learning/test_p
 `DESIGN_MISMATCH`. The harness re-runs that file in a disposable baseline worktree. It records the regression as
 `PRE_EXISTING_BASELINE_FAILURE` only when the failing node ids are identical. Any other failure is a HOLD. The defect
 belongs to the FX-U4 proof-planning owner (WO-220204) and is not repaired here.
+
+## Preparatory review and repair
+
+Before evidence capture, a separate read-only reviewer examined commit `74e1a82`. It confirmed four defects and two
+overstatements:
+
+1. A reservation leaked after a post-reserve store failure or crash, and was reported as a quiet COMPLETE.
+2. A confirmed legacy `launch:` effect was invisible, so it could be relaunched.
+3. A monitor failure raised out of `scan()`.
+4. A release failure after confirmation raised out of `scan()`.
+5. The label of the identity control overstated its reach.
+6. The claim that holds are durable was overstated.
+
+All of these are repaired above. Each repair is covered by a test that failed against `74e1a82` and passes on the
+repaired source:
+
+- `test_crash_after_reservation_before_intent_is_released_at_start`
+- `test_store_failure_after_reservation_does_not_strand_it`
+- `test_confirmed_legacy_launch_holds_instead_of_relaunching`
+- `test_monitor_failure_withdraws_claim_but_reconciliation_continues`
+- `test_release_failure_after_confirmation_does_not_escape`
+- `test_unrecorded_hold_fails_the_scan`
+
+The reviewer found no path where a judgment outcome fails to suppress, and no hold path that launches. This review
+is preparatory. It is not the fresh BIU verifier verdict.
 
 ## Evidence
 

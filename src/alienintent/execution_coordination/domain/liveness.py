@@ -237,6 +237,9 @@ def inspect(profile: str, active: KnownActive, snapshot: ObservationSnapshot, no
         return Suppressed("JUDGMENT_UNRESOLVED", latest)
     if snapshot.legacy_effect == "UNKNOWN":
         return EvidenceHold("LEGACY_EFFECT_UNKNOWN")
+    if snapshot.legacy_effect == "UNALIASED":
+        # No immutable alias binds the legacy launch to a generation: park, never relaunch.
+        return EvidenceHold("LEGACY_EFFECT_UNALIASED")
     if snapshot.legacy_effect == "PENDING":
         return NoAction("LEGACY_EFFECT_PENDING")
     if snapshot.active_invocations:

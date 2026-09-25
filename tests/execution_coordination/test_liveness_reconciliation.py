@@ -207,8 +207,9 @@ def _confirmed(p):
 
 
 def _legacy_launch(p):
-    p.store.commit_with_effect(PROFILE, "execution:" + BIU, 0, {"stage": "IMPLEMENT"}, "launch:WO-L1:1",
-                               {"correlation": "launch:WO-L1:1", "work": BIU, "role": "producer"})
+    """FactoryCoordinator's legacy path: `factory:<work>` projection plus a `launch:` effect."""
+    p.store.commit_with_effect(PROFILE, "factory:" + BIU, 0, {"stage": "IMPLEMENT", "correlation": "launch:WO-L1:1"},
+                               "launch:WO-L1:1", {"correlation": "launch:WO-L1:1", "work": BIU, "role": "producer"})
 
 
 CASES = {
@@ -521,3 +522,92 @@ def test_unknown_record_outside_known_active_is_not_discovered(tmp_path):
     p = started(tmp_path, clock, active=False)
     p.journal.record_outcome(outcome("outcome-1", "SUCCESS", 1))
     assert scan(p, clock, T0 + 10 * G).events == (), "scans only already-known active records"
+
+
+# ---- repair-cycle regressions (preparatory review) -----------------------------------------
+
+def test_confirmed_legacy_launch_holds_instead_of_relaunching(tmp_path):
+    clock = Clock()
+    p = started(tmp_path, clock)
+    _legacy_launch(p)
+    p.store.claim_effect(PROFILE, "launch:WO-L1:1")
+    p.store.confirm_effect(PROFILE, "launch:WO-L1:1", "outcome:success")
+    report = scan(p, clock, T0 + 2 * G)
+    assert kinds(report) == ["liveness.evidence_hold"] and report.events[0].reason == "LEGACY_EFFECT_UNALIASED", \
+        "a settled legacy launch without a generation alias must park, not relaunch"
+    assert consumers(p) == []
+
+
+def test_crash_after_reservation_before_intent_is_released_at_start(tmp_path):
+    clock = Clock(T0 + G)
+    p = started(tmp_path, clock)
+    key = expected(p).effect_key
+    p.store.acquire_many(PROFILE, (("liveness-lane", key),), "dispatcher-1")  # crash before commit_guarded
+    restarted = build(tmp_path, clock, monitor=False)
+    restarted.reconciler.start()
+    assert restarted.store.recovery_reservations(PROFILE) == ()
+    assert "liveness.recovery_intent" in kinds(restarted.reconciler.scan())
+    assert len(consumers(restarted)) == 1
+
+
+def test_store_failure_after_reservation_does_not_strand_it(tmp_path):
+    from alienintent.execution_coordination.ports.operational_store import StoreUnavailable
+    clock = Clock()
+    p = started(tmp_path, clock)
+    real = p.store.commit_guarded
+
+    def locked(*args, **kwargs):
+        p.store.commit_guarded = real
+        raise StoreUnavailable("database is locked")
+    p.store.commit_guarded = locked
+    first = scan(p, clock, T0 + G)
+    assert first.outcome == "EVIDENCE_HOLD" and first.events[-1].reason.startswith("ADMISSION_EVIDENCE_UNAVAILABLE")
+    assert p.store.recovery_reservations(PROFILE) == ()
+    assert "liveness.recovery_intent" in kinds(scan(p, clock, T0 + G + I))
+    assert len(consumers(p)) == 1
+
+
+def test_monitor_failure_withdraws_claim_but_reconciliation_continues(tmp_path):
+    clock = Clock()
+    p = build(tmp_path, clock)
+    grant(p)
+    p.journal.enter(known())
+    p.reconciler.start()  # the bound monitor was never started
+    clock.now = T0 + G
+    report = p.reconciler.scan()
+    assert "liveness.recovery_intent" in kinds(report)
+    assert report.bound_claim.startswith("WITHDRAWN:PROGRESS_UNRECORDED:MonitorHold")
+
+
+def test_release_failure_after_confirmation_does_not_escape(tmp_path):
+    from alienintent.execution_coordination.ports.operational_store import StoreUnavailable
+    clock = Clock()
+    p = started(tmp_path, clock)
+    real = p.store.release
+
+    def failing(*args, **kwargs):
+        raise StoreUnavailable("database is locked")
+    p.store.release = failing
+    report = scan(p, clock, T0 + G)
+    assert kinds(report)[-1] == "liveness.readback_confirmed" and len(consumers(p)) == 1
+    p.store.release = real
+    restarted = build(tmp_path, clock, monitor=False)
+    restarted.reconciler.start()
+    assert restarted.store.recovery_reservations(PROFILE) == (), "startup releases the retained reservation"
+    assert "liveness.recovery_intent" not in kinds(restarted.reconciler.scan())
+
+
+def test_unrecorded_hold_fails_the_scan(tmp_path):
+    from alienintent.execution_coordination.ports.operational_store import StoreUnavailable
+    clock = Clock()
+    p = started(tmp_path, clock, known(budget_admitted=False))
+    real = p.store.commit
+
+    def failing(profile, aggregate, *args):
+        if aggregate.startswith("liveness-hold:"):
+            raise StoreUnavailable("disk full")
+        return real(profile, aggregate, *args)
+    p.store.commit = failing
+    report = scan(p, clock, T0 + G)
+    assert report.outcome == "FAILED", "a hold that is not durable is never quiet success"
+    assert consumers(p) == []

@@ -64,6 +64,12 @@ class StoreEffectObservation(EffectObservation):
         legacy = [status for status, table in (("UNKNOWN", unknown), ("PENDING", pending))
                   for identity, effect in table.items()
                   if identity.startswith("launch:") and effect.payload.get("work") == active.biu]
+        if not legacy:
+            # FactoryCoordinator projects every legacy launch onto `factory:<work>`; a settled one
+            # has no generation alias here, so it is reported, never ignored.
+            _, projection = self.store.read_state(self.profile, "factory:" + active.biu)
+            if str(projection.get("correlation", "")).startswith("launch:"):
+                legacy = ["UNALIASED"]
         return ObservationSnapshot(running, tuple(effects), correlated, legacy[0] if legacy else None)
 
 

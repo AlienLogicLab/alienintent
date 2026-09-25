@@ -117,7 +117,11 @@ class CanonicalEffectAdmission:
             except ReservationRejected:
                 return Refused(key, "RESERVED")
             lane = lane_aggregate(key)
-            lane_version, _ = self.store.read_state(self.profile, lane)
+            try:
+                lane_version, _ = self.store.read_state(self.profile, lane)
+            except (StoreUnavailable, SchemaIncompatible):
+                self._release(reservations)
+                raise
             vector = GuardVector(((active_aggregate(active.biu), revision), (active.authority, authority_version),
                                   (lane, lane_version)), active.authority, int(grant["epoch"]), invocation)
             state = {"schema_version": 1, "effect_key": key, "biu": active.biu, "generation": active.generation,
@@ -132,6 +136,10 @@ class CanonicalEffectAdmission:
                 self._release(reservations)
                 used = "effect identity already used" in str(error)
                 return Refused(key, "EFFECT_IDENTITY_USED" if used else "ADMISSION_REFUSED:" + str(error))
+            except (StoreUnavailable, SchemaIncompatible):
+                # The transaction rolled back, so no intent exists; do not strand the reservation.
+                self._release(reservations)
+                raise
         except (StoreUnavailable, SchemaIncompatible, LivenessHold) as error:
             return Held(key, "ADMISSION_EVIDENCE_UNAVAILABLE:" + type(error).__name__)
         return Intent(key, reservations, replace(vector, versions=tuple(
@@ -140,7 +148,7 @@ class CanonicalEffectAdmission:
     def deliver(self, intent: Intent, source: str) -> Admitted | Held:
         try:
             result = self.executor.execute(self.profile, intent.effect_key, intent.reservations, intent.vector)
-        except (ReservationRejected, VersionConflict, StoreUnavailable) as error:
+        except (ReservationRejected, VersionConflict, StoreUnavailable, SchemaIncompatible) as error:
             # The intent stays durable with its reservation; startup/readback decides.
             return Held(intent.effect_key, "DELIVERY_REFUSED:" + str(error))
         return self._settle(intent.effect_key, intent.reservations, result, source)
@@ -183,9 +191,28 @@ class CanonicalEffectAdmission:
         self._release(reservations)
         return Admitted(key, result.receipt.digest, source)
 
-    def _release(self, reservations: tuple[Reservation, ...]) -> None:
+    def _release(self, reservations: tuple[Reservation, ...]) -> bool:
+        """Best effort: a reservation left behind is reopened by `release_orphans` at startup."""
+        released = True
         for r in reservations:
-            self.store.release(self.profile, r.scope, r.key, r.owner, r.fence)
+            try:
+                self.store.release(self.profile, r.scope, r.key, r.owner, r.fence)
+            except (ReservationRejected, StoreUnavailable, SchemaIncompatible):
+                released = False
+        return released
+
+    def release_orphans(self) -> tuple[str, ...]:
+        """Release lane reservations left by a crash before any durable intent existed.
+
+        A live contender that still holds such a reservation is fenced: its
+        guarded intent is then refused as stale.
+        """
+        orphans = []
+        for r in self.store.recovery_reservations(self.profile):
+            if r.scope == LANE_SCOPE and not self.store.read_state(self.profile, lane_aggregate(r.key))[1]:
+                if self._release((r,)):
+                    orphans.append(r.key)
+        return tuple(orphans)
 
 
 class LivenessReconciler:
@@ -199,7 +226,7 @@ class LivenessReconciler:
         policy.validate()
         self.store, self.observations, self.attention, self.health = store, observations, attention, health
         self.admission, self.profile, self.policy, self.clock, self.progress = admission, profile, policy, clock, progress
-        self.started = False
+        self.started, self._unrecorded = False, False
 
     def start(self) -> tuple[Admitted | Held, ...]:
         """Persist the policy digest, then reopen every durable intent without a new launch."""
@@ -208,10 +235,12 @@ class LivenessReconciler:
         document = {"schema_version": 1, "policy": self.policy.document(), "policy_digest": self.policy.digest()}
         if body != document:
             self.store.commit(self.profile, name, version, document)
+        self.admission.release_orphans()
         pending = {e.identity for e in (*self.store.pending_effects(self.profile), *self.store.unresolved_effects(self.profile))}
+        retained = {r.key for r in self.store.recovery_reservations(self.profile) if r.scope == LANE_SCOPE}
         reopened = tuple(self.admission.resume(str(lane["effect_key"]))
                          for _, _, lane in self.store.list_states(self.profile, lane_aggregate(""))
-                         if lane.get("effect_key") in pending)
+                         if lane.get("effect_key") in pending | retained)
         self.started = True
         return reopened
 
@@ -235,30 +264,50 @@ class LivenessReconciler:
         return replace(decision, attention=attention) if isinstance(decision, Suppressed) else decision
 
     def bound_claim(self) -> str:
-        status, reason = self.health.health()
+        try:
+            status, reason = self.health.health()
+        except Exception as error:  # any health read failure withdraws the claim; it never stops reconciliation
+            return "WITHDRAWN:UNVERIFIED:HEALTH_UNREADABLE:" + type(error).__name__
         return BOUND_CLAIMED if status == "HEALTHY" else f"WITHDRAWN:{status}:{reason}"
+
+    def _progress(self, step: Callable[[], object]) -> str | None:
+        try:
+            step()
+        except Exception as error:  # an unhealthy monitor withdraws the claim; reconciliation continues
+            return type(error).__name__ + ":" + str(error)
+        return None
 
     def scan(self) -> ScanReport:
         if not self.started:
             raise LivenessHold("NOT_STARTED")
-        if self.progress is not None:
-            self.progress.scan_started()
+        self._unrecorded = False
+        progress = None if self.progress is None else self._progress(self.progress.scan_started)
         now = self.clock()
         events: list[LivenessEvent] = []
         try:
             entries = self.known_active()
         except (StoreUnavailable, SchemaIncompatible, LivenessHold) as error:
-            return self._finish(now, "FAILED", events, "known-active store unavailable: " + type(error).__name__)
+            return self._finish(now, "FAILED", events, "known-active store unavailable: " + type(error).__name__, progress)
         for revision, active in entries:
-            events.extend(self._reconcile(revision, active))
+            try:
+                events.extend(self._reconcile(revision, active))
+            except (StoreUnavailable, SchemaIncompatible, ReservationRejected, VersionConflict, LivenessHold) as error:
+                event = LivenessEvent("liveness.evidence_hold", active.biu, None, "SCAN_STORE_FAILURE:" + type(error).__name__)
+                self._record_hold(active, event)
+                events.append(event)
+        if self._unrecorded:
+            return self._finish(now, "FAILED", events, "a hold could not be recorded durably", progress)
         held = any(e.kind == "liveness.evidence_hold" for e in events)
         return self._finish(now, "EVIDENCE_HOLD" if held else "COMPLETE", events,
-                            "evidence hold recorded" if held else None)
+                            "evidence hold recorded" if held else None, progress)
 
-    def _finish(self, now: object, outcome: str, events: list[LivenessEvent], error: str | None) -> ScanReport:
-        if self.progress is not None:
-            self.progress.scan_finished(ScanOutcome(outcome, error, len(events)))  # type: ignore[arg-type]
-        return ScanReport(now if type(now) is int else -1, outcome, tuple(events), self.policy.digest(), self.bound_claim())
+    def _finish(self, now: object, outcome: str, events: list[LivenessEvent], error: str | None,
+                progress: str | None) -> ScanReport:
+        if self.progress is not None and progress is None:
+            progress = self._progress(lambda: self.progress.scan_finished(  # type: ignore[union-attr]
+                ScanOutcome(outcome, error, len(events))))  # type: ignore[arg-type]
+        claim = self.bound_claim() if progress is None else "WITHDRAWN:PROGRESS_UNRECORDED:" + progress
+        return ScanReport(now if type(now) is int else -1, outcome, tuple(events), self.policy.digest(), claim)
 
     def _reconcile(self, revision: int, active: KnownActive) -> list[LivenessEvent]:
         decision = self.inspect(active)
@@ -300,5 +349,6 @@ class LivenessReconciler:
             version, current = self.store.read_state(self.profile, name)
             if {k: v for k, v in current.items() if k != "at"} != body:
                 self.store.commit(self.profile, name, version, body | {"at": self.clock()})
-        except (StoreUnavailable, VersionConflict, ReservationRejected):
-            pass
+        except (StoreUnavailable, SchemaIncompatible, VersionConflict, ReservationRejected):
+            # Never silent: an unrecorded hold makes the scan FAILED, not quiet success.
+            self._unrecorded = True

@@ -42,6 +42,8 @@ CONTROLS = (
      "    if latest is not None and latest.judgment and judgment_resolved is not True:", "    if False:",
      ("test_completed_judgment_suppresses_relaunch_indefinitely[FOUNDER_EXCEPTION]",),
      ("a completed judgment outcome must suppress relaunch",)),
+    # Removes this node's durable identity binding: the admission key stops being the canonical key
+    # shared by every path. The store-side identity/fence guards are WO-220103's, proven by FX-S2's controls.
     ("identity_fence_removed", "AC-07: delayed original + contenders + restart keep one effect identity", APP,
      "        key = expected.effect_key\n", '        key = expected.effect_key + ":" + source\n',
      ("test_race_delayed_original_contenders_and_restart",), ("delayed original must not act again",)),
@@ -131,6 +133,7 @@ def readback(output):
                           "bound_claim": report.bound_claim, "events": [asdict(e) for e in report.events]})
         late = fx.delayed_original(root / "recovery", fx.T0 + 2 * fx.G + fx.SECOND, "readback-delivery")
         effect = fx.expected(recovery)
+        clock = fx.Clock()  # the judgment scenario has its own monitor timeline
         judged = fx.judged(root / "judgment", clock)
         for n in (1, 3, 10):
             report = fx.scan(judged, clock, fx.T0 + n * fx.G)
@@ -257,10 +260,15 @@ def run(output, invocation):
                              "test_newer_nonjudgment_outcome_permits_reevaluation", "test_out_of_lane_resolution_keeps_suppression",
                              "test_stale_resolution_keeps_suppression"],
         "SF-REQ-056-AC-06": ["test_missing_authority_budget_or_custody_records_hold",
+                             "test_confirmed_legacy_launch_holds_instead_of_relaunching", "test_unrecorded_hold_fails_the_scan",
+                             "test_crash_after_reservation_before_intent_is_released_at_start",
+                             "test_store_failure_after_reservation_does_not_strand_it",
+                             "test_release_failure_after_confirmation_does_not_escape",
                              "test_recovery_uses_canonical_effect_path_without_status_toggling", "test_scanner_cannot_create_generation",
                              "test_effect_key_excludes_delivery_and_scan_time"],
         "SF-REQ-056-AC-07": ["proven-red.json: identity_fence_removed, judgment_suppression_removed"],
-        "monitor-health evidence withdraws the G+I claim": ["test_bound_claim_requires_healthy_monitor", "test_scan_progress_reported_to_monitor"],
+        "monitor-health evidence withdraws the G+I claim": ["test_bound_claim_requires_healthy_monitor", "test_scan_progress_reported_to_monitor",
+                                                            "test_monitor_failure_withdraws_claim_but_reconciliation_continues"],
         "non-claim: no work-discovery polling": ["test_unknown_record_outside_known_active_is_not_discovered"],
     }
     (output / "execution-record.json").write_text(json.dumps(report, indent=2) + "\n")
