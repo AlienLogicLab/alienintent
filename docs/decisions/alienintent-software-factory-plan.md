@@ -25,6 +25,16 @@ Long term: commoditize more of work management itself as requirements become str
 
 The human role should progressively move toward **ideation, product intent, and genuinely novel authority decisions**.
 
+## Plan durability and amendment semantics
+
+This plan is durable and cumulative. A later Founder instruction that adds a requirement, proposal, experiment, BIU, buffer target, defect, or other work extends this plan unless the Founder explicitly says that an existing decision, priority, sequence, or critical path is superseded.
+
+New work must therefore be reconciled with the existing plan before sequencing changes are made. An addition does not silently become a new top priority and does not erase previously authorized work. If a new instruction conflicts with the current critical path, the conflict must be surfaced explicitly rather than resolved by inference.
+
+The canonical implementation remains Python AlienIntent. The Node implementation is temporary bootstrap execution machinery and may change only for critical repairs required to keep that bootstrap operational, consistent with the binding Wave 1 Founder decisions. Product defects discovered while Node is operating should be eliminated in the canonical Python path whenever the bootstrap can continue safely without the repair.
+
+The transition to Python Sovereignty and retirement of temporary Node/bootstrap authority remains a critical path until explicitly superseded by Founder decision.
+
 ## Planning authority
 
 ### Founder / Product authority

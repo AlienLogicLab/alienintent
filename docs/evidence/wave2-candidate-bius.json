@@ -7356,7 +7356,7 @@
       ],
       "scope": {
         "dag_scope": "K3 proves shared-profile composition compatibility after K1 durable outcome/readback and K2 canonical orchestration. sandbox_run_profile/github_profile must bind the configured WorkerProvider and durable role/candidate/result correlation before multi-role worker launch; no parallel sidecar state owner.",
-        "extent": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed.",
+        "extent": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed. Invocation ownership includes required supervised background work started by that invocation. Provider/client session exit is not terminal while owned work is still active. Once ownership is conclusively terminal, a missing durable terminal outcome is retained against the original invocation and read back before any successor is considered.",
         "node_kind": "planned_prerequisite",
         "owns_capabilities": [
           "composed_role_bindings"
@@ -7395,7 +7395,8 @@
         }
       },
       "acceptance_criteria": [
-        "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed."
+        "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed.",
+        "Invocation ownership includes required supervised background work started by that invocation. Provider/client session exit is not terminal while owned work is still active. Once ownership is conclusively terminal, a missing durable terminal outcome is retained against the original invocation and read back before any successor is considered. The shared-profile proof must kill/exit the provider client while an owned background proof command remains active and prove that the invocation is still owned until the supervision/readback boundary becomes terminal."
       ],
       "acceptance_ids": [],
       "acceptance_extents": [],
@@ -7405,7 +7406,7 @@
           "owner_node": "K3",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed.",
+          "scenario": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed. Invocation ownership includes required supervised background work started by that invocation. Provider/client session exit is not terminal while owned work is still active. Once ownership is conclusively terminal, a missing durable terminal outcome is retained against the original invocation and read back before any successor is considered.",
           "acceptance_ids": [],
           "enforcement_ids": [],
           "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
@@ -7413,18 +7414,20 @@
         },
         "acceptance_probes": [],
         "enforcement_obligations": [],
-        "order": "Before implementation, pin executable fixture commands, inputs, expected outcomes and evidence schema against this node predicate; demonstrate intact/fault/restored discrimination for mechanical controls. Retain independent judgment where specified. S0 establishes the shared harness at current interfaces; all consumers wait for predecessor proof. No future fixture is claimed executed here.",
+        "order": "Before implementation, pin executable fixture commands, inputs, expected outcomes and evidence schema against this node predicate; demonstrate intact/fault/restored discrimination for mechanical controls. Retain independent judgment where specified. S0 establishes the shared harness at current interfaces; all consumers wait for predecessor proof. No future fixture is claimed executed here. Include a discriminating client-exit/background-work case; session exit alone may not release invocation ownership.",
         "conditional_proof": "Operational fixtures require their separately authorized target and actual readback. Local substitutions must be labelled and cannot satisfy operational acceptance."
       },
       "evidence_obligations": [
         "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
         "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority.",
-        "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS."
+        "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS.",
+        "For client-exit/background-work proof retain client exit, owned-work liveness/terminal observation, original invocation identity, durable readback and any successor-admission decision separately."
       ],
       "architecture_constraints": [
         "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
         "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
-        "Use existing WorkerProvider and invocation/effect/execution evidence ownership; do not create OutcomeEvidencePort/RoleOutcomeRecord sidecar state unless separately reviewed as necessary."
+        "Use existing WorkerProvider and invocation/effect/execution evidence ownership; do not create OutcomeEvidencePort/RoleOutcomeRecord sidecar state unless separately reviewed as necessary.",
+        "Invocation ownership follows the configured WorkerProvider/supervision boundary, not merely the model client process; required owned background work keeps the invocation nonterminal."
       ],
       "capabilities": {
         "needs": [
@@ -7561,7 +7564,7 @@
       ],
       "scope": {
         "dag_scope": "Offline SF-REQ-039 lifecycle capstone over K3/S0/C1 using the canonical producer -> independent verifier -> rework/review/accept/closure path, exact Git custody and durable result correlation. No live authority.",
-        "extent": "Denied-network complete lifecycle with fresh verifier and actual local Git publication/retrieval, rejection/rework, wrong-candidate refusal, missing/miscorrelated durable role outcome, duplicate/restart and judgment hold. Exactly one authorized effect and actual closure receipts. Custody/verifier/binding/correlation mutations must fail. Label every external substitution and make no live proof claim.",
+        "extent": "Denied-network complete lifecycle with fresh verifier and actual local Git publication/retrieval, rejection/rework, wrong-candidate refusal, missing/miscorrelated durable role outcome, duplicate/restart and judgment hold. Exactly one authorized effect and actual closure receipts. Custody/verifier/binding/correlation mutations must fail. Label every external substitution and make no live proof claim. Invocation ownership includes required supervised background work started by that invocation. Provider/client session exit is not terminal while owned work is still active. Once ownership is conclusively terminal, a missing durable terminal outcome is retained against the original invocation and read back before any successor is considered. After conclusive invocation death and a confirmed missing durable terminal result, bounded recovery/replacement proceeds deterministically under existing authority, attempt and budget policy; it must not depend on Factory Director cognition or a new external lifecycle/status event. While ownership/effect state is UNKNOWN, no replacement actor may launch. The capstone must prove both crash-before-output and progress-then-crash, including a closure-phase missing-result case equivalent to the recurring #94/#101/#110 failure class.",
         "node_kind": "planned_capstone",
         "owns_capabilities": [],
         "migration": null,
@@ -7596,7 +7599,8 @@
         }
       },
       "acceptance_criteria": [
-        "Denied-network complete lifecycle with fresh verifier and actual local Git publication/retrieval, rejection/rework, wrong-candidate refusal, missing/miscorrelated durable role outcome, duplicate/restart and judgment hold. Exactly one authorized effect and actual closure receipts. Custody/verifier/binding/correlation mutations must fail. Label every external substitution and make no live proof claim."
+        "Denied-network complete lifecycle with fresh verifier and actual local Git publication/retrieval, rejection/rework, wrong-candidate refusal, missing/miscorrelated durable role outcome, duplicate/restart and judgment hold. Exactly one authorized effect and actual closure receipts. Custody/verifier/binding/correlation mutations must fail. Label every external substitution and make no live proof claim.",
+        "Invocation ownership includes required supervised background work started by that invocation. Provider/client session exit is not terminal while owned work is still active. Once ownership is conclusively terminal, a missing durable terminal outcome is retained against the original invocation and read back before any successor is considered. After conclusive invocation death and a confirmed missing durable terminal result, bounded recovery/replacement proceeds deterministically under existing authority, attempt and budget policy; it must not depend on Factory Director cognition or a new external lifecycle/status event. While ownership/effect state is UNKNOWN, no replacement actor may launch. The capstone must prove both crash-before-output and progress-then-crash, including a closure-phase missing-result case equivalent to the recurring #94/#101/#110 failure class."
       ],
       "acceptance_ids": [
         "SF-REQ-039-AC-01",
@@ -7604,7 +7608,9 @@
         "SF-REQ-039-AC-03",
         "SF-REQ-039-AC-04",
         "SF-REQ-039-AC-05",
-        "SF-REQ-039-AC-06"
+        "SF-REQ-039-AC-06",
+        "SF-REQ-039-AC-07",
+        "SF-REQ-039-AC-08"
       ],
       "acceptance_extents": [
         {
@@ -7690,6 +7696,34 @@
             "composition",
             "deterministic_enforcement_opportunities"
           ]
+        },
+        {
+          "acceptance_id": "SF-REQ-039-AC-07",
+          "requirement_id": "SF-REQ-039",
+          "proof_owner_node": "O",
+          "fixture_ref": "FX-O",
+          "source_design_probe": "At the same production Worker Port, malformed, missing, delayed and duplicate outcomes and wrong invocation/role/attempt/contract/candidate correlation are discriminated. No missing, malformed, stale or miscorrelated outcome advances lifecycle; delayed output waits for correlated readback within existing policy; duplicate identical output has one authorized effect and conflicting duplicate output holds.",
+          "source_contract_sections": [
+            "ports",
+            "failure_modes",
+            "recovery",
+            "composition",
+            "evidence"
+          ]
+        },
+        {
+          "acceptance_id": "SF-REQ-039-AC-08",
+          "requirement_id": "SF-REQ-039",
+          "proof_owner_node": "O",
+          "fixture_ref": "FX-O",
+          "source_design_probe": "Script provider/capacity failure, crash before output and progress then crash. None fabricates a terminal success; retain progress and uncertain-effect evidence, recover from the real durable store/journal with original identity, and resume only under existing authority/budget and readback rules. Assert no replacement actor while outcome/ownership is unknown.",
+          "source_contract_sections": [
+            "ports",
+            "failure_modes",
+            "recovery",
+            "composition",
+            "evidence"
+          ]
         }
       ],
       "verification_obligations": {
@@ -7698,14 +7732,16 @@
           "owner_node": "O",
           "status": "PLANNED_NOT_EXECUTED",
           "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-          "scenario": "Denied-network complete lifecycle with fresh verifier and actual local Git publication/retrieval, rejection/rework, wrong-candidate refusal, missing/miscorrelated durable role outcome, duplicate/restart and judgment hold. Exactly one authorized effect and actual closure receipts. Custody/verifier/binding/correlation mutations must fail. Label every external substitution and make no live proof claim.",
+          "scenario": "Denied-network complete lifecycle with fresh verifier and actual local Git publication/retrieval, rejection/rework, wrong-candidate refusal, missing/miscorrelated durable role outcome, duplicate/restart and judgment hold. Exactly one authorized effect and actual closure receipts. Custody/verifier/binding/correlation mutations must fail. Label every external substitution and make no live proof claim. Invocation ownership includes required supervised background work started by that invocation. Provider/client session exit is not terminal while owned work is still active. Once ownership is conclusively terminal, a missing durable terminal outcome is retained against the original invocation and read back before any successor is considered. After conclusive invocation death and a confirmed missing durable terminal result, bounded recovery/replacement proceeds deterministically under existing authority, attempt and budget policy; it must not depend on Factory Director cognition or a new external lifecycle/status event. While ownership/effect state is UNKNOWN, no replacement actor may launch. The capstone must prove both crash-before-output and progress-then-crash, including a closure-phase missing-result case equivalent to the recurring #94/#101/#110 failure class.",
           "acceptance_ids": [
             "SF-REQ-039-AC-01",
             "SF-REQ-039-AC-02",
             "SF-REQ-039-AC-03",
             "SF-REQ-039-AC-04",
             "SF-REQ-039-AC-05",
-            "SF-REQ-039-AC-06"
+            "SF-REQ-039-AC-06",
+            "SF-REQ-039-AC-07",
+            "SF-REQ-039-AC-08"
           ],
           "enforcement_ids": [
             "039-composed-lifecycle"
@@ -7743,6 +7779,16 @@
             "acceptance_id": "SF-REQ-039-AC-06",
             "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
             "design_probe": "Disable custody guard; targeted composed assertion fails; report local substitutions and no live proof."
+          },
+          {
+            "acceptance_id": "SF-REQ-039-AC-07",
+            "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
+            "design_probe": "At the same production Worker Port, malformed, missing, delayed and duplicate outcomes and wrong invocation/role/attempt/contract/candidate correlation are discriminated. No missing, malformed, stale or miscorrelated outcome advances lifecycle; delayed output waits for correlated readback within existing policy; duplicate identical output has one authorized effect and conflicting duplicate output holds."
+          },
+          {
+            "acceptance_id": "SF-REQ-039-AC-08",
+            "specified_verification": "Controlled fixture or independently inspected versioned artifact; retain inputs, observed outputs and verdict separately.",
+            "design_probe": "Script provider/capacity failure, crash before output and progress then crash. None fabricates a terminal success; retain progress and uncertain-effect evidence, recover from the real durable store/journal with original identity, and resume only under existing authority/budget and readback rules. Assert no replacement actor while outcome/ownership is unknown."
           }
         ],
         "enforcement_obligations": [
@@ -7752,8 +7798,8 @@
             "fixture_ref": "FX-O",
             "id": "039-composed-lifecycle",
             "layer": "python_unit_integration",
-            "rule": "Reuse LRN-002 composed-path promotion for OfflineProfile with actual store/adapters and a fresh verifier; cover success, verifier rejection/rework, result/custody/correlation gaps, duplicate/restart and judgment hold. Exercise the actual sandbox/github composition constructors with local transport substitutes: absent or miscorrelated role/candidate/result binding holds before launch or transition; the bound real-worker path persists and reads back the existing durable invocation/effect/execution evidence through success, rejection and restart. Offline scripted lifecycle shortcuts cannot discharge this probe.",
-            "proven_red_obligation": "Disconnect verifier invocation or custody readback while unit tests stay green; targeted end-to-end assertion must fail. Bypass construction binding validation or disconnect real-worker record emission independently; pre-launch refusal or correlated real-path outcome assertion must fail.",
+            "rule": "Reuse LRN-002 composed-path promotion for OfflineProfile with actual store/adapters and a fresh verifier; cover success, verifier rejection/rework, result/custody/correlation gaps, duplicate/restart and judgment hold. Exercise the actual sandbox/github composition constructors with local transport substitutes: absent or miscorrelated role/candidate/result binding holds before launch or transition; the bound real-worker path persists and reads back the existing durable invocation/effect/execution evidence through success, rejection and restart. Offline scripted lifecycle shortcuts cannot discharge this probe. Prove client/session exit with owned background work does not release ownership; after conclusive death plus confirmed missing terminal result, bounded same-phase recovery is admitted deterministically without a Director episode or new external status event.",
+            "proven_red_obligation": "Disconnect verifier invocation or custody readback while unit tests stay green; targeted end-to-end assertion must fail. Bypass construction binding validation or disconnect real-worker record emission independently; pre-launch refusal or correlated real-path outcome assertion must fail. Disable owned-background-work retention or require a Director/status retrigger for known-dead missing-result recovery; the capstone must fail.",
             "phase3_promotion": "LRN-002",
             "status": "DESIGNED_NOT_IMPLEMENTED",
             "strength": "BLOCKING"
@@ -7765,12 +7811,14 @@
       "evidence_obligations": [
         "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
         "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority.",
-        "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS."
+        "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS.",
+        "For crash/recovery scenarios retain original invocation accounting, owned-work terminal evidence, durable-result readback, UNKNOWN interval if any, replacement authorization/budget decision, successor identity and proof that no Director/status retrigger was required."
       ],
       "architecture_constraints": [
         "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
         "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
-        "Use canonical WorkerProvider and durable invocation/effect/execution evidence. Missing/miscorrelated outcome holds; no RoleOutcomeRecord sidecar or scenario-written lifecycle state."
+        "Use canonical WorkerProvider and durable invocation/effect/execution evidence. Missing/miscorrelated outcome holds; no RoleOutcomeRecord sidecar or scenario-written lifecycle state.",
+        "Known-dead missing-result recovery is deterministic kernel behavior: retain original invocation accounting, enforce existing replacement/attempt/budget limits, and do not require Factory Director cognition or a new lifecycle event."
       ],
       "capabilities": {
         "needs": [
