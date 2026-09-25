@@ -91,14 +91,50 @@ def _gh(*args) -> str:
 
 
 def read_board():
-    query = ('query($owner:String!,$number:Int!){organization(login:$owner){projectV2(number:$number)'
-             '{items(first:100){totalCount pageInfo{hasNextPage} nodes{id type content{__typename '
+    query = ('query($owner:String!,$number:Int!,$cursor:String){organization(login:$owner)'
+             '{projectV2(number:$number){items(first:100,after:$cursor){totalCount '
+             'pageInfo{hasNextPage endCursor} nodes{id type content{__typename '
              '... on Issue{number repository{nameWithOwner}} '
              '... on PullRequest{number}} fieldValueByName(name:"Status")'
              '{... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}')
-    payload = json.loads(_gh("api", "graphql", "-f", f"query={query}",
-                            "-F", f"owner={PROJECT_OWNER}", "-F", f"number={PROJECT_NUMBER}"))
-    return board_from_payload(payload["data"]["organization"]["projectV2"]["items"])
+    nodes = []
+    expected_total = None
+    cursor = None
+    seen_cursors = set()
+    while True:
+        args = ["api", "graphql", "-f", f"query={query}",
+                "-F", f"owner={PROJECT_OWNER}", "-F", f"number={PROJECT_NUMBER}"]
+        if cursor:
+            args += ["-f", f"cursor={cursor}"]
+        payload = json.loads(_gh(*args))
+        items = payload["data"]["organization"]["projectV2"]["items"]
+        page_nodes = items.get("nodes")
+        page_total = items.get("totalCount")
+        page_info = items.get("pageInfo") or {}
+        if not isinstance(page_nodes, list) or not isinstance(page_total, int) or page_total < 0:
+            raise MaterializationFailed(
+                "MATERIALIZATION FAILED\n  - Project item page is malformed or incomplete")
+        if expected_total is None:
+            expected_total = page_total
+        elif page_total != expected_total:
+            raise MaterializationFailed(
+                "MATERIALIZATION FAILED\n  - Project item totalCount changed during pagination "
+                f"({expected_total} -> {page_total})")
+        nodes.extend(page_nodes)
+        has_next = page_info.get("hasNextPage")
+        if has_next is False:
+            break
+        next_cursor = page_info.get("endCursor")
+        if has_next is not True or not isinstance(next_cursor, str) or not next_cursor:
+            raise MaterializationFailed(
+                "MATERIALIZATION FAILED\n  - Project item pagination metadata is inconsistent")
+        if next_cursor in seen_cursors:
+            raise MaterializationFailed(
+                "MATERIALIZATION FAILED\n  - Project item pagination cursor repeated")
+        seen_cursors.add(next_cursor)
+        cursor = next_cursor
+    return board_from_payload({"totalCount": expected_total, "pageInfo": {"hasNextPage": False},
+                               "nodes": nodes})
 
 
 def board_from_payload(items):

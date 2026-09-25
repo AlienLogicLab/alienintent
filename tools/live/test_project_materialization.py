@@ -15,7 +15,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
-from project_materialization import (MaterializationFailed, board_from_payload,  # noqa: E402
+import project_materialization  # noqa: E402
+from project_materialization import (MaterializationFailed, board_from_payload, read_board,  # noqa: E402
                                      verify_materialization)
 
 ITEM = "PVTI_good"
@@ -112,3 +113,76 @@ def test_another_page_fails_closed():
 def test_missing_completeness_metadata_fails_closed():
     with pytest.raises(MaterializationFailed):
         board_from_payload({"nodes": [], "pageInfo": {}})
+
+
+def _graphql_page(nodes, total, has_next, end_cursor=None):
+    return {
+        "data": {
+            "organization": {
+                "projectV2": {
+                    "items": {
+                        "totalCount": total,
+                        "pageInfo": {"hasNextPage": has_next, "endCursor": end_cursor},
+                        "nodes": nodes,
+                    }
+                }
+            }
+        }
+    }
+
+
+def _graphql_node(item_id, issue):
+    return {
+        "id": item_id,
+        "type": "ISSUE",
+        "content": {"__typename": "Issue", "number": issue,
+                    "repository": {"nameWithOwner": "AlienLogicLab/alienintent"}},
+        "fieldValueByName": {"name": "CAPTURE"},
+    }
+
+
+def test_read_board_paginates_complete_project(monkeypatch):
+    pages = [
+        _graphql_page([_graphql_node("PVTI_a", 90)], 2, True, "cursor-1"),
+        _graphql_page([_graphql_node("PVTI_b", 91)], 2, False, None),
+    ]
+    calls = []
+
+    def fake_gh(*args):
+        calls.append(args)
+        return __import__("json").dumps(pages[len(calls) - 1])
+
+    monkeypatch.setattr(project_materialization, "_gh", fake_gh)
+    board = read_board()
+    assert [row["issue"] for row in board] == [90, 91]
+    assert len(calls) == 2
+    assert "cursor=cursor-1" in calls[1]
+
+
+def test_read_board_rejects_total_count_change(monkeypatch):
+    pages = [
+        _graphql_page([_graphql_node("PVTI_a", 90)], 2, True, "cursor-1"),
+        _graphql_page([_graphql_node("PVTI_b", 91)], 3, False, None),
+    ]
+
+    monkeypatch.setattr(project_materialization, "_gh",
+                        lambda *args: __import__("json").dumps(pages.pop(0)))
+    with pytest.raises(MaterializationFailed):
+        read_board()
+
+
+def test_read_board_rejects_missing_or_repeated_cursor(monkeypatch):
+    missing = [_graphql_page([_graphql_node("PVTI_a", 90)], 2, True, None)]
+    monkeypatch.setattr(project_materialization, "_gh",
+                        lambda *args: __import__("json").dumps(missing[0]))
+    with pytest.raises(MaterializationFailed):
+        read_board()
+
+    pages = [
+        _graphql_page([_graphql_node("PVTI_a", 90)], 3, True, "cursor-1"),
+        _graphql_page([_graphql_node("PVTI_b", 91)], 3, True, "cursor-1"),
+    ]
+    monkeypatch.setattr(project_materialization, "_gh",
+                        lambda *args: __import__("json").dumps(pages.pop(0)))
+    with pytest.raises(MaterializationFailed):
+        read_board()
