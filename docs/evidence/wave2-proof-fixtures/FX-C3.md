@@ -41,8 +41,18 @@ network, host or RAI. A local PASS is not operational acceptance.
 - **U-10.** `admitted_total` and `epochs` carry across an authorized new epoch. Per-epoch tenure counters start at 0.
 - **Usage.** An `Unavailable` or prior-check sample yields `CONTEXT_USAGE_UNAVAILABLE`. A wrong invocation,
   non-finite or negative `used`, or a non-finite or non-positive `limit` yields `CONTEXT_USAGE_INVALID`.
-- **Refusals.** A stale epoch or invocation is refused as `STALE_EPOCH` before any write. The S2 fence independently
-  refuses the same old-epoch vector (`inactive or mismatched epoch/authority`), and the test asserts both.
+- **Refusals.** A result is admitted only from the epoch's own invocation: its epoch/invocation fields and the acting
+  process's invocation must all equal the record's. Otherwise it is refused as `STALE_EPOCH` before any write, even
+  when an old-epoch process copies the current epoch's identity. The S2 fence independently refuses an old-epoch
+  vector with the exact message `inactive or mismatched epoch/authority`.
+- **Authority scope.** An `OperatorGrant` counts only under the episode's own authority, for `begin`, explicit
+  `end` and contradiction admission.
+- **Blocked (U-3).** The blocked predicate is observed on `begin`, on every result's reconstructed context, after
+  each admission, and on each tick. A new blocked interval is persisted and arms the injected timer at
+  `blocked_since + 300 s`.
+- **Admission accounting.** A committed transition is always counted. An interrupted delivery (including a vector
+  that moves between commit and claim) is reported `UNKNOWN` and retained; the counter update re-reads and retries
+  on a concurrent pointer write within the same epoch.
 
 ## Commands (all under `rtk proxy`, `PYTHONPATH=src:.`)
 
@@ -53,17 +63,20 @@ network, host or RAI. A local PASS is not operational acceptance.
    when the identical node set already fails at the code baseline, run in its own detached worktree. Any new
    failure is a HOLD.
 
-Probes, the end-cause table and the 19 discriminating controls are in `tools/evidence/fx_c3_evidence.py`
+Probes, the end-cause table and the 23 discriminating controls are in `tools/evidence/fx_c3_evidence.py`
 (`CONTROLS`, `END_CAUSES`) and the retained `FX-C3/` records. The six ★ controls (`old_epoch_accepted`,
 `context_item_omitted`, `unbound_as_zero`, `unbound_auto_terminates`, `bound_unavailable_ignored`,
 `unauthorized_contradiction_accepted`) discharge the `053-tenure-fence` proven-red obligation. `one_biu_removed` is
-a producer addition.
+a producer addition. `forged_identity_accepted`, `grant_authority_ignored`, `claim_conflict_uncaught` and
+`blocked_not_observed_on_results` guard the repairs made after an independent pre-verification review of the first
+candidate (`732b88a`).
 
 ## Residuals and boundaries
 
-- The episode counter update after admission is a second transaction. A concurrent authorized `begin` cannot land
-  between them, because `begin` refuses while the prior epoch is ACTIVE; a crash between them under-counts at most
-  one admission for that epoch.
+- The episode counter update after admission is a second transaction. A concurrent pointer write is retried on
+  the same epoch, and a concurrent authorized `begin` cannot land between them because `begin` refuses while the
+  prior epoch is ACTIVE. A process crash between the two transactions under-counts at most one admission for
+  that epoch.
 - The fixture proves admission and termination of a contradiction judgment, never its semantic truth. Neither the
   fixture nor a context-exhausted event closes LRN-023.
 - Out of scope: bootstrap handoff or retirement (POSTW1-DECIDE-006A), host activation, C4/C5 monitor work,

@@ -27,11 +27,11 @@ ADMISSION_BASELINE = "ed0d4ffb3bfa59bf4bf9e966d6651bf4eaa2e707"
 LABELS = ("LOCAL_SUBSTITUTE_USAGE_SOURCE", "LOCAL_OPERATOR_GRANT_TABLE", "INJECTED_INTEGER_MICROSECOND_CLOCKS",
           "LOCAL_JOURNAL_DELIVERY")
 ARCHITECTURE = ("tools/fitness/check_architecture.py", "--root", "src/alienintent", "--check", "all")
-_IDENTITY = ("        if (result.epoch, result.invocation) != (record.epoch, record.invocation):\n"
+_IDENTITY = ("        if (result.epoch, result.invocation, self.invocation) != (record.epoch, record.invocation, record.invocation):\n"
              "            return None\n"
              "        return result.epoch, result.invocation")
 _UNBOUND = '        return UsageVerdict(None, "UNBOUND", None)'
-_GRANT = ('    grant = authorized(grants, judgment.actor, objective)\n'
+_GRANT = ('    grant = authorized(grants, judgment.actor, objective, authority)\n'
           '    if grant is None:\n'
           '        return InvalidJudgment("UNAUTHORIZED")\n')
 _PRIOR = ('    if observation.check_id != check_id:\n'
@@ -54,7 +54,7 @@ CONTROLS = (
      '        return UsageVerdict(None, "unavailable", None)',
      ("test_usage_bound_invalid[unavailable]",), ("expected ENDED CONTEXT_USAGE_UNAVAILABLE",)),
     ("unauthorized_contradiction_accepted", DOMAIN, _GRANT,
-     '    grant = authorized(grants, judgment.actor, objective) or OperatorGrant(judgment.actor, "unchecked", objective)\n',
+     '    grant = authorized(grants, judgment.actor, objective, authority) or OperatorGrant(judgment.actor, authority, objective)\n',
      ("test_contradiction[unauthorized]",), ("expected InvalidJudgment(UNAUTHORIZED)",)),
     ("age_boundary", DOMAIN, "    if now_us - record.began_us >= policy.max_age_s * SECOND:",
      "    if now_us - record.began_us > policy.max_age_s * SECOND:",
@@ -93,11 +93,27 @@ CONTROLS = (
     # Producer addition beyond the drafted controls.
     ("one_biu_removed", APP, "        if result.work != record.objective:\n", "        if False:\n",
      ("test_one_bius_only",), ("ONE_BIU",)),
+    # Repairs after independent pre-verify review (forged identity, authority scope, lost count, blocked observation).
+    ("forged_identity_accepted", APP, "(record.epoch, record.invocation, record.invocation)",
+     "(record.epoch, record.invocation, self.invocation)",
+     ("test_old_epoch_process_cannot_use_current_identity", "test_competing_epochs_cannot_overwrite"),
+     ("STALE_EPOCH",)),
+    ("grant_authority_ignored", DOMAIN,
+     "    return next((g for g in grants if (g.actor, g.objective, g.authority) == (actor, objective, authority)), None)",
+     "    return next((g for g in grants if (g.actor, g.objective) == (actor, objective)), None)",
+     ("test_contradiction[wrong_authority]", "test_begin_requires_matching_authority"),
+     ("expected InvalidJudgment(UNAUTHORIZED)",)),
+    ("claim_conflict_uncaught", APP, "        except (ReservationRejected, StoreUnavailable, VersionConflict):\n",
+     "        except (ReservationRejected, StoreUnavailable):\n",
+     ("test_interrupted_claim_still_counts",), ("a delivery conflict escaped after admission",)),
+    ("blocked_not_observed_on_results", APP,
+     "        if observed.blocked_since_us != record.blocked_since_us:\n", "        if False:\n",
+     ("test_blocked_observed_on_results",), ("a result observes and persists the block",)),
 )
 END_CAUSES = {
     "AGE_LIMIT": ["test_age_limit[at]", "test_deadline_timer_independent_of_model", "test_restart_utc_deadline[expired]"],
     "TRANSITION_LIMIT": ["test_transition_limit[32]", "test_transition_limit[33]"],
-    "BLOCKED_LIMIT": ["test_blocked_limit[at]"],
+    "BLOCKED_LIMIT": ["test_blocked_limit[at]", "test_blocked_observed_on_results"],
     "CONTRADICTION": ["test_contradiction[accepted]"],
     "STALE_VECTOR": ["test_state_vector_mismatch", "test_obsolete_revision_refused"],
     "CONTEXT_USAGE_LIMIT": ["test_usage_bound_threshold[at]"],
@@ -312,10 +328,12 @@ def run(output, invocation, baseline):
                              "test_contradiction", "test_usage_unbound", "test_usage_bound_threshold",
                              "test_usage_bound_invalid", "test_deadline_timer_independent_of_model",
                              "test_restart_utc_deadline", "test_no_automatic_renewal",
-                             "test_renewal_new_epoch_retains_budget", "test_one_bius_only"],
-        "SF-REQ-053-AC-03": ["test_competing_epochs_cannot_overwrite", "test_obsolete_revision_refused",
+                             "test_renewal_new_epoch_retains_budget", "test_one_bius_only",
+                             "test_begin_requires_matching_authority", "test_blocked_observed_on_results"],
+        "SF-REQ-053-AC-03": ["test_competing_epochs_cannot_overwrite", "test_old_epoch_process_cannot_use_current_identity", "test_obsolete_revision_refused",
                              "test_state_vector_mismatch", "test_current_revision_still_authority_checked"],
         "053-tenure-fence": ["test_replacement_equivalence", "test_expiry_does_not_cancel_admitted",
+                             "test_interrupted_claim_still_counts",
                              "test_episode_profile_composed", *[c[0] for c in CONTROLS]],
     }
     (output / "execution-record.json").write_text(json.dumps(report, indent=2) + "\n")

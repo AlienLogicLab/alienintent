@@ -123,6 +123,13 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
                 pass  # an admitted, unresolved effect keeps its reservation; nothing is cancelled
         return ended
 
+    def _observe_blocked(self, record: EpisodeRecord, document: Mapping[str, object], now: int) -> EpisodeRecord:
+        """U-3 on every observed context; a new blocked interval arms the injected timer at its limit."""
+        since = next_blocked_since(record, blocked(document, record.objective), now)
+        if since is not None and record.blocked_since_us is None:
+            self.timer.arm(record.objective, record.epoch, since + self.policy.max_blocked_s * SECOND)
+        return replace(record, blocked_since_us=since)
+
     def vector_digest(self, objective: str) -> str:
         version, record = self._active(objective)
         return self._vector_digest(version, record)
@@ -145,7 +152,7 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
                document: Mapping[str, object] | None) -> tuple[EndCause | None, EpisodeRecord, dict[str, object]]:
         seq = record.check_seq + 1
         if document is not None:
-            record = replace(record, blocked_since_us=next_blocked_since(record, blocked(document, record.objective), now))
+            record = self._observe_blocked(record, document, now)
         record = replace(record, check_seq=seq, last_check_us=now)
         check_id = f"check:{record.epoch}:{seq}"
         observation = None if self.usage is None else self.usage.read(record.invocation, check_id)
@@ -174,9 +181,9 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
     def begin(self, objective: str, *, actor: str, provider: str, model: str, authority: str,
               objective_revision: str) -> EpisodeRecord:
         """Only an explicit authorized begin opens an epoch; budget accounting carries over."""
-        grant = authorized(self.operators, actor, objective)
+        grant = authorized(self.operators, actor, objective, authority)
         if grant is None:
-            raise EpisodeHold(HoldReason.UNAUTHORIZED, f"{actor} may not begin {objective}")
+            raise EpisodeHold(HoldReason.UNAUTHORIZED, f"{actor} may not begin {objective} under {authority}")
         version, prior = self._load(objective)
         if prior is not None and prior.state is EpisodeState.ACTIVE:
             raise EpisodeHold(HoldReason.EPISODE_ACTIVE, f"epoch {prior.epoch} has not ended")
@@ -190,7 +197,7 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
             objective=objective, epoch=1 if prior is None else prior.epoch + 1, invocation=self.invocation,
             state=EpisodeState.ACTIVE, cause=None, began_us=now, deadline_us=now + self.policy.max_age_s * SECOND,
             last_check_us=now, check_seq=0, transitions=0,
-            blocked_since_us=now if blocked(view.document, objective) else None, accepted_contradictions=0,
+            blocked_since_us=None, accepted_contradictions=0,
             provider=provider, model=model, authority=authority, objective_revision=objective_revision,
             manifest_ref=view.manifest_ref, context_digest=view.digest,
             reservation=(reservation.scope, reservation.key, reservation.owner, reservation.fence),
@@ -204,13 +211,17 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
             self.store.release(self.profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
             raise EpisodeHold(HoldReason.EPISODE_CONFLICT, str(error)) from error
         self.timer.arm(objective, record.epoch, record.deadline_us)
-        return record
+        observed = self._observe_blocked(record, view.document, now)
+        if observed != record:
+            self._save(version + 1, observed, {"action": "CHECK", "source": "begin", "at": now,
+                                               "blocked_since_us": observed.blocked_since_us})
+        return observed
 
     def end(self, objective: str, *, epoch: int, actor: str) -> EpisodeRecord:
-        grant = authorized(self.operators, actor, objective)
+        version, record = self._active(objective)
+        grant = authorized(self.operators, actor, objective, record.authority)
         if grant is None:
             raise EpisodeHold(HoldReason.UNAUTHORIZED, f"{actor} may not end {objective}")
-        version, record = self._active(objective)
         if record.epoch != epoch:
             raise EpisodeHold(HoldReason.EPISODE_CONFLICT, f"epoch {epoch} is not current")
         if record.state is EpisodeState.ENDED:
@@ -255,7 +266,8 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
         if isinstance(entries, ContextUnavailable):
             return InvalidJudgment("CONTEXT_UNAVAILABLE")
         outcome = admit_contradiction(judgment, objective=record.objective, epoch=record.epoch,
-                                      vector_digest=self._vector_digest(version, record), grants=self.operators,
+                                      vector_digest=self._vector_digest(version, record),
+                                      authority=record.authority, grants=self.operators,
                                       resolvable=frozenset(aggregate for aggregate, _ in entries))
         if isinstance(outcome, InvalidJudgment):
             return outcome
@@ -272,9 +284,9 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
         return outcome
 
     # -- guarded admission --------------------------------------------------------------------
-    @staticmethod
-    def _admitted_identity(result: CoordinatorResult, record: EpisodeRecord) -> tuple[int, str] | None:
-        if (result.epoch, result.invocation) != (record.epoch, record.invocation):
+    def _admitted_identity(self, result: CoordinatorResult, record: EpisodeRecord) -> tuple[int, str] | None:
+        """Only the epoch's own invocation acts; a result's identity fields alone prove nothing."""
+        if (result.epoch, result.invocation, self.invocation) != (record.epoch, record.invocation, record.invocation):
             return None
         return result.epoch, result.invocation
 
@@ -302,8 +314,12 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
         view = self.context.reconstruct(result.manifest_ref)
         if isinstance(view, ContextUnavailable):
             return Refused("CONTEXT_UNAVAILABLE", view.reason, record)
-        record = replace(record, manifest_ref=view.manifest_ref, context_digest=view.digest,
-                         blocked_since_us=next_blocked_since(record, blocked(view.document, record.objective), now))
+        observed = self._observe_blocked(replace(record, manifest_ref=view.manifest_ref, context_digest=view.digest),
+                                         view.document, now)
+        if observed.blocked_since_us != record.blocked_since_us:
+            version = self._save(version, observed, {"action": "CHECK", "source": "context", "at": now,
+                                                     "blocked_since_us": observed.blocked_since_us})
+        record = observed
         offered = {(a["work"], a["action"], a["expected_version"]) for a in view.document["authorized_next_action_set"]}
         if (result.work, result.action, result.expected_version) not in offered:
             return Refused("AUTHORITY_REFUSED", "action is not authorized by the reconstructed context", record)
@@ -334,14 +350,30 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
             return Refused("FENCE_REFUSED", str(error), record)
         delivery = self._deliver(result.effect_id, reservation,
                                  replace(vector, versions=tuple((a, committed if a == target else v) for a, v in vector.versions)))
-        record = replace(record, transitions=record.transitions + 1, admitted_total=record.admitted_total + 1)
         event = {"admitted": result.effect_id, "action": "ADMIT", "work": result.work, "transition": result.action,
                  "at": now, "delivery": delivery}
-        cause = EndCause.TERMINAL_OUTCOME if state.stage is LifecycleStage.DONE else evaluate_tenure(record, self.policy, now)
-        if cause is not None:
-            record = self._end(version, record, cause, now, event)
-            return Admitted(record, self._load(record.objective)[0], delivery)
-        return Admitted(record, self._save(version, record, event), delivery)
+        pointer = self.context.pin()
+        after = None if isinstance(pointer, ContextUnavailable) else self.context.reconstruct(pointer)
+        for _ in range(3):
+            counted = replace(record, transitions=record.transitions + 1, admitted_total=record.admitted_total + 1)
+            if isinstance(after, ContextView):
+                counted = self._observe_blocked(counted, after.document, now)
+            cause = (EndCause.TERMINAL_OUTCOME if state.stage is LifecycleStage.DONE
+                     else evaluate_tenure(counted, self.policy, now))
+            try:
+                if cause is not None:
+                    counted = self._end(version, counted, cause, now, event)
+                    return Admitted(counted, self._load(counted.objective)[0], delivery)
+                return Admitted(counted, self._save(version, counted, event), delivery)
+            except EpisodeHold as hold:
+                if hold.reason is not HoldReason.EPISODE_CONFLICT:
+                    raise
+                # Another check wrote the pointer after admission; count on the latest record of this epoch.
+                version, latest = self._active(record.objective)
+                if latest.epoch != epoch:
+                    raise
+                record = latest
+        raise EpisodeHold(HoldReason.EPISODE_CONFLICT, "admission retained; counter update kept conflicting")
 
     def _deliver(self, effect_id: str, reservation: Reservation, vector: GuardVector) -> str:
         """Local durable journal delivery; an interrupted delivery stays UNKNOWN and keeps its reservation."""
@@ -349,6 +381,6 @@ class EpisodeControlService(EpisodeControl, ContradictionObservation):
             self.store.claim_guarded(self.profile, effect_id, (reservation,), vector)
             receipt = self.store.consume_guarded(self.profile, effect_id, (reservation,), vector)
             self.store.confirm_guarded(self.profile, effect_id, (reservation,), receipt)
-        except (ReservationRejected, StoreUnavailable):
+        except (ReservationRejected, StoreUnavailable, VersionConflict):
             return "UNKNOWN"
         return "CONFIRMED"

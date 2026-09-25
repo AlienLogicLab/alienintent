@@ -178,8 +178,9 @@ class OperatorGrant:
     objective: str
 
 
-def authorized(grants: tuple[OperatorGrant, ...], actor: str, objective: str) -> OperatorGrant | None:
-    return next((g for g in grants if g.actor == actor and g.objective == objective), None)
+def authorized(grants: tuple[OperatorGrant, ...], actor: str, objective: str, authority: str) -> OperatorGrant | None:
+    """A grant counts only under the episode's own authority."""
+    return next((g for g in grants if (g.actor, g.objective, g.authority) == (actor, objective, authority)), None)
 
 
 @dataclass(frozen=True)
@@ -206,9 +207,10 @@ class InvalidJudgment:
 
 
 def admit_contradiction(judgment: ContradictionJudgment, *, objective: str, epoch: int, vector_digest: str,
-                        grants: tuple[OperatorGrant, ...], resolvable: frozenset[str]) -> AcceptedContradiction | InvalidJudgment:
+                        authority: str, grants: tuple[OperatorGrant, ...],
+                        resolvable: frozenset[str]) -> AcceptedContradiction | InvalidJudgment:
     """Admission only: semantic truth of the contradiction stays operator judgment."""
-    grant = authorized(grants, judgment.actor, objective)
+    grant = authorized(grants, judgment.actor, objective, authority)
     if grant is None:
         return InvalidJudgment("UNAUTHORIZED")
     if judgment.objective != objective:

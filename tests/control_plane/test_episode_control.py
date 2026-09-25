@@ -65,7 +65,8 @@ class ScriptedUsage:
 
 def grants():
     from alienintent.control_plane.domain.episode import OperatorGrant
-    return tuple(OperatorGrant("director", "authority-1", o) for o in (OBJECTIVE, BLOCKED, "item-implement"))
+    return (*(OperatorGrant("director", "authority-1", o) for o in (OBJECTIVE, BLOCKED, "item-implement")),
+            OperatorGrant("former-director", "authority-0", OBJECTIVE))
 
 
 def episode_profile(root, clocks, *, invocation="fx-c3-a", policy=None, usage=None, timer=None):
@@ -319,6 +320,11 @@ def test_competing_epochs_cannot_overwrite(world):
                  "--result", json.dumps(first["result"]))
     assert (stale.get("outcome"), stale.get("reason")) == ("REFUSED", "STALE_EPOCH"), stale
     assert snapshot(world) == before, "epoch n+1 state is byte-equal after the epoch-n result"
+    forged = _run("submit", *common, "--invocation", "fx-c3-epoch-1", "--utc", str(T0 + 2 * SECOND),
+                  "--result", json.dumps({**second["result"], "effect_id": "effect-forged"}))
+    assert (forged.get("outcome"), forged.get("reason")) == ("REFUSED", "STALE_EPOCH"), \
+        "an old-epoch process cannot act by copying the current epoch's identity"
+    assert snapshot(world) == before
     current = _run("submit", *common, "--invocation", "fx-c3-epoch-2", "--utc", str(T0 + 3 * SECOND),
                    "--result", json.dumps(second["result"]))
     assert current["outcome"] == "ADMITTED", current
@@ -330,17 +336,17 @@ def test_competing_epochs_cannot_overwrite(world):
     version = store.read_state("fixture", "episode:" + OBJECTIVE)[0]
     target = store.read_state("fixture", "factory:" + OBJECTIVE)[0]
     vector = GuardVector(((f"episode:{OBJECTIVE}", version), (f"factory:{OBJECTIVE}", target)), f"episode:{OBJECTIVE}",
-                         1, "fx-c3-epoch-1")
+                         1, "fx-c3-epoch-2")
     reservation = Reservation(*second["record"]["reservation"])
-    with pytest.raises(ReservationRejected, match="inactive or mismatched epoch/authority|reservation"):
-        store.commit_guarded("fixture", f"factory:{OBJECTIVE}", target, vector,
-                             (replace(reservation, owner="fx-c3-epoch-1"),), {}, "effect-old-direct", {})
+    with pytest.raises(ReservationRejected, match="^inactive or mismatched epoch/authority$"):
+        store.commit_guarded("fixture", f"factory:{OBJECTIVE}", target, vector, (reservation,), {},
+                             "effect-old-direct", {})
 
 
 # -- contradiction judgments (operator-owned; admission only) ----------------------------------
 
-@pytest.mark.parametrize("case", ["accepted", "stale_epoch", "stale_vector", "unauthorized", "missing_refs",
-                                  "unresolvable_ref", "empty_rationale"])
+@pytest.mark.parametrize("case", ["accepted", "stale_epoch", "stale_vector", "unauthorized", "wrong_authority",
+                                  "missing_refs", "unresolvable_ref", "empty_rationale"])
 def test_contradiction(world, case):
     from alienintent.control_plane.domain.episode import AcceptedContradiction, ContradictionJudgment, InvalidJudgment
     profile = episode_profile(world, Clocks())
@@ -353,6 +359,7 @@ def test_contradiction(world, case):
         profile.episodes.tick(OBJECTIVE)
     judgment = {"accepted": judgment, "stale_vector": judgment,
                 "stale_epoch": replace(judgment, epoch=2), "unauthorized": replace(judgment, actor="intruder"),
+                "wrong_authority": replace(judgment, actor="former-director"),
                 "missing_refs": replace(judgment, conflicting_refs=()),
                 "unresolvable_ref": replace(judgment, conflicting_refs=("factory:no-such-item",)),
                 "empty_rationale": replace(judgment, rationale="  ")}[case]
@@ -361,7 +368,8 @@ def test_contradiction(world, case):
         assert isinstance(outcome, AcceptedContradiction)
         assert_ended(profile, world, "CONTRADICTION")
         return
-    assert outcome == InvalidJudgment(case.upper()), f"expected InvalidJudgment({case.upper()}), got {outcome}"
+    reason = "UNAUTHORIZED" if case == "wrong_authority" else case.upper()
+    assert outcome == InvalidJudgment(reason), f"expected InvalidJudgment({reason}), got {outcome}"
     record = record_of(profile)
     assert (str(record.state), record.accepted_contradictions) == ("ACTIVE", 0), "an invalid judgment cannot end tenure"
 
@@ -561,3 +569,60 @@ def test_episode_profile_composed(world):
     assert profile.evidence.get(ref_from_document(pointer["history_ref"]), frozenset({"private"})).header.revision == str(version)
     reopened = episode_profile(world, Clocks(T0 + SECOND), invocation="fx-c3-reader")
     assert reopened.repository.load(OBJECTIVE) == (version, ended)
+
+
+def test_old_epoch_process_cannot_use_current_identity(world):
+    from alienintent.control_plane.ports.episode import Refused
+    old = episode_profile(world, Clocks(), invocation="fx-c3-a")
+    record = start(old)
+    old.episodes.end(OBJECTIVE, epoch=record.epoch, actor="director")
+    current = episode_profile(world, Clocks(T0 + SECOND), invocation="fx-c3-b")
+    start(current)
+    forged = result(current, "review", "effect-forged")
+    before = snapshot(world)
+    outcome = old.episodes.submit(forged)
+    assert isinstance(outcome, Refused) and outcome.reason == "STALE_EPOCH", "only the epoch's own invocation may act"
+    assert snapshot(world) == before
+
+
+def test_begin_requires_matching_authority(world):
+    from alienintent.control_plane.domain.episode import EpisodeHold
+    profile = episode_profile(world, Clocks())
+    with pytest.raises(EpisodeHold) as hold:
+        profile.episodes.begin(OBJECTIVE, actor="former-director", provider="claude", model="model-1",
+                               authority="authority-1", objective_revision="rev-1")
+    assert hold.value.reason == "UNAUTHORIZED" and record_of(profile) is None
+
+
+def test_interrupted_claim_still_counts(world):
+    from alienintent.execution_coordination.ports.operational_store import VersionConflict
+    profile = episode_profile(world, Clocks())
+    start(profile)
+    def conflicting(*_):
+        raise VersionConflict("injected: vector moved between commit and claim")
+    profile.store.claim_guarded = conflicting
+    try:
+        (admitted,) = admit(profile, 1)
+    except VersionConflict as error:
+        raise AssertionError("a delivery conflict escaped after admission: " + str(error)) from error
+    assert admitted.delivery == "UNKNOWN" and record_of(profile).transitions == 1, \
+        "a committed transition is counted even when delivery is interrupted"
+
+
+def test_blocked_observed_on_results(world):
+    from alienintent.control_plane.ports.episode import Refused
+    from tests.context_assembly.test_context_reconstruction import escalation
+    clocks, timer = Clocks(), Timer()
+    profile = episode_profile(world, clocks, timer=timer)
+    start(profile)
+    clocks.mono = 10 * SECOND
+    version, inbox = profile.store.read_state("fixture", "decision-inbox")
+    profile.store.commit("fixture", "decision-inbox", version,
+                         {"open": {**inbox["open"], OBJECTIVE: escalation(OBJECTIVE)}})
+    outcome = profile.episodes.submit(result(profile, "review", "effect-blocked"))
+    assert isinstance(outcome, Refused) and outcome.reason == "AUTHORITY_REFUSED"
+    assert record_of(profile).blocked_since_us == T0 + 10 * SECOND, "a result observes and persists the block"
+    assert (OBJECTIVE, 1, T0 + 310 * SECOND) in timer.armed, "the timer is armed at the blocked deadline"
+    clocks.mono = 310 * SECOND
+    profile.episodes.tick(OBJECTIVE)
+    assert str(record_of(profile).cause) == "BLOCKED_LIMIT"
