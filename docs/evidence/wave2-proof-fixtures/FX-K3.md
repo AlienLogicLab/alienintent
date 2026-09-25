@@ -238,4 +238,16 @@ rule to skip K2's attribution checks or advance a stage.
 
 ## Retained run
 
-Pending: the harness run over the clean committed candidate.
+`FX-K3/` holds the harness run for invocation `AlienLogicLab/alienintent#120:PRODUCER:92d60a69-dc02-4058-b64c-c5e22f06e52e`.
+
+- Source: clean committed revision `e8c9f1be504b12898d7ca0ea88e3a1aeb5085cd9`. Code baseline `178732f`.
+- Result: exit 0, no holds.
+- Checks: the focused suite, `check_architecture.py --check all`, the architecture fitness tests and
+  `node scripts/check.mjs all` all exit 0.
+- Controls: all 10 discriminate (intact 0, fault 1, restored 0, with the named assertion in the fault output). Each was
+  applied exactly once.
+- Full suite: 25 nodes fail, all in `tests/evidence_learning/test_proof_planning.py`. The same 25 nodes fail at the
+  code baseline in a detached worktree, so they are recorded as the residual `PREEXISTING_BASELINE_FAILURES`, outside
+  the K3 extent. This is the same residual FX-K2 recorded.
+- Provider calls: 0. Tokens and cost: UNKNOWN.
+- Independent verdict: pending (fresh BIU verifier).

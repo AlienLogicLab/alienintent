@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/composition/test_role_binding.py::test_github_profile_refuses_an_unbound_or_disconnected_worker_before_launch[missing]"],"cwd":"/tmp/fx-k3-controls-udo21mwt","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.38s\n"}

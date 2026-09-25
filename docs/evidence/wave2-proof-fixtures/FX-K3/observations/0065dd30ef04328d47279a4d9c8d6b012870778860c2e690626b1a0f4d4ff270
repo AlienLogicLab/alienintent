@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/composition/test_role_binding.py::test_client_exit_with_owned_background_work_active_does_not_end_the_invocation"],"cwd":"/tmp/fx-k3-controls-udo21mwt","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 1.81s\n"}

@@ -1,0 +1,405 @@
+{
+  "controls": [
+    {
+      "control": "role_grant_unchecked",
+      "material_class": "refuse-unbound-role-authority-custody-or-correlation-before-launch",
+      "file": "src/alienintent/composition/role_binding.py",
+      "application_count": 1,
+      "source_digest": "sha256:0bb570c1308aae691050628ca73a379b61fc7d3c5095ef597a907f58e73a6be0",
+      "mutation": {
+        "remove": "        if (grant.invocation_id, str(grant.role), grant.issuer, grant.target) != (invocation.correlation_id, invocation.role, self._profile, self._repository):\n",
+        "replace_with": "        if (grant.invocation_id, grant.issuer, grant.target) != (invocation.correlation_id, self._profile, self._repository):\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_sandbox_profile_refuses_a_verifier_launch_whose_grant_names_another_role"
+      ],
+      "assertions": [
+        "state.stage is LifecycleStage.VERIFY"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:7e7dda4d0903605d0cb90ae867ee165c0f3bea9308e3337d20257b23aa4c1c7a",
+        "locator": "observations/7e7dda4d0903605d0cb90ae867ee165c0f3bea9308e3337d20257b23aa4c1c7a"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:38756aa23b254f849d8187847ef1c1aac8caa256fd0e719ca518527e3da7082f",
+        "locator": "observations/38756aa23b254f849d8187847ef1c1aac8caa256fd0e719ca518527e3da7082f"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:43afebd92f60d8fcbca98b4d63e53ec45b8f672fcd251087ff3c9f88574e87fe",
+        "locator": "observations/43afebd92f60d8fcbca98b4d63e53ec45b8f672fcd251087ff3c9f88574e87fe"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "outcome_correlation_disconnected",
+      "material_class": "refuse-unbound-role-authority-custody-or-correlation-before-launch",
+      "file": "src/alienintent/composition/role_binding.py",
+      "application_count": 1,
+      "source_digest": "sha256:0bb570c1308aae691050628ca73a379b61fc7d3c5095ef597a907f58e73a6be0",
+      "mutation": {
+        "remove": "        return self._journal is not None and getattr(self.provider, \"journal\", None) is self._journal\n",
+        "replace_with": "        return self._journal is not None\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_github_profile_refuses_an_unbound_or_disconnected_worker_before_launch[disconnected]"
+      ],
+      "assertions": [
+        "summary.dispatched == ()"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:0c374545c169a6030f5d54c09b1ec570db3050e1faec04ce1e5e0131f6056050",
+        "locator": "observations/0c374545c169a6030f5d54c09b1ec570db3050e1faec04ce1e5e0131f6056050"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:7b4772182f08a5842dcac32293167b6c39588e42b5408409ce3aa9978abee35b",
+        "locator": "observations/7b4772182f08a5842dcac32293167b6c39588e42b5408409ce3aa9978abee35b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:e52bf901c4e624dc06dcfb3068145326a70c6b64b7847049751c0f38eae1f51d",
+        "locator": "observations/e52bf901c4e624dc06dcfb3068145326a70c6b64b7847049751c0f38eae1f51d"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "profile_journal_unbound",
+      "material_class": "bound-real-adapter-correlated-success-rejection-restart-readback",
+      "file": "src/alienintent/composition/sandbox_run_profile.py",
+      "application_count": 1,
+      "source_digest": "sha256:71d19c2767787e1387470035f8504fea17bc79c2ef9f82de34c4724938131d4a",
+      "mutation": {
+        "remove": "            now=clock, sleep=time.sleep, journal=self.journal,\n",
+        "replace_with": "            now=clock, sleep=time.sleep,\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_bound_profiles_reach_correlated_success_through_every_role[sandbox]"
+      ],
+      "assertions": [
+        "state.stage is LifecycleStage.DONE"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:d95e609e3928c60212058e5173442c730513a2b827d6b891572df3677f724e94",
+        "locator": "observations/d95e609e3928c60212058e5173442c730513a2b827d6b891572df3677f724e94"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:f629ed9f7cc78b22d7bce0012a3a28bf535dc2543f2cbda3d1aa9ccf15df1d00",
+        "locator": "observations/f629ed9f7cc78b22d7bce0012a3a28bf535dc2543f2cbda3d1aa9ccf15df1d00"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:ca6a2c72e5a359e7748377653970aab54e6535372ddf50a7e211ca9d8f73901d",
+        "locator": "observations/ca6a2c72e5a359e7748377653970aab54e6535372ddf50a7e211ca9d8f73901d"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "binding_guard_bypassed",
+      "material_class": "bypassed-guard-or-disconnected-correlation-fails-before-advancement",
+      "file": "src/alienintent/composition/github_profile.py",
+      "application_count": 1,
+      "source_digest": "sha256:473ab459a30ad876e678fe00d5dae4f920d57164961a2eb910c120d97e9ae358",
+      "mutation": {
+        "remove": "            self.store, self.work, self.worker,\n",
+        "replace_with": "            self.store, self.work, worker,\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_github_profile_refuses_an_unbound_or_disconnected_worker_before_launch[missing]"
+      ],
+      "assertions": [
+        "summary.dispatched == ()"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:36128d643d682e2a71b47bcbf940a55459cd475e0f93cc17474c884c427728f1",
+        "locator": "observations/36128d643d682e2a71b47bcbf940a55459cd475e0f93cc17474c884c427728f1"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:c73ec25388ee5f7974015bd823991be67c3410153e45e576efe76702105096d8",
+        "locator": "observations/c73ec25388ee5f7974015bd823991be67c3410153e45e576efe76702105096d8"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:433171940fcebba8d36a4de2380c4fb1524132cd69ced16ed8d5bc69e2b32b1a",
+        "locator": "observations/433171940fcebba8d36a4de2380c4fb1524132cd69ced16ed8d5bc69e2b32b1a"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "sidecar_state_owner",
+      "material_class": "no-sidecar-state-owner-or-live-activation",
+      "file": "src/alienintent/composition/role_binding.py",
+      "application_count": 1,
+      "source_digest": "sha256:0bb570c1308aae691050628ca73a379b61fc7d3c5095ef597a907f58e73a6be0",
+      "mutation": {
+        "remove": "        self.retained[invocation.correlation_id] = ownership\n",
+        "replace_with": "        self._store.commit(self._profile, \"k3-outcome:\" + invocation.correlation_id, 0, {\"kind\": MISSING_TERMINAL_RESULT})\n        self.retained[invocation.correlation_id] = ownership\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_the_binding_guard_owns_no_state_and_introduces_no_outcome_record"
+      ],
+      "assertions": [
+        "assert forbidden not in source"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:919deacc9fabe3574233ca829d307e801e65412eeeea8cb56e7e588c99edbceb",
+        "locator": "observations/919deacc9fabe3574233ca829d307e801e65412eeeea8cb56e7e588c99edbceb"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:7d8d1bac6ee9bb8591a46f85a7d629582e3042f8546589a72da4a571ac4e3f71",
+        "locator": "observations/7d8d1bac6ee9bb8591a46f85a7d629582e3042f8546589a72da4a571ac4e3f71"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:c9092d1bd5cd933d3e74640abfec8b3c484334febf257dcc7fe03f33dbbe9cfd",
+        "locator": "observations/c9092d1bd5cd933d3e74640abfec8b3c484334febf257dcc7fe03f33dbbe9cfd"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "client_exit_releases_ownership",
+      "material_class": "owned-background-work-retains-invocation-ownership",
+      "file": "src/alienintent/invocation_runtime/adapters/cli_worker.py",
+      "application_count": 1,
+      "source_digest": "sha256:0b164c717eb737cd84b7d1877edb520b61e9c43730c365f0e1fbf293a03bd593",
+      "mutation": {
+        "remove": "            process.communicate(timeout=wall_clock_seconds)\n",
+        "replace_with": "            process.wait(timeout=wall_clock_seconds)\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_client_exit_with_owned_background_work_active_does_not_end_the_invocation"
+      ],
+      "assertions": [
+        "the candidate was taken before owned background work finished"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:0065dd30ef04328d47279a4d9c8d6b012870778860c2e690626b1a0f4d4ff270",
+        "locator": "observations/0065dd30ef04328d47279a4d9c8d6b012870778860c2e690626b1a0f4d4ff270"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:e13709da8eef69ab5c37aa6294425c67b72cae5a7dc65124b0deee208a5790f2",
+        "locator": "observations/e13709da8eef69ab5c37aa6294425c67b72cae5a7dc65124b0deee208a5790f2"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:7d70a88c4f617c4ab0922cf9e9bdf5396cc9b585049f2660a12f551baa2e21bc",
+        "locator": "observations/7d70a88c4f617c4ab0922cf9e9bdf5396cc9b585049f2660a12f551baa2e21bc"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "ownership_assumed_terminal",
+      "material_class": "unknown-ownership-refuses-replacement-conclusive-loss-replaces-once",
+      "file": "src/alienintent/composition/role_binding.py",
+      "application_count": 1,
+      "source_digest": "sha256:0bb570c1308aae691050628ca73a379b61fc7d3c5095ef597a907f58e73a6be0",
+      "mutation": {
+        "remove": "        if invocation.correlation_id not in self._concluded:\n            return False, \"owning-call-not-concluded\"\n",
+        "replace_with": "        return True, \"assumed\"\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_no_replacement_launches_while_ownership_is_unknown_after_the_owner_died"
+      ],
+      "assertions": [
+        "runs(tmp_path) == [(\"PRODUCER\", PRODUCER_0)]"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:03483549bc73d945dc19ae23b71a685904c5721ada11c98004066ea770a00e45",
+        "locator": "observations/03483549bc73d945dc19ae23b71a685904c5721ada11c98004066ea770a00e45"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:361b7200b2e395456ca7f73b80c97bb4aa31a88d98d2eec47172a3a460ea2863",
+        "locator": "observations/361b7200b2e395456ca7f73b80c97bb4aa31a88d98d2eec47172a3a460ea2863"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:fbe758f7e6134222c7953dacd677202cbe4f5d4c81432664c72691084d06a28d",
+        "locator": "observations/fbe758f7e6134222c7953dacd677202cbe4f5d4c81432664c72691084d06a28d"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "raising_call_assumed_concluded",
+      "material_class": "unknown-ownership-refuses-replacement-conclusive-loss-replaces-once",
+      "file": "src/alienintent/composition/role_binding.py",
+      "application_count": 1,
+      "source_digest": "sha256:0bb570c1308aae691050628ca73a379b61fc7d3c5095ef597a907f58e73a6be0",
+      "mutation": {
+        "remove": "        outcome = self.provider.start(invocation, context, grants, budget)  # type: ignore[attr-defined]\n",
+        "replace_with": "        self._concluded.add(invocation.correlation_id)\n        outcome = self.provider.start(invocation, context, grants, budget)  # type: ignore[attr-defined]\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_a_raising_owning_call_leaves_its_effects_unknown_and_is_never_replaced"
+      ],
+      "assertions": [
+        "a replacement launched over an unknown effect"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:047ea337c703f0dccf6cc084715e32b849e3f73495b14008767ea0747d7ff840",
+        "locator": "observations/047ea337c703f0dccf6cc084715e32b849e3f73495b14008767ea0747d7ff840"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:9e109d9decf18ca4b1d497e239adf951c2ffa2a30d3d863d406c8ca18a867776",
+        "locator": "observations/9e109d9decf18ca4b1d497e239adf951c2ffa2a30d3d863d406c8ca18a867776"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:d95556b2f6e7bf81106e686b98daf5e96327e6ea72896de45f831b696c53a562",
+        "locator": "observations/d95556b2f6e7bf81106e686b98daf5e96327e6ea72896de45f831b696c53a562"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "missing_result_advanced_as_verdict",
+      "material_class": "unknown-ownership-refuses-replacement-conclusive-loss-replaces-once",
+      "file": "src/alienintent/execution_coordination/application/factory_coordinator.py",
+      "application_count": 1,
+      "source_digest": "sha256:547b54c1a1a7c6d2d07674f304a7a28a72196a33f19b9e697c444ca8ae72c2ae",
+      "mutation": {
+        "remove": "        if outcome.kind == MISSING_TERMINAL_RESULT:\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_a_conclusively_lost_verifier_result_re_dispatches_the_verifier_on_the_same_candidate"
+      ],
+      "assertions": [
+        "state.stage is LifecycleStage.DONE"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:6250ceb2dbf36807369f361cf6ae386adbde51b4918d5b54f45e39fdd82160aa",
+        "locator": "observations/6250ceb2dbf36807369f361cf6ae386adbde51b4918d5b54f45e39fdd82160aa"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:a09f7c50b832aae856aebe1e124796ae7dd7d08c2c7170df5fa2f220a9927212",
+        "locator": "observations/a09f7c50b832aae856aebe1e124796ae7dd7d08c2c7170df5fa2f220a9927212"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:bf1debb0ac5b02fe8bbf21f9b0eb0f47971bc9c3dff1aa709d86417fec471d04",
+        "locator": "observations/bf1debb0ac5b02fe8bbf21f9b0eb0f47971bc9c3dff1aa709d86417fec471d04"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "replacement_unbounded",
+      "material_class": "unknown-ownership-refuses-replacement-conclusive-loss-replaces-once",
+      "file": "src/alienintent/composition/role_binding.py",
+      "application_count": 1,
+      "source_digest": "sha256:0bb570c1308aae691050628ca73a379b61fc7d3c5095ef597a907f58e73a6be0",
+      "mutation": {
+        "remove": "        return \"replacement-allowance-exhausted\" if lost > self._replacements else None\n",
+        "replace_with": "        return None\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_role_binding.py::test_a_second_loss_in_the_same_phase_is_refused_at_launch_and_held"
+      ],
+      "assertions": [
+        "unbounded replacement launch"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:efe3af1a301377b67877be4ddc9690d7c2e22f0fa6cd91610dff23dec86ed8ab",
+        "locator": "observations/efe3af1a301377b67877be4ddc9690d7c2e22f0fa6cd91610dff23dec86ed8ab"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:2cb4a73bcd7347671c1b7b5f1ed84fe2cf0ea5a5922d8f61b272997b4aa6c926",
+        "locator": "observations/2cb4a73bcd7347671c1b7b5f1ed84fe2cf0ea5a5922d8f61b272997b4aa6c926"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:68982812df64d9c33a08a97cc229b768760b24c24e83ef231893ba74bb52da45",
+        "locator": "observations/68982812df64d9c33a08a97cc229b768760b24c24e83ef231893ba74bb52da45"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}
