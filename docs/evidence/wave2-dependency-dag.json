@@ -3991,7 +3991,7 @@
       "owner_node": "U9",
       "status": "PLANNED_NOT_EXECUTED",
       "environment": "Disposable local profile unless explicitly marked operational; no live action authorized by this plan.",
-      "scenario": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs. At actual profile boundary unbound/unauthorized stub yields OWNER_ASSIGNMENT_HOLD before launch.",
+      "scenario": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 historical bootstrap-assessor immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs, never label as Agent Ready. At actual profile boundary unbound/unauthorized stub yields CAPABILITY_PROVENANCE_HOLD before launch. Require established producer/package provenance, not schema shape; CLARIFY routes via SF-REQ-035 then reassessment; SPLIT routes to the SplitTransaction port and U9 refuses to proceed without a materialized result set; the transaction itself is U8 (DV-7), after which U9 lints/reassesses each result.",
       "acceptance_ids": [
         "SF-REQ-015-AC-01",
         "SF-REQ-015-AC-02",
@@ -4004,7 +4004,12 @@
         "015-composed-authority"
       ],
       "evidence_contract": "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
-      "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL"
+      "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+      "scenario_history": {
+        "until_2026_09_25": "Four dispositions; error/conflicting/unknown/malformed/missing terminal MCP payloads fail regardless of exit status; retain raw bytes and predecessor attempts. Changed inputs invalidate READY; separate release gate stays required. Replay PY-10 immutable BLOCKED, SPLIT_RECOMMENDED and fresh READY refs. At actual profile boundary unbound/unauthorized stub yields OWNER_ASSIGNMENT_HOLD before launch.",
+        "repair": "WO-220209 candidate consistency repair (Director handoff director-handoff-wo220209-prep-20260925T0025Z; SF-REQ-015 re-specification 2026-09-22)",
+        "revision_record": "docs/evidence/wave2-revisions/2026-09-25-wo-220209-candidate-consistency-repair.md"
+      }
     },
     {
       "id": "FX-U10",
@@ -4672,28 +4677,38 @@
       "requirement_id": "SF-REQ-015",
       "proof_owner_node": "U9",
       "fixture_ref": "FX-U9",
-      "source_design_probe": "Missing lint duties yield pre-assessment hold and zero authority calls. 015-composed-authority covers unbound and unauthorized-stub live composition with OWNER_ASSIGNMENT_HOLD and no release.",
+      "source_design_probe": "Missing lint duties yield pre-assessment hold and zero calls. 015-composed-authority covers unbound/surrogate composition with CAPABILITY_PROVENANCE_HOLD and no release.",
       "source_contract_sections": [
         "ports",
         "transitions",
         "evidence",
         "composition",
         "deterministic_enforcement_opportunities"
-      ]
+      ],
+      "source_design_probe_history": {
+        "until_2026_09_25": "Missing lint duties yield pre-assessment hold and zero authority calls. 015-composed-authority covers unbound and unauthorized-stub live composition with OWNER_ASSIGNMENT_HOLD and no release.",
+        "repair": "WO-220209 candidate consistency repair (Director handoff director-handoff-wo220209-prep-20260925T0025Z; SF-REQ-015 re-specification 2026-09-22)",
+        "revision_record": "docs/evidence/wave2-revisions/2026-09-25-wo-220209-candidate-consistency-repair.md"
+      }
     },
     {
       "acceptance_id": "SF-REQ-015-AC-02",
       "requirement_id": "SF-REQ-015",
       "proof_owner_node": "U9",
       "fixture_ref": "FX-U9",
-      "source_design_probe": "Four-disposition table plus separate release gate; three non-READY values never launch.",
+      "source_design_probe": "READY with applicable inputs -> eligibility for separate SF-REQ-002 release gates only; CLARIFY -> resolve only material owner questions through SF-REQ-035 Decision Inbox, then reassess; SPLIT -> authorized SF-REQ-013 Split Transaction, invalidate stale applicability, lint and reassess each materialized result including a retained Integration Parent; HOLD -> satisfy prerequisite, then reassess. No non-READY disposition authorizes implementation and no resolution rewrites an old assessment. Probe all four routes, stale applicability and reassessment of every split result; no generic planning hold substitutes for the handoff.",
       "source_contract_sections": [
         "ports",
         "transitions",
         "evidence",
         "composition",
         "deterministic_enforcement_opportunities"
-      ]
+      ],
+      "source_design_probe_history": {
+        "until_2026_09_25": "Four-disposition table plus separate release gate; three non-READY values never launch.",
+        "repair": "WO-220209 candidate consistency repair (Director handoff director-handoff-wo220209-prep-20260925T0025Z; SF-REQ-015 re-specification 2026-09-22)",
+        "revision_record": "docs/evidence/wave2-revisions/2026-09-25-wo-220209-candidate-consistency-repair.md"
+      }
     },
     {
       "acceptance_id": "SF-REQ-015-AC-03",
@@ -4728,14 +4743,19 @@
       "requirement_id": "SF-REQ-015",
       "proof_owner_node": "U9",
       "fixture_ref": "FX-U9",
-      "source_design_probe": "Replay exact retained PY-10 revisions and retrieve all historical blobs without rewriting.",
+      "source_design_probe": "Replaying the retained PY-10 bootstrap-assessor history preserves verbatim BLOCKED → SPLIT_RECOMMENDED → READY, with READY a distinct fresh assessment after prerequisite completion and all prior revision references retrievable. These are historical Surrogate Readiness Assessments, not an Agent Ready sequence; retention does not coerce or relabel historical verdicts.",
       "source_contract_sections": [
         "ports",
         "transitions",
         "evidence",
         "composition",
         "deterministic_enforcement_opportunities"
-      ]
+      ],
+      "source_design_probe_history": {
+        "until_2026_09_25": "Replay exact retained PY-10 revisions and retrieve all historical blobs without rewriting.",
+        "repair": "WO-220209 candidate consistency repair (Director handoff director-handoff-wo220209-prep-20260925T0025Z; SF-REQ-015 re-specification 2026-09-22)",
+        "revision_record": "docs/evidence/wave2-revisions/2026-09-25-wo-220209-candidate-consistency-repair.md"
+      }
     },
     {
       "acceptance_id": "SF-REQ-016-AC-01",
@@ -5287,11 +5307,21 @@
       "fixture_ref": "FX-U9",
       "id": "015-composed-authority",
       "layer": "python_unit_integration",
-      "rule": "Reuse LRN-002 at the actual live-profile readiness construction/call boundary with local transport and real temporary SQLite. Unbound AssessmentAuthority or a stub lacking assigned G1/G2 authority must refuse construction or return OWNER_ASSIGNMENT_HOLD before assessment/release; a pinned authorized fixture binding reaches the consumer and still checks semantic outcome.",
-      "proven_red_obligation": "Bind a stub that returns READY without G1/G2 authority, then bypass the unbound-authority guard separately: each must fail the expected OWNER_ASSIGNMENT_HOLD/no-release assertion; intact authorized fixture reaches the consumer.",
+      "rule": "Reuse LRN-002 at actual readiness construction/admission with local transport and real temporary SQLite: unbound or unestablished product/package provenance returns CAPABILITY_PROVENANCE_HOLD; a supported product binding reaches the consumer, preserving raw bytes and complete provenance. Test doubles are explicitly fixture producers and cannot discharge native-producer proof.",
+      "proven_red_obligation": "Supply a schema-perfect surrogate READY, copied provider_evidence, wrong package identity or a response disconnected from its invocation; each must fail native admission. Bypass provenance checking independently: corresponding refusal assertion must fail. Intact identified public-interface binding reaches consumer without release bypass.",
       "phase3_promotion": "LRN-002",
       "status": "DESIGNED_NOT_IMPLEMENTED",
-      "strength": "BLOCKING"
+      "strength": "BLOCKING",
+      "rule_history": {
+        "until_2026_09_25": "Reuse LRN-002 at the actual live-profile readiness construction/call boundary with local transport and real temporary SQLite. Unbound AssessmentAuthority or a stub lacking assigned G1/G2 authority must refuse construction or return OWNER_ASSIGNMENT_HOLD before assessment/release; a pinned authorized fixture binding reaches the consumer and still checks semantic outcome.",
+        "repair": "WO-220209 candidate consistency repair (Director handoff director-handoff-wo220209-prep-20260925T0025Z; SF-REQ-015 re-specification 2026-09-22)",
+        "revision_record": "docs/evidence/wave2-revisions/2026-09-25-wo-220209-candidate-consistency-repair.md"
+      },
+      "proven_red_obligation_history": {
+        "until_2026_09_25": "Bind a stub that returns READY without G1/G2 authority, then bypass the unbound-authority guard separately: each must fail the expected OWNER_ASSIGNMENT_HOLD/no-release assertion; intact authorized fixture reaches the consumer.",
+        "repair": "WO-220209 candidate consistency repair (Director handoff director-handoff-wo220209-prep-20260925T0025Z; SF-REQ-015 re-specification 2026-09-22)",
+        "revision_record": "docs/evidence/wave2-revisions/2026-09-25-wo-220209-candidate-consistency-repair.md"
+      }
     },
     {
       "source_requirement": "SF-REQ-016",
