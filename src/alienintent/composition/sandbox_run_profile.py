@@ -27,6 +27,7 @@ from pathlib import Path
 import time
 from typing import Callable, Mapping
 
+from alienintent.composition.role_binding import ROLE_OPERATIONS, RoleBindingGuard
 from alienintent.composition.sandbox_profile import SandboxProfileComposition, load_profile_document
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
 from alienintent.execution_coordination.adapters.github_projects_v2 import GitHubProjectsV2Directory
@@ -40,6 +41,7 @@ from alienintent.installation.application.doctor import InstallationDoctor
 from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
 from alienintent.invocation_runtime.adapters.git_worktree import GitWorktreeAdapter, ref_safe
+from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
 from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
 from alienintent.invocation_runtime.domain.runtime import CapabilityGrant, InvocationRole, ReservationBook
 
@@ -48,7 +50,7 @@ DEFAULT_STATE = Path.home() / ".local/state/alienintent-sandbox/run"
 DEFAULT_PROVIDER = "claude"
 DEFAULT_WORKER_COMMAND = ("/bin/bash", "worker/run.sh")
 PROVIDER_DIMENSIONS = frozenset({"wall-clock", "attempts", "retries", "concurrency", "cancellation"})
-GRANT_OPERATIONS = frozenset({"process-control", "git-write"})
+GRANT_OPERATIONS = ROLE_OPERATIONS[str(InvocationRole.PRODUCER)]
 GRANT_SECONDS = 3600
 
 _CONTRACT_FIELDS = tuple(name for name in BiuContract.__dataclass_fields__ if name != "content_digest")
@@ -298,12 +300,17 @@ class SandboxRunProfile:
             provider, worker_command[0], tuple(worker_command[1:]), "bypassPermissions",
             PROVIDER_DIMENSIONS, environment=worker_environment,
         )
-        self.worker = RealWorkerProvider(
+        # K3: the provider journals every role outcome durably, and the
+        # coordinator reaches it only through the binding guard over that same
+        # journal, so an unbound or miscorrelated launch never starts.
+        self.journal = JsonlInvocationJournal(state_root / "invocation-journal.jsonl", clock)
+        self.real_worker = RealWorkerProvider(
             self.worker_process, GitSourceControl(), checkout, "origin", self.candidate_branch,
             self.producer_read_back_root, self.grant, composition.profile.repository,
             GitWorktreeAdapter(checkout, self.workspace_root), ReservationBook(1, 2),
-            now=clock, sleep=time.sleep,
+            now=clock, sleep=time.sleep, journal=self.journal,
         )
+        self.worker = RoleBindingGuard(self.real_worker, self.journal, self.store, self.name, composition.profile.repository, clock)
         self.notifier = ProjectDecisionNotifier(composition.projects)
         self.coordinator = FactoryCoordinator(
             self.store, self.work, self.worker,
@@ -321,10 +328,11 @@ class SandboxRunProfile:
         return f"candidate/{ref_safe(invocation.correlation_id)}"
 
     def grant(self, invocation: WorkerInvocation) -> CapabilityGrant:
-        """One capability grant per dispatch, naming the invocation it authorizes."""
+        """One capability grant per dispatch, naming the invocation and the role it authorizes."""
+        role = InvocationRole(invocation.role)
         return CapabilityGrant(
-            f"py10-{invocation.work_identity}", "1", invocation.correlation_id, InvocationRole.PRODUCER,
-            self.name, self.composition.profile.repository, GRANT_OPERATIONS, int(self._clock()) + GRANT_SECONDS,
+            f"py10-{invocation.work_identity}", "1", invocation.correlation_id, role,
+            self.name, self.composition.profile.repository, ROLE_OPERATIONS[str(role)], int(self._clock()) + GRANT_SECONDS,
         )
 
     # --- residency -----------------------------------------------------------

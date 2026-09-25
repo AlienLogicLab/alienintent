@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/composition/test_role_binding.py::test_a_raising_owning_call_leaves_its_effects_unknown_and_is_never_replaced"],"cwd":"/tmp/fx-k3-controls-udo21mwt","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.67s\n"}

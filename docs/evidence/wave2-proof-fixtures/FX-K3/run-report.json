@@ -1,0 +1,59 @@
+{
+  "material_class_to_probes": {
+    "refuse-unbound-role-authority-custody-or-correlation-before-launch": [
+      "test_sandbox_profile_refuses_a_verifier_launch_whose_grant_names_another_role",
+      "test_sandbox_profile_refuses_a_verifier_given_a_candidate_the_producer_never_published",
+      "test_github_profile_refuses_an_unbound_or_disconnected_worker_before_launch[missing|disconnected]",
+      "test_a_refused_launch_journals_nothing_and_reads_back_nothing"
+    ],
+    "bound-real-adapter-correlated-success-rejection-restart-readback": [
+      "test_bound_profiles_reach_correlated_success_through_every_role[sandbox|github]",
+      "test_bound_sandbox_profile_reads_back_a_rejection_and_repairs_through_implement",
+      "test_bound_sandbox_profile_recovers_the_verifier_outcome_after_a_crash_without_re_running_it"
+    ],
+    "bypassed-guard-or-disconnected-correlation-fails-before-advancement": [
+      "test_every_shared_profile_coordinator_reaches_its_worker_only_through_the_binding_guard",
+      "test_github_profile_refuses_an_unbound_or_disconnected_worker_before_launch[missing|disconnected]"
+    ],
+    "no-sidecar-state-owner-or-live-activation": [
+      "test_the_binding_guard_owns_no_state_and_introduces_no_outcome_record"
+    ],
+    "owned-background-work-retains-invocation-ownership": [
+      "test_client_exit_with_owned_background_work_active_does_not_end_the_invocation"
+    ],
+    "unknown-ownership-refuses-replacement-conclusive-loss-replaces-once": [
+      "test_no_replacement_launches_while_ownership_is_unknown_after_the_owner_died",
+      "test_conclusive_loss_without_a_durable_result_is_retained_and_replaced_exactly_once",
+      "test_a_second_loss_in_the_same_phase_is_refused_at_launch_and_held",
+      "test_a_raising_owning_call_leaves_its_effects_unknown_and_is_never_replaced",
+      "test_a_conclusively_lost_verifier_result_re_dispatches_the_verifier_on_the_same_candidate"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/composition/test_role_binding.py",
+      "tests/composition/test_sandbox_run_profile.py",
+      "tests/execution_coordination/test_github_work_management.py",
+      "tests/invocation_runtime/test_real_worker_outcome.py",
+      "tests/execution_coordination/test_role_orchestration.py",
+      "tests/execution_coordination/test_factory_coordinator.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:2243813ebf9b565d21330a6dd8a672c745bb7f7dcc9f48971e2b54a3d77f3d32",
+      "locator": "observations/2243813ebf9b565d21330a6dd8a672c745bb7f7dcc9f48971e2b54a3d77f3d32"
+    }
+  },
+  "boundaries": "K3 composed_role_bindings only: local composed proof over the actual sandbox_run_profile and github_profile constructors; no live/shared-profile activation; no RoleOutcomeRecord or sidecar owner",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}

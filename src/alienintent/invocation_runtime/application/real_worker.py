@@ -284,6 +284,19 @@ class RealWorkerProvider(WorkerProvider):
         self._outcomes[invocation.correlation_id] = outcome
         return outcome
 
+    @property
+    def journal(self) -> InvocationJournal | None:
+        """The durable journal this provider writes and reads back, read-only."""
+        return self._journal
+
+    def grant_for(self, invocation: WorkerInvocation) -> CapabilityGrant:
+        """The grant this provider will launch ``invocation`` under, read-only."""
+        return self._grant_for(invocation)
+
+    def candidate_branch(self, invocation: WorkerInvocation) -> str:
+        """The branch a producer ``invocation`` publishes to, read-only."""
+        return self._candidate_branch(invocation)
+
     def _grant_for(self, invocation: WorkerInvocation) -> CapabilityGrant:
         """The capability grant issued for this invocation.
 
