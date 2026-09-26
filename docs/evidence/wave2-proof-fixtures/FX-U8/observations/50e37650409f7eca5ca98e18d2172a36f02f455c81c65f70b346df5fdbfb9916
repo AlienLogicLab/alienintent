@@ -1,0 +1,23 @@
+F                                                                                                                                                                                                                                                                                                                                                                                                        [100%]
+=================================================================================================================================================================================================== FAILURES ===================================================================================================================================================================================================
+______________________________________________________________________________________________________________________________________________________________________________ test_derivation_is_deterministic_under_permutation ______________________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x788f3814aa20>
+
+    def test_derivation_is_deterministic_under_permutation(harness):
+        """AC-06: permuted enumeration yields the same candidate; permuted sources the same mapping and identities."""
+        h = harness()
+        prepared(h)
+        values = inputs(h)
+        first, second = compile_initial(**values), compile_initial(**permuted(values))
+        assert isinstance(first, CompilationCandidate) and isinstance(second, CompilationCandidate)
+>       assert (first.candidate_digest, canonical(first.document())) == (second.candidate_digest,
+                                                                          canonical(second.document()))
+E       assert ('sha256:f3b8...13b4b61d4"}}') == ('sha256:f107...89726070d"}}')
+E         At index 0 diff: 'sha256:f3b84152010ab27b3ce5c6ce5395aa4d52d4524048e8666d3a5e315f77f8b5d7' != 'sha256:f1071ba935694156c6c577bf2672a84b29ecf4ae4b56258fce0de0168ca6c60d'
+E         Use -v to get more diff
+
+tests/context_assembly/test_initial_compilation.py:360: AssertionError
+=========================================================================================================================================================================================== short test summary info ============================================================================================================================================================================================
+FAILED tests/context_assembly/test_initial_compilation.py::test_derivation_is_deterministic_under_permutation - assert ('sha256:f3b8...13b4b61d4"}}') == ('sha256:f107...89726070d"}}')
+1 failed in 5.30s

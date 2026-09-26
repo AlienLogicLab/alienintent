@@ -1,0 +1,21 @@
+F                                                                                                                                                                                                                                                                                                                                                                                                        [100%]
+=================================================================================================================================================================================================== FAILURES ===================================================================================================================================================================================================
+________________________________________________________________________________________________________________________________________________________________________________ test_unverified_design_holds_without_candidate ________________________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x7defeadaea20>
+
+    def test_unverified_design_holds_without_candidate(harness):
+        h = harness()
+        prepared(h, state="unreviewed")
+        before = h.state()
+        result = h.compile()
+        assert_hold(result, "DESIGN_HOLD", (DKEY,))
+>       assert result.detail == "REVIEW_REQUIRED"
+E       AssertionError: assert 'DESIGN_UNREADABLE' == 'REVIEW_REQUIRED'
+E         - REVIEW_REQUIRED
+E         + DESIGN_UNREADABLE
+
+tests/context_assembly/test_initial_compilation.py:284: AssertionError
+=========================================================================================================================================================================================== short test summary info ============================================================================================================================================================================================
+FAILED tests/context_assembly/test_initial_compilation.py::test_unverified_design_holds_without_candidate - AssertionError: assert 'DESIGN_UNREADABLE' == 'REVIEW_REQUIRED'
+1 failed in 5.31s

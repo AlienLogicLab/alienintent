@@ -1,0 +1,29 @@
+F                                                                                                                                                                                                                                                                                                                                                                                                        [100%]
+=================================================================================================================================================================================================== FAILURES ===================================================================================================================================================================================================
+________________________________________________________________________________________________________________________________________________________________________________________ test_obligation_omission_holds ________________________________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x7b62a6066a20>
+
+    def test_obligation_omission_holds(harness):
+        h = harness()
+        prepared(h)
+        values = inputs(h)
+        plan = values["plans"][R1]
+        plan["obligations"] = [o for o in plan["obligations"] if o["predicate"]["acceptance_id"] != f"{R1}-AC-02"]
+>       assert_hold(compile_initial(**values), "UNMAPPED_OBLIGATION", (f"{R1}-AC-02:verification",))
+
+tests/context_assembly/test_initial_compilation.py:310: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = CompilationCandidate(candidate_digest='sha256:37d165abc9ce01f5a9a695ab8ebc46eced158e72d69ebaa7ef5ed21b8a49b8e5', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), code = 'UNMAPPED_OBLIGATION', refs = ('SF-REQ-911-AC-02:verification',)
+
+    def assert_hold(result, code, refs=None):
+>       assert isinstance(result, CompilationHold), result
+E       AssertionError: CompilationCandidate(candidate_digest='sha256:37d165abc9ce01f5a9a695ab8ebc46eced158e72d69ebaa7ef5ed21b8a49b8e5', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+E       assert False
+E        +  where False = isinstance(CompilationCandidate(candidate_digest='sha256:37d165abc9ce01f5a9a695ab8ebc46eced158e72d69ebaa7ef5ed21b8a49b8e5', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), CompilationHold)
+
+tests/context_assembly/test_initial_compilation.py:213: AssertionError
+=========================================================================================================================================================================================== short test summary info ============================================================================================================================================================================================
+FAILED tests/context_assembly/test_initial_compilation.py::test_obligation_omission_holds - AssertionError: CompilationCandidate(candidate_digest='sha256:37d165abc9ce01f5a9a695ab8ebc46eced158e72d69ebaa7ef5ed21b8a49b8e5', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+1 failed in 5.16s

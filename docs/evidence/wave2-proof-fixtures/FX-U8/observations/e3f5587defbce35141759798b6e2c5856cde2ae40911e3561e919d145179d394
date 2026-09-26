@@ -1,0 +1,31 @@
+F                                                                                                                                                                                                                                                                                                                                                                                                        [100%]
+=================================================================================================================================================================================================== FAILURES ===================================================================================================================================================================================================
+_______________________________________________________________________________________________________________________________________________________________________________________ test_unresolved_authority_holds ________________________________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x7d6e4e31eac0>
+
+    def test_unresolved_authority_holds(harness):
+        """AC-04: a requirement the U2 inspection holds is never compiled."""
+        h = harness()
+        sources = {r: SOURCES[r] for r in (R1, R2, R3)}
+        sources[R1] = body(R1, Intent="Derive units from pinned requirements.", Scope="unit derivation", Authority=None,
+                           Acceptance=f"{R1}-AC-01: every unit carries every contract field.")
+        prepared(h, sources=sources)
+        result = h.compile()
+>       assert_hold(result, "UNRESOLVED_AUTHORITY")
+
+tests/context_assembly/test_initial_compilation.py:297: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = CompilationCandidate(candidate_digest='sha256:3aac339bb066a105d6c172999369ffe1ec972f435a29f99c1e0035a8f582c5ab', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), code = 'UNRESOLVED_AUTHORITY', refs = None
+
+    def assert_hold(result, code, refs=None):
+>       assert isinstance(result, CompilationHold), result
+E       AssertionError: CompilationCandidate(candidate_digest='sha256:3aac339bb066a105d6c172999369ffe1ec972f435a29f99c1e0035a8f582c5ab', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+E       assert False
+E        +  where False = isinstance(CompilationCandidate(candidate_digest='sha256:3aac339bb066a105d6c172999369ffe1ec972f435a29f99c1e0035a8f582c5ab', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), CompilationHold)
+
+tests/context_assembly/test_initial_compilation.py:213: AssertionError
+=========================================================================================================================================================================================== short test summary info ============================================================================================================================================================================================
+FAILED tests/context_assembly/test_initial_compilation.py::test_unresolved_authority_holds - AssertionError: CompilationCandidate(candidate_digest='sha256:3aac339bb066a105d6c172999369ffe1ec972f435a29f99c1e0035a8f582c5ab', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+1 failed in 5.33s

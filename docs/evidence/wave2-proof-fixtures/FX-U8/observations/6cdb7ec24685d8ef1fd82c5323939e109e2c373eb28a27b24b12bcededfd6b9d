@@ -1,0 +1,31 @@
+F                                                                                                                                                                                                                                                                                                                                                                                                        [100%]
+=================================================================================================================================================================================================== FAILURES ===================================================================================================================================================================================================
+_______________________________________________________________________________________________________________________________________________________________________________________ test_obligation_invention_holds ________________________________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x7fe9a54eea20>
+
+    def test_obligation_invention_holds(harness):
+        h = harness()
+        prepared(h)
+        values = inputs(h)
+        other = values["plans"][R2]["obligations"][0]
+        values["plans"][R1]["obligations"].append(other)
+>       assert_hold(compile_initial(**values), "OBLIGATION_INVENTED", (other["obligation_id"],))
+
+tests/context_assembly/test_initial_compilation.py:319: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = CompilationHold(reason_code='INPUT_UNPINNED', affected_refs=('SF-REQ-911:SF-REQ-912/SF-REQ-912-AC-01/P1',), mode='INIT...565c2d97cc04f0a8cead547e85', detail='', findings=(('INPUT_UNPINNED', ('SF-REQ-911:SF-REQ-912/SF-REQ-912-AC-01/P1',)),)), code = 'OBLIGATION_INVENTED', refs = ('SF-REQ-912/SF-REQ-912-AC-01/P1',)
+
+    def assert_hold(result, code, refs=None):
+        assert isinstance(result, CompilationHold), result
+>       assert result.reason_code == code, result.findings
+E       AssertionError: (('INPUT_UNPINNED', ('SF-REQ-911:SF-REQ-912/SF-REQ-912-AC-01/P1',)),)
+E       assert 'INPUT_UNPINNED' == 'OBLIGATION_INVENTED'
+E         - OBLIGATION_INVENTED
+E         + INPUT_UNPINNED
+
+tests/context_assembly/test_initial_compilation.py:214: AssertionError
+=========================================================================================================================================================================================== short test summary info ============================================================================================================================================================================================
+FAILED tests/context_assembly/test_initial_compilation.py::test_obligation_invention_holds - AssertionError: (('INPUT_UNPINNED', ('SF-REQ-911:SF-REQ-912/SF-REQ-912-AC-01/P1',)),)
+1 failed in 5.28s

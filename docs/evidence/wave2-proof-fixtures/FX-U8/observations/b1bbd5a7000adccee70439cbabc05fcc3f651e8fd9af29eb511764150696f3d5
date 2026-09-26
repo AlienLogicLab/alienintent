@@ -1,0 +1,37 @@
+F                                                                                                                                                                                                                                                                                                                                                                                                        [100%]
+=================================================================================================================================================================================================== FAILURES ===================================================================================================================================================================================================
+______________________________________________________________________________________________________________________________________________________________________________________ test_unpinned_input_holds[design] _______________________________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x75da3ae26a20>, stale = 'design'
+
+    @pytest.mark.parametrize("stale", ["design", "requirement", "inspection"])
+    def test_unpinned_input_holds(harness, stale):
+        h = harness()
+        prepared(h)
+        values = inputs(h)
+        if stale == "design":
+            values["plans"][R1]["design_ref"]["revision_digest"] = sha("another design revision")
+            expected = (f"{R1}:proof_plan:design",)
+        elif stale == "requirement":
+            values["plans"][R1]["requirement_ref"]["revision_digest"] = sha("another requirement revision")
+            expected = (f"{R1}:proof_plan:requirement",)
+        else:
+            values["inspection"] = replace(values["inspection"], inventory_digest="0" * 64)
+            expected = None
+>       assert_hold(compile_initial(**values), "INPUT_UNPINNED", expected)
+
+tests/context_assembly/test_initial_compilation.py:481: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = CompilationCandidate(candidate_digest='sha256:35175930fe29d8e3a76f9b7256ee30832e6bd6c907f24f0035ed7029de57c236', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), code = 'INPUT_UNPINNED', refs = ('SF-REQ-911:proof_plan:design',)
+
+    def assert_hold(result, code, refs=None):
+>       assert isinstance(result, CompilationHold), result
+E       AssertionError: CompilationCandidate(candidate_digest='sha256:35175930fe29d8e3a76f9b7256ee30832e6bd6c907f24f0035ed7029de57c236', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+E       assert False
+E        +  where False = isinstance(CompilationCandidate(candidate_digest='sha256:35175930fe29d8e3a76f9b7256ee30832e6bd6c907f24f0035ed7029de57c236', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), CompilationHold)
+
+tests/context_assembly/test_initial_compilation.py:213: AssertionError
+=========================================================================================================================================================================================== short test summary info ============================================================================================================================================================================================
+FAILED tests/context_assembly/test_initial_compilation.py::test_unpinned_input_holds[design] - AssertionError: CompilationCandidate(candidate_digest='sha256:35175930fe29d8e3a76f9b7256ee30832e6bd6c907f24f0035ed7029de57c236', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+1 failed in 5.31s
