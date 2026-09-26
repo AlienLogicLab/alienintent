@@ -7,7 +7,9 @@ from alienintent.control_plane.ports.monitor_host import HostRecords
 from alienintent.evidence_learning.domain.records import Header, Observation, canonical_bytes, ref_from_document
 from alienintent.evidence_learning.domain.refs import EvidenceHold, Ref
 from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
-from alienintent.execution_coordination.ports.operational_store import OperationalStore, SchemaIncompatible, StoreUnavailable
+from alienintent.execution_coordination.ports.operational_store import (
+    OperationalStore, ReservationRejected, SchemaIncompatible, StoreUnavailable, VersionConflict,
+)
 
 METHOD = "monitor-host-history"
 
@@ -70,8 +72,14 @@ class DurableHostRecords(HostRecords):
         history = Observation(Header(self.project, self.name, identity, str(expected_version + 1), (source,),
             preceding_refs=() if preceding is None else (preceding,)), source, identity, METHOD, (source,),
             canonical_bytes(body).decode(), None, "monitor-host-launch:" + ownership.launch_id, self.invocation)
-        ref = self.evidence.put(history)
-        return self.store.commit(self.name, identity, expected_version, {"schema_version": 1, "history_ref": asdict(ref)})
+        try:
+            ref = self.evidence.put(history)
+            return self.store.commit(self.name, identity, expected_version,
+                                     {"schema_version": 1, "history_ref": asdict(ref)})
+        except VersionConflict as error:
+            raise HostHold("HOST_VERSION_CONFLICT") from error
+        except (StoreUnavailable, SchemaIncompatible, ReservationRejected, EvidenceHold) as error:
+            raise HostHold("HOST_STORE_UNAVAILABLE") from error
 
     def history(self, profile: str) -> tuple[dict[str, object], ...]:
         """Every supervisor record for the profile, oldest first; a broken chain holds."""

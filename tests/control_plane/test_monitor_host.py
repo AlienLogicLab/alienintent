@@ -38,6 +38,7 @@ class FakeManager:
         from alienintent.control_plane.domain.monitor_host import ManagerIdentity
         self.manager = ManagerIdentity(1000, "boot-1", "59846494", MANAGER_CGROUP)
         self.units, self.calls, self.launched, self.available, self.serial = {}, [], [], True, 0
+        self.fail_launch, self.lingering = False, False
 
     def identity(self):
         self.calls.append(("identity",))
@@ -53,11 +54,16 @@ class FakeManager:
         return self.units.get(unit, UnitState(False, unit))
 
     def cgroup_empty(self, cgroup):
+        if self.lingering:
+            return False
         return not any(u.control_group == cgroup and u.active_state == "active" for u in self.units.values())
 
     def launch(self, binding, argv, environment, stop_seconds, log_path):
-        from alienintent.control_plane.domain.monitor_host import UNIT_PROPERTIES, UnitState
+        from alienintent.control_plane.domain.monitor_host import UNIT_PROPERTIES, HostHold, UnitState
         self.calls.append(("launch", binding.unit))
+        if self.fail_launch:
+            self.fail_launch = False
+            raise HostHold("MANAGER_COMMAND_FAILED")
         if self.show(binding.unit).loaded:
             raise RuntimeError("unit exists")
         self.serial += 1
@@ -66,10 +72,19 @@ class FakeManager:
             tuple(UNIT_PROPERTIES.items()))
         self.launched.append(argv[argv.index("--launch-id") + 1])
 
-    def arm_observer(self, *args):
-        raise AssertionError("not used")
+    def observer_unit(self, binding):
+        return binding.unit.removesuffix(".service").replace("alienintent-monitor-", "alienintent-monitor-observer-")
 
-    disarm_observer = arm_observer
+    def arm_observer(self, binding, argv, environment, period_seconds, log_path):
+        from alienintent.control_plane.domain.monitor_host import UnitState
+        unit = self.observer_unit(binding)
+        self.calls.append(("arm_observer", unit))
+        assert argv[argv.index("-m") + 2] == "observe"
+        self.units[unit + ".timer"] = UnitState(True, unit + ".timer", active_state="active", sub_state="waiting")
+        return unit
+
+    def disarm_observer(self, binding):
+        raise AssertionError("not used")
 
     def terminate(self, unit):
         """The hosted process dies (SIGKILL); systemd keeps the failed unit loaded."""
@@ -100,7 +115,7 @@ def config_document(root, **overrides):
         "env": shutil.which("env"),
         "policy": {"grace_seconds": 300, "interval_seconds": 60, "confirmation_seconds": 90, "startup_seconds": 30,
                    "stop_seconds": 5, "observe_seconds": 10},
-        "host_actors": [ACTOR], "host_authority": AUTHORITY, "alert_authority": "founder-judgment",
+        "host_actors": [ACTOR, "operator"], "host_authority": AUTHORITY, "alert_authority": "founder-judgment",
         "judgment_authority": "founder-judgment"}
     document.update(overrides)
     return document
@@ -112,7 +127,7 @@ class World:
     def __init__(self, tmp_path, **overrides):
         from alienintent.composition.monitor_host import MonitorHostProfile, load_config
         self.root = tmp_path / "profile"
-        self.root.mkdir(exist_ok=True)
+        self.root.mkdir(parents=True, exist_ok=True)
         self.path = tmp_path / "monitor-host.json"
         self.path.write_text(json.dumps(config_document(self.root, **overrides)))
         self.config = load_config(self.path)
@@ -201,11 +216,13 @@ def test_launch_binds_the_owned_unit_to_the_monitor_invocation(world):
     binding = HostBinding.derive(PROFILE, INVOCATION)
     record = world.profile.monitor.repository.read(PROFILE)
     assert ownership.binding == binding and ownership.cgroup == f"{MANAGER_CGROUP}/app.slice/{binding.unit}"
-    assert ownership.systemd_invocation_id == world.manager.units[binding.unit].invocation_id
+    assert ownership.systemd_invocation_id == world.manager.units[binding.unit].invocation_id, \
+        "the manager's invocation of this launch is bound when it is launched"
+    assert ownership.observer + ".timer" in world.manager.units, "launch arms the manager-owned observer"
     # The C4 generation is attributable to exactly this supervised launch.
     assert (record.instance_id, record.generation) == (ownership.launch_id, 1)
     actions = [h["observation"]["action"] for h in world.profile.records.history(PROFILE)]
-    assert actions == ["LAUNCH_INTENT", "LAUNCHED", "BOUND"]
+    assert actions == ["LAUNCH_INTENT", "LAUNCHED"]
 
 
 def test_host_refuses_to_run_outside_its_owned_unit(world):
@@ -303,7 +320,7 @@ def test_restart_of_a_healthy_host_or_duplicate_launch_is_refused(world):
         world.supervisor.restart(world.grant(replaces=ownership.launch_id, alert="attention:" + "0" * 64))
     with pytest.raises(HostHold, match="HOST_ALREADY_OWNED"):
         world.supervisor.launch(world.grant())
-    assert world.manager.mutations() == [("launch", ownership.binding.unit)]
+    assert world.manager.mutations() == [("launch", ownership.binding.unit), ("arm_observer", ownership.observer)]
 
 
 def test_observation_of_a_substituted_unit_or_instance_is_refused(world):
@@ -313,7 +330,8 @@ def test_observation_of_a_substituted_unit_or_instance_is_refused(world):
     # Another process under the same unit name: a new manager invocation the supervisor never launched.
     world.manager.units[unit] = replace(world.manager.units[unit], invocation_id="f" * 32)
     detection, ownership = world.supervisor.observe()
-    assert (detection.status, detection.reason, detection.refused) == ("REFUSED", "UNIT_INVOCATION_MISMATCH", True)
+    assert (detection.status, detection.reason, detection.refused) == ("REFUSED", "UNIT_INVOCATION_MISMATCH", True), \
+        "an observation of a unit the supervisor did not launch must be refused"
     with pytest.raises(HostHold, match="RESTART_REFUSED:UNIT_INVOCATION_MISMATCH"):
         world.supervisor.restart(world.grant(replaces=ownership.launch_id, alert=ownership.alert))
     assert ("kill", unit) not in world.manager.mutations(), "the supervisor never kills a unit it does not own"
@@ -394,3 +412,104 @@ def test_restart_under_a_changed_configuration_holds(tmp_path):
     with pytest.raises(HostHold, match="BINDING_MISMATCH"):
         changed.supervisor.observe()
     assert world.ownership() == ownership
+
+
+# ---- interrupted, conflicting and changed supervision --------------------------------------
+
+def test_interrupted_launch_holds_then_alerts_and_resumes_only_under_its_grant(world):
+    world.seed_pending()
+    world.manager.fail_launch = True
+    assert refusal(lambda: world.supervisor.launch(world.grant())) == "MANAGER_COMMAND_FAILED"
+    assert world.ownership().state == "LAUNCHING"
+    assert refusal(world.supervisor.observe) == "LAUNCH_IN_PROGRESS"
+    assert refusal(lambda: world.supervisor.launch(world.grant(actor="operator"))) == "HOST_ALREADY_OWNED"
+    resumed = world.supervisor.launch(world.grant())
+    assert (resumed.state, resumed.systemd_invocation_id is not None) == ("RUNNING", True)
+    world.host()
+    assert world.supervisor.observe()[0].status == "RUNNING"
+
+
+def test_launch_never_recorded_as_running_alerts_after_the_startup_bound(world):
+    world.manager.fail_launch = True
+    refusal(lambda: world.supervisor.launch(world.grant()))
+    world.clock.now += world.config.policy.startup_micros + 1
+    detection, ownership = world.supervisor.observe()
+    assert (detection.reason, ownership.state) == ("LAUNCH_INCOMPLETE", "ALERTED"), \
+        "an interrupted launch must become a visible failure, not an endless in-progress hold"
+    world.supervisor.restart(world.grant(replaces=ownership.launch_id, alert=ownership.alert))
+    world.host()
+    assert world.profile.monitor.repository.read(PROFILE).generation == 1
+
+
+def test_interrupted_restart_resumes_only_under_the_same_grant(world):
+    world.running()
+    world.manager.terminate(world.ownership().binding.unit)
+    _, ownership = world.supervisor.observe()
+    grant = world.grant(replaces=ownership.launch_id, alert=ownership.alert)
+    world.manager.fail_launch = True
+    assert refusal(lambda: world.supervisor.restart(grant)) == "MANAGER_COMMAND_FAILED"
+    assert world.ownership().state == "RESTARTING"
+    assert refusal(lambda: world.supervisor.restart(world.grant(actor="operator", replaces=ownership.launch_id,
+                                                                alert=ownership.alert))) == "RESTART_IN_PROGRESS"
+    world.supervisor.restart(grant)
+    world.host()
+    assert world.profile.monitor.repository.read(PROFILE).generation == 2
+
+
+def test_resume_under_a_changed_manager_holds(world):
+    world.running()
+    world.manager.terminate(world.ownership().binding.unit)
+    _, ownership = world.supervisor.observe()
+    grant = world.grant(replaces=ownership.launch_id, alert=ownership.alert)
+    world.manager.fail_launch = True
+    refusal(lambda: world.supervisor.restart(grant))
+    world.manager.manager = replace(world.manager.manager, boot_id="boot-2")
+    assert refusal(lambda: world.supervisor.restart(grant)) == "MANAGER_CHANGED"
+
+
+def test_manager_change_and_startup_timeout_are_detected(tmp_path):
+    world = World(tmp_path)
+    world.running()
+    world.manager.manager = replace(world.manager.manager, boot_id="boot-2")
+    assert world.supervisor.observe()[0].reason == "MANAGER_CHANGED"
+    late = World(tmp_path / "late")
+    late.supervisor.launch(late.grant())  # the hosted process never starts
+    late.clock.now += late.config.policy.startup_micros
+    assert late.supervisor.observe()[0].status == "STARTING"
+    late.clock.now += 1
+    assert late.supervisor.observe()[0].reason == "STARTUP_TIMEOUT"
+
+
+def test_takedown_that_cannot_be_confirmed_holds_before_relaunch(world):
+    world.running()
+    world.manager.terminate(world.ownership().binding.unit)
+    _, ownership = world.supervisor.observe()
+    world.manager.lingering = True
+    launches = world.manager.mutations().count(("launch", ownership.binding.unit))
+    assert refusal(lambda: world.supervisor.restart(world.grant(replaces=ownership.launch_id,
+                                                                alert=ownership.alert))) == "TAKEDOWN_UNCONFIRMED"
+    assert world.manager.mutations().count(("launch", ownership.binding.unit)) == launches
+    assert world.ownership() == ownership
+
+
+def test_conflicting_supervisor_write_holds(world):
+    world.running()
+    version, ownership = world.profile.records.read(PROFILE)
+    assert refusal(lambda: world.profile.records.save(version - 1, ownership, {"action": "STALE"})) == \
+        "HOST_VERSION_CONFLICT"
+
+
+def test_changed_configuration_is_refused_by_host_and_observer(tmp_path):
+    from alienintent.composition.monitor_host import MonitorHostProfile, load_config
+    world = World(tmp_path)
+    world.running()
+    world.path.write_text(json.dumps(config_document(world.root, policy={
+        "grace_seconds": 300, "interval_seconds": 30, "confirmation_seconds": 90, "startup_seconds": 30,
+        "stop_seconds": 5, "observe_seconds": 10})))
+    changed = MonitorHostProfile(load_config(world.path), world.path, manager=world.manager, clock=world.clock)
+    from alienintent.composition.monitor_host import HostedMonitor
+    owned = world.ownership()
+    assert refusal(lambda: HostedMonitor(changed.config, owned.launch_id, clock=world.clock,
+                                         cgroup=lambda: owned.cgroup)) == "HOST_CONFIGURATION_CHANGED"
+    detection, ownership = changed.supervisor.observe()
+    assert (detection.reason, ownership.state) == ("CONFIGURATION_CHANGED", "ALERTED")

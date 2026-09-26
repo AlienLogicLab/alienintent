@@ -113,7 +113,7 @@ def test_real_manager_supervises_detects_and_restarts_the_monitor_host(tmp_path)
     try:
         code, launched = cli(config, "launch", "--actor", ACTOR, "--authority", AUTHORITY)
         assert code == 0, launched
-        assert cli(config, "arm-observer")[0] == 0
+        assert launched["observer"] == observer and launched["systemd_invocation_id"], launched
 
         def bound(generation, launch_id):
             ownership, record = stores.ownership(), stores.monitor()

@@ -157,6 +157,10 @@ class ManagerIdentity:
     started_at_monotonic: str
     cgroup: str
 
+    def __post_init__(self) -> None:
+        if type(self.uid) is not int or self.uid < 0 or not _text(self.boot_id, self.started_at_monotonic, self.cgroup):
+            raise HostHold("MANAGER_IDENTITY_REQUIRED")
+
 
 @dataclass(frozen=True)
 class UnitState:
@@ -218,6 +222,7 @@ class HostOwnership:
     alert: str | None = None
     alert_reason: str | None = None
     restart_of: str | None = None
+    observer: str | None = None
 
     STATES = frozenset({"LAUNCHING", "RUNNING", "ALERTED", "RESTARTING"})
 
@@ -227,6 +232,8 @@ class HostOwnership:
                 or type(self.predecessor_generation) is not int or self.predecessor_generation < 0
                 or self.systemd_invocation_id is not None and not _INVOCATION_ID.match(self.systemd_invocation_id)
                 or (self.state in ("ALERTED", "RESTARTING")) != (self.alert is not None)
+                or (self.alert is None) != (self.alert_reason is None)
+                or self.observer is not None and not _text(self.observer)
                 or (self.state == "RESTARTING") != (self.restart_of is not None)):
             raise HostHold("OWNERSHIP_INVALID")
 

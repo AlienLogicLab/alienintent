@@ -34,8 +34,9 @@ PREDECESSORS = (
     ("WO-220304", 96, "FX-C4", "4c806feb8456c68a590b1482ae340338b7d47c7d", "3285c9e087b78909501995a662a008e9e0565dc5"),
     ("WO-220306", 112, "FX-L1", "3cac3912ff7f7d17648fc8dcee4ab7195baaefc8", "1753fde3638c26e47f33d793e59d11a6799ce74b"),
 )
-# One discriminating control per material failure class; class 2 has two distinct invariants
-# (external detection of a stall, and preservation across restart). Applied once each, in a copy.
+# One discriminating control per material failure class. Classes 2 and 3 each name two distinct
+# invariants (stall detection / preservation; restart grant / observation identity). Applied once
+# each, in a disposable copy.
 # (control, failure class, file, needle, replacement, pytest node ids, required assertions)
 CONTROLS = (
     ("host_outside_unit_accepted",
@@ -67,6 +68,13 @@ CONTROLS = (
      '            raise HostHold("GRANT_IDENTITY_MISMATCH")\n', "",
      ("test_restart_with_wrong_identity_is_refused",),
      ("a restart naming another unit, invocation, launch, alert or actor must be refused",)),
+    ("observation_identity_unchecked",
+     "observation with wrong unit/invocation identity is refused; no silent process substitution",
+     "src/alienintent/control_plane/domain/monitor_host.py",
+     "    if ownership.systemd_invocation_id is not None and unit.invocation_id != ownership.systemd_invocation_id:\n"
+     '        return "UNIT_INVOCATION_MISMATCH"\n', "",
+     ("test_observation_of_a_substituted_unit_or_instance_is_refused",),
+     ("an observation of a unit the supervisor did not launch must be refused",)),
     ("non_systemd_mode_accepted",
      "missing/invalid supervision configuration holds before launch/restart",
      "src/alienintent/control_plane/domain/monitor_host.py",

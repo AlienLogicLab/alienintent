@@ -6,8 +6,8 @@ external supervisor and the manager-timer observer. Local/composed only.
   cgroup is not the owned unit's (a session or shell background process cannot host it). It
   reopens the profile stores, starts C4 generation n+1 with the launch id as instance id, starts
   the L1 reconciler (reopening pending state) and ticks and scans every I.
-- `launch`, `observe` and `restart` are the supervisor. `arm-observer` installs a manager-owned
-  timer that runs `observe` every period, independent of the model session and of the host.
+- `launch`, `observe` and `restart` are the supervisor. `launch` and `restart` also make sure a
+  manager-owned timer runs `observe` every period, independent of the model session and of the host.
 - Nothing here claims operational replacement, bootstrap retirement, live G+I or cutover.
 """
 from __future__ import annotations
@@ -121,15 +121,14 @@ class MonitorHostProfile:
             alerts=self.alerts, health=self.monitor.monitor.inspect, clock=clock, next_id=next_id,
             command=self.command)
 
-    def command(self, launch_id: str) -> tuple[tuple[str, ...], dict[str, str], str]:
+    def command(self, launch_id: str | None) -> tuple[tuple[str, ...], dict[str, str], str]:
+        """The hosted monitor for a launch id; the observer (which reaches the manager) for None."""
+        root = Path(self.config.root)
+        if launch_id is None:
+            environment = module_environment(self.config) | {"XDG_RUNTIME_DIR": manager_environment()["XDG_RUNTIME_DIR"]}
+            return module_argv(self.config, self.config_path, "observe"), environment, str(root / "monitor-observer.log")
         argv = module_argv(self.config, self.config_path, "host", "--launch-id", launch_id)
-        return argv, module_environment(self.config), str(Path(self.config.root) / "monitor-host.log")
-
-    def arm_observer(self) -> str:
-        argv = module_argv(self.config, self.config_path, "observe")
-        environment = module_environment(self.config) | {"XDG_RUNTIME_DIR": manager_environment()["XDG_RUNTIME_DIR"]}
-        return self.manager.arm_observer(self.config.binding(), argv, environment, self.config.policy.observe_seconds,
-                                         str(Path(self.config.root) / "monitor-observer.log"))
+        return argv, module_environment(self.config), str(root / "monitor-host.log")
 
 
 def own_cgroup() -> str:
@@ -153,6 +152,8 @@ class HostedMonitor:
             raise HostHold("HOST_NOT_OWNED")
         if cgroup() != ownership.cgroup:
             raise HostHold("HOST_OUTSIDE_OWNED_UNIT")
+        if config.digest() != ownership.config_digest:
+            raise HostHold("HOST_CONFIGURATION_CHANGED")
         invocation = config.host_invocation
         root = Path(config.root)
         self.attention = attention(config, invocation, clock)
@@ -197,7 +198,7 @@ def run_host(config: SupervisionConfig, launch_id: str, stop: Callable[[], bool]
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog=MODULE, description=__doc__.splitlines()[0])
-    parser.add_argument("command", choices=("host", "launch", "observe", "restart", "arm-observer", "show"))
+    parser.add_argument("command", choices=("host", "launch", "observe", "restart", "show"))
     parser.add_argument("--config", type=Path)
     parser.add_argument("--launch-id")
     parser.add_argument("--actor")
@@ -221,8 +222,6 @@ def main(argv: list[str] | None = None) -> int:
         elif arguments.command == "observe":
             detection, ownership = profile.supervisor.observe()
             result = {"detection": asdict(detection), "ownership": asdict(ownership)}
-        elif arguments.command == "arm-observer":
-            result = {"observer": profile.arm_observer()}
         else:
             _, ownership = profile.records.read(config.profile)
             result = {"ownership": None if ownership is None else asdict(ownership)}

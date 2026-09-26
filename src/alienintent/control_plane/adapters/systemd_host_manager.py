@@ -5,6 +5,7 @@ the manager is identified by boot, start time and cgroup; the host runs as a tra
 `Restart=no` unit under `app.slice` with `env -i`, so it inherits nothing from the caller.
 """
 from collections.abc import Callable
+import math
 import os
 from pathlib import Path
 import re
@@ -22,6 +23,11 @@ _MANAGER_CGROUP = re.compile(r"^/user\.slice/user-[0-9]+\.slice/user@[0-9]+\.ser
 
 def observer_unit(binding: HostBinding) -> str:
     return binding.unit.removesuffix(".service").replace("alienintent-monitor-", "alienintent-monitor-observer-")
+
+
+def milliseconds(seconds: int | float) -> str:
+    """Rounded up, so a positive duration never becomes systemd's 0 (which disables it)."""
+    return f"{max(1, math.ceil(seconds * 1000))}ms"
 
 
 def parse(text: str) -> dict[str, str]:
@@ -76,7 +82,7 @@ class SystemdHostManager(HostManager):
             raise HostHold("MANAGER_UNAVAILABLE")
         return UnitState(True, values.get("Id", ""), values.get("Description", ""), values.get("InvocationID", ""),
                          values.get("ControlGroup", ""), values.get("ActiveState", ""), values.get("SubState", ""),
-                         values.get("Result", ""), int(values.get("MainPID", "0") or 0),
+                         values.get("Result", ""), int(values["MainPID"]) if values.get("MainPID", "").isdigit() else 0,
                          tuple((k, values.get(k, "")) for k in UNIT_PROPERTIES))
 
     def cgroup_empty(self, cgroup: str) -> bool:
@@ -92,18 +98,21 @@ class SystemdHostManager(HostManager):
 
     def launch(self, binding: HostBinding, argv: tuple[str, ...], environment: dict[str, str],
                stop_seconds: int | float, log_path: str) -> None:
-        properties = {**UNIT_PROPERTIES, "TimeoutStopSec": f"{int(stop_seconds * 1000)}ms",
+        properties = {**UNIT_PROPERTIES, "TimeoutStopSec": milliseconds(stop_seconds),
                       "StandardOutput": "append:" + log_path, "StandardError": "append:" + log_path}
         self._run([self.systemd_run, "--user", "--unit=" + binding.unit, "--slice=app.slice",
                    "--description=" + binding.description, "--expand-environment=no",
                    *(f"--property={k}={v}" for k, v in properties.items()), "--",
                    self.env, "-i", *(f"{k}={v}" for k, v in sorted(environment.items())), *argv])
 
+    def observer_unit(self, binding: HostBinding) -> str:
+        return observer_unit(binding)
+
     def arm_observer(self, binding: HostBinding, argv: tuple[str, ...], environment: dict[str, str],
                      period_seconds: int | float, log_path: str) -> str:
         """A manager-owned timer runs one external observation per period; it never restarts."""
         unit = observer_unit(binding)
-        period = f"{int(period_seconds * 1000)}ms"
+        period = milliseconds(period_seconds)
         self._run([self.systemd_run, "--user", "--unit=" + unit, "--slice=app.slice",
                    "--description=AlienIntent monitor observer " + binding.description.rsplit(" ", 1)[-1],
                    "--expand-environment=no", "--on-active=" + period, "--on-unit-active=" + period,
