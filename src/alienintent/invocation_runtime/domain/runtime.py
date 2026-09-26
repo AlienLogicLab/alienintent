@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from enum import StrEnum
+from typing import Mapping
 
 
 class InvocationRole(StrEnum):
@@ -19,6 +20,14 @@ FEATURE_REGRESSION_RECEIPT_PATH = ".alienintent/feature-regressions.json"
 # The stated-environment variable naming the invocation a worker process (and
 # everything it starts) belongs to; ownership is observed through it.
 INVOCATION_MARKER = "ALIENINTENT_INVOCATION_ID"
+# Which owner started that work: ``<owner token>/<supervisor instance>``. An
+# invocation identity repeats across profiles; together they do not.
+INVOCATION_OWNER_MARKER = "ALIENINTENT_INVOCATION_OWNER"
+
+
+def owner_token(owner: Mapping[str, object]) -> str:
+    """The stable text identity of an owner process (pid, start time, boot, pid namespace)."""
+    return ":".join(str(owner.get(field)) for field in ("pid", "start", "boot", "pidns"))
 
 
 class CapabilityDenied(PermissionError):

@@ -105,6 +105,21 @@ CONTROLS = (
      "        if False:\n",
      (f"{TEST}::test_unknown_ownership_blocks_replacement[owner-alive-A1]",),
      ("A1 UNKNOWN ownership blocks replacement",)),
+    ("owned_work_assumed_absent", "AC-08", WORKER,
+     "        if work is None or work:\n",
+     "        if False:\n",
+     (f"{TEST}::test_unknown_ownership_blocks_replacement[owned-work-active-B1]",),
+     ("B1 UNKNOWN ownership blocks replacement",)),
+    ("reused_pid_read_as_owner", "AC-08", OWNERSHIP,
+     '        if started != start or state in {"Z", "X"}:\n',
+     '        if state in {"Z", "X"}:\n',
+     (f"{OWNED}::test_the_owner_identity_distinguishes_a_live_process_from_an_ended_or_reused_one",),
+     ("a reused pid read as the owner",)),
+    ("owner_marker_ignored", "AC-08", OWNERSHIP,
+     "                if owner is not None:\n",
+     "                if False:\n",
+     (f"{OWNED}::test_another_owners_work_with_the_same_invocation_identity_is_neither_awaited_nor_stopped",),
+     ("another owner's work was awaited",)),
 )
 MAPPING = {
     "denied-network-publication-retrieval-wrong-candidate": ["proof command inside unshare -rn (network ENFORCED)", "L3", "L4", "W1", "U1"],
@@ -113,7 +128,7 @@ MAPPING = {
     "judgment-hold-one-authorized-effect": ["J1", "J2", "J3", "J4", "E1", "E2", "L8"],
     "custody-verifier-binding-correlation-controls": ["custody_unchecked", "verifier_self_approval", "binding_guard_bypassed", "outcome_correlation_bypassed"],
     "AC-07": ["M1", "N1", "F1", "D1"],
-    "AC-08": ["test_owned_work.py", "C1", "C2", "P1", "P2", "A1", "B1", "E1"],
+    "AC-08": ["test_owned_work.py (owned background work, wall-clock stop, owner identity, marker scan, owner-bound markers, marked-only attestation, pid namespace)", "C1", "C2", "P1", "P2", "A1", "B1", "E1"],
 }
 
 

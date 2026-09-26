@@ -10,7 +10,7 @@ from collections.abc import Callable, Mapping, Sequence
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
-from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
+from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
 from alienintent.invocation_runtime.ports.source_control import SourceControl
@@ -192,7 +192,10 @@ class RealWorkerProvider(WorkerProvider):
             "correlation_id": invocation.correlation_id, "work_identity": invocation.work_identity, "role": invocation.role,
             "contract_digest": None if context is None else context.content_digest,
         }
-        owner = None if self._ownership is None else self._ownership.current()
+        # The owner is attestable later only if every process the invocation
+        # starts carries its markers; otherwise surviving work is unobservable.
+        marked = getattr(self._process, "marks_owned_work", False) is True
+        owner = None if self._ownership is None or not marked else self._ownership.current()
         self._journal.append({"event": "invocation-started"} | attribution | ({} if owner is None else {"owner": dict(owner)}))
         outcome = self._start(invocation, context, grants, budget)
         retry = self.retry_evidence.get(invocation.correlation_id)
@@ -431,7 +434,7 @@ class RealWorkerProvider(WorkerProvider):
         state = self._ownership.owner_state(owner)
         if state != "terminated":
             return answer(OWNER_ALIVE if state == "alive" else OWNER_UNATTESTED)
-        work = self._ownership.owned_work(invocation.correlation_id)
+        work = self._ownership.owned_work(invocation.correlation_id, owner_token(owner))
         if work is None or work:
             return answer(OWNED_WORK_ACTIVE)
         if any(record.get("event") == PUBLICATION_STARTED for record in own):

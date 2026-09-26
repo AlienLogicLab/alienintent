@@ -9,9 +9,10 @@ import subprocess
 import sys
 import time
 from typing import Final, Mapping
+import uuid
 
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
-from alienintent.invocation_runtime.domain.runtime import BudgetRecord, FEATURE_REGRESSION_RECEIPT_PATH, INVOCATION_MARKER, InvocationRole, ProcessResult, ProviderCapabilities, require_eligible
+from alienintent.invocation_runtime.domain.runtime import BudgetRecord, FEATURE_REGRESSION_RECEIPT_PATH, INVOCATION_MARKER, INVOCATION_OWNER_MARKER, InvocationRole, ProcessResult, ProviderCapabilities, owner_token, require_eligible
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 
@@ -31,6 +32,12 @@ class CliWorkerProvider(WorkerProcess):
         self._executable, self._arguments, self._active, self._completed = executable, arguments, {}, set()
         self._environment = None if environment is None else dict(environment)
         self._ownership = ProcOwnership() if ownership is None else ownership
+        # This supervisor's owner marker: the owning process and this instance.
+        owner = self._ownership.current()
+        self._owner = None if owner is None else f"{owner_token(owner)}/{uuid.uuid4().hex}"
+        # Only a stated environment carries the markers to the worker, so only
+        # then can work that outlives this process be observed and attested.
+        self.marks_owned_work = self._environment is not None and self._owner is not None
 
     def _child_environment(self, invocation_id: str, role: InvocationRole) -> Mapping[str, str] | None:
         """The exact environment the worker runs in, or the inherited one.
@@ -43,7 +50,8 @@ class CliWorkerProvider(WorkerProcess):
         """
         if self._environment is None:
             return None
-        return self._environment | {INVOCATION_MARKER: invocation_id, "ALIENINTENT_ROLE": str(role)}
+        owner = {} if self._owner is None else {INVOCATION_OWNER_MARKER: self._owner}
+        return self._environment | {INVOCATION_MARKER: invocation_id, "ALIENINTENT_ROLE": str(role)} | owner
 
     def _feature_regressions(self, workspace: Path, wall_clock_seconds: float) -> ProcessResult:
         runner = workspace / "tools/verification/run_feature_regressions.py"
@@ -55,14 +63,31 @@ class CliWorkerProvider(WorkerProcess):
         if base.returncode != 0 or not base.stdout.strip():
             return ProcessResult("failure", base.returncode, True, BudgetRecord.unknown())
         receipt = workspace / FEATURE_REGRESSION_RECEIPT_PATH
+        # The runner and every pack it starts form one process group, stopped
+        # together at the wall clock; quiescence is observed, not assumed.
+        done = subprocess.Popen(
+            [sys.executable, str(runner), "--base", base.stdout.strip(), "--candidate", "HEAD",
+             "--receipt", str(receipt)],
+            cwd=workspace, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True,
+        )
         try:
-            done = subprocess.run(
-                [sys.executable, str(runner), "--base", base.stdout.strip(), "--candidate", "HEAD",
-                 "--receipt", str(receipt)],
-                cwd=workspace, capture_output=True, text=True, timeout=wall_clock_seconds, check=False,
-            )
+            done.communicate(timeout=wall_clock_seconds)
         except subprocess.TimeoutExpired:
-            return ProcessResult("timeout", None, True, BudgetRecord.unknown())
+            for signum in (signal.SIGTERM, signal.SIGKILL):
+                try:
+                    os.killpg(done.pid, signum)
+                except ProcessLookupError:
+                    break
+                try:
+                    done.communicate(timeout=1)
+                except subprocess.TimeoutExpired:
+                    continue
+            try:
+                os.killpg(done.pid, 0)
+                quiescent = False
+            except ProcessLookupError:
+                quiescent = True
+            return ProcessResult("timeout", None, quiescent, BudgetRecord.unknown())
         return ProcessResult("success" if done.returncode == 0 else "failure",
                              done.returncode, True, BudgetRecord.unknown())
 
@@ -117,7 +142,7 @@ class CliWorkerProvider(WorkerProcess):
             pass
         except PermissionError:
             return True
-        return bool(self._ownership.owned_work(invocation_id))
+        return bool(self._ownership.owned_work(invocation_id, self._owner)) if self.marks_owned_work else False
 
     def _await_owned(self, invocation_id: str, process: subprocess.Popen, deadline: float) -> bool:
         while self._owned(invocation_id, process):
@@ -131,7 +156,7 @@ class CliWorkerProvider(WorkerProcess):
             os.killpg(process.pid, signum)
         except (ProcessLookupError, PermissionError):
             pass
-        for pid in self._ownership.owned_work(invocation_id) or ():
+        for pid in (self._ownership.owned_work(invocation_id, self._owner) if self.marks_owned_work else None) or ():
             try:
                 os.kill(pid, signum)
             except (ProcessLookupError, PermissionError):

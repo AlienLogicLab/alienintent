@@ -93,6 +93,9 @@ class ScriptedWorkerProcess(WorkerProcess):
         if unknown:
             raise ScriptRejected(f"unknown scripted step: {unknown[0]}")
         self.capabilities = ProviderCapabilities(SCRIPTED_PROVIDER, SCRIPTED_DIMENSIONS)
+        # Every step runs in this process and ends before ``run`` returns, so
+        # no work of an invocation can outlive it unobserved.
+        self.marks_owned_work = True
         self._remaining = {identity: list(steps) for identity, steps in script.items()}
         self._notes = dict(notes)
         self._clock, self.journal_path = clock, journal_path

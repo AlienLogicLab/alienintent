@@ -82,3 +82,59 @@ def test_owned_work_is_found_by_its_marker_even_in_another_session(tmp_path: Pat
         survivor.kill()
         survivor.wait()
     assert ProcOwnership().owned_work("launch:AC08:2") == ()
+
+
+def test_another_owners_work_with_the_same_invocation_identity_is_neither_awaited_nor_stopped(tmp_path: Path) -> None:
+    """Correlation ids repeat across profiles; ownership is bound to the owning provider, not the id alone."""
+    from threading import Thread
+
+    other_root, own_root = tmp_path / "other", tmp_path / "own"
+    other_root.mkdir()
+    own_root.mkdir()
+    other = worker(other_root, 3)
+    finished: list[object] = []
+    thread = Thread(target=lambda: finished.append(other.run("launch:SHARED:0", InvocationRole.PRODUCER, other_root, 30)))
+    thread.start()
+    deadline = time.monotonic() + 5
+    while not ProcOwnership().owned_work("launch:SHARED:0") and time.monotonic() < deadline:
+        time.sleep(0.05)
+    quick = own_root / "quick.sh"
+    quick.write_text("exit 0\n")
+    own = CliWorkerProvider("claude", "/bin/bash", (str(quick),), "explicit", DIMENSIONS,
+                            environment={"PATH": os.environ["PATH"], "HOME": str(own_root), "LANG": "C.UTF-8"})
+
+    began = time.monotonic()
+    result = own.run("launch:SHARED:0", InvocationRole.PRODUCER, own_root, 1)
+    elapsed = time.monotonic() - began
+    thread.join(10)
+
+    assert result.kind == "success" and elapsed < 1, f"another owner's work was awaited ({elapsed:.1f}s, {result.kind})"
+    assert finished and finished[0].kind == "success" and (other_root / "result.txt").exists(), "another owner's work was stopped"
+
+
+def test_only_a_worker_whose_owned_work_is_marked_journals_an_attestable_owner(tmp_path: Path) -> None:
+    from alienintent.execution_coordination.domain.contract import BudgetPolicy
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
+    from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+
+    def started_owner(environment) -> object:
+        journal = JsonlInvocationJournal(tmp_path / f"journal-{environment is None}.jsonl", lambda: 0.0)
+        process = CliWorkerProvider("claude", "/bin/true", (), "explicit", DIMENSIONS, environment=environment)
+        provider = RealWorkerProvider(process, None, tmp_path, "origin", "b", tmp_path, None, "t", None, now=lambda: 0.0, sleep=lambda _: None,  # type: ignore[arg-type]
+                                      journal=journal, ownership=ProcOwnership())
+        invocation = WorkerInvocation("W", "launch:W:0", None, "OTHER")
+        provider.start(invocation, None, frozenset(), BudgetPolicy())
+        return journal.records()[0].get("owner"), provider.attest_ownership(invocation).kind
+
+    # An inherited environment carries no marker, so surviving work could not be seen: never attestable.
+    assert started_owner(None) == (None, "owner-unattested")
+    owner, kind = started_owner({"PATH": os.environ["PATH"]})
+    assert isinstance(owner, dict) and kind == "owner-alive"
+
+
+def test_an_owner_recorded_in_another_pid_namespace_is_unknown() -> None:
+    ownership = ProcOwnership()
+    me = ownership.current()
+
+    assert me is not None and ownership.owner_state(dict(me) | {"pidns": -1}) == "unknown"

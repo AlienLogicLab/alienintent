@@ -61,7 +61,7 @@ from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvo
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.adapters.scripted_worker import SCRIPTED_PROVIDER, journal_provider_calls
 from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider, decode_candidate
-from alienintent.invocation_runtime.domain.runtime import INVOCATION_MARKER, CapabilityGrant, InvocationRole, ReservationBook
+from alienintent.invocation_runtime.domain.runtime import INVOCATION_MARKER, INVOCATION_OWNER_MARKER, CapabilityGrant, InvocationRole, ReservationBook, owner_token
 
 FIXTURE, BIU = "FX-O", "WO-220404"
 EXIT_PASS, EXIT_FAIL, EXIT_HOLD = 0, 1, 2
@@ -553,7 +553,10 @@ def unknown_ownership(name: str, identifier: str) -> Scenario:
         else:
             owner = crash_child(root, manifest_path, name, environment)
             work = document["work_items"][0]["identity"]  # type: ignore[index]
-            survivor = subprocess.Popen(["sleep", "120"], env={"PATH": environment.get("PATH", "/usr/bin:/bin"), INVOCATION_MARKER: f"launch:{work}:0"})
+            [begun] = [r for r in journal_records(Path(root) / "worker-journal" / "journal.jsonl") if r.get("event") == "invocation-started"]
+            # Work the dead owner left behind: it carries that owner's markers.
+            survivor = subprocess.Popen(["sleep", "120"], env={"PATH": environment.get("PATH", "/usr/bin:/bin"), INVOCATION_MARKER: f"launch:{work}:0",
+                                                               INVOCATION_OWNER_MARKER: f"{owner_token(begun['owner'])}/left-behind"})
         try:
             restarted = compose(root, document, spec["restart_script"], environment)
             original = f"launch:{restarted.work_identity}:0"

@@ -128,8 +128,11 @@ def test_no_sidecar_state_owner_and_no_scenario_written_lifecycle(tmp_path: Path
     assert all(identity.startswith(("factory:", "release:", "scheduler:", "decision-inbox")) for identity in aggregates), aggregates
     assert not any("stage" in record or "lifecycle" in record for record in composed.journal.records())
     source = (ROOT / "src/alienintent/composition/lifecycle_capstone.py").read_text()
-    for forbidden in ("RoleOutcomeRecord", "OutcomeEvidencePort", "CREATE TABLE", "commit_with_effect", "transition(", "mark_done"):
+    for forbidden in ("RoleOutcomeRecord", "OutcomeEvidencePort", "CREATE TABLE", "commit_with_effect", "transition(", "mark_done", "sqlite3"):
         assert forbidden not in source, forbidden
+    # The one store write is the forged-custody fault the guard must refuse; it never touches the stage.
+    [write] = [line for line in source.splitlines() if ".commit(" in line]
+    assert '"candidate": candidate' in write and "stage" not in write
 
 
 # --- the proof command, as pinned ------------------------------------------------------
