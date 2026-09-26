@@ -1,0 +1,89 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220502",
+  "issued_at": "2026-09-26T09:44:33.112457+00:00",
+  "goal": "Deliver the bounded planned extent: Existing canonical live transport prerequisite",
+  "starting_authority": {
+    "requirements": [],
+    "dag_node": [
+      "E1"
+    ],
+    "candidate_contract_sha256": "5e80ddc66df03d351db2f96ec9e5411b4c7d49935b5147f4f0b30402ee4ec21b",
+    "baseline_sha": "610703bb6cf79d1fdf403bd6d7cfd2580c6a3bf9",
+    "release_authority": "NOT GRANTED — normal Wave 2 release admission required before IMPLEMENT"
+  },
+  "allowed_scope": {
+    "extent": "Before any live integration proof, identify the existing Python profile/transport revision, custody and configured scoped resources under its existing execution authority. Separately authorize and prove the identified Python-only runtime baseline with instrumented no-Node process/dependency paths, real ingress, effect dispatch, durable consumer outcome/readback and restart with the production path; invalid scope or missing readback holds. A local fake, retained Wave 1 receipt or running tunnel alone cannot discharge this prerequisite. Missing implementation returns to its existing requirement owner; this plan does not insert a new live-transport requirement.",
+    "boundary": "Only this node extent. Requirement/design references constrain execution and do not absorb sibling scopes.",
+    "non_goals": [
+      "Replanning the DAG or implementing another node; changing requirements, closing authority gaps or selecting withdrawn architecture policy.",
+      "Automatic release, live operation or retirement from a candidate or local proof result."
+    ],
+    "architecture_constraints": [
+      "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
+      "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks.",
+      "Named reuse/revalidation owner in the DAG, not assignment of an unresolved product owner. Explicitly prevents the PY-10/PY-09B transport ownership gap."
+    ]
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220501",
+      "issue": 116,
+      "project_status": "DONE",
+      "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement."
+    },
+    {
+      "biu_id": "WO-220403",
+      "issue": 120,
+      "project_status": "DONE",
+      "completion_predicate": "With K1/K2 predecessor proof, actual sandbox_run_profile and github_profile constructors using local transports refuse missing/miscorrelated role authority, candidate custody or durable outcome binding before worker launch. A correctly bound real adapter reaches correlated success/rejection/restart readback through existing WorkerProvider/evidence ownership. Disconnect correlation or bypass the binding guard and the proof must fail. No live/shared-profile activation is claimed."
+    },
+    {
+      "biu_id": "WO-220103",
+      "issue": 74,
+      "project_status": "DONE",
+      "completion_predicate": "Two SQLite connections/processes compete; remove fence guard to kill assertion. BEGIN IMMEDIATE checks vector, reservation, epoch/authority and unique intent atomically at intent and claim; validate receipt at confirmation. Crash around intent/send/readback, delayed sender, sorted multi-reservation locking, unknown outcome retain ownership. Consumer dedupes and fences or refuses reassignment until confirmed death/completion."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
+    "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority.",
+    "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS."
+  ],
+  "acceptance": {
+    "criteria": [
+      "Before any live integration proof, identify the existing Python profile/transport revision, custody and configured scoped resources under its existing execution authority. Separately authorize and prove the identified Python-only runtime baseline with instrumented no-Node process/dependency paths, real ingress, effect dispatch, durable consumer outcome/readback and restart with the production path; invalid scope or missing readback holds. A local fake, retained Wave 1 receipt or running tunnel alone cannot discharge this prerequisite. Missing implementation returns to its existing requirement owner; this plan does not insert a new live-transport requirement."
+    ],
+    "proof_fixture": "FX-E1",
+    "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+    "material_failure_classes": [
+      "The existing Python profile/transport revision, custody and scoped resources are not identified before any live call.",
+      "No-Node process/dependency instrumentation is weak or absent, making the no-Node claim unverifiable.",
+      "Real ingress, effect dispatch, durable consumer outcome/readback or restart-with-readback on the production path is missing or substituted with a local fake.",
+      "Simultaneous Node/Python dispatch of the same work, or disturbance of protected Node/bootstrap operation (KEEP_UNTIL_REPLACED)."
+    ],
+    "bounded_commands": [],
+    "non_claims": [
+      "No release, cutover, Node/bootstrap retirement, sibling BIU scope or broader production mutation is authorized.",
+      "A successful proof is not itself operational release or live-operation authorization."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220502",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker.",
+    "current_artifact": "Candidate specification only; no branch publication, implementation commit or worker invocation created by this packet."
+  },
+  "landing": "SWF-19: normal merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220502.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
+    "Separate authority required: EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY (granted 2026-09-26); the distinct future Wave 2 operational-release grant referenced by this BIU's Release rule remains separately required and is unaffected by this proof authority."
+  ],
+  "escalation_condition": [
+    "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
+    "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside this node. Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "READY, native Agent Ready READY at the exact current revision (docs/evidence/wave2-readiness-assessments/WO-220502.2026-09-26T071409.269519Z.assessment.json); this packet grants no release authority."
+}
