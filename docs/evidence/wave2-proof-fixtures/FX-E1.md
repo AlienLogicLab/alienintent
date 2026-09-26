@@ -136,3 +136,22 @@ python3 -m pytest -q tools/live/test_fx_e1.py      # offline; replays every reta
 
 A verifier without live authority can judge the retained records offline with the evaluator and the
 regression test. It can also retrieve the sandbox candidate branches named above.
+
+## Feature-regression receipt custody
+
+`.alienintent/feature-regressions.json` binds the exact candidate SHA it was run against. A commit cannot
+contain a receipt naming its own SHA, so the receipt is not a tracked file (the landed rule in
+[FX-C.md](FX-C/FX-C.md#feature-regression-receipt-custody), present at baseline `2715bec`). The shipped
+`CliWorkerProvider._feature_regressions` writes it into the verifier's checkout of the exact candidate before
+launching the verifier, and `read_verdict` reads it there. When the runtime is not the launcher, the verifier
+produces it in its own worktree at the retrieved SHA:
+
+```
+python3 tools/verification/run_feature_regressions.py --base 2715bec1094e8c85a81e56d2b69c115c7451f688 \
+  --candidate HEAD --receipt .alienintent/feature-regressions.json
+```
+
+Candidate `bfab722` tracked a receipt for its parent `4e55623`. That receipt could never validate against the
+commit carrying it, and the runtime would overwrite it in the verifier checkout. The superseding candidate removes
+it. The PRODUCER records its own receipt for the published SHA on the Issue for comparison; it does not replace
+the verifier-side receipt.
