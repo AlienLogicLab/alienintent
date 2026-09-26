@@ -22,6 +22,22 @@
         "tests/execution_coordination/test_github_work_management.py",
         "tests/execution_coordination/test_factory_coordinator.py"
       ]
+    },
+    {
+      "id": "bootstrap-custody-manifest",
+      "description": "External bootstrap custody inventory stays read-only, discovers the current surface, keeps exact identities, never invents retirement authority and keeps UNKNOWN local (WO-220501, FX-B0).",
+      "paths": [
+        "tools/evidence/bootstrap_custody_manifest.py",
+        "tools/evidence/test_bootstrap_custody_manifest.py",
+        "docs/evidence/wo-220501-fx-b0/**"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tools/evidence/test_bootstrap_custody_manifest.py"
+      ]
     }
   ]
 }
