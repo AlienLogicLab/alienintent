@@ -1,0 +1,57 @@
+{
+  "criteria": {
+    "backup/checkpoint integrity": {
+      "probes": [
+        "E2-04"
+      ],
+      "result": "PASS"
+    },
+    "canonical control absent keeps Node and returns to existing authority": {
+      "probes": [
+        "E2-02"
+      ],
+      "result": "PASS"
+    },
+    "durable active-work/effect reconciliation": {
+      "probes": [
+        "E2-05",
+        "E2-10"
+      ],
+      "result": "PASS"
+    },
+    "isolated rehearsal before live use (no shared state with the live writer)": {
+      "probes": [
+        "E2-01"
+      ],
+      "result": "PASS"
+    },
+    "nonduplicating rollback": {
+      "probes": [
+        "E2-08",
+        "E2-09"
+      ],
+      "result": "PASS"
+    },
+    "quiescence": {
+      "probes": [
+        "E2-03"
+      ],
+      "result": "PASS"
+    },
+    "reject simultaneous Node/Python writers for the same work": {
+      "probes": [
+        "E2-07"
+      ],
+      "result": "PASS"
+    },
+    "retained pending reservations": {
+      "probes": [
+        "E2-06"
+      ],
+      "result": "PASS"
+    }
+  },
+  "fixture": "FX-E2",
+  "label": "LOCAL",
+  "operational_acceptance": "NOT CLAIMED: isolated rehearsal only; a live cutover needs its own separate grant, the live writers' own readback and the B6 capstone"
+}

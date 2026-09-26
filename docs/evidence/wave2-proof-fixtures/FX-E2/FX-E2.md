@@ -148,3 +148,83 @@ An interrupted run reads as INCOMPLETE. Missing measurements are holds, never ze
 - The "prove Node-independent live self-hosting" wording in the fixed decisions belongs to the B6
   capstone and to a future operational grant. This BIU's completion predicate is the isolated rehearsal.
 - No sibling BIU scope. No change to `src/runtime/*.mjs`, `bin/` or live configuration.
+
+## Results (appended after implementation; the pinned sections above are unchanged)
+
+**Accepted LOCAL run: `local-run/20260926T214043Z`.** Result: `run_state=COMPLETE`, exit 0, holds `[]`,
+E2-01…E2-10 PASS, 7/7 controls discriminating (application count 1 each). This is a PRODUCER result.
+It awaits an independent verifier and is not a verdict.
+
+| Run | Source | Disposition | Record |
+|---|---|---|---|
+| `20260926T213920Z` | `52b9f03` | HOLD: `checkpoint_unverified` and `rollback_replays_python_effect` not discriminating | [record](local-run/20260926T213920Z/execution-record.json) · [repair 1](repair-1.md) |
+| `20260926T214043Z` | `e5ac98a` | **PASS** | [record](local-run/20260926T214043Z/execution-record.json) |
+
+In the held run, both faults were detected, but by earlier unlabelled checks, so the pinned
+assertion text never appeared. Repair 1 reordered the test assertions only. It made no `src/` change
+and no probe or control change.
+
+What the rehearsal shows, at LOCAL level:
+
+- **Isolated rehearsal.** The rehearsal refuses its own root, the Node state, or the Python store when
+  any of them lies inside or contains a must-not-touch path. The defaults are the live Node
+  configuration and state file and the live sandbox profile and store. The refusal comes before any
+  write.
+- **Keep Node.** Without canonical control, the result is `RETURN_TO_EXISTING_AUTHORITY`. The writer
+  stays NODE at epoch 1, no checkpoint or reconciliation is written, and Python is refused.
+- **Quiescence.** Each of these blocks the cutover, and none changes the writer:
+  - a running worker;
+  - a pending intent;
+  - an in-flight resource;
+  - a delivery in `PROCESSING`;
+  - an observed Node writer process.
+- **Checkpoint.** The checkpoint binds the Node state bytes and the store owner's online backup. A
+  tampered or missing member holds both verification and rollback.
+- **Reconciliation.** Each record maps once:
+  - the two pending lanes become `cutover-lane` reservations;
+  - the two Node results and one closure become confirmed effects;
+  - the two removed resources are recorded as terminal in the reconciliation aggregate. They have
+    nothing outstanding, so no Python record is needed.
+
+  A launched lane with no result holds `RECONCILIATION_AMBIGUOUS`. The record is identical when read
+  by a fresh controller.
+- **One writer.**
+  - Node is refused after cutover.
+  - In a two-thread race from the same epoch, exactly one controller wins.
+  - A Node-style state write after the checkpoint moves the record to HELD, and both writers are
+    refused.
+- **Nonduplicating rollback.**
+  - Python stops first.
+  - Unreconciled Python effects or Python-originated reservations hold, with Node still disabled.
+  - The restored Node state marks the lane Python completed as `REMOVED`, with a diagnostic naming the
+    effect, and keeps every other pending reservation and every Node result byte-for-byte.
+  - A second rollback changes nothing.
+
+Adjacent suites (operational store, fenced store, factory coordinator), architecture fitness and the
+feature-regression registry all pass in the accepted run. The feature-regression receipt is
+`.alienintent/feature-regressions.json` and is not a tracked file ([FX-C rule](../FX-C/FX-C.md#feature-regression-receipt-custody)).
+For the exact candidate, the verifier's runtime produces it with:
+
+```
+python3 tools/verification/run_feature_regressions.py --base b07be02db62bdbc1c39753de4da32697b6dbd4e0 \
+  --candidate HEAD --receipt .alienintent/feature-regressions.json
+```
+
+It selects `one-writer-cutover-fx-e2` and `local-bounded-control-capstone`, the latter because the
+store owner gained a read-only `backup()`.
+
+Pre-existing and unrelated: the full suite carries the same 25 FX-U4 failures in
+`tests/evidence_learning/test_proof_planning.py` as the baseline. See
+[predecessor-reuse](predecessor-reuse/predecessor-reuse.json); their owner is WO-220204.
+
+### Observations for their owners (not repaired here)
+
+- **The Node runtime does not consult a writer record.** `startupReconcile()` re-adopts the whole
+  Project on every start (`src/runtime/dispatcher.mjs`), and nothing in Node takes a lock or lease.
+  A live cutover therefore also needs Node's start path to refuse when the writer record names
+  PYTHON or HELD. Alternatively, Node can be stopped by its supervisor and kept disabled for the
+  whole Python tenure. That change belongs to the future live-cutover grant and B6. This BIU does
+  not modify Node.
+- **Python's `FactoryCoordinator` does not yet call `OneWriterCutover.admit`** before dispatch. In
+  this BIU, admission is proven on the rehearsal writer. Wiring it into the live composition is
+  part of a live cutover, not this isolated rehearsal.
