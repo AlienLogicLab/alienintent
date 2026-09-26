@@ -1,0 +1,452 @@
+{
+ "kind": "readback",
+ "payload": {
+  "candidates": [
+   {
+    "branch": "candidate/launch-E1-261014-A-3",
+    "identity": "E1-261014-A",
+    "note_excerpt": "- The AlienIntent Python factory executed E1-261014-A under invocation launch:E1-261014-A:3 (FX-E1 deterministic worker).",
+    "note_read_back": true,
+    "revision": "19b490c50f7a610ccc8d21e8874f989799126def"
+   },
+   {
+    "branch": "candidate/launch-E1-261014-B-0",
+    "identity": "E1-261014-B",
+    "note_excerpt": "- The AlienIntent Python factory executed E1-261014-B under invocation launch:E1-261014-B:0 (FX-E1 deterministic worker).",
+    "note_read_back": true,
+    "revision": "f6b1a80b723c64b80804c4b2dd8898ccc4a7f471"
+   }
+  ],
+  "deliveries": [
+   {
+    "action": "created",
+    "delivered_at": "2026-09-26T10:17:58.488Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "41296900-b993-11f1-8d11-a3830009fa49",
+    "process": "D",
+    "redelivery": true,
+    "status_code": 202
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:17:34.322Z",
+    "durable_receipt": false,
+    "event": "projects_v2_item",
+    "guid": "7cc0feb0-b993-11f1-9600-bb31f484e248",
+    "process": "decisions@2129198",
+    "redelivery": false,
+    "status_code": 502
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:17:28.925Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "797444b0-b993-11f1-9741-fa0a3bd35a17",
+    "process": "decisions@2129198",
+    "redelivery": false,
+    "status_code": 202
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:17:22.897Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "75ee7950-b993-11f1-8c47-baf83bf68ca6",
+    "process": "decisions@2129198",
+    "redelivery": false,
+    "status_code": 202
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:16:19.47Z",
+    "durable_receipt": false,
+    "event": "projects_v2_item",
+    "guid": "50079000-b993-11f1-847d-000280294319",
+    "process": "B",
+    "redelivery": false,
+    "status_code": 502
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:16:13.949Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+    "process": "B",
+    "redelivery": false,
+    "status_code": 202
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:16:08.052Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "49433b70-b993-11f1-8a71-5fa6f33a7748",
+    "process": "B",
+    "redelivery": false,
+    "status_code": 202
+   },
+   {
+    "action": "created",
+    "delivered_at": "2026-09-26T10:15:54.452Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "41296900-b993-11f1-8d11-a3830009fa49",
+    "process": "B",
+    "redelivery": false,
+    "status_code": 202
+   }
+  ],
+  "notifications": [
+   {
+    "at": 1790417754.277102,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJLY"
+   },
+   {
+    "at": 1790417767.8698325,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJK8"
+   },
+   {
+    "at": 1790417773.769262,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJK8"
+   },
+   {
+    "at": 1790417842.7102518,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJK4"
+   },
+   {
+    "at": 1790417848.7357402,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJK4"
+   }
+  ],
+  "project": [
+   {
+    "identity": "E1-261014-A",
+    "item": "PVTI_lADOEcrpC84BkIEXzg85dSw",
+    "status": "DONE",
+    "status_updated_at": "2026-09-26T10:17:32Z"
+   },
+   {
+    "identity": "E1-261014-B",
+    "item": "PVTI_lADOEcrpC84BkIEXzg85dU8",
+    "status": "DONE",
+    "status_updated_at": "2026-09-26T10:16:17Z"
+   }
+  ],
+  "store": {
+   "effects": [
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:0",
+     "receipt": null,
+     "status": "authority-authorized"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+     "identity": "ingress:41296900-b993-11f1-8d11-a3830009fa49",
+     "receipt": "notification:ingress:41296900-b993-11f1-8d11-a3830009fa49",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-B",
+     "identity": "launch:E1-261014-B:0",
+     "receipt": "outcome:success",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-B",
+     "identity": "launch:E1-261014-B:2",
+     "receipt": "outcome:accept",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+     "identity": "ingress:49433b70-b993-11f1-8a71-5fa6f33a7748",
+     "receipt": "notification:ingress:49433b70-b993-11f1-8a71-5fa6f33a7748",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-B",
+     "identity": "launch:E1-261014-B:4",
+     "receipt": "outcome:closed",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+     "identity": "ingress:4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+     "receipt": "notification:ingress:4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:3",
+     "receipt": "outcome:success",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:5",
+     "receipt": "outcome:accept",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+     "identity": "ingress:75ee7950-b993-11f1-8c47-baf83bf68ca6",
+     "receipt": "notification:ingress:75ee7950-b993-11f1-8c47-baf83bf68ca6",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:7",
+     "receipt": "outcome:closed",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+     "identity": "ingress:797444b0-b993-11f1-9741-fa0a3bd35a17",
+     "receipt": "notification:ingress:797444b0-b993-11f1-9741-fa0a3bd35a17",
+     "status": "confirmed"
+    }
+   ],
+   "receipts": [
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+     "digest": "35a1a00d72218ac95f66f625ea576d5d54a3f4d9d68be95b1fa3740845365862",
+     "event_id": "41296900-b993-11f1-8d11-a3830009fa49",
+     "status": "applied",
+     "version": 1
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+     "digest": "a2918cc8f723ad505422c01c434688dcc234dceae72f943f93521d048d5a225b",
+     "event_id": "49433b70-b993-11f1-8a71-5fa6f33a7748",
+     "status": "applied",
+     "version": 1
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+     "digest": "238789fb4bc82b69025ff9ffa9374bd2c8cc858afa4680b4161b79cab58dd346",
+     "event_id": "4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+     "status": "applied",
+     "version": 2
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+     "digest": "2038f509f6bf2fa4b87ea4160968aaefb81a3c3a23d0e89ebc51f261b39178d4",
+     "event_id": "75ee7950-b993-11f1-8c47-baf83bf68ca6",
+     "status": "applied",
+     "version": 1
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+     "digest": "5cf502b1c8f286d5d034d35b0df4f95d47ed97a8c093dcbd23947c0225494bb6",
+     "event_id": "797444b0-b993-11f1-9741-fa0a3bd35a17",
+     "status": "applied",
+     "version": 2
+    }
+   ],
+   "state": {
+    "aggregates": {
+     "decision-inbox": {
+      "open": {},
+      "revision": 2
+     },
+     "decision-key:20260926T101450Z-decision-0": {
+      "event": {
+       "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+       "biu_version": 0,
+       "idempotency_key": "20260926T101450Z-decision-0",
+       "work_item": "E1-261014-A"
+      },
+      "revision": 1,
+      "submission": {
+       "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+       "authority_reference": "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+       "biu_version": 0,
+       "choice": "authorize",
+       "expected_version": 0,
+       "idempotency_key": "20260926T101450Z-decision-0",
+       "work_item": "E1-261014-A"
+      }
+     },
+     "decision:E1-261014-A": {
+      "event": {
+       "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+       "biu_version": 0,
+       "idempotency_key": "20260926T101450Z-decision-0",
+       "work_item": "E1-261014-A"
+      },
+      "revision": 1,
+      "submission": {
+       "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+       "authority_reference": "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+       "biu_version": 0,
+       "choice": "authorize",
+       "expected_version": 0,
+       "idempotency_key": "20260926T101450Z-decision-0",
+       "work_item": "E1-261014-A"
+      }
+     },
+     "factory:E1-261014-A": {
+      "accepted": true,
+      "candidate": {
+       "content_digest": "sha256:1e1594a5ceb4cf6c91094f6da0923150f09d808e5e8f556af70c1a882ffa28b3",
+       "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-E1-261014-A-3@19b490c50f7a610ccc8d21e8874f989799126def@sha256:1e1594a5ceb4cf6c91094f6da0923150f09d808e5e8f556af70c1a882ffa28b3",
+       "independent_read_back_proven": true,
+       "kind": "source-revision",
+       "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-E1-261014-A-3@19b490c50f7a610ccc8d21e8874f989799126def",
+       "provenance": "source-control revision"
+      },
+      "closure": [
+       "candidate-published"
+      ],
+      "correlation": "launch:E1-261014-A:7",
+      "decision_choice": "authorize",
+      "decision_key": "20260926T101450Z-decision-0",
+      "invocation_candidate": {
+       "content_digest": "sha256:1e1594a5ceb4cf6c91094f6da0923150f09d808e5e8f556af70c1a882ffa28b3",
+       "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-E1-261014-A-3@19b490c50f7a610ccc8d21e8874f989799126def@sha256:1e1594a5ceb4cf6c91094f6da0923150f09d808e5e8f556af70c1a882ffa28b3",
+       "independent_read_back_proven": true,
+       "kind": "source-revision",
+       "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-E1-261014-A-3@19b490c50f7a610ccc8d21e8874f989799126def",
+       "provenance": "source-control revision"
+      },
+      "outcome": "closed",
+      "outcome_kind": "closed",
+      "producer_correlation": "launch:E1-261014-A:3",
+      "receipts": [
+       "candidate-published"
+      ],
+      "revision": 9,
+      "role": "CLOSURE",
+      "stage": "DONE",
+      "verdict": {
+       "kind": "accept",
+       "reason": "policy accepted required trusted evidence",
+       "verifier_correlation": "launch:E1-261014-A:5"
+      },
+      "version": 4
+     },
+     "factory:E1-261014-B": {
+      "accepted": true,
+      "candidate": {
+       "content_digest": "sha256:9efa9b430d1f2075b5bfa62f19c7efdf92ec5c0bdf44ae92e78b9de8551a1144",
+       "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-E1-261014-B-0@f6b1a80b723c64b80804c4b2dd8898ccc4a7f471@sha256:9efa9b430d1f2075b5bfa62f19c7efdf92ec5c0bdf44ae92e78b9de8551a1144",
+       "independent_read_back_proven": true,
+       "kind": "source-revision",
+       "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-E1-261014-B-0@f6b1a80b723c64b80804c4b2dd8898ccc4a7f471",
+       "provenance": "source-control revision"
+      },
+      "closure": [
+       "candidate-published"
+      ],
+      "correlation": "launch:E1-261014-B:4",
+      "invocation_candidate": {
+       "content_digest": "sha256:9efa9b430d1f2075b5bfa62f19c7efdf92ec5c0bdf44ae92e78b9de8551a1144",
+       "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-E1-261014-B-0@f6b1a80b723c64b80804c4b2dd8898ccc4a7f471@sha256:9efa9b430d1f2075b5bfa62f19c7efdf92ec5c0bdf44ae92e78b9de8551a1144",
+       "independent_read_back_proven": true,
+       "kind": "source-revision",
+       "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-E1-261014-B-0@f6b1a80b723c64b80804c4b2dd8898ccc4a7f471",
+       "provenance": "source-control revision"
+      },
+      "outcome": "closed",
+      "outcome_kind": "closed",
+      "producer_correlation": "launch:E1-261014-B:0",
+      "receipts": [
+       "candidate-published"
+      ],
+      "revision": 6,
+      "role": "CLOSURE",
+      "stage": "DONE",
+      "verdict": {
+       "kind": "accept",
+       "reason": "policy accepted required trusted evidence",
+       "verifier_correlation": "launch:E1-261014-B:2"
+      },
+      "version": 4
+     },
+     "ingress:DI_lADOEcrpC84BkIEXzgLNJK4": {
+      "category": "projects_v2_item",
+      "revision": 2,
+      "source_version": 0
+     },
+     "ingress:DI_lADOEcrpC84BkIEXzgLNJK8": {
+      "category": "projects_v2_item",
+      "revision": 2,
+      "source_version": 0
+     },
+     "ingress:DI_lADOEcrpC84BkIEXzgLNJLY": {
+      "category": "projects_v2_item",
+      "revision": 1,
+      "source_version": 0
+     }
+    },
+    "effects": [
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:0",
+      "status": "authority-authorized"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+      "identity": "ingress:41296900-b993-11f1-8d11-a3830009fa49",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-B",
+      "identity": "launch:E1-261014-B:0",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-B",
+      "identity": "launch:E1-261014-B:2",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+      "identity": "ingress:49433b70-b993-11f1-8a71-5fa6f33a7748",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-B",
+      "identity": "launch:E1-261014-B:4",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+      "identity": "ingress:4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:3",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:5",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+      "identity": "ingress:75ee7950-b993-11f1-8c47-baf83bf68ca6",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:7",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+      "identity": "ingress:797444b0-b993-11f1-9741-fa0a3bd35a17",
+      "status": "confirmed"
+     }
+    ],
+    "reservations": []
+   }
+  }
+ }
+}

@@ -1,0 +1,1186 @@
+{
+ "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+ "after": {
+  "at": "2026-09-26T10:18:17Z",
+  "node_writer": {
+   "bootstrap_port_answers": {
+    "8787": "000",
+    "8788": "401"
+   },
+   "bootstrap_ports_listening": [
+    "8788"
+   ],
+   "definition": "the Node bootstrap's own ingress, observed from outside it; PY-10 neither starts, stops nor reconfigures it",
+   "root_tunnel_config_mtime": 1789742673,
+   "runtime_pids": [
+    2040299
+   ]
+  },
+  "published_branches": {
+   "candidate/launch-E1-261001-A-3": "687593f86e2a4e677c2555002088942dec3a8264",
+   "candidate/launch-E1-261001-B-0": "6302aae4575ff9774f6d8cf833d674406690652a",
+   "candidate/launch-E1-261009-A-3": "59205dbe0629387abb2cd9c629cbff9b0e826446",
+   "candidate/launch-E1-261009-B-0": "7548db10d2a892148b92a4c9bded99451ffc6a3d",
+   "candidate/launch-E1-261014-A-3": "19b490c50f7a610ccc8d21e8874f989799126def",
+   "candidate/launch-E1-261014-B-0": "f6b1a80b723c64b80804c4b2dd8898ccc4a7f471",
+   "candidate/launch-SB-01-3": "cc6eac4d43624cdfabf245a2ccb1f3dd2075d2f1",
+   "candidate/launch-SB-02-0": "7987efb9f071a04061da43485863156912a56c36",
+   "candidate/launch-SB-03-0": "c365ac5a31268292862de269d917c05920d565f4",
+   "candidate/launch-SB-04-0": "a11e17760d67e18e3fa6384f908bc4e30f5c686c",
+   "candidate/launch-SB-05-0": "8f3bb37742e79faa1a5a287fe9abb50a47d268b1",
+   "candidate/launch-SB-06-2": "6f7a61c79192417aab66a51e48c7e537ea41c31a",
+   "main": "869d9a4fde6dfa7f8848ece8c365899d67034d71"
+  }
+ },
+ "authority": "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+ "before": {
+  "at": "2026-09-26T10:14:55Z",
+  "node_writer": {
+   "bootstrap_port_answers": {
+    "8787": "000",
+    "8788": "401"
+   },
+   "bootstrap_ports_listening": [
+    "8788"
+   ],
+   "definition": "the Node bootstrap's own ingress, observed from outside it; PY-10 neither starts, stops nor reconfigures it",
+   "root_tunnel_config_mtime": 1789742673,
+   "runtime_pids": [
+    2040299
+   ]
+  },
+  "published_branches": {
+   "candidate/launch-E1-261001-A-3": "687593f86e2a4e677c2555002088942dec3a8264",
+   "candidate/launch-E1-261001-B-0": "6302aae4575ff9774f6d8cf833d674406690652a",
+   "candidate/launch-E1-261009-A-3": "59205dbe0629387abb2cd9c629cbff9b0e826446",
+   "candidate/launch-E1-261009-B-0": "7548db10d2a892148b92a4c9bded99451ffc6a3d",
+   "candidate/launch-SB-01-3": "cc6eac4d43624cdfabf245a2ccb1f3dd2075d2f1",
+   "candidate/launch-SB-02-0": "7987efb9f071a04061da43485863156912a56c36",
+   "candidate/launch-SB-03-0": "c365ac5a31268292862de269d917c05920d565f4",
+   "candidate/launch-SB-04-0": "a11e17760d67e18e3fa6384f908bc4e30f5c686c",
+   "candidate/launch-SB-05-0": "8f3bb37742e79faa1a5a287fe9abb50a47d268b1",
+   "candidate/launch-SB-06-2": "6f7a61c79192417aab66a51e48c7e537ea41c31a",
+   "main": "869d9a4fde6dfa7f8848ece8c365899d67034d71"
+  },
+  "sandbox_baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71"
+ },
+ "dependency_path": {
+  "alienintent_modules": 73,
+  "exit_status": 0,
+  "interpreter_startup_modules_outside_stdlib": [
+   "<home redacted>/.local/lib/python3.12/site-packages/__editable___factorychecks_decider_0_1_0_finder.py",
+   "<home redacted>/.local/lib/python3.12/site-packages/__editable___factorychecks_die_0_1_0_finder.py",
+   "/usr/lib/python3/dist-packages/_distutils_hack/__init__.py",
+   "/usr/lib/python3/dist-packages/apport_python_hook.py",
+   "/usr/lib/python3/dist-packages/zope/__init__.py"
+  ],
+  "modules_loaded": 147,
+  "modules_outside_stdlib_and_alienintent": [],
+  "node_reference_pattern": "\\[\\s*[\"'](?:[^\"']*/)?(?:node|nodejs|npm|npx|corepack)[\"']\\s*[,\\]]|[\"'][^\"'\\s]*\\.mjs[\"']",
+  "node_references_in_python_source": [],
+  "stdlib_modules": 74
+ },
+ "finished_at": "2026-09-26T10:18:19Z",
+ "fixture_id": "FX-E1",
+ "identities": [
+  "E1-261014-A",
+  "E1-261014-B"
+ ],
+ "instrument_self_test": {
+  "known_node_binaries": [
+   "<home redacted>/.nvm/versions/node/v24.15.0/bin/node"
+  ],
+  "ok": true,
+  "probes": [
+   {
+    "applied": true,
+    "argv": [
+     "/usr/bin/python3",
+     "-c",
+     "print('python only')"
+    ],
+    "discriminates": true,
+    "exit_status": 0,
+    "expected_node_observed": false,
+    "node_observed": false,
+    "node_process_observations": 0,
+    "probe": "intact",
+    "processes_observed": 2,
+    "samples": 8,
+    "shim_invocations": 0
+   },
+   {
+    "applied": true,
+    "argv": [
+     "/usr/bin/python3",
+     "-c",
+     "import subprocess; subprocess.run(['node', '-e', '1'])"
+    ],
+    "discriminates": true,
+    "exit_status": 0,
+    "expected_node_observed": true,
+    "node_observed": true,
+    "node_process_observations": 0,
+    "probe": "fault-shimmed-node-by-name",
+    "processes_observed": 1,
+    "samples": 8,
+    "shim_invocations": 1
+   },
+   {
+    "applied": true,
+    "argv": [
+     "/usr/bin/python3",
+     "-c",
+     "import subprocess; subprocess.run(['<home redacted>/.nvm/versions/node/v24.15.0/bin/node', '-e', 'setTimeout(()=>{},1500)'])"
+    ],
+    "discriminates": true,
+    "exit_status": 0,
+    "expected_node_observed": true,
+    "node_observed": true,
+    "node_process_observations": 1,
+    "probe": "fault-absolute-node-bypassing-shims",
+    "processes_observed": 2,
+    "samples": 36,
+    "shim_invocations": 0
+   },
+   {
+    "applied": true,
+    "argv": [
+     "<home redacted>/.nvm/versions/node/v24.15.0/bin/node",
+     "-e",
+     "setTimeout(()=>{},1500)"
+    ],
+    "discriminates": true,
+    "exit_status": 0,
+    "expected_node_observed": true,
+    "node_observed": true,
+    "node_process_observations": 1,
+    "probe": "fault-stated-environment-detached",
+    "processes_observed": 1,
+    "samples": 36,
+    "shim_invocations": 0
+   },
+   {
+    "applied": true,
+    "argv": [
+     "/usr/bin/python3",
+     "-c",
+     "print('python only')"
+    ],
+    "discriminates": true,
+    "exit_status": 0,
+    "expected_node_observed": false,
+    "node_observed": false,
+    "node_process_observations": 0,
+    "probe": "restored",
+    "processes_observed": 2,
+    "samples": 8,
+    "shim_invocations": 0
+   }
+  ]
+ },
+ "isolation": {
+  "findings": [],
+  "repository_scope": [
+   "AlienLogicLab/alienintent-sandbox"
+  ]
+ },
+ "no_node": {
+  "executables": [
+   "<home redacted>/.local/bin/gh",
+   "/usr/bin/bash",
+   "/usr/bin/dash",
+   "/usr/bin/git",
+   "/usr/bin/python3.12",
+   "/usr/bin/sleep",
+   "/usr/lib/git-core/git",
+   "/usr/lib/git-core/git-remote-http"
+  ],
+  "known_node_binaries": [
+   "<home redacted>/.nvm/versions/node/v24.15.0/bin/node"
+  ],
+  "node_observations": [],
+  "node_observed": false,
+  "processes_observed": 203,
+  "samples": 3694,
+  "shim_directory_names": [
+   "node",
+   "nodejs",
+   "npm",
+   "npx",
+   "corepack"
+  ],
+  "shim_invocations": []
+ },
+ "operator_transcript": "observations/0844f37d5d8cb323358dd0cbcfb4974f861d1bf6e77c77e1da3ba2104a4c080b.json",
+ "phases": [
+  {
+   "items": [
+    {
+     "identity": "E1-261014-A",
+     "item": "PVTI_lADOEcrpC84BkIEXzg85dSw",
+     "priority": "P0",
+     "ready_since": "2026-09-26T10:15:04Z",
+     "status": "READY"
+    },
+    {
+     "identity": "E1-261014-B",
+     "item": "PVTI_lADOEcrpC84BkIEXzg85dU8",
+     "priority": "P1",
+     "ready_since": "2026-09-26T10:15:11Z",
+     "status": "READY"
+    }
+   ],
+   "observation": "observations/c966f2bde49459775d39e8af1559e1e732d797eadef80ec4f2d2eadf72c51cfc.json",
+   "phase": "seed",
+   "seed_revision": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+   "statuses_written_by_seeding": [
+    "READY"
+   ],
+   "verification_kit": {
+    "tools/verification/check_notes.py": "sha256:021c5e8a48f0bfaa83f35c92c95f9f866475bca3fd060df41eb2630ed38abb0e",
+    "tools/verification/feature_regressions.json": "sha256:8861330a8c6762eb637b225bad1691df11a93cf175fa6d39d28400e89262d130",
+    "tools/verification/run_feature_regressions.py": "sha256:f21f7888c0adfa54d4af19e9cdce51c961a7831873aff50bd3bba53a081f6e41"
+   }
+  },
+  {
+   "exit_status": 0,
+   "observation": "observations/f4449871e05d8729acc6baa336a991983d1cc3a41ec43af1755e497fe381dcd6.json",
+   "phase": "doctor",
+   "process": "doctor",
+   "report": {
+    "checks": [
+     {
+      "name": "configuration",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "secrets",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "work_management",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "source_control",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "provider",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "transport",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "persistence",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "execution",
+      "outcome": "PASS",
+      "suggested_action": null
+     }
+    ],
+    "disposition": "PASS",
+    "exit_code": 0,
+    "ready": true
+   }
+  },
+  {
+   "effect_unresolved_at_kill": true,
+   "exit_status": -9,
+   "held_reservation": {
+    "fence": 1,
+    "owner": "launch:E1-261014-A:0",
+    "resource_key": "AlienLogicLab/alienintent-sandbox",
+    "scope": "repository"
+   },
+   "ingress_listener": {
+    "owners": [
+     {
+      "argv": [
+       "/usr/bin/python3",
+       "-m",
+       "alienintent",
+       "--json",
+       "--profile-factory",
+       "alienintent.composition.sandbox_run_profile:profile"
+      ],
+      "executable_name": "python3.12",
+      "pid": 2128556
+     }
+    ],
+    "port": 8789
+   },
+   "observation": "observations/f655fd66797c3ea3619d9c852ff660e1b7d5de3ceee8037c83a8fd936e9befa5.json",
+   "phase": "process-loss",
+   "pid": 2128556,
+   "process": "A",
+   "signal": "SIGKILL",
+   "store_after_kill": {
+    "aggregates": {
+     "factory:E1-261014-A": {
+      "accepted": false,
+      "candidate": null,
+      "closure": [],
+      "invocation_candidate": null,
+      "revision": 1,
+      "role": "PRODUCER",
+      "stage": "IMPLEMENT",
+      "version": 0
+     }
+    },
+    "effects": [
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:0",
+      "status": "unknown"
+     }
+    ],
+    "reservations": [
+     {
+      "fence": 1,
+      "owner": "launch:E1-261014-A:0",
+      "resource_key": "AlienLogicLab/alienintent-sandbox",
+      "scope": "repository"
+     }
+    ]
+   },
+   "store_before_kill": {
+    "aggregates": {
+     "factory:E1-261014-A": {
+      "accepted": false,
+      "candidate": null,
+      "closure": [],
+      "invocation_candidate": null,
+      "revision": 1,
+      "role": "PRODUCER",
+      "stage": "IMPLEMENT",
+      "version": 0
+     }
+    },
+    "effects": [
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:0",
+      "status": "unknown"
+     }
+    ],
+    "reservations": [
+     {
+      "fence": 1,
+      "owner": "launch:E1-261014-A:0",
+      "resource_key": "AlienLogicLab/alienintent-sandbox",
+      "scope": "repository"
+     }
+    ]
+   },
+   "window": [
+    1790417728.4249756,
+    1790417742.5587573
+   ]
+  },
+  {
+   "exit_status": 0,
+   "observation": "observations/56895741e6cd6ecab1aaecaf5b3f54bdc232a141c2bea3cee3a2c27608d3014e.json",
+   "phase": "restart",
+   "pid": 2128614,
+   "process": "B",
+   "summary": {
+    "authority_blocked": [
+     "E1-261014-A"
+    ],
+    "dispatched": [
+     "E1-261014-B"
+    ],
+    "failed": [],
+    "stop_reason": "dependencies-or-authority-blocked"
+   },
+   "window": [
+    1790417742.5617416,
+    1790417779.2809894
+   ]
+  },
+  {
+   "observation": "observations/1b6c07ad0dd6fd4e3d40b575d47734b3c792509e3127ac30d5337142f7427666.json",
+   "phase": "decisions-open",
+   "requests": [
+    {
+     "affected_architecture": [
+      "FD-05"
+     ],
+     "affected_requirements": [
+      "SF-REQ-001",
+      "SF-REQ-010"
+     ],
+     "authorizations": [
+      "authorize permits one normal guarded re-admission",
+      "defer authorizes continued blocking"
+     ],
+     "biu_version": 0,
+     "cost_of_waiting": "The affected work and transitive dependents remain blocked.",
+     "decision": "Authorize the blocked execution to continue through normal admission guards.",
+     "options": [
+      "authorize",
+      "defer"
+     ],
+     "profile": "py10-sandbox",
+     "project": "AlienLogicLab/alienintent-sandbox",
+     "reason": "The external effect outcome is unknown and requires reconciliation authority.",
+     "recommendation": "defer",
+     "tradeoffs": [
+      "authorize permits the bounded work to resume",
+      "defer retains the scoped authority block"
+     ],
+     "work_item": "E1-261014-A"
+    }
+   ]
+  },
+  {
+   "exit_status": 0,
+   "observation": "observations/90424614d862de3c07ca161b2a449257ddeb2dd65147f0b02ad66344f395da40.json",
+   "phase": "decision",
+   "pid": 2129198,
+   "record": {
+    "event": {
+     "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+     "biu_version": 0,
+     "idempotency_key": "20260926T101450Z-decision-0",
+     "work_item": "E1-261014-A"
+    },
+    "submission": {
+     "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+     "authority_reference": "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "20260926T101450Z-decision-0",
+     "work_item": "E1-261014-A"
+    }
+   },
+   "work_item": "E1-261014-A"
+  },
+  {
+   "exit_status": 0,
+   "observation": "observations/430c2d394086c29f487f69a94e2f365d108dbb6830f0351c1693b8c938e33273.json",
+   "phase": "drain-to-exhaustion",
+   "pid": 2129901,
+   "process": "C",
+   "summary": {
+    "authority_blocked": [],
+    "dispatched": [],
+    "failed": [],
+    "stop_reason": "eligible-backlog-exhausted"
+   },
+   "window": [
+    1790417854.1697855,
+    1790417863.006201
+   ]
+  },
+  {
+   "explain": {
+    "E1-261014-A": {
+     "evidence": {
+      "execution_revision": 9
+     },
+     "guard_outcomes": {
+      "eligible": false,
+      "lifecycle": "DONE",
+      "outcome": "closed",
+      "reason": "terminal"
+     },
+     "target": "E1-261014-A"
+    },
+    "E1-261014-B": {
+     "evidence": {
+      "execution_revision": 6
+     },
+     "guard_outcomes": {
+      "eligible": false,
+      "lifecycle": "DONE",
+      "outcome": "closed",
+      "reason": "terminal"
+     },
+     "target": "E1-261014-B"
+    }
+   },
+   "observation": "observations/8001bbc1bba7f2ef8817acad98fc7e11f220603f0194d854cfe11f08be4fb983.json",
+   "phase": "status",
+   "status": {
+    "diagnostics": [],
+    "execution": {
+     "items": [
+      {
+       "identity": "E1-261014-A",
+       "lifecycle": "DONE",
+       "outcome": "closed",
+       "revision": 9
+      },
+      {
+       "identity": "E1-261014-B",
+       "lifecycle": "DONE",
+       "outcome": "closed",
+       "revision": 6
+      }
+     ],
+     "source": "operational-store",
+     "status": "known",
+     "wip": 2
+    },
+    "profile": "py10-sandbox",
+    "projection": {
+     "source": "decision-notifier",
+     "status": "unknown"
+    },
+    "upstream": {
+     "items": [],
+     "source": "work-management",
+     "status": "available"
+    }
+   }
+  },
+  {
+   "ingress_listener": {
+    "owners": [
+     {
+      "argv": [
+       "/usr/bin/python3",
+       "<home redacted>/.local/state/alienintent/worktrees/4517c2e5-e552-4d77-ace3-31c4fecf7661/tools/live/fx_e1_resident.py",
+       "<home redacted>/.local/state/alienintent-sandbox/fx-e1/20260926T101450Z/resident.stop"
+      ],
+      "executable_name": "python3.12",
+      "pid": 2130026
+     }
+    ],
+    "port": 8789
+   },
+   "observation": "observations/d0934fdc63b5d44edb51ae18e37bdf8e23841220c98b8319084dc3876beb6810.json",
+   "phase": "ingress-restart",
+   "pid": 2130026,
+   "process": "D",
+   "ready": true,
+   "replay": {
+    "available": true,
+    "effect_after": [
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+      "identity": "ingress:41296900-b993-11f1-8d11-a3830009fa49",
+      "receipt": "notification:ingress:41296900-b993-11f1-8d11-a3830009fa49",
+      "status": "confirmed"
+     }
+    ],
+    "effect_before": [
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+      "identity": "ingress:41296900-b993-11f1-8d11-a3830009fa49",
+      "receipt": "notification:ingress:41296900-b993-11f1-8d11-a3830009fa49",
+      "status": "confirmed"
+     }
+    ],
+    "guid": "41296900-b993-11f1-8d11-a3830009fa49",
+    "notification_lines_after": 5,
+    "notification_lines_before": 5,
+    "original_status_code": 202,
+    "originally_admitted_by": "B",
+    "receipt_after": {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+     "digest": "35a1a00d72218ac95f66f625ea576d5d54a3f4d9d68be95b1fa3740845365862",
+     "event_id": "41296900-b993-11f1-8d11-a3830009fa49",
+     "status": "applied",
+     "version": 1
+    },
+    "receipt_before": {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+     "digest": "35a1a00d72218ac95f66f625ea576d5d54a3f4d9d68be95b1fa3740845365862",
+     "event_id": "41296900-b993-11f1-8d11-a3830009fa49",
+     "status": "applied",
+     "version": 1
+    },
+    "receipt_unchanged": true,
+    "redelivered_at": "2026-09-26T10:17:58.488Z",
+    "redelivery_request": "requested",
+    "redelivery_status_code": 202
+   },
+   "scope_controls": [
+    {
+     "control": "unsigned_delivery_for_the_configured_project",
+     "durable_receipt_created": false,
+     "http_status": 401,
+     "label": "LOCAL mechanical scope control against the real resident ingress process; not operational proof"
+    },
+    {
+     "control": "wrong_secret_delivery_for_the_configured_project",
+     "durable_receipt_created": false,
+     "http_status": 401,
+     "label": "LOCAL mechanical scope control against the real resident ingress process; not operational proof"
+    },
+    {
+     "control": "correctly_signed_delivery_for_a_foreign_project",
+     "durable_receipt_created": false,
+     "http_status": 401,
+     "label": "LOCAL mechanical scope control against the real resident ingress process; not operational proof"
+    },
+    {
+     "control": "foreign_project_address_resolution",
+     "detail": "observed project is not the configured project",
+     "refused": true
+    }
+   ],
+   "window": [
+    1790417875.3256748,
+    1790417888.1339087
+   ]
+  }
+ ],
+ "pinned": {
+  "fixture_plan_committed_before_run": true,
+  "fixture_plan_digest": "sha256:6e9a30261a6c2ecfd5165bf984fa20fd1f7977ef97ae001bfc0d9c782c8aaf82",
+  "identification_committed_before_run": true,
+  "identification_digest": "sha256:723a22905c5cb9a08c6240e63dd12f4f7672e1d245b303a2031a0614c829bf81",
+  "source_clean": true,
+  "source_revision": "08d91b6b093601b71c6958b7d264e2d26aa48074"
+ },
+ "profile": "py10-sandbox",
+ "project": "PVT_kwDOEcrpC84BkIEX",
+ "readback": {
+  "candidates": [
+   {
+    "branch": "candidate/launch-E1-261014-A-3",
+    "identity": "E1-261014-A",
+    "note_excerpt": "- The AlienIntent Python factory executed E1-261014-A under invocation launch:E1-261014-A:3 (FX-E1 deterministic worker).",
+    "note_read_back": true,
+    "revision": "19b490c50f7a610ccc8d21e8874f989799126def"
+   },
+   {
+    "branch": "candidate/launch-E1-261014-B-0",
+    "identity": "E1-261014-B",
+    "note_excerpt": "- The AlienIntent Python factory executed E1-261014-B under invocation launch:E1-261014-B:0 (FX-E1 deterministic worker).",
+    "note_read_back": true,
+    "revision": "f6b1a80b723c64b80804c4b2dd8898ccc4a7f471"
+   }
+  ],
+  "deliveries": [
+   {
+    "action": "created",
+    "delivered_at": "2026-09-26T10:17:58.488Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "41296900-b993-11f1-8d11-a3830009fa49",
+    "process": "D",
+    "redelivery": true,
+    "status_code": 202
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:17:34.322Z",
+    "durable_receipt": false,
+    "event": "projects_v2_item",
+    "guid": "7cc0feb0-b993-11f1-9600-bb31f484e248",
+    "process": "decisions@2129198",
+    "redelivery": false,
+    "status_code": 502
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:17:28.925Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "797444b0-b993-11f1-9741-fa0a3bd35a17",
+    "process": "decisions@2129198",
+    "redelivery": false,
+    "status_code": 202
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:17:22.897Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "75ee7950-b993-11f1-8c47-baf83bf68ca6",
+    "process": "decisions@2129198",
+    "redelivery": false,
+    "status_code": 202
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:16:19.47Z",
+    "durable_receipt": false,
+    "event": "projects_v2_item",
+    "guid": "50079000-b993-11f1-847d-000280294319",
+    "process": "B",
+    "redelivery": false,
+    "status_code": 502
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:16:13.949Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+    "process": "B",
+    "redelivery": false,
+    "status_code": 202
+   },
+   {
+    "action": "edited",
+    "delivered_at": "2026-09-26T10:16:08.052Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "49433b70-b993-11f1-8a71-5fa6f33a7748",
+    "process": "B",
+    "redelivery": false,
+    "status_code": 202
+   },
+   {
+    "action": "created",
+    "delivered_at": "2026-09-26T10:15:54.452Z",
+    "durable_receipt": true,
+    "event": "projects_v2_item",
+    "guid": "41296900-b993-11f1-8d11-a3830009fa49",
+    "process": "B",
+    "redelivery": false,
+    "status_code": 202
+   }
+  ],
+  "notifications": [
+   {
+    "at": 1790417754.277102,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJLY"
+   },
+   {
+    "at": 1790417767.8698325,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJK8"
+   },
+   {
+    "at": 1790417773.769262,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJK8"
+   },
+   {
+    "at": 1790417842.7102518,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJK4"
+   },
+   {
+    "at": 1790417848.7357402,
+    "notification": "upstream-product-change:DI_lADOEcrpC84BkIEXzgLNJK4"
+   }
+  ],
+  "observation": "observations/a7f4f8d479e10a554378fee372a0e9162e166f5c46b6d5bf30ea2990f63ca648.json",
+  "project": [
+   {
+    "identity": "E1-261014-A",
+    "item": "PVTI_lADOEcrpC84BkIEXzg85dSw",
+    "status": "DONE",
+    "status_updated_at": "2026-09-26T10:17:32Z"
+   },
+   {
+    "identity": "E1-261014-B",
+    "item": "PVTI_lADOEcrpC84BkIEXzg85dU8",
+    "status": "DONE",
+    "status_updated_at": "2026-09-26T10:16:17Z"
+   }
+  ],
+  "store": {
+   "effects": [
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:0",
+     "receipt": null,
+     "status": "authority-authorized"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+     "identity": "ingress:41296900-b993-11f1-8d11-a3830009fa49",
+     "receipt": "notification:ingress:41296900-b993-11f1-8d11-a3830009fa49",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-B",
+     "identity": "launch:E1-261014-B:0",
+     "receipt": "outcome:success",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-B",
+     "identity": "launch:E1-261014-B:2",
+     "receipt": "outcome:accept",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+     "identity": "ingress:49433b70-b993-11f1-8a71-5fa6f33a7748",
+     "receipt": "notification:ingress:49433b70-b993-11f1-8a71-5fa6f33a7748",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-B",
+     "identity": "launch:E1-261014-B:4",
+     "receipt": "outcome:closed",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+     "identity": "ingress:4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+     "receipt": "notification:ingress:4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:3",
+     "receipt": "outcome:success",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:5",
+     "receipt": "outcome:accept",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+     "identity": "ingress:75ee7950-b993-11f1-8c47-baf83bf68ca6",
+     "receipt": "notification:ingress:75ee7950-b993-11f1-8c47-baf83bf68ca6",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:7",
+     "receipt": "outcome:closed",
+     "status": "confirmed"
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+     "identity": "ingress:797444b0-b993-11f1-9741-fa0a3bd35a17",
+     "receipt": "notification:ingress:797444b0-b993-11f1-9741-fa0a3bd35a17",
+     "status": "confirmed"
+    }
+   ],
+   "receipts": [
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+     "digest": "35a1a00d72218ac95f66f625ea576d5d54a3f4d9d68be95b1fa3740845365862",
+     "event_id": "41296900-b993-11f1-8d11-a3830009fa49",
+     "status": "applied",
+     "version": 1
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+     "digest": "a2918cc8f723ad505422c01c434688dcc234dceae72f943f93521d048d5a225b",
+     "event_id": "49433b70-b993-11f1-8a71-5fa6f33a7748",
+     "status": "applied",
+     "version": 1
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+     "digest": "238789fb4bc82b69025ff9ffa9374bd2c8cc858afa4680b4161b79cab58dd346",
+     "event_id": "4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+     "status": "applied",
+     "version": 2
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+     "digest": "2038f509f6bf2fa4b87ea4160968aaefb81a3c3a23d0e89ebc51f261b39178d4",
+     "event_id": "75ee7950-b993-11f1-8c47-baf83bf68ca6",
+     "status": "applied",
+     "version": 1
+    },
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+     "digest": "5cf502b1c8f286d5d034d35b0df4f95d47ed97a8c093dcbd23947c0225494bb6",
+     "event_id": "797444b0-b993-11f1-9741-fa0a3bd35a17",
+     "status": "applied",
+     "version": 2
+    }
+   ],
+   "state": {
+    "aggregates": {
+     "decision-inbox": {
+      "open": {},
+      "revision": 2
+     },
+     "decision-key:20260926T101450Z-decision-0": {
+      "event": {
+       "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+       "biu_version": 0,
+       "idempotency_key": "20260926T101450Z-decision-0",
+       "work_item": "E1-261014-A"
+      },
+      "revision": 1,
+      "submission": {
+       "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+       "authority_reference": "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+       "biu_version": 0,
+       "choice": "authorize",
+       "expected_version": 0,
+       "idempotency_key": "20260926T101450Z-decision-0",
+       "work_item": "E1-261014-A"
+      }
+     },
+     "decision:E1-261014-A": {
+      "event": {
+       "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+       "biu_version": 0,
+       "idempotency_key": "20260926T101450Z-decision-0",
+       "work_item": "E1-261014-A"
+      },
+      "revision": 1,
+      "submission": {
+       "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+       "authority_reference": "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+       "biu_version": 0,
+       "choice": "authorize",
+       "expected_version": 0,
+       "idempotency_key": "20260926T101450Z-decision-0",
+       "work_item": "E1-261014-A"
+      }
+     },
+     "factory:E1-261014-A": {
+      "accepted": true,
+      "candidate": {
+       "content_digest": "sha256:1e1594a5ceb4cf6c91094f6da0923150f09d808e5e8f556af70c1a882ffa28b3",
+       "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-E1-261014-A-3@19b490c50f7a610ccc8d21e8874f989799126def@sha256:1e1594a5ceb4cf6c91094f6da0923150f09d808e5e8f556af70c1a882ffa28b3",
+       "independent_read_back_proven": true,
+       "kind": "source-revision",
+       "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-E1-261014-A-3@19b490c50f7a610ccc8d21e8874f989799126def",
+       "provenance": "source-control revision"
+      },
+      "closure": [
+       "candidate-published"
+      ],
+      "correlation": "launch:E1-261014-A:7",
+      "decision_choice": "authorize",
+      "decision_key": "20260926T101450Z-decision-0",
+      "invocation_candidate": {
+       "content_digest": "sha256:1e1594a5ceb4cf6c91094f6da0923150f09d808e5e8f556af70c1a882ffa28b3",
+       "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-E1-261014-A-3@19b490c50f7a610ccc8d21e8874f989799126def@sha256:1e1594a5ceb4cf6c91094f6da0923150f09d808e5e8f556af70c1a882ffa28b3",
+       "independent_read_back_proven": true,
+       "kind": "source-revision",
+       "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-E1-261014-A-3@19b490c50f7a610ccc8d21e8874f989799126def",
+       "provenance": "source-control revision"
+      },
+      "outcome": "closed",
+      "outcome_kind": "closed",
+      "producer_correlation": "launch:E1-261014-A:3",
+      "receipts": [
+       "candidate-published"
+      ],
+      "revision": 9,
+      "role": "CLOSURE",
+      "stage": "DONE",
+      "verdict": {
+       "kind": "accept",
+       "reason": "policy accepted required trusted evidence",
+       "verifier_correlation": "launch:E1-261014-A:5"
+      },
+      "version": 4
+     },
+     "factory:E1-261014-B": {
+      "accepted": true,
+      "candidate": {
+       "content_digest": "sha256:9efa9b430d1f2075b5bfa62f19c7efdf92ec5c0bdf44ae92e78b9de8551a1144",
+       "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-E1-261014-B-0@f6b1a80b723c64b80804c4b2dd8898ccc4a7f471@sha256:9efa9b430d1f2075b5bfa62f19c7efdf92ec5c0bdf44ae92e78b9de8551a1144",
+       "independent_read_back_proven": true,
+       "kind": "source-revision",
+       "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-E1-261014-B-0@f6b1a80b723c64b80804c4b2dd8898ccc4a7f471",
+       "provenance": "source-control revision"
+      },
+      "closure": [
+       "candidate-published"
+      ],
+      "correlation": "launch:E1-261014-B:4",
+      "invocation_candidate": {
+       "content_digest": "sha256:9efa9b430d1f2075b5bfa62f19c7efdf92ec5c0bdf44ae92e78b9de8551a1144",
+       "identity": "revision:https://github.com/AlienLogicLab/alienintent-sandbox.git@candidate/launch-E1-261014-B-0@f6b1a80b723c64b80804c4b2dd8898ccc4a7f471@sha256:9efa9b430d1f2075b5bfa62f19c7efdf92ec5c0bdf44ae92e78b9de8551a1144",
+       "independent_read_back_proven": true,
+       "kind": "source-revision",
+       "locator": "git:https://github.com/AlienLogicLab/alienintent-sandbox.git#candidate/launch-E1-261014-B-0@f6b1a80b723c64b80804c4b2dd8898ccc4a7f471",
+       "provenance": "source-control revision"
+      },
+      "outcome": "closed",
+      "outcome_kind": "closed",
+      "producer_correlation": "launch:E1-261014-B:0",
+      "receipts": [
+       "candidate-published"
+      ],
+      "revision": 6,
+      "role": "CLOSURE",
+      "stage": "DONE",
+      "verdict": {
+       "kind": "accept",
+       "reason": "policy accepted required trusted evidence",
+       "verifier_correlation": "launch:E1-261014-B:2"
+      },
+      "version": 4
+     },
+     "ingress:DI_lADOEcrpC84BkIEXzgLNJK4": {
+      "category": "projects_v2_item",
+      "revision": 2,
+      "source_version": 0
+     },
+     "ingress:DI_lADOEcrpC84BkIEXzgLNJK8": {
+      "category": "projects_v2_item",
+      "revision": 2,
+      "source_version": 0
+     },
+     "ingress:DI_lADOEcrpC84BkIEXzgLNJLY": {
+      "category": "projects_v2_item",
+      "revision": 1,
+      "source_version": 0
+     }
+    },
+    "effects": [
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:0",
+      "status": "authority-authorized"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJLY",
+      "identity": "ingress:41296900-b993-11f1-8d11-a3830009fa49",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-B",
+      "identity": "launch:E1-261014-B:0",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-B",
+      "identity": "launch:E1-261014-B:2",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+      "identity": "ingress:49433b70-b993-11f1-8a71-5fa6f33a7748",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-B",
+      "identity": "launch:E1-261014-B:4",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK8",
+      "identity": "ingress:4cbc83b0-b993-11f1-8cd5-865e0bf6d1e1",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:3",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:5",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+      "identity": "ingress:75ee7950-b993-11f1-8c47-baf83bf68ca6",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "factory:E1-261014-A",
+      "identity": "launch:E1-261014-A:7",
+      "status": "confirmed"
+     },
+     {
+      "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNJK4",
+      "identity": "ingress:797444b0-b993-11f1-9741-fa0a3bd35a17",
+      "status": "confirmed"
+     }
+    ],
+    "reservations": []
+   }
+  }
+ },
+ "record_kind": "FxE1ProofRun",
+ "repository": "AlienLogicLab/alienintent-sandbox",
+ "run_id": "20260926T101450Z",
+ "schema_version": "1",
+ "started_at": "2026-09-26T10:14:55Z",
+ "substitutions": [
+  {
+   "claims_nothing_about": "provider behaviour, provider spend or provider helper processes",
+   "substitute": "tools/live/fx_e1_worker.sh writes the note deterministically instead of a provider CLI",
+   "unchanged": "the worker is launched by the shipped CliWorkerProvider through RealWorkerProvider and RoleBindingGuard; the control plane publishes and reads back the candidate with the installation credential",
+   "what": "worker note author"
+  }
+ ],
+ "tokens_and_cost": "UNKNOWN (no provider was invoked by the run; the PRODUCER session's own usage is not exposed)",
+ "verdict": {
+  "disposition": "PASS",
+  "predicates": [
+   {
+    "basis": "plan and identification committed before the run at 08d91b6b093601b71c6958b7d264e2d26aa48074",
+    "id": "E1-1",
+    "outcome": "PASS",
+    "title": "identification and fixture pinned before any live call"
+   },
+   {
+    "basis": "5 probes discriminate (faults detected: ['fault-shimmed-node-by-name', 'fault-absolute-node-bypassing-shims', 'fault-stated-environment-detached'])",
+    "id": "E1-2",
+    "outcome": "PASS",
+    "title": "no-Node instrument discriminates (intact/fault/restored)"
+   },
+   {
+    "basis": "203 processes over 3694 samples, 0 Node; 147 modules, all stdlib or alienintent",
+    "id": "E1-3",
+    "outcome": "PASS",
+    "title": "no Node process or dependency on the Python path"
+   },
+   {
+    "basis": "5 real deliveries accepted with durable receipts, by processes ['B', 'decisions@2129198']",
+    "id": "E1-4",
+    "outcome": "PASS",
+    "title": "real ingress with durable receipt"
+   },
+   {
+    "basis": "every seeded BIU's dispatch effect is confirmed and its candidate published",
+    "id": "E1-5",
+    "outcome": "PASS",
+    "title": "effect dispatch"
+   },
+   {
+    "basis": "store DONE, Project DONE and candidate content read back from a fresh clone, for every seeded BIU",
+    "id": "E1-6",
+    "outcome": "PASS",
+    "title": "durable consumer outcome read back"
+   },
+   {
+    "basis": "E1-261014-A killed in flight, recovered and DONE; delivery admitted by process B redelivered to a restarted ingress with its receipt unchanged",
+    "id": "E1-7",
+    "outcome": "PASS",
+    "title": "restart with readback"
+   },
+   {
+    "basis": "3 out-of-scope deliveries refused without receipt; foreign Project address refused",
+    "id": "E1-8",
+    "outcome": "PASS",
+    "title": "invalid scope holds"
+   },
+   {
+    "basis": "Node writer [2040299] unchanged; its ports and root tunnel configuration unchanged",
+    "id": "E1-9",
+    "outcome": "PASS",
+    "title": "one writer: Node bootstrap undisturbed"
+   },
+   {
+    "basis": "1 substitution(s) labelled; local controls labelled LOCAL",
+    "id": "E1-10",
+    "outcome": "PASS",
+    "title": "local substitutions labelled"
+   }
+  ],
+  "rule": "PASS only when every predicate passes on retained evidence; a missing measurement is HOLD, never PASS"
+ },
+ "work_unit": "WO-220502"
+}
