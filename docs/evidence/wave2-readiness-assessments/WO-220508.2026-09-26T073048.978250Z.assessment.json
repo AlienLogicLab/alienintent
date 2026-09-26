@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove, through the existing Python AlienIntent attention / Decision Inbox path, that new and unresolved product attention reaches a human. The proof must cover judgment outcomes, pending reconciliation, zero duplicate handling, intact suppression and a persisting queue. Human receipt means a durable, explicit, item-bound, timestamped human acknowledgement, distinct from queue insertion, command delivery, transport success or rendering. Operational readback must bind the item, the acknowledgement and the resulting state transition. No Windows event notifications and no new notification subsystem.",
+    "implementation_unknowns": [
+      "Whether the existing Decision Inbox path already records a durable, explicit, item-bound, timestamped human acknowledgement, or needs a bounded addition within the existing path to capture one without creating a new subsystem.",
+      "How judgment outcomes and pending-reconciliation states are represented in the current attention model, and how to exercise each in fixtures.",
+      "The mechanism for proving zero duplicate handling and intact suppression, including intact/fault/restored discrimination for these mechanical controls.",
+      "How queue persistence is demonstrated, for example across process restart, and what counts as an immutable observation ref for queue state.",
+      "The exact FX-B5 fixture commands, inputs, expected outcomes and evidence schema, which must be pinned before implementation.",
+      "Which labelled local fixtures (notification failure, queue continuity) can proceed before operational readback, and how they are kept distinct from operational acceptance.",
+      "The empty 'DAG scope' field. This is presumed non-material given the explicit extent and boundary statements."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Operational proof needs a real human to explicitly acknowledge specific items during FX-B5 execution. If no acknowledging human is scheduled or available, the proof will hold at execution time.",
+      "The Founder decisions were relayed by a Founder-authorized observing session, not the Factory Director. Their provenance is asserted in the text and has not been verified by this gate. Execution gates should confirm the inbox handoff records exist.",
+      "A local or simulated acknowledgement could be mistaken for human receipt. Evidence must label local substitutions and keep them out of operational acceptance.",
+      "If the existing path lacks acknowledgement capture, the added work could drift toward a new notification subsystem, which is out of scope. Keep changes within the existing attention / Decision Inbox path and escalate interface changes to their owner.",
+      "Activating the attention path could create unattended or broader product activation beyond the narrow FX-B5 grant.",
+      "A narrowed POSTW1-DECIDE-006A custody or replacement fact may still surface during execution. If so, it should be named specifically rather than reopening the bundle.",
+      "The budget/cost allocation is not bound in the text ('UNKNOWN' when not exposed). Per the stop conditions, an unbound budget may still gate IMPLEMENT."
+    ],
+    "next_action": "Admit WO-220508 to the READY queue at this exact revision. Before IMPLEMENT, the producer should: (1) confirm the two Founder handoff records exist; (2) pin FX-B5 fixture commands, inputs, expected outcomes and evidence schema, including the acknowledgement record shape and the readback binding of item, acknowledgement and state transition; (3) arrange a named human acknowledger for the operational readback window; (4) confirm budget and custody allocation through the authorized allocator.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that the owner-intent and authority gaps behind the prior CLARIFY and HOLD are reported as resolved in this revision. The Windows branch is removed, human receipt is defined and distinguished from delivery, the operational target is authorized, activation authority is narrowly granted, and the 006A bundle is narrowed with no remaining specific fact identified. Dependencies are reported DONE. The work is one decision center (the attention-to-acknowledgement path on an existing surface), so SPLIT is inappropriate. The open items are engineering research or execution-time logistics, not missing owner intent, so CLARIFY is inappropriate. HOLD would require inventing unavailability the text does not establish. Rework should stay localized to the attention/queue/acknowledgement path. READY recommends handoff only; it does not authorize IMPLEMENT or release.",
+    "semantic_split_recommendation": [],
+    "summary": "The revision reports Founder decisions that settle the owner-intent gaps raised by earlier assessments. Windows notifications are removed from this node's scope. Human receipt is defined concretely. The Decision Inbox path is named as the authorized FX-B5 operational target, and ATTENTION_ACTIVATION_AUTHORITY is granted narrowly. POSTW1-DECIDE-006A is narrowed, and no specific remaining fact is identified for this path. All three predecessors are reported DONE. The work is one cohesive capability (attention delivery through human acknowledgement on one existing surface) with observable, bindable acceptance. The remaining unknowns are engineering and execution-logistics matters, not owner intent. These facts are reported in the task text and have not been independently verified by this gate.",
+    "verification_assessment": "Acceptance is observable. The attention item must be traceable through the queue, the human acknowledgement must be a distinct durable, timestamped, item-bound record, and the resulting state transition must be captured by operational readback on the named Decision Inbox surface. Duplicate suppression and queue persistence are checkable through discriminating probes. A single independent verdict is meaningful: a fresh verifier retrieving the exact candidate SHA can judge the whole predicate as one question, namely whether the path demonstrably delivers attention to acknowledged human receipt with the stated invariants. That verdict must rely on actual operational readback, not local substitutes."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T07:31:17.933195+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 14394,
+    "input_sha256": "d25c25a3c1da356e6cd0e8d58aa649533f268d5db80536a6aa11cdcff2c1500e",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-z7ci6unx/WO-220508.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T07:30:48.978250+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220508"
+}
