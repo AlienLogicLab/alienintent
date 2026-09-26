@@ -1,0 +1,270 @@
+{
+  "controls": [
+    {
+      "control": "host_outside_unit_accepted",
+      "failure_class": "supervisor ownership is external to the model session and attributable to the intended invocation",
+      "file": "src/alienintent/composition/monitor_host.py",
+      "application_count": 1,
+      "source_digest": "sha256:c21f8bdfba759fab9a3be0f000f3dd266f0f5d0bfb3a8fe68ef40c71a49d81e9",
+      "mutation": {
+        "remove": "        if cgroup() != ownership.cgroup:\n            raise HostHold(\"HOST_OUTSIDE_OWNED_UNIT\")\n",
+        "replace_with": ""
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_monitor_host.py::test_host_refuses_to_run_outside_its_owned_unit"
+      ],
+      "assertions": [
+        "a process outside the owned unit (a session or shell background process) must not host the monitor"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/control_plane/test_monitor_host.py::test_host_refuses_to_run_outside_its_owned_unit"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:f82ac1cf256446b0c0a57633aa75823b89a62ff580caf01597e52d8a7ded33c2",
+        "locator": "observations/f82ac1cf256446b0c0a57633aa75823b89a62ff580caf01597e52d8a7ded33c2"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:7a4971c7fc2d8ea4a42b1382fc4e2efe94f8190ac9b21391d7515221fd96e05f",
+        "locator": "observations/7a4971c7fc2d8ea4a42b1382fc4e2efe94f8190ac9b21391d7515221fd96e05f"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:d0b9aa7d4d5fd332eca43654632122b97ac80d22bfb2b8bb015b6a1d3bc226c2",
+        "locator": "observations/d0b9aa7d4d5fd332eca43654632122b97ac80d22bfb2b8bb015b6a1d3bc226c2"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "stall_trusts_running_unit",
+      "failure_class": "terminate or stall: external health detection observes the failure",
+      "file": "src/alienintent/control_plane/domain/monitor_host.py",
+      "application_count": 1,
+      "source_digest": "sha256:a70cf832a7c0b9050bc1cb12601625ec50dba10c21807f355e069b7215230d49",
+      "mutation": {
+        "remove": "    if report.status in (HealthStatus.STALE, HealthStatus.UNVERIFIED):\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_monitor_host.py::test_stalled_host_is_detected_externally_and_restart_preserves_generation_and_pending_state"
+      ],
+      "assertions": [
+        "a stalled host with a running unit must be detected from the durable health record"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/control_plane/test_monitor_host.py::test_stalled_host_is_detected_externally_and_restart_preserves_generation_and_pending_state"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:65e30c3069b7e38a1ce1f6aa0f65114d7ffe9f81bc6abfeb56b6abca34abdb0a",
+        "locator": "observations/65e30c3069b7e38a1ce1f6aa0f65114d7ffe9f81bc6abfeb56b6abca34abdb0a"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:1206702cc05854c6bdfd104d82e85626fd8031e49e70a1b472062f0d58530b7b",
+        "locator": "observations/1206702cc05854c6bdfd104d82e85626fd8031e49e70a1b472062f0d58530b7b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:5215703013f6d470b88dacb100d65ad6897cbc2e33391364d15af2fd861b4e08",
+        "locator": "observations/5215703013f6d470b88dacb100d65ad6897cbc2e33391364d15af2fd861b4e08"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "restart_clean_start",
+      "failure_class": "authorized restart preserves generation/pending state rather than fabricating a clean start",
+      "file": "src/alienintent/composition/monitor_host.py",
+      "application_count": 1,
+      "source_digest": "sha256:c21f8bdfba759fab9a3be0f000f3dd266f0f5d0bfb3a8fe68ef40c71a49d81e9",
+      "mutation": {
+        "remove": "        self.monitor = MonitorProfile(root, project=config.project,",
+        "replace_with": "        self.monitor = MonitorProfile((root / launch_id).mkdir() or root / launch_id if ownership.predecessor_generation else root, project=config.project,"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_monitor_host.py::test_stalled_host_is_detected_externally_and_restart_preserves_generation_and_pending_state"
+      ],
+      "assertions": [
+        "restart must continue the generation, not fabricate a clean start"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/control_plane/test_monitor_host.py::test_stalled_host_is_detected_externally_and_restart_preserves_generation_and_pending_state"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:94043cf7d7a1fd078ce1553220ba97e35b68feb35334b2f5688acbbfa182d4b5",
+        "locator": "observations/94043cf7d7a1fd078ce1553220ba97e35b68feb35334b2f5688acbbfa182d4b5"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:6e6870c8d1f157e851bfd238cf3fcc9111b956f6442dc4b6780d640223efd900",
+        "locator": "observations/6e6870c8d1f157e851bfd238cf3fcc9111b956f6442dc4b6780d640223efd900"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:94043cf7d7a1fd078ce1553220ba97e35b68feb35334b2f5688acbbfa182d4b5",
+        "locator": "observations/94043cf7d7a1fd078ce1553220ba97e35b68feb35334b2f5688acbbfa182d4b5"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "grant_identity_unchecked",
+      "failure_class": "restart with wrong unit/invocation identity is refused; no duplicate host or silent substitution",
+      "file": "src/alienintent/control_plane/application/monitor_supervision.py",
+      "application_count": 1,
+      "source_digest": "sha256:0fa0c37d5ba8a73bc5e532b8880e62b17abe141a312d744eca1727ebfbbd3778",
+      "mutation": {
+        "remove": "        if (grant.profile, grant.unit, grant.host_invocation) != (binding.profile, binding.unit,\n                                                                   binding.host_invocation):\n            raise HostHold(\"GRANT_IDENTITY_MISMATCH\")\n",
+        "replace_with": ""
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_monitor_host.py::test_restart_with_wrong_identity_is_refused"
+      ],
+      "assertions": [
+        "a restart naming another unit, invocation, launch, alert or actor must be refused"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/control_plane/test_monitor_host.py::test_restart_with_wrong_identity_is_refused[change0-GRANT_IDENTITY_MISMATCH]",
+        "tests/control_plane/test_monitor_host.py::test_restart_with_wrong_identity_is_refused[change1-GRANT_IDENTITY_MISMATCH]"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:40b3383fb2a93afae6676925cfb79b368c36c16d4c99f85b743098ec81a5d3f1",
+        "locator": "observations/40b3383fb2a93afae6676925cfb79b368c36c16d4c99f85b743098ec81a5d3f1"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:bd6df56d8bc58a2f3c97e3c0d4151c069cc520a91058841124a7a478352561c1",
+        "locator": "observations/bd6df56d8bc58a2f3c97e3c0d4151c069cc520a91058841124a7a478352561c1"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:8a7239fa80a23d0b6b1335f70fbcf77928c53df8d9ced4b93eda08eb2279b043",
+        "locator": "observations/8a7239fa80a23d0b6b1335f70fbcf77928c53df8d9ced4b93eda08eb2279b043"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "observation_identity_unchecked",
+      "failure_class": "observation with wrong unit/invocation identity is refused; no silent process substitution",
+      "file": "src/alienintent/control_plane/domain/monitor_host.py",
+      "application_count": 1,
+      "source_digest": "sha256:a70cf832a7c0b9050bc1cb12601625ec50dba10c21807f355e069b7215230d49",
+      "mutation": {
+        "remove": "    if ownership.systemd_invocation_id is not None and unit.invocation_id != ownership.systemd_invocation_id:\n        return \"UNIT_INVOCATION_MISMATCH\"\n",
+        "replace_with": ""
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_monitor_host.py::test_observation_of_a_substituted_unit_or_instance_is_refused"
+      ],
+      "assertions": [
+        "an observation of a unit the supervisor did not launch must be refused"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/control_plane/test_monitor_host.py::test_observation_of_a_substituted_unit_or_instance_is_refused"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:08d6dbd0aa8c82b77a300ccc7e1b40f6c985766afc788a148b02eb5400638a26",
+        "locator": "observations/08d6dbd0aa8c82b77a300ccc7e1b40f6c985766afc788a148b02eb5400638a26"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:5366398de6ebc661ff3f52b475dca8c8a080b8f8daa92aad4566b3f8d2bc7017",
+        "locator": "observations/5366398de6ebc661ff3f52b475dca8c8a080b8f8daa92aad4566b3f8d2bc7017"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:3c7e0da73daedf96662946888e8cf94b9da577ec3c10a959e745918b48e2d361",
+        "locator": "observations/3c7e0da73daedf96662946888e8cf94b9da577ec3c10a959e745918b48e2d361"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "non_systemd_mode_accepted",
+      "failure_class": "missing/invalid supervision configuration holds before launch/restart",
+      "file": "src/alienintent/control_plane/domain/monitor_host.py",
+      "application_count": 1,
+      "source_digest": "sha256:a70cf832a7c0b9050bc1cb12601625ec50dba10c21807f355e069b7215230d49",
+      "mutation": {
+        "remove": "        if document.get(\"schema_version\") != 1 or document.get(\"mode\") != \"systemd\":\n",
+        "replace_with": "        if document.get(\"schema_version\") != 1:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_monitor_host.py::test_missing_or_invalid_configuration_holds_before_launch"
+      ],
+      "assertions": [
+        "a missing or invalid supervision configuration must hold before launch"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/control_plane/test_monitor_host.py::test_missing_or_invalid_configuration_holds_before_launch[<lambda>-SUPERVISION_CONFIGURATION_INVALID:mode]"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:d2fc66b9d11c5ea6930a0d58799ccdada06b5975512170d80a5cd7ce994045c2",
+        "locator": "observations/d2fc66b9d11c5ea6930a0d58799ccdada06b5975512170d80a5cd7ce994045c2"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:81768bee74adc613202bf08b03c01f0047e690621ac91196c3a5ddd69dce7075",
+        "locator": "observations/81768bee74adc613202bf08b03c01f0047e690621ac91196c3a5ddd69dce7075"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:3c235e75510147d5209eb0b36a387e241777799122d0e5744db0cbb755147502",
+        "locator": "observations/3c235e75510147d5209eb0b36a387e241777799122d0e5744db0cbb755147502"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}

@@ -1,0 +1,371 @@
+{
+  "acceptance_to_probes": {
+    "class 1: supervisor external to the model session; durably attributable to the intended monitor invocation": [
+      "test_launch_binds_the_owned_unit_to_the_monitor_invocation",
+      "test_host_refuses_to_run_outside_its_owned_unit",
+      "test_constructing_the_supervisor_launches_nothing",
+      "systemd_composed: launched stage, HOST_OUTSIDE_OWNED_UNIT from the session process"
+    ],
+    "class 2: terminate or stall -> external detection/alert -> authorized restart preserves generation and pending state": [
+      "test_stalled_host_is_detected_externally_and_restart_preserves_generation_and_pending_state",
+      "test_terminated_host_is_detected_from_the_unit_before_health_goes_stale",
+      "systemd_composed: stall_alerted (SIGSTOP), restarted_after_stall, SIGKILL alert, final"
+    ],
+    "class 3: wrong unit/invocation identity refused; no duplicate host ownership or silent substitution": [
+      "test_restart_with_wrong_identity_is_refused",
+      "test_restart_of_a_healthy_host_or_duplicate_launch_is_refused",
+      "test_observation_of_a_substituted_unit_or_instance_is_refused",
+      "test_monitor_instance_not_launched_by_the_supervisor_is_refused",
+      "systemd_composed: wrong_identity_refused"
+    ],
+    "class 4: missing/invalid supervision configuration holds before launch/restart": [
+      "test_missing_or_invalid_configuration_holds_before_launch",
+      "test_supervisor_without_configuration_or_manager_holds_before_any_mutation",
+      "test_restart_under_a_changed_configuration_holds"
+    ],
+    "negative controls": [
+      "proven-red.json: host_outside_unit_accepted, stall_trusts_running_unit, restart_clean_start, grant_identity_unchecked, observation_identity_unchecked, non_systemd_mode_accepted"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-rfEs",
+      "-p",
+      "no:cacheprovider",
+      "tests/control_plane/test_monitor_host.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:1888bacb63c031e11dd3b0a972b74860caa4f3409cf43069f1c3111f97229a3b",
+      "locator": "observations/1888bacb63c031e11dd3b0a972b74860caa4f3409cf43069f1c3111f97229a3b"
+    }
+  },
+  "systemd_command": {
+    "id": "systemd_composed",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-rfEs",
+      "-p",
+      "no:cacheprovider",
+      "tests/control_plane/test_monitor_host_systemd.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:5f012006801f912ef54412ecbf514e56a49bd2482cfa2fbc0bf9e245ac5e09b8",
+      "locator": "observations/5f012006801f912ef54412ecbf514e56a49bd2482cfa2fbc0bf9e245ac5e09b8"
+    },
+    "ran_on_real_manager": true,
+    "readback_ref": {
+      "revision_digest": "sha256:c849ced10c0230060fb01c96e559340b2197db6f922a225a4821307990510912",
+      "locator": "observations/c849ced10c0230060fb01c96e559340b2197db6f922a225a4821307990510912"
+    }
+  },
+  "composed_readback": {
+    "invocation": "fx-c5-systemd-a3c99da2e20b438eabada796c86758f6",
+    "unit": "alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service",
+    "observer": "alienintent-monitor-observer-19186974cd2983c4c7cb2d3d55c154bc",
+    "stages": [
+      {
+        "stage": "launched",
+        "ownership": {
+          "binding": {
+            "profile": "fixture",
+            "host_invocation": "fx-c5-systemd-a3c99da2e20b438eabada796c86758f6",
+            "unit": "alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service",
+            "description": "AlienIntent monitor host 19186974cd2983c4c7cb2d3d55c154bc"
+          },
+          "manager": {
+            "uid": 1000,
+            "boot_id": "74e260e0-13bd-43fe-94ed-d20c1f167ad5",
+            "started_at_monotonic": "59846494",
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service"
+          },
+          "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service",
+          "config_digest": "sha256:822edcdf5387310458063c25da7b4fde8e2c2ee291f74d8e3d11a1c3a110b112",
+          "state": "RUNNING",
+          "launch_id": "97829204f33e45c485fac4958a2fedcd",
+          "launched_at": 1790401237199391,
+          "predecessor_generation": 0,
+          "grant_digest": "sha256:09e9ab86650178d7ed4e3bf4c233159bc160689c11868055c9270c9670c3d335",
+          "systemd_invocation_id": "cb726f9c0f224024adff178451f73780",
+          "alert": null,
+          "alert_reason": null,
+          "restart_of": null,
+          "observer": "alienintent-monitor-observer-19186974cd2983c4c7cb2d3d55c154bc"
+        },
+        "monitor": {
+          "profile": "fixture",
+          "instance_id": "97829204f33e45c485fac4958a2fedcd",
+          "generation": 1,
+          "policy_digest": "sha256:1980eeb3d963714546461c89a50d80130805bfc974f9c49b6e4a1760cf20427a",
+          "started_at": 1790401237411552,
+          "last_monitor_tick": 1790401237428261,
+          "last_scan_started_at": 1790401237439296,
+          "last_scan_completed_at": 1790401237449990,
+          "last_scan_outcome": "COMPLETE",
+          "next_scan_due": 1790401238449990,
+          "last_error": null
+        },
+        "unit": "ControlGroup=/user.slice/user-1000.slice/user@1000.service/app.slice/alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service\nActiveState=active\nSubState=running\nInvocationID=cb726f9c0f224024adff178451f73780\n"
+      },
+      {
+        "stage": "stall_alerted",
+        "ownership": {
+          "binding": {
+            "profile": "fixture",
+            "host_invocation": "fx-c5-systemd-a3c99da2e20b438eabada796c86758f6",
+            "unit": "alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service",
+            "description": "AlienIntent monitor host 19186974cd2983c4c7cb2d3d55c154bc"
+          },
+          "manager": {
+            "uid": 1000,
+            "boot_id": "74e260e0-13bd-43fe-94ed-d20c1f167ad5",
+            "started_at_monotonic": "59846494",
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service"
+          },
+          "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service",
+          "config_digest": "sha256:822edcdf5387310458063c25da7b4fde8e2c2ee291f74d8e3d11a1c3a110b112",
+          "state": "ALERTED",
+          "launch_id": "97829204f33e45c485fac4958a2fedcd",
+          "launched_at": 1790401237199391,
+          "predecessor_generation": 0,
+          "grant_digest": "sha256:09e9ab86650178d7ed4e3bf4c233159bc160689c11868055c9270c9670c3d335",
+          "systemd_invocation_id": "cb726f9c0f224024adff178451f73780",
+          "alert": "attention:3027a8bd0e3c782c690fa57ba8db008f7162c9359c9bf336a3e7988484a6583c",
+          "alert_reason": "HEALTH_STALE:TICK_OVERDUE",
+          "restart_of": null,
+          "observer": "alienintent-monitor-observer-19186974cd2983c4c7cb2d3d55c154bc"
+        },
+        "observation": {
+          "action": "ALERTED",
+          "alert": "attention:3027a8bd0e3c782c690fa57ba8db008f7162c9359c9bf336a3e7988484a6583c",
+          "health": "STALE",
+          "health_reason": "TICK_OVERDUE",
+          "reason": "HEALTH_STALE:TICK_OVERDUE",
+          "refused": false,
+          "unit": {
+            "active_state": "active",
+            "invocation_id": "cb726f9c0f224024adff178451f73780",
+            "loaded": true,
+            "result": "success",
+            "sub_state": "running"
+          }
+        }
+      },
+      {
+        "stage": "wrong_identity_refused",
+        "result": {
+          "hold": "RESTART_LAUNCH_MISMATCH"
+        }
+      },
+      {
+        "stage": "restarted_after_stall",
+        "ownership": {
+          "binding": {
+            "profile": "fixture",
+            "host_invocation": "fx-c5-systemd-a3c99da2e20b438eabada796c86758f6",
+            "unit": "alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service",
+            "description": "AlienIntent monitor host 19186974cd2983c4c7cb2d3d55c154bc"
+          },
+          "manager": {
+            "uid": 1000,
+            "boot_id": "74e260e0-13bd-43fe-94ed-d20c1f167ad5",
+            "started_at_monotonic": "59846494",
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service"
+          },
+          "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service",
+          "config_digest": "sha256:822edcdf5387310458063c25da7b4fde8e2c2ee291f74d8e3d11a1c3a110b112",
+          "state": "RUNNING",
+          "launch_id": "6290c19b5c8442968e0d0c1c037d5f55",
+          "launched_at": 1790401239983790,
+          "predecessor_generation": 1,
+          "grant_digest": "sha256:144731d5002ca024d9508a3b26ba3de12f7c5e56dfd276511cbf9948358ab6e8",
+          "systemd_invocation_id": "c7194150032e4227941488a1a2daa735",
+          "alert": null,
+          "alert_reason": null,
+          "restart_of": null,
+          "observer": "alienintent-monitor-observer-19186974cd2983c4c7cb2d3d55c154bc"
+        },
+        "monitor": {
+          "profile": "fixture",
+          "instance_id": "6290c19b5c8442968e0d0c1c037d5f55",
+          "generation": 2,
+          "policy_digest": "sha256:1980eeb3d963714546461c89a50d80130805bfc974f9c49b6e4a1760cf20427a",
+          "started_at": 1790401240211468,
+          "last_monitor_tick": 1790401240224211,
+          "last_scan_started_at": 1790401240234331,
+          "last_scan_completed_at": 1790401240248299,
+          "last_scan_outcome": "COMPLETE",
+          "next_scan_due": 1790401241248299,
+          "last_error": null
+        }
+      },
+      {
+        "stage": "final",
+        "ownership": {
+          "binding": {
+            "profile": "fixture",
+            "host_invocation": "fx-c5-systemd-a3c99da2e20b438eabada796c86758f6",
+            "unit": "alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service",
+            "description": "AlienIntent monitor host 19186974cd2983c4c7cb2d3d55c154bc"
+          },
+          "manager": {
+            "uid": 1000,
+            "boot_id": "74e260e0-13bd-43fe-94ed-d20c1f167ad5",
+            "started_at_monotonic": "59846494",
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service"
+          },
+          "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/alienintent-monitor-19186974cd2983c4c7cb2d3d55c154bc.service",
+          "config_digest": "sha256:822edcdf5387310458063c25da7b4fde8e2c2ee291f74d8e3d11a1c3a110b112",
+          "state": "RUNNING",
+          "launch_id": "e02e6e65152e46f0830e9aba20ac355a",
+          "launched_at": 1790401248581806,
+          "predecessor_generation": 2,
+          "grant_digest": "sha256:9c309fa51a5147d881a6ef796d98ca8394d3410446f5978dd91a87b937e43489",
+          "systemd_invocation_id": "e1720d331a5a4d3ba59662fcfe40d683",
+          "alert": null,
+          "alert_reason": null,
+          "restart_of": null,
+          "observer": "alienintent-monitor-observer-19186974cd2983c4c7cb2d3d55c154bc"
+        },
+        "monitor_starts": [
+          [
+            "97829204f33e45c485fac4958a2fedcd",
+            1
+          ],
+          [
+            "6290c19b5c8442968e0d0c1c037d5f55",
+            2
+          ],
+          [
+            "e02e6e65152e46f0830e9aba20ac355a",
+            3
+          ]
+        ],
+        "pending_state": [
+          [
+            [
+              "liveness-active:item-verify",
+              1,
+              {
+                "authority": "authority:dispatch",
+                "biu": "item-verify",
+                "budget_admitted": true,
+                "candidate": "candidate:item-verify",
+                "closure_actions": [],
+                "contract_digest": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+                "entered_at": 1790401236904223,
+                "generation": 1,
+                "repository": "repo:alienintent",
+                "schema_version": 1,
+                "stage": "VERIFY"
+              }
+            ]
+          ],
+          [
+            1,
+            {
+              "policy": {
+                "confirmation_seconds": 90,
+                "grace_seconds": 300,
+                "interval_seconds": 1
+              },
+              "policy_digest": "sha256:6978b1ed817d266764e0e931a98331756c8560c8ead4f8db82684d4f1d5133d2",
+              "schema_version": 1
+            }
+          ]
+        ],
+        "alerts": [
+          {
+            "identity": "attention:3027a8bd0e3c782c690fa57ba8db008f7162c9359c9bf336a3e7988484a6583c",
+            "version": 1,
+            "origin": {
+              "work_ref": "monitor-host:fixture",
+              "event_identity": "monitor-host-alert:97829204f33e45c485fac4958a2fedcd",
+              "kind": "JUDGMENT",
+              "work_revision": "launch:97829204f33e45c485fac4958a2fedcd",
+              "lane": "monitor-host",
+              "required_authority": "founder-judgment",
+              "producer": "monitor-host-supervisor",
+              "source_ref": {
+                "project": "project",
+                "profile": "fixture",
+                "logical_id": "monitor-host:fixture",
+                "revision_digest": "sha256:40311ae3a81d918f37ab01acb7491c03844d695dc34a6bd163e387c913af158b",
+                "locator": "monitor-host-launch:97829204f33e45c485fac4958a2fedcd"
+              }
+            },
+            "status": "PENDING",
+            "attempts": [],
+            "handler": null,
+            "resolution_ref": null,
+            "history_ref": {
+              "project": "project",
+              "profile": "fixture",
+              "logical_id": "attention:3027a8bd0e3c782c690fa57ba8db008f7162c9359c9bf336a3e7988484a6583c",
+              "revision_digest": "sha256:88033134c99418f7985494bd1a1be5440b763823a4ea27457d4b8d0c2e292e14",
+              "locator": "objects/88033134c99418f7985494bd1a1be5440b763823a4ea27457d4b8d0c2e292e14"
+            }
+          },
+          {
+            "identity": "attention:85c9de12f8f33946293ead5a206717263331f8bf6eabe45102b1a2dbc1b82120",
+            "version": 1,
+            "origin": {
+              "work_ref": "monitor-host:fixture",
+              "event_identity": "monitor-host-alert:6290c19b5c8442968e0d0c1c037d5f55",
+              "kind": "JUDGMENT",
+              "work_revision": "launch:6290c19b5c8442968e0d0c1c037d5f55",
+              "lane": "monitor-host",
+              "required_authority": "founder-judgment",
+              "producer": "monitor-host-supervisor",
+              "source_ref": {
+                "project": "project",
+                "profile": "fixture",
+                "logical_id": "monitor-host:fixture",
+                "revision_digest": "sha256:b27771af83efba91d9728b0ce69229d37318f023ba2f5eaaa99106da82d0f0e5",
+                "locator": "monitor-host-launch:6290c19b5c8442968e0d0c1c037d5f55"
+              }
+            },
+            "status": "PENDING",
+            "attempts": [],
+            "handler": null,
+            "resolution_ref": null,
+            "history_ref": {
+              "project": "project",
+              "profile": "fixture",
+              "logical_id": "attention:85c9de12f8f33946293ead5a206717263331f8bf6eabe45102b1a2dbc1b82120",
+              "revision_digest": "sha256:cff01dffbd45f0dec55d3608eb5bbfb8511b3985c61fa5c2c9d0d61a781920bc",
+              "locator": "objects/cff01dffbd45f0dec55d3608eb5bbfb8511b3985c61fa5c2c9d0d61a781920bc"
+            }
+          }
+        ],
+        "host_actions": [
+          "LAUNCH_INTENT",
+          "LAUNCHED",
+          "ALERTED",
+          "RESTART_INTENT",
+          "LAUNCHED",
+          "ALERTED",
+          "RESTART_INTENT",
+          "LAUNCHED"
+        ],
+        "observer_timer": "Result=success\nActiveState=active\n"
+      }
+    ],
+    "cleanup": ""
+  },
+  "boundaries": "local/composed proof only on this workstation's per-user systemd manager; no bootstrap monitor/observer service retired or reconfigured; no operational replacement, live G+I, cutover or retirement; Doctor configuration stays with SF-REQ-037/038",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}
