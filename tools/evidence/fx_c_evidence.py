@@ -2,7 +2,8 @@
 
 Run against committed source; output must be a new directory. Every rerun keeps its own
 immutable observations. The final custody comment identifies the evidence commit, whose
-source files must match the recorded source candidate digests.
+source files must match the recorded source candidate digests. The execution record is rewritten
+after every stage, so a run stopped at any point leaves a durable INCOMPLETE record (a HOLD, never a PASS).
 """
 from dataclasses import asdict
 from hashlib import sha256
@@ -128,6 +129,17 @@ def predecessor_custody():
     return records
 
 
+def checkpoint(output, report, mutations, stage):
+    """Durable progress: an interrupted run reads as INCOMPLETE with a non-null exit, never as a pass."""
+    record = report | {"run_state": "INCOMPLETE", "stage": stage, "exit_status": None,
+                       "holds": report["holds"] + ["INCOMPLETE: run stopped at stage " + stage]}
+    for name, body in (("execution-record.json", record),
+                       ("proven-red.json", {"controls": mutations, "holds": record["holds"]})):
+        partial = output / (name + ".partial")
+        partial.write_text(json.dumps(body, indent=2) + "\n")
+        os.replace(partial, output / name)
+
+
 def baseline_regression(output):
     """The full Python suite at the admission baseline, in a disposable detached worktree."""
     with tempfile.TemporaryDirectory(prefix="fx-c-baseline-") as temporary:
@@ -244,12 +256,7 @@ def run(output, invocation):
         report["holds"].append("pinned inputs missing")
     if not all(all(p["ancestor_of_candidate"].values()) for p in report["predecessors"]):
         report["holds"].append("a predecessor candidate is not an ancestor of this candidate")
-    try:
-        baseline, baseline_ref = baseline_regression(output)
-        baseline_failures = failed_ids(baseline["stdout"])
-    except (subprocess.CalledProcessError, OSError) as error:
-        report["holds"].append("baseline regression unavailable: " + repr(error))
-        baseline_ref, baseline_failures = None, None
+    mutations = []
     for label, command in (
         ("focused", pytest(TEST)),
         ("bounded_initial", pytest(*BOUNDED)),
@@ -259,6 +266,16 @@ def run(output, invocation):
         ("python_regression", pytest()),
         ("node_regression", ["node", "scripts/check.mjs", "all"]),
     ):
+        if label == "python_regression":
+            # The slow baseline suite runs after the focused proof, so a stopped run has already kept it.
+            checkpoint(output, report, mutations, "baseline_regression")
+            try:
+                baseline, baseline_ref = baseline_regression(output)
+                baseline_failures = failed_ids(baseline["stdout"])
+            except (subprocess.CalledProcessError, OSError) as error:
+                report["holds"].append("baseline regression unavailable: " + repr(error))
+                baseline_ref, baseline_failures = None, None
+        checkpoint(output, report, mutations, label)
         observation = execute(ROOT, command)
         entry = {"id": label, "command": command, "exit_status": observation["exit_status"],
                  "observation_ref": retain(output, observation)}
@@ -275,13 +292,13 @@ def run(output, invocation):
         elif observation["exit_status"] != 0:
             report["holds"].append(label + " failed")
         report["commands"].append(entry)
-    mutations = []
     with tempfile.TemporaryDirectory(prefix="fx-c-controls-") as temporary:
         copy = Path(temporary)
         for name in ("src", "tests", "tools"):
             shutil.copytree(ROOT / name, copy / name, ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
         shutil.copy2(ROOT / "pyproject.toml", copy / "pyproject.toml")
         for name, failure_class, relative, needle, replacement, tests, assertions in CONTROLS:
+            checkpoint(output, report, mutations, "control:" + name)
             path = copy / relative
             original = path.read_text()
             count = original.count(needle)
@@ -305,11 +322,13 @@ def run(output, invocation):
                 "restored_ref": retain(output, restored), "discriminates": ok})
             if not ok:
                 report["holds"].append(name + " did not discriminate")
+    checkpoint(output, report, mutations, "readback")
     try:
         report["readback_ref"], observed = readback(output)
     except Exception as error:
         report["holds"].append("readback failed: " + repr(error))
         observed = None
+    report["run_state"] = "COMPLETE"
     report["exit_status"] = 1 if report["holds"] else 0
     mapping = {
         "SF-REQ-053-AC-04 / FX-C: end a coordinator episode during duplicate/delayed outcomes; stale epoch cannot send":

@@ -205,11 +205,34 @@ these is recorded as a HOLD, never a PASS:
 - an unavailable baseline;
 - a mutation needle that does not match exactly once;
 - a non-discriminating control;
-- a failed readback. Tokens, cost and
-provider calls are `null` with reason `UNKNOWN`.
+- a failed readback;
+- a run stopped before it finishes.
+
+Tokens, cost and provider calls are `null` with reason `UNKNOWN`.
+
+The harness rewrites `execution-record.json` and `proven-red.json` before every stage. A run stopped at any point
+therefore leaves a durable record with `run_state: INCOMPLETE`, the stage it stopped at, `exit_status: null` and an
+`INCOMPLETE` hold. The focused, bounded, L1 and architecture commands run first. The two slow full-suite runs follow:
+the release baseline in a disposable worktree, then the candidate. A complete run records `run_state: COMPLETE`.
 
 The feature-regression pack `local-bounded-control-capstone` (`tools/verification/feature_regressions.json`) reruns
 command 1 whenever a candidate changes the composed C3/C4/L1 boundaries.
+
+### Feature-regression receipt custody
+
+`.alienintent/feature-regressions.json` binds the exact candidate SHA (`candidate`) and a `receipt_digest` over its
+body. A commit cannot contain a receipt naming its own SHA, so the receipt is not a tracked file. It is written into
+the checkout of the exact candidate being verified. The invocation runtime does this before launching a verifier
+(`CliWorkerProvider._feature_regressions`), and `read_verdict` reads it beside the verdict. When the runtime is not
+the launcher, the verifier produces it in its own worktree at the retrieved SHA:
+
+```
+python3 tools/verification/run_feature_regressions.py --base <admission baseline> --candidate HEAD \
+  --receipt .alienintent/feature-regressions.json
+```
+
+The PRODUCER records its own receipt for the published SHA on the Issue for comparison. It does not replace the
+verifier-side receipt.
 
 ## Preparatory review
 
