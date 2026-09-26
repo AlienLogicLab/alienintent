@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/composition/test_upstream_integration_capstone.py::test_integration_mutates_no_lifecycle_or_project_state"],"cwd":"/tmp/fx-a-controls-7sul0nq2","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 5.98s\n"}

@@ -294,5 +294,57 @@ Retained evidence follows the FX-C layout in this directory:
 - `observations/`, named by sha256;
 - `digest-manifest.json`.
 
-The retained run is described in the evidence section below once captured. The independent verdict is pending the
-fresh BIU verifier.
+The independent verdict is pending the fresh BIU verifier.
+
+### Retained run `20260926T114829Z`
+
+- **Command:** `PYTHONPATH=src:. python3 -B tools/evidence/fx_a_evidence.py --output /tmp/fx-a-20260926T114829Z
+  --invocation AlienLogicLab/alienintent#119:PRODUCER:e9111cdb-9a88-4be8-82ed-3909a276b535`. It exited 0 with
+  `run_state: COMPLETE` and no holds.
+- **Source revision:** `ecac9848684740a2506f1cb512b37c908d1f2b5d`, with a clean `git status`. This is source commit
+  `15d1204` plus the custody note above. The evidence commit changes only this directory.
+- **Record digests (sha256):**
+  - `execution-record.json`: `04a098cbf6cedac42639585cda132d43341e7b228ab1d56a48f7d87657205461`
+  - `run-report.json`: `4840eba84936d6efc8e80f33f3ee017f2a090144f9b88c4a962eddcbb8aece94`
+  - `proven-red.json`: `a3e58f4d11e861a67c5b7e73520b6598aefff336993b6870366a1fdea78f841b`
+  - `digest-manifest.json`: `110d1afbc24dd6ca1ff87c5990a330983a372cac0a803067c747ef2220c460f3` (25 entries, each
+    re-checked after copying)
+- **Predecessor custody:** all nine accepted candidates and landing merges are ancestors of the source revision. No
+  pinned input is missing.
+
+| Command | Exit | Observed |
+|---|---|---|
+| focused (command 1) | 0 | 15 passed |
+| bounded initial (command 2) | 0 | 227 passed |
+| predecessor suites | 0 | 360 passed, 4 skipped |
+| architecture check | 0 | `PASS: all architecture fitness checks` |
+| architecture fitness tests | 0 | 14 passed |
+| feature-regression registry tests | 0 | 5 passed |
+| full Python regression | 1 | 25 failed, 1165 passed, 4 skipped |
+| `node scripts/check.mjs all` | 0 | passed |
+
+**Baseline condition.** The full Python regression at the release baseline `c5ef2bc` in a disposable worktree shows
+25 failed, 1150 passed, 4 skipped. The failing node ids are identical at both revisions. All 25 are in
+`tests/evidence_learning/test_proof_planning.py` (FX-U4 `PlanHold DESIGN_MISMATCH`). This is the same pre-existing
+condition FX-E1 records, and it is routed to its owner WO-220204. FX-A changes no file on that path. The run records it
+as `PRE_EXISTING_BASELINE_FAILURE`, not as a PASS.
+
+**Negative controls** (`proven-red.json`). Each was applied exactly once, with intact/fault/restored exits of 0/1/0.
+Each fault failed with its named assertion:
+- `premise_gate_removed`
+- `stale_source_revision_reused`
+- `lint_design_duty_removed`
+- `reservations_in_lifecycle_namespace`
+
+**Composed readback** (`run-report.json`). Every revision kind reads back one READY attempt and one producer launch,
+and the outside state is unchanged:
+
+| Revision | Read after revision |
+|---|---|
+| source | `LintHold` |
+| approval | `LintHold` |
+| ambiguity | `LintHold` |
+| decision | `Hold` |
+| design | `LintHold` |
+
+Tokens, cost and provider calls are `null` (`UNKNOWN`). There were zero Agent Ready invocations.

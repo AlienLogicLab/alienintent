@@ -1,0 +1,945 @@
+{
+  "acceptance_to_probes": {
+    "FX-A: inventory -> ambiguity -> premise/proof -> design applicability -> initial compilation -> lint and retained assessment consumption, in order": [
+      "test_chain_runs_in_order_to_eligibility"
+    ],
+    "class 1: inventory, ambiguity and premise evidence gate design applicability and compilation": [
+      "test_failed_upstream_evidence_stops_before_design_and_compilation"
+    ],
+    "class 2: a source, decision or design revision invalidates downstream applicability/readiness": [
+      "test_revision_mismatch_invalidates_downstream_readiness",
+      "test_unavailable_governing_decision_holds_before_assessment"
+    ],
+    "class 3: compilation and retained assessment consumption stay separate typed boundaries": [
+      "test_compilation_and_assessment_stay_separate_boundaries",
+      "test_unbound_producer_holds_before_launch"
+    ],
+    "class 4: no lifecycle/Project mutation; no output asserts release": [
+      "test_integration_mutates_no_lifecycle_or_project_state",
+      "test_revision_mismatch_invalidates_downstream_readiness"
+    ],
+    "composition boundary: every stage must be composed": [
+      "test_composition_requires_every_stage"
+    ],
+    "negative controls (one per material failure class)": [
+      "proven-red.json: premise_gate_removed, stale_source_revision_reused, lint_design_duty_removed, reservations_in_lifecycle_namespace"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/composition/test_upstream_integration_capstone.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:a58a0111620a240b76afcb7fed417e4e7adbe38e74d3288832428c5e0a3a8004",
+      "locator": "observations/a58a0111620a240b76afcb7fed417e4e7adbe38e74d3288832428c5e0a3a8004"
+    }
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:e1c12feffbcafe60f7f4051a2d0bc70ebbaca95368875e3aa2ee62742ba5ed1b",
+    "locator": "observations/e1c12feffbcafe60f7f4051a2d0bc70ebbaca95368875e3aa2ee62742ba5ed1b"
+  },
+  "composed_readback": {
+    "source": {
+      "compiled": {
+        "candidate_digest": "sha256:289e0f63dc89d810cfae78cf5c9a3befe157a9db941a319ed33433e15f3883f1",
+        "input_digest": "sha256:f6b2b7ca8d293d662d3d0595f0a25864bd3de10a69be2bcd03d15f7835a0e890",
+        "inputs": {
+          "inventory": "ed7b675f74b80affcd01e61b061fb97cb831a5fc676c7b0596e531c657a7649b",
+          "inspection": "7dd8906acf1a0710234404c5c5e19be0898d8e41f473aa3d8e830826bd3e4aec",
+          "design": {
+            "design_key": "SF-DESIGN-911",
+            "design_digest": "sha256:5e4587a43ce19571a7d3bad9e6683f482bf0fdce93df3eede6695916890e264f",
+            "review_digest": "sha256:c1d57f5345bc5dfd3e4cfcebe1e016c905a0145a0a98adf3f8b5dce134844e50"
+          },
+          "requirements": {
+            "SF-REQ-911": "329cb17f61a53de30fe33cc3115bc5ef3264438c96aba593fa32da0860a86f3e",
+            "SF-REQ-912": "0a10c596885173a9a1a410556c982c990f7567556e4110d5ec854443adab3615"
+          },
+          "proof_plans": {
+            "SF-REQ-911": "sha256:9ef57b935b1c4f59b3102c5c2e764c770bcc024b3a111b2c6d6666aa68387dab",
+            "SF-REQ-912": "sha256:97bb5e6c39dc361adae5c1a62057205b40e4852bd5ea0c22e9e658c45f8d5d1e"
+          },
+          "authority_limits": "sha256:4fdfae7d150741b7271dc65d82a0576a53e42b52c99da1df9051a6f3919824da"
+        },
+        "completed": true
+      },
+      "eligibility": {
+        "identity": "WO-000005",
+        "attempt_id": "9990ebc6-ae41-4d53-b734-55f8defcb6f4",
+        "contract_digest": "sha256:50da453d410e6970899ac9e990b143126f37304c8732bef2f87d277a558d3cd6",
+        "input_fingerprint": "sha256:f6a5c52d8033c49cf92372508aed78ee880836c42086669fdf5d42d2d8bb460c"
+      },
+      "after_revision": {
+        "type": "LintHold",
+        "identity": "WO-000005",
+        "duty": "architecture",
+        "field": "design_applicability",
+        "detail": "STALE"
+      },
+      "recompiled": {
+        "schema_version": 1,
+        "record_kind": "CompilationHold",
+        "mode": "INITIAL",
+        "candidate_digest": "sha256:7deb3cbde95e606bad445a48928c5cb50b31679d4642d1eccbd167da7edb779b",
+        "reason_code": "DESIGN_HOLD",
+        "affected_refs": [
+          "SF-DESIGN-911"
+        ],
+        "detail": "STALE",
+        "findings": [
+          {
+            "reason_code": "DESIGN_HOLD",
+            "affected_refs": [
+              "SF-DESIGN-911"
+            ]
+          }
+        ],
+        "vocabulary": "COMPILATION_HOLD_CODES_v1",
+        "transition": "NONE"
+      },
+      "retained_attempts": [
+        {
+          "attempt_id": "9990ebc6-ae41-4d53-b734-55f8defcb6f4",
+          "disposition": "READY"
+        }
+      ],
+      "producer_launches": 1,
+      "design_state": "STALE",
+      "outside_unchanged": true,
+      "outside_aggregates": [
+        "factory:WO-990300"
+      ]
+    },
+    "approval": {
+      "compiled": {
+        "candidate_digest": "sha256:289e0f63dc89d810cfae78cf5c9a3befe157a9db941a319ed33433e15f3883f1",
+        "input_digest": "sha256:f6b2b7ca8d293d662d3d0595f0a25864bd3de10a69be2bcd03d15f7835a0e890",
+        "inputs": {
+          "inventory": "ed7b675f74b80affcd01e61b061fb97cb831a5fc676c7b0596e531c657a7649b",
+          "inspection": "7dd8906acf1a0710234404c5c5e19be0898d8e41f473aa3d8e830826bd3e4aec",
+          "design": {
+            "design_key": "SF-DESIGN-911",
+            "design_digest": "sha256:5e4587a43ce19571a7d3bad9e6683f482bf0fdce93df3eede6695916890e264f",
+            "review_digest": "sha256:c1d57f5345bc5dfd3e4cfcebe1e016c905a0145a0a98adf3f8b5dce134844e50"
+          },
+          "requirements": {
+            "SF-REQ-911": "329cb17f61a53de30fe33cc3115bc5ef3264438c96aba593fa32da0860a86f3e",
+            "SF-REQ-912": "0a10c596885173a9a1a410556c982c990f7567556e4110d5ec854443adab3615"
+          },
+          "proof_plans": {
+            "SF-REQ-911": "sha256:9ef57b935b1c4f59b3102c5c2e764c770bcc024b3a111b2c6d6666aa68387dab",
+            "SF-REQ-912": "sha256:97bb5e6c39dc361adae5c1a62057205b40e4852bd5ea0c22e9e658c45f8d5d1e"
+          },
+          "authority_limits": "sha256:4fdfae7d150741b7271dc65d82a0576a53e42b52c99da1df9051a6f3919824da"
+        },
+        "completed": true
+      },
+      "eligibility": {
+        "identity": "WO-000005",
+        "attempt_id": "03f91642-20eb-4f62-8ae1-507110d76a46",
+        "contract_digest": "sha256:50da453d410e6970899ac9e990b143126f37304c8732bef2f87d277a558d3cd6",
+        "input_fingerprint": "sha256:f6a5c52d8033c49cf92372508aed78ee880836c42086669fdf5d42d2d8bb460c"
+      },
+      "after_revision": {
+        "type": "LintHold",
+        "identity": "WO-000005",
+        "duty": "architecture",
+        "field": "design_applicability",
+        "detail": "STALE"
+      },
+      "recompiled": {
+        "schema_version": 1,
+        "record_kind": "CompilationHold",
+        "mode": "INITIAL",
+        "candidate_digest": "sha256:f7cb0886f2ff6cec0aacecfe996be37754386af786d3a21e8152392e18a924d6",
+        "reason_code": "DESIGN_HOLD",
+        "affected_refs": [
+          "SF-DESIGN-911"
+        ],
+        "detail": "STALE",
+        "findings": [
+          {
+            "reason_code": "DESIGN_HOLD",
+            "affected_refs": [
+              "SF-DESIGN-911"
+            ]
+          }
+        ],
+        "vocabulary": "COMPILATION_HOLD_CODES_v1",
+        "transition": "NONE"
+      },
+      "retained_attempts": [
+        {
+          "attempt_id": "03f91642-20eb-4f62-8ae1-507110d76a46",
+          "disposition": "READY"
+        }
+      ],
+      "producer_launches": 1,
+      "design_state": "STALE",
+      "outside_unchanged": true,
+      "outside_aggregates": [
+        "factory:WO-990300"
+      ]
+    },
+    "ambiguity": {
+      "compiled": {
+        "candidate_digest": "sha256:289e0f63dc89d810cfae78cf5c9a3befe157a9db941a319ed33433e15f3883f1",
+        "input_digest": "sha256:f6b2b7ca8d293d662d3d0595f0a25864bd3de10a69be2bcd03d15f7835a0e890",
+        "inputs": {
+          "inventory": "ed7b675f74b80affcd01e61b061fb97cb831a5fc676c7b0596e531c657a7649b",
+          "inspection": "7dd8906acf1a0710234404c5c5e19be0898d8e41f473aa3d8e830826bd3e4aec",
+          "design": {
+            "design_key": "SF-DESIGN-911",
+            "design_digest": "sha256:5e4587a43ce19571a7d3bad9e6683f482bf0fdce93df3eede6695916890e264f",
+            "review_digest": "sha256:c1d57f5345bc5dfd3e4cfcebe1e016c905a0145a0a98adf3f8b5dce134844e50"
+          },
+          "requirements": {
+            "SF-REQ-911": "329cb17f61a53de30fe33cc3115bc5ef3264438c96aba593fa32da0860a86f3e",
+            "SF-REQ-912": "0a10c596885173a9a1a410556c982c990f7567556e4110d5ec854443adab3615"
+          },
+          "proof_plans": {
+            "SF-REQ-911": "sha256:9ef57b935b1c4f59b3102c5c2e764c770bcc024b3a111b2c6d6666aa68387dab",
+            "SF-REQ-912": "sha256:97bb5e6c39dc361adae5c1a62057205b40e4852bd5ea0c22e9e658c45f8d5d1e"
+          },
+          "authority_limits": "sha256:4fdfae7d150741b7271dc65d82a0576a53e42b52c99da1df9051a6f3919824da"
+        },
+        "completed": true
+      },
+      "eligibility": {
+        "identity": "WO-000005",
+        "attempt_id": "e5e79abe-c01f-416f-86af-ae9d50abf93f",
+        "contract_digest": "sha256:50da453d410e6970899ac9e990b143126f37304c8732bef2f87d277a558d3cd6",
+        "input_fingerprint": "sha256:f6a5c52d8033c49cf92372508aed78ee880836c42086669fdf5d42d2d8bb460c"
+      },
+      "after_revision": {
+        "type": "LintHold",
+        "identity": "WO-000005",
+        "duty": "architecture",
+        "field": "design_applicability",
+        "detail": "STALE"
+      },
+      "recompiled": {
+        "schema_version": 1,
+        "record_kind": "CompilationHold",
+        "mode": "INITIAL",
+        "candidate_digest": "sha256:f7cb0886f2ff6cec0aacecfe996be37754386af786d3a21e8152392e18a924d6",
+        "reason_code": "DESIGN_HOLD",
+        "affected_refs": [
+          "SF-DESIGN-911"
+        ],
+        "detail": "STALE",
+        "findings": [
+          {
+            "reason_code": "DESIGN_HOLD",
+            "affected_refs": [
+              "SF-DESIGN-911"
+            ]
+          }
+        ],
+        "vocabulary": "COMPILATION_HOLD_CODES_v1",
+        "transition": "NONE"
+      },
+      "retained_attempts": [
+        {
+          "attempt_id": "e5e79abe-c01f-416f-86af-ae9d50abf93f",
+          "disposition": "READY"
+        }
+      ],
+      "producer_launches": 1,
+      "design_state": "STALE",
+      "outside_unchanged": true,
+      "outside_aggregates": [
+        "factory:WO-990300"
+      ]
+    },
+    "decision": {
+      "compiled": {
+        "candidate_digest": "sha256:289e0f63dc89d810cfae78cf5c9a3befe157a9db941a319ed33433e15f3883f1",
+        "input_digest": "sha256:f6b2b7ca8d293d662d3d0595f0a25864bd3de10a69be2bcd03d15f7835a0e890",
+        "inputs": {
+          "inventory": "ed7b675f74b80affcd01e61b061fb97cb831a5fc676c7b0596e531c657a7649b",
+          "inspection": "7dd8906acf1a0710234404c5c5e19be0898d8e41f473aa3d8e830826bd3e4aec",
+          "design": {
+            "design_key": "SF-DESIGN-911",
+            "design_digest": "sha256:5e4587a43ce19571a7d3bad9e6683f482bf0fdce93df3eede6695916890e264f",
+            "review_digest": "sha256:c1d57f5345bc5dfd3e4cfcebe1e016c905a0145a0a98adf3f8b5dce134844e50"
+          },
+          "requirements": {
+            "SF-REQ-911": "329cb17f61a53de30fe33cc3115bc5ef3264438c96aba593fa32da0860a86f3e",
+            "SF-REQ-912": "0a10c596885173a9a1a410556c982c990f7567556e4110d5ec854443adab3615"
+          },
+          "proof_plans": {
+            "SF-REQ-911": "sha256:9ef57b935b1c4f59b3102c5c2e764c770bcc024b3a111b2c6d6666aa68387dab",
+            "SF-REQ-912": "sha256:97bb5e6c39dc361adae5c1a62057205b40e4852bd5ea0c22e9e658c45f8d5d1e"
+          },
+          "authority_limits": "sha256:4fdfae7d150741b7271dc65d82a0576a53e42b52c99da1df9051a6f3919824da"
+        },
+        "completed": true
+      },
+      "eligibility": {
+        "identity": "WO-000005",
+        "attempt_id": "de4c88f1-f71b-4d82-af72-ec378b8e6137",
+        "contract_digest": "sha256:50da453d410e6970899ac9e990b143126f37304c8732bef2f87d277a558d3cd6",
+        "input_fingerprint": "sha256:f6a5c52d8033c49cf92372508aed78ee880836c42086669fdf5d42d2d8bb460c"
+      },
+      "after_revision": {
+        "type": "Hold",
+        "reason_code": "STALE_ASSESSMENT",
+        "identity": "WO-000005",
+        "attempt_id": "de4c88f1-f71b-4d82-af72-ec378b8e6137",
+        "detail": "assessed inputs no longer match"
+      },
+      "recompiled": {
+        "schema_version": 1,
+        "record_kind": "CompilationCandidate",
+        "mode": "INITIAL",
+        "provenance": "DERIVED_FROM_PINNED_INPUTS",
+        "derivation_rule": "REQUIREMENT_BOUNDED_UNITS_v1",
+        "identity_rule": "INITIAL_IDENTITY_RESERVATION_v1",
+        "budget_rule": "PER_UNIT_CAP_FROM_AUTHORITY_LIMITS",
+        "rationale": "One unit per requirement the verified design satisfies: the requirement is the smallest authorized boundary of intent; finer semantic boundaries are Agent Ready SPLIT judgment applied by an authorized Split Transaction. Each field is copied from one named source; authority_limits.budget_policy is the authorized cap of each unit, never divided or raised. Candidate rule, subject to Design Verification.",
+        "labels": [
+          "INITIAL_COMPILATION",
+          "ADMITTED_FOR_ASSESSMENT_ONLY",
+          "IDENTITY_RULES_CANDIDATE_NOT_INDEPENDENTLY_DESIGN_VERIFIED"
+        ],
+        "admitted_for_assessment": true,
+        "inputs": {
+          "inventory": "ed7b675f74b80affcd01e61b061fb97cb831a5fc676c7b0596e531c657a7649b",
+          "inspection": "7dd8906acf1a0710234404c5c5e19be0898d8e41f473aa3d8e830826bd3e4aec",
+          "design": {
+            "design_key": "SF-DESIGN-911",
+            "design_digest": "sha256:5e4587a43ce19571a7d3bad9e6683f482bf0fdce93df3eede6695916890e264f",
+            "review_digest": "sha256:c1d57f5345bc5dfd3e4cfcebe1e016c905a0145a0a98adf3f8b5dce134844e50"
+          },
+          "requirements": {
+            "SF-REQ-911": "329cb17f61a53de30fe33cc3115bc5ef3264438c96aba593fa32da0860a86f3e",
+            "SF-REQ-912": "0a10c596885173a9a1a410556c982c990f7567556e4110d5ec854443adab3615"
+          },
+          "proof_plans": {
+            "SF-REQ-911": "sha256:9ef57b935b1c4f59b3102c5c2e764c770bcc024b3a111b2c6d6666aa68387dab",
+            "SF-REQ-912": "sha256:97bb5e6c39dc361adae5c1a62057205b40e4852bd5ea0c22e9e658c45f8d5d1e"
+          },
+          "authority_limits": "sha256:4fdfae7d150741b7271dc65d82a0576a53e42b52c99da1df9051a6f3919824da"
+        },
+        "units": [
+          {
+            "unit_key": "requirement:SF-REQ-911",
+            "identity": "WO-000005",
+            "content_digest": "sha256:50da453d410e6970899ac9e990b143126f37304c8732bef2f87d277a558d3cd6",
+            "contract": {
+              "version": "sha256:e7deab9c54bdb3ef196aae49f66ca8c691b04dd2242334c46ea48ad6ddbb8319",
+              "identity": "WO-000005",
+              "intent": "Derive units from pinned requirements.",
+              "satisfied_requirement_ids": [
+                "SF-REQ-911"
+              ],
+              "fixed_decisions": [
+                "D-UNITS: one unit per specified requirement"
+              ],
+              "authorized_scope": [
+                "unit derivation",
+                "contract fields"
+              ],
+              "excluded_scope": [
+                "live release"
+              ],
+              "dependencies": [],
+              "required_capabilities": [
+                "python",
+                "sqlite"
+              ],
+              "budget_policy": {
+                "hard_required_dimensions": [
+                  "attempts"
+                ],
+                "maximum_attempts": 3,
+                "hard_wall_clock_seconds": 7200,
+                "retry_limit": 1,
+                "concurrency_limit": 1
+              },
+              "retry_policy": "one replacement per phase",
+              "completion_criteria": [
+                "SF-REQ-911-AC-01: every unit carries every contract field",
+                "SF-REQ-911-AC-02: every obligation keeps an explicit extent"
+              ],
+              "verification_obligations": [
+                "SF-REQ-911/SF-REQ-911-AC-01/P1: SF-REQ-911-AC-01 holds for the composed fixture",
+                "SF-REQ-911/SF-REQ-911-AC-02/P1: SF-REQ-911-AC-02 holds for the composed fixture"
+              ],
+              "required_evidence": [
+                "SF-REQ-911/SF-REQ-911-AC-01/P1#evidence: observation_ref; exit_status",
+                "SF-REQ-911/SF-REQ-911-AC-02/P1#evidence: observation_ref; exit_status",
+                "an immutable observation retains each compilation record"
+              ],
+              "non_goals": [
+                "live release"
+              ],
+              "candidate_custody_requirements": [
+                "publish the exact candidate SHA"
+              ],
+              "release_policy": "explicit-human-off",
+              "authority_issuer": "Founder",
+              "authority_references": [
+                "SF-REQ-013 amendment 2026-09-22",
+                "SWF-19",
+                "requirement:SF-REQ-911@329cb17f61a53de30fe33cc3115bc5ef3264438c96aba593fa32da0860a86f3e",
+                "design:SF-DESIGN-911@sha256:5e4587a43ce19571a7d3bad9e6683f482bf0fdce93df3eede6695916890e264f",
+                "proof-plan:SF-REQ-911@sha256:9ef57b935b1c4f59b3102c5c2e764c770bcc024b3a111b2c6d6666aa68387dab",
+                "inspection:7dd8906acf1a0710234404c5c5e19be0898d8e41f473aa3d8e830826bd3e4aec"
+              ],
+              "target_repositories": [
+                "AlienLogicLab/alienintent"
+              ],
+              "baselines": [
+                "main@d716552b"
+              ],
+              "required_closure_actions": [
+                "land or park"
+              ],
+              "stop_escalation_conditions": [
+                "authority gap"
+              ]
+            }
+          },
+          {
+            "unit_key": "requirement:SF-REQ-912",
+            "identity": "WO-000006",
+            "content_digest": "sha256:3b33ca86bee8edcd59dc7b0a2a357bf9ad6cd2b6b0b8946b5e9c37f3b6ef37e3",
+            "contract": {
+              "version": "sha256:4f5a48a12bcc66bbd765f99eedb5a651213be503c0dec61d3fc73f1b84467f44",
+              "identity": "WO-000006",
+              "intent": "Order derived units by dependency.",
+              "satisfied_requirement_ids": [
+                "SF-REQ-912"
+              ],
+              "fixed_decisions": [
+                "D-UNITS: one unit per specified requirement"
+              ],
+              "authorized_scope": [
+                "dependency edges after SF-REQ-911",
+                "external predecessor SF-REQ-913"
+              ],
+              "excluded_scope": [
+                "live release"
+              ],
+              "dependencies": [
+                "WO-000005",
+                "WO-990300"
+              ],
+              "required_capabilities": [
+                "python",
+                "sqlite"
+              ],
+              "budget_policy": {
+                "hard_required_dimensions": [
+                  "attempts"
+                ],
+                "maximum_attempts": 3,
+                "hard_wall_clock_seconds": 7200,
+                "retry_limit": 1,
+                "concurrency_limit": 1
+              },
+              "retry_policy": "one replacement per phase",
+              "completion_criteria": [
+                "SF-REQ-912-AC-01: each dependency edge names a DONE predicate"
+              ],
+              "verification_obligations": [
+                "SF-REQ-912/SF-REQ-912-AC-01/P1: SF-REQ-912-AC-01 holds for the composed fixture"
+              ],
+              "required_evidence": [
+                "SF-REQ-912/SF-REQ-912-AC-01/P1#evidence: observation_ref; exit_status",
+                "an immutable observation retains each compilation record"
+              ],
+              "non_goals": [
+                "live release"
+              ],
+              "candidate_custody_requirements": [
+                "publish the exact candidate SHA"
+              ],
+              "release_policy": "explicit-human-off",
+              "authority_issuer": "Founder",
+              "authority_references": [
+                "SF-REQ-013 amendment 2026-09-22",
+                "SWF-19",
+                "requirement:SF-REQ-912@0a10c596885173a9a1a410556c982c990f7567556e4110d5ec854443adab3615",
+                "design:SF-DESIGN-911@sha256:5e4587a43ce19571a7d3bad9e6683f482bf0fdce93df3eede6695916890e264f",
+                "proof-plan:SF-REQ-912@sha256:97bb5e6c39dc361adae5c1a62057205b40e4852bd5ea0c22e9e658c45f8d5d1e",
+                "inspection:7dd8906acf1a0710234404c5c5e19be0898d8e41f473aa3d8e830826bd3e4aec"
+              ],
+              "target_repositories": [
+                "AlienLogicLab/alienintent"
+              ],
+              "baselines": [
+                "main@d716552b"
+              ],
+              "required_closure_actions": [
+                "land or park"
+              ],
+              "stop_escalation_conditions": [
+                "authority gap"
+              ]
+            }
+          }
+        ],
+        "edges": [
+          {
+            "from": "WO-000005",
+            "to": "WO-000006",
+            "predicate": "DONE"
+          },
+          {
+            "from": "WO-990300",
+            "to": "WO-000006",
+            "predicate": "DONE"
+          }
+        ],
+        "external_predecessors": [
+          {
+            "identity": "WO-990300",
+            "stage": "DONE"
+          }
+        ],
+        "obligations": [
+          {
+            "id": "SF-REQ-911",
+            "category": "requirement",
+            "unit_key": "requirement:SF-REQ-911",
+            "field": "satisfied_requirement_ids",
+            "text": "SF-REQ-911"
+          },
+          {
+            "id": "SF-REQ-911-AC-01",
+            "category": "acceptance",
+            "unit_key": "requirement:SF-REQ-911",
+            "field": "completion_criteria",
+            "text": "SF-REQ-911-AC-01: every unit carries every contract field"
+          },
+          {
+            "id": "SF-REQ-911-AC-02",
+            "category": "acceptance",
+            "unit_key": "requirement:SF-REQ-911",
+            "field": "completion_criteria",
+            "text": "SF-REQ-911-AC-02: every obligation keeps an explicit extent"
+          },
+          {
+            "id": "SF-REQ-911/SF-REQ-911-AC-01/P1",
+            "category": "verification",
+            "unit_key": "requirement:SF-REQ-911",
+            "field": "verification_obligations",
+            "text": "SF-REQ-911/SF-REQ-911-AC-01/P1: SF-REQ-911-AC-01 holds for the composed fixture"
+          },
+          {
+            "id": "SF-REQ-911/SF-REQ-911-AC-01/P1#evidence",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-911",
+            "field": "required_evidence",
+            "text": "SF-REQ-911/SF-REQ-911-AC-01/P1#evidence: observation_ref; exit_status"
+          },
+          {
+            "id": "SF-REQ-911/SF-REQ-911-AC-02/P1",
+            "category": "verification",
+            "unit_key": "requirement:SF-REQ-911",
+            "field": "verification_obligations",
+            "text": "SF-REQ-911/SF-REQ-911-AC-02/P1: SF-REQ-911-AC-02 holds for the composed fixture"
+          },
+          {
+            "id": "SF-REQ-911/SF-REQ-911-AC-02/P1#evidence",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-911",
+            "field": "required_evidence",
+            "text": "SF-REQ-911/SF-REQ-911-AC-02/P1#evidence: observation_ref; exit_status"
+          },
+          {
+            "id": "SF-DESIGN-911#evidence:a01e0b83fd12",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-911",
+            "field": "required_evidence",
+            "text": "an immutable observation retains each compilation record"
+          },
+          {
+            "id": "SF-REQ-912",
+            "category": "requirement",
+            "unit_key": "requirement:SF-REQ-912",
+            "field": "satisfied_requirement_ids",
+            "text": "SF-REQ-912"
+          },
+          {
+            "id": "SF-REQ-912-AC-01",
+            "category": "acceptance",
+            "unit_key": "requirement:SF-REQ-912",
+            "field": "completion_criteria",
+            "text": "SF-REQ-912-AC-01: each dependency edge names a DONE predicate"
+          },
+          {
+            "id": "SF-REQ-912/SF-REQ-912-AC-01/P1",
+            "category": "verification",
+            "unit_key": "requirement:SF-REQ-912",
+            "field": "verification_obligations",
+            "text": "SF-REQ-912/SF-REQ-912-AC-01/P1: SF-REQ-912-AC-01 holds for the composed fixture"
+          },
+          {
+            "id": "SF-REQ-912/SF-REQ-912-AC-01/P1#evidence",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-912",
+            "field": "required_evidence",
+            "text": "SF-REQ-912/SF-REQ-912-AC-01/P1#evidence: observation_ref; exit_status"
+          },
+          {
+            "id": "SF-DESIGN-911#evidence:a01e0b83fd12",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-912",
+            "field": "required_evidence",
+            "text": "an immutable observation retains each compilation record"
+          }
+        ],
+        "mapping": [
+          {
+            "obligation_id": "SF-REQ-911-AC-01",
+            "category": "acceptance",
+            "unit_key": "requirement:SF-REQ-911",
+            "extents": [
+              {
+                "identity": "WO-000005",
+                "field": "completion_criteria"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-911",
+            "category": "requirement",
+            "unit_key": "requirement:SF-REQ-911",
+            "extents": [
+              {
+                "identity": "WO-000005",
+                "field": "satisfied_requirement_ids"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-911/SF-REQ-911-AC-02/P1",
+            "category": "verification",
+            "unit_key": "requirement:SF-REQ-911",
+            "extents": [
+              {
+                "identity": "WO-000005",
+                "field": "verification_obligations"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-DESIGN-911#evidence:a01e0b83fd12",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-912",
+            "extents": [
+              {
+                "identity": "WO-000006",
+                "field": "required_evidence"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-DESIGN-911#evidence:a01e0b83fd12",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-911",
+            "extents": [
+              {
+                "identity": "WO-000005",
+                "field": "required_evidence"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-912/SF-REQ-912-AC-01/P1#evidence",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-912",
+            "extents": [
+              {
+                "identity": "WO-000006",
+                "field": "required_evidence"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-911/SF-REQ-911-AC-01/P1#evidence",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-911",
+            "extents": [
+              {
+                "identity": "WO-000005",
+                "field": "required_evidence"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-911/SF-REQ-911-AC-02/P1#evidence",
+            "category": "evidence",
+            "unit_key": "requirement:SF-REQ-911",
+            "extents": [
+              {
+                "identity": "WO-000005",
+                "field": "required_evidence"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-912-AC-01",
+            "category": "acceptance",
+            "unit_key": "requirement:SF-REQ-912",
+            "extents": [
+              {
+                "identity": "WO-000006",
+                "field": "completion_criteria"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-911-AC-02",
+            "category": "acceptance",
+            "unit_key": "requirement:SF-REQ-911",
+            "extents": [
+              {
+                "identity": "WO-000005",
+                "field": "completion_criteria"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-912/SF-REQ-912-AC-01/P1",
+            "category": "verification",
+            "unit_key": "requirement:SF-REQ-912",
+            "extents": [
+              {
+                "identity": "WO-000006",
+                "field": "verification_obligations"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-911/SF-REQ-911-AC-01/P1",
+            "category": "verification",
+            "unit_key": "requirement:SF-REQ-911",
+            "extents": [
+              {
+                "identity": "WO-000005",
+                "field": "verification_obligations"
+              }
+            ]
+          },
+          {
+            "obligation_id": "SF-REQ-912",
+            "category": "requirement",
+            "unit_key": "requirement:SF-REQ-912",
+            "extents": [
+              {
+                "identity": "WO-000006",
+                "field": "satisfied_requirement_ids"
+              }
+            ]
+          }
+        ],
+        "reverse": [
+          {
+            "identity": "WO-000005",
+            "field": "satisfied_requirement_ids",
+            "obligation_id": "SF-REQ-911"
+          },
+          {
+            "identity": "WO-000005",
+            "field": "required_evidence",
+            "obligation_id": "SF-REQ-911/SF-REQ-911-AC-01/P1#evidence"
+          },
+          {
+            "identity": "WO-000005",
+            "field": "required_evidence",
+            "obligation_id": "SF-DESIGN-911#evidence:a01e0b83fd12"
+          },
+          {
+            "identity": "WO-000006",
+            "field": "verification_obligations",
+            "obligation_id": "SF-REQ-912/SF-REQ-912-AC-01/P1"
+          },
+          {
+            "identity": "WO-000006",
+            "field": "required_evidence",
+            "obligation_id": "SF-REQ-912/SF-REQ-912-AC-01/P1#evidence"
+          },
+          {
+            "identity": "WO-000005",
+            "field": "completion_criteria",
+            "obligation_id": "SF-REQ-911-AC-02"
+          },
+          {
+            "identity": "WO-000005",
+            "field": "verification_obligations",
+            "obligation_id": "SF-REQ-911/SF-REQ-911-AC-01/P1"
+          },
+          {
+            "identity": "WO-000006",
+            "field": "satisfied_requirement_ids",
+            "obligation_id": "SF-REQ-912"
+          },
+          {
+            "identity": "WO-000006",
+            "field": "required_evidence",
+            "obligation_id": "SF-DESIGN-911#evidence:a01e0b83fd12"
+          },
+          {
+            "identity": "WO-000005",
+            "field": "verification_obligations",
+            "obligation_id": "SF-REQ-911/SF-REQ-911-AC-02/P1"
+          },
+          {
+            "identity": "WO-000005",
+            "field": "required_evidence",
+            "obligation_id": "SF-REQ-911/SF-REQ-911-AC-02/P1#evidence"
+          },
+          {
+            "identity": "WO-000005",
+            "field": "completion_criteria",
+            "obligation_id": "SF-REQ-911-AC-01"
+          },
+          {
+            "identity": "WO-000006",
+            "field": "completion_criteria",
+            "obligation_id": "SF-REQ-912-AC-01"
+          }
+        ],
+        "coverage": {
+          "requirement": {
+            "total": 2,
+            "covered": 2
+          },
+          "acceptance": {
+            "total": 3,
+            "covered": 3
+          },
+          "verification": {
+            "total": 3,
+            "covered": 3
+          },
+          "evidence": {
+            "total": 4,
+            "covered": 4
+          }
+        },
+        "coverage_is_not_satisfaction": true,
+        "validation": {
+          "record_kind": "ValidationReport",
+          "labels": [
+            "VALIDATION_ONLY"
+          ],
+          "candidate_digest": "sha256:f245090a6c67aaf11462d9712269030080a08e25fcfef67ef372dd03c92d97ef",
+          "report_digest": "sha256:940199c45648cfdd095dbad900338d0fafe529b27f9084ed49479eff9d7fecef"
+        },
+        "reservations": {
+          "requirement:SF-REQ-911": "WO-000005",
+          "requirement:SF-REQ-912": "WO-000006"
+        },
+        "non_claims": [
+          "SPLIT_PREPARE_OR_APPLY",
+          "ISSUE_ALLOCATION_OR_MATERIALIZATION",
+          "LIFECYCLE_OR_RELEASE_TRANSITION",
+          "SF_REQ_015_LINT_OR_ASSESSMENT",
+          "OBLIGATION_SATISFACTION"
+        ]
+      },
+      "retained_attempts": [
+        {
+          "attempt_id": "de4c88f1-f71b-4d82-af72-ec378b8e6137",
+          "disposition": "READY"
+        }
+      ],
+      "producer_launches": 1,
+      "design_state": "VERIFIED",
+      "outside_unchanged": true,
+      "outside_aggregates": [
+        "factory:WO-990300"
+      ]
+    },
+    "design": {
+      "compiled": {
+        "candidate_digest": "sha256:289e0f63dc89d810cfae78cf5c9a3befe157a9db941a319ed33433e15f3883f1",
+        "input_digest": "sha256:f6b2b7ca8d293d662d3d0595f0a25864bd3de10a69be2bcd03d15f7835a0e890",
+        "inputs": {
+          "inventory": "ed7b675f74b80affcd01e61b061fb97cb831a5fc676c7b0596e531c657a7649b",
+          "inspection": "7dd8906acf1a0710234404c5c5e19be0898d8e41f473aa3d8e830826bd3e4aec",
+          "design": {
+            "design_key": "SF-DESIGN-911",
+            "design_digest": "sha256:5e4587a43ce19571a7d3bad9e6683f482bf0fdce93df3eede6695916890e264f",
+            "review_digest": "sha256:c1d57f5345bc5dfd3e4cfcebe1e016c905a0145a0a98adf3f8b5dce134844e50"
+          },
+          "requirements": {
+            "SF-REQ-911": "329cb17f61a53de30fe33cc3115bc5ef3264438c96aba593fa32da0860a86f3e",
+            "SF-REQ-912": "0a10c596885173a9a1a410556c982c990f7567556e4110d5ec854443adab3615"
+          },
+          "proof_plans": {
+            "SF-REQ-911": "sha256:9ef57b935b1c4f59b3102c5c2e764c770bcc024b3a111b2c6d6666aa68387dab",
+            "SF-REQ-912": "sha256:97bb5e6c39dc361adae5c1a62057205b40e4852bd5ea0c22e9e658c45f8d5d1e"
+          },
+          "authority_limits": "sha256:4fdfae7d150741b7271dc65d82a0576a53e42b52c99da1df9051a6f3919824da"
+        },
+        "completed": true
+      },
+      "eligibility": {
+        "identity": "WO-000005",
+        "attempt_id": "3d418314-7e60-4bdb-943a-bc0c9381c7a6",
+        "contract_digest": "sha256:50da453d410e6970899ac9e990b143126f37304c8732bef2f87d277a558d3cd6",
+        "input_fingerprint": "sha256:f6a5c52d8033c49cf92372508aed78ee880836c42086669fdf5d42d2d8bb460c"
+      },
+      "after_revision": {
+        "type": "LintHold",
+        "identity": "WO-000005",
+        "duty": "architecture",
+        "field": "design_applicability",
+        "detail": "REVIEW_REQUIRED"
+      },
+      "recompiled": {
+        "schema_version": 1,
+        "record_kind": "CompilationHold",
+        "mode": "INITIAL",
+        "candidate_digest": "sha256:361153bc8f7d55804d767f91eb928b4df254d5a4c1ae310b3417e06a4d98cbfc",
+        "reason_code": "DESIGN_HOLD",
+        "affected_refs": [
+          "SF-DESIGN-911"
+        ],
+        "detail": "REVIEW_REQUIRED",
+        "findings": [
+          {
+            "reason_code": "DESIGN_HOLD",
+            "affected_refs": [
+              "SF-DESIGN-911"
+            ]
+          }
+        ],
+        "vocabulary": "COMPILATION_HOLD_CODES_v1",
+        "transition": "NONE"
+      },
+      "retained_attempts": [
+        {
+          "attempt_id": "3d418314-7e60-4bdb-943a-bc0c9381c7a6",
+          "disposition": "READY"
+        }
+      ],
+      "producer_launches": 1,
+      "design_state": "REVIEW_REQUIRED",
+      "outside_unchanged": true,
+      "outside_aggregates": [
+        "factory:WO-990300"
+      ]
+    }
+  },
+  "boundaries": "local/composed fixture only; fixture producer bound to a disposable package, never native Agent Ready; no release, lifecycle transition, Project write, split apply or live operation",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}

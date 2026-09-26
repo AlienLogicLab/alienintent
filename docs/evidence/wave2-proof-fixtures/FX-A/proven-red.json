@@ -1,0 +1,165 @@
+{
+  "controls": [
+    {
+      "control": "premise_gate_removed",
+      "failure_class": "inventory, ambiguity and premise evidence must pass before design applicability and initial compilation",
+      "file": "src/alienintent/context_assembly/domain/design_admission.py",
+      "application_count": 1,
+      "source_digest": "sha256:e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+      "mutation": {
+        "remove": "    if infeasible:\n",
+        "replace_with": "    if False and infeasible:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_upstream_integration_capstone.py::test_failed_upstream_evidence_stops_before_design_and_compilation[premise]"
+      ],
+      "assertions": [
+        "failed upstream evidence must not compile"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:fd44d2672d08dd3eeb793ea8ae56975696217768580c28b0db2dad1c4f99646d",
+        "locator": "observations/fd44d2672d08dd3eeb793ea8ae56975696217768580c28b0db2dad1c4f99646d"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:2f88e2ebcfc52d8da52b261132329fe9b7bff470d1a867ad4776740cac0fa43c",
+        "locator": "observations/2f88e2ebcfc52d8da52b261132329fe9b7bff470d1a867ad4776740cac0fa43c"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:ce2afed01554ea165047eccfe908cafa67fd99b7fde96aa385fb10597ea38335",
+        "locator": "observations/ce2afed01554ea165047eccfe908cafa67fd99b7fde96aa385fb10597ea38335"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "stale_source_revision_reused",
+      "failure_class": "a source, decision or design revision mismatch invalidates downstream applicability/readiness",
+      "file": "src/alienintent/composition/upstream_integration.py",
+      "application_count": 1,
+      "source_digest": "sha256:76228a8b1033a827597a4c5ca7c12222cbbf90e38209f1af8b5bfcefc5a90490",
+      "mutation": {
+        "remove": "\"requirements\": {r: revisions.get(r) for r in sorted(design.requirements)}",
+        "replace_with": "\"requirements\": dict(sorted(design.requirements.items()))"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_upstream_integration_capstone.py::test_revision_mismatch_invalidates_downstream_readiness[source]"
+      ],
+      "assertions": [
+        "a stale READY must never be reused after a revision"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:186d18b72445991cba4c4f4ef5a749ac3577f839e16359a2fbaeff970df69b5e",
+        "locator": "observations/186d18b72445991cba4c4f4ef5a749ac3577f839e16359a2fbaeff970df69b5e"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:6f8cf3cf60752681d5bf92c7a1fb920aad0d1383cb3544ae005ac4ca39cecaeb",
+        "locator": "observations/6f8cf3cf60752681d5bf92c7a1fb920aad0d1383cb3544ae005ac4ca39cecaeb"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:06d103dbb96fccfa81deb48b2cd2f2ff24a10bc0c5a8d2ddda30ed0776f6a6cd",
+        "locator": "observations/06d103dbb96fccfa81deb48b2cd2f2ff24a10bc0c5a8d2ddda30ed0776f6a6cd"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "lint_design_duty_removed",
+      "failure_class": "compilation and retained assessment consumption stay separate typed boundaries and cannot bypass design applicability or lint/provenance",
+      "file": "src/alienintent/context_assembly/domain/readiness.py",
+      "application_count": 1,
+      "source_digest": "sha256:b7de00c6426a0987dd3135349545bf53b7eb5343ff2ced9b625f9d5501595806",
+      "mutation": {
+        "remove": "    if not isinstance(design_applicability, CurrentVerified):\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_upstream_integration_capstone.py::test_compilation_and_assessment_stay_separate_boundaries"
+      ],
+      "assertions": [
+        "readiness must not bypass design applicability"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:5563f1c4c20cbf045d096518b6ea03c8b407d939c0d19ad4c37a199967c3bee1",
+        "locator": "observations/5563f1c4c20cbf045d096518b6ea03c8b407d939c0d19ad4c37a199967c3bee1"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:1a6c11525d16711e47add87e2ae54bd243fbc72c751c99d8a73d20a43eaaeacc",
+        "locator": "observations/1a6c11525d16711e47add87e2ae54bd243fbc72c751c99d8a73d20a43eaaeacc"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:cea1b300229144c719233240aa3d7215d8ff02bd7b3f575380d8d91857c3df55",
+        "locator": "observations/cea1b300229144c719233240aa3d7215d8ff02bd7b3f575380d8d91857c3df55"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "reservations_in_lifecycle_namespace",
+      "failure_class": "integration produces no lifecycle/Project mutation and cannot assert release",
+      "file": "src/alienintent/context_assembly/application/initial_compilation_service.py",
+      "application_count": 1,
+      "source_digest": "sha256:77760a55322889e137f2adbbd5f7e0f4685d686b129ebbe2fc91043c62c81665",
+      "mutation": {
+        "remove": "RESERVATIONS = \"upstream:identity-reservations\"",
+        "replace_with": "RESERVATIONS = \"factory:identity-reservations\""
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_upstream_integration_capstone.py::test_integration_mutates_no_lifecycle_or_project_state"
+      ],
+      "assertions": [
+        "the integration must not write lifecycle, release or Project state"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:c751fe8bbdbb32757e49f1814906f3189eab3434aede491318eebf66447e264b",
+        "locator": "observations/c751fe8bbdbb32757e49f1814906f3189eab3434aede491318eebf66447e264b"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:bf52a02a0addf2e823df4284d09a7f7395ee1d7c37bda29081844e3460e5341d",
+        "locator": "observations/bf52a02a0addf2e823df4284d09a7f7395ee1d7c37bda29081844e3460e5341d"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:1a7804beda37e67280992f6e5b8027eb31115e3d5993aefab345a064e004ec05",
+        "locator": "observations/1a7804beda37e67280992f6e5b8027eb31115e3d5993aefab345a064e004ec05"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}

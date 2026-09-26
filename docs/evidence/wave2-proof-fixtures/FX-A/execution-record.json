@@ -1,0 +1,339 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-A",
+  "work_unit": "WO-220211",
+  "issue": 119,
+  "invocation": "AlienLogicLab/alienintent#119:PRODUCER:e9111cdb-9a88-4be8-82ed-3909a276b535",
+  "source_revision": "ecac9848684740a2506f1cb512b37c908d1f2b5d",
+  "source_status": "",
+  "admission_baseline": "c5ef2bc033e712b61da045df47f25b01b40f4dcc",
+  "predecessors": [
+    {
+      "biu": "WO-220201",
+      "issue": 76,
+      "stage": "U1 inventory",
+      "accepted_candidate": "43ea5e2b745be02df6aebaf5ba1e328f4c75fa5e",
+      "landing_merge": "fcb65fffda65fc2a01516aed38d8d5a662cbaba8",
+      "ancestor_of_candidate": {
+        "43ea5e2b745be02df6aebaf5ba1e328f4c75fa5e": true,
+        "fcb65fffda65fc2a01516aed38d8d5a662cbaba8": true
+      }
+    },
+    {
+      "biu": "WO-220202",
+      "issue": 80,
+      "stage": "U2 ambiguity",
+      "accepted_candidate": "d0eacfb6dd8626b07ff1d99e9c633294f13d9de4",
+      "landing_merge": "70fa7148939dfcebbcef73d858f9f481869d7214",
+      "ancestor_of_candidate": {
+        "d0eacfb6dd8626b07ff1d99e9c633294f13d9de4": true,
+        "70fa7148939dfcebbcef73d858f9f481869d7214": true
+      }
+    },
+    {
+      "biu": "WO-220203",
+      "issue": 81,
+      "stage": "U3 premise",
+      "accepted_candidate": "3e8dc7032dc7e61aac48b66ea9d08a3e789757ad",
+      "landing_merge": "474343a4142316941340762a243e965ef44bb15c",
+      "ancestor_of_candidate": {
+        "3e8dc7032dc7e61aac48b66ea9d08a3e789757ad": true,
+        "474343a4142316941340762a243e965ef44bb15c": true
+      }
+    },
+    {
+      "biu": "WO-220204",
+      "issue": 94,
+      "stage": "U4 proof plans",
+      "accepted_candidate": "c8ed707efdb0cd70294bfdb6814ec9f9eb71216d",
+      "landing_merge": "44fd55cb0b54da0a43e77e4e3218dbb0653433ff",
+      "ancestor_of_candidate": {
+        "c8ed707efdb0cd70294bfdb6814ec9f9eb71216d": true,
+        "44fd55cb0b54da0a43e77e4e3218dbb0653433ff": true
+      }
+    },
+    {
+      "biu": "WO-220205",
+      "issue": 97,
+      "stage": "U5 design admission",
+      "accepted_candidate": "6518d1ef09fc99e8abccf1c6234106f860fce7e6",
+      "landing_merge": "036c5fc2d2c7f1699b23ac171e9e019aa8d4fc98",
+      "ancestor_of_candidate": {
+        "6518d1ef09fc99e8abccf1c6234106f860fce7e6": true,
+        "036c5fc2d2c7f1699b23ac171e9e019aa8d4fc98": true
+      }
+    },
+    {
+      "biu": "WO-220206",
+      "issue": 110,
+      "stage": "U6 coupling checks",
+      "accepted_candidate": "99e238b677da46c7b9d9ad65dd1b9477c28cf9ff",
+      "landing_merge": "f03b0cbab2835e01ea2c0d8c0379b1b1cc5f1e62",
+      "ancestor_of_candidate": {
+        "99e238b677da46c7b9d9ad65dd1b9477c28cf9ff": true,
+        "f03b0cbab2835e01ea2c0d8c0379b1b1cc5f1e62": true
+      }
+    },
+    {
+      "biu": "WO-220207",
+      "issue": 101,
+      "stage": "U7 compilation validation",
+      "accepted_candidate": "9d97365f58d41147923d3070ac2f838937ed0f4f",
+      "landing_merge": "0588eae74bbbdddfd8650e349fff472f0db20eff",
+      "ancestor_of_candidate": {
+        "9d97365f58d41147923d3070ac2f838937ed0f4f": true,
+        "0588eae74bbbdddfd8650e349fff472f0db20eff": true
+      }
+    },
+    {
+      "biu": "WO-220208",
+      "issue": 117,
+      "stage": "U8 initial compilation",
+      "accepted_candidate": "e5a61dcd5746dcc158cf4fe823e4ab4d82d4ed5e",
+      "landing_merge": "610703bb6cf79d1fdf403bd6d7cfd2580c6a3bf9",
+      "ancestor_of_candidate": {
+        "e5a61dcd5746dcc158cf4fe823e4ab4d82d4ed5e": true,
+        "610703bb6cf79d1fdf403bd6d7cfd2580c6a3bf9": true
+      }
+    },
+    {
+      "biu": "WO-220209",
+      "issue": 105,
+      "stage": "U9 readiness consumer",
+      "accepted_candidate": "6eecc30c002785f0cc82f0645fbef601c1503e84",
+      "landing_merge": "7595c9c9e953795a4bb148a5c56d7e6ea512414d",
+      "ancestor_of_candidate": {
+        "6eecc30c002785f0cc82f0645fbef601c1503e84": true,
+        "7595c9c9e953795a4bb148a5c56d7e6ea512414d": true
+      }
+    }
+  ],
+  "input_digests": {
+    "docs/evidence/wave2-proof-fixtures/FX-A/FX-A.md": "sha256:3764bd8998f273d32318685423fd15c58a9f6333755cc9888b8909b7990a66e5",
+    "docs/work-units/wave2/WO-220211.md": "sha256:9e47a79ee56993ec09c979a9434433a4757368db43378e29f5a651f55d2ee07e",
+    "docs/evidence/wave2-readiness-assessments/WO-220211.2026-09-26T101031.613435Z.assessment.json": "sha256:887ae3d47250207e12bba0d1cc265a78939026b2a2cfb92bb8f234310e665025",
+    "docs/evidence/wave2-design-contracts.json": "sha256:1cd1fe512e6d24cb7e90d813fd01eb0532e17564d95c99cdf63f63addbe05e80",
+    "docs/evidence/wave2-dependency-dag.json": "sha256:d199768a4481c264848a98db04e6fb8f5f1630151fda7be868319d6bcbd5a95c",
+    "docs/evidence/wave2-candidate-bius.json": "sha256:a3bf2c56e98dc3e8318b5b2d858483542c8553cf66e8e16f5e09534bc8e15695",
+    "docs/evidence/wave2-execution-packets/WO-220211.packet.json": "sha256:96a75fece03ae365c1274312e4532ee1ab178127c670caa60a4d08d8c9be6839",
+    "docs/evidence/wave2-execution-packets/WO-220211.allocation.json": "sha256:5eef141e279288c5b3cffde0005b73cf0432213414451dfa7bead22ea906984c",
+    "docs/evidence/wave2-execution-packets/WO-220211.proof-packet.md": "sha256:81484670df7eac9cccfe6396480ccbc8429463ace3ffb0ea6aee9e6594183018",
+    "docs/evidence/wo-220201-fx-u1.md": "sha256:bfa3f9191e7e450ec5a831c705f586b7b2a1565989814ced77c5f4178f9743f3",
+    "docs/evidence/wo-220202-fx-u2.md": "sha256:da09d6a4e13d1dfb43f99ce4a24f6dac45540772b79d307daff625eb8cdb8b9f",
+    "docs/evidence/wo-220203-fx-u3.md": "sha256:83c9e6142f9cfde3044603bbf8951d44dc2c7d6a0050920527cfdebb470dbbad",
+    "docs/evidence/wo-220204-fx-u4.md": "sha256:5d2421cf70179f62b3c80c0b4dcf2bac16d5c04f72ec07c358f1010a47249083",
+    "docs/evidence/wo-220205-fx-u5.md": "sha256:21fd84f4420475cf88259537c552ae666c7d437e0c201e941aa1a0764f13ee96",
+    "docs/evidence/wo-220206-fx-u6.md": "sha256:c0a253811b34b2c228a0c6653c2545df19692186f74dd1b3a6563c2dc191c0a8",
+    "docs/evidence/wave2-proof-fixtures/FX-U7.md": "sha256:7d72d6bfbc4b54255017200eafad958246689ed01e34daf9d6d383079536acaf",
+    "docs/evidence/wave2-proof-fixtures/FX-U8.md": "sha256:2faa055c31f4685ee39d4ebf3090732ceeb46a3cf2aaaa02cbcb569d423dab74",
+    "docs/evidence/wave2-proof-fixtures/FX-U9.md": "sha256:373b2faf3543a401189744d093724153374470a741e8ccbc0b28ded7b1fce9b1",
+    "tests/composition/test_upstream_integration_capstone.py": "sha256:102b8b68d622cfd6c3cab74ae7dda1e11d3da4a58bda598145cd3df7db1af4d0",
+    "tools/evidence/fx_a_evidence.py": "sha256:7a8bc3f7b5fa3af42a5946642c069b2882b7766ea7494680b7d5a85bf4b73131",
+    "tools/evidence/fx_c_evidence.py": "sha256:7a4335e35dedbd74fd81218c855c462a5f6bf0ab55f924d3f15520163a1f7ed9",
+    "src/alienintent/context_assembly/domain/design_admission.py": "sha256:e1d1c97c70d712227be013a541dfcd0f4be667de6247cfa1965e97221745a899",
+    "src/alienintent/composition/upstream_integration.py": "sha256:76228a8b1033a827597a4c5ca7c12222cbbf90e38209f1af8b5bfcefc5a90490",
+    "src/alienintent/context_assembly/domain/readiness.py": "sha256:b7de00c6426a0987dd3135349545bf53b7eb5343ff2ced9b625f9d5501595806",
+    "src/alienintent/context_assembly/application/initial_compilation_service.py": "sha256:77760a55322889e137f2adbbd5f7e0f4685d686b129ebbe2fc91043c62c81665"
+  },
+  "missing_inputs": [],
+  "commands": [
+    {
+      "id": "focused",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_upstream_integration_capstone.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:a58a0111620a240b76afcb7fed417e4e7adbe38e74d3288832428c5e0a3a8004",
+        "locator": "observations/a58a0111620a240b76afcb7fed417e4e7adbe38e74d3288832428c5e0a3a8004"
+      }
+    },
+    {
+      "id": "bounded_initial",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_design_admission.py",
+        "tests/context_assembly/test_compilation_validation.py",
+        "tests/context_assembly/test_readiness_consumer.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:be74affe743f57624d3105d9c2aead1c5cbe50e41f0ee4be32c1cc2a5f775305",
+        "locator": "observations/be74affe743f57624d3105d9c2aead1c5cbe50e41f0ee4be32c1cc2a5f775305"
+      }
+    },
+    {
+      "id": "predecessor_suites",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly",
+        "tests/evidence_learning/test_premise_evidence.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:9e14c14088ec2b898f53fb5df3d3fd57a4e62256bdeae0637e1375bd19e69f49",
+        "locator": "observations/9e14c14088ec2b898f53fb5df3d3fd57a4e62256bdeae0637e1375bd19e69f49"
+      }
+    },
+    {
+      "id": "architecture",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:69495d584f5148264bdec881b3120581da9eb9b3e571b395df193f59a02982fd",
+        "locator": "observations/69495d584f5148264bdec881b3120581da9eb9b3e571b395df193f59a02982fd"
+      }
+    },
+    {
+      "id": "architecture_fitness_tests",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_architecture_fitness.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:b3e9a1108215c044ff50d9cfa853296ccb14608c133bf56d86d5ef4d9e7e9d42",
+        "locator": "observations/b3e9a1108215c044ff50d9cfa853296ccb14608c133bf56d86d5ef4d9e7e9d42"
+      }
+    },
+    {
+      "id": "feature_regression_registry",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/verification/test_feature_regressions.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:8cd6f1c4f29c665cb596c5e9496fc69d383a70167f6728e173448b2cc07210c0",
+        "locator": "observations/8cd6f1c4f29c665cb596c5e9496fc69d383a70167f6728e173448b2cc07210c0"
+      }
+    },
+    {
+      "id": "python_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_status": 1,
+      "observation_ref": {
+        "revision_digest": "sha256:a6c2d30857c1751bd41f8e26f2b9c8512addfe126ea6a69a801cbd4f9b55eca4",
+        "locator": "observations/a6c2d30857c1751bd41f8e26f2b9c8512addfe126ea6a69a801cbd4f9b55eca4"
+      },
+      "failed": [
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_authorized_supersession_with_passing_replacement_is_accepted",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_changed_judgment_reviewer_inputs_hold",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_plan_pins_the_four_observable_premise",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_profile_derives_and_persists_the_fx_u4_plan",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_credential_denial_obligation_is_infeasible_proof",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_obligation_holds",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_proof_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_erased_truncated_or_padded_history_is_a_hold",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_failed_prior_proof_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_implementation_derived_predicate_is_refused",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_incomplete_mechanical_obligation_holds",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_isolation_obligation_omitting_an_observable_is_infeasible",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_claiming_mechanical_pass_is_refused",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_obligation_names_reviewer_inputs_and_decision_record",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_lost_plan_pointer_is_not_an_empty_history",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_persisted_state_is_a_hold_not_an_exception",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_supersession_or_authority_holds_without_raising",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_recorded_proof_evidence_is_ordered_and_clean",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_removed_required_predicate_blocks_admission",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_replayed_prior_proof_is_accepted",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_skipped_prior_proof_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_supersession_without_passing_replacement_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_tampered_persisted_plan_is_refused",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unattributed_judgment_holds",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unauthorized_supersession_holds"
+      ]
+    },
+    {
+      "id": "node_regression",
+      "command": [
+        "node",
+        "scripts/check.mjs",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:1abb39e6660240a1164881a728509c0d5c6fbdac3b834ed95497b7ed3bf22f85",
+        "locator": "observations/1abb39e6660240a1164881a728509c0d5c6fbdac3b834ed95497b7ed3bf22f85"
+      }
+    }
+  ],
+  "holds": [],
+  "baseline_conditions": [
+    {
+      "condition": "PRE_EXISTING_BASELINE_FAILURE",
+      "count": 25,
+      "baseline": "c5ef2bc033e712b61da045df47f25b01b40f4dcc",
+      "baseline_ref": {
+        "revision_digest": "sha256:f3001ca5176c9ad80180fe3e9f9c2406d3135c8c2b71d371675ff588c6fed31a",
+        "locator": "observations/f3001ca5176c9ad80180fe3e9f9c2406d3135c8c2b71d371675ff588c6fed31a"
+      },
+      "note": "identical failing node ids at the admission baseline; no FX-A file is involved"
+    }
+  ],
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "agent_ready_invocations": 0,
+  "producer": "FIXTURE_PRODUCER_NOT_NATIVE",
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": null,
+    "reason": "UNKNOWN: provider usage is unavailable to this local fixture"
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:e1c12feffbcafe60f7f4051a2d0bc70ebbaca95368875e3aa2ee62742ba5ed1b",
+    "locator": "observations/e1c12feffbcafe60f7f4051a2d0bc70ebbaca95368875e3aa2ee62742ba5ed1b"
+  },
+  "run_state": "COMPLETE",
+  "exit_status": 0
+}
