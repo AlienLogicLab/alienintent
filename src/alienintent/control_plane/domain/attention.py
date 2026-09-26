@@ -66,6 +66,19 @@ class NotificationAttempt:
 
 
 @dataclass(frozen=True)
+class Acknowledgement:
+    """Human receipt: an explicit, item-bound, timestamped act of a configured human acknowledger.
+
+    Queue insertion, notification delivery, rendering and SEEN never produce one."""
+    item_identity: str
+    item_version: int
+    item_history_ref: Ref
+    actor: str
+    at: str
+    statement: str
+
+
+@dataclass(frozen=True)
 class AttentionItem:
     identity: str
     version: int
@@ -75,6 +88,7 @@ class AttentionItem:
     handler: str | None
     resolution_ref: Ref | None
     history_ref: Ref
+    acknowledgement: Acknowledgement | None = None
 
 
 @dataclass(frozen=True)
