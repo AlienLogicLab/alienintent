@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove canonical live release admission. At the actual live-profile prelaunch boundary, all six existing release preconditions plus eligibility must be verified mechanically. Meaningful invalid cases must launch zero actors. Readiness and admission proof must not be treated as release, and SF-REQ-015 must not expand into release ownership.",
+    "implementation_unknowns": [
+      "Locate the existing release requirement authority that enumerates the six release preconditions and the eligibility rule. Confirm the SWF-35-retained checks map one-to-one onto them. If implementation coverage is missing, return it to the scope owner.",
+      "Identify the existing admission/prelaunch code path where the check must run, and confirm how zero actor launch is observed there.",
+      "Choose the meaningful invalid cases. At minimum, each precondition and eligibility should fail individually. Define the intact/fault/restored discrimination for each mechanical control.",
+      "Pin executable fixture commands, inputs, expected outcomes and the evidence/receipt schema for live_release_admission_receipts. Pin them before implementation, against the pinned Phase 9 shared contracts.",
+      "Determine how the predecessor outputs (WO-220501, WO-220211, WO-220210, WO-220403, WO-220502) are consumed at current interfaces without editing them."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The authority disposition is reported as relayed by an observing session. It has not been independently verified here, and the verifier should confirm the durable decision record exists and matches.",
+      "Binding the wrong target could let a local or staging substitute be mislabeled as the live-profile prelaunch boundary, which would invalidate the proof.",
+      "Proof execution at a live boundary could accidentally launch actors or be conflated with release. The task forbids automatic release and live operation.",
+      "The six preconditions may be incompletely covered by existing implementation. That would require escalation to the scope owner, not expansion of scope.",
+      "Direct merge to the baseline without a PR (SWF-19) places full reliance on the independent verifier's exact-SHA verdict."
+    ],
+    "next_action": "Hold the BIU until three things become available. First, the scope/operational owner identifies and binds the actual live-profile prelaunch boundary/target under the recorded authority, with separately authorized target access and readback. Second, the authorized allocator allocates execution budget and custody. Third, acceptance probes are pinned: fixture commands, invalid cases, expected zero-launch outcomes and the evidence schema. Once these are recorded on the Issue, request a fresh Agent Ready assessment of that revision.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "HOLD controls because the missing items are external prerequisites and authority bindings, not unresolved product intent. The owner decisions on release authority and SWF-21 scope are reported as disposed, and the task itself states that the prelaunch target and budget/custody remain unbound stop conditions. This gate cannot bind a target or allocate budget. Without the live target, the operational fixture cannot produce acceptable evidence, and local proof is explicitly non-qualifying. CLARIFY does not fit: no material owner question about intent remains, and target identification is a binding and allocation act by the owner or allocator. SPLIT does not fit: the admission check, zero-launch negative cases and receipts form one cohesive predicate with one verification verdict. Once the prerequisites are available, the remaining unknowns are engineering research, and rework should be localized to the admission check and its fixtures.",
+    "semantic_split_recommendation": [],
+    "summary": "The intent is coherent and owner direction is largely recorded, as reported. The task states that the Founder disposed POSTW1-DECIDE-006A, EXPLICIT_FUTURE_RELEASE_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY and the SWF-21 scope question, with SWF-35 as successor authority. It also states that the five predecessors are DONE. The same text says three gaps stay open, and the stop conditions make two of them explicit holds: (1) the actual live-profile prelaunch boundary/target is not identified or bound, and the authority grant expressly does not bind it; (2) budget and custody are not allocated. The third gap is that no acceptance probes are pinned. The work is operational fixture FX-B3, and local substitutions cannot satisfy acceptance. Without a bound live target and an allocated budget and custody, the acceptance predicate cannot be executed or verified. The controlling condition is therefore missing external prerequisites, not unresolved intent or independent decision centers.",
+    "verification_assessment": "The acceptance predicate is observable in principle: each precondition and eligibility is checked at the real prelaunch boundary, invalid cases produce zero launched actors, and receipts are retained. One independent verdict is meaningful, from a fresh verifier who retrieves the exact candidate SHA and reads back the live target. Today, however, the operational target is unbound and acceptance probes are listed as 'None'. Local results are explicitly disallowed as satisfying acceptance. So no operational verdict is currently achievable, and any verdict would have to be recorded as a hold rather than PASS."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T20:23:33.886470+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10003,
+    "input_sha256": "78e4b164fc86b859ab5f5571cd67ad0fb0d962446582a8e1e2615ce96afc30a0",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-c8nnevp6/WO-220506.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T20:23:10.791482+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220506"
+}

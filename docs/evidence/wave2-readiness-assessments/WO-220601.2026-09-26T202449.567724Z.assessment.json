@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Integrate and prove the R1 coordinator-checkpoint retirement gate (SF-REQ-053). A successor must be able to reconstruct scope, unresolved decisions, effects and authorized next actions without the prior conversation. Any mismatch must block tenure change. The checkpoint must be preserved (KEEP_UNTIL_REPLACED) until equivalent canonical continuity works. This must follow the fixed tenure policy (contract 8) and the pinned Phase 9 shared contracts.",
+    "implementation_unknowns": [
+      "Where the existing checkpoint and continuity artifacts live, and how the successor reconstruction is currently represented in the store/event versions that are said to suffice.",
+      "How to construct FX-R1 fixture commands, inputs, expected outcomes and evidence schema. These must be pinned before implementation and must show intact/fault/restored discrimination against the node predicate.",
+      "Whether the shared S0 harness at current interfaces already supports a scenario where a successor reconstructs without prior conversation, or needs node-local fixture wiring.",
+      "How to mechanically detect a reconstruction mismatch and wire it into guarded admission so that it blocks tenure change, including the durable applicability revision and the injected deadline timer.",
+      "How to represent UNBOUND context usage, AcceptedContradiction versus InvalidJudgment, and clock-regression holds in the fixture so that the tenure-termination paths are observable."
+    ],
+    "independent_decision_centers": [
+      "Coordinator-checkpoint continuity proof, including the mismatch-blocks-tenure-change control under the fixed contract 8 tenure policy. This is one cohesive decision center."
+    ],
+    "material_risks": [
+      "An executor could substitute the generally delegated 'existing local/configured operational target' for the separately authorized target this proof requires. That would produce a proof that cannot satisfy operational acceptance.",
+      "Without a bound execution allocation, work could start on an invented budget, which the escalation rules explicitly prohibit.",
+      "The predecessor DONE status and the Founder disposition are reported in the task text and relayed by an observing session. This gate has not verified them, and the verifier should confirm the durable records.",
+      "Upstream defects found during integration could tempt repair inside the capstone, contrary to the non-goals. They must be returned to their named owner.",
+      "The checkpoint could be retired prematurely by treating a local or candidate proof as evidence of equivalent canonical continuity, violating KEEP_UNTIL_REPLACED."
+    ],
+    "next_action": "Keep the BIU in TASKS on HOLD. Route the unbound operational/external target for the FX-R1 coordinator-checkpoint proof to the appropriate authority, via the Program Director or Founder as the escalation path specifies. Route the execution allocation to the authorized allocator. Once both are bound and recorded durably on this revision, request a fresh Agent Ready assessment of the updated exact revision.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "HOLD is controlling because the task itself declares an unmet external prerequisite as a stop condition. The coordinator-checkpoint proof needs an operational/external target and execution allocation that are not yet bound. The Founder's delegation explicitly does not identify or bind them. Owner intent is well resolved through extensive fixed decisions, non-goals and boundaries, so CLARIFY does not apply. The work is one cohesive decision center, so SPLIT does not apply. READY would require an available independent verdict at the planned OPERATIONAL_OR_EXTERNAL_AUTHORITY proof level, which cannot be obtained until the target is bound. The remaining engineering unknowns are normal research and would not block readiness by themselves.",
+    "semantic_split_recommendation": [],
+    "summary": "The intent, fixed decisions and scope are specified in detail and appear coherent as one decision center. The text reports all three predecessors (WO-220501, WO-220302, WO-220303) as DONE. It also reports that the Founder disposed POSTW1-DECIDE-006A through a durable decision record. These are reported facts, not independently verified. The same authority disposition, and the Stop section, state that the separately authorized operational/external target and the execution allocation required for this coordinator-checkpoint proof remain unbound. The planned proof level is OPERATIONAL_OR_EXTERNAL_AUTHORITY, and local substitutions cannot satisfy operational acceptance. So a necessary external prerequisite is unavailable. The controlling condition is a missing authority and environment prerequisite, not unresolved owner intent.",
+    "verification_assessment": "Acceptance is observable in principle. The fixture would show a successor reconstructing scope, unresolved decisions, effects and authorized next actions without prior context. Negative controls would show that a mismatch blocks tenure change. The evidence contract is explicit: exact revisions, command, exit status, immutable observation refs and an independent verdict. A single independent verifier verdict on the exact published candidate SHA would be meaningful. However, the planned proof level requires a separately authorized operational/external target with actual readback, and that target is currently unbound. Locally labelled substitutions cannot satisfy acceptance. So the verdict is not currently obtainable at the required level. Some acceptance wording also relies on operator judgment, notably 'equivalent canonical continuity' and contradiction truth. Fixtures can prove admission and termination, not semantic truth."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T20:25:12.128355+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10713,
+    "input_sha256": "2bb816d5edef76d60e7707420fd8d8153a73616a0d142d1a31f067472c7ada6a",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-qwo3zdf3/WO-220601.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T20:24:49.567724+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220601"
+}

@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove that live trajectory capture (identity, order, timestamps, anomalies, retention) survives process restart and attention-producer consumption on a separately authorized operational target profile. Reconcile old and new observations across the cutover without loss and retain the queue. The capability being replaced is live_trajectory_capture / live_trajectory_receipts under SF-REQ-053. Scope returns to authority if the reviewed 053 design does not cover an external observer duty.",
+    "implementation_unknowns": [
+      "Exact fixture commands, inputs, expected outcomes and evidence schema for FX-B1 still need to be pinned against the node predicate before implementation.",
+      "How to demonstrate intact/fault/restored discrimination for the capture, restart and cutover controls.",
+      "The mechanism for reconciling old and new observations across the cutover so that loss can be detected.",
+      "How queue retention is observed and read back on the target profile.",
+      "Which existing configured target, if any, is eligible for binding under the delegation. This must be identified by the authorized party, not invented."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Binding or inventing an unauthorized target profile would exceed the delegation. The grant permits binding an existing target but does not name one.",
+      "Local proof results could be mislabelled or inferred as operational success.",
+      "Proceeding before WO-220102 is confirmed DONE would violate the dependency order and could invalidate the proof.",
+      "If the 053 design omits the external observer duty, replacement work could be wasted or could create an authority breach.",
+      "A cutover without lossless reconciliation or queue retention could cause data loss in live trajectory capture.",
+      "The authority delegation was relayed by an observing session. Its provenance is reported, not verified here.",
+      "Direct-merge landing (SWF-19, no PR) raises the stakes of verifier custody errors."
+    ],
+    "next_action": "Keep the BIU in HOLD until three things are resolved. (1) The authorized party identifies and binds an existing operational target profile for live trajectory capture under the 2026-09-26 delegation, and records the binding. (2) WO-220102's Issue is located and its DONE status and proof are confirmed. (3) The owner of the SF-REQ-053 design answers whether it covers the external observer duty, escalating to Program Director/SPECIFY if not. Then re-run Agent Ready on the updated revision. Meanwhile, only labelled local evidence and monitor fixture preparation may proceed, as the task permits.",
+    "owner_clarifications": [
+      "Does the reviewed SF-REQ-053 design cover the external observer duty for live trajectory capture? If not, the task requires returning scope to authority, via Program Director to SPECIFY with a Founder disposition, before any replacement work."
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "HOLD controls because the task itself records that required prerequisites are unavailable. The operational target profile is unbound and is an explicit stop condition. A predecessor's completion is unconfirmed. Without both, acceptance cannot be met, since local substitution is disallowed. CLARIFY is not primary: the goal and fixed decisions are clear, and the one open owner question (observer duty coverage) is a gating check the task already routes to authority. SPLIT is not warranted: capture fidelity, restart retention and cutover reconciliation form one cohesive proof with a single verdict. READY is excluded by the missing target, the unconfirmed dependency and the open observer-duty question. Rework locality is HIGH because failures would be confined to this node's capture/cutover proof. All statuses above are as reported in the task text and were not independently verified.",
+    "semantic_split_recommendation": [],
+    "summary": "The intent is coherent and forms one decision center: an operational replacement proof for trajectory capture across restart and cutover. Two things are unavailable, by the task's own account. First, the operational target profile that acceptance requires has not been identified or bound, and the task lists this as an explicit stop condition. Second, predecessor WO-220102 is not confirmed DONE, and consumers must wait for predecessor proof. In addition, whether the reviewed SF-REQ-053 design covers the external observer duty is unanswered. The text says that answer governs whether replacement may proceed at all. The Founder authority gates (POSTW1-DECIDE-006A, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY) are reported disposed as of 2026-09-26. However, that grant explicitly does not identify or bind a target. Operational acceptance cannot be satisfied by local substitution. The controlling condition is therefore a missing external prerequisite, not unresolved intent or independent decision centers.",
+    "verification_assessment": "Acceptance is observable in principle. It covers identity, order, timestamp and anomaly preservation, retention across restart, lossless old/new reconciliation, and queue retention, backed by immutable observation refs and readback. A single independent verdict from a fresh verifier on the exact candidate SHA would be meaningful, because the criteria share one proof scenario. However, the verdict is currently impossible to obtain: operational acceptance requires an actual bound target, and local substitutions are explicitly non-satisfying. The acceptance probes list is empty, so the discriminating probes still need to be pinned as part of the proof-first order."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T20:22:32.347348+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 9511,
+    "input_sha256": "c23c58f7c13e8466d4394737d5efad3ff26cef93aabb16a4cea383931e2ab56d",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-c6oqanc7/WO-220504.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T20:22:09.766331+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220504"
+}
