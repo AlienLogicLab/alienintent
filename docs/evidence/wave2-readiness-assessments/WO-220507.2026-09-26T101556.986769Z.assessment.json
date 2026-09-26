@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce operational or external-authority proof (fixture FX-B4, node B4, SF-REQ-053) that an explicitly authorized harmless request/reply through a successor episode or supported helper preserves correlation, pending reconciliation, attributed handling and duplicate suppression. The only alternative is authority-proven discharge showing a completed programme with no outstanding message duties. The work must add no new product mailbox requirement and must stay within pinned contracts and tenure policy.",
+    "implementation_unknowns": [
+      "Locate the existing successor episode path or supported helper that can carry an explicitly authorized harmless request/reply, and its current correlation and duplicate-suppression mechanisms.",
+      "Identify how pending reconciliation and attributed handling are currently recorded in the existing store versions and events. The fixed decisions state no new store elaboration is permitted.",
+      "Pin executable FX-B4 commands, inputs, expected outcomes and evidence schema. Then demonstrate intact, fault and restored discrimination for mechanical controls such as duplicate suppression and correlation mismatch.",
+      "Determine how tenure checks (deadline timer, admitted-transition cap, applicability revision) interact with the request/reply round trip. The fixture must not be terminated by tenure limits before the reply is reconciled.",
+      "Confirm the S0 shared harness exists at current interfaces and that predecessor proof artifacts from WO-220501, WO-220302 and WO-220303 are retrievable as pinned identities. Their DONE status is reported, not independently verified."
+    ],
+    "independent_decision_centers": [
+      "Single cohesive proof objective: demonstrating mailbox request/reply integrity through the successor path, or the authority-proven discharge alternative. Both are dispositions of the same node predicate, not independent work streams."
+    ],
+    "material_risks": [
+      "Proceeding without POSTW1-DECIDE-006A could exercise a bootstrap handoff the contracts reserve for separate authority, violating an authority boundary.",
+      "A local fixture result could be mislabelled or treated as operational acceptance. The task forbids inferring operational success from local results.",
+      "A tenure limit (3600s age, 32 transitions, 300s blocked, or an unverifiable external source causing a hold) could end the episode mid-round-trip and be misread as a mailbox defect.",
+      "Scope creep into new product mailbox requirements or store/provider normalization changes, which the task explicitly excludes.",
+      "The choice between the successor-episode path, the supported-helper path and the discharge alternative may depend on the pending Founder decision, so work done before it could be misdirected.",
+      "Predecessor DONE status and pinned artifact identities are reported facts; a source revision mismatch would trigger the STOP condition."
+    ],
+    "next_action": "Hold this BIU in TASKS. Route POSTW1-DECIDE-006A through the Program Director to the Founder for a recorded decision covering this BIU's successor mailbox path. Obtain separate authorization and allocation of the operational target required for OPERATIONAL_OR_EXTERNAL_AUTHORITY proof, including budget and custody binding. Once both are recorded and pinned in a revised work order, request a fresh Agent Ready assessment of that exact revision.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is an unavailable external authority, not unresolved intent or independent decision centers. The work order is internally coherent: the governing intent, fixed tenure and contradiction semantics, non-goals and evidence obligations are well specified. The remaining engineering questions are ordinary research. However, the order itself declares a STOP requiring separate authority POSTW1-DECIDE-006A, and the contracts state this decision gates actual bootstrap handoff. The latest update explicitly reports that no such decision has been recorded. The required proof level also depends on a separately authorized operational target that the text does not establish. These are unavailable authorities and prerequisites that the assigned worker cannot supply, which is HOLD rather than CLARIFY. The proof objective is a single end-to-end scenario with one meaningful verdict, so SPLIT is not warranted. Once authority is available, repair should stay localized to the FX-B4 fixture and successor path.",
+    "semantic_split_recommendation": [],
+    "summary": "The intent and fixed decisions are coherent, and the reported predecessor status is now DONE. However, the task's own STOP condition names a separate authority, POSTW1-DECIDE-006A, and the fixed decisions say it gates actual bootstrap handoff. The update explicitly reports that no Founder decision narrowing POSTW1-DECIDE-006A for this BIU's path has been recorded. The planned proof level is OPERATIONAL_OR_EXTERNAL_AUTHORITY. That level requires a separately authorized operational target with actual readback, and the text does not establish that such a target exists. Local substitutions cannot satisfy acceptance. A necessary external authority is therefore unavailable, and handoff should be held.",
+    "verification_assessment": "Acceptance is observable in principle. Correlation preservation, pending reconciliation, attributed handling and duplicate suppression can each be checked against pinned fixture expectations with negative controls. One independent verdict on FX-B4 is meaningful, because the properties form a single end-to-end request/reply scenario. However, the required proof level is operational or external-authority. Operational acceptance needs a separately authorized target and actual readback, and neither authorization is established in the text. The discharge alternative requires proof by authority. Until POSTW1-DECIDE-006A and the operational target authorization exist, any verdict could only rest on local substitutions, which the task says cannot satisfy acceptance."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T10:16:21.873655+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10022,
+    "input_sha256": "9bf0d0874269dd15758644432d5ee33dd3e2c5327a0cf36dd4aec2b214d2b665",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-lqn__2mk/WO-220507.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T10:15:56.986769+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220507"
+}

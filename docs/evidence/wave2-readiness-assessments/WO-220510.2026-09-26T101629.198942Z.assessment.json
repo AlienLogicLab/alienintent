@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce operational proof that every installation launch reference or integration has been found and, only under installation authority, migrated to canonical alienintent command launches, confirmed by actual readback. Persisted B-DISP markers, lanes, resources and history must be preserved, and alias retirement stays blocked while installation coverage is unknown.",
+    "implementation_unknowns": [
+      "Where the complete inventory of installation launch references and integrations lives, and how completeness of that enumeration will be demonstrated.",
+      "What FX-B7 fixture commands, inputs, expected outcomes and evidence schema to pin, plus the intact/fault/restored discrimination probes to use.",
+      "How to read back canonical alienintent command launches on the authorized target and capture immutable observation references.",
+      "How to check that B-DISP markers, lane/resource identities and history are preserved, for example by before/after snapshots.",
+      "Whether the shared S0 harness at current interfaces is available to this node."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Migrating installations without INSTALLATION_MIGRATION_AUTHORITY would breach an explicit STOP condition.",
+      "Incomplete enumeration of installation references could lead to premature alias retirement and broken launches.",
+      "Migration could corrupt or drop persisted B-DISP markers, lane/resource identities or history.",
+      "A local or fixture result could be mistaken for operational proof.",
+      "The scope of POSTW1-DECIDE-006A is unresolved and could change the node's boundary, requiring a revised design or DAG."
+    ],
+    "next_action": "Keep the BIU in TASKS. Route both authority gaps through the Program Director to SPECIFY and the Founder: (1) record a decision on POSTW1-DECIDE-006A for this path, and (2) grant INSTALLATION_MIGRATION_AUTHORITY naming the operational target(s) and rollback authority. Once both are recorded in this revision, request a fresh assessment.",
+    "owner_clarifications": [
+      "Will the Founder (via Program Director/SPECIFY) record a decision on POSTW1-DECIDE-006A for this BIU's path, either resolving it or narrowing it so that installation migration and readback are in scope?",
+      "Which operational installation target(s) are covered by INSTALLATION_MIGRATION_AUTHORITY, who grants it, and does it include rollback authority if a migration readback fails?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "HOLD is the controlling disposition because a required external authority is reported unavailable, not because the work is unclear or divisible. Intent is coherent and forms a single decision center, so SPLIT does not apply. The remaining engineering questions are normal research. CLARIFY is secondary: POSTW1-DECIDE-006A involves Founder intent, but the task explicitly treats both items as separate authority gates that block execution. The operational proof level means no local work can satisfy acceptance until authority and an authorized target exist. The predecessor being DONE removes only the dependency blocker, not these gates.",
+    "semantic_split_recommendation": [],
+    "summary": "The intent and acceptance predicate are coherent and describe one outcome. The single named dependency, WO-220501, is reported DONE. However, the task text itself says two authority gates are still unmet: INSTALLATION_MIGRATION_AUTHORITY and POSTW1-DECIDE-006A. The node is an external_proof_prerequisite with proof level OPERATIONAL_OR_EXTERNAL_AUTHORITY, so migration and readback need a separately authorized target. Local substitutes are explicitly excluded from satisfying acceptance. Without that authority, the work cannot proceed to meaningful completion.",
+    "verification_assessment": "Acceptance is observable: a complete enumeration, per-installation migration receipts, canonical launch readback, and preservation checks for markers, lanes, resources and history. A single independent verdict on the exact candidate SHA and its operational readback is meaningful. However, the text says operational acceptance requires an authorized target and actual readback, and neither is currently authorized. No verdict can be satisfied until the authority exists, and local proof cannot stand in for it."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T10:16:49.406197+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 6866,
+    "input_sha256": "06d9ca461352784bc8846ce74f77a5b4acbf9cd1f4f22f5cab82315d90c6e658",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-dpxv6_n3/WO-220510.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T10:16:29.198942+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220510"
+}
