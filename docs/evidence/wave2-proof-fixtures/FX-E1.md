@@ -117,6 +117,11 @@ Both holds were harness or sandbox-fixture causes. `src/` was not changed.
 - **Pre-existing baseline failures, unrelated to E1.** At `2715bec`, `python3 -m pytest -q` shows **25 failed, 1150
   passed, 4 skipped**. All 25 failures are in `tests/evidence_learning/test_proof_planning.py` (FX-U4 proof planning,
   `PlanHold DESIGN_MISMATCH`). This BIU changes no file on that path; route to its owner (WO-220204).
+  At the candidate, `python3 -m pytest -q tests tools` shows 27 failed, 1960 passed, 4 skipped: the same 25,
+  plus `tools/orchestration/test_director.py::test_substantial_technical_analysis_routes_to_codex_primary`
+  and `tools/orchestration/test_factory_director_inputs.py::test_board_rows_from_the_read_path_carry_the_issue_repository`.
+  Both also fail on a clean `git archive 2715bec`. The candidate changes nothing under `src/`, `tests/` or
+  `tools/orchestration/`. The applicable feature-regression pack (`live-transport-proof-fx-e1`) passes.
 
 ## Re-running
 
