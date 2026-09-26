@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Produce an independently verifiable live-profile receipt bundle for SF-REQ-056-AC-08. On an authorized live workload, it must show that a bootstrap replacement recovers a dropped trigger within the G+I window, but only when independent scans are healthy and evidence is available. It must also show provider/judgment block suppression with attributed resolution, duplicate safety under delayed delivery and restart, exact real outcome readback, one writer, and retained attention linkage. Offline or sandbox success alone cannot satisfy acceptance or retire SWF-29.",
+    "implementation_unknowns": [
+      "Exact definition and values of the G+I recovery window and the 'healthy independent scans' condition. These are presumably in the pinned Phase 9 shared contracts and should be located, not asked of the owner.",
+      "The executable FX-B2 fixture commands, inputs, expected outcomes and evidence schema. These must be pinned before implementation and must show intact/fault/restored discrimination.",
+      "How to induce a dropped trigger, a provider/judgment block, delayed delivery and restart on the live profile without violating the one-writer or no-simultaneous-live-writer constraints.",
+      "The mechanism for exact real outcome readback and for confirming retained attention linkage against persisted resource identities.",
+      "Which live_liveness_receipts interfaces already exist from predecessor nodes WO-220501, WO-220502, WO-220305, WO-220306 and WO-220403.",
+      "Whether 'Local L1 proof after ratification' requires a ratification that has already occurred."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The live exercise runs against an operational workload. Fault injection (dropped triggers, restarts, delayed delivery) could cause real duplicate outcomes or conflicting writers if duplicate safety or one-writer ownership is defective.",
+      "Pressure to accept a local or sandbox result as operational proof, which is explicitly forbidden and would wrongly retire SWF-29 or the bootstrap.",
+      "Treating missing or unavailable measurements, token or cost figures, or scan health as PASS or zero instead of an explicit hold.",
+      "Predecessor defects surfacing during the live proof. The capstone must route these back to their owners rather than repair them in place, which may stall the node.",
+      "Proceeding under the SWF-21 Wave 1 grant or an assumed authority carryover.",
+      "Direct baseline merge without a pull request (SWF-19). Custody and SHA exactness errors would land unverified changes.",
+      "The empty 'DAG scope' field could let scope drift into sibling nodes."
+    ],
+    "next_action": "Keep WO-220505 on HOLD until four things are recorded on the Issue. First, POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY are granted by the named authority (Founder via Program Director) for a specific live workload and profile. Second, that authorized live target and its readback access are bound. Third, independent verdicts accepting predecessor proof exist for WO-220501, WO-220502, WO-220305, WO-220306 and WO-220403. Fourth, budget and custody are allocated. Meanwhile, the producer may pin the FX-B2 fixture commands, expected outcomes and evidence schema, and may run a clearly labelled local L1 rehearsal if ratification is confirmed. That rehearsal does not count toward acceptance.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "Intent is clear and there is no material owner ambiguity to clarify. Remaining gaps such as the G+I definition and fixture mechanics are engineering research against pinned contracts. The scope is one cohesive decision center: a single live exercise proving related liveness properties of one replacement, verified by one verdict, so SPLIT would fragment a coupled proof. READY is inappropriate because the acceptance criterion is defined by an authorized live-profile exercise. The supplied text states this needs separate authority not yet granted: it is described as a 'future separately authorized' bundle, requires 'explicit future authority', and carries no Wave 1 grant over. The task's own stop conditions also mandate a hold on authority gaps and unmet dependency proof. The controlling condition is therefore an unavailable external authority and operational environment, which is HOLD rather than CLARIFY. This assessment relies on the task text's statements about authority status and has not independently verified them.",
+    "semantic_split_recommendation": [],
+    "summary": "The outcome is coherent and well-specified as a single live proof. The acceptance criterion, proof fixture FX-B2 (OPERATIONAL_OR_EXTERNAL_AUTHORITY) and evidence contract all require an authorized live target and separate authority grants. These are POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY. The text frames both as future, separately required authority, and says no Wave 1 grant carries over. It also depends on five predecessor work orders whose proof status is not established here. The work is not ambiguous in intent and is not decomposable into independent decisions. What controls is that the defining prerequisite, an authorized live exercise, is not shown to be available. The only work permitted now is local L1 proof after ratification, and the text says that cannot satisfy acceptance.",
+    "verification_assessment": "Acceptance is observable and one independent verdict is meaningful. A fresh verifier can retrieve the exact candidate SHA and inspect a versioned live-profile receipt bundle. That bundle would record trigger loss and recovery timing, suppression under provider/judgment block, duplicate counts under delay and restart, writer identity, and real outcome readback, each against expected values. However, the verdict is only meaningful on an actual authorized live workload with actual readback. Local or sandbox substitutions must be labelled and explicitly cannot pass. Until the live target and authority exist, only a non-accepting local rehearsal verdict is possible."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T12:34:10.786342+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 8023,
+    "input_sha256": "b44a714130030b902b6784a9241b1e24e7660f1c5d4a1360b3a9baf69e50b283",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-kuxj98uz/WO-220505.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T12:33:42.214094+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220505"
+}

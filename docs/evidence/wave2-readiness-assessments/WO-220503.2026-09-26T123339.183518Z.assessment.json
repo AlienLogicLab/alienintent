@@ -1,0 +1,76 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Establish a controlled one-writer cutover substrate that moves the live-profile writer from Node to Python. It must prove quiescence, durable reconciliation of active work and external effects, backup and checkpoint integrity, retention of pending reservations, and rollback without duplication, all in an isolated rehearsal before any live use. It must never allow Node and Python to write the same work at once. If canonical cutover control is absent, Node stays authoritative and the work returns to existing authority instead of building its own migration machinery.",
+    "implementation_unknowns": [
+      "The concrete mechanism for proving quiescence of Node-owned work and external effects before handover.",
+      "The storage form and durability guarantees of the active-work/effect reconciliation record under the pinned Phase 9 store contracts.",
+      "How pending reservations are represented and carried across a checkpoint and rollback without duplication.",
+      "How a simultaneous Node/Python writer on the same work is detected and rejected (lease, fencing token, ownership record, or similar), and how the intact/fault/restored discrimination is demonstrated.",
+      "The executable FX-E2 fixture commands, inputs, expected outcomes and evidence schema, which must be pinned before implementation.",
+      "How the isolated rehearsal environment is provisioned so that it is representative of the live profile without touching it."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Dual-writer exposure: a defect in writer fencing during cutover or rollback could cause duplicated or lost work and external effects.",
+      "Rollback that duplicates external effects or drops pending reservations, causing irreversible external side effects.",
+      "False operational confidence from local rehearsal success; the text forbids inferring operational success from local results, but pressure to do so is a risk.",
+      "Scope creep into implementing canonical control or sibling-node machinery if authority is absent, which the text explicitly prohibits.",
+      "Starting implementation before predecessor proof (WO-220502, WO-220302) and fixture pinning, causing proof-order violations and rework.",
+      "Ambiguity between rehearsal-only and live self-hosting acceptance leading to a rejected or incomplete candidate."
+    ],
+    "next_action": "Keep the BIU on HOLD and allow only the permitted partial work (reconciliation fixture preparation, no runtime writer switch). Route the following to the Program Director and Founder: confirmation or grant of EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY, disposition of POSTW1-DECIDE-006A with the reviewed design/DAG revision, and resolution of the rehearsal-versus-live-self-hosting and 'keep Node' completion questions. Also obtain recorded passing proof for WO-220502 and WO-220302, then pin the FX-E2 fixture commands, inputs, expected outcomes and evidence schema before reassessing for READY.",
+    "owner_clarifications": [
+      "Is 'prove Node-independent live self-hosting' in the Fixed decisions part of this node's completion predicate, or is completion limited to the isolated rehearsal, with live self-hosting deferred to a separately authorized operational step? The non-goals exclude live operation, so the two statements conflict.",
+      "If canonical cutover control is found to be absent, does 'keep Node and return to existing authority' count as an accepted completion of this BIU, or as a HOLD/PARKED disposition?",
+      "What decision does POSTW1-DECIDE-006A pin (the directional boundary question reserved to the Founder), and has it been disposed? The design/DAG revision it requires determines what 'canonical control' and the approved live-profile writer are.",
+      "Which process is the single approved live-profile writer after cutover (presumably Python), and which party owns its approval?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The work is cohesive: one capability, with coupled concerns (quiescence, reconciliation, checkpoint, rollback, writer fencing) that must be verified together. SPLIT is therefore inappropriate, and technical breadth alone does not justify it. There are real owner questions about completion semantics, but the controlling condition is external. The text itself lists separate required authorities (EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-006A) and predecessor dependencies as stop conditions, and nothing supplied shows them satisfied. It also limits proceeding work to fixture preparation only, and requires the proof fixture to be pinned before implementation. These are reported gating facts, not inferred ones; this assessment cannot verify their current status. Even if the owner questions were answered today, execution could not proceed without these authorities and proofs, so HOLD is the primary disposition, with the clarifications raised alongside it.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive, safety-critical migration and rollback substrate with one governing capability (one_writer_cutover_control). Size or breadth does not warrant splitting it. The text makes the main work conditional on things it does not show are available. These are: explicit sovereignty cutover authority, the separately named EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY and POSTW1-DECIDE-006A, proof from predecessors WO-220502 and WO-220302, and a pinned FX-E2 fixture. It also permits only reconciliation fixture preparation as partial work, with no runtime writer switch. The acceptance wording mixes isolated-rehearsal proof with a fixed decision to 'prove Node-independent live self-hosting', while live operation is a non-goal. That is a secondary intent ambiguity for the owner to resolve. The controlling condition is missing external authority and prerequisite proof. Engineering research alone would not resolve it.",
+    "verification_assessment": "The acceptance properties could in principle be observed through a local composed rehearsal: rejection of a second writer, a reconciled effect ledger, checkpoint integrity, retained reservations, and a nonduplicating rollback. A single fresh independent verifier retrieving the exact candidate SHA could give one meaningful verdict on the rehearsal. Currently the text lists 'Acceptance probes: None'. The FX-E2 fixture, commands and expected outcomes are explicitly not yet pinned, and the completion predicate is conditional ('if canonical control is absent'). The wording on live self-hosting is also unclear about whether operational proof is required, and local substitutions cannot satisfy operational acceptance. Until the fixture is pinned and the scope question is settled, an independent verdict would lack a stable target."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T12:34:15.545653+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 8320,
+    "input_sha256": "20a63340181734b883b3bf2703322c83c26997da221cc0f864a51594b31aabc4",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-nlzekqlc/WO-220503.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T12:33:39.183518+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220503"
+}

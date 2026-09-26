@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Deliver the one_writer_cutover_control capability. It must prove, in an isolated rehearsal before any live use, five things: quiescence, durable reconciliation of active work and external effects, backup/checkpoint integrity, retained pending reservations, and nonduplicating rollback. It must reject simultaneous Node/Python writers for the same work. If canonical control is absent, it must keep Node and return to the existing authority instead of building its own migration machinery.",
+    "implementation_unknowns": [
+      "The FX-E2 fixture is not yet pinned. Before implementation, the producer must pin its commands, inputs, expected outcomes and evidence schema against the node predicate, and must show intact, fault and restored discrimination for the mechanical controls.",
+      "Recorded passing proof for WO-220502 and WO-220302 must be retrieved and confirmed as reusable on this BIU's path. Board DONE status is reported but is not the same as confirmed proof. If the proof is absent or mismatched, the BIU's own stop condition requires a hold.",
+      "It is not yet known what concretely constitutes 'canonical control' provided by the predecessors, or how the rehearsal detects that it is absent. This determines whether the keep-Node / return-to-authority branch applies.",
+      "The existing Node bootstrap writer, checkpoint format, pending-reservation store and effect ledger need to be located, so that reconciliation and rollback can be exercised against the pinned Phase 9 contracts.",
+      "A mechanism is needed to demonstrate rejection of a simultaneous Node/Python writer for the same work within the isolated rehearsal.",
+      "The 'DAG scope' field is empty. Scope must be derived from the stated extent and the owned capability."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Scope tension on live proof. The Fixed decisions ask to 'prove Node-independent live self-hosting and full required suite'. However, the authority grant excludes live production cutover, and the Non-goals exclude live operation. The producer or verifier could misread live proof as required for completion. The completion predicate, which is the isolated rehearsal, should govern, and any live-proof expectation should be treated as out of scope for this BIU.",
+      "Predecessor proof reuse may fail to confirm despite the DONE board status, which would stop the work under the BIU's hold conditions.",
+      "If the fixture is pinned weakly, rehearsal could pass without truly discriminating duplicated effects or lost reservations during rollback.",
+      "The rehearsal environment must not share state with the live writer. Otherwise the rehearsal itself could create a simultaneous-writer condition or trigger external effects.",
+      "This gate has not verified the authority delegation record or its relay by an observing session. It is taken as reported.",
+      "Direct merge to baseline without a PR (SWF-19) makes landing depend entirely on the exact-SHA independent verdict."
+    ],
+    "next_action": "Hand off to the producer with this ordering. First, retrieve and record the predecessors' passing proof for WO-220502 and WO-220302, and hold if it is missing. Second, pin the FX-E2 fixture commands, inputs, expected outcomes and evidence schema, including intact, fault and restored negative controls. Only then implement and run the isolated rehearsal. Keep scope to rehearsal: no runtime writer switch and no live cutover. Publish the exact SHA for fresh independent verification.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent, owner authority and acceptance are established well enough for autonomous handoff.\n\nThe text reports the authority gates as disposed and bounded to exactly this BIU's rehearsal extent. No product, compatibility or policy decision remains for an owner. The keep-Node / return-to-authority fallback is explicitly specified rather than left open.\n\nThe two gaps the text itself names are engineering obligations inside the work's defined proof order, not owner unknowns:\n- Pinning the fixture is the mandated first step of the proof plan.\n- Confirming predecessor proof is retrieval of artifacts reported to exist.\nNeither is shown to be unavailable, so HOLD is not warranted on the supplied facts. The BIU's own stop rules cover the case where confirmation fails.\n\nThe work is a single decision center. The quiescence, reconciliation, checkpoint, reservation and rollback properties jointly define one migration substrate, and splitting them would produce microtasks without independent rejection value.\n\nThe live-self-hosting phrasing is a real ambiguity. It is recorded as a risk rather than a clarification because the completion predicate, authority grant and non-goals consistently limit this BIU to isolated rehearsal.\n\nREADY here recommends handoff only. It does not authorize IMPLEMENT, release or live operation.",
+    "semantic_split_recommendation": [],
+    "summary": "This is one cohesive, bounded BIU with a single intent: a one-writer migration and rollback substrate proven in isolated rehearsal. The text reports three things, none of which this gate has verified. First, the Founder disposed the required authority gates (EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY and POSTW1-DECIDE-006A) on 2026-09-26, bounded to isolated rehearsal and excluding live production cutover. Second, predecessors WO-220502 and WO-220302 are DONE on the board. Third, execution allocation, custody and landing rules are specified. Two open items remain, and both are producer-side engineering steps rather than owner decisions. One is pinning the FX-E2 fixture commands, inputs, expected outcomes and evidence schema, which the proof plan itself requires as the first step. The other is retrieving and confirming the predecessors' recorded passing proof on this BIU's path. Neither is reported as unavailable. The task's own stop conditions already direct a hold if that proof turns out to be missing.",
+    "verification_assessment": "Acceptance is observable through an isolated rehearsal with pinned fixture evidence. Each of these can be checked by an independent verifier on the exact published SHA:\n- quiescence achieved;\n- active work and effects reconciled durably;\n- checkpoint integrity verified;\n- pending reservations retained;\n- rollback produces no duplication;\n- a concurrent Node/Python writer is rejected;\n- negative controls discriminate.\n\nThese are coupled properties of one substrate, so a single independent verdict is meaningful. Two limits apply. The verdict is only as strong as the FX-E2 fixture, which is still unpinned, so fixture pinning is the first gate. The verdict covers local or isolated proof only. Per the task's own evidence rules, it cannot establish operational or live success."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T20:21:42.133756+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10312,
+    "input_sha256": "9dde655ebd91a8fc1e4d20b5b3994ba061adfc12c3bee90b338ab522a01cffee",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-f329y1ui/WO-220503.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T20:21:04.046800+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220503"
+}
