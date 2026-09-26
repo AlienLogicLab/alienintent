@@ -1,0 +1,15 @@
+
+HKEY_CURRENT_USER\Software\Microsoft\Windows\CurrentVersion\Run
+    OneDriveSetup    REG_SZ    C:\Windows\System32\OneDriveSetup.exe /thfirstsetup
+    OneDrive    REG_SZ    "C:\Program Files\Microsoft OneDrive\OneDrive.exe" /background
+    JetBrains Toolbox    REG_SZ    "C:\Users\netmarine\AppData\Local\JetBrains\Toolbox\bin\jetbrains-toolbox.exe" --minimize
+    com.squirrel.slack.slack    REG_SZ    "C:\Users\netmarine\AppData\Local\slack\slack.exe" --process-start-args --startup
+    (Default)    REG_SZ    
+    com.squirrel.Teams.Teams    REG_SZ    C:\Users\netmarine\AppData\Local\Microsoft\Teams\Update.exe --processStart "Teams.exe" --process-start-args "--system-initiated"
+    Proton VPN    REG_SZ    C:\Program Files\Proton\VPN\ProtonVPN.Launcher.exe "----ms-protocol:ms-encodedlaunch:App?ContractId=Windows.StartupTask&TaskId=Proton%20VPN"
+    Ext4Windows    REG_SZ    "C:\Program Files\Ext4Windows\ext4windows.exe" --server
+    Docker Desktop    REG_SZ    C:\Program Files\Docker\Docker\Docker Desktop.exe
+    GoogleUpdaterTaskUser152.0.7933.0    REG_SZ    "C:\Users\netmarine\AppData\Local\Google\GoogleUpdater\152.0.7933.0\updater.exe" --wake
+    Gemini    REG_SZ    "C:\Users\netmarine\AppData\Local\Google\Gemini\GeminiAppLauncher.exe"
+    Proton Drive    REG_SZ    "C:\Users\netmarine\AppData\Local\Programs\Proton\Drive\ProtonDrive.exe" -quiet
+

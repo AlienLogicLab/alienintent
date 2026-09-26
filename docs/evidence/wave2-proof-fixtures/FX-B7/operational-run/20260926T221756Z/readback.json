@@ -1,0 +1,32 @@
+{
+  "alias_entry_point": {
+    "path": "/mnt/d/Projects/alienintent/bin/b-disp.mjs",
+    "present": true,
+    "sha256": "5e228a764aa8d7b512b9804f937dadfc6ed4da14b12c61e146b481040df7f812"
+  },
+  "failures": [],
+  "repository_store": "/mnt/d/Projects/alienintent",
+  "units": [
+    {
+      "active": "active",
+      "argv": [
+        "/home/netmarine/.local/bin/node",
+        "/mnt/d/Projects/alienintent/bin/alienintent.mjs",
+        "--config",
+        "/home/netmarine/.config/alienintent/self-hosting.json"
+      ],
+      "declared": [
+        "CANONICAL"
+      ],
+      "entry": "/mnt/d/Projects/alienintent/bin/alienintent.mjs",
+      "entry_in_repository_store": true,
+      "entry_realpath": "/mnt/d/Projects/alienintent/bin/alienintent.mjs",
+      "entry_reexports_alias": false,
+      "entry_sha256": "ac781570821866bc5dc551a89061e930c357ddd489ed3aad2621dbd221946ae9",
+      "main_pid": 2324102,
+      "pass": true,
+      "sub": "running",
+      "unit": "alienintent.service"
+    }
+  ]
+}

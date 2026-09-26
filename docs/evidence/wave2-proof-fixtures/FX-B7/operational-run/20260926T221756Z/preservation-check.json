@@ -1,0 +1,13 @@
+{
+  "added": {
+    "active": 0,
+    "closures": 0,
+    "deliveries": 0,
+    "diagnostics": 0,
+    "founderExceptions": 0,
+    "resources": 0
+  },
+  "failures": [],
+  "markers_identical": true,
+  "missing": {}
+}
