@@ -96,3 +96,18 @@ def test_human_attention_acknowledgement_pack_is_selected_by_every_owned_boundar
     )
     for path in owned:
         assert "human-attention-acknowledgement" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path
+
+
+def test_one_writer_cutover_pack_is_selected_by_every_owned_boundary():
+    owned = (
+        "src/alienintent/execution_coordination/domain/cutover.py",
+        "src/alienintent/execution_coordination/ports/cutover.py",
+        "src/alienintent/execution_coordination/application/cutover.py",
+        "src/alienintent/execution_coordination/adapters/cutover_files.py",
+        "src/alienintent/composition/cutover_rehearsal.py",
+        "tests/execution_coordination/test_one_writer_cutover.py",
+        "tools/evidence/fx_e2_evidence.py",
+        "docs/evidence/wave2-proof-fixtures/FX-E2/FX-E2.md",
+    )
+    for path in owned:
+        assert "one-writer-cutover-fx-e2" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path

@@ -282,6 +282,17 @@ class SQLiteOperationalStore(FencedOperationalStore):
             rows = connection.execute("SELECT identity, status, receipt FROM effects WHERE profile=? ORDER BY identity", (profile,)).fetchall()
             return tuple((row["identity"], row["status"], row["receipt"]) for row in rows)
 
+    def backup(self, target: Path) -> None:
+        """Read-only: write a consistent online copy of the whole store to a new file (cutover checkpoint)."""
+        if target.exists():
+            raise StoreUnavailable("backup target already exists")
+        with self._read() as connection:
+            copy = sqlite3.connect(target)
+            try:
+                connection.backup(copy)
+            finally:
+                copy.close()
+
     def pending_effects(self, profile: str) -> tuple[Effect, ...]:
         return self._effects(profile, "pending")
 
