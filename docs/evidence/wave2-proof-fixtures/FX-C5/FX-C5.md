@@ -145,6 +145,15 @@ All commands run with `PYTHONPATH=src:.`.
 5. `python3 -B tools/evidence/fx_c5_evidence.py --output <new dir> --invocation <exact invocation>`. The harness runs
    all of the above and must run on a clean committed candidate.
 
+## Feature regression pack
+
+`tools/verification/feature_regressions.json` registers `supervised-monitor-host`. It runs
+`python3 -m pytest -q tests/control_plane/test_monitor_host.py` for any change to the host, supervisor, manager,
+alert or ownership sources, the C4 monitor-health sources, `control_plane_profile.py`, the FX-C5 tests or the
+harness. The deterministic in-memory manager keeps it runnable in every VERIFY environment. The real-manager probe
+stays in this fixture. The existing `local-bounded-control-capstone` pack still selects on `control_plane/**`
+unchanged.
+
 ## Evidence
 
 The evidence commit retains the harness run beside this file. Until that commit exists, the evidence is pending.

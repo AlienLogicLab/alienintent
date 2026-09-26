@@ -186,7 +186,8 @@ def run(output, invocation):
              Path("docs/evidence/wave2-execution-packets/WO-220305.allocation.json"),
              Path("docs/evidence/wave2-execution-packets/WO-220305.proof-packet.md"),
              *(Path(f"docs/evidence/wave2-proof-fixtures/{f}/execution-record.json") for f in ("FX-C4", "FX-L1")),
-             Path(TEST), Path(SYSTEMD_TEST), Path(__file__).relative_to(ROOT), *(Path(s) for s in SOURCES)]
+             Path(TEST), Path(SYSTEMD_TEST), Path(__file__).relative_to(ROOT), *(Path(s) for s in SOURCES),
+             Path("tools/verification/feature_regressions.json")]
     report = {"record_kind": "ProofFixtureExecution", "schema_version": 1, "fixture_id": "FX-C5",
         "work_unit": "WO-220305", "issue": 114, "invocation": invocation,
         "source_revision": git("rev-parse", "HEAD"),

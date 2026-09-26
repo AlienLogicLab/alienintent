@@ -46,3 +46,18 @@ def test_bounded_control_capstone_pack_is_selected_by_every_composed_boundary():
         assert [p["id"] for p in module.selected_packs(manifest(), (path,))] == [
             "local-bounded-control-capstone"
         ]
+
+
+def test_supervised_monitor_host_pack_is_selected_by_every_host_boundary():
+    owned = (
+        "src/alienintent/composition/monitor_host.py",
+        "src/alienintent/control_plane/domain/monitor_host.py",
+        "src/alienintent/control_plane/application/monitor_supervision.py",
+        "src/alienintent/control_plane/adapters/monitor_host_repository.py",
+        "src/alienintent/control_plane/adapters/systemd_host_manager.py",
+        "src/alienintent/control_plane/application/monitor_health.py",
+        "tests/control_plane/test_monitor_host_systemd.py",
+        "tools/evidence/fx_c5_evidence.py",
+    )
+    for path in owned:
+        assert "supervised-monitor-host" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path
