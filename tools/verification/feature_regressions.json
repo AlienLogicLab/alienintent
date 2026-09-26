@@ -64,6 +64,29 @@
         "-q",
         "tests/composition/test_bounded_control_capstone.py"
       ]
+    },
+    {
+      "id": "supervised-monitor-host",
+      "description": "The monitor/scanner host runs only as its supervisor-owned unit; external observation detects a stalled or terminated host from the unit and the durable C4 record; restart needs a grant naming the exact failed launch and alert and continues the generation with pending state kept; wrong unit/invocation identity, substitution and missing/invalid supervision configuration hold (WO-220305, FX-C5).",
+      "paths": [
+        "src/alienintent/composition/monitor_host.py",
+        "src/alienintent/control_plane/domain/monitor_host.py",
+        "src/alienintent/control_plane/ports/monitor_host.py",
+        "src/alienintent/control_plane/application/monitor_supervision.py",
+        "src/alienintent/control_plane/adapters/monitor_host_*.py",
+        "src/alienintent/control_plane/adapters/systemd_host_manager.py",
+        "src/alienintent/control_plane/*/monitor_health*.py",
+        "src/alienintent/composition/control_plane_profile.py",
+        "tests/control_plane/test_monitor_host*.py",
+        "tools/evidence/fx_c5_evidence.py"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/control_plane/test_monitor_host.py"
+      ]
     }
   ]
 }

@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-rfEs","-p","no:cacheprovider","tests/control_plane/test_monitor_host.py::test_missing_or_invalid_configuration_holds_before_launch"],"cwd":"/tmp/fx-c5-controls-5zeso5jr","exit_status":0,"stderr":"","stdout":"........                                                                 [100%]\n8 passed in 0.26s\n"}
