@@ -66,14 +66,14 @@ the operator is not a message relay.
 | SPECIFY | Requirements, constraints and acceptance criteria |
 | PLAN | Approach and decomposition |
 | TASKS | Materialize bounded work units |
-| READY | Sufficiently specified and prepared for execution; Agent-Ready assessed. Dependencies and operational authority may still gate release/IMPLEMENT. |
+| READY | Fully prepared work in the execution queue. Requirement priority and dependency order determine when it is selected. |
 | IMPLEMENT | Producer execution |
 | VERIFY | Deterministic/mechanical verification of known, mechanized obligations and known failure classes — the factory's accumulated enforceable knowledge |
 | REVIEW | Qualitative engineering judgment, and the discovery frontier for novel/non-mechanized failures and learning candidates; suitable findings graduate through SWF-24 / SF-REQ-050 into proven-red VERIFY checks. Not necessarily a separately dispatched lane |
 | ACCEPT | Accepted engineering result / authority decision |
 | DONE | Operational closure complete |
 
-READY is a preparation state, not a claim that every execution gate is already clear. A READY BIU may remain dependency-blocked, Founder-held, capacity-blocked or awaiting separately scoped operational authority. Native dependency edges and deterministic release admission prevent premature IMPLEMENT. Keeping fully prepared blocked work in READY makes the executable frontier visible and allows immediate admission when its gates clear without another planning/materialization cycle.
+READY is the execution queue. Dependencies are ordinary scheduling constraints: prerequisites are selected before their dependents, while requirement priority determines which requirement the scheduler finishes first. A dependency does not create another lifecycle state. Separate authority, custody, capacity or release failures may still prevent execution.
 
 READY describes the readiness contract; this correction does not wire a new Agent-Ready assessment or automatic release mechanism into the Node dispatcher.
 There is no MERGE state. Merge/landing is a repository operation performed during

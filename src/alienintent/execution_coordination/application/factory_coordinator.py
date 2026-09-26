@@ -226,9 +226,8 @@ class FactoryCoordinator:
             if focused:
                 return min(focused, key=self._priority_key)
 
-            # The focused requirement is currently blocked/unavailable. Borrow
-            # another eligible BIU without forgetting the product requirement
-            # we are trying to finish.
+            # No dependency-eligible BIU exists yet for the focused requirement.
+            # Run the next eligible work without forgetting the requirement focus.
             return best
 
         parent = self._single_requirement(best)
