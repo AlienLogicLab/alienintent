@@ -43,7 +43,9 @@ HOLD_CODES = (
     "PREREQUISITE_NOT_COPIED", "CHILD_PARENT_EDGE_MISSING", "INTER_CHILD_EDGE_UNAUTHORIZED", "EDGE_UNAUTHORIZED",
     "DECISION_CONFLICT", "OBLIGATION_LOST", "PARTIAL_MAPPING", "INTEGRATION_DUTY_DROPPED", "CLAUSE_NOT_VERBATIM",
     "OBLIGATION_INVENTED", "UNMAPPED_OBLIGATION", "BOUNDS_WIDENED", "INVALIDATION_INCOMPLETE",
-    "ASSESSMENT_HISTORY_MUTATED", "STALE_ASSESSMENT_AS_CURRENT", "PERSISTENCE_CONFLICT")
+    "ASSESSMENT_HISTORY_MUTATED", "STALE_ASSESSMENT_AS_CURRENT", "PERSISTENCE_CONFLICT",
+    # U8 initial compilation, appended so no existing code changes rank.
+    "INPUT_UNPINNED", "EXISTING_DECOMPOSITION", "IDENTITY_EXHAUSTED")
 _LIST_FIELDS = ("units", "obligations", "edges", "requirements", "original_edges", "original_obligations", "results",
                 "result_edges", "authorized_edges", "mapping", "reverse", "invalidation", "prior_assessments",
                 "elaboration_approvals")

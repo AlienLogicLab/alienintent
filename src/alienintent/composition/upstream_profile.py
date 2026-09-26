@@ -1,10 +1,10 @@
 """Upstream profile: Inventory -> AmbiguityInspection -> DecisionResolution adapter -> existing DecisionInbox,
 plus the pinned PremiseEvidence bridge, pre-implementation ProofPlanning over it, DesignAdmission whose
-applicability gates readiness processing, compiler validation behind that gate, and the SF-REQ-015 readiness
-consumer (lint, bound ReadinessAssessment producer and retained-evidence consumer)."""
+applicability gates readiness processing, compiler validation and initial compilation behind that gate, and the
+SF-REQ-015 readiness consumer (lint, bound ReadinessAssessment producer and retained-evidence consumer)."""
 from pathlib import Path
 
-from alienintent.composition.compilation import VerifiedDesignDecisions
+from alienintent.composition.compilation import CurrentProofPlanDocuments, VerifiedDesignDecisions
 from alienintent.composition.design_admission import PremiseReaderCheck
 from alienintent.composition.readiness import compose_producer, resolve_binding
 from alienintent.context_assembly.application.design_admission_service import DesignAdmission, DesignReadiness
@@ -12,6 +12,7 @@ from alienintent.context_assembly.adapters.compilation_repository import Evidenc
 from alienintent.context_assembly.adapters.decision_resolution import DecisionInboxQuestions
 from alienintent.context_assembly.adapters.readiness_clarification import InboxClarifications
 from alienintent.context_assembly.application.compilation_validation_service import CompilationValidation
+from alienintent.context_assembly.application.initial_compilation_service import InitialCompilation
 from alienintent.context_assembly.application.ambiguity_service import AmbiguityService, UpstreamQuestionAdmission
 from alienintent.context_assembly.application.inventory_service import InventoryService
 from alienintent.context_assembly.application.readiness_service import ReadinessAdmission
@@ -83,6 +84,14 @@ class UpstreamProfile:
                                                   dependency_lifecycle,
                                                   EvidenceAssessmentHistory(repository, access_scope))
                             if self.design_readiness is not None and dependency_lifecycle is not None else None)
+        # Initial compilation derives from the same gate, the retained verified design, inventory, inspection and
+        # proof plans; it takes no mapping input and writes only upstream: compilation and reservation records.
+        self.initial_compilation = (InitialCompilation(repository, store, project, profile, definition_ref, invocation,
+                                                       access_scope, self.design_readiness,
+                                                       VerifiedDesignDecisions(self.design), self.inventory,
+                                                       self.ambiguity, CurrentProofPlanDocuments(self.proofs),
+                                                       dependency_lifecycle)
+                                    if self.compilation is not None and self.proofs is not None else None)
         # Readiness admission sits behind the same design gate and lifecycle. The producer binding is resolved here,
         # from the configured executable's installed metadata; unbound or unestablished provenance holds before
         # launch. READY is eligibility for the existing release gate only; nothing here releases. A configured
