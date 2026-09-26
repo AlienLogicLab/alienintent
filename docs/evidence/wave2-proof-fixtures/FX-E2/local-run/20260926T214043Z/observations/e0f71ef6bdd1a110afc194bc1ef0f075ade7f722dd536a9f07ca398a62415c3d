@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/execution_coordination/test_one_writer_cutover.py::test_rollback_stops_python_first_and_holds_on_unreconciled_effects"],"cwd":"/tmp/fx-e2-controls-32vscw5j","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.29s\n"}

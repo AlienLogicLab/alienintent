@@ -161,6 +161,27 @@
         "tests/control_plane/test_attention_acknowledgement.py",
         "tools/live/test_fx_b5_operational.py"
       ]
+    },
+    {
+      "id": "one-writer-cutover-fx-e2",
+      "description": "One-writer cutover control stays conditional and nonduplicating: isolation from live writers, keep-Node without canonical control, quiescence blockers, verified checkpoint, complete durable reconciliation, retained pending reservations, exactly one admitted writer with Node-writer detection holding both paths, and rollback that stops Python first and never re-dispatches Python-completed work (WO-220503, FX-E2).",
+      "paths": [
+        "src/alienintent/execution_coordination/domain/cutover.py",
+        "src/alienintent/execution_coordination/ports/cutover.py",
+        "src/alienintent/execution_coordination/application/cutover.py",
+        "src/alienintent/execution_coordination/adapters/cutover_files.py",
+        "src/alienintent/composition/cutover_rehearsal.py",
+        "tests/execution_coordination/test_one_writer_cutover.py",
+        "tools/evidence/fx_e2_evidence.py",
+        "docs/evidence/wave2-proof-fixtures/FX-E2/**"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/execution_coordination/test_one_writer_cutover.py"
+      ]
     }
   ]
 }

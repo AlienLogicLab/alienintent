@@ -1,0 +1,119 @@
+{
+  "baseline": "b07be02db62bdbc1c39753de4da32697b6dbd4e0",
+  "baseline_full_suite": {
+    "command": "PYTHONPATH=src python3 -B -m pytest -q -p no:cacheprovider",
+    "exit_status": 1,
+    "observation": "baseline-full-pytest.summary",
+    "result": "25 failed, 1180 passed, 4 skipped. All 25 are in tests/evidence_learning/test_proof_planning.py (pre-existing FX-U4, owner WO-220204)."
+  },
+  "biu": "WO-220503",
+  "disposition": "CONFIRMED_REUSABLE",
+  "fixture": "FX-E2",
+  "invocation": "AlienLogicLab/alienintent#123:PRODUCER:159cdf95-a22d-49e1-a910-6f6a1cd7dc1c",
+  "observations": {
+    "baseline-full-pytest.summary": "sha256:a0fa57bd80dd1b9aca161e0a2543c9a123d3bc94e02a6c2c32a5eab9ce4cb0db",
+    "fx-c2-at-46920041/digest-manifest.json": "sha256:47b15efd38648018fb358166f9cf9abc2869eb552031d6a5501bf3ab05923f25",
+    "fx-c2-at-46920041/execution-record.json": "sha256:e3e8b570268716d0c66d9e246f8b7bfd0670c08a9379f3c04118326af8df2101",
+    "fx-c2-at-46920041/observations/063214915118582b8413f27970758651a3a1d3a52d490c1f1820851f2c99e8bc": "sha256:063214915118582b8413f27970758651a3a1d3a52d490c1f1820851f2c99e8bc",
+    "fx-c2-at-46920041/observations/0900ee55113910a9e58495c819a23276db67d907bd5f3eda3af6edfaba43a327": "sha256:0900ee55113910a9e58495c819a23276db67d907bd5f3eda3af6edfaba43a327",
+    "fx-c2-at-46920041/observations/0e48e5a214e6e21b26958d77975e7ff61e51ce1b23a9cb763d50138209473d3d": "sha256:0e48e5a214e6e21b26958d77975e7ff61e51ce1b23a9cb763d50138209473d3d",
+    "fx-c2-at-46920041/observations/0f93db0e59385e10597b9b765110dc56c2d9ca584bfe95111a4a778dff429f40": "sha256:0f93db0e59385e10597b9b765110dc56c2d9ca584bfe95111a4a778dff429f40",
+    "fx-c2-at-46920041/observations/1c692f4c0812f0e6d1872a83ff764cb9d7161c2f112d9a6d923e104dffb6a5f3": "sha256:1c692f4c0812f0e6d1872a83ff764cb9d7161c2f112d9a6d923e104dffb6a5f3",
+    "fx-c2-at-46920041/observations/3953625ac5ee7210a5c56959d4b69a50aff92d75712a0eb9deab582cbe46e8b6": "sha256:3953625ac5ee7210a5c56959d4b69a50aff92d75712a0eb9deab582cbe46e8b6",
+    "fx-c2-at-46920041/observations/404100308b671535298f7a9f4c42fa587ffa4f3fdf6c5396212a01c1f8e62ab7": "sha256:404100308b671535298f7a9f4c42fa587ffa4f3fdf6c5396212a01c1f8e62ab7",
+    "fx-c2-at-46920041/observations/50e31084a1c6617c23afe56f4fa45d9149a4592bf56c57dd08fec12c8260919e": "sha256:50e31084a1c6617c23afe56f4fa45d9149a4592bf56c57dd08fec12c8260919e",
+    "fx-c2-at-46920041/observations/54a2948b94b24d5a1cc0c8fe10010f0f168deaf234dc59d2b320bf7726324656": "sha256:54a2948b94b24d5a1cc0c8fe10010f0f168deaf234dc59d2b320bf7726324656",
+    "fx-c2-at-46920041/observations/57270c06bf75a63fb0f168e7f7daa628654d7b50ea063b4467124b48b2a40fc6": "sha256:57270c06bf75a63fb0f168e7f7daa628654d7b50ea063b4467124b48b2a40fc6",
+    "fx-c2-at-46920041/observations/6e1e71dadb0e80c64e6e69c8e9553d4ddd16af9e6a8e81d9a42859765d45e7ec": "sha256:6e1e71dadb0e80c64e6e69c8e9553d4ddd16af9e6a8e81d9a42859765d45e7ec",
+    "fx-c2-at-46920041/observations/6eeb04a8c4150c7cd66f8ba5b8865c52e28b73f5230cadf67b70b7dfbd767a61": "sha256:6eeb04a8c4150c7cd66f8ba5b8865c52e28b73f5230cadf67b70b7dfbd767a61",
+    "fx-c2-at-46920041/observations/71796f22057595d32d517d072046f8d8241cf17e7d3a7334ee2bd741c701809e": "sha256:71796f22057595d32d517d072046f8d8241cf17e7d3a7334ee2bd741c701809e",
+    "fx-c2-at-46920041/observations/92c54b160745986cd2b643b7bc032ba8dd5cc098f3a5f5f0f21618a4211b0bbc": "sha256:92c54b160745986cd2b643b7bc032ba8dd5cc098f3a5f5f0f21618a4211b0bbc",
+    "fx-c2-at-46920041/observations/938362162fb8d714814bef8722837f4cd0b26bd9e950c748c22b02c3addd19e9": "sha256:938362162fb8d714814bef8722837f4cd0b26bd9e950c748c22b02c3addd19e9",
+    "fx-c2-at-46920041/observations/961487ee3511c3a4fd3424aaefaebb887317f50c6c9e16e91a866e4d1e567056": "sha256:961487ee3511c3a4fd3424aaefaebb887317f50c6c9e16e91a866e4d1e567056",
+    "fx-c2-at-46920041/observations/9b1e29fad6cfef5d2ad4e8405c857ea351b552b7201612d5a34fa61dbb8bd8b5": "sha256:9b1e29fad6cfef5d2ad4e8405c857ea351b552b7201612d5a34fa61dbb8bd8b5",
+    "fx-c2-at-46920041/observations/9f4fe6d45269e379949ab74cb0f6b5345a4466b5ded266efd262728174f09ed2": "sha256:9f4fe6d45269e379949ab74cb0f6b5345a4466b5ded266efd262728174f09ed2",
+    "fx-c2-at-46920041/observations/a4386027de19c04897d98d1cce00a9285d78bb2cc3a842355346cd682d980ec7": "sha256:a4386027de19c04897d98d1cce00a9285d78bb2cc3a842355346cd682d980ec7",
+    "fx-c2-at-46920041/observations/a8f2d1f298147324fcedc0478a55103abc626d01b8d08510ac1e74cf722014a5": "sha256:a8f2d1f298147324fcedc0478a55103abc626d01b8d08510ac1e74cf722014a5",
+    "fx-c2-at-46920041/observations/a912928936938911d228f44d3f8305a4e2337dced263f3a3773d090cec53abc2": "sha256:a912928936938911d228f44d3f8305a4e2337dced263f3a3773d090cec53abc2",
+    "fx-c2-at-46920041/observations/ab6c86d245d773757a155eac8a1c321e1edd9e6b7e858951c5debc7f5a6cc55e": "sha256:ab6c86d245d773757a155eac8a1c321e1edd9e6b7e858951c5debc7f5a6cc55e",
+    "fx-c2-at-46920041/observations/ae4177fbac567f05900dab3a5de3d2f670cba5bfb5fa00b7f1ed482cd6468cb9": "sha256:ae4177fbac567f05900dab3a5de3d2f670cba5bfb5fa00b7f1ed482cd6468cb9",
+    "fx-c2-at-46920041/observations/b1406724c282c71f978d00f96e4d609940a64cdbaf55a63537e1ef6a033a3f90": "sha256:b1406724c282c71f978d00f96e4d609940a64cdbaf55a63537e1ef6a033a3f90",
+    "fx-c2-at-46920041/observations/cb404af39532ae54e4d4a39cb4fe85c40582735e40f1c042a1b439e216f008b8": "sha256:cb404af39532ae54e4d4a39cb4fe85c40582735e40f1c042a1b439e216f008b8",
+    "fx-c2-at-46920041/observations/d9ad4a9a28dfaab4935c561bbb094f3d5d7d64b2dba0dce8d2b9645f9428c344": "sha256:d9ad4a9a28dfaab4935c561bbb094f3d5d7d64b2dba0dce8d2b9645f9428c344",
+    "fx-c2-at-46920041/observations/da4e84d2a936efb826416233e94382a86ef94690e173b1799673c317b7a25c18": "sha256:da4e84d2a936efb826416233e94382a86ef94690e173b1799673c317b7a25c18",
+    "fx-c2-at-46920041/observations/dcdbe93a95d03062ce4c25b1f0f76bd6c2a77e03068054c4e2ac9f493363e823": "sha256:dcdbe93a95d03062ce4c25b1f0f76bd6c2a77e03068054c4e2ac9f493363e823",
+    "fx-c2-at-46920041/observations/f7d95bd2ac261db31d86e218edeaa9c3a56bd5bb18e1ac3c68d4b501164ba2dc": "sha256:f7d95bd2ac261db31d86e218edeaa9c3a56bd5bb18e1ac3c68d4b501164ba2dc",
+    "fx-c2-at-46920041/observations/fd7e02b093b4ccfedbba8d9465d3659a979bdcc0e06a18d36f48d0d66bf0695c": "sha256:fd7e02b093b4ccfedbba8d9465d3659a979bdcc0e06a18d36f48d0d66bf0695c",
+    "fx-c2-at-46920041/observations/fe57a35caf37cf5c20b650e1b286746f69591f7422e0e9bf9e4ae7a1cec9c5a8": "sha256:fe57a35caf37cf5c20b650e1b286746f69591f7422e0e9bf9e4ae7a1cec9c5a8",
+    "fx-c2-at-46920041/proven-red.json": "sha256:13505922c0bfe44975e92dc59cc7a3ba9383dc84c5b1b4e9c02de210d1521afe",
+    "fx-c2-at-46920041/run-report.json": "sha256:a71e0dc1fd58bb21dfad7a82fb690fd15cbea09b14ea79371939d38c290cfb2a",
+    "fx_c2.out": "sha256:71491441fa11255f4b097f4043ebedcf7f9a116bc1ab448db0635a6aab043945",
+    "fx_c2_accepted.out": "sha256:2b13404be7d896f36685a36a06b692ef9425459831e31498ffb14626e00f4037",
+    "fx_e1_evaluate.out": "sha256:7f2a4c6ff227ec0b8755e8fe347a378eaaba7c1a8a4c9731e4d15d7cf293eeac",
+    "test_c2.out": "sha256:d33a5be1d3f4c4fd57b3fa90e20d3cc2f74a9f1199992128eb4296907f68eb18",
+    "test_fx_e1.out": "sha256:c1c8d8099103e275c67e02500801d0b59fe3237387249ae2621758ef7dd639be"
+  },
+  "predecessors": [
+    {
+      "accepted_candidate": "5a98c26a7e1d5c9d9572ac7595208e0be51f2b8f",
+      "accepted_run": "docs/evidence/wave2-proof-fixtures/FX-E1/runs/20260926T101450Z/proof-run.json",
+      "biu": "WO-220502",
+      "fixture": "FX-E1",
+      "independent_verdict": "JC VERIFIER AlienLogicLab/alienintent#122:VERIFIER:0ecfb946-2ec8-4480-bec2-8608586f4390 ACCEPT",
+      "issue": 122,
+      "landing_merge": "c5ef2bc033e712b61da045df47f25b01b40f4dcc",
+      "reuse_checks": [
+        {
+          "command": "python3 tools/live/fx_e1_evaluate.py docs/evidence/wave2-proof-fixtures/FX-E1/runs/20260926T101450Z/proof-run.json --controls",
+          "cwd": "baseline",
+          "exit_status": 0,
+          "observation": "fx_e1_evaluate.out",
+          "result": "PASS 10/10; K1-K10 fault HOLD, restored PASS"
+        },
+        {
+          "command": "python3 -B -m pytest -q -p no:cacheprovider tools/live/test_fx_e1.py",
+          "cwd": "baseline",
+          "exit_status": 0,
+          "observation": "test_fx_e1.out",
+          "result": "8 passed"
+        }
+      ],
+      "reused_for": "canonical_live_transport and node_independent_runtime_baseline. The identified Python profile py10-sandbox is the canonical control whose presence FX-E2 checks. The Node live writer (AlienLogicLab/alienintent, Project #1) is must-not-touch."
+    },
+    {
+      "accepted_candidate": "46920041299d4fac28c3bbd65eb25c5ac1823787",
+      "biu": "WO-220302",
+      "fixture": "FX-C2",
+      "independent_verdict": "JC VERIFIER AlienLogicLab/alienintent#95:VERIFIER:306313a4-141f-45ad-8698-2ed77786f872 ACCEPT",
+      "issue": 95,
+      "landing_merge": "7b6e19c4a17f1d797f61c99edafadd4857940dd6",
+      "reuse_checks": [
+        {
+          "command": "PYTHONPATH=src:. python3 -B tools/evidence/fx_c2_evidence.py --output <dir> --invocation <inv>",
+          "cwd": "detached worktree at 46920041",
+          "exit_status": 0,
+          "observation": "fx_c2_accepted.out",
+          "result": "holds [], 13/13 controls discriminating",
+          "run": "fx-c2-at-46920041/"
+        },
+        {
+          "command": "PYTHONPATH=src python3 -B -m pytest -q -p no:cacheprovider tests/context_assembly/test_context_reconstruction.py",
+          "cwd": "baseline",
+          "exit_status": 0,
+          "observation": "test_c2.out",
+          "result": "18 passed"
+        },
+        {
+          "command": "PYTHONPATH=src:. python3 -B tools/evidence/fx_c2_evidence.py --output <dir> --invocation <inv>",
+          "cwd": "baseline",
+          "exit_status": 1,
+          "observation": "fx_c2.out",
+          "result": "HOLD at the moved baseline. This is expected and is not a regression: the harness pins planning-input digests (design contracts, DAG, candidate BIUs) that have moved since its admission, and its full-suite step carries the 25 pre-existing FX-U4 failures (baseline-full-pytest.summary). 13/13 controls still discriminate."
+        }
+      ],
+      "reused_for": "durable_context_reconstruction. The cutover reconstructs writer authority and reconciliation from durable records only, never from conversation memory."
+    }
+  ],
+  "record_kind": "PredecessorProofReuse",
+  "schema_version": "1"
+}

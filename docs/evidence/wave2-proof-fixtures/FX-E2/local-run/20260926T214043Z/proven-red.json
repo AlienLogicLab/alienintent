@@ -1,0 +1,215 @@
+{
+  "controls": [
+    {
+      "application_count": 1,
+      "assertions": [
+        "a pending intent must block quiescence"
+      ],
+      "control": "quiescence_ignores_pending_intent",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "quiescence asserted with an unresolved external intent",
+      "fault": {
+        "locator": "observations/271c47407d8b913160295d7952d7d0d818677e3a028f745aa58a08d09da0d39a",
+        "revision_digest": "sha256:271c47407d8b913160295d7952d7d0d818677e3a028f745aa58a08d09da0d39a"
+      },
+      "file": "src/alienintent/execution_coordination/domain/cutover.py",
+      "intact": {
+        "locator": "observations/463e0a222164203ee72e576f6b5c1bfffde1f5ef2a98ee8f9e3e05cc979eb038",
+        "revision_digest": "sha256:463e0a222164203ee72e576f6b5c1bfffde1f5ef2a98ee8f9e3e05cc979eb038"
+      },
+      "restored": {
+        "locator": "observations/a66155ba6992b13190876b6a2fd6feb98c81212a6a4987175c91a2870cf715c4",
+        "revision_digest": "sha256:a66155ba6992b13190876b6a2fd6feb98c81212a6a4987175c91a2870cf715c4"
+      },
+      "tests": [
+        "tests/execution_coordination/test_one_writer_cutover.py::test_each_quiescence_blocker_holds_without_writer_change"
+      ]
+    },
+    {
+      "application_count": 1,
+      "assertions": [
+        "a tampered checkpoint must hold"
+      ],
+      "control": "checkpoint_unverified",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "checkpoint integrity not verified",
+      "fault": {
+        "locator": "observations/0afb759aff9a3a9bdcb4ea89acb3709d7613398b5cabd0b53b359e7f1f615a42",
+        "revision_digest": "sha256:0afb759aff9a3a9bdcb4ea89acb3709d7613398b5cabd0b53b359e7f1f615a42"
+      },
+      "file": "src/alienintent/execution_coordination/adapters/cutover_files.py",
+      "intact": {
+        "locator": "observations/0a2033cedef0161d157e1bfd29442ffe7f35271d23ad5641b4242e377783bad2",
+        "revision_digest": "sha256:0a2033cedef0161d157e1bfd29442ffe7f35271d23ad5641b4242e377783bad2"
+      },
+      "restored": {
+        "locator": "observations/846a26d954c62819ec5e861433704697f990a70b515922cf6995b006340695b3",
+        "revision_digest": "sha256:846a26d954c62819ec5e861433704697f990a70b515922cf6995b006340695b3"
+      },
+      "tests": [
+        "tests/execution_coordination/test_one_writer_cutover.py::test_checkpoint_binds_both_stores_and_tamper_holds"
+      ]
+    },
+    {
+      "application_count": 1,
+      "assertions": [
+        "the non-approved writer must be refused"
+      ],
+      "control": "admission_unchecked",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "simultaneous Node/Python writer not rejected",
+      "fault": {
+        "locator": "observations/dc3b30fd8eeb6faff641032b09846a9f24314f1d42e11a006fe2f6140b437206",
+        "revision_digest": "sha256:dc3b30fd8eeb6faff641032b09846a9f24314f1d42e11a006fe2f6140b437206"
+      },
+      "file": "src/alienintent/execution_coordination/domain/cutover.py",
+      "intact": {
+        "locator": "observations/10044619a6aef419b45f3e48583017ba8f764a012cfcf6a0f56d650a3366e67e",
+        "revision_digest": "sha256:10044619a6aef419b45f3e48583017ba8f764a012cfcf6a0f56d650a3366e67e"
+      },
+      "restored": {
+        "locator": "observations/5b7a69f7dea0cb64c9b76057c80987d95bbb0766e8391f73792d095cd0fc7883",
+        "revision_digest": "sha256:5b7a69f7dea0cb64c9b76057c80987d95bbb0766e8391f73792d095cd0fc7883"
+      },
+      "tests": [
+        "tests/execution_coordination/test_one_writer_cutover.py::test_one_writer_admission_race_and_node_writer_detection"
+      ]
+    },
+    {
+      "application_count": 1,
+      "assertions": [
+        "a lane Python completed must not be re-dispatchable after rollback"
+      ],
+      "control": "rollback_replays_python_effect",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "rollback duplicates an effect Python already confirmed",
+      "fault": {
+        "locator": "observations/374c88608e4c5781c616f1fe72199280a24340869256daaad55dbe2aed55d44b",
+        "revision_digest": "sha256:374c88608e4c5781c616f1fe72199280a24340869256daaad55dbe2aed55d44b"
+      },
+      "file": "src/alienintent/execution_coordination/application/cutover.py",
+      "intact": {
+        "locator": "observations/9c34edf43f531ee180a1a1182b9befbd4f0e5bec9e27aaced6619ff8cc06488e",
+        "revision_digest": "sha256:9c34edf43f531ee180a1a1182b9befbd4f0e5bec9e27aaced6619ff8cc06488e"
+      },
+      "restored": {
+        "locator": "observations/1ceeba1386388b1e2a2c4fc89cb1bae2efb39e61055a2c573fde553219ee8081",
+        "revision_digest": "sha256:1ceeba1386388b1e2a2c4fc89cb1bae2efb39e61055a2c573fde553219ee8081"
+      },
+      "tests": [
+        "tests/execution_coordination/test_one_writer_cutover.py::test_rollback_never_redispatches_python_completed_work"
+      ]
+    },
+    {
+      "application_count": 1,
+      "assertions": [
+        "every pending reservation must be retained"
+      ],
+      "control": "reservation_dropped",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "pending reservation lost in migration",
+      "fault": {
+        "locator": "observations/ff03633b23f09e8e3b049afc5b9b3c37410260b1b1b329ee6e038ee0750409d6",
+        "revision_digest": "sha256:ff03633b23f09e8e3b049afc5b9b3c37410260b1b1b329ee6e038ee0750409d6"
+      },
+      "file": "src/alienintent/execution_coordination/domain/cutover.py",
+      "intact": {
+        "locator": "observations/cab16c8a3f2c397f4cfd5acb8190c8fa2e48b9848d7270c44c2050155e343d84",
+        "revision_digest": "sha256:cab16c8a3f2c397f4cfd5acb8190c8fa2e48b9848d7270c44c2050155e343d84"
+      },
+      "restored": {
+        "locator": "observations/0404f554ce65d5fc930d642aa1fb6345e782edf40aef565e2485c823313e3341",
+        "revision_digest": "sha256:0404f554ce65d5fc930d642aa1fb6345e782edf40aef565e2485c823313e3341"
+      },
+      "tests": [
+        "tests/execution_coordination/test_one_writer_cutover.py::test_pending_reservations_retained_through_cutover_and_rollback"
+      ]
+    },
+    {
+      "application_count": 1,
+      "assertions": [
+        "absent canonical control must keep Node"
+      ],
+      "control": "keep_node_bypassed",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "canonical control absent but migration proceeds anyway",
+      "fault": {
+        "locator": "observations/051cc6176222de16f99cece24dd9be55a8f4549336c2f1c9f97637495a5c37f8",
+        "revision_digest": "sha256:051cc6176222de16f99cece24dd9be55a8f4549336c2f1c9f97637495a5c37f8"
+      },
+      "file": "src/alienintent/execution_coordination/application/cutover.py",
+      "intact": {
+        "locator": "observations/e37ca4ddebf50528086c9665b37f6f53b7c0c2797e5acc48272025a8044e8215",
+        "revision_digest": "sha256:e37ca4ddebf50528086c9665b37f6f53b7c0c2797e5acc48272025a8044e8215"
+      },
+      "restored": {
+        "locator": "observations/a6a1133afced22f53cbc533a10afc30a9c82e0258628c392379f34baffafe036",
+        "revision_digest": "sha256:a6a1133afced22f53cbc533a10afc30a9c82e0258628c392379f34baffafe036"
+      },
+      "tests": [
+        "tests/execution_coordination/test_one_writer_cutover.py::test_absent_canonical_control_keeps_node"
+      ]
+    },
+    {
+      "application_count": 1,
+      "assertions": [
+        "Node must stay disabled while Python effects are unreconciled"
+      ],
+      "control": "rollback_before_python_stopped",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "old writer enabled before the new writer is stopped and reconciled",
+      "fault": {
+        "locator": "observations/e739c964cb90dc1b635c4e757a1a97d8d18957ea0a83e9ded5fbdb9b6e00fb1a",
+        "revision_digest": "sha256:e739c964cb90dc1b635c4e757a1a97d8d18957ea0a83e9ded5fbdb9b6e00fb1a"
+      },
+      "file": "src/alienintent/execution_coordination/application/cutover.py",
+      "intact": {
+        "locator": "observations/e0f71ef6bdd1a110afc194bc1ef0f075ade7f722dd536a9f07ca398a62415c3d",
+        "revision_digest": "sha256:e0f71ef6bdd1a110afc194bc1ef0f075ade7f722dd536a9f07ca398a62415c3d"
+      },
+      "restored": {
+        "locator": "observations/e0f71ef6bdd1a110afc194bc1ef0f075ade7f722dd536a9f07ca398a62415c3d",
+        "revision_digest": "sha256:e0f71ef6bdd1a110afc194bc1ef0f075ade7f722dd536a9f07ca398a62415c3d"
+      },
+      "tests": [
+        "tests/execution_coordination/test_one_writer_cutover.py::test_rollback_stops_python_first_and_holds_on_unreconciled_effects"
+      ]
+    }
+  ],
+  "holds": []
+}
