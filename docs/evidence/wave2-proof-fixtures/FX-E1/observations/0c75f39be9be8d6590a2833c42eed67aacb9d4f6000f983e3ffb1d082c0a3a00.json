@@ -1,0 +1,34 @@
+{
+ "kind": "process-C",
+ "payload": {
+  "command": [
+   "alienintent",
+   "run",
+   "service",
+   "--actor",
+   "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+   "--authority",
+   "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+   "--intent",
+   "FX-E1 confirm the backlog is exhausted",
+   "--expected-version",
+   "0",
+   "--reason",
+   "FX-E1 confirm the backlog is exhausted",
+   "--idempotency-key",
+   "20260926T100920Z-run-c"
+  ],
+  "ended_at": 1790417524.7236142,
+  "exit_status": 0,
+  "pid": 2126670,
+  "started_at": 1790417516.0376444,
+  "stderr": "",
+  "stdout": {
+   "authority_blocked": [],
+   "dispatched": [],
+   "failed": [],
+   "stop_reason": "eligible-backlog-exhausted"
+  },
+  "wall_clock_bound_reached": false
+ }
+}

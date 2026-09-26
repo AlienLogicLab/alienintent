@@ -269,12 +269,37 @@ def e1_contract(identity: str, priority: str, hold: int, purpose: str) -> dict:
     return contract
 
 
+def verification_kit() -> dict[str, bytes]:
+    """The sandbox's VERIFY gate inputs, as CliWorkerProvider requires them in the target tree.
+
+    The runner is the shipped one, byte for byte; the sandbox registers one real
+    pack, the note-shape check. The sandbox predates the VERIFY regression gate,
+    so seeding installs (or confirms) exactly this kit alongside the contracts.
+    """
+    manifest = {"schema_version": 1, "packs": [{
+        "id": "sandbox-note-shape",
+        "description": "Every note a candidate changes opens with its BIU heading and carries exactly one bullet (FX-E1 sandbox).",
+        "paths": ["docs/**"],
+        "command": ["python3", "tools/verification/check_notes.py"],
+    }]}
+    return {
+        "tools/verification/run_feature_regressions.py": (ROOT / "tools/verification/run_feature_regressions.py").read_bytes(),
+        "tools/verification/check_notes.py": (ROOT / "tools/live/fx_e1_sandbox_check_notes.py").read_bytes(),
+        "tools/verification/feature_regressions.json": (json.dumps(manifest, indent=2) + "\n").encode(),
+    }
+
+
 def publish_contracts(record: dict, token: str, contracts: list[dict]) -> str:
     environment = credentialed_git_environment(record, token)
     repository = str(record["repository"])
     with tempfile.TemporaryDirectory(prefix="fx-e1-seed-") as scratch:
         checkout = Path(scratch) / "checkout"
         git("clone", "--quiet", f"https://github.com/{repository}.git", str(checkout), environment=environment)
+        for relative, content in verification_kit().items():
+            (checkout / relative).parent.mkdir(parents=True, exist_ok=True)
+            (checkout / relative).write_bytes(content)
+            if relative.endswith(".py"):
+                (checkout / relative).chmod(0o755)
         for contract in contracts:
             write_json(checkout / "biu" / f"{contract['identity']}.json", contract)
         git("add", "-A", cwd=checkout, environment=environment)
@@ -474,6 +499,7 @@ def main(argv: list[str]) -> int:
         seed_revision = publish_contracts(record, token, contracts)
         seeded = seed_items(projects, writer, contracts)
         phases.append({"phase": "seed", "seed_revision": seed_revision, "items": seeded,
+                       "verification_kit": {path: "sha256:" + sha256(content).hexdigest() for path, content in verification_kit().items()},
                        "statuses_written_by_seeding": ["READY"], "observation": observations.retain("seed", {"contracts": contracts, "items": seeded})})
 
         checkout = state / "repository"

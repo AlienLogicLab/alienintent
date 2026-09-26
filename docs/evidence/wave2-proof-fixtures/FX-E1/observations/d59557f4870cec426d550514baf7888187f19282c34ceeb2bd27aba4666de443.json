@@ -1,0 +1,331 @@
+{
+ "kind": "operator-transcript",
+ "payload": [
+  {
+   "command": [
+    "alienintent",
+    "doctor"
+   ],
+   "ended_at": 1790417400.5315125,
+   "exit_status": 0,
+   "pid": 2125633,
+   "started_at": 1790417391.0842366,
+   "stderr": "",
+   "stdout": {
+    "checks": [
+     {
+      "name": "configuration",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "secrets",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "work_management",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "source_control",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "provider",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "transport",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "persistence",
+      "outcome": "PASS",
+      "suggested_action": null
+     },
+     {
+      "name": "execution",
+      "outcome": "PASS",
+      "suggested_action": null
+     }
+    ],
+    "disposition": "PASS",
+    "exit_code": 0,
+    "ready": true
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "command": [
+    "alienintent",
+    "run",
+    "service"
+   ],
+   "ended_at": 1790417415.234968,
+   "exit_status": -9,
+   "pid": 2125662,
+   "started_at": 1790417400.5319788,
+   "stderr": "",
+   "stdout": "",
+   "wall_clock_bound_reached": false
+  },
+  {
+   "command": [
+    "alienintent",
+    "run",
+    "service",
+    "--actor",
+    "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+    "--authority",
+    "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+    "--intent",
+    "FX-E1 resume after the process loss",
+    "--expected-version",
+    "0",
+    "--reason",
+    "FX-E1 resume after the process loss",
+    "--idempotency-key",
+    "20260926T100920Z-run-b"
+   ],
+   "ended_at": 1790417445.6005137,
+   "exit_status": 0,
+   "pid": 2125722,
+   "started_at": 1790417415.236185,
+   "stderr": "",
+   "stdout": {
+    "authority_blocked": [
+     "E1-261009-A"
+    ],
+    "dispatched": [
+     "E1-261009-B"
+    ],
+    "failed": [
+     "E1-261009-B"
+    ],
+    "stop_reason": "dependencies-or-authority-blocked"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "command": [
+    "alienintent",
+    "decisions",
+    "list"
+   ],
+   "ended_at": 1790417446.8900874,
+   "exit_status": 0,
+   "pid": 2126162,
+   "started_at": 1790417445.6011925,
+   "stderr": "",
+   "stdout": [
+    {
+     "affected_architecture": [
+      "FD-05"
+     ],
+     "affected_requirements": [
+      "SF-REQ-001",
+      "SF-REQ-010"
+     ],
+     "authorizations": [
+      "authorize permits one normal guarded re-admission",
+      "defer authorizes continued blocking"
+     ],
+     "biu_version": 0,
+     "cost_of_waiting": "The affected work and transitive dependents remain blocked.",
+     "decision": "Authorize the blocked execution to continue through normal admission guards.",
+     "options": [
+      "authorize",
+      "defer"
+     ],
+     "profile": "py10-sandbox",
+     "project": "AlienLogicLab/alienintent-sandbox",
+     "reason": "The external effect outcome is unknown and requires reconciliation authority.",
+     "recommendation": "defer",
+     "tradeoffs": [
+      "authorize permits the bounded work to resume",
+      "defer retains the scoped authority block"
+     ],
+     "work_item": "E1-261009-A"
+    }
+   ],
+   "wall_clock_bound_reached": false
+  },
+  {
+   "command": [
+    "alienintent",
+    "decisions",
+    "decide",
+    "E1-261009-A",
+    "--choice",
+    "authorize",
+    "--biu-version",
+    "0",
+    "--actor",
+    "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+    "--authority",
+    "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+    "--intent",
+    "authorize E1-261009-A to resume through normal admission guards (FX-E1)",
+    "--expected-version",
+    "2",
+    "--reason",
+    "authorize E1-261009-A to resume through normal admission guards (FX-E1)",
+    "--idempotency-key",
+    "20260926T100920Z-decision-0"
+   ],
+   "ended_at": 1790417516.037327,
+   "exit_status": 0,
+   "pid": 2126180,
+   "started_at": 1790417446.8908932,
+   "stderr": "",
+   "stdout": {
+    "event": {
+     "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+     "biu_version": 0,
+     "idempotency_key": "20260926T100920Z-decision-0",
+     "work_item": "E1-261009-A"
+    },
+    "submission": {
+     "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+     "authority_reference": "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+     "biu_version": 0,
+     "choice": "authorize",
+     "expected_version": 0,
+     "idempotency_key": "20260926T100920Z-decision-0",
+     "work_item": "E1-261009-A"
+    }
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "command": [
+    "alienintent",
+    "run",
+    "service",
+    "--actor",
+    "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+    "--authority",
+    "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+    "--intent",
+    "FX-E1 confirm the backlog is exhausted",
+    "--expected-version",
+    "0",
+    "--reason",
+    "FX-E1 confirm the backlog is exhausted",
+    "--idempotency-key",
+    "20260926T100920Z-run-c"
+   ],
+   "ended_at": 1790417524.7236142,
+   "exit_status": 0,
+   "pid": 2126670,
+   "started_at": 1790417516.0376444,
+   "stderr": "",
+   "stdout": {
+    "authority_blocked": [],
+    "dispatched": [],
+    "failed": [],
+    "stop_reason": "eligible-backlog-exhausted"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "command": [
+    "alienintent",
+    "status"
+   ],
+   "ended_at": 1790417528.0586858,
+   "exit_status": 0,
+   "pid": 2126766,
+   "started_at": 1790417524.723888,
+   "stderr": "",
+   "stdout": {
+    "diagnostics": [],
+    "execution": {
+     "items": [
+      {
+       "identity": "E1-261009-A",
+       "lifecycle": "VERIFY",
+       "outcome": "failure",
+       "revision": 7
+      },
+      {
+       "identity": "E1-261009-B",
+       "lifecycle": "VERIFY",
+       "outcome": "failure",
+       "revision": 4
+      }
+     ],
+     "source": "operational-store",
+     "status": "known",
+     "wip": 2
+    },
+    "profile": "py10-sandbox",
+    "projection": {
+     "source": "decision-notifier",
+     "status": "unknown"
+    },
+    "upstream": {
+     "items": [],
+     "source": "work-management",
+     "status": "available"
+    }
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "command": [
+    "alienintent",
+    "explain",
+    "E1-261009-A"
+   ],
+   "ended_at": 1790417531.3593175,
+   "exit_status": 0,
+   "pid": 2126809,
+   "started_at": 1790417528.0587184,
+   "stderr": "",
+   "stdout": {
+    "evidence": {
+     "execution_revision": 7
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "VERIFY",
+     "outcome": "failure",
+     "reason": "terminal"
+    },
+    "target": "E1-261009-A"
+   },
+   "wall_clock_bound_reached": false
+  },
+  {
+   "command": [
+    "alienintent",
+    "explain",
+    "E1-261009-B"
+   ],
+   "ended_at": 1790417534.6647856,
+   "exit_status": 0,
+   "pid": 2126853,
+   "started_at": 1790417531.3593574,
+   "stderr": "",
+   "stdout": {
+    "evidence": {
+     "execution_revision": 4
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "VERIFY",
+     "outcome": "failure",
+     "reason": "terminal"
+    },
+    "target": "E1-261009-B"
+   },
+   "wall_clock_bound_reached": false
+  }
+ ]
+}

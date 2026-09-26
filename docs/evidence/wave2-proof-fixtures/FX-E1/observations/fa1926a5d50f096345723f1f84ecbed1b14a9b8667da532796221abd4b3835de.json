@@ -1,0 +1,72 @@
+{
+ "kind": "process-D",
+ "payload": {
+  "controls": [
+   {
+    "control": "unsigned_delivery_for_the_configured_project",
+    "durable_receipt_created": false,
+    "http_status": 401,
+    "label": "LOCAL mechanical scope control against the real resident ingress process; not operational proof"
+   },
+   {
+    "control": "wrong_secret_delivery_for_the_configured_project",
+    "durable_receipt_created": false,
+    "http_status": 401,
+    "label": "LOCAL mechanical scope control against the real resident ingress process; not operational proof"
+   },
+   {
+    "control": "correctly_signed_delivery_for_a_foreign_project",
+    "durable_receipt_created": false,
+    "http_status": 401,
+    "label": "LOCAL mechanical scope control against the real resident ingress process; not operational proof"
+   },
+   {
+    "control": "foreign_project_address_resolution",
+    "detail": "observed project is not the configured project",
+    "refused": true
+   }
+  ],
+  "replay": {
+   "available": true,
+   "effect_after": [
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNI_A",
+     "identity": "ingress:7dfd44b0-b992-11f1-92c0-1ca17dbffae3",
+     "receipt": "notification:ingress:7dfd44b0-b992-11f1-92c0-1ca17dbffae3",
+     "status": "confirmed"
+    }
+   ],
+   "effect_before": [
+    {
+     "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNI_A",
+     "identity": "ingress:7dfd44b0-b992-11f1-92c0-1ca17dbffae3",
+     "receipt": "notification:ingress:7dfd44b0-b992-11f1-92c0-1ca17dbffae3",
+     "status": "confirmed"
+    }
+   ],
+   "guid": "7dfd44b0-b992-11f1-92c0-1ca17dbffae3",
+   "notification_lines_after": 3,
+   "notification_lines_before": 3,
+   "original_status_code": 202,
+   "originally_admitted_by": "B",
+   "receipt_after": {
+    "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNI_A",
+    "digest": "ec0c38042f6908a77218f8229711eb69382016d320ce1369c420fa3725682461",
+    "event_id": "7dfd44b0-b992-11f1-92c0-1ca17dbffae3",
+    "status": "applied",
+    "version": 1
+   },
+   "receipt_before": {
+    "aggregate": "ingress:DI_lADOEcrpC84BkIEXzgLNI_A",
+    "digest": "ec0c38042f6908a77218f8229711eb69382016d320ce1369c420fa3725682461",
+    "event_id": "7dfd44b0-b992-11f1-92c0-1ca17dbffae3",
+    "status": "applied",
+    "version": 1
+   },
+   "receipt_unchanged": true,
+   "redelivered_at": "2026-09-26T10:12:20.957Z",
+   "redelivery_request": "requested",
+   "redelivery_status_code": 202
+  }
+ }
+}

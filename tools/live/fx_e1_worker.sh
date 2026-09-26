@@ -26,19 +26,19 @@ note="$(field note)"
 
 if [ "$role" = "VERIFIER" ]; then
   # Judge the exact retrieved candidate against its contract's completion
-  # criterion, then leave the verdict and the feature-regression receipt the
-  # shipped RealWorkerProvider requires (.alienintent/verdict.json and
-  # .alienintent/feature-regressions.json, bound to this revision). The sandbox
-  # registers no regression packs, so the receipt truthfully carries none.
+  # criterion and leave the verdict the shipped RealWorkerProvider reads
+  # (.alienintent/verdict.json, bound to this revision). The feature-regression
+  # receipt beside it is written by CliWorkerProvider itself, from the sandbox's
+  # own tools/verification runner, before this process starts; it is not touched.
   exec python3 - "$biu" "$note" <<'PY'
-import hashlib, json, subprocess, sys
+import json, subprocess, sys
 from pathlib import Path
 
 biu, note = sys.argv[1], Path(sys.argv[2])
 def git(*a):
     return subprocess.run(["git", *a], capture_output=True, text=True, check=True).stdout.strip()
 revision = git("rev-parse", "HEAD")
-base = git("merge-base", "HEAD", "origin/main") if subprocess.run(["git", "rev-parse", "--verify", "-q", "origin/main"], capture_output=True).returncode == 0 else revision + "^"
+base = git("merge-base", "HEAD", "origin/main")
 changed = [p for p in git("diff", "--name-only", f"{base}...{revision}").splitlines() if p]
 text = note.read_text(encoding="utf-8") if note.is_file() else ""
 findings = []
@@ -48,12 +48,7 @@ if len([line for line in text.splitlines() if line.startswith("- ")]) != 1:
     findings.append(f"{note} does not carry exactly one bullet line")
 if changed != [str(note)]:
     findings.append(f"the candidate changes {changed}, not exactly {note}")
-def digest(value):
-    return "sha256:" + hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-body = {"schema_version": 1, "kind": "FeatureRegressionReceipt", "base": base, "candidate": revision,
-        "changed_paths": changed, "manifest_digest": digest({"packs": []}), "packs": [], "passed": True}
 out = Path(".alienintent"); out.mkdir(exist_ok=True)
-(out / "feature-regressions.json").write_text(json.dumps(body | {"receipt_digest": digest(body)}, indent=2, sort_keys=True) + "\n")
 verdict = {"revision": revision, "verdict": "reject" if findings else "accept", "findings": findings}
 (out / "verdict.json").write_text(json.dumps(verdict, indent=2, sort_keys=True) + "\n")
 print(f"{verdict['verdict']} {revision}")
