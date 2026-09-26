@@ -1,0 +1,116 @@
+{
+ "controls": [
+  {
+   "applications": 1,
+   "control": "K1",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-1"
+   ],
+   "predicate": "E1-1",
+   "restored_disposition": "PASS"
+  },
+  {
+   "applications": 1,
+   "control": "K2",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-2"
+   ],
+   "predicate": "E1-2",
+   "restored_disposition": "PASS"
+  },
+  {
+   "applications": 1,
+   "control": "K3",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-3"
+   ],
+   "predicate": "E1-3",
+   "restored_disposition": "PASS"
+  },
+  {
+   "applications": 1,
+   "control": "K4",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-4"
+   ],
+   "predicate": "E1-4",
+   "restored_disposition": "PASS"
+  },
+  {
+   "applications": 6,
+   "control": "K5",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-5"
+   ],
+   "predicate": "E1-5",
+   "restored_disposition": "PASS"
+  },
+  {
+   "applications": 1,
+   "control": "K6",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-6"
+   ],
+   "predicate": "E1-6",
+   "restored_disposition": "PASS"
+  },
+  {
+   "applications": 1,
+   "control": "K7",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-7"
+   ],
+   "predicate": "E1-7",
+   "restored_disposition": "PASS"
+  },
+  {
+   "applications": 1,
+   "control": "K8",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-8"
+   ],
+   "predicate": "E1-8",
+   "restored_disposition": "PASS"
+  },
+  {
+   "applications": 1,
+   "control": "K9",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-9"
+   ],
+   "predicate": "E1-9",
+   "restored_disposition": "PASS"
+  },
+  {
+   "applications": 1,
+   "control": "K10",
+   "discriminates": true,
+   "fault_disposition": "HOLD",
+   "held_predicates": [
+    "E1-10"
+   ],
+   "predicate": "E1-10",
+   "restored_disposition": "PASS"
+  }
+ ],
+ "intact_disposition": "PASS",
+ "ok": true
+}

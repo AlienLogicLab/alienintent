@@ -1,0 +1,75 @@
+{
+ "kind": "status",
+ "payload": {
+  "explain": {
+   "E1-261014-A": {
+    "evidence": {
+     "execution_revision": 9
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "closed",
+     "reason": "terminal"
+    },
+    "target": "E1-261014-A"
+   },
+   "E1-261014-B": {
+    "evidence": {
+     "execution_revision": 6
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "DONE",
+     "outcome": "closed",
+     "reason": "terminal"
+    },
+    "target": "E1-261014-B"
+   }
+  },
+  "status": {
+   "command": [
+    "alienintent",
+    "status"
+   ],
+   "ended_at": 1790417866.3136973,
+   "exit_status": 0,
+   "pid": 2129954,
+   "started_at": 1790417863.0064833,
+   "stderr": "",
+   "stdout": {
+    "diagnostics": [],
+    "execution": {
+     "items": [
+      {
+       "identity": "E1-261014-A",
+       "lifecycle": "DONE",
+       "outcome": "closed",
+       "revision": 9
+      },
+      {
+       "identity": "E1-261014-B",
+       "lifecycle": "DONE",
+       "outcome": "closed",
+       "revision": 6
+      }
+     ],
+     "source": "operational-store",
+     "status": "known",
+     "wip": 2
+    },
+    "profile": "py10-sandbox",
+    "projection": {
+     "source": "decision-notifier",
+     "status": "unknown"
+    },
+    "upstream": {
+     "items": [],
+     "source": "work-management",
+     "status": "available"
+    }
+   },
+   "wall_clock_bound_reached": false
+  }
+ }
+}

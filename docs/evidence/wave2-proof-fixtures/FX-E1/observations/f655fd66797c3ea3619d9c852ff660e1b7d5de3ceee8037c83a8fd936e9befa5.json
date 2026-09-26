@@ -1,0 +1,77 @@
+{
+ "kind": "process-A",
+ "payload": {
+  "after": {
+   "aggregates": {
+    "factory:E1-261014-A": {
+     "accepted": false,
+     "candidate": null,
+     "closure": [],
+     "invocation_candidate": null,
+     "revision": 1,
+     "role": "PRODUCER",
+     "stage": "IMPLEMENT",
+     "version": 0
+    }
+   },
+   "effects": [
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:0",
+     "status": "unknown"
+    }
+   ],
+   "reservations": [
+    {
+     "fence": 1,
+     "owner": "launch:E1-261014-A:0",
+     "resource_key": "AlienLogicLab/alienintent-sandbox",
+     "scope": "repository"
+    }
+   ]
+  },
+  "before": {
+   "aggregates": {
+    "factory:E1-261014-A": {
+     "accepted": false,
+     "candidate": null,
+     "closure": [],
+     "invocation_candidate": null,
+     "revision": 1,
+     "role": "PRODUCER",
+     "stage": "IMPLEMENT",
+     "version": 0
+    }
+   },
+   "effects": [
+    {
+     "aggregate": "factory:E1-261014-A",
+     "identity": "launch:E1-261014-A:0",
+     "status": "unknown"
+    }
+   ],
+   "reservations": [
+    {
+     "fence": 1,
+     "owner": "launch:E1-261014-A:0",
+     "resource_key": "AlienLogicLab/alienintent-sandbox",
+     "scope": "repository"
+    }
+   ]
+  },
+  "entry": {
+   "command": [
+    "alienintent",
+    "run",
+    "service"
+   ],
+   "ended_at": 1790417742.560974,
+   "exit_status": -9,
+   "pid": 2128556,
+   "started_at": 1790417728.4249756,
+   "stderr": "",
+   "stdout": "",
+   "wall_clock_bound_reached": false
+  }
+ }
+}

@@ -1,0 +1,175 @@
+{
+ "kind": "seed",
+ "payload": {
+  "contracts": [
+   {
+    "authority_issuer": "FX-E1 live transport proof (WO-220502)",
+    "authority_references": [
+     "SWF-08",
+     "SWF-34",
+     "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
+     "AlienLogicLab/alienintent#122"
+    ],
+    "authorized_scope": [
+     "docs/E1-261009-A.md"
+    ],
+    "baselines": [
+     "main"
+    ],
+    "budget_policy": {
+     "cancellation_limit": 1,
+     "concurrency_limit": 1,
+     "hard_required_dimensions": [
+      "attempts",
+      "retries"
+     ],
+     "hard_wall_clock_seconds": 600,
+     "maximum_attempts": 2,
+     "retry_limit": 1
+    },
+    "candidate_custody_requirements": [
+     "a published source revision, independently read back before VERIFY"
+    ],
+    "completion_criteria": [
+     "docs/E1-261009-A.md records the invocation that produced it"
+    ],
+    "dependencies": [],
+    "excluded_scope": [
+     "every path outside the named note"
+    ],
+    "fixed_decisions": [
+     "FD-03"
+    ],
+    "identity": "E1-261009-A",
+    "intent": "E1-261009-A: in flight when the run process is killed; must survive restart",
+    "non_goals": [
+     "any change outside the named note",
+     "pushing, merging or deploying"
+    ],
+    "release_policy": "automatic-on",
+    "required_capabilities": [
+     "python"
+    ],
+    "required_closure_actions": [
+     "candidate-published"
+    ],
+    "required_evidence": [
+     "artifact-verified"
+    ],
+    "retry_policy": "one bounded retry, then report failure",
+    "satisfied_requirement_ids": [
+     "SF-REQ-001",
+     "SF-REQ-010"
+    ],
+    "stop_escalation_conditions": [
+     "authority the profile does not hold"
+    ],
+    "target_repositories": [
+     "AlienLogicLab/alienintent-sandbox"
+    ],
+    "task": {
+     "hold_seconds": 45,
+     "instruction": "Create docs/E1-261009-A.md containing a markdown heading '# E1-261009-A' and exactly one bullet line recording that the AlienIntent factory executed E1-261009-A under the invocation named above.",
+     "note": "docs/E1-261009-A.md",
+     "priority": "P0"
+    },
+    "verification_obligations": [
+     "the published candidate is read back from a fresh, independent clone"
+    ],
+    "version": "1"
+   },
+   {
+    "authority_issuer": "FX-E1 live transport proof (WO-220502)",
+    "authority_references": [
+     "SWF-08",
+     "SWF-34",
+     "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
+     "AlienLogicLab/alienintent#122"
+    ],
+    "authorized_scope": [
+     "docs/E1-261009-B.md"
+    ],
+    "baselines": [
+     "main"
+    ],
+    "budget_policy": {
+     "cancellation_limit": 1,
+     "concurrency_limit": 1,
+     "hard_required_dimensions": [
+      "attempts",
+      "retries"
+     ],
+     "hard_wall_clock_seconds": 600,
+     "maximum_attempts": 2,
+     "retry_limit": 1
+    },
+    "candidate_custody_requirements": [
+     "a published source revision, independently read back before VERIFY"
+    ],
+    "completion_criteria": [
+     "docs/E1-261009-B.md records the invocation that produced it"
+    ],
+    "dependencies": [],
+    "excluded_scope": [
+     "every path outside the named note"
+    ],
+    "fixed_decisions": [
+     "FD-03"
+    ],
+    "identity": "E1-261009-B",
+    "intent": "E1-261009-B: dispatched by a restarted process after the process loss",
+    "non_goals": [
+     "any change outside the named note",
+     "pushing, merging or deploying"
+    ],
+    "release_policy": "automatic-on",
+    "required_capabilities": [
+     "python"
+    ],
+    "required_closure_actions": [
+     "candidate-published"
+    ],
+    "required_evidence": [
+     "artifact-verified"
+    ],
+    "retry_policy": "one bounded retry, then report failure",
+    "satisfied_requirement_ids": [
+     "SF-REQ-001",
+     "SF-REQ-010"
+    ],
+    "stop_escalation_conditions": [
+     "authority the profile does not hold"
+    ],
+    "target_repositories": [
+     "AlienLogicLab/alienintent-sandbox"
+    ],
+    "task": {
+     "hold_seconds": 0,
+     "instruction": "Create docs/E1-261009-B.md containing a markdown heading '# E1-261009-B' and exactly one bullet line recording that the AlienIntent factory executed E1-261009-B under the invocation named above.",
+     "note": "docs/E1-261009-B.md",
+     "priority": "P1"
+    },
+    "verification_obligations": [
+     "the published candidate is read back from a fresh, independent clone"
+    ],
+    "version": "1"
+   }
+  ],
+  "items": [
+   {
+    "identity": "E1-261009-A",
+    "item": "PVTI_lADOEcrpC84BkIEXzg85bew",
+    "priority": "P0",
+    "ready_since": "2026-09-26T10:09:34Z",
+    "status": "READY"
+   },
+   {
+    "identity": "E1-261009-B",
+    "item": "PVTI_lADOEcrpC84BkIEXzg85biE",
+    "priority": "P1",
+    "ready_since": "2026-09-26T10:09:42Z",
+    "status": "READY"
+   }
+  ]
+ }
+}

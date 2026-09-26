@@ -1,0 +1,75 @@
+{
+ "kind": "status",
+ "payload": {
+  "explain": {
+   "E1-261001-A": {
+    "evidence": {
+     "execution_revision": 7
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "VERIFY",
+     "outcome": "failure",
+     "reason": "terminal"
+    },
+    "target": "E1-261001-A"
+   },
+   "E1-261001-B": {
+    "evidence": {
+     "execution_revision": 4
+    },
+    "guard_outcomes": {
+     "eligible": false,
+     "lifecycle": "VERIFY",
+     "outcome": "failure",
+     "reason": "terminal"
+    },
+    "target": "E1-261001-B"
+   }
+  },
+  "status": {
+   "command": [
+    "alienintent",
+    "status"
+   ],
+   "ended_at": 1790417084.8006434,
+   "exit_status": 0,
+   "pid": 2123004,
+   "started_at": 1790417080.5127268,
+   "stderr": "",
+   "stdout": {
+    "diagnostics": [],
+    "execution": {
+     "items": [
+      {
+       "identity": "E1-261001-A",
+       "lifecycle": "VERIFY",
+       "outcome": "failure",
+       "revision": 7
+      },
+      {
+       "identity": "E1-261001-B",
+       "lifecycle": "VERIFY",
+       "outcome": "failure",
+       "revision": 4
+      }
+     ],
+     "source": "operational-store",
+     "status": "known",
+     "wip": 2
+    },
+    "profile": "py10-sandbox",
+    "projection": {
+     "source": "decision-notifier",
+     "status": "unknown"
+    },
+    "upstream": {
+     "items": [],
+     "source": "work-management",
+     "status": "available"
+    }
+   },
+   "wall_clock_bound_reached": false
+  }
+ }
+}

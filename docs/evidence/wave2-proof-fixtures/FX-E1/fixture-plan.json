@@ -1,0 +1,160 @@
+{
+ "record_kind": "FxE1FixturePlan",
+ "schema_version": "1",
+ "fixture_id": "FX-E1",
+ "work_unit": "WO-220502",
+ "issue": 122,
+ "dag_node": "E1",
+ "planned_proof_level": "LOCAL_COMPOSED_OR_MECHANICAL for the mechanical controls; OPERATIONAL (sandbox production path, authorized target) for acceptance",
+ "baseline": "2715bec1094e8c85a81e56d2b69c115c7451f688",
+ "candidate_contract_sha256": "5e80ddc66df03d351db2f96ec9e5411b4c7d49935b5147f4f0b30402ee4ec21b",
+ "authority": {
+  "gate": "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY",
+  "record": "docs/work-units/wave2/WO-220502.md#live-transport-proof-authority--2026-09-26 (Director inbox founder-live-transport-proof-authority-20260926T070519Z)",
+  "release": "SWF-35 standing Wave 2 authority, READY -> IMPLEMENT on Issue #122 (2026-09-26T09:47:43Z)",
+  "authorized_target": "the existing, identified production-path Python profile/transport: py10-sandbox (see identification.json)",
+  "excluded": [
+   "release",
+   "sovereignty cutover",
+   "Node/bootstrap retirement",
+   "broader production mutation",
+   "AlienLogicLab/alienintent and Project #1 (Node live writer)",
+   "sibling BIUs"
+  ]
+ },
+ "order": [
+  "1. identification (offline, no network): python3 tools/live/fx_e1_identify.py --json > docs/evidence/wave2-proof-fixtures/FX-E1/identification.json",
+  "2. instrument discrimination (offline): python3 tools/live/fx_e1_no_node.py --self-test --json",
+  "3. evaluator discrimination (offline): python3 -m pytest -q tools/live/test_fx_e1.py",
+  "4. commit this plan and the identification (pin) before any live call",
+  "5. live proof (authorized target only): python3 tools/live/fx_e1_live_proof.py --apply --output docs/evidence/wave2-proof-fixtures/FX-E1",
+  "6. evaluator verdict and mechanical controls on the retained record: python3 tools/live/fx_e1_evaluate.py docs/evidence/wave2-proof-fixtures/FX-E1/proof-run.json --controls --json"
+ ],
+ "inputs": {
+  "profile": "~/.config/alienintent-sandbox/profile.json (py10-sandbox; digest in identification.json)",
+  "composition_factory": "alienintent.composition.sandbox_run_profile:profile",
+  "control_plane": "python3 -m alienintent --json --profile-factory alienintent.composition.sandbox_run_profile:profile <doctor|run service|decisions|status|explain>",
+  "seed": "two fresh READY BIUs E1-<ddHHMM>-A (P0, worker holds 45 s) and E1-<ddHHMM>-B (P1), contracts committed to the sandbox repository, items created READY in sandbox Project #2; no other status is written by the operator",
+  "worker": "tools/live/fx_e1_worker.sh launched through the shipped CliWorkerProvider (labelled substitution for the provider CLI)",
+  "state": "~/.local/state/alienintent-sandbox/fx-e1/<run-id>/ (outside every working tree; PY-10 state untouched)"
+ },
+ "expected_outcomes": {
+  "doctor": "exit 0 with transport PASS through the provisioned public route",
+  "process_A": "dispatches E1-A, holds the repository reservation with an unresolved launch effect, and is SIGKILLed (exit -9)",
+  "process_B": "restart exits 0; recovery holds E1-A for a decision (unknown external effect) or reconciles it; E1-B dispatched to DONE",
+  "decisions": "any request for a seeded BIU is answered 'authorize' by the FX-E1 operator under the authority above",
+  "process_C": "drains to eligible-backlog-exhausted; both seeded BIUs DONE",
+  "process_D": "resident ingress restarted; a delivery accepted by an earlier process is redelivered by GitHub, accepted (202) and leaves its durable receipt, effect and notification count unchanged; three out-of-scope local deliveries return 401 without receipt",
+  "readback": "store DONE, Project DONE, candidates read back from a fresh clone, GitHub's delivery log shows 202 deliveries with durable receipts",
+  "no_node": "no shim invocation and no Node process among every process the run launched; production-path modules are stdlib or alienintent only; ingress port held by the Python process",
+  "one_writer": "Node writer PID set, its ports' answers and the root tunnel configuration unchanged before/after"
+ },
+ "evidence_schema": {
+  "proof_run": "proof-run.json (record_kind FxE1ProofRun) \u2014 pinned digests, phases with pid/window/exit status, readback, no_node, dependency_path, before/after, substitutions, verdict",
+  "observations": "observations/<sha256>.json \u2014 content-addressed raw observations cited by the run record",
+  "controls": "negative-controls.json \u2014 evaluator intact/fault/restored results with application counts",
+  "redaction": "App id, installation id, key path, secret paths, ingress hostname, tunnel id and home directory are redacted at the boundary"
+ },
+ "predicates": [
+  {
+   "id": "E1-1",
+   "title": "identification and fixture pinned before any live call"
+  },
+  {
+   "id": "E1-2",
+   "title": "no-Node instrument discriminates (intact/fault/restored)"
+  },
+  {
+   "id": "E1-3",
+   "title": "no Node process or dependency on the Python path"
+  },
+  {
+   "id": "E1-4",
+   "title": "real ingress with durable receipt"
+  },
+  {
+   "id": "E1-5",
+   "title": "effect dispatch"
+  },
+  {
+   "id": "E1-6",
+   "title": "durable consumer outcome read back"
+  },
+  {
+   "id": "E1-7",
+   "title": "restart with readback"
+  },
+  {
+   "id": "E1-8",
+   "title": "invalid scope holds"
+  },
+  {
+   "id": "E1-9",
+   "title": "one writer: Node bootstrap undisturbed"
+  },
+  {
+   "id": "E1-10",
+   "title": "local substitutions labelled"
+  }
+ ],
+ "mechanical_controls": [
+  {
+   "control": "K1",
+   "predicate": "E1-1"
+  },
+  {
+   "control": "K2",
+   "predicate": "E1-2"
+  },
+  {
+   "control": "K3",
+   "predicate": "E1-3"
+  },
+  {
+   "control": "K4",
+   "predicate": "E1-4"
+  },
+  {
+   "control": "K5",
+   "predicate": "E1-5"
+  },
+  {
+   "control": "K6",
+   "predicate": "E1-6"
+  },
+  {
+   "control": "K7",
+   "predicate": "E1-7"
+  },
+  {
+   "control": "K8",
+   "predicate": "E1-8"
+  },
+  {
+   "control": "K9",
+   "predicate": "E1-9"
+  },
+  {
+   "control": "K10",
+   "predicate": "E1-10"
+  }
+ ],
+ "instrument_probes": [
+  "intact",
+  "fault-shimmed-node-by-name",
+  "fault-absolute-node-bypassing-shims",
+  "fault-stated-environment-detached",
+  "restored"
+ ],
+ "holds": [
+  "Any predicate without evidence is HOLD, never PASS or zero.",
+  "doctor failure, no observed dispatch, or instrument non-discrimination stops before the corresponding live step.",
+  "A defect in the existing Python transport returns to its requirement owner; it is not repaired inside E1."
+ ],
+ "non_claims": [
+  "No release, cutover, Node/bootstrap retirement or operational-use authorization.",
+  "No provider behaviour claim: the worker note author is a labelled deterministic substitute.",
+  "Local scope controls against the resident process are labelled LOCAL and do not satisfy operational acceptance on their own.",
+  "Tokens/cost UNKNOWN."
+ ]
+}

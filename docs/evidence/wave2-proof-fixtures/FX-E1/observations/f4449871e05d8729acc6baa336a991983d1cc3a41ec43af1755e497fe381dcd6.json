@@ -1,0 +1,62 @@
+{
+ "kind": "doctor",
+ "payload": {
+  "command": [
+   "alienintent",
+   "doctor"
+  ],
+  "ended_at": 1790417728.4246604,
+  "exit_status": 0,
+  "pid": 2128522,
+  "started_at": 1790417720.376848,
+  "stderr": "",
+  "stdout": {
+   "checks": [
+    {
+     "name": "configuration",
+     "outcome": "PASS",
+     "suggested_action": null
+    },
+    {
+     "name": "secrets",
+     "outcome": "PASS",
+     "suggested_action": null
+    },
+    {
+     "name": "work_management",
+     "outcome": "PASS",
+     "suggested_action": null
+    },
+    {
+     "name": "source_control",
+     "outcome": "PASS",
+     "suggested_action": null
+    },
+    {
+     "name": "provider",
+     "outcome": "PASS",
+     "suggested_action": null
+    },
+    {
+     "name": "transport",
+     "outcome": "PASS",
+     "suggested_action": null
+    },
+    {
+     "name": "persistence",
+     "outcome": "PASS",
+     "suggested_action": null
+    },
+    {
+     "name": "execution",
+     "outcome": "PASS",
+     "suggested_action": null
+    }
+   ],
+   "disposition": "PASS",
+   "exit_code": 0,
+   "ready": true
+  },
+  "wall_clock_bound_reached": false
+ }
+}

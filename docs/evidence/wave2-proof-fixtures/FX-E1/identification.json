@@ -1,0 +1,146 @@
+{
+ "custody_records": [
+  {
+   "digest": "sha256:5e7eb2932e40e61206d0eeb7aa928f06a0ffb53d9943f8a7384d2e987416b484",
+   "path": "docs/operations/py10-sandbox.md",
+   "role": "provisioning record of the sandbox repository, Project, App, tunnel, port and profile (SWF-08)"
+  },
+  {
+   "digest": "sha256:a70f5ca62c9934a92ce566b896a6ae4e213e3a7536649ad4de5ff929d762fccc",
+   "path": "docs/decisions/2026-09-21-sandbox-isolation-standard.md",
+   "role": "SWF-34 isolation standard: repository isolation permission-enforced, Project isolation configuration-enforced"
+  },
+  {
+   "digest": "sha256:5c8cffc5501a037294cea69915a8334bb0ba4c6f35dd1617aeb4596e68b8cad2",
+   "path": "docs/evidence/PY-09B-live-transport.md",
+   "role": "PY-09B: the transport substrate the profile composes (Wave 1 receipt; identification only, not proof here)"
+  },
+  {
+   "digest": "sha256:fcaf4f568d3146519007f2bcc20e5ef0d5363addbcb6c3974195c197df88ce7e",
+   "path": "docs/evidence/wo-220501-fx-b0/bootstrap-custody-manifest.json",
+   "role": "WO-220501 FX-B0 external bootstrap custody manifest (Node/bootstrap side)"
+  },
+  {
+   "digest": "sha256:d86dc3e1abdd6a159774c843f736b4393b0bbcdc4514da6b3d87eda9579970a4",
+   "path": "docs/work-units/wave2/WO-220502.md",
+   "role": "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY record (2026-09-26)"
+  }
+ ],
+ "execution_authority": {
+  "isolation": "SWF-34 (Founder, 2026-09-21)",
+  "live_proof": "EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, Director inbox founder-live-transport-proof-authority-20260926T070519Z, recorded in docs/work-units/wave2/WO-220502.md; release of WO-220502 by SWF-35 on Issue #122",
+  "provisioning": "SWF-08 (Founder, 2026-09-21): test/integration infrastructure only"
+ },
+ "fixture_id": "FX-E1",
+ "interpretation": "The only configured Python live profile is py10-sandbox. Its production path is the shipped control plane (`python -m alienintent --profile-factory alienintent.composition.sandbox_run_profile:profile`) bound to the real GitHub App installation, the real sandbox repository and Project, the provisioned tunnel and the resident ingress on its recorded port. The AlienIntent repository and Project #1 belong to the live Node writer and are on this profile's must-not-touch list; exercising them from Python would breach one-writer ownership, so they are not a target of this proof.",
+ "network_calls": 0,
+ "node_live_writer": {
+  "listen_port": 8788,
+  "policy": "KEEP_UNTIL_REPLACED: the Node bootstrap is the single approved live writer of its own repository and Project; FX-E1 neither starts, stops, reconfigures nor dispatches its work",
+  "project_number": 1,
+  "repository": "AlienLogicLab/alienintent",
+  "runtime_processes": [
+   {
+    "executable_name": "node",
+    "pid": 2040299
+   }
+  ]
+ },
+ "one_writer_separation": {
+  "node_repository_is_on_the_python_must_not_touch_list": true,
+  "python_port_differs_from_node_port": true,
+  "python_repository_differs_from_node_repository": true
+ },
+ "profile": {
+  "app_private_key": {
+   "mode": "0o600",
+   "owner_uid_matches_operator": true,
+   "present": true
+  },
+  "composition_factory": "alienintent.composition.sandbox_run_profile:profile",
+  "custody": {
+   "mode": "0o600",
+   "owner_uid_matches_operator": true,
+   "present": true
+  },
+  "document_digest": "sha256:8ce0adf53d287a2d8c3cf59b11ef80b35ed599b6962d4d49d6ab94735ebf3cd1",
+  "location": "<home redacted>/.config/alienintent-sandbox/profile.json",
+  "name": "py10-sandbox",
+  "secret_references": {
+   "py10-sandbox-webhook": {
+    "mode": "0o600",
+    "owner_uid_matches_operator": true,
+    "present": true
+   }
+  }
+ },
+ "record_kind": "FxE1Identification",
+ "schema_version": "1",
+ "scoped_resources": {
+  "app_slug": "alienintent-py-10-sandbox",
+  "app_status": "PROVISIONED 2026-09-21",
+  "automatic_release": true,
+  "ingress_listen": "127.0.0.1:8789",
+  "must_not_touch": [
+   "AlienLogicLab/alienintent",
+   "AlienIntent Project #1",
+   "factorychecks-b-disp tunnel 6127f451-4e3a-4ae4-b968-9d1495471383",
+   "ports 8787/8788",
+   "cloudflared root service",
+   "FactoryChecks runtime"
+  ],
+  "project_number": 2,
+  "project_reference": "PVT_kwDOEcrpC84BkIEX",
+  "repository": "AlienLogicLab/alienintent-sandbox",
+  "tunnel_name": "alienintent-sandbox",
+  "tunnel_unit": "alienintent-sandbox-tunnel.service"
+ },
+ "source": {
+  "declared_runtime_dependencies": [],
+  "production_path_modules": {
+   "src/alienintent/__main__.py": "sha256:e7f3b9b093a320b82f79911791f300706ca47952fe2901720181ffef6c8db0d1",
+   "src/alienintent/composition/doctor_probes.py": "sha256:28019dfe089d07a9f1ec62b69dc04c34f9acdb34e540f59639d7742a91535f8d",
+   "src/alienintent/composition/role_binding.py": "sha256:a5ce0cda6fbb5815aa03d6eed2162dd19e06012a10f3fcc9af6ea254b2159e7c",
+   "src/alienintent/composition/sandbox_profile.py": "sha256:ac377431fa978b34cfd366a36713746594e259598bfe154945e075ca43230cfe",
+   "src/alienintent/composition/sandbox_run_profile.py": "sha256:b5f5c677ef965a38e40927eb3a554a69c4e697d3799a1af0b7a134378d8c6f2a",
+   "src/alienintent/control_plane/adapters/cli.py": "sha256:e485388389a5c0524b03fb3568cf3ddc1fbd240145910db8376fdfa2219fc640",
+   "src/alienintent/execution_coordination/adapters/github_projects_v2.py": "sha256:f9c58e64692ffb810ffcc55035642908b70deaa751e26fda53ab8ceeab4cf409",
+   "src/alienintent/execution_coordination/adapters/github_repository_api.py": "sha256:62ea73d04ef888370033c55a4e1a327f25dadc70414413e6f4e3956e22b71626",
+   "src/alienintent/execution_coordination/adapters/github_webhook.py": "sha256:d55a32ae00027b0f9904f78ba12c805f6c766568a1132a7e5fb48c2872867696",
+   "src/alienintent/execution_coordination/adapters/github_work_management.py": "sha256:04c8a013df16c14e5366b223eb20d025790183b9bf1f5d5d88479b5b3a83dd98",
+   "src/alienintent/execution_coordination/adapters/sqlite_store.py": "sha256:c1d1446c709b8e916bb6fa991ac85b358583ae4484a7809d0935a663437020ba",
+   "src/alienintent/execution_coordination/application/factory_coordinator.py": "sha256:884b6e1fa1785c03b563291f5cd51aa3c67af65715b0bdbfcf1f1c040d8cef73",
+   "src/alienintent/installation/adapters/app_jwt.py": "sha256:b0faa333a515bf47a81ea5f3f015226cf715fbea92bdd13640705cb75c385424",
+   "src/alienintent/installation/adapters/urllib_github_transport.py": "sha256:f0a5d92384662c72a438228d4af918ef286f926674910f88546e6ec65c802291",
+   "src/alienintent/installation/application/installation_credentials.py": "sha256:ccc47eb2255a705be3b33cfabe4aab7587ab12badf2986cfe1288e15ec678352",
+   "src/alienintent/invocation_runtime/adapters/cli_worker.py": "sha256:4eb4fca5c40af1a5bb785fa1bfc149ef493d3b16e165dd577b619403ea02a38e",
+   "src/alienintent/invocation_runtime/adapters/git_source_control.py": "sha256:9de093794545e2d4e7b620249b039b081e27cb73b048da7a3278b6d60f2a5d3d",
+   "src/alienintent/invocation_runtime/application/real_worker.py": "sha256:938951d6dd6e21f7224f36b66370101c3b0b5c4efa3d1d79e6f134c3e9b373b3"
+  },
+  "python": "3.12.3",
+  "repository": "AlienLogicLab/alienintent",
+  "revision": "2715bec1094e8c85a81e56d2b69c115c7451f688",
+  "worktree_clean": true
+ },
+ "transport": {
+  "config_custody": {
+   "mode": "0o600",
+   "owner_uid_matches_operator": true,
+   "present": true
+  },
+  "config_digest": "sha256:6742d1566b67f5cff7322fcfc4d3cda72d719b9c28e3528c003c2738f3e3419b",
+  "connector_processes": [
+   {
+    "executable_is_node": false,
+    "executable_name": "cloudflared",
+    "pid": 1184
+   }
+  ],
+  "definition": "the sandbox's own cloudflared connector routes the provisioned hostname to the Python ingress port; a running tunnel alone discharges nothing (WO-220502)",
+  "ingress_services": [
+   "http://127.0.0.1:8789",
+   "http_status:404"
+  ]
+ },
+ "work_unit": "WO-220502"
+}

@@ -1,0 +1,47 @@
+{
+ "kind": "decisions-list",
+ "payload": {
+  "command": [
+   "alienintent",
+   "decisions",
+   "list"
+  ],
+  "ended_at": 1790417780.6124084,
+  "exit_status": 0,
+  "pid": 2129196,
+  "started_at": 1790417779.2812688,
+  "stderr": "",
+  "stdout": [
+   {
+    "affected_architecture": [
+     "FD-05"
+    ],
+    "affected_requirements": [
+     "SF-REQ-001",
+     "SF-REQ-010"
+    ],
+    "authorizations": [
+     "authorize permits one normal guarded re-admission",
+     "defer authorizes continued blocking"
+    ],
+    "biu_version": 0,
+    "cost_of_waiting": "The affected work and transitive dependents remain blocked.",
+    "decision": "Authorize the blocked execution to continue through normal admission guards.",
+    "options": [
+     "authorize",
+     "defer"
+    ],
+    "profile": "py10-sandbox",
+    "project": "AlienLogicLab/alienintent-sandbox",
+    "reason": "The external effect outcome is unknown and requires reconciliation authority.",
+    "recommendation": "defer",
+    "tradeoffs": [
+     "authorize permits the bounded work to resume",
+     "defer retains the scoped authority block"
+    ],
+    "work_item": "E1-261014-A"
+   }
+  ],
+  "wall_clock_bound_reached": false
+ }
+}
