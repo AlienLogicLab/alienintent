@@ -35,6 +35,42 @@ The unit of autonomous execution is the **Bounded Implementation Unit (BIU)**: a
 
 The factory's job is to keep those two things aligned.
 
+### Humans govern intent. The factory executes it.
+
+AlienIntent is autonomous at the execution layer, not at the authority layer.
+
+Humans retain authority over product requirements, architecture, priorities, scope, boundaries, policy, and decisions that genuinely require human judgment. The factory turns those decisions into bounded executable work. Agents implement, gather evidence, independently verify, repair rejected candidates, and complete work within the authority they were given.
+
+An agent does not acquire product authority merely because it can write code. When required authority is missing or genuinely ambiguous, the factory should stop at that boundary and ask for a decision instead of inventing one.
+
+### Review is native to the factory
+
+AlienIntent does **not** use pull requests as the review mechanism for its autonomous execution path. Pull requests are a human-oriented collaboration container; AlienIntent performs review as a factory operation against an exact candidate.
+
+```text
+bounded authority
+    ↓
+PRODUCER
+    ↓
+exact candidate SHA
+    ↓
+deterministic evidence and feature regressions
+    ↓
+independent VERIFIER
+    ↓
+repair if rejected
+    ↓
+ACCEPT
+    ↓
+direct landing of the accepted candidate
+    ↓
+DONE
+```
+
+**No PR does not mean no review. It means review is native to the factory.**
+
+The accepted candidate is landed directly while preserving candidate identity and retained evidence. Human intervention is reserved for authority, intent, and decisions that cannot be resolved mechanically within the approved boundaries.
+
 ---
 
 ## The core idea
@@ -141,16 +177,16 @@ That turns experience into machinery.
 The long-term target:
 
 ```text
-novel failur
+novel failure
     ↓
 review finding
-    ↿
+    ↓
 proven regression
     ↓
 deterministic VERIFY rule
-    ↿
+    ↓
 future model tokens not required
-b``
+```
 
 ### Crash-safe execution and deterministic recovery
 
@@ -446,35 +482,23 @@ Until then, expect the self-hosted path to move quickly.
 
 ---
 
-## Contributing
+## Contribution policy
 
-AlienIntent is early enough that good contributions can still change the shape of the product.
+AlienIntent is public so people can inspect it, learn from it, test it, and fork it. **External code contributions are not open yet.**
 
-### Before writing code
+For now:
 
-For substantive changes:
+- feel free to fork the repository and experiment independently;
+- feedback, bug reports, edge cases, and deployment experience are welcome;
+- do not open a pull request unless the Founder has explicitly invited or authorized that contribution;
+- unsolicited pull requests will not be merged;
+- changes to the canonical AlienIntent repository remain Founder-gated while the architecture and autonomous factory are still moving quickly.
 
-1. Read [`AGENTS.md`](AGENTS.md).
-2. Read the architectural reset and software-factory plan linked above.
-3. Open or reference an Issue describing the problem and intended outcome.
-4. Keep the change bounded.
-5. Preserve existing behavior unless the change explicitly supersedes it.
+This policy is separate from AlienIntent's internal execution architecture. The factory itself does not use pull requests for autonomous implementation or verification. If external contribution mechanics are opened later, that will be a repository-governance decision, not a change to the agent-native review model.
 
-### A good contribution
+### Running the test suite
 
-A strong contribution usually includes:
-
-- a clear problem statement;
-- the requirement or behavior being changed;
-- focused implementation;
-- tests that fail for the right reason before the fix;
-- feature-level regression coverage where the behavior should remain durable;
-- no accidental expansion of authority or scope;
-- evidence sufficient for an independent reviewer to reproduce the result.
-
-### Tests
-
-Install the test runner into your development environment:
+If you fork AlienIntent or are working on an authorized change, install the test runner with:
 
 ```bash
 python -m pip install pytest
@@ -486,24 +510,7 @@ Run the tests relevant to your change. The full Python suite is:
 python -m pytest -q
 ```
 
-AlienIntent is under active pre-1.0 development, so compare failures with the current development baseline rather than assuming every failure was introduced by your patch. A contribution should not add new unexplained failures.
-
-If you modify a protected feature surface, expect the applicable feature-regression pack to matter as well.
-
-### Pull requests
-
-Keep PRs narrow enough to review.
-
-Explain:
-
-- what changed;
-- why;
-- what requirement or defect it addresses;
-- what you deliberately did **not** change;
-- how you proved it;
-- what remains uncertain.
-
-Large rewrites without preserved behavior/evidence are unlikely to be useful.
+If you modify a protected feature surface, the applicable feature-regression pack matters as well.
 
 ---
 
