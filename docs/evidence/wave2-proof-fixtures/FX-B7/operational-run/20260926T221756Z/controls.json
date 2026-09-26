@@ -1,0 +1,131 @@
+[
+  {
+    "application_count": 1,
+    "control": "alias_launch_injected",
+    "discriminating": true,
+    "expected": [
+      "alias_launch"
+    ],
+    "failure_class": "unmigrated alias launch hidden in an installation surface",
+    "fault": [
+      "alias_launch"
+    ],
+    "intact": [],
+    "restored": []
+  },
+  {
+    "application_count": 1,
+    "control": "surface_unreadable",
+    "discriminating": true,
+    "expected": [
+      "coverage_unknown"
+    ],
+    "failure_class": "unknown installation coverage must hold alias retirement",
+    "fault": [
+      "coverage_unknown"
+    ],
+    "intact": [],
+    "restored": []
+  },
+  {
+    "application_count": 1,
+    "control": "surface_dropped",
+    "discriminating": true,
+    "expected": [
+      "coverage_incomplete"
+    ],
+    "failure_class": "enumeration without a complete coverage method",
+    "fault": [
+      "coverage_incomplete",
+      "retirement_claim"
+    ],
+    "intact": [],
+    "restored": []
+  },
+  {
+    "application_count": 1,
+    "control": "readback_alias_process",
+    "discriminating": true,
+    "expected": [
+      "readback"
+    ],
+    "failure_class": "canonical launch not confirmed by actual readback",
+    "fault": [
+      "alias_launch",
+      "readback"
+    ],
+    "intact": [],
+    "restored": []
+  },
+  {
+    "application_count": 1,
+    "control": "identity_dropped",
+    "discriminating": true,
+    "expected": [
+      "preservation"
+    ],
+    "failure_class": "persisted lane/resource identity renamed or dropped",
+    "fault": [
+      "preservation"
+    ],
+    "intact": [],
+    "restored": []
+  },
+  {
+    "application_count": 1,
+    "control": "marker_altered",
+    "discriminating": true,
+    "expected": [
+      "preservation"
+    ],
+    "failure_class": "B-DISP protocol marker renamed",
+    "fault": [
+      "preservation"
+    ],
+    "intact": [],
+    "restored": []
+  },
+  {
+    "application_count": 1,
+    "control": "retirement_claimed",
+    "discriminating": true,
+    "expected": [
+      "retirement_claim"
+    ],
+    "failure_class": "alias retirement claimed from a candidate or local result",
+    "fault": [
+      "retirement_claim"
+    ],
+    "intact": [],
+    "restored": []
+  },
+  {
+    "application_count": 1,
+    "control": "migration_without_authority",
+    "discriminating": true,
+    "expected": [
+      "authority"
+    ],
+    "failure_class": "migration without installation authority",
+    "fault": [
+      "alias_launch",
+      "authority"
+    ],
+    "intact": [],
+    "restored": []
+  },
+  {
+    "application_count": 1,
+    "control": "rollback_incomplete",
+    "discriminating": true,
+    "expected": [
+      "rollback"
+    ],
+    "failure_class": "rollback that does not restore exact original bytes",
+    "fault": [
+      "rollback"
+    ],
+    "intact": [],
+    "restored": []
+  }
+]

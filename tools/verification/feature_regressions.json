@@ -182,6 +182,22 @@
         "-q",
         "tests/execution_coordination/test_one_writer_cutover.py"
       ]
+    },
+    {
+      "id": "installation-launch-command-migration",
+      "description": "Installation launch inventory covers every pinned surface, never treats unknown coverage or a remaining alias launch as retirement-eligible, migrates only under recorded authority with byte-exact rollback, reads back canonical launches and preserves B-DISP markers, lanes, resources and history (WO-220510, FX-B7).",
+      "paths": [
+        "tools/live/installation_launch.py",
+        "tools/live/test_installation_launch.py",
+        "docs/evidence/wave2-proof-fixtures/FX-B7/**"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tools/live/test_installation_launch.py"
+      ]
     }
   ]
 }

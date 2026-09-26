@@ -1,0 +1,762 @@
+{
+  "alias_launch_count": 0,
+  "alias_retirement": "COVERAGE_COMPLETE_RETIREMENT_NOT_AUTHORIZED_HERE",
+  "counts": {
+    "ALIAS_REFERENCE": 1,
+    "CANONICAL_LAUNCH": 20,
+    "CANONICAL_LAUNCH_ENTRY_POINT": 5,
+    "CANONICAL_REFERENCE": 45,
+    "CANONICAL_REFERENCE_ENTRY_POINT": 20
+  },
+  "coverage_method": "docs/evidence/wave2-proof-fixtures/FX-B7/FX-B7.md#coverage-method-pinned",
+  "label": "OPERATIONAL",
+  "references": [
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 10,
+      "location": "/home/netmarine/.config/systemd/user/alienintent-liveness.service",
+      "surface": "systemd-user-paths",
+      "text": "WorkingDirectory=/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 9,
+      "location": "/home/netmarine/.config/systemd/user/alienintent-observer.service",
+      "surface": "systemd-user-paths",
+      "text": "WorkingDirectory=/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 7,
+      "location": "/home/netmarine/.config/systemd/user/alienintent.service",
+      "surface": "systemd-user-paths",
+      "text": "WorkingDirectory=/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": true,
+      "launch": true,
+      "line": 8,
+      "location": "/home/netmarine/.config/systemd/user/alienintent.service",
+      "surface": "systemd-user-paths",
+      "text": "ExecStart=/home/netmarine/.local/bin/node /mnt/d/Projects/alienintent/bin/alienintent.mjs --config /home/netmarine/.config/alienintent/self-hosting.json",
+      "token": "/mnt/d/Projects/alienintent/bin/alienintent.mjs"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 10,
+      "location": "/home/netmarine/.config/systemd/user/default.target.wants/alienintent-liveness.service",
+      "surface": "systemd-user-paths",
+      "text": "WorkingDirectory=/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 9,
+      "location": "/home/netmarine/.config/systemd/user/default.target.wants/alienintent-observer.service",
+      "surface": "systemd-user-paths",
+      "text": "WorkingDirectory=/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": true,
+      "launch": true,
+      "line": 0,
+      "location": "unit:alienintent.service",
+      "surface": "systemd-user-loaded",
+      "text": "/home/netmarine/.local/bin/node /mnt/d/Projects/alienintent/bin/alienintent.mjs --config /home/netmarine/.config/alienintent/self-hosting.json",
+      "token": "/mnt/d/Projects/alienintent/bin/alienintent.mjs"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": true,
+      "launch": true,
+      "line": 0,
+      "location": "pid:2324102",
+      "surface": "processes",
+      "text": "/home/netmarine/.local/bin/node /mnt/d/Projects/alienintent/bin/alienintent.mjs --config /home/netmarine/.config/alienintent/self-hosting.json",
+      "token": "/mnt/d/Projects/alienintent/bin/alienintent.mjs"
+    },
+    {
+      "class": "ALIAS_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 7,
+      "location": "/home/netmarine/.config/alienintent/alienintent.service.before-path-correction",
+      "surface": "alienintent-config",
+      "text": "WorkingDirectory=/mnt/d/Projects/b-disp",
+      "token": "/mnt/d/Projects/b-disp"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": true,
+      "launch": true,
+      "line": 8,
+      "location": "/home/netmarine/.config/alienintent/alienintent.service.before-path-correction",
+      "surface": "alienintent-config",
+      "text": "ExecStart=/home/netmarine/.local/bin/node /mnt/d/Projects/b-disp/bin/alienintent.mjs --config /home/netmarine/.config/alienintent/self-hosting.json",
+      "token": "/mnt/d/Projects/b-disp/bin/alienintent.mjs"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 14,
+      "location": "/home/netmarine/.config/alienintent/claude-jc-proof.mjs",
+      "surface": "alienintent-config",
+      "text": "const publish = \"rtk proxy gh issue comment 1 --repo AlienLogicLab/alienintent --body-file \" + artifact;",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/jc-proof-settings.json#/permissions/allow",
+      "surface": "alienintent-config",
+      "text": "Bash(rtk proxy gh issue view 1 --repo AlienLogicLab/alienintent --json body,comments)",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-115-python-critical.json#/repository/name",
+      "surface": "alienintent-config",
+      "text": "alienintent",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-115-python-critical.json#/paths/repositoryStore",
+      "surface": "alienintent-config",
+      "text": "/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-lifecycle-correction.json#/repository/name",
+      "surface": "alienintent-config",
+      "text": "alienintent",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-lifecycle-correction.json#/paths/repositoryStore",
+      "surface": "alienintent-config",
+      "text": "/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-live-proof.json#/repository/name",
+      "surface": "alienintent-config",
+      "text": "alienintent",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-live-proof.json#/paths/repositoryStore",
+      "surface": "alienintent-config",
+      "text": "/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-path-correction.json#/repository/name",
+      "surface": "alienintent-config",
+      "text": "alienintent",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-supervision.json#/repository/name",
+      "surface": "alienintent-config",
+      "text": "alienintent",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-supervision.json#/paths/repositoryStore",
+      "surface": "alienintent-config",
+      "text": "/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-verifier-permission-mode.json#/repository/name",
+      "surface": "alienintent-config",
+      "text": "alienintent",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-verifier-permission-mode.json#/paths/repositoryStore",
+      "surface": "alienintent-config",
+      "text": "/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-wo-220102-limits.json#/repository/name",
+      "surface": "alienintent-config",
+      "text": "alienintent",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-wo-220102-limits.json#/paths/repositoryStore",
+      "surface": "alienintent-config",
+      "text": "/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.before-workers.json#/repository/name",
+      "surface": "alienintent-config",
+      "text": "alienintent",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json#/repository/name",
+      "surface": "alienintent-config",
+      "text": "alienintent",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 0,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json#/paths/repositoryStore",
+      "surface": "alienintent-config",
+      "text": "/mnt/d/Projects/alienintent",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.backup-20260924-pre-claude-producer",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 74,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.backup-20260924-pre-claude-producer",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260921T0220Z",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 47,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260921T0220Z",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T1047Z-fdh9192",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 94,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T1047Z-fdh9192",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T1134Z-wo220204",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 102,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T1134Z-wo220204",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T1310Z-wo220205",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 106,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T1310Z-wo220205",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T142307Z-morty-claude-limit",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 110,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T142307Z-morty-claude-limit",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T2257Z-wo220302",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 110,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T2257Z-wo220302",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T2340Z-wo220304",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 114,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260924T2340Z-wo220304",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260925T012425Z-routing",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 118,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260925T012425Z-routing",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260925T0206Z-wo220207",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 118,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260925T0206Z-wo220207",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": true,
+      "launch": false,
+      "line": 4,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260925T225404Z-restore-claude",
+      "surface": "alienintent-config",
+      "text": "\"name\": \"alienintent\",",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_REFERENCE",
+      "entry_point": false,
+      "launch": false,
+      "line": 110,
+      "location": "/home/netmarine/.config/alienintent/self-hosting.json.bak-20260925T225404Z-restore-claude",
+      "surface": "alienintent-config",
+      "text": "\"repositoryStore\": \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 31,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/cycle_data.py",
+      "surface": "bootstrap-root",
+      "text": "REPO = \"AlienLogicLab/alienintent\"",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 32,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/cycle_data.py",
+      "surface": "bootstrap-root",
+      "text": "WORKDIR = \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 51,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/factory_status.sh",
+      "surface": "bootstrap-root",
+      "text": "git -C /mnt/d/Projects/alienintent log --oneline -5 origin/main 2>/dev/null | sed 's/^/  /'",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 14,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/liveness.py",
+      "surface": "bootstrap-root",
+      "text": "REPO = \"AlienLogicLab/alienintent\"",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 24,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/liveness.py",
+      "surface": "bootstrap-root",
+      "text": "r = subprocess.run([\"gh\", *a], capture_output=True, text=True, input=inp, cwd=\"/mnt/d/Projects/alienintent\")",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 16,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/project_add_recovery_probe.sh",
+      "surface": "bootstrap-root",
+      "text": "REPO=AlienLogicLab/alienintent; ORG=AlienLogicLab; PROJECT=2",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 13,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/py05_py09_quality.py",
+      "surface": "bootstrap-root",
+      "text": "REPO = \"AlienLogicLab/alienintent\"",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 198,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/py05_py09_quality.py",
+      "surface": "bootstrap-root",
+      "text": "\"architecture_violations\": {\"value\": 0, \"scope\": \"architecture fitness PASS reproduced by the verifier at every candidate, against both --root src and --root src/alienintent\"},",
+      "token": "src/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 21,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/py05_py09_trajectory.py",
+      "surface": "bootstrap-root",
+      "text": "REPO = \"AlienLogicLab/alienintent\"",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 43,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/py10_preflight.py",
+      "surface": "bootstrap-root",
+      "text": "\"repository\": \"AlienLogicLab/alienintent\",",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 20,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/release_admission.py",
+      "surface": "bootstrap-root",
+      "text": "REPO = \"AlienLogicLab/alienintent\"",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 21,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/release_admission.py",
+      "surface": "bootstrap-root",
+      "text": "WORKDIR = \"/mnt/d/Projects/alienintent\"",
+      "token": "/mnt/d/Projects/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 104,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/test_py10_preflight.py",
+      "surface": "bootstrap-root",
+      "text": "profile = {\"repository\": \"AlienLogicLab/alienintent\",",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 17,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/worker_credential_probe.sh",
+      "surface": "bootstrap-root",
+      "text": "REPO=AlienLogicLab/alienintent",
+      "token": "AlienLogicLab/alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": true,
+      "launch": true,
+      "line": 42,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/worker_credential_probe.sh",
+      "surface": "bootstrap-root",
+      "text": "pq=$(gh api graphql -f query='query{repository(owner:\"AlienLogicLab\",name:\"alienintent\"){issue(number:83){projectItems(first:5){nodes{project{number}}}}}}' --jq '.data.repository.issue.projectItems.nodes|length' 2>/dev/null)",
+      "token": "alienintent"
+    },
+    {
+      "class": "CANONICAL_LAUNCH",
+      "entry_point": false,
+      "launch": true,
+      "line": 29,
+      "location": "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/project_materialization.py",
+      "surface": "bootstrap-root",
+      "text": "REPO = \"AlienLogicLab/alienintent\"",
+      "token": "AlienLogicLab/alienintent"
+    }
+  ],
+  "surfaces": {
+    "alienintent-config": {
+      "locations_scanned": 31,
+      "locations_sha256": "dd1f133114cc389e9ec7807c83d3c313fb792853ac9906d66822be0800fe4d95",
+      "records_scanned": 2812,
+      "status": "SCANNED"
+    },
+    "bootstrap-root": {
+      "locations_scanned": 27,
+      "locations_sha256": "f967a995c5b8a3bf91379a3b3f05d39c71e7dbf516c26f69011b8262ef3ab96e",
+      "records_scanned": 6526,
+      "status": "SCANNED"
+    },
+    "cron": {
+      "locations_scanned": 5,
+      "locations_sha256": "0bef4a5db0c0fa5fed0493b5d77ec065794a4621b45daac74fe59a689c9ba85d",
+      "records_scanned": 38,
+      "status": "SCANNED"
+    },
+    "path-executables": {
+      "locations_scanned": 2790,
+      "locations_sha256": "31d44bcd75245f2c317cf2f4bf511731dc2dda7f5279c927b6432c1198860283",
+      "records_scanned": 2790,
+      "status": "SCANNED"
+    },
+    "processes": {
+      "locations_scanned": 65,
+      "locations_sha256": "83b7403ea0d18cd1f5461edcc78ef8c74c5eaa0cfa5552ad2318ac922476ad4d",
+      "records_scanned": 65,
+      "status": "SCANNED"
+    },
+    "shell-startup": {
+      "locations_scanned": 16,
+      "locations_sha256": "133562b4ed7f854b85e688d2726756f492ea2a0fbc1d73c3c29242434a702d03",
+      "records_scanned": 599,
+      "status": "SCANNED"
+    },
+    "systemd-system-paths": {
+      "locations_scanned": 496,
+      "locations_sha256": "dddc6bbc72c4ea1f8258ba202d1ea6c406bbaeedf6da84ca2fc294ea5b04e8d8",
+      "records_scanned": 10410,
+      "status": "SCANNED"
+    },
+    "systemd-user-loaded": {
+      "locations_scanned": 19,
+      "locations_sha256": "fbd7d73991f0d8b821a0854b1b52ce28d69bd36d24c1568f153a86158b23b66a",
+      "records_scanned": 24,
+      "status": "SCANNED"
+    },
+    "systemd-user-paths": {
+      "locations_scanned": 89,
+      "locations_sha256": "15eea863908bed5304d215dec52610e251db2ffb046babbfb5ab7e4b05b3cd34",
+      "records_scanned": 1227,
+      "status": "SCANNED"
+    },
+    "windows-run-keys": {
+      "locations_scanned": 4,
+      "locations_sha256": "a05b771c3bd9cca64aa40ff7d557b5cc41323cf647bbd024051ac831b33ff2d0",
+      "records_scanned": 27,
+      "status": "SCANNED"
+    },
+    "windows-startup": {
+      "locations_scanned": 7,
+      "locations_sha256": "0d1588dfbe1a2245bf3cd9114eb50431908864bf1bf5e728aeac400529667574",
+      "records_scanned": 74,
+      "status": "SCANNED"
+    },
+    "windows-tasks": {
+      "locations_scanned": 312,
+      "locations_sha256": "b5565c76928de13e03ba06739e5e62af72533c2f4d2f78a2beee3a5776a7a698",
+      "records_scanned": 13449,
+      "status": "SCANNED"
+    },
+    "wsl-boot": {
+      "locations_scanned": 1,
+      "locations_sha256": "fb94b60f7e207aa93fe221dc12a8237870933daa5020e4c7f2077f39fed0fe8d",
+      "records_scanned": 5,
+      "status": "SCANNED"
+    },
+    "xdg-autostart": {
+      "locations_scanned": 3,
+      "locations_sha256": "4b472550de4c2ca1012434eb76ed373c016088f8a6d3a20cd220355b54ba5325",
+      "records_scanned": 24,
+      "status": "SCANNED"
+    }
+  },
+  "unknown_surfaces": []
+}

@@ -1,0 +1,4 @@
+
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\RunOnce
+    msedge_cleanup_{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}    REG_SZ    "C:\Program Files (x86)\Microsoft\Edge\Application\154.0.4258.37\Installer\setup.exe" --msedge --channel=stable --delete-old-versions --system-level --verbose-logging --on-logon
+

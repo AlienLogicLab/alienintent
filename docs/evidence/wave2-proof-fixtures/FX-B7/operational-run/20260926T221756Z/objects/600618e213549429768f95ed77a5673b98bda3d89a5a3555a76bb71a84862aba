@@ -1,0 +1,7 @@
+
+HKEY_LOCAL_MACHINE\Software\Microsoft\Windows\CurrentVersion\Run
+    SecurityHealth    REG_EXPAND_SZ    %windir%\system32\SecurityHealthSystray.exe
+    RtkAudUService    REG_SZ    "C:\WINDOWS\System32\DriverStore\FileRepository\realtekservice.inf_amd64_719a4f3eb3c3c65a\RtkAudUService64.exe" -background
+    Logitech Download Assistant    REG_SZ    C:\Windows\system32\rundll32.exe C:\Windows\System32\LogiLDA.dll,LogiFetch
+    Logi Download Assistant    REG_SZ    "C:\Program Files\LogiDownloadAssistant\bin\logi_download_assistant.exe" -system-restarted
+

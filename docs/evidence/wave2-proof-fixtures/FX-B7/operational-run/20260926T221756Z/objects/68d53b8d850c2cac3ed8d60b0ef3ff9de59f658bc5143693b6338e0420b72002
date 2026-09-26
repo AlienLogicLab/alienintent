@@ -1,0 +1,16 @@
+/home/netmarine/.config/systemd/user.control
+/run/user/1000/systemd/user.control
+/run/user/1000/systemd/transient
+/run/user/1000/systemd/generator.early
+/home/netmarine/.config/systemd/user
+/etc/xdg/systemd/user
+/etc/systemd/user
+/run/user/1000/systemd/user
+/run/systemd/user
+/run/user/1000/systemd/generator
+/home/netmarine/.local/share/systemd/user
+/usr/local/share/systemd/user
+/usr/share/systemd/user
+/usr/local/lib/systemd/user
+/usr/lib/systemd/user
+/run/user/1000/systemd/generator.late
