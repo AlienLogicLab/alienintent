@@ -104,6 +104,38 @@
         "-q",
         "tools/live/test_fx_e1.py"
       ]
+    },
+    {
+      "id": "wave2a-upstream-integration-capstone",
+      "description": "The Wave 2A chain stays composed in order: inventory, ambiguity and premise evidence gate design applicability and initial compilation; a source, decision or design revision invalidates downstream readiness instead of reusing a stale READY; compilation and retained assessment consumption stay separate typed boundaries behind lint and provenance; nothing writes lifecycle/Project state or asserts release (WO-220211, FX-A).",
+      "paths": [
+        "src/alienintent/composition/upstream_integration.py",
+        "src/alienintent/composition/upstream_profile.py",
+        "src/alienintent/composition/compilation.py",
+        "src/alienintent/composition/design_admission.py",
+        "src/alienintent/composition/premise_evidence.py",
+        "src/alienintent/composition/readiness.py",
+        "src/alienintent/context_assembly/**",
+        "src/alienintent/evidence_learning/application/premise_service.py",
+        "src/alienintent/evidence_learning/application/proof_planning_service.py",
+        "src/alienintent/evidence_learning/domain/premise.py",
+        "src/alienintent/evidence_learning/domain/proof_plan.py",
+        "src/alienintent/execution_coordination/adapters/assessment_consumer.py",
+        "src/alienintent/execution_coordination/domain/readiness.py",
+        "tests/composition/test_upstream_integration_capstone.py",
+        "tests/context_assembly/test_ambiguity.py",
+        "tests/context_assembly/test_design_admission.py",
+        "tests/context_assembly/test_initial_compilation.py",
+        "tests/context_assembly/test_readiness_consumer.py",
+        "tools/evidence/fx_a_evidence.py"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/composition/test_upstream_integration_capstone.py"
+      ]
     }
   ]
 }

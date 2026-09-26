@@ -22,9 +22,8 @@ def test_priority_feature_pack_is_selected_by_every_owned_boundary():
         "src/alienintent/context_assembly/application/readiness_service.py",
     )
     for path in owned:
-        assert [p["id"] for p in module.selected_packs(manifest(), (path,))] == [
-            "requirement-priority-continuity"
-        ]
+        # Packs accumulate: a boundary another feature also chains (readiness_service.py, FX-A) selects both.
+        assert "requirement-priority-continuity" in [p["id"] for p in module.selected_packs(manifest(), (path,))]
 
 
 def test_unrelated_change_does_not_select_priority_pack():
@@ -61,3 +60,22 @@ def test_supervised_monitor_host_pack_is_selected_by_every_host_boundary():
     )
     for path in owned:
         assert "supervised-monitor-host" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path
+
+
+def test_upstream_integration_capstone_pack_is_selected_by_every_chained_stage():
+    chained = (
+        "src/alienintent/composition/upstream_integration.py",
+        "src/alienintent/composition/upstream_profile.py",
+        "src/alienintent/context_assembly/domain/inventory.py",
+        "src/alienintent/context_assembly/domain/ambiguity.py",
+        "src/alienintent/evidence_learning/application/premise_service.py",
+        "src/alienintent/evidence_learning/application/proof_planning_service.py",
+        "src/alienintent/context_assembly/domain/design_admission.py",
+        "src/alienintent/context_assembly/application/initial_compilation_service.py",
+        "src/alienintent/context_assembly/domain/readiness.py",
+        "src/alienintent/execution_coordination/adapters/assessment_consumer.py",
+        "tests/composition/test_upstream_integration_capstone.py",
+    )
+    for path in chained:
+        assert "wave2a-upstream-integration-capstone" in [p["id"] for p in module.selected_packs(manifest(), (path,))]
+    assert module.selected_packs(manifest(), ("docs/README-unrelated.md",)) == []
