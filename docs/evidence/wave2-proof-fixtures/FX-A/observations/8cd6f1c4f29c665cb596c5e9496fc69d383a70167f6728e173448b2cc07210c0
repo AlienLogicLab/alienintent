@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tools/verification/test_feature_regressions.py"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/1ff6ae4f-45e0-4bfb-9106-8dadf6128540","exit_status":0,"stderr":"","stdout":".....                                                                    [100%]\n5 passed in 0.03s\n"}
