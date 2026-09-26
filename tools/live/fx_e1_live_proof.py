@@ -22,6 +22,9 @@ bootstrap, its ports or the root tunnel. Output goes through the PY-10 redaction
 boundary, and every raw observation is retained content-addressed.
 
     python3 tools/live/fx_e1_live_proof.py --apply --output docs/evidence/wave2-proof-fixtures/FX-E1
+
+The run record lands at <output>/runs/<run-id>/proof-run.json; observations it
+cites are relative to <output>.
 """
 from __future__ import annotations
 
@@ -78,7 +81,9 @@ DISPATCH_WAIT_SECONDS = 600.0
 RUN_TIMEOUT_SECONDS = 1500.0
 REDELIVERY_WAIT_SECONDS = 90.0
 READY_SPACING_SECONDS = 2.0
-NODE_REFERENCE = re.compile(r"""["'](?:node|nodejs|npm|npx|corepack)["']|\.mjs\b""")
+# A Node executable as an argument-vector element, or a quoted `.mjs` path: a
+# GraphQL `"node"` field read with `.get("node")` is not an invocation.
+NODE_REFERENCE = re.compile(r"""\[\s*["'](?:[^"']*/)?(?:node|nodejs|npm|npx|corepack)["']\s*[,\]]|["'][^"'\s]*\.mjs["']""")
 
 
 def now() -> str:
@@ -297,20 +302,27 @@ def seed_items(projects: GitHubProjectsV2Directory, writer: SeedWriter, contract
 
 
 def dependency_path(environment: dict[str, str]) -> dict:
-    """The module closure the production path loads, and Node references in its source."""
+    """The module closure the production path adds, and Node invocations in its source.
+
+    Interpreter start-up (`site` and the host's `.pth` hooks) loads modules before
+    any application code runs; they are recorded separately and are not part of
+    the closure. The closure is what importing the control plane and the sandbox
+    composition adds on top of that start-up set.
+    """
     probe = (
         "import json, sys, sysconfig\n"
+        "def files():\n"
+        "    return {getattr(m, '__file__', None) or '' for m in list(sys.modules.values())} - {''}\n"
+        "startup = files()\n"
         "import alienintent.control_plane.adapters.cli, alienintent.composition.sandbox_run_profile\n"
-        "stdlib = sysconfig.get_paths()['stdlib']\n"
-        "files = sorted({getattr(m, '__file__', None) or '' for m in list(sys.modules.values())} - {''})\n"
-        "print(json.dumps({'stdlib': stdlib, 'files': files}))\n"
+        "print(json.dumps({'stdlib': sysconfig.get_paths()['stdlib'], 'startup': sorted(startup), 'closure': sorted(files() - startup)}))\n"
     )
     answer = subprocess.run([sys.executable, "-c", probe], cwd=ROOT, env=environment, capture_output=True, text=True, check=False)
     loaded = json.loads(answer.stdout or "{}")
     source = str(ROOT / "src" / "alienintent")
     stdlib = loaded.get("stdlib", "")
-    files = loaded.get("files", [])
-    other = [path for path in files if not path.startswith(source) and not path.startswith(stdlib)]
+    closure, startup = loaded.get("closure", []), loaded.get("startup", [])
+    other = [path for path in closure if not path.startswith(source) and not path.startswith(stdlib)]
     references = []
     for path in sorted((ROOT / "src" / "alienintent").rglob("*.py")):
         for number, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -318,11 +330,13 @@ def dependency_path(environment: dict[str, str]) -> dict:
                 references.append(f"{path.relative_to(ROOT)}:{number}: {line.strip()[:160]}")
     return {
         "exit_status": answer.returncode,
-        "modules_loaded": len(files),
-        "alienintent_modules": sum(path.startswith(source) for path in files),
-        "stdlib_modules": sum(path.startswith(stdlib) for path in files),
+        "modules_loaded": len(closure),
+        "alienintent_modules": sum(path.startswith(source) for path in closure),
+        "stdlib_modules": sum(path.startswith(stdlib) for path in closure),
         "modules_outside_stdlib_and_alienintent": other,
+        "interpreter_startup_modules_outside_stdlib": [path for path in startup if not path.startswith(stdlib)],
         "node_references_in_python_source": references,
+        "node_reference_pattern": NODE_REFERENCE.pattern,
     }
 
 
@@ -543,8 +557,13 @@ def main(argv: list[str]) -> int:
         # --- process D: the ingress restarted once more; a delivery an earlier process admitted is redelivered.
         admitted_before = {row["event_id"]: row for row in receipts(database)}
         recorded = deliveries(composed)
-        processes = {"A": (started, killed_at), "B": (restarted["started_at"], restarted["ended_at"]),
-                     "C": (final["started_at"], final["ended_at"])}
+        # Every control-plane process is resident while it lives, so each one's
+        # window attributes the deliveries it may have admitted.
+        named = {process_a.pid: "A", restarted["pid"]: "B", final["pid"]: "C"}
+        processes = {"A": (started, killed_at)} | {
+            named.get(entry["pid"], f"{entry['command'][1]}@{entry['pid']}"): (entry["started_at"], entry["ended_at"])
+            for entry in operator.transcript if entry["pid"] != process_a.pid
+        }
 
         def admitting_process(entry: dict) -> str | None:
             moment = iso_epoch(entry.get("delivered_at"))
@@ -608,6 +627,7 @@ def main(argv: list[str]) -> int:
             observed = projects.read_status(item["item"])
             project_readback.append({"identity": item["identity"], "item": item["item"], "status": observed.status,
                                      "status_updated_at": observed.status_updated_at})
+        processes["D"] = (resident_started, time.time())
         recorded = deliveries(composed)
         window = [entry for entry in recorded if (iso_epoch(entry.get("delivered_at")) or 0) >= started - 2]
         durable = {row["event_id"]: row for row in receipts(database)}
@@ -645,8 +665,10 @@ def main(argv: list[str]) -> int:
         "tokens_and_cost": "UNKNOWN (no provider was invoked by the run; the PRODUCER session's own usage is not exposed)",
     }
     run_record["verdict"] = evaluate(run_record)
-    write_json(output / "proof-run.json", redact(run_record))
-    print(json.dumps({"proof_run": str(output / "proof-run.json"), "verdict": run_record["verdict"]["disposition"],
+    # One record per run, so a held run is preserved rather than overwritten on repair.
+    destination = output / "runs" / run_id / "proof-run.json"
+    write_json(destination, redact(run_record))
+    print(json.dumps({"proof_run": str(destination), "verdict": run_record["verdict"]["disposition"],
                       "predicates": {p["id"]: p["outcome"] for p in run_record["verdict"]["predicates"]}}, indent=1))
     return 0 if run_record["verdict"]["disposition"] == "PASS" else 1
 

@@ -1,13 +1,15 @@
 #!/bin/bash
 # FX-E1 deterministic worker. The control plane launches this through the shipped
 # CliWorkerProvider exactly as it launches the sandbox's own worker/run.sh; the
-# only substitution is the author of the note: this script writes it instead of a
-# provider CLI. FX-E1 proves transport, not provider behaviour, and a provider CLI
-# would add model spend and its own helper processes to the no-Node observation.
-# The substitution is labelled in the FX-E1 record and claims nothing about providers.
+# only substitution is the author of the work: this script writes the note (as
+# PRODUCER) and judges it (as VERIFIER) instead of a provider CLI. FX-E1 proves
+# transport, not provider behaviour, and a provider CLI would add model spend and
+# its own helper processes to the no-Node observation. The substitution is
+# labelled in the FX-E1 record and claims nothing about providers.
 set -euo pipefail
 
 invocation="${ALIENINTENT_INVOCATION_ID:?the worker was not told which invocation it is}"
+role="${ALIENINTENT_ROLE:-PRODUCER}"
 biu="${invocation#launch:}"
 biu="${biu%:*}"
 contract="biu/${biu}.json"
@@ -21,6 +23,43 @@ fi
 
 field() { python3 -c 'import json,sys;print(json.load(open(sys.argv[1]))["task"].get(sys.argv[2], ""))' "$contract" "$1"; }
 note="$(field note)"
+
+if [ "$role" = "VERIFIER" ]; then
+  # Judge the exact retrieved candidate against its contract's completion
+  # criterion, then leave the verdict and the feature-regression receipt the
+  # shipped RealWorkerProvider requires (.alienintent/verdict.json and
+  # .alienintent/feature-regressions.json, bound to this revision). The sandbox
+  # registers no regression packs, so the receipt truthfully carries none.
+  exec python3 - "$biu" "$note" <<'PY'
+import hashlib, json, subprocess, sys
+from pathlib import Path
+
+biu, note = sys.argv[1], Path(sys.argv[2])
+def git(*a):
+    return subprocess.run(["git", *a], capture_output=True, text=True, check=True).stdout.strip()
+revision = git("rev-parse", "HEAD")
+base = git("merge-base", "HEAD", "origin/main") if subprocess.run(["git", "rev-parse", "--verify", "-q", "origin/main"], capture_output=True).returncode == 0 else revision + "^"
+changed = [p for p in git("diff", "--name-only", f"{base}...{revision}").splitlines() if p]
+text = note.read_text(encoding="utf-8") if note.is_file() else ""
+findings = []
+if not text.startswith(f"# {biu}\n"):
+    findings.append(f"{note} does not open with the heading '# {biu}'")
+if len([line for line in text.splitlines() if line.startswith("- ")]) != 1:
+    findings.append(f"{note} does not carry exactly one bullet line")
+if changed != [str(note)]:
+    findings.append(f"the candidate changes {changed}, not exactly {note}")
+def digest(value):
+    return "sha256:" + hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+body = {"schema_version": 1, "kind": "FeatureRegressionReceipt", "base": base, "candidate": revision,
+        "changed_paths": changed, "manifest_digest": digest({"packs": []}), "packs": [], "passed": True}
+out = Path(".alienintent"); out.mkdir(exist_ok=True)
+(out / "feature-regressions.json").write_text(json.dumps(body | {"receipt_digest": digest(body)}, indent=2, sort_keys=True) + "\n")
+verdict = {"revision": revision, "verdict": "reject" if findings else "accept", "findings": findings}
+(out / "verdict.json").write_text(json.dumps(verdict, indent=2, sort_keys=True) + "\n")
+print(f"{verdict['verdict']} {revision}")
+PY
+fi
+
 hold="$(field hold_seconds)"
 
 # A held worker keeps the effect unresolved long enough for FX-E1 to take the

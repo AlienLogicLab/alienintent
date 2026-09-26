@@ -18,7 +18,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from fx_e1_evaluate import CONTROLS, PREDICATES, controls, evaluate  # noqa: E402
 from fx_e1_no_node import real_node_binaries, self_test  # noqa: E402
 
-RETAINED = Path(__file__).resolve().parents[2] / "docs/evidence/wave2-proof-fixtures/FX-E1/proof-run.json"
+FIXTURE = Path(__file__).resolve().parents[2] / "docs/evidence/wave2-proof-fixtures/FX-E1"
+MANIFEST = FIXTURE / "manifest.json"
 A, B = "E1-000000-A", "E1-000000-B"
 
 
@@ -113,10 +114,18 @@ class EvaluatorTests(unittest.TestCase):
         held = [p["id"] for p in evaluate(record)["predicates"] if p["outcome"] == "HOLD"]
         self.assertIn("E1-7", held)
 
-    @unittest.skipUnless(RETAINED.is_file(), "no retained FX-E1 run in this checkout")
-    def test_retained_run_still_passes_and_discriminates(self) -> None:
-        record = json.loads(RETAINED.read_text(encoding="utf-8"))
-        self.assertEqual(evaluate(record)["disposition"], "PASS")
+    @unittest.skipUnless(MANIFEST.is_file(), "no retained FX-E1 run in this checkout")
+    def test_every_retained_run_reproduces_its_recorded_disposition(self) -> None:
+        manifest = json.loads(MANIFEST.read_text(encoding="utf-8"))
+        self.assertTrue(manifest["runs"])
+        for run in manifest["runs"]:
+            record = json.loads((FIXTURE / run["record"]).read_text(encoding="utf-8"))
+            with self.subTest(run=run["run_id"]):
+                self.assertEqual(evaluate(record)["disposition"], run["disposition"])
+                self.assertEqual(record["verdict"]["disposition"], run["disposition"])
+        accepted = [run for run in manifest["runs"] if run["run_id"] == manifest["accepted_run"]]
+        self.assertEqual([run["disposition"] for run in accepted], ["PASS"])
+        record = json.loads((FIXTURE / accepted[0]["record"]).read_text(encoding="utf-8"))
         self.assertTrue(controls(copy.deepcopy(record))["ok"])
 
 

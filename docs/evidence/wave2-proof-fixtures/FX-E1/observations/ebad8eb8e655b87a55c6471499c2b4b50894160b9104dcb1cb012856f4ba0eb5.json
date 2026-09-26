@@ -1,0 +1,40 @@
+{
+ "kind": "process-B",
+ "payload": {
+  "command": [
+   "alienintent",
+   "run",
+   "service",
+   "--actor",
+   "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+   "--authority",
+   "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+   "--intent",
+   "FX-E1 resume after the process loss",
+   "--expected-version",
+   "0",
+   "--reason",
+   "FX-E1 resume after the process loss",
+   "--idempotency-key",
+   "20260926T100158Z-run-b"
+  ],
+  "ended_at": 1790417002.5038004,
+  "exit_status": 0,
+  "pid": 2121750,
+  "started_at": 1790416972.1870205,
+  "stderr": "",
+  "stdout": {
+   "authority_blocked": [
+    "E1-261001-A"
+   ],
+   "dispatched": [
+    "E1-261001-B"
+   ],
+   "failed": [
+    "E1-261001-B"
+   ],
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  "wall_clock_bound_reached": false
+ }
+}

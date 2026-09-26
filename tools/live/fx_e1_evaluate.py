@@ -104,7 +104,7 @@ def real_ingress(record: dict) -> str:
     admitted = [entry for entry in log if entry.get("status_code") == 202 and not entry.get("redelivery")]
     need(admitted, "no real delivery was accepted during the run")
     need(all(entry.get("durable_receipt") for entry in admitted), "an accepted delivery has no durable receipt")
-    need(any(entry.get("process") in ("A", "B", "C") for entry in admitted), "no accepted delivery falls in a run process window")
+    need(all(entry.get("process") for entry in admitted), "an accepted delivery falls outside every control-plane process window")
     by_process = sorted({entry.get("process") for entry in admitted if entry.get("process")})
     return f"{len(admitted)} real deliveries accepted with durable receipts, by processes {by_process}"
 

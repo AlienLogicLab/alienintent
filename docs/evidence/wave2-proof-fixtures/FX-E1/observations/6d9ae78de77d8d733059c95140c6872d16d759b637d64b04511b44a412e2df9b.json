@@ -1,0 +1,50 @@
+{
+ "kind": "decision",
+ "payload": {
+  "command": [
+   "alienintent",
+   "decisions",
+   "decide",
+   "E1-261001-A",
+   "--choice",
+   "authorize",
+   "--biu-version",
+   "0",
+   "--actor",
+   "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+   "--authority",
+   "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+   "--intent",
+   "authorize E1-261001-A to resume through normal admission guards (FX-E1)",
+   "--expected-version",
+   "2",
+   "--reason",
+   "authorize E1-261001-A to resume through normal admission guards (FX-E1)",
+   "--idempotency-key",
+   "20260926T100158Z-decision-0"
+  ],
+  "ended_at": 1790417072.1354432,
+  "exit_status": 0,
+  "pid": 2122219,
+  "started_at": 1790417003.8408952,
+  "stderr": "",
+  "stdout": {
+   "event": {
+    "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+    "biu_version": 0,
+    "idempotency_key": "20260926T100158Z-decision-0",
+    "work_item": "E1-261001-A"
+   },
+   "submission": {
+    "actor": "FX-E1 operator (Morty, WO-220502 PRODUCER)",
+    "authority_reference": "AlienLogicLab/alienintent#122 (EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY)",
+    "biu_version": 0,
+    "choice": "authorize",
+    "expected_version": 0,
+    "idempotency_key": "20260926T100158Z-decision-0",
+    "work_item": "E1-261001-A"
+   }
+  },
+  "wall_clock_bound_reached": false
+ }
+}
