@@ -1,0 +1,69 @@
+{
+  "record_kind": "AllocationDecision",
+  "schema_version": "1",
+  "biu_id": "WO-220510",
+  "decided_at": "2026-09-26T22:03:08.000000+00:00",
+  "allocator": {
+    "role": "Factory Director",
+    "authority_basis": [
+      "SF-REQ-026 deterministic trivial allocation policy",
+      "active self-hosting worker configuration",
+      "SWF-09 hard execution limits"
+    ]
+  },
+  "selection": {
+    "execution_path": "Project READY -> normal release admission -> retained runtime launches workers; Director does not launch a worker directly",
+    "producer": {
+      "role": "PRODUCER",
+      "worker": "Morty",
+      "adapter": "claude",
+      "model": "claude-opus-5-5",
+      "configured_in": "~/.config/alienintent/self-hosting.json"
+    },
+    "verifier": {
+      "role": "VERIFIER",
+      "worker": "JC",
+      "adapter": "codex",
+      "model": "gpt-reserve",
+      "configured_in": "~/.config/alienintent/self-hosting.json",
+      "independence": "fresh worktree retrieves exact candidate SHA"
+    },
+    "why": "Use currently configured role bindings; this record changes no provider/model configuration."
+  },
+  "limits": {
+    "concurrency": {
+      "value": 1,
+      "status": "GOVERNED_BY_ACTIVE_PROFILE"
+    },
+    "execution_cycles": {
+      "value": 3,
+      "status": "MUST_BE_BOUND_TO_EXACT_ISSUE_BEFORE_RELEASE"
+    },
+    "replacements_per_phase": {
+      "value": 1,
+      "status": "MUST_BE_BOUND_TO_EXACT_ISSUE_BEFORE_RELEASE"
+    },
+    "wall_clock": {
+      "runtime_milliseconds": 7200000,
+      "startup_milliseconds": 120000,
+      "stop_grace_milliseconds": 300000,
+      "status": "ENFORCED_BY_SYSTEMD_SUPERVISION"
+    },
+    "tokens_and_cost": {
+      "value": "measured where exposed; UNKNOWN otherwise; never zero",
+      "status": "MEASURED_NOT_CAPPED"
+    }
+  },
+  "remaining_allowance": {
+    "cycles_consumed": 0,
+    "cycles_remaining": 3,
+    "replacements_remaining_per_phase": 1
+  },
+  "not_granted_here": "Release authority.",
+  "provenance": {
+    "baseline_sha": "4e74e18efdb9e266f29071907345a99618720141",
+    "candidate_contract_sha256": "35468dc69e46c60363b9a4a72ced9b45e6fdd105ca8941b8075e1e0464e59453",
+    "candidate_ref": "docs/evidence/wave2-candidate-bius.json (WO-220510)",
+    "recorded_by": "Factory Director episode factory-director-821ed2b31f7c4e8e807f5887e1746817, preparing the execution packet this candidate lacked before release; mirrors WO-220503/WO-220502/WO-220208 allocation form"
+  }
+}

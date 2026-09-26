@@ -1,0 +1,80 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220510",
+  "issued_at": "2026-09-26T22:03:08.000000+00:00",
+  "goal": "Deliver the bounded planned extent: Installation launch-command migration proof",
+  "starting_authority": {
+    "requirements": [],
+    "dag_node": [
+      "B7"
+    ],
+    "candidate_contract_sha256": "35468dc69e46c60363b9a4a72ced9b45e6fdd105ca8941b8075e1e0464e59453",
+    "baseline_sha": "4e74e18efdb9e266f29071907345a99618720141",
+    "release_authority": "NOT GRANTED — normal Wave 2 release admission required before IMPLEMENT"
+  },
+  "allowed_scope": {
+    "extent": "Enumerate every installation launch reference/integration, migrate only under installation authority, and read back canonical alienintent command launches for complete coverage. Preserve persisted B-DISP markers, lanes, resources and history. Unknown installation coverage holds alias retirement.",
+    "boundary": "Only this node extent. Requirement/design references constrain execution and do not absorb sibling scopes.",
+    "non_goals": [
+      "Replanning the DAG or implementing another node; changing requirements, closing authority gaps or selecting withdrawn architecture policy.",
+      "Automatic release, live operation or retirement from a candidate or local proof result."
+    ],
+    "architecture_constraints": [
+      "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
+      "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+    ]
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220501",
+      "issue": 116,
+      "project_status": "DONE",
+      "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
+    "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority.",
+    "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS."
+  ],
+  "acceptance": {
+    "criteria": [
+      "Enumerate every installation launch reference/integration, migrate only under installation authority, and read back canonical alienintent command launches for complete coverage. Preserve persisted B-DISP markers, lanes, resources and history. Unknown installation coverage holds alias retirement."
+    ],
+    "proof_fixture": "FX-B7",
+    "proof_level": "OPERATIONAL_OR_EXTERNAL_AUTHORITY",
+    "material_failure_classes": [
+      "Every installation launch reference/integration is not enumerated with a documented, complete coverage method.",
+      "Migration proceeds without installation authority, or B-DISP protocol markers, lane/resource identities or history are renamed, dropped or otherwise not preserved.",
+      "Canonical alienintent command launches are not confirmed by actual operational readback on the authorized target with immutable observation references.",
+      "Unknown or incomplete installation coverage exists but alias retirement proceeds anyway.",
+      "Predecessor proof (WO-220501) is not retrieved and confirmed reusable on this BIU's path before implementation.",
+      "The FX-B7 fixture (commands, inputs, expected outcomes, evidence schema) is not pinned before implementation, or intact/fault/restored discrimination for mechanical controls is not demonstrated.",
+      "Operational success is inferred from a local or disposable substitution instead of the separately authorized target and its actual readback."
+    ],
+    "bounded_commands": [],
+    "non_claims": [
+      "No release, live operation, alias retirement or broader production mutation is authorized.",
+      "A successful proof is not itself operational release or live-operation authorization.",
+      "No live installation cutover is claimed by this packet; local or disposable substitutions must be labelled and cannot satisfy operational acceptance."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220510",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker.",
+    "current_artifact": "Candidate specification only; no branch publication, implementation commit or worker invocation created by this packet."
+  },
+  "landing": "SWF-19: normal merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220510.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
+    "Separate authority required: INSTALLATION_MIGRATION_AUTHORITY, POSTW1-DECIDE-006A — both disposed for this BIU's own approved extent by the Founder's 2026-09-26 Wave 2 bounded operational authority delegation (docs/decisions/2026-09-26-wave2-bounded-operational-authority-delegation.md); the enumeration of every installation launch reference/integration and the canonical command readback remain unbound producer-side steps, not authority gaps."
+  ],
+  "escalation_condition": [
+    "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
+    "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside this node. Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "READY, native Agent Ready READY at the exact current revision (docs/evidence/wave2-readiness-assessments/WO-220510.2026-09-26T202412.297347Z.assessment.json); this packet grants no release authority."
+}
