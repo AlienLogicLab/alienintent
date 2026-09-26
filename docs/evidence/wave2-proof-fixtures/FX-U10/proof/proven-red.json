@@ -1,0 +1,196 @@
+{
+  "controls": [
+    {
+      "control": "C1-mcp_wrapper_dropped",
+      "material_failure_class": "raw response and invocation provenance reach the consumer",
+      "application_count": 1,
+      "file": "src/alienintent/execution_coordination/adapters/agent_ready_producer.py",
+      "source_digest": "sha256:db7cce596410aeb8e904495cc475adc11c49d9e8098bfc4e8b57ed7e02cdcd4b",
+      "mutation": {
+        "remove": "                raw, message = self._response(lines, deadline)\n",
+        "replace_with": "                line, message = self._response(lines, deadline)\n                raw = json.dumps(message[\"result\"]).encode() if isinstance(message, dict) else line\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_readiness_transport.py::test_mcp_binding_reaches_consumer_with_raw_response_and_custody"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_readiness_transport.py::test_mcp_binding_reaches_consumer_with_raw_response_and_custody - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:8ba22dbe22c205b4e1977b64d7221ac6cdfc60556bab6b402872f1bc7966e979",
+        "locator": "observations/8ba22dbe22c205b4e1977b64d7221ac6cdfc60556bab6b402872f1bc7966e979"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:9d6d97eeba39e234b52b5d53735c504661200ec4b30f63a7ad5b06c835c917b9",
+        "locator": "observations/9d6d97eeba39e234b52b5d53735c504661200ec4b30f63a7ad5b06c835c917b9"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:e897fe703d8d6bdcb50f0fb6b6bfbd93d98f67ccb0c7b376f36b0a2b803d6ce4",
+        "locator": "observations/e897fe703d8d6bdcb50f0fb6b6bfbd93d98f67ccb0c7b376f36b0a2b803d6ce4"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "C2-mcp_correlation_trusted",
+      "material_failure_class": "disconnected response refuses",
+      "application_count": 1,
+      "file": "src/alienintent/execution_coordination/adapters/agent_ready_producer.py",
+      "source_digest": "sha256:db7cce596410aeb8e904495cc475adc11c49d9e8098bfc4e8b57ed7e02cdcd4b",
+      "mutation": {
+        "remove": "                answered = identifier if isinstance(identifier, str) else \"\"\n",
+        "replace_with": "                answered = unit.attempt_id\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_readiness_transport.py::test_disconnected_mcp_response_is_refused"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_readiness_transport.py::test_disconnected_mcp_response_is_refused - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:f9628d37c4091aebf23c5b3e5d56aa7117cc5fc724f5c96b02d3991c02d71da3",
+        "locator": "observations/f9628d37c4091aebf23c5b3e5d56aa7117cc5fc724f5c96b02d3991c02d71da3"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:86ed8577e0faeae475f7374ce4be27c76750cac57e038dce83f60e651e8be16c",
+        "locator": "observations/86ed8577e0faeae475f7374ce4be27c76750cac57e038dce83f60e651e8be16c"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:d383fc712d944ce061fe0b1b670a7dd4e7f33729412bdfb54fbdf0a254ea745a",
+        "locator": "observations/d383fc712d944ce061fe0b1b670a7dd4e7f33729412bdfb54fbdf0a254ea745a"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "C3-json_rpc_error_beside_result_admitted",
+      "material_failure_class": "provider error is an attempt failure, never READY",
+      "application_count": 1,
+      "file": "src/alienintent/execution_coordination/domain/readiness.py",
+      "source_digest": "sha256:5303e09f4dd0641a3d0efa373a1df01da5d0f5270f78773e193830a42063ef3b",
+      "mutation": {
+        "remove": "        if \"error\" in document or \"result\" not in document:\n",
+        "replace_with": "        if \"result\" not in document:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_readiness_transport.py::test_failed_attempt_is_never_ready[mcp_json_rpc_error_beside_ready]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_readiness_transport.py::test_failed_attempt_is_never_ready[mcp_json_rpc_error_beside_ready] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:f13a6372fe9bbd8b75bfeca950dc5be7146d046844bde94d0a8024f8db7ad4dc",
+        "locator": "observations/f13a6372fe9bbd8b75bfeca950dc5be7146d046844bde94d0a8024f8db7ad4dc"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:3c269b2ca21b7401abc23e7f1e979d62be6c127441fff8bb6602e3cccd6de01a",
+        "locator": "observations/3c269b2ca21b7401abc23e7f1e979d62be6c127441fff8bb6602e3cccd6de01a"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:6bc241ca7de051f5a929d6be80ee5b0f92ee649bb829b40621cb02d7df972a46",
+        "locator": "observations/6bc241ca7de051f5a929d6be80ee5b0f92ee649bb829b40621cb02d7df972a46"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "C4-ready_released",
+      "material_failure_class": "READY is eligibility only; the release gate is not bypassed",
+      "application_count": 1,
+      "file": "src/alienintent/execution_coordination/adapters/assessment_consumer.py",
+      "source_digest": "sha256:9d6bf484eaed8114d2f0994988f3db3dbb0bb5f4605792614ed7fc9f6beebc1d",
+      "mutation": {
+        "remove": "        status = \"APPLICABLE\" if isinstance(result, ReadinessEligibility) else \"INAPPLICABLE\"\n",
+        "replace_with": "        status = \"APPLICABLE\" if isinstance(result, ReadinessEligibility) else \"INAPPLICABLE\"\n        if status == \"APPLICABLE\":\n            aggregate = \"release:\" + identity\n            self.store.commit(self.profile, aggregate, self.store.read_state(self.profile, aggregate)[0], {\"released\": identity})\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_readiness_transport.py::test_transport_ready_is_eligibility_only[cli]",
+        "tests/context_assembly/test_readiness_transport.py::test_transport_ready_is_eligibility_only[mcp]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_readiness_transport.py::test_transport_ready_is_eligibility_only[cli] - AssertionError ; FAILED tests/context_assembly/test_readiness_transport.py::test_transport_ready_is_eligibility_only[mcp] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ea8c20480339cec7779960724dec5909c710ae7081466feca454c27bac788915",
+        "locator": "observations/ea8c20480339cec7779960724dec5909c710ae7081466feca454c27bac788915"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:2cedb7687e33fa5108b927c4cae083bc1709e89aa20017944839a4a4110d538f",
+        "locator": "observations/2cedb7687e33fa5108b927c4cae083bc1709e89aa20017944839a4a4110d538f"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:ecf879a67e365bc88da99170d11f6f56bea060e69ddde9da77ecf322d4832d18",
+        "locator": "observations/ecf879a67e365bc88da99170d11f6f56bea060e69ddde9da77ecf322d4832d18"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "C5-cli_session_not_isolated",
+      "material_failure_class": "repair R1-4: a timed-out attempt leaves no provider descendant running",
+      "application_count": 1,
+      "file": "src/alienintent/execution_coordination/adapters/agent_ready_producer.py",
+      "source_digest": "sha256:db7cce596410aeb8e904495cc475adc11c49d9e8098bfc4e8b57ed7e02cdcd4b",
+      "mutation": {
+        "remove": "        os.killpg(process.pid, signal.SIGKILL)\n",
+        "replace_with": "        process.kill()\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/context_assembly/test_readiness_transport.py::test_timeout_leaves_no_descendant_running[cli]"
+      ],
+      "assertion": "FAILED tests/context_assembly/test_readiness_transport.py::test_timeout_leaves_no_descendant_running[cli] - AssertionError",
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:6c9d60f5130caa1ace5cb848392f5f997ecb2961fdcfaf57fe104dc130992584",
+        "locator": "observations/6c9d60f5130caa1ace5cb848392f5f997ecb2961fdcfaf57fe104dc130992584"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:e059a0e0cf81b05285027162674cad17a65c5740c8b1574bf728323ceabd5a56",
+        "locator": "observations/e059a0e0cf81b05285027162674cad17a65c5740c8b1574bf728323ceabd5a56"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:584f26556560ce1ad696c7d3c050a1591337fa1e59cb22bf3738678558ca2dfa",
+        "locator": "observations/584f26556560ce1ad696c7d3c050a1591337fa1e59cb22bf3738678558ca2dfa"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}
