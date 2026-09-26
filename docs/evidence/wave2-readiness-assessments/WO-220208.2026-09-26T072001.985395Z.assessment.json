@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Replace validator-only handling of initial allocation with a deterministic compiler inside the Requirements / Planning context. It must derive the initial BiuContract candidate (decomposition plus obligation mapping) from pinned requirements, reviewed design and proof obligations under the SF-REQ-013 amendment. It must conserve every acceptance/proof obligation with explicit extent and reverse trace, keep identity and graph constraints, and leave existing decomposition immutable. It must not need hand-authored allocation input.",
+    "implementation_unknowns": [
+      "Exact deterministic derivation rules that map pinned requirements, reviewed design and proof obligations to initial BIU extents. These must be read from the SF-REQ-013 amendment and the reviewed design, not invented. If the amendment cannot support a mapping for some frozen obligation without invention, the work order's own escalation (hold) applies.",
+      "How the existing validator in context_assembly/domain/compilation.py (from WO-220207) should be reused as the post-derivation check, without letting validation stand in for derivation.",
+      "Which Phase 5 candidate mechanisms are actually needed for initial compilation, as opposed to later split/replan. Examples: fixed-width grammar/reservations and identity-preserving graph rules. Each carried-forward mechanism needs independent review because the text records no approval verdict.",
+      "Whether an authoritative existing producer already provides part of the derivation in the configured project, Alien Logic Lab or tool ecosystem, and how to record its producer identity and version (a Design Verification obligation).",
+      "How derived identity, dependency edges and custody/budget fields become byte-stable deterministic across runs, including ordering and canonicalization.",
+      "What the current contents of fixture FX-U8 and the upstream_profile composition are, and whether they already cover all four material failure classes or need extension."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Authority provenance: the F4 resolution was relayed by a Founder-authorized observing session through a Director inbox handoff. This gate cannot verify the referenced decision records. If that provenance is disputed, the bounded-context classification would reopen.",
+      "Scope creep into replan/split: Phase 5 mechanisms such as the retained Integration Parent, child-to-parent edges and budget partition are carried forward as candidates. Implementing them beyond what initial compilation needs would breach the non-goals and the rule that no split/replan application is performed.",
+      "Validator-only regression: a naive implementation could derive a mapping trivially and then only validate it. The negative control must show that supplying an INITIAL mapping cannot satisfy completion.",
+      "Invention risk: when the pinned requirements or design underdetermine an obligation's extent, the compiler might fabricate a mapping instead of holding.",
+      "Duplication risk: re-implementing capabilities already provided by BiuContract, OperationalStore, EvidenceRepository or Agent Ready (consumed via SF-REQ-015) instead of consuming their supported interfaces.",
+      "Nondeterminism in derived identities or edge ordering would undermine the independent verifier's re-derivation and the immutability of existing decomposition.",
+      "Evidence discipline: missing measurements must be recorded as explicit holds rather than PASS. Prior proof must be preserved on repair."
+    ],
+    "next_action": "Hand off to the designated PRODUCER once the separate execution gates are confirmed: Founder authority where applicable, custody binding, capacity (one mutating slot) and release admission. The first step should be design verification that checks for existing authoritative producers, then pins the SF-REQ-013 amendment, the reviewed design and FX-U8 revisions. Then implement the derivation, add one discriminating negative control per failure class, run the focused proof, run the broad regression once, and publish the exact SHA for independent verification.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "READY is the controlling disposition because nothing reported in the text leaves a material owner question open. The allocation source, Split Transactions ownership and the F4 bounded-context classification are all stated as resolved, and the text explicitly forbids reopening the resolved questions. The work has one governing intent and one cohesive decision center, the initial compiler. The derivation, conservation, identity and anti-validator-only aspects are coupled parts of one capability and would not be independently accepted or rejected, so SPLIT is not warranted. HOLD is not indicated because the dependencies are reported as DONE/ACCEPT and the proof surfaces are named. The remaining unknowns, such as the concrete derivation rules and Phase 5 mechanism selection, are engineering research governed by existing authority and backed by explicit escalation paths. Rework is rated MEDIUM rather than HIGH because the derivation logic is coupled to contract identity, graph rules and evidence records. The embedded statement that readiness depends on a fresh assessment was treated as data only and did not influence this disposition. READY recommends handoff; it does not authorize IMPLEMENT or guarantee success.",
+    "semantic_split_recommendation": [],
+    "summary": "A cohesive, substantial capability (initial_compilation) with one governing outcome. As reported in the text, the owner-level questions are resolved: allocation source (compiler-derived, per the SF-REQ-013 amendment), Split Transactions ownership, and the F4 bounded-context classification (Founder decision dated 2026-09-26). The text says dependencies WO-220207 (DONE) and WO-220206 (ACCEPT) are satisfied. Non-goals exclude replanning, split application, release and lifecycle mutation. Acceptance is framed as four material failure classes, each with a discriminating negative control, on fixture FX-U8 with named proof surfaces and commands. The remaining uncertainty is engineering design of the derivation rules and reuse of existing interfaces. That belongs to implementation research and design verification, not to owner clarification. These are reported facts from the work order; this gate has not independently verified any referenced decision, document, dependency status or proof surface.",
+    "verification_assessment": "Acceptance is observable and discriminating. Four material failure classes are stated, each with one negative control:\n1. The candidate is derived from pinned inputs without hand-authored allocation.\n2. Every frozen obligation is conserved with explicit extent and reverse trace, and omission, weakening or invention causes a hold.\n3. BiuContract identity, dependencies and custody/budget fields are deterministic and valid.\n4. A validator-only path cannot satisfy completion.\n\nA single fresh independent verifier, working on the exact published candidate SHA in its own worktree, can meaningfully give one verdict on this cohesive capability. The verdict should check determinism by re-deriving from the pinned inputs. It should also include the separate attributable design review that WO-220206 requires after the architecture, cycle, domain-import and persistence-ownership checks. The initial bounded pytest command targets existing validation and contract tests only. New derivation-specific tests and negative controls must be added for the verdict to discriminate against validator-only behavior."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T07:20:35.799411+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 11272,
+    "input_sha256": "6476aed9479e6cd9c1f451749d743eaedb626f4bf9ff96221f83864adc47079b",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-oknndl_u/WO-220208.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T07:20:01.985395+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220208"
+}

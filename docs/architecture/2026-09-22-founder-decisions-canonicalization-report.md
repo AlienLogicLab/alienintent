@@ -92,8 +92,11 @@ across `docs/` and `tools/`, then classification of each artifact as *active nor
    scheduling; it was placed with routing, which it extends, and the kernel (SF-REQ-009) keeps
    enforcement. Choice flagged for Founder confirmation (follow-up F2).
 4. **`context_assembly` vs Requirements / Planning.** Wave 2 contracts bound SF-REQ-011..013 to
-   the `context_assembly` module. Whether that module *is* the new context or a sub-module is
-   left to a Design Contract under SF-REQ-051 (FD-02 refinement; follow-up F4).
+   the `context_assembly` module. Whether that module *is* the new context or a sub-module was
+   left to a Design Contract under SF-REQ-051 (FD-02 refinement; follow-up F4). **Resolved
+   2026-09-26**: `context_assembly` is an internal module/application capability within the
+   Requirements / Planning bounded context, not a separate bounded context. See
+   `docs/decisions/2026-09-26-f4-context-assembly-bounded-context-disposition.md`.
 
 ## 5. Terminology collisions (full table in UL v0.1 §4 and Agent Ready UL §3)
 
@@ -113,8 +116,10 @@ Assessment Contract has no version identifier · `provider_evidence` is Codex-on
   (the two-shape drift Phase 4 found was AlienIntent's envelope, not Agent Ready's schema) and the
   `ReadinessAssessment` port adapters against Agent Ready's actual CLI/MCP contract, including the
   exact-version pins (Codex 0.153.4 / Claude Code 2.1.258).
-- **F4 (Design Contract, SF-REQ-051).** Settle whether `context_assembly` is the Requirements /
-  Planning bounded context or a sub-module.
+- **F4 (Design Contract, SF-REQ-051). Resolved 2026-09-26.** `context_assembly` is an internal
+  module/application capability within the Requirements / Planning bounded context, not a
+  separate bounded context. See
+  `docs/decisions/2026-09-26-f4-context-assembly-bounded-context-disposition.md`.
 - **F5 (Wave 2 design-learning objective, SF-REQ-030).** *Identify the earliest lifecycle/evidence
   point at which Assessment Feedback is mature enough to be useful without being premature or
   misleading.* Discover empirically during Wave 2; may resolve before Wave 2 completes. No trigger
