@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","-rfEs","tests/execution_coordination/test_one_writer_cutover.py"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/48a1fda7-469d-4066-9e03-7db90a929ea5","exit_status":0,"stderr":"","stdout":"..........                                                               [100%]\n10 passed in 1.06s\n"}

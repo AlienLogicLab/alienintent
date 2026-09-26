@@ -166,14 +166,13 @@ def test_checkpoint_binds_both_stores_and_tamper_holds(tmp_path):
     tampered = json.loads((checkpoint / "node-state.json").read_text())
     tampered["active"].pop(lane(12))
     (checkpoint / "node-state.json").write_text(json.dumps(tampered))
-    with pytest.raises(CutoverHold, match="CHECKPOINT_CORRUPT"):
-        cutover.checkpoints.verify(result["checkpoint"])
-    try:
-        cutover.rollback()
-    except CutoverHold as held:
-        assert held.code == "CHECKPOINT_CORRUPT"
-    else:
-        raise AssertionError("a tampered checkpoint must hold")
+    for step in (lambda: cutover.checkpoints.verify(result["checkpoint"]), cutover.rollback):
+        try:
+            step()
+        except CutoverHold as held:
+            assert held.code == "CHECKPOINT_CORRUPT"
+        else:
+            raise AssertionError("a tampered checkpoint must hold")
     assert cutover.current().writer != NODE, "a tampered checkpoint must hold"
     (checkpoint / "python-store.sqlite").unlink()
     with pytest.raises(CutoverHold, match="CHECKPOINT_CORRUPT"):
@@ -266,11 +265,11 @@ def test_rollback_never_redispatches_python_completed_work(tmp_path):
     effect = cutover.python_dispatch(lane(12), epoch)
     assert ledger(cutover)[effect] == ("confirmed", f"outcome:{lane(12)}")
     result = cutover.rollback()
-    assert result["disposition"] == "ROLLED_BACK" and result["rollback"]["completed_by_python"] == {lane(12): effect}
     restored_bytes = (tmp_path / "r/node-state.json").read_bytes()
     restored = json.loads(restored_bytes)
     assert lane(12) not in pending_lanes(restored), "a lane Python completed must not be re-dispatchable after rollback"
     assert lane(12) not in restored["active"], "a lane Python completed must not be re-dispatchable after rollback"
+    assert result["disposition"] == "ROLLED_BACK" and result["rollback"]["completed_by_python"] == {lane(12): effect}
     assert restored["resources"][f"{lane(12)}:bbb"]["lifecycle"] == "REMOVED"
     assert effect in restored["resources"][f"{lane(12)}:bbb"]["cleanupDiagnostic"]
     assert pending_lanes(restored) == (lane(14),)

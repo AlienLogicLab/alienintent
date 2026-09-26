@@ -1,0 +1,122 @@
+{
+  "admission_baseline": "b07be02db62bdbc1c39753de4da32697b6dbd4e0",
+  "biu": "WO-220503",
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-rfEs",
+        "tests/execution_coordination/test_one_writer_cutover.py"
+      ],
+      "exit_status": 0,
+      "label": "focused",
+      "observation": {
+        "locator": "observations/14f70092c0e147f126c6ae08986df8be5d0fae0fd69a218266fb526989262abf",
+        "revision_digest": "sha256:14f70092c0e147f126c6ae08986df8be5d0fae0fd69a218266fb526989262abf"
+      }
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_operational_store.py",
+        "tests/execution_coordination/test_fenced_store.py",
+        "tests/execution_coordination/test_factory_coordinator.py"
+      ],
+      "exit_status": 0,
+      "label": "adjacent",
+      "observation": {
+        "locator": "observations/4c24292a82980bf8203d2754645ca522e331c4d452a1b98a276792c10e0c44c0",
+        "revision_digest": "sha256:4c24292a82980bf8203d2754645ca522e331c4d452a1b98a276792c10e0c44c0"
+      }
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "label": "architecture",
+      "observation": {
+        "locator": "observations/701a6c900a65489543d12fa75cd39a07623bf356916933c9c90afab2314f0bfc",
+        "revision_digest": "sha256:701a6c900a65489543d12fa75cd39a07623bf356916933c9c90afab2314f0bfc"
+      }
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/verification/test_feature_regressions.py"
+      ],
+      "exit_status": 0,
+      "label": "feature-regression-registry",
+      "observation": {
+        "locator": "observations/4f7d98e053dbe68bba6ec45ea8adfcb59a13c28fbaa9dcace1a5f45152d48130",
+        "revision_digest": "sha256:4f7d98e053dbe68bba6ec45ea8adfcb59a13c28fbaa9dcace1a5f45152d48130"
+      }
+    }
+  ],
+  "contract": "docs/evidence/wave2-proof-fixtures/FX-E2/FX-E2.md",
+  "exit_status": 1,
+  "fixture": "FX-E2",
+  "holds": [
+    "CONTROL_NOT_DISCRIMINATING:checkpoint_unverified",
+    "CONTROL_NOT_DISCRIMINATING:rollback_replays_python_effect"
+  ],
+  "invocation": "AlienLogicLab/alienintent#123:PRODUCER:159cdf95-a22d-49e1-a910-6f6a1cd7dc1c",
+  "issue": 123,
+  "label": "LOCAL",
+  "non_claims": [
+    "LOCAL proof only; not operational acceptance, release or live cutover",
+    "the Node writer is represented by its dispatcher.mjs state file; no Node process ran",
+    "no live Node or Python writer state was read or written"
+  ],
+  "probes": {
+    "E2-01": "PASS",
+    "E2-02": "PASS",
+    "E2-03": "PASS",
+    "E2-04": "PASS",
+    "E2-05": "PASS",
+    "E2-06": "PASS",
+    "E2-07": "PASS",
+    "E2-08": "PASS",
+    "E2-09": "PASS",
+    "E2-10": "PASS"
+  },
+  "run_state": "COMPLETE",
+  "source_candidate": {
+    "commit": "52b9f03a5d973ad97ba39c17bb5fabdad17152b6",
+    "files": {
+      "docs/evidence/wave2-proof-fixtures/FX-E2/FX-E2.md": "sha256:3a5280e7ee7fda62abf7b8b77080d7935db3f6abadb22a279057cb7467ec1794",
+      "src/alienintent/composition/cutover_rehearsal.py": "sha256:50e18bfd6756e3079938061b02a88e14606446e59147c05842b8a199cbd0b582",
+      "src/alienintent/execution_coordination/adapters/cutover_files.py": "sha256:ac32cc8fea27d93d2a2226956afe5da24cbb22ea7289776de6af35ef9f87a961",
+      "src/alienintent/execution_coordination/adapters/sqlite_store.py": "sha256:dd4da05be97dc0fa440f0e91c677636dd9366e0b98af65d925cac3c51809d978",
+      "src/alienintent/execution_coordination/application/cutover.py": "sha256:0b10312e06800de92db4e0f0f0b8cac09f8d5356e2e3322d811e8dd71646015d",
+      "src/alienintent/execution_coordination/domain/cutover.py": "sha256:70df89c66c72a8b22659ab731e547f0f30c373b9b476025388dd0e923fe3944b",
+      "src/alienintent/execution_coordination/ports/cutover.py": "sha256:8d619ef3ff8d4f43b11ee3b3ae023a1a9c0c93305184894822841d1c0692372a",
+      "tests/execution_coordination/test_one_writer_cutover.py": "sha256:1c3f1ecbd780f1c7df8ec9dafd01447de5c7eea8bb144b010f536be470e60246"
+    }
+  },
+  "stage": "done"
+}
