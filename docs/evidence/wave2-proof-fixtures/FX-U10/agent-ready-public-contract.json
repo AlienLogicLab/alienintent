@@ -1,0 +1,45 @@
+{
+  "record_kind": "PublicInterfaceConformanceFixture",
+  "schema_version": 1,
+  "fixture_id": "FX-U10",
+  "work_unit_id": "WO-220210",
+  "purpose": "Pins the published Agent Ready CLI and local MCP contract at the bound package release, so AlienIntent's adapters (execution_coordination/adapters/agent_ready_producer.py) are checked against it rather than restating it (C#/contracts/4/adapters_note, DV-5). Public documentation only; no Agent Ready private module, rubric or schema is copied.",
+  "bound_release": {
+    "product": "agent-ready",
+    "product_version": "0.1.0rc1",
+    "version_source": "installed-distribution metadata of the configured executable (composition/readiness.py resolve_binding)",
+    "editable_checkout": "file:///mnt/d/Projects/agent-ready",
+    "checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "contract_version": "package-release-bound; no result-level identifier (agent-ready#1)",
+    "contract_version_limitation": "sanookdu/agent-ready#1: v0.1 results carry no product or schema version identifier; the CLI exposes no --version; MCP initialize.serverInfo.version reports the MCP SDK version (observed 1.29.1), recorded as sdk_version and never as product_version"
+  },
+  "sources": {
+    "revision": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "README.md": "sha256:a4be3ed1d8442164c45c3cbc23b11b42632f4778840fe7c11fcfbb146766031f",
+    "schemas/assessment.schema.json": "sha256:ebca2d8753b971d06e9abf1ca79f4abc83d18bd6de7b385734a36bdd6582970b",
+    "docs/agent-ready-v0.1.spec.md": "sha256:a5b52502c9a96062dbc9d411141b2d8ec64ec89c8468e0c17de1b9d724b16cf9"
+  },
+  "cli": {
+    "console_script": "agent-ready",
+    "argv": ["<executable>", "assess", "<file>", "--provider", "<provider>", "--json"],
+    "providers": ["codex", "claude"],
+    "local_file_limit_bytes": 400000,
+    "text_limit_characters": 100000,
+    "exit_status": {"0": "successful assessment, any of READY, CLARIFY, SPLIT, HOLD",
+                    "1": "error; no assessment on stdout", "2": "command usage error"},
+    "readiness_by_exit_status_alone": false
+  },
+  "mcp": {
+    "console_script": "agent-ready-mcp",
+    "transport": "stdio, newline-delimited JSON-RPC 2.0; host-managed subprocess",
+    "protocol_version": "2025-06-18",
+    "tool": "assess_work_unit",
+    "input_keys": ["provider", "text"],
+    "additional_keys": "rejected (isError)",
+    "text": "actual text, never a path; 1..100000 characters",
+    "success": "structuredContent holds the assessment object and a JSON text content block repeats it",
+    "failure": "isError: true and no assessment",
+    "exit_status": "none; an MCP tool result has no process exit status of its own"
+  },
+  "limits_honoured_by": "the product: AlienIntent adapters submit text unmodified and never truncate"
+}
