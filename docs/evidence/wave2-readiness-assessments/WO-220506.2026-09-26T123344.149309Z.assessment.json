@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "At the actual live-profile prelaunch boundary, prove canonical live release admission. The proof must show that all six existing release preconditions plus eligibility are checked, that meaningful invalid cases launch zero actors, and that admission receipts are retained. Admission readiness must stay distinct from release. Release ownership must not expand beyond SF-REQ-015 and SF-REQ-051.",
+    "implementation_unknowns": [
+      "Locate the existing release requirement authority and enumerate the six existing release preconditions and the eligibility rule. If implementation coverage for any of them is missing, the text says to return to the scope owner rather than implement it here.",
+      "Identify the actual live-profile prelaunch boundary where admission must be enforced, and determine how actor launch counts are observed there.",
+      "Define the set of 'meaningful invalid cases' so each precondition and eligibility failure has a discriminating negative control (intact, fault and restored).",
+      "Determine the shape of the admission receipt, and where it is stored, under the pinned Phase 9 evidence and store contracts.",
+      "Determine how to reuse the S0 shared proof harness from predecessors without violating one-writer ownership."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Execution could proceed without EXPLICIT_FUTURE_RELEASE_AUTHORITY, POSTW1-DECIDE-006A or live-transport proof authority, or by carrying over the SWF-21 Wave 1 grant. The text forbids this.",
+      "A local or simulated admission proof could be mistaken for operational acceptance, or admission readiness could be conflated with release.",
+      "Scope could creep into release ownership, or the producer could repair gaps in predecessor BIUs inside this node.",
+      "Predecessor proof from WO-220501, WO-220211, WO-220210, WO-220403 and WO-220502 may be absent or mismatched with source revisions.",
+      "There are no acceptance probes or enforcement obligations defined, which risks weak negative controls unless fixtures are pinned before implementation.",
+      "Direct merge to the baseline branch without a pull request (SWF-19) raises the stakes of verifier custody errors.",
+      "Missing budget or token measurements may be misreported as zero instead of UNKNOWN."
+    ],
+    "next_action": "Keep WO-220506 on HOLD and route requests through the Program Director to the Founder or relevant authority. The hold clears when the following are recorded on the Issue: (1) grant of EXPLICIT_FUTURE_RELEASE_AUTHORITY for Wave 2, (2) disposition of POSTW1-DECIDE-006A, (3) the SWF-21 scope disposition, and (4) EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY together with an authorized live-profile target. In parallel, confirm accepted proof receipts exist for the five predecessor BIUs, and confirm that budget and custody are bound. Once these are available, re-run this gate. It would likely assess the work as READY, since the intent and scope are otherwise coherent.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "Intent is clear and cohesive. The capability, non-goals, boundaries and escalation routes are explicit, so CLARIFY is not warranted: the remaining unknowns are engineering research into existing preconditions and the prelaunch boundary. SPLIT is not warranted either, because there is one decision center (the admission gate and its receipts) with one meaningful verification verdict. The task text itself makes both execution and its operational acceptance contingent on 'explicit future release authority and SWF-21 scope disposition'. It lists three separate authority gates as stop conditions, and it requires a separately authorized live target for operational fixtures. Nothing in the text shows these have been granted, and it expressly denies carryover of the prior grant. The embedded claim that the BIU is 'READY' is task data, not an assessment result, and does not override this. Missing external authority and prerequisites are the controlling condition, so HOLD applies.",
+    "semantic_split_recommendation": [],
+    "summary": "The work is a single cohesive capability: canonical live release admission and its receipts. The outcome, non-goals, boundaries and escalation paths are clearly stated. However, the task text makes execution and acceptance conditional on authority it describes as future and not yet granted: EXPLICIT_FUTURE_RELEASE_AUTHORITY, POSTW1-DECIDE-006A, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, and an SWF-21 scope disposition. It also states that the Wave 1 grant does not carry over. Operational acceptance requires a separately authorized live target with actual readback, and local substitutes cannot satisfy it. Five predecessor BIUs must also supply proof. The controlling condition is therefore missing external authority and prerequisites, not unresolved intent or independent decision centers.",
+    "verification_assessment": "The completion predicate is observable in principle. It requires that each of the six preconditions plus eligibility is verified at the live prelaunch boundary, and that invalid cases produce zero launched actors, backed by retained commands, exit statuses and immutable observation refs. A single independent verifier verdict on the exact candidate SHA is meaningful because the work is one cohesive admission gate. However, the plan lists no acceptance probes. Operational acceptance explicitly requires an authorized live target and actual readback, and local results cannot substitute. Operational acceptance therefore cannot currently be verified. Only a labelled local proof is possible, and that does not satisfy the predicate."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T12:34:09.992438+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 7729,
+    "input_sha256": "7757816ff88c935a6231cd8d3ddedc08e6f17e373da129b14a9edc6d07c41cf5",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-in6gaor3/WO-220506.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T12:33:44.149309+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220506"
+}

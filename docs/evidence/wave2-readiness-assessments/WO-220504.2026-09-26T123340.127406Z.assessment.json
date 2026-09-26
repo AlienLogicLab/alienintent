@@ -1,0 +1,75 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "On a separately authorized operational target profile, prove that live trajectory capture keeps identity, order, timestamps, anomalies and retention intact across process restart and attention-producer consumption. Also prove that old and new observations reconcile across cutover without loss while the queue is retained, all under pinned Phase 9 contracts and existing authority boundaries.",
+    "implementation_unknowns": [
+      "Where current trajectory capture persists observations and how identity and ordering are assigned today.",
+      "How the attention-producer consumes trajectory records, and which readback interface is available on the target profile.",
+      "How to build intact/fault/restored discriminating fixtures for process restart and cutover within the shared S0 harness.",
+      "How queue retention is observed and evidenced during cutover (receipts and immutable observation refs).",
+      "Which existing architecture checks and one-writer ownership rules constrain the replacement write path."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The target profile or authority grants (POSTW1-DECIDE-006A, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY) may be unavailable, blocking operational acceptance entirely.",
+      "Predecessor proofs (WO-220501, WO-220305, WO-220102, WO-220502) may be incomplete, which would invalidate the shared harness or contracts this proof relies on.",
+      "The external observer duty may be discovered mid-execution as uncovered, forcing a scope return after partial work.",
+      "Cutover on a live target risks observation loss or dual writers if one-writer ownership and queue retention are not enforced.",
+      "Local fixture results could be mislabelled or relied on as operational evidence, contrary to the evidence contract.",
+      "The DAG scope field is empty, so boundaries with sibling nodes rest only on the prose boundary statement.",
+      "The landing policy merges directly into the baseline without a pull request, so verifier custody of the exact SHA is the sole review gate."
+    ],
+    "next_action": "Confirm and record the following before queuing for implementation: availability of the separately authorized target profile; grants for POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY; and completed, retained proof for WO-220501, WO-220305, WO-220102 and WO-220502. In parallel, ask the Program Director or Founder whether the reviewed 053 design covers the external observer duty, and pin the retention and no-loss definitions. Meanwhile only local evidence and monitor fixtures may proceed, labelled as non-operational.",
+    "owner_clarifications": [
+      "Does the reviewed SF-REQ-053 design cover the external observer duty? The work order makes replacement conditional on this and routes any gap to authority. Founder or Program Director confirmation before starting would avoid a mid-execution scope return.",
+      "What retention window or policy must the proof demonstrate across restart and cutover? The predicate names 'retention' but does not state the expected bound. This does not apply if the answer is already fixed in the pinned Phase 9 contracts.",
+      "What counts as 'without loss' in old/new reconciliation? For example: exact one-to-one observation identity match, tolerated duplicates, or an ordering guarantee only within a producer. This does not apply if the pinned contracts already define it."
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "Intent is coherent and the work is one decision center, so SPLIT is not warranted. The remaining owner questions are narrow and partly already routed by the work order's own escalation path, so they are not the controlling condition. The controlling condition is that acceptance can only be satisfied on a separately authorized operational target with explicit authorities, and local substitutions are explicitly excluded. The supplied text treats these authorities and the predecessor evidence as gates still to be obtained, and establishes neither as available. That is a missing external prerequisite, which is HOLD rather than CLARIFY. This assessment relies only on the work order text and has not independently verified the status of any authority, profile or dependency.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a single cohesive work order. It proves an operational replacement of trajectory capture and owns live_trajectory_capture and live_trajectory_receipts. The work does not need semantic splitting: capture invariants, restart behaviour, consumer consumption and cutover reconciliation are one verification story. However, the completion predicate can only be met on a 'separately authorized target profile' with actual readback. The text explicitly states that local substitutions cannot satisfy acceptance. The stop conditions name two authorities that must be obtained separately: POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY. The text also says explicit future authority is required for Wave 2 operational use. Four predecessor work orders are listed without any statement that their proof is complete. The supplied text does not establish that the target profile, the authority grants or the predecessor evidence currently exist. These are external gates rather than unresolved owner intent, so the controlling condition is HOLD. Only local evidence and monitor fixtures may proceed, as the order itself states.",
+    "verification_assessment": "Acceptance is observable in principle. It consists of captured records with verifiable identity, order, timestamps, anomalies and retention after restart and after consumption, plus a reconciliation of old and new observations showing no loss and a retained queue. One independent verdict by a fresh verifier on the exact candidate SHA is meaningful, because the outcome is a single coherent proof. The verdict is only valid against the authorized target profile with actual readback, since local results are explicitly insufficient. The predicate has no acceptance probes ('None'), so the fixture commands, expected outcomes and evidence schema must be pinned before implementation, as the proof order requires. The retention bound and the definition of 'without loss' should be pinned in that step."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T12:34:09.815753+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 7493,
+    "input_sha256": "6d2dadb7de7033a5db0c5fbe0eb7654170c935bbbc63dc7fcbd63f3d1802a73b",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-k5sfk68q/WO-220504.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T12:33:40.127406+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220504"
+}
