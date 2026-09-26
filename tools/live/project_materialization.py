@@ -226,13 +226,20 @@ def verify(issue: int, expected_status: str) -> None:
           f"at {expected_status.upper()}, exactly one item, no board pollution")
 
 
-def materialize(title: str, body_file: str, status: str, parent_issue: int | None = None) -> None:
+def materialize(title: str, body_file: str, status: str, parent_issue: int | None = None,
+                external_authority: str | None = None, priority: str | None = None) -> None:
     if status.upper() not in STATUS_OPTIONS:
         raise MaterializationFailed(f"unknown lifecycle state {status!r}")
     is_biu = re.match(r"^WO-\d+\b", title) is not None
-    if is_biu and parent_issue is None:
-        raise MaterializationFailed("BIU materialization requires --parent-issue")
-    inherited_priority = requirement_priority(parent_issue) if parent_issue is not None else None
+    if is_biu and parent_issue is None and not external_authority:
+        raise MaterializationFailed("BIU materialization requires --parent-issue or --external-authority")
+    if priority is not None and priority not in PRIORITY_OPTIONS:
+        raise MaterializationFailed(f"unsupported explicit priority {priority!r}")
+    inherited_priority = requirement_priority(parent_issue) if parent_issue is not None else priority
+    if external_authority and parent_issue is not None:
+        raise MaterializationFailed("use either parent requirement or external authority, not both")
+    if external_authority and inherited_priority is None:
+        raise MaterializationFailed("externally authorized BIU materialization requires --priority")
     url = _gh("issue", "create", "--repo", REPO, "--title", title, "--body-file", body_file).strip()
     issue = int(url.rstrip("/").rsplit("/", 1)[-1])
     print(f"created {url}")
@@ -245,12 +252,16 @@ def materialize(title: str, body_file: str, status: str, parent_issue: int | Non
     if inherited_priority is not None:
         _gh("project", "item-edit", "--project-id", PROJECT_ID, "--id", item,
             "--field-id", PRIORITY_FIELD, "--single-select-option-id", PRIORITY_OPTIONS[inherited_priority])
-        attach_parent(parent_issue, issue)
-        print(f"inherited {inherited_priority} from parent requirement #{parent_issue}")
+        if parent_issue is not None:
+            attach_parent(parent_issue, issue)
+            print(f"inherited {inherited_priority} from parent requirement #{parent_issue}")
+        else:
+            print(f"assigned {inherited_priority} under external authority {external_authority}")
     verify(issue, status)
     if inherited_priority is not None:
         verify_priority(issue, inherited_priority)
-        verify_parent(parent_issue, issue)
+        if parent_issue is not None:
+            verify_parent(parent_issue, issue)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -264,12 +275,15 @@ def main(argv: list[str] | None = None) -> int:
     make.add_argument("--body-file", required=True)
     make.add_argument("--status", default="CAPTURE")
     make.add_argument("--parent-issue", type=int)
+    make.add_argument("--external-authority")
+    make.add_argument("--priority")
     args = parser.parse_args(argv)
     try:
         if args.command == "verify":
             verify(args.issue, args.expect_status)
         else:
-            materialize(args.title, args.body_file, args.status, args.parent_issue)
+            materialize(args.title, args.body_file, args.status, args.parent_issue,
+                        args.external_authority, args.priority)
     except MaterializationFailed as failure:
         print(failure, file=sys.stderr)
         return 1

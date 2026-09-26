@@ -191,7 +191,7 @@ def test_read_board_rejects_missing_or_repeated_cursor(monkeypatch):
 def test_biu_materialization_requires_parent_requirement(tmp_path, monkeypatch):
     body = tmp_path / "body.md"
     body.write_text("body")
-    with pytest.raises(MaterializationFailed, match="parent-issue"):
+    with pytest.raises(MaterializationFailed, match="parent-issue or --external-authority"):
         project_materialization.materialize("WO-999999 — child", str(body), "TASKS")
 
 
@@ -229,3 +229,31 @@ def test_biu_materialization_inherits_parent_priority_and_relationship(tmp_path,
     assert ("attach", 23, 999) in verified
     assert ("priority", 999, "P0") in verified
     assert ("parent", 23, 999) in verified
+
+
+def test_external_biu_materialization_requires_explicit_priority(tmp_path, monkeypatch):
+    body = tmp_path / "body.md"
+    body.write_text("body")
+    with pytest.raises(MaterializationFailed, match="requires --priority"):
+        project_materialization.materialize("WO-999998 — external", str(body), "READY",
+                                            external_authority="cutover-matrix")
+
+
+def test_external_biu_materialization_sets_and_verifies_explicit_priority(tmp_path, monkeypatch):
+    body = tmp_path / "body.md"
+    body.write_text("body")
+    calls, verified = [], []
+    def fake_gh(*args):
+        calls.append(args)
+        if args[:2] == ("issue", "create"):
+            return "https://github.com/AlienLogicLab/alienintent/issues/998"
+        if args[:2] == ("project", "item-add"):
+            return '{"id":"PVTI_external"}'
+        return "{}"
+    monkeypatch.setattr(project_materialization, "_gh", fake_gh)
+    monkeypatch.setattr(project_materialization, "verify", lambda issue, status: verified.append(("status", issue, status)))
+    monkeypatch.setattr(project_materialization, "verify_priority", lambda issue, priority: verified.append(("priority", issue, priority)))
+    project_materialization.materialize("WO-999998 — external", str(body), "READY",
+                                        external_authority="cutover-matrix", priority="P0")
+    assert ("priority", 998, "P0") in verified
+    assert not any(args[:2] == ("api", "--method") for args in calls)
