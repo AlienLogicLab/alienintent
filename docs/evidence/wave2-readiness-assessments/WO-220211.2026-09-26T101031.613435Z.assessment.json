@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Deliver and independently verify the Wave 2A integration capstone. It must chain the already-proven upstream stages in order: inventory, then ambiguity, then premise/proof, then independent design applicability, then compiler-derived initial compilation, then lint and retained Agent Ready assessment consumption. It must show that mutating a source, decision or design revision invalidates downstream evidence and produces a hold. It must do this without any lifecycle or Project mutation, and no output may assert release.",
+    "implementation_unknowns": [
+      "How the existing composition in src/alienintent/composition/upstream_profile.py wires the stages together. Which gaps remain between the existing tests (design_admission, compilation_validation, readiness_consumer) and a true end-to-end chain on fixture FX-A.",
+      "How to construct one discriminating negative control per failure class: stage-order bypass, stale revision reuse, compilation or assessment bypassing design applicability or lint/provenance, and lifecycle/Project mutation or release assertion. Each must avoid a branch-by-branch mutation matrix.",
+      "How to observe 'no lifecycle/Project mutation' mechanically, for example through an outside-state readback or a store snapshot comparison before and after the run.",
+      "How to drive retained Agent Ready consumption through the configured native CLI/MCP path with producer/version provenance checks in the test environment, without substituting schema-shaped prompts.",
+      "Where the pinned Phase 9 shared value, evidence, store, failure and composition contracts, and #/contracts/4 (DV-5), are defined, so the integration can conform to them."
+    ],
+    "independent_decision_centers": [
+      "Wave 2A upstream integration wiring and its end-to-end hold/invalidation proof (single cohesive center)"
+    ],
+    "material_risks": [
+      "Predecessor DONE status, merge/candidate SHAs and producer provenance are reported facts in the task text and have not been independently verified here. WO-220209 lists no merge or candidate SHA in the status update.",
+      "Scope integrates inventory, ambiguity, premise/proof and design-applicability capabilities described as 'already-proven', but only two predecessor BIUs are listed. If any of those providers lack retained proof, integration will expose defects that must be returned upstream rather than fixed here.",
+      "A fixed decision states that the context_assembly/bounded_context mapping is undecided Design Contract work under FD-02. The status update states F4 is resolved by a decision document. The implementer must treat context_assembly paths only as location references and must not encode the semantic mapping locally.",
+      "Risk of emulating Agent Ready or accepting schema-shaped output as producer proof. check_assessment_producer.py supplies only negative shape evidence, so a positive custody/provenance check is still required.",
+      "Negative controls could drift into a mutation matrix, or into repairing upstream capabilities, and exceed the capstone's scope.",
+      "Duplicated fixed-decision entries in the text add noise but show no conflicting content."
+    ],
+    "next_action": "Hand off to the assigned PRODUCER under the stated custody rules. First confirm from retained evidence that the predecessor proofs and provenance records exist. Then pin the contract, inputs, baseline, profile and FX-A revisions, and extend or compose the existing context_assembly tests into one ordered end-to-end integration test with one negative control per failure class and a no-mutation readback. Publish the exact candidate SHA for the fresh independent verifier. Release/IMPLEMENT remains unauthorized under the BIU's own terms; READY here is a handoff recommendation only.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent and owner decisions are recorded as settled, and the work forms one cohesive decision center with observable, independently verifiable acceptance. The earlier HOLD prerequisite is reported satisfied, and no remaining unknown requires product, policy or architecture authority. The open items are engineering research: locating the wiring, designing the controls and observing non-mutation. CLARIFY does not apply because the text explicitly settles allocation, ownership, edge policy and dispositions. SPLIT does not apply because the stages are integrated, not independently decided. HOLD does not apply because nothing in the supplied text establishes an unavailable prerequisite, though predecessor facts remain unverified reports. Rework is expected to stay local to integration wiring and tests, because upstream defects are routed back to their providers by explicit non-goal.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive integration/capstone BIU. Its scope, non-goals and fixed decisions are explicit. The prior owner questions are recorded as settled: SF-REQ-013 allocation, Split Transaction ownership, the withdrawn R1 edge table, Agent Ready ownership, and F4 bounded-context identity (the last per a referenced decision document). The task text reports that both named predecessors, WO-220208 (#117, merged 610703b, candidate e5a61dc\u2026) and WO-220209 (#105), are DONE. This gate has not verified those reports. The work has a single integration decision center. Its proof plan names four distinct failure classes, a fixture (FX-A), existing test surfaces and a bounded command. Candidate custody gives a fresh verifier in a separate worktree. What remains is engineering research, not owner intent. The prior HOLD condition, #117 reaching DONE with provenance, is reported as satisfied.",
+    "verification_assessment": "Acceptance is observable. The chain must run in the stated order on FX-A. A revision mutation must yield a downstream hold. Typed boundaries must reject bypass. Readback must show no lifecycle/Project mutation or release assertion. The four material failure classes each map to one discriminating negative control, and a bounded pytest command plus one broad regression run are specified. A single independent verdict is meaningful: the verifier retrieves the exact published candidate SHA in its own worktree and judges the whole integration predicate. The acceptance criterion is phrased tersely and duplicates the scope text. The verifier should therefore judge against the proof-plan failure classes and evidence obligations, not the criterion sentence alone."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T10:11:03.058969+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 15036,
+    "input_sha256": "9e47a79ee56993ec09c979a9434433a4757368db43378e29f5a651f55d2ee07e",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-2dwi7w5g/WO-220211.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T10:10:31.613435+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220211"
+}
