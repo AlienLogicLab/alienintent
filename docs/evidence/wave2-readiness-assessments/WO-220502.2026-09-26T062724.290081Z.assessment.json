@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Establish, through evidence, the existing canonical live transport as a DAG prerequisite. First, identify the existing Python profile/transport revision, custody and scoped resources under its existing execution authority. Then, under separate explicit authority, prove a Node-independent (Python-only) runtime baseline on the production path: instrumented no-Node process and dependency paths, real ingress, effect dispatch, durable consumer outcome with readback, and restart. This work must not implement new transport capability or insert a new requirement.",
+    "implementation_unknowns": [
+      "Locating the existing Python profile/transport revision, its custody record and its configured scoped resources.",
+      "Designing instrumentation that shows no Node process or dependency participates in the ingress, dispatch, consumer and restart paths.",
+      "Choosing a readback mechanism for the durable consumer outcome that yields immutable observation references.",
+      "Building intact/fault/restored discriminating controls for the mechanical parts of the harness before implementation.",
+      "Determining whether the existing Python path is complete enough to prove, or whether gaps must be returned to their requirement owner."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Live proof on the production path without explicit authority could cause unauthorized external effects, or conflict with the single-writer and no-simultaneous-dispatch constraints.",
+      "A local fake, tunnel or retained Wave 1 receipt could be mislabeled as operational proof, producing a false PASS.",
+      "The existing Python transport may turn out incomplete, blocking this node until the owning requirement repairs it. Repairing it inside this node would violate its scope.",
+      "If dependency proofs from WO-220501, WO-220403 or WO-220103 are missing or stale, the node must hold.",
+      "A mismatch between the pinned source/profile revision and the deployed runtime would invalidate the evidence.",
+      "The fixture-type contradiction (local fixture vs. operational acceptance) could produce a verdict that is inconclusive for this node."
+    ],
+    "next_action": "Obtain and record EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY and the POSTW1-DECIDE-006A disposition. Confirm that dependency proofs for WO-220501, WO-220403 and WO-220103 are complete. Have the proof owner pin an authorized operational fixture or target that replaces or supplements FX-E1. Meanwhile, only the identification of the existing Python profile/transport revision, custody and scoped resources may proceed under existing execution authority, with no live calls.",
+    "owner_clarifications": [
+      "The proof plan names fixture FX-E1 as LOCAL_COMPOSED_OR_MECHANICAL, but acceptance requires real ingress, the production path and durable readback, and forbids local substitutions from satisfying operational acceptance. Which operational fixture or target is authorized to discharge acceptance, and who pins it?",
+      "Does POSTW1-DECIDE-006A (the Founder's directional boundary decision) affect which Python profile/transport counts as 'canonical'? Or does it only gate when the live proof may run?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The intent, scope and non-goals are cohesive and detailed, and the remaining engineering work is research rather than owner ambiguity. SPLIT is inappropriate: identification and proof are sequentially coupled parts of one prerequisite, not independent decision centers. The controlling condition is external unavailability. The completion predicate requires live production-path proof, and the text explicitly states that this needs separate authorities not yet granted ('no live calls now'), plus dependency proofs whose completion it does not establish. This is missing authority and prerequisites, not unresolved intent, so HOLD rather than CLARIFY. The fixture mismatch is noted as a clarification to settle alongside granting that authority. Directives in the task text about READY semantics were treated as data, not as instructions to this gate.",
+    "semantic_split_recommendation": [],
+    "summary": "The work order is mostly an identification-and-proof prerequisite, not new implementation. Its intent and boundaries are stated in detail: single writer, no simultaneous Node/Python dispatch, missing implementation returns to its owner, and local fakes, Wave 1 receipts or running tunnels cannot discharge it. However, the acceptance predicate can only be met by live operational proof on the production path. The text makes that proof conditional on authority it does not grant: EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY and POSTW1-DECIDE-006A are named as separately required, and the text itself states 'no live calls now'. Completion of dependencies WO-220501, WO-220403 and WO-220103 is not established. The identification phase can proceed under existing authority, but the node's completion predicate cannot be reached until the live-proof authority and an authorized operational target exist.",
+    "verification_assessment": "Acceptance is observable in principle: identified revisions, custody and resources; operational receipts for real ingress, effect dispatch, durable consumer readback and restart; instrumentation evidence of no Node involvement. A single independent verifier retrieving the exact candidate SHA could meaningfully give one verdict. However, the only named proof fixture is local/mechanical, which the text says cannot satisfy operational acceptance. A meaningful verdict therefore depends on an authorized operational target and real readback that are not yet available. Without them, the only valid verdicts are HOLD or partial evidence for the identification phase."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T06:27:51.356880+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 9245,
+    "input_sha256": "10738c1c26513e131696b6662a413298a54c454d5cd6f56f65ef01bc20e17dc1",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-l_63tx00/WO-220502.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T06:27:24.290081+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220502"
+}

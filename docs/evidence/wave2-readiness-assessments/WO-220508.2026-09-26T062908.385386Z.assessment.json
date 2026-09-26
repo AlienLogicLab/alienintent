@@ -1,0 +1,74 @@
+{
+  "assessment": {
+    "disposition": "CLARIFY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Close requirement SF-REQ-053 for this node. Settle how the human-notification path on Windows is disposed: either prove human receipt and response through an authorized replacement channel, or record explicit Founder risk acceptance. Then show that new and unresolved product attention reaches a human with no duplicate handling, with suppression intact and the queue persisting. The text is explicit that delivering a command does not count as human receipt.",
+    "implementation_unknowns": [
+      "Where the current notification path, attention queue, suppression logic and duplicate-handling mechanism sit within the pinned Phase 9 contracts.",
+      "Exact semantics of 'judgment outcomes', 'pending reconciliation' and 'intact suppression' as defined by SF-REQ-053 and the linked contract sections. The source documents were not inspected.",
+      "How to build intact/fault/restored discriminating fixtures for duplicate suppression and queue persistence on the shared S0 harness.",
+      "Whether dependencies WO-220501, WO-220301 and WO-220305 have retained predecessor proof. The text neither establishes nor denies this."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "If the producer proceeds without a disposition, it may build a replacement channel that the Founder later rejects in favour of risk acceptance, or the reverse. That rework would span the implementation, the fixtures and the evidence.",
+      "Transport or command delivery could be mistaken for human receipt, which the text explicitly forbids.",
+      "Local proof could be presented as operational acceptance. FX-B5 requires an authorized target and actual readback.",
+      "Unattended activation of the attention path before ATTENTION_ACTIVATION_AUTHORITY is granted.",
+      "Dependency proof status is unknown. If predecessors are unproven, the stop conditions require a hold after clarification.",
+      "Direct merge into the baseline branch without a pull request (SWF-19) puts heavy weight on the independent verifier's exact-SHA retrieval and verdict."
+    ],
+    "next_action": "Route the WINDOWS_NOTIFICATION_DISPOSITION question through the Program Director to SPECIFY for a Founder decision: replacement channel versus risk acceptance, plus the observable definition of human receipt and response. Confirm the status of POSTW1-DECIDE-006A and ATTENTION_ACTIVATION_AUTHORITY and the FX-B5 operational target. Pin the decision and obtain the reviewed design revision. Meanwhile, the local notification-failure and queue-continuity fixtures may proceed as labelled partial work, with no unattended activation.",
+    "owner_clarifications": [
+      "WINDOWS_NOTIFICATION_DISPOSITION: will the Founder authorize a replacement human-notification channel, or explicitly accept the risk of the Windows notification gap? If a replacement is chosen, which specific channel or mechanism is authorized?",
+      "If a replacement channel is chosen, what observable event counts as proof of human receipt and response? For example, an acknowledgement action by a named human, recorded with a timestamp and bound to the specific attention item. Is that event distinct from command or transport delivery?",
+      "If Founder risk acceptance is chosen, must this node still show new and unresolved product attention reaching a human through some channel? Or is a queue-persistence and suppression proof plus the recorded risk-acceptance receipt sufficient to satisfy SF-REQ-053 for this node?",
+      "Have POSTW1-DECIDE-006A and ATTENTION_ACTIVATION_AUTHORITY been granted? What exactly do they permit? In particular, is a separately authorized operational target available for fixture FX-B5 (OPERATIONAL_OR_EXTERNAL_AUTHORITY), or should this cycle deliver only labelled local proof and hold on operational acceptance?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "Scope, evidence, custody and verification discipline are clear enough for autonomous work. The controlling gap is owner intent: acceptance is defined as an 'or' between two materially different outcomes, and only the Founder can choose between them. That makes this CLARIFY rather than HOLD. The missing element is a decision, not an artifact or environment, although the authority-gate grants may turn into a HOLD once the decision is made. SPLIT is not warranted. The notification disposition and the attention-handoff proof share one requirement and one receipt semantics, and the text already allows the local fixture work to proceed. Engineering questions about contract locations and fixture design are ordinary research and are not grounds for clarification.",
+    "semantic_split_recommendation": [],
+    "summary": "The work order is well structured. Evidence, custody, verification and stop rules are all spelled out. However, its central acceptance criterion is a two-way owner choice that has not been made: an authorized replacement channel, or Founder risk acceptance of the Windows notification gap. Each branch leads to a different implementation, a different proof fixture and a different evidence set. The text also says the governing authority gates (WINDOWS_NOTIFICATION_DISPOSITION, POSTW1-DECIDE-006A, ATTENTION_ACTIVATION_AUTHORITY) need separate authority and that 'Founder alone disposes the directional boundary question'. It does not say any of these decisions has been made. Engineering work on local notification-failure and queue-continuity fixtures is bounded, and the text explicitly allows it as partial work. The node as a whole cannot be meaningfully produced or verified until the owner picks the disposition branch.",
+    "verification_assessment": "The attention-handoff half of acceptance is observable. New and unresolved items appear, duplicate handling is zero, suppression is intact and the queue persists; each can be checked with discriminating fixtures and retained evidence. The human-receipt half cannot currently be verified, because what counts as proof depends on the unchosen disposition branch: a replacement-channel acknowledgement versus a Founder risk-acceptance receipt. The operational fixture also requires a separately authorized target, and local results are explicitly insufficient. Once the branch and the receipt definition are fixed, one independent verdict on the exact candidate SHA is meaningful."
+  },
+  "disposition": "CLARIFY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T06:29:41.357371+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 7600,
+    "input_sha256": "481c47776212ce188016f6149eabca5719b427e378aac04b2fd4738e0b467f63",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-7da66ntd/WO-220508.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T06:29:08.385386+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220508"
+}
