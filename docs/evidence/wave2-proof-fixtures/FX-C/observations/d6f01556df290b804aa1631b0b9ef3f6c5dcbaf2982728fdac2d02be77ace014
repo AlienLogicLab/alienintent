@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/composition/test_bounded_control_capstone.py"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/8a10ce75-3dcc-444a-af29-3dba5b045f98","exit_status":0,"stderr":"","stdout":"....                                                                     [100%]\n4 passed in 2.82s\n"}

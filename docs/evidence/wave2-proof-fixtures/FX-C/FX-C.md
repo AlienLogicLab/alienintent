@@ -264,4 +264,24 @@ The evidence is in this directory, following the FX-C4 and FX-L1 conventions:
 - `observations/`, named by sha256 and written with `xb`
 - `digest-manifest.json`
 
+The retained run is from invocation `AlienLogicLab/alienintent#118:PRODUCER:35226af6-5856-4726-8c6a-68fad890f56a`
+at source `a45193abc7ba1a30086a61f35c7d3262e2800deb` (clean). It was run from a clean checkout with
+`PYTHONPATH=src:. python3 -B tools/evidence/fx_c_evidence.py --output /tmp/fx-c-35226af6-a45193a --invocation <that
+invocation>`, which took 9 min 17 s wall clock. Result: `run_state: COMPLETE`, exit 0, no holds.
+
+- Focused, bounded initial, L1, architecture, architecture-fitness tests and `node scripts/check.mjs all` all exit 0.
+- The full Python suite exits 1 with 25 failures in `tests/evidence_learning/test_proof_planning.py`. They have
+  identical node ids at the admission baseline `b86b9fb`, so they are recorded as `PRE_EXISTING_BASELINE_FAILURE`
+  (owned by WO-220204). They are not an FX-C hold.
+- The four controls each apply once and discriminate: intact 0, fault 1 with the named assertion, restored 0.
+- The composed readback passes.
+
+The evidence commit on top of that source changes only files under this directory.
+
+The first candidate, `400ccbaeac60a7152788bb3aae28cd6046135e2d`, is retained as predecessor proof. Its VERIFIER
+REJECT (invocation `…#118:VERIFIER:176c3e2c-ce3b-4cf1-b296-5846f847b164`) had two causes, both repaired above:
+
+- no feature-regression receipt was present in the verifier checkout (see receipt custody);
+- the harness left no durable report within the verifier's bounded wait.
+
 The independent verdict is pending the fresh BIU verifier.

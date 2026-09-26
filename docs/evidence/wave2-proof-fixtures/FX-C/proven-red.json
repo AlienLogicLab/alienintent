@@ -1,0 +1,165 @@
+{
+  "controls": [
+    {
+      "control": "stale_epoch_sends",
+      "failure_class": "episode termination/restart reconstructs the same authorized state and stale epoch actions cannot send",
+      "file": "src/alienintent/control_plane/application/episode_control.py",
+      "application_count": 1,
+      "source_digest": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+      "mutation": {
+        "remove": "        if (result.epoch, result.invocation, self.invocation) != (record.epoch, record.invocation, record.invocation):",
+        "replace_with": "        if (result.epoch, result.invocation) != (record.epoch, record.invocation):"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_bounded_control_capstone.py::test_episode_end_during_duplicate_and_delayed_outcomes"
+      ],
+      "assertions": [
+        "a stale epoch cannot send"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:02eac32ec63e9e437167f2fd3922e7ec5d73851bc2bb1595e432203e5d17b51d",
+        "locator": "observations/02eac32ec63e9e437167f2fd3922e7ec5d73851bc2bb1595e432203e5d17b51d"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:9654c8e9b8de3cfa40778ab5ff4959dc44c362b9ffa229f9e6e726f06e513474",
+        "locator": "observations/9654c8e9b8de3cfa40778ab5ff4959dc44c362b9ffa229f9e6e726f06e513474"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:73618855079b37df831068036ee935b1ca071012598fbe0a4237cab76c925d04",
+        "locator": "observations/73618855079b37df831068036ee935b1ca071012598fbe0a4237cab76c925d04"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "judgment_attention_detached",
+      "failure_class": "durable attention survives restart and completed judgment suppresses recovery until resolution",
+      "file": "src/alienintent/composition/bounded_control_profile.py",
+      "application_count": 1,
+      "source_digest": "sha256:dd450f745920d6b0c0e7c1cd967b1b95ce9eabd1bcec2738fc81339f547f0566",
+      "mutation": {
+        "remove": "attention=self.attention, monitor=self.monitor,",
+        "replace_with": "attention=AttentionProfile(Path(__import__(\"tempfile\").mkdtemp()), project=project, name=name, invocation=invocation, clock=lambda: \"detached\", next_id=lambda: \"detached\", resolvers=resolvers), monitor=self.monitor,"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_bounded_control_capstone.py::test_judgment_attention_survives_episode_end_and_suppresses_recovery"
+      ],
+      "assertions": [
+        "judgment attention must be durable in the store every fresh context reconstructs"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:d7a8825e05f93645f503a10e7997c8527ee28f5e03904fc24177b371f86a3757",
+        "locator": "observations/d7a8825e05f93645f503a10e7997c8527ee28f5e03904fc24177b371f86a3757"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:1228c14efd6033fc4090ca1513933b7908a87f755cb0b0de33e7cc07ecbe06dc",
+        "locator": "observations/1228c14efd6033fc4090ca1513933b7908a87f755cb0b0de33e7cc07ecbe06dc"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:33fc302f3d488db065f0dc42418af3b156969e8243b41cad87a446d6ac1cc637",
+        "locator": "observations/33fc302f3d488db065f0dc42418af3b156969e8243b41cad87a446d6ac1cc637"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "health_bridge_unconditional",
+      "failure_class": "stopped/stale/degraded monitor evidence stays explicit and never becomes a healthy claim",
+      "file": "src/alienintent/composition/liveness_profile.py",
+      "application_count": 1,
+      "source_digest": "sha256:cff7ef1d5bab36148d8bea27e54746ecf9a8c79ef519bd84076f7c39dbff9d05",
+      "mutation": {
+        "remove": "        return str(report.status), report.reason\n",
+        "replace_with": "        return \"HEALTHY\", \"IN_BOUND\"\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_bounded_control_capstone.py::test_stopped_scans_surface_stale_or_degraded_never_healthy"
+      ],
+      "assertions": [
+        "a scan must never claim G+I while the monitor's ticks have stopped"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:ec955d2e22833b90b8277ea56d062def55690188c35f2d89c388e70b04bc5199",
+        "locator": "observations/ec955d2e22833b90b8277ea56d062def55690188c35f2d89c388e70b04bc5199"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:9e42abab073cbcd978ce49bc6d0ce55b5dfc2c0e88c297840c4b355cadf3627b",
+        "locator": "observations/9e42abab073cbcd978ce49bc6d0ce55b5dfc2c0e88c297840c4b355cadf3627b"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:96d4e1b4fcdc7a9b24649463ebfe44a3c105cd1343be09a4e2ca7102c8885c27",
+        "locator": "observations/96d4e1b4fcdc7a9b24649463ebfe44a3c105cd1343be09a4e2ca7102c8885c27"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "identity_fence_removed",
+      "failure_class": "duplicate/delayed outcomes preserve one authorized effect/readback identity across the composed path",
+      "file": "src/alienintent/execution_coordination/application/liveness.py",
+      "application_count": 1,
+      "source_digest": "sha256:5c75e886c369ee0968a41bbd87d8ca37c928f34aa7c41eb111cbf786f75f8cac",
+      "mutation": {
+        "remove": "        key = expected.effect_key\n",
+        "replace_with": "        key = expected.effect_key + \":\" + source\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_bounded_control_capstone.py::test_episode_end_during_duplicate_and_delayed_outcomes"
+      ],
+      "assertions": [
+        "a duplicate recovery during the episode end must not create a second intent"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "intact_ref": {
+        "revision_digest": "sha256:14b7eec2ed23e4f1bf5a2f28247019a9cf335cc79609ac0d79aacd1e2ab953ea",
+        "locator": "observations/14b7eec2ed23e4f1bf5a2f28247019a9cf335cc79609ac0d79aacd1e2ab953ea"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:976381e02df81bbbc7b79bafe02d2ebb29b68d6034eccfe520eb6886f8c015f3",
+        "locator": "observations/976381e02df81bbbc7b79bafe02d2ebb29b68d6034eccfe520eb6886f8c015f3"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:2b721488b519f7b32d573863b1338eebc59a24716b404ddc8700078363d9bfb8",
+        "locator": "observations/2b721488b519f7b32d573863b1338eebc59a24716b404ddc8700078363d9bfb8"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}
