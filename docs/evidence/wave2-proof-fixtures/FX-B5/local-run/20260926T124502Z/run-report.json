@@ -1,0 +1,54 @@
+{
+  "criteria": {
+    "command delivery is not human receipt; receipt is explicit, item-bound, timestamped": {
+      "probes": [
+        "B5-01",
+        "B5-02",
+        "B5-03"
+      ],
+      "result": "PASS"
+    },
+    "human operator surface on the existing path": {
+      "probes": [
+        "B5-09"
+      ],
+      "result": "PASS"
+    },
+    "intact suppression": {
+      "probes": [
+        "B5-07",
+        "B5-10"
+      ],
+      "result": "PASS"
+    },
+    "new and unresolved product attention, judgment outcomes": {
+      "probes": [
+        "B5-02",
+        "B5-05",
+        "B5-08"
+      ],
+      "result": "PASS"
+    },
+    "pending reconciliation": {
+      "probes": [
+        "B5-06"
+      ],
+      "result": "PASS"
+    },
+    "queue persists": {
+      "probes": [
+        "B5-08"
+      ],
+      "result": "PASS"
+    },
+    "zero duplicate handling": {
+      "probes": [
+        "B5-04"
+      ],
+      "result": "PASS"
+    }
+  },
+  "fixture": "FX-B5",
+  "label": "LOCAL",
+  "operational_acceptance": "NOT CLAIMED: requires tools/live/fx_b5_operational.py readback of a named human acknowledgement on the authorized operational root"
+}

@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/control_plane/test_attention_acknowledgement.py::test_unconfigured_actor_refused"],"cwd":"/tmp/fx-b5-controls-zdry7s2l","exit_status":0,"stderr":"","stdout":".....                                                                    [100%]\n5 passed in 0.31s\n"}

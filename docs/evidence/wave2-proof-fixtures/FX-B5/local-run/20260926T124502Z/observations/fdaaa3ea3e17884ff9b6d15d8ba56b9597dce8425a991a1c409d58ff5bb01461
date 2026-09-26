@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tools/live/test_fx_b5_operational.py"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/2cd0beeb-14e9-4a6e-b133-2067053dda2d","exit_status":0,"stderr":"","stdout":"..                                                                       [100%]\n2 passed in 0.55s\n"}
