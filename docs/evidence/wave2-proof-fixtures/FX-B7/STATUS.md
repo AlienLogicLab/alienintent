@@ -12,6 +12,18 @@ The canonical `alienintent` launch was read back on the live unit. Alias retirem
 `COVERAGE_COMPLETE_RETIREMENT_NOT_AUTHORIZED_HERE`: coverage is complete, but retiring the alias
 still needs its own separately authorized BIU.
 
+## Repair 1 (verifier REJECT of `59a6c9c`)
+
+Verifier `AlienLogicLab/alienintent#129:VERIFIER:c1023844-fa8b-44c7-9b7b-c1bfe5146690` passed every fresh check
+on `59a6c9c`. It rejected the candidate only because `.alienintent/feature-regressions.json` was absent from the
+published tree. Under the landed custody rule, that receipt is written into the verifier's checkout and is never
+tracked (see [FX-B7.md](FX-B7.md#feature-regression-receipt-custody)). Committing it would be invalid: it would
+name a parent SHA and could never validate against the commit carrying it. Repair 1
+(`AlienLogicLab/alienintent#129:PRODUCER:d13eaf36-4fb8-43c0-85d9-c24b97daae9f`) states that rule in the pinned
+contract. It records the PRODUCER receipt for the new published SHA on Issue #129. It leaves the tool, tests,
+regression pack and the retained operational run `20260926T221756Z` unchanged. That run's source candidate
+remains `07d80af`.
+
 ## Pins
 
 | Item | Value |

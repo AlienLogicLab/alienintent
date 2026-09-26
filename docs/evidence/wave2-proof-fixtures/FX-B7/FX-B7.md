@@ -142,6 +142,29 @@ the controls, the predecessor re-check, raw observations under `objects/`, and a
 `digest-manifest.json`. Missing measurements are holds, never zero or PASS. Token and cost
 telemetry that is not exposed to the producer is recorded as UNKNOWN.
 
+## Feature-regression receipt custody
+
+Added in repair 1 (invocation `AlienLogicLab/alienintent#129:PRODUCER:d13eaf36-4fb8-43c0-85d9-c24b97daae9f`)
+after verifier `c1023844-fa8b-44c7-9b7b-c1bfe5146690` rejected `59a6c9c` because the published tree held no
+`.alienintent/feature-regressions.json`. This section adds no probe and weakens none.
+
+`.alienintent/feature-regressions.json` binds the exact candidate SHA (`candidate`) and a `receipt_digest` over its
+body. A commit cannot contain a receipt naming its own SHA, so the receipt is not a tracked file. This is the landed
+rule in [FX-C.md](../FX-C/FX-C.md#feature-regression-receipt-custody), applied again for WO-220502 in
+[FX-E1.md](../FX-E1.md#feature-regression-receipt-custody) (`5a98c26`). The runtime writes the receipt into the
+verifier's checkout of the exact candidate before launching the verifier
+(`CliWorkerProvider._feature_regressions`), and `read_verdict` reads it there. When the runtime is not the launcher,
+the verifier produces it in its own worktree at the retrieved SHA:
+
+```
+python3 tools/verification/run_feature_regressions.py --base 5b5fbf671333c7a6d4eaa897a499e94726342ebd \
+  --candidate HEAD --receipt .alienintent/feature-regressions.json
+```
+
+A 404 for that path on the published branch is therefore expected. It is not a custody defect. The PRODUCER
+records its own receipt for the published SHA on Issue #129 for comparison. That receipt does not replace the
+verifier-side receipt.
+
 ## Non-claims
 
 - No alias retirement, release, live operation or production change is authorized or performed.
