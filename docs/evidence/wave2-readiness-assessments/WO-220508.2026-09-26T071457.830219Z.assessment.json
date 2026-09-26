@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove that new and unresolved product attention in the Python AlienIntent product reaches a human. The proof must cover judgment outcomes, pending reconciliation, zero duplicate handling and intact suppression, and the attention queue must persist. Command delivery must not count as human receipt. Per the reported Founder decision, Windows event notification is no longer required.",
+    "implementation_unknowns": [
+      "Where the existing attention queue and its persistence live at the current interfaces, and how the S0 shared harness exposes them to FX-B5.",
+      "How judgment outcomes and pending-reconciliation states are currently represented, so fixtures can assert them.",
+      "How duplicate detection and suppression are keyed, so that intact/fault/restored discrimination probes can be built for zero-duplicate handling and intact suppression.",
+      "The exact evidence schema and fixture commands to pin before implementation, as the proof order requires."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The open authority gates (POSTW1-DECIDE-006A, ATTENTION_ACTIVATION_AUTHORITY) may change activation semantics or scope after implementation begins.",
+      "The FX-B5 operational target is unauthorized, so local proof may be mistaken for operational acceptance.",
+      "Without a defined receipt surface, the implementation may treat queue enqueue or command delivery as human receipt, contrary to the stated constraint.",
+      "The Founder decision is reported as relayed by an observing session through a Director inbox handoff. This gate cannot verify it, and its custody should be confirmed before relying on it.",
+      "The partial work allowed under the stop condition (local failure and queue continuity fixtures) could drift into activation. Unattended activation must stay excluded."
+    ],
+    "next_action": "Hold the BIU until three things are resolved. First, obtain dispositions for POSTW1-DECIDE-006A and ATTENTION_ACTIVATION_AUTHORITY. Second, get the FX-B5 operational target authorized, or get an explicit authority decision on how FX-B5 acceptance is satisfied. Third, route the human-receipt surface question to the Founder through the Program Director, and pin the answer in the node contract. Meanwhile, the permitted partial work (local notification-failure and queue-continuity fixtures, no activation) may proceed if custody allows. Then request a fresh assessment of the revised exact revision.",
+    "owner_clarifications": [
+      "With Windows event notification removed and no replacement channel required, what surface or mechanism counts as 'reaching a human' and as human receipt for SF-REQ-053? For example: an existing in-product attention queue or view that a human reads and acknowledges, or queue persistence plus an explicit human acknowledgement record. Without this, the owned capability 'human_notification_path' has no defined observable endpoint distinct from command delivery."
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The work is cohesive and largely well specified, so SPLIT does not apply. The controlling condition is that the text itself declares necessary authorities unavailable: two authority gates plus the FX-B5 operational target. Acceptance explicitly depends on these, and the stop condition mandates a hold on open authority gates. That is an external prerequisite or authority gap rather than engineering research, so HOLD controls over READY. The human-receipt surface question is a real owner-intent gap. It is secondary because resolving it alone would not make the work executable while the authority gates remain open, but it should be resolved in the same escalation to avoid another assessment cycle.",
+    "semantic_split_recommendation": [],
+    "summary": "The Windows-notification branch of SF-REQ-053 is reported as disposed by the Founder on 2026-09-26, and the predecessors are reported DONE. The work is cohesive: one node, one capability pair and one acceptance predicate, so splitting is not warranted. However, the text itself says three necessary authorities remain open: POSTW1-DECIDE-006A, ATTENTION_ACTIVATION_AUTHORITY and the FX-B5 operational target. The proof fixture is classed OPERATIONAL_OR_EXTERNAL_AUTHORITY, and a local substitution cannot satisfy operational acceptance. The stop condition requires a hold on any open authority gate. There is also a residual intent gap. With no Windows notification and no replacement channel required, the text does not say which surface counts as human receipt for the 'must reach a human' requirement.",
+    "verification_assessment": "Acceptance is observable in principle. The observable properties are: new and unresolved attention items with judgment outcomes and pending reconciliation; zero duplicates under repeat input; suppression kept intact; queue persistence across restart; and an explicit distinction between command delivery and human receipt. One independent verifier verdict on the exact candidate SHA would be meaningful for the local fixtures. However, FX-B5 is an operational/external-authority fixture, and operational acceptance requires a separately authorized target and actual readback. That target is stated to be unresolved, so a full acceptance verdict cannot currently be reached. Local results must be labelled as substitutions. The undefined human-receipt surface also weakens the observability of the 'reaches a human' predicate."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-26T07:15:29.247274+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10016,
+    "input_sha256": "e031c9917e9580ba9bdf378c7642173cadaf775f9ee9d39c365520c14640ed8a",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-_jx1ztm5/WO-220508.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-26T07:14:57.830219+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220508"
+}
