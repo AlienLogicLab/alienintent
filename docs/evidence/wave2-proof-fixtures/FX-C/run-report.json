@@ -1,0 +1,616 @@
+{
+  "acceptance_to_probes": {
+    "SF-REQ-053-AC-04 / FX-C: end a coordinator episode during duplicate/delayed outcomes; stale epoch cannot send": [
+      "test_episode_end_during_duplicate_and_delayed_outcomes"
+    ],
+    "FX-C: a fresh context reconstructs identical authorized actions (authorized_view predicate; class 1 over unchanged C2 state, class 2 over the judged state including the pending item)": [
+      "test_episode_end_during_duplicate_and_delayed_outcomes",
+      "test_judgment_attention_survives_episode_end_and_suppresses_recovery"
+    ],
+    "FX-C / SF-REQ-053-AC-04: attention survives; duplicate observation/restart keeps one identity": [
+      "test_judgment_attention_survives_episode_end_and_suppresses_recovery"
+    ],
+    "FX-C: completed judgment suppresses recovery; valid resolution permits reinspection only": [
+      "test_judgment_attention_survives_episode_end_and_suppresses_recovery"
+    ],
+    "FX-C: one authorized effect/readback identity under duplicate/delayed outcomes": [
+      "test_episode_end_during_duplicate_and_delayed_outcomes"
+    ],
+    "FX-C / SF-REQ-053-AC-04: stopped scans surface DEGRADED/STALE; monitor continues after the episode ends": [
+      "test_stopped_scans_surface_stale_or_degraded_never_healthy"
+    ],
+    "composition boundary: constructing starts nothing; missing policy blocks startup": [
+      "test_constructing_the_composition_starts_nothing"
+    ],
+    "negative controls (one per material failure class)": [
+      "proven-red.json: stale_epoch_sends, judgment_attention_detached, health_bridge_unconditional, identity_fence_removed"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/composition/test_bounded_control_capstone.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:d6f01556df290b804aa1631b0b9ef3f6c5dcbaf2982728fdac2d02be77ace014",
+      "locator": "observations/d6f01556df290b804aa1631b0b9ef3f6c5dcbaf2982728fdac2d02be77ace014"
+    }
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:6fce10747780de8fa72583f64709df86d6f4152448077c9bab52455325fc8070",
+    "locator": "observations/6fce10747780de8fa72583f64709df86d6f4152448077c9bab52455325fc8070"
+  },
+  "composed_readback": {
+    "recovery": {
+      "ended_episode": {
+        "objective": "item-verify",
+        "epoch": 1,
+        "invocation": "coordinator-epoch-1",
+        "state": "ENDED",
+        "cause": "EXPLICIT_REQUEST",
+        "began_us": 1790000000000000,
+        "deadline_us": 1790003600000000,
+        "last_check_us": 1790000295000000,
+        "check_seq": 0,
+        "transitions": 0,
+        "blocked_since_us": null,
+        "accepted_contradictions": 0,
+        "provider": "claude",
+        "model": "model-1",
+        "authority": "authority-1",
+        "objective_revision": "rev-1",
+        "manifest_ref": "context:manifest:e9a81d510010cea93f67d1918849ec8c23c93467e7ced44d432639f5a802679d",
+        "context_digest": "sha256:0ef20754cb949b29ef03f5447c7c3ef81c311486f05d1686398ead70426472ca",
+        "reservation": [
+          "episode-work",
+          "item-verify",
+          "coordinator-epoch-1",
+          1
+        ],
+        "usage_binding": "UNBOUND",
+        "policy_digest": "sha256:8611246c7a69cd8a9a27bf6ff378ca129783775655c9b20fb73b064ca2ef1bd7",
+        "admitted_total": 0,
+        "epochs": 1
+      },
+      "scan_during_end": {
+        "at": 1790000300000000,
+        "outcome": "COMPLETE",
+        "events": [
+          {
+            "kind": "liveness.no_action",
+            "biu": "item-verify",
+            "effect_key": null,
+            "reason": "PENDING_EFFECT",
+            "attention": null
+          }
+        ],
+        "policy_digest": "sha256:04610ebf7dce627d8eea88d46b47a8474d46aaa5c5cfefdbf48a4f1ee6222745",
+        "bound_claim": "G_PLUS_I_CLAIMED"
+      },
+      "reconstruction_equal": true,
+      "fresh_view": {
+        "manifest_ref": "context:manifest:e9a81d510010cea93f67d1918849ec8c23c93467e7ced44d432639f5a802679d",
+        "digest": "sha256:0ef20754cb949b29ef03f5447c7c3ef81c311486f05d1686398ead70426472ca",
+        "authorized_next_action_set": [
+          {
+            "work": "item-verify",
+            "action": "review",
+            "from_stage": "VERIFY",
+            "expected_version": 1
+          },
+          {
+            "work": "item-verify",
+            "action": "rework",
+            "from_stage": "VERIFY",
+            "expected_version": 1
+          },
+          {
+            "work": "item-implement",
+            "action": "verify",
+            "from_stage": "IMPLEMENT",
+            "expected_version": 0
+          },
+          {
+            "work": "item-released",
+            "action": "verify",
+            "from_stage": "IMPLEMENT",
+            "expected_version": 0
+          }
+        ],
+        "blocked_set": [
+          {
+            "work": "item-blocked",
+            "reasons": [
+              {
+                "code": "AUTHORITY_BLOCK",
+                "ref": "factory:item-blocked"
+              },
+              {
+                "code": "OPEN_DECISION",
+                "ref": "decision-inbox:item-blocked"
+              }
+            ]
+          },
+          {
+            "work": "item-attn",
+            "reasons": [
+              {
+                "code": "PENDING_ATTENTION:PENDING",
+                "ref": "attention:081ff009b739334770fd2fa5d6cd4be75d6dce5f04fe232f376b56549614e781"
+              }
+            ]
+          }
+        ],
+        "pending_attention": [
+          {
+            "identity": "attention:081ff009b739334770fd2fa5d6cd4be75d6dce5f04fe232f376b56549614e781",
+            "version": 1,
+            "status": "PENDING",
+            "work_ref": "item-attn",
+            "kind": "JUDGMENT",
+            "required_authority": "authority-1"
+          }
+        ],
+        "lifecycle": {
+          "item-attn": {
+            "stage": "REVIEW",
+            "version": 2,
+            "accepted": false,
+            "outcome": null,
+            "released": null
+          },
+          "item-blocked": {
+            "stage": "IMPLEMENT",
+            "version": 0,
+            "accepted": false,
+            "outcome": "authority-block",
+            "released": null
+          },
+          "item-cancelled": {
+            "stage": "VERIFY",
+            "version": 1,
+            "accepted": false,
+            "outcome": "cancelled-by-operator",
+            "released": null
+          },
+          "item-done": {
+            "stage": "DONE",
+            "version": 4,
+            "accepted": true,
+            "outcome": null,
+            "released": null
+          },
+          "item-implement": {
+            "stage": "IMPLEMENT",
+            "version": 0,
+            "accepted": false,
+            "outcome": null,
+            "released": null
+          },
+          "item-released": {
+            "stage": "IMPLEMENT",
+            "version": 0,
+            "accepted": false,
+            "outcome": null,
+            "released": "explicit-human"
+          },
+          "item-verify": {
+            "stage": "VERIFY",
+            "version": 1,
+            "accepted": false,
+            "outcome": null,
+            "released": null
+          }
+        }
+      },
+      "reopened": [
+        {
+          "effect_key": "liveness-effect:9dd925a5461f4a537f55be0f729d43e096dcbec48c8595c36d33f613f2e3d255",
+          "receipt": "sha256:1cd62d07853f389af74fc41d57b794a132f32c45340d3fc94a500fe8713ca7ac",
+          "source": "readback"
+        }
+      ],
+      "consumer_outcomes": [
+        {
+          "aggregate": "liveness-lane:liveness-effect:9dd925a5461f4a537f55be0f729d43e096dcbec48c8595c36d33f613f2e3d255",
+          "effect_id": "liveness-effect:9dd925a5461f4a537f55be0f729d43e096dcbec48c8595c36d33f613f2e3d255",
+          "invocation": "dispatcher-1",
+          "outcome": {
+            "payload": {
+              "biu": "item-verify",
+              "candidate": "candidate:item-verify",
+              "effect_key": "liveness-effect:9dd925a5461f4a537f55be0f729d43e096dcbec48c8595c36d33f613f2e3d255",
+              "generation": 1,
+              "kind": "liveness-canonical-effect",
+              "role_key": "verifier"
+            },
+            "status": "accepted"
+          },
+          "payload_digest": "sha256:130866229258bd3831b71910c76d20f7586dee631f02ccb02b9294bf7f0d532c",
+          "profile": "fixture",
+          "reservations": [
+            [
+              "liveness-lane",
+              "liveness-effect:9dd925a5461f4a537f55be0f729d43e096dcbec48c8595c36d33f613f2e3d255",
+              "dispatcher-1",
+              1
+            ]
+          ],
+          "schema_version": 1,
+          "vector": {
+            "authority": "authority:dispatch",
+            "epoch": 1,
+            "invocation": "dispatcher-1",
+            "versions": [
+              [
+                "authority:dispatch",
+                1
+              ],
+              [
+                "liveness-active:item-verify",
+                1
+              ],
+              [
+                "liveness-lane:liveness-effect:9dd925a5461f4a537f55be0f729d43e096dcbec48c8595c36d33f613f2e3d255",
+                1
+              ]
+            ]
+          }
+        }
+      ],
+      "readback_receipt": {
+        "effect_id": "liveness-effect:9dd925a5461f4a537f55be0f729d43e096dcbec48c8595c36d33f613f2e3d255",
+        "invocation": "dispatcher-1",
+        "digest": "sha256:1cd62d07853f389af74fc41d57b794a132f32c45340d3fc94a500fe8713ca7ac"
+      },
+      "lane": [
+        1,
+        {
+          "active_revision": 1,
+          "authority": "authority:dispatch",
+          "authority_version": 1,
+          "biu": "item-verify",
+          "effect_key": "liveness-effect:9dd925a5461f4a537f55be0f729d43e096dcbec48c8595c36d33f613f2e3d255",
+          "epoch": 1,
+          "generation": 1,
+          "intended_at": 1790000295000000,
+          "invocation": "dispatcher-1",
+          "role_key": "verifier",
+          "schema_version": 1,
+          "source": "original-delivery:coordinator-epoch-1"
+        }
+      ],
+      "episode_pointer": [
+        3,
+        {
+          "active": true,
+          "deadline_utc_us": 1790003990000000,
+          "epoch": 2,
+          "expires_at": 1790003990.0,
+          "history_ref": {
+            "locator": "objects/8b922be648dd976fdbb68466169c8ada4681edf4e50ac6fbcefbd52a88e2956d",
+            "logical_id": "episode:item-verify",
+            "profile": "fixture",
+            "project": "project",
+            "revision_digest": "sha256:8b922be648dd976fdbb68466169c8ada4681edf4e50ac6fbcefbd52a88e2956d"
+          },
+          "invocation": "coordinator-epoch-2",
+          "schema_version": 1
+        }
+      ],
+      "episode_history": [
+        {
+          "action": "BEGIN",
+          "actor": "director",
+          "at": 1790000000000000,
+          "authority": "authority-1",
+          "policy": {
+            "max_accepted_contradictions": 1,
+            "max_age_s": 3600,
+            "max_blocked_s": 300,
+            "max_transitions": 32,
+            "threshold": null,
+            "usage": "UNBOUND"
+          }
+        },
+        {
+          "action": "END",
+          "actor": "director",
+          "at": 1790000295000000,
+          "authority": "authority-1",
+          "cause": "EXPLICIT_REQUEST"
+        },
+        {
+          "action": "BEGIN",
+          "actor": "director",
+          "at": 1790000390000000,
+          "authority": "authority-1",
+          "policy": {
+            "max_accepted_contradictions": 1,
+            "max_age_s": 3600,
+            "max_blocked_s": 300,
+            "max_transitions": 32,
+            "threshold": null,
+            "usage": "UNBOUND"
+          }
+        }
+      ],
+      "epoch_2": {
+        "objective": "item-verify",
+        "epoch": 2,
+        "invocation": "coordinator-epoch-2",
+        "state": "ACTIVE",
+        "cause": null,
+        "began_us": 1790000390000000,
+        "deadline_us": 1790003990000000,
+        "last_check_us": 1790000390000000,
+        "check_seq": 0,
+        "transitions": 0,
+        "blocked_since_us": null,
+        "accepted_contradictions": 0,
+        "provider": "claude",
+        "model": "model-1",
+        "authority": "authority-1",
+        "objective_revision": "rev-1",
+        "manifest_ref": "context:manifest:e9a81d510010cea93f67d1918849ec8c23c93467e7ced44d432639f5a802679d",
+        "context_digest": "sha256:0ef20754cb949b29ef03f5447c7c3ef81c311486f05d1686398ead70426472ca",
+        "reservation": [
+          "episode-work",
+          "item-verify",
+          "coordinator-epoch-2",
+          2
+        ],
+        "usage_binding": "UNBOUND",
+        "policy_digest": "sha256:8611246c7a69cd8a9a27bf6ff378ca129783775655c9b20fb73b064ca2ef1bd7",
+        "admitted_total": 0,
+        "epochs": 2
+      },
+      "monitor": {
+        "profile": "fixture",
+        "instance_id": "coordinator-epoch-2:monitor-1",
+        "generation": 2,
+        "policy_digest": "sha256:7bfef2f3e5f0269167f6ae83ff28b4adef7904a2281a80a513fbc2fc48f63227",
+        "started_at": 1790000390000000,
+        "last_monitor_tick": null,
+        "last_scan_started_at": null,
+        "last_scan_completed_at": null,
+        "last_scan_outcome": null,
+        "next_scan_due": 1790000450000000,
+        "last_error": null
+      }
+    },
+    "judgment": {
+      "blocked_end": {
+        "objective": "item-verify",
+        "epoch": 1,
+        "invocation": "coordinator-epoch-1",
+        "state": "ENDED",
+        "cause": "BLOCKED_LIMIT",
+        "began_us": 1790000000000000,
+        "deadline_us": 1790003600000000,
+        "last_check_us": 1790000600000000,
+        "check_seq": 2,
+        "transitions": 0,
+        "blocked_since_us": 1790000300000000,
+        "accepted_contradictions": 0,
+        "provider": "claude",
+        "model": "model-1",
+        "authority": "authority-1",
+        "objective_revision": "rev-1",
+        "manifest_ref": "context:manifest:e9a81d510010cea93f67d1918849ec8c23c93467e7ced44d432639f5a802679d",
+        "context_digest": "sha256:0ef20754cb949b29ef03f5447c7c3ef81c311486f05d1686398ead70426472ca",
+        "reservation": [
+          "episode-work",
+          "item-verify",
+          "coordinator-epoch-1",
+          1
+        ],
+        "usage_binding": "UNBOUND",
+        "policy_digest": "sha256:8611246c7a69cd8a9a27bf6ff378ca129783775655c9b20fb73b064ca2ef1bd7",
+        "admitted_total": 0,
+        "epochs": 1
+      },
+      "suppressed_scan": {
+        "at": 1790006001000000,
+        "outcome": "COMPLETE",
+        "events": [
+          {
+            "kind": "liveness.suppressed",
+            "biu": "item-verify",
+            "effect_key": null,
+            "reason": "JUDGMENT_UNRESOLVED",
+            "attention": "attention:ba8bcbbb0ad83f43734ca4d16af748fd5d3030d80e01ff9bfbd5be3ed04c66a0"
+          }
+        ],
+        "policy_digest": "sha256:04610ebf7dce627d8eea88d46b47a8474d46aaa5c5cfefdbf48a4f1ee6222745",
+        "bound_claim": "G_PLUS_I_CLAIMED"
+      },
+      "attention": [
+        {
+          "identity": "attention:ba8bcbbb0ad83f43734ca4d16af748fd5d3030d80e01ff9bfbd5be3ed04c66a0",
+          "version": 1,
+          "origin": {
+            "work_ref": "item-verify",
+            "event_identity": "verifier-outcome-1",
+            "kind": "JUDGMENT",
+            "work_revision": "sha256:cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc:generation:1",
+            "lane": "verifier",
+            "required_authority": "founder-judgment",
+            "producer": "liveness-reconciler",
+            "source_ref": {
+              "project": "project",
+              "profile": "fixture",
+              "logical_id": "verifier-outcome-1",
+              "revision_digest": "sha256:795b77afeb8bb10f469ac6b4b3c04010e86baf4b30c6e78996c606abb1e425f1",
+              "locator": "liveness-outcome:item-verify"
+            }
+          },
+          "status": "PENDING",
+          "attempts": [],
+          "handler": null,
+          "resolution_ref": null,
+          "history_ref": {
+            "project": "project",
+            "profile": "fixture",
+            "logical_id": "attention:ba8bcbbb0ad83f43734ca4d16af748fd5d3030d80e01ff9bfbd5be3ed04c66a0",
+            "revision_digest": "sha256:f062e7fc14f119c3118109b9af93cdbcc4a26e672bd4233ea765b393bd023a22",
+            "locator": "objects/f062e7fc14f119c3118109b9af93cdbcc4a26e672bd4233ea765b393bd023a22"
+          }
+        }
+      ],
+      "fresh_view": {
+        "manifest_ref": "context:manifest:3d7b35daf54dea612c2bd81f622ac6f403a858222a9ddd7e2549daaedf431e51",
+        "digest": "sha256:8efb254541caf881ca76c234a846e02370b9bc6725f3a9a61646ec3a3d11dabf",
+        "authorized_next_action_set": [
+          {
+            "work": "item-implement",
+            "action": "verify",
+            "from_stage": "IMPLEMENT",
+            "expected_version": 0
+          },
+          {
+            "work": "item-released",
+            "action": "verify",
+            "from_stage": "IMPLEMENT",
+            "expected_version": 0
+          }
+        ],
+        "blocked_set": [
+          {
+            "work": "item-blocked",
+            "reasons": [
+              {
+                "code": "AUTHORITY_BLOCK",
+                "ref": "factory:item-blocked"
+              },
+              {
+                "code": "OPEN_DECISION",
+                "ref": "decision-inbox:item-blocked"
+              }
+            ]
+          },
+          {
+            "work": "item-attn",
+            "reasons": [
+              {
+                "code": "PENDING_ATTENTION:PENDING",
+                "ref": "attention:081ff009b739334770fd2fa5d6cd4be75d6dce5f04fe232f376b56549614e781"
+              }
+            ]
+          },
+          {
+            "work": "item-verify",
+            "reasons": [
+              {
+                "code": "PENDING_ATTENTION:PENDING",
+                "ref": "attention:ba8bcbbb0ad83f43734ca4d16af748fd5d3030d80e01ff9bfbd5be3ed04c66a0"
+              }
+            ]
+          }
+        ],
+        "pending_attention": [
+          {
+            "identity": "attention:081ff009b739334770fd2fa5d6cd4be75d6dce5f04fe232f376b56549614e781",
+            "version": 1,
+            "status": "PENDING",
+            "work_ref": "item-attn",
+            "kind": "JUDGMENT",
+            "required_authority": "authority-1"
+          },
+          {
+            "identity": "attention:ba8bcbbb0ad83f43734ca4d16af748fd5d3030d80e01ff9bfbd5be3ed04c66a0",
+            "version": 1,
+            "status": "PENDING",
+            "work_ref": "item-verify",
+            "kind": "JUDGMENT",
+            "required_authority": "founder-judgment"
+          }
+        ],
+        "lifecycle": {
+          "item-attn": {
+            "stage": "REVIEW",
+            "version": 2,
+            "accepted": false,
+            "outcome": null,
+            "released": null
+          },
+          "item-blocked": {
+            "stage": "IMPLEMENT",
+            "version": 0,
+            "accepted": false,
+            "outcome": "authority-block",
+            "released": null
+          },
+          "item-cancelled": {
+            "stage": "VERIFY",
+            "version": 1,
+            "accepted": false,
+            "outcome": "cancelled-by-operator",
+            "released": null
+          },
+          "item-done": {
+            "stage": "DONE",
+            "version": 4,
+            "accepted": true,
+            "outcome": null,
+            "released": null
+          },
+          "item-implement": {
+            "stage": "IMPLEMENT",
+            "version": 0,
+            "accepted": false,
+            "outcome": null,
+            "released": null
+          },
+          "item-released": {
+            "stage": "IMPLEMENT",
+            "version": 0,
+            "accepted": false,
+            "outcome": null,
+            "released": "explicit-human"
+          },
+          "item-verify": {
+            "stage": "VERIFY",
+            "version": 1,
+            "accepted": false,
+            "outcome": null,
+            "released": null
+          }
+        }
+      },
+      "consumer_outcomes": [],
+      "stopped_ticks_claim": "WITHDRAWN:STALE:TICK_OVERDUE",
+      "monitor_inspection": {
+        "status": "STALE",
+        "reason": "TICK_OVERDUE",
+        "record": {
+          "profile": "fixture",
+          "instance_id": "coordinator-epoch-2:monitor-1",
+          "generation": 2,
+          "policy_digest": "sha256:7bfef2f3e5f0269167f6ae83ff28b4adef7904a2281a80a513fbc2fc48f63227",
+          "started_at": 1790006000000000,
+          "last_monitor_tick": 1790006001000000,
+          "last_scan_started_at": 1790006122000000,
+          "last_scan_completed_at": 1790006122000000,
+          "last_scan_outcome": "COMPLETE",
+          "next_scan_due": 1790006182000000,
+          "last_error": null
+        },
+        "observed_at": 1790006122000000
+      },
+      "hold_records": []
+    }
+  },
+  "boundaries": "local/composed fixture only; host unassigned (R1-GAP-MONITOR-HOST); no supervised-host deployment, bootstrap replacement, live G+I, live transport, cutover, sovereignty or retirement",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}

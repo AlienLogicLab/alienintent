@@ -1,0 +1,245 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-C",
+  "work_unit": "WO-220307",
+  "issue": 118,
+  "invocation": "AlienLogicLab/alienintent#118:PRODUCER:35226af6-5856-4726-8c6a-68fad890f56a",
+  "source_revision": "a45193abc7ba1a30086a61f35c7d3262e2800deb",
+  "source_status": "",
+  "admission_baseline": "b86b9fbd1978ccf3c341155d0dd64d153ad6cb19",
+  "predecessors": [
+    {
+      "biu": "WO-220303",
+      "issue": 99,
+      "fixture": "FX-C3",
+      "accepted_candidate": "d69c00480c895da80d63eb185b534ca1befad0c7",
+      "landing_merge": "fc5c0a7fcbc0d70772c07cd35a4fe52a3e2641c7",
+      "ancestor_of_candidate": {
+        "d69c00480c895da80d63eb185b534ca1befad0c7": true,
+        "fc5c0a7": true
+      }
+    },
+    {
+      "biu": "WO-220304",
+      "issue": 96,
+      "fixture": "FX-C4",
+      "accepted_candidate": "4c806feb8456c68a590b1482ae340338b7d47c7d",
+      "landing_merge": "3285c9e087b78909501995a662a008e9e0565dc5",
+      "ancestor_of_candidate": {
+        "4c806feb8456c68a590b1482ae340338b7d47c7d": true,
+        "3285c9e087b78909501995a662a008e9e0565dc5": true
+      }
+    },
+    {
+      "biu": "WO-220306",
+      "issue": 112,
+      "fixture": "FX-L1",
+      "accepted_candidate": "3cac3912ff7f7d17648fc8dcee4ab7195baaefc8",
+      "landing_merge": "1753fde3638c26e47f33d793e59d11a6799ce74b",
+      "ancestor_of_candidate": {
+        "3cac3912ff7f7d17648fc8dcee4ab7195baaefc8": true,
+        "1753fde3638c26e47f33d793e59d11a6799ce74b": true
+      }
+    }
+  ],
+  "input_digests": {
+    "docs/evidence/wave2-proof-fixtures/FX-C/FX-C.md": "sha256:d45fc74794b99890cbe9046f7ba402c17402fef62f25f4c436fbc497025d0dd2",
+    "docs/work-units/wave2/WO-220307.md": "sha256:a5199d8d60075eca1bb41b6d8247f0ecef263b130bf0777cee8845575640eeef",
+    "docs/evidence/wave2-readiness-assessments/WO-220307.2026-09-25T221218.340064Z.assessment.json": "sha256:d7ba2f2b2ea09e8a8112ed9651f1801861894175a47ab5320e9e6654ab80eede",
+    "docs/evidence/wave2-design-contracts.json": "sha256:1cd1fe512e6d24cb7e90d813fd01eb0532e17564d95c99cdf63f63addbe05e80",
+    "docs/evidence/wave2-dependency-dag.json": "sha256:d199768a4481c264848a98db04e6fb8f5f1630151fda7be868319d6bcbd5a95c",
+    "docs/evidence/wave2-candidate-bius.json": "sha256:a3bf2c56e98dc3e8318b5b2d858483542c8553cf66e8e16f5e09534bc8e15695",
+    "docs/evidence/wave2-execution-packets/WO-220307.packet.json": "sha256:86ee3e3642490418b6e32bd4f5d00c6ad3bbea5f5b9bfba31d4d58b260999b57",
+    "docs/evidence/wave2-execution-packets/WO-220307.allocation.json": "sha256:a1d74cd913539da0eead26f80afe3135b80d9e8ce1f22e272d0c81ffe88ee3a4",
+    "docs/evidence/wave2-execution-packets/WO-220307.proof-packet.md": "sha256:0fc36d90196680b2c08b9e2e05167507b0b1098bfc5220a6bf03db29ce73a1be",
+    "docs/evidence/wave2-proof-fixtures/FX-C3/execution-record.json": "sha256:726a5041546d2e721768bd7dd525ca238bfec9d41e4f00d4aeeb3433df8681c8",
+    "docs/evidence/wave2-proof-fixtures/FX-C4/execution-record.json": "sha256:2618e0754929f452b13e3d9d15a49a7d336008fb81ea1e6b9287cdbef026cde6",
+    "docs/evidence/wave2-proof-fixtures/FX-L1/execution-record.json": "sha256:4e046c27e0763625f4018d1919088fc4f365dc394ab3fc8bbf086f638e4c6604",
+    "tests/composition/test_bounded_control_capstone.py": "sha256:15bd45deb55417775f49ae757a0d0dc67949da969a1aa03fb7606c1709a0e62f",
+    "tools/evidence/fx_c_evidence.py": "sha256:7a4335e35dedbd74fd81218c855c462a5f6bf0ab55f924d3f15520163a1f7ed9",
+    "src/alienintent/composition/bounded_control_profile.py": "sha256:dd450f745920d6b0c0e7c1cd967b1b95ce9eabd1bcec2738fc81339f547f0566",
+    "src/alienintent/control_plane/application/episode_control.py": "sha256:c8ca3ce0d9db497ffdc9ec86e9380bd1729ee69da803489c7498e1a7f49e2ba5",
+    "src/alienintent/composition/liveness_profile.py": "sha256:cff7ef1d5bab36148d8bea27e54746ecf9a8c79ef519bd84076f7c39dbff9d05",
+    "src/alienintent/execution_coordination/application/liveness.py": "sha256:5c75e886c369ee0968a41bbd87d8ca37c928f34aa7c41eb111cbf786f75f8cac"
+  },
+  "missing_inputs": [],
+  "commands": [
+    {
+      "id": "focused",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_bounded_control_capstone.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:d6f01556df290b804aa1631b0b9ef3f6c5dcbaf2982728fdac2d02be77ace014",
+        "locator": "observations/d6f01556df290b804aa1631b0b9ef3f6c5dcbaf2982728fdac2d02be77ace014"
+      }
+    },
+    {
+      "id": "bounded_initial",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_episode_control.py",
+        "tests/control_plane/test_attention.py",
+        "tests/control_plane/test_monitor_health.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:88d98e0e95ee457ed0ffa53776cd534117abc252f179f4363e3220e8736ae0d5",
+        "locator": "observations/88d98e0e95ee457ed0ffa53776cd534117abc252f179f4363e3220e8736ae0d5"
+      }
+    },
+    {
+      "id": "predecessor_l1",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/execution_coordination/test_liveness_reconciliation.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:13b29ddc4e3d0d5cb5573f768faf788694f7a7f9e8176368e5a95b65c059e82c",
+        "locator": "observations/13b29ddc4e3d0d5cb5573f768faf788694f7a7f9e8176368e5a95b65c059e82c"
+      }
+    },
+    {
+      "id": "architecture",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:25853e5a1f5d41591b9703a4824594b850b0802c74976139fa717cd945b089b8",
+        "locator": "observations/25853e5a1f5d41591b9703a4824594b850b0802c74976139fa717cd945b089b8"
+      }
+    },
+    {
+      "id": "architecture_fitness_tests",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_architecture_fitness.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:a021a3c1329e1261cc1d66d52c516809eab34bd42ee2dedd8a448ab8ab1ec6ba",
+        "locator": "observations/a021a3c1329e1261cc1d66d52c516809eab34bd42ee2dedd8a448ab8ab1ec6ba"
+      }
+    },
+    {
+      "id": "python_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_status": 1,
+      "observation_ref": {
+        "revision_digest": "sha256:6db7878019490dffff9a38468db92902843f094ad8156c35b742b74db0a3d41d",
+        "locator": "observations/6db7878019490dffff9a38468db92902843f094ad8156c35b742b74db0a3d41d"
+      },
+      "failed": [
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_authorized_supersession_with_passing_replacement_is_accepted",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_changed_judgment_reviewer_inputs_hold",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_plan_pins_the_four_observable_premise",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_profile_derives_and_persists_the_fx_u4_plan",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_credential_denial_obligation_is_infeasible_proof",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_obligation_holds",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_proof_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_erased_truncated_or_padded_history_is_a_hold",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_failed_prior_proof_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_implementation_derived_predicate_is_refused",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_incomplete_mechanical_obligation_holds",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_isolation_obligation_omitting_an_observable_is_infeasible",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_claiming_mechanical_pass_is_refused",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_obligation_names_reviewer_inputs_and_decision_record",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_lost_plan_pointer_is_not_an_empty_history",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_persisted_state_is_a_hold_not_an_exception",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_supersession_or_authority_holds_without_raising",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_recorded_proof_evidence_is_ordered_and_clean",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_removed_required_predicate_blocks_admission",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_replayed_prior_proof_is_accepted",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_skipped_prior_proof_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_supersession_without_passing_replacement_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_tampered_persisted_plan_is_refused",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unattributed_judgment_holds",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unauthorized_supersession_holds"
+      ]
+    },
+    {
+      "id": "node_regression",
+      "command": [
+        "node",
+        "scripts/check.mjs",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:3529c9135e84fe28aca3a04860c2613c794141ffb7386ab3daec47ebffc463d1",
+        "locator": "observations/3529c9135e84fe28aca3a04860c2613c794141ffb7386ab3daec47ebffc463d1"
+      }
+    }
+  ],
+  "holds": [],
+  "baseline_conditions": [
+    {
+      "condition": "PRE_EXISTING_BASELINE_FAILURE",
+      "count": 25,
+      "baseline": "b86b9fbd1978ccf3c341155d0dd64d153ad6cb19",
+      "baseline_ref": {
+        "revision_digest": "sha256:1b053123a5703a2062c94dd4ac95ebe4f57c4888ec4b42d2457c7c9ba802b63d",
+        "locator": "observations/1b053123a5703a2062c94dd4ac95ebe4f57c4888ec4b42d2457c7c9ba802b63d"
+      },
+      "note": "identical failing node ids at the admission baseline; no FX-C file is involved"
+    }
+  ],
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": null,
+    "reason": "UNKNOWN: provider usage is unavailable to this local fixture"
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:6fce10747780de8fa72583f64709df86d6f4152448077c9bab52455325fc8070",
+    "locator": "observations/6fce10747780de8fa72583f64709df86d6f4152448077c9bab52455325fc8070"
+  },
+  "run_state": "COMPLETE",
+  "exit_status": 0
+}

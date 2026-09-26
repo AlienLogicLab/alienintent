@@ -38,6 +38,32 @@
         "-q",
         "tools/evidence/test_bootstrap_custody_manifest.py"
       ]
+    },
+    {
+      "id": "local-bounded-control-capstone",
+      "description": "C3 episodes, C1 attention, C4 monitor health and L1 liveness stay composed: an ended episode's fresh context reconstructs identical authorized actions, one effect/readback survives duplicate/delayed outcomes, judgment attention survives and suppresses recovery, a stale epoch cannot send, and stopped scans never read as healthy (WO-220307, FX-C).",
+      "paths": [
+        "src/alienintent/composition/bounded_control_profile.py",
+        "src/alienintent/composition/control_plane_profile.py",
+        "src/alienintent/composition/liveness_profile.py",
+        "src/alienintent/control_plane/**",
+        "src/alienintent/execution_coordination/*/liveness*.py",
+        "src/alienintent/execution_coordination/ports/scan_progress.py",
+        "src/alienintent/execution_coordination/ports/fenced_store.py",
+        "src/alienintent/execution_coordination/adapters/sqlite_store.py",
+        "src/alienintent/context_assembly/application/reconstruction_service.py",
+        "src/alienintent/context_assembly/domain/reconstruction.py",
+        "tests/composition/test_bounded_control_capstone.py",
+        "tests/context_assembly/test_context_reconstruction.py",
+        "tests/execution_coordination/test_liveness_reconciliation.py"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/composition/test_bounded_control_capstone.py"
+      ]
     }
   ]
 }

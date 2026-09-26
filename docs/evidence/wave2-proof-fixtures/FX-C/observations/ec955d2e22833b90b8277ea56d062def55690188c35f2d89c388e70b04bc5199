@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/composition/test_bounded_control_capstone.py::test_stopped_scans_surface_stale_or_degraded_never_healthy"],"cwd":"/tmp/fx-c-controls-9aa4zl7a","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.79s\n"}

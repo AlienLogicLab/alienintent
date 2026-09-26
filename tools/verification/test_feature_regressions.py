@@ -29,3 +29,20 @@ def test_priority_feature_pack_is_selected_by_every_owned_boundary():
 
 def test_unrelated_change_does_not_select_priority_pack():
     assert module.selected_packs(manifest(), ("docs/README-unrelated.md",)) == []
+
+
+def test_bounded_control_capstone_pack_is_selected_by_every_composed_boundary():
+    composed = (
+        "src/alienintent/composition/bounded_control_profile.py",
+        "src/alienintent/composition/liveness_profile.py",
+        "src/alienintent/control_plane/application/episode_control.py",
+        "src/alienintent/execution_coordination/application/liveness.py",
+        "src/alienintent/execution_coordination/adapters/liveness_observations.py",
+        "src/alienintent/execution_coordination/adapters/sqlite_store.py",
+        "tests/context_assembly/test_context_reconstruction.py",
+        "tests/execution_coordination/test_liveness_reconciliation.py",
+    )
+    for path in composed:
+        assert [p["id"] for p in module.selected_packs(manifest(), (path,))] == [
+            "local-bounded-control-capstone"
+        ]
