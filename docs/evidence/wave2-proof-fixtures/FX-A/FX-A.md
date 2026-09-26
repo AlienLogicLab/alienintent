@@ -12,8 +12,14 @@ This is a disposable local fixture for the pinned FX-A proof packet
   assessment `WO-220211.2026-09-26T101031.613435Z`.
 - **Release and code baseline:** `c5ef2bc033e712b61da045df47f25b01b40f4dcc` (Factory Director RELEASED record on
   Issue #119).
-- **PRODUCER invocation:** `AlienLogicLab/alienintent#119:PRODUCER:c35b931d-a6be-43ba-8232-43c960067adb`, worker
-  Morty, branch `b-disp/5fd5d12d-e1f4-4a10-82d2-52f2b819103b`.
+- **PRODUCER invocations:**
+  - `AlienLogicLab/alienintent#119:PRODUCER:c35b931d-a6be-43ba-8232-43c960067adb`, worker Morty, branch
+    `b-disp/5fd5d12d-e1f4-4a10-82d2-52f2b819103b`. It authored source commit
+    `15d120462fd5235f4cd1bb0bf74e4118094d2f75` and ended `DURABLE_RESULT_MISSING` before any evidence was retained
+    (Factory Director checkpoint on Issue #119).
+  - Replacement `AlienLogicLab/alienintent#119:PRODUCER:e9111cdb-9a88-4be8-82ed-3909a276b535`, worker Morty, branch
+    `b-disp/1ff6ae4f-45e0-4bfb-9106-8dadf6128540`. It carries `15d1204` unchanged by fast-forward and retains the
+    evidence run.
 
 The fixture launches no Agent Ready, provider or model. It releases nothing, transitions no lifecycle state and
 writes no Issue or Project item.
