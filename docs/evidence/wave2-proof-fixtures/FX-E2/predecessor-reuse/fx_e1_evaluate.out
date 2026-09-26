@@ -1,0 +1,10 @@
+ok  K1 -> E1-1: fault HOLD ['E1-1'], restored PASS
+ok  K2 -> E1-2: fault HOLD ['E1-2'], restored PASS
+ok  K3 -> E1-3: fault HOLD ['E1-3'], restored PASS
+ok  K4 -> E1-4: fault HOLD ['E1-4'], restored PASS
+ok  K5 -> E1-5: fault HOLD ['E1-5'], restored PASS
+ok  K6 -> E1-6: fault HOLD ['E1-6'], restored PASS
+ok  K7 -> E1-7: fault HOLD ['E1-7'], restored PASS
+ok  K8 -> E1-8: fault HOLD ['E1-8'], restored PASS
+ok  K9 -> E1-9: fault HOLD ['E1-9'], restored PASS
+ok  K10 -> E1-10: fault HOLD ['E1-10'], restored PASS

@@ -1,0 +1,1 @@
+{"fixture": "FX-C2", "exit_status": 1, "holds": ["pinned input digest mismatch: docs/evidence/wave2-design-contracts.json", "pinned input digest mismatch: docs/evidence/wave2-dependency-dag.json", "pinned input digest mismatch: docs/evidence/wave2-candidate-bius.json", "python_regression failed"], "controls": 13, "discriminating": 13, "output": "/tmp/e2-pred/fx-c2-run"}

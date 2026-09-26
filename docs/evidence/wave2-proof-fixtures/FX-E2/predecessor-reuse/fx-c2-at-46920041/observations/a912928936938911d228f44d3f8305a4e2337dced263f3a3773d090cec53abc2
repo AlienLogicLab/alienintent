@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","tests/context_assembly/test_context_reconstruction.py"],"cwd":"/tmp/e2-pred/c2wt","exit_status":0,"stderr":"","stdout":"..................                                                       [100%]\n18 passed in 6.48s\n"}
