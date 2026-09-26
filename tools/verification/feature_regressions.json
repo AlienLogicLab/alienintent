@@ -87,6 +87,23 @@
         "-q",
         "tests/control_plane/test_monitor_host.py"
       ]
+    },
+    {
+      "id": "live-transport-proof-fx-e1",
+      "description": "FX-E1 judges the Python-only live transport proof: every predicate passes only on retained evidence, each mechanical fault holds its own predicate and restores, and the no-Node instrument detects Node by name, by absolute path and under a stated environment (WO-220502, FX-E1).",
+      "paths": [
+        "tools/live/fx_e1_*.py",
+        "tools/live/fx_e1_worker.sh",
+        "tools/live/test_fx_e1.py",
+        "docs/evidence/wave2-proof-fixtures/FX-E1/**"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tools/live/test_fx_e1.py"
+      ]
     }
   ]
 }
