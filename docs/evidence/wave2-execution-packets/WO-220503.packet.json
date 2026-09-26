@@ -1,0 +1,84 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220503",
+  "issued_at": "2026-09-26T21:10:00.000000+00:00",
+  "goal": "Deliver the bounded planned extent: Conditional one-writer migration and rollback substrate",
+  "starting_authority": {
+    "requirements": [],
+    "dag_node": [
+      "E2"
+    ],
+    "candidate_contract_sha256": "fa63d0cd88b48f5ca98f0315470e1dedfa0e1e450fdd680f1179d4953b567b12",
+    "baseline_sha": "70fb9f8851f0ae214a553bcf650846c75a66e2c3",
+    "release_authority": "NOT GRANTED — normal Wave 2 release admission required before IMPLEMENT"
+  },
+  "allowed_scope": {
+    "extent": "Under existing cutover authority and reviewed scope, prove quiescence, durable active-work/effect reconciliation, backup/checkpoint integrity, retained pending reservations and nonduplicating rollback in an isolated rehearsal before live use. Reject simultaneous Node/Python writers for the same work. If canonical control is absent, keep Node and return to existing authority rather than let sovereignty capstone implement its own migration machinery.",
+    "boundary": "Only this node extent. Requirement/design references constrain execution and do not absorb sibling scopes.",
+    "non_goals": [
+      "Replanning the DAG or implementing another node; changing requirements, closing authority gaps or selecting withdrawn architecture policy.",
+      "Automatic release, live operation or retirement from a candidate or local proof result."
+    ],
+    "architecture_constraints": [
+      "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
+      "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+    ]
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220502",
+      "issue": 122,
+      "project_status": "DONE",
+      "completion_predicate": "Before any live integration proof, identify the existing Python profile/transport revision, custody and configured scoped resources under its existing execution authority. Separately authorize and prove the identified Python-only runtime baseline with instrumented no-Node process/dependency paths, real ingress, effect dispatch, durable consumer outcome/readback and restart with the production path; invalid scope or missing readback holds. A local fake, retained Wave 1 receipt or running tunnel alone cannot discharge this prerequisite. Missing implementation returns to its existing requirement owner; this plan does not insert a new live-transport requirement."
+    },
+    {
+      "biu_id": "WO-220302",
+      "issue": 95,
+      "project_status": "DONE",
+      "completion_predicate": "Two fresh invocations reading the identical manifest reconstruct equal authorized_next_action_set and blocked_set, current work, unresolved decisions and evidence refs. Conversation memory is neither an input nor authority; unavailable state produces hold."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
+    "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority.",
+    "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS."
+  ],
+  "acceptance": {
+    "criteria": [
+      "Under existing cutover authority and reviewed scope, prove quiescence, durable active-work/effect reconciliation, backup/checkpoint integrity, retained pending reservations and nonduplicating rollback in an isolated rehearsal before live use. Reject simultaneous Node/Python writers for the same work. If canonical control is absent, keep Node and return to existing authority rather than let sovereignty capstone implement its own migration machinery."
+    ],
+    "proof_fixture": "FX-E2",
+    "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+    "material_failure_classes": [
+      "Quiescence, active-work/effect reconciliation, checkpoint integrity, pending-reservation retention or nonduplicating rollback is missing, weak or asserted without discriminating evidence.",
+      "A simultaneous Node/Python writer for the same work is not rejected, or the isolated rehearsal shares state with the live writer.",
+      "Predecessor proof (WO-220502, WO-220302) is not retrieved and confirmed reusable on this BIU's path before implementation.",
+      "The FX-E2 fixture is not pinned (commands, inputs, expected outcomes, evidence schema) before implementation begins.",
+      "Canonical control is found absent but the BIU implements its own migration machinery instead of the keep-Node/return-to-authority path."
+    ],
+    "bounded_commands": [],
+    "non_claims": [
+      "No release, cutover, Node/bootstrap retirement, sibling BIU scope or broader production mutation is authorized.",
+      "A successful proof is not itself operational release or live-operation authorization.",
+      "No live self-hosting or production writer switch is claimed by this packet; scope is isolated rehearsal only."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220503",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker.",
+    "current_artifact": "Candidate specification only; no branch publication, implementation commit or worker invocation created by this packet."
+  },
+  "landing": "SWF-19: normal merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220503.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
+    "Separate authority required: EXPLICIT_SOVEREIGNTY_CUTOVER_AUTHORITY, EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, POSTW1-DECIDE-006A — all three disposed for this BIU's own approved isolated-rehearsal extent by the Founder's 2026-09-26 Wave 2 bounded operational authority delegation (docs/decisions/2026-09-26-wave2-bounded-operational-authority-delegation.md); the distinct future Wave 2 operational-release/live-cutover grant referenced by this BIU's release_policy remains separately required and is unaffected by this proof authority."
+  ],
+  "escalation_condition": [
+    "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
+    "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside this node. Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "READY, native Agent Ready READY at the exact current revision (docs/evidence/wave2-readiness-assessments/WO-220503.2026-09-26T202104.046800Z.assessment.json); this packet grants no release authority."
+}
