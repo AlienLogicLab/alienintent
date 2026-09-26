@@ -1,0 +1,1512 @@
+{
+  "artifact_type": "bootstrap_custody_manifest",
+  "assets": [
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/attention.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "attention_wait.py",
+          "liveness.py",
+          "observer.py",
+          "test_attention.py",
+          "test_attention_wait.py",
+          "test_liveness_suppression.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 12,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/operations.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Attention queue library imported by liveness.py and observer.py. It is part of the current live protection chain. Identity/history/consumer migration is not proven.",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/operations.md"
+        ],
+        "group": "attention",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "90a0d7289e75bb2acb5dd47fb0987aa4352a53ce",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T03:14:18.802800+00:00",
+        "sha256": "14e2f9ba92ac996f116d44fcfd45ae94e94c4ad6620a7db170099d001d27475f",
+        "size": 10577
+      },
+      "in_historical_eighteen": true,
+      "path": "attention.py",
+      "provenance": {
+        "bootstrap_tests": [
+          "test_attention.py",
+          "test_attention_wait.py",
+          "test_liveness_suppression.py"
+        ],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/attention_wait.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "test_attention_wait.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 4,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/operations.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Session-bound wake/attention bridge. Retirement is gated by successor attention handoff/tenure proof or an explicit decision.",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/operations.md"
+        ],
+        "group": "attention-wait",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "d8b5d2a5014a4ceecf87f2c85d90017791f148fc",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-20T22:02:42.610535+00:00",
+        "sha256": "6b6e6893119e278ced8c67b9f31c58d05c9ed0ee66eb826155bce7b54bcf7ba8",
+        "size": 4402
+      },
+      "in_historical_eighteen": true,
+      "path": "attention_wait.py",
+      "provenance": {
+        "bootstrap_tests": [
+          "test_attention_wait.py"
+        ],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/cycle_data.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "test_cycle_data.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 4,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/operations.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Wave-1 repair-cycle evidence utility. No long-lived process or unit observed.",
+        "class": "HISTORICAL_PROVENANCE_UTILITY",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+          "docs/operations.md"
+        ],
+        "group": "wave1-evidence-utilities",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "9cd8218f4a76c983bbfba10feaccc5ea22b28d38",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T02:57:07.291715+00:00",
+        "sha256": "0286eba7c1c263954922bd32fcdefc5c68274393fea4f49371949df74dfceb1c",
+        "size": 13557
+      },
+      "in_historical_eighteen": true,
+      "path": "cycle_data.py",
+      "provenance": {
+        "bootstrap_tests": [
+          "test_cycle_data.py"
+        ],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/codex_session.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "factory-director-host/factory_director_host.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 5,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Provider session module of the live Factory Director Host. Installed by tools/orchestration/install_factory_director_host.sh from repository source; unit alienintent-factory-director-host.service; docs/operations/factory-director-host.md",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/operations/factory-director-host.md",
+          "tools/orchestration/install_factory_director_host.sh"
+        ],
+        "group": "factory-director-host",
+        "migration_deletion_retirement_authorized": false,
+        "replacement_ref": "tools/orchestration/codex_session.py",
+        "replacement_ref_status": "IDENTICAL",
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "c4b2ea9aa931c7f4e68c37eeafe36a7ca0ff49ce",
+        "mode": "0o600",
+        "mtime_utc": "2026-09-24T11:39:57.541865+00:00",
+        "sha256": "45b42a72b943ddeca79cba7f5cd99d7c86df3129db6b6ebfb3e8519e6d1ec7b6",
+        "size": 6755
+      },
+      "in_historical_eighteen": false,
+      "path": "factory-director-host/codex_session.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [
+          {
+            "commit": "2ac6e1d5161d47be5bbca23bf1110a3593063f29",
+            "subject": "tools(orchestration): classify a provider 'session limit' notice as a capacity interruption"
+          }
+        ],
+        "repository_paths_with_identical_bytes": [
+          "tools/orchestration/codex_session.py"
+        ]
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/factory-director-episode.md",
+      "consumers": {
+        "bootstrap_assets": [
+          "factory-director-host/factory-director-host.sh"
+        ],
+        "processes": [
+          {
+            "argv": [
+              "python3",
+              "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/factory_director_host.py",
+              "--state-root",
+              "/home/netmarine/.local/state/alienintent/factory-director-host",
+              "--config",
+              "/home/netmarine/.config/alienintent/factory-director-host.json",
+              "--workdir",
+              "/home/netmarine/.local/state/alienintent/factory-director/worktree",
+              "--prompt",
+              "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/factory-director-episode.md"
+            ],
+            "pid": 1593754
+          }
+        ],
+        "repository_basename_mentions_unattributed": 8,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/operations/factory-director-host-live-proof.md",
+            "docs/operations/factory-director-host.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Episode prompt passed to the live Factory Director Host. Installed by tools/orchestration/install_factory_director_host.sh from repository source; unit alienintent-factory-director-host.service; docs/operations/factory-director-host.md",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/operations/factory-director-host.md",
+          "tools/orchestration/install_factory_director_host.sh"
+        ],
+        "group": "factory-director-host",
+        "migration_deletion_retirement_authorized": false,
+        "replacement_ref": "tools/orchestration/factory-director-episode.md",
+        "replacement_ref_status": "IDENTICAL",
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "448bde4da59f457cbb1eda6537abbdd1bc744647",
+        "mode": "0o600",
+        "mtime_utc": "2026-09-24T11:39:57.549041+00:00",
+        "sha256": "b840387014f94236ab4f0b00c0dde59ac3b5d1a9d872515f0695997c6bff3cec",
+        "size": 685
+      },
+      "in_historical_eighteen": false,
+      "path": "factory-director-host/factory-director-episode.md",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [
+          {
+            "commit": "a2bf163cce3d868dd38b4abf3dddf3740995bb22",
+            "subject": "feat: authoritative predicate adapter and provider-neutral Factory Director Host (FDH-01)"
+          }
+        ],
+        "repository_paths_with_identical_bytes": [
+          "tools/orchestration/factory-director-episode.md"
+        ]
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/factory-director-host.sh",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 2,
+        "repository_qualified_references": {
+          "code": [
+            "tools/orchestration/systemd/alienintent-factory-director-host.service"
+          ],
+          "docs": []
+        },
+        "service_units": [
+          {
+            "enabled_via_wants_link": true,
+            "lines": [
+              "ExecStart=/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/factory-director-host.sh"
+            ],
+            "unit": "alienintent-factory-director-host.service"
+          }
+        ]
+      },
+      "custody": {
+        "basis": "ExecStart of alienintent-factory-director-host.service. It is generated by the installer's heredoc, so no repository file holds its exact bytes. Installed by tools/orchestration/install_factory_director_host.sh from repository source; unit alienintent-factory-director-host.service; docs/operations/factory-director-host.md",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/operations/factory-director-host.md",
+          "tools/orchestration/install_factory_director_host.sh",
+          "tools/orchestration/systemd/alienintent-factory-director-host.service"
+        ],
+        "group": "factory-director-host",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "f5a67443e70a7afec39c0dba3607cc9d9bce153c",
+        "mode": "0o700",
+        "mtime_utc": "2026-09-24T11:39:57.558262+00:00",
+        "sha256": "829b6d4cf03a7283f7f6da7465c6189dc9071682b91d98784d7327efb8121e5d",
+        "size": 567
+      },
+      "in_historical_eighteen": false,
+      "path": "factory-director-host/factory-director-host.sh",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/factory_director_host.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "factory-director-host/factory-director-host.sh",
+          "factory-director-host/factory_director_inputs.py"
+        ],
+        "processes": [
+          {
+            "argv": [
+              "python3",
+              "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/factory_director_host.py",
+              "--state-root",
+              "/home/netmarine/.local/state/alienintent/factory-director-host",
+              "--config",
+              "/home/netmarine/.config/alienintent/factory-director-host.json",
+              "--workdir",
+              "/home/netmarine/.local/state/alienintent/factory-director/worktree",
+              "--prompt",
+              "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/factory-director-episode.md"
+            ],
+            "pid": 1593754
+          }
+        ],
+        "repository_basename_mentions_unattributed": 117,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/operations/factory-director-host-live-proof.md",
+            "docs/operations/factory-director-host.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Live Factory Director Host process (a deployment, not a temporary protection). Installed by tools/orchestration/install_factory_director_host.sh from repository source; unit alienintent-factory-director-host.service; docs/operations/factory-director-host.md",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/operations/factory-director-host.md",
+          "tools/orchestration/install_factory_director_host.sh"
+        ],
+        "group": "factory-director-host",
+        "migration_deletion_retirement_authorized": false,
+        "replacement_ref": "tools/orchestration/factory_director_host.py",
+        "replacement_ref_status": "IDENTICAL",
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "9f01093dda1f30e44b215e454cd478844f529984",
+        "mode": "0o700",
+        "mtime_utc": "2026-09-24T11:39:57.533231+00:00",
+        "sha256": "92a4f8392a25bcf92a36cbc9d8a67d90099d799236f10eb12b5d9ef202a3d070",
+        "size": 35581
+      },
+      "in_historical_eighteen": false,
+      "path": "factory-director-host/factory_director_host.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [
+          {
+            "commit": "04c77e38406b0c78ac8597e009df8a0fdd06f5ef",
+            "subject": "FDH-92: treat runtime claims at or above the WIP limit as intentionally full"
+          }
+        ],
+        "repository_paths_with_identical_bytes": [
+          "tools/orchestration/factory_director_host.py"
+        ]
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/factory_director_inputs.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "factory-director-host/factory_director_host.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 125,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/operations/factory-director-host-live-proof.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Imported by the live Factory Director Host. Installed by tools/orchestration/install_factory_director_host.sh from repository source; unit alienintent-factory-director-host.service; docs/operations/factory-director-host.md",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/operations/factory-director-host.md",
+          "tools/orchestration/install_factory_director_host.sh"
+        ],
+        "group": "factory-director-host",
+        "migration_deletion_retirement_authorized": false,
+        "replacement_ref": "tools/orchestration/factory_director_inputs.py",
+        "replacement_ref_status": "IDENTICAL",
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "7b74063760bef3fbf386e6f57ec704aabd53a52c",
+        "mode": "0o700",
+        "mtime_utc": "2026-09-24T11:39:57.537806+00:00",
+        "sha256": "8adb3aa6b779c2b84bc728cbb05f53f6aab1de8db4adc1e1e22c3870c79e8181",
+        "size": 25775
+      },
+      "in_historical_eighteen": false,
+      "path": "factory-director-host/factory_director_inputs.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [
+          {
+            "commit": "cba31f9f1c1756979935e0b7e34e7064d32e45c0",
+            "subject": "FDH-91: require a host env PATH that resolves gh; fail closed naming gh and the searched PATH"
+          }
+        ],
+        "repository_paths_with_identical_bytes": [
+          "tools/orchestration/factory_director_inputs.py"
+        ]
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/factory-director-host/project_materialization.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "factory-director-host/factory_director_inputs.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 20,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Project materialization module installed for the live Factory Director Host from tools/live/project_materialization.py. Installed by tools/orchestration/install_factory_director_host.sh from repository source; unit alienintent-factory-director-host.service; docs/operations/factory-director-host.md",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/operations/factory-director-host.md",
+          "tools/orchestration/install_factory_director_host.sh"
+        ],
+        "group": "factory-director-host",
+        "migration_deletion_retirement_authorized": false,
+        "replacement_ref": "tools/live/project_materialization.py",
+        "replacement_ref_status": "DIFFERS",
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "2dae437f9f08ce0d1abb50d843aa43f95d8fd379",
+        "mode": "0o600",
+        "mtime_utc": "2026-09-25T16:35:30.581170+00:00",
+        "sha256": "5aa6c548c39a2960763dd2965ebc34f701791a3affc8461eaecdbf4b8c3ad0c5",
+        "size": 10579
+      },
+      "in_historical_eighteen": false,
+      "path": "factory-director-host/project_materialization.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [
+          {
+            "commit": "178732f464a516f0cd6c108f18e25f1c6b978445",
+            "subject": "fix(materialization): inherit parent requirement priority"
+          },
+          {
+            "commit": "4e74e18efdb9e266f29071907345a99618720141",
+            "subject": "fix(factory-director): paginate Project board reads"
+          }
+        ],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/factory_status.sh",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 1,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Read-only operator snapshot helper. It is newly discovered and outside the historical eighteen. No service unit, process or repository code consumer was observed.",
+        "class": "UNKNOWN",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md"
+        ],
+        "group": "operator-shell-helpers",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": [
+          {
+            "blocks": [
+              "factory_status.sh"
+            ],
+            "question": "No recorded owner, authority, replacement or expiry for this operator helper; its custody class (keep, repository custody or retirement decision) is undecided."
+          }
+        ]
+      },
+      "identity": {
+        "git_blob": "10c27490555b6e6673eaa56dc9a83fa01f83c481",
+        "mode": "0o755",
+        "mtime_utc": "2026-09-25T02:50:51.266516+00:00",
+        "sha256": "aa47d100f0deba44332a3f0b5ba63d9874267127495385ebabfbf4eb48b40cf3",
+        "size": 2103
+      },
+      "in_historical_eighteen": false,
+      "path": "factory_status.sh",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/liveness.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "test_liveness_suppression.py"
+        ],
+        "processes": [
+          {
+            "argv": [
+              "/usr/bin/python3",
+              "/home/netmarine/.local/share/alienintent-bootstrap/liveness.py"
+            ],
+            "pid": 1182
+          }
+        ],
+        "repository_basename_mentions_unattributed": 9,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": [
+          {
+            "enabled_via_wants_link": true,
+            "lines": [
+              "ExecStart=/usr/bin/python3 /home/netmarine/.local/share/alienintent-bootstrap/liveness.py"
+            ],
+            "unit": "alienintent-liveness.service"
+          }
+        ]
+      },
+      "custody": {
+        "basis": "Temporary SWF-29 actor/effect liveness protection run by the alienintent-liveness user unit. Canonical SF-REQ-056 live replacement is not proven.",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md"
+        ],
+        "group": "liveness",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "828f90e8e2dbc49cf2b21e40e594575b67537180",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T03:14:18.803046+00:00",
+        "sha256": "36f49b448e34fc528fddb7ba47ab38da151eaba0d94c5e0c799f1babd0dc2017",
+        "size": 12694
+      },
+      "in_historical_eighteen": true,
+      "path": "liveness.py",
+      "provenance": {
+        "bootstrap_tests": [
+          "test_liveness_suppression.py"
+        ],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/notify_founder.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "attention.py",
+          "test_attention.py",
+          "test_notify_founder.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 5,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Bootstrap notification path imported by attention.py (live chain). Needs a separate notification risk/replacement disposition, which this pass does not decide.",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md"
+        ],
+        "group": "notification",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "3273b4e4b6f2d18b255387698fcd00a382755385",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-20T17:07:00.891867+00:00",
+        "sha256": "9c6bdf8d90f879b2920a7dffa46149b9d99d5e77e812b3ced430f3bdeb7f3d97",
+        "size": 2021
+      },
+      "in_historical_eighteen": true,
+      "path": "notify_founder.py",
+      "provenance": {
+        "bootstrap_tests": [
+          "test_attention.py",
+          "test_notify_founder.py"
+        ],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/observer.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "attention.py"
+        ],
+        "processes": [
+          {
+            "argv": [
+              "/usr/bin/python3",
+              "/home/netmarine/.local/share/alienintent-bootstrap/observer.py"
+            ],
+            "pid": 1183
+          }
+        ],
+        "repository_basename_mentions_unattributed": 5,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": [
+          {
+            "enabled_via_wants_link": true,
+            "lines": [
+              "ExecStart=/usr/bin/python3 /home/netmarine/.local/share/alienintent-bootstrap/observer.py"
+            ],
+            "unit": "alienintent-observer.service"
+          }
+        ]
+      },
+      "custody": {
+        "basis": "SWF-27 deterministic lifecycle observer run by the alienintent-observer user unit. Canonical trajectory/monitor replacement is not proven.",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md"
+        ],
+        "group": "observer",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "6f68317f7229b40f03318fd0e01cd822a4293f79",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-20T17:08:06.717576+00:00",
+        "sha256": "fe01d46f4ae41bf4410f92a54dd1b9c4ec135e1d14e7e0a922dae1761cb4cc5e",
+        "size": 5323
+      },
+      "in_historical_eighteen": true,
+      "path": "observer.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/project_add_recovery_probe.sh",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 1,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": [
+          {
+            "enabled_via_wants_link": false,
+            "lines": [
+              "ExecStart=/home/netmarine/.local/share/alienintent-bootstrap/project_add_recovery_probe.sh"
+            ],
+            "unit": "alienintent-project-add-probe.service"
+          }
+        ]
+      },
+      "custody": {
+        "basis": "Temporary GitHub Project add-path recovery probe. It is ExecStart of alienintent-project-add-probe.service, driven by alienintent-project-add-probe.timer. It creates and closes a disposable sandbox Issue on each run.",
+        "class": "UNKNOWN",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md"
+        ],
+        "group": "operator-shell-helpers",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": [
+          {
+            "blocks": [
+              "project_add_recovery_probe.sh"
+            ],
+            "question": "No authority record for the probe or its expiry. The script states a RECOVERED exit condition, but no decision ties retirement to it."
+          },
+          {
+            "blocks": [
+              "project_add_recovery_probe.sh"
+            ],
+            "question": "Timer activation state is not observable read-only here: no *.wants link is present and systemctl is not invoked by this inventory."
+          }
+        ]
+      },
+      "identity": {
+        "git_blob": "30b1137bbf600d4b502232a43b9f8eb80dcf20b2",
+        "mode": "0o755",
+        "mtime_utc": "2026-09-24T04:10:05.625525+00:00",
+        "sha256": "558860b8e0b1b3fea5a688ad8729a36e12f283c25e380f942cf8c7325e9ba6e5",
+        "size": 3262
+      },
+      "in_historical_eighteen": false,
+      "path": "project_add_recovery_probe.sh",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/py05_py09_quality.py",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 4,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/evidence/execution-trajectories/PY-05-to-PY-09-extraction-verification.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Generator of the retained PY-05..PY-09 quality evidence.",
+        "class": "HISTORICAL_PROVENANCE_UTILITY",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/evidence/execution-trajectories/PY-05-to-PY-09-extraction-verification.md"
+        ],
+        "group": "wave1-evidence-utilities",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "5eba47398533477020c1d84e36027ab631d224a6",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T02:45:07.070169+00:00",
+        "sha256": "8834041c274c6b6da59a1759251e627c5660bcb6836cdf5efd2526b08eea70cc",
+        "size": 39318
+      },
+      "in_historical_eighteen": true,
+      "path": "py05_py09_quality.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/py05_py09_trajectory.py",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 4,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/evidence/execution-trajectories/PY-05-to-PY-09-extraction-verification.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Generator of the retained PY-05..PY-09 trajectory evidence.",
+        "class": "HISTORICAL_PROVENANCE_UTILITY",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/evidence/execution-trajectories/PY-05-to-PY-09-extraction-verification.md"
+        ],
+        "group": "wave1-evidence-utilities",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "476fe7159bfa2701e518229222f02f63fbbbd229",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T02:46:09.195518+00:00",
+        "sha256": "160dddc0af0ed9eb195e2af76457c27a4ed8525cdcf8fcb7d6749a725b9235fb",
+        "size": 87199
+      },
+      "in_historical_eighteen": true,
+      "path": "py05_py09_trajectory.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/py10_preflight.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "test_py10_preflight.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 4,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/operations/py10-sandbox.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "PY-10 sandbox preflight utility that produced the retained py10-preflight evidence.",
+        "class": "HISTORICAL_PROVENANCE_UTILITY",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/operations/py10-sandbox.md"
+        ],
+        "group": "wave1-evidence-utilities",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "a9869f950173c0753c043223dd2a4b0463963619",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T09:13:50.688726+00:00",
+        "sha256": "0d6b3b777f412e6d5f82adb2f8e060654da017a949778c098d18f7df6c3a2580",
+        "size": 12514
+      },
+      "in_historical_eighteen": true,
+      "path": "py10_preflight.py",
+      "provenance": {
+        "bootstrap_tests": [
+          "test_py10_preflight.py"
+        ],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/release_admission.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "test_release_admission.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 28,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+            "docs/evidence/fdh-01-live-proof/20260924T080401Z/04-timeline-83.json",
+            "docs/evidence/fdh-01-live-proof/20260924T080401Z/08-output-B.json",
+            "docs/evidence/fdh-01-live-proof/20260924T080401Z/0a-inbox-handoff.json",
+            "docs/operations.md",
+            "docs/work-units/wave2/BRD-83.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "External release-admission gate. The canonical in-repository successor exists. The external copy stays until the in-repo live-boundary replacement proof.",
+        "class": "REPLACEMENT_PROOF_CANDIDATE",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/decisions/2026-09-20-wave1-release-coordinator.md",
+          "docs/evidence/brd-83-execution.md"
+        ],
+        "group": "release-admission",
+        "migration_deletion_retirement_authorized": false,
+        "replacement_ref": "tools/live/release_admission.py",
+        "replacement_ref_status": "DIFFERS",
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "6ef1bc845b1e51531b0d92f900001a413f716d4c",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-23T08:23:23.653432+00:00",
+        "sha256": "fb8758cecb4db13073be71e39f37c77250b018406d7c968e45d1fa57231b9b1b",
+        "size": 9859
+      },
+      "in_historical_eighteen": true,
+      "path": "release_admission.py",
+      "provenance": {
+        "bootstrap_tests": [
+          "test_release_admission.py"
+        ],
+        "repository_commits_touching_blob": [
+          {
+            "commit": "7afec8282c9eb79f4a73fa79326b96053057e7ed",
+            "subject": "fix: read readiness records from the release point for any BIU identifier (BRD-83, Issue #83)"
+          },
+          {
+            "commit": "1439457d4ac39803fcee1c9920b103fd31f2015b",
+            "subject": "chore: import release-admission gate verbatim into tools/live (BRD-83, Issue #83)"
+          }
+        ],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/test_attention.py",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 66,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Regression tests for the live attention queue; they stay with their subject.",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+          "docs/operations.md"
+        ],
+        "group": "attention",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "c9b53d203eb0f942b299c539d19b880d3cb98b92",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T03:14:04.270129+00:00",
+        "sha256": "fb41b381776a32512c5edc9fe1fc54f7cb2e307fd7188b2cb6ac87a21604f0d3",
+        "size": 13373
+      },
+      "in_historical_eighteen": true,
+      "path": "test_attention.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/test_attention_wait.py",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 2,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Regression tests for the attention waiter; they stay with their subject.",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json"
+        ],
+        "group": "attention-wait",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "efe560bbd1009572af9414cf85e0240474080070",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-20T22:03:16.873648+00:00",
+        "sha256": "c6616b87b287006c30842e3aecdc5c641503b25bd3aa6877db45e81b5fa7d6bd",
+        "size": 5093
+      },
+      "in_historical_eighteen": true,
+      "path": "test_attention_wait.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/test_cycle_data.py",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 2,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Tests for cycle_data.py.",
+        "class": "HISTORICAL_PROVENANCE_UTILITY",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json"
+        ],
+        "group": "wave1-evidence-utilities",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "e6f338fa5215a604fc3f09323aa1b960234dc062",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T02:57:07.244013+00:00",
+        "sha256": "efe1f2e7a4f305eb9f35826108a795ef4f904ef16e62803cb81be2166cede5df",
+        "size": 13568
+      },
+      "in_historical_eighteen": true,
+      "path": "test_cycle_data.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/test_liveness_suppression.py",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 5,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Regression tests for the live liveness protection; they stay with their subject.",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json",
+          "docs/decisions/2026-09-20-liveness-reconciliation.md"
+        ],
+        "group": "liveness",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "0d9965f53336a1585c05e9a773544788f9d62c9f",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T03:14:04.270129+00:00",
+        "sha256": "018d76b9d6b7fcb2aec18242731bbbac42ba8fcd529ef8d805cebd1e7ec6338a",
+        "size": 4176
+      },
+      "in_historical_eighteen": true,
+      "path": "test_liveness_suppression.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/test_notify_founder.py",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 2,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Regression tests for the bootstrap notification path; they stay with their subject.",
+        "class": "KEEP_UNTIL_REPLACED",
+        "evidence": [
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json"
+        ],
+        "group": "notification",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "3c2158e0c86122661424a850f0b444cba1d42352",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-20T17:06:37.013318+00:00",
+        "sha256": "01bc6660ab9d5f04121e92df6b9eddda516fd13f74bc3d52870b831fcbcab6e6",
+        "size": 1510
+      },
+      "in_historical_eighteen": true,
+      "path": "test_notify_founder.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/test_py10_preflight.py",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 2,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Tests for py10_preflight.py.",
+        "class": "HISTORICAL_PROVENANCE_UTILITY",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/evidence/wave1-bootstrap-retirement-matrix.json"
+        ],
+        "group": "wave1-evidence-utilities",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "dae3640590063ffe00c0feb9748701457d03cb0e",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T09:14:10.954657+00:00",
+        "sha256": "a4ee136ed02449d9751294f8f27c52eb4e5ba4a462117d3a70d3f87004d71cd4",
+        "size": 7496
+      },
+      "in_historical_eighteen": true,
+      "path": "test_py10_preflight.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/test_release_admission.py",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 15,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Tests for the external release-admission gate; the in-repository successor has its own regression coverage.",
+        "class": "REPLACEMENT_PROOF_CANDIDATE",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/evidence/brd-83-execution.md"
+        ],
+        "group": "release-admission",
+        "migration_deletion_retirement_authorized": false,
+        "replacement_ref": "tools/live/test_release_admission.py",
+        "replacement_ref_status": "DIFFERS",
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "c6285d5241b39f8c624888b6a10c1fb4c1c277e9",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-23T08:22:58.230444+00:00",
+        "sha256": "e8000ad29d07d6a6064a7f4982b760ca957376e9d518991b8c8497a2954e5e4e",
+        "size": 7003
+      },
+      "in_historical_eighteen": true,
+      "path": "test_release_admission.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [
+          {
+            "commit": "7afec8282c9eb79f4a73fa79326b96053057e7ed",
+            "subject": "fix: read readiness records from the release point for any BIU identifier (BRD-83, Issue #83)"
+          },
+          {
+            "commit": "1439457d4ac39803fcee1c9920b103fd31f2015b",
+            "subject": "chore: import release-admission gate verbatim into tools/live (BRD-83, Issue #83)"
+          }
+        ],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/trajectory_consistency.py",
+      "consumers": {
+        "bootstrap_assets": [
+          "py05_py09_quality.py"
+        ],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 4,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": [
+            "docs/evidence/execution-trajectories/PY-05-to-PY-09-extraction-verification.md"
+          ]
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Consistency checker for the retained PY-05..PY-09 evidence.",
+        "class": "HISTORICAL_PROVENANCE_UTILITY",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/evidence/execution-trajectories/PY-05-to-PY-09-extraction-verification.md"
+        ],
+        "group": "wave1-evidence-utilities",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": []
+      },
+      "identity": {
+        "git_blob": "374eb1dc386e6f43f75fb3243ba6120619b0cd20",
+        "mode": "0o644",
+        "mtime_utc": "2026-09-21T02:46:30.472599+00:00",
+        "sha256": "787bc6979b22ceb8a4e108f864433a70f25b537ad0127de6281d326b9e842314",
+        "size": 19850
+      },
+      "in_historical_eighteen": true,
+      "path": "trajectory_consistency.py",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    },
+    {
+      "absolute_path": "/home/netmarine/.local/share/alienintent-bootstrap/worker_credential_probe.sh",
+      "consumers": {
+        "bootstrap_assets": [],
+        "processes": [],
+        "repository_basename_mentions_unattributed": 6,
+        "repository_qualified_references": {
+          "code": [],
+          "docs": []
+        },
+        "service_units": []
+      },
+      "custody": {
+        "basis": "Worker gh-credential probe. It proves pull-request refusal while the worker's operations succeed, and pushes and deletes a throwaway branch. It is cited as FDH-01 live-proof evidence. No service unit or process consumer was observed.",
+        "class": "UNKNOWN",
+        "evidence": [
+          "docs/evidence/2026-09-25-external-bootstrap-custody-refresh.md",
+          "docs/evidence/fdh-01-live-proof/20260924T080401Z/08-output-A.json"
+        ],
+        "group": "operator-shell-helpers",
+        "migration_deletion_retirement_authorized": false,
+        "unknowns": [
+          {
+            "blocks": [
+              "worker_credential_probe.sh"
+            ],
+            "question": "No recorded owner, authority or repository custody decision for this credential probe; whether it is live operations tooling or retained proof utility is undecided."
+          }
+        ]
+      },
+      "identity": {
+        "git_blob": "33777ff38f02f01af9c1203bb0ae4bfd7d176f68",
+        "mode": "0o755",
+        "mtime_utc": "2026-09-24T02:43:03.318053+00:00",
+        "sha256": "ddc3d4fe4bd90a4340906cb6e54a85c74a3dc3a935211737530bb39226a666aa",
+        "size": 4603
+      },
+      "in_historical_eighteen": false,
+      "path": "worker_credential_probe.sh",
+      "provenance": {
+        "bootstrap_tests": [],
+        "repository_commits_touching_blob": [],
+        "repository_paths_with_identical_bytes": []
+      }
+    }
+  ],
+  "discovery": {
+    "additional_to_historical_eighteen": [
+      "factory-director-host/codex_session.py",
+      "factory-director-host/factory-director-episode.md",
+      "factory-director-host/factory-director-host.sh",
+      "factory-director-host/factory_director_host.py",
+      "factory-director-host/factory_director_inputs.py",
+      "factory-director-host/project_materialization.py",
+      "factory_status.sh",
+      "project_add_recovery_probe.sh",
+      "worker_credential_probe.sh"
+    ],
+    "discovered_count": 27,
+    "excluded_cache_dirs": [
+      "__pycache__",
+      ".pytest_cache"
+    ],
+    "historical_eighteen_missing": [],
+    "historical_eighteen_present": [
+      "attention.py",
+      "attention_wait.py",
+      "cycle_data.py",
+      "liveness.py",
+      "notify_founder.py",
+      "observer.py",
+      "py05_py09_quality.py",
+      "py05_py09_trajectory.py",
+      "py10_preflight.py",
+      "release_admission.py",
+      "test_attention.py",
+      "test_attention_wait.py",
+      "test_cycle_data.py",
+      "test_liveness_suppression.py",
+      "test_notify_founder.py",
+      "test_py10_preflight.py",
+      "test_release_admission.py",
+      "trajectory_consistency.py"
+    ],
+    "policy_entries_not_discovered": []
+  },
+  "issue": "AlienLogicLab/alienintent#116",
+  "proof_fixture": "FX-B0",
+  "provenance": {
+    "bootstrap_root": "/home/netmarine/.local/share/alienintent-bootstrap",
+    "generated_at": "2026-09-26T02:47:59.026227+00:00",
+    "generator": "tools/evidence/bootstrap_custody_manifest.py",
+    "generator_sha256": "8bb18ac1041f015e6a9d472327cb5d4ed5e2b1c792ddb8e819374633e0b3f80e",
+    "observation_limits": [
+      "Process and unit observations are a point-in-time readback on the producing host.",
+      "Unit activation is inferred only from *.wants links; systemctl is never invoked.",
+      "Repository basename mentions may collide with unrelated files, so they are counted, not attributed.",
+      "mtime is recorded for context only; identity is sha256 and git blob."
+    ],
+    "process_table": "/proc",
+    "repository_revision": "5307736e82e8a57bc4974824baac22f85b59dbb5",
+    "unit_dir": "/home/netmarine/.config/systemd/user"
+  },
+  "schema_version": "1",
+  "side_effect_check": {
+    "after_digest": "sha256:bad1bbff158fdd399ecf39e6de3ac87abeae0e6a383de74169297b3f4e402471",
+    "before_digest": "sha256:bad1bbff158fdd399ecf39e6de3ac87abeae0e6a383de74169297b3f4e402471",
+    "changed_paths": [],
+    "commands_executed": [
+      [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      [
+        "git",
+        "ls-tree",
+        "-r",
+        "5307736e82e8a57bc4974824baac22f85b59dbb5"
+      ],
+      [
+        "git",
+        "log",
+        "--raw",
+        "--no-abbrev",
+        "--no-renames",
+        "--format=C %H %s",
+        "5307736e82e8a57bc4974824baac22f85b59dbb5"
+      ],
+      [
+        "git",
+        "grep",
+        "-o",
+        "-F",
+        "-e",
+        "alienintent-bootstrap/attention.py",
+        "-e",
+        "alienintent-bootstrap/attention_wait.py",
+        "-e",
+        "alienintent-bootstrap/cycle_data.py",
+        "-e",
+        "alienintent-bootstrap/factory-director-host/codex_session.py",
+        "-e",
+        "alienintent-bootstrap/factory-director-host/factory-director-episode.md",
+        "-e",
+        "alienintent-bootstrap/factory-director-host/factory-director-host.sh",
+        "-e",
+        "alienintent-bootstrap/factory-director-host/factory_director_host.py",
+        "-e",
+        "alienintent-bootstrap/factory-director-host/factory_director_inputs.py",
+        "-e",
+        "alienintent-bootstrap/factory-director-host/project_materialization.py",
+        "-e",
+        "alienintent-bootstrap/factory_status.sh",
+        "-e",
+        "alienintent-bootstrap/liveness.py",
+        "-e",
+        "alienintent-bootstrap/notify_founder.py",
+        "-e",
+        "alienintent-bootstrap/observer.py",
+        "-e",
+        "alienintent-bootstrap/project_add_recovery_probe.sh",
+        "-e",
+        "alienintent-bootstrap/py05_py09_quality.py",
+        "-e",
+        "alienintent-bootstrap/py05_py09_trajectory.py",
+        "-e",
+        "alienintent-bootstrap/py10_preflight.py",
+        "-e",
+        "alienintent-bootstrap/release_admission.py",
+        "-e",
+        "alienintent-bootstrap/test_attention.py",
+        "-e",
+        "alienintent-bootstrap/test_attention_wait.py",
+        "-e",
+        "alienintent-bootstrap/test_cycle_data.py",
+        "-e",
+        "alienintent-bootstrap/test_liveness_suppression.py",
+        "-e",
+        "alienintent-bootstrap/test_notify_founder.py",
+        "-e",
+        "alienintent-bootstrap/test_py10_preflight.py",
+        "-e",
+        "alienintent-bootstrap/test_release_admission.py",
+        "-e",
+        "alienintent-bootstrap/trajectory_consistency.py",
+        "-e",
+        "alienintent-bootstrap/worker_credential_probe.sh",
+        "-e",
+        "attention.py",
+        "-e",
+        "attention_wait.py",
+        "-e",
+        "codex_session.py",
+        "-e",
+        "cycle_data.py",
+        "-e",
+        "factory-director-episode.md",
+        "-e",
+        "factory-director-host.sh",
+        "-e",
+        "factory_director_host.py",
+        "-e",
+        "factory_director_inputs.py",
+        "-e",
+        "factory_status.sh",
+        "-e",
+        "liveness.py",
+        "-e",
+        "notify_founder.py",
+        "-e",
+        "observer.py",
+        "-e",
+        "project_add_recovery_probe.sh",
+        "-e",
+        "project_materialization.py",
+        "-e",
+        "py05_py09_quality.py",
+        "-e",
+        "py05_py09_trajectory.py",
+        "-e",
+        "py10_preflight.py",
+        "-e",
+        "release_admission.py",
+        "-e",
+        "test_attention.py",
+        "-e",
+        "test_attention_wait.py",
+        "-e",
+        "test_cycle_data.py",
+        "-e",
+        "test_liveness_suppression.py",
+        "-e",
+        "test_notify_founder.py",
+        "-e",
+        "test_py10_preflight.py",
+        "-e",
+        "test_release_admission.py",
+        "-e",
+        "trajectory_consistency.py",
+        "-e",
+        "worker_credential_probe.sh",
+        "5307736e82e8a57bc4974824baac22f85b59dbb5",
+        "--"
+      ]
+    ],
+    "scope": [
+      "/home/netmarine/.local/share/alienintent-bootstrap",
+      "/home/netmarine/.config/systemd/user"
+    ],
+    "unchanged": true
+  },
+  "status": "READ_ONLY_INVENTORY; NO MIGRATION, DELETION, SERVICE CHANGE, CUTOVER OR RETIREMENT AUTHORITY",
+  "summary": {
+    "HISTORICAL_PROVENANCE_UTILITY": 7,
+    "KEEP_UNTIL_REPLACED": 15,
+    "REPLACEMENT_PROOF_CANDIDATE": 2,
+    "UNKNOWN": 3
+  },
+  "taxonomy": {
+    "HISTORICAL_PROVENANCE_UTILITY": "Retained evidence/proof utility with no observed live consumer. Candidate for provenance-preserving repository custody, never blind deletion.",
+    "KEEP_UNTIL_REPLACED": "Live protection or live deployment. Kept until its replacement is proven at the live boundary.",
+    "REPLACEMENT_PROOF_CANDIDATE": "An in-repository successor exists; the external copy stays until live-boundary replacement proof.",
+    "UNKNOWN": "Custody undecided. Blocks only this asset's own classification/replacement path."
+  },
+  "work_unit": "WO-220501"
+}

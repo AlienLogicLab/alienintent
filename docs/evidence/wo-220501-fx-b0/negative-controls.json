@@ -1,0 +1,119 @@
+{
+  "controls": [
+    {
+      "applications": 1,
+      "control": "discovery_beyond_historical_eighteen",
+      "expected_failure_check": "completeness",
+      "fault": "fixed-list inventory omits a newly discovered asset",
+      "fault_result": {
+        "detected": true,
+        "failures": [
+          "discovery: additional-asset list disagrees with the inventory",
+          "discovery: discovered_count disagrees with the inventory",
+          "summary: class counts disagree with the inventory",
+          "completeness: discovered asset factory_status.sh is missing from the manifest"
+        ]
+      },
+      "gate": "verify",
+      "intact": {
+        "failures": [],
+        "passed": true
+      },
+      "restored": {
+        "failures": [],
+        "passed": true
+      },
+      "verdict": "PASS"
+    },
+    {
+      "applications": 1,
+      "control": "exact_identity",
+      "expected_failure_check": "identity",
+      "fault": "recorded sha256 no longer matches the asset bytes",
+      "fault_result": {
+        "detected": true,
+        "failures": [
+          "identity: attention.py sha256 differs from current bytes"
+        ]
+      },
+      "gate": "verify",
+      "intact": {
+        "failures": [],
+        "passed": true
+      },
+      "restored": {
+        "failures": [],
+        "passed": true
+      },
+      "verdict": "PASS"
+    },
+    {
+      "applications": 1,
+      "control": "truthful_custody_class",
+      "expected_failure_check": "custody_class",
+      "fault": "live protection relabelled with an invented retirement class",
+      "fault_result": {
+        "detected": true,
+        "failures": [
+          "custody_class: liveness.py has 'RETIRE_CANDIDATE', not one of ('KEEP_UNTIL_REPLACED', 'HISTORICAL_PROVENANCE_UTILITY', 'REPLACEMENT_PROOF_CANDIDATE', 'UNKNOWN')",
+          "summary: class counts disagree with the inventory"
+        ]
+      },
+      "gate": "check",
+      "intact": {
+        "failures": [],
+        "passed": true
+      },
+      "restored": {
+        "failures": [],
+        "passed": true
+      },
+      "verdict": "PASS"
+    },
+    {
+      "applications": 1,
+      "control": "unknown_locality",
+      "expected_failure_check": "unknown_locality",
+      "fault": "UNKNOWN for one asset widened to block an unrelated asset",
+      "fault_result": {
+        "detected": true,
+        "failures": [
+          "unknown_locality: factory_status.sh unknown blocks ['factory_status.sh', 'liveness.py'], not only itself"
+        ]
+      },
+      "gate": "check",
+      "intact": {
+        "failures": [],
+        "passed": true
+      },
+      "restored": {
+        "failures": [],
+        "passed": true
+      },
+      "verdict": "PASS"
+    },
+    {
+      "applications": 1,
+      "control": "zero_effect",
+      "expected_failure_check": "zero_effect",
+      "fault": "an asset is rewritten during the inventory pass",
+      "fault_result": {
+        "detected": true,
+        "failures": [
+          "zero_effect: inventory pass changed ['/tmp/tmpc3516odg/fault/bootstrap/observer.py']"
+        ]
+      },
+      "gate": "check",
+      "intact": {
+        "failures": [],
+        "passed": true
+      },
+      "restored": {
+        "failures": [],
+        "passed": true
+      },
+      "verdict": "PASS"
+    }
+  ],
+  "fixture": "FX-B0"
+}
