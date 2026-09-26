@@ -1,0 +1,9 @@
+"""Observation of who owns an invocation's processes; it answers, it never decides."""
+
+from typing import Mapping, Protocol
+
+
+class ProcessOwnership(Protocol):
+    def current(self) -> Mapping[str, object] | None: ...
+    def owner_state(self, owner: Mapping[str, object]) -> str: ...
+    def owned_work(self, invocation_id: str, owner: str | None = None) -> tuple[int, ...] | None: ...

@@ -42,6 +42,7 @@ from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvo
 from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
 from alienintent.invocation_runtime.domain.runtime import CapabilityGrant, InvocationRole, ReservationBook
 from tests.composition.test_sandbox_run_profile import backlog, contract_document, digest_of, project_item
+from tests.support.feature_regressions import seed_verification_runner
 
 ROOT = Path(__file__).resolve().parents[2]
 EPOCH = 1758445000.0
@@ -100,6 +101,7 @@ def seed(root: Path) -> Path:
     (checkout / "worker").mkdir()
     (checkout / "worker" / "run.sh").write_text(WORKER)
     (checkout / "README.md").write_text("FX-K3 disposable baseline\n")
+    seed_verification_runner(checkout)
     subprocess.run(["git", "-C", str(checkout), "add", "-A"], check=True)
     subprocess.run(["git", "-C", str(checkout), "commit", "--quiet", "-m", "baseline"], check=True, env=_git_environment())
     subprocess.run(["git", "-C", str(checkout), "push", "--quiet", "origin", "HEAD:refs/heads/main"], check=True, capture_output=True)

@@ -276,6 +276,12 @@ class SQLiteOperationalStore(FencedOperationalStore):
             rows = connection.execute("SELECT identity, aggregate, payload FROM effects WHERE profile=? AND status=? ORDER BY identity", (profile, status)).fetchall()
             return tuple(Effect(row["identity"], row["aggregate"], json.loads(row["payload"])) for row in rows)
 
+    def effect_ledger(self, profile: str) -> tuple[tuple[str, str, str | None], ...]:
+        """Read-only: every effect's identity, status and receipt, for evidence observation."""
+        with self._read() as connection:
+            rows = connection.execute("SELECT identity, status, receipt FROM effects WHERE profile=? ORDER BY identity", (profile,)).fetchall()
+            return tuple((row["identity"], row["status"], row["receipt"]) for row in rows)
+
     def pending_effects(self, profile: str) -> tuple[Effect, ...]:
         return self._effects(profile, "pending")
 

@@ -1,0 +1,223 @@
+{
+ "baseline_files": {
+  "README.md": "FX-O disposable baseline\n"
+ },
+ "clock": {
+  "definition": "every substrate clock read returns exactly this value (2026-09-26T00:00:00Z)",
+  "epoch_seconds": 1790380800
+ },
+ "fixture_id": "FX-O",
+ "kernel_baseline": "",
+ "kernel_paths": [],
+ "profile": "fx-o",
+ "record_kind": "OfflineProofManifest",
+ "repository": "local:fx-o",
+ "scenarios": {
+  "crash-before-output": {
+   "class": "AC-08",
+   "crash": "after-invocation-started",
+   "restart_script": [
+    "success",
+    "accept"
+   ],
+   "script": [
+    "success"
+   ]
+  },
+  "delayed-readback": {
+   "class": "AC-07",
+   "crash": "after-producer-outcome",
+   "restart_script": [
+    "accept"
+   ],
+   "script": [
+    "success"
+   ]
+  },
+  "duplicate-outcome": {
+   "class": "AC-07",
+   "fault": "duplicate-producer-outcome",
+   "script": [
+    "success",
+    "accept"
+   ]
+  },
+  "judgment-hold": {
+   "class": "judgment-hold-and-one-authorized-effect",
+   "restart_script": [
+    "success",
+    "accept"
+   ],
+   "script": [
+    "authority-block",
+    "success",
+    "accept"
+   ]
+  },
+  "lifecycle": {
+   "class": "rejection-rework-fresh-candidate-and-accepted-closure",
+   "script": [
+    "success",
+    "reject",
+    "success",
+    "accept"
+   ]
+  },
+  "malformed-outcome": {
+   "class": "AC-07",
+   "fault": "malform-producer-outcome",
+   "script": [
+    "success",
+    "accept"
+   ]
+  },
+  "miscorrelated-outcome": {
+   "class": "AC-07",
+   "fault": "misattribute-producer-outcome",
+   "script": [
+    "success",
+    "accept"
+   ]
+  },
+  "owned-work-active": {
+   "class": "AC-08",
+   "crash": "after-invocation-started",
+   "restart_script": [
+    "success",
+    "accept"
+   ],
+   "script": [
+    "success"
+   ]
+  },
+  "owner-alive": {
+   "class": "AC-08",
+   "crash": "after-invocation-started",
+   "restart_script": [
+    "success",
+    "accept"
+   ],
+   "script": [
+    "success"
+   ]
+  },
+  "progress-then-crash": {
+   "class": "AC-08",
+   "crash": "after-producer-progress",
+   "restart_script": [
+    "success",
+    "accept"
+   ],
+   "script": [
+    "success"
+   ]
+  },
+  "unknown-effect": {
+   "class": "judgment-hold-and-one-authorized-effect",
+   "crash": "before-producer-outcome",
+   "restart_script": [
+    "success",
+    "accept"
+   ],
+   "script": [
+    "success"
+   ]
+  },
+  "unpublished-candidate": {
+   "class": "wrong-or-unpublished-candidate-refused",
+   "fault": "unpublish-at-verify",
+   "script": [
+    "success",
+    "accept"
+   ]
+  },
+  "wrong-candidate": {
+   "class": "wrong-or-unpublished-candidate-refused",
+   "fault": "forge-custody-at-verify",
+   "script": [
+    "success",
+    "accept"
+   ]
+  }
+ },
+ "schema_version": "1",
+ "seed": "fx-o-seed-1",
+ "work_items": [
+  {
+   "contract": {
+    "authority_issuer": "FX-O proof fixture",
+    "authority_references": [
+     "WO-220404",
+     "SF-REQ-039"
+    ],
+    "authorized_scope": [
+     "docs/O-LIFE.md"
+    ],
+    "baselines": [
+     "main"
+    ],
+    "budget_policy": {
+     "cancellation_limit": 1,
+     "concurrency_limit": 1,
+     "hard_required_dimensions": [
+      "attempts",
+      "retries"
+     ],
+     "hard_wall_clock_seconds": 60,
+     "maximum_attempts": 2,
+     "retry_limit": 0
+    },
+    "candidate_custody_requirements": [
+     "published source revision, independently read back"
+    ],
+    "completion_criteria": [
+     "docs/O-LIFE.md records the invocation"
+    ],
+    "dependencies": [],
+    "excluded_scope": [
+     "every other path"
+    ],
+    "fixed_decisions": [
+     "FX-O offline capstone over the bound K1/K2/K3/S0/C1 seams only"
+    ],
+    "identity": "O-LIFE",
+    "intent": "prove the canonical producer -> independent verifier -> rework/review/accept/closure lifecycle offline",
+    "non_goals": [
+     "anything outside the named note"
+    ],
+    "release_policy": "automatic-on",
+    "required_capabilities": [
+     "python"
+    ],
+    "required_closure_actions": [
+     "candidate-published"
+    ],
+    "required_evidence": [
+     "artifact-verified"
+    ],
+    "retry_policy": "no-retry",
+    "satisfied_requirement_ids": [
+     "SF-REQ-039"
+    ],
+    "stop_escalation_conditions": [
+     "authority outside the profile"
+    ],
+    "target_repositories": [
+     "local:fx-o"
+    ],
+    "verification_obligations": [
+     "candidate read back from a fresh clone"
+    ],
+    "version": "1"
+   },
+   "dependencies": [],
+   "identity": "O-LIFE",
+   "note_path": "docs/O-LIFE.md",
+   "priority": 1,
+   "script": [
+    "success",
+    "accept"
+   ]
+  }
+ ]
+}

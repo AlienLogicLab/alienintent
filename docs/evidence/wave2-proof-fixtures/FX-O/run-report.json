@@ -1,0 +1,122 @@
+{
+  "material_classes": {
+    "denied-network-publication-retrieval-wrong-candidate": "Denied-network lifecycle uses actual local Git publication and fresh verifier retrieval and rejects wrong/unpublished candidate identity.",
+    "rework-review-accept-closure-without-collapse": "Distinct producer/verifier flow exercises rejection-repair-fresh-candidate and accepted REVIEW/ACCEPT/closure without success-collapse shortcuts.",
+    "outcome-evidence-holds-restart-idempotent": "Missing, stale or miscorrelated durable role/invocation/candidate outcome evidence holds despite process success; duplicate/restart remains idempotent.",
+    "judgment-hold-one-authorized-effect": "Judgment-required outcomes hold correctly and exactly one authorized effect/readback identity is retained.",
+    "custody-verifier-binding-correlation-controls": "Custody, verifier independence, binding and correlation negative controls fail while restored canonical behavior passes.",
+    "AC-07": "Malformed, missing, delayed, duplicate or miscorrelated outcomes never advance lifecycle; delayed correlated readback and duplicate idempotency are proved.",
+    "AC-08": "Crash-before-output and progress-then-crash preserve original identity/evidence; UNKNOWN ownership blocks replacement, while conclusively dead + confirmed missing result triggers bounded deterministic recovery without a Director/status retrigger."
+  },
+  "material_class_to_probes": {
+    "denied-network-publication-retrieval-wrong-candidate": [
+      "proof command inside unshare -rn (network ENFORCED)",
+      "L3",
+      "L4",
+      "W1",
+      "U1"
+    ],
+    "rework-review-accept-closure-without-collapse": [
+      "L1",
+      "L2",
+      "L5",
+      "L6",
+      "L7"
+    ],
+    "outcome-evidence-holds-restart-idempotent": [
+      "M1",
+      "N1",
+      "F1",
+      "D1",
+      "L9"
+    ],
+    "judgment-hold-one-authorized-effect": [
+      "J1",
+      "J2",
+      "J3",
+      "J4",
+      "E1",
+      "E2",
+      "L8"
+    ],
+    "custody-verifier-binding-correlation-controls": [
+      "custody_unchecked",
+      "verifier_self_approval",
+      "binding_guard_bypassed",
+      "outcome_correlation_bypassed"
+    ],
+    "AC-07": [
+      "M1",
+      "N1",
+      "F1",
+      "D1"
+    ],
+    "AC-08": [
+      "test_owned_work.py (owned background work, wall-clock stop, owner identity, marker scan, owner-bound markers, marked-only attestation, pid namespace)",
+      "C1",
+      "C2",
+      "P1",
+      "P2",
+      "A1",
+      "B1",
+      "E1"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-p",
+      "no:cacheprovider",
+      "tests/composition/test_lifecycle_capstone.py",
+      "tests/invocation_runtime/test_owned_work.py",
+      "tests/composition/test_offline_proof.py",
+      "tests/composition/test_sandbox_run_profile.py",
+      "tests/execution_coordination/test_factory_coordinator.py",
+      "tests/invocation_runtime/test_runtime.py",
+      "tests/composition/test_role_binding.py",
+      "tests/invocation_runtime/test_real_worker_outcome.py",
+      "tests/execution_coordination/test_role_orchestration.py",
+      "tests/invocation_runtime/test_scripted_worker.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:dc6a97531e7d280368b5126cdd8a293f48364e981ae7968c2e5ebcb6e2c47830",
+      "locator": "observations/dc6a97531e7d280368b5126cdd8a293f48364e981ae7968c2e5ebcb6e2c47830"
+    }
+  },
+  "proof_command": {
+    "id": "proof_command",
+    "command": [
+      "unshare",
+      "-rn",
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "alienintent.composition.lifecycle_capstone",
+      "--root",
+      "/tmp/fx-o-proof-inbrse1r/run",
+      "--manifest",
+      "/home/netmarine/.local/state/alienintent/worktrees/a358a97e-d1d1-471e-aeea-53fc4cc9c17d/docs/evidence/wave2-proof-fixtures/FX-O/manifest.json",
+      "--network-timeout",
+      "1"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:36e5cef009d219a966ad5bbc8a04b51a418c3e78a53639818e973f00cd1ad8cc",
+      "locator": "observations/36e5cef009d219a966ad5bbc8a04b51a418c3e78a53639818e973f00cd1ad8cc"
+    },
+    "report_ref": {
+      "revision_digest": "sha256:9ea6ea1408dc4d0d9f0229ae193e9f4c8cdb5c8568377c19d7d6e55aee3a9d36",
+      "locator": "observations/9ea6ea1408dc4d0d9f0229ae193e9f4c8cdb5c8568377c19d7d6e55aee3a9d36"
+    }
+  },
+  "boundaries": "WO-220404 offline capstone over bound K1/K2/K3/S0/C1 seams plus the bounded AC-08 implementation in Invocation Runtime (process ownership, owner-attested journal, restart attestation) consumed at the K3 guard; no live/shared-profile activation; no RoleOutcomeRecord or sidecar owner",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}

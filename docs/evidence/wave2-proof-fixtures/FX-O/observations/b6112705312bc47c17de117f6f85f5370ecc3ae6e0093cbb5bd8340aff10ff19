@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-p","no:cacheprovider","tests/invocation_runtime/test_owned_work.py::test_the_owner_identity_distinguishes_a_live_process_from_an_ended_or_reused_one"],"cwd":"/tmp/fx-o-controls-1p0lvgma","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.14s\n"}

@@ -28,6 +28,7 @@ from alienintent.composition.evidence_profile import EvidenceProfile
 from alienintent.evidence_learning.domain.admission import AuthoritySnapshot
 from alienintent.evidence_learning.domain.refs import EvidenceHold
 from alienintent.control_plane.adapters.decision_notifier import NoOpDecisionNotifier
+from alienintent.control_plane.ports.decision_notifier import DecisionNotifier
 from alienintent.execution_coordination.adapters.local_work_management import LocalWorkManagement
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator
@@ -47,11 +48,12 @@ if TYPE_CHECKING:
 class OfflineProfile:
     def __init__(self, database: Path, work: WorkManagement, worker: WorkerProvider, artifact_root: Path, verifier_root: Path | None = None, *, name: str = "offline", automatic_release: bool = True, doctor: "DoctorService | None" = None,
                  evidence_root: Path | None = None, evidence_permitted_root: Path | None = None,
-                 evidence_project: str | None = None, evidence_authority: AuthoritySnapshot | None = None) -> None:
+                 evidence_project: str | None = None, evidence_authority: AuthoritySnapshot | None = None,
+                 store: SQLiteOperationalStore | None = None, notifier: DecisionNotifier | None = None) -> None:
         self.name = name
-        self.store = SQLiteOperationalStore(database)
+        self.store = SQLiteOperationalStore(database) if store is None else store
         self.work = work
-        self.coordinator = FactoryCoordinator(self.store, work, worker, LocalArtifactStore(artifact_root, verifier_root or artifact_root / "verifier-evidence"), name, automatic_release=automatic_release, notifier=NoOpDecisionNotifier())
+        self.coordinator = FactoryCoordinator(self.store, work, worker, LocalArtifactStore(artifact_root, verifier_root or artifact_root / "verifier-evidence"), name, automatic_release=automatic_release, notifier=NoOpDecisionNotifier() if notifier is None else notifier)
         self.doctor = doctor
         self.evidence = None
         evidence_arguments = (evidence_root, evidence_permitted_root, evidence_project, evidence_authority)
@@ -179,14 +181,25 @@ class OfflineProofSubstrate:
             {entry.identity: entry.note_path for entry in manifest.work_items},
             self.clock, self.journal_path, self.git_environment,
         )
+        self.store = SQLiteOperationalStore(self.database)
+        self.worker = self._compose_worker()
+        self.profile = OfflineProfile(self.database, self.work, self.worker, self.artifacts, self.verifier_root, name=manifest.profile,
+                                      store=self.store, notifier=self._compose_notifier())
+        self.coordinator = self.profile.coordinator
+
+    # --- worker composition ---------------------------------------------------
+
+    def _compose_worker(self) -> WorkerProvider:
+        """S0: the unchanged ``RealWorkerProvider`` behind a scripted journaling wrapper."""
         self.real_worker = RealWorkerProvider(
             self.process, GitSourceControl(), self.checkout, "origin", self.candidate_branch, self.producer_read_back,
-            self.grant, manifest.repository, GitWorktreeAdapter(self.checkout, self.workspaces), ReservationBook(1, 2),
+            self.grant, self.manifest.repository, GitWorktreeAdapter(self.checkout, self.workspaces), ReservationBook(1, 2),
             now=self.clock, sleep=lambda _: None,
         )
-        self.worker = ScriptedWorkerProvider(self.real_worker, self.journal_path, self.clock)
-        self.profile = OfflineProfile(self.database, self.work, self.worker, self.artifacts, self.verifier_root, name=manifest.profile)
-        self.coordinator, self.store = self.profile.coordinator, self.profile.store
+        return ScriptedWorkerProvider(self.real_worker, self.journal_path, self.clock)
+
+    def _compose_notifier(self) -> DecisionNotifier | None:
+        return None
 
     # --- per-invocation authority and custody --------------------------------
 
