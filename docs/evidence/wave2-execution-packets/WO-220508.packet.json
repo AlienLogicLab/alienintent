@@ -1,0 +1,90 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220508",
+  "issued_at": "2026-09-26T12:28:49.925646Z",
+  "goal": "Deliver the bounded planned extent: Human notification and attention consumer handoff proof",
+  "starting_authority": {
+    "requirements": [
+      "SF-REQ-053"
+    ],
+    "dag_node": [
+      "B5"
+    ],
+    "candidate_contract_sha256": "5ff729d6d77c6dde3c69fc908c91db138e0fd142601765e4d4590faf554c276a",
+    "baseline_sha": "4e74e18efdb9e266f29071907345a99618720141",
+    "release_authority": "NOT GRANTED"
+  },
+  "allowed_scope": {
+    "extent": "Separate Windows notification disposition: prove human receipt and response through authorized replacement, or explicit Founder risk acceptance. Demonstrate new and unresolved product attention including judgment outcomes, pending reconciliation, zero duplicate handling and intact suppression; queue persists. Command delivery is not human receipt.",
+    "boundary": "Only this node extent. Requirement/design references constrain execution and do not absorb sibling scopes.",
+    "non_goals": [
+      "Replanning the DAG or implementing another node; changing requirements, closing authority gaps or selecting withdrawn architecture policy.",
+      "Automatic release, live operation or retirement from a candidate or local proof result."
+    ],
+    "architecture_constraints": [
+      "Apply the pinned shared contracts and linked contract sections within this node extent. No service or context boundary beyond the pinned design, RAI wiring or adopted withdrawn edge table.",
+      "Preserve compatible interfaces, persisted resource identities, one-writer ownership and existing approved architecture checks."
+    ]
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220501",
+      "issue": 116,
+      "project_status": "DONE",
+      "completion_predicate": "Produce a current bootstrap custody manifest covering all discovered external assets, exact revisions/hashes, consumers/service references, test/evidence provenance, and a truthful per-component custody class. Include newly discovered shell helpers/Factory Director Host. Unknowns are explicit and local to the affected component. Perform no migration, deletion, service change, live replacement, cutover or retirement."
+    },
+    {
+      "biu_id": "WO-220301",
+      "issue": 78,
+      "project_status": "DONE",
+      "completion_predicate": "SF-REQ-053-AC-05: notification failure leaves an item pending with a recorded failed attempt; a later authorized consumer can inspect and handle it without the former conversation. SF-REQ-053-AC-06: without unattended-activation authority, a pending item may notify but must not launch an authority-bearing episode; an explicit authorized activation policy is an input, never presumed. FX-C1 commands/inputs/expected outcomes/evidence schema pinned before implementation with intact/fault/restored discrimination; local/composed/mechanical proof, no operational-acceptance claim."
+    },
+    {
+      "biu_id": "WO-220305",
+      "issue": 114,
+      "project_status": "DONE",
+      "completion_predicate": "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state. A profile constructor or shell background waiter does not satisfy hosting. No operational replacement or bootstrap retirement is claimed."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
+    "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority.",
+    "Retain all authority dispositions and migration/rollback/readback receipts applicable to this node. Missing or unavailable measurements are explicit holds, never zero or PASS."
+  ],
+  "acceptance": {
+    "criteria": [
+      "Prove, through the existing Python AlienIntent attention / Decision Inbox path, that new and unresolved product attention reaches a human. The proof must cover judgment outcomes, pending reconciliation, zero duplicate handling, intact suppression and a persisting queue. Human receipt means a durable, explicit, item-bound, timestamped human acknowledgement, distinct from queue insertion, command delivery, transport success or rendering. Operational readback must bind the item, the acknowledgement and the resulting state transition. No Windows event notifications and no new notification subsystem."
+    ],
+    "proof_fixture": "FX-B5",
+    "proof_level": "OPERATIONAL_OR_EXTERNAL_AUTHORITY",
+    "material_failure_classes": [
+      "Command delivery, transport success, queue insertion or rendering mistaken for human receipt.",
+      "A local or simulated acknowledgement presented as operational acceptance; operational readback requires the authorized target and a real human acknowledger.",
+      "Unattended or broader activation of the attention path beyond the narrow FX-B5 grant.",
+      "Drift toward a new notification subsystem or Windows event notifications, both out of scope."
+    ],
+    "bounded_commands": [],
+    "non_claims": [
+      "No Windows event-notification implementation or replacement notification channel is claimed or required.",
+      "No release, cutover, Node/bootstrap retirement, or operational-release grant follows from this BIU."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220508",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker.",
+    "current_artifact": "Candidate specification only; no Issue, branch publication, implementation commit or worker invocation created by this packet."
+  },
+  "landing": "SWF-19: merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220508.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
+    "Operational fixtures require their separately authorized target and actual readback. Local substitutions must be labelled and cannot satisfy operational acceptance."
+  ],
+  "escalation_condition": [
+    "Route unmet source/product authority through Program Director to SPECIFY; Founder alone disposes the directional boundary question. Pin decision and obtain reviewed affected design/DAG revision before implementation.",
+    "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside a capstone. Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "Fresh native Agent Ready READY at input SHA-256 d25c25a3c1da356e6cd0e8d58aa649533f268d5db80536a6aa11cdcff2c1500e (docs/evidence/wave2-readiness-assessments/WO-220508.2026-09-26T073048.978250Z.assessment.json). No genuine Founder-reserved gate remains open against this exact revision (WINDOWS_NOTIFICATION_DISPOSITION, ATTENTION_ACTIVATION_AUTHORITY and the FX-B5 operational target all resolved per Issue #128 comments 2026-09-26T07:16:46Z and 2026-09-26T07:33:32Z)."
+}
