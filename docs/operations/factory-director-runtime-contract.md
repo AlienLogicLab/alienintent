@@ -5,11 +5,9 @@ Status: durable, versioned contract for every Factory Director episode. Contract
 (`tools/orchestration/factory-director-episode.md`) only points here. A fresh episode must
 read this file from `origin/main`, not rely on any copy in a prompt or conversation.
 
-Sources: the FDH-01 contract `docs/work-units/wave2/FDH-01.md`, and chat record
-`AlienIntent_Chat_Record_Last_24h_20260923-185454-SGT.md` §2, §3 and §13–§17. That chat
-record is an operator file outside the repository (sha256
-`8c35ff8b2eb023557271b07413114122b2db94f1ed664928d61cb7d132c613a0`). Where the two
-disagree, the FDH-01 contract controls.
+Source: the FDH-01 contract `docs/work-units/wave2/FDH-01.md`. This file is the durable
+public runtime contract for Factory Director episodes. Private continuity/history records
+are not runtime authority and are not required to operate or reconstruct the factory.
 
 ## 1. Role and mission
 
@@ -36,7 +34,7 @@ durable state and starts a fresh episode if control is still required.
 ## 3. Terminal conditions and checkpoints
 
 Only durable state can end Director control. There are exactly five allowed terminal
-conditions (chat record §15). The host's idle reason for each is shown:
+conditions defined by this contract. The host's idle reason for each is shown:
 
 | # | Terminal condition | Host idle reason |
 |---|---|---|
@@ -58,7 +56,7 @@ another episode is needed.
 
 ## 4. Director continuity fault
 
-**`DIRECTOR_CONTINUITY_FAULT`** (chat record §14) is the state in which authorized,
+**`DIRECTOR_CONTINUITY_FAULT`** is the state in which authorized,
 dependency-eligible work exists, execution or control capacity exists, no genuine
 authority blocker exists, and no Factory Director episode is advancing control.
 
@@ -266,7 +264,7 @@ determine liveness, waits the full interval instead.
 
 Nothing is retired because the host exists or its tests pass. Resident and session
 continuity, observers, liveness checks and the Node runtime all stay in place. Retirement
-requires the twelve-step live proof in chat record §16, executed by the procedure in
+requires the twelve-step live proof defined by this contract and executed by the procedure in
 `docs/operations/factory-director-host-live-proof.md` under real factory workload.
 Executing that proof, and installing or enabling the host, are Factory Director actions
 that are separately authorized.

@@ -1,8 +1,8 @@
 # Factory Director Host live proof
 
-This is the procedure for the twelve-step live proof in chat record §16. The runtime
-contract (`docs/operations/factory-director-runtime-contract.md` §11) requires it before
-any existing continuity mechanism can be retired.
+This is the procedure for the twelve-step live proof required by the runtime contract
+(`docs/operations/factory-director-runtime-contract.md` §11) before any existing continuity
+mechanism can be retired.
 
 **Authority.** Landing FDH-01 does not authorize this proof. Installing and enabling the
 host, and running this procedure, are Factory Director actions. Each needs its own
