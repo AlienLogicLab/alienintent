@@ -1,0 +1,30 @@
+F                                                                                                                                                                                                                                                                                                                                                                                                        [100%]
+=================================================================================================================================================================================================== FAILURES ===================================================================================================================================================================================================
+_____________________________________________________________________________________________________________________________________________________________________________ test_validator_only_supplied_mapping_cannot_complete _____________________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x7e6a200eac00>
+
+    def test_validator_only_supplied_mapping_cannot_complete(harness):
+        h = harness()
+        prepared(h)
+        derived = h.compile()
+        document = derived.document()
+        # Hand the compiler's own units to the U7 validator as a supplied mapping: it is admitted, but VALIDATION_ONLY.
+        supplied = {"mode": INITIAL, "design_key": DKEY, "design_vector": h.vectors[DKEY],
+                    "requirements": sorted(document["inputs"]["requirements"]),
+                    "obligations": [{"id": o["text"], "category": o["category"]} for o in document["obligations"]],
+                    "units": [{"unit_key": u["unit_key"], "contract": u["contract"]} for u in document["units"]],
+                    "edges": document["edges"]}
+        report = h.profile.compilation.validate(supplied)
+        assert isinstance(report, ValidationReport), getattr(report, "findings", report)
+        assert report.document()["provenance"] == "SUPPLIED_CANDIDATE_NOT_DERIVED"
+>       assert not is_initial_compilation(report.document())
+E       AssertionError: assert not True
+E        +  where True = is_initial_compilation({'admitted_for_assessment': True, 'candidate_digest': 'sha256:61c283eccdf4b8494d55f963e595e352345e33fdbd31289b2e7898f5...-000005', 'predicate': 'DONE', 'to': 'WO-000006'}, {'from': 'WO-990300', 'predicate': 'DONE', 'to': 'WO-000006'}], ...})
+E        +    where {'admitted_for_assessment': True, 'candidate_digest': 'sha256:61c283eccdf4b8494d55f963e595e352345e33fdbd31289b2e7898f5...-000005', 'predicate': 'DONE', 'to': 'WO-000006'}, {'from': 'WO-990300', 'predicate': 'DONE', 'to': 'WO-000006'}], ...} = <bound method ValidationReport.document of ValidationReport(mode='INITIAL', candidate_digest='sha256:61c283eccdf4b8494...external_predecessors': [{'identity': 'WO-990300', 'stage': 'DONE'}], 'provenance': 'SUPPLIED_CANDIDATE_NOT_DERIVED'})>()
+E        +      where <bound method ValidationReport.document of ValidationReport(mode='INITIAL', candidate_digest='sha256:61c283eccdf4b8494...external_predecessors': [{'identity': 'WO-990300', 'stage': 'DONE'}], 'provenance': 'SUPPLIED_CANDIDATE_NOT_DERIVED'})> = ValidationReport(mode='INITIAL', candidate_digest='sha256:61c283eccdf4b8494d55f963e595e352345e33fdbd31289b2e7898f5412f...'external_predecessors': [{'identity': 'WO-990300', 'stage': 'DONE'}], 'provenance': 'SUPPLIED_CANDIDATE_NOT_DERIVED'}).document
+
+tests/context_assembly/test_initial_compilation.py:534: AssertionError
+=========================================================================================================================================================================================== short test summary info ============================================================================================================================================================================================
+FAILED tests/context_assembly/test_initial_compilation.py::test_validator_only_supplied_mapping_cannot_complete - AssertionError: assert not True
+1 failed in 5.42s

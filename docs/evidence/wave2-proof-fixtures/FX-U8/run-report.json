@@ -1,0 +1,217 @@
+{
+  "biu_id": "WO-220208",
+  "candidate_commit": "f7a146726f6c19c16c65798dfaa94330cce568c6",
+  "controls": [
+    {
+      "applied_count": 1,
+      "discriminated": true,
+      "exit_status": 1,
+      "failed": [
+        "tests/context_assembly/test_initial_compilation.py::test_unverified_design_holds_without_candidate"
+      ],
+      "failure_class": "1-derived-from-reviewed-design",
+      "file": "src/alienintent/context_assembly/application/initial_compilation_service.py",
+      "id": "K1",
+      "mutation": {
+        "mutated": "        if False:\n",
+        "original": "        if not decision.admitted:\n"
+      },
+      "observation": "36db1840277f3090827b292e43cc345fc4b4e045f11474f4e5b7a6c9f88d933e",
+      "targets": [
+        "tests/context_assembly/test_initial_compilation.py::test_unverified_design_holds_without_candidate"
+      ]
+    },
+    {
+      "applied_count": 1,
+      "discriminated": true,
+      "exit_status": 1,
+      "failed": [
+        "tests/context_assembly/test_initial_compilation.py::test_unresolved_authority_holds"
+      ],
+      "failure_class": "1-derived-from-pinned-requirements",
+      "file": "src/alienintent/context_assembly/domain/initial_compilation.py",
+      "id": "K2",
+      "mutation": {
+        "mutated": "        elif False:\n",
+        "original": "        elif report.preparation != ELIGIBLE:\n"
+      },
+      "observation": "e3f5587defbce35141759798b6e2c5856cde2ae40911e3561e919d145179d394",
+      "targets": [
+        "tests/context_assembly/test_initial_compilation.py::test_unresolved_authority_holds"
+      ]
+    },
+    {
+      "applied_count": 1,
+      "discriminated": true,
+      "exit_status": 1,
+      "failed": [
+        "tests/context_assembly/test_initial_compilation.py::test_obligation_omission_holds"
+      ],
+      "failure_class": "2-omission-holds",
+      "file": "src/alienintent/context_assembly/domain/initial_compilation.py",
+      "id": "K3",
+      "mutation": {
+        "mutated": "    unproven = []\n",
+        "original": "    unproven = [f\"{a}:verification\" for a in acceptance if a not in proven]\n"
+      },
+      "observation": "2f158d7f446c5b042de7422668226233415fd31d5187d746f2c9daccdbc335f6",
+      "targets": [
+        "tests/context_assembly/test_initial_compilation.py::test_obligation_omission_holds"
+      ]
+    },
+    {
+      "applied_count": 1,
+      "discriminated": true,
+      "exit_status": 1,
+      "failed": [
+        "tests/context_assembly/test_initial_compilation.py::test_obligation_invention_holds"
+      ],
+      "failure_class": "2-invention-holds",
+      "file": "src/alienintent/context_assembly/domain/initial_compilation.py",
+      "id": "K4",
+      "mutation": {
+        "mutated": "    invented = []\n",
+        "original": "    invented = [o[\"obligation_id\"] for o in proofs if o[\"predicate\"][\"acceptance_id\"] not in acceptance]\n"
+      },
+      "observation": "6cdb7ec24685d8ef1fd82c5323939e109e2c373eb28a27b24b12bcededfd6b9d",
+      "targets": [
+        "tests/context_assembly/test_initial_compilation.py::test_obligation_invention_holds"
+      ]
+    },
+    {
+      "applied_count": 1,
+      "discriminated": true,
+      "exit_status": 1,
+      "failed": [
+        "tests/context_assembly/test_initial_compilation.py::test_reservation_is_stable_and_not_sort_derived"
+      ],
+      "failure_class": "3-identity-not-sort-derived",
+      "file": "src/alienintent/context_assembly/domain/initial_compilation.py",
+      "id": "K5",
+      "mutation": {
+        "mutated": "        identity = None\n",
+        "original": "        identity = reservations.get(key)\n"
+      },
+      "observation": "6415e7ff056945b58b7c03042dcf3c9e413bf72bcd9a88e69e4a44e85bebefd0",
+      "targets": [
+        "tests/context_assembly/test_initial_compilation.py::test_reservation_is_stable_and_not_sort_derived"
+      ]
+    },
+    {
+      "applied_count": 1,
+      "discriminated": true,
+      "exit_status": 1,
+      "failed": [
+        "tests/context_assembly/test_initial_compilation.py::test_derivation_is_deterministic_under_permutation"
+      ],
+      "failure_class": "3-deterministic-under-permutation",
+      "file": "src/alienintent/context_assembly/domain/initial_compilation.py",
+      "id": "K6",
+      "mutation": {
+        "mutated": "    proofs = list(plan[\"obligations\"])\n",
+        "original": "    proofs = sorted(plan[\"obligations\"], key=lambda o: o[\"obligation_id\"])\n"
+      },
+      "observation": "50e37650409f7eca5ca98e18d2172a36f02f455c81c65f70b346df5fdbfb9916",
+      "targets": [
+        "tests/context_assembly/test_initial_compilation.py::test_derivation_is_deterministic_under_permutation"
+      ]
+    },
+    {
+      "applied_count": 1,
+      "discriminated": true,
+      "exit_status": 1,
+      "failed": [
+        "tests/context_assembly/test_initial_compilation.py::test_identity_dependency_and_bound_violations_hold[collision]",
+        "tests/context_assembly/test_initial_compilation.py::test_identity_dependency_and_bound_violations_hold[foreign_unit]",
+        "tests/context_assembly/test_initial_compilation.py::test_identity_dependency_and_bound_violations_hold[foreign_unreserved]"
+      ],
+      "failure_class": "3-identity-collision-fails-closed",
+      "file": "src/alienintent/context_assembly/domain/initial_compilation.py",
+      "id": "K7",
+      "mutation": {
+        "mutated": "            elif list(reservations.values()).count(identity) > 1:\n",
+        "original": "            elif identity in occupied or list(reservations.values()).count(identity) > 1:\n"
+      },
+      "observation": "7a86e3b5721b250e449c72e2039f5618477968a324d25836a0f0497c3d1e815d",
+      "targets": [
+        "tests/context_assembly/test_initial_compilation.py::test_identity_dependency_and_bound_violations_hold[collision]",
+        "tests/context_assembly/test_initial_compilation.py::test_identity_dependency_and_bound_violations_hold[foreign_unit]",
+        "tests/context_assembly/test_initial_compilation.py::test_identity_dependency_and_bound_violations_hold[foreign_unreserved]"
+      ]
+    },
+    {
+      "applied_count": 1,
+      "discriminated": true,
+      "exit_status": 1,
+      "failed": [
+        "tests/context_assembly/test_initial_compilation.py::test_unpinned_input_holds[design]"
+      ],
+      "failure_class": "1-exact-pinned-inputs",
+      "file": "src/alienintent/context_assembly/domain/initial_compilation.py",
+      "id": "K9",
+      "mutation": {
+        "mutated": "        or False:\n",
+        "original": "        or not _same(design.digest, plan[\"design_ref\"][\"revision_digest\"]):\n"
+      },
+      "observation": "b1bbd5a7000adccee70439cbabc05fcc3f651e8fd9af29eb511764150696f3d5",
+      "targets": [
+        "tests/context_assembly/test_initial_compilation.py::test_unpinned_input_holds[design]"
+      ]
+    },
+    {
+      "applied_count": 1,
+      "discriminated": true,
+      "exit_status": 1,
+      "failed": [
+        "tests/context_assembly/test_initial_compilation.py::test_validator_only_supplied_mapping_cannot_complete"
+      ],
+      "failure_class": "4-validator-only-cannot-complete",
+      "file": "src/alienintent/context_assembly/domain/initial_compilation.py",
+      "id": "K8",
+      "mutation": {
+        "mutated": "        or document.get(\"mode\") == INITIAL\n",
+        "original": "        and document.get(\"provenance\") == DERIVED and document.get(\"mode\") == INITIAL \\\n        and document.get(\"derivation_rule\") == DERIVATION_RULE\n"
+      },
+      "observation": "11f6390d64abcede9a0bcc962cfdee29d8a5c77eb7da4efe5fba9848533aba16",
+      "targets": [
+        "tests/context_assembly/test_initial_compilation.py::test_validator_only_supplied_mapping_cannot_complete"
+      ]
+    }
+  ],
+  "cost": null,
+  "ended_at": "2026-09-26T09:17:01.915379+00:00",
+  "fixture": "FX-U8",
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "intact": [
+    {
+      "command": "PYTHONPATH=src python3 -B -m pytest -q tests/context_assembly/test_initial_compilation.py",
+      "exit_status": 0,
+      "expected": 0,
+      "failed": [],
+      "name": "fx-u8-probes",
+      "observation": "cc5acda0f59b0720751c320cbc273f21bc2fbeaacdaa4a443b4c026f7dadb491"
+    },
+    {
+      "command": "PYTHONPATH=src python3 -B -m pytest -q tests/context_assembly/test_compilation_validation.py tests/execution_coordination/domain/test_contract.py tests/context_assembly/test_initial_compilation.py",
+      "exit_status": 0,
+      "expected": 0,
+      "failed": [],
+      "name": "bounded-command",
+      "observation": "295bd919d4cd7f92878691d33216f8ae8a713a5a17f0e8b68abbb9fec48b75d4"
+    }
+  ],
+  "invocation": "AlienLogicLab/alienintent#117:PRODUCER:13bb35b4-c7a1-4b73-89d0-9813dd64de42",
+  "live_proof": "NOT_ESTABLISHED",
+  "proof_level": "LOCAL_COMPOSED_OR_MECHANICAL",
+  "python": "3.12.3",
+  "record_kind": "ProofRunReport",
+  "result": "PASS",
+  "runner": {
+    "path": "tools/evidence/fx_u8_evidence.py",
+    "sha256": "e382e03832ba301b0043433267cf0bf31d100d94476424524a6b54dfa05a724e"
+  },
+  "schema_version": 1,
+  "started_at": "2026-09-26T09:14:29.313704+00:00",
+  "tokens": null,
+  "tokens_cost_reason": "UNKNOWN: not exposed to the runner"
+}

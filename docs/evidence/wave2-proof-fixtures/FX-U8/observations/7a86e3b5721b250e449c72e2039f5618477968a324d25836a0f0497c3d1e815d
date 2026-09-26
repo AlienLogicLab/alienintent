@@ -1,0 +1,175 @@
+FFF                                                                                                                                                                                                                                                                                                                                                                                                      [100%]
+=================================================================================================================================================================================================== FAILURES ===================================================================================================================================================================================================
+________________________________________________________________________________________________________________________________________________________________________ test_identity_dependency_and_bound_violations_hold[collision] _________________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x7400e02e2d40>, variant = 'collision'
+
+    @pytest.mark.parametrize("variant", ["collision", "foreign_unit", "foreign_unreserved", "foreign_new", "exhausted",
+                                         "capability", "endpoint", "existing"])
+    def test_identity_dependency_and_bound_violations_hold(harness, variant):
+        h = harness()
+        prepared(h)
+        values = inputs(h)
+        limits = values["authority_limits"]
+        if variant == "collision":
+            values["reservations"] = {"requirement:" + R1: "WO-000003"}
+            expected = ("IDENTITY_COLLISION", ("requirement:" + R1 + ":WO-000003",))
+        elif variant == "foreign_unit":  # Reserved number later materialized for another requirement (review R1-B1).
+            values["reservations"] = {"requirement:" + R1: EXISTING}
+            expected = ("IDENTITY_COLLISION", ("requirement:" + R1 + ":" + EXISTING,))
+        elif variant == "foreign_unreserved":  # Review R2-B1: an existing unit absent from the snapshot is still taken.
+            limits["existing_decomposition"] = {R3: ["WO-000009"]}
+            values["stages"], values["reservations"] = {"WO-000009": "DONE"}, {"requirement:" + R1: "WO-000009"}
+            expected = ("IDENTITY_COLLISION", ("requirement:" + R1 + ":WO-000009",))
+        elif variant == "foreign_new":  # Review R2-B1: a new number never lands on an existing unit's identity.
+            limits["existing_decomposition"] = {R3: ["WO-000005"]}
+            values["stages"] = {"WO-000005": "DONE"}
+            result = compile_initial(**values)
+            assert isinstance(result, CompilationCandidate), getattr(result, "findings", result)
+            assert {u["identity"] for u in result.document()["units"]} == {"WO-000006", "WO-000007"}
+            return
+        elif variant == "exhausted":
+            limits["identity_policy"] = {"family": "PY", "width": 2}
+            limits["identity_snapshot"]["active"] += [f"PY-{n:02d}" for n in range(1, 100)]
+            expected = ("IDENTITY_EXHAUSTED", ("requirement:" + R1 + ":PY/2", "requirement:" + R2 + ":PY/2"))
+        elif variant == "capability":
+            limits["required_capabilities"] = ["python"]
+            expected = ("BOUNDS_WIDENED", ("WO-000005:required_capabilities:sqlite",
+                                           "WO-000006:required_capabilities:sqlite"))
+        elif variant == "endpoint":
+            limits["existing_decomposition"] = {}
+            expected = ("MISSING_ENDPOINT", (f"{R2}:{R3}",))
+        else:
+            limits["existing_decomposition"][R1] = ["WO-000001"]
+            expected = ("EXISTING_DECOMPOSITION", (f"{R1}:WO-000001",))
+>       assert_hold(compile_initial(**values), *expected)
+
+tests/context_assembly/test_initial_compilation.py:448: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = CompilationCandidate(candidate_digest='sha256:aa2c4633b144b5cd165965224c0f8775a1da9075de63fe01718daba0ae693be2', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), code = 'IDENTITY_COLLISION', refs = ('requirement:SF-REQ-911:WO-000003',)
+
+    def assert_hold(result, code, refs=None):
+>       assert isinstance(result, CompilationHold), result
+E       AssertionError: CompilationCandidate(candidate_digest='sha256:aa2c4633b144b5cd165965224c0f8775a1da9075de63fe01718daba0ae693be2', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+E       assert False
+E        +  where False = isinstance(CompilationCandidate(candidate_digest='sha256:aa2c4633b144b5cd165965224c0f8775a1da9075de63fe01718daba0ae693be2', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), CompilationHold)
+
+tests/context_assembly/test_initial_compilation.py:213: AssertionError
+_______________________________________________________________________________________________________________________________________________________________________ test_identity_dependency_and_bound_violations_hold[foreign_unit] _______________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x7400e029d800>, variant = 'foreign_unit'
+
+    @pytest.mark.parametrize("variant", ["collision", "foreign_unit", "foreign_unreserved", "foreign_new", "exhausted",
+                                         "capability", "endpoint", "existing"])
+    def test_identity_dependency_and_bound_violations_hold(harness, variant):
+        h = harness()
+        prepared(h)
+        values = inputs(h)
+        limits = values["authority_limits"]
+        if variant == "collision":
+            values["reservations"] = {"requirement:" + R1: "WO-000003"}
+            expected = ("IDENTITY_COLLISION", ("requirement:" + R1 + ":WO-000003",))
+        elif variant == "foreign_unit":  # Reserved number later materialized for another requirement (review R1-B1).
+            values["reservations"] = {"requirement:" + R1: EXISTING}
+            expected = ("IDENTITY_COLLISION", ("requirement:" + R1 + ":" + EXISTING,))
+        elif variant == "foreign_unreserved":  # Review R2-B1: an existing unit absent from the snapshot is still taken.
+            limits["existing_decomposition"] = {R3: ["WO-000009"]}
+            values["stages"], values["reservations"] = {"WO-000009": "DONE"}, {"requirement:" + R1: "WO-000009"}
+            expected = ("IDENTITY_COLLISION", ("requirement:" + R1 + ":WO-000009",))
+        elif variant == "foreign_new":  # Review R2-B1: a new number never lands on an existing unit's identity.
+            limits["existing_decomposition"] = {R3: ["WO-000005"]}
+            values["stages"] = {"WO-000005": "DONE"}
+            result = compile_initial(**values)
+            assert isinstance(result, CompilationCandidate), getattr(result, "findings", result)
+            assert {u["identity"] for u in result.document()["units"]} == {"WO-000006", "WO-000007"}
+            return
+        elif variant == "exhausted":
+            limits["identity_policy"] = {"family": "PY", "width": 2}
+            limits["identity_snapshot"]["active"] += [f"PY-{n:02d}" for n in range(1, 100)]
+            expected = ("IDENTITY_EXHAUSTED", ("requirement:" + R1 + ":PY/2", "requirement:" + R2 + ":PY/2"))
+        elif variant == "capability":
+            limits["required_capabilities"] = ["python"]
+            expected = ("BOUNDS_WIDENED", ("WO-000005:required_capabilities:sqlite",
+                                           "WO-000006:required_capabilities:sqlite"))
+        elif variant == "endpoint":
+            limits["existing_decomposition"] = {}
+            expected = ("MISSING_ENDPOINT", (f"{R2}:{R3}",))
+        else:
+            limits["existing_decomposition"][R1] = ["WO-000001"]
+            expected = ("EXISTING_DECOMPOSITION", (f"{R1}:WO-000001",))
+>       assert_hold(compile_initial(**values), *expected)
+
+tests/context_assembly/test_initial_compilation.py:448: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = CompilationCandidate(candidate_digest='sha256:742afe62878101b72ed1fb1aa51b2c59999f8da493faaa3e42753cbef0912fee', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), code = 'IDENTITY_COLLISION', refs = ('requirement:SF-REQ-911:WO-990300',)
+
+    def assert_hold(result, code, refs=None):
+>       assert isinstance(result, CompilationHold), result
+E       AssertionError: CompilationCandidate(candidate_digest='sha256:742afe62878101b72ed1fb1aa51b2c59999f8da493faaa3e42753cbef0912fee', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+E       assert False
+E        +  where False = isinstance(CompilationCandidate(candidate_digest='sha256:742afe62878101b72ed1fb1aa51b2c59999f8da493faaa3e42753cbef0912fee', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), CompilationHold)
+
+tests/context_assembly/test_initial_compilation.py:213: AssertionError
+____________________________________________________________________________________________________________________________________________________________________ test_identity_dependency_and_bound_violations_hold[foreign_unreserved] ____________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x7400e029d6c0>, variant = 'foreign_unreserved'
+
+    @pytest.mark.parametrize("variant", ["collision", "foreign_unit", "foreign_unreserved", "foreign_new", "exhausted",
+                                         "capability", "endpoint", "existing"])
+    def test_identity_dependency_and_bound_violations_hold(harness, variant):
+        h = harness()
+        prepared(h)
+        values = inputs(h)
+        limits = values["authority_limits"]
+        if variant == "collision":
+            values["reservations"] = {"requirement:" + R1: "WO-000003"}
+            expected = ("IDENTITY_COLLISION", ("requirement:" + R1 + ":WO-000003",))
+        elif variant == "foreign_unit":  # Reserved number later materialized for another requirement (review R1-B1).
+            values["reservations"] = {"requirement:" + R1: EXISTING}
+            expected = ("IDENTITY_COLLISION", ("requirement:" + R1 + ":" + EXISTING,))
+        elif variant == "foreign_unreserved":  # Review R2-B1: an existing unit absent from the snapshot is still taken.
+            limits["existing_decomposition"] = {R3: ["WO-000009"]}
+            values["stages"], values["reservations"] = {"WO-000009": "DONE"}, {"requirement:" + R1: "WO-000009"}
+            expected = ("IDENTITY_COLLISION", ("requirement:" + R1 + ":WO-000009",))
+        elif variant == "foreign_new":  # Review R2-B1: a new number never lands on an existing unit's identity.
+            limits["existing_decomposition"] = {R3: ["WO-000005"]}
+            values["stages"] = {"WO-000005": "DONE"}
+            result = compile_initial(**values)
+            assert isinstance(result, CompilationCandidate), getattr(result, "findings", result)
+            assert {u["identity"] for u in result.document()["units"]} == {"WO-000006", "WO-000007"}
+            return
+        elif variant == "exhausted":
+            limits["identity_policy"] = {"family": "PY", "width": 2}
+            limits["identity_snapshot"]["active"] += [f"PY-{n:02d}" for n in range(1, 100)]
+            expected = ("IDENTITY_EXHAUSTED", ("requirement:" + R1 + ":PY/2", "requirement:" + R2 + ":PY/2"))
+        elif variant == "capability":
+            limits["required_capabilities"] = ["python"]
+            expected = ("BOUNDS_WIDENED", ("WO-000005:required_capabilities:sqlite",
+                                           "WO-000006:required_capabilities:sqlite"))
+        elif variant == "endpoint":
+            limits["existing_decomposition"] = {}
+            expected = ("MISSING_ENDPOINT", (f"{R2}:{R3}",))
+        else:
+            limits["existing_decomposition"][R1] = ["WO-000001"]
+            expected = ("EXISTING_DECOMPOSITION", (f"{R1}:WO-000001",))
+>       assert_hold(compile_initial(**values), *expected)
+
+tests/context_assembly/test_initial_compilation.py:448: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+result = CompilationCandidate(candidate_digest='sha256:b306c6d79088ec4701e144cdc7d7791f8854b5d742bb2e2b2ed0b6b03a3b2cf6', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), code = 'IDENTITY_COLLISION', refs = ('requirement:SF-REQ-911:WO-000009',)
+
+    def assert_hold(result, code, refs=None):
+>       assert isinstance(result, CompilationHold), result
+E       AssertionError: CompilationCandidate(candidate_digest='sha256:b306c6d79088ec4701e144cdc7d7791f8854b5d742bb2e2b2ed0b6b03a3b2cf6', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+E       assert False
+E        +  where False = isinstance(CompilationCandidate(candidate_digest='sha256:b306c6d79088ec4701e144cdc7d7791f8854b5d742bb2e2b2ed0b6b03a3b2cf6', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']}), CompilationHold)
+
+tests/context_assembly/test_initial_compilation.py:213: AssertionError
+=========================================================================================================================================================================================== short test summary info ============================================================================================================================================================================================
+FAILED tests/context_assembly/test_initial_compilation.py::test_identity_dependency_and_bound_violations_hold[collision] - AssertionError: CompilationCandidate(candidate_digest='sha256:aa2c4633b144b5cd165965224c0f8775a1da9075de63fe01718daba0ae693be2', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+FAILED tests/context_assembly/test_initial_compilation.py::test_identity_dependency_and_bound_violations_hold[foreign_unit] - AssertionError: CompilationCandidate(candidate_digest='sha256:742afe62878101b72ed1fb1aa51b2c59999f8da493faaa3e42753cbef0912fee', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+FAILED tests/context_assembly/test_initial_compilation.py::test_identity_dependency_and_bound_violations_hold[foreign_unreserved] - AssertionError: CompilationCandidate(candidate_digest='sha256:b306c6d79088ec4701e144cdc7d7791f8854b5d742bb2e2b2ed0b6b03a3b2cf6', input...N_OR_MATERIALIZATION', 'LIFECYCLE_OR_RELEASE_TRANSITION', 'SF_REQ_015_LINT_OR_ASSESSMENT', 'OBLIGATION_SATISFACTION']})
+3 failed in 5.65s

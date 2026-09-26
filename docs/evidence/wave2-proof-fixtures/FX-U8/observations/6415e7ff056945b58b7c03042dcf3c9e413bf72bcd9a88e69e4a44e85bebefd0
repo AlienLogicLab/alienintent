@@ -1,0 +1,23 @@
+F                                                                                                                                                                                                                                                                                                                                                                                                        [100%]
+=================================================================================================================================================================================================== FAILURES ===================================================================================================================================================================================================
+_______________________________________________________________________________________________________________________________________________________________________________ test_reservation_is_stable_and_not_sort_derived ________________________________________________________________________________________________________________________________________________________________________________
+
+harness = <function harness.<locals>.<lambda> at 0x7b6160aeea20>
+
+    def test_reservation_is_stable_and_not_sort_derived(harness):
+        """A persisted reservation never moves: a later requirement that sorts first takes the next free number."""
+        h = harness()
+        revisions = prepared(h)
+        first = h.compile()
+        assert isinstance(first, CompilationCandidate)
+        version = h.store.read_state(PROFILE, "upstream:identity-reservations")[0]
+        again = h.compile()  # Regeneration from identical input: same candidate, nothing newly reserved.
+>       assert again.candidate_digest == first.candidate_digest
+E       AssertionError: assert 'sha256:aef28...7ab27c9780e22' == 'sha256:0c9fb...927f2a796f3fa'
+E         - sha256:0c9fb768a4b18f695876da19edf2803abcfe58c3a18c76606a5927f2a796f3fa
+E         + sha256:aef28dc718614b4abe07f3ffc7564730b307041ba4914bbdd017ab27c9780e22
+
+tests/context_assembly/test_initial_compilation.py:386: AssertionError
+=========================================================================================================================================================================================== short test summary info ============================================================================================================================================================================================
+FAILED tests/context_assembly/test_initial_compilation.py::test_reservation_is_stable_and_not_sort_derived - AssertionError: assert 'sha256:aef28...7ab27c9780e22' == 'sha256:0c9fb...927f2a796f3fa'
+1 failed in 5.38s
