@@ -10,8 +10,9 @@ from collections.abc import Callable, Mapping, Sequence
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
-from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
+from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, require_eligible
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
+from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
 from alienintent.invocation_runtime.ports.source_control import SourceControl
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 from alienintent.invocation_runtime.ports.workspace import WorkspaceManager
@@ -34,6 +35,16 @@ def decode_candidate(record: Mapping[str, object] | None) -> CandidateRef | None
         CandidateKind(str(record["kind"])), str(record["identity"]), str(record["content_digest"]),
         str(record["locator"]), str(record["provenance"]), bool(record["independent_read_back_proven"]),
     )
+
+
+# AC-08 restart-time attestation answers (``attest_ownership``). Only
+# ``owner-terminated`` is conclusive; every other answer leaves the invocation
+# UNKNOWN, and nothing may replace it.
+OWNER_TERMINATED = "owner-terminated"
+OWNER_UNATTESTED, OWNER_ALIVE, OWNED_WORK_ACTIVE, EFFECT_UNKNOWN = "owner-unattested", "owner-alive", "owned-work-active", "effect-unknown"
+# Journaled just before a producer's publication, the one external effect a
+# role invocation performs; once present, a lost result's effect is UNKNOWN.
+PUBLICATION_STARTED = "publication-started"
 
 
 # Outcome kinds that must name the exact candidate the role acted on.
@@ -154,7 +165,7 @@ def _publishes_to(candidate: CandidateRef, branch: str) -> bool:
 
 
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -168,6 +179,7 @@ class RealWorkerProvider(WorkerProvider):
         self._now = now
         self._sleep = sleep
         self._journal = journal
+        self._ownership = ownership
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
@@ -180,7 +192,8 @@ class RealWorkerProvider(WorkerProvider):
             "correlation_id": invocation.correlation_id, "work_identity": invocation.work_identity, "role": invocation.role,
             "contract_digest": None if context is None else context.content_digest,
         }
-        self._journal.append({"event": "invocation-started"} | attribution)
+        owner = None if self._ownership is None else self._ownership.current()
+        self._journal.append({"event": "invocation-started"} | attribution | ({} if owner is None else {"owner": dict(owner)}))
         outcome = self._start(invocation, context, grants, budget)
         retry = self.retry_evidence.get(invocation.correlation_id)
         self._journal.append({"event": "invocation-outcome"} | attribution | {
@@ -296,6 +309,9 @@ class RealWorkerProvider(WorkerProvider):
                 outcome = WorkerOutcome(result.kind)
             else:
                 revision = self._source.revision(workspace.path)
+                if self._journal is not None:
+                    self._journal.append({"event": PUBLICATION_STARTED, "correlation_id": invocation.correlation_id,
+                                          "work_identity": invocation.work_identity, "role": invocation.role, "revision": revision})
                 candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
                 outcome = WorkerOutcome.success(candidate)
         finally:
@@ -385,6 +401,42 @@ class RealWorkerProvider(WorkerProvider):
         except JournalUnreadable:
             return None
         return correlated_outcome(records, invocation, self._candidate_branch(invocation))
+
+    def attest_ownership(self, invocation: WorkerInvocation) -> ProcessResult:
+        """AC-08: whether an invocation this process did not run has conclusively ended.
+
+        Answered from the durable journal and the process-ownership
+        observation only, never from a caller's claim. It is conclusive
+        (``owner-terminated``, quiescent) only when the one journaled start
+        names an owner process that has ended, no process carrying the
+        invocation's marker is alive, and no publication had begun. Anything
+        else - no attested owner, an owner still running, owned work still
+        active, a publication that may have escaped, an unreadable journal or
+        observation - is UNKNOWN.
+        """
+        def answer(kind: str) -> ProcessResult:
+            return ProcessResult(kind, None, kind == OWNER_TERMINATED, BudgetRecord.unknown())
+
+        if self._journal is None or self._ownership is None:
+            return answer(OWNER_UNATTESTED)
+        try:
+            records = self._journal.records()
+        except JournalUnreadable:
+            return answer(OWNER_UNATTESTED)
+        own = [record for record in records if record.get("correlation_id") == invocation.correlation_id]
+        started = [record for record in own if record.get("event") == "invocation-started"]
+        owner = started[0].get("owner") if len(started) == 1 else None
+        if not isinstance(owner, Mapping):
+            return answer(OWNER_UNATTESTED)
+        state = self._ownership.owner_state(owner)
+        if state != "terminated":
+            return answer(OWNER_ALIVE if state == "alive" else OWNER_UNATTESTED)
+        work = self._ownership.owned_work(invocation.correlation_id)
+        if work is None or work:
+            return answer(OWNED_WORK_ACTIVE)
+        if any(record.get("event") == PUBLICATION_STARTED for record in own):
+            return answer(EFFECT_UNKNOWN)
+        return answer(OWNER_TERMINATED)
 
     def verify(self, candidate, producer_invocation_id: str, verifier_invocation_id: str) -> WorkerOutcome:
         try:

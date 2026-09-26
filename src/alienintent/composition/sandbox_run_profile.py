@@ -39,6 +39,7 @@ from alienintent.execution_coordination.ports.work_management import WorkRejecte
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
 from alienintent.installation.application.doctor import InstallationDoctor
 from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
+from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
 from alienintent.invocation_runtime.adapters.git_worktree import GitWorktreeAdapter, ref_safe
 from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
@@ -296,9 +297,12 @@ class SandboxRunProfile:
         for directory in (self.workspace_root, self.verifier_root, self.producer_read_back_root, self.artifact_root):
             directory.mkdir(parents=True, exist_ok=True)
         self._clock = clock
+        # WO-220404 AC-08: one kernel observation of invocation ownership, shared
+        # by the process adapter's supervision and the provider's attestation.
+        self.ownership = ProcOwnership()
         self.worker_process = CliWorkerProvider(
             provider, worker_command[0], tuple(worker_command[1:]), "bypassPermissions",
-            PROVIDER_DIMENSIONS, environment=worker_environment,
+            PROVIDER_DIMENSIONS, environment=worker_environment, ownership=self.ownership,
         )
         # K3: the provider journals every role outcome durably, and the
         # coordinator reaches it only through the binding guard over that same
@@ -309,6 +313,7 @@ class SandboxRunProfile:
             self.producer_read_back_root, self.grant, composition.profile.repository,
             GitWorktreeAdapter(checkout, self.workspace_root), ReservationBook(1, 2),
             now=clock, sleep=time.sleep, journal=self.journal,
+            ownership=self.ownership,
         )
         self.worker = RoleBindingGuard(self.real_worker, self.journal, self.store, self.name, composition.profile.repository, clock)
         self.notifier = ProjectDecisionNotifier(composition.projects)

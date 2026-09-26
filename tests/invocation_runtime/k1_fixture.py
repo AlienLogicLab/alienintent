@@ -37,6 +37,7 @@ from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvo
 from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
 from alienintent.invocation_runtime.domain.runtime import CapabilityGrant, InvocationRole, ReservationBook
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
+from tests.support.feature_regressions import seed_verification_runner
 
 ROOT = Path(__file__).resolve().parents[2]
 S0_MANIFEST = ROOT / "docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json"
@@ -131,6 +132,7 @@ def _seed(root: Path) -> None:
     _git("init", "-q", "--bare", "--initial-branch=main", str(root / "remote.git"), cwd=root, environment=environment)
     _git("init", "-q", "--initial-branch=main", str(root / "checkout"), cwd=root, environment=environment)
     (root / "checkout" / "README.md").write_text("FX-K1 disposable baseline\n", encoding="utf-8")
+    seed_verification_runner(root / "checkout")
     _git("add", "-A", cwd=root / "checkout", environment=environment)
     _git("commit", "-q", "-m", "FX-K1 baseline", cwd=root / "checkout", environment=environment)
     _git("remote", "add", "origin", str(root / "remote.git"), cwd=root / "checkout", environment=environment)

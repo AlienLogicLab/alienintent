@@ -52,7 +52,7 @@ from alienintent.execution_coordination.domain.custody import CandidateKind, Can
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
 from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, PRODUCER, VERIFIER, WorkerInvocation, WorkerOutcome, WorkerProvider
-from alienintent.invocation_runtime.application.real_worker import correlated_outcome, decode_candidate
+from alienintent.invocation_runtime.application.real_worker import OWNER_TERMINATED, PUBLICATION_STARTED, correlated_outcome, decode_candidate
 from alienintent.invocation_runtime.domain.runtime import JournalUnreadable
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
 
@@ -66,6 +66,9 @@ ROLE_OPERATIONS = {
 }
 # Process-adapter answers that attest the owned process and its output holders are gone.
 TERMINAL_OWNERSHIP = frozenset({"already-finished"})
+# WO-220404 AC-08: the Invocation Runtime's restart-time attestation that the
+# journaled owner process ended with no owned work alive and no effect begun.
+ATTESTED_OWNERSHIP = frozenset({OWNER_TERMINATED})
 
 
 def phase_of(invocation: WorkerInvocation) -> str:
@@ -214,6 +217,21 @@ class RoleBindingGuard(WorkerProvider):
         kind = str(getattr(observed, "kind", observed))
         return getattr(observed, "quiescent", False) is True and kind in TERMINAL_OWNERSHIP, kind
 
+    def _attested_terminal(self, invocation: WorkerInvocation) -> tuple[bool, str]:
+        """AC-08: an invocation this process did not run, as the Invocation Runtime attests it.
+
+        Only the runtime's own conclusive answer counts: the journaled owner
+        process has ended, nothing carrying the invocation's marker is alive
+        and no publication had begun. Otherwise ownership or effect state is
+        UNKNOWN and nothing is retained or replaced.
+        """
+        attest = getattr(self.provider, "attest_ownership", None)
+        if not callable(attest):
+            return False, "owning-call-not-concluded"
+        observed = attest(invocation)
+        kind = str(getattr(observed, "kind", observed))
+        return getattr(observed, "quiescent", False) is True and kind in ATTESTED_OWNERSHIP, kind
+
     def _retain_missing(self, invocation: WorkerInvocation) -> WorkerOutcome | None:
         """Retain a conclusively missing terminal result against the original invocation."""
         assert self._journal is not None
@@ -221,13 +239,17 @@ class RoleBindingGuard(WorkerProvider):
             records = self._journal.records()
         except JournalUnreadable:
             return None
-        own = [record for record in records if record.get("correlation_id") == invocation.correlation_id]
+        # A begun publication is not a terminal record; whether its effect
+        # concluded is the ownership answer's to give.
+        own = [record for record in records if record.get("correlation_id") == invocation.correlation_id and record.get("event") != PUBLICATION_STARTED]
         if [record.get("event") for record in own] != ["invocation-started"]:
             return None
         begun = own[0]
         if begun.get("work_identity") != invocation.work_identity or begun.get("role") != invocation.role:
             return None
         terminal, ownership = self._ownership_terminal(invocation)
+        if not terminal and ownership == "owning-call-not-concluded":
+            terminal, ownership = self._attested_terminal(invocation)
         if not terminal:
             return None
         try:

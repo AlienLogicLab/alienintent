@@ -36,6 +36,7 @@ from alienintent.execution_coordination.ports.worker_provider import WorkerInvoc
 from alienintent.invocation_runtime.adapters.git_worktree import GitWorktreeAdapter, ref_safe
 from alienintent.invocation_runtime.domain.runtime import InvocationRole
 from tests.composition.test_sandbox_profile import document
+from tests.support.feature_regressions import seed_verification_runner
 from tests.support.live_github import (
     PRIORITY_FIELD,
     SANDBOX_PROJECT,
@@ -458,6 +459,7 @@ def _seeded_repository(tmp_path: Path) -> tuple[Path, Path]:
     (checkout / "worker").mkdir()
     (checkout / "worker" / "run.sh").write_text(WORKER)
     (checkout / "README.md").write_text("sandbox rehearsal\n")
+    seed_verification_runner(checkout)
     subprocess.run(["git", "-C", str(checkout), "add", "-A"], check=True)
     subprocess.run(["git", "-C", str(checkout), "commit", "--quiet", "-m", "baseline"], check=True, env=_git_identity())
     subprocess.run(["git", "-C", str(checkout), "push", "--quiet", "origin", "HEAD:refs/heads/main"], check=True)

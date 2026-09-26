@@ -16,6 +16,9 @@ class InvocationRole(StrEnum):
 # {"verdict": "accept"|"reject", "revision": <evaluated 40-hex revision>, "findings": [..]}.
 VERDICT_PATH = ".alienintent/verdict.json"
 FEATURE_REGRESSION_RECEIPT_PATH = ".alienintent/feature-regressions.json"
+# The stated-environment variable naming the invocation a worker process (and
+# everything it starts) belongs to; ownership is observed through it.
+INVOCATION_MARKER = "ALIENINTENT_INVOCATION_ID"
 
 
 class CapabilityDenied(PermissionError):
