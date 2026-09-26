@@ -232,4 +232,20 @@ A read-only reviewer examined candidate `41591b1`. It found no HIGH issues.
 
 ## Retained run
 
-Pending: the harness run over the clean committed candidate is retained under `FX-O/` in the next commit.
+`FX-O/` holds the harness run for invocation `AlienLogicLab/alienintent#121:PRODUCER:acd2c651-2426-40d5-97d5-d5a1b88585f8`.
+
+- Source: clean committed revision `1035037f75350226d374a89c9017f979dc8c21bd`. Code and admission baseline `4a9a3b6`.
+- Result: exit 0, no holds.
+- Proof command: inside `unshare -rn`, exit 0, verdict PASS. All 13 scenarios and all 31 checks pass. Network denial is
+  `ENFORCED` and no credential is present.
+- Checks: the focused suites, `check_architecture.py --check all`, the architecture fitness tests and
+  `node scripts/check.mjs all` all exit 0.
+- Controls: all 16 discriminate. The 14 source controls give intact 0, fault 1, restored 0, with the named assertion in
+  the fault output, each applied exactly once. The 2 environment controls give intact 0, fault 2 (HOLD), restored 0.
+- Full suite: 25 nodes fail, all in `tests/evidence_learning/test_proof_planning.py`. The same 25 fail at the code
+  baseline in a detached worktree, so they are recorded as `PREEXISTING_BASELINE_FAILURES`, outside this extent. This
+  is the same residual FX-K2 and FX-K3 recorded. No new failure.
+- Provider calls: 0. Tokens and cost: UNKNOWN.
+- Independent verdict: pending (fresh BIU verifier).
+- A superseded first run over `41591b1` (exit 0, 13 controls) preceded the review repairs. It was not retained in the
+  repository, and nothing in this record depends on it.
