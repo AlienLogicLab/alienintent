@@ -4,7 +4,7 @@ from dataclasses import asdict
 from hashlib import sha256
 
 from alienintent.control_plane.domain.attention import (
-    ActivationHold, ActivationPolicy, AttentionHold, AttentionItem, AttentionOrigin,
+    Acknowledgement, ActivationHold, ActivationPolicy, AttentionHold, AttentionItem, AttentionOrigin,
     DeliveryReceipt, NotificationAttempt, Resolution, ResolverGrant,
 )
 from alienintent.control_plane.ports.attention import (
@@ -18,10 +18,12 @@ class AttentionService(AttentionPort):
     def __init__(self, repository: AttentionRepository, *, project: str, profile: str,
                  clock: Callable[[], str], next_id: Callable[[], str], resolvers: tuple[ResolverGrant, ...],
                  notifier: AttentionNotifier | None = None, activation: AttentionActivation | None = None,
-                 activation_policy: ActivationPolicy | None = None) -> None:
+                 activation_policy: ActivationPolicy | None = None, acknowledgers: tuple[str, ...] = ()) -> None:
         self.repository, self.project, self.profile = repository, project, profile
         self.clock, self.next_id, self.resolvers = clock, next_id, tuple(resolvers)
         self.notifier, self.activation, self.activation_policy = notifier, activation, activation_policy
+        # Named human acknowledgers are trusted composition input, never a caller claim.
+        self.acknowledgers = tuple(acknowledgers)
 
     def ensure(self, origin: AttentionOrigin) -> AttentionItem:
         if (origin.source_ref.project, origin.source_ref.profile) != (self.project, self.profile):
@@ -60,8 +62,12 @@ class AttentionService(AttentionPort):
                 a = delivery["attempt"]
             attempts.append(NotificationAttempt(a["identity"], a["status"], a["diagnostic"],
                 None if a["receipt"] is None else DeliveryReceipt(**a["receipt"])))
+        raw_ack = body.get("acknowledgement")
+        acknowledgement = None if raw_ack is None else Acknowledgement(**(
+            dict(raw_ack) | {"item_history_ref": ref_from_document(raw_ack["item_history_ref"])}))
         return AttentionItem(identity, version, AttentionOrigin(**raw_origin), body["status"], tuple(attempts),
-            body["handler"], None if body["resolution_ref"] is None else ref_from_document(body["resolution_ref"]), ref)
+            body["handler"], None if body["resolution_ref"] is None else ref_from_document(body["resolution_ref"]), ref,
+            acknowledgement)
 
     def list_pending(self) -> tuple[AttentionItem, ...]:
         return tuple(item for identity in self.repository.identities("attention:")
@@ -100,6 +106,21 @@ class AttentionService(AttentionPort):
         if item.status == "RESOLVED":
             raise AttentionHold("ALREADY_RESOLVED")
         return self._change(item, "SEEN", actor, status="SEEN")
+
+    def acknowledge(self, identity: str, actor: str, expected_version: int, statement: str) -> AttentionItem:
+        """Human receipt of the exact version shown. SEEN, not RESOLVED: suppression and the queue stay."""
+        item = self.show(identity)
+        self._version(item, expected_version)
+        if item.status == "RESOLVED":
+            raise AttentionHold("ALREADY_RESOLVED")
+        if item.acknowledgement is not None:
+            raise AttentionHold("ALREADY_ACKNOWLEDGED")
+        if actor not in self.acknowledgers:
+            raise AttentionHold("WRONG_ACKNOWLEDGER")
+        if not isinstance(statement, str) or not statement.strip():
+            raise AttentionHold("STATEMENT_REQUIRED")
+        receipt = Acknowledgement(identity, item.version, item.history_ref, actor, self.clock(), statement)
+        return self._change(item, "ACKNOWLEDGED", actor, status="SEEN", acknowledgement=asdict(receipt))
 
     def resolve(self, identity: str, decision: Resolution) -> AttentionItem:
         item = self.show(identity)

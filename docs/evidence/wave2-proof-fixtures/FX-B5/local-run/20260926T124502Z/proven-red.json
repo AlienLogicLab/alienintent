@@ -1,0 +1,125 @@
+{
+  "controls": [
+    {
+      "application_count": 1,
+      "assertions": [
+        "a delivered notification must not be human receipt"
+      ],
+      "control": "delivery_counts_as_receipt",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "command delivery or transport mistaken for human receipt",
+      "fault": {
+        "locator": "observations/a0418ec3dfba82525435ba8e889445911ebecbed6b9af3721aaa57b33dc0fc42",
+        "revision_digest": "sha256:a0418ec3dfba82525435ba8e889445911ebecbed6b9af3721aaa57b33dc0fc42"
+      },
+      "file": "src/alienintent/control_plane/application/attention.py",
+      "intact": {
+        "locator": "observations/98cd33ad715866838ec6ab7e1e308240559e5a503090f122f4e2d98543ec4d7e",
+        "revision_digest": "sha256:98cd33ad715866838ec6ab7e1e308240559e5a503090f122f4e2d98543ec4d7e"
+      },
+      "restored": {
+        "locator": "observations/5ac1291bbdc7ac7ee3968df4c1d78cb07bbf0a972911cf2d9402824c3a18045c",
+        "revision_digest": "sha256:5ac1291bbdc7ac7ee3968df4c1d78cb07bbf0a972911cf2d9402824c3a18045c"
+      },
+      "tests": [
+        "tests/control_plane/test_attention_acknowledgement.py::test_receipt_distinct_from_insertion_delivery_rendering_seen"
+      ]
+    },
+    {
+      "application_count": 1,
+      "assertions": [
+        "an unconfigured actor must not acknowledge"
+      ],
+      "control": "acknowledger_unchecked",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "acknowledgement by a non-human or unconfigured actor",
+      "fault": {
+        "locator": "observations/97aeccffd305126af6f3cf228a07464c3443d7a9edaa576be762dc9569897351",
+        "revision_digest": "sha256:97aeccffd305126af6f3cf228a07464c3443d7a9edaa576be762dc9569897351"
+      },
+      "file": "src/alienintent/control_plane/application/attention.py",
+      "intact": {
+        "locator": "observations/dcbb7e117315349a63c8f1cc68f041389da7683707bab68a670eca75ed054670",
+        "revision_digest": "sha256:dcbb7e117315349a63c8f1cc68f041389da7683707bab68a670eca75ed054670"
+      },
+      "restored": {
+        "locator": "observations/85c03e4ceafd6f06223bf99cb78aa1820abd6f6ee62bdd5cbfc3fca9dccfa852",
+        "revision_digest": "sha256:85c03e4ceafd6f06223bf99cb78aa1820abd6f6ee62bdd5cbfc3fca9dccfa852"
+      },
+      "tests": [
+        "tests/control_plane/test_attention_acknowledgement.py::test_unconfigured_actor_refused"
+      ]
+    },
+    {
+      "application_count": 1,
+      "assertions": [
+        "a second acknowledgement must be refused"
+      ],
+      "control": "duplicate_acknowledgement",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "duplicate handling",
+      "fault": {
+        "locator": "observations/9ba3722b2b7d31255f0da6f101591b9959d59ed3fd811aeb1a8a0a4a90a0b8e6",
+        "revision_digest": "sha256:9ba3722b2b7d31255f0da6f101591b9959d59ed3fd811aeb1a8a0a4a90a0b8e6"
+      },
+      "file": "src/alienintent/control_plane/application/attention.py",
+      "intact": {
+        "locator": "observations/1af3b2ea746a1b1d510c284cad3a90ce9295d9dc8ab2935c8a92e92a7ee134eb",
+        "revision_digest": "sha256:1af3b2ea746a1b1d510c284cad3a90ce9295d9dc8ab2935c8a92e92a7ee134eb"
+      },
+      "restored": {
+        "locator": "observations/1af3b2ea746a1b1d510c284cad3a90ce9295d9dc8ab2935c8a92e92a7ee134eb",
+        "revision_digest": "sha256:1af3b2ea746a1b1d510c284cad3a90ce9295d9dc8ab2935c8a92e92a7ee134eb"
+      },
+      "tests": [
+        "tests/control_plane/test_attention_acknowledgement.py::test_zero_duplicate_handling"
+      ]
+    },
+    {
+      "application_count": 1,
+      "assertions": [
+        "acknowledgement must not lift judgment suppression"
+      ],
+      "control": "acknowledgement_resolves",
+      "discriminating": true,
+      "exit_status": [
+        0,
+        1,
+        0
+      ],
+      "failure_class": "suppression broken or acknowledgement confused with resolution",
+      "fault": {
+        "locator": "observations/deb6a7aec9fe10f810748ea63bac92b44eef9adf50b8e4c1a799392fc2119afb",
+        "revision_digest": "sha256:deb6a7aec9fe10f810748ea63bac92b44eef9adf50b8e4c1a799392fc2119afb"
+      },
+      "file": "src/alienintent/control_plane/application/attention.py",
+      "intact": {
+        "locator": "observations/7ac885a8a02c58307096ed313858aab684c85f7276cd770ab07ceea44e8849d6",
+        "revision_digest": "sha256:7ac885a8a02c58307096ed313858aab684c85f7276cd770ab07ceea44e8849d6"
+      },
+      "restored": {
+        "locator": "observations/141362b68dd9869526dae1a962f3793ad6611f50eb32a9d3fa850ff58bf9acd4",
+        "revision_digest": "sha256:141362b68dd9869526dae1a962f3793ad6611f50eb32a9d3fa850ff58bf9acd4"
+      },
+      "tests": [
+        "tests/control_plane/test_attention_acknowledgement.py::test_acknowledgement_keeps_judgment_suppression"
+      ]
+    }
+  ],
+  "holds": []
+}

@@ -1,0 +1,138 @@
+{
+  "admission_baseline": "62e693932dcbd6b6583a1d37b172f4b418af9256",
+  "biu": "WO-220508",
+  "commands": [
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "-rfEs",
+        "tests/control_plane/test_attention_acknowledgement.py"
+      ],
+      "exit_status": 0,
+      "label": "focused",
+      "observation": {
+        "locator": "observations/bf965b0fa7e07480c90c16145bfa00c781d950564029f49da5b117c758e33cdf",
+        "revision_digest": "sha256:bf965b0fa7e07480c90c16145bfa00c781d950564029f49da5b117c758e33cdf"
+      }
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_attention.py",
+        "tests/execution_coordination/test_liveness_reconciliation.py",
+        "tests/control_plane/test_monitor_host.py",
+        "tests/composition/test_bounded_control_capstone.py"
+      ],
+      "exit_status": 0,
+      "label": "adjacent",
+      "observation": {
+        "locator": "observations/c23ca7b4ab466cd0cbf68ea9f7b59a7fd81a1394936e1b36f64e91c806c2219f",
+        "revision_digest": "sha256:c23ca7b4ab466cd0cbf68ea9f7b59a7fd81a1394936e1b36f64e91c806c2219f"
+      }
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/live/test_fx_b5_operational.py"
+      ],
+      "exit_status": 0,
+      "label": "operational-tool",
+      "observation": {
+        "locator": "observations/fdaaa3ea3e17884ff9b6d15d8ba56b9597dce8425a991a1c409d58ff5bb01461",
+        "revision_digest": "sha256:fdaaa3ea3e17884ff9b6d15d8ba56b9597dce8425a991a1c409d58ff5bb01461"
+      }
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "label": "architecture",
+      "observation": {
+        "locator": "observations/67087f4bc463a275248a6ee0dfdaee7b5e173a4a716855fc8b405aa40c8e6bf3",
+        "revision_digest": "sha256:67087f4bc463a275248a6ee0dfdaee7b5e173a4a716855fc8b405aa40c8e6bf3"
+      }
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-p",
+        "no:cacheprovider",
+        "tools/verification/test_feature_regressions.py"
+      ],
+      "exit_status": 0,
+      "label": "feature-regression-registry",
+      "observation": {
+        "locator": "observations/567ab3f5228bc4b19de83c0a3f69d77be396c4a553b582a1b5859ebc1448a08a",
+        "revision_digest": "sha256:567ab3f5228bc4b19de83c0a3f69d77be396c4a553b582a1b5859ebc1448a08a"
+      }
+    }
+  ],
+  "contract": "docs/evidence/wave2-proof-fixtures/FX-B5/FX-B5.md",
+  "exit_status": 0,
+  "fixture": "FX-B5",
+  "holds": [],
+  "invocation": "AlienLogicLab/alienintent#128:PRODUCER:ce1a2eae-a310-483e-af55-0362eaf166cf",
+  "issue": 128,
+  "label": "LOCAL",
+  "non_claims": [
+    "LOCAL proof only; not operational acceptance",
+    "no acknowledgement made here is human receipt"
+  ],
+  "probes": {
+    "B5-01": "PASS",
+    "B5-02": "PASS",
+    "B5-03": "PASS",
+    "B5-04": "PASS",
+    "B5-05": "PASS",
+    "B5-06": "PASS",
+    "B5-07": "PASS",
+    "B5-08": "PASS",
+    "B5-09": "PASS",
+    "B5-10": "PASS"
+  },
+  "run_state": "COMPLETE",
+  "source_candidate": {
+    "commit": "e52cfdb004f51c87cfa4d911204a25f3276e9a3c",
+    "files": {
+      "docs/evidence/wave2-proof-fixtures/FX-B5/FX-B5.md": "sha256:6401b98eb6619245115bc86399ee8360a2a8ef2cdf6d89ce083fcdcd6f225511",
+      "src/alienintent/composition/attention_inbox.py": "sha256:8bcfc160915e7bbc49ae47b3c7f70a3d68ae1bcc768bfd92e1294a8c7303669a",
+      "src/alienintent/composition/control_plane_profile.py": "sha256:57772f33d62b8d179fc344ea69bca41048641d890c3cd9d17165a007c9552f23",
+      "src/alienintent/control_plane/application/attention.py": "sha256:ddb892027949f0f407988293095ad193504dadd8dc9b1e3ffd79ee1e9577c905",
+      "src/alienintent/control_plane/domain/attention.py": "sha256:18e574071903cd6831a503bf2dd63b9d807ee0d17e1e7a4ed23be3664885345f",
+      "src/alienintent/control_plane/ports/attention.py": "sha256:bf8880abc4f23230e144c5a313855329359fef1016aca5c1ddc36cd920932e2a",
+      "tests/control_plane/test_attention_acknowledgement.py": "sha256:f618fd490f3099f7eb9ffc742ede6c7de7a6e6d40db40b9ae501ff314442b23a",
+      "tools/live/fx_b5_operational.py": "sha256:269e3bc0416f4eb1b4d20d186c3de76d39a727a001beab71cf24f43d60e501c9",
+      "tools/live/test_fx_b5_operational.py": "sha256:739847de8c1405b441e3f7e6817a70bf3b7feb459815f742cc52b42899a9990b"
+    }
+  },
+  "stage": "done"
+}

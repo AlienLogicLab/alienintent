@@ -79,3 +79,20 @@ def test_upstream_integration_capstone_pack_is_selected_by_every_chained_stage()
     for path in chained:
         assert "wave2a-upstream-integration-capstone" in [p["id"] for p in module.selected_packs(manifest(), (path,))]
     assert module.selected_packs(manifest(), ("docs/README-unrelated.md",)) == []
+
+
+def test_human_attention_acknowledgement_pack_is_selected_by_every_owned_boundary():
+    owned = (
+        "src/alienintent/control_plane/domain/attention.py",
+        "src/alienintent/control_plane/ports/attention.py",
+        "src/alienintent/control_plane/application/attention.py",
+        "src/alienintent/control_plane/adapters/attention_repository.py",
+        "src/alienintent/composition/attention_inbox.py",
+        "src/alienintent/composition/control_plane_profile.py",
+        "tests/control_plane/test_attention_acknowledgement.py",
+        "tools/live/fx_b5_operational.py",
+        "tools/evidence/fx_b5_evidence.py",
+        "docs/evidence/wave2-proof-fixtures/FX-B5/FX-B5.md",
+    )
+    for path in owned:
+        assert "human-attention-acknowledgement" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path

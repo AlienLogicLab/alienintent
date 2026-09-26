@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","tools/fitness/check_architecture.py","--root","src/alienintent","--check","all"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/2cd0beeb-14e9-4a6e-b133-2067053dda2d","exit_status":0,"stderr":"","stdout":"PASS: all architecture fitness checks\n"}

@@ -34,7 +34,7 @@ class AttentionProfile:
     def __init__(self, root: Path, *, project: str, name: str, invocation: str,
                  clock: Callable[[], str], next_id: Callable[[], str], resolvers: tuple[ResolverGrant, ...],
                  notifier: AttentionNotifier | None = None, activation: AttentionActivation | None = None,
-                 activation_policy: ActivationPolicy | None = None) -> None:
+                 activation_policy: ActivationPolicy | None = None, acknowledgers: tuple[str, ...] = ()) -> None:
         root = Path(root).resolve(strict=True)
         self.store = SQLiteOperationalStore(root / "attention.sqlite")
         self.evidence = LocalEvidenceRepository(root / "attention-evidence", project, name)
@@ -42,7 +42,7 @@ class AttentionProfile:
             project=project, profile=name, invocation=invocation)
         self.attention = AttentionService(self.repository, project=project, profile=name,
             clock=clock, next_id=next_id, resolvers=resolvers, notifier=notifier,
-            activation=activation, activation_policy=activation_policy)
+            activation=activation, activation_policy=activation_policy, acknowledgers=acknowledgers)
         self.migration = BootstrapAttentionImport(self.repository, project=project, profile=name)
         self.context = ContextReconstructionService(self.store, self.evidence, project=project,
             profile=name, invocation=invocation)

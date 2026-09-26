@@ -1,0 +1,125 @@
+{
+  "acknowledgers": [
+    "sanookdu"
+  ],
+  "holds": [],
+  "items": [
+    {
+      "acknowledged_entries": 1,
+      "acknowledgement": {
+        "actor": "sanookdu",
+        "at": "2026-09-26T20:25:11.958225+00:00",
+        "item_history_ref": {
+          "locator": "objects/58826a15812555e076a7aaa61597843ee0a7c5dd247a479609e51fd2f85e7f0c",
+          "logical_id": "attention:ff18a00138eaaa725e2ee26bf56be0f85f574572959278b029896c0e0fd0a053",
+          "profile": "fx-b5-operational",
+          "project": "AlienLogicLab/alienintent",
+          "revision_digest": "sha256:58826a15812555e076a7aaa61597843ee0a7c5dd247a479609e51fd2f85e7f0c"
+        },
+        "item_identity": "attention:ff18a00138eaaa725e2ee26bf56be0f85f574572959278b029896c0e0fd0a053",
+        "item_version": 1,
+        "statement": "I authorize 128"
+      },
+      "current_history_ref": {
+        "locator": "objects/2a18ebefccf7cb12412f2ed1eddc202ed0fa61626b7eb9082f0fccb14930ba40",
+        "logical_id": "attention:ff18a00138eaaa725e2ee26bf56be0f85f574572959278b029896c0e0fd0a053",
+        "profile": "fx-b5-operational",
+        "project": "AlienLogicLab/alienintent",
+        "revision_digest": "sha256:2a18ebefccf7cb12412f2ed1eddc202ed0fa61626b7eb9082f0fccb14930ba40"
+      },
+      "current_object": {
+        "present": true,
+        "ref": {
+          "locator": "objects/2a18ebefccf7cb12412f2ed1eddc202ed0fa61626b7eb9082f0fccb14930ba40",
+          "logical_id": "attention:ff18a00138eaaa725e2ee26bf56be0f85f574572959278b029896c0e0fd0a053",
+          "profile": "fx-b5-operational",
+          "project": "AlienLogicLab/alienintent",
+          "revision_digest": "sha256:2a18ebefccf7cb12412f2ed1eddc202ed0fa61626b7eb9082f0fccb14930ba40"
+        },
+        "rehash_matches": true
+      },
+      "history_actions": [
+        "CREATED",
+        "ACKNOWLEDGED"
+      ],
+      "identity": "attention:ff18a00138eaaa725e2ee26bf56be0f85f574572959278b029896c0e0fd0a053",
+      "in_pending_queue": true,
+      "kind": "JUDGMENT",
+      "origin_matches": true,
+      "status": "SEEN",
+      "transition": {
+        "actor_is_configured_human": true,
+        "from": {
+          "action": "CREATED",
+          "history_ref": {
+            "locator": "objects/58826a15812555e076a7aaa61597843ee0a7c5dd247a479609e51fd2f85e7f0c",
+            "logical_id": "attention:ff18a00138eaaa725e2ee26bf56be0f85f574572959278b029896c0e0fd0a053",
+            "profile": "fx-b5-operational",
+            "project": "AlienLogicLab/alienintent",
+            "revision_digest": "sha256:58826a15812555e076a7aaa61597843ee0a7c5dd247a479609e51fd2f85e7f0c"
+          },
+          "object": {
+            "present": true,
+            "ref": {
+              "locator": "objects/58826a15812555e076a7aaa61597843ee0a7c5dd247a479609e51fd2f85e7f0c",
+              "logical_id": "attention:ff18a00138eaaa725e2ee26bf56be0f85f574572959278b029896c0e0fd0a053",
+              "profile": "fx-b5-operational",
+              "project": "AlienLogicLab/alienintent",
+              "revision_digest": "sha256:58826a15812555e076a7aaa61597843ee0a7c5dd247a479609e51fd2f85e7f0c"
+            },
+            "rehash_matches": true
+          },
+          "status": "PENDING",
+          "version": 1
+        },
+        "item_bound": true,
+        "receipt_equals_entry": true,
+        "to": {
+          "action": "ACKNOWLEDGED",
+          "actor": "sanookdu",
+          "at": "2026-09-26T20:25:11.959379+00:00",
+          "status": "SEEN",
+          "version": 2
+        }
+      },
+      "version": 2
+    },
+    {
+      "acknowledged_entries": 0,
+      "acknowledgement": null,
+      "current_history_ref": {
+        "locator": "objects/f1a782bbb3526fc33a3575ed2e503712b4969d143582c77eb49483b287aae395",
+        "logical_id": "attention:961de2349200a4690761383436513a06c443abed9f589c07a3f9de187db8e679",
+        "profile": "fx-b5-operational",
+        "project": "AlienLogicLab/alienintent",
+        "revision_digest": "sha256:f1a782bbb3526fc33a3575ed2e503712b4969d143582c77eb49483b287aae395"
+      },
+      "current_object": {
+        "present": true,
+        "ref": {
+          "locator": "objects/f1a782bbb3526fc33a3575ed2e503712b4969d143582c77eb49483b287aae395",
+          "logical_id": "attention:961de2349200a4690761383436513a06c443abed9f589c07a3f9de187db8e679",
+          "profile": "fx-b5-operational",
+          "project": "AlienLogicLab/alienintent",
+          "revision_digest": "sha256:f1a782bbb3526fc33a3575ed2e503712b4969d143582c77eb49483b287aae395"
+        },
+        "rehash_matches": true
+      },
+      "history_actions": [
+        "CREATED"
+      ],
+      "identity": "attention:961de2349200a4690761383436513a06c443abed9f589c07a3f9de187db8e679",
+      "in_pending_queue": true,
+      "kind": "DONE",
+      "origin_matches": true,
+      "status": "PENDING",
+      "version": 1
+    }
+  ],
+  "other_attention_identities": [],
+  "profile": "fx-b5-operational",
+  "read_at": "2026-09-26T20:47:18.767531+00:00",
+  "result": "OPERATIONAL_READBACK_COMPLETE",
+  "root": "/home/netmarine/.local/state/alienintent/fx-b5/attention",
+  "source_candidate": "0d2030500d4172e1d52990d8d76afd290325ea92"
+}
