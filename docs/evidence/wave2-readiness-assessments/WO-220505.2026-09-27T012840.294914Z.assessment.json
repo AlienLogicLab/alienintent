@@ -1,0 +1,77 @@
+{
+  "assessment": {
+    "disposition": "CLARIFY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce operational (not offline) evidence for SF-REQ-056-AC-08. A real, supervised, independently scanned liveness host must show all of the following on an authorized live workload: dropped-trigger recovery within G+I, judgment/provider-block suppression with attributed resolution, delayed-delivery and restart duplicate safety, one-writer enforcement, retained attention linkage, and exact real outcome readback. The run must be captured as independently verified, custody-tracked live_liveness_receipts. It must not retire the SWF-29 bootstrap or release anything.",
+    "implementation_unknowns": [
+      "The contents and location of fx-b2-supervision.json are not specified and must be authored consistently with MonitorHostProfile/SystemdHostManager.",
+      "It is assumed, not established, that the monitor_host CLI exposes launch/restart/show subcommands with the stated flags, and that the timer-driven observe path works outside the fake-clock FX-L1 tests.",
+      "Fixture sequencing: step 4 runs 'before or instead of step 3' on the seeded record, which would suppress step 3's recovery. Step 5 depends on step 3's gap. Separate probe identities or launches, or a fixed order, are likely needed to keep each probe discriminating.",
+      "Timing semantics: step 3 bounds gap to readback_confirmed within 360s, but confirmation_seconds=90 may push readback confirmation past G+I. Which event the G+I bound applies to needs to be derived from the design contract.",
+      "The proof plan requires intact/fault/restored negative-control discrimination and application counts for the mechanical controls (ownership fence, effect-identity refusal, prelaunch refusal). These controls are not fully enumerated in the pinned steps.",
+      "Timing the SIGTERM precisely between a durable intent and its readback on a real wall clock may need observation hooks or retries.",
+      "The FX-B7 evidence record shape must be located so the FX-B2 record can mirror it."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The SPECIFY hold on the governing design is overridden inside the BIU rather than through a reviewed design revision. That could invalidate the proof or breach the non-goal against closing authority gaps.",
+      "A synthetic isolated workload may later be judged insufficient for AC-08, forcing a repeat exercise on the real workload.",
+      "The authority chain is relayed through an observing session and recorded by the Director. This gate cannot verify the durable decision records.",
+      "The sequencing ambiguity between steps 3 and 4 could yield non-discriminating or self-contradictory probe results.",
+      "Real systemd-run units on the shared host ALIENLAPTOP could interfere with the sibling alienintent/observer units if isolation of the unit name, cgroup or profile is misconfigured.",
+      "The work runs on long real wall-clock intervals (at least 300s per grace period, multiple periods) with a race-sensitive restart step, so there is a risk of flaky timing within the 3-cycle cap.",
+      "The FX-B2 PASS could be misread as authority to retire SWF-29, which the work order explicitly forbids."
+    ],
+    "next_action": "Route the three clarifications to Program Director. Get the design owner's recorded disposition, or a reviewed design revision, clearing R1-GAP-MONITOR-HOST / DESIGN_CANDIDATE_WITH_SPECIFY_HOLD for the monitor_host path. Get a Founder statement on whether the isolated synthetic FX-B2-PROBE workload and the Director-bound target satisfy AC-08's 'independently authorized ... on that workload'. Record both in the work order, then request a fresh assessment of that revision.",
+    "owner_clarifications": [
+      "The design contract marks this path DESIGN_CANDIDATE_WITH_SPECIFY_HOLD / R1-GAP-MONITOR-HOST (wave2-design-contracts.md:995). The work order declares that marker superseded by WO-220305's completion. Does the design owner (via Program Director/SPECIFY) confirm the hold is cleared for the monitor_host composition, with a reviewed design revision or recorded disposition? Or must this BIU wait for one, per its own escalation rule and its non-goal against closing authority gaps?",
+      "Does the Founder accept this as the 'authorized live workload' for SF-REQ-056-AC-08? The workload is a synthetic FX-B2-PROBE KnownActive record in an isolated fx-b2 profile, disjoint from the real factory state, but running under real systemd, real wall clock and real stores. AC-08 requires demonstration 'on that workload', which may mean the actual factory workload the replacement will supervise. Does AC-08 require the latter?",
+      "Is the Director's 2026-09-27 target binding and fixture pin sufficient as the 'independently authorized live-profile exercise' AC-08 requires? The Founder authority was relayed through an observing session. Or does AC-08 need a separate, direct Founder/owner acknowledgment of this specific target and fixture?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is unresolved owner authority over whether this proof is admissible, not missing engineering detail or unavailable prerequisites. The text states that the target, budget, custody and fixture are bound. Nothing suggests they are unavailable, so HOLD is not controlling. The work is one cohesive proof with one verification verdict, so SPLIT is inappropriate. READY is blocked for two reasons. The work order itself requires a reviewed design revision before implementation when source authority is unmet, and forbids closing authority gaps. Yet it asserts a documented SPECIFY hold is obsolete. The acceptance criterion's workload identity is also an owner interpretation, which the Director resolved but the Founder did not. Both are answerable by owners and material to whether a PASS counts. The remaining uncertainties are engineering research and are listed as implementation unknowns: config authoring, step sequencing, timing semantics and negative controls.",
+    "semantic_split_recommendation": [],
+    "summary": "The text reports that five predecessors are DONE, that the Founder disposed the two authority gates (2026-09-26), and that a later Founder handoff authorized a new isolated local proof target. It also reports that the Director bound a target and pinned a seven-step FX-B2 fixture with an evidence schema (2026-09-27). These are reported facts; this gate has not verified them. Most execution detail is concrete and the work is cohesive. Two owner-level matters remain unresolved, and the work order's own rules make them material. First, the governing design contract carries a DESIGN_CANDIDATE_WITH_SPECIFY_HOLD / R1-GAP-MONITOR-HOST marker, which this work order declares stale by assertion. That conflicts with the escalation rule (a reviewed design revision is required before implementation) and with the non-goal against closing authority gaps. Second, the bound workload is a synthetic placeholder KnownActive record in an isolated profile. Whether that counts as 'that workload' for AC-08 was chosen by the Director, not stated by the Founder.",
+    "verification_assessment": "Acceptance is largely observable. The pinned steps name durable events in liveness.sqlite, refusal codes (HostHold, HOST_NOT_OWNED, EFFECT_IDENTITY_USED), readback_guarded output, exit statuses and immutable observation refs. The evidence schema maps PASS/FAIL to steps 1-7. A fresh verifier retrieving the exact SHA and inspecting the retained receipts can give one meaningful verdict on the operational run. That verdict only settles AC-08 if the owner accepts the synthetic isolated workload as 'that workload' and the SPECIFY hold is cleared. Otherwise the verdict could PASS a proof that does not count. Local or fake-clock results are correctly excluded."
+  },
+  "disposition": "CLARIFY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T01:29:26.666550+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 18528,
+    "input_sha256": "db2aea3006d0a0e7c230f00758468000378392ca89bfec6778517a010ad5388b",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-lz1a_5hf/WO-220505.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T01:28:40.294914+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220505"
+}
