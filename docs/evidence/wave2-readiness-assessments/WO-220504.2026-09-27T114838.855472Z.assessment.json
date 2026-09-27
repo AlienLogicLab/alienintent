@@ -1,0 +1,68 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce operational proof, on a separately authorized and bound target profile, that live_trajectory_receipts preserves trajectory capture identity, order, timestamps, anomalies and retention across process restart and attention-producer consumption. The proof must also reconcile old and new observations across cutover without loss and retain the queue. It must not claim to replace or retire the existing independent external observer (alienintent-observer.service).",
+    "implementation_unknowns": [
+      "How to integrate live_trajectory_receipts with the WO-220610 live_trajectory_capture composition running under local systemd --user supervision.",
+      "How to drive and observe a process restart and attention-producer consumption on the bound target so that identity, order, timestamps, anomalies and retention are captured as immutable observation refs.",
+      "How to design the old/new cutover reconciliation and queue-retention check, and the intact/fault/restored negative controls that discriminate them.",
+      "The exact fixture commands, inputs, expected outcomes and evidence schema for FX-B1, which must be pinned before implementation per the proof order."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The title ('replacement proof') and the unrevised Acceptance/Scenario text still carry the original replacement framing and the observer-duty contingency. Verifiers may judge against the broader original predicate instead of the 2026-09-27 proof-only scoping. The predicate text should be reconciled before handoff.",
+      "The target may be bound implicitly by assuming the WO-220610 systemd --user composition is the authorized target profile. The authority grant permits binding an existing target but does not identify one, so the binding must be explicit and recorded.",
+      "A local fixture result may be mislabelled as operational proof, contrary to the evidence contract.",
+      "Cutover reconciliation on a live target could disturb the running alienintent/observer services on ALIENLAPTOP if one-writer ownership and the observer's independence are not preserved.",
+      "Predecessor DONE statuses, authority dispositions and DAG check results are self-reported in the task text and not independently verified by this gate."
+    ],
+    "next_action": "An authorized party (the Director, under the recorded Founder delegation) should explicitly identify and bind an existing operational target profile for live_trajectory_receipts. That could be the WO-220610 composition's local systemd --user target, if it is confirmed as authorized. The binding should be recorded durably with the profile identity, and the stop condition updated. At the same time, revise the acceptance/scenario text to reflect the proof-only, no-observer-replacement scope. Then request a fresh assessment of that revision.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is an unavailable prerequisite, not unresolved intent. Intent is clear, and the observer-duty ambiguity was resolved through the BIU's own pre-approved contingency under a relayed Founder instruction. Dependencies are reported satisfied, and the work is one cohesive proof with no independent decision centers, so SPLIT does not apply. CLARIFY does not fit because no product or policy question remains open. Binding the target is an authority/custody act the delegation already permits but has not performed. However, acceptance explicitly requires a separately authorized, bound operational target with actual readback, and the document states that this target is not identified or bound and remains a stop condition. Handing off now could only yield local evidence that cannot satisfy acceptance. HOLD is therefore correct until the target profile binding becomes available.",
+    "semantic_split_recommendation": [],
+    "summary": "Most prior gaps are reported closed. All five predecessors are reported DONE, including WO-220102 (#71) and the new prerequisite WO-220610/B1P (#140), which is reported landed on origin/main. The Founder is reported to have disposed POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY. The observer-duty question is handled by invoking the BIU's own contingency: the proof is scoped as proof-only, with no observer replacement or retirement claim. One necessary prerequisite remains explicitly unmet: the separately authorized operational target profile for this BIU's own workload is neither identified nor bound. The acceptance criteria require that target and actual readback, and local substitutions cannot satisfy operational acceptance. The document itself keeps this as a stop condition, so the work cannot produce its acceptance evidence yet. This assessment relies on the document's own claims and has not independently verified any of them.",
+    "verification_assessment": "Acceptance is observable and a single independent verdict is meaningful once a target is bound. The evidence would be operational readback showing preserved identity, order, timestamps, anomalies and retention across restart and consumption, plus lossless old/new reconciliation with the queue retained. Evidence is retained under the stated contract, and a fresh verifier retrieves the exact candidate SHA. Without a bound, authorized target profile, no operational verdict can be produced, since local results are explicitly insufficient. Verification is therefore currently blocked, not incoherent."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T11:49:03.262457+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 15546,
+    "input_sha256": "c319f5eac8814b5df8bddb65cb289ff59826e2306b50e7bfd6ee7115b89735fc",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-dhnaelgv/WO-220504.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T11:48:38.855472+00:00",
+    "timeout_s": 600
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220504"
+}
