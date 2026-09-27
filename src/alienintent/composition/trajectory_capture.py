@@ -44,6 +44,8 @@ from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOpera
 MODULE = "alienintent.composition.trajectory_capture"
 MAX_SUBMISSION_BYTES = 1024 * 1024
 POLL_SECONDS = 0.1
+# One connection may hold the single-threaded host for at most this long, well inside 2*I.
+READ_SECONDS = 0.5
 
 
 def load_policy(path: Path | str | None) -> CapturePolicy:
@@ -105,13 +107,19 @@ class HostedCapture:
         self.hosted.cycle()
 
 
-def serve(capture: TrajectoryCaptureService, connection: socket.socket) -> None:
-    """One submission, one reply. The reply is sent only after the entry is committed."""
+def serve(capture: TrajectoryCaptureService, connection: socket.socket,
+          monotonic: Callable[[], float] = time.monotonic) -> None:
+    """One submission, one reply. The reply is sent only after the entry is committed. A client
+    that does not finish its submission within READ_SECONDS is dropped with nothing written."""
     with connection:
-        connection.settimeout(5)
+        deadline = monotonic() + READ_SECONDS
         body = b""
         try:
             while not body.endswith(b"\n") and len(body) <= MAX_SUBMISSION_BYTES:
+                remaining = deadline - monotonic()
+                if remaining <= 0:
+                    return
+                connection.settimeout(remaining)
                 chunk = connection.recv(65536)
                 if not chunk:
                     break
@@ -123,7 +131,7 @@ def serve(capture: TrajectoryCaptureService, connection: socket.socket) -> None:
                 raise CaptureHold("SUBMISSION_TOO_LARGE")
             try:
                 document = json.loads(body)
-            except ValueError as error:
+            except (ValueError, RecursionError) as error:
                 raise CaptureHold("SUBMISSION_INVALID:json") from error
             reply: dict[str, object] = capture.submit(Submission.from_document(document))
         except CaptureHold as hold:
@@ -143,21 +151,27 @@ def run_capture_host(config: SupervisionConfig, policy: CapturePolicy, launch_id
     except HostHold as hold:
         print(json.dumps({"host": "REFUSED", "reason": hold.reason}), flush=True)
         return EXIT_REFUSED
+    path = socket_path(config)
+    listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+    # The owned unit is the only host: C5 confirmed its predecessor's cgroup empty before launch.
+    # The socket is bound before the session opens, so a bind failure writes nothing.
+    previous = os.umask(0o177)
+    try:
+        path.unlink(missing_ok=True)
+        listener.bind(str(path))
+        listener.listen(16)
+    except OSError:
+        listener.close()
+        print(json.dumps({"host": "HOLD", "reason": "CAPTURE_SOCKET_UNAVAILABLE"}), flush=True)
+        return EXIT_HOLD
+    finally:
+        os.umask(previous)
     try:
         opened = hosted.start()
     except CaptureHold as hold:
+        listener.close()
         print(json.dumps({"host": "HOLD", "reason": hold.reason}), flush=True)
         return EXIT_HOLD
-    path = socket_path(config)
-    # The owned unit is the only host: C5 confirmed its predecessor's cgroup empty before launch.
-    path.unlink(missing_ok=True)
-    listener = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    previous = os.umask(0o177)
-    try:
-        listener.bind(str(path))
-    finally:
-        os.umask(previous)
-    listener.listen(16)
     selector = selectors.DefaultSelector()
     selector.register(listener, selectors.EVENT_READ)
     print(json.dumps({"host": "STARTED", "launch_id": launch_id, "session": opened["session"],
@@ -169,7 +183,10 @@ def run_capture_host(config: SupervisionConfig, policy: CapturePolicy, launch_id
                 hosted.cycle()
                 deadline = monotonic() + config.policy.interval_seconds
             for _ in selector.select(timeout=POLL_SECONDS):
-                connection, _ = listener.accept()
+                try:
+                    connection, _ = listener.accept()
+                except OSError:
+                    continue  # an aborted connection is the client's; nothing was submitted
                 serve(hosted.capture, connection)
             hosted.capture.check_stall()
     except MonitorHold as hold:

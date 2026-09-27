@@ -145,3 +145,20 @@ def test_an_invalid_submission_is_answered_with_a_hold_and_writes_nothing(world)
     assert send(hosted, {"source": "agent-1"}) == {"hold": "SUBMISSION_INVALID:fields"}
     assert send(hosted, event(1) | {"source_seq": 0}) == {"hold": "SUBMISSION_INVALID:source_seq"}
     assert [e["kind"] for e in world.journal()["entries"]] == ["SESSION"]
+
+
+def test_a_hostile_or_silent_client_neither_crashes_nor_holds_the_host(world):
+    from alienintent.composition.trajectory_capture import READ_SECONDS, serve
+    world.supervisor.launch(world.grant())
+    hosted = world.host()
+    source, capture = socket.socketpair()
+    with source:
+        source.sendall(b"[" * 100_000 + b"\n")                   # nesting deeper than the JSON parser allows
+        serve(hosted.capture, capture)
+        assert json.loads(source.makefile().readline()) == {"hold": "SUBMISSION_INVALID:json"}
+    silent, capture = socket.socketpair()
+    with silent:
+        ticks = iter(range(100))
+        serve(hosted.capture, capture, monotonic=lambda: next(ticks) * READ_SECONDS)  # sends nothing: dropped
+        assert silent.recv(10) == b""
+    assert [e["kind"] for e in world.journal()["entries"]] == ["SESSION"]

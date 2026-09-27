@@ -160,7 +160,7 @@ def test_restart_reconciles_accepted_events_without_loss_or_duplication(root):
     opened = entries(root)[-1]
     assert opened["kind"] == "SESSION" and opened["session"]["reconciled"] == {
         "entries": 5, "events": 4, "sessions": ["launch-1"],
-        "sources": {"agent-1": {"high_seq": 4, "last_observed_at": T0 + 4 * SECOND}}}
+        "sources": {"agent-1": {"high_seq": 4, "high_observed_at": T0 + 4 * SECOND}}}
     # The source never saw the ack for 4 and retries it: recorded, not captured again.
     retry = second.submit(submission(4))
     assert (retry["status"], retry["capture_seq"], retry["identity"]) == ("DUPLICATE", 4, acks[3]["identity"])
@@ -270,3 +270,23 @@ def test_a_broken_or_inconsistent_journal_holds(root):
         with pytest.raises(CaptureHold) as held:
             state.apply(bad)
         assert held.value.reason == reason
+
+
+def test_source_clock_regression_is_measured_against_the_highest_reported_time(root):
+    clock = Clock()
+    service = capture(root, "launch-1", clock)
+    kinds = [service.submit(submission(seq, observed_at=T0 + at))["anomalies"]
+             for seq, at in ((1, 100), (3, 300), (2, 200), (4, 250), (5, 400))]
+    # 2 is late and expected to be older (out of order only); 4 advances the order yet is older than 3.
+    assert kinds == [[], [SEQUENCE_GAP], [OUT_OF_ORDER], [TIMESTAMP_REGRESSION], []]
+
+
+def test_event_ids_are_unique_within_their_source_only(root):
+    service = capture(root, "launch-1", Clock())
+    service.submit(submission(1, source="agent-a", event_id="shared-1"))
+    other = service.submit(submission(1, source="agent-b", event_id="shared-1"))
+    follow = service.submit(submission(2, source="agent-b"))
+    assert (other["status"], other["capture_seq"], other["anomalies"]) == ("CAPTURED", 2, [])
+    assert follow["anomalies"] == [], "the other source's cursor exists; no false gap"
+    assert [(e["source"], e["event_id"]) for e in captured(root)] == [
+        ("agent-a", "shared-1"), ("agent-b", "shared-1"), ("agent-b", "agent-b-002")]
