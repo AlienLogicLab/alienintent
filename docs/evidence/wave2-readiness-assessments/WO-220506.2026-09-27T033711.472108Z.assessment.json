@@ -1,0 +1,77 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove, with retained operational evidence, that canonical live release admission checks all six existing release preconditions plus eligibility at the actual live-profile prelaunch boundary (AlienLogicLab/alienintent / Project #1). Every meaningful invalid case must launch zero actors and the valid case must launch exactly one. The work must not become release itself or expand SF-REQ-015 into release ownership.",
+    "implementation_unknowns": [
+      "Whether a GitHubProfileComposition built from the sandbox profile can be composed with ScriptedWorkerProvider without code changes, and whether the FactoryCoordinator prelaunch call site can be driven directly for synthetic items.",
+      "Whether the cited line ranges (release.py:57-79, factory_coordinator.py:255-268, :284) still match the current source revision.",
+      "How release policy/source, readiness digest, dependencies, capabilities and budget dimensions are represented on seeded sandbox Project items so that each negative case isolates exactly one failing precondition.",
+      "Whether the ScriptedWorkerProvider/offline journal durably records start invocations in a form that a fresh, out-of-process readback can count.",
+      "Whether the executing actor can access the production GitHub App credential in a strictly read-only way for the step-9 Project #1 before/after readback.",
+      "How the tools/live/py10_sandbox.py and FX-E1 harness pieces are adapted for FX-B3 seeding, observation and cleanup."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Phase-1 sandbox evidence being mislabeled or treated as satisfying the completion predicate or release readiness.",
+      "The authority chain for key dispositions relies on relayed handoffs through an observing session and a broad 'do whatever is required' delegation applied by analogy. Its sufficiency is reported, not verified here.",
+      "A future phase-2 exercise writing synthetic state to the production Project #1 board has material blast radius, including accidental launch if the worker is not doubled.",
+      "Use of the production GitHub App credential for step-9 readback could exceed read-only use or leak into the sandbox fixture configuration.",
+      "Negative cases may fail for unintended reasons (multiple preconditions violated at once), producing vacuous discrimination.",
+      "The 'plus eligibility' requirement may be left unproven by a fixture covering only the six admit_release preconditions.",
+      "Landing via direct merge into the baseline without a PR (SWF-19) reduces review opportunity if phase-1 artifacts include harness changes.",
+      "Sandbox cleanup failures could leave proof litter or cross-contaminate later proofs."
+    ],
+    "next_action": "Obtain an explicit Founder authorization for the phase-2 exercise against AlienLogicLab/alienintent / Project #1. It should cover target, budget, custody, whether synthetic writes are permitted, whether worker dispatch stays doubled, and cleanup/rollback requirements. In the same record, confirm the phase-1 insufficiency disposition and whether 'eligibility' needs a distinct probe. Re-assess after that. Phase 1 may proceed only under its separately recorded sanction; this gate does not authorize execution.",
+    "owner_clarifications": [
+      "For the phase-2 production-boundary exercise, who authorizes it, and with what explicit blast-radius limits? Specifically: may synthetic Issues/items be written to AlienLogicLab/alienintent Project #1, may worker dispatch remain doubled (ScriptedWorkerProvider) there, and what cleanup and rollback is required?",
+      "Does the Founder directly confirm the Director's analogy-based disposition that the sandbox phase-1 proof does not satisfy 'actual live-profile prelaunch boundary'? It was made under the broad 'do whatever is required to unblock' delegation rather than as a Founder decision specific to this BIU.",
+      "Does 'plus eligibility' in the completion predicate require a probe distinct from the six admit_release preconditions? The pinned fixture's steps 3-8 cover only replay, policy/source, readiness digest, dependency, capability and budget."
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is an unavailable external authority and target, not unresolved engineering. The BIU's own completion predicate, as disposed in the text, requires an exercise at the real production prelaunch boundary. The text states that the authorization, target binding, budget and custody for that exercise do not exist, and its stop conditions require holding on an authority gap or unbound budget/custody. Intent is otherwise coherent, and phase 1 is well specified with localized rework. There is a single decision center (admission proof at one boundary), so SPLIT is unwarranted. CLARIFY is secondary because the remaining open items are chiefly authorization of an external production target. The listed owner questions describe what that authorization must settle.",
+    "semantic_split_recommendation": [],
+    "summary": "The text reports several things as resolved: release and live-transport authorities, the SWF-21/SWF-35 scope question, predecessor completion, sandbox target binding, and a pinned 10-step FX-B3 fixture. It splits acceptance into two phases. Phase 1 is an isolated sandbox proof using the real GitHubProfileComposition/FactoryCoordinator with doubled worker dispatch. The Director, acting under a broad Founder delegation and reasoning by analogy to #125, states that phase 1 does not satisfy the completion predicate. The predicate requires an exercise at the real Project #1 prelaunch boundary. The target, budget, custody and blast-radius limits for that phase-2 exercise are explicitly not authorized, so the BIU cannot reach its completion predicate. These are reported facts, not independently verified.",
+    "verification_assessment": "Phase 1 has observable, discriminating acceptance. It includes a positive control launching exactly one actor, six single-precondition negative controls launching zero, fresh out-of-process readback, a production non-interference readback, and retained argv, exit status and observation refs. A fresh independent verifier retrieving the exact SHA can issue a meaningful verdict on phase 1. However, the stated completion predicate requires the actual Project #1 boundary, which is unauthorized. One independent verdict on the whole BIU therefore cannot currently reach PASS, only a phase-1 verdict. 'Eligibility' beyond the six preconditions is not explicitly probed."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T03:37:45.417953+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 26257,
+    "input_sha256": "9974ce0a30caec4c61eb4d9153f83de9c772e836bbebd2fb517971aefe489abe",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-c_k0eeuy/WO-220506.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T03:37:11.472108+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220506"
+}
