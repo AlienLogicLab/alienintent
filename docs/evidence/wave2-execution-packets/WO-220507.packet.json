@@ -1,0 +1,101 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220507",
+  "issued_at": "2026-09-27T03:10:00.000000+00:00",
+  "goal": "Curate the FX-B4 retained evidence record discharging DAG node B4 (Successor program mailbox path proof, SF-REQ-053) through its own alternative-discharge clause: a completed programme with no outstanding message duties, proven by authority. No new mailbox capability is built.",
+  "starting_authority": {
+    "requirements": ["SF-REQ-053"],
+    "dag_node": ["B4"],
+    "candidate_contract_sha256": "b08ca4e995a2511ddfae46f0dba3ff43f6dcc8c63188013ed535665fe2012745",
+    "baseline_sha": "4076a57010867a98022ee43ca6590814a962e4a9",
+    "release_authority": "NOT GRANTED — normal Wave 2 release admission required before IMPLEMENT"
+  },
+  "allowed_scope": {
+    "extent": "Produce and retain the FX-B4 evidence record citing: (1) the DAG's own R2 node title ('Program Director mailbox bridge waiter') establishing that this node's 'successor episode or supported helper' names the retired bootstrap Program Director bridge; (2) both post-Wave-1 programme messages (POSTW1-BRIDGE-000, POSTW1-LEARN-002) recorded DONE/PASS in docs/operations/post-wave1-program/program-state.json; (3) the programme's own PROGRAM_COMPLETE terminal state recorded in docs/operations/post-wave1-program/reports/FINAL-REPORT.md's Director closure addendum, landed and remotely verified at commit 352fa9d7, predating any Wave 2 BIU. Verify each citation resolves at the pinned baseline before recording the record as discharged.",
+    "boundary": "Owns no new capability. Does not build successor_mailbox_consumer or successor_mailbox_receipts as running code; the DAG's owns_capabilities entry for B4 is discharged by authority citation, not by implementation.",
+    "non_goals": [
+      "Building any new mailbox/messaging capability or service.",
+      "Reopening or reinterpreting PROGRAM_COMPLETE, the Wave 1 programme closure, or any of its seven still-open Founder decision records — this BIU only cites the terminal-state fact.",
+      "Claiming this discharges R2 (Program Director mailbox bridge waiter) — R2 is its own DAG node with its own dependency on B4 plus R1, and is not addressed by this packet.",
+      "Replanning the DAG or implementing another node's scope."
+    ],
+    "architecture_constraints": [
+      "Cite retained programme evidence by exact path/commit; do not restate or duplicate program-state.json's own records.",
+      "Do not modify docs/operations/post-wave1-program/ historical records; this BIU only references them."
+    ],
+    "owner_clarifications_disposed": {
+      "successor_episode_interpretation": "'Successor episode or supported helper' names the retired bootstrap Program Director / resident-coordinator bridge, per R2's own DAG title ('Program Director mailbox bridge waiter') and BOOTSTRAP-M13's identical title. It does not refer to Wave 2 Factory Director episode-to-episode continuity, which has its own separate, already-proven path (R1, FDH-01 live proof) and is not gated by B4/R2.",
+      "authority_standard_for_alternative_route": "A computed ProgramState.terminal_state() of PROGRAM_COMPLETE, recorded in the programme's own Director closure addendum against its eight completion conditions, landed and remotely verified before any Wave 2 BIU existed, is sufficient 'proof by authority'. Requiring a fresh Founder re-statement would relitigate an already durably answered record (runtime contract §8)."
+    }
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220501",
+      "dag_node": "B0",
+      "issue": 116,
+      "project_status": "DONE",
+      "completion_predicate": "See docs/work-units/wave2/WO-220501.md."
+    },
+    {
+      "biu_id": "WO-220302",
+      "dag_node": "C2",
+      "issue": 95,
+      "project_status": "DONE",
+      "completion_predicate": "See docs/work-units/wave2/WO-220302.md."
+    },
+    {
+      "biu_id": "WO-220303",
+      "dag_node": "C3",
+      "issue": 99,
+      "project_status": "DONE",
+      "completion_predicate": "See docs/work-units/wave2/WO-220303.md."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required.",
+    "Retain all authority dispositions and cited-artifact verification (hash/commit resolution) applicable to this node."
+  ],
+  "acceptance": {
+    "criteria": [
+      "FX-B4 record verifies that docs/operations/post-wave1-program/program-state.json records POSTW1-BRIDGE-000 and POSTW1-LEARN-002 as status DONE, review_status PASS, at the pinned baseline.",
+      "FX-B4 record verifies commit 352fa9d7fce76b661ca98bebca0adec7a00a13df is reachable/ancestral and contains the cited FINAL-REPORT.md Director closure addendum.",
+      "FX-B4 record verifies the DAG's R2 node title and BOOTSTRAP-M13/M17 dispositions as cited.",
+      "The record explicitly states no new mailbox capability is built and this does not discharge R2."
+    ],
+    "proof_fixture": "FX-B4",
+    "proof_level": "OPERATIONAL_OR_EXTERNAL_AUTHORITY",
+    "material_failure_classes": [
+      "A cited artifact does not exist, does not say what is claimed, or does not resolve at the pinned baseline.",
+      "The record claims this discharges R2 or any other node beyond B4 itself.",
+      "The record claims or implies a new mailbox capability exists or was built."
+    ],
+    "bounded_commands": [
+      "git show 352fa9d7fce76b661ca98bebca0adec7a00a13df:docs/operations/post-wave1-program/reports/FINAL-REPORT.md",
+      "git merge-base --is-ancestor 352fa9d7fce76b661ca98bebca0adec7a00a13df <release-baseline>",
+      "jq '.\"POSTW1-BRIDGE-000\",.\"POSTW1-LEARN-002\"' docs/operations/post-wave1-program/program-state.json"
+    ],
+    "non_claims": [
+      "No claim that R2 (Program Director mailbox bridge waiter) is discharged.",
+      "No claim of a new or reinterpreted Founder decision on the seven still-open post-Wave-1 decision records.",
+      "No release, cutover, or broader production mutation is authorized."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220507",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker. No pull request.",
+    "current_artifact": "Candidate specification only; no branch publication, implementation commit or worker invocation created by this packet."
+  },
+  "landing": "SWF-19: normal merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220507.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU if a cited artifact does not verify at the pinned baseline. Preserve unrelated completed proof.",
+    "Do not build a new mailbox capability, and do not claim discharge of R2."
+  ],
+  "escalation_condition": [
+    "Return interface/scope changes or defects in prerequisites to their named owner; do not repair them inside this node.",
+    "Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "READY, native Agent Ready READY at the exact current revision (docs/evidence/wave2-readiness-assessments/WO-220507.2026-09-27T030323.491454Z.assessment.json); this packet grants no release authority."
+}
