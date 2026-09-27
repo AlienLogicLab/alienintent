@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce operational proof that the existing canonical release admission (admit_release's six preconditions plus eligibility) discriminates correctly at the real prelaunch call site. Meaningful invalid cases must launch zero actors and one bounded valid case must launch exactly one (doubled) actor. Proof runs first against the isolated sandbox (FX-B3, phase 1) and then against the actual live-profile AlienLogicLab/alienintent Project #1 boundary (FX-B4, phase 2). Evidence is retained for independent verification, with no release, no real worker launch against production, and no expansion of SF-REQ-015 into release ownership.",
+    "implementation_unknowns": [
+      "Whether 'plus eligibility' in the scope and acceptance predicate is exercised by the pinned steps. Steps 3-8 cover the six release.py preconditions, and eligibility (e.g., a non-READY or otherwise ineligible item) has no explicit negative case. Add one if the existing eligibility check is separate. If implementation coverage is missing, return to the scope owner as the predicate directs rather than expanding scope.",
+      "How to keep the live production factory's own coordinator from selecting the phase-2 positive-control item (Status READY, satisfying admission) and launching a real worker. Candidate approaches are a capability or budget dimension available only in the fixture composition, or another mechanism within the 'doubled or otherwise prevented' authorization. The chosen approach must be demonstrated before any READY write.",
+      "Whether the existing production GitHub App credential can actually delete Issues. REST/App deletion is typically unavailable, and GraphQL deleteIssue requires admin. If it cannot, whether 'close and remove the Project item' meets the mandatory-cleanup rule, or whether the step must escalate per its own stop condition.",
+      "How to implement step 9's 'every other item byte-for-byte unchanged' comparison so it is not confounded by legitimate concurrent factory or human activity on Project #1 during the run. Options include a scoped snapshot diff excluding expected concurrent actors, or a quiesce window if one is already available.",
+      "Reconciling step 9's wording ('read back Project #1 itself: confirm exactly one recorded start') with the fact that start records live in the ScriptedWorkerProvider/offline journal, not on the board. The evidence should cite both sources.",
+      "Locating and reusing the tools/live py10_sandbox and FX-E1 harness helpers to parameterize the same fixture for the sandbox and production profiles, without leaking the production profile path into the working tree."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "A phase-2 READY probe item on the real Project #1 could be picked up by the running production factory and trigger real, duplicate live work. This would violate the Founder's 'no duplicate live work' limit unless it is prevented before the write.",
+      "Cleanup on the production board could fail because of permissions (e.g., Issue deletion) or an interrupted run, leaving probe litter. The record treats this as a stop-and-escalate condition, not a partial pass.",
+      "The step-9 non-interference check could produce false failures from concurrent legitimate board changes, or false passes if the comparison scope is too narrow.",
+      "The 'plus eligibility' portion of the predicate may be untested by the pinned steps, which would leave the completion predicate unmet despite passing FX-B3/FX-B4.",
+      "Authority provenance is reported via relayed inbox handoffs from a Founder-authorized observing session. This gate cannot verify them. The executor should confirm that the durable decision records exist at the cited paths before phase-2 writes.",
+      "Mis-constructing the production profile, or reusing sandbox identifiers or credentials across phases, could write to the wrong target. Configuration-enforced isolation depends on correct wiring.",
+      "Admission proof could be misread as release. The record's 'readiness is not release' and 'no automatic release' boundaries must be preserved in evidence labelling."
+    ],
+    "next_action": "Hand off to the PRODUCER for IMPLEMENT. First pin the harness and confirm eligibility-case coverage, adding a negative case or returning to the scope owner. Run phase 1 FX-B3 against the sandbox and retain evidence. Before any Project #1 write, demonstrate the mechanism that prevents the live factory from dispatching the READY probe item, and confirm that the cleanup permissions are adequate. Then run phase 2 FX-B4 with the doubled worker, verified cleanup and scoped non-interference readback. Publish the exact candidate SHA for the fresh VERIFIER, who judges the phase-2 evidence from retained receipts. Halt and escalate on any stop condition.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The record resolves the controlling owner questions. The Founder dispositions report that the sandbox proof is insufficient on its own, that the read-only readback is covered, and that a bounded phase-2 production exercise is authorized with explicit blast-radius limits. Targets, budget, custody and fixtures are reported as bound, and dependencies as DONE, so no unavailable external prerequisite is established (not HOLD). The two phases share one decision center, one call site and one completion predicate. Phase 1 is a sanctioned precursor, not an independently rejectable concern, so splitting would fragment one cohesive proof (not SPLIT). The remaining uncertainties are engineering and verification design within the granted authority, including the explicit latitude to have worker launch 'doubled or otherwise prevented'. The existing stop/escalate rules route any authority shortfall back to the owner. Those uncertainties are real and material risks for a production write, so they are surfaced as pre-write checks rather than ceremonial owner questions. READY recommends handoff only; it does not authorize execution or release.",
+    "semantic_split_recommendation": [],
+    "summary": "This is one cohesive proof BIU with two sequenced phases that share one harness, one call site and one predicate. The record reports that the Founder has disposed the owner-level questions: sandbox proof alone does not satisfy \"actual live-profile\", the read-only Project #1 readback is covered, and a phase-2 production write is authorized with bounded blast radius. The record also reports bound targets, budget and custody, pinned fixtures (FX-B3 and FX-B4, steps 1-10), and predecessors DONE. These are reported facts from the supplied text and handoff references; this gate has not independently verified them. What remains is engineering and verification design: confirming how the eligibility check is covered, preventing the live factory from acting on a READY probe item, the mechanics of cleanup permissions, and making the non-interference readback robust against concurrent production activity. None of these requires a new owner decision under the recorded authority, and the existing stop/escalate rules cover the failure paths.",
+    "verification_assessment": "Acceptance is observable and discriminating. It has a positive control that avoids vacuous negatives, six named refusal cases each expecting zero worker.start calls, fresh-read readback of the journal and board, a production non-interference comparison, and verified cleanup, with exit status, argv and immutable observation refs retained. One independent verdict over the pinned predicate is meaningful. Phase 1 and phase 2 must be recorded as separate evidence, and neither may be represented as the other. One caveat: a fresh verifier re-running FX-B4 would itself perform additional production writes that the 'minimum reversible writes' authorization may not contemplate. The verifier should therefore judge phase 2 from the retained immutable evidence and cleanup/readback receipts, and may re-execute phase 1 against the sandbox, unless a re-run is separately authorized. Local-only substitutions must stay labelled and cannot satisfy acceptance."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T23:26:36.131870+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 33597,
+    "input_sha256": "7e5badd1540fca860d9c8677a1045b8e949c86b12c7e990fa658ce7fc1a69976",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-upiqy9pr/WO-220506.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T23:25:51.622371+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220506"
+}
