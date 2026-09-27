@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Prove, on a separately authorized operational target profile, that live trajectory capture keeps identity, order, timestamps, anomaly marking and retention across process restart and attention-producer consumption. The proof must also reconcile old and new observations across cutover without loss while retaining the queue. It must make no claim of replacing or retiring the existing external observer (alienintent-observer.service).",
+    "implementation_unknowns": [
+      "How the live trajectory-capture composition should be built from the existing offline/fixture writer (src/alienintent/composition/offline_proof.py) using the pinned Phase 9 value, evidence, store, failure and composition contracts.",
+      "Where capture state is persisted so that identity, order, timestamps, anomalies and retention survive a process restart, and how to show intact/fault/restored discrimination for these controls.",
+      "How the attention producer consumes trajectory records, and how consumption is shown not to lose, reorder or duplicate observations.",
+      "What 'old/new observations across cutover' concretely maps to in the current codebase (e.g., offline writer output versus live capture output), and which reconciliation keys prove no loss while the queue is retained.",
+      "Exact fixture commands, inputs, expected outcomes and evidence schema for FX-B1, to be pinned before implementation per the proof order."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Scope creep: the live capture composition could drift into observer replacement or retirement despite the conservative scoping. Any such claim would violate the retained-observer instruction.",
+      "A local or offline proof could be mislabelled or treated as satisfying operational acceptance, contrary to the evidence contract.",
+      "A target could be bound by inventing or broadening one, which the delegated authority grant does not permit, instead of binding an existing configured target.",
+      "Simultaneous live writers or conflicting one-writer ownership with alienintent.service or the existing observer on the same host during cutover.",
+      "The cutover reconciliation semantics are loosely specified. Misinterpreting 'old/new observations' could produce a proof that passes locally but does not match what authority intended.",
+      "Predecessor DONE statuses and authority dispositions are reported in the task text and not independently verified by this gate. A source revision mismatch would trigger the BIU's own hold."
+    ],
+    "next_action": "The authorized allocator, via the Program Director, should identify and bind a specific, existing, separately authorized operational target profile for live_trajectory_capture and live_trajectory_receipts, for example the named host and service environment. It should record that binding durably on the Issue. If no existing target can be bound without first building the capability, return the question to authority. That authority should decide whether this BIU may implement the capability against local fixtures first and then bind a target for operational proof. Meanwhile, only the permitted partial work may proceed: labelled local evidence/monitor fixtures and pinning FX-B1 fixture commands and schema, with no live capture or observer-retirement claims. Re-run Agent Ready on the revision that records the binding.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "HOLD is the controlling condition because a necessary external prerequisite, a bound operational target profile, is unavailable. The acceptance predicate cannot be met without it. The task text states this explicitly as its sole remaining stop condition, and the proof plan forbids local substitution for operational acceptance. This is not CLARIFY: the owner-intent questions have been disposed as reported. The observer-duty question was handled by the BIU's own pre-approved fallback plus a Founder instruction, and the authority gates were disposed. The remaining engineering questions (building the live composition, persistence across restart, reconciliation mechanics) are implementation research, not owner decisions. This is not SPLIT: capture, receipts, restart durability, consumer consumption and cutover reconciliation form one cohesive capability proof with a single meaningful verdict. This is not READY because the stop condition and the unbound target prevent observable operational acceptance.",
+    "semantic_split_recommendation": [],
+    "summary": "The intent is now reasonably coherent. As reported, the observer-duty question was narrowed by invoking the BIU's own fallback: proof only, the existing external observer is retained, and no retirement claim is made. The four predecessors are reported DONE, and the Founder authority gates are reported disposed. One necessary external prerequisite is still missing: the operational target profile for live_trajectory_capture and live_trajectory_receipts is not identified or bound. The BIU's own stop condition names this as a hold. The acceptance criteria require operational readback on that target and explicitly bar local substitutes from satisfying acceptance, so no meaningful operational verdict is possible until a target is bound. The text also reports that no live capture composition exists yet, only the offline fixture writer in offline_proof.py. That is not a blocker in itself, because this BIU owns the capability and building it is PRODUCER scope. But the delegated grant only allows binding an existing target, and there is nothing concrete to bind yet. These are reported facts; this gate has not verified them.",
+    "verification_assessment": "Acceptance is observable in principle: capture invariants across restart and consumer consumption, and reconciliation across cutover without loss. The evidence obligations are explicit: exact revisions, commands, exit statuses, immutable observation refs, and a fresh independent verifier retrieving the exact SHA. A single independent verdict is meaningful because the scope is one cohesive capability proof. However, operational acceptance explicitly requires the separately authorized target and actual readback, and local substitutions cannot satisfy it. Until a target profile is bound, only labelled local evidence and monitor fixtures can be produced. An operational PASS verdict is not reachable now."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T01:52:05.284339+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 12366,
+    "input_sha256": "32e8982362943e208823ebf7b8129c21a7337b619db9ba743e551bb3a792869e",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-j138cu3h/WO-220504.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T01:51:36.832700+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220504"
+}
