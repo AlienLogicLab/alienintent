@@ -138,6 +138,41 @@ release baseline:
 - The DAG's `proof_fixtures` status for FX-B4 stays as planned. Updating the DAG is replanning, which is outside
   this BIU's extent.
 
+## Feature-regression receipt custody
+
+This follows the landed FX-C rule ([FX-C.md](FX-C/FX-C.md#feature-regression-receipt-custody)).
+`.alienintent/feature-regressions.json` binds the exact candidate SHA, so it is not tracked: a commit cannot carry a
+receipt naming its own SHA. It is written into the checkout of the exact candidate being verified, either by the
+invocation runtime or by the verifier at the retrieved SHA:
+
+```
+python3 tools/verification/run_feature_regressions.py --base b23f6eb4e6735aa3528a3fd10ecb3d2c6e589f19 \
+  --candidate HEAD --receipt .alienintent/feature-regressions.json
+```
+
+The base is the repair candidate's parent, `origin/main` at dispatch. The PRODUCER
+records its own receipt for the published SHA on the Issue for comparison only.
+
+## Repair 1 (verifier REJECT of `3d3e2ed`)
+
+Verifier `AlienLogicLab/alienintent#127:VERIFIER:6179558d-c5dd-460f-88ed-eee9cc9828fc` independently reran the
+checker on `3d3e2ed`: exit 0, 26 of 26 PASS. It rejected the candidate on two grounds:
+
+1. **`.alienintent/feature-regressions.json` was absent from the candidate tree.** Repair: the custody section above
+   states the landed rule. The receipt stays untracked, and the PRODUCER receipt for the new SHA is on Issue #127.
+2. **Packet acceptance criterion 2 is literally unmet (B4-F1).** Commit `352fa9d7` does not contain the Director
+   closure addendum; `89389fd` adds it. This is a fixed fact of history, and no candidate content can change it.
+   The criterion text belongs to the execution packet, which the Factory Director owns. Under the packet's
+   escalation condition, this repair returns the defect to its owner rather than rewording the criterion inside
+   this node. Repair PRODUCER `AlienLogicLab/alienintent#127:PRODUCER:7a59d776-2ea2-4aa6-b1c9-e0ce0a097cac`
+   therefore reports `FOUNDER_EXCEPTION`, not `VERIFY`. It requests a packet amendment of criterion 2 (for example:
+   "`352fa9d7` is ancestral, and its only child `89389fd` adds the cited Director closure addendum, which records
+   conditions as of `352fa9d7`"). The verifier also has to rule on B4-F5.
+
+The repair was rebased onto `origin/main` `b23f6eb`. On that base the checker, run with the original pinned release
+baseline `25f7aa3` and invocation, reproduces `FX-B4/citation-check.json` byte for byte (exit 0, 26 of 26). The
+tool, the retained checks and the discrimination probes are unchanged.
+
 ## Non-claims
 
 - No claim that R2 (Program Director mailbox bridge waiter) or any node other than B4 is discharged.
