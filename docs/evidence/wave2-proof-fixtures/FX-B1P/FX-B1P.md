@@ -67,6 +67,8 @@ No predecessor file changes in this BIU.
   - `DUPLICATE` naming the original;
   - `{"hold": ...}` for an invalid submission, which writes nothing.
 
+  A client must finish its submission within 0.5 s, or it is dropped with nothing written. This keeps the
+  single-threaded host's C4 tick inside its bound. Unparsable, over-deep or oversized input is a hold, never a crash.
   A source that cannot connect has nothing accepted; nothing is buffered for a down capture. B1 can integrate a real
   source through the same `submit` without redefining the interface.
 - **Assignment.** The capture assigns every value itself, at acceptance:
@@ -87,12 +89,17 @@ No predecessor file changes in this BIU.
   |---|---|---|
   | `SEQUENCE_GAP` | `source_seq` is above the source's high mark + 1 | yes |
   | `OUT_OF_ORDER` | `source_seq` is at or below the high mark, with a new `event_id` | yes |
-  | `DUPLICATE_IDENTITY` | the `event_id` was already captured | no: a `DUPLICATE` entry, never a second capture |
-  | `TIMESTAMP_REGRESSION` | the source's `observed_at` or the capture clock went backwards | yes |
+  | `DUPLICATE_IDENTITY` | the source already had this `event_id` captured (ids are unique within a source) | no: a `DUPLICATE` entry, never a second capture |
+  | `TIMESTAMP_REGRESSION` | an event advancing the source's order has an `observed_at` below the highest the source already reported, or the capture clock went backwards | yes |
   | `CAPTURE_STALL` | no event was accepted for longer than `stall_seconds` | not applicable (no event) |
 
-  A capture stall is measured from the later of the last accepted event and the current session start. It is recorded
-  once per idle interval, and that record survives restart.
+  A late (out-of-order) event is expected to be older and is not also a timestamp regression.
+
+  A capture stall is measured from the later of the last accepted event and the current session start. The host checks
+  for it after every poll (0.1 s) and after every served connection. A detected stall is recorded once per idle
+  interval, and the record is durable: a restart neither loses nor repeats it. An idle interval that ends before any
+  check runs (by an event or a kill) is not recorded. The window is bounded by the poll plus the per-connection read
+  deadline.
 - **Restart-loss boundary** (disposed). The guarantee covers only entries already committed at the kill. Events a
   source emits while the capture is down are not recovered. The next accepted event from that source shows them as a
   `SEQUENCE_GAP`, and the composed probe demonstrates this.
@@ -103,7 +110,7 @@ No predecessor file changes in this BIU.
 |---|---|---|
 | (a) identity/order/time assigned, stable across restart | `test_capture_assigns_identity_order_and_time`, `test_restart_reconciles_accepted_events_without_loss_or_duplication` | every acknowledgement's `capture_seq`/`identity`/`captured_at` equals the journal after restart; pre-kill events are an unchanged prefix |
 | (b) no loss or duplication across restart | `test_restart_reconciles_…`, `test_an_unacknowledged_submission_was_never_accepted`, `test_a_killed_capture_is_detected_and_its_granted_restart_loses_and_duplicates_nothing` | SIGKILL → observer alert `UNIT_FAILED_FAILED_SIGNAL` → granted restart → C4 generation 2; the retry is `DUPLICATE`; a submission while down is refused, and the next event records the gap |
-| (c) each anomaly class durable | `test_each_seeded_anomaly_class_is_recorded_durably`, `test_stall_is_measured_from_…_and_not_repeated` | all five kinds are read back from the journal after restart; source-clock regression is seeded, and capture-clock regression is mechanical only |
+| (c) each anomaly class durable | `test_each_seeded_anomaly_class_is_recorded_durably`, `test_stall_is_measured_from_…_and_not_repeated`, `test_source_clock_regression_is_measured_against_the_highest_reported_time`, `test_event_ids_are_unique_within_their_source_only` | all five kinds are read back from the journal after restart; source-clock regression is seeded, and capture-clock regression is mechanical only |
 | (d) durable and readable after restart | every assertion reads from fresh store objects; `test_a_broken_or_inconsistent_journal_holds` | fresh reader in the test process; `SESSION` reconciliation counts |
 | (e) own local systemd `--user` supervision only | `test_the_c5_supervisor_launches_and_observes_the_capture_host`, `test_the_capture_host_refuses_outside_its_owned_unit_before_opening_the_journal` | `host` from the session process exits 3 `HOST_OUTSIDE_OWNED_UNIT`; transient units are removed at the end |
 
