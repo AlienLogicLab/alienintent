@@ -1,0 +1,1940 @@
+{
+  "fixture": "FX-B1",
+  "root": "/home/netmarine/.local/state/alienintent/fx-b1/trajectory",
+  "profile": "fx-b1-trajectory-operational",
+  "stream": "fx-b1-20260927T150544Z",
+  "started_at": "2026-09-27T15:05:44.691639+00:00",
+  "root_guard": [],
+  "acks": [
+    {
+      "stage": "seed",
+      "submitted": "fx-b1-source-001",
+      "source_seq": 1,
+      "ack": {
+        "anomalies": [],
+        "capture_seq": 1,
+        "captured_at": 1790521546469360,
+        "entry_seq": 2,
+        "event_id": "fx-b1-source-001",
+        "identity": "sha256:47b75b08e45f5d374f4c8152f7994abb42f5268501fac3bb6ceb4a2ed711ee27",
+        "status": "CAPTURED"
+      }
+    },
+    {
+      "stage": "seed",
+      "submitted": "fx-b1-source-002",
+      "source_seq": 2,
+      "ack": {
+        "anomalies": [],
+        "capture_seq": 2,
+        "captured_at": 1790521546484944,
+        "entry_seq": 3,
+        "event_id": "fx-b1-source-002",
+        "identity": "sha256:c9e802dcfbe078e0a3fbe0cfb4aeeaaad708b6e9eaa2b7ba4509a53b78261a70",
+        "status": "CAPTURED"
+      }
+    },
+    {
+      "stage": "seed",
+      "submitted": "fx-b1-source-003",
+      "source_seq": 3,
+      "ack": {
+        "anomalies": [],
+        "capture_seq": 3,
+        "captured_at": 1790521546497998,
+        "entry_seq": 4,
+        "event_id": "fx-b1-source-003",
+        "identity": "sha256:7b64eee0a2359c64fe94cb58f5d96a227464be3cafa70100caafb3f8f07dcf0f",
+        "status": "CAPTURED"
+      }
+    },
+    {
+      "stage": "seed",
+      "submitted": "fx-b1-source-006",
+      "source_seq": 6,
+      "ack": {
+        "anomalies": [
+          "SEQUENCE_GAP"
+        ],
+        "capture_seq": 4,
+        "captured_at": 1790521546520256,
+        "entry_seq": 5,
+        "event_id": "fx-b1-source-006",
+        "identity": "sha256:597edb33b8727f107e32483a4a86086afacab9bd32acfd1ce762bd13865ed35c",
+        "status": "CAPTURED"
+      }
+    },
+    {
+      "stage": "seed",
+      "submitted": "fx-b1-source-004",
+      "source_seq": 4,
+      "ack": {
+        "anomalies": [
+          "OUT_OF_ORDER"
+        ],
+        "capture_seq": 5,
+        "captured_at": 1790521546534203,
+        "entry_seq": 6,
+        "event_id": "fx-b1-source-004",
+        "identity": "sha256:97c4e5bb7657aa827a8f937f9f70175805df5eecc0b02e005774ce620e0378bb",
+        "status": "CAPTURED"
+      }
+    },
+    {
+      "stage": "seed",
+      "submitted": "fx-b1-source-002",
+      "source_seq": 2,
+      "ack": {
+        "anomalies": [
+          "DUPLICATE_IDENTITY"
+        ],
+        "capture_seq": 2,
+        "entry_seq": 7,
+        "event_id": "fx-b1-source-002",
+        "identity": "sha256:c9e802dcfbe078e0a3fbe0cfb4aeeaaad708b6e9eaa2b7ba4509a53b78261a70",
+        "status": "DUPLICATE"
+      }
+    },
+    {
+      "stage": "seed",
+      "submitted": "fx-b1-source-007",
+      "source_seq": 7,
+      "ack": {
+        "anomalies": [
+          "TIMESTAMP_REGRESSION"
+        ],
+        "capture_seq": 6,
+        "captured_at": 1790521546565142,
+        "entry_seq": 8,
+        "event_id": "fx-b1-source-007",
+        "identity": "sha256:408fe11e08effdd89ef2fb80c45a14f53aa66cc910b4065812828c77a0a39bbb",
+        "status": "CAPTURED"
+      }
+    },
+    {
+      "stage": "while_down",
+      "submitted": "fx-b1-source-008",
+      "source_seq": 8,
+      "ack": {
+        "hold": "CAPTURE_UNAVAILABLE",
+        "error": "ConnectionRefusedError"
+      }
+    },
+    {
+      "stage": "retry",
+      "submitted": "fx-b1-source-007",
+      "source_seq": 7,
+      "ack": {
+        "anomalies": [
+          "DUPLICATE_IDENTITY"
+        ],
+        "capture_seq": 6,
+        "entry_seq": 11,
+        "event_id": "fx-b1-source-007",
+        "identity": "sha256:408fe11e08effdd89ef2fb80c45a14f53aa66cc910b4065812828c77a0a39bbb",
+        "status": "DUPLICATE"
+      }
+    },
+    {
+      "stage": "after_restart",
+      "submitted": "fx-b1-source-009",
+      "source_seq": 9,
+      "ack": {
+        "anomalies": [
+          "SEQUENCE_GAP"
+        ],
+        "capture_seq": 7,
+        "captured_at": 1790521559063357,
+        "entry_seq": 12,
+        "event_id": "fx-b1-source-009",
+        "identity": "sha256:929b01477e372cce1902329485b2117c920bfb66531ab494a6202e3d9ed20993",
+        "status": "CAPTURED"
+      }
+    }
+  ],
+  "consume": {
+    "before_kill": {
+      "status": "RECEIPTED",
+      "receipt_seq": 1,
+      "receipt_ref": {
+        "project": "alienintent",
+        "profile": "fx-b1-trajectory-operational",
+        "logical_id": "trajectory-receipts:fx-b1-20260927T150544Z",
+        "revision_digest": "sha256:adca195b7c3d00304ef175e6866df0a6b3c9074c7fcd3df250005739214c9446",
+        "locator": "objects/adca195b7c3d00304ef175e6866df0a6b3c9074c7fcd3df250005739214c9446"
+      },
+      "from_entry": 1,
+      "to_entry": 9,
+      "consumed": 9,
+      "events": 6,
+      "attention": [
+        "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+        "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+        "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+        "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+        "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147"
+      ]
+    },
+    "while_down": {
+      "status": "UP_TO_DATE",
+      "receipt_seq": 1,
+      "to_entry": 9,
+      "consumed": 0
+    },
+    "after_restart": {
+      "status": "RECEIPTED",
+      "receipt_seq": 2,
+      "receipt_ref": {
+        "project": "alienintent",
+        "profile": "fx-b1-trajectory-operational",
+        "logical_id": "trajectory-receipts:fx-b1-20260927T150544Z",
+        "revision_digest": "sha256:680e74a27cb2096e4f8d4f24c57690d7ca0eb2dc6d50b6700b71060ff87b1503",
+        "locator": "objects/680e74a27cb2096e4f8d4f24c57690d7ca0eb2dc6d50b6700b71060ff87b1503"
+      },
+      "from_entry": 10,
+      "to_entry": 12,
+      "consumed": 3,
+      "events": 1,
+      "attention": [
+        "attention:deb8be387b41f52133caceba73c1f9aab036870023488a879bef57df54d59886",
+        "attention:9ac5277c757b04383e68f4a50514bab4c1273569d63279d6abe659b8088f178c"
+      ]
+    },
+    "idempotent": {
+      "status": "UP_TO_DATE",
+      "receipt_seq": 2,
+      "to_entry": 12,
+      "consumed": 0
+    }
+  },
+  "queue": {
+    "after_consume_1": [
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:9:0",
+        "identity": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:CAPTURE_STALL",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:8:0",
+        "identity": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:TIMESTAMP_REGRESSION",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:5:0",
+        "identity": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:6:0",
+        "identity": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:OUT_OF_ORDER",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:7:0",
+        "identity": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      }
+    ],
+    "while_down": [
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:9:0",
+        "identity": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:CAPTURE_STALL",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:8:0",
+        "identity": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:TIMESTAMP_REGRESSION",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:5:0",
+        "identity": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "monitor-host-alert:13b39e46ca774b858f3da607936bc9d0",
+        "identity": "attention:79bae917d76ebbbdbab9ff47c540bdaf093ab59636f8f01654cb71bc60c8369c",
+        "kind": "JUDGMENT",
+        "lane": "monitor-host",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "monitor-host:fx-b1-trajectory-operational"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:6:0",
+        "identity": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:OUT_OF_ORDER",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:7:0",
+        "identity": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      }
+    ],
+    "final": [
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:9:0",
+        "identity": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:CAPTURE_STALL",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:8:0",
+        "identity": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:TIMESTAMP_REGRESSION",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:5:0",
+        "identity": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "monitor-host-alert:13b39e46ca774b858f3da607936bc9d0",
+        "identity": "attention:79bae917d76ebbbdbab9ff47c540bdaf093ab59636f8f01654cb71bc60c8369c",
+        "kind": "JUDGMENT",
+        "lane": "monitor-host",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "monitor-host:fx-b1-trajectory-operational"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:12:0",
+        "identity": "attention:9ac5277c757b04383e68f4a50514bab4c1273569d63279d6abe659b8088f178c",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:6:0",
+        "identity": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:OUT_OF_ORDER",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:7:0",
+        "identity": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      },
+      {
+        "acknowledged_by": null,
+        "attempts": [],
+        "event_identity": "anomaly:11:0",
+        "identity": "attention:deb8be387b41f52133caceba73c1f9aab036870023488a879bef57df54d59886",
+        "kind": "JUDGMENT",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "status": "PENDING",
+        "version": 1,
+        "work_ref": "trajectory-capture:fx-b1-20260927T150544Z"
+      }
+    ]
+  },
+  "produced": {
+    "after_consume_1": [
+      {
+        "identity": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:5:0",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "work_revision": "sha256:f9740e5aa4f157a7fe62230e0ac1c76f547da277108437133cab7281b397269c",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+          "revision_digest": "sha256:aac0854866a57a124fe0aa5aab4ec9aa0619f453c656c1cc6c9163fa4d21b4be",
+          "locator": "objects/aac0854866a57a124fe0aa5aab4ec9aa0619f453c656c1cc6c9163fa4d21b4be"
+        }
+      },
+      {
+        "identity": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:6:0",
+        "lane": "trajectory-anomaly:OUT_OF_ORDER",
+        "work_revision": "sha256:eaf60a411a6bae2c71d2975854a21814132c7044461612b21ef1f1199875d9da",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+          "revision_digest": "sha256:5ea62afdd96b397636d8b48ea18dedad478affae6d5fc3c5fd78589b54a7364a",
+          "locator": "objects/5ea62afdd96b397636d8b48ea18dedad478affae6d5fc3c5fd78589b54a7364a"
+        }
+      },
+      {
+        "identity": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:7:0",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "work_revision": "sha256:51c01343a8a897cb5b7a35b7f36e8cfae09fe897497e1e781a6b80e5f80243b1",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+          "revision_digest": "sha256:d7c57e01ca3ce30420f9712fbca7c024f01d13e94b72c87eaa2a30db8e5f473d",
+          "locator": "objects/d7c57e01ca3ce30420f9712fbca7c024f01d13e94b72c87eaa2a30db8e5f473d"
+        }
+      },
+      {
+        "identity": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:8:0",
+        "lane": "trajectory-anomaly:TIMESTAMP_REGRESSION",
+        "work_revision": "sha256:905b124f325019bdcfbbc7169aa1f36fc9079abe7fc9759e10935bc8260eda76",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+          "revision_digest": "sha256:2d9430c81f7d865c6f2902de3c585b8883161d16f0ed77a7acb2d083336566c2",
+          "locator": "objects/2d9430c81f7d865c6f2902de3c585b8883161d16f0ed77a7acb2d083336566c2"
+        }
+      },
+      {
+        "identity": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:9:0",
+        "lane": "trajectory-anomaly:CAPTURE_STALL",
+        "work_revision": "sha256:30a1b436ec1ab11b14f5f971f1649c715e2aa856ec19ca1ab4314fa81e8f1da0",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+          "revision_digest": "sha256:a3a07e5627e947417e2b3dfb92ebaeaf220dceefc2b18cbf77633eac63e1e821",
+          "locator": "objects/a3a07e5627e947417e2b3dfb92ebaeaf220dceefc2b18cbf77633eac63e1e821"
+        }
+      }
+    ],
+    "while_down": [
+      {
+        "identity": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:5:0",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "work_revision": "sha256:f9740e5aa4f157a7fe62230e0ac1c76f547da277108437133cab7281b397269c",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+          "revision_digest": "sha256:aac0854866a57a124fe0aa5aab4ec9aa0619f453c656c1cc6c9163fa4d21b4be",
+          "locator": "objects/aac0854866a57a124fe0aa5aab4ec9aa0619f453c656c1cc6c9163fa4d21b4be"
+        }
+      },
+      {
+        "identity": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:6:0",
+        "lane": "trajectory-anomaly:OUT_OF_ORDER",
+        "work_revision": "sha256:eaf60a411a6bae2c71d2975854a21814132c7044461612b21ef1f1199875d9da",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+          "revision_digest": "sha256:5ea62afdd96b397636d8b48ea18dedad478affae6d5fc3c5fd78589b54a7364a",
+          "locator": "objects/5ea62afdd96b397636d8b48ea18dedad478affae6d5fc3c5fd78589b54a7364a"
+        }
+      },
+      {
+        "identity": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:7:0",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "work_revision": "sha256:51c01343a8a897cb5b7a35b7f36e8cfae09fe897497e1e781a6b80e5f80243b1",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+          "revision_digest": "sha256:d7c57e01ca3ce30420f9712fbca7c024f01d13e94b72c87eaa2a30db8e5f473d",
+          "locator": "objects/d7c57e01ca3ce30420f9712fbca7c024f01d13e94b72c87eaa2a30db8e5f473d"
+        }
+      },
+      {
+        "identity": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:8:0",
+        "lane": "trajectory-anomaly:TIMESTAMP_REGRESSION",
+        "work_revision": "sha256:905b124f325019bdcfbbc7169aa1f36fc9079abe7fc9759e10935bc8260eda76",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+          "revision_digest": "sha256:2d9430c81f7d865c6f2902de3c585b8883161d16f0ed77a7acb2d083336566c2",
+          "locator": "objects/2d9430c81f7d865c6f2902de3c585b8883161d16f0ed77a7acb2d083336566c2"
+        }
+      },
+      {
+        "identity": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:9:0",
+        "lane": "trajectory-anomaly:CAPTURE_STALL",
+        "work_revision": "sha256:30a1b436ec1ab11b14f5f971f1649c715e2aa856ec19ca1ab4314fa81e8f1da0",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+          "revision_digest": "sha256:a3a07e5627e947417e2b3dfb92ebaeaf220dceefc2b18cbf77633eac63e1e821",
+          "locator": "objects/a3a07e5627e947417e2b3dfb92ebaeaf220dceefc2b18cbf77633eac63e1e821"
+        }
+      }
+    ],
+    "final": [
+      {
+        "identity": "attention:deb8be387b41f52133caceba73c1f9aab036870023488a879bef57df54d59886",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:11:0",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "work_revision": "sha256:d767f283ee11c673d3e3c146e04e1d924a869371b993846bea1baba49e5475d2",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:deb8be387b41f52133caceba73c1f9aab036870023488a879bef57df54d59886",
+          "revision_digest": "sha256:313a8bb3207163151c41a4832c28e8e89eefb8e10b88af99b5f4a99e7ecda282",
+          "locator": "objects/313a8bb3207163151c41a4832c28e8e89eefb8e10b88af99b5f4a99e7ecda282"
+        }
+      },
+      {
+        "identity": "attention:9ac5277c757b04383e68f4a50514bab4c1273569d63279d6abe659b8088f178c",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:12:0",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "work_revision": "sha256:1783e041cd798bba16f0d072c187598916b958396783370c9728f11b065737f9",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:9ac5277c757b04383e68f4a50514bab4c1273569d63279d6abe659b8088f178c",
+          "revision_digest": "sha256:40f8061587082555659d5fb5b6f7dae365a3603098cf2673ae2d9748a23e8a1d",
+          "locator": "objects/40f8061587082555659d5fb5b6f7dae365a3603098cf2673ae2d9748a23e8a1d"
+        }
+      },
+      {
+        "identity": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:5:0",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "work_revision": "sha256:f9740e5aa4f157a7fe62230e0ac1c76f547da277108437133cab7281b397269c",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+          "revision_digest": "sha256:aac0854866a57a124fe0aa5aab4ec9aa0619f453c656c1cc6c9163fa4d21b4be",
+          "locator": "objects/aac0854866a57a124fe0aa5aab4ec9aa0619f453c656c1cc6c9163fa4d21b4be"
+        }
+      },
+      {
+        "identity": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:6:0",
+        "lane": "trajectory-anomaly:OUT_OF_ORDER",
+        "work_revision": "sha256:eaf60a411a6bae2c71d2975854a21814132c7044461612b21ef1f1199875d9da",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+          "revision_digest": "sha256:5ea62afdd96b397636d8b48ea18dedad478affae6d5fc3c5fd78589b54a7364a",
+          "locator": "objects/5ea62afdd96b397636d8b48ea18dedad478affae6d5fc3c5fd78589b54a7364a"
+        }
+      },
+      {
+        "identity": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:7:0",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "work_revision": "sha256:51c01343a8a897cb5b7a35b7f36e8cfae09fe897497e1e781a6b80e5f80243b1",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+          "revision_digest": "sha256:d7c57e01ca3ce30420f9712fbca7c024f01d13e94b72c87eaa2a30db8e5f473d",
+          "locator": "objects/d7c57e01ca3ce30420f9712fbca7c024f01d13e94b72c87eaa2a30db8e5f473d"
+        }
+      },
+      {
+        "identity": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:8:0",
+        "lane": "trajectory-anomaly:TIMESTAMP_REGRESSION",
+        "work_revision": "sha256:905b124f325019bdcfbbc7169aa1f36fc9079abe7fc9759e10935bc8260eda76",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+          "revision_digest": "sha256:2d9430c81f7d865c6f2902de3c585b8883161d16f0ed77a7acb2d083336566c2",
+          "locator": "objects/2d9430c81f7d865c6f2902de3c585b8883161d16f0ed77a7acb2d083336566c2"
+        }
+      },
+      {
+        "identity": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:9:0",
+        "lane": "trajectory-anomaly:CAPTURE_STALL",
+        "work_revision": "sha256:30a1b436ec1ab11b14f5f971f1649c715e2aa856ec19ca1ab4314fa81e8f1da0",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+          "revision_digest": "sha256:a3a07e5627e947417e2b3dfb92ebaeaf220dceefc2b18cbf77633eac63e1e821",
+          "locator": "objects/a3a07e5627e947417e2b3dfb92ebaeaf220dceefc2b18cbf77633eac63e1e821"
+        }
+      }
+    ]
+  },
+  "config_digest": "sha256:4804d96edf74f3299c7dcd392243e395c81324756e7e73813c9671497174a488",
+  "unit": "alienintent-monitor-6a3e57d0571472f027a1e58857c6b29d.service",
+  "monitor_observer": "alienintent-monitor-observer-6a3e57d0571472f027a1e58857c6b29d",
+  "launch_1": "13b39e46ca774b858f3da607936bc9d0",
+  "journal_before": {
+    "entries": [
+      {
+        "anomalies": [],
+        "entry_seq": 1,
+        "event": null,
+        "kind": "SESSION",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546234116,
+        "schema_version": 1,
+        "session": {
+          "policy": {
+            "stall_seconds": 2
+          },
+          "reconciled": {
+            "entries": 0,
+            "events": 0,
+            "sessions": [],
+            "sources": {}
+          }
+        }
+      },
+      {
+        "anomalies": [],
+        "entry_seq": 2,
+        "event": {
+          "capture_seq": 1,
+          "captured_at": 1790521546469360,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 1",
+            "event_id": "fx-b1-source-001",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-001",
+          "identity": "sha256:47b75b08e45f5d374f4c8152f7994abb42f5268501fac3bb6ceb4a2ed711ee27",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000001000000,
+          "source": "fx-b1-source",
+          "source_seq": 1
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546469360,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [],
+        "entry_seq": 3,
+        "event": {
+          "capture_seq": 2,
+          "captured_at": 1790521546484944,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 2",
+            "event_id": "fx-b1-source-002",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-002",
+          "identity": "sha256:c9e802dcfbe078e0a3fbe0cfb4aeeaaad708b6e9eaa2b7ba4509a53b78261a70",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000002000000,
+          "source": "fx-b1-source",
+          "source_seq": 2
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546484944,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [],
+        "entry_seq": 4,
+        "event": {
+          "capture_seq": 3,
+          "captured_at": 1790521546497998,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 3",
+            "event_id": "fx-b1-source-003",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-003",
+          "identity": "sha256:7b64eee0a2359c64fe94cb58f5d96a227464be3cafa70100caafb3f8f07dcf0f",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000003000000,
+          "source": "fx-b1-source",
+          "source_seq": 3
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546497998,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:5:0",
+            "detail": {
+              "expected_source_seq": 4,
+              "missing": 2,
+              "source_seq": 6
+            },
+            "detected_at": 1790521546520256,
+            "event_id": "fx-b1-source-006",
+            "kind": "SEQUENCE_GAP",
+            "source": "fx-b1-source"
+          }
+        ],
+        "entry_seq": 5,
+        "event": {
+          "capture_seq": 4,
+          "captured_at": 1790521546520256,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 6",
+            "event_id": "fx-b1-source-006",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-006",
+          "identity": "sha256:597edb33b8727f107e32483a4a86086afacab9bd32acfd1ce762bd13865ed35c",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000006000000,
+          "source": "fx-b1-source",
+          "source_seq": 6
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546520256,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:6:0",
+            "detail": {
+              "high_source_seq": 6,
+              "source_seq": 4
+            },
+            "detected_at": 1790521546534203,
+            "event_id": "fx-b1-source-004",
+            "kind": "OUT_OF_ORDER",
+            "source": "fx-b1-source"
+          }
+        ],
+        "entry_seq": 6,
+        "event": {
+          "capture_seq": 5,
+          "captured_at": 1790521546534203,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 4",
+            "event_id": "fx-b1-source-004",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-004",
+          "identity": "sha256:97c4e5bb7657aa827a8f937f9f70175805df5eecc0b02e005774ce620e0378bb",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000006000000,
+          "source": "fx-b1-source",
+          "source_seq": 4
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546534203,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:7:0",
+            "detail": {
+              "original_capture_seq": 2,
+              "same_content": true,
+              "source_seq": 2
+            },
+            "detected_at": 1790521546545941,
+            "event_id": "fx-b1-source-002",
+            "kind": "DUPLICATE_IDENTITY",
+            "source": "fx-b1-source"
+          }
+        ],
+        "duplicate": {
+          "identity": "sha256:c9e802dcfbe078e0a3fbe0cfb4aeeaaad708b6e9eaa2b7ba4509a53b78261a70",
+          "original_capture_seq": 2
+        },
+        "entry_seq": 7,
+        "event": null,
+        "kind": "DUPLICATE",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546545941,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:8:0",
+            "detail": {
+              "clock": "source",
+              "observed": 1790000001000000,
+              "previous": 1790000006000000
+            },
+            "detected_at": 1790521546565142,
+            "event_id": "fx-b1-source-007",
+            "kind": "TIMESTAMP_REGRESSION",
+            "source": "fx-b1-source"
+          }
+        ],
+        "entry_seq": 8,
+        "event": {
+          "capture_seq": 6,
+          "captured_at": 1790521546565142,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 7",
+            "event_id": "fx-b1-source-007",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-007",
+          "identity": "sha256:408fe11e08effdd89ef2fb80c45a14f53aa66cc910b4065812828c77a0a39bbb",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000001000000,
+          "source": "fx-b1-source",
+          "source_seq": 7
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546565142,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:9:0",
+            "detail": {
+              "idle_micros": 2082367,
+              "idle_since": 1790521546565142,
+              "stall_micros": 2000000
+            },
+            "detected_at": 1790521548647509,
+            "event_id": null,
+            "kind": "CAPTURE_STALL",
+            "source": null
+          }
+        ],
+        "entry_seq": 9,
+        "event": null,
+        "kind": "STALL",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521548647509,
+        "schema_version": 1
+      }
+    ],
+    "state": {
+      "entries": 9,
+      "events": 6,
+      "sessions": [
+        "13b39e46ca774b858f3da607936bc9d0"
+      ],
+      "sources": {
+        "fx-b1-source": {
+          "high_seq": 7,
+          "high_observed_at": 1790000006000000
+        }
+      },
+      "last_captured_at": 1790521546565142
+    }
+  },
+  "kill": {
+    "at": "2026-09-27T15:05:49.594173+00:00",
+    "exit_status": 0,
+    "alert_reason": "UNIT_FAILED_FAILED_SIGNAL",
+    "alert": "attention:79bae917d76ebbbdbab9ff47c540bdaf093ab59636f8f01654cb71bc60c8369c",
+    "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+  },
+  "submission_while_down": {
+    "exit_status": 2,
+    "replies": [
+      {
+        "hold": "CAPTURE_UNAVAILABLE",
+        "error": "ConnectionRefusedError"
+      }
+    ],
+    "accepted": false
+  },
+  "launch_2": "cf137056d5b9438eada24996b39e2fd3",
+  "retry": {
+    "anomalies": [
+      "DUPLICATE_IDENTITY"
+    ],
+    "capture_seq": 6,
+    "entry_seq": 11,
+    "event_id": "fx-b1-source-007",
+    "identity": "sha256:408fe11e08effdd89ef2fb80c45a14f53aa66cc910b4065812828c77a0a39bbb",
+    "status": "DUPLICATE"
+  },
+  "fresh": {
+    "anomalies": [
+      "SEQUENCE_GAP"
+    ],
+    "capture_seq": 7,
+    "captured_at": 1790521559063357,
+    "entry_seq": 12,
+    "event_id": "fx-b1-source-009",
+    "identity": "sha256:929b01477e372cce1902329485b2117c920bfb66531ab494a6202e3d9ed20993",
+    "status": "CAPTURED"
+  },
+  "journal_after": {
+    "entries": [
+      {
+        "anomalies": [],
+        "entry_seq": 1,
+        "event": null,
+        "kind": "SESSION",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546234116,
+        "schema_version": 1,
+        "session": {
+          "policy": {
+            "stall_seconds": 2
+          },
+          "reconciled": {
+            "entries": 0,
+            "events": 0,
+            "sessions": [],
+            "sources": {}
+          }
+        }
+      },
+      {
+        "anomalies": [],
+        "entry_seq": 2,
+        "event": {
+          "capture_seq": 1,
+          "captured_at": 1790521546469360,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 1",
+            "event_id": "fx-b1-source-001",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-001",
+          "identity": "sha256:47b75b08e45f5d374f4c8152f7994abb42f5268501fac3bb6ceb4a2ed711ee27",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000001000000,
+          "source": "fx-b1-source",
+          "source_seq": 1
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546469360,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [],
+        "entry_seq": 3,
+        "event": {
+          "capture_seq": 2,
+          "captured_at": 1790521546484944,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 2",
+            "event_id": "fx-b1-source-002",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-002",
+          "identity": "sha256:c9e802dcfbe078e0a3fbe0cfb4aeeaaad708b6e9eaa2b7ba4509a53b78261a70",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000002000000,
+          "source": "fx-b1-source",
+          "source_seq": 2
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546484944,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [],
+        "entry_seq": 4,
+        "event": {
+          "capture_seq": 3,
+          "captured_at": 1790521546497998,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 3",
+            "event_id": "fx-b1-source-003",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-003",
+          "identity": "sha256:7b64eee0a2359c64fe94cb58f5d96a227464be3cafa70100caafb3f8f07dcf0f",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000003000000,
+          "source": "fx-b1-source",
+          "source_seq": 3
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546497998,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:5:0",
+            "detail": {
+              "expected_source_seq": 4,
+              "missing": 2,
+              "source_seq": 6
+            },
+            "detected_at": 1790521546520256,
+            "event_id": "fx-b1-source-006",
+            "kind": "SEQUENCE_GAP",
+            "source": "fx-b1-source"
+          }
+        ],
+        "entry_seq": 5,
+        "event": {
+          "capture_seq": 4,
+          "captured_at": 1790521546520256,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 6",
+            "event_id": "fx-b1-source-006",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-006",
+          "identity": "sha256:597edb33b8727f107e32483a4a86086afacab9bd32acfd1ce762bd13865ed35c",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000006000000,
+          "source": "fx-b1-source",
+          "source_seq": 6
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546520256,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:6:0",
+            "detail": {
+              "high_source_seq": 6,
+              "source_seq": 4
+            },
+            "detected_at": 1790521546534203,
+            "event_id": "fx-b1-source-004",
+            "kind": "OUT_OF_ORDER",
+            "source": "fx-b1-source"
+          }
+        ],
+        "entry_seq": 6,
+        "event": {
+          "capture_seq": 5,
+          "captured_at": 1790521546534203,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 4",
+            "event_id": "fx-b1-source-004",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-004",
+          "identity": "sha256:97c4e5bb7657aa827a8f937f9f70175805df5eecc0b02e005774ce620e0378bb",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000006000000,
+          "source": "fx-b1-source",
+          "source_seq": 4
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546534203,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:7:0",
+            "detail": {
+              "original_capture_seq": 2,
+              "same_content": true,
+              "source_seq": 2
+            },
+            "detected_at": 1790521546545941,
+            "event_id": "fx-b1-source-002",
+            "kind": "DUPLICATE_IDENTITY",
+            "source": "fx-b1-source"
+          }
+        ],
+        "duplicate": {
+          "identity": "sha256:c9e802dcfbe078e0a3fbe0cfb4aeeaaad708b6e9eaa2b7ba4509a53b78261a70",
+          "original_capture_seq": 2
+        },
+        "entry_seq": 7,
+        "event": null,
+        "kind": "DUPLICATE",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546545941,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:8:0",
+            "detail": {
+              "clock": "source",
+              "observed": 1790000001000000,
+              "previous": 1790000006000000
+            },
+            "detected_at": 1790521546565142,
+            "event_id": "fx-b1-source-007",
+            "kind": "TIMESTAMP_REGRESSION",
+            "source": "fx-b1-source"
+          }
+        ],
+        "entry_seq": 8,
+        "event": {
+          "capture_seq": 6,
+          "captured_at": 1790521546565142,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 7",
+            "event_id": "fx-b1-source-007",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-007",
+          "identity": "sha256:408fe11e08effdd89ef2fb80c45a14f53aa66cc910b4065812828c77a0a39bbb",
+          "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+          "observed_at": 1790000001000000,
+          "source": "fx-b1-source",
+          "source_seq": 7
+        },
+        "kind": "EVENT",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521546565142,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:9:0",
+            "detail": {
+              "idle_micros": 2082367,
+              "idle_since": 1790521546565142,
+              "stall_micros": 2000000
+            },
+            "detected_at": 1790521548647509,
+            "event_id": null,
+            "kind": "CAPTURE_STALL",
+            "source": null
+          }
+        ],
+        "entry_seq": 9,
+        "event": null,
+        "kind": "STALL",
+        "launch_id": "13b39e46ca774b858f3da607936bc9d0",
+        "recorded_at": 1790521548647509,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [],
+        "entry_seq": 10,
+        "event": null,
+        "kind": "SESSION",
+        "launch_id": "cf137056d5b9438eada24996b39e2fd3",
+        "recorded_at": 1790521558515706,
+        "schema_version": 1,
+        "session": {
+          "policy": {
+            "stall_seconds": 2
+          },
+          "reconciled": {
+            "entries": 9,
+            "events": 6,
+            "sessions": [
+              "13b39e46ca774b858f3da607936bc9d0"
+            ],
+            "sources": {
+              "fx-b1-source": {
+                "high_observed_at": 1790000006000000,
+                "high_seq": 7
+              }
+            }
+          }
+        }
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:11:0",
+            "detail": {
+              "original_capture_seq": 6,
+              "same_content": true,
+              "source_seq": 7
+            },
+            "detected_at": 1790521558817678,
+            "event_id": "fx-b1-source-007",
+            "kind": "DUPLICATE_IDENTITY",
+            "source": "fx-b1-source"
+          }
+        ],
+        "duplicate": {
+          "identity": "sha256:408fe11e08effdd89ef2fb80c45a14f53aa66cc910b4065812828c77a0a39bbb",
+          "original_capture_seq": 6
+        },
+        "entry_seq": 11,
+        "event": null,
+        "kind": "DUPLICATE",
+        "launch_id": "cf137056d5b9438eada24996b39e2fd3",
+        "recorded_at": 1790521558817678,
+        "schema_version": 1
+      },
+      {
+        "anomalies": [
+          {
+            "anomaly_id": "anomaly:12:0",
+            "detail": {
+              "expected_source_seq": 8,
+              "missing": 1,
+              "source_seq": 9
+            },
+            "detected_at": 1790521559063357,
+            "event_id": "fx-b1-source-009",
+            "kind": "SEQUENCE_GAP",
+            "source": "fx-b1-source"
+          }
+        ],
+        "entry_seq": 12,
+        "event": {
+          "capture_seq": 7,
+          "captured_at": 1790521559063357,
+          "event": {
+            "actor_role": "FACTORY",
+            "description": "synthetic FX-B1 operational event 9",
+            "event_id": "fx-b1-source-009",
+            "event_type": "TOOL_CALL",
+            "schema_version": "1.0"
+          },
+          "event_id": "fx-b1-source-009",
+          "identity": "sha256:929b01477e372cce1902329485b2117c920bfb66531ab494a6202e3d9ed20993",
+          "launch_id": "cf137056d5b9438eada24996b39e2fd3",
+          "observed_at": 1790000009000000,
+          "source": "fx-b1-source",
+          "source_seq": 9
+        },
+        "kind": "EVENT",
+        "launch_id": "cf137056d5b9438eada24996b39e2fd3",
+        "recorded_at": 1790521559063357,
+        "schema_version": 1
+      }
+    ],
+    "state": {
+      "entries": 12,
+      "events": 7,
+      "sessions": [
+        "13b39e46ca774b858f3da607936bc9d0",
+        "cf137056d5b9438eada24996b39e2fd3"
+      ],
+      "sources": {
+        "fx-b1-source": {
+          "high_seq": 9,
+          "high_observed_at": 1790000009000000
+        }
+      },
+      "last_captured_at": 1790521559063357
+    }
+  },
+  "receipts": {
+    "receipts": [
+      {
+        "consumer": "AlienLogicLab/alienintent#124:PRODUCER:86456750-4a5a-46c8-8fa1-170250f834ae:before_kill",
+        "entries": [
+          {
+            "anomalies": [],
+            "entry_digest": "sha256:0ecad57d0b986cf22aa3c9587ba69b85e8e815dca69d6d991f05a3df8c9601ca",
+            "entry_seq": 1,
+            "event": null,
+            "kind": "SESSION",
+            "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+          },
+          {
+            "anomalies": [],
+            "entry_digest": "sha256:d7b681affbac1dcecac02344ec6baf5b6ef8fb85a637365bc861d566a167d9a0",
+            "entry_seq": 2,
+            "event": {
+              "capture_seq": 1,
+              "captured_at": 1790521546469360,
+              "event_id": "fx-b1-source-001",
+              "identity": "sha256:47b75b08e45f5d374f4c8152f7994abb42f5268501fac3bb6ceb4a2ed711ee27",
+              "source": "fx-b1-source",
+              "source_seq": 1
+            },
+            "kind": "EVENT",
+            "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+          },
+          {
+            "anomalies": [],
+            "entry_digest": "sha256:9ace073fe0640a2f6c55774d756f537ef81b2d3fc8af704557b092ff6f99df8f",
+            "entry_seq": 3,
+            "event": {
+              "capture_seq": 2,
+              "captured_at": 1790521546484944,
+              "event_id": "fx-b1-source-002",
+              "identity": "sha256:c9e802dcfbe078e0a3fbe0cfb4aeeaaad708b6e9eaa2b7ba4509a53b78261a70",
+              "source": "fx-b1-source",
+              "source_seq": 2
+            },
+            "kind": "EVENT",
+            "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+          },
+          {
+            "anomalies": [],
+            "entry_digest": "sha256:c875cd78af41c13a7c71ab24af2286e9ae59a7433aa45d64746b189ea057875d",
+            "entry_seq": 4,
+            "event": {
+              "capture_seq": 3,
+              "captured_at": 1790521546497998,
+              "event_id": "fx-b1-source-003",
+              "identity": "sha256:7b64eee0a2359c64fe94cb58f5d96a227464be3cafa70100caafb3f8f07dcf0f",
+              "source": "fx-b1-source",
+              "source_seq": 3
+            },
+            "kind": "EVENT",
+            "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+          },
+          {
+            "anomalies": [
+              {
+                "anomaly_id": "anomaly:5:0",
+                "attention": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+                "kind": "SEQUENCE_GAP"
+              }
+            ],
+            "entry_digest": "sha256:f9740e5aa4f157a7fe62230e0ac1c76f547da277108437133cab7281b397269c",
+            "entry_seq": 5,
+            "event": {
+              "capture_seq": 4,
+              "captured_at": 1790521546520256,
+              "event_id": "fx-b1-source-006",
+              "identity": "sha256:597edb33b8727f107e32483a4a86086afacab9bd32acfd1ce762bd13865ed35c",
+              "source": "fx-b1-source",
+              "source_seq": 6
+            },
+            "kind": "EVENT",
+            "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+          },
+          {
+            "anomalies": [
+              {
+                "anomaly_id": "anomaly:6:0",
+                "attention": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+                "kind": "OUT_OF_ORDER"
+              }
+            ],
+            "entry_digest": "sha256:eaf60a411a6bae2c71d2975854a21814132c7044461612b21ef1f1199875d9da",
+            "entry_seq": 6,
+            "event": {
+              "capture_seq": 5,
+              "captured_at": 1790521546534203,
+              "event_id": "fx-b1-source-004",
+              "identity": "sha256:97c4e5bb7657aa827a8f937f9f70175805df5eecc0b02e005774ce620e0378bb",
+              "source": "fx-b1-source",
+              "source_seq": 4
+            },
+            "kind": "EVENT",
+            "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+          },
+          {
+            "anomalies": [
+              {
+                "anomaly_id": "anomaly:7:0",
+                "attention": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+                "kind": "DUPLICATE_IDENTITY"
+              }
+            ],
+            "entry_digest": "sha256:51c01343a8a897cb5b7a35b7f36e8cfae09fe897497e1e781a6b80e5f80243b1",
+            "entry_seq": 7,
+            "event": null,
+            "kind": "DUPLICATE",
+            "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+          },
+          {
+            "anomalies": [
+              {
+                "anomaly_id": "anomaly:8:0",
+                "attention": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+                "kind": "TIMESTAMP_REGRESSION"
+              }
+            ],
+            "entry_digest": "sha256:905b124f325019bdcfbbc7169aa1f36fc9079abe7fc9759e10935bc8260eda76",
+            "entry_seq": 8,
+            "event": {
+              "capture_seq": 6,
+              "captured_at": 1790521546565142,
+              "event_id": "fx-b1-source-007",
+              "identity": "sha256:408fe11e08effdd89ef2fb80c45a14f53aa66cc910b4065812828c77a0a39bbb",
+              "source": "fx-b1-source",
+              "source_seq": 7
+            },
+            "kind": "EVENT",
+            "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+          },
+          {
+            "anomalies": [
+              {
+                "anomaly_id": "anomaly:9:0",
+                "attention": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+                "kind": "CAPTURE_STALL"
+              }
+            ],
+            "entry_digest": "sha256:30a1b436ec1ab11b14f5f971f1649c715e2aa856ec19ca1ab4314fa81e8f1da0",
+            "entry_seq": 9,
+            "event": null,
+            "kind": "STALL",
+            "launch_id": "13b39e46ca774b858f3da607936bc9d0"
+          }
+        ],
+        "from_entry": 1,
+        "prefix_digest": "sha256:d4f76ca3bc3303e5d2ff5b76806e6ca8e518fd37f9d8a63358f1ff658ba5434e",
+        "receipt_seq": 1,
+        "schema_version": 1,
+        "stream": "fx-b1-20260927T150544Z",
+        "to_entry": 9,
+        "receipt_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "trajectory-receipts:fx-b1-20260927T150544Z",
+          "revision_digest": "sha256:adca195b7c3d00304ef175e6866df0a6b3c9074c7fcd3df250005739214c9446",
+          "locator": "objects/adca195b7c3d00304ef175e6866df0a6b3c9074c7fcd3df250005739214c9446"
+        }
+      },
+      {
+        "consumer": "AlienLogicLab/alienintent#124:PRODUCER:86456750-4a5a-46c8-8fa1-170250f834ae:after_restart",
+        "entries": [
+          {
+            "anomalies": [],
+            "entry_digest": "sha256:c9bbd04fc5f5bb9e4c72387d133a2c840afb48a6e76733a5e7453bd681a017d2",
+            "entry_seq": 10,
+            "event": null,
+            "kind": "SESSION",
+            "launch_id": "cf137056d5b9438eada24996b39e2fd3"
+          },
+          {
+            "anomalies": [
+              {
+                "anomaly_id": "anomaly:11:0",
+                "attention": "attention:deb8be387b41f52133caceba73c1f9aab036870023488a879bef57df54d59886",
+                "kind": "DUPLICATE_IDENTITY"
+              }
+            ],
+            "entry_digest": "sha256:d767f283ee11c673d3e3c146e04e1d924a869371b993846bea1baba49e5475d2",
+            "entry_seq": 11,
+            "event": null,
+            "kind": "DUPLICATE",
+            "launch_id": "cf137056d5b9438eada24996b39e2fd3"
+          },
+          {
+            "anomalies": [
+              {
+                "anomaly_id": "anomaly:12:0",
+                "attention": "attention:9ac5277c757b04383e68f4a50514bab4c1273569d63279d6abe659b8088f178c",
+                "kind": "SEQUENCE_GAP"
+              }
+            ],
+            "entry_digest": "sha256:1783e041cd798bba16f0d072c187598916b958396783370c9728f11b065737f9",
+            "entry_seq": 12,
+            "event": {
+              "capture_seq": 7,
+              "captured_at": 1790521559063357,
+              "event_id": "fx-b1-source-009",
+              "identity": "sha256:929b01477e372cce1902329485b2117c920bfb66531ab494a6202e3d9ed20993",
+              "source": "fx-b1-source",
+              "source_seq": 9
+            },
+            "kind": "EVENT",
+            "launch_id": "cf137056d5b9438eada24996b39e2fd3"
+          }
+        ],
+        "from_entry": 10,
+        "prefix_digest": "sha256:dd07f86322cf04604c00a91c7d2acdbf8e6cdff4a883baeb161df85d7e66db38",
+        "receipt_seq": 2,
+        "schema_version": 1,
+        "stream": "fx-b1-20260927T150544Z",
+        "to_entry": 12,
+        "receipt_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "trajectory-receipts:fx-b1-20260927T150544Z",
+          "revision_digest": "sha256:680e74a27cb2096e4f8d4f24c57690d7ca0eb2dc6d50b6700b71060ff87b1503",
+          "locator": "objects/680e74a27cb2096e4f8d4f24c57690d7ca0eb2dc6d50b6700b71060ff87b1503"
+        }
+      }
+    ],
+    "attention": [
+      {
+        "identity": "attention:deb8be387b41f52133caceba73c1f9aab036870023488a879bef57df54d59886",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:11:0",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "work_revision": "sha256:d767f283ee11c673d3e3c146e04e1d924a869371b993846bea1baba49e5475d2",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:deb8be387b41f52133caceba73c1f9aab036870023488a879bef57df54d59886",
+          "revision_digest": "sha256:313a8bb3207163151c41a4832c28e8e89eefb8e10b88af99b5f4a99e7ecda282",
+          "locator": "objects/313a8bb3207163151c41a4832c28e8e89eefb8e10b88af99b5f4a99e7ecda282"
+        }
+      },
+      {
+        "identity": "attention:9ac5277c757b04383e68f4a50514bab4c1273569d63279d6abe659b8088f178c",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:12:0",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "work_revision": "sha256:1783e041cd798bba16f0d072c187598916b958396783370c9728f11b065737f9",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:9ac5277c757b04383e68f4a50514bab4c1273569d63279d6abe659b8088f178c",
+          "revision_digest": "sha256:40f8061587082555659d5fb5b6f7dae365a3603098cf2673ae2d9748a23e8a1d",
+          "locator": "objects/40f8061587082555659d5fb5b6f7dae365a3603098cf2673ae2d9748a23e8a1d"
+        }
+      },
+      {
+        "identity": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:5:0",
+        "lane": "trajectory-anomaly:SEQUENCE_GAP",
+        "work_revision": "sha256:f9740e5aa4f157a7fe62230e0ac1c76f547da277108437133cab7281b397269c",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:4a5d47517b77daf595518fcb6862464af04e5e850d8b50f820751d1c0abd9c49",
+          "revision_digest": "sha256:aac0854866a57a124fe0aa5aab4ec9aa0619f453c656c1cc6c9163fa4d21b4be",
+          "locator": "objects/aac0854866a57a124fe0aa5aab4ec9aa0619f453c656c1cc6c9163fa4d21b4be"
+        }
+      },
+      {
+        "identity": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:6:0",
+        "lane": "trajectory-anomaly:OUT_OF_ORDER",
+        "work_revision": "sha256:eaf60a411a6bae2c71d2975854a21814132c7044461612b21ef1f1199875d9da",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:a1bf4fae906f9241464ef58778cff3e1ce6d34c83c66366d6e6d0c84ae920ed6",
+          "revision_digest": "sha256:5ea62afdd96b397636d8b48ea18dedad478affae6d5fc3c5fd78589b54a7364a",
+          "locator": "objects/5ea62afdd96b397636d8b48ea18dedad478affae6d5fc3c5fd78589b54a7364a"
+        }
+      },
+      {
+        "identity": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:7:0",
+        "lane": "trajectory-anomaly:DUPLICATE_IDENTITY",
+        "work_revision": "sha256:51c01343a8a897cb5b7a35b7f36e8cfae09fe897497e1e781a6b80e5f80243b1",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:c5f78b2cb92d8c71a6152f0e30e2cdcc08dffc305fdf0d283990f8bfab983b28",
+          "revision_digest": "sha256:d7c57e01ca3ce30420f9712fbca7c024f01d13e94b72c87eaa2a30db8e5f473d",
+          "locator": "objects/d7c57e01ca3ce30420f9712fbca7c024f01d13e94b72c87eaa2a30db8e5f473d"
+        }
+      },
+      {
+        "identity": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:8:0",
+        "lane": "trajectory-anomaly:TIMESTAMP_REGRESSION",
+        "work_revision": "sha256:905b124f325019bdcfbbc7169aa1f36fc9079abe7fc9759e10935bc8260eda76",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:32d56116b12173e364250c926d1b9bde779e0eb7d460141e908ac4fb520c7d87",
+          "revision_digest": "sha256:2d9430c81f7d865c6f2902de3c585b8883161d16f0ed77a7acb2d083336566c2",
+          "locator": "objects/2d9430c81f7d865c6f2902de3c585b8883161d16f0ed77a7acb2d083336566c2"
+        }
+      },
+      {
+        "identity": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+        "version": 1,
+        "status": "PENDING",
+        "kind": "JUDGMENT",
+        "event_identity": "anomaly:9:0",
+        "lane": "trajectory-anomaly:CAPTURE_STALL",
+        "work_revision": "sha256:30a1b436ec1ab11b14f5f971f1649c715e2aa856ec19ca1ab4314fa81e8f1da0",
+        "required_authority": "founder-judgment",
+        "history_ref": {
+          "project": "alienintent",
+          "profile": "fx-b1-trajectory-operational",
+          "logical_id": "attention:0392022fc55501c89102b7e994ca6269ab7b0f86cbccedb68cd39b2d23080147",
+          "revision_digest": "sha256:a3a07e5627e947417e2b3dfb92ebaeaf220dceefc2b18cbf77633eac63e1e821",
+          "locator": "objects/a3a07e5627e947417e2b3dfb92ebaeaf220dceefc2b18cbf77633eac63e1e821"
+        }
+      }
+    ],
+    "reconciliation": {
+      "journal_entries": 12,
+      "receipts": 2,
+      "receipted_entries": 12,
+      "entries_in_order_once": true,
+      "unreceipted_entries": [],
+      "journal_events": 7,
+      "observed_events": 7,
+      "events_observed_once": true,
+      "mismatched_events": [],
+      "mismatched_entries": [],
+      "anomalies": 7,
+      "attention_items": 7,
+      "anomalies_without_item": [],
+      "anomalies_with_duplicate_items": [],
+      "items_without_anomaly": [],
+      "mismatched_items": [],
+      "pending_items": 7,
+      "anomaly_kinds": [
+        "CAPTURE_STALL",
+        "DUPLICATE_IDENTITY",
+        "OUT_OF_ORDER",
+        "SEQUENCE_GAP",
+        "TIMESTAMP_REGRESSION"
+      ],
+      "reconciled": true
+    }
+  },
+  "monitor_starts": [
+    [
+      "13b39e46ca774b858f3da607936bc9d0",
+      1
+    ],
+    [
+      "cf137056d5b9438eada24996b39e2fd3",
+      2
+    ]
+  ],
+  "ownership_final": "HostOwnership(binding=HostBinding(profile='fx-b1-trajectory-operational', host_invocation='fx-b1-20260927T150544Z', unit='alienintent-monitor-6a3e57d0571472f027a1e58857c6b29d.service', description='AlienIntent monitor host 6a3e57d0571472f027a1e58857c6b29d'), manager=ManagerIdentity(uid=1000, boot_id='74e260e0-13bd-43fe-94ed-d20c1f167ad5', started_at_monotonic='59846494', cgroup='/user.slice/user-1000.slice/user@1000.service'), cgroup='/user.slice/user-1000.slice/user@1000.service/app.slice/alienintent-monitor-6a3e57d0571472f027a1e58857c6b29d.service', config_digest='sha256:87ba6330e93e654a8c07677e3c3c65a5801da02bb0f4686d8408e58975d95322', state='RUNNING', launch_id='cf137056d5b9438eada24996b39e2fd3', launched_at=1790521558247487, predecessor_generation=1, grant_digest='sha256:e1022d1df575d071a70c9fb2d243a6f1a7cfd7a012ea7fc501ab15963ac704e4', systemd_invocation_id='0c676919d7564afeb54292a71f321c7f', alert=None, alert_reason=None, restart_of=None, observer='alienintent-monitor-observer-6a3e57d0571472f027a1e58857c6b29d')",
+  "units_after_teardown": "",
+  "audit": {
+    "protected": "/home/netmarine/.local/state/alienintent",
+    "allowed": [
+      "/home/netmarine/.local/state/alienintent/fx-b1/trajectory",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z"
+    ],
+    "paths": 239,
+    "executions": 39,
+    "unexpected_executions": [],
+    "root_touched": true,
+    "forbidden": [],
+    "touched_under_state_outside_root": [
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/0144529fd6b4585d3651aa3e30d68d5f10bcc080b82142858ace4ef405edcfd8",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/0589e391e9806604fd72707443877b2722224890e3c266ea2bb3c9e742288824",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/0dba074b84d311b4343613c900145865299d34833abc0da31d36f6827f36c667",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/101c97c838d67394c4e0d26caba64c969b7ca6dfb7ad5fd4fac3f6a793ee60db",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/105b90d1c60128cd20f8485c4c3eb3f3ac6b84acb62902c892abb6a644518ae6",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/4cfd45ea152337e796d07e617da863ace17f187ca3466589657be6d69769131c",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/584ea6aecb4ba0bad0e180fba6868bb0539c71632b1459144a2b0d8e7941f645",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/90613b628e4a6768a8ed8a77b1325b03b6662b7753fc69c0731aee48888bd365",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/9a70e8751021044ce5fa0db4103824c6977e82418995350024f37859287d7d38",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/a2d5f96d70ee1adbf1966a8afd4e8b87fe06cac00a270a0b9cac996378fad080",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/a9f578e05bc122eab2ffcf527ac079bd3ce3a9fd803123da892fe173d24340cc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/ae9e851f587ab10b2e8b79f3afdae18d7812173585b30bb24aa1b9bea9d503e9",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/b7bf2e174d77f7a50c9857ead606f488caadfec503234d398689b33dac54b362",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/b9d49d9abd2d5f7ef71dfca2f1b6a32148e293128f0885cbfda57f9a2d6f552c",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/bdf0b278b4875fb272fb6d1a9e2af5717ba551937777fe4c22ed348fe8fdfae5",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/c6b5b891a14f7e327154f0f05b7b5ffb2dfce54393dc47dd340a5e666efa223c",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/d8fc866e393fdd0206da2a6a9cbd9bc44f19f3cfb90b600164cf945e43bb20af",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/observations/fe5f4b0eebb01a5140eded4adec62f8f06998fc9cad5aedc9c2359e4dd97ab65",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/composition",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/composition/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/composition/__pycache__/attention_inbox.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/composition/__pycache__/control_plane_profile.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/composition/__pycache__/liveness_profile.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/composition/__pycache__/monitor_host.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/composition/__pycache__/trajectory_capture.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/composition/__pycache__/trajectory_receipts.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/composition/attention_inbox.py",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/application",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/application/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/application/__pycache__/inventory_service.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/application/__pycache__/reconstruction_service.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/domain",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/domain/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/domain/__pycache__/inventory.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/domain/__pycache__/reconstruction.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/ports",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/ports/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/context_assembly/ports/__pycache__/context_assembler.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/adapters",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/adapters/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/adapters/__pycache__/attention_import.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/adapters/__pycache__/attention_repository.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/adapters/__pycache__/episode_repository.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/adapters/__pycache__/monitor_health_repository.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/adapters/__pycache__/monitor_host_alerts.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/adapters/__pycache__/monitor_host_repository.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/adapters/__pycache__/systemd_host_manager.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/application",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/application/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/application/__pycache__/attention.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/application/__pycache__/episode_control.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/application/__pycache__/monitor_health.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/application/__pycache__/monitor_supervision.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/domain",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/domain/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/domain/__pycache__/attention.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/domain/__pycache__/episode.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/domain/__pycache__/monitor_health.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/domain/__pycache__/monitor_host.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/ports",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/ports/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/ports/__pycache__/attention.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/ports/__pycache__/episode.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/ports/__pycache__/monitor_health.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/control_plane/ports/__pycache__/monitor_host.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/adapters",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/adapters/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/adapters/__pycache__/local_evidence_repository.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/adapters/__pycache__/trajectory_journal.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/application",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/application/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/application/__pycache__/trajectory_capture_service.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/domain",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/domain/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/domain/__pycache__/catalog.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/domain/__pycache__/records.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/domain/__pycache__/refs.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/domain/__pycache__/trajectory_capture.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/ports",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/ports/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/ports/__pycache__/evidence_repository.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/evidence_learning/ports/__pycache__/trajectory_journal.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/adapters",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/adapters/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/adapters/__pycache__/liveness_observations.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/adapters/__pycache__/sqlite_store.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/application",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/application/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/application/__pycache__/guarded_effect_execution.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/application/__pycache__/liveness.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/domain",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/domain/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/domain/__pycache__/contract.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/domain/__pycache__/custody.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/domain/__pycache__/lifecycle.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/domain/__pycache__/liveness.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/domain/__pycache__/verdict.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/ports",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/ports/__pycache__/__init__.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/ports/__pycache__/fenced_store.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/ports/__pycache__/liveness.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/ports/__pycache__/operational_store.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/src/alienintent/execution_coordination/ports/__pycache__/scan_progress.cpython-312.pyc",
+      "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py"
+    ]
+  },
+  "audit_ref": {
+    "revision_digest": "sha256:13c3f71d48234436a1db9392d77516fb5260bb768643e4a3f373052011090826",
+    "locator": "observations/13c3f71d48234436a1db9392d77516fb5260bb768643e4a3f373052011090826"
+  },
+  "finished_at": "2026-09-27T15:06:00.692932+00:00",
+  "predicates": {
+    "identity_order_timestamps_stable": "PASS",
+    "five_anomaly_classes_durable": "PASS",
+    "no_loss_no_duplication_queue_retained": "PASS",
+    "pre_post_restart_reconcile": "PASS",
+    "attention_producer_observes_receipts": "PASS",
+    "observer_boundary_and_disjointness": "PASS"
+  }
+}
