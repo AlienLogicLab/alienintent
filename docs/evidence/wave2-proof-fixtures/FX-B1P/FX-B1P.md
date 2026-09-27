@@ -162,6 +162,26 @@ files for any change to:
 
 The real-manager probe stays in this fixture.
 
+## Feature-regression receipt custody
+
+`.alienintent/feature-regressions.json` binds the exact candidate SHA it was run against. A commit cannot contain a
+receipt naming its own SHA, so the receipt is not a tracked file. This follows the landed rule in
+[FX-C.md](../FX-C/FX-C.md#feature-regression-receipt-custody) and [FX-E1.md](../FX-E1.md#feature-regression-receipt-custody).
+The shipped `CliWorkerProvider._feature_regressions` writes the receipt into the verifier's checkout of the exact
+candidate before it launches the verifier, and `read_verdict` reads it there. When the runtime is not the launcher, the
+verifier produces the receipt in its own worktree at the retrieved SHA:
+
+```
+python3 tools/verification/run_feature_regressions.py --base 322baf4ae45776acb59d303370b12d48d76085ee \
+  --candidate HEAD --receipt .alienintent/feature-regressions.json
+```
+
+The harness stage `feature_regressions` (step 4 above) runs on the committed source revision that precedes the
+evidence commit. It is predecessor evidence, not the exact-candidate receipt. The first verifier of candidate
+`b8c4c53` rejected it for this reason (Issue #140). The PRODUCER of the next candidate ran the command above against
+that exact candidate SHA and recorded the receipt digest on Issue #140. The verifier regenerates the receipt and does
+not trust that digest.
+
 ## Evidence
 
 The evidence commit retains the harness run under `local-run/<UTC stamp>/`. The retained files are:
