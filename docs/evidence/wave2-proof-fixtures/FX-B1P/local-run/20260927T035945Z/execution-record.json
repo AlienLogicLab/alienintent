@@ -1,0 +1,313 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-B1P",
+  "work_unit": "WO-220610",
+  "dag_node": "B1P",
+  "issue": 140,
+  "invocation": "AlienLogicLab/alienintent#140:PRODUCER:a7ea1a3c-3313-4846-ab51-23767dadc902",
+  "source_revision": "1288338d9ad8ac66e5a037197260871637348254",
+  "source_status": "",
+  "admission_baseline": "322baf4ae45776acb59d303370b12d48d76085ee",
+  "predecessors": [
+    {
+      "biu": "WO-220101",
+      "dag_node": "S0",
+      "issue": 69,
+      "fixture": "FX-S0",
+      "accepted_candidate": "761a3cb4d6e24dc24ec370de45e25fe8c505eeda",
+      "landing_merge": "9174849713df2685117de7a8150126d916a4b644",
+      "ancestor_of_candidate": {
+        "761a3cb4d6e24dc24ec370de45e25fe8c505eeda": true,
+        "9174849713df2685117de7a8150126d916a4b644": true
+      }
+    },
+    {
+      "biu": "WO-220305",
+      "dag_node": "C5",
+      "issue": 114,
+      "fixture": "FX-C5",
+      "accepted_candidate": "ef29d04e9c6bbc4fe3211472daa66819aca7298d",
+      "landing_merge": "7ccb1e74b1abd3bfe356595258d5222b6ede91cb",
+      "ancestor_of_candidate": {
+        "ef29d04e9c6bbc4fe3211472daa66819aca7298d": true,
+        "7ccb1e74b1abd3bfe356595258d5222b6ede91cb": true
+      }
+    }
+  ],
+  "unchanged_predecessor_sources": {
+    "baseline": "322baf4ae45776acb59d303370b12d48d76085ee",
+    "paths": [
+      "src/alienintent/composition/monitor_host.py",
+      "src/alienintent/composition/offline_proof.py",
+      "src/alienintent/control_plane/domain/monitor_host.py",
+      "src/alienintent/control_plane/ports/monitor_host.py",
+      "src/alienintent/control_plane/application/monitor_supervision.py",
+      "src/alienintent/control_plane/adapters/monitor_host_repository.py",
+      "src/alienintent/control_plane/adapters/monitor_host_alerts.py",
+      "src/alienintent/control_plane/adapters/systemd_host_manager.py",
+      "src/alienintent/evidence_learning/adapters/local_evidence_repository.py",
+      "src/alienintent/execution_coordination/adapters/sqlite_store.py"
+    ],
+    "changed": []
+  },
+  "input_digests": {
+    "docs/evidence/wave2-proof-fixtures/FX-B1P/FX-B1P.md": "sha256:5d07a609bcad8b66ce4e30afe7b0f8e4b8f9499edf9298da6f56b649ca1abb4e",
+    "docs/work-units/wave2/WO-220610.md": "sha256:2fee983a0d5550a095f39d8b3b8834720e010416045ab72a58c59b351bf00a17",
+    "docs/evidence/wave2-readiness-assessments/WO-220610.2026-09-27T023136.204114Z.assessment.json": "sha256:2cd854b368b810e3f3bfb5993ffd300f3878f5100d7b8fd5ecbf6e222dbca659",
+    "docs/evidence/wave2-dependency-dag.json": "sha256:f4b0da1d5eeaae1b857b8499e049f5caccba56240d98e18d7b05e3a22d0cf8db",
+    "docs/evidence/wave2-candidate-bius.json": "sha256:acd94d85c79f3927e9487a2b8f7ed0043dc393bf21c8e48a46453aeb27970c89",
+    "docs/evidence/wave2-execution-packets/WO-220610.packet.json": "sha256:1ff1069f5bc4bb723e057336427c849fc24f2b7fcb6e6617c4ba7764cbd7f138",
+    "docs/evidence/wave2-execution-packets/WO-220610.allocation.json": "sha256:61f0fe003fb21aab82005ad546743d5cbdf915fd5113900c3ea222664ff80992",
+    "docs/evidence/wave2-proof-fixtures/FX-C5/execution-record.json": "sha256:80b181c34fbffd8c932fb1ded91d4c4e13ac27e6fb26ef445f465381a6632fa5",
+    "tests/evidence_learning/test_trajectory_capture.py": "sha256:b20bf68162ff779c03258646284f53446efc8ca4905cfcd3bab5f3fa45f6be58",
+    "tests/composition/test_trajectory_capture_host.py": "sha256:035e5041fb1235dcf0a72ed8942aa883e0afeba8d8149952b27cedf1232ad429",
+    "tests/composition/test_trajectory_capture_systemd.py": "sha256:96d2efbea117aef472f447b2f82c557cd8ec29d1e7ca463187a5ca426500fc55",
+    "tools/evidence/fx_b1p_evidence.py": "sha256:e2d37be2f75c0da38e58b3f070d21431c94e30193aa1a2366daff4890132fd10",
+    "src/alienintent/evidence_learning/domain/trajectory_capture.py": "sha256:38144151f33f710bb29641a59cd578bcb46bf61f4fe8dccf330d45f01a528ba8",
+    "src/alienintent/evidence_learning/ports/trajectory_journal.py": "sha256:0b77295b7249e1f5c573338a3da94ddc60c2df82dcd88044b64660f5d47cc0a7",
+    "src/alienintent/evidence_learning/adapters/trajectory_journal.py": "sha256:f13eccf9525319c2f996f9a56010e4ce4cc1dec9c068a19c906084d44cc3f953",
+    "src/alienintent/evidence_learning/application/trajectory_capture_service.py": "sha256:ca9bccde335772db1f266ec04160f9c5bb7c6d3957b4b614290d8d8802864cb3",
+    "src/alienintent/composition/trajectory_capture.py": "sha256:c03afc4b880d86cf4ab015818a09bc55302e3ae8535a6462abbd7e656069f094",
+    "src/alienintent/composition/monitor_host.py": "sha256:c21f8bdfba759fab9a3be0f000f3dd266f0f5d0bfb3a8fe68ef40c71a49d81e9",
+    "src/alienintent/composition/offline_proof.py": "sha256:21809cad3a1f3274e85119072e999fe3b38764dd2f13faba8015900e1a700ccc",
+    "src/alienintent/control_plane/domain/monitor_host.py": "sha256:a70cf832a7c0b9050bc1cb12601625ec50dba10c21807f355e069b7215230d49",
+    "src/alienintent/control_plane/ports/monitor_host.py": "sha256:6046d9fa9c804e8946f127e89a3833db81fc3c022eb18d7e874c82b2a32751d3",
+    "src/alienintent/control_plane/application/monitor_supervision.py": "sha256:0fa0c37d5ba8a73bc5e532b8880e62b17abe141a312d744eca1727ebfbbd3778",
+    "src/alienintent/control_plane/adapters/monitor_host_repository.py": "sha256:b9f633adcc827d5ad54082a2d39575322a3d8be8023fadb02cb58978ce740f08",
+    "src/alienintent/control_plane/adapters/monitor_host_alerts.py": "sha256:fed79fb8d168c5df96bfeb812d0b2621d3704c73a095ad6d393e0fd7d0969864",
+    "src/alienintent/control_plane/adapters/systemd_host_manager.py": "sha256:b59c7c0f0f46327ff0570d28130a5ea62694f7dfe23662d39679c7226fdfbd60",
+    "src/alienintent/evidence_learning/adapters/local_evidence_repository.py": "sha256:db2dc94061e2de049ebc895940733194c59adb1b796bc43abbacf1804447fb7b",
+    "src/alienintent/execution_coordination/adapters/sqlite_store.py": "sha256:dd4da05be97dc0fa440f0e91c677636dd9366e0b98af65d925cac3c51809d978",
+    "tools/verification/feature_regressions.json": "sha256:2417a391d6792d20c4c68c52168b10eb989d3bd1660c4042c98618e4537b3d72"
+  },
+  "missing_inputs": [],
+  "commands": [
+    {
+      "id": "focused",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/evidence_learning/test_trajectory_capture.py",
+        "tests/composition/test_trajectory_capture_host.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:fcb7ab5c48022350a29ee0b86785c58f6a51ddd1e4fe23f28ccf6192fa8c4f40",
+        "locator": "observations/fcb7ab5c48022350a29ee0b86785c58f6a51ddd1e4fe23f28ccf6192fa8c4f40"
+      }
+    },
+    {
+      "id": "systemd_composed",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_trajectory_capture_systemd.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:616c5e83c8dbfde9fd7deac37ec0141818849c0c7256e2e2f7e9f36a5c6c6c14",
+        "locator": "observations/616c5e83c8dbfde9fd7deac37ec0141818849c0c7256e2e2f7e9f36a5c6c6c14"
+      },
+      "ran_on_real_manager": true,
+      "readback_ref": {
+        "revision_digest": "sha256:4fb1dbaae44eec19348119304ba3cf9c6275c9cb912f86d504c07839c394cdaf",
+        "locator": "observations/4fb1dbaae44eec19348119304ba3cf9c6275c9cb912f86d504c07839c394cdaf"
+      }
+    },
+    {
+      "id": "c5_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/control_plane/test_monitor_host.py",
+        "tests/control_plane/test_monitor_host_systemd.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:b2933da082e52b63061e1774df35a3e7ce79ae79f44265ca71fc0e43f66d38c7",
+        "locator": "observations/b2933da082e52b63061e1774df35a3e7ce79ae79f44265ca71fc0e43f66d38c7"
+      }
+    },
+    {
+      "id": "s0_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_offline_proof.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:417b7390cae3f51015d6b845b8b21285496663fcca5963afd1a270135688822f",
+        "locator": "observations/417b7390cae3f51015d6b845b8b21285496663fcca5963afd1a270135688822f"
+      }
+    },
+    {
+      "id": "feature_regressions",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/verification/run_feature_regressions.py",
+        "--base",
+        "322baf4ae45776acb59d303370b12d48d76085ee",
+        "--candidate",
+        "HEAD"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:9b985d8ea3e29b05c81ddce0bcf37ce569a5911d9b1dae55b9693e8281c3bc5e",
+        "locator": "observations/9b985d8ea3e29b05c81ddce0bcf37ce569a5911d9b1dae55b9693e8281c3bc5e"
+      }
+    },
+    {
+      "id": "architecture",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "tools/fitness/check_architecture.py",
+        "--root",
+        "src/alienintent",
+        "--check",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:b425230806f76f92ba3a9276c3bab60b7c7c10ac28ec90e2bf46fea38f453a11",
+        "locator": "observations/b425230806f76f92ba3a9276c3bab60b7c7c10ac28ec90e2bf46fea38f453a11"
+      }
+    },
+    {
+      "id": "architecture_fitness_tests",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/test_architecture_fitness.py"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:0da57ac8d954e2768dba2aa66631ebe662bb49d1908e4a39e8ab878d414f424d",
+        "locator": "observations/0da57ac8d954e2768dba2aa66631ebe662bb49d1908e4a39e8ab878d414f424d"
+      }
+    },
+    {
+      "id": "python_regression",
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider"
+      ],
+      "exit_status": 1,
+      "observation_ref": {
+        "revision_digest": "sha256:d2e08f29c4f67403b930ab77bc068f9047aee530b195271dbfd42688b477ab6a",
+        "locator": "observations/d2e08f29c4f67403b930ab77bc068f9047aee530b195271dbfd42688b477ab6a"
+      },
+      "failed": [
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_authorized_supersession_with_passing_replacement_is_accepted",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_changed_judgment_reviewer_inputs_hold",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_plan_pins_the_four_observable_premise",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_composed_profile_derives_and_persists_the_fx_u4_plan",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_credential_denial_obligation_is_infeasible_proof",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_obligation_holds",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_dropped_prior_proof_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_erased_truncated_or_padded_history_is_a_hold",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_failed_prior_proof_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_implementation_derived_predicate_is_refused",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_incomplete_mechanical_obligation_holds",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_isolation_obligation_omitting_an_observable_is_infeasible",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_claiming_mechanical_pass_is_refused",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_judgment_obligation_names_reviewer_inputs_and_decision_record",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_lost_plan_pointer_is_not_an_empty_history",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_persisted_state_is_a_hold_not_an_exception",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_malformed_supersession_or_authority_holds_without_raising",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_recorded_proof_evidence_is_ordered_and_clean",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_removed_required_predicate_blocks_admission",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_replayed_prior_proof_is_accepted",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_skipped_prior_proof_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_supersession_without_passing_replacement_is_rejected",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_tampered_persisted_plan_is_refused",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unattributed_judgment_holds",
+        "tests/evidence_learning/test_proof_planning.py::ProofPlanningTests::test_unauthorized_supersession_holds"
+      ]
+    },
+    {
+      "id": "node_regression",
+      "command": [
+        "node",
+        "scripts/check.mjs",
+        "all"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:033974f4c08c992e1d5f94c6cddabe85db0eab3130a289e9ab788d17d3905661",
+        "locator": "observations/033974f4c08c992e1d5f94c6cddabe85db0eab3130a289e9ab788d17d3905661"
+      }
+    }
+  ],
+  "holds": [],
+  "baseline_conditions": [
+    {
+      "condition": "PRE_EXISTING_BASELINE_FAILURE",
+      "count": 25,
+      "baseline": "322baf4ae45776acb59d303370b12d48d76085ee",
+      "baseline_ref": {
+        "revision_digest": "sha256:96dc05206c2875b7e8c25253111c86eaa1d45538558ef7ac4b7e51e4002a3777",
+        "locator": "observations/96dc05206c2875b7e8c25253111c86eaa1d45538558ef7ac4b7e51e4002a3777"
+      },
+      "note": "identical failing node ids at the admission baseline; no FX-B1P file is involved"
+    }
+  ],
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "proof_level": "LOCAL_SELF_SUPERVISED",
+  "live_proof": "NOT_ESTABLISHED",
+  "labels": [
+    "REAL_USER_SYSTEMD_MANAGER_LOCAL",
+    "C5_SUPERVISION_REUSED_UNCHANGED",
+    "FAKE_MANAGER_FOR_COMPOSED_NEGATIVE_CONTROLS",
+    "SYNTHETIC_SOURCE_DIRECT_FEED",
+    "NO_BUFFERED_UPSTREAM_SOURCE",
+    "NO_OPERATIONAL_TARGET_BOUND"
+  ],
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": null,
+    "reason": "UNKNOWN: provider usage is unavailable to this local fixture"
+  },
+  "run_state": "COMPLETE",
+  "exit_status": 0
+}
