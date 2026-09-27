@@ -62,6 +62,22 @@ def test_supervised_monitor_host_pack_is_selected_by_every_host_boundary():
         assert "supervised-monitor-host" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path
 
 
+def test_live_trajectory_capture_pack_is_selected_by_every_capture_boundary():
+    owned = (
+        "src/alienintent/composition/trajectory_capture.py",
+        "src/alienintent/evidence_learning/domain/trajectory_capture.py",
+        "src/alienintent/evidence_learning/ports/trajectory_journal.py",
+        "src/alienintent/evidence_learning/adapters/trajectory_journal.py",
+        "src/alienintent/evidence_learning/application/trajectory_capture_service.py",
+        "src/alienintent/composition/monitor_host.py",
+        "tests/composition/test_trajectory_capture_systemd.py",
+        "tests/control_plane/test_monitor_host.py",
+        "tools/evidence/fx_b1p_evidence.py",
+    )
+    for path in owned:
+        assert "live-trajectory-capture" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path
+
+
 def test_upstream_integration_capstone_pack_is_selected_by_every_chained_stage():
     chained = (
         "src/alienintent/composition/upstream_integration.py",
