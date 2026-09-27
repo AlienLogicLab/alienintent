@@ -22,6 +22,8 @@ GOOD = dict(
     baseline_ancestral=True,
     open_dependencies=[],
     active_invocations=[],
+    active_claims_total=0,
+    wip_limit=1,
     held=False,
 )
 
@@ -80,6 +82,29 @@ def test_an_existing_active_invocation_is_refused():
 
 def test_an_explicitly_held_biu_is_refused():
     assert "not_held" in _fail_codes(held=True)
+
+
+def test_an_unreadable_wip_limit_is_refused():
+    assert "wip_limit_known" in _fail_codes(wip_limit=None)
+
+
+def test_an_unreadable_active_claim_total_is_refused():
+    assert "wip_capacity_known" in _fail_codes(active_claims_total=None)
+
+
+def test_active_claims_at_the_wip_limit_are_refused():
+    # 2026-09-27 incident: releasing a second, graph-independent Issue while another
+    # Issue's PRODUCER claim was still active produced two simultaneous claims against
+    # wipLimit=1. This is the mechanical guard that incident recommended.
+    assert "wip_capacity_available" in _fail_codes(active_claims_total=1, wip_limit=1)
+
+
+def test_active_claims_above_the_wip_limit_are_refused():
+    assert "wip_capacity_available" in _fail_codes(active_claims_total=2, wip_limit=1)
+
+
+def test_active_claims_below_the_wip_limit_are_admitted():
+    assert _fail_codes(active_claims_total=0, wip_limit=1) == []
 
 
 def test_every_failure_explains_itself():

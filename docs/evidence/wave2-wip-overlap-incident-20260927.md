@@ -6,7 +6,7 @@ by Factory Director episode `factory-director-1e91d4e924fe45668dd38201276218b0`.
 
 ## What happened
 
-`~/.config/alienintent/self-hosting.json` sets `wipLimit: 1`. At the time this episode began,
+`~/.config/alienintent/factory-director-host.json` sets `wipLimit: 1`. At the time this episode began,
 exactly one PRODUCER claim was active: `AlienLogicLab/alienintent#140:PRODUCER` (WO-220610),
 started `2026-09-27T02:34:xxZ`.
 
@@ -90,13 +90,38 @@ that point.
 - #140's own unclaimed-`IMPLEMENT`-with-no-result state is flagged for separate investigation
   (why the claim disappeared without a posted result) — not resolved here, out of this
   incident's bounded scope.
-- **Repair recommendation** (not applied by this episode; needs its own tested change, per the
-  runtime contract's own preference for `MECHANICAL_ENFORCEMENT` over remembered policy): add a
-  global active-claim count check to `tools/live/release_admission.py`'s `admit()` — refuse
-  admission when `len(state.json active) >= wipLimit` at check time, in addition to the existing
-  per-issue `no_active_invocation` check — with its own test coverage alongside the existing
-  `tools/live/test_release_admission.py` suite. `wipLimit` itself is already-decided policy
-  (`~/.config/alienintent/self-hosting.json`); adding an enforcement check for it is fixing the
-  machinery to match already-decided intent, per the runtime contract §6, not a new Founder
-  decision — but the change still needs its own careful authoring and test pass, not a hurried
-  edit appended to an already-long incident response.
+- **Repair applied, this episode:** added a global active-claim count check to
+  `tools/live/release_admission.py`'s `admit()` (new facts `wip_limit`, read from
+  `~/.config/alienintent/factory-director-host.json`, and `active_claims_total`, the total size
+  of `state.json`'s `active` map) — admission is now refused (`wip_limit_known`,
+  `wip_capacity_known`, or `wip_capacity_available`) whenever the limit or the current total
+  cannot be read, or the total is already at or above the limit, independent of the existing
+  per-issue `no_active_invocation` check. New tests
+  (`test_an_unreadable_wip_limit_is_refused`, `test_an_unreadable_active_claim_total_is_refused`,
+  `test_active_claims_at_the_wip_limit_are_refused`,
+  `test_active_claims_above_the_wip_limit_are_refused`,
+  `test_active_claims_below_the_wip_limit_are_admitted`) in
+  `tools/live/test_release_admission.py`; `tools/live/test_release_admission_release_point.py`'s
+  isolated `World` fixture now seeds a matching `factory-director-host.json`/`state.json` so its
+  existing ADMITTED-path tests stay hermetic. Full suite: `104 passed`. This fixes the machinery
+  to match already-decided policy (`wipLimit: 1`), per runtime contract §6, not a new Founder
+  decision.
+- **This fix's scope boundary, honestly stated:** it gates only the Director-initiated
+  `tools/live/release_admission.py` `READY -> IMPLEMENT` path this Director always runs before
+  flipping status. It does **not** gate the Node runtime's own automatic `IMPLEMENT -> VERIFY`
+  handoff (triggered by a PRODUCER's `RESULT=VERIFY` comment, handled entirely inside
+  `src/runtime/dispatcher.mjs`), which has no `wipLimit` check either and was not touched by this
+  episode. At investigation close, both #127 and #130 independently posted `RESULT=VERIFY` and
+  the Node runtime moved both to `VERIFY` with zero active claims outstanding — the same
+  no-global-concurrency-check gap could in principle let it dispatch two VERIFIER claims at once
+  next. This is flagged, not fixed, for a successor.
+
+## Resolution observed before this record closed
+
+Both PRODUCER claims ran to completion undisturbed and released normally, with no observed
+duplicate-effect or shared-file conflict: #130 published candidate `06f99a2c` on branch
+`b-disp/cd37c36a-...` (`RESULT=VERIFY`, `2026-09-27T03:13:07Z`); #127 published candidate
+`3d3e2edf...` on branch `b-disp/c6cf1bd7-...` (`RESULT=VERIFY`, `2026-09-27T03:16:08Z`). `state.json`
+`active` returned to `{}` once both finished. The Node runtime moved both Issues to `VERIFY`
+autonomously. This incident's substance (the missing global concurrency guard, and this episode's
+own causal role in triggering it) stands regardless of this benign outcome.

@@ -27,6 +27,7 @@ from pathlib import Path, PurePosixPath
 REPO = "AlienLogicLab/alienintent"
 WORKDIR_ENV = "ALIENINTENT_WORKDIR"
 STATE = Path.home() / ".local/state/alienintent/state.json"
+HOST_CONFIG = Path.home() / ".config/alienintent/factory-director-host.json"
 PROJECT_ID = "PVT_kwDOEcrpC84Bj5i_"
 PRIORITY_FIELD = "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ"
 PRIORITY_OPTIONS = {"P0":"92998478","P1":"ae42b437","P2":"1da6e4a3","P3":"f10b964a","P4":"65e330b9","P5":"c29e1f42"}
@@ -76,6 +77,20 @@ def admit(facts: dict) -> list[dict]:
         fail("no_active_invocation", f"An invocation already exists: {facts['active_invocations']}.")
     if facts.get("held"):
         fail("not_held", "The BIU is explicitly held.")
+
+    wip_limit = facts.get("wip_limit")
+    active_total = facts.get("active_claims_total")
+    if wip_limit is None:
+        fail("wip_limit_known", "wipLimit could not be read from the host configuration; "
+             "admitting without it could silently exceed the concurrency policy.")
+    elif active_total is None:
+        fail("wip_capacity_known", "The current total active-claim count could not be read from "
+             "the runtime state file.")
+    elif active_total >= wip_limit:
+        fail("wip_capacity_available",
+             f"{active_total} claim(s) are already active against a wipLimit of {wip_limit}. "
+             "Admitting this release would exceed the configured concurrency policy, regardless "
+             "of whether this specific Issue has its own active invocation.")
 
     priority = facts.get("priority_reconciliation") or {}
     if priority.get("status") in {"UNAVAILABLE", "UNRESOLVED"}:
@@ -230,9 +245,18 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
                  if d.get("state") != "closed"]
 
     try:
-        active = [k for k in json.loads(STATE.read_text()).get("active", {}) if f"#{issue}:" in k]
+        all_active = json.loads(STATE.read_text()).get("active", {})
     except Exception:
-        active = []
+        all_active = None
+    active = [k for k in (all_active or {}) if f"#{issue}:" in k]
+    active_claims_total = len(all_active) if all_active is not None else None
+
+    try:
+        wip_limit = json.loads(HOST_CONFIG.read_text()).get("wipLimit")
+        if not isinstance(wip_limit, int):
+            wip_limit = None
+    except Exception:
+        wip_limit = None
 
     return {
         "issue": issue,
@@ -246,6 +270,8 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
         "baseline_ancestral": ancestral,
         "open_dependencies": open_deps,
         "active_invocations": active,
+        "active_claims_total": active_claims_total,
+        "wip_limit": wip_limit,
         "held": any("hold" in l.lower() for l in (data.get("labels") or []) if isinstance(l, str)),
         "repository": root,
         "release_point": release_point,

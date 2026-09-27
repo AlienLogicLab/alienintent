@@ -61,6 +61,14 @@ class World:
         self.env.pop("ALIENINTENT_WORKDIR", None)
         (root / "home").mkdir()
         (root / "bin").mkdir()
+        # Isolated wipLimit/active-claims state so admission is not affected by the real
+        # host's configuration or currently running invocations.
+        host_config_dir = root / "home" / ".config" / "alienintent"
+        host_config_dir.mkdir(parents=True)
+        (host_config_dir / "factory-director-host.json").write_text(json.dumps({"wipLimit": 1}))
+        runtime_state_dir = root / "home" / ".local" / "state" / "alienintent"
+        runtime_state_dir.mkdir(parents=True)
+        (runtime_state_dir / "state.json").write_text(json.dumps({"active": {}}))
         gh = root / "bin" / "gh"
         gh.write_text(FAKE_GH.format(python=sys.executable))
         gh.chmod(0o755)
