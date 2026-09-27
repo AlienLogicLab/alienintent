@@ -1,0 +1,100 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220601",
+  "issued_at": "2026-09-27T03:00:00.000000+00:00",
+  "goal": "Curate the FX-R1 retained proof record for DAG node R1 (Replacement gate: coordinator checkpoint, SF-REQ-053), citing the already-executed FDH-01 live-continuity proof and the retained FX-C2/FX-C3 fault-path proof, without retiring anything or re-executing the underlying proof.",
+  "starting_authority": {
+    "requirements": ["SF-REQ-053"],
+    "dag_node": ["R1"],
+    "candidate_contract_sha256": "edb243379f55c5965aed63f19605beb6aab6886b79dd5975ef8112f8ac887c53",
+    "baseline_sha": "de2f533e2423f92759be73baff88feadc7226a99",
+    "release_authority": "NOT GRANTED — normal Wave 2 release admission required before IMPLEMENT"
+  },
+  "allowed_scope": {
+    "extent": "Produce and retain the FX-R1 evidence record: cite docs/evidence/fdh-01-live-proof/20260924T080401Z/ (PASS, Issue #89 authorized) as the operational proof of fresh-successor reconstruction and correct-action continuity, and cite FX-C2 (tests/context_assembly/test_context_reconstruction.py::test_mismatch_is_failure) and FX-C3 (docs/evidence/wave2-proof-fixtures/FX-C3.md, 23 discriminating controls) as the retained fault-path/mismatch proof for this node's dependencies. Map each cited artifact to the completion predicate's elements (scope, unresolved decisions, effects, authorized next actions, mismatch blocks tenure change).",
+    "boundary": "Owns no capability (owns_capabilities: [] in the DAG). Does not touch C2's or C3's own retained proof records beyond citing them. Does not re-execute, extend, or supersede the FDH-01 live-proof run.",
+    "non_goals": [
+      "Any claim that the session-bound/resident continuity mechanism is retired — retirement is a later, separate, explicit decision outside this BIU's own extent.",
+      "Running a new negative-control or fault-path exercise for this node itself; the disposed owner clarification holds that C2/C3's own retained fault proof discharges this element.",
+      "Replanning the DAG or implementing another node's scope."
+    ],
+    "architecture_constraints": [
+      "Cite retained evidence by exact path/commit/hash; do not restate or duplicate C2/C3's own retained records.",
+      "Preserve the FDH-01 evidence directory and the live-proof procedure document unchanged; this BIU only references them."
+    ],
+    "owner_clarifications_disposed": {
+      "fx_r1_mismatch_evidence": "No new negative-control exercise is authorized or needed. R1's proof_requires_capabilities (durable_context_reconstruction/C2, bounded_episode_control/C3) are DONE dependencies with their own retained fault-path proof (FX-C2's test_mismatch_is_failure; FX-C3's 23 discriminating controls). R1's own contribution is the integrated positive-path continuity proof, which the cited FDH-01 run demonstrates.",
+      "fx_r1_retroactive_pin": "Not retroactive. docs/operations/factory-director-host-live-proof.md (the exact pinned fixture commands/inputs/expected-outcomes/evidence-schema) was committed at a2bf163 (2026-09-24T06:56:25Z), before the proof run it pins started (2026-09-24T08:04:01Z). This BIU cites an existing, already-pinned, already-executed target rather than minting a duplicate pin."
+    }
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220501",
+      "dag_node": "B0",
+      "issue": 116,
+      "project_status": "DONE",
+      "completion_predicate": "See docs/work-units/wave2/WO-220501.md."
+    },
+    {
+      "biu_id": "WO-220302",
+      "dag_node": "C2",
+      "issue": 95,
+      "project_status": "DONE",
+      "completion_predicate": "Durable, project-owned context reconstruction from pinned manifest, with MISMATCH treated as hard failure (FX-C2, test_mismatch_is_failure)."
+    },
+    {
+      "biu_id": "WO-220303",
+      "dag_node": "C3",
+      "issue": 99,
+      "project_status": "DONE",
+      "completion_predicate": "Bounded episodes and stale-command refusal; 23 discriminating intact/fault/restored controls for tenure/state-vector mismatch (FX-C3)."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required.",
+    "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately. Preserve prior proof on repair; supersession needs explicit authority."
+  ],
+  "acceptance": {
+    "criteria": [
+      "FX-R1 record cites the FDH-01 live-proof PASS evidence and maps steps 7-10 and 12 to the completion predicate's 'reconstructs scope, unresolved decisions, effects and authorized next actions without prior conversation' element.",
+      "FX-R1 record cites FX-C2's test_mismatch_is_failure and FX-C3's 23 discriminating controls for the 'mismatch blocks tenure change' element, and states plainly that this element is proven at the capability level, not re-observed at the R1 integration level.",
+      "The record explicitly states the checkpoint is preserved and nothing is retired.",
+      "Evidence integrity is checked: SHA256SUMS in the FDH-01 evidence directory verify, and FDH-01 landed SHA a233e9e is confirmed an ancestor of the release baseline."
+    ],
+    "proof_fixture": "FX-R1",
+    "proof_level": "OPERATIONAL_OR_EXTERNAL_AUTHORITY",
+    "material_failure_classes": [
+      "The record claims or implies retirement of the session-bound/resident continuity mechanism.",
+      "The record restates or duplicates C2/C3's fault-path proof instead of citing it, or misattributes a capability-level proof as an R1-level observation.",
+      "A cited hash, SHA, or ancestry claim does not verify.",
+      "The record infers operational success beyond what the cited evidence actually shows."
+    ],
+    "bounded_commands": [
+      "sha256sum -c docs/evidence/fdh-01-live-proof/20260924T080401Z/SHA256SUMS",
+      "git merge-base --is-ancestor a233e9e <release-baseline>"
+    ],
+    "non_claims": [
+      "No claim that the session-bound/resident continuity mechanism is retired.",
+      "No claim of a fresh operational mismatch/fault-path observation at the R1 level.",
+      "No release, cutover, or broader production mutation is authorized."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220601",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker. No pull request.",
+    "current_artifact": "Candidate specification only; no branch publication, implementation commit or worker invocation created by this packet."
+  },
+  "landing": "SWF-19: normal merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220601.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe, or conflicting ownership. Preserve unrelated completed proof.",
+    "Do not claim or imply retirement of the session-bound/resident continuity mechanism; that remains a later, separate, explicit decision."
+  ],
+  "escalation_condition": [
+    "Return interface/scope changes or defects in prerequisites (C2/C3) to their named owner; do not repair them inside this capstone.",
+    "Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "READY, native Agent Ready READY at the exact current revision (docs/evidence/wave2-readiness-assessments/WO-220601.2026-09-27T025230.497401Z.assessment.json); this packet grants no release authority."
+}
