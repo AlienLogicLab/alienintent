@@ -1,0 +1,121 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220504",
+  "issued_at": "2026-09-27T13:20:00.000000+00:00",
+  "goal": "Prove, on the bound fx-b1-trajectory-operational target, that live_trajectory_receipts preserves trajectory capture identity, order, timestamps, anomaly detection and retention across a supervised process restart and through attention-producer consumption, reconciling the composition's own pre/post-restart observations without loss, with the queue retained. Proof-only: makes no claim to replace or retire alienintent-observer.service.",
+  "starting_authority": {
+    "requirements": ["SF-REQ-053"],
+    "dag_node": ["B1"],
+    "candidate_contract_sha256": "bad671f1e29119dfa83955c4a500d4dcf5ecec3a979d204c3c7728014d40ab77",
+    "baseline_sha": "eef844a6fd6d9d98e1e9387d51917ffd54fad879",
+    "release_authority": "NOT GRANTED — normal Wave 2 release admission required before IMPLEMENT"
+  },
+  "allowed_scope": {
+    "extent": "On the bound fx-b1-trajectory-operational profile (docs/work-units/wave2/WO-220504.md \"Target binding — 2026-09-27\"), prove trajectory capture identity/order/timestamps/anomalies/retention across process restart and attention-producer consumption; reconcile the composition's own pre/post-restart observations without loss; retain the queue.",
+    "boundary": "Owns live_trajectory_receipts only. Integrates against, does not rebuild, the alienintent.composition.trajectory_capture composition WO-220610/#140 already built. No claim of replacing or retiring alienintent-observer.service, and the proof must not read that observer's data.",
+    "non_goals": [
+      "Building or modifying alienintent.composition.trajectory_capture itself — that capability is WO-220610/#140's own, already DONE and landed.",
+      "Any claim of external-observer replacement or retirement.",
+      "Reading, perturbing or depending on alienintent-observer.service's live data.",
+      "Replanning the DAG, implementing another node's scope, or broadening this BIU's own extent."
+    ],
+    "architecture_constraints": [
+      "Reuse the existing SupervisionConfig/systemd --user pattern (src/alienintent/composition/trajectory_capture.py, src/alienintent/composition/monitor_host.py) rather than inventing a new supervision mechanism.",
+      "Run entirely inside the isolated fx-b1-trajectory-operational profile root (~/.local/state/alienintent/fx-b1/trajectory), disjoint from real factory state.json/worktrees and from any live Wave 2 BIU claim.",
+      "Preserve one-writer ownership via the existing HostedMonitor/HostedCapture ownership/cgroup/config-digest fence."
+    ],
+    "owner_clarifications_disposed": {
+      "operational_target_profile": "Bound to the WO-220610/#140 alienintent.composition.trajectory_capture composition under local systemd --user supervision, in a new isolated fx-b1-trajectory-operational profile root. Authority: Director inbox handoff founder-authorize-local-live-proof-target-20260927T0102Z (AUTHORIZE_BOUNDED_LOCAL_OPERATIONAL_PROOF_TARGET_CREATION), which names #124 explicitly and authorizes provisioning a new isolated local operational proof target using existing credentials/configured services.",
+      "cutover_reconciliation_meaning": "'Old' and 'new' observations are both the bound composition's own state before and after its own supervised kill/restart cycle, entirely inside the isolated profile; 'cutover' is that restart transition. The proof does not read alienintent-observer.service data. Grounded in WO-220610's own identical 'old/new observations across a supervised restart' phrasing for the same composition, and in the Founder-instructed observer-duty conservative scoping (founder-build-proof-capability-20260927T0140Z) that keeps alienintent-observer.service governing and unchanged. See docs/work-units/wave2/WO-220504.md \"Cutover-reconciliation scope disposed — 2026-09-27\"."
+    }
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220501",
+      "dag_node": "B0",
+      "issue": 116,
+      "project_status": "DONE",
+      "completion_predicate": "See docs/work-units/wave2/WO-220501.md."
+    },
+    {
+      "biu_id": "WO-220305",
+      "dag_node": "C5",
+      "issue": 114,
+      "project_status": "DONE",
+      "completion_predicate": "See docs/work-units/wave2/WO-220305.md."
+    },
+    {
+      "biu_id": "WO-220102",
+      "dag_node": "S1",
+      "issue": 71,
+      "project_status": "DONE",
+      "completion_predicate": "See docs/work-units/python/WO-220102.md."
+    },
+    {
+      "biu_id": "WO-220502",
+      "dag_node": "E1",
+      "issue": 122,
+      "project_status": "DONE",
+      "completion_predicate": "See docs/work-units/wave2/WO-220502.md."
+    },
+    {
+      "biu_id": "WO-220610",
+      "dag_node": "B1P",
+      "issue": 140,
+      "project_status": "DONE",
+      "completion_predicate": "See docs/work-units/wave2/WO-220610.md. Supplies the live_trajectory_capture composition this BIU integrates against and binds a target to."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/profile/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs, independent verdict where required; never infer operational success from a local result.",
+    "Retain predecessor candidate identities, proof fixture revision, full command/exit status, raw observations, negative-control application counts and independent verdicts separately.",
+    "Explicit negative controls proving profile disjointness from real factory state and the absence of any alienintent-observer.service read."
+  ],
+  "acceptance": {
+    "criteria": [
+      "Identity, order and timestamps of captured events are stable and correct across a supervised kill/restart on the bound fx-b1 profile.",
+      "The five anomaly classes WO-220610 already implements (sequence gap, out-of-order event, duplicate identity, timestamp regression, capture stall) each produce a durable anomaly evidence record.",
+      "Every already-accepted event survives the restart without loss or duplication; the queue is retained and readable after restart.",
+      "Pre- and post-restart observations from the same composition reconcile without loss (the disposed 'cutover' reading).",
+      "An attention-producer consumer observes the captured receipts.",
+      "The proof record explicitly states no observer-replacement or retirement claim and that no alienintent-observer.service data was read."
+    ],
+    "proof_fixture": "FX-B1",
+    "proof_level": "OPERATIONAL_OR_EXTERNAL_AUTHORITY",
+    "material_failure_classes": [
+      "A local/offline substitution is labelled as operational proof.",
+      "The proof reads, perturbs, or otherwise depends on alienintent-observer.service.",
+      "The proof claims observer replacement or retirement.",
+      "The proof writes to or duplicate-effects against real factory state.json/worktrees or any live Wave 2 BIU claim."
+    ],
+    "bounded_commands": [
+      "python3 -m alienintent.composition.trajectory_capture launch --config fx-b1-supervision.json --actor factory-director --authority <fx-b1-authorization>",
+      "python3 -m alienintent.composition.trajectory_capture submit --config fx-b1-supervision.json   (seed synthetic trajectory events, including seeded anomaly classes)",
+      "python3 -m alienintent.composition.trajectory_capture restart --config fx-b1-supervision.json --actor factory-director --authority <fx-b1-authorization> --replaces <old-launch-id>   (kill/restart discrimination)",
+      "python3 -m alienintent.composition.trajectory_capture journal --config fx-b1-supervision.json   (readback: entries, anomalies, queue state after restart)"
+    ],
+    "non_claims": [
+      "No claim that alienintent-observer.service is replaced, retired, or read.",
+      "No claim that this BIU's proof substitutes for WO-220610/#140's own FX-B1P composition-level proof; predecessor evidence is cited, not re-claimed as this BIU's own.",
+      "No release, cutover (in the migration sense), or broader production mutation is authorized."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220504",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker. No pull request.",
+    "current_artifact": "Candidate specification only; no branch publication, implementation commit or worker invocation created by this packet."
+  },
+  "landing": "SWF-19: normal merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220504.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe or conflicting ownership. Preserve unrelated completed proof.",
+    "Hold if the proof reads or perturbs alienintent-observer.service, or claims observer replacement/retirement."
+  ],
+  "escalation_condition": [
+    "Return interface/scope changes or defects in prerequisites (including WO-220610's own composition) to their named owner; do not repair them inside this node.",
+    "Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "READY, native Agent Ready READY at the exact current revision (docs/evidence/wave2-readiness-assessments/WO-220504.2026-09-27T131311.200780Z.assessment.json); this packet grants no release authority."
+}

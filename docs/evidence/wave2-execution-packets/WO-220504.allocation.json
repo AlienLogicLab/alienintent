@@ -1,0 +1,71 @@
+{
+  "record_kind": "AllocationDecision",
+  "schema_version": "1",
+  "biu_id": "WO-220504",
+  "decided_at": "2026-09-27T13:20:00.000000+00:00",
+  "allocator": {
+    "role": "Factory Director",
+    "authority_basis": [
+      "founder-wave2-authority-delegation-20260926T200500Z",
+      "founder-authorize-local-live-proof-target-20260927T0102Z (AUTHORIZE_BOUNDED_LOCAL_OPERATIONAL_PROOF_TARGET_CREATION, names #124)",
+      "director-followthrough-unblock-124-126-20260927T125243Z",
+      "active self-hosting worker configuration",
+      "SWF-09 hard execution limits"
+    ]
+  },
+  "selection": {
+    "execution_path": "Project READY -> normal release admission -> retained runtime launches workers; Director does not launch a worker directly",
+    "producer": {
+      "role": "PRODUCER",
+      "worker": "Morty",
+      "adapter": "claude",
+      "model": "claude-opus-5-5",
+      "configured_in": "~/.config/alienintent/self-hosting.json"
+    },
+    "verifier": {
+      "role": "VERIFIER",
+      "worker": "JC",
+      "adapter": "codex",
+      "model": "gpt-reserve",
+      "configured_in": "~/.config/alienintent/self-hosting.json",
+      "independence": "fresh worktree retrieves exact candidate SHA"
+    },
+    "why": "Use currently configured role bindings; this record changes no provider/model configuration."
+  },
+  "limits": {
+    "concurrency": {
+      "value": 1,
+      "status": "GOVERNED_BY_ACTIVE_PROFILE — WIP=1; queues behind any currently active claim"
+    },
+    "execution_cycles": {
+      "value": 3,
+      "status": "BOUND — ~/.config/alienintent/self-hosting.json execution.biuLimits[\"AlienLogicLab/alienintent#124\"] (pre-existing entry, unchanged)"
+    },
+    "replacements_per_phase": {
+      "value": 1,
+      "status": "BOUND — ~/.config/alienintent/self-hosting.json execution.biuLimits[\"AlienLogicLab/alienintent#124\"] (pre-existing entry, unchanged)"
+    },
+    "wall_clock": {
+      "runtime_milliseconds": 7200000,
+      "startup_milliseconds": 120000,
+      "stop_grace_milliseconds": 300000,
+      "status": "ENFORCED_BY_SYSTEMD_SUPERVISION"
+    },
+    "tokens_and_cost": {
+      "value": "measured where exposed; UNKNOWN otherwise; never zero",
+      "status": "MEASURED_NOT_CAPPED"
+    }
+  },
+  "remaining_allowance": {
+    "cycles_consumed": 0,
+    "cycles_remaining": 3,
+    "replacements_remaining_per_phase": 1
+  },
+  "not_granted_here": "Release authority.",
+  "provenance": {
+    "baseline_sha": "eef844a6fd6d9d98e1e9387d51917ffd54fad879",
+    "candidate_contract_sha256": "bad671f1e29119dfa83955c4a500d4dcf5ecec3a979d204c3c7728014d40ab77",
+    "candidate_ref": "docs/evidence/wave2-dependency-dag.json (node B1); docs/evidence/wave2-candidate-bius.json (WO-220504)",
+    "recorded_by": "Factory Director episode factory-director-2ea1898b81c2462384c56cfaef7a5516, preparing the execution packet this BIU needs before release, acting on Director inbox handoff director-followthrough-unblock-124-126-20260927T125243Z; mirrors WO-220507/WO-220610 allocation form. No new self-hosting.json entry needed: AlienLogicLab/alienintent#124 already had a biuLimits entry (maxCycles 3, maxReplacementsPerPhase 1)."
+  }
+}
