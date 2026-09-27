@@ -52,6 +52,8 @@ ADDENDUM_CLAIMS = (
     "7. No temporary worktree or task left without a durable disposition",
     "8. Terminal state — **`PROGRAM_COMPLETE`**, computed by `ProgramState.terminal_state()`",
 )
+# Packet acceptance.bounded_commands[2], as amended at 240f7b25ffe9b44962caf5299364b32e6e826510.
+PACKET_JQ = '.tasks["POSTW1-BRIDGE-000"], .tasks["POSTW1-LEARN-002"]'
 DECISION_RECORD = "docs/decisions/2026-09-26-wave2-bounded-operational-authority-delegation.md"
 
 
@@ -140,11 +142,14 @@ def main():
             check(checks, f"{task_id}_done_pass_at_{label}", {"status": "DONE", "review_status": "PASS"},
                   {"status": task.get("status"), "review_status": task.get("review_status")},
                   revision=rev, path=STATE, command=["jq", f'.tasks["{task_id}"] | {{status, review_status}}', STATE])
-    literal = run(["jq", '."POSTW1-BRIDGE-000",."POSTW1-LEARN-002"', STATE])
-    observations.append({"observation": "packet_bounded_jq_command_literal", "command": literal["command"],
-                         "exit_status": literal["exit_status"], "stdout": literal["stdout"].strip(),
-                         "note": "The packet's literal filter addresses top-level keys; tasks live under .tasks, "
-                                 "so it prints null twice. The corrected filter is used in the checks above."})
+    # The packet's bounded jq command (amended at 240f7b2), run literally against the baseline's state file.
+    with tempfile.TemporaryDirectory() as tmp:
+        Path(tmp, "program-state.json").write_text(show(baseline, STATE))
+        done = subprocess.run(["jq", "-c", PACKET_JQ, "program-state.json"], cwd=tmp, capture_output=True, text=True)
+    printed = [json.loads(line) for line in done.stdout.splitlines() if line.strip()]
+    check(checks, "packet_bounded_jq_command_at_baseline", [0, [{"status": "DONE", "review_status": "PASS"}] * 2],
+          [done.returncode, [{k: (t or {}).get(k) for k in ("status", "review_status")} for t in printed]],
+          revision=baseline, command=["jq", "-c", PACKET_JQ, STATE])
 
     listing = run(["git", "ls-tree", "--name-only", f"{baseline}:{PROGRAM}/messages"])
     check(checks, "messages_directory_exactly_two_files_at_baseline", MESSAGE_FILES,
@@ -153,7 +158,7 @@ def main():
     check(checks, "only_bridge_000_task_references_messages_dir_at_baseline", ["POSTW1-BRIDGE-000"],
           message_refs(state_at_baseline), revision=baseline, path=STATE)
 
-    # Acceptance 2: closure commit ancestry and the Director closure addendum.
+    # Acceptance 2 (amended): closure is ancestral; its only child adds the Director closure addendum.
     for name, commit in (("closure", CLOSURE), ("addendum", ADDENDUM)):
         result = run(["git", "merge-base", "--is-ancestor", commit, baseline])
         check(checks, f"{name}_is_ancestor_of_baseline", 0, result["exit_status"], command=result["command"])
@@ -161,10 +166,18 @@ def main():
     observations.append({"observation": "packet_bounded_git_show_closure_report", "command": at_closure["command"],
                          "exit_status": at_closure["exit_status"], "stdout_sha256": at_closure["stdout_sha256"],
                          "director_closure_addendum_present": ADDENDUM_HEADING in at_closure["stdout"],
-                         "note": "The addendum is not in the closure commit's tree; it was added by the next "
-                                 "commit, whose only parent is the closure commit. Checked below."})
+                         "note": "The addendum is not in the closure commit's tree; its only child adds it "
+                                 "(packet criterion 2 as amended). Checked below."})
     check(checks, "addendum_commit_parent_is_closure", CLOSURE,
           git("show", "-s", "--format=%P", ADDENDUM).strip(), commit=ADDENDUM)
+    children = sorted(line.split()[0] for line in git("rev-list", "--parents", baseline).splitlines()
+                      if CLOSURE in line.split()[1:])
+    check(checks, "addendum_commit_is_only_child_of_closure_at_baseline", [ADDENDUM], children,
+          command=["git", "rev-list", "--parents", baseline], note="children of the closure reachable from the baseline")
+    at_addendum = run(["git", "show", f"{ADDENDUM}:{REPORT}"])
+    observations.append({"observation": "packet_bounded_git_show_addendum_report", "command": at_addendum["command"],
+                         "exit_status": at_addendum["exit_status"], "stdout_sha256": at_addendum["stdout_sha256"],
+                         "director_closure_addendum_present": ADDENDUM_HEADING in at_addendum["stdout"]})
     check(checks, "addendum_absent_at_closure_present_at_addendum_commit", [False, True],
           [ADDENDUM_HEADING in at_closure["stdout"], ADDENDUM_HEADING in show(ADDENDUM, REPORT)])
     report_last_change = git("log", "-1", "--format=%H", baseline, "--", REPORT).strip()

@@ -28,8 +28,9 @@ authorized or performed.
 
 | Item | Value |
 |---|---|
-| Invocation | `AlienLogicLab/alienintent#127:PRODUCER:f9799689-cd10-47a8-9145-82148b3c1d21` |
+| Invocation | `AlienLogicLab/alienintent#127:PRODUCER:f9799689-cd10-47a8-9145-82148b3c1d21` (original); repair 2: `AlienLogicLab/alienintent#127:PRODUCER:a0c62cb6-3a0d-49d7-9b2a-11ab749c72f3` |
 | Release baseline | `25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd` (RELEASED record, Issue #127); packet authority baseline `4076a57010867a98022ee43ca6590814a962e4a9` is its parent |
+| Amended-packet baseline (repair 2) | `240f7b25ffe9b44962caf5299364b32e6e826510`: Factory Director amendment of packet acceptance criterion 2 and the bounded `jq` command; the candidate's parent |
 | Candidate contract | sha256 `b08ca4e995a2511ddfae46f0dba3ff43f6dcc8c63188013ed535665fe2012745` |
 | Readiness | native Agent Ready READY, `docs/evidence/wave2-readiness-assessments/WO-220507.2026-09-27T030323.491454Z.assessment.json` |
 | Programme closure | `352fa9d7fce76b661ca98bebca0adec7a00a13df`: "Phase 14 Founder approval packet and final report — PROGRAM_COMPLETE" |
@@ -37,7 +38,54 @@ authorized or performed.
 | Authority records | `docs/decisions/2026-09-26-wave2-bounded-operational-authority-delegation.md` (disposes POSTW1-DECIDE-006A); Founder grant `FULL_WAVE2_BIU_UNBLOCK_AUTHORITY` (2026-09-27T02:01:41Z), cited by reference only (see B4-F4) |
 | Proof level | `OPERATIONAL_OR_EXTERNAL_AUTHORITY`, met on the **external-authority** limb: retained, landed programme records. No operational result is claimed. |
 
-## Integrity check (bounded commands)
+## Repair 2: amended packet (current result)
+
+The Factory Director amended the execution packet at `240f7b2`. Criterion 2 now reads: `352fa9d7` "is
+reachable/ancestral, and its only child `89389fd…` adds the cited FINAL-REPORT.md Director closure addendum, which
+records conditions as of `352fa9d7…`". The bounded `jq` command now reads `.tasks["…"]`, and a fourth bounded
+command `git show 89389fd…:…/FINAL-REPORT.md` was added. This resolves B4-F1 and B4-F2 at their owner.
+
+The checker was updated to the amended packet, and nothing else about it changed:
+
+- `packet_bounded_jq_command_at_baseline` (replaces the `null` observation): runs the packet's amended filter
+  literally on the baseline's `program-state.json`. Expected and observed: exit 0, both tasks `DONE`/`PASS`.
+- `addendum_commit_is_only_child_of_closure_at_baseline` (new): the children of `352fa9d7` reachable from the
+  baseline, by `git rev-list --parents`, are exactly `[89389fd…]`.
+- Observation `packet_bounded_git_show_addendum_report` (new): the packet's fourth bounded command exits 0 and
+  its output contains the Director closure addendum heading.
+
+```
+rtk proxy python3 -B tools/evidence/fx_b4_evidence.py \
+  --baseline 240f7b25ffe9b44962caf5299364b32e6e826510 \
+  --invocation "AlienLogicLab/alienintent#127:PRODUCER:a0c62cb6-3a0d-49d7-9b2a-11ab749c72f3" \
+  --output docs/evidence/wave2-proof-fixtures/FX-B4/repair-2
+```
+
+Observed: exit 0, **28 of 28 checks PASS**, retained as `FX-B4/repair-2/citation-check.json` (sha256
+`433ca42e…`); a second run reproduces it byte for byte. Acceptance mapping:
+
+| Packet criterion | Checks |
+|---|---|
+| 1. Messages DONE/PASS at the pinned baseline | `POSTW1-*_done_pass_at_baseline`, `packet_bounded_jq_command_at_baseline` |
+| 2. (amended) Closure ancestral; its only child adds the addendum, conditions as of `352fa9d7` | `closure_is_ancestor_of_baseline`, `addendum_commit_parent_is_closure`, `addendum_commit_is_only_child_of_closure_at_baseline`, `addendum_absent_at_closure_present_at_addendum_commit`, `addendum_states_cited_conditions` |
+| 3. R2 title, BOOTSTRAP-M13/M17 | `dag_r2_node`, `bootstrap_m13_reject`, `bootstrap_m17_reject` |
+| 4. No mailbox built; R2 not discharged | stated in "No mailbox is built; R2 is not discharged" and "Non-claims" |
+
+**Discrimination (repair 2).** `FX-B4/repair-2/discrimination.json` records six probes, all behaving as expected:
+intact `240f7b2` 0 failed; pre-closure `01af974` 11 failed; `352fa9d7` as baseline 10 failed; injected message-duty
+fault (same three edits, on `240f7b2`) exactly the 4 expected checks failed, now including the packet `jq` check;
+injected second child of `352fa9d7` merged into `240f7b2` with an unchanged tree, exactly
+`addendum_commit_is_only_child_of_closure_at_baseline` failed; restored `240f7b2` 0 failed.
+
+B4-F3, B4-F4 and B4-F5 are unchanged: at `240f7b2`, `terminal_state()` still returns `FOUNDER_DECISION_REQUIRED`,
+blocked by `FACT-S1-ADMISSION-008`, and the post-closure tasks still reference no message. The verifier still has
+to rule on B4-F5.
+
+The sections below are the original record at release baseline `25f7aa3`, preserved as retained. Its output files
+`FX-B4/citation-check.json` and `FX-B4/discrimination.json` were produced by the checker as committed in the
+original candidate `3d3e2ed` (26 checks); they are not regenerated.
+
+## Integrity check (bounded commands, original run)
 
 `tools/evidence/fx_b4_evidence.py` re-checks everything this record relies on, and nothing more. It reads git
 objects and writes only `FX-B4/citation-check.json`.
@@ -110,6 +158,8 @@ release baseline:
 
 ## Findings for the verifier (recorded, not repaired here)
 
+B4-F1 and B4-F2 are resolved by the packet amendment at `240f7b2`; see "Repair 2" above.
+
 - **B4-F1: addendum commit.** Packet acceptance criterion 2 says `352fa9d7` "contains the cited FINAL-REPORT.md
   Director closure addendum". It does not. The addendum was added 45 seconds later by `89389fd`, whose only parent
   is `352fa9d7`, and the addendum itself explains why: "a final report cannot contain the identity of the commit
@@ -146,11 +196,11 @@ receipt naming its own SHA. It is written into the checkout of the exact candida
 invocation runtime or by the verifier at the retrieved SHA:
 
 ```
-python3 tools/verification/run_feature_regressions.py --base b23f6eb4e6735aa3528a3fd10ecb3d2c6e589f19 \
+python3 tools/verification/run_feature_regressions.py --base 240f7b25ffe9b44962caf5299364b32e6e826510 \
   --candidate HEAD --receipt .alienintent/feature-regressions.json
 ```
 
-The base is the repair candidate's parent, `origin/main` at dispatch. The PRODUCER
+The base is the repair 2 candidate's parent, `origin/main` at dispatch (repair 1 used `b23f6eb`). The PRODUCER
 records its own receipt for the published SHA on the Issue for comparison only.
 
 ## Repair 1 (verifier REJECT of `3d3e2ed`)
