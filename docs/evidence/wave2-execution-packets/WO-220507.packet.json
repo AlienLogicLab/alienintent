@@ -59,7 +59,7 @@
   "acceptance": {
     "criteria": [
       "FX-B4 record verifies that docs/operations/post-wave1-program/program-state.json records POSTW1-BRIDGE-000 and POSTW1-LEARN-002 as status DONE, review_status PASS, at the pinned baseline.",
-      "FX-B4 record verifies commit 352fa9d7fce76b661ca98bebca0adec7a00a13df is reachable/ancestral and contains the cited FINAL-REPORT.md Director closure addendum.",
+      "FX-B4 record verifies commit 352fa9d7fce76b661ca98bebca0adec7a00a13df is reachable/ancestral, and its only child 89389fd21bd1d3e388730f90cddec6e95a2eacc6 adds the cited FINAL-REPORT.md Director closure addendum, which records conditions as of 352fa9d7fce76b661ca98bebca0adec7a00a13df.",
       "FX-B4 record verifies the DAG's R2 node title and BOOTSTRAP-M13/M17 dispositions as cited.",
       "The record explicitly states no new mailbox capability is built and this does not discharge R2."
     ],
@@ -73,7 +73,8 @@
     "bounded_commands": [
       "git show 352fa9d7fce76b661ca98bebca0adec7a00a13df:docs/operations/post-wave1-program/reports/FINAL-REPORT.md",
       "git merge-base --is-ancestor 352fa9d7fce76b661ca98bebca0adec7a00a13df <release-baseline>",
-      "jq '.\"POSTW1-BRIDGE-000\",.\"POSTW1-LEARN-002\"' docs/operations/post-wave1-program/program-state.json"
+      "jq '.tasks[\"POSTW1-BRIDGE-000\"], .tasks[\"POSTW1-LEARN-002\"]' docs/operations/post-wave1-program/program-state.json",
+      "git show 89389fd21bd1d3e388730f90cddec6e95a2eacc6:docs/operations/post-wave1-program/reports/FINAL-REPORT.md"
     ],
     "non_claims": [
       "No claim that R2 (Program Director mailbox bridge waiter) is discharged.",
