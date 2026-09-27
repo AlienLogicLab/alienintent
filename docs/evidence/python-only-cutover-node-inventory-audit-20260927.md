@@ -149,3 +149,15 @@ disabled or reconfigured while producing this record. No unrelated non-AlienInte
 tool (GitNexus, Desktop Commander, other Claude Code sessions) was touched. No DAG or
 candidate-BIU count was changed by this audit — the gap it identifies is reported for a
 successor's SPECIFY-shape decision, not resolved unilaterally here.
+
+## Update 2026-09-27 (episode `factory-director-2e75cfd340584912a5a773bbc2733632`)
+
+The dedicated follow-up this audit recommended for steps 1, 2, 4 and 5 is done:
+`docs/evidence/2026-09-27-python-cutover-steps-1-2-4-5-disposition.md`. Correction: this
+audit's "no linkage of any kind" finding for those four steps checked only
+`bootstrap_replacement_sequence`'s `gate_node` assignment; `source_transition_guards` in
+the same file already carries a named `release_gate` for every step, including these four.
+The follow-up found steps 1, 2 and 5 already satisfied by existing evidence (no new BIU or
+Founder action needed to close them), and step 4 (PRODUCER-on-Claude) newly genuinely
+open — routed to the Founder there alongside the pre-existing steps 8/9/10 gates. No DAG
+node was added.
