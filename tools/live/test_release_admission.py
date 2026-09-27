@@ -217,6 +217,25 @@ def test_the_release_record_carries_its_text_so_a_path_cited_there_is_found():
     assert str(assessment_record_path(record["text"])) == RECORDS["FDH-01"]
 
 
+def test_a_narrative_comment_about_a_different_issues_release_is_not_this_issues_own_record():
+    """Bug found live on Issue #124 (WO-220504): a comment describing a DIFFERENT, already
+    landed Issue's release ('... was released READY -> IMPLEMENT ... baseline `<sha>`') also
+    happens to use the word 'authorized' later, discussing THIS issue's own unrelated open
+    ground. Dotall matching let SUPERSEDING_WORDING span the whole comment and treat that
+    narrative as if it were this issue's own release record, producing a false ADMITTED."""
+    from release_admission import release_record_from
+    comment = (
+        "This BIU's own hold is unaffected in substance and stands.\n\n"
+        "Bounded prerequisite dispatched. WO-220610 reached native Agent Ready READY and "
+        "was released READY -> IMPLEMENT (`release_admission.py` ADMITTED, baseline "
+        "`322baf4ae45776acb59d303370b12d48d76085ee`). The Node runtime has already dispatched "
+        "PRODUCER against it.\n\n"
+        "This BIU's own hold narrows further: it now rests solely on a separately authorized "
+        "operational target-profile binding, which the other BIU does not and cannot close."
+    )
+    assert release_record_from("no pointer", [{"body": comment}]) is None
+
+
 def test_a_path_that_climbs_out_of_the_record_directory_is_rejected():
     assert assessment_record_path(
         "`docs/evidence/wave2-readiness-assessments/../../../etc/ARP-01.s.assessment.json`") is None

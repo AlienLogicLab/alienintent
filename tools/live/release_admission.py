@@ -33,7 +33,7 @@ PRIORITY_FIELD = "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ"
 PRIORITY_OPTIONS = {"P0":"92998478","P1":"ae42b437","P2":"1da6e4a3","P3":"f10b964a","P4":"65e330b9","P5":"c29e1f42"}
 
 UNAUTHORIZED_WORDING = re.compile(r"implementation is\s+\*{0,2}not\*{0,2}\s+authorized", re.I)
-SUPERSEDING_WORDING = re.compile(r"\bRELEASED\b.*\bauthoriz", re.I | re.S)
+SUPERSEDING_WORDING = re.compile(r"\bRELEASED\b.*\bauthoriz", re.I)
 BASELINE_IN_RECORD = re.compile(r"baseline[^`]*`([0-9a-f]{7,40})`", re.I)
 AUTHORIZES_IMPLEMENT = re.compile(r"IMPLEMENT is authorized", re.I)
 
