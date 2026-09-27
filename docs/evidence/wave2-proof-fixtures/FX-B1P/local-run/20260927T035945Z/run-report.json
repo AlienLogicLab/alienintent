@@ -1,0 +1,968 @@
+{
+  "acceptance_to_probes": {
+    "(a) identity/order/timestamp assignment is stable and correct across a supervised kill/restart": [
+      "test_capture_assigns_identity_order_and_time",
+      "test_restart_reconciles_accepted_events_without_loss_or_duplication",
+      "systemd_composed: acks vs journal after restart (capture_seq, identity, captured_at unchanged)"
+    ],
+    "(b) every already-accepted event survives the restart without loss or duplication": [
+      "test_restart_reconciles_accepted_events_without_loss_or_duplication",
+      "test_an_unacknowledged_submission_was_never_accepted",
+      "test_a_killed_capture_is_detected_and_its_granted_restart_loses_and_duplicates_nothing",
+      "systemd_composed: SIGKILL -> observer alert -> granted restart; retry recorded DUPLICATE"
+    ],
+    "(c) each seeded anomaly class produces a durable anomaly evidence record": [
+      "test_each_seeded_anomaly_class_is_recorded_durably",
+      "test_stall_is_measured_from_the_later_of_last_event_and_session_and_not_repeated",
+      "systemd_composed: all five kinds read back after restart"
+    ],
+    "(d) captured events and anomaly records are durably persisted and readable after restart": [
+      "test_restart_reconciles_accepted_events_without_loss_or_duplication",
+      "test_a_broken_or_inconsistent_journal_holds",
+      "systemd_composed: restarted stage journal readback"
+    ],
+    "(e) runs under this operator's own local systemd --user supervision only": [
+      "test_the_c5_supervisor_launches_and_observes_the_capture_host",
+      "test_the_capture_host_refuses_outside_its_owned_unit_before_opening_the_journal",
+      "systemd_composed: transient units removed at the end of the run"
+    ],
+    "C5 / WO-220101 not regressed": [
+      "unchanged_predecessor_sources",
+      "c5_regression",
+      "s0_regression"
+    ],
+    "negative controls": [
+      "proven-red.json: order_from_journal_position, capture_time_not_monotonic, ack_without_durable_commit, duplicate_recaptured, restart_clean_start, sequence_gap_undetected, out_of_order_undetected, timestamp_regression_undetected, capture_stall_undetected"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-rfEs",
+      "-p",
+      "no:cacheprovider",
+      "tests/evidence_learning/test_trajectory_capture.py",
+      "tests/composition/test_trajectory_capture_host.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:fcb7ab5c48022350a29ee0b86785c58f6a51ddd1e4fe23f28ccf6192fa8c4f40",
+      "locator": "observations/fcb7ab5c48022350a29ee0b86785c58f6a51ddd1e4fe23f28ccf6192fa8c4f40"
+    }
+  },
+  "systemd_command": {
+    "id": "systemd_composed",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-rfEs",
+      "-p",
+      "no:cacheprovider",
+      "tests/composition/test_trajectory_capture_systemd.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:616c5e83c8dbfde9fd7deac37ec0141818849c0c7256e2e2f7e9f36a5c6c6c14",
+      "locator": "observations/616c5e83c8dbfde9fd7deac37ec0141818849c0c7256e2e2f7e9f36a5c6c6c14"
+    },
+    "ran_on_real_manager": true,
+    "readback_ref": {
+      "revision_digest": "sha256:4fb1dbaae44eec19348119304ba3cf9c6275c9cb912f86d504c07839c394cdaf",
+      "locator": "observations/4fb1dbaae44eec19348119304ba3cf9c6275c9cb912f86d504c07839c394cdaf"
+    }
+  },
+  "composed_readback": {
+    "invocation": "fx-b1p-systemd-dcbb345c377242b7884d3017fca1e09d",
+    "unit": "alienintent-monitor-c17064d8c6d5d5f424856b3c42c7a228.service",
+    "observer": "alienintent-monitor-observer-c17064d8c6d5d5f424856b3c42c7a228",
+    "stages": [
+      {
+        "stage": "seeded",
+        "ownership": {
+          "binding": {
+            "profile": "fixture",
+            "host_invocation": "fx-b1p-systemd-dcbb345c377242b7884d3017fca1e09d",
+            "unit": "alienintent-monitor-c17064d8c6d5d5f424856b3c42c7a228.service",
+            "description": "AlienIntent monitor host c17064d8c6d5d5f424856b3c42c7a228"
+          },
+          "manager": {
+            "uid": 1000,
+            "boot_id": "74e260e0-13bd-43fe-94ed-d20c1f167ad5",
+            "started_at_monotonic": "59846494",
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service"
+          },
+          "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/alienintent-monitor-c17064d8c6d5d5f424856b3c42c7a228.service",
+          "config_digest": "sha256:1b2d65340485cf13dc5559af3b024be860e029466503d638002ff9f020c4f1e1",
+          "state": "RUNNING",
+          "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+          "launched_at": 1790481590436645,
+          "predecessor_generation": 0,
+          "grant_digest": "sha256:58590cc4e7bf02caf60d407393349a8db7de575b1033e3479e9e849696d4370f",
+          "systemd_invocation_id": "ab4b525dae4f4f2dac4eb6407f69db02",
+          "alert": null,
+          "alert_reason": null,
+          "restart_of": null,
+          "observer": "alienintent-monitor-observer-c17064d8c6d5d5f424856b3c42c7a228"
+        },
+        "journal": {
+          "entries": [
+            {
+              "anomalies": [],
+              "entry_seq": 1,
+              "event": null,
+              "kind": "SESSION",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481590734647,
+              "schema_version": 1,
+              "session": {
+                "policy": {
+                  "stall_seconds": 2
+                },
+                "reconciled": {
+                  "entries": 0,
+                  "events": 0,
+                  "sessions": [],
+                  "sources": {}
+                }
+              }
+            },
+            {
+              "anomalies": [],
+              "entry_seq": 2,
+              "event": {
+                "capture_seq": 1,
+                "captured_at": 1790481590996769,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 1",
+                  "event_id": "agent-1-001",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-001",
+                "identity": "sha256:c88bbf8e8d2edc994c72d40d0823c6203a7531ca7c291b6fd51a9b3889463ae5",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000001000000,
+                "source": "agent-1",
+                "source_seq": 1
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481590996769,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [],
+              "entry_seq": 3,
+              "event": {
+                "capture_seq": 2,
+                "captured_at": 1790481591008674,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 2",
+                  "event_id": "agent-1-002",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-002",
+                "identity": "sha256:76ffe547f2f81b02491c7e821ef7b0d152adbc4c288b3d0dbb873ec90521607a",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000002000000,
+                "source": "agent-1",
+                "source_seq": 2
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591008674,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [],
+              "entry_seq": 4,
+              "event": {
+                "capture_seq": 3,
+                "captured_at": 1790481591024569,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 3",
+                  "event_id": "agent-1-003",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-003",
+                "identity": "sha256:75a62491f205067996ef74f998a9135ac3bf800c7a648709a2ac526dc4d8f08f",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000003000000,
+                "source": "agent-1",
+                "source_seq": 3
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591024569,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:5:0",
+                  "detail": {
+                    "expected_source_seq": 4,
+                    "missing": 2,
+                    "source_seq": 6
+                  },
+                  "detected_at": 1790481591033424,
+                  "event_id": "agent-1-006",
+                  "kind": "SEQUENCE_GAP",
+                  "source": "agent-1"
+                }
+              ],
+              "entry_seq": 5,
+              "event": {
+                "capture_seq": 4,
+                "captured_at": 1790481591033424,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 6",
+                  "event_id": "agent-1-006",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-006",
+                "identity": "sha256:7cceb6d8466d36d8239cd542e04277c76118f24c200b366709e6b5c092bf9fbd",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000006000000,
+                "source": "agent-1",
+                "source_seq": 6
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591033424,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:6:0",
+                  "detail": {
+                    "high_source_seq": 6,
+                    "source_seq": 4
+                  },
+                  "detected_at": 1790481591041947,
+                  "event_id": "agent-1-004",
+                  "kind": "OUT_OF_ORDER",
+                  "source": "agent-1"
+                }
+              ],
+              "entry_seq": 6,
+              "event": {
+                "capture_seq": 5,
+                "captured_at": 1790481591041947,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 4",
+                  "event_id": "agent-1-004",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-004",
+                "identity": "sha256:ab8356253a3e18edd55c321095f80634b3c8eefae478e38937ea6324a81135f3",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000006000000,
+                "source": "agent-1",
+                "source_seq": 4
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591041947,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:7:0",
+                  "detail": {
+                    "original_capture_seq": 2,
+                    "same_content": true,
+                    "source_seq": 2
+                  },
+                  "detected_at": 1790481591050536,
+                  "event_id": "agent-1-002",
+                  "kind": "DUPLICATE_IDENTITY",
+                  "source": "agent-1"
+                }
+              ],
+              "duplicate": {
+                "identity": "sha256:76ffe547f2f81b02491c7e821ef7b0d152adbc4c288b3d0dbb873ec90521607a",
+                "original_capture_seq": 2
+              },
+              "entry_seq": 7,
+              "event": null,
+              "kind": "DUPLICATE",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591050536,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:8:0",
+                  "detail": {
+                    "clock": "source",
+                    "observed": 1790000001000000,
+                    "previous": 1790000006000000
+                  },
+                  "detected_at": 1790481591059655,
+                  "event_id": "agent-1-007",
+                  "kind": "TIMESTAMP_REGRESSION",
+                  "source": "agent-1"
+                }
+              ],
+              "entry_seq": 8,
+              "event": {
+                "capture_seq": 6,
+                "captured_at": 1790481591059655,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 7",
+                  "event_id": "agent-1-007",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-007",
+                "identity": "sha256:e550fdeeee0d91a86c4815f7371234a93689903868353459fc78b8ec5449a9ba",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000001000000,
+                "source": "agent-1",
+                "source_seq": 7
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591059655,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:9:0",
+                  "detail": {
+                    "idle_micros": 2067018,
+                    "idle_since": 1790481591059655,
+                    "stall_micros": 2000000
+                  },
+                  "detected_at": 1790481593126673,
+                  "event_id": null,
+                  "kind": "CAPTURE_STALL",
+                  "source": null
+                }
+              ],
+              "entry_seq": 9,
+              "event": null,
+              "kind": "STALL",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481593126673,
+              "schema_version": 1
+            }
+          ],
+          "state": {
+            "entries": 9,
+            "events": 6,
+            "sessions": [
+              "296c48d75ff04d0b9fd40c4bf9986908"
+            ],
+            "sources": {
+              "agent-1": {
+                "high_seq": 7,
+                "high_observed_at": 1790000006000000
+              }
+            },
+            "last_captured_at": 1790481591059655
+          }
+        }
+      },
+      {
+        "stage": "killed",
+        "ownership": {
+          "binding": {
+            "profile": "fixture",
+            "host_invocation": "fx-b1p-systemd-dcbb345c377242b7884d3017fca1e09d",
+            "unit": "alienintent-monitor-c17064d8c6d5d5f424856b3c42c7a228.service",
+            "description": "AlienIntent monitor host c17064d8c6d5d5f424856b3c42c7a228"
+          },
+          "manager": {
+            "uid": 1000,
+            "boot_id": "74e260e0-13bd-43fe-94ed-d20c1f167ad5",
+            "started_at_monotonic": "59846494",
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service"
+          },
+          "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/alienintent-monitor-c17064d8c6d5d5f424856b3c42c7a228.service",
+          "config_digest": "sha256:1b2d65340485cf13dc5559af3b024be860e029466503d638002ff9f020c4f1e1",
+          "state": "ALERTED",
+          "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+          "launched_at": 1790481590436645,
+          "predecessor_generation": 0,
+          "grant_digest": "sha256:58590cc4e7bf02caf60d407393349a8db7de575b1033e3479e9e849696d4370f",
+          "systemd_invocation_id": "ab4b525dae4f4f2dac4eb6407f69db02",
+          "alert": "attention:802aec4f2811e3c304e5dc5c9953a057143d58de7a745d2ac44152ae3ab1be26",
+          "alert_reason": "UNIT_FAILED_FAILED_SIGNAL",
+          "restart_of": null,
+          "observer": "alienintent-monitor-observer-c17064d8c6d5d5f424856b3c42c7a228"
+        },
+        "submission_while_down": "ConnectionRefusedError"
+      },
+      {
+        "stage": "restarted",
+        "ownership": {
+          "binding": {
+            "profile": "fixture",
+            "host_invocation": "fx-b1p-systemd-dcbb345c377242b7884d3017fca1e09d",
+            "unit": "alienintent-monitor-c17064d8c6d5d5f424856b3c42c7a228.service",
+            "description": "AlienIntent monitor host c17064d8c6d5d5f424856b3c42c7a228"
+          },
+          "manager": {
+            "uid": 1000,
+            "boot_id": "74e260e0-13bd-43fe-94ed-d20c1f167ad5",
+            "started_at_monotonic": "59846494",
+            "cgroup": "/user.slice/user-1000.slice/user@1000.service"
+          },
+          "cgroup": "/user.slice/user-1000.slice/user@1000.service/app.slice/alienintent-monitor-c17064d8c6d5d5f424856b3c42c7a228.service",
+          "config_digest": "sha256:1b2d65340485cf13dc5559af3b024be860e029466503d638002ff9f020c4f1e1",
+          "state": "RUNNING",
+          "launch_id": "d1fdbc1e928c44ffaf0edfed173d1744",
+          "launched_at": 1790481593696498,
+          "predecessor_generation": 1,
+          "grant_digest": "sha256:3ceadfbda66a01affca0eba4afb74e1ce39609f611911e20752661a81b9b135e",
+          "systemd_invocation_id": "8461582d93cb4d9c94ba0022ed06e3b2",
+          "alert": null,
+          "alert_reason": null,
+          "restart_of": null,
+          "observer": "alienintent-monitor-observer-c17064d8c6d5d5f424856b3c42c7a228"
+        },
+        "journal": {
+          "entries": [
+            {
+              "anomalies": [],
+              "entry_seq": 1,
+              "event": null,
+              "kind": "SESSION",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481590734647,
+              "schema_version": 1,
+              "session": {
+                "policy": {
+                  "stall_seconds": 2
+                },
+                "reconciled": {
+                  "entries": 0,
+                  "events": 0,
+                  "sessions": [],
+                  "sources": {}
+                }
+              }
+            },
+            {
+              "anomalies": [],
+              "entry_seq": 2,
+              "event": {
+                "capture_seq": 1,
+                "captured_at": 1790481590996769,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 1",
+                  "event_id": "agent-1-001",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-001",
+                "identity": "sha256:c88bbf8e8d2edc994c72d40d0823c6203a7531ca7c291b6fd51a9b3889463ae5",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000001000000,
+                "source": "agent-1",
+                "source_seq": 1
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481590996769,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [],
+              "entry_seq": 3,
+              "event": {
+                "capture_seq": 2,
+                "captured_at": 1790481591008674,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 2",
+                  "event_id": "agent-1-002",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-002",
+                "identity": "sha256:76ffe547f2f81b02491c7e821ef7b0d152adbc4c288b3d0dbb873ec90521607a",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000002000000,
+                "source": "agent-1",
+                "source_seq": 2
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591008674,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [],
+              "entry_seq": 4,
+              "event": {
+                "capture_seq": 3,
+                "captured_at": 1790481591024569,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 3",
+                  "event_id": "agent-1-003",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-003",
+                "identity": "sha256:75a62491f205067996ef74f998a9135ac3bf800c7a648709a2ac526dc4d8f08f",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000003000000,
+                "source": "agent-1",
+                "source_seq": 3
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591024569,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:5:0",
+                  "detail": {
+                    "expected_source_seq": 4,
+                    "missing": 2,
+                    "source_seq": 6
+                  },
+                  "detected_at": 1790481591033424,
+                  "event_id": "agent-1-006",
+                  "kind": "SEQUENCE_GAP",
+                  "source": "agent-1"
+                }
+              ],
+              "entry_seq": 5,
+              "event": {
+                "capture_seq": 4,
+                "captured_at": 1790481591033424,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 6",
+                  "event_id": "agent-1-006",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-006",
+                "identity": "sha256:7cceb6d8466d36d8239cd542e04277c76118f24c200b366709e6b5c092bf9fbd",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000006000000,
+                "source": "agent-1",
+                "source_seq": 6
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591033424,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:6:0",
+                  "detail": {
+                    "high_source_seq": 6,
+                    "source_seq": 4
+                  },
+                  "detected_at": 1790481591041947,
+                  "event_id": "agent-1-004",
+                  "kind": "OUT_OF_ORDER",
+                  "source": "agent-1"
+                }
+              ],
+              "entry_seq": 6,
+              "event": {
+                "capture_seq": 5,
+                "captured_at": 1790481591041947,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 4",
+                  "event_id": "agent-1-004",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-004",
+                "identity": "sha256:ab8356253a3e18edd55c321095f80634b3c8eefae478e38937ea6324a81135f3",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000006000000,
+                "source": "agent-1",
+                "source_seq": 4
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591041947,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:7:0",
+                  "detail": {
+                    "original_capture_seq": 2,
+                    "same_content": true,
+                    "source_seq": 2
+                  },
+                  "detected_at": 1790481591050536,
+                  "event_id": "agent-1-002",
+                  "kind": "DUPLICATE_IDENTITY",
+                  "source": "agent-1"
+                }
+              ],
+              "duplicate": {
+                "identity": "sha256:76ffe547f2f81b02491c7e821ef7b0d152adbc4c288b3d0dbb873ec90521607a",
+                "original_capture_seq": 2
+              },
+              "entry_seq": 7,
+              "event": null,
+              "kind": "DUPLICATE",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591050536,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:8:0",
+                  "detail": {
+                    "clock": "source",
+                    "observed": 1790000001000000,
+                    "previous": 1790000006000000
+                  },
+                  "detected_at": 1790481591059655,
+                  "event_id": "agent-1-007",
+                  "kind": "TIMESTAMP_REGRESSION",
+                  "source": "agent-1"
+                }
+              ],
+              "entry_seq": 8,
+              "event": {
+                "capture_seq": 6,
+                "captured_at": 1790481591059655,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 7",
+                  "event_id": "agent-1-007",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-007",
+                "identity": "sha256:e550fdeeee0d91a86c4815f7371234a93689903868353459fc78b8ec5449a9ba",
+                "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+                "observed_at": 1790000001000000,
+                "source": "agent-1",
+                "source_seq": 7
+              },
+              "kind": "EVENT",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481591059655,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:9:0",
+                  "detail": {
+                    "idle_micros": 2067018,
+                    "idle_since": 1790481591059655,
+                    "stall_micros": 2000000
+                  },
+                  "detected_at": 1790481593126673,
+                  "event_id": null,
+                  "kind": "CAPTURE_STALL",
+                  "source": null
+                }
+              ],
+              "entry_seq": 9,
+              "event": null,
+              "kind": "STALL",
+              "launch_id": "296c48d75ff04d0b9fd40c4bf9986908",
+              "recorded_at": 1790481593126673,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [],
+              "entry_seq": 10,
+              "event": null,
+              "kind": "SESSION",
+              "launch_id": "d1fdbc1e928c44ffaf0edfed173d1744",
+              "recorded_at": 1790481593966674,
+              "schema_version": 1,
+              "session": {
+                "policy": {
+                  "stall_seconds": 2
+                },
+                "reconciled": {
+                  "entries": 9,
+                  "events": 6,
+                  "sessions": [
+                    "296c48d75ff04d0b9fd40c4bf9986908"
+                  ],
+                  "sources": {
+                    "agent-1": {
+                      "high_observed_at": 1790000006000000,
+                      "high_seq": 7
+                    }
+                  }
+                }
+              }
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:11:0",
+                  "detail": {
+                    "original_capture_seq": 6,
+                    "same_content": true,
+                    "source_seq": 7
+                  },
+                  "detected_at": 1790481594007745,
+                  "event_id": "agent-1-007",
+                  "kind": "DUPLICATE_IDENTITY",
+                  "source": "agent-1"
+                }
+              ],
+              "duplicate": {
+                "identity": "sha256:e550fdeeee0d91a86c4815f7371234a93689903868353459fc78b8ec5449a9ba",
+                "original_capture_seq": 6
+              },
+              "entry_seq": 11,
+              "event": null,
+              "kind": "DUPLICATE",
+              "launch_id": "d1fdbc1e928c44ffaf0edfed173d1744",
+              "recorded_at": 1790481594007745,
+              "schema_version": 1
+            },
+            {
+              "anomalies": [
+                {
+                  "anomaly_id": "anomaly:12:0",
+                  "detail": {
+                    "expected_source_seq": 8,
+                    "missing": 1,
+                    "source_seq": 9
+                  },
+                  "detected_at": 1790481594016903,
+                  "event_id": "agent-1-009",
+                  "kind": "SEQUENCE_GAP",
+                  "source": "agent-1"
+                }
+              ],
+              "entry_seq": 12,
+              "event": {
+                "capture_seq": 7,
+                "captured_at": 1790481594016903,
+                "event": {
+                  "actor_role": "FACTORY",
+                  "description": "synthetic FX-B1P event 9",
+                  "event_id": "agent-1-009",
+                  "event_type": "TOOL_CALL",
+                  "schema_version": "1.0"
+                },
+                "event_id": "agent-1-009",
+                "identity": "sha256:c81be57637bf314b61de05c209c99613d81008a7631b4107f97d992b56e931a7",
+                "launch_id": "d1fdbc1e928c44ffaf0edfed173d1744",
+                "observed_at": 1790000009000000,
+                "source": "agent-1",
+                "source_seq": 9
+              },
+              "kind": "EVENT",
+              "launch_id": "d1fdbc1e928c44ffaf0edfed173d1744",
+              "recorded_at": 1790481594016903,
+              "schema_version": 1
+            }
+          ],
+          "state": {
+            "entries": 12,
+            "events": 7,
+            "sessions": [
+              "296c48d75ff04d0b9fd40c4bf9986908",
+              "d1fdbc1e928c44ffaf0edfed173d1744"
+            ],
+            "sources": {
+              "agent-1": {
+                "high_seq": 9,
+                "high_observed_at": 1790000009000000
+              }
+            },
+            "last_captured_at": 1790481594016903
+          }
+        },
+        "monitor_starts": [
+          [
+            "296c48d75ff04d0b9fd40c4bf9986908",
+            1
+          ],
+          [
+            "d1fdbc1e928c44ffaf0edfed173d1744",
+            2
+          ]
+        ],
+        "anomaly_kinds": [
+          "CAPTURE_STALL",
+          "DUPLICATE_IDENTITY",
+          "OUT_OF_ORDER",
+          "SEQUENCE_GAP",
+          "TIMESTAMP_REGRESSION"
+        ]
+      }
+    ],
+    "acks": [
+      {
+        "submitted": "agent-1-001",
+        "source_seq": 1,
+        "ack": {
+          "anomalies": [],
+          "capture_seq": 1,
+          "captured_at": 1790481590996769,
+          "entry_seq": 2,
+          "event_id": "agent-1-001",
+          "identity": "sha256:c88bbf8e8d2edc994c72d40d0823c6203a7531ca7c291b6fd51a9b3889463ae5",
+          "status": "CAPTURED"
+        }
+      },
+      {
+        "submitted": "agent-1-002",
+        "source_seq": 2,
+        "ack": {
+          "anomalies": [],
+          "capture_seq": 2,
+          "captured_at": 1790481591008674,
+          "entry_seq": 3,
+          "event_id": "agent-1-002",
+          "identity": "sha256:76ffe547f2f81b02491c7e821ef7b0d152adbc4c288b3d0dbb873ec90521607a",
+          "status": "CAPTURED"
+        }
+      },
+      {
+        "submitted": "agent-1-003",
+        "source_seq": 3,
+        "ack": {
+          "anomalies": [],
+          "capture_seq": 3,
+          "captured_at": 1790481591024569,
+          "entry_seq": 4,
+          "event_id": "agent-1-003",
+          "identity": "sha256:75a62491f205067996ef74f998a9135ac3bf800c7a648709a2ac526dc4d8f08f",
+          "status": "CAPTURED"
+        }
+      },
+      {
+        "submitted": "agent-1-006",
+        "source_seq": 6,
+        "ack": {
+          "anomalies": [
+            "SEQUENCE_GAP"
+          ],
+          "capture_seq": 4,
+          "captured_at": 1790481591033424,
+          "entry_seq": 5,
+          "event_id": "agent-1-006",
+          "identity": "sha256:7cceb6d8466d36d8239cd542e04277c76118f24c200b366709e6b5c092bf9fbd",
+          "status": "CAPTURED"
+        }
+      },
+      {
+        "submitted": "agent-1-004",
+        "source_seq": 4,
+        "ack": {
+          "anomalies": [
+            "OUT_OF_ORDER"
+          ],
+          "capture_seq": 5,
+          "captured_at": 1790481591041947,
+          "entry_seq": 6,
+          "event_id": "agent-1-004",
+          "identity": "sha256:ab8356253a3e18edd55c321095f80634b3c8eefae478e38937ea6324a81135f3",
+          "status": "CAPTURED"
+        }
+      },
+      {
+        "submitted": "agent-1-002",
+        "source_seq": 2,
+        "ack": {
+          "anomalies": [
+            "DUPLICATE_IDENTITY"
+          ],
+          "capture_seq": 2,
+          "entry_seq": 7,
+          "event_id": "agent-1-002",
+          "identity": "sha256:76ffe547f2f81b02491c7e821ef7b0d152adbc4c288b3d0dbb873ec90521607a",
+          "status": "DUPLICATE"
+        }
+      },
+      {
+        "submitted": "agent-1-007",
+        "source_seq": 7,
+        "ack": {
+          "anomalies": [
+            "TIMESTAMP_REGRESSION"
+          ],
+          "capture_seq": 6,
+          "captured_at": 1790481591059655,
+          "entry_seq": 8,
+          "event_id": "agent-1-007",
+          "identity": "sha256:e550fdeeee0d91a86c4815f7371234a93689903868353459fc78b8ec5449a9ba",
+          "status": "CAPTURED"
+        }
+      },
+      {
+        "submitted": "agent-1-007",
+        "source_seq": 7,
+        "ack": {
+          "anomalies": [
+            "DUPLICATE_IDENTITY"
+          ],
+          "capture_seq": 6,
+          "entry_seq": 11,
+          "event_id": "agent-1-007",
+          "identity": "sha256:e550fdeeee0d91a86c4815f7371234a93689903868353459fc78b8ec5449a9ba",
+          "status": "DUPLICATE"
+        }
+      },
+      {
+        "submitted": "agent-1-009",
+        "source_seq": 9,
+        "ack": {
+          "anomalies": [
+            "SEQUENCE_GAP"
+          ],
+          "capture_seq": 7,
+          "captured_at": 1790481594016903,
+          "entry_seq": 12,
+          "event_id": "agent-1-009",
+          "identity": "sha256:c81be57637bf314b61de05c209c99613d81008a7631b4107f97d992b56e931a7",
+          "status": "CAPTURED"
+        }
+      }
+    ],
+    "cleanup": ""
+  },
+  "boundaries": "local self-supervised proof only on this workstation's per-user systemd manager; synthetic events fed directly; no operational target, live trajectory receipts, buffered upstream source, observer replacement or retirement",
+  "proof_level": "LOCAL_SELF_SUPERVISED",
+  "live_proof": "NOT_ESTABLISHED",
+  "exit_status": 0
+}
