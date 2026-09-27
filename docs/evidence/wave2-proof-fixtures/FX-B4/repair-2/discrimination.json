@@ -1,0 +1,198 @@
+{
+  "fixture_id": "FX-B4",
+  "invocation": "AlienLogicLab/alienintent#127:PRODUCER:a0c62cb6-3a0d-49d7-9b2a-11ab749c72f3",
+  "note": "Repair 2 discrimination at the amended-packet baseline 240f7b2. Shows the citation check can fail. Probes ran outside the candidate tree; their full reports were temporary and only their summaries are retained here. Injected-fault commits exist only in a throwaway clone and are not retrievable; their content is described exactly.",
+  "probes": [
+    {
+      "baseline": "240f7b25ffe9b44962caf5299364b32e6e826510",
+      "checks": 28,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "240f7b25ffe9b44962caf5299364b32e6e826510",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "exit_status": 0,
+      "expected": {
+        "exit_status": 0,
+        "failed": []
+      },
+      "failed": [],
+      "probe": "intact",
+      "report_sha256": "sha256:433ca42e4fdde4416ef1f559ec8e58358acf49fe9a5cb4b867907899b717cc08",
+      "result": "PASS",
+      "where": "candidate worktree"
+    },
+    {
+      "baseline": "01af974c05879b548c727848043e0eabe34c5f57",
+      "checks": 28,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "01af974c05879b548c727848043e0eabe34c5f57",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "description": "Phase 12 commit 01af974, before the programme closed: closure is not an ancestor, addendum and authority text absent.",
+      "exit_status": 1,
+      "expected": {
+        "exit_status": 1
+      },
+      "failed": [
+        "closure_is_ancestor_of_baseline",
+        "addendum_is_ancestor_of_baseline",
+        "addendum_commit_is_only_child_of_closure_at_baseline",
+        "final_report_unchanged_since_addendum_at_baseline",
+        "addendum_states_cited_conditions",
+        "bootstrap_m13_reject",
+        "bootstrap_m17_reject",
+        "runtime_contract_no_competing_role",
+        "task_ledger_bridge_000",
+        "task_ledger_learn_002",
+        "authority_delegation_decision_record_present"
+      ],
+      "probe": "fault_pre_closure_baseline",
+      "report_sha256": "sha256:5761e8a0011eab19037ba2d7d929676744893247075b75610c565e9cd9c85742",
+      "result": "PASS",
+      "where": "candidate worktree"
+    },
+    {
+      "baseline": "352fa9d7fce76b661ca98bebca0adec7a00a13df",
+      "checks": 28,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "352fa9d7fce76b661ca98bebca0adec7a00a13df",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "description": "Closure commit 352fa9d7 itself: the addendum commit is not yet an ancestor.",
+      "exit_status": 1,
+      "expected": {
+        "exit_status": 1
+      },
+      "failed": [
+        "addendum_is_ancestor_of_baseline",
+        "addendum_commit_is_only_child_of_closure_at_baseline",
+        "final_report_unchanged_since_addendum_at_baseline",
+        "addendum_states_cited_conditions",
+        "bootstrap_m13_reject",
+        "bootstrap_m17_reject",
+        "runtime_contract_no_competing_role",
+        "task_ledger_bridge_000",
+        "task_ledger_learn_002",
+        "authority_delegation_decision_record_present"
+      ],
+      "probe": "fault_closure_commit_as_baseline",
+      "report_sha256": "sha256:ff16c0af586b74a2f28027af28daf1f6a96228fdd1094f40fbadc58529731992",
+      "result": "PASS",
+      "where": "candidate worktree"
+    },
+    {
+      "baseline": "2374f3572f5a93caee4451ac37396fea3085e59e",
+      "checks": 28,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "2374f3572f5a93caee4451ac37396fea3085e59e",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "description": "Two commits on 240f7b2: program-state.json POSTW1-BRIDGE-000 status DONE->IN_PROGRESS and POSTW1-LEARN-002 review_status PASS->PENDING; new file messages/POSTW1-EXTRA-999-request.md.",
+      "exit_status": 1,
+      "expected": {
+        "exit_status": 1,
+        "failed": [
+          "POSTW1-BRIDGE-000_done_pass_at_baseline",
+          "POSTW1-LEARN-002_done_pass_at_baseline",
+          "packet_bounded_jq_command_at_baseline",
+          "messages_directory_exactly_two_files_at_baseline"
+        ]
+      },
+      "failed": [
+        "POSTW1-BRIDGE-000_done_pass_at_baseline",
+        "POSTW1-LEARN-002_done_pass_at_baseline",
+        "packet_bounded_jq_command_at_baseline",
+        "messages_directory_exactly_two_files_at_baseline"
+      ],
+      "probe": "fault_injected_message_duty",
+      "report_sha256": "sha256:6fe04407f5373d3bfbe0dda0ae6f9ba6c579be731bed1619d8dd194ebf617d67",
+      "result": "PASS",
+      "where": "throwaway clone"
+    },
+    {
+      "baseline": "0da9f4a14ed95a95958574c84660cf7b26cc9a48",
+      "checks": 28,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "0da9f4a14ed95a95958574c84660cf7b26cc9a48",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "description": "On 240f7b2, merge (-s ours, tree unchanged) an empty commit whose parent is 352fa9d7: the closure gains a second child reachable from the baseline.",
+      "exit_status": 1,
+      "expected": {
+        "exit_status": 1,
+        "failed": [
+          "addendum_commit_is_only_child_of_closure_at_baseline"
+        ]
+      },
+      "failed": [
+        "addendum_commit_is_only_child_of_closure_at_baseline"
+      ],
+      "probe": "fault_injected_second_closure_child",
+      "report_sha256": "sha256:843f98507a9d8c37ab73816031a43f0f00be91df4d243460761cdc591ca0db57",
+      "result": "PASS",
+      "where": "throwaway clone"
+    },
+    {
+      "baseline": "240f7b25ffe9b44962caf5299364b32e6e826510",
+      "checks": 28,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "240f7b25ffe9b44962caf5299364b32e6e826510",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "description": "Intact baseline re-run after the fault probes.",
+      "exit_status": 0,
+      "expected": {
+        "exit_status": 0,
+        "failed": []
+      },
+      "failed": [],
+      "probe": "restored",
+      "report_sha256": "sha256:433ca42e4fdde4416ef1f559ec8e58358acf49fe9a5cb4b867907899b717cc08",
+      "result": "PASS",
+      "where": "candidate worktree"
+    }
+  ],
+  "result": "PASS"
+}

@@ -1,0 +1,164 @@
+{
+  "fixture_id": "FX-B4",
+  "note": "Shows the citation check can fail. Probes ran outside the candidate tree; their full reports were temporary and only their summaries are retained here. The injected-fault commit exists only in a throwaway clone and is not retrievable; its content is described exactly.",
+  "probes": [
+    {
+      "baseline": "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd",
+      "checks": 26,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "exit_status": 0,
+      "expected": {
+        "exit_status": 0,
+        "failed": []
+      },
+      "failed": [],
+      "probe": "intact",
+      "report_sha256": "sha256:13a5271d9533ce551ee08615b4fea96315bfbf74fdf81af6303382e6ec37e03e",
+      "result": "PASS",
+      "where": "candidate worktree"
+    },
+    {
+      "baseline": "01af974c05879b548c727848043e0eabe34c5f57",
+      "checks": 26,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "01af974c05879b548c727848043e0eabe34c5f57",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "description": "Phase 12 commit 01af974, before the programme closed: closure is not an ancestor, addendum and authority text absent.",
+      "exit_status": 1,
+      "expected": {
+        "exit_status": 1
+      },
+      "failed": [
+        "closure_is_ancestor_of_baseline",
+        "addendum_is_ancestor_of_baseline",
+        "final_report_unchanged_since_addendum_at_baseline",
+        "addendum_states_cited_conditions",
+        "bootstrap_m13_reject",
+        "bootstrap_m17_reject",
+        "runtime_contract_no_competing_role",
+        "task_ledger_bridge_000",
+        "task_ledger_learn_002",
+        "authority_delegation_decision_record_present"
+      ],
+      "probe": "fault_pre_closure_baseline",
+      "report_sha256": "sha256:dd322f66cb60ac0c685d50e20271507fd0bf5b72abbaa5d3d4683ed952295b83",
+      "result": "PASS",
+      "where": "candidate worktree"
+    },
+    {
+      "baseline": "352fa9d7fce76b661ca98bebca0adec7a00a13df",
+      "checks": 26,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "352fa9d7fce76b661ca98bebca0adec7a00a13df",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "description": "Closure commit 352fa9d7 itself: the addendum commit is not yet an ancestor.",
+      "exit_status": 1,
+      "expected": {
+        "exit_status": 1
+      },
+      "failed": [
+        "addendum_is_ancestor_of_baseline",
+        "final_report_unchanged_since_addendum_at_baseline",
+        "addendum_states_cited_conditions",
+        "bootstrap_m13_reject",
+        "bootstrap_m17_reject",
+        "runtime_contract_no_competing_role",
+        "task_ledger_bridge_000",
+        "task_ledger_learn_002",
+        "authority_delegation_decision_record_present"
+      ],
+      "probe": "fault_closure_commit_as_baseline",
+      "report_sha256": "sha256:0a4206938184b932e1ac72fc120d1c8a3c459088085364d390b48b0823d65ffb",
+      "result": "PASS",
+      "where": "candidate worktree"
+    },
+    {
+      "baseline": "34d128fa90e20158d262a3186c644da3c7efdc4b",
+      "checks": 26,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "34d128fa90e20158d262a3186c644da3c7efdc4b",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "description": "Two commits on 25f7aa3: program-state.json POSTW1-BRIDGE-000 status DONE->IN_PROGRESS and POSTW1-LEARN-002 review_status PASS->PENDING; new file messages/POSTW1-EXTRA-999-request.md.",
+      "exit_status": 1,
+      "expected": {
+        "exit_status": 1,
+        "failed": [
+          "POSTW1-BRIDGE-000_done_pass_at_baseline",
+          "POSTW1-LEARN-002_done_pass_at_baseline",
+          "messages_directory_exactly_two_files_at_baseline"
+        ]
+      },
+      "failed": [
+        "POSTW1-BRIDGE-000_done_pass_at_baseline",
+        "POSTW1-LEARN-002_done_pass_at_baseline",
+        "messages_directory_exactly_two_files_at_baseline"
+      ],
+      "probe": "fault_injected_message_duty",
+      "report_sha256": "sha256:582a341aa165e209cafc8b9ee47166fdb9b47c11960644ea1ecd42831df0efef",
+      "result": "PASS",
+      "where": "throwaway git clone --shared of the release baseline"
+    },
+    {
+      "baseline": "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd",
+      "checks": 26,
+      "command": [
+        "python3",
+        "-B",
+        "tools/evidence/fx_b4_evidence.py",
+        "--baseline",
+        "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd",
+        "--invocation",
+        "<invocation>",
+        "--output",
+        "<tmp>"
+      ],
+      "exit_status": 0,
+      "expected": {
+        "exit_status": 0,
+        "failed": []
+      },
+      "failed": [],
+      "probe": "restored",
+      "report_sha256": "sha256:168dfd86ebb5753e731c3d6935214935b75a1acdfe46cbadc9d5b1a18d30b88e",
+      "result": "PASS",
+      "where": "same throwaway clone, release baseline"
+    }
+  ],
+  "record_kind": "CitationCheckDiscrimination",
+  "schema_version": "1",
+  "script": "tools/evidence/fx_b4_evidence.py"
+}
