@@ -1,0 +1,77 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove, on real transport, a real supervised host process and real wall-clock timing, that the canonical liveness replacement (WO-220305 monitor_host composition over LivenessProfile, LivenessReconciler and SQLiteOperationalStore) does all of the following: recovers dropped triggers within G+I; suppresses recovery under provider/judgment blocks, with attributed resolution; stays duplicate-safe across delayed delivery and restart; keeps one-writer ownership; and gives exact outcome readback. SF-REQ-056-AC-08 is closed, and SWF-29 bootstrap retirement becomes possible, only when this is demonstrated against the authorized live factory workload.",
+    "implementation_unknowns": [
+      "Whether fx-b2-supervision.json exists or must be authored, and its exact schema for MonitorHostProfile/SystemdHostManager.",
+      "Whether the monitor_host CLI already exposes launch, restart (--replaces), show and host --launch-id exactly as named in the pinned commands, or needs thin wiring.",
+      "How to deterministically place SIGTERM in step 5 inside the window after a durable recovery intent exists but before its readback settles, given 60s real-time scan intervals.",
+      "Ordering of step 4 ('before or instead of step 3') on the same seeded record: whether step 4 needs a separate seeded identity or a fresh generation so that steps 3 and 5 are not suppressed.",
+      "Whether a systemd --user session with the required lingering and cgroup behaviour is available to the executing worker identity on ALIENLAPTOP. This is reported as present, not verified here.",
+      "How to shape negative-control application counts and intact/fault/restored discrimination into the FX-B7-shaped probes{} record.",
+      "How the synthetic C1 JUDGMENT attention item and the AttentionPort.resolve actor/authority/lane values are sourced for the isolated profile."
+    ],
+    "independent_decision_centers": [
+      "Phase 1 isolated supervised mechanics proof. Target, fixture and custody are reported bound; it can be independently verified and rejected on its own FX-B2 OPERATIONAL evidence record.",
+      "Phase 2 live factory workload exercise for SF-REQ-056-AC-08 closure. The target, its readback access and its separate authorization are unbound; it is the only path to DONE and bootstrap retirement."
+    ],
+    "material_risks": [
+      "Phase 1 OPERATIONAL evidence could be mislabelled or read as satisfying SF-REQ-056-AC-08 or as licensing SWF-29 retirement. The text forbids this, but the evidence record's non_claims[] must state it explicitly.",
+      "Authority provenance relies on relayed Director inbox handoffs, including one relayed via an external observing session, plus decision files this gate has not inspected. These are reported facts, not independently verified.",
+      "The design contract line 995 marker is reported as still present and unrevised in the file, while a separate Founder decision record claims narrow clearance. Reviewers may see an apparent conflict unless the decision record is linked in the evidence.",
+      "Real-time timing windows (G+I of 360s or less, and the SIGTERM injection point) risk flaky or non-discriminating results. A missed window must be recorded as a FAIL or a hold, never inferred as PASS.",
+      "Running real systemd --user units on the same host as the live alienintent.service and alienintent-observer.service risks unit-name, cgroup or config-digest collisions unless the isolated profile and unit naming are strictly disjoint.",
+      "Steps 3, 4 and 5 interact on shared seeded state. Poor sequencing could produce suppressed recoveries that invalidate the step 3 and step 5 probes.",
+      "The Phase 2 target is unbound with no stated owner or timeline, so the BIU may sit indefinitely with Phase 1 complete and not DONE.",
+      "Token and cost telemetry is UNKNOWN and must not be recorded as zero."
+    ],
+    "next_action": "Keep the BIU on HOLD for completion and DONE until an authorized live factory workload target, with its readback access and separate authorization, is identified and bound for Phase 2. Route this through the Program Director to the Founder per the BIU's escalation rule. Meanwhile, under the BIU's 'Partial work that proceeds' clause and the recorded Phase 1 disposition, the allocator may dispatch Phase 1 only. This means running pinned FX-B2 steps 1-7 against the isolated fx-b2-liveness-operational profile, producing an OPERATIONAL evidence record whose non_claims explicitly exclude AC-08 and SWF-29 retirement, and obtaining a fresh independent Phase 1 verdict on the exact candidate SHA.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "Intent is clear and all previously raised owner questions are reported as disposed. That includes the Founder's direct decision that Phase 2 must use the actual live factory workload and that both phases stay in one BIU. So CLARIFY is not warranted. SPLIT is also not appropriate: the owner has explicitly chosen a single BIU, the phase boundary is already drawn inside the text, and the remaining gap is not an undecided design choice. The missing piece is the Phase 2 target, a necessary external prerequisite and authority for the BIU's own completion predicate. The text states it is unidentified, unbound and requires separate authorization. Without it, SF-REQ-056-AC-08 cannot be demonstrated and no independent verdict can accept the BIU, so READY's requirements for available prerequisites and a meaningful completion verdict fail. HOLD is therefore the controlling disposition. The hold is narrow: Phase 1 is reported as fully bound, well specified, observable and locally repairable, and the BIU itself permits it as partial work, so execution effort need not stall. This assessment rests on the task text's reported facts; it does not verify the referenced decision records, board status, code paths or host capabilities.",
+    "semantic_split_recommendation": [],
+    "summary": "The text reports that Phase 1 is fully bound. The isolated fx-b2-liveness-operational target, the synthetic FX-B2-PROBE record, the pinned FX-B2 steps 1-7, the evidence schema, budget/custody and the Founder dispositions of the four prior owner questions are all recorded. Phase 1 is therefore coherent, executable engineering proof. However, the BIU's completion predicate (SF-REQ-056-AC-08) and its DONE state require Phase 2. The Founder has already decided Phase 2 must exercise the actual live factory workload. The text states that this target is not yet identified, bound or separately authorized. The Founder also chose to keep both phases in this one BIU, so the unit as a whole cannot reach its acceptance verdict. The controlling condition is a missing external prerequisite and authority, not unresolved intent. The BIU's own 'Partial work that proceeds' clause allows Phase 1 to run as bounded proof while the hold persists.",
+    "verification_assessment": "Phase 1 acceptance is observable and discriminating. It relies on durable liveness.sqlite event sequences, refusal codes (EFFECT_IDENTITY_USED, HOST_NOT_OWNED/HOST_OUTSIDE_OWNED_UNIT, HostHold), store.readback_guarded receipts, exit statuses and a PASS/FAIL probe map. A fresh verifier retrieving the exact candidate SHA can reach a meaningful independent verdict on Phase 1 mechanics. That verdict does not cover the BIU's completion predicate. AC-08 requires a separate live factory workload verdict whose target does not yet exist, so no single verdict currently available can accept or reject the BIU as a whole. Wall-clock timing (300s grace and 60s interval, and at least 2 grace periods in step 4) makes runs slow and potentially timing-sensitive, but they remain observable."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T02:09:07.991714+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 23620,
+    "input_sha256": "f40fa04f1b4847006690f6439dffd1bcccaba2ad5c155a8f14f0b0ac252f5fe3",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-r8y4a0te/WO-220505.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T02:08:28.816102+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220505"
+}
