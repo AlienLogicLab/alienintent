@@ -1,0 +1,416 @@
+{
+  "checks": [
+    {
+      "check": "fdh01_evidence_unchanged_git",
+      "command": [
+        "git",
+        "diff",
+        "--quiet",
+        "59db3c532a004e10dee60eede7a477e8e17545f1",
+        "233cdbcb4c57d38ec50982f233361905a16882b3",
+        "--",
+        "docs/evidence/fdh-01-live-proof/20260924T080401Z"
+      ],
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "fdh01_evidence_unchanged_worktree",
+      "command": [
+        "git",
+        "diff",
+        "--quiet",
+        "233cdbcb4c57d38ec50982f233361905a16882b3",
+        "--",
+        "docs/evidence/fdh-01-live-proof/20260924T080401Z"
+      ],
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "fdh01_evidence_no_untracked_files",
+      "expected": "",
+      "observed": "",
+      "path": "docs/evidence/fdh-01-live-proof/20260924T080401Z",
+      "result": "PASS"
+    },
+    {
+      "check": "fdh01_sha256sums_verify",
+      "command": [
+        "sha256sum",
+        "-c",
+        "SHA256SUMS"
+      ],
+      "cwd": "docs/evidence/fdh-01-live-proof/20260924T080401Z",
+      "expected": {
+        "exit_status": 0,
+        "ok": 44
+      },
+      "files_in_directory": 46,
+      "observed": {
+        "exit_status": 0,
+        "ok": 44
+      },
+      "result": "PASS",
+      "stdout_sha256": "sha256:46ef50267934620312687e40b4e2fb50aa535899bd448f2ac7964ac8a3a92a4f"
+    },
+    {
+      "check": "fdh01_run_head_is_procedure_followed",
+      "expected": "06e7e0c1f384e29c304788b11e0e559d8bdacc73",
+      "observed": "06e7e0c1f384e29c304788b11e0e559d8bdacc73",
+      "result": "PASS"
+    },
+    {
+      "check": "fdh01_landed_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "a233e9e47fae053e0f789943f6423dbfeb2a8bbe",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "a233e9e47fae053e0f789943f6423dbfeb2a8bbe",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "fdh01_evidence_commit_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "59db3c532a004e10dee60eede7a477e8e17545f1",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "59db3c532a004e10dee60eede7a477e8e17545f1",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "procedure_authored_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "a2bf163cce3d868dd38b4abf3dddf3740995bb22",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "a2bf163cce3d868dd38b4abf3dddf3740995bb22",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "procedure_followed_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "06e7e0c1f384e29c304788b11e0e559d8bdacc73",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "06e7e0c1f384e29c304788b11e0e559d8bdacc73",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_source_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "459f825cd9d8a922837b9b20f053e3285eb47de4",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "459f825cd9d8a922837b9b20f053e3285eb47de4",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_retained_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "46920041299d4fac28c3bbd65eb25c5ac1823787",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "46920041299d4fac28c3bbd65eb25c5ac1823787",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_merge_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "7b6e19c4a17f1d797f61c99edafadd4857940dd6",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "7b6e19c4a17f1d797f61c99edafadd4857940dd6",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_source_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "aaa16fb2d1c2bbc9adaeee78b50939bced2cffe7",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "aaa16fb2d1c2bbc9adaeee78b50939bced2cffe7",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_retained_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "d69c00480c895da80d63eb185b534ca1befad0c7",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "d69c00480c895da80d63eb185b534ca1befad0c7",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_merge_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "fc5c0a7fcbc0d70772c07cd35a4fe52a3e2641c7",
+        "98dddaea8783b6e482364122751dd1e72647361b"
+      ],
+      "commit": "fc5c0a7fcbc0d70772c07cd35a4fe52a3e2641c7",
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "procedure_authored_committed_before_run",
+      "commit": "a2bf163cce3d868dd38b4abf3dddf3740995bb22",
+      "committed_utc": "2026-09-24T06:56:25Z",
+      "expected": true,
+      "observed": true,
+      "result": "PASS",
+      "run_started_utc": "2026-09-24T08:04:01Z"
+    },
+    {
+      "check": "procedure_followed_committed_before_run",
+      "commit": "06e7e0c1f384e29c304788b11e0e559d8bdacc73",
+      "committed_utc": "2026-09-24T08:02:58Z",
+      "expected": true,
+      "observed": true,
+      "result": "PASS",
+      "run_started_utc": "2026-09-24T08:04:01Z"
+    },
+    {
+      "authored_blob": "28756efa8699af9405eccfa56584b24b183298ed",
+      "blob": "c9977a268db3c103c63e9a00b81415b355c0f8ab",
+      "check": "procedure_followed_last_changed_before_run",
+      "expected": true,
+      "last_change_commit": "c09a785c064c862b3e3f2efdfc5d0848e69d1a5d",
+      "last_change_utc": "2026-09-24T07:22:15Z",
+      "observed": true,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_unchanged_git",
+      "command": [
+        "git",
+        "diff",
+        "--quiet",
+        "46920041299d4fac28c3bbd65eb25c5ac1823787",
+        "233cdbcb4c57d38ec50982f233361905a16882b3",
+        "--",
+        "docs/evidence/wave2-proof-fixtures/FX-C2"
+      ],
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_unchanged_worktree",
+      "command": [
+        "git",
+        "diff",
+        "--quiet",
+        "233cdbcb4c57d38ec50982f233361905a16882b3",
+        "--",
+        "docs/evidence/wave2-proof-fixtures/FX-C2"
+      ],
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_no_untracked_files",
+      "expected": "",
+      "observed": "",
+      "path": "docs/evidence/wave2-proof-fixtures/FX-C2",
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_observations_self_digest",
+      "expected": {
+        "bad": [],
+        "count": 31
+      },
+      "observed": {
+        "bad": [],
+        "count": 31
+      },
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_control_refs_resolve",
+      "expected": [],
+      "observed": [],
+      "refs": 26,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_controls_all_discriminate_once",
+      "expected": {
+        "discriminating_once": 13,
+        "total": 13
+      },
+      "observed": {
+        "discriminating_once": 13,
+        "total": 13
+      },
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_probe_control_runs_probe",
+      "control": "mismatch_as_failure",
+      "expected": true,
+      "observed": true,
+      "probe": "test_mismatch_is_failure",
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C2_record",
+      "expected": {
+        "exit_status": 0,
+        "holds": [],
+        "source_revision": "459f825cd9d8a922837b9b20f053e3285eb47de4"
+      },
+      "invocation": "AlienLogicLab/alienintent#95:PRODUCER:4a2582db-0aaf-4794-94a1-ad6ae61bc1c6",
+      "observed": {
+        "exit_status": 0,
+        "holds": [],
+        "source_revision": "459f825cd9d8a922837b9b20f053e3285eb47de4"
+      },
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_unchanged_git",
+      "command": [
+        "git",
+        "diff",
+        "--quiet",
+        "d69c00480c895da80d63eb185b534ca1befad0c7",
+        "233cdbcb4c57d38ec50982f233361905a16882b3",
+        "--",
+        "docs/evidence/wave2-proof-fixtures/FX-C3"
+      ],
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_unchanged_worktree",
+      "command": [
+        "git",
+        "diff",
+        "--quiet",
+        "233cdbcb4c57d38ec50982f233361905a16882b3",
+        "--",
+        "docs/evidence/wave2-proof-fixtures/FX-C3"
+      ],
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_no_untracked_files",
+      "expected": "",
+      "observed": "",
+      "path": "docs/evidence/wave2-proof-fixtures/FX-C3",
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_observations_self_digest",
+      "expected": {
+        "bad": [],
+        "count": 73
+      },
+      "observed": {
+        "bad": [],
+        "count": 73
+      },
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_control_refs_resolve",
+      "expected": [],
+      "observed": [],
+      "refs": 69,
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_controls_all_discriminate_once",
+      "expected": {
+        "discriminating_once": 23,
+        "total": 23
+      },
+      "observed": {
+        "discriminating_once": 23,
+        "total": 23
+      },
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_probe_control_runs_probe",
+      "control": "vector_check_removed",
+      "expected": true,
+      "observed": true,
+      "probe": "test_state_vector_mismatch",
+      "result": "PASS"
+    },
+    {
+      "check": "FX-C3_record",
+      "expected": {
+        "exit_status": 0,
+        "holds": [],
+        "source_revision": "aaa16fb2d1c2bbc9adaeee78b50939bced2cffe7"
+      },
+      "invocation": "AlienLogicLab/alienintent#99:PRODUCER:1965556d-3b42-4d19-93fd-986110da3347",
+      "observed": {
+        "exit_status": 0,
+        "holds": [],
+        "source_revision": "aaa16fb2d1c2bbc9adaeee78b50939bced2cffe7"
+      },
+      "result": "PASS"
+    }
+  ],
+  "fixture_id": "FX-R1",
+  "record_kind": "CitationIntegrityChecks"
+}
