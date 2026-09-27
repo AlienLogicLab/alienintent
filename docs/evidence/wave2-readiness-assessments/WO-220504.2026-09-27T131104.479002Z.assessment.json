@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce operational proof, on the bound isolated fx-b1-trajectory-operational profile, that the existing alienintent.composition.trajectory_capture composition built by WO-220610 delivers live_trajectory_receipts. The proof must show that trajectory capture identity, order, timestamps, anomaly detection and retention survive a supervised process restart and attention-producer consumption. It must reconcile pre-restart and post-restart observations without loss while retaining the queue. It is proof-only: it makes no claim to replace or retire alienintent-observer.service and reads none of its data.",
+    "implementation_unknowns": [
+      "How the pinned FX-B1 fixture drives 'attention-producer consumption' against the bound trajectory_capture target. This includes locating the existing attention-producer consumer interface and confirming it can be wired to the isolated fx-b1 profile without touching real factory state.",
+      "Which queue 'retain queue' refers to (likely the capture-to-attention-producer handoff queue or journal), and what exact readback demonstrates retention across restart.",
+      "How to construct intact/fault/restored discriminating controls for each claimed property (identity, order, timestamps, the five anomaly classes, retention) so that negative controls actually fail.",
+      "How this proof differs in evidence from WO-220610's FX-B1P composition-level proof, so that the result is operational receipts on the bound profile rather than a re-label of the predecessor proof.",
+      "Teardown and cleanup mechanics for the transient systemd --user unit and the ~/.local/state/alienintent/fx-b1/trajectory root, and how to retain immutable observation refs after teardown.",
+      "The evidence schema and pinning of fixture commands, inputs and expected outcomes, which the proof order requires before implementation."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "If no existing attention-producer consumer can be wired to the bound composition, satisfying that clause may require new capability beyond this proof-only extent. Per the escalation rules, that must be returned to the owning node rather than built inside this BIU.",
+      "The proof could collapse into a duplicate of WO-220610's composition-level proof. The evidence must show operational receipts on the bound fx-b1 profile, including attention-producer consumption, not a relabelled predecessor result.",
+      "Accidental contact with real factory state or alienintent-observer.service despite the isolated profile root. The isolation and one-writer fencing should be asserted in evidence, not assumed.",
+      "Dependency DONE statuses, the target-binding authorization, and the cutover disposition come from the task's own narrative. This gate has not independently verified them; release admission should confirm them.",
+      "The Intent line still says 'Operational trajectory replacement proof', which could be misread as a replacement claim contrary to the later proof-only scoping. Evidence and verdict wording must not imply observer replacement or retirement.",
+      "Operational side effects of transient systemd --user units on the shared ALIENLAPTOP host if teardown fails."
+    ],
+    "next_action": "Hand off to the normal release-admission process for IMPLEMENT, subject to its separate authority, custody and budget gates. The PRODUCER should first do two things: (1) pin the FX-B1 fixture commands, inputs, expected outcomes and evidence schema, including concrete attention-producer consumption and queue-retention readback steps, before implementing; (2) confirm an existing attention-producer consumer is available. If none exists, escalate to the owning node rather than building it here.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent, scope and acceptance are now coherent and bounded. The supplied text reports that the three earlier owner-level gaps each have a recorded disposition from a cited authority. The target binding is explicitly within a named Founder authorization that references this BIU. The observer-duty exclusion follows a direct Founder instruction and the BIU's own pre-written fallback. The cutover definition aligns with sibling WO-220610's identical phrasing and with the protected observer boundary. The remaining uncertainties, such as fixture mechanics, queue identification, discrimination controls and teardown, are engineering research answerable by the PRODUCER, not product or policy questions. The work is a single cohesive proof with one independent verdict, and rework would be confined to the fixture and evidence. HOLD is not warranted because no named prerequisite is shown to be unavailable. The attention-producer availability is the main latent risk; the text does not establish it as missing. This assessment rests on the text's reported facts, not on independent verification, and READY does not authorize execution.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive, proof-only work item with one capability (live_trajectory_receipts) and one acceptance predicate. The earlier holds and ambiguities are reported as closed in the text: (1) the operational target is bound to an isolated local systemd --user profile under a cited Founder authorization; (2) the observer-duty question is conservatively scoped out; (3) the 'cutover' phrase is defined as the composition's own supervised restart inside the fx-b1 profile; (4) all listed predecessors, including WO-220610, are reported DONE and landed. These are claims in the supplied text, not independently verified. What remains is engineering work: how the FX-B1 fixture drives attention-producer consumption, the queue-retention readback, fault/restore discrimination and teardown. No material owner intent or independent decision center remains open on the text as supplied.",
+    "verification_assessment": "Acceptance is observable. A verifier can check restart-surviving identity, order and timestamps, anomaly detection for the five disposed classes, retention and queue readback, and lossless reconciliation of pre-restart and post-restart observations, all on a named isolated profile. The verifier can also confirm there is no access to alienintent-observer.service data. The evidence contract is explicit: exact revisions, commands, exit statuses, raw observations, negative-control counts, and labelled local substitutions. A single fresh independent verifier retrieving the exact candidate SHA can render one meaningful verdict against one predicate. That verdict weakens if the proof merely replays WO-220610's FX-B1P results, or if attention-producer consumption is stubbed rather than exercised; the verifier should check both."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T13:11:37.348749+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 24183,
+    "input_sha256": "4b0e53f2c800fc098be313094b2cd21f585efc44fc6928ee5d8b81271249b919",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-iv7qimtz/WO-220504.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T13:11:04.479002+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220504"
+}

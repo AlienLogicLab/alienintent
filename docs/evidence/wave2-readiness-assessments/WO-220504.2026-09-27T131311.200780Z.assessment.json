@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce an independently verifiable, proof-only operational demonstration of the live_trajectory_receipts capability for SF-REQ-053. On the bound isolated fx-b1-trajectory-operational profile, which runs the WO-220610 trajectory_capture composition under systemd --user on ALIENLAPTOP, the proof must show that trajectory capture preserves identity, order, timestamps, anomaly detection and retention across a supervised process restart and through attention-producer consumption. It must also reconcile pre-restart and post-restart observations without loss and retain the queue. It makes no claim to replace or retire alienintent-observer.service and reads none of its data.",
+    "implementation_unknowns": [
+      "How the pinned FX-B1 fixture drives attention-producer consumption against the bound trajectory_capture target, including which existing attention-producer interface is consumed and whether it is already available without building another node's capability.",
+      "The exact observable form of 'retain queue' across restart: which queue, what the readback mechanism is, and how retention is evidenced in immutable observation refs.",
+      "How the fixture forces the supervised kill/restart cycle via systemd-run/systemctl, and how it demonstrates intact/fault/restored discrimination for no-loss and no-duplication reconciliation.",
+      "Negative controls for each of the five anomaly classes (sequence gaps, out-of-order events, duplicate identities, timestamp regressions, capture stalls) as observed through the consumption path, not only at the composition level.",
+      "Teardown and isolation mechanics for ~/.local/state/alienintent/fx-b1/trajectory, and confirmation that the config-digest/cgroup ownership fence prevents interaction with real factory state.",
+      "Evidence schema pinning (fixture/source/profile/candidate revisions, commands, exit statuses, raw observations) before implementation, as the proof order requires."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Attention-producer dependency: if the attention-producer consumption path does not already exist as a usable interface, satisfying it could require implementing another node's capability. That is a non-goal and should trigger the stop/escalation path rather than in-BIU construction.",
+      "Duplicate proof: because cutover is narrowed to the composition's own restart, the proof risks merely duplicating WO-220610's FX-B1P evidence. Its distinct value must come from the consumption and queue-retention legs.",
+      "Unverified disposition authority: the cutover disposition was made by the Director as applying existing intent, while escalation text reserves directional boundary questions to the Founder. If a reviewer later reads 'cutover' as a genuine old-to-new mechanism transition for SF-REQ-053, this proof may not satisfy the requirement's replacement intent.",
+      "Operational versus local labelling: the bound target is a new local isolated profile, and the evidence contract forbids local substitutions satisfying operational acceptance. Evidence must clearly show the target runs under the authorized operational profile with actual readback.",
+      "Isolation failure: systemd --user proof units on the shared ALIENLAPTOP host could interact with real alienintent.service or observer units if isolation or teardown is imperfect.",
+      "Reported, not verified: the authority records, DONE statuses and handoff identifiers are claims in the text and were not independently checked by this gate."
+    ],
+    "next_action": "Queue for PRODUCER handoff subject to the existing execution gates (custody, capacity, release admission). As the first step, pin the FX-B1 fixture commands, inputs, expected outcomes and evidence schema. Specifically identify the existing attention-producer interface and the queue-retention readback against the bound fx-b1 profile, and escalate through the stop conditions if either requires building capability outside this node.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that no material owner intent remains unresolved according to the supplied text. The earlier owner-level grounds are all reported disposed: authority gates, observer duty, target binding and the meaning of cutover. The cutover disposition is grounded in the sibling contract's identical phrasing and the Founder-fixed observer boundary, and it narrows rather than broadens scope. The work is one cohesive proof against one target, with no independent decision centers warranting a split. The prerequisites and authority are reported available, so HOLD is not supported. Acceptance is observable, one independent verdict is meaningful, and repair would be localized to the fixture and integration. The remaining uncertainties, chiefly the attention-producer consumption path and queue readback, are engineering research. The existing stop conditions already cover the case where those turn out to require out-of-scope construction. READY recommends handoff only; it does not authorize IMPLEMENT or guarantee success.",
+    "semantic_split_recommendation": [],
+    "summary": "This revision reports that every previously open owner-level ground is resolved.\n- **Dependencies:** WO-220501, WO-220305, WO-220502, WO-220102 and WO-220610 are all reported DONE or landed.\n- **Authority gates:** both are reported disposed by the Founder.\n- **Observer duty:** conservatively scoped out under a reported direct Founder instruction.\n- **Target profile:** bound by the Director under a Founder authorization that names this Issue and permits a new isolated local operational proof target.\n- **Cutover:** the ambiguous phrase is disposed as the composition's own supervised restart inside the isolated profile, consistent with the sibling WO-220610 wording and the observer boundary.\n\nThe remaining questions are engineering research: how the FX-B1 fixture drives attention-producer consumption, queue-retention readback, and teardown. These are all facts reported by the task text; this gate has not independently verified them. The text's statement that a prior assessment returned READY was not treated as determinative; this disposition comes from analysis of the text itself.",
+    "verification_assessment": "Acceptance is observable. It consists of recorded identity, order and timestamp continuity, anomaly-class detection with negative controls, no-loss/no-duplication reconciliation across a forced supervised restart, retention and queue readback, and evidence of attention-producer consumption. All of this is to be captured with exact revisions, commands, exit statuses and immutable observation refs. The outcome is one cohesive proof on one bound target, so a single independent verdict is meaningful: a fresh verifier retrieves the exact candidate SHA in its own worktree. The verifier should confirm three things: the target is the isolated fx-b1 profile rather than an unlabelled local substitution, no alienintent-observer.service data was read, and the proof exercises attention-producer consumption and queue retention rather than only re-running WO-220610's composition-level FX-B1P proof."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T13:13:48.091728+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 24150,
+    "input_sha256": "3f9a56090cffb40cdfe0a20024801593db1f52762519c12761481dd1d7fe9fa4",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-usjea8fl/WO-220504.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T13:13:11.200780+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220504"
+}

@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "On the bound fx-b1-trajectory-operational profile, prove that live_trajectory_receipts preserves trajectory capture identity, order, timestamps, anomaly detection and retention across a supervised process restart and through attention-producer consumption. The proof must also reconcile pre- and post-restart observations from the same trajectory_capture composition without loss, with the queue retained. It is proof-only: it makes no claim to replace or retire alienintent-observer.service, and it must not read that observer's data.",
+    "implementation_unknowns": [
+      "How the pinned FX-B1 fixture drives and observes attention-producer consumption of captured trajectory receipts against the bound target.",
+      "Which concrete queue 'retain queue' refers to in the composition (for example the capture journal or an attention-producer consumption queue), and how its retention across restart is read back.",
+      "How the fixture demonstrates intact/fault/restored discrimination for each of the five anomaly classes and for restart reconciliation, including negative-control application counts.",
+      "How the isolated profile root, SQLite store, evidence store and socket are provisioned and torn down under systemd-run while the inherited one-writer ownership/cgroup/config-digest fence still applies.",
+      "How the proof reuses WO-220610's composition-level results without treating them as a substitute for this BIU's own operational readback on the fx-b1 profile.",
+      "The evidence schema and immutable observation reference format to pin before implementation."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Under the disposed reading (a), 'cutover' equals the supervised restart. This makes the reconciliation clause overlap heavily with WO-220610's FX-B1P proof. If the Founder or the SF-REQ-053 owner later intends 'cutover' to mean a bootstrap source transition (KEEP_UNTIL_REPLACED, 'preserve source transition order'), this proof would not satisfy that intent. The narrowing is conservative and claims less, but it could require a follow-up BIU.",
+      "Authority rests on relayed Director inbox handoffs, some relayed by an observing session. Their validity, and the claim that the new profile root falls within 'AUTHORIZE_BOUNDED_LOCAL_OPERATIONAL_PROOF_TARGET_CREATION', are reported and not verified by this gate. Release admission should confirm them.",
+      "The proof could accidentally touch real factory state or the live observer if profile isolation or the ownership fence is misconfigured. Disjointness and no-observer-read should be explicit negative controls.",
+      "Reusing WO-220610's composition-level proof risks being presented as satisfying this BIU's operational acceptance. The evidence must keep predecessor proof and this BIU's own readback separate.",
+      "Transient systemd --user units and new state directories on ALIENLAPTOP must not leave residue or change security posture. Teardown and readback receipts should be retained.",
+      "'Operational trajectory replacement proof' in the intent line could be misread as a replacement claim despite the proof-only scoping. Evidence and closure text should state explicitly that no replacement or retirement is claimed."
+    ],
+    "next_action": "Hand off to PRODUCER (Morty) for the proof-first step. Before implementation, pin the FX-B1 fixture commands, inputs, expected outcomes and evidence schema against the disposed predicate (reading (a)), including:\n- negative controls for the observer-service no-read and for profile disjointness;\n- intact/fault/restored discrimination for restart reconciliation and the anomaly classes.\nThen implement and publish the candidate SHA for fresh independent verification by JC. Actual execution remains subject to the separate IMPLEMENT and release-admission gates.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "READY is controlling because the one ground that kept the prior revision at CLARIFY has a recorded, conservative disposition that is consistent with already-decided scoping. The cutover meaning is resolved to reading (a), and observer data is explicitly excluded. No other material owner intent is open. Per the text, dependencies are reported DONE, authority gates are disposed, and the target is bound with no new spend or credentials. Remaining uncertainties about attention-producer driving, queue observation and fixture design are engineering research for PRODUCER. The work is one cohesive proof over one composition with one acceptance predicate, so there are no independent decision centers to justify SPLIT. It also lacks a stated missing external prerequisite, so HOLD does not apply. Any repair is likely confined to the fixture or evidence harness, so rework locality is high. The main residual risk is that the narrowed 'cutover' reading may not match a later owner intent about source transition. Because the narrowing reduces rather than broadens claims, it is recorded as a risk rather than an open clarification. This assessment relies on the document's reported facts and does not independently verify them.",
+    "semantic_split_recommendation": [],
+    "summary": "The prior revision was assessed CLARIFY on one ground: the meaning of 'reconcile old/new observations across cutover'. This revision records a Director disposition that answers it. 'Old' and 'new' are the bound fx-b1 composition's own observations before and after its supervised kill/restart. 'Cutover' is that restart. Readings (b) (reading the live observer's data) and (c) (the offline writer versus the live composition) are explicitly excluded. The document grounds this in sibling WO-220610's identical phrasing, the Founder-instructed observer-duty scoping, and the evidence contract's ban on local substitution. As reported in the text, and not independently verified here:\n- All five predecessors, including WO-220102 and WO-220610/B1P, are DONE.\n- Both authority gates are disposed.\n- The operational target is bound under the recorded local proof-target authorization: the existing trajectory_capture composition, existing systemd --user supervision, a new isolated profile root, and no new spend or credentials.\n- Observer duty is conservatively excluded.\nThe remaining uncertainty is engineering-level: how the FX-B1 fixture drives attention-producer consumption, and exactly how the retained queue is observed. The work forms one cohesive proof with one acceptance predicate and one independent verification verdict.",
+    "verification_assessment": "Acceptance is observable. A single operational fixture (FX-B1) on the bound fx-b1 profile can show the following, with retained command, exit status, raw observations and actual readback:\n- identity, order and timestamps persist across a supervised kill/restart;\n- the five anomaly classes are detected;\n- retention and the queue survive the restart;\n- attention-producer consumption observes the receipts;\n- pre- and post-restart observations reconcile without loss.\nThe custody model has the verifier retrieve the exact candidate SHA in a fresh worktree, so one independent verdict on 'predicate proven on the bound target, labelled as proof-only, no observer data read' is meaningful. The proof plan requires fixture commands, expected outcomes and the evidence schema to be pinned before implementation, even though no acceptance probes are pre-listed. The verifier should confirm operational (not local-substitute) readback, the absence of any observer-service reads, and disjointness from real factory state."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T13:08:26.704754+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 23538,
+    "input_sha256": "b6fa1d1f4895b37b5712199a988a235848bed79b368a6cfcf62c1477c60c9968",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-h77rmnoc/WO-220504.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T13:07:49.472820+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220504"
+}
