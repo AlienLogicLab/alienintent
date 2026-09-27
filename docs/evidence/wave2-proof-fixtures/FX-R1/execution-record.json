@@ -1,0 +1,68 @@
+{
+ "record_kind": "ProofFixtureExecution",
+ "schema_version": 1,
+ "fixture_id": "FX-R1",
+ "biu_id": "WO-220601",
+ "issue_number": 130,
+ "invocation": "AlienLogicLab/alienintent#130:PRODUCER:6ec08ebe-d2b4-462e-976d-6284d6be5b36",
+ "source_revision": "233cdbcb4c57d38ec50982f233361905a16882b3",
+ "source_status": "",
+ "admission_baseline": "98dddaea8783b6e482364122751dd1e72647361b",
+ "input_digests": {
+  "docs/evidence/wave2-proof-fixtures/FX-R1.md": "sha256:fceda7c8a1da4ce5f27885cc5050eac9e5d2d06bb1bb414f60cfdddc3d76d898",
+  "docs/work-units/wave2/WO-220601.md": "sha256:f8e48528701fa475feb9a8ab22eb0f2b06988192a1f5799adefab9d9978cd091",
+  "docs/evidence/wave2-execution-packets/WO-220601.packet.json": "sha256:1df8be5af6eb148c5359ddbec1ba5167f69ffc786425a9033cab95d93c04d29a",
+  "docs/evidence/wave2-execution-packets/WO-220601.allocation.json": "sha256:0d4b856dfdd31febf159afa31a7b5d2f926e9acf2d2975828f153057641e7b34",
+  "docs/evidence/wave2-dependency-dag.json": "sha256:f4b0da1d5eeaae1b857b8499e049f5caccba56240d98e18d7b05e3a22d0cf8db",
+  "tools/evidence/fx_r1_evidence.py": "sha256:d72eff38971f370e1e0a6a4bd3df7e754792e231408de71c38bc74cd52ec13b4",
+  "docs/evidence/fdh-01-live-proof/20260924T080401Z/SHA256SUMS": "sha256:a21f3555d3f9f3cfa02d5c62a3c2684a1700c3f39b80a2e91c0f561c8849b9d3",
+  "docs/evidence/fdh-01-live-proof/20260924T080401Z/README.md": "sha256:b26f4a52be4af44994ca8e2236fe277197eea24acc8812b7271aa3b16399e14c",
+  "docs/evidence/wave2-proof-fixtures/FX-C2/execution-record.json": "sha256:03191aabafc8803ed38556a672e708c1d089e081d80c1b270ec3d4df92a3286d",
+  "docs/evidence/wave2-proof-fixtures/FX-C2/proven-red.json": "sha256:52b2594d7a9b2c143b11c8beafaef6c80a2e890cd3830f994ab4d5e92ff05ddb",
+  "docs/evidence/wave2-proof-fixtures/FX-C3/execution-record.json": "sha256:726a5041546d2e721768bd7dd525ca238bfec9d41e4f00d4aeeb3433df8681c8",
+  "docs/evidence/wave2-proof-fixtures/FX-C3/proven-red.json": "sha256:0844c950ceab88f824e2d73242ef51273e546709679afcafc11dcb909b1b0b9a"
+ },
+ "labels": [
+  "CITATION_ONLY_NO_REEXECUTION",
+  "FDH01_POSITIVE_PATH_ONLY",
+  "MISMATCH_ELEMENT_CAPABILITY_LEVEL_C2_C3"
+ ],
+ "commands": [
+  {
+   "id": "citation_integrity",
+   "command": [
+    "python3",
+    "-B",
+    "tools/evidence/fx_r1_evidence.py",
+    "--baseline",
+    "98dddaea8783b6e482364122751dd1e72647361b",
+    "--invocation",
+    "AlienLogicLab/alienintent#130:PRODUCER:6ec08ebe-d2b4-462e-976d-6284d6be5b36",
+    "--output",
+    "<output>"
+   ],
+   "exit_status": 0,
+   "observation_ref": {
+    "revision_digest": "sha256:14e7ae4b1a02c9acd862422c5f3d4ef131240e8f0ecc6d5756f562ea4b57a1bd",
+    "locator": "observations/14e7ae4b1a02c9acd862422c5f3d4ef131240e8f0ecc6d5756f562ea4b57a1bd"
+   }
+  }
+ ],
+ "checks_total": 34,
+ "checks_failed": [],
+ "holds": [],
+ "residuals": [
+  "R1-F1_DISPOSITION_EXACTLY_C2_C3_WORDING",
+  "R1-F2_PROCEDURE_REVISION_PRECISION",
+  "C3_VERDICT_COMMENT_FIELDS_BLANK"
+ ],
+ "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+ "proof_level": "OPERATIONAL_OR_EXTERNAL_AUTHORITY",
+ "proof_level_by_element": {
+  "reconstruction_without_prior_conversation": "OPERATIONAL_BY_CITATION (FDH-01, Issue #89)",
+  "mismatch_blocks_tenure_change": "LOCAL_COMPOSED_OR_MECHANICAL_BY_CITATION (FX-C2, FX-C3)"
+ },
+ "live_proof": "CITED_NOT_REEXECUTED",
+ "retirement": "NONE \u2014 KEEP_UNTIL_REPLACED",
+ "exit_status": 0
+}
