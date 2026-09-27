@@ -1,0 +1,472 @@
+{
+  "baseline": "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd",
+  "checks": [
+    {
+      "check": "POSTW1-BRIDGE-000_done_pass_at_baseline",
+      "command": [
+        "jq",
+        ".tasks[\"POSTW1-BRIDGE-000\"] | {status, review_status}",
+        "docs/operations/post-wave1-program/program-state.json"
+      ],
+      "expected": {
+        "review_status": "PASS",
+        "status": "DONE"
+      },
+      "observed": {
+        "review_status": "PASS",
+        "status": "DONE"
+      },
+      "path": "docs/operations/post-wave1-program/program-state.json",
+      "result": "PASS",
+      "revision": "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd"
+    },
+    {
+      "check": "POSTW1-LEARN-002_done_pass_at_baseline",
+      "command": [
+        "jq",
+        ".tasks[\"POSTW1-LEARN-002\"] | {status, review_status}",
+        "docs/operations/post-wave1-program/program-state.json"
+      ],
+      "expected": {
+        "review_status": "PASS",
+        "status": "DONE"
+      },
+      "observed": {
+        "review_status": "PASS",
+        "status": "DONE"
+      },
+      "path": "docs/operations/post-wave1-program/program-state.json",
+      "result": "PASS",
+      "revision": "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd"
+    },
+    {
+      "check": "POSTW1-BRIDGE-000_done_pass_at_closure",
+      "command": [
+        "jq",
+        ".tasks[\"POSTW1-BRIDGE-000\"] | {status, review_status}",
+        "docs/operations/post-wave1-program/program-state.json"
+      ],
+      "expected": {
+        "review_status": "PASS",
+        "status": "DONE"
+      },
+      "observed": {
+        "review_status": "PASS",
+        "status": "DONE"
+      },
+      "path": "docs/operations/post-wave1-program/program-state.json",
+      "result": "PASS",
+      "revision": "352fa9d7fce76b661ca98bebca0adec7a00a13df"
+    },
+    {
+      "check": "POSTW1-LEARN-002_done_pass_at_closure",
+      "command": [
+        "jq",
+        ".tasks[\"POSTW1-LEARN-002\"] | {status, review_status}",
+        "docs/operations/post-wave1-program/program-state.json"
+      ],
+      "expected": {
+        "review_status": "PASS",
+        "status": "DONE"
+      },
+      "observed": {
+        "review_status": "PASS",
+        "status": "DONE"
+      },
+      "path": "docs/operations/post-wave1-program/program-state.json",
+      "result": "PASS",
+      "revision": "352fa9d7fce76b661ca98bebca0adec7a00a13df"
+    },
+    {
+      "check": "messages_directory_exactly_two_files_at_baseline",
+      "command": [
+        "git",
+        "ls-tree",
+        "--name-only",
+        "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd:docs/operations/post-wave1-program/messages"
+      ],
+      "exit_status": 0,
+      "expected": [
+        "POSTW1-BRIDGE-000-request.md",
+        "POSTW1-LEARN-002-review-request.md"
+      ],
+      "observed": [
+        "POSTW1-BRIDGE-000-request.md",
+        "POSTW1-LEARN-002-review-request.md"
+      ],
+      "result": "PASS"
+    },
+    {
+      "check": "only_bridge_000_task_references_messages_dir_at_baseline",
+      "expected": [
+        "POSTW1-BRIDGE-000"
+      ],
+      "observed": [
+        "POSTW1-BRIDGE-000"
+      ],
+      "path": "docs/operations/post-wave1-program/program-state.json",
+      "result": "PASS",
+      "revision": "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd"
+    },
+    {
+      "check": "closure_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "352fa9d7fce76b661ca98bebca0adec7a00a13df",
+        "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd"
+      ],
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "addendum_is_ancestor_of_baseline",
+      "command": [
+        "git",
+        "merge-base",
+        "--is-ancestor",
+        "89389fd21bd1d3e388730f90cddec6e95a2eacc6",
+        "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd"
+      ],
+      "expected": 0,
+      "observed": 0,
+      "result": "PASS"
+    },
+    {
+      "check": "addendum_commit_parent_is_closure",
+      "commit": "89389fd21bd1d3e388730f90cddec6e95a2eacc6",
+      "expected": "352fa9d7fce76b661ca98bebca0adec7a00a13df",
+      "observed": "352fa9d7fce76b661ca98bebca0adec7a00a13df",
+      "result": "PASS"
+    },
+    {
+      "check": "addendum_absent_at_closure_present_at_addendum_commit",
+      "expected": [
+        false,
+        true
+      ],
+      "observed": [
+        false,
+        true
+      ],
+      "result": "PASS"
+    },
+    {
+      "baseline_report_sha256": "sha256:954e1d31c87e4a0f4d24d72e0e2d212c733d7af811884bc903f78d5c67586d2f",
+      "check": "final_report_unchanged_since_addendum_at_baseline",
+      "expected": "89389fd21bd1d3e388730f90cddec6e95a2eacc6",
+      "observed": "89389fd21bd1d3e388730f90cddec6e95a2eacc6",
+      "path": "docs/operations/post-wave1-program/reports/FINAL-REPORT.md",
+      "result": "PASS"
+    },
+    {
+      "addendum_sha256": "sha256:7bcf2a74b1dee6dfb8a439491c331230358cfa19d997c59706efc266cd693298",
+      "check": "addendum_states_cited_conditions",
+      "claims": [
+        "**Amendment \u00a715 completion conditions, as of `352fa9d7fce76b661ca98bebca0adec7a00a13df`:**",
+        "6. Repository changes landed and remotely verified \u2014 `352fa9d7` pushed to `origin/main`",
+        "7. No temporary worktree or task left without a durable disposition",
+        "8. Terminal state \u2014 **`PROGRAM_COMPLETE`**, computed by `ProgramState.terminal_state()`"
+      ],
+      "expected": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "observed": [
+        true,
+        true,
+        true,
+        true
+      ],
+      "result": "PASS"
+    },
+    {
+      "check": "closure_committed_before_first_wave2_biu_issue",
+      "commit": "352fa9d7fce76b661ca98bebca0adec7a00a13df",
+      "committed_utc": "2026-09-21T22:48:41Z",
+      "expected": true,
+      "first_wave2_biu_issue_created_utc": "2026-09-22T11:04:25Z",
+      "observed": true,
+      "result": "PASS"
+    },
+    {
+      "check": "addendum_committed_before_first_wave2_biu_issue",
+      "commit": "89389fd21bd1d3e388730f90cddec6e95a2eacc6",
+      "committed_utc": "2026-09-21T22:49:26Z",
+      "expected": true,
+      "first_wave2_biu_issue_created_utc": "2026-09-22T11:04:25Z",
+      "observed": true,
+      "result": "PASS"
+    },
+    {
+      "check": "terminal_state_recomputed_at_closure",
+      "detail": {
+        "blocking_founder_decisions": [],
+        "founder_decisions_required": [
+          "POSTW1-DECIDE-010A",
+          "POSTW1-DECIDE-013A",
+          "POSTW1-DECIDE-004A",
+          "POSTW1-DECIDE-005A",
+          "POSTW1-DECIDE-006A",
+          "POSTW1-DECIDE-007A",
+          "POSTW1-DECIDE-008A"
+        ],
+        "task_count": 24,
+        "terminal_state": "PROGRAM_COMPLETE"
+      },
+      "expected": {
+        "blocking_founder_decisions": [],
+        "terminal_state": "PROGRAM_COMPLETE"
+      },
+      "observed": {
+        "blocking_founder_decisions": [],
+        "terminal_state": "PROGRAM_COMPLETE"
+      },
+      "result": "PASS",
+      "revision": "352fa9d7fce76b661ca98bebca0adec7a00a13df"
+    },
+    {
+      "check": "post_closure_tasks_reference_no_message",
+      "count": 9,
+      "expected": [],
+      "observed": [],
+      "result": "PASS"
+    },
+    {
+      "addendum_committed_utc": "2026-09-21T22:49:26Z",
+      "check": "post_closure_tasks_created_after_addendum",
+      "expected": true,
+      "observed": true,
+      "result": "PASS"
+    },
+    {
+      "check": "dag_r2_node",
+      "expected": {
+        "depends_on_includes_b4": true,
+        "title": "Replacement gate: Program Director mailbox bridge waiter"
+      },
+      "observed": {
+        "depends_on_includes_b4": true,
+        "title": "Replacement gate: Program Director mailbox bridge waiter"
+      },
+      "path": "docs/evidence/wave2-dependency-dag.json",
+      "result": "PASS"
+    },
+    {
+      "check": "dag_b4_node",
+      "expected": {
+        "node_kind": "external_proof_prerequisite",
+        "proof_fixtures": [
+          "FX-B4"
+        ],
+        "title": "Successor program mailbox path proof"
+      },
+      "observed": {
+        "node_kind": "external_proof_prerequisite",
+        "proof_fixtures": [
+          "FX-B4"
+        ],
+        "title": "Successor program mailbox path proof"
+      },
+      "path": "docs/evidence/wave2-dependency-dag.json",
+      "result": "PASS"
+    },
+    {
+      "check": "dag_r2_title_in_technical_plan",
+      "expected": true,
+      "line": 120,
+      "observed": true,
+      "path": "docs/evidence/wave2-technical-plan.md",
+      "result": "PASS",
+      "text": "| R2 | Replacement gate: Program Director mailbox bridge waiter | R1, B4 | SEPARATE_AUTHORITY_REQUIRED |"
+    },
+    {
+      "check": "bootstrap_m13_reject",
+      "expected": true,
+      "line": 63,
+      "observed": true,
+      "path": "docs/evidence/wave2-specified-requirements.md",
+      "result": "PASS",
+      "text": "| BOOTSTRAP-M13 | No | Program Director mailbox bridge waiter replacement: REJECT as permanent product requirement: retain or hand off the separate program-message consumer for unfinished program duties. No evidence warrants making this temporary mailbox a new Wave 2 product mechanism. |"
+    },
+    {
+      "check": "bootstrap_m17_reject",
+      "expected": true,
+      "line": 67,
+      "observed": true,
+      "path": "docs/evidence/wave2-specified-requirements.md",
+      "result": "PASS",
+      "text": "| BOOTSTRAP-M17 | No | Local Program Director bootstrap orchestration role replacement: REJECT permanent productization of the temporary Director role. Complete or disposition program duties and preserve state under its existing authority; no new product owner or lifecycle is implied. |"
+    },
+    {
+      "check": "runtime_contract_no_competing_role",
+      "expected": true,
+      "line": 15,
+      "observed": true,
+      "path": "docs/operations/factory-director-runtime-contract.md",
+      "result": "PASS",
+      "text": "Do not create a competing role such as Program Director, resident coordinator or"
+    },
+    {
+      "check": "task_ledger_bridge_000",
+      "expected": true,
+      "line": 29,
+      "observed": true,
+      "path": "docs/operations/post-wave1-program/task-ledger.md",
+      "result": "PASS",
+      "text": "| POSTW1-BRIDGE-000 | 0 | DONE | MEDIUM | claude-bootstrap-coordinator | PASS | Bootstrap proof: Director-to-coordinator direct message with correlated reply |"
+    },
+    {
+      "check": "task_ledger_learn_002",
+      "expected": true,
+      "line": 40,
+      "observed": true,
+      "path": "docs/operations/post-wave1-program/task-ledger.md",
+      "result": "PASS",
+      "text": "| POSTW1-LEARN-002 | 2 | DONE | MEDIUM | codex-fresh | PASS | Wave 1 Learning Consolidation |"
+    },
+    {
+      "check": "authority_delegation_decision_record_present",
+      "expected": true,
+      "observed": true,
+      "path": "docs/decisions/2026-09-26-wave2-bounded-operational-authority-delegation.md",
+      "result": "PASS"
+    }
+  ],
+  "exit_status": 0,
+  "failed": [],
+  "fixture_id": "FX-B4",
+  "invocation": "AlienLogicLab/alienintent#127:PRODUCER:f9799689-cd10-47a8-9145-82148b3c1d21",
+  "observations": [
+    {
+      "command": [
+        "jq",
+        ".\"POSTW1-BRIDGE-000\",.\"POSTW1-LEARN-002\"",
+        "docs/operations/post-wave1-program/program-state.json"
+      ],
+      "exit_status": 0,
+      "note": "The packet's literal filter addresses top-level keys; tasks live under .tasks, so it prints null twice. The corrected filter is used in the checks above.",
+      "observation": "packet_bounded_jq_command_literal",
+      "stdout": "null\nnull"
+    },
+    {
+      "command": [
+        "git",
+        "show",
+        "352fa9d7fce76b661ca98bebca0adec7a00a13df:docs/operations/post-wave1-program/reports/FINAL-REPORT.md"
+      ],
+      "director_closure_addendum_present": false,
+      "exit_status": 0,
+      "note": "The addendum is not in the closure commit's tree; it was added by the next commit, whose only parent is the closure commit. Checked below.",
+      "observation": "packet_bounded_git_show_closure_report",
+      "stdout_sha256": "sha256:d0a8f19602125576c3b6efe00a035e181066519c4ec2075d419a6467e7ae3373"
+    },
+    {
+      "blocking_founder_decisions": [
+        "FACT-S1-ADMISSION-008"
+      ],
+      "founder_decisions_required": [
+        "POSTW1-DECIDE-010A",
+        "POSTW1-DECIDE-013A",
+        "POSTW1-DECIDE-006A",
+        "POSTW1-DECIDE-007A",
+        "POSTW1-DECIDE-008A",
+        "FACT-S1-ADMISSION-008"
+      ],
+      "observation": "terminal_state_recomputed_at_baseline",
+      "revision": "25f7aa33c4f29de509ee2e6ff9b3e1aa8ab8cbdd",
+      "task_count": 33,
+      "tasks_added_after_closure": [
+        {
+          "assigned_actor": "claude-bootstrap-coordinator",
+          "created_at": "2026-09-22T08:48:20.486532+00:00",
+          "critical_path": false,
+          "phase": "F1",
+          "prompt_path": null,
+          "status": "BLOCKED",
+          "task_id": "FACT-ARCLOSE-001"
+        },
+        {
+          "assigned_actor": "deterministic",
+          "created_at": "2026-09-22T08:48:20.508208+00:00",
+          "critical_path": null,
+          "phase": "F2",
+          "prompt_path": null,
+          "status": "DONE",
+          "task_id": "FACT-BACKLOG-003"
+        },
+        {
+          "assigned_actor": "claude-bootstrap-coordinator",
+          "created_at": "2026-09-22T11:00:27.763234+00:00",
+          "critical_path": true,
+          "phase": "F5",
+          "prompt_path": null,
+          "status": "DONE",
+          "task_id": "FACT-BIU-007"
+        },
+        {
+          "assigned_actor": "fresh-reviewer",
+          "created_at": "2026-09-22T09:20:49.113903+00:00",
+          "critical_path": false,
+          "phase": "F4",
+          "prompt_path": null,
+          "status": "DONE",
+          "task_id": "FACT-DV-005"
+        },
+        {
+          "assigned_actor": "codex-fresh",
+          "created_at": "2026-09-22T08:48:20.497460+00:00",
+          "critical_path": true,
+          "phase": "F2",
+          "prompt_path": null,
+          "status": "DONE",
+          "task_id": "FACT-RECON-002"
+        },
+        {
+          "assigned_actor": "program-director",
+          "created_at": "2026-09-22T16:39:44.969996+00:00",
+          "critical_path": true,
+          "phase": "F5",
+          "prompt_path": null,
+          "status": "FOUNDER_DECISION_REQUIRED",
+          "task_id": "FACT-S1-ADMISSION-008"
+        },
+        {
+          "assigned_actor": "deterministic",
+          "created_at": "2026-09-22T11:00:27.755578+00:00",
+          "critical_path": null,
+          "phase": "F5",
+          "prompt_path": null,
+          "status": "DONE",
+          "task_id": "FACT-SELECT-006"
+        },
+        {
+          "assigned_actor": "codex-fresh",
+          "created_at": "2026-09-22T08:56:52.343431+00:00",
+          "critical_path": false,
+          "phase": "F3",
+          "prompt_path": null,
+          "status": "DONE",
+          "task_id": "FACT-SPECIFY-004A"
+        },
+        {
+          "assigned_actor": "codex-fresh",
+          "created_at": "2026-09-22T09:10:46.384799+00:00",
+          "critical_path": false,
+          "phase": "F3",
+          "prompt_path": null,
+          "status": "DONE",
+          "task_id": "FACT-SPECIFY-004B"
+        }
+      ],
+      "terminal_state": "FOUNDER_DECISION_REQUIRED"
+    }
+  ],
+  "record_kind": "CitationIntegrityCheck",
+  "schema_version": "1",
+  "script": "tools/evidence/fx_b4_evidence.py"
+}
