@@ -194,6 +194,16 @@ the audit allows; no probe above is weakened.
   same CLIs under the same audit. It returns `RETAINED_READBACK_RECONCILED` only when the audit
   finds no forbidden path.
 
+## Control repair after the first complete local run — 2026-09-27
+
+Local run `local-run/20260927T145427Z` (PRODUCER invocation `...:86456750-...`) completed with one
+HOLD: `audit_blind: mutation count 0, expected exactly one`. The review repair above rewrote
+`forbidden_touches` (undecodable paths, symlink resolution) but left the control's needle at the old
+one-line return, so the control could not apply. The needle now matches the repaired return; the
+mutation (`return []`) is unchanged. The control also now requires the review-repair probe
+`test_the_audit_names_a_protected_path_reached_through_a_child_process_or_symlink` to fail. No probe
+is weakened. The HOLD run is retained unchanged as evidence.
+
 ## Evidence schema
 
 Local run (`local-run/<UTC stamp>/`) and operational run (`operational/<UTC stamp>/`) each hold:

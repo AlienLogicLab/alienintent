@@ -1,0 +1,69 @@
+{
+  "acceptance_to_probes": {
+    "B1-01 receipts observe every captured event": [
+      "tests/composition/test_trajectory_receipts.py::test_receipts_observe_every_captured_event_with_its_journal_identity"
+    ],
+    "B1-02 one pending JUDGMENT item per anomaly kind": [
+      "tests/composition/test_trajectory_receipts.py::test_each_anomaly_kind_yields_exactly_one_pending_judgment_item"
+    ],
+    "B1-03 idempotent pass": [
+      "tests/composition/test_trajectory_receipts.py::test_a_pass_with_nothing_new_writes_nothing"
+    ],
+    "B1-04/B1-05 restart reconciles, queue retained": [
+      "tests/composition/test_trajectory_receipts.py::test_passes_across_a_kill_and_granted_restart_reconcile_old_and_new_entries"
+    ],
+    "B1-06 crash between items and receipt": [
+      "tests/composition/test_trajectory_receipts.py::test_a_pass_that_dies_before_its_receipt_leaves_no_second_item"
+    ],
+    "B1-07 rewritten or overtaken prefix holds": [
+      "tests/composition/test_trajectory_receipts.py::test_a_rewritten_or_overtaken_prefix_holds_and_writes_nothing"
+    ],
+    "B1-08 second consumer refused": [
+      "tests/composition/test_trajectory_receipts.py::test_a_lost_receipt_compare_and_set_holds"
+    ],
+    "B1-09 read audit": [
+      "tools/live/test_fx_b1_operational.py::test_the_audit_names_a_protected_read_outside_the_allowed_root",
+      "tools/live/test_fx_b1_operational.py::test_the_audit_records_sqlite_opens_and_survives_a_failing_module"
+    ],
+    "B1-10 root guard": [
+      "tools/live/test_fx_b1_operational.py::test_the_root_guard_refuses_before_anything_is_written",
+      "tools/live/test_fx_b1_operational.py::test_the_default_target_is_the_bound_profile_root"
+    ],
+    "Review repairs (FX-B1.md clarification 2026-09-27)": [
+      "tests/composition/test_trajectory_receipts.py::test_an_item_whose_origin_differs_from_its_entry_does_not_reconcile",
+      "tests/composition/test_trajectory_receipts.py::test_a_store_failure_while_ensuring_items_holds_and_writes_no_receipt",
+      "tools/live/test_fx_b1_operational.py::test_the_audit_names_a_protected_path_reached_through_a_child_process_or_symlink"
+    ],
+    "B1P / C1 not regressed": [
+      "unchanged_predecessor_sources",
+      "b1p_regression",
+      "c1_regression"
+    ],
+    "negative controls": [
+      "proven-red.json: receipt_skips_events, attention_not_produced, prefix_unchecked, receipt_before_attention, cursor_ignored, audit_blind"
+    ]
+  },
+  "focused_command": {
+    "id": "focused",
+    "command": [
+      "/usr/bin/python3",
+      "-B",
+      "-m",
+      "pytest",
+      "-q",
+      "-rfEs",
+      "-p",
+      "no:cacheprovider",
+      "tests/composition/test_trajectory_receipts.py",
+      "tools/live/test_fx_b1_operational.py"
+    ],
+    "exit_status": 0,
+    "observation_ref": {
+      "revision_digest": "sha256:39f8c1285d4be3522a9c9a05bd8109a5d1ed6d12bd62b9ace680b96a3e913519",
+      "locator": "observations/39f8c1285d4be3522a9c9a05bd8109a5d1ed6d12bd62b9ace680b96a3e913519"
+    }
+  },
+  "boundaries": "LOCAL mechanical proof only; the operational acceptance is the separate FX-B1 operational run on the bound fx-b1-trajectory-operational target",
+  "proof_level": "LOCAL",
+  "exit_status": 1
+}

@@ -75,10 +75,12 @@ CONTROLS = (
      (T + "test_a_pass_with_nothing_new_writes_nothing",
       T + "test_passes_across_a_kill_and_granted_restart_reconcile_old_and_new_entries")),
     ("audit_blind", "a read of observer or factory state goes undetected", DRIVER,
-     "    return sorted({p for p in paths if inside(p, protected) and not any(inside(p, a) for a in allowed)})\n",
+     "    return sorted({p for p in paths if p.startswith(\"UNDECODABLE:\")\n"
+     "                   or inside(p, protected) and not any(inside(p, a) for a in allowed)})\n",
      "    return []\n",
      (D + "test_the_audit_names_a_protected_read_outside_the_allowed_root",
-      D + "test_the_audit_records_sqlite_opens_and_survives_a_failing_module")),
+      D + "test_the_audit_records_sqlite_opens_and_survives_a_failing_module",
+      D + "test_the_audit_names_a_protected_path_reached_through_a_child_process_or_symlink")),
 )
 
 
