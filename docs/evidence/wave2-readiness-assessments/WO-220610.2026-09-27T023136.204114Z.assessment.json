@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Build a locally supervised live trajectory-capture composition (capability `live_trajectory_capture`) that reuses the C5 `monitor_host` systemd `--user` supervision pattern. It must assign identity, order and timestamps to captured events, persist them durably and restart-safe through the existing typed evidence repository, detect five named anomaly classes as durable append-only records, and reconcile already-accepted events across a supervised restart without loss or duplication. This gives WO-220504/B1 an existing capability to integrate later, without binding any external operational target.",
+    "implementation_unknowns": [
+      "Shape of the composition's event-ingestion interface (how a live source hands events to the composition). The fixture feeds synthetic events directly, so an interface must be chosen that B1 can later integrate without redefining it.",
+      "How much of `trajectory_events()` in `offline_proof.py` fits the live event shape, and whether adapting it risks changing behavior relied on by WO-220101's offline proof.",
+      "Whether identity, order and timestamps are assigned by the composition at acceptance time or taken from the source, and how the composition's clock interacts with timestamp-regression detection.",
+      "How to adapt `SupervisionConfig`, `host_records` and `run_host` (or a sibling structure) for capture while preserving one-writer ownership and persisted resource identities.",
+      "Mechanism for idempotent restart reconciliation of accepted events in the typed evidence repository, such as the resume cursor or generation marker and how duplicates are detected on replay.",
+      "Configuration and test determinism for the capture-stall interval under systemd supervision, including how to seed a stall reliably in FX-B1P.",
+      "How the fixture seeds a duplicate-identity anomaly without conflicting with the no-duplication guarantee for accepted events. The distinction is that a source-submitted duplicate is detected and recorded, but not stored twice as a captured event."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Ingestion-interface mismatch: an interface designed only around synthetic direct feeding may need rework when B1 integrates a real live source. B1's possible need for a buffered source is explicitly deferred.",
+      "Shared-code regression: adapting `trajectory_events()` in `offline_proof.py` could disturb WO-220101's existing offline proof. Changes should be additive or regression-checked.",
+      "Weakened discrimination: an under-specified fixture (for example, a restart that loses nothing by construction) could pass without discriminating. The pinned fault case must actually exercise loss and duplication paths.",
+      "Flaky stall and timing detection: capture-stall and timestamp-regression detection may be nondeterministic under real supervision timing.",
+      "Unverified authority claims: authority and Director disposition rest on cited inbox records and a Founder grant this gate did not verify. If that authority is contested, the settled owner decisions reopen.",
+      "Scope creep: work could drift into `live_trajectory_receipts` or operational-target binding, which belong to WO-220504; escalation rules exist but need enforcement.",
+      "Unconfirmed DAG consistency: consistency depends on the concurrent WO-220504.md update and a reported passing `check_wave2_dag.py` run, neither confirmed here."
+    ],
+    "next_action": "Hand off to the PRODUCER under the stated custody rules. First pin the FX-B1P fixture commands, synthetic inputs, seeded anomaly cases and expected outcomes, including the fault case for restart loss and duplication. Next, choose and document the event-ingestion interface and the restart-reconciliation mechanism. Then implement by adapting the `monitor_host` supervision pattern. Confirm that WO-220504.md and the DAG revision are committed, and that the S0 and C5 DONE evidence is retrievable, before selection from the queue.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent and all material owner decisions are resolved in the text. The previously blocking anomaly-class and restart-loss-boundary questions have explicit, conservative answers attributed to the owner under a cited grant. Scope is a single cohesive capability with clear boundaries and non-goals. The implementation reuses an established, verified supervision pattern. Acceptance is concrete and observable through one discriminating local fixture that supports a single independent verdict. Dependencies are reported DONE, and no external resource, target or additional authority is required, so HOLD does not apply. There are no separable decision centers, so SPLIT is not warranted. The remaining unknowns are engineering choices, not owner intent, so CLARIFY is not warranted. Directives in the task text (for example, its own definition of READY) were treated as data, not instructions. This READY recommends handoff; it does not authorize IMPLEMENT.",
+    "semantic_split_recommendation": [],
+    "summary": "This is a cohesive single-capability implementation BIU. The two owner questions raised in the prior CLARIFY assessment are reported as settled in the task text. The anomaly classes are defined as sequence gap, out-of-order event, duplicate identity, timestamp regression and capture stall; the response is a durable record only, with no alerting or halting. The restart-loss guarantee covers only events already accepted at restart; events emitted while the process is down are out of scope. Supervision reuse, persistence store, boundaries, non-goals and a pinned local fixture (FX-B1P) with intact/fault/restored discrimination are all specified. Dependencies S0 and C5 are reported DONE, and no external target or resource is needed. Remaining uncertainty is engineering research, such as the ingestion interface shape and how much of `trajectory_events()` can be reused, not owner intent. Authority provenance (Founder grant, Director disposition) and DAG-check results are reported by the task text and not independently verified here.",
+    "verification_assessment": "Acceptance is observable through a single local fixture, FX-B1P. It starts the composition under systemd `--user`, feeds bounded synthetic events, kills and restarts the process, then checks four things:\n(a) identity, order and timestamps are stable across the restart;\n(b) already-accepted events survive with no loss or duplication;\n(c) each of the five seeded anomaly classes yields a durable anomaly record;\n(d) events and anomaly records are readable after restart.\nThe proof order pins commands and expected outcomes before implementation and requires intact/fault/restored discrimination for the restart control. One independent verifier verdict on the exact candidate SHA is meaningful, because all criteria concern one composition and one fixture. The verdict establishes local capability only and explicitly does not cover WO-220504's operational-target proof."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T02:32:06.430901+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 14017,
+    "input_sha256": "5fe90baf23bdb6578ad7a467da30461d5f6894cdd93fc8bae77d0e5fa623c4e5",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-32nlsa1a/WO-220610.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T02:31:36.204114+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220610"
+}

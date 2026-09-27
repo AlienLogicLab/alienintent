@@ -2019,6 +2019,53 @@
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
+      "id": "B1P",
+      "title": "Live trajectory-capture composition",
+      "requirement_ids": [
+        "SF-REQ-053"
+      ],
+      "depends_on": [
+        "S0",
+        "C5"
+      ],
+      "is_capstone": false,
+      "owns_capabilities": [
+        "live_trajectory_capture"
+      ],
+      "proof_requires_capabilities": [
+        "existing_kernel_fixture",
+        "local_proof_transport",
+        "supervised_monitor_host"
+      ],
+      "proof_fixtures": [
+        "FX-B1P"
+      ],
+      "parallelisable_with": [
+        "U6",
+        "U8",
+        "U10",
+        "A",
+        "C2",
+        "C3",
+        "L1",
+        "O",
+        "C"
+      ],
+      "authority_gap_refs": [],
+      "direct_authority_gap_refs": [],
+      "authority_gate_refs": [],
+      "migration": null,
+      "bootstrap_replacement_for": [],
+      "track": "replacement",
+      "node_kind": "capability",
+      "scope": "Bounded prerequisite implementation, not a proof node: build a real, locally-supervised live trajectory-capture composition (identity/order/timestamp assignment, restart-safe persistence, reconciliation of old/new observations) modeled directly on the proven C5 monitor_host supervision pattern (SupervisionConfig, host_records, systemd --user supervised run loop). No separately authorized operational target is required or bound here; this composition runs under this operator's own existing local systemd --user supervision, the same class of resource C5 already uses. No claim of external-observer replacement or retirement; that remains B1's own scope and the existing alienintent-observer.service.",
+      "proceeds_regardless": "A local, self-supervised composition build proceeds under existing operational/read authority and the Founder's explicit 2026-09-27T02:01:41Z grant (FULL_WAVE2_BIU_UNBLOCK_AUTHORITY) authorizing new bounded prerequisite implementation BIUs for B1/WO-220504 and siblings; no new external resource or separate target authority is invoked.",
+      "completion_predicate": "Implement and locally exercise a live trajectory-capture composition that assigns identity/order/timestamps to captured events, persists them durably and restart-safe, detects anomalies, and reconciles old/new observations across a supervised restart without loss, using only this operator's own existing local systemd --user supervision (no new external target, service or resource). Produce the owned live_trajectory_capture capability that B1/WO-220504 then integrates and proves against its own separately authorized target profile.",
+      "inherited_authority_gate_refs": [],
+      "completion_status": "PROCEEDS_REGARDLESS",
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+    },
+    {
       "id": "B1",
       "title": "Operational trajectory replacement proof",
       "requirement_ids": [
@@ -2028,11 +2075,11 @@
         "B0",
         "C5",
         "S1",
-        "E1"
+        "E1",
+        "B1P"
       ],
       "is_capstone": false,
       "owns_capabilities": [
-        "live_trajectory_capture",
         "live_trajectory_receipts"
       ],
       "proof_requires_capabilities": [
@@ -2047,6 +2094,7 @@
         "existing_kernel_fixture",
         "fenced_consumer_readback",
         "guarded_effect_store",
+        "live_trajectory_capture",
         "local_proof_transport",
         "monitor_health_core",
         "node_independent_runtime_baseline",
@@ -5870,22 +5918,23 @@
     "migrations": "Nodes with non-null migration, including nine conditional retirement transitions; none executed."
   },
   "statistics": {
-    "nodes": 46,
+    "nodes": 47,
     "capstones": 13,
     "planned_capabilities": 41,
     "unowned": 0,
     "parallel_tracks": 5,
     "bootstrap_replacements_sequenced": 9,
     "gap_blocked_nodes": 0,
-    "proceeds_regardless": 25,
+    "proceeds_regardless": 26,
     "separate_authority_only_nodes": 21,
-    "proof_fixtures": 46,
+    "proof_fixtures": 47,
     "migrations": 18,
     "acceptance_criteria": 53,
     "enforcement_obligations": 18,
     "recounted_2026_09_22": "DV-1: recomputed from nodes[*].completion_status; enforced by check_wave2_dag.py root_register_consistent",
     "recounted_2026_09_25_cohort_prep": "Recounted after targeted U6/U10/L1/K1 stale-gate repair; downstream inherited stale copies intentionally not rescheduled.",
     "recounted_2026_09_25_supply_buffer": "Recounted after C5/K2/B0 stale/broad authority-gate repair for READY-lane supply.",
-    "recounted_2026_09_25_global_stale_gap_cleanup": "Removed only authority blockers already dispositioned by 2026-09-25 grooming; explicit live/cutover gates remain."
+    "recounted_2026_09_25_global_stale_gap_cleanup": "Removed only authority blockers already dispositioned by 2026-09-25 grooming; explicit live/cutover gates remain.",
+    "recounted_2026_09_27_b1p_insertion": "Added node B1P (WO-220610), a bounded prerequisite implementation node, under Founder grant FULL_WAVE2_BIU_UNBLOCK_AUTHORITY (2026-09-27T02:01:41Z); it owns live_trajectory_capture, previously first-owned by its own prover B1/WO-220504. nodes 46->47, proceeds_regardless 25->26 (B1P). planned_capabilities unchanged (live_trajectory_capture already planned; ownership moved, not added)."
   }
 }

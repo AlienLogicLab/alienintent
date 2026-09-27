@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "CLARIFY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Build a real, locally supervised live trajectory-capture composition (capability `live_trajectory_capture`, DAG node B1P) that WO-220504/B1 can later integrate and prove against an operational target. It should reuse the C5 `monitor_host` systemd `--user` supervision pattern and the typed evidence repository. It must assign identity, order and timestamps to events, persist them restart-safe, detect anomalies, and reconcile across supervised restarts without loss or duplication. It must not bind any external target or touch `live_trajectory_receipts`.",
+    "implementation_unknowns": [
+      "Whether the event shape produced by `trajectory_events()` in offline_proof.py fits live capture, or needs a compatible extension.",
+      "How the typed evidence repository supports atomic, idempotent writes and one-writer ownership for restart-safe persistence and deduplication.",
+      "How to adapt `SupervisionConfig`, `host_records` and `run_host` from monitor_host.py for a capture loop, including the unit definition and restart policy under systemd `--user`.",
+      "How to design an identity/ordering scheme that stays stable across restarts, such as a persisted sequence cursor or a content-derived identity.",
+      "How to make the kill/restart fixture deterministically discriminate intact, fault and restored states."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "If 'no loss' is not defined, the implementation may pass the synthetic fixture but lose live-source events emitted during downtime. That gap would only surface in B1.",
+      "If the anomaly definition is left to the producer, the acceptance criterion could be trivially satisfied by detecting only the one seeded anomaly type.",
+      "Adapting shared code in monitor_host.py or offline_proof.py could regress C5 or the WO-220101 offline proof. Interfaces must remain compatible, and changes to prerequisites must go to their owners.",
+      "The capture interface may not match what B1/WO-220504 needs for `live_trajectory_receipts` integration, which would cause rework across nodes.",
+      "The authority chain, the dependencies being DONE, and the check_wave2_dag.py pass are reported in the task text and were not independently verified by this gate."
+    ],
+    "next_action": "Ask the owner (Factory Director or Founder) to answer or point to SF-REQ-053 text for: (1) the required anomaly classes and the response to each; (2) the restart loss boundary and the live-source contract, as they affect B1 integration. Then record the answers in WO-220610's acceptance criteria and FX-B1P expected outcomes, and re-assess. It should then be READY without splitting.",
+    "owner_clarifications": [
+      "Which anomaly classes must the composition detect for acceptance, and what should it do when it detects one? Candidate classes: sequence gaps, out-of-order events, duplicate identities, timestamp regressions or skew, malformed events, and capture stalls. Possible responses: record an anomaly evidence record, alert, or halt. If SF-REQ-053 already enumerates these, please confirm that it governs.",
+      "What is the required loss boundary across a supervised restart? (a) Only events the composition has already accepted or acknowledged must survive without loss or duplication. (b) Events the live source produced while the process was down must also be recovered, which requires a replayable or buffered source contract. Which source classes must B1 eventually capture from, so that the ingestion interface fits B1's later integration?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "Scope, authority, dependencies, custody, non-goals and a single discriminating local fixture are all supplied, and the work is one cohesive decision center. It is therefore neither SPLIT nor HOLD: no external prerequisite is reported missing. What controls the disposition is material owner intent. Two acceptance predicates, 'detects anomalies' and 'without loss' for a live source, have more than one reasonable meaning, and each meaning leads to a different design and verdict. These questions concern product and compatibility semantics that the downstream B1 proof depends on. They are not engineering research, so they block handoff until answered, even if the answer is simply a pointer to SF-REQ-053.",
+    "semantic_split_recommendation": [],
+    "summary": "This is one cohesive implementation with a single local proof fixture (FX-B1P), bounded scope, explicit non-goals and a reported authority chain. It should not be split. Two acceptance terms are undefined in the supplied text, and they determine both the design and what the verifier must judge. First, which anomalies the composition must detect. Second, what 'without loss' means for a live source across a kill/restart: loss of events already accepted, or also events emitted while the process was down, which would require a durable or replayable upstream. The proof plan has the producer pin its own expected outcomes before implementation. Without owner-defined answers, the producer would effectively define its own acceptance, and B1 may inherit a capture contract it cannot use. SF-REQ-053 may already answer both questions. If so, the owner only needs to confirm that, and the task becomes READY.",
+    "verification_assessment": "FX-B1P gives observable acceptance: feed synthetic events, kill and restart under systemd `--user`, then check identity/order/timestamp stability, no loss or duplication, detection of a seeded anomaly, and durable readability after restart. A single independent verdict from JC on the exact candidate SHA is meaningful, because all criteria come from one fixture run against one composition. However, the verdict is only non-circular if the anomaly classes and the loss boundary are defined by the owner or requirement. Otherwise the producer-pinned expectations are the only reference the verifier has."
+  },
+  "disposition": "CLARIFY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T02:30:32.532444+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 11405,
+    "input_sha256": "3cb2a26cfe06e80573c5a41d9ff7681c5a4902dc255b44f3f726e6e21f771607",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-fh52nlnn/WO-220610.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T02:29:59.447498+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220610"
+}

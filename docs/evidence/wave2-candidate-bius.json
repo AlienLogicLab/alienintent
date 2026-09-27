@@ -91,9 +91,10 @@
       "R6": "WO-220606",
       "R7": "WO-220607",
       "R8": "WO-220608",
-      "R9": "WO-220609"
+      "R9": "WO-220609",
+      "B1P": "WO-220610"
     },
-    "rule": "Explicit candidate identity ledger; immutable under input/order/title changes. Numeric blocks are readability only, not computed rank or parsing semantics. These are candidate identities, not live work registrations; local docs/src/tests collision scan found no existing WO-2201xx through WO-2206xx use. No external registry verification performed."
+    "rule": "Explicit candidate identity ledger; immutable under input/order/title changes. Numeric blocks are readability only, not computed rank or parsing semantics. These are candidate identities, not live work registrations; local docs/src/tests collision scan found no existing WO-2201xx through WO-2206xx use. No external registry verification performed. B1P/WO-220610 (2026-09-27) is the first appended entry after Phase 12 compilation: a Director-added bounded prerequisite implementation node under Founder grant FULL_WAVE2_BIU_UNBLOCK_AUTHORITY (2026-09-27T02:01:41Z), not a Phase 12 candidate; appending a new identity is distinct from the immutability guarantee, which protects existing entries from renumbering."
   },
   "required_requirements": [
     "SF-REQ-011",
@@ -245,6 +246,9 @@
     ],
     "WO-220609": [
       "R9"
+    ],
+    "WO-220610": [
+      "B1P"
     ]
   },
   "fixed_design_baseline": {
