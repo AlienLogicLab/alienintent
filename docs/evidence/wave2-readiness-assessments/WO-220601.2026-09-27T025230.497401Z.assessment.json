@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce WO-220601's retained FX-R1 proof record for the R1 coordinator-checkpoint replacement gate (SF-REQ-053). The record would cite the already-executed FDH-01 live-proof run and the fault-path proof from dependencies C2 and C3. Together these should show that a fresh successor reconstructs scope, unresolved decisions, effects and authorized next actions from durable state without prior conversation, and that a mismatch blocks tenure change. The checkpoint is preserved; nothing is retired, released or re-executed.",
+    "implementation_unknowns": [
+      "Whether the FDH-01 evidence directory (README.md, FINDINGS.txt, raw evidence under SHA256SUMS) is reachable at the pinned baseline, and whether its checksums verify, so the record can cite exact immutable observation refs.",
+      "The exact revisions of the FX-C2 and FX-C3 retained proof records (fixture revision, command, exit status, negative-control application counts, independent verdicts) that FX-R1 must reference rather than restate.",
+      "The concrete mapping from the FDH-01 twelve-step procedure (steps 7-10 and 12) to each clause of the completion predicate: scope, unresolved decisions, effects, authorized next actions, and mismatch blocking tenure change.",
+      "The evidence schema and location expected for a retained FX-R1 record, and how to label clearly that cited C2/C3 fault proofs are capability-level proofs, not proofs of R1-level composition.",
+      "The exact candidate branch and full SHA publication steps and the Issue recording format needed before RESULT=VERIFY."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The mismatch clause is discharged by capability-level C2/C3 proof plus a positive-path-only operational run. The composed system's mismatch-blocks-tenure behaviour under real operation is inferred, not directly observed. This was accepted by owner disposition, but the record must state the limitation honestly.",
+      "The owner disposition rests on the Director applying a delegated Founder grant to its own capstone evidence scope. If a reviewer contests that authority chain, the disposition could be reopened. That would be an authority issue, not an engineering one.",
+      "The FDH-01 PASS, the pin-before-run timestamps, the checksums and the SHA ancestry are reported facts that this gate did not verify. Any discrepancy found at curation time should trigger a STOP for source revision mismatch or unavailable evidence, not a repair.",
+      "Curated wording could imply that the checkpoint is retired or that the session-bound mechanism is replaceable. That would violate the KEEP_UNTIL_REPLACED scope and the non-goals.",
+      "The execution allocation is bound only on release. Release/IMPLEMENT is not authorized, so work cannot proceed until the allocator binds budget after release.",
+      "The FDH-01 run evidence predates the current baseline. If intervening changes touched reconstruction or tenure behaviour, the citation's applicability could be questioned."
+    ],
+    "next_action": "Record this READY eligibility on the WO-220601 Issue. Await explicit release and the execution allocation in execution.biuLimits. Once both exist, the producer should pin the baseline and candidate branch, author the FX-R1 record, and publish the candidate SHA for a fresh independent verifier. The record should cite the FDH-01 run with its exact refs and checksums, plus the FX-C2 and FX-C3 fault proofs, and label the positive-path-only operational scope.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that the remaining work is a single bounded curation deliverable with a stated completion predicate and an owner-disposed evidence scope. The previously open owner questions (negative-control scope and pin ordering) are answered in the text by a stated authority. The operational target is reported as bound. Dependencies are reported DONE. The unbound execution allocation is deliberately tied to release, which READY does not grant, so HOLD is not warranted for eligibility. There is no competing decision center to split. What remains is engineering work: resolving refs, mapping steps to the predicate, and schema placement. The residual concerns about composition evidence strength and the authority chain are recorded as risks rather than questions, because they have been explicitly disposed. The gate conditions stated inside the task text did not determine this disposition; it follows from the rubric.",
+    "semantic_split_recommendation": [],
+    "summary": "One cohesive deliverable: an evidence-curation and citation record. The task text reports all of the following; this gate has not verified any of it. All three dependencies are DONE. The operational target (FDH-01, Issue #89) is bound under the Founder's 2026-09-26 delegation. The FDH-01 procedure was pinned at commit a2bf163 before the 2026-09-24T08:04:01Z run, and the run is recorded as PASS. The FDH-01 landed SHA is an ancestor of the current baseline. The two owner questions raised by the prior assessment are disposed by the Factory Director under the FULL_WAVE2_BIU_UNBLOCK_AUTHORITY grant. First, no new negative-control run is needed; the mismatch predicate is discharged by citing FX-C2 test_mismatch_is_failure and FX-C3's 23 discriminating controls. Second, the pin-before-run order is satisfied. The execution allocation binds only on release, and release is explicitly not authorized, so it does not block eligibility. No material owner intent, independent decision center or unavailable prerequisite remains in the supplied text.",
+    "verification_assessment": "Acceptance is observable. A fresh independent verifier can retrieve the candidate SHA and check the following. (1) FX-R1 cites the exact FDH-01 run directory, SHA256SUMS, commit a2bf163 and the landed SHA a233e9e, and the checksums and ancestry hold. (2) The cited FDH-01 steps demonstrate fresh-episode reconstruction and correct authorized next action with distinct episodes. (3) The FX-C2 and FX-C3 references resolve to retained fault-discriminating proof covering reconstruction mismatch and state-vector-mismatch tenure termination. (4) No retirement, release or re-execution is claimed, and local results are not presented as operational success. This is one meaningful combined verdict over a single coherent record. The verifier judges citation integrity and predicate coverage; it does not re-run the proof."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T02:53:03.794168+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 16911,
+    "input_sha256": "f8e48528701fa475feb9a8ab22eb0f2b06988192a1f5799adefab9d9978cd091",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-bs3156hx/WO-220601.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T02:52:30.497401+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220601"
+}

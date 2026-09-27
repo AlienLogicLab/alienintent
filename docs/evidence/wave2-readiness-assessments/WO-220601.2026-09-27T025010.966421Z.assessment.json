@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "CLARIFY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Produce the retained FX-R1 proof record for replacement gate R1 (SF-REQ-053). The record must show that a fresh successor reconstructs scope, unresolved decisions, effects and authorized next actions from durable state without prior conversation, and that a mismatch blocks tenure change. The checkpoint must be preserved and nothing retired. Per the latest revision, the work is done by curating and citing the existing FDH-01 live-proof evidence, not by re-executing or extending it.",
+    "implementation_unknowns": [
+      "Map the cited FDH-01 steps (7-10, 12) and raw artifacts to each predicate element: scope, unresolved decisions, effects and authorized next actions. The designed proof text names 'authorized next actions, unresolved decisions and evidence' but not 'scope' or 'effects' explicitly.",
+      "Verify that the files listed in SHA256SUMS match the retained artifacts, and that FDH-01 landed SHA a233e9e is an ancestor of baseline 4e74e18.",
+      "Determine the evidence-record schema and location for the FX-R1 record, and how to reference Issue #89 authorization and the delegation decision document.",
+      "Arrange fresh independent verifier retrieval of the exact candidate SHA and capture the retrieval/verdict receipts per the candidate custody rules."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Positive-path-only evidence could be recorded as PASS for a predicate that also requires fail-closed mismatch behavior. That would be an inferred success the evidence contract forbids.",
+      "Retroactively adopting a pre-pin run may break the 'pin before implementation' discipline and weaken the discrimination proof.",
+      "The curated record might be read as authorizing retirement of the session-bound checkpoint. The text explicitly reserves retirement for a later separate decision.",
+      "The two authority passages are in tension. The 2026-09-26 disposition says the target 'stays open', while the 2026-09-27 binding claims closure under the delegation. The delegation's scope is asserted, not verified here.",
+      "Execution allocation is bound only on release. Starting work before release would violate the custody and budget rules."
+    ],
+    "next_action": "Route the two owner questions through the Program Director to the appropriate authority (the Founder for any scope or authority change). The questions are: whether FX-R1 needs mismatch/negative-control evidence and how to source it, and whether retroactive adoption of the pre-pin FDH-01 run is acceptable. Record the disposition in the work order, then request a fresh Agent Ready assessment of that revision.",
+    "owner_clarifications": [
+      "The FX-R1 predicate requires that a reconstruction mismatch blocks tenure change, and the proof order requires intact/fault/restored discrimination with negative-control counts. The cited FDH-01 run reportedly shows only positive-path reconstruction. Should FX-R1 be accepted on the cited evidence alone? If fault/mismatch evidence is required, should this BIU be authorized to run a bounded negative-control exercise, even though it says 'not to re-execute or extend the underlying proof'? Or should it cite a named existing negative-control artifact, or else hold and return the gap to its named provider?",
+      "The 2026-09-24 FDH-01 run was executed before FX-R1 fixture commands, inputs, expected outcomes and evidence schema were pinned against this node predicate, which the 'Order' obligation requires to happen before implementation. Is retroactive adoption of that run as the FX-R1 record acceptable? If so, which authority (Program Director or Founder) records that disposition, and must the post-hoc pin be reviewed before the independent verifier's verdict?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is unresolved owner intent about what satisfies acceptance. The predecessors, target binding and authority disposition are reported as resolved, and allocation-on-release is the normal release flow, so HOLD is not controlling. The work is a single cohesive curation deliverable, so SPLIT does not apply. READY is blocked because the BIU's curation-only, no-extension framing conflicts with its own completion predicate ('mismatch blocks tenure change') and its proof-order and negative-control obligations. Resolving that conflict needs a product or authority decision, not engineering research. The remaining evidence mapping and integrity checks are ordinary implementation unknowns.",
+    "semantic_split_recommendation": [],
+    "summary": "The work order says predecessors are DONE, the Founder has disposed POSTW1-DECIDE-006A, and the operational target is bound to FDH-01 (Issue #89) with existing PASS evidence at docs/evidence/fdh-01-live-proof/20260924T080401Z/. The remaining deliverable is evidence curation, and execution allocation is bound on release. Engineering scope is small and cohesive, so splitting is not needed. However, the node's completion predicate and proof order conflict with the curation-only framing, and only an owner can decide which governs. The predicate requires that 'mismatch blocks tenure change', and the proof order requires intact/fault/restored discrimination and negative-control counts. The cited run, as described, reports only positive-path reconstruction and advancement: steps 7-10 and 12. It also predates any FX-R1 fixture pin, although the Order section requires pinning commands and expected outcomes before implementation. The BIU forbids extending the proof, so it cannot fill these gaps on its own authority. These facts come from the task text only and have not been independently verified.",
+    "verification_assessment": "Once the owner questions are resolved, one independent verdict is meaningful. The verifier checks the curated FX-R1 record against the pinned predicate, the evidence integrity (hashes, SHAs, ancestry, authorization refs), and the explicit statement that nothing is retired. Observability of the 'mismatch blocks tenure change' element is currently unestablished, because the cited evidence as described contains no fault or negative-control case. Without an owner decision, a verifier could fairly reject the record on that element alone."
+  },
+  "disposition": "CLARIFY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-27T02:50:46.244276+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 13617,
+    "input_sha256": "2cf3611cdb219ae3866cde1897e6d7a2eab7fddd2d0dc5b96bcdad5a6f00324b",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-re_vwo5a/WO-220601.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-27T02:50:10.966421+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220601"
+}
