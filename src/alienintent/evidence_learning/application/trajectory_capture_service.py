@@ -25,9 +25,10 @@ def acknowledgement(entry: Mapping[str, object], state: CaptureState) -> dict[st
     anomalies = [a["kind"] for a in entry["anomalies"]]
     if entry["kind"] == DUPLICATE:
         original = entry["duplicate"]["original_capture_seq"]
-        event_id = entry["anomalies"][0]["event_id"]
+        anomaly = entry["anomalies"][0]
         return {"status": "DUPLICATE", "entry_seq": entry["entry_seq"], "capture_seq": original,
-                "event_id": event_id, "identity": state.event_ids[event_id][1], "anomalies": anomalies}
+                "event_id": anomaly["event_id"], "identity": state.event_ids[(anomaly["source"], anomaly["event_id"])][1],
+                "anomalies": anomalies}
     event = entry["event"]
     return {"status": "CAPTURED", "entry_seq": entry["entry_seq"], "capture_seq": event["capture_seq"],
             "event_id": event["event_id"], "identity": event["identity"], "captured_at": event["captured_at"],

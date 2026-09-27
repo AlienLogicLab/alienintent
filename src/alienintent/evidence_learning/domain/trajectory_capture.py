@@ -42,7 +42,7 @@ def _count(value: object, minimum: int) -> bool:
 def canonical(document: object) -> str:
     try:
         return json.dumps(document, sort_keys=True, separators=(",", ":"), allow_nan=False)
-    except (TypeError, ValueError) as error:
+    except (TypeError, ValueError, RecursionError) as error:
         raise CaptureHold("SUBMISSION_INVALID:json") from error
 
 
@@ -122,7 +122,8 @@ class CaptureState:
         self.stalled_since: int | None = None
         self.sessions: list[str] = []
         self.sources: dict[str, dict[str, int]] = {}
-        self.event_ids: dict[str, tuple[int, str]] = {}
+        # (source, event_id) -> (capture_seq, identity): an event id is unique within its source.
+        self.event_ids: dict[tuple[str, str], tuple[int, str]] = {}
 
     def apply(self, entry: Mapping[str, object]) -> None:
         """Fold one committed entry; an entry that does not continue this state holds."""
@@ -148,7 +149,8 @@ class CaptureState:
             event = entry.get("event")
             if not isinstance(event, Mapping) or event.get("capture_seq") != self.events + 1:
                 raise CaptureHold("JOURNAL_EVENT_OUT_OF_SEQUENCE")
-            if event.get("event_id") in self.event_ids:
+            key = (str(event["source"]), str(event["event_id"]))
+            if key in self.event_ids:
                 raise CaptureHold("JOURNAL_EVENT_DUPLICATED")
             captured_at = event.get("captured_at")
             if not _count(captured_at, 0) or (self.last_captured_at is not None and captured_at < self.last_captured_at):
@@ -156,10 +158,10 @@ class CaptureState:
             self.events += 1
             self.last_captured_at = captured_at
             self.idle_since = captured_at if self.idle_since is None else max(self.idle_since, captured_at)
-            self.event_ids[str(event["event_id"])] = (self.events, str(event["identity"]))
-            cursor = self.sources.setdefault(str(event["source"]), {"high_seq": 0, "last_observed_at": 0})
+            self.event_ids[key] = (self.events, str(event["identity"]))
+            cursor = self.sources.setdefault(key[0], {"high_seq": 0, "high_observed_at": 0})
             cursor["high_seq"] = max(cursor["high_seq"], int(event["source_seq"]))
-            cursor["last_observed_at"] = int(event["observed_at"])
+            cursor["high_observed_at"] = max(cursor["high_observed_at"], int(event["observed_at"]))
         elif kind == STALL:
             anomalies = entry.get("anomalies")
             if not isinstance(anomalies, list) or len(anomalies) != 1 or anomalies[0].get("kind") != CAPTURE_STALL:
@@ -191,7 +193,7 @@ def session(state: CaptureState, launch_id: str, now: int, policy: CapturePolicy
 def admit(state: CaptureState, submission: Submission, launch_id: str, now: int) -> dict[str, object]:
     """The entry that accepts `submission`, with every anomaly it shows.
 
-    A submission naming an already-captured `event_id` is never captured twice: it becomes a
+    A submission naming an `event_id` its source already had captured is never captured twice: it becomes a
     `DUPLICATE` entry that points at the original. Otherwise the event is captured even when
     anomalous, so no observation is dropped by detection.
     """
@@ -203,21 +205,24 @@ def admit(state: CaptureState, submission: Submission, launch_id: str, now: int)
                                   submission.event_id))
 
     identity = submission.identity()
-    original = state.event_ids.get(submission.event_id)
+    original = state.event_ids.get((submission.source, submission.event_id))
     if original is not None:
         flag(DUPLICATE_IDENTITY, original_capture_seq=original[0], same_content=original[1] == identity,
              source_seq=submission.source_seq)
         return _entry(state, DUPLICATE, launch_id, now, anomalies=anomalies,
                       duplicate={"original_capture_seq": original[0], "identity": identity})
-    cursor = state.sources.get(submission.source, {"high_seq": 0, "last_observed_at": None})
-    if submission.source_seq > cursor["high_seq"] + 1:
-        flag(SEQUENCE_GAP, expected_source_seq=cursor["high_seq"] + 1, source_seq=submission.source_seq,
-             missing=submission.source_seq - cursor["high_seq"] - 1)
-    elif submission.source_seq <= cursor["high_seq"]:
-        flag(OUT_OF_ORDER, high_source_seq=cursor["high_seq"], source_seq=submission.source_seq)
-    last_observed = cursor["last_observed_at"]
-    if last_observed is not None and submission.observed_at < last_observed:
-        flag(TIMESTAMP_REGRESSION, clock="source", previous=last_observed, observed=submission.observed_at)
+    cursor = state.sources.get(submission.source)
+    high_seq = 0 if cursor is None else cursor["high_seq"]
+    if submission.source_seq > high_seq + 1:
+        flag(SEQUENCE_GAP, expected_source_seq=high_seq + 1, source_seq=submission.source_seq,
+             missing=submission.source_seq - high_seq - 1)
+    elif submission.source_seq <= high_seq:
+        flag(OUT_OF_ORDER, high_source_seq=high_seq, source_seq=submission.source_seq)
+    # An event advancing the source's order must not be older than anything the source already
+    # reported; a late (out-of-order) event is expected to be older and is not a regression.
+    high_observed = None if cursor is None else cursor["high_observed_at"]
+    if submission.source_seq > high_seq and high_observed is not None and submission.observed_at < high_observed:
+        flag(TIMESTAMP_REGRESSION, clock="source", previous=high_observed, observed=submission.observed_at)
     captured_at = now
     if state.last_captured_at is not None and now < state.last_captured_at:
         # Capture order stays monotonic in time; the regressed reading is kept as evidence.
