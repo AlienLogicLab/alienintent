@@ -204,6 +204,25 @@ mutation (`return []`) is unchanged. The control also now requires the review-re
 `test_the_audit_names_a_protected_path_reached_through_a_child_process_or_symlink` to fail. No probe
 is weakened. The HOLD run is retained unchanged as evidence.
 
+## Retained runs — PRODUCER invocation `...:86456750-4a5a-46c8-8fa1-170250f834ae`, 2026-09-27
+
+| Run | Source | Result |
+|---|---|---|
+| `local-run/20260927T145427Z` | `c4b7505` (clean) | exit 1, HOLD `audit_blind` count 0 (repaired above) |
+| `operational/20260927T150544Z` | `5f56155` (clean) | exit 0, `OPERATIONAL_READBACK_COMPLETE`; all six predicates PASS; audit forbidden set empty, no unexpected executable; no unit left after teardown |
+| `operational/20260927T150544Z/retained-readback` | same root, after the run | `RETAINED_READBACK_RECONCILED` |
+| `local-run/20260927T150637Z` | `fdefa42` (clean) | exit 0, no holds; six controls, each applied once and discriminating; `python_regression` failures identical to the admission baseline (25, `PRE_EXISTING_BASELINE_FAILURE`) |
+
+The source changed between the operational run and the final local run only by adding retained
+evidence files. The bound root is retained with its stores.
+
+Cleanup: a transient unit `alienintent-monitor-0eae603507db752ddd7406a54841a593` (and its observer
+timer) was still running from an earlier PRODUCER attempt's interrupted B1P real-manager regression. It
+ran a pytest temporary config from worktree `2089b4d8-...`, not the bound root. This invocation
+stopped it and reset it. No other unit was touched.
+
+The independent verdict remains `PENDING_FRESH_BIU_VERIFIER`.
+
 ## Evidence schema
 
 Local run (`local-run/<UTC stamp>/`) and operational run (`operational/<UTC stamp>/`) each hold:
