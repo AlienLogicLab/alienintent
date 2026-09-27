@@ -154,6 +154,46 @@ set and the empty forbidden set; the unit list after teardown. The capture host 
 under `env -i` in its transient unit and is not audited; its configuration names only paths inside
 the root and the source tree, which the record binds by digest (label `HOST_PROCESS_CONFIG_CONFINED`).
 
+## Clarification after independent review — 2026-09-27
+
+An independent read-only review of implementation commit `31fae99` found that the audit was less
+strict than this contract states. This section records the repair. It adds probes and narrows what
+the audit allows; no probe above is weakened.
+
+- **Allowed subtrees, stated exactly.** Every audited process imports the candidate's own source,
+  and this checkout sits under `~/.local/state/alienintent/worktrees/`. The allowed set is therefore
+  the bound root, plus from this checkout only `src/`, `tools/` and the run's output directory.
+  It is recorded as label `AUDIT_ALLOWS_CANDIDATE_SRC_TOOLS_OUTPUT`. The first implementation allowed
+  the whole checkout; that is withdrawn.
+- **Child processes and symlinks.**
+  - The audit records every child process (`subprocess.Popen`, `os.exec`, `os.posix_spawn`,
+    `os.spawn`, `os.system`) with its argument vector.
+  - Every absolute path argument counts as a touched path.
+  - Symlinks are resolved on both sides of the forbidden-path check, and an undecodable path is
+    always forbidden.
+  - An executable outside `python3`, `systemd-run`, `systemctl` and `env` makes the
+    observer-boundary predicate HOLD.
+  - New probe: `test_the_audit_names_a_protected_path_reached_through_a_child_process_or_symlink`.
+- **Unaudited units.** The C5 monitor-observer unit (`trajectory_capture observe`) runs unaudited
+  under systemd, in addition to the capture host. Both are bound by their configuration, which
+  names only the root and the source tree (label `HOST_AND_MONITOR_OBSERVER_UNITS_CONFIG_CONFINED`).
+- **Predicates decided from counts and every status.**
+  - Queue retention and the PENDING check now use `trajectory_receipts receipts`, which reads
+    items in every status, at each stage. `attention_inbox list` reads only pending items.
+  - The operational predicates assert the pinned counts: 7 captured events (6 before the kill),
+    5 items before and during the outage, 7 after, and exactly one refused submission while down.
+- **Store faults and origin checks.**
+  - A store fault while ensuring an item holds `ATTENTION_STORE_UNAVAILABLE:<error>` and writes no
+    receipt.
+  - `reconcile` compares every item with the origin its journal entry implies (kind, lane, entry
+    digest, authority), and with the attention identity named in the receipt. It also compares
+    every receipted entry digest with the journal.
+  - New probes: `test_a_store_failure_while_ensuring_items_holds_and_writes_no_receipt` and
+    `test_an_item_whose_origin_differs_from_its_entry_does_not_reconcile`.
+- **Retained readback.** `readback --root <root> --output <dir>` reads a retained root through the
+  same CLIs under the same audit. It returns `RETAINED_READBACK_RECONCILED` only when the audit
+  finds no forbidden path.
+
 ## Evidence schema
 
 Local run (`local-run/<UTC stamp>/`) and operational run (`operational/<UTC stamp>/`) each hold:

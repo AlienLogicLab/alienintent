@@ -177,3 +177,35 @@ def test_a_lost_receipt_compare_and_set_holds(world):  # B1-08
                                "prefix_digest": "sha256:" + "0" * 64, "entries": []})
     assert held.value.reason == "RECEIPTS_VERSION_CONFLICT"
     assert len(consumer(world, "reader").chain()) == 1
+
+
+def test_an_item_whose_origin_differs_from_its_entry_does_not_reconcile(world):  # B1-02 (reconcile)
+    world.supervisor.launch(world.grant())
+    seed(world, world.host())
+    wrong = consumer(world, "wrong")
+    real_origin = wrong.origin
+
+    def mislabelled(entry, anomaly):
+        from dataclasses import replace
+        return replace(real_origin(entry, anomaly), lane="trajectory-anomaly:WRONG")
+    wrong.origin = mislabelled
+    wrong.consume()
+    report = consumer(world, "reader").reconcile()
+    assert not report["reconciled"]
+    assert len(report["mismatched_items"]) == len(KINDS)
+
+
+def test_a_store_failure_while_ensuring_items_holds_and_writes_no_receipt(world):  # B1-06 (store faults)
+    from alienintent.composition.trajectory_receipts import ReceiptHold
+    from alienintent.execution_coordination.ports.operational_store import VersionConflict
+    world.supervisor.launch(world.grant())
+    seed(world, world.host())
+    racing = consumer(world, "racing")
+
+    def lost(origin):
+        raise VersionConflict("a concurrent consumer created the item first")
+    racing.attention.ensure = lost
+    with pytest.raises(ReceiptHold) as held:
+        racing.consume()
+    assert held.value.reason == "ATTENTION_STORE_UNAVAILABLE:VersionConflict"
+    assert consumer(world, "reader").chain() == ()

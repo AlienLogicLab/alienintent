@@ -146,6 +146,8 @@ class TrajectoryReceipts:
                     item = self.attention.ensure(self.origin(entry, anomaly))
                 except AttentionHold as hold:
                     raise ReceiptHold("ATTENTION_" + hold.reason) from hold
+                except (VersionConflict, StoreUnavailable, SchemaIncompatible, EvidenceHold) as error:
+                    raise ReceiptHold("ATTENTION_STORE_UNAVAILABLE:" + type(error).__name__) from error
                 items.append({"anomaly_id": anomaly["anomaly_id"], "kind": anomaly["kind"],
                               "attention": item.identity})
             event = entry["event"] if entry["kind"] == EVENT else None
@@ -185,8 +187,10 @@ class TrajectoryReceipts:
             item = self.attention.show(identity)
             if item.origin.producer == PRODUCER and item.origin.work_ref == self.work_ref:
                 found.append({"identity": item.identity, "version": item.version, "status": item.status,
-                              "event_identity": item.origin.event_identity, "lane": item.origin.lane,
-                              "work_revision": item.origin.work_revision, "history_ref": asdict(item.history_ref)})
+                              "kind": item.origin.kind, "event_identity": item.origin.event_identity,
+                              "lane": item.origin.lane, "work_revision": item.origin.work_revision,
+                              "required_authority": item.origin.required_authority,
+                              "history_ref": asdict(item.history_ref)})
         return tuple(sorted(found, key=lambda i: i["event_identity"]))
 
     def reconcile(self) -> dict[str, object]:
@@ -202,6 +206,17 @@ class TrajectoryReceipts:
             by_anomaly.setdefault(str(item["event_identity"]), []).append(item)
         mismatched_events = [s for s, e in ((o["capture_seq"], o) for o in observed)
                              if s not in journal_events or any(journal_events[s][k] != e[k] for k in e)]
+        receipted_items = {a["anomaly_id"]: a["attention"] for e in receipted for a in e["anomalies"]}
+        mismatched_items = []
+        for anomaly_id, found in sorted(by_anomaly.items()):
+            if anomaly_id not in anomalies:
+                continue
+            expected = self.origin(*anomalies[anomaly_id])
+            if any((i["kind"], i["lane"], i["work_revision"], i["required_authority"]) !=
+                   (expected.kind, expected.lane, expected.work_revision, expected.required_authority)
+                   or (anomaly_id in receipted_items and receipted_items[anomaly_id] != i["identity"])
+                   for i in found):
+                mismatched_items.append(anomaly_id)
         mismatched_entries = [e["entry_seq"] for e in receipted if not 1 <= e["entry_seq"] <= len(entries)
                               or entry_digest(entries[e["entry_seq"] - 1]) != e["entry_digest"]]
         report = {
@@ -217,6 +232,7 @@ class TrajectoryReceipts:
             "anomalies_without_item": sorted(a for a in anomalies if a not in by_anomaly),
             "anomalies_with_duplicate_items": sorted(a for a, v in by_anomaly.items() if len(v) > 1),
             "items_without_anomaly": sorted(a for a in by_anomaly if a not in anomalies),
+            "mismatched_items": mismatched_items,
             "pending_items": sum(1 for i in items if i["status"] == "PENDING"),
             "anomaly_kinds": sorted({str(a["kind"]) for _, a in anomalies.values()}),
         }
@@ -225,7 +241,7 @@ class TrajectoryReceipts:
                                 and not mismatched_entries
                                 and not report["anomalies_without_item"]
                                 and not report["anomalies_with_duplicate_items"]
-                                and not report["items_without_anomaly"])
+                                and not report["items_without_anomaly"] and not mismatched_items)
         return report
 
 

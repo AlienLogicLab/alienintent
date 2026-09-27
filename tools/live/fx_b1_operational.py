@@ -57,8 +57,22 @@ def inside(path, parent):
 
 
 def forbidden_touches(paths, protected, allowed):
-    """Every audited path under `protected` that is not inside one of the `allowed` subtrees."""
-    return sorted({p for p in paths if inside(p, protected) and not any(inside(p, a) for a in allowed)})
+    """Every audited path under `protected` that is not inside one of the `allowed` subtrees, with
+    symlinks resolved on both sides. An undecodable path is always forbidden."""
+    paths = [p if p.startswith("UNDECODABLE:") else os.path.realpath(p) for p in paths]
+    protected, allowed = os.path.realpath(protected), [os.path.realpath(a) for a in allowed]
+    return sorted({p for p in paths if p.startswith("UNDECODABLE:")
+                   or inside(p, protected) and not any(inside(p, a) for a in allowed)})
+
+
+EXECUTABLES = frozenset({os.path.basename(sys.executable), "python3", "systemd-run", "systemctl", "env"})
+
+
+def read_audit(log):
+    """The audit log as touched paths and child-process argument vectors."""
+    records = [json.loads(line) for line in Path(log).read_text().splitlines()] if Path(log).exists() else []
+    return {"paths": sorted({r for r in records if isinstance(r, str)}),
+            "executions": [r["exec"] for r in records if isinstance(r, dict)]}
 
 
 def guard_root(root, bound_parent=BOUND_PARENT):
@@ -181,12 +195,14 @@ def predicates(readback, stream):
     sessions = [e for e in journal if e["kind"] == "SESSION"]
     reconciliation = readback["receipts"]["reconciliation"]
     chain = readback["receipts"]["receipts"]
-    items_1, items_down, items_3 = (receipt_items(readback["queue"][k], stream) for k in ("after_consume_1",
-                                                                                       "while_down", "final"))
+    items_1, items_down, items_3 = (readback["produced"][k] or [] for k in ("after_consume_1", "while_down", "final"))
+    pending = receipt_items(readback["queue"]["final"], stream)
+    down = readback["submission_while_down"]["replies"]
     observed = [e["event"] for r in chain for e in r["entries"] if e["event"]]
     result = {
         "identity_order_timestamps_stable": (
-            events[:len(before)] == before
+            len(captured) == 7 and len(before) == 6 and len(events) == 7
+            and events[:len(before)] == before
             and [e["capture_seq"] for e in events] == list(range(1, len(events) + 1))
             and all(x["captured_at"] <= y["captured_at"] for x, y in zip(events, events[1:]))
             and all((by_id[k]["capture_seq"], by_id[k]["identity"], by_id[k]["captured_at"]) ==
@@ -195,8 +211,8 @@ def predicates(readback, stream):
         "no_loss_no_duplication_queue_retained": (
             len(by_id) == len(events) and set(by_id) == set(captured)
             and readback["retry"].get("status") == "DUPLICATE"
-            and readback["submission_while_down"].get("accepted") is False
-            and items_1 == items_down and len(items_1) > 0
+            and len(down) == 1 and all("hold" in r for r in down)
+            and items_1 == items_down and len(items_1) == 5
             and all(i in items_3 for i in items_1)
             and len({i["event_identity"] for i in items_3}) == len(items_3)),
         "pre_post_restart_reconcile": (
@@ -211,10 +227,12 @@ def predicates(readback, stream):
         "attention_producer_observes_receipts": (
             sorted(o["capture_seq"] for o in observed) == [e["capture_seq"] for e in events]
             and all(by_id[o["event_id"]]["identity"] == o["identity"] for o in observed)
-            and len(items_3) == reconciliation.get("anomalies")
-            and {i["status"] for i in items_3} == {"PENDING"} and {i["kind"] for i in items_3} == {"JUDGMENT"}),
+            and len(items_3) == reconciliation.get("anomalies") == 7
+            and {i["status"] for i in items_3} == {"PENDING"} and {i["kind"] for i in items_3} == {"JUDGMENT"}
+            and sorted(i["identity"] for i in pending) == sorted(i["identity"] for i in items_3)),
         "observer_boundary_and_disjointness": (
             readback["root_guard"] == [] and readback["audit"]["forbidden"] == []
+            and readback["audit"]["unexpected_executions"] == [] and readback["audit"]["executions"] > 0
             and readback["audit"]["paths"] > 0 and readback["audit"]["root_touched"]
             and readback["units_after_teardown"].strip() == ""),
     }
@@ -265,8 +283,11 @@ def operate(root, output, invocation, run, readback):
         readback["consume"][stage] = result or {"hold": "NO_OUTPUT", "exit_status": code}
 
     def queue(stage):
+        """The pending queue through the independent C1 reader, and every status of this producer's items."""
         _, listed = run.cli("queue:" + stage, INBOX, "list", "--config", str(root / "attention-inbox.json"))
         readback["queue"][stage] = listed
+        _, receipted = run.cli("receipts:" + stage, RECEIPTS, "receipts", *c)
+        readback["produced"][stage] = (receipted or {}).get("attention")
 
     try:
         code, launched = run.cli("launch", CAPTURE, "launch", *c, "--actor", ACTOR, "--authority", AUTHORITY)
@@ -327,7 +348,7 @@ def run_operational(root, output, invocation):
     stamp = datetime.now(UTC).strftime("%Y%m%dT%H%M%SZ")
     readback = {"fixture": "FX-B1", "root": str(root), "profile": PROFILE, "stream": f"fx-b1-{stamp}",
                 "started_at": datetime.now(UTC).isoformat(), "root_guard": guard_root(root), "acks": [],
-                "consume": {}, "queue": {}}
+                "consume": {}, "queue": {}, "produced": {}}
     output.mkdir(parents=True, exist_ok=False)
     audit_log = output / "audit.log.partial"
     record = {"record_kind": "ProofFixtureExecution", "schema_version": 1, "fixture_id": "FX-B1",
@@ -344,7 +365,8 @@ def run_operational(root, output, invocation):
                          "supervisor": "systemd --user (C5 SystemdHostManager)"},
               "proof_level": "OPERATIONAL_OR_EXTERNAL_AUTHORITY",
               "labels": ["BOUND_TARGET_FX_B1_TRAJECTORY_OPERATIONAL", "REAL_USER_SYSTEMD_MANAGER",
-                         "B1P_COMPOSITION_UNCHANGED", "SYNTHETIC_SOURCE_DIRECT_FEED", "HOST_PROCESS_CONFIG_CONFINED",
+                         "B1P_COMPOSITION_UNCHANGED", "SYNTHETIC_SOURCE_DIRECT_FEED",
+                         "HOST_AND_MONITOR_OBSERVER_UNITS_CONFIG_CONFINED", "AUDIT_ALLOWS_CANDIDATE_SRC_TOOLS_OUTPUT",
                          "ROOT_RETAINED_AFTER_RUN"],
               "measurements": {"tokens": None, "cost": None, "provider_calls": None,
                                "reason": "UNKNOWN: provider usage is unavailable to this local operational run"},
@@ -363,15 +385,19 @@ def run_operational(root, output, invocation):
             operate(root, output, invocation, run, readback)
         except Exception as error:  # the record keeps what happened; a failure is a HOLD, never a PASS
             record["holds"].append(f"operational run stopped: {type(error).__name__}: {error}")
-    touched = sorted(set(json.loads(line) for line in audit_log.read_text().splitlines())) \
-        if audit_log.exists() else []
-    allowed = (str(root), str(ROOT))
+    audit = read_audit(audit_log)
+    touched = audit["paths"]
+    # The bound root, and from this checkout only the candidate's own source and tools (imported by
+    # every audited process) and this run's output directory.
+    allowed = (str(root), str(ROOT / "src"), str(ROOT / "tools"), str(output))
+    unexpected = [argv for argv in audit["executions"] if os.path.basename(argv[0] if argv else "") not in EXECUTABLES]
     readback["audit"] = {"protected": str(STATE), "allowed": list(allowed), "paths": len(touched),
+                         "executions": len(audit["executions"]), "unexpected_executions": unexpected,
                          "root_touched": any(inside(p, root) for p in touched),
                          "forbidden": forbidden_touches(touched, STATE, allowed),
-                         "touched_outside_checkout_under_state": sorted(p for p in touched if inside(p, STATE)
-                                                                         and not inside(p, ROOT))}
-    readback["audit_ref"] = retain(output, {"touched": touched})
+                         "touched_under_state_outside_root": sorted(p for p in touched if inside(p, STATE)
+                                                                    and not inside(p, root))}
+    readback["audit_ref"] = retain(output, {"touched": touched, "executions": audit["executions"]})
     if audit_log.exists():
         audit_log.unlink()
     readback["finished_at"] = datetime.now(UTC).isoformat()
@@ -403,9 +429,12 @@ def readback_only(root, output):
     config = root / "fx-b1-supervision.json"
     _, journal = run.cli("journal", CAPTURE, "journal", "--config", str(config))
     _, receipts = run.cli("receipts", RECEIPTS, "receipts", "--config", str(config))
-    reconciled = bool(receipts and receipts.get("reconciliation", {}).get("reconciled"))
+    audit = read_audit(output / "audit.log")
+    forbidden = forbidden_touches(audit["paths"], STATE, (str(root), str(ROOT / "src"), str(ROOT / "tools"),
+                                                           str(output)))
+    reconciled = bool(receipts and receipts.get("reconciliation", {}).get("reconciled")) and not forbidden
     result = {"root": str(root), "commands": run.commands, "journal_entries": len((journal or {}).get("entries", [])),
-              "reconciliation": (receipts or {}).get("reconciliation"),
+              "reconciliation": (receipts or {}).get("reconciliation"), "audit_forbidden": forbidden,
               "result": "RETAINED_READBACK_RECONCILED" if reconciled else "HOLD"}
     (output / "retained-readback.json").write_text(json.dumps(result, indent=2, default=str) + "\n")
     print(json.dumps({"result": result["result"], "output": str(output)}))

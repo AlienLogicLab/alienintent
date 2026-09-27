@@ -74,3 +74,25 @@ def test_the_default_target_is_the_bound_profile_root():
     assert fx.PROFILE == "fx-b1-trajectory-operational"
     assert fx.STATE == Path.home() / ".local/state/alienintent"
     assert fx.inside(fx.DEFAULT_ROOT, fx.STATE) and not fx.inside(fx.STATE / "state.json", fx.DEFAULT_ROOT)
+
+
+def test_the_audit_names_a_protected_path_reached_through_a_child_process_or_symlink(tmp_path):  # B1-09
+    protected, allowed = tmp_path / "state", tmp_path / "state" / "fx-b1" / "trajectory"
+    allowed.mkdir(parents=True)
+    decoy = protected / "state.json"
+    decoy.write_text("{}\n")
+    link = allowed / "looks-inside.json"
+    link.symlink_to(decoy)
+    (tmp_path / "fx_b1_child.py").write_text(
+        f"import subprocess\nsubprocess.run(['cat', {str(decoy)!r}], capture_output=True)\n")
+    log = tmp_path / "audit.log"
+    subprocess.run([sys.executable, "-B", str(AUDIT), str(log), "-m", "fx_b1_child"], cwd=tmp_path,
+                   env={**os.environ, "PYTHONPATH": str(tmp_path)}, capture_output=True, timeout=60, check=True)
+    child = fx.read_audit(log)
+    assert fx.forbidden_touches(child["paths"], protected, (allowed,)) == [str(decoy)]
+    assert [e[0] for e in child["executions"]] == ["cat"]
+
+    result, _ = audited(tmp_path, "json.tool", str(link))
+    assert result.returncode == 0
+    linked = fx.read_audit(tmp_path / "audit.log")
+    assert str(decoy) in fx.forbidden_touches(linked["paths"], protected, (allowed,))
