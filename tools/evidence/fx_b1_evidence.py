@@ -296,6 +296,10 @@ def run(output, invocation):
                              D + "test_the_audit_records_sqlite_opens_and_survives_a_failing_module"],
         "B1-10 root guard": [D + "test_the_root_guard_refuses_before_anything_is_written",
                              D + "test_the_default_target_is_the_bound_profile_root"],
+        "Review repairs (FX-B1.md clarification 2026-09-27)": [
+            T + "test_an_item_whose_origin_differs_from_its_entry_does_not_reconcile",
+            T + "test_a_store_failure_while_ensuring_items_holds_and_writes_no_receipt",
+            D + "test_the_audit_names_a_protected_path_reached_through_a_child_process_or_symlink"],
         "B1P / C1 not regressed": ["unchanged_predecessor_sources", "b1p_regression", "c1_regression"],
         "negative controls": ["proven-red.json: " + ", ".join(c[0] for c in CONTROLS)],
     }
