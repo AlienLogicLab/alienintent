@@ -1,0 +1,91 @@
+{
+  "record_kind": "ExecutionPacket",
+  "schema_version": "1",
+  "biu_id": "WO-220610",
+  "issued_at": "2026-09-27T02:35:46.000000+00:00",
+  "goal": "Build and locally exercise a live trajectory-capture composition (DAG node B1P), the bounded prerequisite implementation that WO-220504/Issue #124 needs before it can integrate and prove live_trajectory_capture.",
+  "starting_authority": {
+    "requirements": ["SF-REQ-053"],
+    "dag_node": ["B1P"],
+    "candidate_contract_sha256": "NOT_APPLICABLE — Director-added prerequisite node, not a Phase 12 compilation candidate; see docs/evidence/wave2-candidate-bius.json identifier_policy.assignments.B1P and docs/evidence/wave2-dependency-dag.json node B1P",
+    "baseline_sha": "322baf4ae45776acb59d303370b12d48d76085ee",
+    "release_authority": "NOT GRANTED — normal Wave 2 release admission required before IMPLEMENT"
+  },
+  "allowed_scope": {
+    "extent": "Implement a live-process trajectory-capture composition modeled on the proven C5/monitor_host supervision pattern (SupervisionConfig, host_records, systemd --user supervised run loop). Assign identity/order/timestamps to captured events, persist them durably and restart-safe, detect anomalies, reconcile old/new observations across a supervised restart without loss, using only this operator's own existing local systemd --user supervision. No new external target, service, budget, or custody arrangement.",
+    "boundary": "Owns only live_trajectory_capture. Does not touch live_trajectory_receipts or WO-220504's own separately authorized target-profile proof. Does not bind, request, or invent any new external resource.",
+    "non_goals": [
+      "Proving anything against a separately authorized live operational target profile — that remains WO-220504/Issue #124's own scope.",
+      "Any claim of external-observer replacement or retirement; alienintent-observer.service remains the governing independent observer.",
+      "Replanning the DAG beyond this single insertion, or implementing another node's scope."
+    ],
+    "architecture_constraints": [
+      "Reuse the existing SupervisionConfig/host_records/systemd-supervision pattern from src/alienintent/composition/monitor_host.py rather than inventing a new supervision mechanism.",
+      "Preserve compatible interfaces, persisted resource identities, one-writer ownership. Changes to monitor_host.py or offline_proof.py that could regress C5 or WO-220101 must preserve their existing behavior."
+    ],
+    "owner_clarifications_disposed": {
+      "anomaly_classes_and_response": "Detect: sequence gaps, out-of-order events, duplicate identities, timestamp regressions, capture stalls. On detection: record a durable anomaly evidence record (append-only). Do not alert or halt.",
+      "restart_loss_boundary": "Guarantee covers only already-accepted (durably recorded) events at the moment of restart — those must survive without loss or duplication. Events a live source might emit while the process is down are out of this node's scope (no buffered/replayable upstream source is built here)."
+    }
+  },
+  "dependencies": [
+    {
+      "biu_id": "WO-220101",
+      "dag_node": "S0",
+      "issue": null,
+      "project_status": "DONE",
+      "completion_predicate": "Real temporary SQLite; disposable local bare Git remote, publication/fetch into a fresh verifier worktree, local work-management and provider transport, injected clock/IDs, durable scripted worker journal, credentials absent and enforced denied outbound network with attempted-network refusal."
+    },
+    {
+      "biu_id": "WO-220305",
+      "dag_node": "C5",
+      "issue": 114,
+      "project_status": "DONE",
+      "completion_predicate": "Under existing SWF-27 / SF-REQ-053 ownership, independently supervise the monitor/scanner host. Terminate or stall monitor/scanner, observe external health detection/alert, and demonstrate authorized restart preserving generation and pending state."
+    }
+  ],
+  "required_evidence": [
+    "Retain exact fixture/source/candidate revisions, invocation and command, expected/observed result, exit status, immutable observation refs.",
+    "Retain predecessor candidate identities and full command/exit status. Preserve prior proof on repair; supersession needs explicit authority."
+  ],
+  "acceptance": {
+    "criteria": [
+      "Identity/order/timestamp assignment is stable and correct across a supervised kill/restart.",
+      "Every already-accepted event survives the restart without loss or duplication (per the disposed restart-loss boundary).",
+      "Each seeded anomaly class (sequence gap, out-of-order event, duplicate identity, timestamp regression, capture stall) produces a durable anomaly evidence record.",
+      "Captured events and anomaly records are durably persisted and readable after restart."
+    ],
+    "proof_fixture": "FX-B1P",
+    "proof_level": "LOCAL_SELF_SUPERVISED",
+    "material_failure_classes": [
+      "Identity/order/timestamp assignment is unstable, incorrect, or undefined across the restart.",
+      "An already-accepted event is lost or duplicated across the restart.",
+      "A seeded anomaly class is not detected, or detection is not recorded durably.",
+      "The composition invents a new external target, service, or upstream buffering contract beyond this operator's own local systemd --user supervision.",
+      "A change to monitor_host.py or offline_proof.py regresses C5's or WO-220101's own existing proof."
+    ],
+    "bounded_commands": [],
+    "non_claims": [
+      "No claim that this satisfies WO-220504/Issue #124's own separately authorized operational-target proof.",
+      "No claim of external-observer replacement or retirement.",
+      "No release, cutover, or broader production mutation is authorized."
+    ]
+  },
+  "candidate_custody": {
+    "identity": "WO-220610",
+    "policy": "Future PRODUCER pins contract/input/baseline/profile and candidate branch+full SHA; publishes candidate to configured authorized remote and records exact branch/SHA on the Issue before RESULT=VERIFY. Fresh independent verifier retrieves that exact SHA in its own worktree; retain retrieval and verdict receipts.",
+    "closure": "Retain actor-owned branch/worktree through required closure; disposition LANDED, DISCARDED or PARKED with durable blocker. No direct main push by a BIU worker. No pull request.",
+    "current_artifact": "Candidate specification only; no branch publication, implementation commit or worker invocation created by this packet."
+  },
+  "landing": "SWF-19: normal merge exact accepted candidate SHA; no pull request.",
+  "limits_ref": "WO-220610.allocation.json#/limits",
+  "stop_condition": [
+    "Hold this BIU on unmet dependency proof, unbound budget/custody, authority gap/gate, source revision mismatch, unavailable evidence, failing discriminating probe, or conflicting ownership. Preserve unrelated completed proof.",
+    "Do not expand this node's own scope into WO-220504's separately authorized target-profile proof, and do not invent a new external target/resource beyond this operator's own local systemd --user supervision."
+  ],
+  "escalation_condition": [
+    "Return interface/scope changes or defects in prerequisites (monitor_host.py, offline_proof.py) to their named owner; do not repair them inside this node.",
+    "Missing execution allocation goes to the authorized allocator; no invented budget."
+  ],
+  "readiness": "READY, native Agent Ready READY at the exact current revision (docs/evidence/wave2-readiness-assessments/WO-220610.2026-09-27T023136.204114Z.assessment.json); this packet grants no release authority."
+}
