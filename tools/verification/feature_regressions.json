@@ -222,6 +222,32 @@
         "-q",
         "tools/live/test_installation_launch.py"
       ]
+    },
+    {
+      "id": "live-trajectory-receipts",
+      "description": "The trajectory-receipts attention producer consumes the capture journal with a receipt chain as its cursor: every committed entry is receipted once in order, every captured event is observed with its journal identity, each anomaly becomes exactly one pending C1 JUDGMENT attention item, a crash between items and receipt leaves no duplicate, a rewritten or overtaken prefix holds, and the operational read audit and bound-root guard discriminate (WO-220504, FX-B1).",
+      "paths": [
+        "src/alienintent/composition/trajectory_receipts.py",
+        "src/alienintent/composition/trajectory_capture.py",
+        "src/alienintent/evidence_learning/*/trajectory_*.py",
+        "src/alienintent/control_plane/*/attention.py",
+        "src/alienintent/control_plane/adapters/attention_repository.py",
+        "src/alienintent/composition/control_plane_profile.py",
+        "src/alienintent/composition/monitor_host.py",
+        "tests/composition/test_trajectory_receipts.py",
+        "tests/composition/test_trajectory_capture_host.py",
+        "tools/live/fx_b1_*.py",
+        "tools/live/test_fx_b1_operational.py",
+        "tools/evidence/fx_b1_evidence.py"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/composition/test_trajectory_receipts.py",
+        "tools/live/test_fx_b1_operational.py"
+      ]
     }
   ]
 }

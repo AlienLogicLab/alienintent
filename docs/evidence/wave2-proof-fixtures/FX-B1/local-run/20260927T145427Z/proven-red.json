@@ -1,0 +1,236 @@
+{
+  "controls": [
+    {
+      "control": "receipt_skips_events",
+      "failure_class": "an attention-producer consumer does not observe the captured receipts",
+      "file": "src/alienintent/composition/trajectory_receipts.py",
+      "application_count": 1,
+      "source_digest": "sha256:fde00c928aeb8ea0b2f4e84ae6868171b7b56e3ae7ed0e92e2962731e351db95",
+      "mutation": {
+        "remove": "            event = entry[\"event\"] if entry[\"kind\"] == EVENT else None\n",
+        "replace_with": "            event = None\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_trajectory_receipts.py::test_receipts_observe_every_captured_event_with_its_journal_identity"
+      ],
+      "required_failures": [
+        "tests/composition/test_trajectory_receipts.py::test_receipts_observe_every_captured_event_with_its_journal_identity"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/composition/test_trajectory_receipts.py::test_receipts_observe_every_captured_event_with_its_journal_identity"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:3358a9bb8b6c51c29b76ae02287b7d955b776e0579f26db83433c25efdcf33b0",
+        "locator": "observations/3358a9bb8b6c51c29b76ae02287b7d955b776e0579f26db83433c25efdcf33b0"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:8c3468e3e586db4fea7b48d67681fcdb957237215f4b8703ca2c95593f6deb64",
+        "locator": "observations/8c3468e3e586db4fea7b48d67681fcdb957237215f4b8703ca2c95593f6deb64"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:51c0b32e8df6a8b88d43a05f5eb07e121499dec32d1a6a40f58df0639e7acf3f",
+        "locator": "observations/51c0b32e8df6a8b88d43a05f5eb07e121499dec32d1a6a40f58df0639e7acf3f"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "attention_not_produced",
+      "failure_class": "an anomaly is not consumed into the attention queue",
+      "file": "src/alienintent/composition/trajectory_receipts.py",
+      "application_count": 1,
+      "source_digest": "sha256:fde00c928aeb8ea0b2f4e84ae6868171b7b56e3ae7ed0e92e2962731e351db95",
+      "mutation": {
+        "remove": "            for anomaly in entry[\"anomalies\"]:\n",
+        "replace_with": "            for anomaly in ():\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_trajectory_receipts.py::test_each_anomaly_kind_yields_exactly_one_pending_judgment_item"
+      ],
+      "required_failures": [
+        "tests/composition/test_trajectory_receipts.py::test_each_anomaly_kind_yields_exactly_one_pending_judgment_item"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/composition/test_trajectory_receipts.py::test_each_anomaly_kind_yields_exactly_one_pending_judgment_item"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:ccc4e68d747074d83cd4da9f724034e4830c64c3465c9e29eda68364768b10a1",
+        "locator": "observations/ccc4e68d747074d83cd4da9f724034e4830c64c3465c9e29eda68364768b10a1"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:7a6f7d9eb584339931945a4451bee088c8e7ec21ab08c23dc06c934539f16173",
+        "locator": "observations/7a6f7d9eb584339931945a4451bee088c8e7ec21ab08c23dc06c934539f16173"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:c958640f374207601e2e7981b76a31f6e700b6abe95c11cdf64ed231f0785b4e",
+        "locator": "observations/c958640f374207601e2e7981b76a31f6e700b6abe95c11cdf64ed231f0785b4e"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "prefix_unchecked",
+      "failure_class": "pre/post-restart observations do not reconcile",
+      "file": "src/alienintent/composition/trajectory_receipts.py",
+      "application_count": 1,
+      "source_digest": "sha256:fde00c928aeb8ea0b2f4e84ae6868171b7b56e3ae7ed0e92e2962731e351db95",
+      "mutation": {
+        "remove": "        if chain and chain[-1][\"prefix_digest\"] != prefix_digest(entries[:consumed]):\n",
+        "replace_with": "        if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_trajectory_receipts.py::test_a_rewritten_or_overtaken_prefix_holds_and_writes_nothing"
+      ],
+      "required_failures": [
+        "tests/composition/test_trajectory_receipts.py::test_a_rewritten_or_overtaken_prefix_holds_and_writes_nothing"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/composition/test_trajectory_receipts.py::test_a_rewritten_or_overtaken_prefix_holds_and_writes_nothing"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:5232948cafb73a82e8333a62033dd77a2da3f5089a6e5041e6c4394420c1afe9",
+        "locator": "observations/5232948cafb73a82e8333a62033dd77a2da3f5089a6e5041e6c4394420c1afe9"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:2592eed0ce6f630cdd08f9ecdb2f13f21e4984e9819cab58020d8d539a6379d6",
+        "locator": "observations/2592eed0ce6f630cdd08f9ecdb2f13f21e4984e9819cab58020d8d539a6379d6"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:5232948cafb73a82e8333a62033dd77a2da3f5089a6e5041e6c4394420c1afe9",
+        "locator": "observations/5232948cafb73a82e8333a62033dd77a2da3f5089a6e5041e6c4394420c1afe9"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "receipt_before_attention",
+      "failure_class": "a crash loses an anomaly's attention item",
+      "file": "src/alienintent/composition/trajectory_receipts.py",
+      "application_count": 1,
+      "source_digest": "sha256:fde00c928aeb8ea0b2f4e84ae6868171b7b56e3ae7ed0e92e2962731e351db95",
+      "mutation": {
+        "remove": "        fresh = entries[consumed:]\n",
+        "replace_with": "        fresh = entries[consumed:]\n        if fresh:\n            self._append(version, {\"schema_version\": 1, \"receipt_seq\": version + 1, \"to_entry\": len(entries),\n                                   \"prefix_digest\": prefix_digest(entries), \"entries\": []})\n            version += 1\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_trajectory_receipts.py::test_a_pass_that_dies_before_its_receipt_leaves_no_second_item"
+      ],
+      "required_failures": [
+        "tests/composition/test_trajectory_receipts.py::test_a_pass_that_dies_before_its_receipt_leaves_no_second_item"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/composition/test_trajectory_receipts.py::test_a_pass_that_dies_before_its_receipt_leaves_no_second_item"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:536ef806b270521eab1c7d3312783f4fa77da32b82b7c604a99a825a80e81bf2",
+        "locator": "observations/536ef806b270521eab1c7d3312783f4fa77da32b82b7c604a99a825a80e81bf2"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:dc91031dafecadc092fde62920be4253576172a1b8d882100f9dc9c9f81ecec1",
+        "locator": "observations/dc91031dafecadc092fde62920be4253576172a1b8d882100f9dc9c9f81ecec1"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:123cb65341e959e5af62bbb1c27a1711f16c63a9979b7c53f87df5c980eaf13f",
+        "locator": "observations/123cb65341e959e5af62bbb1c27a1711f16c63a9979b7c53f87df5c980eaf13f"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "cursor_ignored",
+      "failure_class": "an entry is consumed twice across restart",
+      "file": "src/alienintent/composition/trajectory_receipts.py",
+      "application_count": 1,
+      "source_digest": "sha256:fde00c928aeb8ea0b2f4e84ae6868171b7b56e3ae7ed0e92e2962731e351db95",
+      "mutation": {
+        "remove": "        fresh = entries[consumed:]\n",
+        "replace_with": "        fresh = entries\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_trajectory_receipts.py::test_a_pass_with_nothing_new_writes_nothing",
+        "tests/composition/test_trajectory_receipts.py::test_passes_across_a_kill_and_granted_restart_reconcile_old_and_new_entries"
+      ],
+      "required_failures": [
+        "tests/composition/test_trajectory_receipts.py::test_a_pass_with_nothing_new_writes_nothing",
+        "tests/composition/test_trajectory_receipts.py::test_passes_across_a_kill_and_granted_restart_reconcile_old_and_new_entries"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/composition/test_trajectory_receipts.py::test_a_pass_with_nothing_new_writes_nothing",
+        "tests/composition/test_trajectory_receipts.py::test_passes_across_a_kill_and_granted_restart_reconcile_old_and_new_entries"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:87ada0a22743de0240aa6875edd68285e50cb15e1146cc5372f192948c99eefb",
+        "locator": "observations/87ada0a22743de0240aa6875edd68285e50cb15e1146cc5372f192948c99eefb"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:6549f7c82522ae82d76e29117912293bc3e56eae6559838dabe9141ab9e134ca",
+        "locator": "observations/6549f7c82522ae82d76e29117912293bc3e56eae6559838dabe9141ab9e134ca"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:87ada0a22743de0240aa6875edd68285e50cb15e1146cc5372f192948c99eefb",
+        "locator": "observations/87ada0a22743de0240aa6875edd68285e50cb15e1146cc5372f192948c99eefb"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "audit_blind",
+      "file": "tools/live/fx_b1_operational.py",
+      "application_count": 0,
+      "discriminates": false
+    }
+  ],
+  "holds": [
+    "audit_blind: mutation count 0, expected exactly one"
+  ]
+}

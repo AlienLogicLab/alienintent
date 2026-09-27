@@ -1,0 +1,73 @@
+{
+  "root": "/home/netmarine/.local/state/alienintent/fx-b1/trajectory",
+  "commands": [
+    {
+      "stage": "journal",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/retained-readback/audit.log",
+        "-m",
+        "alienintent.composition.trajectory_capture",
+        "journal",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:beae00312ce6530d3a547505728aa2b401921c6ba62402bb77103e5d019a8cee",
+        "locator": "observations/beae00312ce6530d3a547505728aa2b401921c6ba62402bb77103e5d019a8cee"
+      }
+    },
+    {
+      "stage": "receipts",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/retained-readback/audit.log",
+        "-m",
+        "alienintent.composition.trajectory_receipts",
+        "receipts",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:726d5ef1c5d201fa44582e5248205f7dd70098570c8fd5e94df332e06030983c",
+        "locator": "observations/726d5ef1c5d201fa44582e5248205f7dd70098570c8fd5e94df332e06030983c"
+      }
+    }
+  ],
+  "journal_entries": 12,
+  "reconciliation": {
+    "journal_entries": 12,
+    "receipts": 2,
+    "receipted_entries": 12,
+    "entries_in_order_once": true,
+    "unreceipted_entries": [],
+    "journal_events": 7,
+    "observed_events": 7,
+    "events_observed_once": true,
+    "mismatched_events": [],
+    "mismatched_entries": [],
+    "anomalies": 7,
+    "attention_items": 7,
+    "anomalies_without_item": [],
+    "anomalies_with_duplicate_items": [],
+    "items_without_anomaly": [],
+    "mismatched_items": [],
+    "pending_items": 7,
+    "anomaly_kinds": [
+      "CAPTURE_STALL",
+      "DUPLICATE_IDENTITY",
+      "OUT_OF_ORDER",
+      "SEQUENCE_GAP",
+      "TIMESTAMP_REGRESSION"
+    ],
+    "reconciled": true
+  },
+  "audit_forbidden": [],
+  "result": "RETAINED_READBACK_RECONCILED"
+}

@@ -1,0 +1,430 @@
+{
+  "record_kind": "ProofFixtureExecution",
+  "schema_version": 1,
+  "fixture_id": "FX-B1",
+  "work_unit": "WO-220504",
+  "dag_node": "B1",
+  "issue": 124,
+  "invocation": "AlienLogicLab/alienintent#124:PRODUCER:86456750-4a5a-46c8-8fa1-170250f834ae",
+  "source_revision": "5f5615506b6ad48430ad636c0c0009bea76de0d2",
+  "source_status": "",
+  "admission_baseline": "01764fccf144a536023854dd533b05952131cb44",
+  "predecessor": {
+    "biu": "WO-220610",
+    "dag_node": "B1P",
+    "issue": 140,
+    "fixture": "FX-B1P",
+    "accepted_candidate": "2d3d1f970e262e5f330cfb848784c74a0c991a0d",
+    "ancestor_of_candidate": true
+  },
+  "target": {
+    "profile": "fx-b1-trajectory-operational",
+    "root": "/home/netmarine/.local/state/alienintent/fx-b1/trajectory",
+    "authority": "founder-authorize-local-live-proof-target-20260927T0102Z",
+    "host_actor": "factory-director",
+    "supervisor": "systemd --user (C5 SystemdHostManager)"
+  },
+  "proof_level": "OPERATIONAL_OR_EXTERNAL_AUTHORITY",
+  "labels": [
+    "BOUND_TARGET_FX_B1_TRAJECTORY_OPERATIONAL",
+    "REAL_USER_SYSTEMD_MANAGER",
+    "B1P_COMPOSITION_UNCHANGED",
+    "SYNTHETIC_SOURCE_DIRECT_FEED",
+    "HOST_AND_MONITOR_OBSERVER_UNITS_CONFIG_CONFINED",
+    "AUDIT_ALLOWS_CANDIDATE_SRC_TOOLS_OUTPUT",
+    "ROOT_RETAINED_AFTER_RUN"
+  ],
+  "measurements": {
+    "tokens": null,
+    "cost": null,
+    "provider_calls": null,
+    "reason": "UNKNOWN: provider usage is unavailable to this local operational run"
+  },
+  "independent_verdict": "PENDING_FRESH_BIU_VERIFIER",
+  "non_claims": [
+    "No claim that alienintent-observer.service is replaced, retired, read or perturbed; no observer data was read.",
+    "'Old/new observations across cutover' are this composition's own pre/post-restart observations (disposed 2026-09-27); no other observation source is compared.",
+    "No claim that this run substitutes for FX-B1P; B1P composition-level evidence is cited, not re-claimed.",
+    "No release, migration cutover, persistent unit installation, notification, acknowledgement, resolution or activation is performed or authorized."
+  ],
+  "holds": [],
+  "commands": [
+    {
+      "stage": "launch",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_capture",
+        "launch",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json",
+        "--actor",
+        "factory-director",
+        "--authority",
+        "founder-authorize-local-live-proof-target-20260927T0102Z"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:fe5f4b0eebb01a5140eded4adec62f8f06998fc9cad5aedc9c2359e4dd97ab65",
+        "locator": "observations/fe5f4b0eebb01a5140eded4adec62f8f06998fc9cad5aedc9c2359e4dd97ab65"
+      }
+    },
+    {
+      "stage": "seed",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_capture",
+        "submit",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:9a70e8751021044ce5fa0db4103824c6977e82418995350024f37859287d7d38",
+        "locator": "observations/9a70e8751021044ce5fa0db4103824c6977e82418995350024f37859287d7d38"
+      }
+    },
+    {
+      "stage": "before_kill",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_receipts",
+        "consume",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json",
+        "--consumer",
+        "AlienLogicLab/alienintent#124:PRODUCER:86456750-4a5a-46c8-8fa1-170250f834ae:before_kill"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:101c97c838d67394c4e0d26caba64c969b7ca6dfb7ad5fd4fac3f6a793ee60db",
+        "locator": "observations/101c97c838d67394c4e0d26caba64c969b7ca6dfb7ad5fd4fac3f6a793ee60db"
+      }
+    },
+    {
+      "stage": "queue:after_consume_1",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.attention_inbox",
+        "list",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/attention-inbox.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:ae9e851f587ab10b2e8b79f3afdae18d7812173585b30bb24aa1b9bea9d503e9",
+        "locator": "observations/ae9e851f587ab10b2e8b79f3afdae18d7812173585b30bb24aa1b9bea9d503e9"
+      }
+    },
+    {
+      "stage": "receipts:after_consume_1",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_receipts",
+        "receipts",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:bdf0b278b4875fb272fb6d1a9e2af5717ba551937777fe4c22ed348fe8fdfae5",
+        "locator": "observations/bdf0b278b4875fb272fb6d1a9e2af5717ba551937777fe4c22ed348fe8fdfae5"
+      }
+    },
+    {
+      "stage": "while_down",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_capture",
+        "submit",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 2,
+      "observation_ref": {
+        "revision_digest": "sha256:105b90d1c60128cd20f8485c4c3eb3f3ac6b84acb62902c892abb6a644518ae6",
+        "locator": "observations/105b90d1c60128cd20f8485c4c3eb3f3ac6b84acb62902c892abb6a644518ae6"
+      }
+    },
+    {
+      "stage": "while_down",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_receipts",
+        "consume",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json",
+        "--consumer",
+        "AlienLogicLab/alienintent#124:PRODUCER:86456750-4a5a-46c8-8fa1-170250f834ae:while_down"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:d8fc866e393fdd0206da2a6a9cbd9bc44f19f3cfb90b600164cf945e43bb20af",
+        "locator": "observations/d8fc866e393fdd0206da2a6a9cbd9bc44f19f3cfb90b600164cf945e43bb20af"
+      }
+    },
+    {
+      "stage": "queue:while_down",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.attention_inbox",
+        "list",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/attention-inbox.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:90613b628e4a6768a8ed8a77b1325b03b6662b7753fc69c0731aee48888bd365",
+        "locator": "observations/90613b628e4a6768a8ed8a77b1325b03b6662b7753fc69c0731aee48888bd365"
+      }
+    },
+    {
+      "stage": "receipts:while_down",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_receipts",
+        "receipts",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:a2d5f96d70ee1adbf1966a8afd4e8b87fe06cac00a270a0b9cac996378fad080",
+        "locator": "observations/a2d5f96d70ee1adbf1966a8afd4e8b87fe06cac00a270a0b9cac996378fad080"
+      }
+    },
+    {
+      "stage": "restart",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_capture",
+        "restart",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json",
+        "--actor",
+        "factory-director",
+        "--authority",
+        "founder-authorize-local-live-proof-target-20260927T0102Z",
+        "--replaces",
+        "13b39e46ca774b858f3da607936bc9d0",
+        "--alert",
+        "attention:79bae917d76ebbbdbab9ff47c540bdaf093ab59636f8f01654cb71bc60c8369c"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:b9d49d9abd2d5f7ef71dfca2f1b6a32148e293128f0885cbfda57f9a2d6f552c",
+        "locator": "observations/b9d49d9abd2d5f7ef71dfca2f1b6a32148e293128f0885cbfda57f9a2d6f552c"
+      }
+    },
+    {
+      "stage": "retry",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_capture",
+        "submit",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:a9f578e05bc122eab2ffcf527ac079bd3ce3a9fd803123da892fe173d24340cc",
+        "locator": "observations/a9f578e05bc122eab2ffcf527ac079bd3ce3a9fd803123da892fe173d24340cc"
+      }
+    },
+    {
+      "stage": "after_restart",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_capture",
+        "submit",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:b7bf2e174d77f7a50c9857ead606f488caadfec503234d398689b33dac54b362",
+        "locator": "observations/b7bf2e174d77f7a50c9857ead606f488caadfec503234d398689b33dac54b362"
+      }
+    },
+    {
+      "stage": "after_restart",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_receipts",
+        "consume",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json",
+        "--consumer",
+        "AlienLogicLab/alienintent#124:PRODUCER:86456750-4a5a-46c8-8fa1-170250f834ae:after_restart"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:584ea6aecb4ba0bad0e180fba6868bb0539c71632b1459144a2b0d8e7941f645",
+        "locator": "observations/584ea6aecb4ba0bad0e180fba6868bb0539c71632b1459144a2b0d8e7941f645"
+      }
+    },
+    {
+      "stage": "idempotent",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_receipts",
+        "consume",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json",
+        "--consumer",
+        "AlienLogicLab/alienintent#124:PRODUCER:86456750-4a5a-46c8-8fa1-170250f834ae:idempotent"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:0dba074b84d311b4343613c900145865299d34833abc0da31d36f6827f36c667",
+        "locator": "observations/0dba074b84d311b4343613c900145865299d34833abc0da31d36f6827f36c667"
+      }
+    },
+    {
+      "stage": "journal",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_capture",
+        "journal",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:0589e391e9806604fd72707443877b2722224890e3c266ea2bb3c9e742288824",
+        "locator": "observations/0589e391e9806604fd72707443877b2722224890e3c266ea2bb3c9e742288824"
+      }
+    },
+    {
+      "stage": "receipts",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_receipts",
+        "receipts",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:0144529fd6b4585d3651aa3e30d68d5f10bcc080b82142858ace4ef405edcfd8",
+        "locator": "observations/0144529fd6b4585d3651aa3e30d68d5f10bcc080b82142858ace4ef405edcfd8"
+      }
+    },
+    {
+      "stage": "queue:final",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.attention_inbox",
+        "list",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/attention-inbox.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:4cfd45ea152337e796d07e617da863ace17f187ca3466589657be6d69769131c",
+        "locator": "observations/4cfd45ea152337e796d07e617da863ace17f187ca3466589657be6d69769131c"
+      }
+    },
+    {
+      "stage": "receipts:final",
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/tools/live/fx_b1_audit.py",
+        "/home/netmarine/.local/state/alienintent/worktrees/8dbdd38f-2ae4-4fdf-8794-3e7ac4ff1dd3/docs/evidence/wave2-proof-fixtures/FX-B1/operational/20260927T150544Z/audit.log.partial",
+        "-m",
+        "alienintent.composition.trajectory_receipts",
+        "receipts",
+        "--config",
+        "/home/netmarine/.local/state/alienintent/fx-b1/trajectory/fx-b1-supervision.json"
+      ],
+      "exit_status": 0,
+      "observation_ref": {
+        "revision_digest": "sha256:c6b5b891a14f7e327154f0f05b7b5ffb2dfce54393dc47dd340a5e666efa223c",
+        "locator": "observations/c6b5b891a14f7e327154f0f05b7b5ffb2dfce54393dc47dd340a5e666efa223c"
+      }
+    }
+  ],
+  "predicates": {
+    "identity_order_timestamps_stable": "PASS",
+    "five_anomaly_classes_durable": "PASS",
+    "no_loss_no_duplication_queue_retained": "PASS",
+    "pre_post_restart_reconcile": "PASS",
+    "attention_producer_observes_receipts": "PASS",
+    "observer_boundary_and_disjointness": "PASS"
+  },
+  "readback_ref": {
+    "revision_digest": "sha256:e4786f8b9157cf3d7922f5714ada78d21dc63fdb0c69c29629909e9e4380a458",
+    "locator": "observations/e4786f8b9157cf3d7922f5714ada78d21dc63fdb0c69c29629909e9e4380a458"
+  },
+  "run_state": "COMPLETE",
+  "result": "OPERATIONAL_READBACK_COMPLETE",
+  "exit_status": 0
+}

@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-rfEs","-p","no:cacheprovider","tests/composition/test_trajectory_receipts.py::test_a_pass_that_dies_before_its_receipt_leaves_no_second_item"],"cwd":"/tmp/fx-b1-controls-o9x5rmfq","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 0.59s\n"}
