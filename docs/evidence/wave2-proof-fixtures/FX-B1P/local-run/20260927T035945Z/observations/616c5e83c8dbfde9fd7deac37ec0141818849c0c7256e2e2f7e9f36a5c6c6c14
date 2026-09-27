@@ -1,0 +1,1 @@
+{"argv":["/usr/bin/python3","-B","-m","pytest","-q","-rfEs","-p","no:cacheprovider","tests/composition/test_trajectory_capture_systemd.py"],"cwd":"/home/netmarine/.local/state/alienintent/worktrees/284658d9-7099-4945-af2e-05f7882a984f","exit_status":0,"stderr":"","stdout":".                                                                        [100%]\n1 passed in 4.18s\n"}

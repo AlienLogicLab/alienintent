@@ -1,0 +1,407 @@
+{
+  "controls": [
+    {
+      "control": "order_from_journal_position",
+      "failure_class": "identity/order/timestamp assignment is incorrect",
+      "file": "src/alienintent/evidence_learning/domain/trajectory_capture.py",
+      "application_count": 1,
+      "source_digest": "sha256:38144151f33f710bb29641a59cd578bcb46bf61f4fe8dccf330d45f01a528ba8",
+      "mutation": {
+        "remove": "    event = {\"capture_seq\": state.events + 1,",
+        "replace_with": "    event = {\"capture_seq\": state.entries + 1,"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/evidence_learning/test_trajectory_capture.py::test_capture_assigns_identity_order_and_time"
+      ],
+      "required_failures": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_capture_assigns_identity_order_and_time"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_capture_assigns_identity_order_and_time"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:5b0353e579a7403c21d0b32dabe4dc09bdb8a4dfa6d8d242c444864405b9f26f",
+        "locator": "observations/5b0353e579a7403c21d0b32dabe4dc09bdb8a4dfa6d8d242c444864405b9f26f"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:87517858b1b32eff8f56de980a97a210b90dcad11d7a225c430c73d7f48af95a",
+        "locator": "observations/87517858b1b32eff8f56de980a97a210b90dcad11d7a225c430c73d7f48af95a"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:06bb72ad7ea95a1f8e26b63abd7449eedfc6dcb014bdf26e2fc3efa0a96d0fb4",
+        "locator": "observations/06bb72ad7ea95a1f8e26b63abd7449eedfc6dcb014bdf26e2fc3efa0a96d0fb4"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "capture_time_not_monotonic",
+      "failure_class": "identity/order/timestamp assignment is incorrect",
+      "file": "src/alienintent/evidence_learning/domain/trajectory_capture.py",
+      "application_count": 1,
+      "source_digest": "sha256:38144151f33f710bb29641a59cd578bcb46bf61f4fe8dccf330d45f01a528ba8",
+      "mutation": {
+        "remove": "        captured_at = state.last_captured_at\n",
+        "replace_with": ""
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "required_failures": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:34d11d363e91bf4a3505d2bd261c86f4d2ff029873be87b85c93c2f2b3010518",
+        "locator": "observations/34d11d363e91bf4a3505d2bd261c86f4d2ff029873be87b85c93c2f2b3010518"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:250311c43481242e1fe0416152e1d0b91e63e95314d19e382a7d54e4357bcda5",
+        "locator": "observations/250311c43481242e1fe0416152e1d0b91e63e95314d19e382a7d54e4357bcda5"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:1671f97c00932dd2d2d89c93acfb0a5962910b6a5d94b815dd033ca0f5b966cf",
+        "locator": "observations/1671f97c00932dd2d2d89c93acfb0a5962910b6a5d94b815dd033ca0f5b966cf"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "ack_without_durable_commit",
+      "failure_class": "an already-accepted event is lost across the restart",
+      "file": "src/alienintent/evidence_learning/application/trajectory_capture_service.py",
+      "application_count": 1,
+      "source_digest": "sha256:ca9bccde335772db1f266ec04160f9c5bb7c6d3957b4b614290d8d8802864cb3",
+      "mutation": {
+        "remove": "        self.version = self.journal.append(self.version, entry)\n",
+        "replace_with": "        self.version = self.version if entry[\"kind\"] == \"EVENT\" else self.journal.append(self.version, entry)\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/evidence_learning/test_trajectory_capture.py::test_restart_reconciles_accepted_events_without_loss_or_duplication"
+      ],
+      "required_failures": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_restart_reconciles_accepted_events_without_loss_or_duplication"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_restart_reconciles_accepted_events_without_loss_or_duplication"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:23400f06cb22a96822176d2d284148f1aadf2469e492c3ebf811d9a813cb89a7",
+        "locator": "observations/23400f06cb22a96822176d2d284148f1aadf2469e492c3ebf811d9a813cb89a7"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:7a5ac063ba5053ee1766008f5bb9d57fb23b3c8f9caed319e45d78e9d60789ec",
+        "locator": "observations/7a5ac063ba5053ee1766008f5bb9d57fb23b3c8f9caed319e45d78e9d60789ec"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:a19a342dca033e90330dde1314664b6c9a9046d75b53c0d37eca03c5461572ae",
+        "locator": "observations/a19a342dca033e90330dde1314664b6c9a9046d75b53c0d37eca03c5461572ae"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "duplicate_recaptured",
+      "failure_class": "an already-accepted event is duplicated across the restart",
+      "file": "src/alienintent/evidence_learning/domain/trajectory_capture.py",
+      "application_count": 1,
+      "source_digest": "sha256:38144151f33f710bb29641a59cd578bcb46bf61f4fe8dccf330d45f01a528ba8",
+      "mutation": {
+        "remove": "    original = state.event_ids.get((submission.source, submission.event_id))\n",
+        "replace_with": "    original = None\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/evidence_learning/test_trajectory_capture.py::test_restart_reconciles_accepted_events_without_loss_or_duplication",
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "required_failures": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_restart_reconciles_accepted_events_without_loss_or_duplication",
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably",
+        "tests/evidence_learning/test_trajectory_capture.py::test_restart_reconciles_accepted_events_without_loss_or_duplication"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:8d8c0554f0ddb14887c088b46cc5ec806e76d320cfa70d2d6b7715622fa3433d",
+        "locator": "observations/8d8c0554f0ddb14887c088b46cc5ec806e76d320cfa70d2d6b7715622fa3433d"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:54f0773dc86b3d7f3b00806453114c9b057e238a763669503d554434acd4dd8c",
+        "locator": "observations/54f0773dc86b3d7f3b00806453114c9b057e238a763669503d554434acd4dd8c"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:8d8c0554f0ddb14887c088b46cc5ec806e76d320cfa70d2d6b7715622fa3433d",
+        "locator": "observations/8d8c0554f0ddb14887c088b46cc5ec806e76d320cfa70d2d6b7715622fa3433d"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "restart_clean_start",
+      "failure_class": "a supervised restart does not reconcile the accepted journal",
+      "file": "src/alienintent/composition/trajectory_capture.py",
+      "application_count": 1,
+      "source_digest": "sha256:c03afc4b880d86cf4ab015818a09bc55302e3ae8535a6462abbd7e656069f094",
+      "mutation": {
+        "remove": "stream=config.host_invocation,",
+        "replace_with": "stream=invocation,"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/composition/test_trajectory_capture_host.py::test_a_killed_capture_is_detected_and_its_granted_restart_loses_and_duplicates_nothing"
+      ],
+      "required_failures": [
+        "tests/composition/test_trajectory_capture_host.py::test_a_killed_capture_is_detected_and_its_granted_restart_loses_and_duplicates_nothing"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/composition/test_trajectory_capture_host.py::test_a_killed_capture_is_detected_and_its_granted_restart_loses_and_duplicates_nothing"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:d30062db96149a69895dd21ece34a19321856e64532330cd1bb714694851c150",
+        "locator": "observations/d30062db96149a69895dd21ece34a19321856e64532330cd1bb714694851c150"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:1f37ae2dcc1b560f124b25a8712866168af195de3d878d2bba8eea09028e588a",
+        "locator": "observations/1f37ae2dcc1b560f124b25a8712866168af195de3d878d2bba8eea09028e588a"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:0687931a7521abd4eabad0d4a92fc0a5269b2d3da071a84eb6c6a3833bc84983",
+        "locator": "observations/0687931a7521abd4eabad0d4a92fc0a5269b2d3da071a84eb6c6a3833bc84983"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "sequence_gap_undetected",
+      "failure_class": "a seeded anomaly class is not detected or not recorded durably",
+      "file": "src/alienintent/evidence_learning/domain/trajectory_capture.py",
+      "application_count": 1,
+      "source_digest": "sha256:38144151f33f710bb29641a59cd578bcb46bf61f4fe8dccf330d45f01a528ba8",
+      "mutation": {
+        "remove": "    if submission.source_seq > high_seq + 1:\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "required_failures": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:1671f97c00932dd2d2d89c93acfb0a5962910b6a5d94b815dd033ca0f5b966cf",
+        "locator": "observations/1671f97c00932dd2d2d89c93acfb0a5962910b6a5d94b815dd033ca0f5b966cf"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:1f9be0652f29551f09b1560307415c49c390c6dd29cdb74c3f44fdd315b18f1a",
+        "locator": "observations/1f9be0652f29551f09b1560307415c49c390c6dd29cdb74c3f44fdd315b18f1a"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:13a4656ea734e8d004a52f0ab726b6840d61f44412de59ae6aa942f287a3bdd2",
+        "locator": "observations/13a4656ea734e8d004a52f0ab726b6840d61f44412de59ae6aa942f287a3bdd2"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "out_of_order_undetected",
+      "failure_class": "a seeded anomaly class is not detected or not recorded durably",
+      "file": "src/alienintent/evidence_learning/domain/trajectory_capture.py",
+      "application_count": 1,
+      "source_digest": "sha256:38144151f33f710bb29641a59cd578bcb46bf61f4fe8dccf330d45f01a528ba8",
+      "mutation": {
+        "remove": "    elif submission.source_seq <= high_seq:\n",
+        "replace_with": "    elif False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "required_failures": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:1671f97c00932dd2d2d89c93acfb0a5962910b6a5d94b815dd033ca0f5b966cf",
+        "locator": "observations/1671f97c00932dd2d2d89c93acfb0a5962910b6a5d94b815dd033ca0f5b966cf"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:a7f0be4786d5cf3986eb9953043d39202b77267ec707c64e4842f0e669ed07f0",
+        "locator": "observations/a7f0be4786d5cf3986eb9953043d39202b77267ec707c64e4842f0e669ed07f0"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:743214661b283a3ecf1cc2847b5890593dbfeb35fa917be1fec80382a2121f15",
+        "locator": "observations/743214661b283a3ecf1cc2847b5890593dbfeb35fa917be1fec80382a2121f15"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "timestamp_regression_undetected",
+      "failure_class": "a seeded anomaly class is not detected or not recorded durably",
+      "file": "src/alienintent/evidence_learning/domain/trajectory_capture.py",
+      "application_count": 1,
+      "source_digest": "sha256:38144151f33f710bb29641a59cd578bcb46bf61f4fe8dccf330d45f01a528ba8",
+      "mutation": {
+        "remove": "    if submission.source_seq > high_seq and high_observed is not None and submission.observed_at < high_observed:\n",
+        "replace_with": "    if False:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably",
+        "tests/evidence_learning/test_trajectory_capture.py::test_source_clock_regression_is_measured_against_the_highest_reported_time"
+      ],
+      "required_failures": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably",
+        "tests/evidence_learning/test_trajectory_capture.py::test_source_clock_regression_is_measured_against_the_highest_reported_time"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably",
+        "tests/evidence_learning/test_trajectory_capture.py::test_source_clock_regression_is_measured_against_the_highest_reported_time"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:b738d81061132eead86e15ad39d805339a014bb6d3a65ef6c917d7aa9fbb749c",
+        "locator": "observations/b738d81061132eead86e15ad39d805339a014bb6d3a65ef6c917d7aa9fbb749c"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:40b17e73a24d575392e0e71f48df965df7a0681890d691f8623a6df3528a6655",
+        "locator": "observations/40b17e73a24d575392e0e71f48df965df7a0681890d691f8623a6df3528a6655"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:b738d81061132eead86e15ad39d805339a014bb6d3a65ef6c917d7aa9fbb749c",
+        "locator": "observations/b738d81061132eead86e15ad39d805339a014bb6d3a65ef6c917d7aa9fbb749c"
+      },
+      "discriminates": true
+    },
+    {
+      "control": "capture_stall_undetected",
+      "failure_class": "a seeded anomaly class is not detected or not recorded durably",
+      "file": "src/alienintent/evidence_learning/domain/trajectory_capture.py",
+      "application_count": 1,
+      "source_digest": "sha256:38144151f33f710bb29641a59cd578bcb46bf61f4fe8dccf330d45f01a528ba8",
+      "mutation": {
+        "remove": "    if since is None or now - since <= policy.stall_micros or state.stalled_since == since:\n",
+        "replace_with": "    if True:\n"
+      },
+      "command": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "pytest",
+        "-q",
+        "-rfEs",
+        "-p",
+        "no:cacheprovider",
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "required_failures": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "intact_exit": 0,
+      "fault_exit": 1,
+      "restored_exit": 0,
+      "fault_failed": [
+        "tests/evidence_learning/test_trajectory_capture.py::test_each_seeded_anomaly_class_is_recorded_durably"
+      ],
+      "intact_ref": {
+        "revision_digest": "sha256:13a4656ea734e8d004a52f0ab726b6840d61f44412de59ae6aa942f287a3bdd2",
+        "locator": "observations/13a4656ea734e8d004a52f0ab726b6840d61f44412de59ae6aa942f287a3bdd2"
+      },
+      "fault_ref": {
+        "revision_digest": "sha256:2a92173f294c30f95e401a95376ef7abd67f1d3a4a5f058631516eb7171724ab",
+        "locator": "observations/2a92173f294c30f95e401a95376ef7abd67f1d3a4a5f058631516eb7171724ab"
+      },
+      "restored_ref": {
+        "revision_digest": "sha256:1671f97c00932dd2d2d89c93acfb0a5962910b6a5d94b815dd033ca0f5b966cf",
+        "locator": "observations/1671f97c00932dd2d2d89c93acfb0a5962910b6a5d94b815dd033ca0f5b966cf"
+      },
+      "discriminates": true
+    }
+  ],
+  "holds": []
+}
