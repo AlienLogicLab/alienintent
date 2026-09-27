@@ -1,0 +1,205 @@
+{
+  "fixture": "FX-B3 pre-execution coverage probe",
+  "work_unit": "WO-220506",
+  "issue": 126,
+  "label": "LOCAL_FX_L1_EQUIVALENT \u2014 not operational evidence; cannot satisfy FX-B3/FX-B4 acceptance",
+  "call_site": "src/alienintent/execution_coordination/application/factory_coordinator.py:FactoryCoordinator._run",
+  "cases": [
+    {
+      "source": "WO-220506.md FX-B3 step 2",
+      "required_guard": "admit_release admits",
+      "expected_worker_starts": 1,
+      "case": "fxb3-2-positive-control",
+      "observed_worker_starts": 1,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [
+        "FXB3-POS"
+      ],
+      "authority_blocked": [
+        "FXB3-POS"
+      ],
+      "observed_guard": "none: admitted and launched",
+      "recorded_correlation": "launch:FXB3-POS:0",
+      "recorded_outcome": "authority-block",
+      "matches_expected": true
+    },
+    {
+      "source": "WO-220506.md FX-B3 step 3",
+      "required_guard": "release.py:59-61 replay/fingerprint refusal",
+      "expected_worker_starts": 1,
+      "case": "fxb3-3-identity-replay",
+      "observed_worker_starts": 1,
+      "observed_worker_starts_before_replay": 1,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [
+        "FXB3-REPLAY"
+      ],
+      "authority_blocked": [
+        "FXB3-REPLAY"
+      ],
+      "observed_guard": "replay not re-dispatched: FactoryCoordinator._eligible recorded-outcome guard (release.py:59-61 not reached; admit_release is called with an empty ledger)",
+      "recorded_correlation": "launch:FXB3-REPLAY:0",
+      "recorded_outcome": "authority-block",
+      "matches_expected": true
+    },
+    {
+      "source": "WO-220506.md FX-B3 step 4",
+      "required_guard": "release.py:63-68 policy/source refusal",
+      "expected_worker_starts": 0,
+      "case": "fxb3-4-policy-source-mismatch",
+      "observed_worker_starts": 0,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [],
+      "authority_blocked": [
+        "FXB3-POLICY"
+      ],
+      "observed_guard": "admit_release refusal (factory_coordinator.py:264-268)",
+      "recorded_correlation": "release",
+      "recorded_outcome": "authority-block",
+      "matches_expected": true
+    },
+    {
+      "source": "WO-220506.md FX-B3 step 5",
+      "required_guard": "release.py:69-70 stale readiness refusal",
+      "expected_worker_starts": 0,
+      "case": "fxb3-5-readiness-digest-mismatch",
+      "observed_worker_starts": 0,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [],
+      "authority_blocked": [
+        "FXB3-DIGEST"
+      ],
+      "observed_guard": "admit_release refusal (factory_coordinator.py:264-268)",
+      "recorded_correlation": "release",
+      "recorded_outcome": "authority-block",
+      "matches_expected": true
+    },
+    {
+      "source": "WO-220506.md FX-B3 step 6",
+      "required_guard": "release.py:71-73 unsatisfied dependency refusal",
+      "expected_worker_starts": 0,
+      "case": "fxb3-6-unsatisfied-dependency",
+      "observed_worker_starts": 0,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [],
+      "authority_blocked": [],
+      "observed_guard": "not selected: FactoryCoordinator._eligible (release/dependency eligibility)",
+      "recorded_correlation": null,
+      "recorded_outcome": null,
+      "matches_expected": true
+    },
+    {
+      "source": "WO-220506.md FX-B3 step 7",
+      "required_guard": "release.py:74-75 missing capability refusal",
+      "expected_worker_starts": 0,
+      "case": "fxb3-7-missing-capability",
+      "observed_worker_starts": 0,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [],
+      "authority_blocked": [
+        "FXB3-CAP"
+      ],
+      "observed_guard": "admit_release refusal (factory_coordinator.py:264-268)",
+      "recorded_correlation": "release",
+      "recorded_outcome": "authority-block",
+      "matches_expected": true
+    },
+    {
+      "source": "WO-220506.md FX-B3 step 8",
+      "required_guard": "release.py:76-78 absent budget dimension refusal",
+      "expected_worker_starts": 0,
+      "case": "fxb3-8-missing-budget-dimension",
+      "observed_worker_starts": 1,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [
+        "FXB3-BUDGET"
+      ],
+      "authority_blocked": [
+        "FXB3-BUDGET"
+      ],
+      "observed_guard": "none: admitted and launched",
+      "recorded_correlation": "launch:FXB3-BUDGET:0",
+      "recorded_outcome": "authority-block",
+      "matches_expected": false
+    },
+    {
+      "source": "DAG B3 'plus eligibility' (explicit-human profile, no release)",
+      "required_guard": "FactoryCoordinator._eligible",
+      "expected_worker_starts": 0,
+      "case": "eligibility-not-released",
+      "observed_worker_starts": 0,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [],
+      "authority_blocked": [],
+      "observed_guard": "not selected: FactoryCoordinator._eligible (release/dependency eligibility)",
+      "recorded_correlation": null,
+      "recorded_outcome": null,
+      "matches_expected": true
+    },
+    {
+      "source": "DAG B3 release_preconditions[0..1]",
+      "required_guard": "durable release record authorizes IMPLEMENT; exact baseline named",
+      "expected_worker_starts": 0,
+      "case": "dag-b3-p1-p2-no-release-record-no-named-baseline",
+      "observed_worker_starts": 1,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [
+        "FXB3-NORECORD"
+      ],
+      "authority_blocked": [
+        "FXB3-NORECORD"
+      ],
+      "observed_guard": "none: admitted and launched",
+      "recorded_correlation": "launch:FXB3-NORECORD:0",
+      "recorded_outcome": "authority-block",
+      "matches_expected": false
+    },
+    {
+      "source": "DAG B3 release_preconditions[2..3]",
+      "required_guard": "baseline resolves to a real commit reachable from the release point",
+      "expected_worker_starts": 0,
+      "case": "dag-b3-p3-p4-baseline-unresolvable",
+      "observed_worker_starts": 1,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [
+        "FXB3-BASELINE"
+      ],
+      "authority_blocked": [
+        "FXB3-BASELINE"
+      ],
+      "observed_guard": "none: admitted and launched",
+      "recorded_correlation": "launch:FXB3-BASELINE:0",
+      "recorded_outcome": "authority-block",
+      "matches_expected": false
+    },
+    {
+      "source": "DAG B3 release_preconditions[4]",
+      "required_guard": "no stale denial wording without a superseding record",
+      "expected_worker_starts": 0,
+      "case": "dag-b3-p5-unsuperseded-denial-wording",
+      "observed_worker_starts": 1,
+      "observed_worker_starts_before_replay": null,
+      "stop_reason": "dependencies-or-authority-blocked",
+      "dispatched": [
+        "FXB3-DENIAL"
+      ],
+      "authority_blocked": [
+        "FXB3-DENIAL"
+      ],
+      "observed_guard": "none: admitted and launched",
+      "recorded_correlation": "launch:FXB3-DENIAL:0",
+      "recorded_outcome": "authority-block",
+      "matches_expected": false
+    }
+  ],
+  "all_match": false
+}
