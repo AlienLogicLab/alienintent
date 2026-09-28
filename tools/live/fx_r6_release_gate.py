@@ -13,6 +13,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 OLD_GATE = ROOT / "tools/live/release_admission.py"
+INSTALLED_GATE = Path.home() / ".local/share/alienintent-bootstrap/release_admission.py"
 PROFILE = Path.home() / ".config/alienintent/self-hosting.json"
 STATE = Path.home() / ".local/state/alienintent/state.json"
 INVOCATION = "AlienLogicLab/alienintent#138:PRODUCER:5bd7c385-7f0b-4c3e-b4c2-c08d5365d994"
@@ -42,8 +43,8 @@ def check_cases(cases: list[dict]) -> list[str]:
             or by_name[name].get("matches_expected") is not True]
 
 
-def old_gate_control() -> dict:
-    spec = importlib.util.spec_from_file_location("old_release_admission", OLD_GATE)
+def old_gate_control(path: Path = OLD_GATE) -> dict:
+    spec = importlib.util.spec_from_file_location("old_release_admission", path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     facts = {"status": "READY", "agent_ready": "READY",
@@ -70,17 +71,19 @@ def main() -> int:
     out = args.out.resolve()
     if out.exists():
         parser.error("output directory already exists; evidence is immutable")
-    if not PROFILE.is_file() or not STATE.is_file():
-        parser.error("configured profile or runtime state is unavailable")
+    if not PROFILE.is_file() or not STATE.is_file() or not INSTALLED_GATE.is_file():
+        parser.error("configured profile, runtime state or installed gate is unavailable")
     source = git("rev-parse", "HEAD").stdout.decode().strip()
     baseline = git("merge-base", "HEAD", "origin/main").stdout.decode().strip()
     old_before = OLD_GATE.read_bytes()
+    installed_before = INSTALLED_GATE.read_bytes()
     state_before = STATE.read_bytes()
     committed_old = git("show", "HEAD:tools/live/release_admission.py").stdout
     if old_before != committed_old:
         parser.error("old protection differs from committed source")
     control_before = old_gate_control()
-    if not control_before["passed"]:
+    installed_control_before = old_gate_control(INSTALLED_GATE)
+    if not control_before["passed"] or not installed_control_before["passed"]:
         parser.error("old protection control failed before live probe")
     out.mkdir(parents=True)
     command = [sys.executable, "tools/live/fx_b3_release_admission_proof.py", "--target", "production",
@@ -93,11 +96,20 @@ def main() -> int:
     case_failures = check_cases(live.get("cases", []))
     positive = next((c for c in live.get("cases", []) if c.get("case") == "02-positive-control"), {})
     old_after = OLD_GATE.read_bytes()
+    installed_after = INSTALLED_GATE.read_bytes()
     control_after = old_gate_control() if old_after == old_before else {"passed": False}
+    installed_control_after = old_gate_control(INSTALLED_GATE) if installed_after == installed_before else {"passed": False}
     readback = {"old_protection_path": "tools/live/release_admission.py",
                 "before_sha256": digest(old_before), "after_sha256": digest(old_after),
                 "unchanged": old_before == old_after == committed_old,
                 "before_control": control_before, "after_control": control_after,
+                "installed_gate_path": str(INSTALLED_GATE),
+                "installed_before_sha256": digest(installed_before),
+                "installed_after_sha256": digest(installed_after),
+                "installed_unchanged": installed_before == installed_after,
+                "installed_differs_from_repository": installed_before != committed_old,
+                "installed_before_control": installed_control_before,
+                "installed_after_control": installed_control_after,
                 "project": live.get("target", {}).get("project_id"),
                 "project_non_interference": live.get("non_interference", {}).get("target"),
                 "cleanup": live.get("cleanup"), "runtime_state_after_sha256": digest(STATE.read_bytes())}
@@ -107,11 +119,15 @@ def main() -> int:
               "positive_control_one_launch": positive.get("observed_worker_starts") == 1,
               "old_protection_unchanged": readback["unchanged"],
               "old_protection_control": control_before["passed"] and control_after["passed"],
+              "installed_protection_unchanged": readback["installed_unchanged"],
+              "installed_protection_control": installed_control_before["passed"] and installed_control_after["passed"],
               "project_non_interference": bool(readback["project_non_interference"] and
                                                readback["project_non_interference"].get("unchanged")),
               "cleanup_verified": bool(readback["cleanup"] and readback["cleanup"].get("verified"))}
     write(out / "proven-red.json", {"mechanical_control": control_before,
                                      "restored_control": control_after,
+                                     "installed_control": installed_control_before,
+                                     "installed_restored_control": installed_control_after,
                                      "upstream_offline_test": "tools/live/test_fx_b3_release_admission_proof.py"})
     write(out / "independent-verdict.json", {"status": "PENDING_INDEPENDENT_VERIFIER",
                                              "claim": "Producer evidence only; no independent verdict is claimed"})

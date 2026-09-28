@@ -65,3 +65,8 @@ and command stdout/stderr. `independent-verdict.json` records PENDING until the 
 verifier issues its own verdict. The candidate commit SHA is recorded on Issue #138
 after the evidence commit because a commit cannot embed its own SHA. A missing case,
 counter, profile, state, readback or cleanup is a failure, never inferred zero or PASS.
+
+The installed bootstrap gate is `~/.local/share/alienintent-bootstrap/release_admission.py`.
+Read its digest and run the intact/fault/restored control before and after the live
+probe, separately from the repository copy. Retain any difference between those
+files as an observed installation gap. Neither file is retired by this fixture.
