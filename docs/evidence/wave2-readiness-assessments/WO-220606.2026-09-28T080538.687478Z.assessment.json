@@ -1,0 +1,35 @@
+{
+  "failure": {
+    "class": "PROVIDER_OR_PRODUCT_FAILURE",
+    "stderr": "agent-ready: INCOMPATIBLE Codex: required capability probe failed.\n"
+  },
+  "outcome": "EXECUTION_FAILURE",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T08:05:39.968626+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 1,
+    "input_chars": 12384,
+    "input_sha256": "c608679f9452fb1058c6b1a948c624ef022b8c14f9552c6510cb6bd0bf2c8732",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-4lclt4ti/WO-220606.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": null,
+    "started_at": "2026-09-28T08:05:38.687478+00:00",
+    "timeout_s": 120
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220606"
+}
