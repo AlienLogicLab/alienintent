@@ -142,3 +142,18 @@ def test_canonical_release_precondition_gate_pack_is_selected_by_every_owned_bou
     )
     for path in owned:
         assert "canonical-release-precondition-gate" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path
+
+
+def test_canonical_live_release_admission_proof_pack_is_selected_by_every_owned_boundary():
+    owned = (
+        "tools/live/fx_b3_release_admission_proof.py",
+        "tools/live/test_fx_b3_release_admission_proof.py",
+        "docs/evidence/wave2-proof-fixtures/FX-B3/phase2-project1/result.json",
+        "src/alienintent/execution_coordination/application/factory_coordinator.py",
+        "src/alienintent/execution_coordination/application/release_admission.py",
+        "src/alienintent/composition/github_profile.py",
+        "src/alienintent/composition/role_binding.py",
+        "src/alienintent/invocation_runtime/adapters/scripted_worker.py",
+    )
+    for path in owned:
+        assert "canonical-live-release-admission-proof" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path
