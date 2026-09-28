@@ -1061,6 +1061,19 @@ AlienIntent accepts proposals as immutable, noncanonical provenance until admitt
 
 Canonical Product Requirement: [Issue #66](https://github.com/AlienLogicLab/alienintent/issues/66), CAPTURE. Origin: PROP-2026-0005.
 
+## SF-REQ-057 — Durable Founder requirement intake
+**Priority:** P0
+
+**Founder requirement (2026-09-29, exact source content):** AlienIntent must guarantee that every future Founder requirement entering through the Factory Director inbox remains an active obligation until it is durably materialized into canonical product/backlog state with exact provenance, and then proceeds through the normal prioritized lifecycle to DONE. An acknowledgement, defer note, or successor reminder is not materialization.
+
+**Founder acceptance criteria:**
+
+1. An acknowledgement-only processed receipt does not clear the inbox obligation.
+2. A valid completion receipt identifies a canonical artifact, exact git revision, and GitHub Issue/Project backlog identity.
+3. The materialized backlog item preserves Founder priority P0 and remains visible to normal lifecycle processing after inbox completion.
+
+Authority and provenance: Founder-authored `FOUNDER_REQUIREMENT` inbox entry `founder-requirement-intake-durability-live-proof-20260929.json`; P0 factory correctness. This requirement is a new active product obligation. Its backlog Issue and Project identity are recorded on the Issue after materialization. No implementation Wave or BIU release is assigned by this entry.
+
 ## SF-REQ-031 — Evidence-derived routing learning
 **Priority:** P4
 
