@@ -248,6 +248,28 @@
         "tests/composition/test_trajectory_receipts.py",
         "tools/live/test_fx_b1_operational.py"
       ]
+    },
+    {
+      "id": "canonical-release-precondition-gate",
+      "description": "At the canonical FactoryCoordinator._run -> admit_release boundary, a configured release gate refuses a missing or non-authorizing release record, an inexact, unresolvable or unreachable baseline and unsuperseded denial wording, and a configured attributable allocation lets the existing budget check refuse an exhausted or absent dimension, each with zero worker launches; valid controls launch exactly one (WO-220611, FX-B3P).",
+      "paths": [
+        "src/alienintent/execution_coordination/domain/release.py",
+        "src/alienintent/execution_coordination/*/release_admission.py",
+        "src/alienintent/execution_coordination/application/factory_coordinator.py",
+        "tests/execution_coordination/test_factory_coordinator.py",
+        "tests/execution_coordination/domain/test_policy.py",
+        "tools/live/fx_b3p_*.py",
+        "tools/live/test_fx_b3p_release_preconditions.py"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tests/execution_coordination/domain/test_policy.py",
+        "tests/execution_coordination/test_factory_coordinator.py",
+        "tools/live/test_fx_b3p_release_preconditions.py"
+      ]
     }
   ]
 }

@@ -4,15 +4,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from enum import StrEnum
-from typing import Iterable
+from typing import Iterable, Mapping
 
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore, verify_in_fresh_process
+from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired, SupersededDecision
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
-from alienintent.execution_coordination.domain.release import ReleaseRequest, ReleaseSource, admit_release
+from alienintent.execution_coordination.domain.release import ReleasePreconditionRefused, ReleaseRequest, ReleaseSource, admit_release
 from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, VerdictKind, evaluate_verdict
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
+from alienintent.execution_coordination.ports.release_admission import ExecutionAllocation
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
 from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, PRODUCER, VERIFIER, WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
@@ -61,9 +63,14 @@ class ProjectedState:
 
 
 class FactoryCoordinator:
-    def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True, notifier: DecisionNotifier | None = None) -> None:
+    def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True, notifier: DecisionNotifier | None = None,
+                 release_gate: ReleasePreconditionGate | None = None, allocation: ExecutionAllocation | None = None) -> None:
         self._store, self._work, self._worker, self._artifacts, self._profile = store, work, worker, artifacts, profile
         self._automatic_release = automatic_release
+        # SWF-21 release preconditions and the attributable per-BIU budget
+        # (WO-220611). A profile that supplies neither keeps its prior
+        # admission behaviour; see _available_budget.
+        self._release_gate, self._allocation = release_gate, allocation
         self._released: set[str] = set()
         self._notifier = notifier
         self.delivery_health: dict[str, DeliveryHealth] = {}
@@ -257,10 +264,17 @@ class FactoryCoordinator:
             # invocation acts on work already admitted and never resets it.
             source = ReleaseSource.AUTOMATIC_POLICY if self._is_automatic(item) else ReleaseSource.EXPLICIT_HUMAN
             try:
+                if self._release_gate is not None:
+                    self._release_gate.check(item)
                 capabilities = {"python", "filesystem", "process-control"}
                 if self._has_authorizing_decision(item.identity):
                     capabilities.update(item.contract.required_capabilities)
-                admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset(capabilities), {dimension: 1 for dimension in item.contract.budget_policy.required_dimensions}, "offline-profile", source))
+                admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset(capabilities), self._available_budget(item, raw), "offline-profile", source))
+            except ReleasePreconditionRefused as refusal:
+                self._record_result(item, current, "release", "authority-block", {"hold_reason": f"release-precondition:{refusal.check}"})
+                self._register_escalation(self._authority_request(item, current.version, f"Release precondition refused: {refusal}."))
+                self._block_dependents(item, self._work.import_ready_snapshot())
+                return StopReason.BLOCKED
             except ValueError:
                 self._record_result(item, current, "release", "authority-block")
                 self._register_escalation(self._authority_request(item, current.version, "Release admission requires authority not present in this profile."))
@@ -311,6 +325,17 @@ class FactoryCoordinator:
         finally:
             if read_back and not self._has_unresolved_effect(item.identity):
                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
+
+    def _available_budget(self, item: ReadyWorkItem, raw: dict[str, object]) -> Mapping[str, int]:
+        """The budget admit_release checks: the configured allocation less durable consumption.
+
+        Without a configured allocation the profile is unmetered and every
+        required dimension is admitted, as before WO-220611.
+        """
+        if self._allocation is None:
+            return {dimension: 1 for dimension in item.contract.budget_policy.required_dimensions}
+        consumed = {"attempts": int(raw.get("rejections", 0) or 0)} if raw else {}
+        return self._allocation.available_budget(item.identity, item.contract, consumed)
 
     @staticmethod
     def _invocation(item: ReadyWorkItem, correlation: str, role: str, state: ExecutionState) -> WorkerInvocation:
