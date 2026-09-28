@@ -1,0 +1,45 @@
+{
+  "candidate_revision": "RECORDED_ON_ISSUE_AFTER_COMMIT",
+  "checks": {
+    "all_negative_cases_zero_launches": true,
+    "cleanup_verified": true,
+    "live_exit_zero": true,
+    "live_passed": true,
+    "old_protection_control": true,
+    "old_protection_unchanged": true,
+    "positive_control_one_launch": true,
+    "project_non_interference": true
+  },
+  "command": [
+    "/usr/bin/python3",
+    "tools/live/fx_b3_release_admission_proof.py",
+    "--target",
+    "production",
+    "--out",
+    "/home/netmarine/.local/state/alienintent/worktrees/af01fc9a-0a83-48e8-ac8f-5d9fc446b326/docs/evidence/wave2-proof-fixtures/FX-R6/20260928-r6-5bd7c385/live"
+  ],
+  "exit_status": 0,
+  "expected": "one scripted valid launch; zero invalid launches; old protection retained",
+  "fixture": "FX-R6",
+  "fixture_revision": "2a2e9eb5e5e9c0d242be969d3d4547c9ef62d2ba",
+  "invalid_cases": [],
+  "invocation": "AlienLogicLab/alienintent#138:PRODUCER:5bd7c385-7f0b-4c3e-b4c2-c08d5365d994",
+  "issue": 138,
+  "observed": {
+    "expected_worker_starts": 1,
+    "observed_worker_starts": 1,
+    "provider_calls": 0,
+    "publications": 0
+  },
+  "old_protection_readback": "readback.json",
+  "passed": true,
+  "predecessor_proof": "docs/evidence/wave2-proof-fixtures/FX-B3/phase2-project1/result.json",
+  "profile_path": "/home/netmarine/.config/alienintent/self-hosting.json",
+  "profile_sha256": "4b26fae49943f984b693457e565f18764be2260d0315321ceb032250f3b88d87",
+  "proof_level": "OPERATIONAL_OR_EXTERNAL_AUTHORITY",
+  "release_baseline": "a8869f4b7169951ef1bc523e6b6ea4bcd0adc1be",
+  "runtime_state_before_sha256": "77c4ab7b72f4dbf96a9593d9541859013a37ff0195dab30cdf726a77c507c207",
+  "scope": "Project #1 labelled disposable probes; no real worker provider calls or publications",
+  "source_revision": "2a2e9eb5e5e9c0d242be969d3d4547c9ef62d2ba",
+  "work_unit": "WO-220606"
+}

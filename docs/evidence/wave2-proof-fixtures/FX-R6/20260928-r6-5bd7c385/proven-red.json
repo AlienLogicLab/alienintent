@@ -1,0 +1,25 @@
+{
+  "mechanical_control": {
+    "fault": [
+      {
+        "check": "agent_ready",
+        "why": "Agent-Ready disposition is None, not READY."
+      }
+    ],
+    "intact": [],
+    "passed": true,
+    "restored": []
+  },
+  "restored_control": {
+    "fault": [
+      {
+        "check": "agent_ready",
+        "why": "Agent-Ready disposition is None, not READY."
+      }
+    ],
+    "intact": [],
+    "passed": true,
+    "restored": []
+  },
+  "upstream_offline_test": "tools/live/test_fx_b3_release_admission_proof.py"
+}

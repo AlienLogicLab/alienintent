@@ -1,0 +1,18 @@
+{
+  "command.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "command.stdout": "12ddbfaf9c4a22746bd9f1ed786133071a5ca04e837dc41bc3ac90e465d7cefd",
+  "execution-record.json": "2e6cf25492f08b173ce1e3779aad409c2b2787f6691e4e038841ac80d21df6e5",
+  "independent-verdict.json": "a7ec3d00ff803ddec53024fe89c210a72c912a67c4de942cc20826439dc1e45e",
+  "live/board-after.json": "95a60506d41053327696f43be8c4c5b0082ac9db018304e314e9ba7cb1f089c3",
+  "live/board-before.json": "95a60506d41053327696f43be8c4c5b0082ac9db018304e314e9ba7cb1f089c3",
+  "live/journals/02-positive-control/invocation-journal.jsonl": "fa4f229f8d8c95b2fe16530e3c1eea3553b57c5d4fd58cbb913f2dab5c632616",
+  "live/journals/02-positive-control/process-journal.jsonl": "13513f646e6eca1875bc78daed68918b9d9b5d0f98a2ee4c43c44df3a066dc38",
+  "live/ledger.json": "acc4942e2a810236659907cb0a4e983ee77bc24c5e261e7054b9e2224756c2ed",
+  "live/result.json": "6ee2225b361cf06a1c45e5e1cddccd86c16c7e3ff70120e3c7da013e514edfcc",
+  "observations/12ddbfaf9c4a22746bd9f1ed786133071a5ca04e837dc41bc3ac90e465d7cefd": "12ddbfaf9c4a22746bd9f1ed786133071a5ca04e837dc41bc3ac90e465d7cefd",
+  "observations/6ee2225b361cf06a1c45e5e1cddccd86c16c7e3ff70120e3c7da013e514edfcc": "6ee2225b361cf06a1c45e5e1cddccd86c16c7e3ff70120e3c7da013e514edfcc",
+  "observations/a16b734b265827260f2214d7225708eb5a5c07c410bb199b27af2fd45e7a96d4": "a16b734b265827260f2214d7225708eb5a5c07c410bb199b27af2fd45e7a96d4",
+  "observations/e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "proven-red.json": "91f355f18757db98793ed708d82bb00d3e8c770a4614b5ef711d15c045381e56",
+  "readback.json": "a16b734b265827260f2214d7225708eb5a5c07c410bb199b27af2fd45e7a96d4"
+}

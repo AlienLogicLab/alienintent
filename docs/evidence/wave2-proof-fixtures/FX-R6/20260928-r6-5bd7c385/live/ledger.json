@@ -1,0 +1,113 @@
+{
+ "cleanup": {
+  "absent_after_fresh_read": {
+   "PVTI_lADOEcrpC84Bj5i_zg9MY2c": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MY8I": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MYdo": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MYiU": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MYl8": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MYqk": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MYvE": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MYy8": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MZA0": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MZF4": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MZK4": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MZQs": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MZUU": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9MZYQ": true
+  },
+  "deleted": [
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYdo",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-POS",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MYdo"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYiU",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-POLICY",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MYiU"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYl8",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-DIGEST",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MYl8"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYqk",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-DEP",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MYqk"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYvE",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-CAP",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MYvE"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYy8",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-BUDGET",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MYy8"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MY2c",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-UNRELEASED",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MY2c"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MY8I",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-NORECORD",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MY8I"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZA0",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-NOAUTH",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MZA0"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZF4",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-NOBASE",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MZF4"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZK4",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-NULLBASE",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MZK4"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZQs",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-ABSENTBASE",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MZQs"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZUU",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-DIVERGED",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MZUU"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZYQ",
+    "identity": "FX-B4-PROBE-20260928T114320Z-a363-DENIAL",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9MZYQ"
+   }
+  ],
+  "failures": [],
+  "verified": true
+ },
+ "items": {
+  "FX-B4-PROBE-20260928T114320Z-a363-ABSENTBASE": "PVTI_lADOEcrpC84Bj5i_zg9MZQs",
+  "FX-B4-PROBE-20260928T114320Z-a363-BUDGET": "PVTI_lADOEcrpC84Bj5i_zg9MYy8",
+  "FX-B4-PROBE-20260928T114320Z-a363-CAP": "PVTI_lADOEcrpC84Bj5i_zg9MYvE",
+  "FX-B4-PROBE-20260928T114320Z-a363-DENIAL": "PVTI_lADOEcrpC84Bj5i_zg9MZYQ",
+  "FX-B4-PROBE-20260928T114320Z-a363-DEP": "PVTI_lADOEcrpC84Bj5i_zg9MYqk",
+  "FX-B4-PROBE-20260928T114320Z-a363-DIGEST": "PVTI_lADOEcrpC84Bj5i_zg9MYl8",
+  "FX-B4-PROBE-20260928T114320Z-a363-DIVERGED": "PVTI_lADOEcrpC84Bj5i_zg9MZUU",
+  "FX-B4-PROBE-20260928T114320Z-a363-NOAUTH": "PVTI_lADOEcrpC84Bj5i_zg9MZA0",
+  "FX-B4-PROBE-20260928T114320Z-a363-NOBASE": "PVTI_lADOEcrpC84Bj5i_zg9MZF4",
+  "FX-B4-PROBE-20260928T114320Z-a363-NORECORD": "PVTI_lADOEcrpC84Bj5i_zg9MY8I",
+  "FX-B4-PROBE-20260928T114320Z-a363-NULLBASE": "PVTI_lADOEcrpC84Bj5i_zg9MZK4",
+  "FX-B4-PROBE-20260928T114320Z-a363-POLICY": "PVTI_lADOEcrpC84Bj5i_zg9MYiU",
+  "FX-B4-PROBE-20260928T114320Z-a363-POS": "PVTI_lADOEcrpC84Bj5i_zg9MYdo",
+  "FX-B4-PROBE-20260928T114320Z-a363-UNRELEASED": "PVTI_lADOEcrpC84Bj5i_zg9MY2c"
+ },
+ "launch": "20260928T114320Z-a363",
+ "project": "PVT_kwDOEcrpC84Bj5i_",
+ "target": "production"
+}

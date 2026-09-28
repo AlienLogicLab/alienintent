@@ -1,0 +1,130 @@
+{
+  "after_control": {
+    "fault": [
+      {
+        "check": "agent_ready",
+        "why": "Agent-Ready disposition is None, not READY."
+      }
+    ],
+    "intact": [],
+    "passed": true,
+    "restored": []
+  },
+  "after_sha256": "84b2e2e72cb1cbcad20203726a7d5957faedac31ee0dfe314502c9b466a7d995",
+  "before_control": {
+    "fault": [
+      {
+        "check": "agent_ready",
+        "why": "Agent-Ready disposition is None, not READY."
+      }
+    ],
+    "intact": [],
+    "passed": true,
+    "restored": []
+  },
+  "before_sha256": "84b2e2e72cb1cbcad20203726a7d5957faedac31ee0dfe314502c9b466a7d995",
+  "cleanup": {
+    "absent_after_fresh_read": {
+      "PVTI_lADOEcrpC84Bj5i_zg9MY2c": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MY8I": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MYdo": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MYiU": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MYl8": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MYqk": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MYvE": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MYy8": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MZA0": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MZF4": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MZK4": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MZQs": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MZUU": true,
+      "PVTI_lADOEcrpC84Bj5i_zg9MZYQ": true
+    },
+    "deleted": [
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYdo",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-POS",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MYdo"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYiU",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-POLICY",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MYiU"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYl8",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-DIGEST",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MYl8"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYqk",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-DEP",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MYqk"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYvE",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-CAP",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MYvE"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MYy8",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-BUDGET",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MYy8"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MY2c",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-UNRELEASED",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MY2c"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MY8I",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-NORECORD",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MY8I"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZA0",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-NOAUTH",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MZA0"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZF4",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-NOBASE",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MZF4"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZK4",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-NULLBASE",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MZK4"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZQs",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-ABSENTBASE",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MZQs"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZUU",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-DIVERGED",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MZUU"
+      },
+      {
+        "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9MZYQ",
+        "identity": "FX-B4-PROBE-20260928T114320Z-a363-DENIAL",
+        "item": "PVTI_lADOEcrpC84Bj5i_zg9MZYQ"
+      }
+    ],
+    "failures": [],
+    "verified": true
+  },
+  "old_protection_path": "tools/live/release_admission.py",
+  "project": "PVT_kwDOEcrpC84Bj5i_",
+  "project_non_interference": {
+    "added": [],
+    "changed": [],
+    "items_after": 126,
+    "items_before": 126,
+    "removed": [],
+    "unchanged": true
+  },
+  "runtime_state_after_sha256": "f62e5a3e1453f2ba3208d6071a20cb6157e6261f92e4ae2685c8e91520ee178b",
+  "unchanged": true
+}
