@@ -551,7 +551,6 @@ export class EventRelay {
   async startupReconcile() {
     if (this.started || this.stopped) return;
     this.assertActiveConfiguration();
-    this.reconcileResources();
     this.started = true; this.metrics.projectLists++;
     for (const item of await this.options.authority.listItems()) {
       if (this.stopped) return;
@@ -614,5 +613,9 @@ export class EventRelay {
         this.emit({ issue: item.issue, outcome: "STARTUP_RECONCILIATION_ERROR", error: error.message });
       }
     }
+    // Historical worktree cleanup is best-effort maintenance, not a prerequisite for
+    // recovering current actionable Project work. Running it first can starve dispatch
+    // for minutes when many retained resources require inspection.
+    this.reconcileResources();
   }
 }
