@@ -4,6 +4,7 @@ import { join } from 'node:path';
 
 const TOKEN = /^[a-zA-Z0-9][a-zA-Z0-9._:/-]*$/;
 const PROVIDERS = new Set(['codex', 'claude']);
+const PERMISSIONS = { codex: new Set(['read-only','workspace-write','danger-full-access']), claude: new Set(['manual','bypassPermissions']) };
 
 export function modelRoutingPath(environment = process.env) {
   return environment.ALIENINTENT_MODEL_ROUTING || join(environment.HOME || homedir(), '.config', 'alienintent', 'model-routing.json');
@@ -20,6 +21,6 @@ export function resolveRoute(role, { path = modelRoutingPath(), read = readFileS
   if (!PROVIDERS.has(provider) || typeof model !== 'string' || !TOKEN.test(model) || !providerConfig) throw new Error('MODEL_ROUTING_INVALID');
   const executable = providerConfig.executable;
   const permissionMode = providerConfig.permissionMode;
-  if (typeof executable !== 'string' || !executable.startsWith('/') || typeof permissionMode !== 'string' || !permissionMode) throw new Error('MODEL_ROUTING_INVALID');
+  if (typeof executable !== 'string' || !executable.startsWith('/') || !PERMISSIONS[provider]?.has(permissionMode)) throw new Error('MODEL_ROUTING_INVALID');
   return { provider, model, executable, permissionMode };
 }

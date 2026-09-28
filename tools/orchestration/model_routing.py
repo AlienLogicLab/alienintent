@@ -4,6 +4,7 @@ from pathlib import Path
 
 _TOKEN = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9._:/-]*$')
 _PROVIDERS = {'codex', 'claude'}
+_PERMISSIONS = {'codex': {'read-only', 'workspace-write', 'danger-full-access'}, 'claude': {'manual', 'bypassPermissions'}}
 
 def routing_path() -> Path:
     return Path(os.environ.get('ALIENINTENT_MODEL_ROUTING', Path.home() / '.config/alienintent/model-routing.json'))
@@ -20,6 +21,6 @@ def resolve_route(role: str, path: Path | str | None = None) -> dict[str, str]:
     if provider not in _PROVIDERS or not isinstance(model, str) or not _TOKEN.fullmatch(model) or not isinstance(cfg, dict):
         raise ValueError('MODEL_ROUTING_INVALID')
     executable, permission = cfg.get('executable'), cfg.get('permissionMode')
-    if not isinstance(executable, str) or not executable.startswith('/') or not isinstance(permission, str) or not permission:
+    if not isinstance(executable, str) or not executable.startswith('/') or permission not in _PERMISSIONS[provider]:
         raise ValueError('MODEL_ROUTING_INVALID')
     return {'provider': provider, 'model': model, 'executable': executable, 'permissionMode': permission}

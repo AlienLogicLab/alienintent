@@ -29,3 +29,12 @@ def test_invalid_routing_fails_closed(tmp_path):
     path.write_text(json.dumps(bad))
     with pytest.raises(ValueError, match="MODEL_ROUTING_INVALID"):
         resolve_route("DIRECTOR", path)
+
+
+def test_routing_enforces_provider_scoped_permission_modes(tmp_path):
+    path = tmp_path / "routing.json"
+    value = doc("model-a")
+    value["providers"]["codex"]["permissionMode"] = "bypassPermissions"
+    path.write_text(json.dumps(value))
+    with pytest.raises(ValueError, match="MODEL_ROUTING_INVALID"):
+        resolve_route("DIRECTOR", path)

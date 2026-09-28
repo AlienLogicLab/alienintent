@@ -28,7 +28,7 @@ test('OFFLINE synthetic self-hosting rehearsal composes CLI, signed events, isol
     const fixture=setupRehearsal(directory,source,port);
     const routingDir=join(directory,'.config','alienintent'); mkdirSync(routingDir,{recursive:true});
     const profile=JSON.parse(readFileSync(fixture.config,'utf8'));
-    writeFileSync(join(routingDir,'model-routing.json'),JSON.stringify({schemaVersion:1,default:{provider:'codex',model:'synthetic-model'},providers:{codex:{executable:profile.workers.PRODUCER.provider.executablePath,permissionMode:profile.workers.PRODUCER.provider.permissionMode},claude:{executable:profile.workers.VERIFIER.provider.executablePath,permissionMode:profile.workers.VERIFIER.provider.permissionMode}},roles:{VERIFIER:{provider:'claude'}}}));
+    writeFileSync(join(routingDir,'model-routing.json'),JSON.stringify({schemaVersion:1,default:{provider:'codex',model:'synthetic-model'},providers:{codex:{executable:fixture.provider,permissionMode:'workspace-write'},claude:{executable:fixture.provider,permissionMode:'bypassPermissions'}},roles:{VERIFIER:{provider:'claude'}}}));
     const read=path=>JSON.parse(readFileSync(path,'utf8'));
     const launches=()=>existsSync(fixture.launches)?readFileSync(fixture.launches,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];
     const diagnostic=()=>output+'\n'+(existsSync(fixture.state)?readFileSync(fixture.state,'utf8'):'no state');

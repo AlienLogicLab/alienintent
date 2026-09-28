@@ -102,10 +102,10 @@ while(!existsSync(${JSON.stringify(directory)}+'/exit-'+phase))await new Promise
   profile.environment.executableSearchPath = '/usr/bin:/bin';
   for(const [role, worker] of Object.entries(profile.workers)) {
     const name=role.toLowerCase();
-    worker.provider.adapter='codex';worker.provider.executablePath=provider;worker.provider.fundingProfile='provider-default';worker.provider.permissionMode='workspace-write';
-    worker.provider.authenticationProfile.homeDirectory=join(directory,name+'-home');mkdirSync(worker.provider.authenticationProfile.homeDirectory);
+    worker.fundingProfile='provider-default';
+    worker.authenticationProfile.homeDirectory=join(directory,name+'-home');mkdirSync(worker.authenticationProfile.homeDirectory);
     worker.githubAuthentication={configDirectory:join(directory,name+'-gh'),shimDirectory:join(directory,name+'-shim')};
   }
   const config=join(directory,'profile.json');writeFileSync(config,JSON.stringify(profile));
-  return {config,transport,store,baseline,database,state:profile.paths.stateFile,launches:join(directory,'launches.jsonl')};
+  return {config,transport,store,baseline,database,state:profile.paths.stateFile,launches:join(directory,'launches.jsonl'),provider};
 }

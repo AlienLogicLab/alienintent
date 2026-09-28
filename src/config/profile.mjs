@@ -108,7 +108,7 @@ export function loadProfile(profilePath) {
   for (const role of roles) {
     const w = p.workers[role];
     if (!w) { roleNames[role] = role; continue; }
-    object(w, `workers.${role}`, ["displayName", "githubLogin", "gitIdentity", "provider", "githubAuthentication", "environment", "compatibility", "knownChanges"]);
+    object(w, `workers.${role}`, ["displayName", "githubLogin", "gitIdentity", "authenticationProfile", "fundingProfile", "githubAuthentication", "environment", "compatibility", "knownChanges"]);
     const displayName = text(w.displayName, "worker.displayName");
     const githubLogin = text(w.githubLogin, "worker.githubLogin");
     if (logins.has(githubLogin) || githubLogin.endsWith("[bot]")) fail("worker.githubLogin");
@@ -116,16 +116,9 @@ export function loadProfile(profilePath) {
     object(w.gitIdentity, "worker.gitIdentity", ["name", "email"]);
     const gitName = text(w.gitIdentity.name, "worker.gitIdentity.name");
     const gitEmail = text(w.gitIdentity.email, "worker.gitIdentity.email");
-    object(w.provider, "worker.provider", ["adapter", "executablePath", "arguments", "permissionMode", "authenticationProfile", "fundingProfile"]);
-    if (!["codex", "claude"].includes(w.provider.adapter)) fail("worker.provider.adapter");
-    const command = path(w.provider.executablePath, "worker.provider.executablePath");
-    const args = strings(w.provider.arguments, "worker.provider.arguments");
-    const modes = w.provider.adapter === "codex" ? ["read-only", "workspace-write", "danger-full-access"] : ["manual", "bypassPermissions"];
-    if (!modes.includes(w.provider.permissionMode)) fail("worker.provider.permissionMode");
-    object(w.provider.authenticationProfile, "worker.provider.authenticationProfile", ["name", "homeDirectory"]);
-    const home = path(w.provider.authenticationProfile.homeDirectory, "worker.provider.authenticationProfile.homeDirectory");
-    if (!["provider-default", "claude-subscription"].includes(w.provider.fundingProfile)
-        || (w.provider.fundingProfile === "claude-subscription" && w.provider.adapter !== "claude")) fail("worker.provider.fundingProfile");
+    object(w.authenticationProfile, "worker.authenticationProfile", ["name", "homeDirectory"]);
+    const home = path(w.authenticationProfile.homeDirectory, "worker.authenticationProfile.homeDirectory");
+    if (!["provider-default", "claude-subscription"].includes(w.fundingProfile)) fail("worker.fundingProfile");
     object(w.githubAuthentication, "worker.githubAuthentication", ["configDirectory", "shimDirectory"]);
     const ghConfigDir = path(w.githubAuthentication.configDirectory, "worker.githubAuthentication.configDirectory");
     const ghShimDir = path(w.githubAuthentication.shimDirectory, "worker.githubAuthentication.shimDirectory");
@@ -153,9 +146,8 @@ export function loadProfile(profilePath) {
     }
     if (w.knownChanges !== undefined && !Array.isArray(w.knownChanges)) fail("worker.knownChanges");
     workerLogins[storedRole] = githubLogin;
-    workers[storedRole] = { displayName, githubLogin, gitName, gitEmail, command,
-      adapter: w.provider.adapter, arguments: args, permissionMode: w.provider.permissionMode,
-      authenticationProfile: w.provider.authenticationProfile, fundingProfile: w.provider.fundingProfile,
+    workers[storedRole] = { displayName, githubLogin, gitName, gitEmail,
+      authenticationProfile: w.authenticationProfile, fundingProfile: w.fundingProfile,
       ghConfigDir, ghShimDir, runtimePath, logDirectory: p.paths.workerLogDirectory, executables,
       environment: { inheritNames, values: { ...w.environment.values, HOME: home } },
       knownChanges: w.knownChanges ?? [], legacyInvocationIdentities, ...(supervision ? { supervision } : {}) };

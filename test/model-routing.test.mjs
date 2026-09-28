@@ -14,3 +14,11 @@ test('model routing is reread on every resolution', () => {
   writeFileSync(path, JSON.stringify(doc('model-b')));
   assert.equal(resolveRoute('DIRECTOR', { path }).model, 'model-b');
 });
+
+
+test('routing enforces provider-scoped permission modes', () => {
+  const path = join(mkdtempSync(join(tmpdir(), 'alienintent-model-routing-')), 'routing.json');
+  const bad = doc('model-a'); bad.providers.codex.permissionMode = 'bypassPermissions';
+  writeFileSync(path, JSON.stringify(bad));
+  assert.throws(() => resolveRoute('DIRECTOR', { path }), /MODEL_ROUTING_INVALID/);
+});
