@@ -1,8 +1,8 @@
-import { existsSync, readFileSync, writeFileSync, renameSync, rmSync } from "node:fs";
 import crypto from "node:crypto";
 import { inspectWorker, workerLogPath } from "./worker-runner.mjs";
 import { isAbsolute } from "node:path";
 import { allowedSignals, attemptsResultSignal, parseInvocationSignal } from "../github/authority.mjs";
+import { NodeStateLedger } from "./node-state-ledger.mjs";
 const defaultRoleNames = { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" };
 
 const routedSignal = claim => claim?.control ?? claim?.result;
@@ -19,7 +19,8 @@ function workerBootstrap(role, item, invocationId, status, roleNames, workerDisp
 }
 export function verifyWebhookSignature(secret, rawBody, signature) { if (!secret || !signature?.startsWith("sha256=")) return false; const expected = Buffer.from(`sha256=${crypto.createHmac("sha256", secret).update(rawBody).digest("hex")}`); const received = Buffer.from(signature); return expected.length === received.length && crypto.timingSafeEqual(expected, received); }
 export class EventRelay {
-  constructor(options) { this.options = options; this.roleNames = options.roleNames ?? defaultRoleNames; this.roles = { IMPLEMENT: this.roleNames.PRODUCER, VERIFY: this.roleNames.VERIFIER, ACCEPT: this.roleNames.PRODUCER }; this.active = new Map(); this.started = false; this.stopped = false; this.routing = new Map(); this.metrics = { projectLists: 0 }; this._events = []; }
+  constructor(options) { this.options = options; this.ledger = new NodeStateLedger(options.statePath, options.ledgerPath, options.ledgerHooks); this.roleNames = options.roleNames ?? defaultRoleNames; this.roles = { IMPLEMENT: this.roleNames.PRODUCER, VERIFY: this.roleNames.VERIFIER, ACCEPT: this.roleNames.PRODUCER }; this.active = new Map(); this.deliveriesInFlight = new Set(); this.started = false; this.stopped = false; this.routing = new Map(); this.metrics = { projectLists: 0 }; this._events = []; }
+  fence() { return this.ledger.assertFence(); }
   isClosure(claim) { return claim?.role === this.roleNames.PRODUCER && claim.status === "ACCEPT"; }
   configuredWorkerLogin(role) { return this.options.workerLogins?.[role] ?? this.options.authority.workerLogins?.[role]; }
   assertActiveConfiguration() {
@@ -107,14 +108,8 @@ export class EventRelay {
       }
     }
   }
-  state() { return existsSync(this.options.statePath) ? JSON.parse(readFileSync(this.options.statePath, "utf8")) : { deliveries: {}, active: {} }; }
-  save(state) {
-    const temporary = `${this.options.statePath}.${process.pid}.${crypto.randomUUID()}.tmp`;
-    try {
-      writeFileSync(temporary, `${JSON.stringify(state, null, 2)}\n`, { mode: 0o600 });
-      renameSync(temporary, this.options.statePath);
-    } finally { rmSync(temporary, { force: true }); }
-  }
+  state() { return this.ledger.read(); }
+  save(state) { return this.ledger.save(state); }
   get events() { return this._events; } emit(event) { const record = { at: new Date().toISOString(), ...event }; this._events.push(record); this.options.onEvent?.(record); }
   lane(item, role) { return `${item.repository}#${item.issue}:${role}`; } invocation(item, role) { return `${this.lane(item, role)}:${crypto.randomUUID()}`; }
   biuKey(item) { return `${item.repository}#${item.issue}`; }
@@ -151,20 +146,48 @@ export class EventRelay {
       && (this.options.authorizedOperatorLogins ?? []).some(value => value.toLowerCase() === login);
   }
   eventStatus(payload) { const change = payload?.changes?.field_value; if (payload?.action !== "edited" || change?.field_name !== "Status") return null; const value = typeof change.to === "string" ? change.to : change.to?.name; return typeof value === "string" ? value.toUpperCase() : null; }
+  reserveDelivery(delivery) {
+    const state = this.state();
+    const prior = state.deliveries[delivery]?.state;
+    if (prior === "PROCESSED" || this.deliveriesInFlight.has(delivery)) return false;
+    if (prior !== undefined && prior !== "PROCESSING") throw new Error("DELIVERY_STATE_INVALID");
+    this.deliveriesInFlight.add(delivery);
+    try {
+      if (!prior) {
+        state.deliveries[delivery] = { state: "PROCESSING", at: new Date().toISOString() };
+        this.save(state);
+      }
+      return true;
+    } catch (error) {
+      this.deliveriesInFlight.delete(delivery);
+      throw error;
+    }
+  }
+  releaseFailedDelivery(delivery) {
+    const retryable = this.state();
+    if (retryable.deliveries[delivery]?.state === "PROCESSING") {
+      delete retryable.deliveries[delivery];
+      this.save(retryable);
+    }
+  }
   async acceptEvent({ headers, payload }) {
+    this.state(); this.fence();
     this.assertActiveConfiguration();
     if (!headers["x-github-delivery"]) return { accepted: false, reason: "UNSUPPORTED_EVENT" };
     if (headers["x-github-event"] === "issue_comment") return this.acceptResultComment(headers["x-github-delivery"], payload);
     if (headers["x-github-event"] !== "projects_v2_item") return { accepted: false, reason: "UNSUPPORTED_EVENT" };
     if (payload?.organization?.login && this.options.projectOwner && payload.organization.login !== this.options.projectOwner) return { accepted: false, reason: "WRONG_ORGANIZATION" };
     const status = this.eventStatus(payload), role = this.roles[status]; if (!role || !payload?.projects_v2_item?.content_node_id || !payload.projects_v2_item.id) return { accepted: false, reason: "IRRELEVANT" };
-    const state = this.state(), delivery = headers["x-github-delivery"]; if (state.deliveries[delivery]) return { accepted: true, duplicate: true }; state.deliveries[delivery] = { state: "PROCESSING", at: new Date().toISOString() }; this.save(state);
+    const delivery = headers["x-github-delivery"];
+    if (!this.reserveDelivery(delivery)) return { accepted: true, duplicate: true };
     try { const identity = await this.options.authority.enrichContentNode(payload.projects_v2_item.content_node_id, payload.projects_v2_item.node_id ?? payload.projects_v2_item.id); if (!identity?.repository || !Number.isInteger(identity.issue) || !identity.itemId) { this.emit({ outcome: "CONTENT_ENRICHMENT_FAILED" }); } else await this.start(identity, role, status, undefined, payload); const processed = this.state(); processed.deliveries[delivery] = { state: "PROCESSED", at: new Date().toISOString() }; this.save(processed); return { accepted: true }; }
-    catch (error) { const retryable = this.state(); delete retryable.deliveries[delivery]; this.save(retryable); throw error; }
+    catch (error) { this.releaseFailedDelivery(delivery); throw error; }
+    finally { this.deliveriesInFlight.delete(delivery); }
   }
   async acceptResultComment(delivery, payload) {
+    this.fence();
     if (payload?.action !== "created") return { accepted: false, reason: "UNSUPPORTED_ACTION" };
-    const state = this.state(); if (state.deliveries[delivery]) return { accepted: true, duplicate: true }; state.deliveries[delivery] = { state: "PROCESSING", at: new Date().toISOString() }; this.save(state);
+    if (!this.reserveDelivery(delivery)) return { accepted: true, duplicate: true };
     try {
       const repository = payload?.repository?.full_name, issue = payload?.issue?.number, body = payload?.comment?.body, author = payload?.comment?.user?.login;
       const snapshot = this.state();
@@ -199,7 +222,8 @@ export class EventRelay {
         } else await this.routeResult(claim, signal);
       }
       const processed = this.state(); processed.deliveries[delivery] = { state: "PROCESSED", at: new Date().toISOString() }; this.save(processed); return { accepted: true };
-    } catch (error) { const retryable = this.state(); delete retryable.deliveries[delivery]; this.save(retryable); throw error; }
+    } catch (error) { this.releaseFailedDelivery(delivery); throw error; }
+    finally { this.deliveriesInFlight.delete(delivery); }
   }
   now() { return (this.options.now ?? Date.now)(); }
   diagnostic(claim, outcome, evidence = {}, pendingState) {
@@ -218,6 +242,7 @@ export class EventRelay {
     if (state.active[claim.lane]?.invocationId === claim.invocationId) { delete state.active[claim.lane]; this.save(state); }
   }
   async routeResult(claim, result) {
+    this.fence();
     if (!allowedSignals(claim, this.roleNames).has(result)) return false;
     if (this.routing.has(claim.invocationId)) return this.routing.get(claim.invocationId);
     const pending = (async () => {
@@ -271,7 +296,7 @@ export class EventRelay {
       }
       if (target || this.isClosure(claim)) owned.pendingSignal ??= { value: result, target };
       this.save(latest);
-      if (target && !confirmed) await this.options.authority.transition(item, target);
+      if (target && !confirmed) { this.fence(); await this.options.authority.transition(item, target); }
       const state = this.state();
       if (state.active[claim.lane]?.invocationId === claim.invocationId) {
         const field = result === "RETURN_TO_IMPLEMENT" ? "control" : "result";
@@ -296,6 +321,7 @@ export class EventRelay {
     this.scheduleInspection(active);
   }
   async resumeAfterClosure(claim) {
+    this.fence();
     const desired = claim.pendingStatus ?? (claim.control === "RETURN_TO_IMPLEMENT" ? "IMPLEMENT" : null);
     if (!desired || this.stopped) return;
     if (await this.options.authority.currentStatus(claim.item) === desired) await this.start(claim.item, this.roleNames.PRODUCER, desired, undefined, claim.pendingOperatorEvent);
@@ -315,6 +341,7 @@ export class EventRelay {
     return durable;
   }
   async start(item, role, status, durableRead, operatorEvent) {
+    this.state(); this.fence();
     if (this.stopped) return false;
     this.assertActiveConfiguration();
     if (!Object.values(this.roleNames).includes(role)) throw new Error("WORKER_ROLE_CONFIGURATION_MISMATCH");
@@ -445,6 +472,7 @@ export class EventRelay {
         this.save(accounting);
       }
       this.updateResource(invocationId, { lifecycle: "LAUNCHING", ...(supervision ? { supervision } : {}) });
+      this.fence();
       const child = this.options.launch({ role, item, invocationId, worktree: active.worktree, resource: this.state().resources?.[invocationId], bootstrap: workerBootstrap(role, item, invocationId, status, this.roleNames, this.options.workerDisplayNames) });
       active.child = child;
       this.active.set(invocationId, active);
