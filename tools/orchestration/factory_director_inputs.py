@@ -6,8 +6,10 @@ The adapter reads only durable sources and derives the host's nine-boolean
 ``docs/work-units/wave2/FDH-01.md``:
 
 * GitHub Project #1, through the fail-closed read path in
-  ``tools/live/project_materialization.py`` (complete board, one item per Issue,
-  no non-Issue items), plus Issue comments for retained Agent Ready assessments;
+  ``tools/live/project_materialization.py`` (complete, internally consistent board, one
+  item per Issue; non-Issue items are excluded as observable foreign pollution rather
+  than failing the whole board closed), plus Issue comments for retained Agent Ready
+  assessments;
 * the Node runtime state file named by ``self-hosting.json`` ``paths.stateFile``
   (``active``, ``limitEscalations``, ``founderExceptions``);
 * the Founder-hold record, the explicit-pause flag and the Director inbox named
@@ -161,14 +163,27 @@ def read_issue_comments(issue: int) -> list[dict]:
 
 # --- per-source validation ------------------------------------------------------------------
 
-def validate_board(rows) -> dict[int, str]:
-    """Issue number -> lifecycle state; the whole board or nothing."""
+def validate_board(rows) -> tuple[dict[int, str], tuple[str, ...]]:
+    """Issue number -> lifecycle state (the whole board or nothing), and the foreign
+    (non-Issue) items observed.
+
+    A non-Issue Project item -- a benign GitHub ``DRAFT_ISSUE`` card, for example -- is board
+    pollution, not an authority signal: it is excluded from AlienIntent lifecycle state and
+    reported back as a foreign item rather than failing the whole board closed. An ISSUE row
+    is still held to strict validation: repository identity, issue number, lifecycle status
+    and duplicates all fail closed, because those are exactly the shapes that could otherwise
+    fabricate execution authority.
+    """
     if not isinstance(rows, list):
         raise SourceUnavailable("Project board is not a list of items")
     board: dict[int, str] = {}
+    foreign: list[str] = []
     for row in rows:
-        if not isinstance(row, dict) or row.get("type") != "ISSUE":
-            raise SourceUnavailable(f"non-Issue item on the Project: {row!r}"[:240])
+        if not isinstance(row, dict):
+            raise SourceUnavailable(f"Project item is not an object: {row!r}"[:240])
+        if row.get("type") != "ISSUE":
+            foreign.append(f"{row.get('type')!r} item {row.get('id')!r}"[:120])
+            continue
         issue, status = row.get("issue"), row.get("status")
         if not _positive_int(issue):
             raise SourceUnavailable(f"Project item {row.get('id')!r} has no Issue number")
@@ -180,7 +195,7 @@ def validate_board(rows) -> dict[int, str]:
         if issue in board:
             raise SourceUnavailable(f"duplicate Project items for issue #{issue}")
         board[issue] = status.upper()
-    return board
+    return board, tuple(foreign)
 
 
 def validate_self_hosting(raw) -> tuple[str, Path, frozenset[str]]:
@@ -414,17 +429,20 @@ class AuthoritativeDirectorInputs:
         self.host_config = Path(host_config)
         self.projection = Path(projection) if projection is not None else None
         self.board_reader, self.comments_reader = board_reader, comments_reader
+        self.last_foreign_project_items: tuple[str, ...] = ()
 
     # Each reader is a separate method so a negative control can break exactly one source.
     def read_board(self) -> dict[int, str]:
         if self.board_reader is materialization.read_board or self.comments_reader is read_issue_comments:
             require_gh()  # the default readers run gh; injected readers do not
         try:
-            return validate_board(self.board_reader())
+            board, foreign = validate_board(self.board_reader())
         except SourceUnavailable:
             raise
         except Exception as exc:  # MaterializationFailed, gh failure, malformed payload
             raise SourceUnavailable(f"Project board read failed: {exc}"[:300]) from exc
+        self.last_foreign_project_items = foreign
+        return board
 
     def read_runtime(self, config: AdapterConfig) -> RuntimeView:
         repository, state_file, self.operators = validate_self_hosting(
@@ -468,7 +486,10 @@ class AuthoritativeDirectorInputs:
             paused = self.read_pause(config)
             board = self.read_board()
             assessed = self.read_assessed(board)
-            return derive(board, runtime, holds, unprocessed, assessed, paused, config.wip_limit, acknowledgements)
+            evaluation = derive(board, runtime, holds, unprocessed, assessed, paused, config.wip_limit,
+                                acknowledgements)
+            evaluation.observations["foreignProjectItems"] = list(self.last_foreign_project_items)
+            return evaluation
         except SourceUnavailable as exc:
             return Evaluation(UNAVAILABLE, str(exc))
         except Exception as exc:  # anything unexpected is also not authoritative

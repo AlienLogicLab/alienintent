@@ -26,6 +26,7 @@ import json
 import re
 import subprocess
 import sys
+import time
 
 REPO = "AlienLogicLab/alienintent"
 PROJECT_OWNER = "AlienLogicLab"
@@ -46,6 +47,11 @@ STATUS_OPTIONS = {
 
 class MaterializationFailed(RuntimeError):
     """The Project does not show the state we intended. Never proceed past this."""
+
+
+class _PaginationMutated(RuntimeError):
+    """``totalCount`` changed mid-pagination: concurrent Project mutation, not corruption.
+    Caught only by ``read_board``'s bounded snapshot retry; never escapes it directly."""
 
 
 def verify_materialization(*, issue: int, expected_status: str, board, issue_side_items) -> None:
@@ -93,7 +99,10 @@ def _gh(*args) -> str:
     return done.stdout
 
 
-def read_board():
+def _read_board_snapshot():
+    """One full page-1-to-last-page read attempt. Raises ``_PaginationMutated`` (retryable)
+    when ``totalCount`` changes mid-pagination, or ``MaterializationFailed`` (not retryable)
+    for any other inconsistency."""
     query = ('query($owner:String!,$number:Int!,$cursor:String){organization(login:$owner)'
              '{projectV2(number:$number){items(first:100,after:$cursor){totalCount '
              'pageInfo{hasNextPage endCursor} nodes{id type content{__typename '
@@ -122,9 +131,8 @@ def read_board():
         if expected_total is None:
             expected_total = page_total
         elif page_total != expected_total:
-            raise MaterializationFailed(
-                "MATERIALIZATION FAILED\n  - Project item totalCount changed during pagination "
-                f"({expected_total} -> {page_total})")
+            raise _PaginationMutated(
+                f"Project item totalCount changed during pagination ({expected_total} -> {page_total})")
         nodes.extend(page_nodes)
         has_next = page_info.get("hasNextPage")
         if has_next is False:
@@ -140,6 +148,25 @@ def read_board():
         cursor = next_cursor
     return board_from_payload({"totalCount": expected_total, "pageInfo": {"hasNextPage": False},
                                "nodes": nodes})
+
+
+def read_board(*, max_attempts: int = 3, backoff_seconds: float = 0.2):
+    """Bounded snapshot retry: normal concurrent Project mutation (a card moves while we
+    paginate) must not disable Director cognition. A ``totalCount`` change mid-pagination
+    discards the partial read and restarts from page 1, after a short backoff, rather than
+    failing on the first sight of concurrent activity. After `max_attempts` unstable reads,
+    fail closed rather than fabricate a snapshot that was never internally consistent."""
+    last_error: _PaginationMutated | None = None
+    for attempt in range(1, max_attempts + 1):
+        try:
+            return _read_board_snapshot()
+        except _PaginationMutated as exc:
+            last_error = exc
+            if attempt < max_attempts:
+                time.sleep(backoff_seconds)
+    raise MaterializationFailed(
+        "MATERIALIZATION FAILED\n  - Project item pagination could not obtain a stable "
+        f"snapshot after {max_attempts} attempts (concurrent mutation): {last_error}")
 
 
 def board_from_payload(items):

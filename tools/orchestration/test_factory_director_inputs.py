@@ -152,6 +152,24 @@ def test_inert_states_are_not_eligible_work(sources, state):
     assert (values.eligible_authorized_work, values.lifecycle_requires_selection) == (False, False)
 
 
+def test_non_issue_project_item_does_not_block_authoritative_state(sources):
+    """A benign non-Issue card (a GitHub ``DRAFT_ISSUE``, for example) is board pollution, not
+    corruption: it must not make all Director state unavailable while real Issues are fine."""
+    sources.issue(40, "READY")
+    sources.board.append({"id": "PVTI_draft", "type": "DRAFT_ISSUE", "issue": None, "status": "READY"})
+    values = sources.inputs()
+    assert values.authoritative_state is True
+    assert values.eligible_authorized_work is True
+
+
+def test_foreign_project_item_is_observable_but_creates_no_authority(sources):
+    sources.board.append({"id": "PVTI_draft", "type": "DRAFT_ISSUE", "issue": None, "status": "READY"})
+    evaluation = sources.adapter().evaluate()
+    assert evaluation.inputs.authoritative_state is True
+    assert evaluation.inputs.eligible_authorized_work is False  # the draft creates no authority
+    assert evaluation.observations["foreignProjectItems"] == ["'DRAFT_ISSUE' item 'PVTI_draft'"]
+
+
 def test_lifecycle_requires_selection_for_review(sources):
     sources.issue(4, "DONE")
     assert sources.inputs().lifecycle_requires_selection is False
@@ -217,12 +235,6 @@ class SwallowBoardFailure(AuthoritativeDirectorInputs):
             return {1: "READY"}
 
 
-class IgnoreNonIssueItems(AuthoritativeDirectorInputs):
-    def read_board(self):
-        rows = [row for row in self.board_reader() if row.get("type") == "ISSUE"]
-        return adapter_module.validate_board(rows)
-
-
 class DefaultMissingState(AuthoritativeDirectorInputs):
     def read_runtime(self, config):
         try:
@@ -253,10 +265,6 @@ def board_incomplete(s):
     s.board_reader_override = reader
 
 
-def board_non_issue(s):
-    s.board.append({"id": "PVTI_draft", "type": "DRAFT_ISSUE", "issue": None, "status": "READY"})
-
-
 def state_missing(s):
     s.state_file.unlink()
 
@@ -281,7 +289,6 @@ def inbox_absent(s):
 
 FAULTS = [
     ("board-incomplete", board_incomplete, SwallowBoardFailure),
-    ("board-non-issue-item", board_non_issue, IgnoreNonIssueItems),
     ("state-file-missing", state_missing, DefaultMissingState),
     ("state-file-unparsable", state_unparsable, DefaultMissingState),
     ("hold-record-absent", hold_absent, DefaultMissingHolds),

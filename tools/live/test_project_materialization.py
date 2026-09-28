@@ -159,16 +159,49 @@ def test_read_board_paginates_complete_project(monkeypatch):
     assert "cursor=cursor-1" in calls[1]
 
 
-def test_read_board_rejects_total_count_change(monkeypatch):
-    pages = [
-        _graphql_page([_graphql_node("PVTI_a", 90)], 2, True, "cursor-1"),
-        _graphql_page([_graphql_node("PVTI_b", 91)], 3, False, None),
+def test_read_board_recovers_after_one_mutated_pagination_attempt(monkeypatch):
+    """A totalCount change mid-pagination is normal concurrent Project mutation: discard the
+    partial read and restart from page 1. A subsequent stable snapshot still succeeds."""
+    attempts = [
+        [  # attempt 1: totalCount changes between page 1 and page 2 -- discarded
+            _graphql_page([_graphql_node("PVTI_a", 90)], 2, True, "cursor-1"),
+            _graphql_page([_graphql_node("PVTI_b", 91)], 3, False, None),
+        ],
+        [  # attempt 2: restarted from page 1, internally consistent this time
+            _graphql_page([_graphql_node("PVTI_a", 90)], 2, True, "cursor-1"),
+            _graphql_page([_graphql_node("PVTI_b", 91)], 2, False, None),
+        ],
     ]
+    calls = []
 
-    monkeypatch.setattr(project_materialization, "_gh",
-                        lambda *args: __import__("json").dumps(pages.pop(0)))
-    with pytest.raises(MaterializationFailed):
-        read_board()
+    def fake_gh(*args):
+        calls.append(args)
+        page = attempts[0].pop(0)
+        if not attempts[0]:
+            attempts.pop(0)
+        return __import__("json").dumps(page)
+
+    monkeypatch.setattr(project_materialization, "_gh", fake_gh)
+    board = read_board(backoff_seconds=0)
+    assert [row["issue"] for row in board] == [90, 91]
+    assert len(calls) == 4
+
+
+def test_read_board_exhausts_retry_budget_on_continuous_mutation_and_fails_closed(monkeypatch):
+    """Continuously mutating pagination (never a stable snapshot) fails closed rather than
+    fabricating state, once the bounded retry budget is spent."""
+    counter = {"n": 0}
+
+    def fake_gh(*args):
+        counter["n"] += 1
+        if counter["n"] % 2 == 1:
+            return __import__("json").dumps(_graphql_page([_graphql_node("PVTI_a", 90)], 2, True, "cursor-1"))
+        return __import__("json").dumps(_graphql_page([_graphql_node("PVTI_b", 91)], 3, False, None))
+
+    monkeypatch.setattr(project_materialization, "_gh", fake_gh)
+    with pytest.raises(MaterializationFailed, match="stable"):
+        read_board(max_attempts=3, backoff_seconds=0)
+    assert counter["n"] == 6
 
 
 def test_read_board_rejects_missing_or_repeated_cursor(monkeypatch):
