@@ -122,8 +122,9 @@ point is `main`.
 | contrast-ungated-no-record | 1 | — (no gate configured) |
 | contrast-unmetered-dimension | 1 | — (no allocation configured) |
 
-The observed result, with its exact source revision, command and exit status, is retained in
-`FX-B3P/result.json`.
+The observed result is retained in `FX-B3P/result.json`. It was run against source revision
+`596c98068f65fff7657e728fb2a0120eab914209` and records the command, the exit status (0), the output
+sha256 and the full case output. All 15 cases match their pinned expectations (`all_match: true`).
 
 Enforcement tests:
 
