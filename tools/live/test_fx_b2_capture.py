@@ -28,7 +28,7 @@ def test_preflight_rejects_missing_and_unbounded_authority(tmp_path, monkeypatch
     StoreLifecycleJournal(store, profile=profile).enter(active)
     calls = []
     monkeypatch.setattr(fx_b2_capture.subprocess, "run", lambda argv, **kwargs:
-                        calls.append(argv) or SimpleNamespace(returncode=0, stdout="{}", stderr=""))
+                        calls.append((argv, kwargs)) or SimpleNamespace(returncode=0, stdout="{}", stderr=""))
     with pytest.raises(ValueError, match="AUTHORITY_UNAVAILABLE"):
         fx_b2_capture.preflight(root, now=2.0)
     with pytest.raises(ValueError, match="AUTHORITY_UNAVAILABLE"):
@@ -46,7 +46,8 @@ def test_preflight_rejects_missing_and_unbounded_authority(tmp_path, monkeypatch
         "epoch": 1, "invocation": "fx-b2-test", "expires_at": 3600.0})
     assert fx_b2_capture.preflight(root, now=2.0)["active"]["generation"] == 1
     assert fx_b2_capture.launch(root, now=2.0)["exit_status"] == 0
-    assert len(calls) == 1 and calls[0][4:6] == ["launch", "--config"]
+    assert len(calls) == 1 and calls[0][0][4:6] == ["launch", "--config"]
+    assert str(Path(__file__).resolve().parents[2] / "src") in calls[0][1]["env"]["PYTHONPATH"].split(":")
     StoreLifecycleJournal(store, profile=profile).enter(KnownActive(
         active.biu, active.repository, active.contract_digest, active.stage, 2, 2_000_000,
         active.authority, True))
@@ -74,3 +75,20 @@ def test_preflight_missing_store_refuses_without_creating_it(tmp_path):
     with pytest.raises(ValueError, match="EVIDENCE_STORE_MISSING"):
         fx_b2_capture.preflight(root, now=2.0)
     assert list(root.iterdir()) == []
+
+
+def test_existing_empty_store_is_rejected_without_mutation(tmp_path):
+    root = tmp_path / "profile"
+    root.mkdir()
+    (tmp_path / "fx-b2-supervision.json").write_text(json.dumps({
+        "root": str(root), "profile": "fx-b2-liveness-operational",
+        "host_invocation": "fx-b2-test", "host_authority": "fx-b2-operational-authorization"}))
+    stores = ("liveness.sqlite", "attention.sqlite", "monitor.sqlite", "monitor-host.sqlite")
+    for name in stores:
+        (root / name).write_bytes(b"")
+    with pytest.raises(ValueError, match="EVIDENCE_SCHEMA_UNAVAILABLE"):
+        fx_b2_capture.preflight(root, now=2.0)
+    with pytest.raises(ValueError, match="EVIDENCE_SCHEMA_UNAVAILABLE"):
+        fx_b2_capture.capture(root, tmp_path / "out", "a" * 40)
+    assert all((root / name).read_bytes() == b"" for name in stores)
+    assert not (tmp_path / "out").exists()

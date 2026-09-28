@@ -11,13 +11,30 @@ import json
 import math
 import os
 from pathlib import Path
+import sqlite3
 import subprocess
 import sys
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "src"))
 
-from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore  # noqa: E402
+from alienintent.execution_coordination.adapters.sqlite_store import (  # noqa: E402
+    SCHEMA_VERSION, SQLiteOperationalStore,
+)
+
+
+class ReadOnlyStore(SQLiteOperationalStore):
+    """Read current evidence without creating or migrating a source database."""
+
+    def _connect(self) -> sqlite3.Connection:
+        connection = sqlite3.connect(f"file:{self.path}?mode=ro", uri=True, isolation_level=None)
+        connection.row_factory = sqlite3.Row
+        return connection
+
+    def _initialize(self) -> None:
+        with self._connect() as connection:
+            if self._preflight(connection).current_version != SCHEMA_VERSION:
+                raise ValueError("EVIDENCE_SCHEMA_UNAVAILABLE")
 
 
 def canonical(value: object) -> bytes:
@@ -35,7 +52,7 @@ def preflight(root: Path, *, now: float | None = None) -> dict[str, object]:
         raise ValueError("FX_B2_PROFILE_MISMATCH")
     if not (root / "liveness.sqlite").is_file():
         raise ValueError("EVIDENCE_STORE_MISSING")
-    store = SQLiteOperationalStore(root / "liveness.sqlite")
+    store = ReadOnlyStore(root / "liveness.sqlite")
     _, authority = store.read_state(profile, authority_name)
     expiry = authority.get("expires_at")
     at = time.time() if now is None else now
@@ -70,6 +87,8 @@ def launch(root: Path, *, now: float | None = None) -> dict[str, object]:
             "--config", str(admitted["config"]), "--actor", "factory-director",
             "--authority", "fx-b2-operational-authorization"]
     env = dict(os.environ)
+    source_path = str(Path(__file__).resolve().parents[2] / "src")
+    env["PYTHONPATH"] = os.pathsep.join((source_path, env["PYTHONPATH"])) if env.get("PYTHONPATH") else source_path
     env.setdefault("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
     result = subprocess.run(argv, capture_output=True, text=True, env=env, check=False)
     return {"argv": argv, "exit_status": result.returncode, "stdout": result.stdout, "stderr": result.stderr}
@@ -87,14 +106,14 @@ def capture(root: Path, output: Path, source_sha: str) -> dict[str, object]:
     if any(not (root / name).is_file() for name in required):
         raise ValueError("EVIDENCE_STORE_MISSING")
     profile = config["profile"]
-    store = SQLiteOperationalStore(root / "liveness.sqlite")
+    store = ReadOnlyStore(root / "liveness.sqlite")
     raw = {
         "config": config,
         "liveness_states": store.list_states(profile, ""),
         "effect_ledger": store.effect_ledger(profile),
-        "attention_states": SQLiteOperationalStore(root / "attention.sqlite").list_states(profile, ""),
-        "monitor_states": SQLiteOperationalStore(root / "monitor.sqlite").list_states(profile, ""),
-        "host_states": SQLiteOperationalStore(root / "monitor-host.sqlite").list_states(profile, ""),
+        "attention_states": ReadOnlyStore(root / "attention.sqlite").list_states(profile, ""),
+        "monitor_states": ReadOnlyStore(root / "monitor.sqlite").list_states(profile, ""),
+        "host_states": ReadOnlyStore(root / "monitor-host.sqlite").list_states(profile, ""),
         "host_log": (root / "monitor-host.log").read_text() if (root / "monitor-host.log").exists() else None,
         "observer_log": (root / "monitor-observer.log").read_text() if (root / "monitor-observer.log").exists() else None,
     }
