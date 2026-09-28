@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Implement durable Founder requirement intake in the Python Factory Director Host input adapter so future Founder requirements remain active obligations through exact canonical materialization and the normal prioritized Project lifecycle to authoritative DONE, without creating a second lifecycle, changing the Wave DAG, mutating live state, or treating acknowledgements as materialization.",
+    "implementation_unknowns": [
+      "Exact current implementation shape of `tools/orchestration/factory_director_inputs.py` and how its existing read-only inbox predicate is structured.",
+      "Exact APIs and behavior available from `tools/live/project_materialization.py` for configured GitHub identity and complete Project read path reuse.",
+      "How the repository currently represents Founder receipts, source keys, digest/provenance metadata, status predicates, and diagnostics.",
+      "How to construct bounded fixtures that faithfully discriminate acknowledgement-only receipts, fake/incomplete receipts, canonical revision/artifact failures, Project item duplication, priority/source-byte mismatches, restart reconciliation, interrupted migration, non-DONE states, and authoritative DONE.",
+      "Which existing feature regressions are applicable and how they should be run in the target environment.",
+      "Exact release baseline and any pre-existing worktree changes to classify once implementation authority exists."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Implementation authority is not presently established because the packet reports it is not a RELEASED instruction and requires a RELEASED admission before execution.",
+      "The implementation depends on external read availability and exact identity checks for Git, GitHub Issue, Project item, priority, and canonical artifact revision; unavailable or inconsistent reads must fail closed.",
+      "Incorrectly accepting receipt claims as self-verifying evidence would undermine the core Founder provenance guarantee.",
+      "Accidentally mutating GitHub, Git, inbox entries, runtime state, configuration, or the existing #147 receipt would violate the stated custody and scope constraints.",
+      "DONE/non-DONE status interpretation errors could prematurely retire an active Founder obligation or keep a completed obligation active.",
+      "Duplicate Project item handling, source-byte changes under the same id, or conflicting supersession could create ambiguous materialization if not treated as fail-closed conditions."
+    ],
+    "next_action": "Obtain the required release/admission authority for this specific issue packet: bind and read back the finite execution limit, confirm dependency and WIP capacity, name isolated producer/verifier custody and exact baseline, classify pre-existing changes, and record the RELEASED admission on #147 before implementation handoff.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The task is not being split because the described changes form one coherent decision center: durable Founder intake materialization in the existing Python Factory Director input adapter, with tests and evidence proving that single behavior. Owner intent is sufficiently specific and does not require clarification. The blocker is authority, not ambiguity or engineering research: the supplied text explicitly says the packet is not a RELEASED instruction and lists required admission steps before implementation. Until that release authority exists, the correct disposition is HOLD.",
+    "semantic_split_recommendation": [],
+    "summary": "The supplied packet describes a cohesive, highly constrained implementation centered on `tools/orchestration/factory_director_inputs.py`, with focused tests, runtime contract documentation, and bounded evidence. The product/authority intent is specific: validate immutable Founder source provenance, canonical artifact identity, Issue/Project/P0 identity, source digest, duplicate/mismatch handling, restart behavior, non-DONE activity, DONE completion, and deterministic migration checks while preserving read-only behavior. However, the packet itself reports that it is in TASKS lifecycle, is not a RELEASED instruction, and requires additional release/admission steps before implementation. That missing release authority is the controlling condition.",
+    "verification_assessment": "Acceptance is observable: a verifier can inspect the candidate diff for allowed paths and read-only behavior, run focused unit/fixture tests plus applicable regressions, and review recorded evidence showing exact fixture inputs, commands, exit codes, counts, predicates, and diagnostics across the specified positive and negative cases. One independent verification verdict is meaningful because the work has a single governing behavior boundary: whether the Founder intake adapter preserves exact provenance and backlog identity while keeping obligations active until authoritative DONE. The packet\u2019s referenced accepted specification, plan, commits, source entry, and Project/Issue state are reported facts from the task text only; this assessment does not independently verify them."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T23:35:16.400630+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 6368,
+    "input_sha256": "6ba67fb8330692d9ca9b3ae5f1c7969669770c4f97d90d7510c1f0902eb16b64",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-afhyfjq2/SF-REQ-057.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-28T23:34:42.759891+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "SF-REQ-057"
+}

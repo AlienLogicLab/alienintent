@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Implement the Python Factory Director Host input adapter behavior so future Founder requirements entering the Director inbox remain active obligations until exact canonical materialization proceeds through the normal prioritized Project lifecycle to authoritative DONE, without reinterpreting Founder content or mutating out-of-scope systems.",
+    "implementation_unknowns": [
+      "How the existing read-only inbox predicate is structured in `tools/orchestration/factory_director_inputs.py` and where the new chain-validation logic should integrate without changing public compatibility markers.",
+      "The exact APIs, return shapes, and error semantics available from `tools/live/project_materialization.py` for GitHub identity, Project read path, item uniqueness, priority, status, and issue-body reads.",
+      "The current receipt schema and how to add deterministic migration-check evidence requirements while preserving prior receipt content and avoiding opportunistic mutation.",
+      "The existing test fixture conventions and how to model unavailable reads, duplicate items, non-DONE statuses, authoritative DONE, source-byte digest changes, unpublished revisions, and interrupted migration repeatability.",
+      "The precise docs/operations runtime contract location and evidence format expected by the repository\u2019s existing conventions."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "External read behavior must be bounded and explicit; if existing Project/GitHub helpers do not expose all required evidence, implementation may require careful adapter-level error handling or narrow helper use.",
+      "The requirement is provenance-sensitive: small mismatches in title, authority, acceptance strings, priority, source digest, revision, artifact path, or Project item uniqueness must fail closed rather than be normalized away.",
+      "The existing #147 receipt must not be migrated opportunistically by the worker, so implementation must clearly separate deterministic migration checks from actual Director-controlled receipt mutation.",
+      "Scope discipline is material because the task permits only specific paths unless a new scope decision is made.",
+      "Regression risk exists if existing intake predicates or identity markers are weakened to accommodate the new durable-Founder behavior."
+    ],
+    "next_action": "Proceed to implementation handoff under the stated scope: inspect the allowed files, integrate the durable Founder receipt validation into the Python adapter, add focused tests and runtime/evidence documentation, and preserve read-only/fail-closed behavior.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The controlling condition is readiness: the task states the governing owner intent, repository owner, allowed mutation scope, exact behavior to implement, prohibited behaviors, acceptance evidence, and custody boundaries. Remaining uncertainty is engineering discovery inside the repository, not unresolved product or authority intent. The work is cohesive around one intake adapter contract, and splitting it would risk separating mutually dependent validation, lifecycle predicate, migration-check, and evidence behavior that must be verified together.",
+    "semantic_split_recommendation": [],
+    "summary": "The supplied task defines a bounded, cohesive implementation contract for durable Founder requirement intake in `tools/orchestration/factory_director_inputs.py`, with focused tests, runtime contract documentation, and evidence fixtures. It specifies authority, scope limits, required provenance checks, fail-closed behavior, migration-check support, read-only external behavior, and observable acceptance evidence. No material owner decision appears unresolved from the supplied text.",
+    "verification_assessment": "Acceptance is observable through deterministic unit or integration-style tests and recorded evidence that exercise exact source-byte hashing, canonical revision/artifact validation, Issue and Project item identity, priority preservation, duplicate and mismatch failures, non-DONE versus DONE status handling, restart idempotence, interrupted migration behavior, and read-only/fail-closed external-read errors. One independent verification verdict is meaningful because the behavior is a single intake predicate/materialization contract with coherent pass/fail outcomes rather than multiple unrelated product decisions."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T23:36:05.567201+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 6687,
+    "input_sha256": "20818d3eadd906009467541a5dbcb3bcdc52c4ef4a22db81d7814194772f1aaa",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-qv_g031x/SF-REQ-057.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-28T23:35:42.941796+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "SF-REQ-057"
+}
