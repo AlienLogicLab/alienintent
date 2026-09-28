@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { EventEmitter } from "node:events";
-import { mkdtempSync, readFileSync, writeFileSync } from "node:fs";
+import { appendFileSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { spawnSync } from "node:child_process";
 import test from "node:test";
 import { EventRelay, verifyWebhookSignature } from "../src/runtime/dispatcher.mjs";
 import { GitHubAuthority } from "../src/github/authority.mjs";
@@ -1109,20 +1110,130 @@ test("startup isolates an unavailable closure item while recovering other accept
   restarted.stop();
 });
 
-test("failed state write leaves the previous complete snapshot readable", async () => {
+test("committed ledger append repairs a failed projection without repeating the save", () => {
   const f = subject();
   f.relay.save({ deliveries: {}, active: {}, proof: "previous" });
-  const fs = (await import("node:fs")).default;
-  const { syncBuiltinESMExports } = await import("node:module");
-  const originalWrite = fs.writeFileSync;
-  fs.writeFileSync = (path, ...args) => {
-    if (String(path).startsWith(f.statePath)) { originalWrite(path, "{partial"); throw new Error("ENOSPC"); }
-    return originalWrite(path, ...args);
-  };
-  syncBuiltinESMExports();
-  try { assert.throws(() => f.relay.save({ deliveries: {}, active: {}, proof: "next" }), /ENOSPC/); }
-  finally { fs.writeFileSync = originalWrite; syncBuiltinESMExports(); }
-  assert.equal(f.relay.state().proof, "previous");
+  f.relay.ledger.hooks.beforeProjection = () => { throw new Error("ENOSPC"); };
+  assert.throws(() => f.relay.save({ deliveries: {}, active: {}, proof: "next" }), /ENOSPC/);
+  assert.equal(JSON.parse(readFileSync(f.statePath, "utf8")).proof, "previous");
+  delete f.relay.ledger.hooks.beforeProjection;
+  assert.equal(f.relay.state().proof, "next");
+  assert.equal(JSON.parse(readFileSync(f.statePath, "utf8")).proof, "next");
+});
+
+test("ledger genesis marks unknown history and each save commits the complete post-state", () => {
+  const f = subject();
+  const first = f.relay.state();
+  assert.deepEqual(first, { deliveries: {}, active: {} });
+  const lane = "ExampleOrg/sample-project#303:PRODUCER";
+  f.relay.save({ ...first, deliveries: { d1: { state: "PROCESSED" } },
+    active: { [lane]: { invocationId: "one" } }, resources: { one: { path: "/tmp/one" } },
+    executionLimits: { "ExampleOrg/sample-project#303": { cycle: 1 } } });
+  const records = readFileSync(f.relay.ledger.path, "utf8").trim().split("\n").map(JSON.parse);
+  assert.deepEqual(records.map(record => record.sequence), [0, 1]);
+  assert.equal(records[0].historyBeforeGenesis, "UNKNOWN");
+  assert.equal(records[1].previousDigest, records[0].digest);
+  assert.equal(records[1].state.resources.one.path, "/tmp/one");
+  assert.equal(records[1].state.executionLimits["ExampleOrg/sample-project#303"].cycle, 1);
+  assert.deepEqual(records[1].changedLanes, [lane]);
+  assert.equal(records[1].occurrences[0].id, `${records[1].revision}:1:0`);
+  const restarted = new EventRelay(f.relay.options);
+  assert.deepEqual(restarted.state(), records[1].state);
+  assert.equal(readFileSync(f.relay.ledger.path, "utf8").trim().split("\n").length, 2);
+});
+
+test("before-append failure admits no new record, projection, or worker effect", async () => {
+  const f = subject();
+  f.relay.state();
+  f.relay.ledger.hooks.beforeAppend = () => { throw new Error("ENOSPC"); };
+  await assert.rejects(f.relay.acceptEvent(event("IMPLEMENT")), /ENOSPC/);
+  delete f.relay.ledger.hooks.beforeAppend;
+  assert.deepEqual(f.launches, []);
+  const records = readFileSync(f.relay.ledger.path, "utf8").trim().split("\n");
+  assert.equal(records.length, 1);
+  assert.deepEqual(f.relay.state().active, {});
+});
+
+for (const mutation of ["partial", "sequence", "digest", "fork", "whole-record-truncation"]) {
+  test(`ledger ${mutation} refuses startup before Project read or worker effect`, async () => {
+    const f = subject();
+    f.relay.save({ deliveries: {}, active: {}, proof: "durable" });
+    const lines = readFileSync(f.relay.ledger.path, "utf8").trim().split("\n");
+    if (mutation === "partial") appendFileSync(f.relay.ledger.path, "{partial");
+    else if (mutation === "whole-record-truncation") writeFileSync(f.relay.ledger.path, `${lines[0]}\n`);
+    else {
+      const record = JSON.parse(lines[1]);
+      if (mutation === "sequence") record.sequence = 7;
+      if (mutation === "digest") record.state.proof = "forged";
+      if (mutation === "fork") record.previousDigest = "wrong";
+      writeFileSync(f.relay.ledger.path, `${lines[0]}\n${JSON.stringify(record)}\n`);
+    }
+    let reads = 0;
+    f.relay.options.authority.listItems = async () => { reads++; return []; };
+    await assert.rejects(f.relay.startupReconcile(), /LEDGER_/);
+    assert.equal(reads, 0); assert.deepEqual(f.launches, []);
+  });
+}
+
+test("a second process cannot become the ledger writer while the first is live", () => {
+  const f = subject(); f.relay.state();
+  const script = `import { NodeStateLedger } from ${JSON.stringify(new URL("../src/runtime/node-state-ledger.mjs", import.meta.url).href)}; new NodeStateLedger(process.argv[1]).read();`;
+  const child = spawnSync(process.execPath, ["--input-type=module", "-e", script, f.statePath], { encoding: "utf8" });
+  assert.notEqual(child.status, 0);
+  assert.match(child.stderr, /LEDGER_WRITER_BUSY/);
+});
+
+test("committed append before head or projection survives replay with one sequence", () => {
+  const f = subject(); f.relay.state();
+  f.relay.ledger.hooks.afterAppend = () => { throw new Error("INTERRUPTED_AFTER_APPEND"); };
+  assert.throws(() => f.relay.save({ deliveries: {}, active: {}, proof: "committed" }), /INTERRUPTED_AFTER_APPEND/);
+  delete f.relay.ledger.hooks.afterAppend;
+  const recovered = new EventRelay(f.relay.options);
+  assert.equal(recovered.state().proof, "committed");
+  assert.equal(readFileSync(f.relay.ledger.path, "utf8").trim().split("\n").length, 2);
+  assert.equal(JSON.parse(readFileSync(f.statePath, "utf8")).proof, "committed");
+});
+
+test("projection before acknowledgement retains the one committed occurrence", () => {
+  const f = subject(); f.relay.state();
+  f.relay.ledger.hooks.afterProjection = () => { throw new Error("ACK_LOST"); };
+  assert.throws(() => f.relay.save({ deliveries: {}, active: {}, proof: "committed" }), /ACK_LOST/);
+  delete f.relay.ledger.hooks.afterProjection;
+  assert.equal(f.relay.state().proof, "committed");
+  assert.equal(readFileSync(f.relay.ledger.path, "utf8").trim().split("\n").length, 2);
+});
+
+test("missing source with an existing head fences startup and launch", async () => {
+  const f = subject(); f.relay.state();
+  const { rmSync } = await import("node:fs");
+  rmSync(f.relay.ledger.path);
+  let reads = 0;
+  f.relay.options.authority.listItems = async () => { reads++; return []; };
+  await assert.rejects(f.relay.startupReconcile(), /LEDGER_TRUNCATED/);
+  assert.equal(reads, 0); assert.deepEqual(f.launches, []);
+});
+
+test("a forked head witness refuses replay even when the JSONL body is intact", async () => {
+  const f = subject(); f.relay.save({ deliveries: {}, active: {}, proof: "durable" });
+  const head = JSON.parse(readFileSync(f.relay.ledger.headPath, "utf8"));
+  head.digest = "0".repeat(64);
+  writeFileSync(f.relay.ledger.headPath, `${JSON.stringify(head)}\n`);
+  await assert.rejects(f.relay.startupReconcile(), /LEDGER_TRUNCATED_OR_FORKED/);
+  assert.deepEqual(f.launches, []);
+});
+
+test("interrupted replay keeps effects fenced until the committed projection is repaired", async () => {
+  const f = subject(); f.relay.save({ deliveries: {}, active: {}, proof: "durable" });
+  writeFileSync(f.statePath, "{partial");
+  f.relay.ledger.hooks.beforeProjection = () => { throw new Error("REPLAY_INTERRUPTED"); };
+  let reads = 0;
+  f.relay.options.authority.listItems = async () => { reads++; return []; };
+  await assert.rejects(f.relay.startupReconcile(), /REPLAY_INTERRUPTED/);
+  assert.equal(reads, 0); assert.deepEqual(f.launches, []);
+  delete f.relay.ledger.hooks.beforeProjection;
+  const restarted = new EventRelay(f.relay.options);
+  assert.equal(restarted.state().proof, "durable");
+  assert.equal(readFileSync(f.relay.ledger.path, "utf8").trim().split("\n").length, 2);
 });
 
 test("Founder re-admission compares GitHub event time to GitHub signal time despite local skew", async () => {
