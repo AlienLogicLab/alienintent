@@ -11,6 +11,11 @@ real `SQLiteOperationalStore`, `GitHubProjectsWorkManagement`, the store-held re
 real local git repository for baseline resolution and reachability. Only the Project snapshot rows
 and the worker (a counting double answering `authority-block`, so no process starts) are local.
 
+The `profile-*` cases (candidate cycle 2) drive the production composition root
+`GitHubProfileComposition` itself, which always composes the gate and the allocation
+(`composition/release_admission.py`); they supply only the profile's configuration and durable
+records, never a gate, and count dispatches at the coordinator's worker boundary.
+
 It touches no network, no GitHub repository/Project, no provider and no credential. It does not
 re-pin FX-B3/FX-B4 (WO-220506's own scope) and is not operational evidence for them.
 
@@ -28,6 +33,8 @@ import subprocess
 import sys
 import tempfile
 
+from alienintent.composition.github_profile import GitHubProfileComposition
+from alienintent.composition.release_admission import ReleaseAdmissionConfig
 from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
 from alienintent.execution_coordination.adapters.release_admission import GitRevisionResolver, StoredReleaseAuthorizations
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
@@ -37,6 +44,8 @@ from alienintent.execution_coordination.application.release_admission import Biu
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.release import ReleaseAuthorization
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome
+from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
+from alienintent.installation.domain.github_profile import GitHubProfile
 
 REPOSITORY = "AlienLogicLab/alienintent"
 PROFILE = "fx-b3p-local"
@@ -130,8 +139,13 @@ def run_case(root: Path, repository: dict[str, str], name: str, item: BiuContrac
     coordinator = FactoryCoordinator(store, work, worker, LocalArtifactStore(case_root / "a", case_root / "v"), PROFILE,
                                      release_gate=gate, allocation=None if allocation is None else BiuLimitAllocation(allocation))
     summary = coordinator.start()
+    return _observe(name, coordinator, summary, worker, item.identity, authorization, allocation, gated)
+
+
+def _observe(name: str, coordinator: FactoryCoordinator, summary, worker: CountingWorker, identity: str,
+             authorization: ReleaseAuthorization | None, allocation: dict | None, gated: bool) -> dict:
     try:
-        record_state = coordinator.state(item.identity).record or {}
+        record_state = coordinator.state(identity).record or {}
     except KeyError:
         record_state = {}
     correlation = record_state.get("correlation")
@@ -152,6 +166,36 @@ def run_case(root: Path, repository: dict[str, str], name: str, item: BiuContrac
         "recorded_correlation": correlation,
         "recorded_outcome": record_state.get("outcome"),
     }
+
+
+def run_profile_case(root: Path, repository: dict[str, str], name: str, item: BiuContract, *, record: dict | None,
+                     allocation: dict | None = None) -> dict:
+    """One case through the production ``GitHubProfileComposition``: only configuration and records are supplied."""
+    case_root = root / name
+    case_root.mkdir(parents=True)
+    rows = (row(item),)
+    secret = case_root / "webhook"
+    secret.write_text("fx-b3p-webhook-secret")
+    profile = GitHubProfile(PROFILE, REPOSITORY, "PVT_fx_b3p", {"READY": "READY"}, {"IMPLEMENT": "Execution"}, "webhook", automatic_release=True)
+    composed = GitHubProfileComposition(
+        profile, ProtectedLocalFileSecretProvider({"webhook": secret}), case_root / "state.sqlite", lambda: rows, item, lambda _: None,
+        projection_write=lambda identity, field, state, revision: revision, worker=CountingWorker(),
+        checkout=Path(repository["checkout"]),
+        release_admission=ReleaseAdmissionConfig(RELEASE_POINT, allocation or {}),
+    )
+    # Count at the coordinator's worker boundary (the composed binding guard); the gate and
+    # allocation the constructor composed are left exactly as built.
+    worker = CountingWorker()
+    composed.worker.start, composed.worker.read_back = worker.start, worker.read_back  # type: ignore[method-assign]
+    authorization = None
+    if record is not None:
+        values = {"identity": item.identity, "record_ref": f"fixture:{item.identity}:release-record", "authorizes_implement": True,
+                  "baseline": "baseline", "text": "IMPLEMENT is authorized."} | record
+        values["baseline"] = repository.get(values["baseline"], values["baseline"])
+        authorization = ReleaseAuthorization(**values)
+        composed.release_records.record(authorization)
+    summary = composed.coordinator.start()
+    return _observe(name, composed.coordinator, summary, worker, item.identity, authorization, allocation, True)
 
 
 # (case, acceptance criterion, expected worker starts, expected refusing check or None, spec)
@@ -190,6 +234,19 @@ CASES = (
     ("contrast-unmetered-dimension", "contrast: no allocation configured, FX-B3 step 8 shape", 1, None,
      dict(item=contract("FXB3P-UNMETERED", budget_policy=BudgetPolicy(hard_required_dimensions=("fx-b3-unallocated-dimension",))),
           record={})),
+    # Cycle 2: the production composition root composes the gate and allocation itself, so the
+    # contrast shapes above are unreachable through it.
+    ("profile-no-release-record", "operational profile: no durable release record", 0, "implementation-authorized",
+     dict(item=contract("FXB3P-PROFILE-NORECORD"), record=None, allocation={"FXB3P-PROFILE-NORECORD": {"attempts": 1}}, profile=True)),
+    ("profile-unreachable-baseline", "operational profile: baseline not reachable from the release point", 0, "baseline-reachable",
+     dict(item=contract("FXB3P-PROFILE-DIVERGED"), record={"baseline": "diverged"}, allocation={"FXB3P-PROFILE-DIVERGED": {"attempts": 1}}, profile=True)),
+    ("profile-no-allocation", "operational profile: no allocation configured for this BIU", 0, "admit_release",
+     dict(item=contract("FXB3P-PROFILE-UNALLOCATED"), record={}, profile=True)),
+    ("profile-unmetered-dimension", "operational profile: FX-B3 step 8 shape (formerly the unmetered contrast)", 0, "admit_release",
+     dict(item=contract("FXB3P-PROFILE-UNMETERED", budget_policy=BudgetPolicy(hard_required_dimensions=("fx-b3-unallocated-dimension",))),
+          record={}, allocation={"FXB3P-PROFILE-UNMETERED": {"attempts": 1}}, profile=True)),
+    ("profile-positive-control", "operational profile: every precondition and allocation holds", 1, None,
+     dict(item=contract("FXB3P-PROFILE-POS"), record={}, allocation={"FXB3P-PROFILE-POS": {"attempts": 1}}, profile=True)),
 )
 
 
@@ -202,7 +259,8 @@ def main(argv: list[str] | None = None) -> int:
         root = Path(temporary)
         repository = target_repository(root)
         for name, criterion, expected, refused_by, spec in CASES:
-            observed = run_case(root, repository, name, **spec)
+            spec = dict(spec)
+            observed = (run_profile_case if spec.pop("profile", False) else run_case)(root, repository, name, **spec)
             for key in ("baseline",):
                 if observed["release_record"] and observed["release_record"][key] in {repository["baseline"], repository["diverged"]}:
                     observed["release_record"][key] = "<fixture:" + ("baseline" if observed["release_record"][key] == repository["baseline"] else "diverged") + ">"

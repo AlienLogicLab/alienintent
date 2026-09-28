@@ -30,6 +30,7 @@ import subprocess
 from typing import Callable
 
 from alienintent.composition.github_profile import GitHubProfileComposition
+from alienintent.composition.release_admission import ReleaseAdmissionConfig
 from alienintent.composition.role_binding import ROLE_OPERATIONS
 from alienintent.composition.sandbox_run_profile import PROVIDER_DIMENSIONS, SandboxRunProfile, contract_from_document, worker_environment
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
@@ -43,6 +44,7 @@ from alienintent.invocation_runtime.application.real_worker import RealWorkerPro
 from alienintent.invocation_runtime.domain.runtime import CapabilityGrant, InvocationRole, ReservationBook
 from tests.composition.test_sandbox_run_profile import backlog, contract_document, digest_of, project_item
 from tests.support.feature_regressions import seed_verification_runner
+from tests.support.release_admission import authorize_release, biu_limits
 
 ROOT = Path(__file__).resolve().parents[2]
 EPOCH = 1758445000.0
@@ -119,10 +121,12 @@ def sandbox(root: Path, *, maximum_attempts: int = 1, profile_class: type[Sandbo
     checkout = seed(root)
     only = document(SANDBOX_WORK, maximum_attempts)
     items = [project_item("PVTI_1", SANDBOX_WORK, priority="P0", ready_at="2026-09-21T11:00:01Z", digest=digest_of(only))]
-    return profile_class(
+    profile = profile_class(
         backlog(root, items, {f"biu/{SANDBOX_WORK}.json": only}), root / "state", checkout,
         provider="claude", worker_command=WORKER_COMMAND, worker_environment=worker_environment(root), clock=lambda: EPOCH,
     )
+    authorize_release(profile.release_records, checkout, (SANDBOX_WORK,))
+    return profile
 
 
 def github_grant(invocation: WorkerInvocation) -> CapabilityGrant:
@@ -158,11 +162,14 @@ def github(root: Path, *, binding: str = "bound", grant: Callable[[WorkerInvocat
         now=clock, sleep=lambda _: None, journal=provider_journal,
     )
     profile = GitHubProfile(GH_PROFILE, GH_REPOSITORY, "PVT_1", {"READY": "READY"}, {"IMPLEMENT": "Execution"}, "webhook", automatic_release=True)
-    return GitHubProfileComposition(
+    composed = GitHubProfileComposition(
         profile, ProtectedLocalFileSecretProvider({"webhook": secret}), root / "state.sqlite", lambda: (row,), contract, lambda _: None,
         projection_write=lambda identity, field, state, revision: revision, worker=worker,
         journal=None if binding == "missing" else journal, clock=clock,
+        checkout=checkout, release_admission=ReleaseAdmissionConfig(biu_limits=biu_limits((GH_WORK,))),
     )
+    authorize_release(composed.release_records, checkout, (GH_WORK,))
+    return composed
 
 
 # --- observation --------------------------------------------------------------

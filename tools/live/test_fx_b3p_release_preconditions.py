@@ -52,3 +52,18 @@ def test_contrast_profiles_without_the_inputs_keep_the_prior_observed_behaviour(
     cases = _cases()
     assert cases["contrast-ungated-no-record"]["observed_worker_starts"] == 1
     assert cases["contrast-unmetered-dimension"]["observed_worker_starts"] == 1
+
+
+def test_the_operational_profile_enforces_the_gate_and_allocation_by_construction():
+    cases = _cases()
+    refused = {
+        "profile-no-release-record": "implementation-authorized",
+        "profile-unreachable-baseline": "baseline-reachable",
+        "profile-no-allocation": "admit_release",
+        "profile-unmetered-dimension": "admit_release",
+    }
+    for name, check in refused.items():
+        assert cases[name]["observed_worker_starts"] == 0, name
+        assert cases[name]["observed_refused_by"] == check, name
+    assert cases["profile-positive-control"]["observed_worker_starts"] == 1
+    assert cases["profile-positive-control"]["observed_refused_by"] is None
