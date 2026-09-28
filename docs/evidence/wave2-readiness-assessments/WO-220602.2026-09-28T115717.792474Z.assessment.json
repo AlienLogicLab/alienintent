@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove a replacement for the Program Director mailbox bridge waiter by delivering an authorized harmless test through the intended successor path, reconciling pending messages, suppressing duplicates, and retaining the existing bridge until the replacement is demonstrated with required authority, evidence, and dependency proof.",
+    "implementation_unknowns": [
+      "Where the exact independently verified WO-220601 and WO-220507 predecessor candidate receipts, fixture revisions, raw observations, negative controls, and independent verdicts are stored and how they are to be consumed.",
+      "Which concrete successor mailbox consumption path or supported helper will be used for the harmless request/reply and how correlation will be observed.",
+      "How pending-message reconciliation and duplicate suppression are mechanically observed in the FX-R2 fixture evidence.",
+      "Which immutable evidence refs, command invocations, source/profile revisions, and custody records must be emitted for this specific run.",
+      "How the existing bridge protection continuity readback is performed before any retirement decision."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Operational acceptance cannot be satisfied without an actual separately authorized target and readback; a local or planned fixture alone is explicitly insufficient.",
+      "If predecessor evidence is missing, stale, mismatched, or not independently verified, this BIU must remain held regardless of implementation progress.",
+      "Retiring or weakening the current bridge before demonstrated replacement would violate the KEEP_UNTIL_REPLACED constraint.",
+      "Authority or custody mismatch could invalidate the proof even if the mechanical test appears to pass.",
+      "Duplicate suppression and pending reconciliation are central to acceptance; insufficient observability could cause rejection of the proof."
+    ],
+    "next_action": "Hold execution until the required predecessor proof receipts are available and independently verified, and the operational target/readback path for FX-R2 is explicitly bound with fixture commands, inputs, expected outcomes, and evidence schema pinned for this node.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The controlling condition is not ambiguous owner intent or excessive task size. The work describes a single coherent retirement-gate proof with clear acceptance behavior. The blocker is prerequisite availability: the task requires exact predecessor evidence and an operational target/readback before implementation or verification, while the supplied text either says those remain required or explicitly warns that missing proof, unavailable evidence, and unbound operational target are hold conditions.",
+    "semantic_split_recommendation": [],
+    "summary": "The work is cohesive and the intended outcome is clear, but execution readiness is blocked by required external prerequisites that the supplied text does not establish as available: independently verified predecessor proof receipts and a bound operational target/readback path for the FX-R2 operational proof. The task itself repeatedly states that missing dependency proof, unavailable evidence, or an unbound operational target is a hold condition.",
+    "verification_assessment": "The acceptance predicate is observable in principle: an authorized harmless message must traverse the intended replacement path, produce a correlated reply, demonstrate pending-message reconciliation, show no duplicate handling, retain old protection until proof, and preserve exact evidence plus an independent verdict where required. One independent verification verdict would be meaningful because the outcome is a single retirement-gate proof. However, the supplied text does not establish that the required predecessor proof receipts and operational target/readback are presently available, and it explicitly bars inferring operational success from local substitutions or planned fixtures."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T11:57:46.539340+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 13358,
+    "input_sha256": "e70c2551847edf14b8c0a05aa9db53f6868e054bcdb11f89c368c8adb1d828aa",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-_mv_t0e0/WO-220602.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-28T11:57:17.792474+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220602"
+}

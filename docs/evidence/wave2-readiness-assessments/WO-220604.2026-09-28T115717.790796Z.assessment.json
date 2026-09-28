@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove the SWF-27 observer replacement gate for R4 by demonstrating no observation loss across the boundary, preserving consumer identity/order/timestamps/anomalies/retention across restart and attention-producer consumption, and retaining the attention queue even if the observer is later retired, without performing live retirement or broadening scope.",
+    "implementation_unknowns": [
+      "Whether the pinned FX-R4 fixture fully specifies executable commands, inputs, expected outcomes, and evidence schema sufficient for the R4 predicate.",
+      "How the implementation will collect and retain immutable evidence receipts, raw observations, negative controls, command/exit status, and independent verdicts in the required format.",
+      "Whether the existing observer/store/harness interfaces already expose the needed restart, interruption, restoration, generation-contrast, consumer, identity, retention, and attention-queue checks without code changes.",
+      "How applicability revisions, authority/source-change observations, and conservative holds are represented in the existing system during guarded admission.",
+      "How to verify preservation of the attention queue while avoiding any unauthorized live cutover or retirement claim."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Proceeding without the required FX-R4 operational execution would produce only a local or preparatory result and would not satisfy the R4 acceptance predicate.",
+      "The predecessor B1 proof is reported as explicitly scoped not to discharge R4's own no-loss/cutover-reconciliation and attention-queue-retention predicate.",
+      "Unauthorized cutover, retirement, release, or production-scope change would violate the stated retirement-gate boundary.",
+      "Missing or unavailable measurements must be treated as holds, not PASS or zero, creating a hard evidence risk if the operational target or readback is unavailable.",
+      "Candidate custody requirements require exact branch/SHA, independently retrieved verifier worktree, retained receipts, and no direct main push; absent custody artifacts would block acceptance.",
+      "If FX-R4 uses disposable fixture state without a separately authorized operational target/readback, it may fail to meet the OPERATIONAL_OR_EXTERNAL_AUTHORITY proof level."
+    ],
+    "next_action": "Hold until the required execution supply is available: identify and authorize the operational target/profile for FX-R4, execute the pinned fixture under the required custody rules, retain the full evidence package and independent verdict, then reassess the exact resulting revision.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The controlling condition is not ambiguous product intent and not multiple independent decision centers; it is unavailable prerequisite proof/execution supply. The task text itself says the authority delegation does not bind the BIU's own required operational target, no FX-R4 execution record exists, operational fixtures require their separately authorized target and actual readback, TASKS is not READY, and proof/custody gates remain required before READY. Those statements establish a HOLD until the external operational proof and evidence prerequisites exist.",
+    "semantic_split_recommendation": [],
+    "summary": "The task has coherent intent and a bounded node scope, but the supplied text establishes that required proof/custody/execution gates are not yet satisfied. Authority gates are reported as disposed for Wave 2, and FX-R4 preparation is reported as pinned, but the text also states that no FX-R4 execution record exists, the operational target/proof still must be supplied, TASKS is not READY, and all dependency/authority/proof/custody gates remain required before READY. This is therefore blocked on external execution/proof supply rather than unclear owner intent or a need to split the work.",
+    "verification_assessment": "Acceptance is observable in principle: FX-R4 must show no observation loss across the boundary, continuity of consumer/identity/restart/retention behavior, retained attention queue, and discriminating intact/fault/restored controls, with exact fixture/source/profile/candidate revisions, invocation, command, expected/observed result, exit status, immutable observation refs, and an independent verdict where required. One independent verdict would be meaningful because the node has a single governing proof predicate. However, the supplied text reports that the operational proof has not yet been executed and that local substitutions cannot satisfy operational acceptance."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T11:57:49.982964+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 13825,
+    "input_sha256": "f464d9377e75b4e01ff7a0f6467695df2e2087591146f3f9c72f60074baedaf9",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-szfc953b/WO-220604.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-28T11:57:17.790796+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220604"
+}
