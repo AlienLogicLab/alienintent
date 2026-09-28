@@ -51,7 +51,7 @@ LIFECYCLE_STATES = frozenset(materialization.STATUS_OPTIONS)
 WORKER_STATES = frozenset({"IMPLEMENT", "VERIFY", "ACCEPT"})
 ASSESSMENT_MARKER = re.compile(r"<!--\s*AGENT_READY_ASSESSMENT:(.*?)-->", re.DOTALL)
 INBOX_ENTRY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.json$")
-HOLD_KEYS = frozenset({"issue", "reason"})
+HOLD_KEYS = frozenset({"issue", "reason", "kind"})
 HOLD_OPTIONAL_KEYS = frozenset({"recordedAt", "recordedBy"})
 
 UNAVAILABLE = DirectorInputs(False, False, False, False, False, False, False, False, False)
@@ -291,6 +291,7 @@ def validate_holds(raw) -> dict[int, str]:
         if (not isinstance(hold, dict) or not HOLD_KEYS <= set(hold)
                 or not set(hold) <= HOLD_KEYS | HOLD_OPTIONAL_KEYS
                 or not _positive_int(hold["issue"])
+                or hold["kind"] != "FOUNDER_DECISION"
                 or not isinstance(hold["reason"], str) or not hold["reason"].strip()):
             raise SourceUnavailable(f"Founder-hold entry is malformed: {hold!r}"[:240])
         if hold["issue"] in holds:

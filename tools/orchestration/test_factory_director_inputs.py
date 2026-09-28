@@ -87,7 +87,7 @@ class Sources:
         return self
 
     def hold(self, number: int) -> "Sources":
-        self.holds.append({"issue": number, "reason": "Founder decision on scope"})
+        self.holds.append({"issue": number, "reason": "Founder decision on scope", "kind": "FOUNDER_DECISION"})
         self.flush()
         return self
 

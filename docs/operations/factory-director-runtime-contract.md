@@ -140,15 +140,15 @@ The host reads these, and only these, through the read-only adapter
 | Project #1 | GitHub, via `tools/live/project_materialization.py` `read_board` | complete board; Issue items of `AlienLogicLab/alienintent` only; one item per Issue; every item has a lifecycle Status | fail closed |
 | Retained Agent Ready assessment (TASKS only) | Issue comments containing `<!-- AGENT_READY_ASSESSMENT: {json} -->` (the native receipt the Factory Director posts beside the retained `docs/evidence/wave2-readiness-assessments/` record) | counted **only** in comments by a login in self-hosting `operator.authorizedGithubLogins`; JSON object with a string `disposition`. An unparsable marker from such a login fails closed. Markers from anyone else are ignored | not assessed |
 | Node runtime state | `paths.stateFile` from `selfHostingConfig` | object with an `active` map; optional `limitEscalations` and `founderExceptions` maps | fail closed |
-| Founder-hold record | `~/.local/state/alienintent/factory-director/founder-holds.json` | `{"schemaVersion": 1, "holds": [{"issue": <int>, "reason": "<text>", "recordedAt"?: "...", "recordedBy"?: "..."}]}`; no other keys; no duplicates | **fail closed**. "No holds" is written as `"holds": []` |
+| Founder-hold record | `~/.local/state/alienintent/factory-director/founder-holds.json` | `{"schemaVersion": 1, "holds": [{"issue": <int>, "kind": "FOUNDER_DECISION", "reason": "<text>", "recordedAt"?: "...", "recordedBy"?: "..."}]}`; no other keys; no duplicates | **fail closed**. "No holds" is written as `"holds": []` |
 | Director inbox | `~/.local/state/alienintent/factory-director/inbox/` | entry = `<id>.json` directly inside (id `[A-Za-z0-9][A-Za-z0-9._-]*`); receipt = `processed/<id>.json`. A visible `*.json` file with any other name fails closed | **fail closed**. "No entries" is an empty directory |
 | Explicit pause | `~/.local/state/alienintent/factory-director/PAUSE` | presence only (any file type or content). A location that cannot be checked (for example, permission denied) fails closed | not paused |
 | WIP limit | `wipLimit` in the host configuration | positive integer; configured value is **1** | fail closed |
 
 Director obligations on these sources:
 
-- **Founder holds.** Add a hold entry, with a reason, when an Issue waits on a genuine
-  Founder decision. Remove it when the decision is durably recorded. Rewrite the file
+- **Founder holds.** Add a hold entry, with `kind: FOUNDER_DECISION` and a reason, only when an Issue waits on a genuine
+  Founder decision. Dependency, credential, implementation, evidence, provider, or other technical blockers MUST NOT be written here; they remain actionable Director control. Remove it when the decision is durably recorded. Rewrite the file
   atomically (write a temporary file, then rename it). A hold covers the Issue in
   **every** lifecycle state, claimed or not.
 - **Inbox.** Anyone with the authority to address the Director (the Founder, or a prior
