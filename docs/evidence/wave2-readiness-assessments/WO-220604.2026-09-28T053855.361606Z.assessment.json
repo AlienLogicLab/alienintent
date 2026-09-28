@@ -1,0 +1,71 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Replace the SWF-27 observer with a proven successor (DAG node R4, migration M-R4, retire_by_proven_replacement) without losing any observation across the cutover. This requires consumer, identity, restart and retention proof, and the attention queue must be kept even if the observer retires. Old protection stays in place until upstream replacement proof, exact operational authority and a protection-continuity readback are all obtained.",
+    "implementation_unknowns": [
+      "The concrete executable commands, inputs, expected outcomes and evidence schema for fixture FX-R4 are not yet pinned. The text requires pinning them, plus demonstrating intact/fault/restored discrimination, before implementation.",
+      "The identity of the replacement observer mechanism and its interfaces are not stated. They are presumably defined by the SF-REQ-053 design, which was not inspected.",
+      "How old/new observation reconciliation will prove no loss across cutover, including identity, order, timestamps, anomalies and retention across process restart.",
+      "How attention-queue retention will be demonstrated independently of observer retirement.",
+      "The status of the S0 shared harness at current interfaces is not stated."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Predecessor dependency: WO-220504 is reported as held (Founder hold; operational target, budget and custody unbound). Its label also reads 'READY \u2014 HELD', which is internally inconsistent and must be reconciled from canonical sources rather than assumed.",
+      "Open authority gates: POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY are open, and planning eligibility is GAP_BLOCKED (assessment_status NOT_ASSESSED_PHASE_13_OUT_OF_SCOPE).",
+      "Retiring the observer before a protection-continuity readback could silently lose observations or attention-queue items.",
+      "A local or fixture-only result could be mistaken for operational acceptance. The text forbids inferring operational success from a local result.",
+      "Scope-return trigger: if the reviewed SF-REQ-053 design does not cover an external observer duty, scope must return to authority. This could reopen owner intent after the hold clears.",
+      "Scope creep: pressure to repair upstream capabilities or close authority gaps inside this capstone, which is explicitly a non-goal.",
+      "The fixed decisions cite docs/evidence/wave2-design-contracts.json and baseline/contract hashes. These are reported, not independently verified by this gate."
+    ],
+    "next_action": "Keep this BIU on HOLD and leave the existing SWF-27 observer protection active. Re-assess only once all of the following are available: (1) the Founder has discharged WO-220504's hold, with a bound operational target, budget and custody; (2) WO-220504 has an independently verified candidate and retained proof receipts; (3) the Founder has disposed POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY, with the authority disposition recorded; (4) a separately authorized operational target profile has been allocated. Meanwhile, the engineering side can prepare the FX-R4 fixture command, input, expected-outcome and evidence-schema pinning against the node predicate, without executing any retirement.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The intent is clear and coherent: prove a no-loss, queue-preserving replacement of the SWF-27 observer. The key policy decisions are already fixed by the cited contracts, so CLARIFY does not apply. The conditional scope-return clause is a contingent escalation path, not a currently unresolved owner question. The work is one cohesive decision center (replacement proof and cutover for a single observer) with one independent verdict, so SPLIT does not apply. READY is precluded by the task's own account of unavailable external prerequisites: the dependency is under Founder hold with unbound target, budget and custody; the named authority gates are open; eligibility is GAP_BLOCKED; and acceptance requires an operational target and predecessor proof receipts that do not yet exist. These are availability and authority conditions rather than intent ambiguity, which makes HOLD the controlling disposition. Rework locality is expected to be HIGH (bounded) because the scope is limited to this node's extent, and prerequisite defects must be returned to their named owners.",
+    "semantic_split_recommendation": [],
+    "summary": "The task is a retirement/replacement gate (capstone) for the SWF-27 observer. Its intent and acceptance predicate are coherent and largely fixed by the cited design contracts (tenure policy, context-usage binding, contradiction judgment, evidence rules). However, the text itself reports several blockers. The sole predecessor, WO-220504, is HELD under a Founder hold because the operational target, budget and custody are unbound. Planning eligibility is GAP_BLOCKED. Direct and inherited authority gates (POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY) are open pending separate Founder action. The planned proof level is OPERATIONAL_OR_EXTERNAL_AUTHORITY, which needs a separately authorized target that the text does not establish as available. The controlling condition is therefore unavailable external prerequisites and authority, not unresolved intent or independent decision centers.",
+    "verification_assessment": "The acceptance predicate is observable in principle. It covers no observation loss across the boundary, proof of consumer, identity, restart and retention, and retention of the attention queue. The evidence contract (exact revisions, commands, exit status, immutable observation refs, negative-control counts, independent verdict) supports one meaningful independent verdict on a single cohesive outcome. However, the required proof level is operational/external authority on a separately authorized target with actual readback, and local substitutions explicitly cannot satisfy acceptance. Until that target, the predecessor proof receipts and the authority gates exist, no acceptance-satisfying verdict can be produced. The FX-R4 fixture is also not yet pinned."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T05:39:20.231651+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 10962,
+    "input_sha256": "f901205171f231f90349a3e8659e235f7c967a5b92a8e8fc6b7e422f62dc7d14",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-ptav0n2v/WO-220604.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-28T05:38:55.361606+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220604"
+}
