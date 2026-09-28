@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "At the existing canonical Python prelaunch boundary (FactoryCoordinator._run -> admit_release), enforce the six SWF-21 release preconditions that today exist only in the bootstrap gate, so invalid release requests are refused with zero worker launches. In the same place, replace the hard-coded per-dimension budget value of 1 with a real, attributable per-BIU allocation input, so the existing budget check can actually refuse exhausted allocations. The bootstrap gate, the existing admit_release behavior and #126's own proof steps stay untouched.",
+    "implementation_unknowns": [
+      "Where a durable release authorization record is read from at the canonical boundary: an existing store or port versus a new additive persisted input. This must honor the 'preserve persisted resource identities' constraint.",
+      "How to define the 'intended release point' for the ancestry/reachability check. Also how to resolve baseline revisions and ancestry through an explicit port, rather than calling git directly from the domain layer.",
+      "How to faithfully reproduce the SWF-21 semantics of 'unsuperseded denial/refusal wording' and its supersession rules without importing tools/live/release_admission.py. This needs to be derived from the amendment text (plan.md:857-873) and the bootstrap gate's observed behavior.",
+      "Where the Python execution allocation / per-BIU limits come from (the analogue of the Node runtime's execution.biuLimits), and how that source is wired into a new FactoryCoordinator constructor or port input at the composition root.",
+      "Whether 'exhausted' means a zero or insufficient configured allocation, or remaining allocation after tracked consumption. The fixture only needs a demonstrably exhausted dimension, but the chosen model affects the design of the input.",
+      "How to add the precondition inputs to admit_release additively, without changing its signature or existing behavior as covered by test_policy.py.",
+      "Whether the evidence-branch probe at a11e1dd7 can be retrieved into the producer worktree and adapted as FX-B3P."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Denial/refusal wording detection may diverge from the bootstrap gate's semantics (false admits or false refusals). Detection based on text is inherently fragile, and the two gates must later be proven equivalent by #126 and R6.",
+      "A new authorization-record or allocation input could inadvertently change persisted schemas or resource identities, or break existing callers of FactoryCoordinator.",
+      "Placing git revision resolution and ancestry checks in the domain layer without a port could couple the domain to the environment and make the fixture flaky.",
+      "A producer could satisfy the budget criterion with another effectively constant or default allocation, recreating the unreachable-check defect under a different name.",
+      "Scope creep into re-pinning FX-B3/FX-B4, #126 proof, or bootstrap-gate changes, which are explicitly excluded.",
+      "Concurrent edits to factory_coordinator.py or release.py by another in-flight BIU; WIP limit 1 is reported but not verified here.",
+      "Reported facts (S0 DONE, DAG/BIU checkers passing, line references, Founder disposition) are taken from the task text and have not been independently verified by this gate."
+    ],
+    "next_action": "Hand off WO-220611 (node B3P) to the PRODUCER through normal queue selection, subject to the execution gates the task names: custody, capacity and WIP. The first step is to pin the FX-B3P fixture commands, inputs and expected outcomes, including the concrete meanings of 'intended release point' and 'unsuperseded denial wording' derived from the SWF-21 amendment text. That step also identifies the authorization-record and allocation sources before any implementation begins.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "READY is the controlling condition. Owner intent is resolved: the task reports that the Founder chose option (a) on #126, and the six preconditions are the SWF-21 amendment's own text. Boundaries, non-goals and escalation paths are explicit. The precondition gate and the budget input are two capabilities, but they are not independent decision centers. Both close the same prelaunch-boundary gap found by the same probe, touch the same files, share one fixture and one verifier verdict, and were deliberately bundled by the owner disposition. Splitting them would add coordination cost on shared files without separating any real decision. The open questions (record source, revision port, wording semantics, allocation wiring) are engineering research that the producer can resolve from existing code and the amendment text, so CLARIFY does not apply. The only dependency (S0) is reported DONE and the fixture is stated to need no external target or authority, so nothing establishes HOLD. Rework stays local to one module boundary. READY recommends handoff only; it does not authorize IMPLEMENT or release.",
+    "semantic_split_recommendation": [],
+    "summary": "This is one cohesive BIU at a single module boundary (src/alienintent/execution_coordination). It has two named capabilities: the canonical_release_precondition_gate and the attributable_execution_budget input. The task text reports that both come from a Founder disposition on Issue #126, and that the six preconditions are defined by the SWF-21 amendment text in SF-REQ-002. Acceptance is framed as discriminating refuse/admit cases with launch counts, and the proof plan reuses an existing coverage probe. Non-goals, boundaries, stop conditions and custody are explicit. The remaining uncertainties are about how to implement (record source, revision-resolution port, wording detection, allocation wiring), not about unresolved owner intent. This gate has not independently verified any of the reported facts: S0 DONE, the DAG checker passing, the line references, or the Founder disposition.",
+    "verification_assessment": "Acceptance is observable and discriminating. There is one negative case per precondition (missing record, no exact baseline, unresolvable baseline, non-ancestral baseline, unsuperseded denial wording) plus a budget-exhaustion case, each asserting refusal with zero actors launched. A positive control asserts one launch. All cases run against the real FactoryCoordinator/SQLiteOperationalStore stack. Preservation of the existing admit_release checks is verified by the unchanged existing tests, and the no-weakening rule makes this checkable by diff. A single fresh independent verifier retrieving the exact candidate SHA can give one meaningful verdict, because every criterion lives at the same boundary and is exercised by one fixture plus two test files. Criteria that depend on semantics (what counts as denial wording, what the release point is) should be pinned in the fixture's expected outcomes before implementation, as the proof order already requires."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T01:22:23.626238+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 14846,
+    "input_sha256": "b5953aa8112150a84b6c02aa199eecc3f13c9d30e0638393c5fdbeeb4afd895b",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-bqj4u354/WO-220611.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-28T01:21:51.670323+00:00",
+    "timeout_s": 600
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220611"
+}
