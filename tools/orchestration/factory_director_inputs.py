@@ -42,6 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "live"))
 
 import project_materialization as materialization  # noqa: E402
+from app_github_reader import AppGitHubReader  # noqa: E402
 from factory_director_host import DirectorInputs  # noqa: E402
 
 HOST_CONFIG_SCHEMA_VERSION = 1
@@ -440,20 +441,24 @@ class AuthoritativeDirectorInputs:
     """Callable source of ``DirectorInputs`` for the host; publishes each projection atomically."""
 
     def __init__(self, host_config: Path | str, projection: Path | str | None = None, *,
-                 board_reader: Callable[[], list] = materialization.read_board,
-                 comments_reader: Callable[[int], list[dict]] = read_issue_comments) -> None:
+                 board_reader: Callable[[], list] | None = None,
+                 comments_reader: Callable[[int], list[dict]] | None = None) -> None:
         self.host_config = Path(host_config)
         self.projection = Path(projection) if projection is not None else None
         self.board_reader, self.comments_reader = board_reader, comments_reader
+        self._app_reader: AppGitHubReader | None = None
         self.last_foreign_project_items: tuple[str, ...] = ()
         self.last_biu_issues: frozenset[int] = frozenset()
 
     # Each reader is a separate method so a negative control can break exactly one source.
-    def read_board(self) -> dict[int, str]:
-        if self.board_reader is materialization.read_board or self.comments_reader is read_issue_comments:
-            require_gh()  # the default readers run gh; injected readers do not
+    def app_reader(self, config: AdapterConfig) -> AppGitHubReader:
+        if self._app_reader is None:
+            self._app_reader = AppGitHubReader(config.self_hosting_config)
+        return self._app_reader
+
+    def read_board(self, config: AdapterConfig) -> dict[int, str]:
         try:
-            rows = self.board_reader()
+            rows = self.board_reader() if self.board_reader is not None else self.app_reader(config).board()
             board, foreign = validate_board(rows)
             self.last_biu_issues = frozenset(
                 row.get("issue") for row in rows if isinstance(row, dict) and row.get("type") == "ISSUE"
@@ -486,11 +491,11 @@ class AuthoritativeDirectorInputs:
         except OSError as exc:  # unreadable is not "not paused"
             raise SourceUnavailable(f"pause flag cannot be checked: {exc}") from exc
 
-    def read_assessed(self, board: dict[int, str]) -> set[int]:
+    def read_assessed(self, board: dict[int, str], config: AdapterConfig) -> set[int]:
         assessed = set()
         for issue in sorted(issue for issue, state in board.items() if state == "TASKS"):
             try:
-                bodies = self.comments_reader(issue)
+                bodies = self.comments_reader(issue) if self.comments_reader is not None else self.app_reader(config).comments(issue)
             except SourceUnavailable:
                 raise
             except Exception as exc:
@@ -506,8 +511,8 @@ class AuthoritativeDirectorInputs:
             holds = self.read_holds(config)
             unprocessed, acknowledgements = self.read_inbox(config)
             paused = self.read_pause(config)
-            board = self.read_board()
-            assessed = self.read_assessed(board)
+            board = self.read_board(config)
+            assessed = self.read_assessed(board, config)
             evaluation = derive(board, runtime, holds, unprocessed, assessed, paused, config.wip_limit,
                                 acknowledgements, biu_issues=self.last_biu_issues,
                                 prepared_buffer_target=config.prepared_buffer_target)

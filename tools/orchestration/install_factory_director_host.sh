@@ -13,6 +13,7 @@ state_root="${HOME}/.local/state/alienintent/factory-director-host"
 mkdir -p "$target_root" "$unit_root" "$config_root"
 install -m 0700 "$source_root/factory_director_host.py" "$target_root/factory_director_host.py"
 install -m 0700 "$source_root/factory_director_inputs.py" "$target_root/factory_director_inputs.py"
+install -m 0600 "$source_root/app_github_reader.py" "$target_root/app_github_reader.py"
 install -m 0600 "$source_root/codex_session.py" "$target_root/codex_session.py"
 install -m 0600 "$source_root/model_routing.py" "$target_root/model_routing.py"
 install -m 0600 "$repo_root/tools/live/project_materialization.py" "$target_root/project_materialization.py"
@@ -27,7 +28,6 @@ fi
 if [[ ! -e "$config_root/factory-director-host.env" ]]; then
   install -m 0600 /dev/null "$config_root/factory-director-host.env"
   printf '%s\n' '# Set FACTORY_DIRECTOR_WORKTREE to a dedicated linked worktree, never main.' \
-    '# Set GH_CONFIG_DIR to a gh configuration that can read Project #1 and Issue comments.' \
     '# Set PATH so it resolves gh, python3, git and the provider CLI (claude or codex): the systemd' \
     '# user unit does not inherit the login shell PATH, and systemd does not expand $HOME or ~ here.' \
     "# PATH=${HOME}/.local/bin:/usr/local/bin:/usr/bin:/bin" \

@@ -260,9 +260,9 @@ def test_explicit_pause(sources):
 # --- criterion 2: fail closed per source, each with a negative control --------------------
 
 class SwallowBoardFailure(AuthoritativeDirectorInputs):
-    def read_board(self):
+    def read_board(self, config):
         try:
-            return super().read_board()
+            return super().read_board(config)
         except SourceUnavailable:
             return {1: "READY"}
 
@@ -561,8 +561,9 @@ def test_adapter_source_contains_no_github_write_or_issue_transition():
     assert source.count("_atomic_json(") == 3  # definition + projection + diagnostics
 
 
-def test_default_board_reader_is_the_fail_closed_materialization_read_path():
-    assert AuthoritativeDirectorInputs("/nonexistent").board_reader is materialization.read_board
+def test_default_board_reader_uses_app_authority_not_operator_gh():
+    adapter = AuthoritativeDirectorInputs("/nonexistent")
+    assert adapter.board_reader is None and adapter.comments_reader is None
 
 
 def test_comment_reader_paginates_and_refuses_an_incomplete_answer(monkeypatch):
@@ -706,83 +707,33 @@ def test_fingerprint_tracks_durable_progress_but_not_worker_claims(sources):
     assert adapter.last_fingerprint is None
 
 
-# --- FDH-91: gh must resolve on the host's PATH, or the adapter fails closed naming it --------
+# --- App-backed default read path ---------------------------------------------------------
 
-ADAPTER = Path(adapter_module.__file__)
-
-
-def fake_gh(directory: Path, board: list[dict], comments: dict[int, list[dict]]) -> Path:
-    """A ``gh`` that answers the adapter's two read-only queries; needs nothing else on PATH."""
-    nodes = [{"id": f"PVTI_{row['issue']}", "type": "ISSUE", "fieldValueByName": {"name": row["status"]},
-              "content": {"__typename": "Issue", "number": row["issue"], "repository": {"nameWithOwner": REPO}}}
-             for row in board]
-    board_payload = {"data": {"organization": {"projectV2": {"items": {
-        "totalCount": len(nodes), "pageInfo": {"hasNextPage": False}, "nodes": nodes}}}}}
-    cases = [f"*projectV2*) printf '%s\\n' '{json.dumps(board_payload)}' ;;"]
-    for issue, bodies in comments.items():
-        page = {"totalCount": len(bodies), "pageInfo": {"hasNextPage": False, "endCursor": None},
-                "nodes": [{"body": c["body"], "author": {"login": c["author"]}, "editor": None,
-                           "lastEditedAt": None} for c in bodies]}
-        cases.append(f"*issue={issue}*) printf '%s\\n' "
-                     f"'{json.dumps({'data': {'repository': {'issue': {'comments': page}}}})}' ;;")
-    directory.mkdir(parents=True, exist_ok=True)
-    script = directory / "gh"
-    script.write_text('#!/bin/sh\ncase "$*" in\n' + "\n".join(cases) + "\n*) exit 3 ;;\nesac\n")
-    script.chmod(0o755)
-    return directory
-
-
-def run_adapter_cli(sources, path: str):
-    import subprocess
-    return subprocess.run([sys.executable, str(ADAPTER), "--config", str(sources.config),
-                           "--projection", str(sources.projection)],
-                          env={**os.environ, "PATH": path}, capture_output=True, text=True, timeout=60)
-
-
-def test_unresolvable_gh_fails_closed_naming_gh_and_the_searched_path(sources, tmp_path):
-    sources.issue(60, "READY")
-    empty = tmp_path / "no-gh-here"
-    empty.mkdir()
-
-    result = run_adapter_cli(sources, str(empty))
-
-    assert result.returncode != 0
-    assert "Traceback" not in result.stdout + result.stderr
-    output = json.loads(result.stdout)
-    assert output["inputs"]["authoritative_state"] is False
-    assert not any(output["inputs"].values())
-    assert "'gh'" in output["failure"] and f"PATH={str(empty)!r}" in output["failure"]
-    diagnostics = json.loads(sources.projection.with_name("inputs.diagnostics.json").read_text())
-    assert diagnostics["failure"] == output["failure"]
-
-
-def test_host_records_the_unresolvable_gh_failure_with_the_refusal(sources, tmp_path, monkeypatch):
-    sources.issue(61, "READY")
+def test_default_read_path_does_not_depend_on_operator_gh_path(sources, tmp_path, monkeypatch):
+    sources.issue(62, "TASKS").issue(63, "READY")
+    sources.comments[62] = [ASSESSMENT]
+    class FakeAppReader:
+        def board(self): return list(sources.board)
+        def comments(self, issue): return list(sources.comments.get(issue, []))
+    monkeypatch.setattr(adapter_module, "AppGitHubReader", lambda path: FakeAppReader())
     empty = tmp_path / "no-gh-here"
     empty.mkdir()
     monkeypatch.setenv("PATH", str(empty))
-    host_root = sources.root / "host-state"
-
-    result = FactoryDirectorHost(host_root, AuthoritativeDirectorInputs(sources.config, sources.projection),
-                                 InMemoryDirectorLauncher()).reconcile()
-
-    assert result.reason == "AUTHORITATIVE_STATE_UNAVAILABLE"
-    record = json.loads((host_root / "history.jsonl").read_text().splitlines()[-1])
-    assert "'gh'" in record["failure"] and f"PATH={str(empty)!r}" in record["failure"]
+    adapter = AuthoritativeDirectorInputs(sources.config, sources.projection)
+    values = adapter()
+    assert values.authoritative_state is True
+    assert values.eligible_authorized_work is True
+    assert values.lifecycle_requires_selection is True
+    assert adapter.last_failure is None
 
 
-def test_resolvable_gh_leaves_adapter_behaviour_unchanged(sources, tmp_path):
-    sources.issue(62, "TASKS").issue(63, "READY")
-    sources.comments[62] = [ASSESSMENT]
-    bin_dir = fake_gh(tmp_path / "fake-bin", sources.board, sources.comments)
-
-    result = run_adapter_cli(sources, str(bin_dir))
-
-    assert result.returncode == 0, result.stderr
-    output = json.loads(result.stdout)
-    assert output["failure"] is None
-    assert output["inputs"] == {**{key: False for key in output["inputs"]}, "authoritative_state": True,
-                                "eligible_authorized_work": True, "executable_capacity": True,
-                                "lifecycle_requires_selection": True}
-    assert output["observations"]["controlRequiredBy"] == {"62": "selection:TASKS_ASSESSED", "63": "eligible:READY"}
-    assert output["inputs"] == vars(sources.inputs())  # the same sources through injected readers
+def test_default_app_read_failure_fails_closed(sources, monkeypatch):
+    class BrokenAppReader:
+        def board(self): raise RuntimeError("app project unavailable")
+        def comments(self, issue): return []
+    monkeypatch.setattr(adapter_module, "AppGitHubReader", lambda path: BrokenAppReader())
+    sources.issue(64, "READY")
+    adapter = AuthoritativeDirectorInputs(sources.config, sources.projection)
+    values = adapter()
+    assert values.authoritative_state is False
+    assert "app project unavailable" in adapter.last_failure
