@@ -461,6 +461,36 @@ def test_held_unclaimed_implement_issue_does_not_make_control_required(sources):
     assert result.reason == "FOUNDER_DECISION_PENDING" and launcher.launched == []
 
 
+
+
+def test_founder_requirement_acknowledgement_only_remains_pending(sources):
+    entry_id = "founder-requirement-1"
+    (sources.inbox / f"{entry_id}.json").write_text(json.dumps({
+        "schemaVersion": 1, "kind": "FOUNDER_REQUIREMENT", "requirement": "prove durable intake"
+    }))
+    (sources.inbox / "processed").mkdir(exist_ok=True)
+    (sources.inbox / "processed" / f"{entry_id}.json").write_text(json.dumps({
+        "processedBy": "episode", "action": "ACKNOWLEDGED"
+    }))
+    assert sources.inputs().pending_director_inbox is True
+
+
+def test_founder_requirement_materialization_receipt_clears_pending(sources):
+    entry_id = "founder-requirement-2"
+    (sources.inbox / f"{entry_id}.json").write_text(json.dumps({
+        "schemaVersion": 1, "kind": "FOUNDER_REQUIREMENT", "requirement": "prove durable intake"
+    }))
+    (sources.inbox / "processed").mkdir(exist_ok=True)
+    (sources.inbox / "processed" / f"{entry_id}.json").write_text(json.dumps({
+        "processedBy": "episode",
+        "materialization": {
+            "issue": 146,
+            "canonicalArtifact": "docs/requirements/REQ-146.md",
+            "revision": "a" * 40
+        }
+    }))
+    assert sources.inputs().pending_director_inbox is False
+
 def test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it(sources):
     sources.issue(34, "READY").hold(34).inbox_entry("founder-2026-09-24")
     result, launcher = reconcile(sources)

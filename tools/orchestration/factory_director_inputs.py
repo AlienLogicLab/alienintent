@@ -328,7 +328,40 @@ def read_inbox(inbox: Path) -> tuple[tuple[str, ...], frozenset[str]]:
     if unrecognised:
         raise SourceUnavailable(f"Director inbox has entries with invalid ids: {sorted(unrecognised)!r}"[:240])
     entries = {path.stem for path in files if INBOX_ENTRY.match(path.name)}
-    return tuple(sorted(entries - receipts)), acknowledgements
+
+    # Product-intent input has a stronger completion rule than ordinary operational handoffs.
+    # A FOUNDER_REQUIREMENT remains pending until its receipt proves durable materialization;
+    # acknowledgement/defer text alone must never make the requirement disappear.
+    valid_receipts = set(receipts)
+    for entry_id in sorted(entries & receipts):
+        entry_path = inbox / f"{entry_id}.json"
+        try:
+            entry = json.loads(entry_path.read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            raise SourceUnavailable(f"Director inbox entry {entry_id!r} cannot be parsed: {exc}"[:240]) from exc
+        if not isinstance(entry, dict):
+            raise SourceUnavailable(f"Director inbox entry {entry_id!r} is not an object")
+        if entry.get("kind") != "FOUNDER_REQUIREMENT":
+            continue
+        receipt_path = processed / f"{entry_id}.json"
+        try:
+            receipt = json.loads(receipt_path.read_text())
+        except (OSError, json.JSONDecodeError):
+            valid_receipts.discard(entry_id)
+            continue
+        materialization = receipt.get("materialization") if isinstance(receipt, dict) else None
+        valid = (
+            isinstance(materialization, dict)
+            and _positive_int(materialization.get("issue"))
+            and isinstance(materialization.get("canonicalArtifact"), str)
+            and bool(materialization["canonicalArtifact"].strip())
+            and isinstance(materialization.get("revision"), str)
+            and bool(re.fullmatch(r"[0-9a-f]{40}", materialization["revision"].strip()))
+        )
+        if not valid:
+            valid_receipts.discard(entry_id)
+
+    return tuple(sorted(entries - valid_receipts)), acknowledgements
 
 
 def retained_assessment_disposition(comments: list[dict], issue: int, operators: frozenset[str]) -> str | None:

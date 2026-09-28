@@ -155,7 +155,11 @@ Director obligations on these sources:
   episode handing off) writes `<id>.json` atomically. Only a Director episode writes the
   receipt `processed/<id>.json`, after acting on the entry. A receipt with no entry is
   ignored. Files whose names do not match the entry pattern (`.partial` and temporary
-  files, for example) are not entries.
+  files, for example) are not entries. For `kind: FOUNDER_REQUIREMENT`, acknowledgement is
+  not completion: the receipt counts as processed only when it contains
+  `materialization.issue`, `materialization.canonicalArtifact`, and an exact 40-hex
+  `materialization.revision`. Without that tuple the entry remains pending and the host
+  must continue Director control.
 - **Pause.** Create `PAUSE` to stop new launches. Delete it to resume. Pausing never kills
   a live episode.
 - **Escalations.** The Node runtime never removes or resolves a `limitEscalations` entry.
