@@ -1,0 +1,67 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Integrate and verify the R4 retirement/replacement gate for the SWF-27 observer, proving no observation loss across the replacement boundary, preservation of consumer identity/restart/retention behavior, attention queue continuity, and protection continuity before any old observer retirement.",
+    "implementation_unknowns": [
+      "Exact locations and interfaces of the existing observer, attention queue, retained protection/evidence mechanisms, and fixture harness would need to be discovered during implementation once prerequisites are available.",
+      "The concrete FX-R4 executable commands, input profiles, expected outcomes, and evidence schema must be pinned or confirmed against the current repository state before execution, as described by the supplied task text.",
+      "The method for reading back protection continuity and reconciling evidence continuity across the replacement boundary remains an implementation detail once the accepted successor exists."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Attempting R4 before the SF-REQ-029 successor is implemented and independently accepted could falsely treat a specification or disposable fixture preparation as an executable replacement substrate.",
+      "Using predecessor WO-220504/B1 proof as a substitute would leave R4's own SWF-27 no-loss, cutover reconciliation, and attention-queue-retention predicate unproven, according to the supplied text.",
+      "Premature service action, cutover, or retirement could lose observations or weaken existing protection before replacement continuity is proven.",
+      "Missing or stale operational measurements must be treated as holds rather than inferred success.",
+      "Authority/custody boundaries must remain intact: R4 must consume the owner's accepted successor rather than implementing or repairing that capability inside the capstone."
+    ],
+    "next_action": "Hold R4 until the SF-REQ-029 owner delivers the implemented and independently accepted observer successor, exact installed profile, one-writer boundary, and required custody/proof receipts; then perform a fresh readiness assessment for R4 against that concrete dependency supply before dispatching implementation/verification.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The task's intent, scope, non-goals, authority boundaries, and acceptance predicate are specific and coherent. There is no material owner question that must be answered before understanding the desired outcome, and the work is a single replacement-gate proof rather than multiple independent decision centers. The blocker is that a required external prerequisite is explicitly described as unavailable: the successor observer exists only as an accepted specification with proposed identities, not as an implemented, installed, independently accepted operational capability. Since R4 is prohibited from creating that missing capability and must consume it from its named owner, READY would be premature and SPLIT or CLARIFY would not address the controlling condition.",
+    "semantic_split_recommendation": [],
+    "summary": "The work is a cohesive replacement-gate verification task, not a candidate for semantic splitting. However, the supplied text states that the required SF-REQ-029 observer successor is only specified, not implemented, installed, independently accepted, or available as an operational profile. Because R4 must consume that exact accepted successor and must not build it inside this retirement gate, the necessary execution substrate is unavailable. The controlling condition is therefore an external prerequisite hold, not unresolved owner intent or excessive task size.",
+    "verification_assessment": "Acceptance is observable in principle: an operational FX-R4-style proof could demonstrate no observation loss, consumer/identity/restart/retention continuity, attention queue preservation, protection continuity, and discriminating intact/fault/restored behavior, with retained fixture revisions, commands, outputs, exit status, raw observations, immutable references, and an independent replacement verdict. One independent verdict would be meaningful because the R4 predicate is a single replacement-boundary proof. However, the supplied text states that the required successor capability and exact operational profile are not yet available, so the verification cannot presently be run to satisfy the predicate."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T17:26:25.516055+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 16412,
+    "input_sha256": "9cb217908c0893f19f06d12fd39ca3afcbfe5ba9d730cd575e6a15d7f4332b29",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-vl8eexvd/WO-220604.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-28T17:26:04.753909+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220604"
+}
