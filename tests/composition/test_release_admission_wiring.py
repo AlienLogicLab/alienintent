@@ -3,13 +3,14 @@
 ``SandboxRunProfile`` (the ``alienintent --profile-factory`` live profile) and
 ``GitHubProfileComposition`` always compose the SWF-21 precondition gate and the
 attributable per-BIU allocation. Each case drives the real profile constructor
-and counts actual worker starts; nothing here injects a gate by hand.
+and counts dispatches at the coordinator's worker boundary; no case injects a gate.
 """
 
 from __future__ import annotations
 
 import json
 from pathlib import Path
+import subprocess
 
 import pytest
 
@@ -98,8 +99,15 @@ def test_the_live_profile_refuses_release_when_no_allocation_is_configured(tmp_p
 
 
 def test_the_live_profile_refuses_a_baseline_the_release_point_cannot_reach(tmp_path: Path) -> None:
-    profile = _sandbox(tmp_path, record=False, release_point="refs/does-not-exist")
-    authorize_release(profile.release_records, profile.checkout, ("SB-01",))
+    profile = _sandbox(tmp_path, record=False)
+    # A real commit on a side branch: it resolves, but the checkout's HEAD cannot reach it.
+    git = ["git", "-C", str(profile.checkout)]
+    identity = ["-c", "user.name=fx", "-c", "user.email=fx@alienintent.invalid"]
+    subprocess.run([*git, "checkout", "--quiet", "-b", "side"], check=True)
+    subprocess.run([*git, *identity, "commit", "--quiet", "--allow-empty", "-m", "diverged"], check=True)
+    diverged = subprocess.run([*git, "rev-parse", "HEAD"], capture_output=True, text=True, check=True).stdout.strip()
+    subprocess.run([*git, "checkout", "--quiet", "-"], check=True)
+    profile.release_records.record(ReleaseAuthorization("SB-01", "fixture-release-record:SB-01", True, diverged))
     started = _producer_starts(profile)
 
     profile.coordinator.start()
@@ -118,17 +126,31 @@ def test_the_live_profile_releases_exactly_once_when_every_precondition_holds(tm
     assert profile.coordinator.state("SB-01").stage is LifecycleStage.DONE
 
 
-def test_a_github_profile_without_a_checkout_resolves_no_baseline_and_launches_nothing(tmp_path: Path) -> None:
-    composed = k3_fixture.github(tmp_path)
-    # The same profile recomposed without its checkout: nothing can resolve.
-    composed.release_admission = compose_release_admission(composed.store, k3_fixture.GH_PROFILE, k3_fixture.GH_REPOSITORY, None, ReleaseAdmissionConfig())
-    composed.coordinator._release_gate = composed.release_admission.gate
+def test_a_github_profile_composed_without_a_checkout_resolves_no_baseline_and_launches_nothing(tmp_path: Path) -> None:
+    from alienintent.composition.github_profile import GitHubProfileComposition
+    from alienintent.composition.sandbox_run_profile import contract_from_document
+    from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
+    from alienintent.installation.domain.github_profile import GitHubProfile
+    from tests.support.release_admission import biu_limits
+
+    contract = contract_from_document(contract_document("GH-01"))
+    row = {"identity": "GH-01", "repository": k3_fixture.GH_REPOSITORY, "membership": True, "complete": True, "status": "READY",
+           "priority": "P0", "wave": "2", "dependencies": [], "contract": "biu/GH-01.json",
+           "contract_digest": contract.content_digest, "readiness": "READY", "source_version": "wiring"}
+    secret = tmp_path / "webhook"
+    secret.write_text("wiring-webhook-secret")
+    profile = GitHubProfile(k3_fixture.GH_PROFILE, k3_fixture.GH_REPOSITORY, "PVT_1", {"READY": "READY"}, {"IMPLEMENT": "Execution"}, "webhook", automatic_release=True)
+    # The real constructor, given a release record and an allocation but no checkout.
+    composed = GitHubProfileComposition(profile, ProtectedLocalFileSecretProvider({"webhook": secret}), tmp_path / "state.sqlite", lambda: (row,),
+                                        contract, lambda _: None, projection_write=lambda identity, field, state, revision: revision,
+                                        worker=object(), release_admission=ReleaseAdmissionConfig(biu_limits=biu_limits(("GH-01",))))  # type: ignore[arg-type]
+    composed.release_records.record(ReleaseAuthorization("GH-01", "fixture-release-record:GH-01", True, "a" * 40))
     started = _producer_starts(composed)
 
     composed.coordinator.start()
 
     assert started == []
-    assert composed.coordinator.state(k3_fixture.GH_WORK).record["hold_reason"] == "release-precondition:baseline-resolves"
+    assert composed.coordinator.state("GH-01").record["hold_reason"] == "release-precondition:baseline-resolves"
 
 
 def test_an_absent_release_admission_section_is_the_fail_closed_default() -> None:

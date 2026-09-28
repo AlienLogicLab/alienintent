@@ -182,9 +182,10 @@ into the operational profiles through a new composition module,
   of `execution.biuLimits`. When the section is absent, no BIU has an allocation, so any contract
   with a required budget dimension is refused.
 - **Release point** comes from `release_admission.release_point` and defaults to the checkout's
-  `HEAD`. A malformed section is refused when the profile is composed (`ReleaseAdmissionRejected`).
+  `HEAD`. That is the control-plane checkout of the baseline branch. An operator whose checkout
+  may sit elsewhere configures an explicit ref such as `origin/main`. A malformed section is refused when the profile is composed (`ReleaseAdmissionRejected`).
 - **`OfflineProfile`** is the scripted offline double. No operational entry point constructs it;
-  `src/` uses it only in `offline_proof.py`. It takes a supplied `ReleaseAdmission` and forwards it.
+  `src/` uses it only in the proof harnesses `offline_proof.py` (`OfflineProofSubstrate`) and `lifecycle_capstone.py` (`CapstoneSubstrate`). It takes a supplied `ReleaseAdmission` and forwards it.
   It stays opt-in because the existing `test_factory_coordinator.py` cases drive it without release
   records, and the Issue forbids weakening them.
 
@@ -199,7 +200,9 @@ Consequences for existing fixtures:
   the guard's. The source check that the guard writes nothing is unchanged.
 
 Discriminating tests are in `tests/composition/test_release_admission_wiring.py`. They drive the
-real `SandboxRunProfile` and `GitHubProfileComposition` constructors:
+real `SandboxRunProfile` and `GitHubProfileComposition` constructors, and no case injects a gate.
+The unreachable case uses a real side-branch commit. These tests were revised at the evidence commit,
+after the `d408caf` fixture run. No `src/` or fixture file changed after that run.
 
 - the profile refuses when there is no record, when no allocation is configured, when the baseline
   is unreachable, or when no checkout exists, each with zero starts;
