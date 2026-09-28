@@ -1,0 +1,59 @@
+{
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220605",
+  "outcome": "ASSESSED",
+  "disposition": "HOLD",
+  "assessment": {
+    "disposition": "HOLD",
+    "governing_intent": "Assess whether Issue #137 / WO-220605 can proceed to READY as the Wave 2 replacement gate for the attention queue, requiring migration of retained history and pending items, preservation of identity/attribution/evidence, dedupe, seen-versus-resolved behavior, liveness suppression, and SF-REQ-053-AC-07 proof before any queue retirement or writer switch.",
+    "summary": "The submitted packet has clear intent and a coherent capstone scope, and the supplied binding Wave 2 delegation appears to dispose the recurring authority references for POSTW1-DECIDE-006A, live proof, attention activation, SWF-21 scope disposition, and related bootstrap authority when within approved Wave 2 bounds. However, the packet itself reports remaining non-authority prerequisites that are not available: predecessor proofs for #135/R3, #134/B8, and #136/R4 are not accepted, #136 remains held on a separate observer design question, the actual retained-queue inventory and operational migration target are unbound, and allocation/custody/independent verification are still required. The controlling condition is therefore HOLD, not clarification or split.",
+    "owner_clarifications": [],
+    "implementation_unknowns": [
+      "Exact retained pending and handled attention queue inventory, identity aliases, actor attribution, immutable history, and programme mailbox separation have not yet been established for the real queue.",
+      "Actual operational migration target, commands, source/staged queue digests, cutover or rollback path, and readback procedure remain unbound.",
+      "How the accepted predecessor implementations will expose canonical attention producer/consumer behavior, observer boundary behavior, and tenure/judgment duties to this R5 migration fixture remains dependent on their final proofs.",
+      "The local preparation probes are identified, but the discriminating operational contrast against the retained queue has not yet been run or evidenced.",
+      "Independent verifier retrieval, candidate custody receipts, exact candidate SHA, and durable evidence record contents remain to be produced for this BIU."
+    ],
+    "independent_decision_centers": [],
+    "semantic_split_recommendation": [],
+    "verification_assessment": "Acceptance is observable in principle: a meaningful verdict would inspect the exact candidate and fixture revisions, accepted predecessor proof receipts, retained queue inventory, staged migration results, duplicate/conflict/consumer-unavailable controls, restart behavior, SEEN versus RESOLVED distinction, liveness suppression, old-protection/readback continuity, and independent verdict evidence for SF-REQ-053-AC-07. At the current packet state, one independent READY verdict is not yet meaningful because the required predecessors, operational target, inventory, allocation/custody, and actual migration evidence are missing. The reported local pytest results are useful preparation only and explicitly cannot discharge the operational acceptance criterion.",
+    "expected_rework_locality": "MEDIUM",
+    "material_risks": [
+      "Proceeding before predecessor proofs are accepted could mask defects that belong to #135/R3, #134/B8, or #136/R4 and incorrectly repair prerequisite scope inside this capstone.",
+      "The #136 observer design hold is reported as separate from the recurring authority delegation and remains a blocker to using that predecessor as execution substrate.",
+      "Unbound retained-queue inventory creates risk of lost pending attention, duplicate handling, lost attribution, or conflation of product attention with programme mailbox duties.",
+      "Unbound operational target, allocation, custody, and independent verification prevent durable proof of actual migration behavior.",
+      "An empty queue or local-only mechanics could be mistaken for proof, contrary to the packet’s stated acceptance boundary.",
+      "Queue retirement or writer switch before readback and rollback obligations pass would violate KEEP_UNTIL_REPLACED and one-writer safety."
+    ],
+    "next_action": "Keep Issue #137 on HOLD. First obtain accepted independently verified predecessor proofs for #135/R3, #134/B8, and #136/R4, including resolution of #136’s separate hold; then bind the operational migration target, allocation/custody, retained-queue inventory, exact candidate/fixture revisions, evidence record location, and independent verification plan before requesting a fresh native Agent Ready assessment.",
+    "rationale": "The governing product and architecture intent is sufficiently specific and does not require new owner clarification: R5 is a bounded replacement gate for attention queue migration, not a broad redesign or release authorization. The supplied binding decision resolves the recurring Wave 2 authority items within its stated bounds, so reopening those authority questions would be inappropriate. The blocker is instead that required external prerequisites and proof substrate are not yet available according to the packet itself. Because the missing items are prerequisites to a single cohesive capstone migration proof rather than separate independently releasable decisions, SPLIT is not the controlling disposition. Because the unresolved items are not primarily questions of owner intent, CLARIFY is not appropriate. HOLD best captures the remaining gates.",
+    "provider_evidence": {
+      "provider": "codex",
+      "version": "codex-cli 0.158.0",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "capability_probe": "PASSED"
+    }
+  },
+  "provenance": {
+    "producer": "agent-ready-mcp",
+    "native_agent_ready": true,
+    "provider": "codex",
+    "provider_evidence": {
+      "provider": "codex",
+      "version": "codex-cli 0.158.0",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "capability_probe": "PASSED"
+    },
+    "invocation": "mcp__agent_ready__assess_work_unit",
+    "input_sha256": "fe1bc5fbd4918e04241bd1f81b0784d788799d44f771e8cb7e90d302c441f68d",
+    "input_paths": [
+      "docs/decisions/2026-09-26-wave2-bounded-operational-authority-delegation.md",
+      "docs/work-units/wave2/WO-220605.md",
+      "docs/evidence/wave2-proof-fixtures/FX-R5.md"
+    ],
+    "ended_at": "2026-09-28T14:42:25.787709+00:00"
+  }
+}
