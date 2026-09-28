@@ -170,7 +170,9 @@ class HostedMonitor:
 
     def cycle(self) -> None:
         self.monitor.monitor.tick()
-        self.liveness.reconciler.scan()
+        report = self.liveness.reconciler.scan()
+        self.liveness.store.commit(self.config.profile, "liveness-scan:" + uuid.uuid4().hex, 0,
+            {"schema_version": 1, "launch_id": self.launch_id, **asdict(report)})
 
 
 def run_host(config: SupervisionConfig, launch_id: str, stop: Callable[[], bool],
