@@ -163,8 +163,10 @@ Director obligations on these sources:
   files, for example) are not entries. For `kind: FOUNDER_REQUIREMENT`, acknowledgement is
   not completion: the receipt counts as processed only when it contains
   `materialization.issue`, `materialization.canonicalArtifact`, and an exact 40-hex
-  `materialization.revision`. Without that tuple the entry remains pending and the host
-  must continue Director control.
+  `materialization.revision`. Without that tuple the entry remains pending. Even with that
+  tuple, materialization is only a checkpoint: the entry remains an active Director
+  obligation until the linked Project item reaches DONE. The receipt is the durable pointer
+  used by successor episodes to continue the exact requirement; it is not a tombstone.
 - **Pause.** Create `PAUSE` to stop new launches. Delete it to resume. Pausing never kills
   a live episode.
 - **Escalations.** The Node runtime never removes or resolves a `limitEscalations` entry.

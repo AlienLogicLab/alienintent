@@ -304,7 +304,7 @@ def _ids(directory: Path) -> frozenset[str]:
     return frozenset(path.stem for path in directory.iterdir() if path.is_file() and INBOX_ENTRY.match(path.name))
 
 
-def read_inbox(inbox: Path) -> tuple[tuple[str, ...], frozenset[str]]:
+def read_inbox(inbox: Path, board: dict[int, str] | None = None) -> tuple[tuple[str, ...], frozenset[str]]:
     """Unprocessed entry ids (``<id>.json`` with no ``processed/<id>.json``) and the escalation
     acknowledgement ids in ``escalations/``.
 
@@ -359,6 +359,12 @@ def read_inbox(inbox: Path) -> tuple[tuple[str, ...], frozenset[str]]:
             and bool(re.fullmatch(r"[0-9a-f]{40}", materialization["revision"].strip()))
         )
         if not valid:
+            valid_receipts.discard(entry_id)
+            continue
+        # Materialization is a checkpoint, not completion. When authoritative board state is
+        # available, a Founder requirement remains an active Director obligation until its
+        # linked backlog item reaches DONE. This prevents materialized-but-forgotten intent.
+        if board is not None and board.get(materialization["issue"]) != "DONE":
             valid_receipts.discard(entry_id)
 
     return tuple(sorted(entries - valid_receipts)), acknowledgements
@@ -517,8 +523,8 @@ class AuthoritativeDirectorInputs:
     def read_holds(self, config: AdapterConfig) -> dict[int, str]:
         return validate_holds(_read_json(config.founder_hold_record, "Founder-hold record"))
 
-    def read_inbox(self, config: AdapterConfig) -> tuple[tuple[str, ...], frozenset[str]]:
-        return read_inbox(config.director_inbox)
+    def read_inbox(self, config: AdapterConfig, board: dict[int, str] | None = None) -> tuple[tuple[str, ...], frozenset[str]]:
+        return read_inbox(config.director_inbox, board)
 
     def read_pause(self, config: AdapterConfig) -> bool:
         try:
@@ -548,9 +554,9 @@ class AuthoritativeDirectorInputs:
             config = load_adapter_config(self.host_config)
             runtime = self.read_runtime(config)
             holds = self.read_holds(config)
-            unprocessed, acknowledgements = self.read_inbox(config)
             paused = self.read_pause(config)
             board = self.read_board(config)
+            unprocessed, acknowledgements = self.read_inbox(config, board)
             assessed = self.read_assessed(board, config)
             evaluation = derive(board, runtime, holds, unprocessed, assessed, paused, config.wip_limit,
                                 acknowledgements, biu_issues=self.last_biu_issues,

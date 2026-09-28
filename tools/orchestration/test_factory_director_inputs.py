@@ -315,9 +315,9 @@ class DefaultMissingHolds(AuthoritativeDirectorInputs):
 
 
 class DefaultMissingInbox(AuthoritativeDirectorInputs):
-    def read_inbox(self, config):
+    def read_inbox(self, config, board=None):
         try:
-            return super().read_inbox(config)
+            return super().read_inbox(config, board)
         except SourceUnavailable:
             return (), frozenset()
 
@@ -475,20 +475,24 @@ def test_founder_requirement_acknowledgement_only_remains_pending(sources):
     assert sources.inputs().pending_director_inbox is True
 
 
-def test_founder_requirement_materialization_receipt_clears_pending(sources):
+def test_founder_requirement_materialization_stays_pending_until_done(sources):
     entry_id = "founder-requirement-2"
+    sources.issue(146, "CAPTURE")
     (sources.inbox / f"{entry_id}.json").write_text(json.dumps({
         "schemaVersion": 1, "kind": "FOUNDER_REQUIREMENT", "requirement": "prove durable intake"
     }))
     (sources.inbox / "processed").mkdir(exist_ok=True)
-    (sources.inbox / "processed" / f"{entry_id}.json").write_text(json.dumps({
+    receipt = {
         "processedBy": "episode",
         "materialization": {
             "issue": 146,
             "canonicalArtifact": "docs/requirements/REQ-146.md",
             "revision": "a" * 40
         }
-    }))
+    }
+    (sources.inbox / "processed" / f"{entry_id}.json").write_text(json.dumps(receipt))
+    assert sources.inputs().pending_director_inbox is True
+    sources.issue(146, "DONE")
     assert sources.inputs().pending_director_inbox is False
 
 def test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it(sources):
