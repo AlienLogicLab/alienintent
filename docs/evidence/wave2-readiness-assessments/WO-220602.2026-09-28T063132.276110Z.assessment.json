@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove, under operational authority, that the intended successor path for the Program Director mailbox bridge waiter can carry an authorized harmless request/reply end to end. The proof must show pending-message reconciliation, correlated reply and no duplicate handling. The existing bridge and its protection must stay in place until the proof is demonstrated and read back. Tenure must be governed by the fixed contract-8 policy.",
+    "implementation_unknowns": [
+      "Exact executable FX-R2 fixture: commands, inputs, expected outcomes and evidence schema pinned against the node predicate, with intact/fault/restored discrimination for mechanical controls.",
+      "Which existing successor episode or supported helper path carries the harmless request/reply, and how it correlates with pending-message reconciliation state.",
+      "How the injected deadline timer, persisted UTC deadline and clock-regression hold are wired into the replacement path at current interfaces.",
+      "How duplicate suppression is observed and evidenced: negative-control application counts and raw observations.",
+      "Readback mechanism that confirms old bridge protection continuity before any end of the old mechanism."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Authority disposition validity: the POSTW1-DECIDE-006A disposition is reported as relayed by an observing session and applied to this BIU by interpreting a general Wave 2 grant plus a non-exhaustive Affected Issues list. Its applicability should be confirmed against the durable decision record rather than accepted from the task text.",
+      "Operational substitution: a local or fixture-only run could be mislabelled as operational success, which the evidence contract prohibits.",
+      "Premature retirement: ending or weakening the current bridge before the successor proof and protection-continuity readback are complete could drop or duplicate Program Director messages.",
+      "Predecessor drift: WO-220601 and WO-220507 candidates or proof receipts may not match the exact revisions consumed here, which would block admission.",
+      "Scope creep into repairing upstream successor or mailbox capabilities inside this capstone instead of returning defects to their owners.",
+      "Tenure misconfiguration: an UNBOUND context-usage source could be represented as zero or safe usage, or a BOUND source's stale or invalid samples might not terminate tenure."
+    ],
+    "next_action": "Keep the BIU held and route the gaps to their owners. (1) The authorized allocator or Program Director identifies and binds the separately authorized operational target for the mailbox-bridge-waiter proof. (2) Pin the FX-R2 fixture commands, inputs, expected outcomes and evidence schema, with a demonstrated intact/fault/restored discrimination. (3) Obtain the independent verification verdicts and proof receipts for WO-220601 and WO-220507 at their exact candidate SHAs. (4) Confirm the durable 2026-09-26 authority decision record covers this BIU. (5) Bind execution allocation at release. Then resubmit this exact revision for a fresh assessment.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "Intent is clear, the fixed decisions leave no material owner question, and the work is one cohesive decision center whose rejection would be localized, so CLARIFY and SPLIT do not apply. READY is precluded because the task text itself states that necessary external supply is unavailable. The operational target this OPERATIONAL_OR_EXTERNAL_AUTHORITY proof requires is not identified or bound. The fixture is not pinned. Execution allocation is not bound. Independent verification of predecessor evidence is named as an outstanding readiness condition. These are availability gaps rather than unresolved intent, which makes HOLD the controlling disposition. The reported authority disposition is noted but not independently verified here.",
+    "semantic_split_recommendation": [],
+    "summary": "WO-220602 (R2) is a retirement-gate proof node. Its intent, fixed decisions, tenure policy, contradiction semantics and evidence contract are detailed and coherent. The task text reports that the Founder disposed the POSTW1-DECIDE-006A authority gate on 2026-09-26, covering Wave 2 replacement BIUs including this one. This gate treats that as a reported fact, not an independently verified one. The same text states that several execution prerequisites are not available: the separately authorized operational target the proof requires is not identified or bound; the FX-R2 fixture commands, inputs, expected outcomes and evidence schema are not yet pinned; and the execution allocation is bound only after release. Readiness also depends on independently verified predecessor evidence for WO-220601 and WO-220507. Those items are reported DONE, but their independent verification and proof receipts are named as outstanding readiness conditions. The work is cohesive and needs no split, and no material owner intent is unresolved. The controlling condition is missing external execution supply.",
+    "verification_assessment": "The acceptance criterion is observable in principle. An authorized harmless message is delivered through the replacement path, with a correlated reply, pending messages reconciled, no duplicate handling, and the old bridge retained. The evidence contract is explicit: exact revisions, invocation, exit status, immutable observation refs and an independent verdict. One independent verdict is meaningful because the proof is a single end-to-end operational scenario. However, the planned proof level is OPERATIONAL_OR_EXTERNAL_AUTHORITY, and local substitutions cannot satisfy it. Without a bound operational target and a pinned fixture, no acceptance-grade verdict can currently be produced."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T06:31:55.110001+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 12884,
+    "input_sha256": "6d31c38f8883dfa198d6ef2a465fc93e32b49868353a8236ec9b1c2e9b38f625",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-bukelgxo/WO-220602.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-28T06:31:32.276110+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220602"
+}

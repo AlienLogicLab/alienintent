@@ -1,0 +1,74 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Prove, on a separately authorized operational target, that replacing the SWF-27 observer loses no observations across the cutover boundary. The proof must cover consumer, identity, order, restart and retention, and the attention queue must be kept even if the observer retires. The old protection stays in place until upstream replacement proofs, reconciliation and a protection-continuity readback are complete.",
+    "implementation_unknowns": [
+      "Exact FX-R4 fixture commands, inputs, expected outcomes and evidence schema, which must be pinned before implementation and must discriminate intact, fault and restored states.",
+      "How old and new observations will be reconciled across the cutover when the predecessor proof never read the observer's live data.",
+      "Where the attention-queue retention mechanism lives and how it stays independent of the observer's lifecycle.",
+      "How to read back protection continuity before ending the old mechanism.",
+      "Whether the S0 shared harness at current interfaces already supports the R4 scenario."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Retiring or bypassing the observer before continuity is proven could permanently lose observations or the attention queue. This is a retirement gate, so errors may be irreversible.",
+      "The authority disposition for this BIU rests on a self-interpretation in the task text of a relayed delegation. The canonical artifact still says GAP_BLOCKED.",
+      "The predecessor proof's scope excludes the observer's live data. Filling that gap inside this capstone would violate the non-goal against repairing upstream capabilities.",
+      "A local fixture result might be mislabelled or treated as operational acceptance.",
+      "Operational execution might drift outside the delegation boundaries: new external spend, broadened production scope or a changed security posture.",
+      "The SF-REQ-053 design may not cover the external observer duty, which would require returning scope to authority."
+    ],
+    "next_action": "Keep the SWF-27 observer and attention queue active. Obtain the following, then re-run a fresh Agent Ready assessment on the updated revision:\n(1) a canonical, authority-recorded confirmation that both gates are disposed for WO-220604, with the planning-eligibility record updated from GAP_BLOCKED;\n(2) the identity of the authorized, existing configured operational target for FX-R4;\n(3) a determination from the SF-REQ-053 design owner on whether the observer duty is covered, or else routing of that scope back to authority;\n(4) the pinned FX-R4 fixture (commands, inputs, expected outcomes, evidence schema) with a demonstrated intact/fault/restored discrimination.",
+    "owner_clarifications": [
+      "Does the reviewed SF-REQ-053 design cover the SWF-27 observer's external observer duty? WO-220504 says that if it does not, scope must return to authority before replacement. The predecessor's 'observer-duty conservative scoping' suggests this was left open.",
+      "Will the authority holder confirm, in the canonical candidate artifact rather than in an appended task-text note, that the Wave 2 delegation (founder-wave2-authority-delegation-20260926T200500Z) disposes POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY for WO-220604/R4, which is absent from the delegation's Affected Issues list?",
+      "Which existing, locally configured operational target is authorized for FX-R4 execution within the delegation's boundaries?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "HOLD is the controlling condition because the necessary operational substrate is absent. The task text itself says no FX-R4 fixture exists and no operational target has been separately identified, and operational acceptance cannot be met by local substitution. Upstream replacement proof also has an acknowledged gap: WO-220504 excludes the observer's live data, and M-R4 requires every upstream replacement proof before replacement. Authority is not independently established. The canonical record says GAP_BLOCKED, and the claimed disposition is an interpretive note inside untrusted task text, which this gate cannot treat as verified. There are owner-level questions, namely design coverage of the observer duty and target selection, but they sit alongside missing artifacts and target binding rather than being the sole blocker. So CLARIFY is not the primary disposition. The work is a single cohesive retirement proof with one verification center, so SPLIT is not warranted.",
+    "semantic_split_recommendation": [],
+    "summary": "The intent and acceptance predicate for R4 are coherent, and the tenure, context-usage and contradiction policies are fixed in detail. The work cannot be handed off yet because its operational substrate is missing. Neither an FX-R4 fixture nor a bound operational target exists. The predecessor WO-220504's operational proof explicitly excludes reading the SWF-27 observer's live data, so the upstream replacement proof that M-R4 requires is not fully in hand for the observer duty. The canonical planning eligibility is still recorded as GAP_BLOCKED. The appended 2026-09-28 section argues that the Founder delegation disposes both authority gates for this BIU. That argument comes from the task text, is relayed through a non-Director session, and relies on reading the delegation as covering BIUs not listed in its 'Affected Issues'. This gate has not verified it.",
+    "verification_assessment": "The acceptance predicate is observable in principle: no observation loss across cutover, proven for consumer, identity, restart and retention, with the attention queue retained. A single independent verdict on the pinned FX-R4 fixture run against the authorized target would be meaningful. That verdict is not achievable today for three reasons. The fixture is not pinned, no target is bound, and the planned proof level is OPERATIONAL_OR_EXTERNAL_AUTHORITY, so local substitutions cannot satisfy acceptance. The predecessor FX-B1 evidence does not cover the observer's data, so no-loss cannot be inferred from it."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T06:32:34.235893+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 13344,
+    "input_sha256": "ae4dcb997fc49e7c0f03a4187c9ee1189caf2124aa3f1cb83601bf133606e5f2",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-smfvm657/WO-220604.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-28T06:32:05.107993+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220604"
+}
