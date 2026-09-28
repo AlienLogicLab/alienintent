@@ -127,3 +127,18 @@ def test_one_writer_cutover_pack_is_selected_by_every_owned_boundary():
     )
     for path in owned:
         assert "one-writer-cutover-fx-e2" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path
+
+
+def test_canonical_release_precondition_gate_pack_is_selected_by_every_owned_boundary():
+    owned = (
+        "src/alienintent/execution_coordination/domain/release.py",
+        "src/alienintent/execution_coordination/ports/release_admission.py",
+        "src/alienintent/execution_coordination/application/release_admission.py",
+        "src/alienintent/execution_coordination/adapters/release_admission.py",
+        "src/alienintent/execution_coordination/application/factory_coordinator.py",
+        "tests/execution_coordination/domain/test_policy.py",
+        "tools/live/fx_b3p_release_preconditions.py",
+        "tools/live/test_fx_b3p_release_preconditions.py",
+    )
+    for path in owned:
+        assert "canonical-release-precondition-gate" in [p["id"] for p in module.selected_packs(manifest(), (path,))], path

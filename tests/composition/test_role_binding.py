@@ -191,7 +191,9 @@ def test_the_binding_guard_owns_no_state_and_introduces_no_outcome_record(tmp_pa
     profile.coordinator.start()
 
     aggregates = {identity for identity, _, _ in profile.store.list_states(profile.name)}
-    assert all(identity.startswith(("factory:", "release:", "scheduler:", "decision-inbox")) for identity in aggregates), aggregates
+    # ``release-authorization:`` is the WO-220611 durable release record the
+    # fixture records for the release gate; the guard itself still writes nothing.
+    assert all(identity.startswith(("factory:", "release:", "release-authorization:", "scheduler:", "decision-inbox")) for identity in aggregates), aggregates
     assert {record["event"] for record in journaled(profile.journal.path, "invocation-started") + journaled(profile.journal.path)} == {
         "invocation-started", "invocation-outcome"}
 

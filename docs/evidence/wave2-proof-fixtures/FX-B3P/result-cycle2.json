@@ -1,0 +1,549 @@
+{
+  "record_kind": "FixtureRun",
+  "fixture": "FX-B3P",
+  "work_unit": "WO-220611",
+  "issue": 141,
+  "invocation": "AlienLogicLab/alienintent#141:PRODUCER:e63dde70-dfdf-425a-921b-3c6611179fda",
+  "cycle": 2,
+  "supersedes_observation": "docs/evidence/wave2-proof-fixtures/FX-B3P/result.json (source 596c98068f65fff7657e728fb2a0120eab914209, retained unchanged)",
+  "source_revision": "d408caf7c6a30367b00800af1d1a14c90a4eb0cd",
+  "source_tree": "e904b64bc92f9e197eba9bb44f9142210c2501cd",
+  "fixture_blob": "44f3f093f8512c750face4ec7c6005876377ab6b",
+  "authorized_baseline": "93dc10d5969a95717e631496b65ea734531d3089",
+  "command": [
+    "python3",
+    "tools/live/fx_b3p_release_preconditions.py",
+    "--out",
+    "<file>"
+  ],
+  "environment": {
+    "PYTHONPATH": "src"
+  },
+  "observed_at": "2026-09-28T03:36:32.578654+00:00",
+  "exit_status": 0,
+  "output_sha256": "sha256:ef963340f6bd3782e6f176a6947f31afba53142e660f3fe6d953f6b610df7d30",
+  "all_match": true,
+  "output": {
+    "fixture": "FX-B3P",
+    "work_unit": "WO-220611",
+    "issue": 141,
+    "label": "LOCAL_REAL_STACK \u2014 FX-B3P for WO-220611; not FX-B3/FX-B4 operational evidence",
+    "call_site": "src/alienintent/execution_coordination/application/factory_coordinator.py:FactoryCoordinator._run",
+    "release_point": "main",
+    "attribution": "derived from tools/live/fx_b3_admission_coverage.py @ a11e1dd716fef312698c32ba390ff10c722bf649 (WO-220506, Issue #126)",
+    "cases": [
+      {
+        "criterion": "valid release admits (one launch)",
+        "expected_worker_starts": 1,
+        "expected_refused_by": null,
+        "case": "positive-control",
+        "release_record": {
+          "identity": "FXB3P-POS",
+          "record_ref": "fixture:FXB3P-POS:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 1,
+        "observed_refused_by": null,
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-POS"
+        ],
+        "recorded_correlation": "launch:FXB3P-POS:0",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "no durable release authorization record",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "implementation-authorized",
+        "case": "p1-no-release-record",
+        "release_record": null,
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "implementation-authorized",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-NORECORD"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "record does not explicitly authorize IMPLEMENT",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "implementation-authorized",
+        "case": "p1-record-does-not-authorize",
+        "release_record": {
+          "identity": "FXB3P-NOAUTH",
+          "record_ref": "fixture:FXB3P-NOAUTH:release-record",
+          "authorizes_implement": false,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "implementation-authorized",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-NOAUTH"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "record names no exact baseline (symbolic 'main')",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "baseline-named",
+        "case": "p2-no-exact-baseline",
+        "release_record": {
+          "identity": "FXB3P-NOBASE",
+          "record_ref": "fixture:FXB3P-NOBASE:release-record",
+          "authorizes_implement": true,
+          "baseline": "main",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "baseline-named",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-NOBASE"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "baseline does not resolve (the null revision)",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "baseline-resolves",
+        "case": "p3-null-baseline",
+        "release_record": {
+          "identity": "FXB3P-NULL",
+          "record_ref": "fixture:FXB3P-NULL:release-record",
+          "authorizes_implement": true,
+          "baseline": "0000000000000000000000000000000000000000",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "baseline-resolves",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-NULL"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "baseline does not resolve (well-formed but absent)",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "baseline-resolves",
+        "case": "p3-absent-baseline",
+        "release_record": {
+          "identity": "FXB3P-ABSENT",
+          "record_ref": "fixture:FXB3P-ABSENT:release-record",
+          "authorizes_implement": true,
+          "baseline": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "baseline-resolves",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-ABSENT"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "baseline not reachable from the intended release point",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "baseline-reachable",
+        "case": "p4-unreachable-baseline",
+        "release_record": {
+          "identity": "FXB3P-DIVERGED",
+          "record_ref": "fixture:FXB3P-DIVERGED:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:diverged>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "baseline-reachable",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-DIVERGED"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "explicit unsuperseded denial wording, other fields valid",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "authority-wording-consistent",
+        "case": "p5-unsuperseded-denial",
+        "release_record": {
+          "identity": "FXB3P-DENIAL",
+          "record_ref": "fixture:FXB3P-DENIAL:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "authority-wording-consistent",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-DENIAL"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "denial wording with an explicit superseding record admits",
+        "expected_worker_starts": 1,
+        "expected_refused_by": null,
+        "case": "p5-superseded-denial",
+        "release_record": {
+          "identity": "FXB3P-SUPERSEDED",
+          "record_ref": "fixture:FXB3P-SUPERSEDED:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": "fixture:FXB3P-SUPERSEDED:superseding"
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 1,
+        "observed_refused_by": null,
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-SUPERSEDED"
+        ],
+        "recorded_correlation": "launch:FXB3P-SUPERSEDED:0",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "attributable allocation exhausted for a required dimension",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "admit_release",
+        "case": "budget-exhausted",
+        "release_record": {
+          "identity": "FXB3P-EXHAUSTED",
+          "record_ref": "fixture:FXB3P-EXHAUSTED:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": {
+          "FXB3P-EXHAUSTED": {
+            "attempts": 0
+          }
+        },
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "admit_release",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-EXHAUSTED"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "no attributable allocation for this BIU",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "admit_release",
+        "case": "budget-unallocated",
+        "release_record": {
+          "identity": "FXB3P-UNALLOCATED",
+          "record_ref": "fixture:FXB3P-UNALLOCATED:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": {
+          "FXB3P-OTHER": {
+            "attempts": 3
+          }
+        },
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "admit_release",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-UNALLOCATED"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "attributable allocation available admits",
+        "expected_worker_starts": 1,
+        "expected_refused_by": null,
+        "case": "budget-allocated",
+        "release_record": {
+          "identity": "FXB3P-ALLOCATED",
+          "record_ref": "fixture:FXB3P-ALLOCATED:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": {
+          "FXB3P-ALLOCATED": {
+            "attempts": 1
+          }
+        },
+        "gate_configured": true,
+        "observed_worker_starts": 1,
+        "observed_refused_by": null,
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-ALLOCATED"
+        ],
+        "recorded_correlation": "launch:FXB3P-ALLOCATED:0",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "allocation lacks one required dimension (FX-B3 step 8 shape)",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "admit_release",
+        "case": "budget-dimension-unallocated",
+        "release_record": {
+          "identity": "FXB3P-DIMENSION",
+          "record_ref": "fixture:FXB3P-DIMENSION:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": {
+          "FXB3P-DIMENSION": {
+            "attempts": 1
+          }
+        },
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "admit_release",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-DIMENSION"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "contrast: no release gate configured, no record",
+        "expected_worker_starts": 1,
+        "expected_refused_by": null,
+        "case": "contrast-ungated-no-record",
+        "release_record": null,
+        "allocation": null,
+        "gate_configured": false,
+        "observed_worker_starts": 1,
+        "observed_refused_by": null,
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-UNGATED"
+        ],
+        "recorded_correlation": "launch:FXB3P-UNGATED:0",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "contrast: no allocation configured, FX-B3 step 8 shape",
+        "expected_worker_starts": 1,
+        "expected_refused_by": null,
+        "case": "contrast-unmetered-dimension",
+        "release_record": {
+          "identity": "FXB3P-UNMETERED",
+          "record_ref": "fixture:FXB3P-UNMETERED:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 1,
+        "observed_refused_by": null,
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-UNMETERED"
+        ],
+        "recorded_correlation": "launch:FXB3P-UNMETERED:0",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "operational profile: no durable release record",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "implementation-authorized",
+        "case": "profile-no-release-record",
+        "release_record": null,
+        "allocation": {
+          "FXB3P-PROFILE-NORECORD": {
+            "attempts": 1
+          }
+        },
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "implementation-authorized",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-PROFILE-NORECORD"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "operational profile: baseline not reachable from the release point",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "baseline-reachable",
+        "case": "profile-unreachable-baseline",
+        "release_record": {
+          "identity": "FXB3P-PROFILE-DIVERGED",
+          "record_ref": "fixture:FXB3P-PROFILE-DIVERGED:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:diverged>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": {
+          "FXB3P-PROFILE-DIVERGED": {
+            "attempts": 1
+          }
+        },
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "baseline-reachable",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-PROFILE-DIVERGED"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "operational profile: no allocation configured for this BIU",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "admit_release",
+        "case": "profile-no-allocation",
+        "release_record": {
+          "identity": "FXB3P-PROFILE-UNALLOCATED",
+          "record_ref": "fixture:FXB3P-PROFILE-UNALLOCATED:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": null,
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "admit_release",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-PROFILE-UNALLOCATED"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "operational profile: FX-B3 step 8 shape (formerly the unmetered contrast)",
+        "expected_worker_starts": 0,
+        "expected_refused_by": "admit_release",
+        "case": "profile-unmetered-dimension",
+        "release_record": {
+          "identity": "FXB3P-PROFILE-UNMETERED",
+          "record_ref": "fixture:FXB3P-PROFILE-UNMETERED:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": {
+          "FXB3P-PROFILE-UNMETERED": {
+            "attempts": 1
+          }
+        },
+        "gate_configured": true,
+        "observed_worker_starts": 0,
+        "observed_refused_by": "admit_release",
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-PROFILE-UNMETERED"
+        ],
+        "recorded_correlation": "release",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      },
+      {
+        "criterion": "operational profile: every precondition and allocation holds",
+        "expected_worker_starts": 1,
+        "expected_refused_by": null,
+        "case": "profile-positive-control",
+        "release_record": {
+          "identity": "FXB3P-PROFILE-POS",
+          "record_ref": "fixture:FXB3P-PROFILE-POS:release-record",
+          "authorizes_implement": true,
+          "baseline": "<fixture:baseline>",
+          "text": "IMPLEMENT is authorized.",
+          "superseding_record": null
+        },
+        "allocation": {
+          "FXB3P-PROFILE-POS": {
+            "attempts": 1
+          }
+        },
+        "gate_configured": true,
+        "observed_worker_starts": 1,
+        "observed_refused_by": null,
+        "stop_reason": "dependencies-or-authority-blocked",
+        "authority_blocked": [
+          "FXB3P-PROFILE-POS"
+        ],
+        "recorded_correlation": "launch:FXB3P-PROFILE-POS:0",
+        "recorded_outcome": "authority-block",
+        "matches_expected": true
+      }
+    ],
+    "all_match": true
+  }
+}

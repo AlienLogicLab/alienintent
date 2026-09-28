@@ -27,6 +27,7 @@ from pathlib import Path
 import time
 from typing import Callable, Mapping
 
+from alienintent.composition.release_admission import compose_release_admission, release_admission_config
 from alienintent.composition.role_binding import ROLE_OPERATIONS, RoleBindingGuard
 from alienintent.composition.sandbox_profile import SandboxProfileComposition, load_profile_document
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
@@ -317,10 +318,17 @@ class SandboxRunProfile:
         )
         self.worker = RoleBindingGuard(self.real_worker, self.journal, self.store, self.name, composition.profile.repository, clock)
         self.notifier = ProjectDecisionNotifier(composition.projects)
+        # WO-220611: SWF-21 release preconditions against this checkout and the
+        # profile's configured per-BIU allocation, enforced before any launch.
+        self.release_admission = compose_release_admission(
+            self.store, self.name, composition.profile.repository, checkout, release_admission_config(composition.document),
+        )
+        self.release_records = self.release_admission.records
         self.coordinator = FactoryCoordinator(
             self.store, self.work, self.worker,
             LocalArtifactStore(self.artifact_root, self.verifier_root), self.name,
             automatic_release=composition.profile.automatic_release, notifier=self.notifier,
+            release_gate=self.release_admission.gate, allocation=self.release_admission.allocation,
         )
         self.doctor = composition.doctor(self.workspace_root, checkout, self.worker_process, provider)
         self.ingress_route = ""

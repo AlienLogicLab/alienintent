@@ -686,3 +686,150 @@ def test_higher_priority_requirement_preempts_existing_focus(tmp_path: Path) -> 
     coordinator.start()
     assert worker.dispatched[0] == "B0"
     assert coordinator._requirement_focus() == ("SF-REQ-B", 0)
+
+
+# --- WO-220611 (B3P): SWF-21 release preconditions and attributable budget at the canonical call site ---
+
+DENIAL = "Implementation is **not** authorized by this Issue. Release remains an explicit authority step."
+
+
+def _git(checkout: Path, *args: str) -> str:
+    env = {**os.environ, "GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@example.invalid",
+           "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@example.invalid"}
+    return subprocess.run(["git", *args], cwd=checkout, env=env, check=True, capture_output=True, text=True).stdout.strip()
+
+
+def _release_repository(tmp_path: Path) -> dict[str, str]:
+    """A real repository: ``baseline`` is on ``main``; ``diverged`` is a commit ``main`` cannot reach."""
+    checkout = tmp_path / "target"
+    checkout.mkdir()
+    _git(checkout, "init", "--quiet", "--initial-branch=main")
+    _git(checkout, "commit", "--quiet", "--allow-empty", "-m", "baseline")
+    baseline = _git(checkout, "rev-parse", "HEAD")
+    _git(checkout, "commit", "--quiet", "--allow-empty", "-m", "release point")
+    _git(checkout, "checkout", "--quiet", "-b", "side", baseline)
+    _git(checkout, "commit", "--quiet", "--allow-empty", "-m", "diverged")
+    diverged = _git(checkout, "rev-parse", "HEAD")
+    _git(checkout, "checkout", "--quiet", "main")
+    return {"checkout": str(checkout), "baseline": baseline, "diverged": diverged}
+
+
+def _gated(tmp_path: Path, item, *, record: dict | None, allocation=None, outcomes: list[str] | None = None, verdicts=None):
+    coordinator_module, custody, _, _ = _api()
+    from alienintent.execution_coordination.adapters.release_admission import GitRevisionResolver, StoredReleaseAuthorizations
+    from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+    from alienintent.execution_coordination.domain.release import ReleaseAuthorization
+
+    repository = _release_repository(tmp_path)
+    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    records = StoredReleaseAuthorizations(store, "offline")
+    if record is not None:
+        values = {"identity": item.identity, "record_ref": f"issue:{item.identity}:release-record", "authorizes_implement": True,
+                  "baseline": "baseline", "text": "IMPLEMENT is authorized."} | record
+        values["baseline"] = repository.get(values["baseline"], values["baseline"])
+        records.record(ReleaseAuthorization(**values))
+    release_gate = ReleasePreconditionGate(records, GitRevisionResolver({"repo": Path(repository["checkout"])}), "main")
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    worker = ScriptedWorker(artifacts, {item.identity: outcomes or ["success"]}, verdicts=verdicts)
+    coordinator = coordinator_module.FactoryCoordinator(store, MemoryWorkManagement([item]), worker, artifacts, "offline",
+                                                        release_gate=release_gate, allocation=allocation)
+    return coordinator, worker
+
+
+def _custom_item(identity: str, **changes):
+    _, _, ports, _ = _api()
+    values = dict(identity=identity, release_policy="automatic-on", satisfied_requirement_ids=("SF-REQ-001",),
+                  budget_policy=BudgetPolicy(hard_required_dimensions=("attempts",)), required_evidence=("artifact-verified",))
+    contract = valid_contract(**(values | changes))
+    return ports.ReadyWorkItem(identity, 0, "repo", "offline", 1, (), contract, contract.content_digest, "ready", True)
+
+
+def test_complete_release_record_admits_and_launches_exactly_one_producer(tmp_path: Path) -> None:
+    coordinator, worker = _gated(tmp_path, _item("released", 0, 1), record={})
+    summary = coordinator.start()
+    assert worker.dispatched == ["released"]
+    assert summary.dispatched == ("released",)
+    assert coordinator.state("released").stage is LifecycleStage.DONE
+
+
+@pytest.mark.parametrize(("record", "check"), [
+    (None, "implementation-authorized"),
+    ({"authorizes_implement": False}, "implementation-authorized"),
+    ({"baseline": None}, "baseline-named"),
+    ({"baseline": "main"}, "baseline-named"),
+    ({"baseline": "0" * 40}, "baseline-resolves"),
+    ({"baseline": "b" * 40}, "baseline-resolves"),
+    ({"baseline": "diverged"}, "baseline-reachable"),
+])
+def test_failed_release_precondition_refuses_before_any_worker_launch(tmp_path: Path, record, check) -> None:
+    coordinator, worker = _gated(tmp_path, _item("gated", 0, 1), record=record)
+    summary = coordinator.start()
+    assert worker.invocations == []
+    assert summary.dispatched == ()
+    assert summary.authority_blocked == ("gated",)
+    projected = coordinator.state("gated")
+    assert projected.stage is LifecycleStage.IMPLEMENT
+    assert projected.record["correlation"] == "release"
+    assert projected.record["hold_reason"] == f"release-precondition:{check}"
+
+
+def test_unsuperseded_denial_wording_refuses_an_otherwise_valid_release(tmp_path: Path) -> None:
+    coordinator, worker = _gated(tmp_path, _custom_item("denied", intent=DENIAL), record={})
+    summary = coordinator.start()
+    assert worker.invocations == [] and summary.authority_blocked == ("denied",)
+    assert coordinator.state("denied").record["hold_reason"] == "release-precondition:authority-wording-consistent"
+
+
+def test_explicit_superseding_record_admits_despite_earlier_denial_wording(tmp_path: Path) -> None:
+    coordinator, worker = _gated(tmp_path, _custom_item("superseded", intent=DENIAL), record={"superseding_record": "issue:superseded:superseding-record"})
+    coordinator.start()
+    assert worker.dispatched == ["superseded"]
+
+
+def test_attributable_allocation_replaces_the_synthesized_budget(tmp_path: Path) -> None:
+    from alienintent.execution_coordination.application.release_admission import BiuLimitAllocation
+
+    for identity, limits, launched in (
+        ("exhausted", {"exhausted": {"attempts": 0}}, False),
+        ("unallocated", {"someone-else": {"attempts": 3}}, False),
+        ("allocated", {"allocated": {"attempts": 2}}, True),
+    ):
+        root = tmp_path / identity
+        root.mkdir()
+        coordinator, worker = _gated(root, _item(identity, 0, 1), record={}, allocation=BiuLimitAllocation(limits))
+        summary = coordinator.start()
+        assert worker.dispatched == ([identity] if launched else [])
+        if not launched:
+            assert worker.invocations == [] and summary.authority_blocked == (identity,)
+            # Refused by the existing admit_release budget check, after every precondition passed.
+            assert coordinator.state(identity).record["correlation"] == "release"
+            assert "hold_reason" not in coordinator.state(identity).record
+
+
+@pytest.mark.parametrize(("allocated", "producer_launches"), [(1, 1), (2, 2)])
+def test_allocation_counts_durable_rejections_as_consumed_attempts(tmp_path: Path, allocated: int, producer_launches: int) -> None:
+    from alienintent.execution_coordination.application.release_admission import BiuLimitAllocation
+
+    _, _, _, provider = _api()
+    item = _custom_item("reworked", budget_policy=BudgetPolicy(hard_required_dimensions=("attempts",), maximum_attempts=3))
+    coordinator, worker = _gated(tmp_path, item, record={}, allocation=BiuLimitAllocation({"reworked": {"attempts": allocated}}),
+                                 outcomes=["success", "success"])
+    scripted_start = worker.start
+
+    def start(invocation, context, grants, budget):
+        if invocation.role != provider.VERIFIER:
+            return scripted_start(invocation, context, grants, budget)
+        # A receipted verifier rejection: the only verdict that returns work to IMPLEMENT.
+        worker.invocations.append((invocation.work_identity, invocation.role, invocation.correlation_id))
+        outcome = provider.WorkerOutcome.reject(invocation.candidate, ("finding",), receipts=("feature-regressions:sha256:" + "a" * 64,))
+        worker.observed[invocation.correlation_id] = outcome
+        return outcome
+
+    worker.start = start
+    summary = coordinator.start()
+    # Each receipted rejection consumes one allocated attempt; re-admission after rework
+    # is refused once the allocation is exhausted, and not before.
+    assert worker.dispatched == ["reworked"] * producer_launches
+    assert summary.authority_blocked == ("reworked",)
+    assert coordinator.state("reworked").record["correlation"] == "release"
+    assert coordinator.state("reworked").record["rejections"] == allocated

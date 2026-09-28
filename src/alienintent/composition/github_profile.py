@@ -7,6 +7,7 @@ from pathlib import Path
 import time
 from typing import Mapping
 
+from alienintent.composition.release_admission import ReleaseAdmissionConfig, compose_release_admission
 from alienintent.composition.role_binding import RoleBindingGuard
 from alienintent.execution_coordination.adapters.github_webhook import GitHubWebhookIngress
 from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
@@ -25,7 +26,8 @@ from alienintent.invocation_runtime.ports.invocation_journal import InvocationJo
 class GitHubProfileComposition:
     """Wire configuration-owned references at the outer boundary only."""
 
-    def __init__(self, profile: GitHubProfile, secrets: SecretProvider, database: Path, snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, notify: Callable[[str], None], projection_write: Callable[[str, str, str, int], int] | None = None, worker: WorkerProvider | None = None, decision_projection_write: Callable[[HumanDecisionRequired], str] | None = None, journal: InvocationJournal | None = None, clock: Callable[[], float] = time.time) -> None:
+    def __init__(self, profile: GitHubProfile, secrets: SecretProvider, database: Path, snapshot: Callable[[], tuple[Mapping[str, object], ...]], contract: BiuContract, notify: Callable[[str], None], projection_write: Callable[[str, str, str, int], int] | None = None, worker: WorkerProvider | None = None, decision_projection_write: Callable[[HumanDecisionRequired], str] | None = None, journal: InvocationJournal | None = None, clock: Callable[[], float] = time.time,
+                 checkout: Path | None = None, release_admission: ReleaseAdmissionConfig | None = None) -> None:
         self.store = SQLiteOperationalStore(database)
         writer = projection_write or (lambda identity, field, state, revision: -1)
         self.work = GitHubProjectsWorkManagement(profile.profile, profile.repository, profile.lifecycle_statuses, profile.projection_fields, snapshot, contract, writer, decision_projection_write)
@@ -35,9 +37,14 @@ class GitHubProfileComposition:
         # K3: it is reached only through the binding guard, so a worker not
         # bound to ``journal`` or to the launched role and candidate never starts.
         self.worker = None if worker is None else RoleBindingGuard(worker, journal, self.store, profile.profile, profile.repository, clock)
+        # WO-220611: the SWF-21 release gate and the attributable per-BIU
+        # allocation are always wired; without a checkout no baseline resolves.
+        self.release_admission = compose_release_admission(self.store, profile.profile, profile.repository, checkout, release_admission or ReleaseAdmissionConfig())
+        self.release_records = self.release_admission.records
         self.coordinator = None if self.worker is None else FactoryCoordinator(
             self.store, self.work, self.worker,
             LocalArtifactStore(database.parent / "candidate-artifacts", database.parent / "candidate-artifacts" / "verifier-evidence"), profile.profile,
             automatic_release=profile.automatic_release,
             notifier=WorkManagementDecisionNotifier(self.work),
+            release_gate=self.release_admission.gate, allocation=self.release_admission.allocation,
         )

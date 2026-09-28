@@ -37,6 +37,7 @@ from alienintent.invocation_runtime.adapters.git_worktree import GitWorktreeAdap
 from alienintent.invocation_runtime.domain.runtime import InvocationRole
 from tests.composition.test_sandbox_profile import document
 from tests.support.feature_regressions import seed_verification_runner
+from tests.support.release_admission import authorize_release, release_admission_section
 from tests.support.live_github import (
     PRIORITY_FIELD,
     SANDBOX_PROJECT,
@@ -115,7 +116,9 @@ def digest_of(document: dict) -> str:
 def backlog(tmp_path: Path, items: list[dict], documents: dict[str, dict]) -> SandboxBacklogComposition:
     contents = {path: json.dumps(value).encode() for path, value in documents.items()}
     transport = RecordedTransport(rest_answers(contents=contents), project_graphql(items=items))
-    return SandboxBacklogComposition(document(tmp_path), tmp_path / "state.sqlite", lambda _: None, transport, lambda: 1758445000.0)
+    # WO-220611: the profile's configured per-BIU allocation for every contract it serves.
+    identities = [str(value["identity"]) for value in documents.values() if isinstance(value, dict) and "identity" in value]
+    return SandboxBacklogComposition(document(tmp_path) | release_admission_section(identities), tmp_path / "state.sqlite", lambda _: None, transport, lambda: 1758445000.0)
 
 
 # --- the upstream descriptor --------------------------------------------------
@@ -472,11 +475,14 @@ def _seeded_repository(tmp_path: Path) -> tuple[Path, Path]:
 def run_profile(tmp_path: Path, items: list[dict], documents: dict[str, dict]) -> SandboxRunProfile:
     remote, checkout = _seeded_repository(tmp_path)
     composed = backlog(tmp_path, items, documents)
-    return SandboxRunProfile(
+    profile = SandboxRunProfile(
         composed, tmp_path / "state", checkout,
         provider="claude", worker_command=("/bin/bash", "worker/run.sh"),
         worker_environment=worker_environment(tmp_path), clock=lambda: 1758445000.0,
     )
+    # WO-220611: the durable release record an operator records before release.
+    authorize_release(profile.release_records, checkout, [str(value["identity"]) for value in documents.values()])
+    return profile
 
 
 def test_the_run_profile_exposes_exactly_what_the_control_plane_cli_loads(tmp_path: Path) -> None:

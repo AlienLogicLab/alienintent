@@ -12,7 +12,16 @@ from alienintent.execution_coordination.domain.lifecycle import (
     LifecycleStage,
     transition,
 )
-from alienintent.execution_coordination.domain.release import ReleaseConflict, ReleaseRequest, ReleaseSource, admit_release
+from alienintent.execution_coordination.domain.release import (
+    BaselineEvidence,
+    ReleaseAuthorization,
+    ReleaseConflict,
+    ReleasePreconditionRefused,
+    ReleaseRequest,
+    ReleaseSource,
+    admit_release,
+    admit_release_preconditions,
+)
 from alienintent.execution_coordination.domain.scheduling import Capacity, ScheduledItem, select_admissible
 from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, VerdictKind, evaluate_verdict
 from .test_contract import valid_contract
@@ -44,6 +53,70 @@ def test_release_is_idempotent_and_rejects_changed_payload_or_missing_guards() -
     with pytest.raises(ValueError, match="policy"):
         admit_release({}, ReleaseRequest("release-7", automatic, automatic.content_digest, frozenset(), frozenset({"python"}), {"attempts": 1}, "Founder"))
     assert admit_release({}, ReleaseRequest("release-8", automatic, automatic.content_digest, frozenset(), frozenset({"python"}), {"attempts": 1}, "policy-v1", ReleaseSource.AUTOMATIC_POLICY)).identity == "release-8"
+
+
+BASELINE = "a" * 40
+DENIAL = "Implementation is **not** authorized by this Issue. Release remains an explicit authority step."
+
+
+def _authorization(**overrides) -> ReleaseAuthorization:
+    values = dict(identity="WO-1", record_ref="issue#1:comment:1", authorizes_implement=True, baseline=BASELINE,
+                  text=f"IMPLEMENT is authorized against baseline `{BASELINE}`.")
+    return ReleaseAuthorization(**(values | overrides))
+
+
+def _refused(authorization, evidence=BaselineEvidence("main", True, True), wording=()) -> str:
+    with pytest.raises(ReleasePreconditionRefused) as refused:
+        admit_release_preconditions("WO-1", authorization, evidence, wording)
+    assert isinstance(refused.value, ValueError)
+    return refused.value.check
+
+
+def test_release_preconditions_admit_only_a_complete_consistent_record() -> None:
+    admit_release_preconditions("WO-1", _authorization(), BaselineEvidence("main", True, True), ("ordinary intent",))
+
+
+@pytest.mark.parametrize(("authorization", "check"), [
+    (None, "implementation-authorized"),
+    (_authorization(record_ref=""), "implementation-authorized"),
+    (_authorization(identity="WO-2"), "implementation-authorized"),
+    (_authorization(authorizes_implement=False), "implementation-authorized"),
+    (_authorization(baseline=None), "baseline-named"),
+    (_authorization(baseline="main"), "baseline-named"),
+    (_authorization(baseline="abc1234"), "baseline-named"),
+])
+def test_release_preconditions_refuse_missing_record_or_inexact_baseline(authorization, check) -> None:
+    assert _refused(authorization) == check
+
+
+def test_release_preconditions_refuse_unresolvable_or_unreachable_baseline() -> None:
+    assert _refused(_authorization(), BaselineEvidence("main", False, False)) == "baseline-resolves"
+    assert _refused(_authorization(), None) == "baseline-resolves"
+    # The null revision never names a real commit, whatever a resolver answers.
+    assert _refused(_authorization(baseline="0" * 40), BaselineEvidence("main", True, True)) == "baseline-resolves"
+    assert _refused(_authorization(), BaselineEvidence("main", True, False)) == "baseline-reachable"
+
+
+def test_release_preconditions_refuse_unsuperseded_denial_wording() -> None:
+    assert _refused(_authorization(), wording=("fine", DENIAL)) == "authority-wording-consistent"
+    assert _refused(_authorization(), wording=("implementation is unauthorized here",)) == "authority-wording-consistent"
+    for denial in ("Implementation is not yet authorized.", "IMPLEMENT is not authorized", "Implementation not currently authorized",
+                   "Release is refused pending review.", "release denied"):
+        assert _refused(_authorization(), wording=(denial,)) == "authority-wording-consistent", denial
+    # A record cannot supersede wording by naming itself.
+    assert _refused(_authorization(superseding_record="issue#1:comment:1"), wording=(DENIAL,)) == "authority-wording-consistent"
+    admit_release_preconditions("WO-1", _authorization(), BaselineEvidence("main", True, True),
+                                ("READY does not itself authorize IMPLEMENT.", "Release rule: candidate compilation and READY are not release."))
+    assert _refused(_authorization(text=DENIAL, superseding_record="issue#1:comment:2")) == "authority-wording-consistent"
+    admit_release_preconditions("WO-1", _authorization(superseding_record="issue#1:comment:2"),
+                                BaselineEvidence("main", True, True), (DENIAL,))
+
+
+def test_exhausted_attributable_budget_is_refused_by_the_existing_budget_check() -> None:
+    contract = valid_contract(budget_policy=BudgetPolicy(hard_required_dimensions=("attempts",)))
+    with pytest.raises(ValueError, match="budget"):
+        admit_release({}, ReleaseRequest("exhausted", contract, contract.content_digest, frozenset(), frozenset({"python"}), {"attempts": 0}, "allocation"))
+    assert admit_release({}, ReleaseRequest("allocated", contract, contract.content_digest, frozenset(), frozenset({"python"}), {"attempts": 3}, "allocation")).identity == "allocated"
 
 
 def test_lifecycle_requires_readback_and_policy_verdict_then_rework_invalidates_acceptance() -> None:

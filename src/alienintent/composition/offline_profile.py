@@ -23,6 +23,7 @@ import re
 import subprocess
 from typing import TYPE_CHECKING, Callable, Mapping
 
+from alienintent.composition.release_admission import ReleaseAdmission
 from alienintent.composition.sandbox_run_profile import contract_from_document
 from alienintent.composition.evidence_profile import EvidenceProfile
 from alienintent.evidence_learning.domain.admission import AuthoritySnapshot
@@ -49,11 +50,18 @@ class OfflineProfile:
     def __init__(self, database: Path, work: WorkManagement, worker: WorkerProvider, artifact_root: Path, verifier_root: Path | None = None, *, name: str = "offline", automatic_release: bool = True, doctor: "DoctorService | None" = None,
                  evidence_root: Path | None = None, evidence_permitted_root: Path | None = None,
                  evidence_project: str | None = None, evidence_authority: AuthoritySnapshot | None = None,
-                 store: SQLiteOperationalStore | None = None, notifier: DecisionNotifier | None = None) -> None:
+                 store: SQLiteOperationalStore | None = None, notifier: DecisionNotifier | None = None,
+                 release_admission: ReleaseAdmission | None = None) -> None:
         self.name = name
         self.store = SQLiteOperationalStore(database) if store is None else store
         self.work = work
-        self.coordinator = FactoryCoordinator(self.store, work, worker, LocalArtifactStore(artifact_root, verifier_root or artifact_root / "verifier-evidence"), name, automatic_release=automatic_release, notifier=NoOpDecisionNotifier() if notifier is None else notifier)
+        # The offline double profile (scripted workers, no operational entry
+        # point) takes the WO-220611 release gate only when composed with one;
+        # the operational profiles always compose it (composition/release_admission.py).
+        self.release_admission = release_admission
+        self.coordinator = FactoryCoordinator(self.store, work, worker, LocalArtifactStore(artifact_root, verifier_root or artifact_root / "verifier-evidence"), name, automatic_release=automatic_release, notifier=NoOpDecisionNotifier() if notifier is None else notifier,
+                                              release_gate=None if release_admission is None else release_admission.gate,
+                                              allocation=None if release_admission is None else release_admission.allocation)
         self.doctor = doctor
         self.evidence = None
         evidence_arguments = (evidence_root, evidence_permitted_root, evidence_project, evidence_authority)
