@@ -2,6 +2,7 @@
   "schemaVersion": 1,
   "selfHostingConfig": "/home/netmarine/.config/alienintent/self-hosting.json",
   "wipLimit": 1,
+  "preparedBufferTarget": 20,
   "founderHoldRecord": "/home/netmarine/.local/state/alienintent/factory-director/founder-holds.json",
   "pauseFlag": "/home/netmarine/.local/state/alienintent/factory-director/PAUSE",
   "directorInbox": "/home/netmarine/.local/state/alienintent/factory-director/inbox"

@@ -97,6 +97,7 @@ class AdapterConfig:
     pause_flag: Path
     director_inbox: Path
     wip_limit: int
+    prepared_buffer_target: int
 
 
 def load_adapter_config(path: Path | str) -> AdapterConfig:
@@ -105,12 +106,15 @@ def load_adapter_config(path: Path | str) -> AdapterConfig:
         raise SourceUnavailable("host configuration schemaVersion is not 1")
     if not _positive_int(raw.get("wipLimit")):
         raise SourceUnavailable("host configuration wipLimit must be a positive integer")
+    prepared_buffer_target = raw.get("preparedBufferTarget", 1)
+    if not _positive_int(prepared_buffer_target):
+        raise SourceUnavailable("host configuration preparedBufferTarget must be a positive integer")
     return AdapterConfig(
         self_hosting_config=_absolute_path(raw.get("selfHostingConfig"), "selfHostingConfig"),
         founder_hold_record=_absolute_path(raw.get("founderHoldRecord"), "founderHoldRecord"),
         pause_flag=_absolute_path(raw.get("pauseFlag"), "pauseFlag"),
         director_inbox=_absolute_path(raw.get("directorInbox"), "directorInbox"),
-        wip_limit=raw["wipLimit"],
+        wip_limit=raw["wipLimit"], prepared_buffer_target=prepared_buffer_target,
     )
 
 
@@ -366,7 +370,8 @@ class Evaluation:
     fingerprint: str | None = None
 
 
-def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: set[int]) -> str | None:
+def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: set[int],
+                   supply_candidates: frozenset[int] = frozenset()) -> str | None:
     """Why this Issue alone would make Director control required, ignoring holds."""
     if state == "READY":
         return "eligible:READY"
@@ -376,14 +381,23 @@ def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: se
         return "selection:REVIEW"
     if state == "TASKS" and issue in assessed:
         return "selection:TASKS_ASSESSED"
+    if state == "TASKS" and issue in supply_candidates:
+        return "selection:TASKS_SUPPLY"
     return None
 
 
 def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
            unprocessed: tuple[str, ...], assessed: set[int], paused: bool, wip_limit: int,
-           acknowledgements: frozenset[str] = frozenset()) -> Evaluation:
+           acknowledgements: frozenset[str] = frozenset(), *,
+           biu_issues: frozenset[int] = frozenset(), prepared_buffer_target: int = 1) -> Evaluation:
+    prepared_depth = sum(1 for issue, state in board.items()
+                         if state == "READY" or (state == "TASKS" and issue in assessed))
+    supply_candidates = frozenset(issue for issue, state in board.items()
+                                  if prepared_depth < prepared_buffer_target and state == "TASKS"
+                                  and issue in biu_issues and issue not in assessed and issue not in holds)
     reasons = {issue: reason for issue, state in board.items()
-               if (reason := control_reason(issue, state, runtime.claimed_issues, assessed))}
+               if (reason := control_reason(issue, state, runtime.claimed_issues, assessed,
+                                            supply_candidates))}
     unheld = {issue: reason for issue, reason in reasons.items() if issue not in holds}
     held = {issue: reason for issue, reason in reasons.items() if issue in holds}
     eligible = any(reason.startswith("eligible:") for reason in unheld.values())
@@ -406,6 +420,8 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
     )
     observations = {
         "boardIssues": len(board), "activeClaims": runtime.claims, "wipLimit": wip_limit,
+        "preparedBufferTarget": prepared_buffer_target, "preparedBufferDepth": prepared_depth,
+        "supplyCandidates": sorted(supply_candidates),
         "controlRequiredBy": {str(k): v for k, v in sorted(unheld.items())},
         "heldControl": {str(k): v for k, v in sorted(held.items())},
         "unresolvedLimitEscalations": list(escalations),
@@ -430,13 +446,19 @@ class AuthoritativeDirectorInputs:
         self.projection = Path(projection) if projection is not None else None
         self.board_reader, self.comments_reader = board_reader, comments_reader
         self.last_foreign_project_items: tuple[str, ...] = ()
+        self.last_biu_issues: frozenset[int] = frozenset()
 
     # Each reader is a separate method so a negative control can break exactly one source.
     def read_board(self) -> dict[int, str]:
         if self.board_reader is materialization.read_board or self.comments_reader is read_issue_comments:
             require_gh()  # the default readers run gh; injected readers do not
         try:
-            board, foreign = validate_board(self.board_reader())
+            rows = self.board_reader()
+            board, foreign = validate_board(rows)
+            self.last_biu_issues = frozenset(
+                row.get("issue") for row in rows if isinstance(row, dict) and row.get("type") == "ISSUE"
+                and any(isinstance(label, str) and label.lower() == "biu" for label in row.get("labels", []))
+                and _positive_int(row.get("issue")))
         except SourceUnavailable:
             raise
         except Exception as exc:  # MaterializationFailed, gh failure, malformed payload
@@ -487,7 +509,8 @@ class AuthoritativeDirectorInputs:
             board = self.read_board()
             assessed = self.read_assessed(board)
             evaluation = derive(board, runtime, holds, unprocessed, assessed, paused, config.wip_limit,
-                                acknowledgements)
+                                acknowledgements, biu_issues=self.last_biu_issues,
+                                prepared_buffer_target=config.prepared_buffer_target)
             evaluation.observations["foreignProjectItems"] = list(self.last_foreign_project_items)
             return evaluation
         except SourceUnavailable as exc:

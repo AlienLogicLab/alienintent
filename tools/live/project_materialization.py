@@ -106,7 +106,7 @@ def _read_board_snapshot():
     query = ('query($owner:String!,$number:Int!,$cursor:String){organization(login:$owner)'
              '{projectV2(number:$number){items(first:100,after:$cursor){totalCount '
              'pageInfo{hasNextPage endCursor} nodes{id type content{__typename '
-             '... on Issue{number repository{nameWithOwner}} '
+             '... on Issue{number repository{nameWithOwner} labels(first:100){nodes{name}}} '
              '... on PullRequest{number}} '
              'status:fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}} '
              'priority:fieldValueByName(name:"Priority"){... on ProjectV2ItemFieldSingleSelectValue{name}}'
@@ -191,7 +191,8 @@ def board_from_payload(items):
              "issue": (node.get("content") or {}).get("number"),
              "status": (node.get("status") or node.get("fieldValueByName") or {}).get("name"),
              "priority": (node.get("priority") or {}).get("name"),
-             "repository": ((node.get("content") or {}).get("repository") or {}).get("nameWithOwner")}
+             "repository": ((node.get("content") or {}).get("repository") or {}).get("nameWithOwner"),
+             "labels": [label.get("name") for label in (((node.get("content") or {}).get("labels") or {}).get("nodes") or []) if isinstance(label, dict) and isinstance(label.get("name"), str)]}
             for node in nodes]
 
 

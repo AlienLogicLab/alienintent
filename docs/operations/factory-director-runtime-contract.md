@@ -185,7 +185,7 @@ The adapter derives nine booleans and writes them atomically to
 |---|---|
 | `authoritative_state` | every source above was read successfully and is internally consistent. Any read failure, partial board, parse error or schema mismatch makes this and every other predicate false |
 | `eligible_authorized_work` | an unheld Issue is `READY`, or an unheld Issue is `IMPLEMENT`/`VERIFY`/`ACCEPT` with no active runtime claim |
-| `lifecycle_requires_selection` | an unheld Issue is `REVIEW`, or an unheld Issue is `TASKS` with a retained Agent Ready assessment (so it has not yet transitioned to `READY`) |
+| `lifecycle_requires_selection` | an unheld Issue is `REVIEW`; an unheld `TASKS` Issue has a retained Agent Ready assessment; or the prepared buffer is below `preparedBufferTarget` and an unassessed `biu`-labelled `TASKS` Issue can be prepared as supply |
 | `attention_required` | the runtime state has an unresolved `limitEscalations` entry (section 9) |
 | `pending_director_inbox` | at least one inbox entry has no receipt |
 | `executable_capacity` | active runtime claims < WIP limit |
