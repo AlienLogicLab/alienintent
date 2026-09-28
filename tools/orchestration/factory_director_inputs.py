@@ -462,7 +462,8 @@ class AuthoritativeDirectorInputs:
             board, foreign = validate_board(rows)
             self.last_biu_issues = frozenset(
                 row.get("issue") for row in rows if isinstance(row, dict) and row.get("type") == "ISSUE"
-                and any(isinstance(label, str) and label.lower() == "biu" for label in row.get("labels", []))
+                and (any(isinstance(label, str) and label.lower() == "biu" for label in row.get("labels", []))
+                     or (isinstance(row.get("title"), str) and row["title"].startswith(("WO-", "PY-", "FDH-", "ARP-"))))
                 and _positive_int(row.get("issue")))
         except SourceUnavailable:
             raise

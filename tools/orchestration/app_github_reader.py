@@ -38,7 +38,7 @@ class AppGitHubReader:
         return doc["data"]
 
     def board(self, max_attempts: int = 3) -> list[dict]:
-        query = '''query($owner:String!,$number:Int!,$cursor:String){organization(login:$owner){projectV2(number:$number){items(first:100,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{id type content{__typename ... on Issue{number repository{nameWithOwner} labels(first:100){nodes{name}}} ... on PullRequest{number}} status:fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}} priority:fieldValueByName(name:"Priority"){... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}'''
+        query = '''query($owner:String!,$number:Int!,$cursor:String){organization(login:$owner){projectV2(number:$number){items(first:100,after:$cursor){totalCount pageInfo{hasNextPage endCursor} nodes{id type content{__typename ... on Issue{number title repository{nameWithOwner} labels(first:100){nodes{name}}} ... on PullRequest{number}} status:fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}} priority:fieldValueByName(name:"Priority"){... on ProjectV2ItemFieldSingleSelectValue{name}}}}}}}'''
         for _ in range(max_attempts):
             rows=[]; cursor=None; expected=None; unstable=False
             while True:
@@ -50,7 +50,7 @@ class AppGitHubReader:
                 for node in items["nodes"]:
                     content=node.get("content") or {}
                     rows.append({"id":node["id"],"type":node["type"],"issue":content.get("number"),
-                        "status":(node.get("status") or {}).get("name"),"priority":(node.get("priority") or {}).get("name"),
+                        "title":content.get("title"),"status":(node.get("status") or {}).get("name"),"priority":(node.get("priority") or {}).get("name"),
                         "repository":(content.get("repository") or {}).get("nameWithOwner"),
                         "labels":[x.get("name") for x in ((content.get("labels") or {}).get("nodes") or []) if isinstance(x,dict) and isinstance(x.get("name"),str)]})
                 info=items["pageInfo"]

@@ -106,7 +106,7 @@ def _read_board_snapshot():
     query = ('query($owner:String!,$number:Int!,$cursor:String){organization(login:$owner)'
              '{projectV2(number:$number){items(first:100,after:$cursor){totalCount '
              'pageInfo{hasNextPage endCursor} nodes{id type content{__typename '
-             '... on Issue{number repository{nameWithOwner} labels(first:100){nodes{name}}} '
+             '... on Issue{number title repository{nameWithOwner} labels(first:100){nodes{name}}} '
              '... on PullRequest{number}} '
              'status:fieldValueByName(name:"Status"){... on ProjectV2ItemFieldSingleSelectValue{name}} '
              'priority:fieldValueByName(name:"Priority"){... on ProjectV2ItemFieldSingleSelectValue{name}}'
@@ -189,6 +189,7 @@ def board_from_payload(items):
             f"{total} items but returned {len(nodes)}; verification would be incomplete")
     return [{"id": node["id"], "type": node["type"],
              "issue": (node.get("content") or {}).get("number"),
+             "title": (node.get("content") or {}).get("title"),
              "status": (node.get("status") or node.get("fieldValueByName") or {}).get("name"),
              "priority": (node.get("priority") or {}).get("name"),
              "repository": ((node.get("content") or {}).get("repository") or {}).get("nameWithOwner"),

@@ -74,8 +74,8 @@ class Sources:
         self.state_file.write_text(json.dumps(self.state))
         self.holds_file.write_text(json.dumps({"schemaVersion": 1, "holds": self.holds}))
 
-    def issue(self, number: int, status: str, labels=()) -> "Sources":
-        self.board.append({"id": f"PVTI_{number}", "type": "ISSUE", "issue": number, "status": status,
+    def issue(self, number: int, status: str, labels=(), title=None) -> "Sources":
+        self.board.append({"id": f"PVTI_{number}", "type": "ISSUE", "issue": number, "title": title, "status": status,
                            "repository": REPO, "labels": list(labels)})
         return self
 
@@ -163,6 +163,16 @@ def test_unassessed_biu_tasks_is_supply_control_when_buffer_below_target(sources
     assert evaluation.observations["controlRequiredBy"] == {"60": "selection:TASKS_SUPPLY"}
     assert evaluation.observations["preparedBufferDepth"] == 0
     assert evaluation.observations["preparedBufferTarget"] == 20
+
+
+def test_unassessed_work_unit_title_is_supply_even_without_biu_label(sources):
+    raw = json.loads(sources.config.read_text())
+    raw["preparedBufferTarget"] = 20
+    sources.config.write_text(json.dumps(raw))
+    sources.issue(65, "TASKS", title="WO-220999 — prepared unit")
+    evaluation = sources.adapter().evaluate()
+    assert evaluation.inputs.lifecycle_requires_selection is True
+    assert evaluation.observations["controlRequiredBy"] == {"65": "selection:TASKS_SUPPLY"}
 
 
 def test_unassessed_non_biu_tasks_remains_inert_even_when_buffer_low(sources):
@@ -671,7 +681,7 @@ def test_board_rows_from_the_read_path_carry_the_issue_repository():
         "nodes": [{"id": "PVTI_1", "type": "ISSUE", "fieldValueByName": {"name": "READY"},
                    "content": {"__typename": "Issue", "number": 7,
                                "repository": {"nameWithOwner": REPO}}}]})
-    assert rows == [{"id": "PVTI_1", "type": "ISSUE", "issue": 7, "status": "READY", "priority": None, "repository": REPO, "labels": []}]
+    assert rows == [{"id": "PVTI_1", "type": "ISSUE", "issue": 7, "title": None, "status": "READY", "priority": None, "repository": REPO, "labels": []}]
     assert "repository{nameWithOwner}" in Path(materialization.__file__).read_text()
 
 
