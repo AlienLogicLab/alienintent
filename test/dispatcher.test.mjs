@@ -118,6 +118,68 @@ test("startup preserves a supervised DONE worker despite a dead launcher pid", a
 
 test("a reserved delivery blocks concurrent duplicate processing", async () => { let release; const blocked = new Promise((resolve) => { release = resolve; }); let enrichments = 0; const { relay, launches } = subject({ authority: { enrichContentNode: async () => { enrichments++; await blocked; return { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" }; }, durableResult: async () => null, transition: async () => {}, listItems: async () => [] } }); const first = relay.acceptEvent(event("IMPLEMENT", "same")); await new Promise((resolve) => setImmediate(resolve)); const duplicate = await relay.acceptEvent(event("IMPLEMENT", "same")); assert.equal(duplicate.duplicate, true); release(); await first; assert.equal(enrichments, 1); assert.deepEqual(launches, ["PRODUCER"]); });
 
+test("restart resumes a committed PROCESSING project delivery after append interruption", async () => {
+  let enrichments = 0;
+  const { relay, launches } = subject({ authority: {
+    enrichContentNode: async () => { enrichments++; return { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" }; },
+    durableResult: async () => null, transition: async () => {}, listItems: async () => [],
+  } });
+  relay.ledger.hooks.afterAppend = record => {
+    if (record.state.deliveries.interrupted?.state === "PROCESSING") throw new Error("INTERRUPTED_AFTER_APPEND");
+  };
+  await assert.rejects(relay.acceptEvent(event("IMPLEMENT", "interrupted")), /INTERRUPTED_AFTER_APPEND/);
+  const interruptedRecords = readFileSync(relay.ledger.path, "utf8").trimEnd().split("\n");
+  assert.equal(interruptedRecords.length, 2); // Genesis and committed reservation.
+  assert.equal(enrichments, 0);
+  assert.deepEqual(launches, []);
+  assert.equal(relay.state().deliveries.interrupted.state, "PROCESSING");
+  const restarted = new EventRelay({ ...relay.options, ledgerHooks: {} });
+  assert.deepEqual(await restarted.acceptEvent(event("IMPLEMENT", "interrupted")), { accepted: true });
+  assert.equal(restarted.state().deliveries.interrupted.state, "PROCESSED");
+  assert.equal(enrichments, 1);
+  assert.deepEqual(launches, ["PRODUCER"]);
+  assert.equal((await restarted.acceptEvent(event("IMPLEMENT", "interrupted"))).duplicate, true);
+  assert.deepEqual(launches, ["PRODUCER"]);
+});
+
+test("a committed PROCESSED delivery survives acknowledgement interruption", async () => {
+  const { relay, launches } = subject();
+  let interrupted = false;
+  relay.ledger.hooks.afterAppend = record => {
+    if (!interrupted && record.state.deliveries.acknowledgement?.state === "PROCESSED") {
+      interrupted = true;
+      throw new Error("INTERRUPTED_BEFORE_ACKNOWLEDGEMENT");
+    }
+  };
+  await assert.rejects(relay.acceptEvent(event("IMPLEMENT", "acknowledgement")), /INTERRUPTED_BEFORE_ACKNOWLEDGEMENT/);
+  const committed = JSON.parse(readFileSync(relay.ledger.path, "utf8").trimEnd().split("\n").at(-1));
+  assert.equal(committed.state.deliveries.acknowledgement.state, "PROCESSED");
+  const restarted = new EventRelay({ ...relay.options, ledgerHooks: {} });
+  assert.equal(restarted.state().deliveries.acknowledgement.state, "PROCESSED");
+  assert.equal((await restarted.acceptEvent(event("IMPLEMENT", "acknowledgement"))).duplicate, true);
+  assert.deepEqual(launches, ["PRODUCER"]);
+});
+
+test("restart resumes a committed PROCESSING result delivery without repeating the status effect", async () => {
+  const { relay, transitions } = subject();
+  await relay.acceptEvent(event("IMPLEMENT"));
+  const invocationId = [...relay.active.values()][0].invocationId;
+  const before = readFileSync(relay.ledger.path, "utf8").trimEnd().split("\n").length;
+  relay.ledger.hooks.afterAppend = record => {
+    if (record.state.deliveries["result-interrupted"]?.state === "PROCESSING") throw new Error("INTERRUPTED_RESULT_RESERVATION");
+  };
+  const received = resultEvent({ invocationId, id: "result-interrupted" });
+  await assert.rejects(relay.acceptEvent(received), /INTERRUPTED_RESULT_RESERVATION/);
+  assert.equal(readFileSync(relay.ledger.path, "utf8").trimEnd().split("\n").length, before + 1);
+  assert.deepEqual(transitions, []);
+  const restarted = new EventRelay({ ...relay.options, ledgerHooks: {} });
+  assert.deepEqual(await restarted.acceptEvent(received), { accepted: true });
+  assert.deepEqual(transitions, ["VERIFY"]);
+  assert.equal(restarted.state().deliveries["result-interrupted"].state, "PROCESSED");
+  assert.equal((await restarted.acceptEvent(received)).duplicate, true);
+  assert.deepEqual(transitions, ["VERIFY"]);
+});
+
 test("a successfully processed delivery remains deduplicated", async () => { const { relay, launches } = subject(); await relay.acceptEvent(event("IMPLEMENT", "processed")); const duplicate = await relay.acceptEvent(event("IMPLEMENT", "processed")); assert.equal(duplicate.duplicate, true); assert.deepEqual(launches, ["PRODUCER"]); });
 
 test("a failed dispatch releases its delivery reservation for same-id redelivery", async () => { let fail = true; const { relay, launches } = subject({ launch: ({ role }) => { if (fail) { fail = false; throw new Error("launch failed"); } launches.push(role); return child(); } }); await assert.rejects(relay.acceptEvent(event("IMPLEMENT", "retryable")), /launch failed/); assert.equal(relay.state().deliveries.retryable, undefined); await relay.acceptEvent(event("IMPLEMENT", "retryable")); assert.deepEqual(launches, ["PRODUCER"]); });
