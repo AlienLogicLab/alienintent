@@ -1,0 +1,73 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Prove, at the canonical FactoryCoordinator prelaunch call site, that live release admission enforces all six existing SWF-21-derived release preconditions (now implemented by WO-220611's ReleasePreconditionGate) plus admit_release eligibility. Meaningful invalid cases must launch zero actors and one bounded valid case must launch exactly one doubled actor. The proof runs first against the isolated sandbox (FX-B3) and then against the real AlienLogicLab/alienintent Project #1 boundary (FX-B4). Readiness and admission proof must not be represented as release, and the node must not be expanded into release ownership.",
+    "implementation_unknowns": [
+      "How each case's release-authorization record is seeded. The positive control (step 2) and steps 3-8 must each carry a fully valid release-authorization record with a resolvable, reachable baseline. Otherwise they would be refused at ReleasePreconditionGate rather than at the intended admit_release check. This would make those negative controls pass for the wrong reason and the positive control fail.",
+      "How each refusal point is asserted. The fixture must record which check refused each case: gate-level check names for steps 9-14 and the specific admit_release condition for steps 3-8. Asserting only zero launches would not distinguish these.",
+      "How step 13 (baseline not reachable) obtains a diverged commit for FX-B4 without writing a branch or commit to the production repository. For example, it could use a local-only commit in the run-local checkout, or a configured release point that makes an existing commit a non-ancestor. The mechanism must stay within the authorized minimum Project-state writes.",
+      "Whether the fixture should use the ReleaseAdmissionConfig/biu_limits construction path directly for all cases, so that the step-8 budget refusal is genuinely reachable and every other item receives positive limits.",
+      "Whether the production GitHub App credential permits deleting Issues, as opposed to only closing them, for step-16 cleanup on Project #1. If it does not, a fallback that still satisfies the Founder's mandatory-cleanup condition must be determined.",
+      "How to take the byte-for-byte before/after snapshot of every other Project #1 item (Status, fields, comments) required by step 15. This includes handling pagination and fields that change legitimately and concurrently while the run is in progress.",
+      "Exact reuse of the tools/live/py10_sandbox.py and FX-E1/fx_b3p harness pieces, and the evidence record schema that retains argv, exit status, immutable observation refs and candidate identities per case."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Vacuous or misattributed refusals. If the per-case release-authorization or biu_limits seeding is wrong, negative controls could pass because an earlier check refuses them, not the check they target. The positive control guards only partially against this; refusal-point assertions are needed.",
+      "Production blast radius in phase 2. Probe Issues are created with Status READY on the real Project #1. The resident production factory, if running, could observe these items and act on them. The WO-220611 gate should refuse items that lack a record in the production store, but it could still write authority-block state or comments. It could also cause the step-15 unchanged-items check to fail, or conflict with the \"no duplicate live work\" condition. The producer should confirm how the resident factory is paused, excluded from these items, or protected by the gate, and should not rely on assumption.",
+      "Cleanup failure on the production board. Deleting Issues may require permissions beyond the existing credential. Incomplete cleanup is defined as a stop and escalation condition.",
+      "Step 13 could tempt a write to the production repository to create a diverged commit. That write would exceed the authorized minimum reversible Project-state writes.",
+      "Authority provenance is reported only through relayed Director inbox handoffs and durable decision records. This gate cannot verify them. The predecessor DONE statuses, including WO-220611 at 953dda54 landed at 598ea0d, are likewise reported, not independently verified.",
+      "If the composition under proof unexpectedly requires a real worker for any step, the fixture must halt and escalate. It must not launch a real Claude/Codex worker against production.",
+      "Risk of conflating admission proof with release. Passing FX-B3/FX-B4 must not be recorded as a release decision under SWF-35, which remains a separate mechanical check."
+    ],
+    "next_action": "Release the founder-holds.json hold on Issue #126 through the normal authority path and queue WO-220506 for IMPLEMENT under the existing allocation (PRODUCER Morty, VERIFIER JC, max 3 cycles). Before running any board write, the producer should:\n1. Pin the per-case seeding matrix: which record and biu_limits each case receives, and the expected refusing check for every step.\n2. Confirm the resident production factory's interaction with READY probe items on Project #1.\n3. Confirm Issue delete or close permissions for cleanup.\n4. Choose a production-safe mechanism for step 13.\nThe producer should then run FX-B3 against the sandbox, followed by FX-B4 against Project #1 in sequence, retain the evidence per the obligations, publish the exact candidate SHA, and obtain the fresh independent verifier verdict.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "rationale": "The controlling condition is that intent, authority and prerequisites are all recorded as settled.\n- Intent and authority: the governing intent is clear and bounded. Every owner-level question previously raised is recorded as disposed by Founder handoffs: the actual-live-profile interpretation, phase-2 production authorization with blast-radius limits, read-only readback coverage, and routing missing coverage to a separate prerequisite owner instead of expanding scope.\n- Prerequisites: the prerequisite that caused the last HOLD, WO-220611, is reported DONE. The required fixture re-pin is present in this revision. Targets, budget and custody are reported bound for both phases, so no unavailable external prerequisite is established by the text.\n- Why not SPLIT: the two phases share one completion predicate, one composition under proof and one fixture design. Phase 1 is sanctioned partial progress, not an independently acceptable outcome. There are no independent decision centers.\n- Acceptance: acceptance is concretely observable, and a single independent verdict is meaningful.\n- Remaining uncertainty: this is engineering, not owner intent. It covers correct per-case seeding so refusals are attributed to the right check, a production-safe step-13 mechanism, cleanup permissions, and protection from the resident factory. These belong in implementation unknowns and risks, and each is covered by existing stop and escalation rules.\n- Rework locality: rework would mostly be confined to the fixture harness and case configuration, and defects in prerequisites route to their owners. Locality is therefore HIGH.",
+    "semantic_split_recommendation": [],
+    "summary": "The owner-level questions raised by earlier assessments are recorded as disposed. The record states that the sandbox proof alone does not satisfy the \"actual live-profile\" wording, that Project #1 phase-2 writes are authorized under explicit blast-radius limits, and that the read-only Project #1 readback is covered. The missing canonical-precondition coverage was routed to WO-220611, which is reported DONE and landed. Both fixtures have since been re-pinned with five gate-level negative controls and a corrected, reachable budget-refusal case. Targets, budget, custody, execution allocation, cleanup and readback obligations are recorded for both phases. All of these facts are reported by the task text and have not been independently verified here. The remaining work is the BIU's own IMPLEMENT/VERIFY: build and run the pinned 16-step fixture against both targets, then publish for independent verification. What remains is engineering research and execution risk, not unresolved owner intent or an unavailable prerequisite.",
+    "verification_assessment": "Acceptance is observable and pinned per case.\n- Launches: exactly one worker.start on the doubled ScriptedWorkerProvider from the positive control, and zero from each of the 12 negative controls (steps 3-14).\n- Refusal points: specific checks are named at release.py and release_admission.py.\n- Readback: a fresh readback of the target board and journal, confirmation that production Project #1 is unaffected in phase 1 and that unrelated items are unchanged in phase 2, and verified cleanup.\nPhases 1 and 2 are sequential halves of one completion predicate. The BIU is not DONE until both pass, and neither phase may be represented as the other. A single fresh independent verifier verdict on the exact candidate SHA and both retained evidence sets is therefore meaningful. The verifier should check that each negative case was refused at its intended check, not merely that nothing launched, and that phase-1 sandbox evidence is not being claimed as satisfying the actual-live-profile criterion. Any local-only substitution must remain labelled and cannot satisfy acceptance."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "7fbe8215e85fd384fb6614ea088cce28076b8d53",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T04:17:33.420642+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 43351,
+    "input_sha256": "502aecff28919e9ba8c61537ff00da01dfa2f3cfe674b8918d034783a0bcab82",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-wo220506/WO-220506.md",
+      "--provider",
+      "claude",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "claude",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "claude",
+      "version": "2.1.283 (Claude Code)"
+    },
+    "started_at": "2026-09-28T04:16:46.663840+00:00",
+    "timeout_s": null
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220506"
+}
