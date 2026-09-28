@@ -1,0 +1,33 @@
+{
+  "kind": "IndependentVerificationVerdict",
+  "invocation": "AlienLogicLab/alienintent#138:VERIFIER:e555c844-0638-4d9b-bd91-86baf7d3c7b1",
+  "work_unit": "WO-220606",
+  "issue": 138,
+  "verdict": "ACCEPT",
+  "reviewed_branch": "b-disp/af01fc9a-0a83-48e8-ac8f-5d9fc446b326",
+  "reviewed_candidate": "052e14084a85c8f64aded1f023142ff1cb0964d9",
+  "release_baseline": "789adc92d0fe564edd6afd5aa9a0e8d7ae5c2356",
+  "producer_evidence": "docs/evidence/wave2-proof-fixtures/FX-R6/20260928-r6-5bd7c385-installed-readback",
+  "verifier_checks": {
+    "remote_candidate_ref_matched_issue_sha": true,
+    "predecessor_issue_126_accepted_and_landed": true,
+    "retained_digest_manifest_files": 16,
+    "retained_digest_manifest_mismatches": 0,
+    "case_count": 15,
+    "negative_case_launches": 0,
+    "positive_scripted_launches": 1,
+    "provider_calls": 0,
+    "publications": 0,
+    "project_probe_items_deleted_and_absent": 14,
+    "project_non_interference": true,
+    "runtime_state_digest_unchanged": true,
+    "repository_gate_before_after_same": true,
+    "installed_gate_before_after_same": true,
+    "repository_and_installed_gate_controls_passed": true,
+    "feature_regression_pack_tests_passed": 9
+  },
+  "feature_regression_receipt": "feature-regressions.json",
+  "feature_regression_receipt_digest": "sha256:d07b0050bb454b9e8ae7f6a07931863e473c9840d44d29f12b9bca4302aeeb6d",
+  "finding": "The installed bootstrap release-admission gate differs from the repository copy and predates WIP-capacity and priority-reconciliation checks. The gate remained installed and unchanged; its owner must disposition the installation gap before any cutover or retirement.",
+  "limits": "This verdict accepts the bounded FX-R6 candidate and its retained operational probe evidence. It does not authorize release, bootstrap-gate retirement, deployment, or a main-branch merge. The live Project probe was not rerun by this verifier."
+}
