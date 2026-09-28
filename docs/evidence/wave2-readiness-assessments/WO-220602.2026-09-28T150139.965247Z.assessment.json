@@ -1,0 +1,68 @@
+{
+  "assessment": {
+    "disposition": "HOLD",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Retire the Program Director mailbox bridge waiter only after the approved completed-programme replacement path proves there are no outstanding Program Director mailbox duties, all formerly pending duties have attributed terminal dispositions, and incumbent protection continuity is independently read back before ending the old mechanism.",
+    "implementation_unknowns": [
+      "How the current exhaustive inventory of message files, pending duties, request/reply correlations, handled records, and duplicate-handling state will be produced from the authorized source.",
+      "Which exact executable fixture commands, inputs, expected outcomes, and evidence schema will be pinned for FX-R2 before implementation.",
+      "How the independent verifier will retrieve and assess the exact candidate/source revision in a separate worktree.",
+      "How protection-continuity readback will be captured and recorded without inferring operational success from local preparation evidence."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Retiring the incumbent bridge without the required current inventory or continuity readback could lose or orphan outstanding Program Director mailbox duties.",
+      "Local disposable waiter preparation could be mistaken for operational proof even though the task explicitly says it is preparation evidence only.",
+      "Predecessor evidence from WO-220601 and WO-220507 may fail independent verification or reveal mismatches that block this gate.",
+      "Unknown, unmatched, newly pending, stale, or duplicate message records would block discharge and require returning defects to the named provider rather than repairing them inside this capstone.",
+      "Authority or source revision mismatch would require stopping and preserving the incumbent protection."
+    ],
+    "next_action": "Hold until the named prerequisite evidence exists: independently verified predecessor proofs, exact current authorized inventory and source revision, FX-R2 pinned executable proof materials, independent verdict receipts, and protection-continuity readback. Then reassess this exact revision before authorizing handoff.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The controlling condition is not ambiguity in product intent: the Founder-selected completed-programme path and acceptance predicate are stated. It is also not a split problem, because the work is one retirement gate whose alternatives have been narrowed to the completed-programme path unless a real authorized successor path later exists. The blocker is that the task itself identifies mandatory external proof, custody, source, inventory, and readback artifacts that remain required and not yet produced. Under the rubric, unavailable necessary artifacts and authority/proof prerequisites require HOLD.",
+    "semantic_split_recommendation": [],
+    "summary": "The task has coherent intent, a selected retirement path, explicit acceptance criteria, and observable proof obligations. However, the supplied text itself states that required predecessor proofs, a fresh current mailbox-duty inventory, exact source revision, independent verdict, operational readback, and continuity evidence remain unavailable or unproduced. That makes the controlling condition an external prerequisite hold rather than unresolved owner intent or a need to split the work.",
+    "verification_assessment": "The acceptance predicate is observable: verify an authoritative terminal programme record, reconcile a current exhaustive inventory of mailbox duties and duplicate/correlation state, prove fail-closed behavior on a disposable copy, obtain an independent verdict, and read back incumbent protection continuity before retirement. One independent verification verdict would be meaningful because the retirement decision is a single gate with fail-closed criteria. At present, the supplied text reports that the necessary current inventory, predecessor proof receipts, independent verdict, and continuity readback have not yet been produced, so the verification cannot be completed from the available state."
+  },
+  "disposition": "HOLD",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T15:02:06.550562+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 15215,
+    "input_sha256": "da12c2b46f51b2b93493a73c862714fa1d67840b3261a8d476bb064b4eb3c07a",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-8zu9yl97/WO-220602.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-28T15:01:39.965247+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220602"
+}
