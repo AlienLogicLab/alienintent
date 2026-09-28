@@ -69,6 +69,50 @@ test("startup routes an exact durable result before probing the persisted worker
 
 test("startup clears a stale claim and starts exactly one fresh worker", async () => { const { relay, launches, statePath } = subject({ isProcessAlive: () => false, authority: { enrichContentNode: async () => null, durableResult: async () => null, transition: async () => {}, listItems: async () => [{ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "IMPLEMENT" }] } }); writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: { "ExampleOrg/sample-project#303:PRODUCER": { invocationId: "stale", startedAt: "2026-09-04T00:00:00.000Z", pid: 4455 } } })); await relay.startupReconcile(); assert.deepEqual(launches, ["PRODUCER"]); assert.notEqual(relay.state().active["ExampleOrg/sample-project#303:PRODUCER"].invocationId, "stale"); });
 
+test("startup frees DONE dead claims without discarding retained resources or diagnostics", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "DONE" };
+  const resource = { invocationId: "stale", path: "/tmp/retained-diagnostic-worktree", lifecycle: "READY" };
+  const diagnostic = { invocationId: "stale", outcome: "DURABLE_RESULT_MISSING" };
+  const { relay, launches, statePath } = subject({ isProcessAlive: () => false,
+    worktreeManager: { cleanup: () => { throw new Error("dirty worktree retained"); } },
+    authority: { listItems: async () => [item], durableResult: async () => null } });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: {
+    "ExampleOrg/sample-project#303:PRODUCER": { invocationId: "stale", item, role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-04T00:00:00.000Z", pid: 4455 },
+  }, diagnostics: { "ExampleOrg/sample-project#303:PRODUCER": diagnostic }, resources: { stale: resource } }));
+  await relay.startupReconcile();
+  assert.deepEqual(relay.state().active, {});
+  assert.deepEqual(relay.state().diagnostics["ExampleOrg/sample-project#303:PRODUCER"], diagnostic);
+  assert.deepEqual(relay.state().resources.stale, resource);
+  assert.deepEqual(launches, []);
+});
+
+test("startup preserves a live DONE worker claim", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "DONE" };
+  const { relay, launches, statePath } = subject({ isProcessAlive: (pid) => pid === 4455,
+    authority: { listItems: async () => [item], durableResult: async () => null } });
+  const lane = "ExampleOrg/sample-project#303:PRODUCER";
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: {
+    [lane]: { invocationId: "live", item, role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-04T00:00:00.000Z", pid: 4455 },
+  } }));
+  await relay.startupReconcile();
+  assert.equal(relay.state().active[lane].invocationId, "live");
+  assert.deepEqual(launches, []);
+});
+
+test("startup preserves a supervised DONE worker despite a dead launcher pid", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "DONE" };
+  const lane = "ExampleOrg/sample-project#303:PRODUCER";
+  const launch = () => { throw new Error("unexpected launch"); };
+  launch.observe = () => ({ terminal: false });
+  const { relay, statePath } = subject({ isProcessAlive: () => false, launch,
+    authority: { listItems: async () => [item], durableResult: async () => null } });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: {
+    [lane]: { invocationId: "supervised", item, role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-04T00:00:00.000Z", pid: 4455 },
+  }, resources: { supervised: { invocationId: "supervised", path: "/tmp/supervised-diagnostic-worktree", supervision: { unit: "worker.service" } } } }));
+  await relay.startupReconcile();
+  assert.equal(relay.state().active[lane].invocationId, "supervised");
+});
+
 
 
 test("a reserved delivery blocks concurrent duplicate processing", async () => { let release; const blocked = new Promise((resolve) => { release = resolve; }); let enrichments = 0; const { relay, launches } = subject({ authority: { enrichContentNode: async () => { enrichments++; await blocked; return { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" }; }, durableResult: async () => null, transition: async () => {}, listItems: async () => [] } }); const first = relay.acceptEvent(event("IMPLEMENT", "same")); await new Promise((resolve) => setImmediate(resolve)); const duplicate = await relay.acceptEvent(event("IMPLEMENT", "same")); assert.equal(duplicate.duplicate, true); release(); await first; assert.equal(enrichments, 1); assert.deepEqual(launches, ["PRODUCER"]); });

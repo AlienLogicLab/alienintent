@@ -559,6 +559,24 @@ export class EventRelay {
       if (this.stopped) return;
       try {
       const snapshot = this.state();
+      if (item.status === "DONE") {
+        // Project lifecycle is authoritative, but a surviving worker still owns
+        // its lane. Retained resources and diagnostics are separate from WIP.
+        for (const role of Object.values(this.roleNames)) {
+          const lane = this.lane(item, role);
+          const claim = snapshot.active[lane];
+          if (!claim) continue;
+          const owned = { ...claim, lane, item, role };
+          if (this.isClosure(owned) && claim.pendingSignal?.target === "DONE" && !routedSignal(claim)) {
+            await this.routeResult(owned, claim.pendingSignal.value);
+          }
+          if (!this.ownedWorkAlive(owned)) {
+            this.release(owned);
+            this.emit({ issue: item.issue, role, invocationId: claim.invocationId, outcome: "DONE_STALE_CLAIM_RELEASED" });
+          }
+        }
+        continue;
+      }
       const producerLane = this.lane(item, this.roleNames.PRODUCER);
       const closure = snapshot.active[producerLane] ?? (recoverable(snapshot.diagnostics?.[producerLane]?.outcome) ? snapshot.diagnostics[producerLane] : null);
       const interrupted = [...Object.entries(snapshot.active), ...Object.entries(snapshot.diagnostics ?? {})]
