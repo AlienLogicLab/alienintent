@@ -9,7 +9,9 @@ import argparse
 from hashlib import sha256
 import json
 import math
+import os
 from pathlib import Path
+import subprocess
 import sys
 import time
 
@@ -31,14 +33,23 @@ def preflight(root: Path, *, now: float | None = None) -> dict[str, object]:
     if (Path(config["root"]).resolve(strict=True) != root or config["profile"] != profile
             or config["host_authority"] != authority_name or (root / "state.json").exists()):
         raise ValueError("FX_B2_PROFILE_MISMATCH")
+    if not (root / "liveness.sqlite").is_file():
+        raise ValueError("EVIDENCE_STORE_MISSING")
     store = SQLiteOperationalStore(root / "liveness.sqlite")
     _, authority = store.read_state(profile, authority_name)
     expiry = authority.get("expires_at")
     at = time.time() if now is None else now
+    policy = config.get("policy", {})
+    durations = [policy.get(key) for key in ("grace_seconds", "interval_seconds", "confirmation_seconds")]
+    if any(type(value) not in (int, float) or not math.isfinite(value) or value <= 0 for value in durations):
+        raise ValueError("POLICY_INVALID")
+    grace, interval, confirmation = durations
+    # One gap window, two real suppression grace periods, then a confirmation window.
+    minimum_expiry = at + 3 * grace + 2 * interval + confirmation
     if (authority.get("schema_version") != 1 or authority.get("active") is not True
             or type(authority.get("epoch")) is not int or authority["epoch"] < 1
             or authority.get("invocation") != config["host_invocation"]
-            or type(expiry) not in (int, float) or not math.isfinite(expiry) or expiry <= at):
+            or type(expiry) not in (int, float) or not math.isfinite(expiry) or expiry <= minimum_expiry):
         raise ValueError("AUTHORITY_UNAVAILABLE")
     entries = store.list_states(profile, "liveness-active:")
     if len(entries) != 1:
@@ -52,6 +63,18 @@ def preflight(root: Path, *, now: float | None = None) -> dict[str, object]:
             "active": active, "profile": profile}
 
 
+def launch(root: Path, *, now: float | None = None) -> dict[str, object]:
+    """The fixture's only launch entrypoint: admission first, then the C5 CLI."""
+    admitted = preflight(root, now=now)
+    argv = [sys.executable, "-B", "-m", "alienintent.composition.monitor_host", "launch",
+            "--config", str(admitted["config"]), "--actor", "factory-director",
+            "--authority", "fx-b2-operational-authorization"]
+    env = dict(os.environ)
+    env.setdefault("XDG_RUNTIME_DIR", f"/run/user/{os.getuid()}")
+    result = subprocess.run(argv, capture_output=True, text=True, env=env, check=False)
+    return {"argv": argv, "exit_status": result.returncode, "stdout": result.stdout, "stderr": result.stderr}
+
+
 def capture(root: Path, output: Path, source_sha: str) -> dict[str, object]:
     root = root.resolve(strict=True)
     config_path = root.parent / "fx-b2-supervision.json"
@@ -60,6 +83,9 @@ def capture(root: Path, output: Path, source_sha: str) -> dict[str, object]:
         raise ValueError("FX-B2_PROFILE_MISMATCH")
     if (root / "state.json").exists():
         raise ValueError("FACTORY_STATE_IN_ISOLATED_ROOT")
+    required = ("liveness.sqlite", "attention.sqlite", "monitor.sqlite", "monitor-host.sqlite")
+    if any(not (root / name).is_file() for name in required):
+        raise ValueError("EVIDENCE_STORE_MISSING")
     profile = config["profile"]
     store = SQLiteOperationalStore(root / "liveness.sqlite")
     raw = {
@@ -96,11 +122,17 @@ def main() -> None:
     parser.add_argument("--output", type=Path)
     parser.add_argument("--source-sha")
     parser.add_argument("--preflight", action="store_true")
+    parser.add_argument("--launch", action="store_true")
     args = parser.parse_args()
-    if not args.preflight and (args.output is None or args.source_sha is None):
+    if args.preflight and args.launch:
+        parser.error("--preflight and --launch are mutually exclusive")
+    if not (args.preflight or args.launch) and (args.output is None or args.source_sha is None):
         parser.error("--output and --source-sha are required for capture")
-    result = preflight(args.root) if args.preflight else capture(args.root, args.output, args.source_sha)
+    result = (preflight(args.root) if args.preflight else launch(args.root) if args.launch else
+              capture(args.root, args.output, args.source_sha))
     print(json.dumps(result, sort_keys=True))
+    if args.launch:
+        raise SystemExit(result["exit_status"])
 
 
 if __name__ == "__main__":
