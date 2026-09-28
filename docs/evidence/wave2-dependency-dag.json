@@ -86,7 +86,9 @@
     "sovereignty_cutover_receipts",
     "installation_command_migration_receipts",
     "resident_handoff_receipts",
-    "programme_completion_receipts"
+    "programme_completion_receipts",
+    "canonical_release_precondition_gate",
+    "attributable_execution_budget"
   ],
   "nodes": [
     {
@@ -2213,6 +2215,48 @@
       "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
     },
     {
+      "id": "B3P",
+      "title": "Canonical Python release-admission precondition gate",
+      "requirement_ids": [],
+      "depends_on": [
+        "S0"
+      ],
+      "is_capstone": false,
+      "owns_capabilities": [
+        "canonical_release_precondition_gate",
+        "attributable_execution_budget"
+      ],
+      "proof_requires_capabilities": [
+        "existing_kernel_fixture",
+        "local_proof_transport"
+      ],
+      "proof_fixtures": [
+        "FX-B3P"
+      ],
+      "parallelisable_with": [
+        "C2",
+        "C3",
+        "C4",
+        "C5",
+        "L1",
+        "O",
+        "C"
+      ],
+      "authority_gap_refs": [],
+      "direct_authority_gap_refs": [],
+      "authority_gate_refs": [],
+      "migration": null,
+      "bootstrap_replacement_for": [],
+      "track": "replacement",
+      "node_kind": "capability",
+      "scope": "Bounded prerequisite implementation, not a proof node: at the canonical Python prelaunch boundary (FactoryCoordinator._run -> admit_release, src/alienintent/execution_coordination), enforce the SWF-21/BOOTSTRAP-M15 release protections that today exist only in the bootstrap gate tools/live/release_admission.py -- a valid release authorization record, exact named baseline, baseline resolves, baseline reachable/ancestral from the intended release point, no unsuperseded denial/refusal blocks release, and zero worker launches until those checks pass -- while preserving the existing canonical admit_release checks (replay, policy/source, digest, dependency, capability, budget) unchanged. Also replace FactoryCoordinator's hard-coded per-dimension budget value of 1 with a real attributable budget/limit input drawn from the execution allocation, so the existing budget check can mechanically refuse. Does not retire, weaken or duplicate the bootstrap gate, which remains KEEP_UNTIL_REPLACED.",
+      "proceeds_regardless": "Bounded implementation at the existing canonical release-admission call site proceeds under the Founder's direct disposition on Issue #126 (Director inbox handoff founder-build-python-release-gate-prerequisite-20260928T010208Z, 2026-09-28T01:02:08Z, choosing option (a) of the FOUNDER_EXCEPTION recorded 2026-09-27T23:47:57Z); no new external resource, target or separate authority is invoked.",
+      "completion_predicate": "At the canonical FactoryCoordinator/admit_release prelaunch boundary, enforce all six SWF-21 preconditions (release record authorizes IMPLEMENT; exact baseline named; baseline resolves; baseline reachable from release point; no unsuperseded denial wording; zero launches until the preceding five pass) and a real attributable budget input, with invalid cases for each launching zero actors; preserve all existing canonical admit_release checks unchanged.",
+      "inherited_authority_gate_refs": [],
+      "completion_status": "PROCEEDS_REGARDLESS",
+      "parallelism_condition": "Only after own dependencies and authority are satisfied; no shared-file concurrent edits or simultaneous live writers. Entries express graph independence, not current execution permission."
+    },
+    {
       "id": "B3",
       "title": "Canonical live release admission proof",
       "requirement_ids": [
@@ -2224,7 +2268,8 @@
         "A",
         "U10",
         "K3",
-        "E1"
+        "E1",
+        "B3P"
       ],
       "is_capstone": false,
       "owns_capabilities": [
@@ -2234,8 +2279,10 @@
       "proof_requires_capabilities": [
         "ambiguity_inspection",
         "assigned_assessment_binding",
+        "attributable_execution_budget",
         "bootstrap_custody_manifest",
         "canonical_live_transport",
+        "canonical_release_precondition_gate",
         "canonical_role_orchestration",
         "compilation_validation_hold",
         "composed_role_bindings",
@@ -5918,16 +5965,16 @@
     "migrations": "Nodes with non-null migration, including nine conditional retirement transitions; none executed."
   },
   "statistics": {
-    "nodes": 47,
+    "nodes": 48,
     "capstones": 13,
-    "planned_capabilities": 41,
+    "planned_capabilities": 43,
     "unowned": 0,
     "parallel_tracks": 5,
     "bootstrap_replacements_sequenced": 9,
     "gap_blocked_nodes": 0,
-    "proceeds_regardless": 26,
+    "proceeds_regardless": 27,
     "separate_authority_only_nodes": 21,
-    "proof_fixtures": 47,
+    "proof_fixtures": 48,
     "migrations": 18,
     "acceptance_criteria": 53,
     "enforcement_obligations": 18,
@@ -5935,6 +5982,7 @@
     "recounted_2026_09_25_cohort_prep": "Recounted after targeted U6/U10/L1/K1 stale-gate repair; downstream inherited stale copies intentionally not rescheduled.",
     "recounted_2026_09_25_supply_buffer": "Recounted after C5/K2/B0 stale/broad authority-gate repair for READY-lane supply.",
     "recounted_2026_09_25_global_stale_gap_cleanup": "Removed only authority blockers already dispositioned by 2026-09-25 grooming; explicit live/cutover gates remain.",
-    "recounted_2026_09_27_b1p_insertion": "Added node B1P (WO-220610), a bounded prerequisite implementation node, under Founder grant FULL_WAVE2_BIU_UNBLOCK_AUTHORITY (2026-09-27T02:01:41Z); it owns live_trajectory_capture, previously first-owned by its own prover B1/WO-220504. nodes 46->47, proceeds_regardless 25->26 (B1P). planned_capabilities unchanged (live_trajectory_capture already planned; ownership moved, not added)."
+    "recounted_2026_09_27_b1p_insertion": "Added node B1P (WO-220610), a bounded prerequisite implementation node, under Founder grant FULL_WAVE2_BIU_UNBLOCK_AUTHORITY (2026-09-27T02:01:41Z); it owns live_trajectory_capture, previously first-owned by its own prover B1/WO-220504. nodes 46->47, proceeds_regardless 25->26 (B1P). planned_capabilities unchanged (live_trajectory_capture already planned; ownership moved, not added).",
+    "recounted_2026_09_28_b3p_insertion": "Added node B3P (WO-220611), a bounded prerequisite implementation node routing SF-REQ-002/BOOTSTRAP-M15 canonical release-admission coverage to its scope owner, per the Founder's direct disposition on Issue #126 (Director inbox handoff founder-build-python-release-gate-prerequisite-20260928T010208Z, choosing option (a) of the FOUNDER_EXCEPTION recorded 2026-09-27T23:47:57Z); it owns two newly planned capabilities (canonical_release_precondition_gate, attributable_execution_budget), previously unowned at the canonical FactoryCoordinator/admit_release boundary. B3/WO-220506 now depends on B3P and lists both capabilities in its own proof_requires_capabilities. nodes 47->48, proceeds_regardless 26->27, proof_fixtures 47->48, planned_capabilities 41->43 (two new capabilities added, not moved)."
   }
 }
