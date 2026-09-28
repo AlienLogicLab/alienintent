@@ -70,3 +70,31 @@ The installed bootstrap gate is `~/.local/share/alienintent-bootstrap/release_ad
 Read its digest and run the intact/fault/restored control before and after the live
 probe, separately from the repository copy. Retain any difference between those
 files as an observed installation gap. Neither file is retired by this fixture.
+
+## Producer execution — invocation `5bd7c385-7f0b-4c3e-b4c2-c08d5365d994`
+
+The source revision for the final run is `4bc01d9b5a45b15fae8d0fdf1559e4eec490de42`;
+its Project #1 release point was `a8869f4b7169951ef1bc523e6b6ea4bcd0adc1be`.
+The profile digest is `4b26fae49943f984b693457e565f18764be2260d0315321ceb032250f3b88d87`.
+The exact commands and exit statuses are in each run's `execution-record.json`.
+
+| Run | Status | Cases | Invalid launches | Valid scripted launches | Cleanup | Installed gate readback |
+| --- | --- | ---: | ---: | ---: | --- | --- |
+| `20260928-r6-5bd7c385` | PASS for canonical admission; partial R6 readback | 15 | 0 | 1 | 14/14 deleted and absent | UNKNOWN before live probe |
+| `20260928-r6-5bd7c385-installed-readback` | PASS for the pinned R6 probe and readback | 15 | 0 | 1 | 14/14 deleted and absent | before/after identical; intact/fault/restored control passed |
+
+Both live runs exited 0 and report zero provider calls or publications. All 16 files
+in each digest manifest matched their retained SHA-256 digests on producer inspection.
+The second run's runtime state digest was identical before and after. The raw Project
+item facts, admission answers, journal counts, mutation scope and board snapshots
+remain under each run's `live/` directory. The first run is retained as interim
+evidence; it is not used to claim installed-gate continuity.
+
+The installed bootstrap file (`fb8758cecb4db13073be71e39f37c77250b018406d7c968e45d1fa57231b9b1b`)
+differs from the repository file (`84b2e2e72cb1cbcad20203726a7d5957faedac31ee0dfe314502c9b466a7d995`).
+The installed copy predates the repository's WIP-capacity and priority-reconciliation
+checks. This is an installation discrepancy for the named bootstrap owner to
+disposition; this R6 producer did not edit the installed copy or retire it. The
+canonical Project #1 prelaunch path is proven in the labelled probe, but a live
+cutover/retirement is not claimed. `independent-verdict.json` remains PENDING for a
+fresh verifier invocation.

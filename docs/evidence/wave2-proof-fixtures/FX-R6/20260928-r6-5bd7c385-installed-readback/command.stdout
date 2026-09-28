@@ -1,0 +1,27 @@
+{
+ "fixture": "FX-B4",
+ "launch": "20260928T115134Z-3e5c",
+ "passed": true,
+ "checks": {
+  "no_failure": true,
+  "all_cases_match": true,
+  "exact_launch_total": true,
+  "zero_provider_calls": true,
+  "zero_publications": true,
+  "no_binding_refusals": true,
+  "no_board_projection_written": true,
+  "probes_intact_at_readback": true,
+  "mutations_only_on_own_items": true,
+  "watched_boards_not_written": true,
+  "cleanup_verified": true,
+  "target_board_unchanged": true,
+  "watched_boards_unchanged": true
+ },
+ "totals": {
+  "expected_worker_starts": 1,
+  "observed_worker_starts": 1,
+  "provider_calls": 0,
+  "publications": 0
+ },
+ "failure": null
+}
