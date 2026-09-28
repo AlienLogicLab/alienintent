@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "default": {
+    "provider": "codex",
+    "model": "gpt-6-sol"
+  },
+  "providers": {
+    "codex": {
+      "executable": "/home/netmarine/.local/bin/codex",
+      "permissionMode": "danger-full-access"
+    },
+    "claude": {
+      "executable": "/home/netmarine/.local/bin/claude",
+      "permissionMode": "bypassPermissions"
+    }
+  },
+  "roles": {}
+}

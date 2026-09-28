@@ -21,6 +21,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
+from model_routing import resolve_route
 from typing import Callable
 
 
@@ -165,29 +166,29 @@ BACKOFF_CAP_SECONDS = 3600
 
 
 class ProcessDirectorLauncher:
-    """Starts a fresh bounded Factory Director episode with the configured provider.
+    """Starts a fresh bounded Factory Director episode from the live model-routing source."""
+    def __init__(self, workdir: Path | str, prompt_file: Path | str, *,
+                 output_dir: Path | str, require_isolated: bool = False,
+                 route_resolver=resolve_route) -> None:
+        self.workdir, self.prompt_file, self.output_dir = Path(workdir), Path(prompt_file), Path(output_dir)
+        self.route_resolver = route_resolver
+        self._children: dict[str, subprocess.Popen] = {}
+        self._route()  # validate current routing, but never cache it
+        if require_isolated and not self._is_linked_worktree():
+            raise ValueError("Factory Director workspace must be an isolated linked worktree")
 
-    Every launch is a new process with no resumed or inherited conversation:
-    ``claude -p --no-session-persistence`` or ``codex exec --ephemeral`` (the same
-    fresh-session flags the Node runtime uses for workers).  Switching provider is a
-    configuration change.  The prompt goes on stdin; provider output is retained under
-    the host state root, never in the Director worktree.
-    """
-    def __init__(self, workdir: Path | str, prompt_file: Path | str, *, provider: str,
-                 executable: str, model: str, permission_mode: str,
-                 output_dir: Path | str, require_isolated: bool = False) -> None:
+    def _route(self) -> dict[str, str]:
+        route = self.route_resolver("DIRECTOR")
+        provider, executable = route.get("provider"), route.get("executable")
+        model, permission_mode = route.get("model"), route.get("permissionMode")
         if provider not in PROVIDERS:
             raise ValueError(f"unsupported Factory Director provider {provider!r}")
         for label, value in (("executable", executable), ("model", model), ("permission_mode", permission_mode)):
             if not isinstance(value, str) or not value:
-                raise ValueError(f"Factory Director launcher {label} must be configured explicitly")
+                raise ValueError(f"Factory Director route {label} must be configured explicitly")
         if permission_mode not in PERMISSION_MODES[provider]:
             raise ValueError(f"permission mode {permission_mode!r} is not valid for {provider}")
-        self.workdir, self.prompt_file, self.output_dir = Path(workdir), Path(prompt_file), Path(output_dir)
-        self.provider, self.executable, self.model, self.permission_mode = provider, executable, model, permission_mode
-        self._children: dict[str, subprocess.Popen] = {}
-        if require_isolated and not self._is_linked_worktree():
-            raise ValueError("Factory Director workspace must be an isolated linked worktree")
+        return route
 
     def _is_linked_worktree(self) -> bool:
         try:
@@ -199,15 +200,16 @@ class ProcessDirectorLauncher:
         except (OSError, subprocess.SubprocessError):
             return False
 
-    def command(self) -> list[str]:
-        if self.provider == "claude":
-            return [self.executable, "-p", "--no-session-persistence", "--output-format", "json",
-                    "--permission-mode", self.permission_mode, "--model", self.model]
-        return [self.executable, "exec", "--ephemeral", "--json", "--sandbox", self.permission_mode,
-                "-C", str(self.workdir), "--model", self.model, "-"]
+    def command(self, route: dict[str, str] | None = None) -> list[str]:
+        route = route or self._route()
+        if route["provider"] == "claude":
+            return [route["executable"], "-p", "--no-session-persistence", "--output-format", "json",
+                    "--permission-mode", route["permissionMode"], "--model", route["model"]]
+        return [route["executable"], "exec", "--ephemeral", "--json", "--sandbox", route["permissionMode"],
+                "-C", str(self.workdir), "--model", route["model"], "-"]
 
-    def environment(self) -> dict[str, str]:
-        if self.provider == "codex":
+    def environment(self, route: dict[str, str]) -> dict[str, str]:
+        if route["provider"] == "codex":
             from codex_session import FILTERED_ENV
             return {k: v for k, v in os.environ.items() if k not in FILTERED_ENV}
         return dict(os.environ)
@@ -217,21 +219,21 @@ class ProcessDirectorLauncher:
 
     def launch(self, episode_id: str, on_spawned: Callable[[Episode], None] | None = None) -> Episode:
         prompt = self.prompt_file.read_text().replace("{{EPISODE_ID}}", episode_id)
+        route = self._route()
         self.output_dir.mkdir(parents=True, exist_ok=True)
         with self._output(episode_id, "stdout").open("w") as stdout, \
                 self._output(episode_id, "stderr").open("w") as stderr:
-            child = subprocess.Popen(self.command(), cwd=str(self.workdir), stdin=subprocess.PIPE,
-                                     stdout=stdout, stderr=stderr, text=True, env=self.environment())
+            child = subprocess.Popen(self.command(route), cwd=str(self.workdir), stdin=subprocess.PIPE,
+                                     stdout=stdout, stderr=stderr, text=True, env=self.environment(route))
         self._children[episode_id] = child
         try:
             episode = Episode(episode_id, child.pid, _now(), self._process_start_ticks(child.pid),
-                              self.provider, self.model)
+                              route["provider"], route["model"])
             if on_spawned is not None:
                 if not isinstance(episode.process_start_ticks, str) or not episode.process_start_ticks:
                     raise RuntimeError("spawned child process identity is unavailable")
                 on_spawned(episode)
         except BaseException:
-            # Never bound to the lease: an unleased child must not survive to run unsupervised.
             self._children.pop(episode_id, None)
             child.kill()
             try:
@@ -246,11 +248,9 @@ class ProcessDirectorLauncher:
 
     @staticmethod
     def _process_start_ticks(pid: int) -> str | None:
-        """Stable /proc start identity; PID alone is unsafe after a restart."""
         try:
-            # comm may contain spaces/parentheses, so split only after its final ')'.
             fields = Path(f"/proc/{pid}/stat").read_text().rsplit(")", 1)[1].split()
-            return fields[19]  # Linux proc stat field 22, after state (field 3).
+            return fields[19]
         except (OSError, IndexError):
             return None
 
@@ -260,12 +260,12 @@ class ProcessDirectorLauncher:
     def liveness(self, episode: Episode) -> bool | None:
         child = self._children.get(episode.episode_id)
         if child is not None:
-            return child.poll() is None  # poll() also reaps the exited child.
+            return child.poll() is None
         if episode.pid is None:
             return False
         try:
             fields = Path(f"/proc/{episode.pid}/stat").read_text().rsplit(")", 1)[1].split()
-            if fields[0] == "Z":  # A zombie has exited even though kill(pid, 0) succeeds.
+            if fields[0] == "Z":
                 return False
             current_start = fields[19]
             return episode.process_start_ticks is not None and current_start == episode.process_start_ticks
@@ -279,11 +279,10 @@ class ProcessDirectorLauncher:
             return None
         child = self._children.get(episode.episode_id)
         if child is None or child.returncode is None:
-            return "PROCESS_EXITED"  # Launched before a host restart; the status is not ours to read.
+            return "PROCESS_EXITED"
         return f"EXIT_{child.returncode}" if child.returncode >= 0 else f"SIGNAL_{-child.returncode}"
 
     def usage(self, episode: Episode) -> dict:
-        """Tokens, cost and model as reported by the provider; never assumed."""
         try:
             text = self._output(episode.episode_id, "stdout").read_text()
         except OSError:
@@ -321,9 +320,6 @@ def codex_usage(text: str) -> dict:
                     totals[key] += event["usage"][key]
     if not turns:
         return {"measured": False, "reason": "PROVIDER_DID_NOT_EXPOSE_USAGE"}
-    # Codex JSON events carry token counts only: model and cost are recorded as not exposed.
-    # The requested model (--model) is intent, not evidence of the model actually used, so it
-    # is never copied here (runtime contract section 10).
     return {"measured": True, "turns": turns, **totals, "observed_models": None,
             "model_evidence": "NOT_EXPOSED_BY_PROVIDER", "cost_usd": None}
 
@@ -654,14 +650,8 @@ class FactoryDirectorHost:
 
 def load_launcher(config_path: Path | str, workdir: Path | str, prompt: Path | str,
                   state_root: Path | str) -> ProcessDirectorLauncher:
-    raw = json.loads(Path(config_path).read_text())
-    launcher = raw.get("launcher") if isinstance(raw, dict) else None
-    if not isinstance(launcher, dict):
-        raise ValueError("host configuration has no launcher section")
-    return ProcessDirectorLauncher(workdir, prompt, provider=launcher.get("provider"),
-                                   executable=launcher.get("executable"), model=launcher.get("model"),
-                                   permission_mode=launcher.get("permissionMode"),
-                                   output_dir=Path(state_root) / "episodes", require_isolated=True)
+    return ProcessDirectorLauncher(workdir, prompt, output_dir=Path(state_root) / "episodes",
+                                   require_isolated=True)
 
 
 def main(argv: list[str] | None = None) -> int:

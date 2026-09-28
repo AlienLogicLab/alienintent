@@ -20,6 +20,9 @@ install -m 0644 "$source_root/systemd/alienintent-factory-director-host.service"
 if [[ ! -e "$config_root/factory-director-host.json" ]]; then
   install -m 0600 "$repo_root/config/factory-director-host.example.json" "$config_root/factory-director-host.json"
 fi
+if [[ ! -e "$config_root/model-routing.json" ]]; then
+  install -m 0600 "$repo_root/config/model-routing.example.json" "$config_root/model-routing.json"
+fi
 if [[ ! -e "$config_root/factory-director-host.env" ]]; then
   install -m 0600 /dev/null "$config_root/factory-director-host.env"
   printf '%s\n' '# Set FACTORY_DIRECTOR_WORKTREE to a dedicated linked worktree, never main.' \

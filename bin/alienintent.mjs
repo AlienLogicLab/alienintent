@@ -9,6 +9,7 @@ import { createGitHubAppClient } from "../src/github/app-client.mjs";
 import { createWorkerLauncher, workerEnvironment, inspectWorker } from "../src/runtime/worker-runner.mjs";
 import { createWorktreeManager } from "../src/runtime/worktree-manager.mjs";
 import { loadProfile } from "../src/config/profile.mjs";
+import { resolveRoute } from "../src/config/model-routing.mjs";
 
 if (process.argv.includes("--help")) {
   console.log("Usage: alienintent --config <profile.json> [--preflight-only | --once]\nExecution disabled suppresses launches, not reconciliation mutations.");
@@ -49,7 +50,7 @@ const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(eve
     baselineRef: config.baselineRef, git: config.executables.git }) : undefined,
   inspectionIntervalMs: config.inspectionIntervalMs, preflight,
   inspectWorker: child => inspectWorker(child, { executable: config.executables.processInspector }),
-  launch: createWorkerLauncher({ workers: config.workers }) });
+  launch: createWorkerLauncher({ workers: config.workers, routeResolver: resolveRoute }) });
 await relay.startupReconcile();
 if (process.argv.includes("--once")) { relay.stop(); process.exit(0); }
 const server = createServer(async (request, response) => {

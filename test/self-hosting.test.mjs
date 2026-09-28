@@ -4,7 +4,7 @@ import { createHmac } from 'node:crypto';
 import { createServer } from 'node:net';
 import { once } from 'node:events';
 import { spawn, execFileSync } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
+import { existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -26,6 +26,9 @@ test('OFFLINE synthetic self-hosting rehearsal composes CLI, signed events, isol
     const source=fileURLToPath(new URL('..',import.meta.url));
     const port=await unusedPort();
     const fixture=setupRehearsal(directory,source,port);
+    const routingDir=join(directory,'.config','alienintent'); mkdirSync(routingDir,{recursive:true});
+    const profile=JSON.parse(readFileSync(fixture.config,'utf8'));
+    writeFileSync(join(routingDir,'model-routing.json'),JSON.stringify({schemaVersion:1,default:{provider:'codex',model:'synthetic-model'},providers:{codex:{executable:profile.workers.PRODUCER.provider.executablePath,permissionMode:profile.workers.PRODUCER.provider.permissionMode},claude:{executable:profile.workers.VERIFIER.provider.executablePath,permissionMode:profile.workers.VERIFIER.provider.permissionMode}},roles:{VERIFIER:{provider:'claude'}}}));
     const read=path=>JSON.parse(readFileSync(path,'utf8'));
     const launches=()=>existsSync(fixture.launches)?readFileSync(fixture.launches,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];
     const diagnostic=()=>output+'\n'+(existsSync(fixture.state)?readFileSync(fixture.state,'utf8'):'no state');

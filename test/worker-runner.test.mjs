@@ -183,3 +183,17 @@ test('bounded launcher requires persisted exact supervision intent and never cal
   spawnWorker({ ...request, resource: { supervision: { invocationId: 'owned' } } });
   assert.equal(direct, 0); assert.equal(bounded, 1);
 });
+
+test('worker launcher resolves provider and model fresh for every invocation', () => {
+  let current = { provider: 'codex', model: 'model-a', executable: '/bin/codex', permissionMode: 'danger-full-access' };
+  const received = [];
+  const launch = createWorkerLauncher({ workers: { PRODUCER: fixture('codex') },
+    routeResolver: () => current, runner: input => { received.push(input.worker); return {}; } });
+  launch({ role: 'PRODUCER', worktree: '/tmp/one' });
+  current = { provider: 'claude', model: 'model-b', executable: '/bin/claude', permissionMode: 'bypassPermissions' };
+  launch({ role: 'PRODUCER', worktree: '/tmp/two' });
+  assert.deepEqual(received.map(w => [w.adapter, w.command, w.permissionMode, w.arguments]), [
+    ['codex', '/bin/codex', 'danger-full-access', ['--model', 'model-a']],
+    ['claude', '/bin/claude', 'bypassPermissions', ['--model', 'model-b']],
+  ]);
+});

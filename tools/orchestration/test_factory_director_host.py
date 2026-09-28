@@ -39,9 +39,21 @@ def process_launcher(tmp_path, prompt, *, provider="codex", executable="unused",
                      permission_mode=None, **kwargs):
     if permission_mode is None:
         permission_mode = {"claude": "bypassPermissions"}.get(provider, "workspace-write")
-    return ProcessDirectorLauncher(tmp_path, prompt, provider=provider, executable=executable, model=model,
-                                   permission_mode=permission_mode, output_dir=tmp_path / "episodes", **kwargs)
+    route = {"provider": provider, "executable": executable, "model": model, "permissionMode": permission_mode}
+    return ProcessDirectorLauncher(tmp_path, prompt, output_dir=tmp_path / "episodes",
+                                   route_resolver=lambda _role: route, **kwargs)
 
+
+
+def test_director_resolves_provider_and_model_fresh_for_every_launch(tmp_path):
+    route = {"provider": "codex", "executable": "/bin/codex", "model": "model-a", "permissionMode": "workspace-write"}
+    launcher = ProcessDirectorLauncher(tmp_path, tmp_path / "p", output_dir=tmp_path / "episodes",
+                                       route_resolver=lambda _role: route)
+    assert launcher.command() == ["/bin/codex", "exec", "--ephemeral", "--json", "--sandbox", "workspace-write",
+                                  "-C", str(tmp_path), "--model", "model-a", "-"]
+    route.update(provider="claude", executable="/bin/claude", model="model-b", permissionMode="bypassPermissions")
+    assert launcher.command() == ["/bin/claude", "-p", "--no-session-persistence", "--output-format", "json",
+                                  "--permission-mode", "bypassPermissions", "--model", "model-b"]
 
 def host(tmp_path, inputs=None):
     launcher = InMemoryDirectorLauncher()
@@ -527,9 +539,8 @@ def test_no_command_resumes_or_continues_a_conversation(tmp_path, provider):
     assert not {"--resume", "-r", "--continue", "-c", "resume", "--last", "--session-id"} & set(argv)
 
 
-@pytest.mark.parametrize("override", [{"provider": "gemini"}, {"model": ""}, {"model": None},
-                                      {"executable": ""}, {"permission_mode": ""}])
-def test_launcher_refuses_unsupported_provider_or_unconfigured_model(tmp_path, override):
+@pytest.mark.parametrize("override", [{"provider": "gemini"}, {"executable": ""}, {"permission_mode": ""}])
+def test_launcher_refuses_unsupported_provider_or_invalid_launch_config(tmp_path, override):
     with pytest.raises(ValueError):
         process_launcher(tmp_path, tmp_path / "p", **override)
 
@@ -547,12 +558,10 @@ def test_launcher_refuses_a_workdir_that_is_not_a_linked_worktree(tmp_path):
 
     for refused in (plain, main_checkout):
         with pytest.raises(ValueError, match="isolated linked worktree"):
-            ProcessDirectorLauncher(refused, tmp_path / "p", provider="claude", executable="x", model="m",
-                                    permission_mode="bypassPermissions", output_dir=tmp_path / "o",
-                                    require_isolated=True)
-    assert ProcessDirectorLauncher(linked, tmp_path / "p", provider="claude", executable="x", model="m",
-                                   permission_mode="bypassPermissions", output_dir=tmp_path / "o",
-                                   require_isolated=True).workdir == linked
+            ProcessDirectorLauncher(refused, tmp_path / "p", output_dir=tmp_path / "o", require_isolated=True,
+                                    route_resolver=lambda _role: {"provider":"claude","executable":"x","model":"m","permissionMode":"bypassPermissions"})
+    assert ProcessDirectorLauncher(linked, tmp_path / "p", output_dir=tmp_path / "o", require_isolated=True,
+                                   route_resolver=lambda _role: {"provider":"claude","executable":"x","model":"m","permissionMode":"bypassPermissions"}).workdir == linked
 
 
 FAKE_CLAUDE = """#!/usr/bin/env bash
@@ -590,9 +599,9 @@ def test_real_claude_episodes_are_fresh_and_record_provider_model_and_usage(tmp_
     workdir.mkdir()
     prompt = tmp_path / "prompt.md"
     prompt.write_text("Read docs/operations/factory-director-runtime-contract.md. Episode {{EPISODE_ID}}.")
-    launcher = ProcessDirectorLauncher(workdir, prompt, provider="claude", executable=str(fake),
-                                       model="claude-opus-5-5", permission_mode="bypassPermissions",
-                                       output_dir=tmp_path / "host" / "episodes")
+    launcher = ProcessDirectorLauncher(workdir, prompt, output_dir=tmp_path / "host" / "episodes",
+                                       route_resolver=lambda _role: {"provider":"claude","executable":str(fake),
+                                           "model":"claude-opus-5-5","permissionMode":"bypassPermissions"})
     service = FactoryDirectorHost(tmp_path / "host", required, launcher)
 
     first = service.reconcile()

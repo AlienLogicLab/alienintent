@@ -54,12 +54,15 @@ export function spawnWorker({ role, worker, item, invocationId, bootstrap, resou
   child.stdout?.on("data", append); child.stderr?.on("data", append);
   return child;
 }
-export function createWorkerLauncher({ workers, runner = spawnWorker, supervisorFactory = createSystemdSupervisor }) {
+export function createWorkerLauncher({ workers, runner = spawnWorker, supervisorFactory = createSystemdSupervisor, routeResolver }) {
   const supervisors = Object.fromEntries(Object.entries(workers).filter(([, worker]) => worker.supervision).map(([role, worker]) => [role, supervisorFactory(worker.supervision)]));
   const launch = ({ role, item, invocationId, bootstrap, worktree, resource }) => {
     if (typeof worktree !== "string" || !isAbsolute(worktree) || worktree.includes("\0")) throw new Error("INVOCATION_WORKTREE_REQUIRED");
     if (!workers[role]) throw new Error("UNKNOWN_WORKER_ROLE");
-    return runner({ role, worker: { ...workers[role], worktree }, item, invocationId, bootstrap, ...(resource ? { resource } : {}), ...(supervisors[role] ? { supervisor: supervisors[role] } : {}) });
+    const base = { ...workers[role], worktree };
+    const route = routeResolver?.(role);
+    const worker = route ? { ...base, adapter: route.provider, command: route.executable, permissionMode: route.permissionMode, arguments: ["--model", route.model] } : base;
+    return runner({ role, worker, item, invocationId, bootstrap, ...(resource ? { resource } : {}), ...(supervisors[role] ? { supervisor: supervisors[role] } : {}) });
   };
   launch.plan = request => supervisors[request.role]?.plan(request);
   launch.observe = (resource, persist) => {
