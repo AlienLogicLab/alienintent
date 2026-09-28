@@ -252,6 +252,27 @@ python3 tools/verification/run_feature_regressions.py --base 93dc10d5969a95717e6
 The PRODUCER records its own receipt for the published SHA on Issue #141 for comparison. That
 receipt does not replace the verifier-side one.
 
+## Cycle 3 — verifier REJECT of `29c8e45` (receipt custody only)
+
+Verifier `AlienLogicLab/alienintent#141:VERIFIER:d94eaf5b-3b32-4822-9ebc-38fe34711145` gave no
+finding against the implementation, fixture or wiring. Both applicable packs passed at `29c8e45`.
+It rejected only because `.alienintent/feature-regressions.json` was absent from the published tree.
+It had written the receipt it generated to `/tmp`, not to that path in its own checkout.
+
+A tracked receipt cannot satisfy the admission check. `read_verdict`
+(`src/alienintent/invocation_runtime/application/real_worker.py`) accepts a receipt only when its
+`candidate` field equals the verified revision. A receipt committed in revision C records C's
+parent, so the check always refuses it. The admissible receipt for revision C is therefore the one
+present at `.alienintent/feature-regressions.json` in the verifier's own checkout of C, beside
+`.alienintent/verdict.json`, where `read_verdict` reads it. Either the runtime writes it there, or,
+when the runtime is not the launcher, the verifier generates it there at the retrieved SHA with the
+command above (`--receipt .alienintent/feature-regressions.json`, not a path outside the checkout).
+The same custody repair led to ACCEPT on Issue #129 (verifier `3fe3223f`) and Issue #140 (verifier
+`8f914881`).
+
+Cycle 3 changes only this document. `src/`, `tests/`, `tools/` and the retained results
+`result.json` and `result-cycle2.json` are byte-identical to `29c8e45`.
+
 ### Remaining known limits (unchanged from cycle 1, plus one)
 
 - **Durable consumption.** It exists only for `attempts`, taken from recorded verifier rejections.
