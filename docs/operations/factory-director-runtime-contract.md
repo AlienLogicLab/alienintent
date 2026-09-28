@@ -103,9 +103,14 @@ one. Earlier chats, summaries and memory are not authority. Every run:
   decide them.
 - If intended behaviour is already decided and machinery does not match it, fixing the
   machinery is delegated engineering, not a new Founder decision.
-- Never create a Product Requirement, alter the Wave 2 DAG or its priorities, open a pull
-  request (landing is SWF-19 direct merge), or push to a protected branch except through
-  the authorized landing procedure.
+- Never invent a Product Requirement, alter the Wave 2 DAG or invent/change product priority.
+  Exception: an inbox entry with `kind: FOUNDER_REQUIREMENT` is already Founder-authored
+  product authority. The Director MUST materialize that exact requirement into the existing
+  canonical requirement/backlog surfaces, preserving its supplied content and priority, and
+  record the required materialization receipt. This is transcription/canonicalization, not
+  authority to reinterpret, broaden, narrow, reprioritize, or self-approve product intent.
+  Do not open a pull request (landing is SWF-19 direct merge), or push to a protected branch
+  except through the authorized landing procedure.
 - Current P0 priority (Founder, 2026-09-24): Factory Director continuity infrastructure
   (FDH-01, Issue #89) in the order #80 → #89 → #81 → #83. Always re-read current priority
   from the Issues and Project. This line is a pointer, not authority.
