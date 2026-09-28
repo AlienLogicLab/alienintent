@@ -1,0 +1,120 @@
+{
+ "cleanup": {
+  "absent_after_fresh_read": {
+   "PVTI_lADOEcrpC84BkIEXzg9II58": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIMw": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIQ0": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIUY": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIXM": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIZ4": true,
+   "PVTI_lADOEcrpC84BkIEXzg9II_U": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIcI": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIhw": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IInM": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIs4": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIzc": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IJGA": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IJN8": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IJRg": true
+  },
+  "deleted": [
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIMw"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIQ0",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-POLICY",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIQ0"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIUY",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIUY"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIXM",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DEP",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIXM"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIZ4",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-CAP",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIZ4"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIcI",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIcI"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIhw",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIhw"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IInM",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NORECORD",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IInM"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIs4",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIs4"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIzc",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIzc"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9II58",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9II58"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9II_U",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9II_U"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IJGA",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IJGA"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IJN8",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IJN8"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IJRg",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IJRg"
+   }
+  ],
+  "failures": [],
+  "verified": true
+ },
+ "items": {
+  "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE": "PVTI_lADOEcrpC84BkIEXzg9II_U",
+  "FX-B3-PROBE-20260928T045326Z-973e-BUDGET": "PVTI_lADOEcrpC84BkIEXzg9IIcI",
+  "FX-B3-PROBE-20260928T045326Z-973e-CAP": "PVTI_lADOEcrpC84BkIEXzg9IIZ4",
+  "FX-B3-PROBE-20260928T045326Z-973e-DENIAL": "PVTI_lADOEcrpC84BkIEXzg9IJN8",
+  "FX-B3-PROBE-20260928T045326Z-973e-DEP": "PVTI_lADOEcrpC84BkIEXzg9IIXM",
+  "FX-B3-PROBE-20260928T045326Z-973e-DIGEST": "PVTI_lADOEcrpC84BkIEXzg9IIUY",
+  "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED": "PVTI_lADOEcrpC84BkIEXzg9IJGA",
+  "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH": "PVTI_lADOEcrpC84BkIEXzg9IIs4",
+  "FX-B3-PROBE-20260928T045326Z-973e-NOBASE": "PVTI_lADOEcrpC84BkIEXzg9IIzc",
+  "FX-B3-PROBE-20260928T045326Z-973e-NORECORD": "PVTI_lADOEcrpC84BkIEXzg9IInM",
+  "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE": "PVTI_lADOEcrpC84BkIEXzg9II58",
+  "FX-B3-PROBE-20260928T045326Z-973e-POLICY": "PVTI_lADOEcrpC84BkIEXzg9IIQ0",
+  "FX-B3-PROBE-20260928T045326Z-973e-POS": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+  "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED": "PVTI_lADOEcrpC84BkIEXzg9IJRg",
+  "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED": "PVTI_lADOEcrpC84BkIEXzg9IIhw"
+ },
+ "launch": "20260928T045326Z-973e",
+ "project": "PVT_kwDOEcrpC84BkIEX",
+ "target": "sandbox"
+}

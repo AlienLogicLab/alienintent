@@ -1,0 +1,2270 @@
+{
+ "cases": [
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+     "reason": null,
+     "result": "admitted"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   ],
+   "binding_refusals": {},
+   "case": "02-positive-control",
+   "criterion": "every precondition, eligibility and allocation holds: admit and launch exactly once",
+   "dispatched": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   ],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 2
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   },
+   "expected_refused_by": null,
+   "expected_worker_starts": 1,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+   "journal": {
+    "invocation_outcomes": [
+     "authority-block"
+    ],
+    "invocation_started": 1,
+    "process_runs": [
+     "authority-block"
+    ],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": null,
+   "observed_worker_starts": 1,
+   "pinned_step": "step 2",
+   "profile_automatic_release": true,
+   "projection_attempts": [
+    {
+     "field": "Status",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+     "revision": 0,
+     "state": "IMPLEMENT",
+     "written": false
+    }
+   ],
+   "recorded_correlation": "launch:FX-B3-PROBE-20260928T045326Z-973e-POS:0",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-POS:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   ],
+   "binding_refusals": {},
+   "case": "03-identity-replay",
+   "criterion": "re-attempt admission for the step-2 identity",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 2
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   },
+   "expected_refused_by": "eligibility:authority-block",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+   "journal": {
+    "invocation_outcomes": [
+     "authority-block"
+    ],
+    "invocation_started": 1,
+    "process_runs": [
+     "authority-block"
+    ],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "eligibility:authority-block",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 3",
+   "profile_automatic_release": true,
+   "projection_attempts": [
+    {
+     "field": "Status",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+     "revision": 0,
+     "state": "IMPLEMENT",
+     "written": false
+    }
+   ],
+   "recorded_correlation": "launch:FX-B3-PROBE-20260928T045326Z-973e-POS:0",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-POLICY",
+     "reason": "automatic-on release requires attributable policy authorization",
+     "result": "refused"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POLICY"
+   ],
+   "binding_refusals": {},
+   "case": "04-policy-source-mismatch",
+   "criterion": "automatic-on contract released by an explicit human source",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-POLICY"
+   },
+   "expected_refused_by": "admit_release:automatic-on release requires attributable policy authorization",
+   "expected_worker_starts": 0,
+   "explicit_release": true,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-POLICY",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-POLICY",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIQ0",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "admit_release:automatic-on release requires attributable policy authorization",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 4",
+   "profile_automatic_release": false,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-POLICY",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-POLICY:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST",
+     "reason": "stale readiness reference",
+     "result": "refused"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DIGEST"
+   ],
+   "binding_refusals": {},
+   "case": "05-readiness-digest-mismatch",
+   "criterion": "Project readiness digest is not the contract digest",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST"
+   },
+   "expected_refused_by": "admit_release:stale readiness reference",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIUY",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "admit_release:stale readiness reference",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 5",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-DIGEST:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [],
+   "binding_refusals": {},
+   "case": "06-unsatisfied-dependency",
+   "criterion": "dependency on work that is not DONE",
+   "dispatched": [],
+   "eligibility": null,
+   "expected_refused_by": "eligibility:dependencies-incomplete",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-DEP",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIXM",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "eligibility:dependencies-incomplete",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 6",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": null,
+   "recorded_hold_reason": null,
+   "recorded_outcome": null,
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DEP",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-DEP:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-CAP",
+     "reason": "missing required capability",
+     "result": "refused"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-CAP"
+   ],
+   "binding_refusals": {},
+   "case": "07-missing-capability",
+   "criterion": "required capability absent from the admitted set",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-CAP"
+   },
+   "expected_refused_by": "admit_release:missing required capability",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-CAP",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-CAP",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIZ4",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "admit_release:missing required capability",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 7",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-CAP",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-CAP:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET",
+     "reason": "absent hard-required budget dimension",
+     "result": "refused"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-BUDGET"
+   ],
+   "binding_refusals": {},
+   "case": "08-missing-budget-dimension",
+   "criterion": "allocation lacks one hard-required dimension",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET"
+   },
+   "expected_refused_by": "admit_release:absent hard-required budget dimension",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIcI",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "admit_release:absent hard-required budget dimension",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 8 (re-pinned)",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-BUDGET:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [],
+   "binding_refusals": {},
+   "case": "E1-eligibility-not-released",
+   "criterion": "explicit-release profile, never released",
+   "dispatched": [],
+   "eligibility": null,
+   "expected_refused_by": "eligibility:not-released",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIhw",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "eligibility:not-released",
+   "observed_worker_starts": 0,
+   "pinned_step": "'plus eligibility'",
+   "profile_automatic_release": false,
+   "projection_attempts": [],
+   "recorded_correlation": null,
+   "recorded_hold_reason": null,
+   "recorded_outcome": null,
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NORECORD"
+   ],
+   "binding_refusals": {},
+   "case": "09-no-release-record",
+   "criterion": "no durable release record",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-NORECORD"
+   },
+   "expected_refused_by": "gate:implementation-authorized",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "implementation-authorized",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-NORECORD",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-NORECORD",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IInM",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:implementation-authorized",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 9",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:implementation-authorized",
+   "recorded_outcome": "authority-block",
+   "release_record": null,
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH"
+   ],
+   "binding_refusals": {},
+   "case": "10-record-does-not-authorize",
+   "criterion": "record does not authorize IMPLEMENT",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH"
+   },
+   "expected_refused_by": "gate:implementation-authorized",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "implementation-authorized",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIs4",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:implementation-authorized",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 10",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:implementation-authorized",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": false,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-NOAUTH:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NOBASE"
+   ],
+   "binding_refusals": {},
+   "case": "11-no-exact-baseline",
+   "criterion": "record names a symbolic baseline",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE"
+   },
+   "expected_refused_by": "gate:baseline-named",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "baseline-named",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIzc",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:baseline-named",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 11",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:baseline-named",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "main",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-NOBASE:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE"
+   ],
+   "binding_refusals": {},
+   "case": "12a-null-baseline",
+   "criterion": "baseline is the null revision",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE"
+   },
+   "expected_refused_by": "gate:baseline-resolves",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "baseline-resolves",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II58",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:baseline-resolves",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 12",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:baseline-resolves",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "0000000000000000000000000000000000000000",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-NULLBASE:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE"
+   ],
+   "binding_refusals": {},
+   "case": "12b-absent-baseline",
+   "criterion": "baseline is well formed but absent",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE"
+   },
+   "expected_refused_by": "gate:baseline-resolves",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "baseline-resolves",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II_U",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:baseline-resolves",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 12",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:baseline-resolves",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED"
+   ],
+   "binding_refusals": {},
+   "case": "13-unreachable-baseline",
+   "criterion": "baseline is a local-only commit the release point cannot reach",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED"
+   },
+   "expected_refused_by": "gate:baseline-reachable",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "baseline-reachable",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJGA",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:baseline-reachable",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 13",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:baseline-reachable",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "42aba2767bfd20dc86307ff3209badd471f184c8",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-DIVERGED:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DENIAL"
+   ],
+   "binding_refusals": {},
+   "case": "14-unsuperseded-denial",
+   "criterion": "denial wording with no superseding record, all else valid",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL"
+   },
+   "expected_refused_by": "gate:authority-wording-consistent",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "authority-wording-consistent",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJN8",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:authority-wording-consistent",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 14",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:authority-wording-consistent",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-DENIAL:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED",
+     "reason": null,
+     "result": "admitted"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED"
+   ],
+   "binding_refusals": {},
+   "case": "C1-superseded-denial-contrast",
+   "criterion": "the same wording with a superseding record admits",
+   "dispatched": [
+    "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED"
+   ],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 2
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED"
+   },
+   "expected_refused_by": null,
+   "expected_worker_starts": 1,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJRg",
+   "journal": {
+    "invocation_outcomes": [
+     "authority-block"
+    ],
+    "invocation_started": 1,
+    "process_runs": [
+     "authority-block"
+    ],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": null,
+   "observed_worker_starts": 1,
+   "pinned_step": "step 14 contrast (informative)",
+   "profile_automatic_release": true,
+   "projection_attempts": [
+    {
+     "field": "Status",
+     "identity": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED",
+     "revision": 0,
+     "state": "IMPLEMENT",
+     "written": false
+    }
+   ],
+   "recorded_correlation": "launch:FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED:0",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED",
+    "record_ref": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED:release-record",
+    "superseding_record": "FX-B3:20260928T045326Z-973e:FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED:release-record:superseding",
+    "text": "IMPLEMENT is authorized for this FX-B3 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  }
+ ],
+ "checkout": {
+  "baseline": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+  "diverged": "42aba2767bfd20dc86307ff3209badd471f184c8",
+  "push_url": "/tmp/fx-b3-sandbox-id06qaow/push-disabled.invalid",
+  "release_point": "origin/main",
+  "release_point_revision": "869d9a4fde6dfa7f8848ece8c365899d67034d71",
+  "url": "https://github.com/AlienLogicLab/alienintent-sandbox"
+ },
+ "checks": {
+  "all_cases_match": true,
+  "cleanup_verified": true,
+  "exact_launch_total": true,
+  "mutations_only_on_own_items": true,
+  "no_binding_refusals": true,
+  "no_board_projection_written": true,
+  "no_failure": true,
+  "probes_intact_at_readback": true,
+  "target_board_unchanged": true,
+  "watched_boards_not_written": true,
+  "watched_boards_unchanged": true,
+  "zero_provider_calls": true,
+  "zero_publications": true
+ },
+ "cleanup": {
+  "absent_after_fresh_read": {
+   "PVTI_lADOEcrpC84BkIEXzg9II58": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIMw": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIQ0": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIUY": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIXM": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIZ4": true,
+   "PVTI_lADOEcrpC84BkIEXzg9II_U": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIcI": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIhw": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IInM": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIs4": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IIzc": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IJGA": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IJN8": true,
+   "PVTI_lADOEcrpC84BkIEXzg9IJRg": true
+  },
+  "deleted": [
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIMw"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIQ0",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-POLICY",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIQ0"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIUY",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIUY"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIXM",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DEP",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIXM"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIZ4",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-CAP",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIZ4"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIcI",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIcI"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIhw",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIhw"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IInM",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NORECORD",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IInM"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIs4",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIs4"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IIzc",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIzc"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9II58",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9II58"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9II_U",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9II_U"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IJGA",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IJGA"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IJN8",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IJN8"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84BkIEXzg9IJRg",
+    "identity": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IJRg"
+   }
+  ],
+  "failures": [],
+  "verified": true
+ },
+ "composition": {
+  "call_site": "FactoryCoordinator._run: ReleasePreconditionGate.check -> admit_release -> RoleBindingGuard.start",
+  "observation": "admit_release and ReleasePreconditionGate.check wrapped observation-only; each delegates unchanged",
+  "projection": "withheld: recorded locally, never written to the board",
+  "root": "alienintent.composition.github_profile.GitHubProfileComposition",
+  "snapshot": "fresh paginated Projects v2 read per admission pass, restricted to this run's own probe item ids",
+  "worker": "RoleBindingGuard(RealWorkerProvider(ScriptedWorkerProcess['authority-block'], JsonlInvocationJournal, GitWorktreeAdapter))"
+ },
+ "ended_at": "2026-09-28T04:56:44+00:00",
+ "exit_status": 0,
+ "failure": null,
+ "fixture": "FX-B3",
+ "invocation": {
+  "argv": [
+   "tools/live/fx_b3_release_admission_proof.py",
+   "--target",
+   "sandbox",
+   "--out",
+   "docs/evidence/wave2-proof-fixtures/FX-B3/phase1-sandbox"
+  ],
+  "source_revision": {
+   "head": "e9f165426fecb350e4374904b1c2dcd8e6cfae38",
+   "tool_uncommitted": false
+  },
+  "tool": "tools/live/fx_b3_release_admission_proof.py",
+  "tool_sha256": "sha256:e00b4112c24963ae64a93b91c6799d351523b95324c3e5b948b0d7ab018f6f22"
+ },
+ "issue": 126,
+ "label": "OPERATIONAL \u2014 phase 1, isolated sandbox target; does not satisfy the 'actual live-profile' criterion by itself",
+ "launch_id": "20260928T045326Z-973e",
+ "mutations": [
+  {
+   "at": "2026-09-28T04:53:40+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-POS \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:53:42+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:53:44+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:53:46+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-POLICY \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:53:49+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIQ0",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:53:50+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIQ0",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:53:53+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:53:55+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIUY",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:53:56+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIUY",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:53:59+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-DEP \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:01+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIXM",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:02+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIXM",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:05+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-CAP \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:06+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIZ4",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:08+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIZ4",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:10+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:12+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIcI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:14+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIcI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:16+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:18+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIhw",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:19+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIhw",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:21+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-NORECORD \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:23+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IInM",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:25+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IInM",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:27+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:29+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIs4",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:31+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIs4",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:33+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:34+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIzc",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:36+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIzc",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:39+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:40+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II58",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:42+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II58",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:44+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:45+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II_U",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:47+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II_U",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:49+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:51+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJGA",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:53+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJGA",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:55+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:54:57+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJN8",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:54:59+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJN8",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:55:01+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:55:04+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x-w",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJRg",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:55:06+00:00",
+   "field": "PVTSSF_lADOEcrpC84BkIEXzhi5x34",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJRg",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:03+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:05+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIQ0",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:06+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIUY",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:07+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIXM",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:08+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIZ4",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:09+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIcI",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:10+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIhw",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:12+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IInM",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:13+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIs4",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:14+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIzc",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:16+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II58",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:17+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II_U",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:18+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJGA",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:19+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJN8",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:56:20+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJRg",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84BkIEX",
+   "title": null
+  }
+ ],
+ "non_interference": {
+  "production Project #1 read-only before/after (phase 1 compensating control)": {
+   "added": [],
+   "changed": [],
+   "items_after": 126,
+   "items_before": 126,
+   "removed": [],
+   "unchanged": true
+  },
+  "target": {
+   "added": [],
+   "changed": [],
+   "items_after": 17,
+   "items_before": 17,
+   "removed": [],
+   "unchanged": true
+  }
+ },
+ "passed": true,
+ "phase": 1,
+ "probe_items": [
+  {
+   "body_sha256": "sha256:525c947f743122d6d8f2a56b35f35127e979bc7278ec11961b297a81d848f544",
+   "contract_digest": "sha256:665ab678c2567158a68f974932e3b91d2d609b2e00d938176d9a1c36d6f3ebfa",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-POS",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+   "readback": {
+    "body_sha256": "sha256:525c947f743122d6d8f2a56b35f35127e979bc7278ec11961b297a81d848f544",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIMw",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:53:44Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-POS \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-POS \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:46ae7b062fe3860e4731fe79d73e07e287b245005829b6a612e4c387f8b1b51d",
+   "contract_digest": "sha256:7c720a4ea67ea6927f30c6473d091df5e297b58a0bb405c2a51a50e7c8fb2321",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-POLICY",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIQ0",
+   "readback": {
+    "body_sha256": "sha256:46ae7b062fe3860e4731fe79d73e07e287b245005829b6a612e4c387f8b1b51d",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIQ0",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:53:51Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-POLICY \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-POLICY \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:dab80476d73b6a06daf201b242a1b337853160f27b2da542111e570ece129b23",
+   "contract_digest": "sha256:8a84471269dd28f35e7be0f6792694c42712898ca4f32a161f1ab95ffb2534be",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIUY",
+   "readback": {
+    "body_sha256": "sha256:dab80476d73b6a06daf201b242a1b337853160f27b2da542111e570ece129b23",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIUY",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:53:57Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-DIGEST \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:6f5b2f044c2145d4d8192511e30a343b726a51f34dfd9b139cc7ad549cdb137c",
+   "contract_digest": "sha256:45d3d77f5be436a896dac262452ea712978ee684992bcc26308a080ffddb6c43",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-DEP",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIXM",
+   "readback": {
+    "body_sha256": "sha256:6f5b2f044c2145d4d8192511e30a343b726a51f34dfd9b139cc7ad549cdb137c",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIXM",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:03Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-DEP \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-DEP \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:3564ca37a1790a97e3dfa7ab685636644f05e8b42951c6e146d7eb60b34e5982",
+   "contract_digest": "sha256:ea4ca99ff0742bd14f88fea451ba373a64388d1c51277deea0ed9c4f18c37350",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-CAP",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIZ4",
+   "readback": {
+    "body_sha256": "sha256:3564ca37a1790a97e3dfa7ab685636644f05e8b42951c6e146d7eb60b34e5982",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIZ4",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:09Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-CAP \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-CAP \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:8e809a8f647a2b85a65b756a8797750929f884ba9d3b72794581ca7e3b3b45fe",
+   "contract_digest": "sha256:fa4fbd273dfe0834d97dbfda077267ce6aa352423926a06419f9735e386ee69e",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIcI",
+   "readback": {
+    "body_sha256": "sha256:8e809a8f647a2b85a65b756a8797750929f884ba9d3b72794581ca7e3b3b45fe",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIcI",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:14Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-BUDGET \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:c7fb0c61fe8530e1f68ea2689384b06ed878b59d49d6f8be016a4de0607f3cd3",
+   "contract_digest": "sha256:2ddbf98278d6cf2a1ab50cacb7a8d4839048c5bda1eb4f65b8199ea7242e1f55",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIhw",
+   "readback": {
+    "body_sha256": "sha256:c7fb0c61fe8530e1f68ea2689384b06ed878b59d49d6f8be016a4de0607f3cd3",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIhw",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:20Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:bb93ef89a0581f505f1695111cb338e43c715407b433e3c75a75ca34b9324ec9",
+   "contract_digest": "sha256:8c0ed286742f401c4b7ca0677c888ed832edd34b633eef8edc96b3089c377070",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-NORECORD",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IInM",
+   "readback": {
+    "body_sha256": "sha256:bb93ef89a0581f505f1695111cb338e43c715407b433e3c75a75ca34b9324ec9",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IInM",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:26Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-NORECORD \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-NORECORD \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:0dd4c05dd3433e7d5271090df0e8e3bacb3616736aad57496253e8ce7a7d0d6a",
+   "contract_digest": "sha256:aed58c071653a30693240286e69ac5eafcb25dff77c82f0b32e931c01f619144",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIs4",
+   "readback": {
+    "body_sha256": "sha256:0dd4c05dd3433e7d5271090df0e8e3bacb3616736aad57496253e8ce7a7d0d6a",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIs4",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:31Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:7d88703220962bb7c2a4c79e5d4c8a33fbc77667a0475e31d51924f1ce8aa18e",
+   "contract_digest": "sha256:122ec624cd9f72ef11849772a024af9e4c4019c5c307c987387eb856e6cbffbf",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IIzc",
+   "readback": {
+    "body_sha256": "sha256:7d88703220962bb7c2a4c79e5d4c8a33fbc77667a0475e31d51924f1ce8aa18e",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IIzc",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:37Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-NOBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:009900cf4718198af21928fd2914a321e3042ce36571e48e3b5d46093efc0dfe",
+   "contract_digest": "sha256:d90517d700d543e53cf841ad9680fb76fb61aeddba8467c2caa7ac4ea3c80c92",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II58",
+   "readback": {
+    "body_sha256": "sha256:009900cf4718198af21928fd2914a321e3042ce36571e48e3b5d46093efc0dfe",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9II58",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:42Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:657f7aef5c0cf574f45c7ed91dee8d03f2723b1eadfce3a767beccd33b4b9194",
+   "contract_digest": "sha256:d22595fb904814431326e89ae1d7dd1adbed946afaed4734d9af2b87ce8282ce",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9II_U",
+   "readback": {
+    "body_sha256": "sha256:657f7aef5c0cf574f45c7ed91dee8d03f2723b1eadfce3a767beccd33b4b9194",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9II_U",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:48Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:55c016fe5a66abab1446caa238948ba4e3efe1cc954a8aa804e50d74457bee9f",
+   "contract_digest": "sha256:a798809f78e77d23d5ecd9421c0f64ee0fe82976310da5a26d88654811885ab6",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJGA",
+   "readback": {
+    "body_sha256": "sha256:55c016fe5a66abab1446caa238948ba4e3efe1cc954a8aa804e50d74457bee9f",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IJGA",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:54Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:a3f939b42f50dcc76ff280848c51140ef3be8f091ae097622fd4970b92ec6579",
+   "contract_digest": "sha256:fc43a21e90874d2979db74cb25b9ff4f4ddda311aee9260bc3575d7d5cd40f6d",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJN8",
+   "readback": {
+    "body_sha256": "sha256:a3f939b42f50dcc76ff280848c51140ef3be8f091ae097622fd4970b92ec6579",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IJN8",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:54:59Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-DENIAL \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:6842495f508dbc9aa905a82eecb5d00964ed08a60c7c4a19ef8a294848a5a2a9",
+   "contract_digest": "sha256:0d43a6950f116050d0863662f53668ea1960fed6939e0ce8d050eaa098fb5da3",
+   "identity": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED",
+   "item": "PVTI_lADOEcrpC84BkIEXzg9IJRg",
+   "readback": {
+    "body_sha256": "sha256:6842495f508dbc9aa905a82eecb5d00964ed08a60c7c4a19ef8a294848a5a2a9",
+    "item": "PVTI_lADOEcrpC84BkIEXzg9IJRg",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:55:06Z",
+    "title": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  }
+ ],
+ "record_kind": "ReleaseAdmissionProof",
+ "schema_version": 1,
+ "snapshot_reads": [
+  {
+   "at": "2026-09-28T04:55:09+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:10+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:11+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:12+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:14+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:15+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POLICY"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:17+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POLICY"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:18+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-POLICY"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:19+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DIGEST"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:20+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DIGEST"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:21+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DIGEST"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:22+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DEP"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:24+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DEP"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:26+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-CAP"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:27+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-CAP"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:28+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-CAP"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:29+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-BUDGET"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:30+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-BUDGET"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:31+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-BUDGET"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:33+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:34+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:35+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NORECORD"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:36+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NORECORD"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:37+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NORECORD"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:38+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:39+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:41+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:42+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NOBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:43+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NOBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:44+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NOBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:45+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:47+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:48+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:49+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:51+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:52+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:53+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:54+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:56+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:57+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DENIAL"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:58+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DENIAL"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:55:59+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-DENIAL"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:56:00+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:56:01+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:56:02+00:00",
+   "identities": [
+    "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED"
+   ]
+  }
+ ],
+ "started_at": "2026-09-28T04:53:26+00:00",
+ "step15_readback": {
+  "FX-B3-PROBE-20260928T045326Z-973e-ABSENTBASE": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-BUDGET": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-CAP": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-DENIAL": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-DEP": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-DIGEST": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-DIVERGED": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-NOAUTH": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-NOBASE": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-NORECORD": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-NULLBASE": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-POLICY": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-POS": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-SUPERSEDED": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B3-PROBE-20260928T045326Z-973e-UNRELEASED": {
+   "present": true,
+   "status": "READY"
+  }
+ },
+ "target": {
+  "name": "sandbox",
+  "profile": "py10-sandbox",
+  "project_id": "PVT_kwDOEcrpC84BkIEX",
+  "project_number": 2,
+  "repository": "AlienLogicLab/alienintent-sandbox"
+ },
+ "tokens_and_cost": "UNKNOWN (no provider ran; the fixture itself spends no tokens)",
+ "totals": {
+  "expected_worker_starts": 2,
+  "observed_worker_starts": 2,
+  "provider_calls": 0,
+  "publications": 0
+ },
+ "watched_mutations": {
+  "production Project #1 read-only before/after (phase 1 compensating control)": []
+ },
+ "work_unit": "WO-220506"
+}

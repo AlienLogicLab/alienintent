@@ -1,0 +1,523 @@
+{
+ "PVTI_lADOEcrpC84BkIEXzg78I_I": {
+  "digest": "sha256:8ab7f2fadb5fe1fd85fe855cc55ff2ff7e7c8ac070e2dbac8c09b8495d15c17a",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:2e07fedc45863f16714e02fea814fe5f8bd827128651025c0e0caeab57f9158f",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLKWjU",
+    "number": null,
+    "state": null,
+    "title": "SB-01 \u2014 docs/SB-01.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-21T11:46:45Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-21T11:46:47Z",
+     "value": "P0"
+    },
+    "Status": {
+     "updatedAt": "2026-09-21T11:50:51Z",
+     "value": "DONE"
+    },
+    "Title": {
+     "updatedAt": "2026-09-21T11:46:45Z",
+     "value": "SB-01 \u2014 docs/SB-01.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg78I_I",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-21T11:50:51Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg78JDU": {
+  "digest": "sha256:b8066fbc28e839c3fd328f1b922f0fd1474ea9eb10ccf5b8e00c34ac31884d74",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:8bf44d433144605807da726336462cb625664577dfb58a6ce5c830e0f92eac49",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLKWjY",
+    "number": null,
+    "state": null,
+    "title": "SB-06 \u2014 docs/SB-06.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-21T11:46:52Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-21T11:46:53Z",
+     "value": "P0"
+    },
+    "Status": {
+     "updatedAt": "2026-09-21T11:51:26Z",
+     "value": "DONE"
+    },
+    "Title": {
+     "updatedAt": "2026-09-21T11:46:52Z",
+     "value": "SB-06 \u2014 docs/SB-06.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg78JDU",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-21T11:51:26Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg78JIE": {
+  "digest": "sha256:5481a69f796349cfda47d25e7cc3482cf80b306f0ff32451a0a59d6f243ef60a",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:9086de9fc67de2af668d56bee71562c083657a679b93ef81b637757159df694d",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLKWjk",
+    "number": null,
+    "state": null,
+    "title": "SB-02 \u2014 docs/SB-02.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-21T11:46:58Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-21T11:47:00Z",
+     "value": "P1"
+    },
+    "Status": {
+     "updatedAt": "2026-09-21T11:48:58Z",
+     "value": "DONE"
+    },
+    "Title": {
+     "updatedAt": "2026-09-21T11:46:58Z",
+     "value": "SB-02 \u2014 docs/SB-02.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg78JIE",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-21T11:48:58Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg78JOk": {
+  "digest": "sha256:0253a2ff96e2bbaa1ac4923802f2225d6a955b4a026e6f10103774035a89a8cb",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:cf4702234292b1b562f8de8b81dc66ba9b48c28ddc9473d30c42c51762ac21dc",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLKWjs",
+    "number": null,
+    "state": null,
+    "title": "SB-03 \u2014 docs/SB-03.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-21T11:47:05Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-21T11:47:07Z",
+     "value": "P1"
+    },
+    "Status": {
+     "updatedAt": "2026-09-21T11:49:23Z",
+     "value": "DONE"
+    },
+    "Title": {
+     "updatedAt": "2026-09-21T11:47:05Z",
+     "value": "SB-03 \u2014 docs/SB-03.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg78JOk",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-21T11:49:23Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg78JWM": {
+  "digest": "sha256:12df1fd8021a7a28f55f61b6f998f0f14ec63bcaa61e1f341ea0255df2181ffe",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:9c01a719e9da2b1a0ad07795bddc90dc9c88b80d3e36df5bc9ea6c77209fd0f9",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLKWj0",
+    "number": null,
+    "state": null,
+    "title": "SB-04 \u2014 docs/SB-04.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-21T11:47:12Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-21T11:47:14Z",
+     "value": "P2"
+    },
+    "Status": {
+     "updatedAt": "2026-09-21T11:50:15Z",
+     "value": "DONE"
+    },
+    "Title": {
+     "updatedAt": "2026-09-21T11:47:12Z",
+     "value": "SB-04 \u2014 docs/SB-04.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg78JWM",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-21T11:50:15Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg78JaM": {
+  "digest": "sha256:c1d1d11b2bd183e92c07803752329278af08d04599ba00432e3831713d27d5e3",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:a3197331a2557a32c5134140b47d31cbb7f072f0e1e2e698fc8f8e521e6c15fc",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLKWkA",
+    "number": null,
+    "state": null,
+    "title": "SB-05 \u2014 docs/SB-05.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-21T11:47:19Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-21T11:47:20Z",
+     "value": "P3"
+    },
+    "Status": {
+     "updatedAt": "2026-09-21T11:49:49Z",
+     "value": "DONE"
+    },
+    "Title": {
+     "updatedAt": "2026-09-21T11:47:19Z",
+     "value": "SB-05 \u2014 docs/SB-05.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg78JaM",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-21T11:49:49Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg78KGI": {
+  "digest": "sha256:ff9d0a78cef41803de7c4c7a5fe2a14997472fd5ead49d0ab59547b63a630f5e",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:0c2e4a5d8a8b0ae9aa74fbe4fefb806caeaa5fa9f93f0543d902ebfab95295be",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLKWmc",
+    "number": null,
+    "state": null,
+    "title": "DECISION REQUIRED \u2014 SB-01 @ v0",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-21T11:48:25Z"
+   },
+   "fields": {
+    "Title": {
+     "updatedAt": "2026-09-21T11:48:25Z",
+     "value": "DECISION REQUIRED \u2014 SB-01 @ v0"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg78KGI",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-21T11:48:25Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg78KIQ": {
+  "digest": "sha256:800c9ee9cd727d03edab483e1b0272a6bc73815ae7552bfba15e801f1e5512d5",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:4ac8d85f149480b0805c8f900c549dd4daebdb4368f417adf8ff22abe6a6e297",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLKWmk",
+    "number": null,
+    "state": null,
+    "title": "DECISION REQUIRED \u2014 SB-06 @ v0",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-21T11:48:28Z"
+   },
+   "fields": {
+    "Title": {
+     "updatedAt": "2026-09-21T11:48:28Z",
+     "value": "DECISION REQUIRED \u2014 SB-06 @ v0"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg78KIQ",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-21T11:48:28Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg85ZRA": {
+  "digest": "sha256:2491c2f916dae747bd459b733ffe009f5dad755f292dcaccc376b7c003677995",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:89744df848fcefe3140252e71230ce5baad6435563a531ae9d76d70feaafb5ca",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLNI1o",
+    "number": null,
+    "state": null,
+    "title": "E1-261001-A \u2014 docs/E1-261001-A.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-26T10:02:09Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-26T10:02:11Z",
+     "value": "P0"
+    },
+    "Status": {
+     "updatedAt": "2026-09-26T10:04:25Z",
+     "value": "VERIFY"
+    },
+    "Title": {
+     "updatedAt": "2026-09-26T10:02:09Z",
+     "value": "E1-261001-A \u2014 docs/E1-261001-A.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg85ZRA",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-26T10:04:25Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg85ZUE": {
+  "digest": "sha256:9062dc8b5469efd1810ce05581a37425de2db4ad80ba04245f9fe8ab9b897b82",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:d069d28d5c79086fb05609cfb592e751d4feba3a40cd80d7a8c8837ca0abf8bd",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLNI1w",
+    "number": null,
+    "state": null,
+    "title": "E1-261001-B \u2014 docs/E1-261001-B.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-26T10:02:17Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-26T10:02:18Z",
+     "value": "P1"
+    },
+    "Status": {
+     "updatedAt": "2026-09-26T10:03:15Z",
+     "value": "VERIFY"
+    },
+    "Title": {
+     "updatedAt": "2026-09-26T10:02:17Z",
+     "value": "E1-261001-B \u2014 docs/E1-261001-B.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg85ZUE",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-26T10:03:15Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg85Zfg": {
+  "digest": "sha256:2e5cfe342411897f70b5d2b54fce76df448f3e5d2b8c8b5d75938f4b189e2109",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:b6feba25a2f2fc10ed9ad9bedfbc7c132b50832394c47ff5953d9ca32adcbd46",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLNI20",
+    "number": null,
+    "state": null,
+    "title": "DECISION REQUIRED \u2014 E1-261001-A @ v0",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-26T10:03:02Z"
+   },
+   "fields": {
+    "Title": {
+     "updatedAt": "2026-09-26T10:03:02Z",
+     "value": "DECISION REQUIRED \u2014 E1-261001-A @ v0"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg85Zfg",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-26T10:03:02Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg85bew": {
+  "digest": "sha256:d5cae8f7d0311f7005e7494ddfe7827f89660794d54a21cf59ed83c667dfeeea",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:805e0e8a99adcfe0d0f1b704206acbefd1fc03dd8619f4f4389ae6d9ddac164a",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLNI-k",
+    "number": null,
+    "state": null,
+    "title": "E1-261009-A \u2014 docs/E1-261009-A.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-26T10:09:31Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-26T10:09:32Z",
+     "value": "P0"
+    },
+    "Status": {
+     "updatedAt": "2026-09-26T10:11:48Z",
+     "value": "VERIFY"
+    },
+    "Title": {
+     "updatedAt": "2026-09-26T10:09:31Z",
+     "value": "E1-261009-A \u2014 docs/E1-261009-A.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg85bew",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-26T10:11:48Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg85biE": {
+  "digest": "sha256:3ce702c16bfbea266254b3dca8ec26a31045f07f5f061adcd97e90570c2febe9",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:0e3f5ec2cb901c78a25c55b4c54dc95b0835d9c0863e2130f591ba3bf9928db3",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLNI-s",
+    "number": null,
+    "state": null,
+    "title": "E1-261009-B \u2014 docs/E1-261009-B.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-26T10:09:38Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-26T10:09:40Z",
+     "value": "P1"
+    },
+    "Status": {
+     "updatedAt": "2026-09-26T10:10:38Z",
+     "value": "VERIFY"
+    },
+    "Title": {
+     "updatedAt": "2026-09-26T10:09:38Z",
+     "value": "E1-261009-B \u2014 docs/E1-261009-B.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg85biE",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-26T10:10:38Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg85buw": {
+  "digest": "sha256:fbe1c17f72e00494d783ec8b4f49b61f0b4d4b028f98ab00ab0b4d5530773969",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:bd52b996c24f70e5ea8cf4995692c80f8d3190943d8aaaa59d82a3a414ac374b",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLNI_A",
+    "number": null,
+    "state": null,
+    "title": "DECISION REQUIRED \u2014 E1-261009-A @ v0",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-26T10:10:25Z"
+   },
+   "fields": {
+    "Title": {
+     "updatedAt": "2026-09-26T10:10:25Z",
+     "value": "DECISION REQUIRED \u2014 E1-261009-A @ v0"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg85buw",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-26T10:10:25Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg85dSw": {
+  "digest": "sha256:1cb3d2852b90846bd19adac9e362f39b356187b9953a4a5a18dfd7bdcac817ce",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:cc51024380d8a481c036857ac8b7a3016b867e1d46ac652ae74e48bb6050a749",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLNJK4",
+    "number": null,
+    "state": null,
+    "title": "E1-261014-A \u2014 docs/E1-261014-A.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-26T10:15:01Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-26T10:15:02Z",
+     "value": "P0"
+    },
+    "Status": {
+     "updatedAt": "2026-09-26T10:17:32Z",
+     "value": "DONE"
+    },
+    "Title": {
+     "updatedAt": "2026-09-26T10:15:01Z",
+     "value": "E1-261014-A \u2014 docs/E1-261014-A.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg85dSw",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-26T10:17:32Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg85dU8": {
+  "digest": "sha256:d3467757abbcceee9864658ac8063d704f3a0c45222ac073d2e70a0756cddc57",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:8b238dcb921b94bdefdfe3bb2f0ed7e08af30605ca7807f1739733da51ea83c0",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLNJK8",
+    "number": null,
+    "state": null,
+    "title": "E1-261014-B \u2014 docs/E1-261014-B.md",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-26T10:15:08Z"
+   },
+   "fields": {
+    "Priority": {
+     "updatedAt": "2026-09-26T10:15:10Z",
+     "value": "P1"
+    },
+    "Status": {
+     "updatedAt": "2026-09-26T10:16:17Z",
+     "value": "DONE"
+    },
+    "Title": {
+     "updatedAt": "2026-09-26T10:15:08Z",
+     "value": "E1-261014-B \u2014 docs/E1-261014-B.md"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg85dU8",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-26T10:16:17Z"
+  }
+ },
+ "PVTI_lADOEcrpC84BkIEXzg85djc": {
+  "digest": "sha256:27ed37d3e6c44135b0949b4fda80f3feab5fd5f48ed8783273dc73ba7c5d10a6",
+  "item": {
+   "content": {
+    "body_sha256": "sha256:032aad326d9f0ba61c85ab733fbcb2a04d5384026c4cad2e8be3e3cc02776668",
+    "closedAt": null,
+    "id": "DI_lADOEcrpC84BkIEXzgLNJLY",
+    "number": null,
+    "state": null,
+    "title": "DECISION REQUIRED \u2014 E1-261014-A @ v0",
+    "typename": "DraftIssue",
+    "updatedAt": "2026-09-26T10:15:52Z"
+   },
+   "fields": {
+    "Title": {
+     "updatedAt": "2026-09-26T10:15:52Z",
+     "value": "DECISION REQUIRED \u2014 E1-261014-A @ v0"
+    }
+   },
+   "id": "PVTI_lADOEcrpC84BkIEXzg85djc",
+   "isArchived": false,
+   "type": "DRAFT_ISSUE",
+   "updatedAt": "2026-09-26T10:15:52Z"
+  }
+ }
+}

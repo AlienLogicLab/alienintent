@@ -1,0 +1,2101 @@
+{
+ "cases": [
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POS",
+     "reason": null,
+     "result": "admitted"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   ],
+   "binding_refusals": {},
+   "case": "02-positive-control",
+   "criterion": "every precondition, eligibility and allocation holds: admit and launch exactly once",
+   "dispatched": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   ],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 2
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   },
+   "expected_refused_by": null,
+   "expected_worker_starts": 1,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POS",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POS",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKLc",
+   "journal": {
+    "invocation_outcomes": [
+     "authority-block"
+    ],
+    "invocation_started": 1,
+    "process_runs": [
+     "authority-block"
+    ],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": null,
+   "observed_worker_starts": 1,
+   "pinned_step": "step 2",
+   "profile_automatic_release": true,
+   "projection_attempts": [
+    {
+     "field": "Status",
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POS",
+     "revision": 0,
+     "state": "IMPLEMENT",
+     "written": false
+    }
+   ],
+   "recorded_correlation": "launch:FX-B4-PROBE-20260928T045705Z-24bd-POS:0",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POS",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-POS:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   ],
+   "binding_refusals": {},
+   "case": "03-identity-replay",
+   "criterion": "re-attempt admission for the step-2 identity",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 2
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   },
+   "expected_refused_by": "eligibility:authority-block",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POS",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKLc",
+   "journal": {
+    "invocation_outcomes": [
+     "authority-block"
+    ],
+    "invocation_started": 1,
+    "process_runs": [
+     "authority-block"
+    ],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "eligibility:authority-block",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 3",
+   "profile_automatic_release": true,
+   "projection_attempts": [
+    {
+     "field": "Status",
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POS",
+     "revision": 0,
+     "state": "IMPLEMENT",
+     "written": false
+    }
+   ],
+   "recorded_correlation": "launch:FX-B4-PROBE-20260928T045705Z-24bd-POS:0",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY",
+     "reason": "automatic-on release requires attributable policy authorization",
+     "result": "refused"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POLICY"
+   ],
+   "binding_refusals": {},
+   "case": "04-policy-source-mismatch",
+   "criterion": "automatic-on contract released by an explicit human source",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY"
+   },
+   "expected_refused_by": "admit_release:automatic-on release requires attributable policy authorization",
+   "expected_worker_starts": 0,
+   "explicit_release": true,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKOY",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "admit_release:automatic-on release requires attributable policy authorization",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 4",
+   "profile_automatic_release": false,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-POLICY:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST",
+     "reason": "stale readiness reference",
+     "result": "refused"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST"
+   ],
+   "binding_refusals": {},
+   "case": "05-readiness-digest-mismatch",
+   "criterion": "Project readiness digest is not the contract digest",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST"
+   },
+   "expected_refused_by": "admit_release:stale readiness reference",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKRI",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "admit_release:stale readiness reference",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 5",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-DIGEST:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [],
+   "binding_refusals": {},
+   "case": "06-unsatisfied-dependency",
+   "criterion": "dependency on work that is not DONE",
+   "dispatched": [],
+   "eligibility": null,
+   "expected_refused_by": "eligibility:dependencies-incomplete",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DEP",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKTY",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "eligibility:dependencies-incomplete",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 6",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": null,
+   "recorded_hold_reason": null,
+   "recorded_outcome": null,
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DEP",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-DEP:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-CAP",
+     "reason": "missing required capability",
+     "result": "refused"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-CAP"
+   ],
+   "binding_refusals": {},
+   "case": "07-missing-capability",
+   "criterion": "required capability absent from the admitted set",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-CAP"
+   },
+   "expected_refused_by": "admit_release:missing required capability",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-CAP",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-CAP",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKWI",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "admit_release:missing required capability",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 7",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-CAP",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-CAP:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [
+    {
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET",
+     "reason": "absent hard-required budget dimension",
+     "result": "refused"
+    }
+   ],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET"
+   ],
+   "binding_refusals": {},
+   "case": "08-missing-budget-dimension",
+   "criterion": "allocation lacks one hard-required dimension",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET"
+   },
+   "expected_refused_by": "admit_release:absent hard-required budget dimension",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": null,
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET",
+     "result": "passed"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKZ4",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "admit_release:absent hard-required budget dimension",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 8 (re-pinned)",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": null,
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-BUDGET:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [],
+   "binding_refusals": {},
+   "case": "E1-eligibility-not-released",
+   "criterion": "explicit-release profile, never released",
+   "dispatched": [],
+   "eligibility": null,
+   "expected_refused_by": "eligibility:not-released",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKb4",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "eligibility:not-released",
+   "observed_worker_starts": 0,
+   "pinned_step": "'plus eligibility'",
+   "profile_automatic_release": false,
+   "projection_attempts": [],
+   "recorded_correlation": null,
+   "recorded_hold_reason": null,
+   "recorded_outcome": null,
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD"
+   ],
+   "binding_refusals": {},
+   "case": "09-no-release-record",
+   "criterion": "no durable release record",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD"
+   },
+   "expected_refused_by": "gate:implementation-authorized",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "implementation-authorized",
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKfs",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:implementation-authorized",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 9",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:implementation-authorized",
+   "recorded_outcome": "authority-block",
+   "release_record": null,
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH"
+   ],
+   "binding_refusals": {},
+   "case": "10-record-does-not-authorize",
+   "criterion": "record does not authorize IMPLEMENT",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH"
+   },
+   "expected_refused_by": "gate:implementation-authorized",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "implementation-authorized",
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKik",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:implementation-authorized",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 10",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:implementation-authorized",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": false,
+    "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE"
+   ],
+   "binding_refusals": {},
+   "case": "11-no-exact-baseline",
+   "criterion": "record names a symbolic baseline",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE"
+   },
+   "expected_refused_by": "gate:baseline-named",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "baseline-named",
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKlU",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:baseline-named",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 11",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:baseline-named",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "main",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-NOBASE:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE"
+   ],
+   "binding_refusals": {},
+   "case": "12a-null-baseline",
+   "criterion": "baseline is the null revision",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE"
+   },
+   "expected_refused_by": "gate:baseline-resolves",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "baseline-resolves",
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKnM",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:baseline-resolves",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 12",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:baseline-resolves",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "0000000000000000000000000000000000000000",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE"
+   ],
+   "binding_refusals": {},
+   "case": "12b-absent-baseline",
+   "criterion": "baseline is well formed but absent",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE"
+   },
+   "expected_refused_by": "gate:baseline-resolves",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "baseline-resolves",
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKqI",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:baseline-resolves",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 12",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:baseline-resolves",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED"
+   ],
+   "binding_refusals": {},
+   "case": "13-unreachable-baseline",
+   "criterion": "baseline is a local-only commit the release point cannot reach",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED"
+   },
+   "expected_refused_by": "gate:baseline-reachable",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "baseline-reachable",
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKsU",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:baseline-reachable",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 13",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:baseline-reachable",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "954e82e3e3d60959bd01f68f27132ab7649bdc65",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  },
+  {
+   "admit_release_answers": [],
+   "allocation": {
+    "attempts": 1,
+    "cancellation": 1,
+    "wall-clock": 60
+   },
+   "authority_blocked": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL"
+   ],
+   "binding_refusals": {},
+   "case": "14-unsuperseded-denial",
+   "criterion": "denial wording with no superseding record, all else valid",
+   "dispatched": [],
+   "eligibility": {
+    "eligible": false,
+    "evidence": {
+     "execution_revision": 1
+    },
+    "lifecycle": "IMPLEMENT",
+    "outcome": "authority-block",
+    "reason": "authority-block",
+    "target": "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL"
+   },
+   "expected_refused_by": "gate:authority-wording-consistent",
+   "expected_worker_starts": 0,
+   "explicit_release": false,
+   "gate_answers": [
+    {
+     "check": "authority-wording-consistent",
+     "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL",
+     "result": "refused"
+    }
+   ],
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL",
+   "imported_from_fresh_board_read": true,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKvI",
+   "journal": {
+    "invocation_outcomes": [],
+    "invocation_started": 0,
+    "process_runs": [],
+    "provider_calls": 0,
+    "publication_started": 0
+   },
+   "matches_expected": true,
+   "observed_refused_by": "gate:authority-wording-consistent",
+   "observed_worker_starts": 0,
+   "pinned_step": "step 14",
+   "profile_automatic_release": true,
+   "projection_attempts": [],
+   "recorded_correlation": "release",
+   "recorded_hold_reason": "release-precondition:authority-wording-consistent",
+   "recorded_outcome": "authority-block",
+   "release_record": {
+    "authorizes_implement": true,
+    "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL",
+    "record_ref": "FX-B4:20260928T045705Z-24bd:FX-B4-PROBE-20260928T045705Z-24bd-DENIAL:release-record",
+    "text": "IMPLEMENT is authorized for this FX-B4 probe item by the WO-220506 fixture."
+   },
+   "stop_reason": "dependencies-or-authority-blocked"
+  }
+ ],
+ "checkout": {
+  "baseline": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+  "diverged": "954e82e3e3d60959bd01f68f27132ab7649bdc65",
+  "push_url": "/tmp/fx-b3-production-wpjqqk2n/push-disabled.invalid",
+  "release_point": "origin/main",
+  "release_point_revision": "5149d4d5c76ccead8659a70a513e7a0c17a50840",
+  "url": "https://github.com/AlienLogicLab/alienintent"
+ },
+ "checks": {
+  "all_cases_match": true,
+  "cleanup_verified": true,
+  "exact_launch_total": true,
+  "mutations_only_on_own_items": true,
+  "no_binding_refusals": true,
+  "no_board_projection_written": true,
+  "no_failure": true,
+  "probes_intact_at_readback": true,
+  "target_board_unchanged": true,
+  "watched_boards_not_written": true,
+  "watched_boards_unchanged": true,
+  "zero_provider_calls": true,
+  "zero_publications": true
+ },
+ "cleanup": {
+  "absent_after_fresh_read": {
+   "PVTI_lADOEcrpC84Bj5i_zg9IKLc": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKOY": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKRI": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKTY": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKWI": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKZ4": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKb4": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKfs": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKik": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKlU": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKnM": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKqI": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKsU": true,
+   "PVTI_lADOEcrpC84Bj5i_zg9IKvI": true
+  },
+  "deleted": [
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKLc",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POS",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKLc"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKOY",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKOY"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKRI",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKRI"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKTY",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DEP",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKTY"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKWI",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-CAP",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKWI"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKZ4",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKZ4"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKb4",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKb4"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKfs",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKfs"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKik",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKik"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKlU",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKlU"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKnM",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKnM"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKqI",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKqI"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKsU",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKsU"
+   },
+   {
+    "deleted_item_id": "PVTI_lADOEcrpC84Bj5i_zg9IKvI",
+    "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKvI"
+   }
+  ],
+  "failures": [],
+  "verified": true
+ },
+ "composition": {
+  "call_site": "FactoryCoordinator._run: ReleasePreconditionGate.check -> admit_release -> RoleBindingGuard.start",
+  "observation": "admit_release and ReleasePreconditionGate.check wrapped observation-only; each delegates unchanged",
+  "projection": "withheld: recorded locally, never written to the board",
+  "root": "alienintent.composition.github_profile.GitHubProfileComposition",
+  "snapshot": "fresh paginated Projects v2 read per admission pass, restricted to this run's own probe item ids",
+  "worker": "RoleBindingGuard(RealWorkerProvider(ScriptedWorkerProcess['authority-block'], JsonlInvocationJournal, GitWorktreeAdapter))"
+ },
+ "ended_at": "2026-09-28T05:03:57+00:00",
+ "exit_status": 0,
+ "failure": null,
+ "fixture": "FX-B4",
+ "invocation": {
+  "argv": [
+   "tools/live/fx_b3_release_admission_proof.py",
+   "--target",
+   "production",
+   "--out",
+   "docs/evidence/wave2-proof-fixtures/FX-B3/phase2-project1"
+  ],
+  "source_revision": {
+   "head": "e9f165426fecb350e4374904b1c2dcd8e6cfae38",
+   "tool_uncommitted": false
+  },
+  "tool": "tools/live/fx_b3_release_admission_proof.py",
+  "tool_sha256": "sha256:e00b4112c24963ae64a93b91c6799d351523b95324c3e5b948b0d7ab018f6f22"
+ },
+ "issue": 126,
+ "label": "OPERATIONAL \u2014 phase 2, real AlienLogicLab/alienintent Project #1 prelaunch boundary; worker process doubled",
+ "launch_id": "20260928T045705Z-24bd",
+ "mutations": [
+  {
+   "at": "2026-09-28T04:57:19+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-POS \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:57:21+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKLc",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:23+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKLc",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:25+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:57:27+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKOY",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:29+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKOY",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:31+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:57:33+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKRI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:35+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKRI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:37+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-DEP \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:57:39+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKTY",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:41+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKTY",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:43+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-CAP \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:57:44+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKWI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:46+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKWI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:48+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:57:50+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKZ4",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:52+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKZ4",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:54+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:57:55+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKb4",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:57:57+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKb4",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:00+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:58:02+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKfs",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:04+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKfs",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:06+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:58:08+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKik",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:10+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKik",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:13+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:58:14+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKlU",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:16+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKlU",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:19+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:58:20+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKnM",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:22+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKnM",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:25+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:58:26+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKqI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:28+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKqI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:31+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:58:32+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKsU",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:34+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKsU",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:36+00:00",
+   "field": null,
+   "item": null,
+   "operation": "addProjectV2DraftIssue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "at": "2026-09-28T04:58:38+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKvI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T04:58:39+00:00",
+   "field": "PVTSSF_lADOEcrpC84Bj5i_zhisMnY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKvI",
+   "operation": "updateProjectV2ItemFieldValue",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:14+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKLc",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:16+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKOY",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:17+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKRI",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:18+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKTY",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:19+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKWI",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:21+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKZ4",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:22+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKb4",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:23+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKfs",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:25+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKik",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:26+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKlU",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:27+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKnM",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:28+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKqI",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:29+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKsU",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  },
+  {
+   "at": "2026-09-28T05:03:30+00:00",
+   "field": null,
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKvI",
+   "operation": "deleteProjectV2Item",
+   "project": "PVT_kwDOEcrpC84Bj5i_",
+   "title": null
+  }
+ ],
+ "non_interference": {
+  "target": {
+   "added": [],
+   "changed": [],
+   "items_after": 126,
+   "items_before": 126,
+   "removed": [],
+   "unchanged": true
+  }
+ },
+ "passed": true,
+ "phase": 2,
+ "probe_items": [
+  {
+   "body_sha256": "sha256:7475d414d1f88a2a00e2ebea8bd9afcda99a6249cadc01dc4f4e529bf1466beb",
+   "contract_digest": "sha256:5006fe4c0fde4f54314564505cf989a0d6550ce4fdc7d514aee9c270c3402a2c",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POS",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKLc",
+   "readback": {
+    "body_sha256": "sha256:7475d414d1f88a2a00e2ebea8bd9afcda99a6249cadc01dc4f4e529bf1466beb",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKLc",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:57:23Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-POS \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-POS \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:a7334dc46883ce39c4154c805f88847d212565bcbfb953b903692e6281567893",
+   "contract_digest": "sha256:97778688d4c18d586b4e77ce6ff515f02eacadce6ab8b5299a30e8d412574137",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKOY",
+   "readback": {
+    "body_sha256": "sha256:a7334dc46883ce39c4154c805f88847d212565bcbfb953b903692e6281567893",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKOY",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:57:29Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-POLICY \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:85dbe754a3bffb047334128568008cbab6ba65618575e0dffcc440def0180050",
+   "contract_digest": "sha256:f82f7be8b6516603193b6a32f4eca9cc3f4fed0e8241961ab7a394d6a13c057d",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKRI",
+   "readback": {
+    "body_sha256": "sha256:85dbe754a3bffb047334128568008cbab6ba65618575e0dffcc440def0180050",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKRI",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:57:36Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:4f59246b0daa6d1351881d74cc84d8157363c33906df477d0d8e24cff2f51c75",
+   "contract_digest": "sha256:90d7d3cb691333bb88892d8ed8b1fa58f4bf4722e1819e2813a2ec78eaacf640",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DEP",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKTY",
+   "readback": {
+    "body_sha256": "sha256:4f59246b0daa6d1351881d74cc84d8157363c33906df477d0d8e24cff2f51c75",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKTY",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:57:41Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-DEP \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-DEP \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:01d4e6bac11b9a6a28437749b524a67c1aeb8fc29d8e0f1f17aa7dd60351653e",
+   "contract_digest": "sha256:32f96ff2d638a3e9256be5343623487dde4d87080a7cef380c84971adbceb48c",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-CAP",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKWI",
+   "readback": {
+    "body_sha256": "sha256:01d4e6bac11b9a6a28437749b524a67c1aeb8fc29d8e0f1f17aa7dd60351653e",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKWI",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:57:47Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-CAP \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-CAP \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:b8ab9a9fd5b40a231ddf620de498202ff7791db420a6c15f314b264f227b8119",
+   "contract_digest": "sha256:04b07b9e650b4176a3a85f3b0e4c898aca62f2601af37716274713bf2ccccfdc",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKZ4",
+   "readback": {
+    "body_sha256": "sha256:b8ab9a9fd5b40a231ddf620de498202ff7791db420a6c15f314b264f227b8119",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKZ4",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:57:52Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:b3f1e364a05696d14beea3c1d72183512b2215f9ef0af753a3f1f7c307f63c87",
+   "contract_digest": "sha256:45339d1c93011931f323a9690567d42f301f2fb8c5a43fb2c9c5c3e587e63076",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKb4",
+   "readback": {
+    "body_sha256": "sha256:b3f1e364a05696d14beea3c1d72183512b2215f9ef0af753a3f1f7c307f63c87",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKb4",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:57:58Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:c9d126c453081661c1364ebfcd1b01e7c08fdc67ddaf9e7dd2e2d7ccfe7fb87c",
+   "contract_digest": "sha256:47f21c15ee9eeb36f02bd7c2b2497ae83ec53d114ae6a250e9b64385ac486bb8",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKfs",
+   "readback": {
+    "body_sha256": "sha256:c9d126c453081661c1364ebfcd1b01e7c08fdc67ddaf9e7dd2e2d7ccfe7fb87c",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKfs",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:58:05Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:3ea62f679e8027af36a4fa83333c13d8566b728a440c9cc29249a0461a0b481b",
+   "contract_digest": "sha256:f1fa37945fd0c82d9edfddb13d489f556434e28f49db489c84eaaf8ad3cc12a0",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKik",
+   "readback": {
+    "body_sha256": "sha256:3ea62f679e8027af36a4fa83333c13d8566b728a440c9cc29249a0461a0b481b",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKik",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:58:11Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:b7fe5839e4a2045cd0e95ea59f51e9bcc3b7bdc634e787d6de19faf4cf1bd36e",
+   "contract_digest": "sha256:08161cc01a43e2a06f65ba1b42c80ab9c3e5616434864cec0f9260a490cd2ea5",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKlU",
+   "readback": {
+    "body_sha256": "sha256:b7fe5839e4a2045cd0e95ea59f51e9bcc3b7bdc634e787d6de19faf4cf1bd36e",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKlU",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:58:17Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:e52de96fb0e0b5cb76cb83aca620b43ab3141fbdf3bfe10f76c6d925d05f156f",
+   "contract_digest": "sha256:9aeb97ed4aef1e7954b5ab8739eb13f99c27026f786451e9429925b50c58b7fc",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKnM",
+   "readback": {
+    "body_sha256": "sha256:e52de96fb0e0b5cb76cb83aca620b43ab3141fbdf3bfe10f76c6d925d05f156f",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKnM",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:58:23Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:fe7c1bf40c1f5acaf0986b4b1d9ea1df785cbf83c8aac3c422652a123a81b83b",
+   "contract_digest": "sha256:cc18bf1d5a84090e9642a76430d55a5372013e1058991b1f23a153b5747824dc",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKqI",
+   "readback": {
+    "body_sha256": "sha256:fe7c1bf40c1f5acaf0986b4b1d9ea1df785cbf83c8aac3c422652a123a81b83b",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKqI",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:58:29Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:656ac4242341106be0356d2a8e07b39f88e62ae290f3ebbafce3a64ad439c7fc",
+   "contract_digest": "sha256:22739e534de56fac66d9d4114d38fb4f06f94f852065e64550d157bb2c1ba809",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKsU",
+   "readback": {
+    "body_sha256": "sha256:656ac4242341106be0356d2a8e07b39f88e62ae290f3ebbafce3a64ad439c7fc",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKsU",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:58:34Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED \u2014 release-admission proof scaffolding, safe to close, do not act"
+  },
+  {
+   "body_sha256": "sha256:eceb020d719328586a750d43684835c98a1b799e288ccff27051a90c50f2d97f",
+   "contract_digest": "sha256:7495db317b67603064e07fa6b526305551e805bf10baffa2db4d6723683515c9",
+   "identity": "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL",
+   "item": "PVTI_lADOEcrpC84Bj5i_zg9IKvI",
+   "readback": {
+    "body_sha256": "sha256:eceb020d719328586a750d43684835c98a1b799e288ccff27051a90c50f2d97f",
+    "item": "PVTI_lADOEcrpC84Bj5i_zg9IKvI",
+    "priority": "P5",
+    "status": "READY",
+    "status_updated_at": "2026-09-28T04:58:40Z",
+    "title": "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL \u2014 release-admission proof scaffolding, safe to close, do not act"
+   },
+   "readback_ok": true,
+   "title": "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL \u2014 release-admission proof scaffolding, safe to close, do not act"
+  }
+ ],
+ "record_kind": "ReleaseAdmissionProof",
+ "schema_version": 1,
+ "snapshot_reads": [
+  {
+   "at": "2026-09-28T04:58:48+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:58:56+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:02+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:09+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:15+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POS"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:21+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POLICY"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:28+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POLICY"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:35+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-POLICY"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:40+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:46+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:53+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST"
+   ]
+  },
+  {
+   "at": "2026-09-28T04:59:59+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DEP"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:00:05+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DEP"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:00:11+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-CAP"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:00:17+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-CAP"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:00:25+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-CAP"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:00:32+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:00:37+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:00:44+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:00:51+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:00:56+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:01:02+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:01:08+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:01:18+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:01:24+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:01:29+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:01:35+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:01:42+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:01:48+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:01:54+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:00+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:06+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:12+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:18+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:25+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:32+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:38+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:44+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:50+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:02:56+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:03:01+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL"
+   ]
+  },
+  {
+   "at": "2026-09-28T05:03:08+00:00",
+   "identities": [
+    "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL"
+   ]
+  }
+ ],
+ "started_at": "2026-09-28T04:57:05+00:00",
+ "step15_readback": {
+  "FX-B4-PROBE-20260928T045705Z-24bd-ABSENTBASE": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-BUDGET": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-CAP": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-DENIAL": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-DEP": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-DIGEST": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-DIVERGED": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-NOAUTH": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-NOBASE": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-NORECORD": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-NULLBASE": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-POLICY": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-POS": {
+   "present": true,
+   "status": "READY"
+  },
+  "FX-B4-PROBE-20260928T045705Z-24bd-UNRELEASED": {
+   "present": true,
+   "status": "READY"
+  }
+ },
+ "target": {
+  "name": "production",
+  "profile": "alienintent-self-hosting",
+  "project_id": "PVT_kwDOEcrpC84Bj5i_",
+  "project_number": 1,
+  "repository": "AlienLogicLab/alienintent"
+ },
+ "tokens_and_cost": "UNKNOWN (no provider ran; the fixture itself spends no tokens)",
+ "totals": {
+  "expected_worker_starts": 1,
+  "observed_worker_starts": 1,
+  "provider_calls": 0,
+  "publications": 0
+ },
+ "watched_mutations": {},
+ "work_unit": "WO-220506"
+}

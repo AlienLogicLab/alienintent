@@ -277,6 +277,33 @@
         "tools/live/test_fx_b3p_release_preconditions.py",
         "tests/composition/test_release_admission_wiring.py"
       ]
+    },
+    {
+      "id": "canonical-live-release-admission-proof",
+      "description": "The FX-B3/FX-B4 pinned sequence (WO-220506, Issue #126) through GitHubProfileComposition's FactoryCoordinator._run: one fully valid probe launches exactly once through the K3 RoleBindingGuard and RealWorkerProvider with only the worker process doubled; the identity replay, policy/source, readiness-digest, dependency, capability, budget-dimension and not-released cases and the five ReleasePreconditionGate cases each refuse at their named check with zero launches; only the run's own items are mutated, cleanup is verified and every other item is unchanged. Offline over an in-memory board; a faulted gate is detected and the restored gate passes.",
+      "paths": [
+        "tools/live/fx_b3_release_admission_proof.py",
+        "tools/live/test_fx_b3_release_admission_proof.py",
+        "docs/evidence/wave2-proof-fixtures/FX-B3/**",
+        "src/alienintent/execution_coordination/domain/release.py",
+        "src/alienintent/execution_coordination/*/release_admission.py",
+        "src/alienintent/execution_coordination/application/factory_coordinator.py",
+        "src/alienintent/execution_coordination/adapters/github_work_management.py",
+        "src/alienintent/execution_coordination/adapters/github_projects_v2.py",
+        "src/alienintent/composition/github_profile.py",
+        "src/alienintent/composition/release_admission.py",
+        "src/alienintent/composition/role_binding.py",
+        "src/alienintent/composition/sandbox_run_profile.py",
+        "src/alienintent/invocation_runtime/application/real_worker.py",
+        "src/alienintent/invocation_runtime/adapters/scripted_worker.py"
+      ],
+      "command": [
+        "python3",
+        "-m",
+        "pytest",
+        "-q",
+        "tools/live/test_fx_b3_release_admission_proof.py"
+      ]
     }
   ]
 }
