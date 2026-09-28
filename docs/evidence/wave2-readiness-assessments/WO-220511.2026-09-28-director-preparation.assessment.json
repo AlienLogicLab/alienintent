@@ -1,0 +1,64 @@
+{
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220511",
+  "outcome": "ASSESSED",
+  "disposition": "HOLD",
+  "assessment": {
+    "disposition": "HOLD",
+    "governing_intent": "Deliver WO-220511/#134 B8 attention waiter and resident tenure handoff gates: durable handling of new/unresolved judgment attention or explicit duty end, suppression and no duplicate handling, explicit tenure decisions and exits, checkpoint continuity, wake-up paths, independent monitor/readback evidence, and fresh-context equivalent authority without lost programme review or communication.",
+    "summary": "The packet is explicitly a TASKS/preparation packet, not a READY claim. The 2026-09-26 Wave 2 binding decision disposes the recurring Wave 2 authority items within bounds, including POSTW1-DECIDE-006A, SWF-21 scope disposition, attention activation authority, and Windows notification non-requirement. Remaining gates are not merely implementation research: accepted predecessor replacement-path proof for #131, retained human-attention proof dependency from #128 where applicable, B8-specific resident tenure owner disposition or exact owner record confirmation, bound operational successor target/command/profile/budget/custody, and independent operational verification/readback evidence are unavailable or expressly unbound.",
+    "owner_clarifications": [],
+    "implementation_unknowns": [
+      "Exact successor operational target, live command, profile, policy digest, runtime budget and custody path for the B8 operational contrast are reported as UNBOUND.",
+      "The exact accepted #131 replacement-path candidate/proof receipt and whether its Founder hold has been discharged are not available in the supplied packet.",
+      "The exact B8-specific resident tenure owner disposition or authoritative owner record is not supplied; the fixture states it remains to be checked against exact owner records.",
+      "How the local pytest probes map onto the final operational evidence record is partially specified, but local passing results are explicitly not sufficient for operational acceptance.",
+      "The final independent verifier workflow and evidence custody details depend on later candidate publication and retrieval of an exact SHA."
+    ],
+    "independent_decision_centers": [
+      "Predecessor proof availability and retained holds for #131/#128 must be resolved by their named owners before this BIU can rely on the replacement path and human-attention predicate.",
+      "B8-specific resident tenure authority/owner disposition must be confirmed or issued separately from the general Wave 2 delegation.",
+      "Operational execution allocation must bind target, command, budget, custody and authorized provider/runtime without inventing new scope or spend.",
+      "Independent verification must evaluate the exact candidate and operational evidence once prerequisites and custody are in place."
+    ],
+    "semantic_split_recommendation": [],
+    "verification_assessment": "Acceptance is observable in principle: local mechanical probes have named commands and reported prior local pass counts, and the operational evidence contract specifies source/candidate/fixture SHA, command/exit status, before/after pending and handled identities, delivery counts, tenure epoch/deadline/revision, monitor readback, incumbent readback, raw observations, and an independent verdict. However, one meaningful independent READY/acceptance verdict is not yet possible because the required operational target, predecessor replacement-path proof, authority/custody inputs, and operational readback are not available. Local substitutions are explicitly labelled insufficient.",
+    "expected_rework_locality": "MEDIUM",
+    "material_risks": [
+      "Treating local preparation probes as operational proof would violate the packet’s stated boundary and could falsely satisfy external proof obligations.",
+      "Proceeding before #131 accepted replacement-path proof could build on an unavailable execution substrate.",
+      "Proceeding before the retained human-attention dependency is discharged could conflate command delivery with genuine human receipt or judgment.",
+      "Unbound operational target, budget and custody create a risk of unauthorized live operation or unverifiable evidence.",
+      "Missing resident tenure authority could lead to implementation of a tenure policy without the required owner disposition.",
+      "Failure to preserve one-writer safety, durable queue identity, suppression and readback evidence could cause lost or duplicate handling of programme attention."
+    ],
+    "next_action": "Keep #134 on HOLD and narrow the hold to the remaining gates: obtain accepted predecessor proof receipts for #131 and applicable #128 retained proof, bind or produce the B8-specific resident tenure owner disposition, bind authorized operational target/command/profile/budget/custody, then run a fresh Agent Ready assessment on the exact revised packet before implementation handoff.",
+    "rationale": "The controlling condition is missing external prerequisites and authority/evidence inputs, not task size or a need to split the implementation. The binding Wave 2 delegation removes several recurring authority holds and should not be reopened, but the supplied packet itself preserves independent gates: predecessor proofs, B8-specific tenure disposition, operational target and custody, and independent operational verification. The work is cohesive around one B8 proof objective, so SPLIT is not warranted; owner intent is mostly expressed, so CLARIFY is not the primary disposition. Because required artifacts and authority are unavailable or expressly unbound, the correct readiness disposition is HOLD.",
+    "provider_evidence": {
+      "provider": "codex",
+      "version": "codex-cli 0.158.0",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "capability_probe": "PASSED"
+    }
+  },
+  "provenance": {
+    "producer": "agent-ready-mcp",
+    "native_agent_ready": true,
+    "provider": "codex",
+    "provider_evidence": {
+      "provider": "codex",
+      "version": "codex-cli 0.158.0",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "capability_probe": "PASSED"
+    },
+    "invocation": "mcp__agent_ready__assess_work_unit",
+    "input_sha256": "f223832f9dca6e802450cbf6c17f90b1c85c508f93ad814c70fc6cde895eaf5e",
+    "input_paths": [
+      "docs/decisions/2026-09-26-wave2-bounded-operational-authority-delegation.md",
+      "docs/work-units/wave2/WO-220511.md",
+      "docs/evidence/wave2-proof-fixtures/FX-B8.md"
+    ],
+    "ended_at": "2026-09-28T14:42:25.787231+00:00"
+  }
+}

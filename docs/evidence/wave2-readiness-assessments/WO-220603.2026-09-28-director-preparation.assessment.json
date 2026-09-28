@@ -1,0 +1,62 @@
+{
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220603",
+  "outcome": "ASSESSED",
+  "disposition": "HOLD",
+  "assessment": {
+    "disposition": "HOLD",
+    "governing_intent": "Assess readiness of Issue #135 / WO-220603, a Wave 2 retirement/replacement gate for SWF-29 liveness reconciliation, using the current TASKS packet and the included binding authority delegation. The work must prove operational liveness replacement behavior only after required predecessor proof, live target/readback, budget/custody, evidence, and independent verification gates are available; local probes are preparation only.",
+    "summary": "The binding Wave 2 delegation appears, as reported in the packet, to dispose the previously named Founder authority gates POSTW1-DECIDE-006A and EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY within approved Wave 2 boundaries, so those should not control the assessment. The current controlling condition is HOLD because required external/execution prerequisites remain unavailable or explicitly unbound: predecessor WO-220505/#125 is still held and lacks accepted operational proof, this BIU has no bound live target/readback, budget/allocation/custody are unbound, and no operational contrast or independent verdict exists. The task’s intent and boundaries are otherwise coherent: it is a capstone/replacement gate, not an implementation of sibling scopes or an authorization to retire SWF-29 from local tests.",
+    "owner_clarifications": [],
+    "implementation_unknowns": [
+      "Exact current repository state, candidate branch/SHA, and fixture revisions for any future producer/verifier handoff are not established by this assessment and would need to be pinned when execution is authorized.",
+      "The concrete operational invocation, target profile, effect key, readback mechanism, writer/generation identity, and attention linkage are not yet specified because the packet says they are unbound.",
+      "The independent verifier process and evidence storage locations are described contractually but not instantiated for this issue’s operational run.",
+      "Engineering may still need to confirm that the named local pytest suites remain aligned with current interfaces at the execution revision, but passing local probes cannot satisfy operational acceptance."
+    ],
+    "independent_decision_centers": [
+      "Predecessor WO-220505/#125 operational proof and hold discharge: #135 cannot consume a planned or local predecessor capability as execution substrate.",
+      "Operational target, readback, budget/allocation, and candidate custody binding for #135: these are necessary execution prerequisites delegated or allocated outside the current packet.",
+      "Operational proof and independent verification for FX-R3: the acceptance predicate requires live/authorized contrast and durable readback, not only local mechanics tests."
+    ],
+    "semantic_split_recommendation": [],
+    "verification_assessment": "Acceptance is observable in principle: an authorized operational run must demonstrate dropped-event recovery within G+I, suppression during provider/judgment block, explicit resolution, delayed delivery and restart duplicate safety, one-writer preservation, queue/attention linkage, durable effect readback, old-protection continuity, retained evidence, and an independent verdict. One independent verification verdict would be meaningful only after the exact predecessor proof, candidate SHA, target/profile, commands, observations, and readback artifacts are available. The reported local pytest passes are useful mechanics observations but expressly do not satisfy the operational replacement predicate.",
+    "expected_rework_locality": "MEDIUM",
+    "material_risks": [
+      "Proceeding before #125 is DONE would treat an unavailable predecessor capability as execution substrate.",
+      "Local/sandbox proof could be mistaken for operational replacement evidence despite the packet explicitly forbidding that inference.",
+      "Unbound target/readback/budget/custody could cause invalid or unreproducible proof attempts.",
+      "Retiring or weakening SWF-29 before replacement proof and rollback/readback obligations pass would violate KEEP_UNTIL_REPLACED and no-loss/no-duplicate-effect protections.",
+      "Missing measurements or unavailable evidence must remain UNKNOWN/HOLD, not be converted to PASS.",
+      "A provider unable to prove idempotent/fenced consumption and durable readback must be parked rather than accepted by relaxing the effectively-once boundary."
+    ],
+    "next_action": "Maintain HOLD. Narrow the remaining gates to non-Founder-authority prerequisites: obtain accepted operational predecessor proof and hold discharge for #125, bind #135’s authorized live target/readback plus budget/allocation/custody, pin exact candidate/fixture/profile/commands/evidence schema, then run the operational FX-R3 contrast with independent verification.",
+    "rationale": "The included binding decision removes the old recurring Founder authority blockers for approved Wave 2 work within stated boundaries, so reopening POSTW1-DECIDE-006A or EXPLICIT_LIVE_TRANSPORT_PROOF_AUTHORITY would be inappropriate. However, the current packet itself repeatedly states that #125 remains held without accepted operational predecessor proof, no live target or allocation is bound, no operational probe has run, and local tests are preparation only. These are necessary prerequisites and evidence gates, not unresolved product-intent questions and not independent semantic workstreams suitable for splitting this capstone. Because the proof predicate depends on external operational substrate and predecessor receipts that are unavailable, HOLD is the controlling disposition.",
+    "provider_evidence": {
+      "provider": "codex",
+      "version": "codex-cli 0.158.0",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "capability_probe": "PASSED"
+    }
+  },
+  "provenance": {
+    "producer": "agent-ready-mcp",
+    "native_agent_ready": true,
+    "provider": "codex",
+    "provider_evidence": {
+      "provider": "codex",
+      "version": "codex-cli 0.158.0",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "capability_probe": "PASSED"
+    },
+    "invocation": "mcp__agent_ready__assess_work_unit",
+    "input_sha256": "d4a6063c2d9ba5282bb146c85b47da2cbbdf4335ec11f61c1765d0ab2265e559",
+    "input_paths": [
+      "docs/decisions/2026-09-26-wave2-bounded-operational-authority-delegation.md",
+      "docs/work-units/wave2/WO-220603.md",
+      "docs/evidence/wave2-proof-fixtures/FX-R3.md"
+    ],
+    "ended_at": "2026-09-28T14:42:25.786598+00:00"
+  }
+}
