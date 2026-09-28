@@ -1,0 +1,68 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Integrate and verify the R6 bootstrap replacement gate for release admission, preserving the existing release-admission protection until the canonical live-profile admission path has operational proof, authority closure, retained evidence, and readback continuity.",
+    "implementation_unknowns": [
+      "Exact repository implementation points for the current external admission mechanism and canonical live-profile admission path must be located during implementation.",
+      "The worker must confirm the pinned FX-R6 fixture commands, inputs, expected outcomes, and evidence schema in the repository before relying on them.",
+      "The exact mechanics for preserving old protection while proving replacement continuity may require local engineering inspection.",
+      "The worker must determine how existing evidence retention, immutable observation references, and independent verdict recording are implemented in the current project workflow."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Operational target or live-profile prelaunch boundary may be unavailable or differ from the pinned fixture assumptions.",
+      "FX-R6 may reveal that predecessor evidence is insufficient, mismatched, or not retrievable exactly as required.",
+      "The old release-admission mechanism readback may fail, preventing retirement and requiring the old protection to remain active.",
+      "A discriminating probe failure could expose a defect owned by an upstream provider rather than this capstone, causing a blocked transition rather than local repair.",
+      "Evidence or authority records must not be inferred from local proof; missing measurements are explicit holds."
+    ],
+    "next_action": "Hand off to an implementing/verifying worker to execute the pinned FX-R6 flow within the stated authority boundaries, retain the required evidence, preserve the old admission protection until replacement proof and readback pass, and stop rather than broaden scope if predecessor proof, operational target, custody, or authority assumptions fail.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.156.1"
+    },
+    "rationale": "The controlling condition is readiness rather than clarification, split, or hold. The supplied text reports that the previously named authority gates have been disposed for this BIU, the predecessor dependency is done, and the FX-R6 preparation has been pinned. The intent is narrow and coherent: prove and admit the replacement gate without changing release authority, adding lifecycle states, replanning the DAG, or repairing upstream defects. Remaining uncertainty is implementation and operational verification work, which is appropriate for autonomous execution under the provided stop conditions. The work should not be split because the fixture execution, old-mechanism continuity, evidence retention, and retirement decision form one semantic gate whose acceptance or rejection should be judged together.",
+    "semantic_split_recommendation": [],
+    "summary": "The work describes a cohesive retirement/replacement gate for the bootstrap release-admission mechanism. Owner intent, authority boundaries, non-goals, dependencies, evidence requirements, rollback behavior, and acceptance predicate are materially specified. The remaining work is execution and verification of the pinned FX-R6 fixture and associated operational/readback evidence, not a product or authority clarification.",
+    "verification_assessment": "Acceptance is observable: FX-R6 must show that all six preconditions plus eligibility refuse meaningful invalid cases before launch, that formal release-authority closure alone does not clear the gate, that the old protection remains until replacement proof and readback continuity exist, and that required evidence records include fixture/source/profile/candidate revisions, invocation, expected and observed results, exit status, immutable observation references, and independent verdict where required. One independent verification verdict is meaningful because the task has a single governing predicate and a single replacement-gate boundary."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-28T09:10:27.234307+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 12384,
+    "input_sha256": "c608679f9452fb1058c6b1a948c624ef022b8c14f9552c6510cb6bd0bf2c8732",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-tynvbwkv/WO-220606.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.156.1"
+    },
+    "started_at": "2026-09-28T09:09:57.082498+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220606"
+}
