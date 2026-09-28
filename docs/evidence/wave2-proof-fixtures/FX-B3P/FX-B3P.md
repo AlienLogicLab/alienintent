@@ -67,6 +67,10 @@ existing `release.py` budget check therefore refuses an exhausted, absent or zer
 
 ### Compatibility boundary (declared, not hidden)
 
+> **Superseded in part by candidate cycle 2 (below).** The composition-root statement in this
+> subsection described cycle 1 (`596c980`). The VERIFIER rejected it, and cycle 2 wires the gate and
+> allocation into the operational profiles. The text is kept as the record of what cycle 1 claimed.
+
 Both inputs are opt-in constructor inputs, as the Issue requires ("add fields/inputs additively";
 "preserve compatible interfaces"):
 
@@ -151,3 +155,106 @@ weigh that deviation from the stated proof order.
 
 The contrast cases guard against the fixture passing vacuously: an unconfigured profile still
 launches the same invalid inputs.
+
+## Candidate cycle 2 — REJECT repair
+
+Invocation: `AlienLogicLab/alienintent#141:PRODUCER:e63dde70-dfdf-425a-921b-3c6611179fda` (worker Morty).
+Cycle 2 builds on cycle-1 candidate `6ba67e9` on branch `b-disp/6897ec54-…`. It answers VERIFIER
+invocation `…#141:VERIFIER:69ad8f97-…` (RESULT=REJECT), which raised two findings.
+
+### Finding 2 — the operational profiles did not enforce the gate (repaired)
+
+Implementation commit `d408caf7c6a30367b00800af1d1a14c90a4eb0cd` wires the gate and the allocation
+into the operational profiles through a new composition module,
+`src/alienintent/composition/release_admission.py`:
+
+- `SandboxRunProfile` is the `alienintent --profile-factory` live profile.
+  `GitHubProfileComposition` is the GitHub-backed profile. Both now always build their
+  `FactoryCoordinator` with `release_gate` and `allocation` from `compose_release_admission`. Neither
+  exposes a way to omit them.
+- **Release records** are durable `release-authorization:<BIU>` aggregates in the profile's own
+  operational store. They are exposed as `profile.release_records`.
+- **Revisions** come from `GitRevisionResolver` over the profile's checkout.
+  `GitHubProfileComposition` takes a `checkout`. Without one, no baseline resolves and every
+  release is refused.
+- **Allocation** comes from the profile document's `release_admission.biu_limits`. For
+  `GitHubProfileComposition` it comes from a `ReleaseAdmissionConfig`. This is the Python analogue
+  of `execution.biuLimits`. When the section is absent, no BIU has an allocation, so any contract
+  with a required budget dimension is refused.
+- **Release point** comes from `release_admission.release_point` and defaults to the checkout's
+  `HEAD`. A malformed section is refused when the profile is composed (`ReleaseAdmissionRejected`).
+- **`OfflineProfile`** is the scripted offline double. No operational entry point constructs it;
+  `src/` uses it only in `offline_proof.py`. It takes a supplied `ReleaseAdmission` and forwards it.
+  It stays opt-in because the existing `test_factory_coordinator.py` cases drive it without release
+  records, and the Issue forbids weakening them.
+
+Consequences for existing fixtures:
+
+- **Fixtures that drain work through the operational profiles** now record what an operator
+  supplies. These are the FX-K3 `k3_fixture.py` and the `test_sandbox_run_profile.py` whole-loop
+  tests. They record one release authorization per BIU at the checkout's baseline, plus a per-BIU
+  allocation, using `tests/support/release_admission.py`. No assertion was changed.
+- **The role-binding test** (`test_role_binding.py::test_the_binding_guard_owns_no_state…`) has an
+  aggregate-prefix allow-list. It now names `release-authorization:`, the gate's record and not
+  the guard's. The source check that the guard writes nothing is unchanged.
+
+Discriminating tests are in `tests/composition/test_release_admission_wiring.py`. They drive the
+real `SandboxRunProfile` and `GitHubProfileComposition` constructors:
+
+- the profile refuses when there is no record, when no allocation is configured, when the baseline
+  is unreachable, or when no checkout exists, each with zero starts;
+- a fully authorized profile starts exactly one producer and reaches DONE;
+- config parsing and the fail-closed default behave as specified.
+
+FX-B3P gains five `profile-*` cases through the production `GitHubProfileComposition` constructor.
+They supply only configuration and durable records, never a gate:
+
+| Case | Expected starts | Expected refusal |
+|---|---|---|
+| profile-no-release-record | 0 | implementation-authorized |
+| profile-unreachable-baseline | 0 | baseline-reachable |
+| profile-no-allocation | 0 | admit_release (budget) |
+| profile-unmetered-dimension (FX-B3 step 8 shape) | 0 | admit_release (budget) |
+| profile-positive-control | 1 | — |
+
+The `contrast-*` cases stay at the bare `FactoryCoordinator` level. They show that the refusals come
+from the gate. The `profile-unmetered-dimension` case shows the same shape is now refused through
+the operational profile.
+
+Observed result: `FX-B3P/result-cycle2.json`. It was produced by running the fixture against
+`d408caf` on a clean tree:
+
+- exit status 0
+- `all_match: true` across all 20 cases
+- the command, output sha256, source tree and fixture blob are recorded in the file
+
+The cycle-1 observation `FX-B3P/result.json` is retained unchanged.
+
+The regression pack `canonical-release-precondition-gate` now also selects the composition roots,
+the wiring test and the fixture support. It runs `tests/composition/test_release_admission_wiring.py`.
+
+### Finding 1 — no committed `.alienintent/feature-regressions.json` (custody rule)
+
+A commit cannot carry a receipt that names its own SHA. For that reason, the landed custody rule
+does not track the receipt. That rule is in [FX-C.md](../FX-C/FX-C.md#feature-regression-receipt-custody)
+and was reaffirmed by FX-E1 (`5a98c26`). The runtime (`CliWorkerProvider._feature_regressions`)
+writes the receipt into the verifier's checkout of the exact candidate. Otherwise the verifier
+produces it at the retrieved SHA:
+
+```
+python3 tools/verification/run_feature_regressions.py --base 93dc10d5969a95717e631496b65ea734531d3089 \
+  --candidate HEAD --receipt .alienintent/feature-regressions.json
+```
+
+The PRODUCER records its own receipt for the published SHA on Issue #141 for comparison. That
+receipt does not replace the verifier-side one.
+
+### Remaining known limits (unchanged from cycle 1, plus one)
+
+- **Durable consumption.** It exists only for `attempts`, taken from recorded verifier rejections.
+- **Budget refusals.** They keep the untagged `admit_release` refusal record.
+- **Populating release records.** Nothing yet copies release records from the Issue's
+  release-record comments into a profile's store. An operator or tool records them through
+  `profile.release_records`. Until one is recorded, the operational profiles refuse release,
+  which is the fail-closed behaviour SWF-21 requires. Automating that population is operational
+  wiring for WO-220506/#126, together with the FX-B3/FX-B4 re-pin, and is not claimed here.
