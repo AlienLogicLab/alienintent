@@ -368,7 +368,10 @@ export class EventRelay {
       finally {
         completed = this.state().active[lane];
         this.release(claim); this.active.delete(claim.invocationId);
-        this.reconcileResources();
+        // If the prior invocation has no valid durable result, replacement admission is
+        // the liveness-critical next step. Historical resource cleanup is best-effort
+        // maintenance and must not block that replacement launch.
+        if (allowedSignals(claim, this.roleNames).has(durable)) this.reconcileResources();
       }
       if (allowedSignals(claim, this.roleNames).has(durable) && !routedSignal(claim)) {
         if (completed && routedSignal(completed)) await this.resumeAfterClosure(completed);
