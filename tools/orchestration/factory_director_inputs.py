@@ -331,13 +331,9 @@ def read_inbox(inbox: Path) -> tuple[tuple[str, ...], frozenset[str]]:
     return tuple(sorted(entries - receipts)), acknowledgements
 
 
-def has_retained_assessment(comments: list[dict], issue: int, operators: frozenset[str]) -> bool:
-    """A marker counts only in a comment by an authorized operator (self-hosting ``operator``).
-
-    Markers from anyone else are not a source at all, so quoting the format cannot mark an
-    Issue assessed or take the factory out of authoritative state.
-    """
-    found = False
+def retained_assessment_disposition(comments: list[dict], issue: int, operators: frozenset[str]) -> str | None:
+    """Return the latest authorized retained Agent Ready disposition for an Issue."""
+    latest = None
     for comment in comments:
         if not isinstance(comment, dict) or not isinstance(comment.get("body"), str):
             raise SourceUnavailable(f"issue #{issue} comment is malformed")
@@ -345,18 +341,23 @@ def has_retained_assessment(comments: list[dict], issue: int, operators: frozens
         if not isinstance(author, str) or author.lower() not in operators:
             continue
         if editor is not None and (not isinstance(editor, str) or editor.lower() not in operators):
-            continue  # an operator's comment rewritten by someone else is no longer the operator's
+            continue
         if editor is None and comment.get("lastEditedAt"):
-            continue  # edited by an account GitHub no longer names: provenance unknown
+            continue
         for match in ASSESSMENT_MARKER.finditer(comment["body"]):
             try:
                 record = json.loads(match.group(1).strip())
             except json.JSONDecodeError as exc:
                 raise SourceUnavailable(f"issue #{issue} has an unparsable Agent Ready assessment") from exc
-            if not isinstance(record, dict) or not isinstance(record.get("disposition"), str):
+            disposition = record.get("disposition") if isinstance(record, dict) else None
+            if not isinstance(disposition, str) or not disposition.strip():
                 raise SourceUnavailable(f"issue #{issue} has a malformed Agent Ready assessment")
-            found = True
-    return found
+            latest = disposition.strip().upper()
+    return latest
+
+
+def has_retained_assessment(comments: list[dict], issue: int, operators: frozenset[str]) -> bool:
+    return retained_assessment_disposition(comments, issue, operators) is not None
 
 
 # --- mapping ------------------------------------------------------------------------------
@@ -372,7 +373,7 @@ class Evaluation:
     fingerprint: str | None = None
 
 
-def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: set[int],
+def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: dict[int, str],
                    supply_candidates: frozenset[int] = frozenset()) -> str | None:
     """Why this Issue alone would make Director control required, ignoring holds."""
     if state == "READY":
@@ -389,11 +390,13 @@ def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: se
 
 
 def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
-           unprocessed: tuple[str, ...], assessed: set[int], paused: bool, wip_limit: int,
+           unprocessed: tuple[str, ...], assessed: dict[int, str] | set[int], paused: bool, wip_limit: int,
            acknowledgements: frozenset[str] = frozenset(), *,
            biu_issues: frozenset[int] = frozenset(), prepared_buffer_target: int = 1) -> Evaluation:
+    if not isinstance(assessed, dict):
+        assessed = {issue: "UNKNOWN" for issue in assessed}
     prepared_depth = sum(1 for issue, state in board.items()
-                         if state == "READY" or (state == "TASKS" and issue in assessed))
+                         if state == "READY" or (state == "TASKS" and assessed.get(issue) == "READY"))
     supply_candidates = frozenset(issue for issue, state in board.items()
                                   if prepared_depth < prepared_buffer_target and state == "TASKS"
                                   and issue in biu_issues and issue not in assessed and issue not in holds)
@@ -433,7 +436,7 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
     }
     fingerprint = sha256(json.dumps({
         "board": {str(k): v for k, v in sorted(board.items())}, "holds": sorted(holds),
-        "inbox": list(unprocessed), "escalations": list(escalations), "assessed": sorted(assessed),
+        "inbox": list(unprocessed), "escalations": list(escalations), "assessed": sorted(assessed.items()),
     }, sort_keys=True).encode()).hexdigest()
     return Evaluation(inputs, None, observations, fingerprint)
 
@@ -493,8 +496,8 @@ class AuthoritativeDirectorInputs:
         except OSError as exc:  # unreadable is not "not paused"
             raise SourceUnavailable(f"pause flag cannot be checked: {exc}") from exc
 
-    def read_assessed(self, board: dict[int, str], config: AdapterConfig) -> set[int]:
-        assessed = set()
+    def read_assessed(self, board: dict[int, str], config: AdapterConfig) -> dict[int, str]:
+        assessed: dict[int, str] = {}
         for issue in sorted(issue for issue, state in board.items() if state == "TASKS"):
             try:
                 bodies = self.comments_reader(issue) if self.comments_reader is not None else self.app_reader(config).comments(issue)
@@ -502,8 +505,9 @@ class AuthoritativeDirectorInputs:
                 raise
             except Exception as exc:
                 raise SourceUnavailable(f"issue #{issue} comments read failed: {exc}"[:300]) from exc
-            if has_retained_assessment(bodies, issue, self.operators):
-                assessed.add(issue)
+            disposition = retained_assessment_disposition(bodies, issue, self.operators)
+            if disposition is not None:
+                assessed[issue] = disposition
         return assessed
 
     def evaluate(self) -> Evaluation:

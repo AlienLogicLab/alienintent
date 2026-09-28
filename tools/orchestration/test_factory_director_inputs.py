@@ -165,6 +165,27 @@ def test_unassessed_biu_tasks_is_supply_control_when_buffer_below_target(sources
     assert evaluation.observations["preparedBufferTarget"] == 20
 
 
+def test_hold_assessment_does_not_inflate_prepared_buffer(sources):
+    raw = json.loads(sources.config.read_text())
+    raw["preparedBufferTarget"] = 20
+    sources.config.write_text(json.dumps(raw))
+    sources.issue(66, "TASKS", labels=("biu",))
+    sources.comments[66] = [comment('<!-- AGENT_READY_ASSESSMENT: {"disposition":"HOLD"} -->', author=OPERATOR)]
+    evaluation = sources.adapter().evaluate()
+    assert evaluation.observations["preparedBufferDepth"] == 0
+    assert evaluation.observations["controlRequiredBy"] == {"66": "selection:TASKS_ASSESSED"}
+
+
+def test_ready_assessment_counts_toward_prepared_buffer(sources):
+    raw = json.loads(sources.config.read_text())
+    raw["preparedBufferTarget"] = 20
+    sources.config.write_text(json.dumps(raw))
+    sources.issue(67, "TASKS", labels=("biu",))
+    sources.comments[67] = [comment('<!-- AGENT_READY_ASSESSMENT: {"disposition":"READY"} -->', author=OPERATOR)]
+    evaluation = sources.adapter().evaluate()
+    assert evaluation.observations["preparedBufferDepth"] == 1
+
+
 def test_unassessed_work_unit_title_is_supply_even_without_biu_label(sources):
     raw = json.loads(sources.config.read_text())
     raw["preparedBufferTarget"] = 20
