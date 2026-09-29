@@ -6,10 +6,11 @@ Criterion 2: every malformed or unavailable source fails closed, and each such c
              is not evidence).
 Criterion 3: Founder-hold and Director-inbox scenarios drive the real host.
 """
-from pathlib import Path
 import json
-import os
 import sys
+from hashlib import sha256
+from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -514,25 +515,139 @@ def test_founder_requirement_acknowledgement_only_remains_pending(sources):
     assert sources.inputs().pending_director_inbox is True
 
 
-def test_founder_requirement_materialization_stays_pending_until_done(sources):
+@pytest.mark.parametrize("state", list(materialization.STATUS_OPTIONS))
+def test_founder_requirement_materialization_stays_pending_until_done(sources, state):
     entry_id = "founder-requirement-2"
-    sources.issue(146, "CAPTURE")
-    (sources.inbox / f"{entry_id}.json").write_text(json.dumps({
-        "schemaVersion": 1, "kind": "FOUNDER_REQUIREMENT", "requirement": "prove durable intake"
-    }))
+    sources.issue(146, state)
+    entry = {"schemaVersion": 1, "kind": "FOUNDER_REQUIREMENT", "priority": "P0",
+             "title": "Durable intake", "authority": "Founder", "requirement": "prove durable intake",
+             "acceptance": ["exact acceptance"]}
+    source = json.dumps(entry).encode()
+    (sources.inbox / f"{entry_id}.json").write_bytes(source)
     (sources.inbox / "processed").mkdir(exist_ok=True)
     receipt = {
         "processedBy": "episode",
         "materialization": {
             "issue": 146,
             "canonicalArtifact": "docs/requirements/REQ-146.md",
-            "revision": "a" * 40
-        }
+            "revision": "a" * 40, "project": 1, "projectItem": "PVTI_146", "priority": "P0"
+        }, "sourceSha256": sha256(source).hexdigest(),
+        "provenance": {"sourceTitle": entry["title"], "sourceAuthority": entry["authority"]},
+        "entry": entry_id,
     }
     (sources.inbox / "processed" / f"{entry_id}.json").write_text(json.dumps(receipt))
-    assert sources.inputs().pending_director_inbox is True
-    sources.issue(146, "DONE")
-    assert sources.inputs().pending_director_inbox is False
+    sources.board[0]["priority"] = "P0"
+    adapter = sources.adapter()
+    adapter.provenance_reader = lambda revision, path, issue: (
+        "prove durable intake\nexact acceptance", "prove durable intake\nexact acceptance")
+    assert adapter().pending_director_inbox is (state != "DONE")
+    sources.board[0]["status"] = "DONE"
+    assert adapter().pending_director_inbox is False
+
+
+@pytest.mark.parametrize("change", ["digest", "revision", "issue", "item", "priority",
+                                    "title", "authority", "requirement", "acceptance", "duplicate"])
+def test_founder_receipt_refuses_broken_provenance(sources, change):
+    entry_id = "founder-requirement-3"
+    entry = {"schemaVersion": 1, "kind": "FOUNDER_REQUIREMENT", "priority": "P0",
+             "title": "Exact title", "authority": "Founder authority", "requirement": "Exact requirement",
+             "acceptance": ["Exact acceptance"]}
+    source = json.dumps(entry).encode()
+    (sources.inbox / f"{entry_id}.json").write_bytes(source)
+    (sources.inbox / "processed").mkdir()
+    sources.issue(147, "DONE")
+    sources.board[0]["priority"] = "P0"
+    record = {"entry": entry_id, "sourceSha256": sha256(source).hexdigest(),
+              "provenance": {"sourceTitle": "Exact title", "sourceAuthority": "Founder authority"},
+              "materialization": {"issue": 147, "canonicalArtifact": "docs/requirements/REQ-147.md",
+                                  "revision": "a" * 40, "project": 1,
+                                  "projectItem": "PVTI_147", "priority": "P0"}}
+    artifact = "Exact requirement\nExact acceptance"
+    issue_body = artifact
+    if change == "digest": record["sourceSha256"] = "0" * 64
+    if change == "revision": record["materialization"]["revision"] = "abc"
+    if change == "issue": record["materialization"]["issue"] = 148
+    if change == "item": record["materialization"]["projectItem"] = "PVTI_wrong"
+    if change == "priority": sources.board[0]["priority"] = "P1"
+    if change == "title": record["provenance"]["sourceTitle"] = "wrong"
+    if change == "authority": record["provenance"]["sourceAuthority"] = "wrong"
+    if change == "requirement": artifact = issue_body = "Exact acceptance"
+    if change == "acceptance": artifact = issue_body = "Exact requirement"
+    if change == "duplicate": sources.board.append(dict(sources.board[0], id="PVTI_duplicate"))
+    (sources.inbox / "processed" / f"{entry_id}.json").write_text(json.dumps(record))
+    adapter = sources.adapter()
+    adapter.provenance_reader = lambda revision, path, issue: (artifact, issue_body)
+    result = adapter.evaluate()
+    assert result.inputs.authoritative_state is False or result.inputs.pending_director_inbox is True
+    assert result.failure or result.observations.get("inboxFailures")
+
+
+def test_founder_receipt_external_read_unavailable_fails_closed(sources):
+    entry_id = "founder-requirement-4"
+    source = {"kind": "FOUNDER_REQUIREMENT", "priority": "P0", "title": "title",
+              "authority": "Founder", "requirement": "requirement", "acceptance": ["acceptance"]}
+    data = json.dumps(source).encode()
+    (sources.inbox / f"{entry_id}.json").write_bytes(data)
+    (sources.inbox / "processed").mkdir()
+    (sources.inbox / "processed" / f"{entry_id}.json").write_text(json.dumps({
+        "entry": entry_id, "sourceSha256": sha256(data).hexdigest(),
+        "provenance": {"sourceTitle": "title", "sourceAuthority": "Founder"},
+        "materialization": {"issue": 147, "project": 1, "projectItem": "PVTI_147", "priority": "P0",
+                            "canonicalArtifact": "docs/x.md", "revision": "a" * 40}}))
+    sources.issue(147, "DONE")
+    sources.board[0]["priority"] = "P0"
+    adapter = sources.adapter()
+    adapter.provenance_reader = lambda *_: (_ for _ in ()).throw(SourceUnavailable("remote revision unavailable"))
+    result = adapter.evaluate()
+    assert result.inputs.authoritative_state is False
+    assert "remote revision unavailable" in result.failure
+
+
+def test_founder_receipt_migration_is_repeatable_and_preserves_old_evidence(sources):
+    entry_id = "founder-requirement-5"
+    entry = {"kind": "FOUNDER_REQUIREMENT", "priority": "P0", "title": "title",
+             "authority": "Founder", "requirement": "requirement", "acceptance": ["acceptance"]}
+    source = json.dumps(entry).encode()
+    old = {"action": "MATERIALIZED", "evidence": ["original observation"],
+           "materialization": {"issue": 147, "project": 1, "projectItem": "PVTI_147", "priority": "P0",
+                               "canonicalArtifact": "docs/x.md", "revision": "a" * 40}}
+    sources.issue(147, "DONE")
+    sources.board[0]["priority"] = "P0"
+    reader = lambda *_: ("requirement\nacceptance", "requirement\nacceptance")
+    prepared = adapter_module.prepare_founder_receipt_migration(
+        entry_id, source, old, sources.board, reader)
+    assert prepared["evidence"] == old["evidence"]
+    assert prepared["sourceSha256"] == sha256(source).hexdigest()
+    assert adapter_module.prepare_founder_receipt_migration(
+        entry_id, source, prepared, sources.board, reader) == prepared
+    assert "sourceSha256" not in old
+    with pytest.raises(SourceUnavailable, match="digest"):
+        adapter_module.validate_founder_receipt(entry_id, source + b" ", prepared, sources.board, reader)
+
+
+@pytest.mark.parametrize("failure", ["unpublished", "missing-artifact", "missing-issue"])
+def test_remote_provenance_read_refuses_incomplete_chain(sources, failure):
+    adapter = sources.adapter()
+    calls = []
+    class Transport:
+        def request(self, method, url, headers):
+            calls.append(url)
+            if "/compare/" in url:
+                payload = {"status": "diverged" if failure == "unpublished" else "ahead"}
+                status = 200
+            elif "/contents/" in url:
+                payload = {"type": "file", "encoding": "base64", "content": "dGV4dA=="}
+                status = 404 if failure == "missing-artifact" else 200
+            else:
+                payload = {"number": 147, "body": "text"}
+                status = 404 if failure == "missing-issue" else 200
+            return SimpleNamespace(status=status, body=json.dumps(payload).encode())
+    adapter.app_reader = lambda config: SimpleNamespace(
+        transport=Transport(), credentials=SimpleNamespace(authorization=dict))
+    with pytest.raises(SourceUnavailable):
+        adapter.read_founder_provenance(adapter_module.load_adapter_config(sources.config),
+                                       "a" * 40, "docs/requirements/x.md", 147)
+    assert calls[0].endswith("/compare/" + "a" * 40 + "...main?per_page=1")
 
 def test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it(sources):
     sources.issue(34, "READY").hold(34).inbox_entry("founder-2026-09-24")
