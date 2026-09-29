@@ -7,6 +7,8 @@ const defaultRoleNames = { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" };
 
 const routedSignal = claim => claim?.control ?? claim?.result;
 const recoverable = outcome => ["COMPLETION_ERROR", "DURABLE_RESULT_MISSING", "WORKER_IDENTITY_MISMATCH"].includes(outcome);
+const hasClaimTransfer = (state, invocationId, lane) => Object.entries(state.claimTransfers ?? {}).some(([key, transfer]) =>
+  key === invocationId || transfer?.invocationId === invocationId || (lane && transfer?.lane === lane));
 // State-only part of claim transfer admission. Host, ledger-head, marker and
 // delivery-payload proof remain separate prerequisites before any owner grant.
 export function assertClaimTransferState(state, request) {
@@ -124,6 +126,7 @@ export class EventRelay {
     for (const invocationId of Object.keys(this.state().resources ?? {})) {
       const state = this.state(), resource = state.resources[invocationId];
       if (resource.lifecycle === "REMOVED" || this.active.has(invocationId)
+          || hasClaimTransfer(state, invocationId)
           || Object.values(state.active).some(claim => claim.invocationId === invocationId)) continue;
       if (resource.supervision && this.ownedWorkAlive(resource)) continue;
       // PID reuse can cause conservative retention; permission errors are unknown.
@@ -277,6 +280,8 @@ export class EventRelay {
   }
   release(claim) {
     const state = this.state();
+    if (hasClaimTransfer(state, claim.invocationId, claim.lane))
+      throw new Error("CLAIM_TRANSFER_IN_PROGRESS");
     if (state.active[claim.lane]?.invocationId === claim.invocationId) { delete state.active[claim.lane]; this.save(state); }
   }
   async routeResult(claim, result) {
@@ -388,6 +393,11 @@ export class EventRelay {
       this.emit({ issue: item.issue, role, outcome: "STALE_ACCEPT_EVENT" }); return false;
     }
     let persisted = this.state();
+    if (Object.values(persisted.claimTransfers ?? {}).some(transfer =>
+      transfer?.lane?.slice(0, transfer.lane.lastIndexOf(":")) === this.biuKey(item))) {
+      this.emit({ issue: item.issue, role, outcome: "CLAIM_TRANSFER_IN_PROGRESS" });
+      return false;
+    }
     if (persisted.limitEscalations?.[this.biuKey(item)]?.outcome === "EXECUTION_CYCLE_LIMIT") {
       this.emit({ issue: item.issue, role, outcome: "EXECUTION_CYCLE_LIMIT", biu: this.biuKey(item) }); return false;
     }

@@ -1,6 +1,9 @@
 import assert from "node:assert/strict";
+import { mkdtempSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import test from "node:test";
-import { assertClaimTransferState } from "../src/runtime/dispatcher.mjs";
+import { assertClaimTransferState, EventRelay } from "../src/runtime/dispatcher.mjs";
 
 const invocationId = "AlienLogicLab/alienintent#149:PRODUCER:claim-1";
 const lane = "AlienLogicLab/alienintent#149:PRODUCER";
@@ -65,4 +68,45 @@ test("transfer state preflight refuses incomplete operation and owner identity",
     delete request[field];
     assert.throws(() => assertClaimTransferState(state, request), /CLAIM_TRANSFER_/, field);
   }
+});
+
+test("a transfer record prevents release of its original active claim", () => {
+  const { state } = fixture();
+  state.claimTransfers = { [invocationId]: { schemaVersion: 1, operationId: "operation-1",
+    lane, invocationId, resourceId: "resource-1", path, branch, status: "COMMITTED" } };
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-release-")), "state.json");
+  const relay = new EventRelay({ statePath });
+  relay.save(state);
+
+  assert.throws(() => relay.release({ ...state.active[lane], lane }), /CLAIM_TRANSFER_IN_PROGRESS/);
+  assert.equal(relay.state().active[lane].invocationId, invocationId);
+});
+
+test("reconciliation retains a transferred resource after an interrupted claim projection", () => {
+  const { state } = fixture();
+  state.active = {};
+  state.claimTransfers = { [invocationId]: { schemaVersion: 1, operationId: "operation-1",
+    lane, invocationId, resourceId: "resource-1", path, branch, status: "COMMITTED" } };
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-cleanup-")), "state.json");
+  const relay = new EventRelay({ statePath, launch: { observe: () => ({ terminal: true }) }, worktreeManager: {
+    cleanup: resource => ({ ...resource, lifecycle: "REMOVED" }),
+  } });
+  relay.save(state);
+
+  relay.reconcileResources();
+  assert.equal(relay.state().resources[invocationId].lifecycle, "LAUNCHING");
+});
+
+test("a transfer record blocks a competing worker reservation after restart", async () => {
+  const { state } = fixture();
+  state.active = {};
+  state.claimTransfers = { [invocationId]: { schemaVersion: 1, operationId: "operation-1",
+    lane, invocationId, resourceId: "resource-1", path, branch, status: "COMMITTED" } };
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-start-")), "state.json");
+  const relay = new EventRelay({ statePath, authority: { workerLogins: {} }, preflight: async () => ({ ok: false }) });
+  relay.save(state);
+
+  assert.equal(await relay.start({ repository: "AlienLogicLab/alienintent", issue: 149 }, "PRODUCER", "IMPLEMENT"), false);
+  assert.deepEqual(relay.state().active, {});
+  assert.equal(relay.events.at(-1)?.outcome, "CLAIM_TRANSFER_IN_PROGRESS");
 });
