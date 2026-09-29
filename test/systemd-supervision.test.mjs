@@ -125,3 +125,25 @@ test('absence proof needs no unit, an empty cgroup and an owner never seen runni
   assert.equal(f.adapter.absent(f.owner), true, 'a changed manager does not hide a unit it would report');
   assert.deepEqual(f.effects, []);
 });
+test('absence proof throws when the manager or the cgroup cannot be read', () => {
+  const root = '/user.slice/user-1000.slice/user@1000.service';
+  let unitRead = 'ok', cgroupRead = 'ok';
+  const adapter = module.createSystemdSupervisor(config, { uid: () => 1000,
+    readFile: path => {
+      if (path.endsWith('/boot_id')) return 'boot-id';
+      if (path.endsWith('/cgroup.controllers')) return 'cpu memory';
+      if (cgroupRead === 'denied') throw Object.assign(new Error('EACCES'), { code: 'EACCES' });
+      return 'populated 0\n';
+    },
+    transport: (_command, args) => {
+      if (!args.includes('--')) return { UserspaceTimestampMonotonic: '100', ControlGroup: root };
+      if (unitRead === 'unavailable') throw new Error('SUPERVISION_MANAGER_UNAVAILABLE');
+      return { LoadState: 'not-found' };
+    } });
+  const owner = adapter.plan({ invocationId: 'org/repo#1:PRODUCER:id', resource: { path: '/tmp/work' } });
+  assert.equal(adapter.absent(owner), true);
+  unitRead = 'unavailable';
+  assert.throws(() => adapter.absent(owner), /UNAVAILABLE/);
+  unitRead = 'ok'; cgroupRead = 'denied';
+  assert.throws(() => adapter.absent(owner), /EACCES/);
+});
