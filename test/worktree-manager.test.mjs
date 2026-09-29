@@ -41,6 +41,18 @@ test('cleanup is idempotent and retains branch and another invocation', t => {
   assert.equal(existsSync(a.path), false); assert.equal(existsSync(b.path), true);
   assert.ok(git(f.repositoryStore, 'rev-parse', '--verify', a.branch));
 });
+test('transfer ownership inspection binds marker, registered checkout and branch without mutation', t => {
+  const f = fixture(t); const a = f.manager.allocate(f.plan(), f.worker);
+  const before = git(a.path, 'rev-parse', 'HEAD');
+  assert.deepEqual(f.manager.inspectOwnership(a), {
+    resourceId: a.resourceId, invocationId: a.invocationId,
+    path: a.path, branch: a.branch, head: before,
+  });
+  assert.equal(git(a.path, 'rev-parse', 'HEAD'), before);
+  assert.throws(() => f.manager.inspectOwnership({ ...a, invocationId: 'other' }), /ownership mismatch/);
+  git(a.path, 'switch', '-c', 'other-owner');
+  assert.throws(() => f.manager.inspectOwnership(a), /branch mismatch/);
+});
 test('path escapes, canonical path, collisions and cross-owner cleanup fail closed', t => {
   const f = fixture(t); const a = f.plan();
   assert.throws(() => f.manager.allocate({ ...a, path: f.repositoryStore }, f.worker));

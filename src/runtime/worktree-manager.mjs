@@ -83,6 +83,21 @@ export function createWorktreeManager({ repository, repositoryStore, worktreeRoo
       if (symbolic.startsWith('refs/remotes/')) run(record.path, 'branch', '--set-upstream-to', baselineRef, record.branch);
       return { ...record, lifecycle: 'READY' };
     },
+    inspectOwnership(record) {
+      const marker = validateRecord(record); checkOwner(record, marker);
+      if (!existsSync(record.path)) fail('owned worktree missing');
+      safePath(record.path);
+      const entries = run(repositoryStore, 'worktree', 'list', '--porcelain', '-z').split('\0\0').filter(Boolean).map(entry => Object.fromEntries(entry.split('\0').filter(Boolean).map(line => { const at = line.indexOf(' '); return at < 0 ? [line, true] : [line.slice(0, at), line.slice(at + 1)]; })));
+      const registered = entries.find(entry => entry.worktree === record.path);
+      if (!registered || registered.branch !== `refs/heads/${record.branch}` || registered.locked
+          || run(record.path, 'symbolic-ref', '--quiet', 'HEAD') !== `refs/heads/${record.branch}`)
+        fail('worktree registration/branch mismatch');
+      if (realpathSync(run(record.path, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== commonDir)
+        fail('worktree repository mismatch');
+      return { resourceId: record.resourceId, invocationId: record.invocationId,
+        path: record.path, branch: record.branch,
+        head: run(record.path, 'rev-parse', '--verify', 'HEAD') };
+    },
     cleanup(record) {
       const marker = validateRecord(record); checkOwner(record, marker);
       const entries = run(repositoryStore, 'worktree', 'list', '--porcelain', '-z').split('\0\0').filter(Boolean).map(entry => Object.fromEntries(entry.split('\0').filter(Boolean).map(line => { const at = line.indexOf(' '); return at < 0 ? [line, true] : [line.slice(0, at), line.slice(at + 1)]; })));
