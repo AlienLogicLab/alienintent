@@ -1222,6 +1222,29 @@ test("ledger genesis marks unknown history and each save commits the complete po
   assert.equal(readFileSync(f.relay.ledger.path, "utf8").trim().split("\n").length, 2);
 });
 
+test("unchanged verified ledger head is reused without replaying its full history", () => {
+  const f = subject();
+  f.relay.state();
+  const verified = f.relay.ledger.replay();
+  assert.strictEqual(f.relay.ledger.replay(), verified);
+  f.relay.save({ deliveries: {}, active: {}, proof: "next" });
+  const appended = f.relay.ledger.replay();
+  assert.equal(appended.sequence, verified.sequence + 1);
+  assert.strictEqual(f.relay.ledger.replay(), appended);
+});
+
+test("same-size journal tampering invalidates a cached verified head", () => {
+  const f = subject();
+  f.relay.state();
+  const original = readFileSync(f.relay.ledger.path, "utf8");
+  const record = JSON.parse(original);
+  record.digest = "0".repeat(64);
+  const altered = `${JSON.stringify(record)}\n`;
+  assert.equal(altered.length, original.length);
+  writeFileSync(f.relay.ledger.path, altered);
+  assert.throws(() => f.relay.ledger.replay(), /LEDGER_CORRUPT_OR_FORKED/);
+});
+
 test("before-append failure admits no new record, projection, or worker effect", async () => {
   const f = subject();
   f.relay.state();

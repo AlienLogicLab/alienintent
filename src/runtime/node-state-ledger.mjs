@@ -1,5 +1,5 @@
 import crypto from "node:crypto";
-import { closeSync, existsSync, fsyncSync, openSync, readFileSync, renameSync, rmSync, writeSync } from "node:fs";
+import { closeSync, existsSync, fsyncSync, openSync, readFileSync, renameSync, rmSync, statSync, writeSync } from "node:fs";
 import { dirname, join } from "node:path";
 
 const canonical = value => JSON.stringify(value, (_key, item) =>
@@ -9,6 +9,15 @@ const digest = value => crypto.createHash("sha256").update(canonical(value)).dig
 const snapshot = value => JSON.parse(JSON.stringify(value));
 const defaultState = () => ({ deliveries: {}, active: {} });
 const owners = new Map();
+function fileIdentity(path) {
+  try {
+    const stat = statSync(path, { bigint: true });
+    return [stat.dev, stat.ino, stat.size, stat.mtimeNs, stat.ctimeNs].join(":");
+  } catch (error) {
+    if (error.code === "ENOENT") return null;
+    throw error;
+  }
+}
 
 function writeAll(fd, value) {
   const bytes = Buffer.from(value, "utf8");
@@ -83,11 +92,14 @@ export class NodeStateLedger {
   }
   replay() {
     this.lock();
+    if (this.cached && this.cached.source === fileIdentity(this.path)
+        && this.cached.head === fileIdentity(this.headPath)) return this.cached.record;
     if (!existsSync(this.path)) {
       if (existsSync(this.headPath)) throw new Error("LEDGER_TRUNCATED");
       const legacy = existsSync(this.statePath) ? JSON.parse(readFileSync(this.statePath, "utf8")) : defaultState();
       this.appendRecord(null, legacy, true);
     }
+    const sourceIdentity = fileIdentity(this.path), headIdentity = fileIdentity(this.headPath);
     const bytes = readFileSync(this.path, "utf8");
     if (!bytes.endsWith("\n")) throw new Error("LEDGER_TRUNCATED");
     const lines = bytes.trimEnd().split("\n");
@@ -113,17 +125,28 @@ export class NodeStateLedger {
       records.push(record);
     }
     if (!previous || previous.sequence < 0) throw new Error("LEDGER_CORRUPT");
+    let repairedHead = false;
     if (existsSync(this.headPath)) {
       const head = JSON.parse(readFileSync(this.headPath, "utf8"));
       if (head.revision !== previous.revision || !Number.isSafeInteger(head.sequence)
           || head.sequence < 0 || head.sequence > previous.sequence
           || records[head.sequence].digest !== head.digest) throw new Error("LEDGER_TRUNCATED_OR_FORKED");
       // A crash after append and before the head update leaves a recoverable lag.
-      if (head.sequence < previous.sequence) atomic(this.headPath, `${JSON.stringify({ revision: previous.revision, sequence: previous.sequence, digest: previous.digest })}\n`);
-    } else atomic(this.headPath, `${JSON.stringify({ revision: previous.revision, sequence: previous.sequence, digest: previous.digest })}\n`);
+      if (head.sequence < previous.sequence) {
+        atomic(this.headPath, `${JSON.stringify({ revision: previous.revision, sequence: previous.sequence, digest: previous.digest })}\n`);
+        repairedHead = true;
+      }
+    } else {
+      atomic(this.headPath, `${JSON.stringify({ revision: previous.revision, sequence: previous.sequence, digest: previous.digest })}\n`);
+      repairedHead = true;
+    }
+    if (sourceIdentity !== fileIdentity(this.path)
+        || (!repairedHead && headIdentity !== fileIdentity(this.headPath))) throw new Error("LEDGER_CHANGED_DURING_REPLAY");
+    this.cached = repairedHead ? null : { record: previous, source: sourceIdentity, head: headIdentity };
     return previous;
   }
   appendRecord(previous, state, genesis = false) {
+    this.cached = null;
     const postState = snapshot(state);
     const revision = previous?.revision ?? crypto.randomUUID();
     const sequence = (previous?.sequence ?? -1) + 1;
