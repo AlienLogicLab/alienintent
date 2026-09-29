@@ -65,6 +65,7 @@ test('result while child lives retains resource, exit cleans only its own path a
   assert.deepEqual(f.removed, []);
   active.closed = true; active.child.exitCode = 0;
   await f.relay.complete(active);
+  f.relay.runResourceCleanupBatch();
   assert.deepEqual(f.removed, [f.launches[0].worktree]);
   const resource = f.relay.state().resources[active.invocationId];
   assert.equal(resource.lifecycle, 'REMOVED'); assert.ok(resource.logPath);
@@ -77,6 +78,7 @@ test('cleanup failure is a resource diagnostic, never a workflow rewrite', async
   const active = [...f.relay.active.values()][0];
   await f.relay.routeResult(active, 'VERIFY'); active.closed = true; active.child.exitCode = 0;
   await f.relay.complete(active);
+  f.relay.runResourceCleanupBatch();
   assert.deepEqual(f.transitions, ['VERIFY']);
   assert.equal(f.relay.state().diagnostics[active.lane].outcome, 'VERIFY_TO_VERIFY');
   assert.equal(f.relay.state().resources[active.invocationId].cleanupDiagnostic, 'dirty checkout retained');
@@ -129,14 +131,168 @@ test('orphan recovery preserves plausible live and ambiguous launching resources
   }));
   f.relay.save({ deliveries: {}, active: {}, resources: Object.fromEntries(records.map(r => [r.invocationId, r])) });
   await f.relay.startupReconcile();
+  assert.deepEqual(f.removed, [], 'startup returns before historical cleanup');
+  f.relay.runResourceCleanupBatch();
   assert.deepEqual(f.removed, [records[0].path]);
   assert.notEqual(f.relay.state().resources.live.lifecycle, 'REMOVED');
   assert.notEqual(f.relay.state().resources.uncertain.lifecycle, 'REMOVED');
 });
 
+test('startup admits current work before a large slow historical sweep; batches survive restart', async t => {
+  const f = fixture(t, { resourceCleanupDelayMs: 60000 });
+  const resources = {};
+  for (let n = 0; n < 24; n++) {
+    const invocationId = `old-${String(n).padStart(2, '0')}`;
+    resources[invocationId] = { ...f.manager.plan({ invocationId, item: f.item(n + 1), role: 'PRODUCER' }), lifecycle: 'READY' };
+  }
+  f.relay.save({ deliveries: {}, active: {}, resources });
+  let inspected = 0;
+  f.manager.cleanup = record => { inspected++; return { ...record, lifecycle: 'REMOVED' }; };
+  f.relay.options.authority.listItems = async () => [{ ...f.item(150), status: 'IMPLEMENT' }];
+  await f.relay.startupReconcile();
+  assert.equal(f.launches.length, 1);
+  assert.equal(inspected, 0);
+  for (let batch = 0; batch < 4; batch++) f.relay.runResourceCleanupBatch();
+  assert.ok(inspected > 0 && inspected < 24);
+  const cursor = f.relay.state().resourceCleanup.after;
+  assert.ok(cursor);
+  f.relay.stop();
+  const restarted = new EventRelay({ ...f.relay.options, statePath: f.relay.options.statePath });
+  t.after(() => restarted.stop());
+  restarted.runResourceCleanupBatch();
+  assert.ok(inspected > 15 && inspected < 24);
+  assert.equal(restarted.state().resourceCleanup.after, cursor, 'next checkpoint waits for a bounded group');
+  while (restarted.state().resourceCleanup.after) restarted.runResourceCleanupBatch();
+  assert.equal(inspected, 24);
+  restarted.runResourceCleanupBatch();
+  assert.equal(inspected, 24, 'repeated pass is idempotent');
+});
+
+test('a 336-record backlog leaves pending custody intact after startup and one maintenance turn', async t => {
+  const f = fixture(t, { resourceCleanupDelayMs: 60000 });
+  const resources = {};
+  for (let n = 0; n < 336; n++) {
+    const invocationId = `old-${String(n).padStart(3, '0')}`;
+    resources[invocationId] = { ...f.manager.plan({ invocationId, item: f.item(n + 1), role: 'PRODUCER' }), lifecycle: 'READY' };
+  }
+  f.relay.save({ deliveries: {}, active: {}, resources });
+  let inspected = 0;
+  f.manager.cleanup = record => { inspected++; return { ...record, lifecycle: 'REMOVED' }; };
+  f.relay.options.authority.listItems = async () => [{ ...f.item(500), status: 'IMPLEMENT' }];
+  await f.relay.startupReconcile();
+  assert.equal(f.launches.length, 1);
+  assert.equal(inspected, 0);
+  f.relay.runResourceCleanupBatch();
+  assert.ok(inspected > 0 && inspected <= 4);
+  assert.ok(Object.values(f.relay.state().resources).filter(record => record.lifecycle !== 'REMOVED').length >= 333);
+});
+
+test('bounded cleanup keeps dirty and ambiguous or live-owned resources for later safe retry', t => {
+  const f = fixture(t);
+  const records = ['dirty', 'ambiguous', 'live', 'clean'].map((invocationId, index) => ({
+    ...f.manager.plan({ invocationId, item: f.item(index + 1), role: 'PRODUCER' }),
+    lifecycle: index === 1 ? 'LAUNCHING' : index === 2 ? 'RUNNING' : 'READY',
+    ...(index === 2 ? { pid: 555 } : {}),
+  }));
+  f.relay.options.isProcessAlive = pid => pid === 555;
+  f.relay.save({ deliveries: {}, active: {}, resources: Object.fromEntries(records.map(r => [r.invocationId, r])) });
+  f.manager.cleanup = record => {
+    if (record.invocationId === 'dirty') throw new Error('dirty worktree retained');
+    f.removed.push(record.path);
+    return { ...record, lifecycle: 'REMOVED' };
+  };
+  f.relay.runResourceCleanupBatch();
+  assert.deepEqual(f.removed, [records[3].path]);
+  assert.equal(f.relay.state().resources.dirty.cleanupDiagnostic, 'dirty worktree retained');
+  assert.equal(f.relay.state().resources.ambiguous.lifecycle, 'LAUNCHING');
+  assert.equal(f.relay.state().resources.live.lifecycle, 'RUNNING');
+  assert.equal(f.relay.state().resourceCleanup.pending, 3);
+  const sequence = f.relay.ledger.replay().sequence;
+  const observations = [];
+  f.relay.options.onEvent = event => observations.push(event);
+  f.relay.runResourceCleanupBatch();
+  assert.equal(f.relay.ledger.replay().sequence, sequence, 'unchanged refusals do not append full-state ledger records');
+  assert.equal(observations.at(-1).outcome, 'RESOURCE_CLEANUP_PASS');
+  assert.equal(observations.at(-1).pending, 3);
+  f.manager.cleanup = record => ({ ...record, lifecycle: 'REMOVED' });
+  f.relay.runResourceCleanupBatch();
+  assert.equal(f.relay.state().resources.dirty.lifecycle, 'REMOVED', 'retained refusal is retried safely');
+});
+
+test('new cleanup eligibility advances a long retry timer', t => {
+  const f = fixture(t);
+  f.relay.scheduleResourceCleanup(15 * 60 * 1000);
+  const originalDue = f.relay.resourceCleanupDueAt;
+  f.relay.scheduleResourceCleanup(25);
+  assert.ok(f.relay.resourceCleanupDueAt < originalDue);
+});
+
+test('eligibility after its key was visited triggers another prompt pass', async t => {
+  const f = fixture(t, { resourceCleanupDelayMs: 1 });
+  const resources = {};
+  for (let n = 0; n < 8; n++) {
+    const invocationId = `old-${n}`;
+    resources[invocationId] = { ...f.manager.plan({ invocationId, item: f.item(n + 1), role: 'PRODUCER' }), lifecycle: 'READY' };
+  }
+  f.relay.save({ deliveries: {}, active: {}, resources });
+  let dirty = true;
+  f.manager.cleanup = record => {
+    if (record.invocationId === 'old-0' && dirty) throw new Error('dirty worktree retained');
+    return { ...record, lifecycle: 'REMOVED' };
+  };
+  await f.relay.startupReconcile();
+  const deadline = Date.now() + 2000;
+  while ((f.relay.resourceCleanupIndex ?? 0) < 4 && Date.now() < deadline)
+    await new Promise(resolve => setTimeout(resolve, 1));
+  assert.ok(f.relay.resourceCleanupIndex >= 4);
+  dirty = false;
+  f.relay.scheduleResourceCleanup();
+  while (f.relay.state().resources['old-0'].lifecycle !== 'REMOVED' && Date.now() < deadline)
+    await new Promise(resolve => setTimeout(resolve, 1));
+  assert.equal(f.relay.state().resources['old-0'].lifecycle, 'REMOVED');
+});
+
+test('cleanup callback cannot start an overlapping batch', t => {
+  const f = fixture(t), invocationId = 'old';
+  const resource = { ...f.manager.plan({ invocationId, item: f.item(1), role: 'PRODUCER' }), lifecycle: 'READY' };
+  f.relay.save({ deliveries: {}, active: {}, resources: { [invocationId]: resource } });
+  let nested;
+  f.manager.cleanup = record => {
+    nested = f.relay.runResourceCleanupBatch();
+    return { ...record, lifecycle: 'REMOVED' };
+  };
+  f.relay.runResourceCleanupBatch();
+  assert.equal(nested, false);
+  assert.equal(f.relay.state().resources[invocationId].lifecycle, 'REMOVED');
+});
+
+test('slow historical cleanup yields between batches and does not delay startup admission', async t => {
+  const f = fixture(t, { resourceCleanupDelayMs: 1 });
+  const resources = {};
+  for (let n = 0; n < 12; n++) {
+    const invocationId = `old-${String(n).padStart(2, '0')}`;
+    resources[invocationId] = { ...f.manager.plan({ invocationId, item: f.item(n + 1), role: 'PRODUCER' }), lifecycle: 'READY' };
+  }
+  f.relay.save({ deliveries: {}, active: {}, resources });
+  let inspected = 0;
+  f.manager.cleanup = record => {
+    const until = Date.now() + 2;
+    while (Date.now() < until) {}
+    inspected++;
+    return { ...record, lifecycle: 'REMOVED' };
+  };
+  f.relay.options.authority.listItems = async () => [{ ...f.item(150), status: 'IMPLEMENT' }];
+  await f.relay.startupReconcile();
+  assert.equal(f.launches.length, 1);
+  assert.equal(inspected, 0);
+  await new Promise(resolve => setTimeout(resolve, 2));
+  assert.ok(inspected > 0 && inspected < 12, 'one timer turn cannot drain the backlog');
+});
+
 test('preflight failure reclaims allocation without launching and retains ownership evidence', async t => {
   const f = fixture(t, { preflight: async () => ({ ok: false }) });
   await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  f.relay.runResourceCleanupBatch();
   assert.equal(f.launches.length, 0); assert.equal(f.removed.length, 1);
   assert.equal(Object.values(f.relay.state().resources)[0].lifecycle, 'REMOVED');
 });
@@ -198,6 +354,7 @@ test('durable result retains existing semantics while supervised work remains ow
   await f.relay.complete(active);
   assert.deepEqual(f.transitions, ['VERIFY']); assert.deepEqual(f.removed, []);
   control.terminal = true; await f.relay.complete(active);
+  f.relay.runResourceCleanupBatch();
   assert.equal(f.removed.length, 1);
   assert.equal(f.relay.state().resources[active.invocationId].supervision.stopConfirmed, true);
 });

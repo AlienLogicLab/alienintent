@@ -121,11 +121,12 @@ export class EventRelay {
       return true;
     }
   }
-  reconcileResources() {
+  reconcileResources(invocationIds = Object.keys(this.state().resources ?? {}), validatePaths = true) {
     if (!this.options.worktreeManager) return;
-    this.assertResourcePaths();
-    for (const invocationId of Object.keys(this.state().resources ?? {})) {
+    if (validatePaths) this.assertResourcePaths();
+    for (const invocationId of invocationIds) {
       const state = this.state(), resource = state.resources[invocationId];
+      if (!resource) continue;
       if (resource.lifecycle === "REMOVED" || resource.launchFailed === 'PRE_SPAWN_MANAGER_REFUSAL' || this.active.has(invocationId)
           || Object.values(state.active).some(claim => claim.invocationId === invocationId)) continue;
       if (resource.supervision && this.ownedWorkAlive(resource)) continue;
@@ -150,6 +151,86 @@ export class EventRelay {
         this.emit({ invocationId, outcome: "WORKTREE_CLEANUP_FAILED", error: error.message });
       }
     }
+  }
+  // A cursor is advisory progress, never cleanup authority. Recheck every resource
+  // against current claims and supervision immediately before each cleanup attempt.
+  runResourceCleanupBatch() {
+    if (this.stopped || !this.options.worktreeManager || this.resourceCleanupRunning) return false;
+    if (this.resourceCleanupTimer) { clearTimeout(this.resourceCleanupTimer); this.resourceCleanupTimer = null; }
+    this.resourceCleanupRunning = true;
+    try {
+      if (!this.resourceCleanupKeys) {
+        this.assertResourcePaths();
+        const state = this.state();
+        const after = state.resourceCleanup?.after ?? null;
+        this.resourceCleanupKeys = Object.keys(state.resources ?? {}).sort();
+        this.resourceCleanupIndex = after === null ? 0 : this.resourceCleanupKeys.findIndex(key => key > after);
+        if (this.resourceCleanupIndex < 0) this.resourceCleanupIndex = this.resourceCleanupKeys.length;
+        this.resourceCleanupSinceCheckpoint = 0;
+        this.resourceCleanupInitialPass = !state.resourceCleanup?.lastCheckpointedPassAt;
+        this.resourceCleanupPassChanged = false;
+      }
+      const batch = this.resourceCleanupKeys.slice(this.resourceCleanupIndex, this.resourceCleanupIndex + 4);
+      const sequence = this.ledger.replay().sequence;
+      this.reconcileResources(batch, false);
+      if (this.ledger.replay().sequence !== sequence) this.resourceCleanupPassChanged = true;
+      this.resourceCleanupIndex += batch.length;
+      this.resourceCleanupSinceCheckpoint += batch.length;
+      const continuing = this.resourceCleanupIndex < this.resourceCleanupKeys.length;
+      // Checkpoint progress in the full-state ledger sparingly. A crash may
+      // repeat inspections safely; unchanged periodic retries write no records.
+      const current = !continuing || (this.resourceCleanupInitialPass && this.resourceCleanupSinceCheckpoint >= 16)
+        ? this.state() : null;
+      const pending = current
+        ? Object.values(current.resources ?? {}).filter(resource => resource.lifecycle !== 'REMOVED').length : null;
+      if (current && ((this.resourceCleanupInitialPass && this.resourceCleanupSinceCheckpoint >= 16)
+          || (!continuing && (this.resourceCleanupInitialPass || this.resourceCleanupPassChanged
+            || pending !== current.resourceCleanup?.pending)))) {
+        current.resourceCleanup = {
+          after: continuing ? batch.at(-1) : null,
+          pending,
+          lastCheckpointedPassAt: continuing ? (current.resourceCleanup?.lastCheckpointedPassAt ?? null) : new Date(this.now()).toISOString(),
+        };
+        this.save(current);
+        this.resourceCleanupSinceCheckpoint = 0;
+      }
+      if (!continuing) {
+        this.resourceCleanupPending = pending;
+        this.options.onEvent?.({ at: new Date(this.now()).toISOString(), outcome: 'RESOURCE_CLEANUP_PASS',
+          visited: this.resourceCleanupKeys.length, pending });
+        this.resourceCleanupKeys = null;
+      }
+      return continuing;
+    } catch (error) {
+      this.resourceCleanupKeys = null;
+      throw error;
+    } finally { this.resourceCleanupRunning = false; }
+  }
+  scheduleResourceCleanup(delay = this.options.resourceCleanupDelayMs ?? 25) {
+    if (this.stopped || !this.options.worktreeManager || this.resourceCleanupRunning) return;
+    if (arguments.length === 0 && this.resourceCleanupKeys) this.resourceCleanupRerunRequested = true;
+    const dueAt = Date.now() + delay;
+    if (this.resourceCleanupTimer) {
+      if (dueAt >= this.resourceCleanupDueAt) return;
+      clearTimeout(this.resourceCleanupTimer);
+    }
+    this.resourceCleanupDueAt = dueAt;
+    this.resourceCleanupTimer = setTimeout(() => {
+      this.resourceCleanupTimer = null;
+      this.resourceCleanupDueAt = null;
+      if (this.stopped) return;
+      let continuing = false, failed = false, pending = true;
+      try {
+        continuing = this.runResourceCleanupBatch();
+        if (!continuing) pending = this.resourceCleanupPending > 0;
+      }
+      catch (error) { failed = true; this.emit({ outcome: 'RESOURCE_CLEANUP_ERROR', error: error.message }); }
+      const rerun = !continuing && this.resourceCleanupRerunRequested;
+      if (!continuing) this.resourceCleanupRerunRequested = false;
+      if (failed || pending || rerun)
+        this.scheduleResourceCleanup(!failed && (continuing || rerun) ? (this.options.resourceCleanupDelayMs ?? 25) : 15 * 60 * 1000);
+    }, delay);
+    this.resourceCleanupTimer.unref();
   }
   state() { return this.ledger.read(); }
   save(state) { return this.ledger.save(state); }
@@ -259,7 +340,7 @@ export class EventRelay {
           finally {
             const completed = this.state().active[claim.lane];
             this.release(claim); this.active.delete(claim.invocationId);
-            this.reconcileResources();
+            this.scheduleResourceCleanup();
             if (completed && routedSignal(completed)) await this.resumeAfterClosure(completed);
           }
         } else await this.routeResult(claim, signal);
@@ -441,7 +522,7 @@ export class EventRelay {
         // If the prior invocation has no valid durable result, replacement admission is
         // the liveness-critical next step. Historical resource cleanup is best-effort
         // maintenance and must not block that replacement launch.
-        if (allowedSignals(claim, this.roleNames).has(durable)) this.reconcileResources();
+        if (allowedSignals(claim, this.roleNames).has(durable)) this.scheduleResourceCleanup();
       }
       if (allowedSignals(claim, this.roleNames).has(durable) && !routedSignal(claim)) {
         if (completed && routedSignal(completed)) await this.resumeAfterClosure(completed);
@@ -510,7 +591,7 @@ export class EventRelay {
         if (this.stopped || previous === "FOUNDER_EXCEPTION" || recoverable(previous)) {
           this.emit({ issue: item.issue, role, invocationId, outcome: this.stopped ? "SERVICE_STOPPED" : "PREFLIGHT_FAILED", ...evidence });
         } else this.diagnostic(active, "PREFLIGHT_FAILED", evidence);
-        this.release(active); this.active.delete(invocationId); this.reconcileResources();
+        this.release(active); this.active.delete(invocationId); this.scheduleResourceCleanup();
         return false;
       }
       const supervision = this.options.launch.plan?.({ role, item, invocationId, resource });
@@ -547,7 +628,7 @@ export class EventRelay {
       if (!active.child && !this.state().resources?.[invocationId]?.supervision) {
         const resource = this.state().resources?.[invocationId];
         if (resource && ["ALLOCATING", "READY"].includes(resource.lifecycle)) this.updateResource(invocationId, { admissionFailed: true });
-        this.release(active); this.active.delete(invocationId); this.reconcileResources();
+        this.release(active); this.active.delete(invocationId); this.scheduleResourceCleanup();
       }
       throw error;
     }
@@ -585,7 +666,7 @@ export class EventRelay {
         if ((active.closed || active.child?.exitCode != null || active.child?.signalCode != null)
             && !this.state().resources?.[active.invocationId]?.supervision?.absenceRecovery)
           this.updateResource(active.invocationId, { exitedAt: new Date(this.now()).toISOString() });
-        this.reconcileResources();
+        this.scheduleResourceCleanup();
         if (completedClaim?.invocationId === active.invocationId) await this.resumeAfterClosure(completedClaim);
       }
     })();
@@ -630,6 +711,8 @@ export class EventRelay {
   }
   stop() {
     this.stopped = true;
+    if (this.resourceCleanupTimer) clearTimeout(this.resourceCleanupTimer);
+    this.resourceCleanupTimer = null;
     for (const active of this.active.values()) this.cancelInspection(active);
   }
   // A dead claim must not outlive its phase: DONE, or a status no worker owns (TASKS, READY).
@@ -699,7 +782,7 @@ export class EventRelay {
           if (!this.ownedWorkAlive(claim)) {
             const completed = this.state().active[lane];
             this.release(claim);
-            this.reconcileResources();
+            this.scheduleResourceCleanup();
             if (this.isClosure(claim)) await this.resumeAfterClosure(completed ?? claim);
             else if (routed && interrupted && item.status === persisted.pendingSignal?.target && this.roles[item.status]) {
               // Startup used to admit the target lane here. Settle the old exact
@@ -736,6 +819,6 @@ export class EventRelay {
     // Historical worktree cleanup is best-effort maintenance, not a prerequisite for
     // recovering current actionable Project work. Running it first can starve dispatch
     // for minutes when many retained resources require inspection.
-    this.reconcileResources();
+    this.scheduleResourceCleanup();
   }
 }
