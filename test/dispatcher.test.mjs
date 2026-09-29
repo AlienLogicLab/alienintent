@@ -108,6 +108,24 @@ test("admission refuses missing capacity, limit and current authority without a 
   }
 });
 
+test("reservation refuses a pause or Founder hold added while reading Issue authority", async () => {
+  for (const change of ["pause", "hold"]) {
+    let paused = false; const held = new Set();
+    const { relay, launches } = subject({
+      admissionEvidence: async () => {
+        if (change === "pause") paused = true;
+        else held.add(303);
+        return { eligible: true };
+      },
+      getWipLimit: item => paused || (item && held.has(item.issue)) ? null : 1,
+      biuLimits: { "ExampleOrg/sample-project#303": { maxCycles: 3, maxReplacementsPerPhase: 1 } },
+    });
+    assert.equal(await relay.start({ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" }, "PRODUCER", "IMPLEMENT"), false);
+    assert.deepEqual(relay.state().active, {});
+    assert.deepEqual(launches, []);
+  }
+});
+
 test("current Issue admission evidence rejects stale, held, blocked, unreleased and ambiguous items", async () => {
   const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVTI_303" };
   let status = "IMPLEMENT", held = false, blocked = false, released = true, ambiguous = false;
@@ -133,6 +151,23 @@ test("current Issue admission evidence rejects stale, held, blocked, unreleased 
     change();
     assert.deepEqual(await authority.admissionEvidence(item, "IMPLEMENT"), { eligible: false, reason });
   }
+});
+
+test("release declaration for another Issue cannot authorize a cross-referenced Issue", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVTI_303" };
+  const gh = args => {
+    const path = args[1];
+    if (path === `repos/${item.repository}/issues/${item.issue}`) return JSON.stringify({ number: 303, state: "open", labels: [] });
+    if (path?.endsWith("/dependencies/blocked_by")) return "[]";
+    if (path?.endsWith("/comments")) return JSON.stringify([{ user: { login: "operator" },
+      body: "**RELEASED — MAINT-149 / Issue #149.**\n#303 remains READY." }]);
+    throw new Error(`unexpected ${path}`);
+  };
+  const authority = new GitHubAuthority({ gh, owner: "ExampleOrg", projectNumber: 1,
+    repository: item.repository, authorizedOperatorLogins: ["operator"] });
+  authority.resolveItem = current => current;
+  authority.currentStatus = async () => "IMPLEMENT";
+  assert.deepEqual(await authority.admissionEvidence(item, "IMPLEMENT"), { eligible: false, reason: "RELEASE_UNVERIFIED" });
 });
 
 test("startup skips unrelated Project history before recovering a persisted claim", async () => {

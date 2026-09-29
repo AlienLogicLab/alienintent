@@ -55,7 +55,11 @@ const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(eve
       return { eligible: false, reason: "FACTORY_POLICY_UNAVAILABLE_OR_HELD" };
     return authority.admissionEvidence(item, status);
   },
-  getWipLimit: () => factoryPolicy()?.wipLimit,
+  getWipLimit: item => {
+    const policy = factoryPolicy();
+    return policy && !policy.paused && !policy.holds.some(hold => hold.issue === item.issue)
+      ? policy.wipLimit : null;
+  },
   worktreeManager: config.executionEnabled ? createWorktreeManager({ repository: config.repository,
     repositoryStore: config.repositoryStore, worktreeRoot: config.worktreeRoot,
     baselineRef: config.baselineRef, git: config.executables.git }) : undefined,
