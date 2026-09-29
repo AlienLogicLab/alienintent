@@ -42,12 +42,13 @@ prerequisites before its live gates.
 
 | Order | Existing work | Completion needed for this milestone |
 |---|---|---|
-| 0 — preserve custody before shutdown | #149 closure; active #147 and #150; #125 parked candidate; #138 unknown-outcome resource | Stop admissions, allow or explicitly fence owned work, record exact claims/results/effects and a recoverable checkpoint. Do not assert DONE or kill active workers from Project status alone. Carry unresolved items into the Python backlog with stable identities. |
-| 1 — v2 durable kernel | PY-02/03/04 as prior capability evidence; SF-REQ-001/002/003/004/008/009 (#3–6, #10–11); #146 supply invariant; #147/SF-REQ-057 | Implement one SQLite WAL canonical state, legal transitions, indexed current projection, priority/dependency/WIP=1 scheduler, READY preparation, durable requirement intake, typed blockers, idempotent effects, verified checkpoint/segment retention and crash recovery. No routine historical replay or unbounded resource growth. #147's current candidate must be assessed before reuse. |
-| 2 — offline full lifecycle | PY-06/07 and WO-220401/402/403, then #121/WO-220404; #118/WO-220307 | Demonstrate independent Producer→Verifier→ACCEPT→DONE, candidate custody, bounded repair, decisions, no-silent-idle, restart and failure handling with provider-free fixtures. Use the formal v2 safety/liveness properties S1–S12 and L1–L5 as acceptance, with targeted antipattern/resource review. |
-| 3 — Python external boundaries | PY-05/08/09/09B prior capability evidence; B0/WO-220501, E1/WO-220502, E2/WO-220503; #127/B4; #130/R1; #129/B7 | Bind authenticated GitHub ingress/projection, operator commands, profile/worker custody, effect readback, bounded Director episode/mailbox, install/start and reversible one-writer migration to the v2 kernel. The external Python bootstrap scripts need per-component successor or retained-custody decisions. |
-| 4 — live replacement proofs after Python starts | #124/B1, #125/B2, #126/B3, #128/B5; #131/R2; #134/B8; #132/B6 | Use one named real profile and one writer to prove trajectory, liveness, release admission, attention, mailbox and reversible sovereignty. #125's current two-cycle packet relies on a live real lane; adapt/reassess its target and schedule for Python rather than pretending the offline build satisfied it. Preserve its parked candidate as evidence, not an accepted result. |
-| 5 — retire old duties | #135/R3, #136/R4, #137/R5, R6/WO-220606, #139/R7; R8/WO-220608; B9/WO-220512; R9/WO-220609 | Read back replacements and complete the gates before removing Node/bootstrap authority, compatibility alias or Director bootstrap role. R8, B9 and R9 have candidate BIUs but no materialized Issue in the current inventory; materialize and assess them when their prerequisites are ready. |
+| 0 — preserve custody during shutdown | #149 closure; active #147 and #150; #125 parked candidate; #138 unknown-outcome resource | Stop admissions, allow or explicitly fence owned work, record exact claims/results/effects and a recoverable checkpoint. Do not assert DONE or kill active workers from Project status alone. Carry unresolved items into the Python backlog with stable identities. |
+| 1 — prepare the Git home | V2-000A–H in the canonical v2 plan | Make the canonical engineering repository private; verify integrations; establish the curated public publication boundary and its proof before serious v2 codebase work. |
+| 2 — v2 durable kernel | PY-02/03/04 as prior capability evidence; SF-REQ-001/002/003/004/008/009 (#3–6, #10–11); #146 supply invariant; #147/SF-REQ-057 | Implement one SQLite WAL canonical state, legal transitions, indexed current projection, priority/dependency/WIP=1 scheduler, READY preparation, durable requirement intake, typed blockers, idempotent effects, verified checkpoint/segment retention and crash recovery. No routine historical replay or unbounded resource growth. #147's current candidate must be assessed before reuse. |
+| 3 — offline full lifecycle | PY-06/07 and WO-220401/402/403, then #121/WO-220404; #118/WO-220307 | Demonstrate independent Producer→Verifier→ACCEPT→DONE, candidate custody, bounded repair, decisions, no-silent-idle, restart and failure handling with provider-free fixtures. Use the formal v2 safety/liveness properties S1–S12 and L1–L5 as acceptance, with targeted antipattern/resource review. |
+| 4 — Python external boundaries | PY-05/08/09/09B prior capability evidence; B0/WO-220501, E1/WO-220502, E2/WO-220503; #127/B4; #130/R1; #129/B7 | Bind authenticated GitHub ingress/projection, operator commands, profile/worker custody, effect readback, bounded Director episode/mailbox, install/start and reversible one-writer migration to the v2 kernel. The external Python bootstrap scripts need per-component successor or retained-custody decisions. |
+| 5 — live replacement proofs after Python starts | #124/B1, #125/B2, #126/B3, #128/B5; #131/R2; #134/B8; #132/B6 | Use one named real profile and one writer to prove trajectory, liveness, release admission, attention, mailbox and reversible sovereignty. #125's current two-cycle packet relies on a live real lane; adapt/reassess its target and schedule for Python rather than pretending the offline build satisfied it. Preserve its parked candidate as evidence, not an accepted result. |
+| 6 — retire old duties | #135/R3, #136/R4, #137/R5, R6/WO-220606, #139/R7; R8/WO-220608; B9/WO-220512; R9/WO-220609 | Read back replacements and complete the gates before removing Node/bootstrap authority, compatibility alias or Director bootstrap role. R8, B9 and R9 have candidate BIUs but no materialized Issue in the current inventory; materialize and assess them when their prerequisites are ready. |
 
 The ordered proof chain is B2→R3, B1→R4, B3→R6, R3+R4+B8→R5,
 B1+B2+B3+B5+E2→B6, and R3+R4+R5+R6+B6→R7. R8 depends on B7;
@@ -98,12 +99,20 @@ before its dependent live gate. The Windows notification exclusion and
 expired PY-04 mutation gate are already disposed in the cited audit correction;
 do not re-open them without new evidence.
 
-## Next working packet
+## Next working packet — repository first
 
-Start with the **v2 durable kernel / scheduler** in row 1 as one bounded BIU,
-using [the work-packet template](../templates/work-packet.md). Pin the exact
-repository baseline and the existing PY-02/03/04 interfaces. Record object
-ownership, retention, high-water behavior, crash cleanup, measured admission
-cost as history grows and an independent antipattern/slop review. Then perform
-row 2 offline lifecycle proof. Do not spend model or test budget on all
+The Founder clarified on 2026-09-29 that the first work is to create the proper
+Git home for the product under the [canonical v2 plan](../decisions/alienintent-v2-canonical-project-plan.md):
+complete repository/privacy/publication work V2-000A–H and verify its exit
+criteria **before** serious kernel or other codebase implementation. The
+kernel-first instruction previously in this section is superseded on order.
+
+After that repository milestone, prepare the **v2 durable kernel / scheduler**
+in row 2 as one bounded BIU using [the work-packet template](../templates/work-packet.md).
+Pin the exact repository baseline and inspect existing PY-02/03/04 interfaces.
+Record object ownership, retention, high-water behavior, crash cleanup,
+measured admission cost as history grows, and an independent antipattern/slop
+review. Then perform row 3 offline lifecycle proof. See the
+[replacement path analysis](python-replacement-shortest-path-analysis.md) for
+the dependency and quality gates. Do not spend model or test budget on all
 historical Node suites to validate a Python-only slice.
