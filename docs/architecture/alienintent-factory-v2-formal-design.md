@@ -3,7 +3,7 @@
 Date: 2026-09-29  
 Status: **Canonical AlienIntent Factory v2 architecture. Architecture only: no v1 runtime change, cutover, migration, repository-visibility change, or retirement is authorized merely by this document.**
 
-This document supersedes `AlienIntent_Factory_Director_Role_and_Buildout_2026-09-23.md` as a separate design authority and incorporates its enduring Factory Director/flywheel model. It also incorporates the Founder-approved private-canonical/public-publication repository architecture recorded on 2026-09-28, the protocol-neutral Operator Control Plane/interface design, and the foundational v1 architecture that remains correct for v2: Domain-Driven Design, the canonical Ubiquitous Language, modular-monolith bounded contexts, Hexagonal ports/adapters with Anti-Corruption Layers, provider-neutral contracts, Python engineering discipline, architecture fitness and advanced coding/testing standards. Historical decision/design records remain provenance and source evidence, not competing v2 design authorities.
+This document supersedes `AlienIntent_Factory_Director_Role_and_Buildout_2026-09-23.md` as a separate design authority and incorporates its enduring Factory Director/flywheel model. It also incorporates the Founder-approved private-canonical/public-publication repository architecture recorded on 2026-09-28, the protocol-neutral Operator Control Plane/interface design, and AlienIntent’s foundational architecture: Domain-Driven Design, the canonical Ubiquitous Language, modular-monolith bounded contexts, Hexagonal ports/adapters with Anti-Corruption Layers, provider-neutral contracts, Python engineering discipline, architecture fitness and advanced coding/testing standards. Historical decision/design records remain provenance and source evidence, not competing v2 design authorities.
 
 ## 1. Purpose
 
@@ -16,6 +16,102 @@ The objective is deliberately narrow:
 > Given durable product intent, continuously convert the highest-priority eligible work into independently verified DONE outcomes using a control kernel whose behavior is deterministic, inspectable, replayable, and small enough to reason about completely.
 
 v1 is retained as evidence, historical trajectory, and a source of requirements and failure classes. v1 implementation structure is not a compatibility target for the v2 control kernel.
+
+## 1A. Architecture lineage, authority and inheritance
+
+AlienIntent v2 is not architecturally greenfield. It is a clean implementation of the current AlienIntent product intent under the existing authoritative architecture, amended by lessons learned from v1.
+
+The controlling source hierarchy is:
+
+1. **`docs/architecture/alienintent-architecture-authority-2026-09-19.md`** — authoritative Founder-approved architecture direction, including later canonical amendments.
+2. **`docs/architecture/alienintent-ubiquitous-language-v0.1.md`** — current canonical domain language baseline.
+3. **Binding Founder decisions / SF-REQ requirements** that refine specific capabilities and ownership.
+4. **`docs/architecture/canonical-architecture.md`** — retained canonical design principles where not superseded by later Architecture Authority amendments.
+5. Historical recommendations, pre-Python candidate designs, v1 implementation and incident evidence — rationale/evidence, not overriding authority.
+
+Where older documents conflict with a later Founder-approved Architecture Authority amendment, the later authority controls. In particular, the older `canonical-architecture.md` statement that AlienIntent is not a requirements/specification/planning system is refined by Architecture Authority amendment **A2**, which establishes an explicit **Requirements / Planning bounded context** inside AlienIntent. That context owns conversion of authorized product intent into executable work while preserving obligations; external Work Management providers may still own product/business authority according to configured ownership boundaries.
+
+v2 therefore preserves the strongest valid architecture from earlier AlienIntent work rather than either copying v1 implementation or discarding the product's architectural foundation.
+
+### 1A.1 Binding governing principles inherited unchanged
+
+The following principles are direct architectural inheritance from the Founder-approved Architecture Authority and are binding on v2:
+
+- **Build from explicit product intent, not inherited implementation accident.**
+- **Domain-Driven Design (DDD).**
+- **Hexagonal Architecture / ports and adapters.**
+- **Explicit Anti-Corruption Layers at external boundaries.**
+- **Python-specific software-engineering best practices.**
+- **Alien Logic Lab EOS inheritance/contribution where an internally consistent EOS baseline exists.**
+- **Convention over configuration.**
+- **Solve for N architecturally; optimize the normal path for N=1.**
+- **KISS / elegance through absence of unnecessary complexity.**
+- **Modular monolith + explicit bounded contexts by default; distribution only when evidence justifies it.**
+- **Event-driven / asynchronous integration. Polling is prohibited unless explicitly approved.**
+- **Material product, architecture, security, privacy and deployment decisions require the appropriate human authority; routine implementation details inside approved constraints are delegated.**
+- **Reuse Before Build:** consume an existing authoritative capability through its supported public interface rather than emulating it or reproducing its logic without explicit authority.
+
+These are not merely style preferences. They are architecture constraints that must be mechanically enforced where practical.
+
+### 1A.2 Additional foundational architecture inherited into v2
+
+The v2 design also carries forward these Founder-approved architectural decisions unless a later v2 section explicitly refines their implementation:
+
+- one self-hosted AlienIntent installation may manage **N isolated project profiles**, with one as the normal default;
+- transport is a Hexagonal port; direct webhook and outbound relay are first-class patterns, and the domain is transport-neutral;
+- PRODUCER and VERIFIER are domain roles; external identities/providers/accounts are deployment policy;
+- verifier independence means separate invocation, isolated workspace, independent context, immutable candidate/evidence inputs, separate provenance and no self-approval;
+- source-control methodology is agent-native and evidence-driven; PRs are optional artifacts, not the lifecycle itself;
+- multi-repository work is first-class and represented through bounded work plus explicit dependency ordering, not fake atomic Git semantics;
+- work/product concepts are repository-neutral; GitHub/Jira/Linear/GitLab representations are adapters, not domain entities;
+- execution release is attributable policy, separate from readiness;
+- assurance/sandboxing/capabilities are configurable and proportional rather than a mandatory bureaucracy;
+- agents may receive powerful capabilities when required, but capabilities are explicit, attributable and bounded;
+- deployment is an authorized effect/closure obligation when required, not a magic lifecycle synonym;
+- operational state, task context, durable knowledge, trajectory, Quality Evidence and learned policy are distinct stores/concepts rather than one generic memory bucket;
+- evidence is local-first by default, secret-safe, selectively retrievable and independent of private chain-of-thought;
+- private reasoning is not required or stored; observable engineering evidence is retained instead;
+- ports/adapters are versioned and capability-aware, and the core does not accumulate vendor-specific conditional logic;
+- configuration is typed, convention-heavy and secret references are separate from values;
+- installation/upgrade/migration behavior includes preflight, migration/versioning, safe active-work handling and rollback where practical;
+- structured logs, health/readiness, execution timelines, lifecycle history, usage/cost/latency and diagnostics are first-class observability;
+- the Operator Control Plane drives legitimate events/commands through the same domain interfaces rather than mutating state directly;
+- DDD/Hexagonal dependency rules and adapter isolation are architecture fitness properties enforced in CI;
+- Python uses a `src/` layout organized by bounded contexts with domain/application/ports/adapters/composition separated.
+
+### 1A.3 Principles retained from the existing canonical architecture
+
+The following principles from `canonical-architecture.md` remain especially important and are promoted explicitly into v2:
+
+- **Preserve history; execute current intent.** Historical artifacts are evidence, not permanent authority.
+- **State beats prompt prose.** Durable structured state and policy replace repeated instructional scaffolding wherever possible.
+- **Role-specific context.** Context is compiled by role + phase; verifier/operator contexts intentionally differ from producer context.
+- **No private-reasoning dependency.** Verification consumes authoritative requirements, candidate and evidence, not producer reasoning narrative.
+- **Operator explainability.** The system must answer: Where am I? Why am I here? What is authoritative? What blocks advancement? What is the safest valid next action? Can AlienIntent perform it?
+- **Owned-resource cleanup only.** AlienIntent may clean up resources it can prove it owns; process/resource absence alone is not fabricated custody evidence.
+- **Merge is not DONE.** DONE means the bounded obligation's required landing/deployment/publication/operational closure predicates are actually satisfied.
+- **Advisory work must not delay an authoritative handoff once required evidence is satisfied.**
+- **Quality gate:** every persistent mechanism should answer, “Which demonstrated failure does this prevent?” If none can be named, reject or remove it.
+
+### 1A.4 Scope evolution: Requirements / Planning is now inside AlienIntent
+
+Architecture Authority amendment A2 is binding for v2. AlienIntent includes an explicit Requirements / Planning bounded context responsible for:
+
+- requirement intake and normalization;
+- requirement provenance;
+- specification and design-input preparation;
+- planning;
+- requirement-to-BIU compilation;
+- dependency DAG construction;
+- invocation of Agent Ready through a Hexagonal port;
+- processing readiness dispositions through AlienIntent authority;
+- split/replan transactions;
+- obligation conservation;
+- Wave/plan materialization where authorized.
+
+This does **not** make AlienIntent the source of arbitrary product authority. It means AlienIntent owns the deterministic/cognizant machinery that preserves and transforms authorized product intent into executable work without losing, inventing, weakening or silently reallocating obligations.
+
+Agent Ready remains a separate bounded context/product and readiness authority. AlienIntent consumes it only through supported public interfaces; it does not copy its rubric or implementation.
 
 ## 2. Primary design rule
 
