@@ -1,7 +1,9 @@
 # AlienIntent Factory v2.0 — Formal Control-Plane Design
 
 Date: 2026-09-29  
-Status: **Founder-directed v2 design baseline; architecture only. No v1 runtime change, cutover, migration, or retirement is authorized by this document.**
+Status: **Canonical AlienIntent Factory v2 architecture. Architecture only: no v1 runtime change, cutover, migration, repository-visibility change, or retirement is authorized merely by this document.**
+
+This document supersedes `AlienIntent_Factory_Director_Role_and_Buildout_2026-09-23.md` as a separate design authority and incorporates its enduring Factory Director/flywheel model. It also incorporates the Founder-approved private-canonical/public-publication repository architecture recorded on 2026-09-28. Historical decision records remain provenance, not competing design authorities.
 
 ## 1. Purpose
 
@@ -582,7 +584,261 @@ The v2 core must not contain equivalents of:
 - model reasoning to decide whether READY/WIP/dependencies are satisfied;
 - manual “poke the lane” behavior required for normal progress.
 
-## 25. v1 compatibility policy
+## 25. Factory Director operating model
+
+The Factory Director is the persistent **coordination cognition** around the deterministic kernel. It is not the lifecycle engine, not the scheduler, not the source of product authority, and not the domain brain for every bounded context.
+
+### 25.1 Mission
+
+> **Continuously coordinate authorized work so the factory maintains a healthy supply of correctly prioritized executable work and processes it through completion with minimal avoidable coordination latency.**
+
+The Director optimizes flow subject to deterministic policy: authority, priority, dependencies, WIP, readiness, verification, budgets, security/privacy, custody, and durable plan obligations.
+
+The Director is successful when the factory does not idle merely because preparation, delegation, or coordination that was already authorized failed to happen.
+
+### 25.2 Two connected flows
+
+The Director coordinates two flows that remain conceptually distinct.
+
+**Demand / definition flow**
+
+```text
+Proposal / Feature / Defect / Discovery
+                |
+              CAPTURE
+                |
+             SPECIFY
+                |
+               PLAN
+                |
+              TASKS
+                |
+          readiness work
+                |
+              READY
+```
+
+**Execution flow**
+
+```text
+READY -> IMPLEMENT -> VERIFY -> ACCEPT -> DONE
+```
+
+Review, assurance, deployment, publication, and other gates may participate as typed policies/effects without multiplying the core lifecycle unnecessarily.
+
+WIP applies to execution. It does **not** prohibit the Director from continuing specification, planning, decomposition, readiness work, dependency resolution, or queue replenishment for later work.
+
+### 25.3 Director control loop
+
+The cognitive Director operates over typed kernel queries and commands:
+
+```text
+OBSERVE
+  canonical state, queues, blockers, effects, runtime health
+      |
+      v
+INTERPRET
+  determine which uncertainty actually needs cognition
+      |
+      v
+DELEGATE / PROPOSE
+  requirements, design, planning, readiness, implementation,
+  verification, recovery, or operator attention
+      |
+      v
+COMMAND
+  submit typed intent to the deterministic kernel
+      |
+      v
+VERIFY RESULT
+  consume canonical state/effect readback, never prose inference
+      |
+      +----> repeat
+```
+
+The Director never changes canonical state by editing projections or by narrating a desired outcome. It asks the kernel to perform a typed command; the kernel accepts or rejects it mechanically.
+
+### 25.4 Queues
+
+v2 exposes four operator-visible logical queues derived from canonical state:
+
+- **Intake** — durable requirements/proposals not yet sufficiently specified.
+- **Definition** — specification, design, planning, decomposition, and readiness work.
+- **Admission** — READY work waiting for execution capacity or an explicit release policy.
+- **Execution** — claimed IMPLEMENT/VERIFY/ACCEPT work.
+
+Blocked work is not a fifth lifecycle. It is a typed condition attached to the owning WorkItem with an explicit owner and resolution predicate.
+
+### 25.5 Delegation boundary
+
+The Director delegates substantive work to authoritative capabilities rather than emulating every capability itself with ad hoc prompting. Examples include requirements/specification, architecture/design, planning/decomposition, Agent Ready, allocation, producer implementation, independent verification, review, publication assembly, and deployment.
+
+Each delegated capability returns typed artifacts/results. Free-form prose may explain a result but cannot itself mutate lifecycle state.
+
+### 25.6 No-idle rule
+
+Healthy idle exists only when **no legal deterministic transition, no eligible execution, and no authorized cognitive preparation/delegation can advance the factory**.
+
+If READY is below target while authorized preparable backlog exists, the Director must keep preparation active. If execution capacity is available and eligible READY work exists, the deterministic scheduler must fill it. If neither can progress, the blocking predicate must be visible and attributable.
+
+### 25.7 Factory health
+
+Factory health is measured from canonical state, not model impressions. Minimum flow indicators include:
+
+- READY depth and target;
+- executable WIP / limit;
+- oldest unresolved requirement;
+- blocked items by type/owner;
+- time in state;
+- preparation throughput;
+- implementation/verification cycle counts;
+- retry exhaustion;
+- pending/unknown external effects;
+- projection drift;
+- runtime/deployed revision drift;
+- requirements with no legal next action.
+
+The Director may explain these metrics cognitively, but it does not calculate alternate truth.
+
+## 26. Repository authority and deterministic public publication
+
+AlienIntent v2 separates **engineering authority** from **publication**.
+
+### 26.1 Private canonical engineering repository
+
+The canonical engineering repository is private by default. It is the durable product-development authority and may contain:
+
+- source and tests;
+- requirements, architecture, design and ADRs;
+- Ubiquitous Language and contracts;
+- work units and internal evidence;
+- internal Issues/Project state references;
+- Factory Director internals;
+- migration/cutover plans;
+- durable private runbooks;
+- provider/model evaluations and other internal engineering material.
+
+Committing an artifact to the canonical repository does **not** publish it.
+
+### 26.2 Public repository is a publication target
+
+A public repository, when configured, is a separate product/distribution surface generated from an explicitly approved canonical private revision.
+
+Typical public content may include:
+
+- intentionally released source and appropriate tests;
+- README, LICENSE, CONTRIBUTING and SECURITY;
+- build/package metadata required by users;
+- installation and stable API/extension documentation;
+- deliberately curated public architecture/security/contributor guidance;
+- intentional releases and public tags.
+
+The public repository is never canonical engineering authority merely because it is visible to users.
+
+### 26.3 Publication classification
+
+Every canonical artifact resolves to exactly one publication classification:
+
+- `INTERNAL` — default;
+- `PUBLIC_SOURCE` — explicitly approved open-source product content;
+- `PUBLIC_DOCUMENTATION` — explicitly approved external documentation.
+
+Unknown or missing classification means `INTERNAL`.
+
+There is no denylist-based publication mode.
+
+### 26.4 Publication pipeline
+
+Publication is a deterministic, allowlist-based, fail-closed factory operation:
+
+```text
+private canonical revision
+        |
+publication assembler
+        |
+explicit allowlist/classification resolution
+        |
+reject unknown/unclassified public candidates
+        |
+secret scan
+        |
+private-reference / internal-path scan
+        |
+public build + tests
+        |
+public API/compatibility checks
+        |
+immutable publication candidate
+        |
+explicit publication authority
+        |
+public repository / release
+```
+
+The Factory Director may coordinate publication, but it may not infer privacy from conversation context, model memory, filename patterns, or prior publication. Classification and publication authority are deterministic data.
+
+### 26.5 Public/private issue separation
+
+Internal Issues and the internal Project are factory-control infrastructure and remain private with the canonical engineering authority.
+
+A public repository may expose a separate public Issue/Discussion surface. External input follows:
+
+```text
+external report / proposal / question
+            |
+        public intake
+            |
+     internal evaluation
+            |
+ possible RequirementCandidate
+            |
+ canonical private Requirements context
+```
+
+A public Issue never directly becomes a canonical requirement, BIU, priority decision, worker assignment, or execution authority.
+
+### 26.6 Branch and history separation
+
+Private canonical history may retain detailed engineering truth and worker/candidate branches required for custody.
+
+Public publication must not automatically expose worker branches, internal failure history, private planning, model/provider strategy, or security-sensitive operations. Public history may compose or squash accepted private changes into externally meaningful commits.
+
+The preferred public repository genesis is a **fresh curated publication snapshot**, not a rewrite of the full internal Git object graph.
+
+### 26.7 Operations-document rule
+
+Transient operational narrative is not a permanent architecture mechanism. When an operational incident reveals a durable rule, promote that rule into one or more of:
+
+- requirement;
+- architecture/design/ADR;
+- deterministic policy;
+- executable invariant/regression test;
+- durable private runbook.
+
+Then the transient operational record may expire or remain only in private continuity/history.
+
+### 26.8 Installer/product invariant
+
+A new AlienIntent installation assumes:
+
+> **canonical engineering repository = private unless explicitly configured otherwise**
+
+If a user wants a public repository, it is configured as a separate publication target. Setup must never assume `canonical repo == public repo`, `commit == publication`, `public Issues == internal work management`, or `GitHub visibility == engineering authority`.
+
+### 26.9 Publication safety properties
+
+The v2 conformance suite must prove:
+
+- unknown classification cannot publish;
+- only allowlisted artifacts enter a publication candidate;
+- internal requirements/design/evidence/work units/worker branches cannot leak by default;
+- secrets/private references fail publication;
+- a public publication is reconstructable from canonical revision + publication policy;
+- repeating publication assembly is deterministic;
+- public intake cannot bypass internal requirement authority;
+- publication and normal engineering commits are distinct effects with distinct authority.
+
+## 27. v1 compatibility policy
 
 v2 must preserve **intent and evidence**, not v1 implementation quirks.
 
@@ -595,7 +851,7 @@ During migration:
 - divergences are classified as v2 defect, v1 defect, or intentional semantic change;
 - no v1 special case is copied merely to make replay match a known-bad outcome.
 
-## 26. v2 build sequence
+## 28. v2 build sequence
 
 ### Phase V2-0 — Formal model
 
@@ -687,7 +943,7 @@ Only after live proof:
 5. retain v1 read-only rollback evidence;
 6. retire v1 control components only after a defined stability window.
 
-## 27. v2 acceptance bar
+## 29. v2 acceptance bar
 
 v2 is not production-ready because unit tests pass.
 
@@ -706,7 +962,7 @@ Before cutover it must demonstrate:
 - deployment revision mismatch detection;
 - sustained shadow operation without Founder maintenance intervention.
 
-## 28. Complexity budget
+## 30. Complexity budget
 
 The v2 kernel has an explicit complexity budget.
 
@@ -727,7 +983,7 @@ A proposed kernel feature must answer:
 
 If those answers are weak, the feature does not enter the kernel.
 
-## 29. Definition of “expensive watch” behavior
+## 31. Definition of “expensive watch” behavior
 
 The factory behaves correctly when an operator can predict its next action from canonical state without reading source code, model transcripts, or historical comments.
 
@@ -746,7 +1002,7 @@ For every non-DONE WorkItem, the system must be able to answer mechanically:
 
 If the answer requires reconstructing a conversation, interpreting prose, or asking a model what probably happened, v2 has failed its design objective.
 
-## 30. Governing principle
+## 32. Governing principle
 
 > **AlienIntent v2 should be difficult to make clever and easy to prove correct.**
 
