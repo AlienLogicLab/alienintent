@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Repair startup/dispatcher resource reconciliation so best-effort historical retained-resource cleanup no longer blocks listener readiness or current authoritative project dispatch, while preserving custody safety, diagnostics, resumability, and non-overlapping cleanup ownership.",
+    "implementation_unknowns": [
+      "Exact current structure of bin/alienintent.mjs startup sequencing, relay.startupReconcile(), dispatcher reconcileResources(), and retained-resource persistence APIs must be located before design changes.",
+      "The appropriate mechanism for restart-safe bounded cleanup ownership, progress markers, lease/lock semantics, and no-overlap guarantees must be determined from existing runtime conventions.",
+      "The existing test harness and fixtures for retained resources, dirty worktrees, active claims, ambiguous custody, restarts, and repeated execution must be identified or extended.",
+      "How diagnostics and pending-cleanup observability are currently surfaced must be mapped so the repair preserves or improves existing evidence without inventing historical outcomes.",
+      "The exact origin/main baseline, current #149 worker/claim state, and listener state must be read back before implementation as required by the packet."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "A naive async conversion could admit current dispatch while weakening custody, active-claim, supervised-unit, dirty-worktree, or ambiguous-ownership refusals.",
+      "Incomplete restart/progress handling could lose retained cleanup records, duplicate cleanup ownership, or make historical cleanup effectively skipped rather than deferred.",
+      "Startup/listener changes could mask real reconciliation failures if diagnostics do not distinguish authoritative current reconciliation from best-effort historical cleanup.",
+      "The current observed production state may have changed; implementation must treat the described incident as recurrence prevention if the sweep has already completed.",
+      "Accidental coupling to #149 custody work, #138 historical outcome, PROCESSING delivery, service restart, or live rollout would exceed the authorized boundary."
+    ],
+    "next_action": "Assign the isolated engineering owner through normal handoff, read back current #149 claim/worker and listener state, pin the exact origin/main baseline, then implement the bounded/resumable historical-cleanup decoupling with the specified safety and regression tests before independent verification.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "READY is the controlling disposition because owner intent, non-goals, safety constraints, and observable proof obligations are materially clear, and the work is one coherent runtime maintenance repair rather than multiple independent product or architectural decisions. The remaining unknowns concern how to implement the repair within the existing codebase and test infrastructure. No owner clarification is needed, and the packet\u2019s rollout and unrelated custody/history concerns are explicitly excluded rather than unresolved.",
+    "semantic_split_recommendation": [],
+    "summary": "The proposed work is a cohesive maintenance repair with clear boundaries: decouple or bound historical cleanup from startup/listen/control flow without changing #149 custody semantics, product priorities, live rollout, or unrelated historical outcomes. Owner intent is sufficiently specified, acceptance is observable, and remaining uncertainties are implementation research rather than product clarification.",
+    "verification_assessment": "Acceptance is observable through discriminating tests and release evidence: startup/listener readiness and eligible current dispatch must proceed while a large or slow retained-resource cleanup remains pending; dirty, ambiguous, live-owned, or mismatched resources must still be refused; cleanup must be resumable after restart, idempotent under repetition, bounded per pass, and protected from overlapping owners. One independent verification verdict is meaningful because the work has a single governing behavioral change across startup reconciliation and retained cleanup safety, with normal candidate and feature-regression receipts before landing. Installed-service rollout is explicitly outside the implementation landing and requires its own quiescent preflight/readback evidence."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-29T02:50:59.271214+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 3302,
+    "input_sha256": "82b63a3a1ce54c1ca59898718d62aa79069a0219ecbd9f408369653574f76c5b",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-j_e_r725/MAINT-150.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-29T02:50:23.184955+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "MAINT-150"
+}
