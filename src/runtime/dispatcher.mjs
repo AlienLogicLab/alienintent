@@ -168,9 +168,10 @@ export class EventRelay {
   inspectClaimTransferUnit(request) {
     const state = this.state();
     assertClaimTransferState(state, request);
-    const inspect = this.options.claimTransferUnitInspector;
+    const inspect = this.options.claimTransferUnitInspector ?? this.options.launch?.inspectClaimTransferUnit;
     if (typeof inspect !== "function") throw new Error("CLAIM_TRANSFER_UNIT_INSPECTOR_REQUIRED");
-    const observed = inspect(state.resources[request.invocationId].supervision);
+    const resource = state.resources[request.invocationId];
+    const observed = inspect(resource.supervision, resource.role);
     if (observed?.unit !== request.unit || observed.cgroup !== request.cgroup
         || !isDeepStrictEqual(observed.manager, request.manager)
         || observed.loadState !== "not-found" || observed.cgroupPopulated !== false)

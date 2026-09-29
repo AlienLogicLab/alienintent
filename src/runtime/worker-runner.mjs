@@ -86,5 +86,9 @@ export function createWorkerLauncher({ workers, runner = spawnWorker, supervisor
     if (!supervisors[resource.role]) throw new Error("SUPERVISION_CONFIGURATION_REQUIRED");
     return supervisors[resource.role].observe(resource.supervision, persist);
   };
+  launch.inspectClaimTransferUnit = (owner, role) => {
+    if (!supervisors[role]?.inspectClaimTransferUnit) throw new Error("SUPERVISION_CONFIGURATION_REQUIRED");
+    return supervisors[role].inspectClaimTransferUnit(owner);
+  };
   return launch;
 }

@@ -52,6 +52,22 @@ test("transfer unit preflight inspects only the exact retained supervision inten
   assert.deepEqual(observed, [state.resources[invocationId].supervision]);
 });
 
+test("transfer unit preflight uses the installed launch inspector for the retained role", () => {
+  const { state, request } = fixture();
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-launch-unit-")), "state.json");
+  const calls = [];
+  const relay = new EventRelay({ statePath, launch: {
+    inspectClaimTransferUnit: (owner, role) => {
+      calls.push({ owner, role });
+      return { unit: owner.unit, cgroup: owner.cgroup, manager: owner.manager,
+        loadState: "not-found", cgroupPopulated: false };
+    },
+  } });
+  relay.save(state);
+  assert.equal(relay.inspectClaimTransferUnit(request).unit, request.unit);
+  assert.deepEqual(calls, [{ owner: state.resources[invocationId].supervision, role: "PRODUCER" }]);
+});
+
 test("transfer state preflight binds the exact processless supervised claim", () => {
   const { state, request } = fixture();
   assert.deepEqual(assertClaimTransferState(state, request), {

@@ -62,6 +62,19 @@ test("launcher preserves item and invocation ID for the worker runner", () => {
   assert.deepEqual(received, { role: "VERIFIER", worker: { ...fixture("claude"), worktree: "/tmp/invocation-specific" }, item, invocationId, bootstrap: "bootstrap" });
 });
 
+test("launcher exposes read-only transfer unit inspection for the exact role", () => {
+  const owner = { unit: "retained.service" };
+  const calls = [];
+  const launch = createWorkerLauncher({ workers: {
+    PRODUCER: { ...fixture("codex"), supervision: { mode: "systemd" } },
+  }, supervisorFactory: () => ({
+    inspectClaimTransferUnit: observed => { calls.push(observed); return { unit: observed.unit }; },
+  }) });
+  assert.deepEqual(launch.inspectClaimTransferUnit(owner, "PRODUCER"), { unit: owner.unit });
+  assert.deepEqual(calls, [owner]);
+  assert.throws(() => launch.inspectClaimTransferUnit(owner, "VERIFIER"), /SUPERVISION_CONFIGURATION_REQUIRED/);
+});
+
 test("worker commands preserve only the current invocation bootstrap and identity-isolated environment", () => {
   const item = { repository: "sample/widget", issue: 101 };
   const currentInvocation = "sample/widget#101:PRODUCER:current";
