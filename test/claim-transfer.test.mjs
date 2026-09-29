@@ -42,6 +42,7 @@ test("transfer unit preflight inspects only the exact retained supervision inten
       loadState: "not-found", cgroupPopulated: false };
   } });
   relay.save(state);
+  request.expectedHead = relay.fence();
   assert.deepEqual(relay.inspectClaimTransferUnit(request), {
     unit: request.unit, cgroup: request.cgroup, manager: request.manager,
     loadState: "not-found", cgroupPopulated: false,
@@ -64,8 +65,24 @@ test("transfer unit preflight uses the installed launch inspector for the retain
     },
   } });
   relay.save(state);
+  request.expectedHead = relay.fence();
   assert.equal(relay.inspectClaimTransferUnit(request).unit, request.unit);
   assert.deepEqual(calls, [{ owner: state.resources[invocationId].supervision, role: "PRODUCER" }]);
+});
+
+test("transfer unit inspection refuses stale or changing ledger custody", () => {
+  const { state, request } = fixture();
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-unit-fence-")), "state.json");
+  let relay;
+  relay = new EventRelay({ statePath, claimTransferUnitInspector: owner => {
+    relay.save(relay.state());
+    return { unit: owner.unit, cgroup: owner.cgroup, manager: owner.manager,
+      loadState: "not-found", cgroupPopulated: false };
+  } });
+  relay.save(state);
+  request.expectedHead = relay.fence();
+  assert.throws(() => relay.inspectClaimTransferUnit(request), /CLAIM_TRANSFER_UNIT_STATE_CHANGED/);
+  assert.throws(() => relay.inspectClaimTransferUnit(request), /CLAIM_TRANSFER_UNIT_STATE_CHANGED/);
 });
 
 test("transfer state preflight binds the exact processless supervised claim", () => {

@@ -168,6 +168,9 @@ export class EventRelay {
   inspectClaimTransferUnit(request) {
     const state = this.state();
     assertClaimTransferState(state, request);
+    const head = this.fence();
+    if (!isDeepStrictEqual(head, request.expectedHead))
+      throw new Error("CLAIM_TRANSFER_UNIT_STATE_CHANGED");
     const inspect = this.options.claimTransferUnitInspector ?? this.options.launch?.inspectClaimTransferUnit;
     if (typeof inspect !== "function") throw new Error("CLAIM_TRANSFER_UNIT_INSPECTOR_REQUIRED");
     const resource = state.resources[request.invocationId];
@@ -176,6 +179,8 @@ export class EventRelay {
         || !isDeepStrictEqual(observed.manager, request.manager)
         || observed.loadState !== "not-found" || observed.cgroupPopulated !== false)
       throw new Error("CLAIM_TRANSFER_UNIT_PROOF_MISMATCH");
+    if (!isDeepStrictEqual(this.fence(), head))
+      throw new Error("CLAIM_TRANSFER_UNIT_STATE_CHANGED");
     return observed;
   }
   commitClaimTransfer(request) {
