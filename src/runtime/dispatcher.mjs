@@ -93,7 +93,8 @@ export class EventRelay {
       if (observation.terminal) this.updateResource(claim.invocationId, { exitedAt: resource.exitedAt ?? new Date(this.now()).toISOString() });
       return !observation.terminal;
     } catch (error) {
-      this.updateResource(claim.invocationId, { supervisionDiagnostic: error.message });
+      if (resource.supervisionDiagnostic !== error.message)
+        this.updateResource(claim.invocationId, { supervisionDiagnostic: error.message });
       this.emit({ invocationId: claim.invocationId, outcome: "SUPERVISION_HOLD", error: error.message });
       return true;
     }
@@ -121,7 +122,8 @@ export class EventRelay {
         this.updateResource(invocationId, { ...cleaned, cleanupDiagnostic: null });
         this.emit({ invocationId, outcome: "WORKTREE_REMOVED" });
       } catch (error) {
-        this.updateResource(invocationId, { cleanupDiagnostic: error.message });
+        if (resource.cleanupDiagnostic !== error.message)
+          this.updateResource(invocationId, { cleanupDiagnostic: error.message });
         this.emit({ invocationId, outcome: "WORKTREE_CLEANUP_FAILED", error: error.message });
       }
     }

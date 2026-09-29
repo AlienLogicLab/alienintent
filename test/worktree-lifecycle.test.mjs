@@ -82,6 +82,26 @@ test('cleanup failure is a resource diagnostic, never a workflow rewrite', async
   assert.equal(f.relay.state().resources[active.invocationId].cleanupDiagnostic, 'dirty checkout retained');
 });
 
+for (const refusal of ['AlienIntent worktree: dirty worktree retained',
+  'AlienIntent worktree: worktree registration/branch mismatch']) {
+  test(`repeated reconciliation retains deterministic cleanup refusal: ${refusal}`, t => {
+    const f = fixture(t), item = f.item(149), invocationId = `ExampleOrg/sample-project#149:PRODUCER:old`;
+    const resource = { ...f.manager.plan({ invocationId, item, role: 'PRODUCER' }), lifecycle: 'READY' };
+    f.relay.save({ deliveries: {}, active: {}, resources: { [invocationId]: resource } });
+    let attempts = 0;
+    f.manager.cleanup = () => { attempts++; throw new Error(refusal); };
+    f.relay.reconcileResources();
+    const firstSequence = f.relay.ledger.replay().sequence;
+    f.relay.reconcileResources();
+    assert.equal(attempts, 2);
+    assert.equal(f.relay.ledger.replay().sequence, firstSequence, 'same refusal does not grow the journal');
+    assert.equal(f.relay.state().resources[invocationId].cleanupDiagnostic, refusal);
+    f.manager.cleanup = retained => ({ ...retained, lifecycle: 'REMOVED' });
+    f.relay.reconcileResources();
+    assert.equal(f.relay.state().resources[invocationId].lifecycle, 'REMOVED');
+  });
+}
+
 test('failed durable-result read preserves exited worktree for recovery', async t => {
   const f = fixture(t);
   f.relay.options.authority.durableResult = async () => { throw new Error('read interrupted'); };
@@ -159,6 +179,10 @@ test('supervised recovery holds on manager failure or live unit despite dead cli
   control.unavailable = true;
   await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
   assert.equal(f.launches.length, 1);
+  const firstHoldSequence = f.relay.ledger.replay().sequence;
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  assert.equal(f.relay.ledger.replay().sequence, firstHoldSequence,
+    'the same supervision refusal must not append another full snapshot');
   control.unavailable = false;
   await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
   assert.equal(f.launches.length, 1);
