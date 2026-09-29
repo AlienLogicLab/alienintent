@@ -32,6 +32,26 @@ function fixture() {
   return { state, request };
 }
 
+test("transfer unit preflight inspects only the exact retained supervision intent", () => {
+  const { state, request } = fixture();
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-unit-")), "state.json");
+  const observed = [];
+  const relay = new EventRelay({ statePath, claimTransferUnitInspector: owner => {
+    observed.push(owner);
+    return { unit: owner.unit, cgroup: owner.cgroup, manager: owner.manager,
+      loadState: "not-found", cgroupPopulated: false };
+  } });
+  relay.save(state);
+  assert.deepEqual(relay.inspectClaimTransferUnit(request), {
+    unit: request.unit, cgroup: request.cgroup, manager: request.manager,
+    loadState: "not-found", cgroupPopulated: false,
+  });
+  assert.deepEqual(observed, [state.resources[invocationId].supervision]);
+  assert.throws(() => relay.inspectClaimTransferUnit({ ...request, unit: "another.service" }),
+    /CLAIM_TRANSFER_SUPERVISION_MISMATCH/);
+  assert.deepEqual(observed, [state.resources[invocationId].supervision]);
+});
+
 test("transfer state preflight binds the exact processless supervised claim", () => {
   const { state, request } = fixture();
   assert.deepEqual(assertClaimTransferState(state, request), {

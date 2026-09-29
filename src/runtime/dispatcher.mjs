@@ -165,6 +165,18 @@ export class EventRelay {
   }
   state() { return this.ledger.read(); }
   save(state) { return this.ledger.save(state); }
+  inspectClaimTransferUnit(request) {
+    const state = this.state();
+    assertClaimTransferState(state, request);
+    const inspect = this.options.claimTransferUnitInspector;
+    if (typeof inspect !== "function") throw new Error("CLAIM_TRANSFER_UNIT_INSPECTOR_REQUIRED");
+    const observed = inspect(state.resources[request.invocationId].supervision);
+    if (observed?.unit !== request.unit || observed.cgroup !== request.cgroup
+        || !isDeepStrictEqual(observed.manager, request.manager)
+        || observed.loadState !== "not-found" || observed.cgroupPopulated !== false)
+      throw new Error("CLAIM_TRANSFER_UNIT_PROOF_MISMATCH");
+    return observed;
+  }
   commitClaimTransfer(request) {
     const prove = this.options.claimTransferHostProof;
     if (typeof prove !== "function") throw new Error("CLAIM_TRANSFER_HOST_PROOF_REQUIRED");
