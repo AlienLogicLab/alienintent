@@ -1540,3 +1540,14 @@ test("a failed preflight leaves a typed PREFLIGHT_FAILED diagnostic and no claim
   await relay.acceptEvent(event("IMPLEMENT", "d2"));
   assert.deepEqual(launches, ["PRODUCER"]);
 });
+
+test("a failed preflight never replaces a recoverable diagnostic, so the prior invocation's late result still routes", async () => {
+  const { relay, statePath, transitions } = subject({ preflight: async () => ({ ok: false, reason: "GITHUB_VERIFICATION_UNAVAILABLE" }) });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: {}, diagnostics: { [`${REPO}#303:PRODUCER`]: {
+    invocationId: "exited", item: { repository: REPO, issue: 303, itemId: "PVT_1" }, role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-25T00:00:00.000Z", outcome: "DURABLE_RESULT_MISSING" } } }));
+  await relay.acceptEvent(event("IMPLEMENT"));
+  assert.equal(relay.state().diagnostics[`${REPO}#303:PRODUCER`].invocationId, "exited");
+  assert.equal(relay.events.find(entry => entry.outcome === "PREFLIGHT_FAILED")?.reason, "GITHUB_VERIFICATION_UNAVAILABLE");
+  await relay.acceptEvent(resultEvent({ invocationId: "exited", id: "late-result" }));
+  assert.deepEqual(transitions, ["VERIFY"]);
+});

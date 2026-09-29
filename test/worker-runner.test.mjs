@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
-import { createWorkerLauncher, spawnWorker, workerLogPath, workerEnvironment } from "../src/runtime/worker-runner.mjs";
+import { createPreflight, createWorkerLauncher, spawnWorker, workerLogPath, workerEnvironment } from "../src/runtime/worker-runner.mjs";
 const fixture = (adapter) => ({ adapter, command: adapter, worktree: "/tmp", permissionMode: adapter === "claude" ? "manual" : "danger-full-access", fundingProfile: adapter === "claude" ? "claude-subscription" : "configured", ghConfigDir: `/tmp/${adapter}-config`, ghShimDir: `/tmp/b-disp-gh/${adapter === "claude" ? "verifier" : "producer"}`, runtimePath: "/usr/bin:/bin", executables: { githubCli: "/usr/bin/gh" } });
 test("VERIFIER fails closed for API, unavailable, or unknown authentication before spawning", () => {
   for (const status of [{ loggedIn: true, authMethod: "api_key" }, { loggedIn: false }, { loggedIn: true, authMethod: "claude.ai", subscriptionType: null }]) {
@@ -196,4 +196,21 @@ test('worker launcher resolves provider and model fresh for every invocation', (
     ['codex', '/bin/codex', 'danger-full-access', ['--model', 'model-a']],
     ['claude', '/bin/claude', 'bypassPermissions', ['--model', 'model-b']],
   ]);
+});
+
+test("preflight returns a typed reason for every refusal", async () => {
+  const request = { role: "PRODUCER", item: { issue: 7 }, invocationId: "inv", worktree: "/wt", resource: { path: "/wt", invocationId: "inv" } };
+  const refusal = (stdout) => () => { const error = new Error("exit 1"); error.stdout = stdout; throw error; };
+  const run = (execute, overrides = {}) => createPreflight({ repository: "o/r", workers: { PRODUCER: {} }, node: "node", script: "pf",
+    execute, environment: () => ({}) })({ ...request, ...overrides });
+  const calls = [];
+  assert.deepEqual(await run((...args) => { calls.push(args); return JSON.stringify({ safe_to_start: true }); }), { ok: true });
+  assert.deepEqual(calls[0].slice(0, 2), ["node", ["pf", "--repository", "o/r", "--issue", "7", "--json"]]);
+  assert.deepEqual(await run(() => "{}", { resource: { path: "/other", invocationId: "inv" } }), { ok: false, reason: "WORKTREE_MISMATCH" });
+  assert.deepEqual(await run(refusal(JSON.stringify({ safe_to_start: false, classification: "GITHUB_VERIFICATION_UNAVAILABLE" }))), { ok: false, reason: "GITHUB_VERIFICATION_UNAVAILABLE" });
+  assert.deepEqual(await run(refusal(undefined)), { ok: false, reason: "PREFLIGHT_UNAVAILABLE" });
+  assert.deepEqual(await run(() => "not json"), { ok: false, reason: "PREFLIGHT_OUTPUT_INVALID" });
+  assert.deepEqual(await run(() => JSON.stringify({ safe_to_start: false })), { ok: false, reason: "PREFLIGHT_REFUSED" });
+  // A nonzero exit is a refusal even if the output claims it is safe to start.
+  assert.deepEqual(await run(refusal(JSON.stringify({ safe_to_start: true }))), { ok: false, reason: "PREFLIGHT_REFUSED" });
 });

@@ -27,6 +27,23 @@ export function workerEnvironment({ worker, environment = process.env }) {
   }
   return { ...safe, PATH: `${worker.ghShimDir}:${worker.runtimePath}`, GH_CONFIG_DIR: worker.ghConfigDir, B_DISP_GH_CONFIG_DIR: worker.ghConfigDir, B_DISP_GH_EXECUTABLE: worker.executables.githubCli };
 }
+// Worker preflight with a typed refusal reason, persisted on the lane's PREFLIGHT_FAILED diagnostic.
+export function createPreflight({ repository, workers, node, script, execute = execFileSync, environment = workerEnvironment }) {
+  return async ({ role, item, invocationId, worktree, resource }) => {
+    if (!worktree || resource?.path !== worktree || resource?.invocationId !== invocationId) return { ok: false, reason: "WORKTREE_MISMATCH" };
+    let output, failed = false;
+    try {
+      const worker = { ...workers[role], role, worktree, resource, invocationId };
+      output = execute(node, [script, "--repository", repository, "--issue", String(item.issue), "--json"], {
+        cwd: worker.worktree, encoding: "utf8", input: JSON.stringify(worker), env: environment({ role, worker }),
+      });
+    } catch (error) { failed = true; output = error.stdout; }
+    let value;
+    try { value = JSON.parse(output); } catch { return { ok: false, reason: failed ? "PREFLIGHT_UNAVAILABLE" : "PREFLIGHT_OUTPUT_INVALID" }; }
+    if (!failed && value?.safe_to_start === true) return { ok: true };
+    return { ok: false, reason: typeof value?.classification === "string" ? value.classification : "PREFLIGHT_REFUSED" };
+  };
+}
 export function workerLogPath(invocationId, logDirectory) { return join(logDirectory, `${encodeURIComponent(invocationId)}.log`); }
 function subscriptionStatus(command, options) {
   try { return JSON.parse(execFileSync(command, ["auth", "status", "--json"], { ...options, encoding: "utf8", timeout: 10000, stdio: ["ignore", "pipe", "pipe"] })); }

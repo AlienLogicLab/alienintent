@@ -460,9 +460,11 @@ export class EventRelay {
       if (!preflight?.ok || this.stopped) {
         this.updateResource(invocationId, { admissionFailed: true });
         const evidence = preflight?.reason ? { reason: preflight.reason } : {};
-        // A typed, durable reason on the lane. A Founder exception's diagnostic keeps gating
-        // re-admission, so there the failure is only reported.
-        if (this.stopped || this.state().diagnostics?.[lane]?.outcome === "FOUNDER_EXCEPTION") {
+        // A typed, durable reason on the lane. A Founder exception keeps gating re-admission and
+        // a recoverable diagnostic keeps the prior invocation's late result routable, so neither
+        // is replaced: there the failure is only reported.
+        const previous = this.state().diagnostics?.[lane]?.outcome;
+        if (this.stopped || previous === "FOUNDER_EXCEPTION" || recoverable(previous)) {
           this.emit({ issue: item.issue, role, invocationId, outcome: this.stopped ? "SERVICE_STOPPED" : "PREFLIGHT_FAILED", ...evidence });
         } else this.diagnostic(active, "PREFLIGHT_FAILED", evidence);
         this.release(active); this.active.delete(invocationId); this.reconcileResources();
