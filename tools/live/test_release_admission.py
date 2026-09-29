@@ -1,23 +1,32 @@
-"""Release admission preconditions (SWF-21).
+"""Release admission preconditions (SWF-21, SWF-35, SF-REQ-002 amendment 2026-09-29).
 
-Evidence: PY-07 was moved READY -> IMPLEMENT with no release record naming a baseline,
-while its Issue body still said implementation was not authorized. Two producers refused
-correctly; work proceeded only once an explicit release record with a resolvable baseline
-existed. These checks make that mechanical.
+Evidence: PY-07 was moved READY -> IMPLEMENT with no record naming a baseline, while its Issue
+body still said implementation was not authorized. Two producers refused correctly; work
+proceeded only once an exact, resolvable baseline was bound. These checks make that mechanical.
+Since 2026-09-29 the authority is structural: a native READY receipt bound to the current task
+packet by its input digest, and the baseline named by the BIU's execution packet.
 """
+import hashlib
+import json
 import sys
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent))
 
 from release_admission import admit  # noqa: E402
 
+DOCUMENT = b"# PY-07\nThe task packet as assessed.\n"
+DIGEST = hashlib.sha256(DOCUMENT).hexdigest()
 GOOD = dict(
     issue=55,
     status="READY",
     agent_ready="READY",
-    body="**BIU:** PY-07\n> **RELEASED** IMPLEMENT authorized against baseline `6c3f843`.",
-    release_record={"baseline": "6c3f8432129892f11d182e713102e63cf0aa9b56", "authorizes_implement": True},
+    body="**BIU:** PY-07",
+    receipt={"disposition": "READY", "work_unit_id": "PY-07", "input_sha256": DIGEST},
+    work_unit_sha256=DIGEST,
+    baseline="6c3f8432129892f11d182e713102e63cf0aa9b56",
     baseline_resolves=True,
     baseline_ancestral=True,
     open_dependencies=[],
@@ -32,16 +41,30 @@ def _fail_codes(**overrides):
     return [f["check"] for f in admit({**GOOD, **overrides})]
 
 
-def test_a_complete_release_record_is_admitted():
+def test_a_bound_receipt_and_a_packet_baseline_are_admitted():
     assert admit(GOOD) == []
 
 
-def test_release_without_a_record_authorizing_implementation_is_refused():
-    assert "implementation_authorized" in _fail_codes(release_record=None)
+def test_release_without_a_receipt_naming_its_work_unit_is_refused():
+    assert "receipt_bound" in _fail_codes(receipt=None)
+    assert "receipt_bound" in _fail_codes(receipt={**GOOD["receipt"], "work_unit_id": None})
 
 
-def test_release_record_must_name_a_baseline():
-    assert "baseline_named" in _fail_codes(release_record={"baseline": None, "authorizes_implement": True})
+def test_a_receipt_whose_work_unit_has_no_document_is_refused():
+    assert "receipt_bound" in _fail_codes(work_unit_sha256=None)
+
+
+def test_a_task_packet_edited_after_its_ready_assessment_is_refused():
+    """SWF-35: the released text is the assessed text. An old READY receipt never admits an
+    edited packet; the Director must assess the current packet again."""
+    edited = hashlib.sha256(DOCUMENT + b"one more requirement\n").hexdigest()
+    failures = admit({**GOOD, "work_unit_sha256": edited})
+    assert [f["check"] for f in failures] == ["receipt_bound"]
+    assert "fresh assessment" in failures[0]["why"]
+
+
+def test_release_must_name_a_baseline():
+    assert "baseline_named" in _fail_codes(baseline=None)
 
 
 def test_a_baseline_that_does_not_resolve_is_refused():
@@ -53,7 +76,7 @@ def test_a_baseline_outside_the_release_point_ancestry_is_refused():
     assert "baseline_ancestral" in _fail_codes(baseline_ancestral=False)
 
 
-def test_stale_unauthorized_wording_without_a_superseding_record_is_refused():
+def test_stale_unauthorized_wording_without_a_superseding_statement_is_refused():
     assert "authority_wording_consistent" in _fail_codes(
         body="> Implementation is **not** authorized by this Issue. Release remains an explicit authority step.")
 
@@ -64,12 +87,28 @@ def test_unauthorized_wording_is_accepted_when_explicitly_superseded():
                                   "baseline `6c3f843`, superseding the line above."}) == []
 
 
+def test_release_prose_never_stands_in_for_a_bound_receipt():
+    """Authority is structural: a comment or body saying IMPLEMENT is authorized admits nothing."""
+    codes = _fail_codes(receipt=None, body="> **RELEASED.** IMPLEMENT is authorized against baseline `6c3f843`.")
+    assert "receipt_bound" in codes
+
+
 def test_a_biu_not_in_ready_is_refused():
     assert "status_ready" in _fail_codes(status="TASKS")
 
 
 def test_a_biu_without_an_agent_ready_disposition_is_refused():
     assert "agent_ready" in _fail_codes(agent_ready="NEEDS_CLARIFICATION")
+
+
+@pytest.mark.parametrize("disposition", [None, "HOLD", "CLARIFY", "SPLIT"])
+def test_a_biu_without_a_ready_disposition_is_refused(disposition):
+    assert "agent_ready" in _fail_codes(agent_ready=disposition)
+
+
+def test_an_unreadable_assessment_says_why():
+    failures = admit({**GOOD, "agent_ready": None, "agent_ready_unreadable": "assessment unreadable: x"})
+    assert any(f["check"] == "agent_ready" and "unreadable" in f["why"] for f in failures)
 
 
 def test_an_open_dependency_is_refused():
@@ -108,68 +147,14 @@ def test_active_claims_below_the_wip_limit_are_admitted():
 
 
 def test_every_failure_explains_itself():
-    for failure in admit({**GOOD, "release_record": None, "baseline_resolves": False}):
+    for failure in admit({**GOOD, "receipt": None, "baseline_resolves": False}):
         assert failure["why"], failure
         assert failure["check"]
 
 
 def test_all_failures_are_reported_not_just_the_first():
-    codes = _fail_codes(status="TASKS", release_record=None, held=True)
-    assert {"status_ready", "implementation_authorized", "not_held"} <= set(codes)
-
-
-# --- inserted BIU identifiers ---------------------------------------------------
-# SWF-33 introduced PY-09B, following the repository's existing suffix convention.
-# The disposition lookup keyed on PY-\d\d and silently returned None for it, which the
-# gate then reported as "Agent-Ready disposition is None" — a missing-assessment refusal
-# for a BIU whose assessment existed and said READY.
-
-
-def test_a_suffixed_biu_identifier_is_recognised():
-    from release_admission import biu_from_body
-    assert biu_from_body("see [`PY-09B.assessment.json`](.../PY-09B.assessment.json)") == "PY-09B"
-
-
-def test_a_plain_biu_identifier_is_still_recognised():
-    from release_admission import biu_from_body
-    assert biu_from_body("see [`PY-10.assessment.json`](.../PY-10.assessment.json)") == "PY-10"
-
-
-def test_a_body_without_an_assessment_pointer_yields_none():
-    from release_admission import biu_from_body
-    assert biu_from_body("no pointer here") is None
-
-
-# --- Wave 2 (2026-09-22): native Agent Ready records live beside the Wave 2 evidence ---------
-# WO-NNNNNN BIUs are assessed by the Agent Ready product; the retained record is a
-# ReadinessAssessment envelope under docs/evidence/wave2-readiness-assessments/, not a bare
-# PY-NN.assessment.json under docs/work-units/python/. The gate must read the disposition from
-# that record and only when the record says it was ASSESSED by Agent Ready.
-
-from release_admission import biu_from_body, assessment_record_path, disposition_from_record  # noqa: E402
-
-WAVE2_BODY = ("**Contract:** docs/work-units/wave2/WO-220101.md · readiness record "
-              "docs/evidence/wave2-readiness-assessments/WO-220101.2026-09-22T110109.877043Z.assessment.json")
-
-
-def test_a_wave2_biu_identifier_is_recognised():
-    assert biu_from_body(WAVE2_BODY) == "WO-220101"
-
-
-def test_a_wave2_readiness_record_path_is_taken_from_the_body():
-    assert assessment_record_path(WAVE2_BODY).name == "WO-220101.2026-09-22T110109.877043Z.assessment.json"
-
-
-def test_disposition_comes_only_from_an_assessed_agent_ready_record():
-    rec = {"record_kind": "ReadinessAssessment", "outcome": "ASSESSED", "disposition": "READY",
-           "provenance": {"producer": "agent-ready-cli", "native_agent_ready": True}}
-    assert disposition_from_record(rec) == "READY"
-    assert disposition_from_record({**rec, "outcome": "EXECUTION_FAILURE"}) is None
-    assert disposition_from_record({**rec, "provenance": {"producer": "surrogate-bootstrap-assessor"}}) is None
-
-
-def test_a_legacy_python_record_is_still_read_as_before():
-    assert disposition_from_record({"disposition": "READY"}) == "READY"
+    codes = _fail_codes(status="TASKS", receipt=None, held=True)
+    assert {"status_ready", "receipt_bound", "not_held"} <= set(codes)
 
 
 def test_issue_project_readback_is_authoritative_when_list_transport_omits_the_new_item():
@@ -178,189 +163,176 @@ def test_issue_project_readback_is_authoritative_when_list_transport_omits_the_n
     assert project_status_from_issue(issue) == "READY"
 
 
-def test_native_issue_comment_receipt_requires_agent_ready_provenance_and_input_digest():
-    from release_admission import disposition_from_native_comment
-    valid = ("<!-- AGENT_READY_ASSESSMENT: {\"record_kind\":\"ReadinessAssessment\","
-             "\"outcome\":\"ASSESSED\",\"disposition\":\"READY\","
-             "\"provenance\":{\"producer\":\"agent-ready-cli\","
-             "\"input_sha256\":\"abc\"}} -->")
-    assert disposition_from_native_comment(valid) == "READY"
-    assert disposition_from_native_comment(valid.replace("agent-ready-cli", "surrogate")) is None
-    assert disposition_from_native_comment(valid.replace("input_sha256\":\"abc", "input_sha256\":\"")) is None
+# --- the one Agent Ready reader (shared with the Factory Director inputs adapter) -------------
+# #125: HOLD and CLARIFY records were cited by path in the body while the later READY receipts
+# cited none, and later comments mentioning "RELEASED" without a baseline were taken as the
+# newest release record. The Director and the gate then disagreed about the same Issue.
+
+from release_admission import (  # noqa: E402
+    MalformedReceipt,
+    agent_ready_disposition,
+    agent_ready_receipt,
+    comments_from_gh,
+    packet_baseline,
+    receipt_record,
+    work_unit_document,
+)
+
+OPERATOR = "sanookdu"
+OPERATORS = frozenset({OPERATOR})
 
 
-# --- Issue #83 (BRD-83): any BIU identifier, and nothing outside the record directory ----------
-# ARP-01 and FDH-01 had native READY records on main, yet only WO-NNNNNN paths were recognised,
-# so their release fell back to the native-receipt comment. The identifier widening must not
-# widen the directory: the path is read from the release point, and a pattern that followed
-# `..` or a `/` could be steered at a file that is not a readiness record.
-
-import pytest  # noqa: E402
-
-RECORDS = {
-    "ARP-01": "docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json",
-    "FDH-01": "docs/evidence/wave2-readiness-assessments/FDH-01.2026-09-24T055203.941687Z.assessment.json",
-    "WO-220202": "docs/evidence/wave2-readiness-assessments/WO-220202.2026-09-23T161839.955776Z.assessment.json",
-}
+def record(disposition="READY", **overrides):
+    """A native receipt in the shape tools/orchestration/readiness_assessment.py records."""
+    value = {"record_kind": "ReadinessAssessment", "outcome": "ASSESSED", "disposition": disposition,
+             "work_unit_id": "WO-220505",
+             "provenance": {"producer": "agent-ready-cli", "input_sha256": "0" * 64}}
+    value.update(overrides)
+    return value
 
 
-@pytest.mark.parametrize("biu", sorted(RECORDS))
-def test_a_readiness_record_for_any_biu_identifier_is_recognised(biu):
-    for text in (f"readiness record `{RECORDS[biu]}`", f"record ({RECORDS[biu]}).", RECORDS[biu]):
-        assert str(assessment_record_path(text)) == RECORDS[biu]
+def receipt(disposition="READY", author=OPERATOR, **overrides):
+    body = f"Native Agent Ready receipt.\n<!-- AGENT_READY_ASSESSMENT: {json.dumps(record(disposition, **overrides))} -->"
+    return {"author": author, "body": body}
 
 
-def test_the_release_record_carries_its_text_so_a_path_cited_there_is_found():
-    from release_admission import release_record_from
-    comment = f"RELEASED. IMPLEMENT is authorized at baseline `474343a`. Record `{RECORDS['FDH-01']}`."
-    record = release_record_from("no pointer", [{"body": comment}])
-    assert str(assessment_record_path(record["text"])) == RECORDS["FDH-01"]
+def test_a_native_receipt_needs_agent_ready_provenance_and_an_input_digest():
+    assert receipt_record(record()) == {"disposition": "READY", "input_sha256": "0" * 64, "work_unit_id": "WO-220505"}
+    assert receipt_record(record(outcome="EXECUTION_FAILURE")) is None
+    assert receipt_record(record(provenance={"producer": "surrogate-bootstrap-assessor", "input_sha256": "0" * 64})) is None
+    assert receipt_record(record(provenance={"producer": "agent-ready-cli", "input_sha256": ""})) is None
+    assert receipt_record(record("MAYBE")) is None
 
 
-def test_a_narrative_comment_about_a_different_issues_release_is_not_this_issues_own_record():
-    """Bug found live on Issue #124 (WO-220504): a comment describing a DIFFERENT, already
-    landed Issue's release ('... was released READY -> IMPLEMENT ... baseline `<sha>`') also
-    happens to use the word 'authorized' later, discussing THIS issue's own unrelated open
-    ground. Dotall matching let SUPERSEDING_WORDING span the whole comment and treat that
-    narrative as if it were this issue's own release record, producing a false ADMITTED."""
-    from release_admission import release_record_from
-    comment = (
-        "This BIU's own hold is unaffected in substance and stands.\n\n"
-        "Bounded prerequisite dispatched. WO-220610 reached native Agent Ready READY and "
-        "was released READY -> IMPLEMENT (`release_admission.py` ADMITTED, baseline "
-        "`322baf4ae45776acb59d303370b12d48d76085ee`). The Node runtime has already dispatched "
-        "PRODUCER against it.\n\n"
-        "This BIU's own hold narrows further: it now rests solely on a separately authorized "
-        "operational target-profile binding, which the other BIU does not and cannot close."
-    )
-    assert release_record_from("no pointer", [{"body": comment}]) is None
+def test_a_bare_legacy_disposition_is_not_a_receipt():
+    """A compatible shape is not evidence: without Agent Ready provenance and an input digest a
+    record cannot be bound to the packet it assessed."""
+    assert receipt_record({"disposition": "READY"}) is None
 
 
-def test_a_path_that_climbs_out_of_the_record_directory_is_rejected():
-    assert assessment_record_path(
-        "`docs/evidence/wave2-readiness-assessments/../../../etc/ARP-01.s.assessment.json`") is None
-    assert assessment_record_path(
-        "`docs/evidence/wave2-readiness-assessments/ARP-01..assessment.json`") is None
+def test_the_newest_receipt_is_the_current_disposition():
+    comments = [receipt("HOLD"), receipt("CLARIFY"), {"author": OPERATOR, "body": "RELEASED, see above"},
+                receipt("READY")]
+    assert agent_ready_disposition(comments, OPERATORS) == "READY"
+    assert agent_ready_disposition(comments + [receipt("CLARIFY")], OPERATORS) == "CLARIFY"
 
 
-def test_a_record_path_reached_through_a_parent_prefix_is_rejected():
-    assert assessment_record_path(
-        "`../docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json`") is None
+def test_the_receipt_carries_the_work_unit_and_digest_it_assessed():
+    newest = agent_ready_receipt([receipt("HOLD"), receipt(work_unit_id="WO-220611",
+        provenance={"producer": "agent-ready-cli", "input_sha256": "AB" * 32})], OPERATORS)
+    assert newest == {"disposition": "READY", "work_unit_id": "WO-220611", "input_sha256": "ab" * 32}
 
 
-def test_an_identifier_containing_a_slash_is_rejected():
-    assert assessment_record_path(
-        "`docs/evidence/wave2-readiness-assessments/ARP/01.2026-09-24T030043.921727Z.assessment.json`") is None
+def test_a_narrative_comment_about_a_different_issues_release_is_not_a_receipt():
+    """Bug found live on Issue #124 (WO-220504): a comment describing a DIFFERENT, already landed
+    Issue's release produced a false ADMITTED when authority was read from prose. Prose is not a
+    receipt; only a native marker from an operator is."""
+    comment = {"author": OPERATOR, "body": (
+        "Bounded prerequisite dispatched. WO-220610 reached native Agent Ready READY and was released "
+        "READY -> IMPLEMENT (`release_admission.py` ADMITTED, baseline "
+        "`322baf4ae45776acb59d303370b12d48d76085ee`). This BIU's own hold is not authorized to lift.")}
+    assert agent_ready_receipt([comment], OPERATORS) is None
 
 
-def test_a_record_in_another_directory_is_rejected():
-    assert assessment_record_path(
-        "`docs/evidence/elsewhere/ARP-01.2026-09-24T030043.921727Z.assessment.json`") is None
-    assert assessment_record_path(
-        "`docs/evidence/wave2-readiness-assessments/sub/FDH-01.2026-09-24T055203.941687Z.assessment.json`") is None
+def test_a_receipt_from_anyone_but_an_operator_is_ignored():
+    assert agent_ready_disposition([receipt("READY", author="drive-by")], OPERATORS) is None
+    assert agent_ready_disposition([receipt("HOLD"), receipt("READY", author="drive-by")], OPERATORS) == "HOLD"
 
 
-def test_a_record_path_continued_past_the_file_is_rejected():
-    assert assessment_record_path(
-        "`docs/evidence/wave2-readiness-assessments/ARP-01.2026-09-24T030043.921727Z.assessment.json/../x`") is None
+def test_an_edited_receipt_counts_only_when_an_operator_edited_it():
+    assert agent_ready_disposition([{**receipt(), "editor": "someone"}], OPERATORS) is None
+    assert agent_ready_disposition([{**receipt(), "editor": OPERATOR}], OPERATORS) == "READY"
+    assert agent_ready_disposition([{**receipt(), "lastEditedAt": "2026-09-29T00:00:00Z"}], OPERATORS) is None
 
 
-def test_the_wave1_python_record_path_is_unchanged():
-    assert str(assessment_record_path("see `PY-09B.assessment.json`")) == \
-        "docs/work-units/python/PY-09B.assessment.json"
+def test_a_non_native_marker_does_not_override_an_older_native_receipt():
+    comments = [receipt("READY"), receipt("HOLD", outcome="EXECUTION_FAILURE")]
+    assert agent_ready_disposition(comments, OPERATORS) == "READY"
 
 
-# --- Issue #83, JC R1: a rejected citation is not reinterpreted as a Wave 1 record ----------------
-# A Wave 2-shaped path that the Wave 2 pattern rejected still carried a PY/WO identifier, and the
-# Wave 1 fallback turned it into `docs/work-units/python/<BIU>.assessment.json`: a record the Issue
-# never cited. Each of these must resolve to nothing, for WO- and PY-shaped identifiers alike.
-
-REJECTED_CITATIONS = [
-    f"{where}{biu}.s.assessment.json"
-    for where in ("docs/evidence/elsewhere/", "docs/evidence/wave2-readiness-assessments/../../../",
-                  "docs/evidence/wave2-readiness-assessments/ARP/")
-    for biu in ("WO-220202", "PY-05")
-]
+def test_an_unparsable_operator_marker_fails_closed():
+    with pytest.raises(MalformedReceipt):
+        agent_ready_disposition([{"author": OPERATOR, "body": "<!-- AGENT_READY_ASSESSMENT: {broken -->"}],
+                                OPERATORS)
+    assert agent_ready_disposition([{"author": "x", "body": "<!-- AGENT_READY_ASSESSMENT: {broken -->"}],
+                                   OPERATORS) is None
 
 
-@pytest.mark.parametrize("path", REJECTED_CITATIONS)
-def test_a_rejected_wave2_citation_is_not_reinterpreted_as_a_wave1_record(path):
-    assert assessment_record_path(f"Readiness record `{path}`.") is None
+def test_gh_comments_map_to_the_reader_shape():
+    gh = [{"author": {"login": OPERATOR}, "body": receipt()["body"], "includesCreatedEdit": False},
+          {"author": {"login": OPERATOR}, "body": receipt("HOLD")["body"], "includesCreatedEdit": True}]
+    assert agent_ready_disposition(comments_from_gh(gh), OPERATORS) == "READY"
 
 
-def test_a_stamped_name_is_not_a_wave1_record():
-    assert assessment_record_path("`WO-220202.s.assessment.json`") is None
-    assert assessment_record_path("`PY-05.2026-09-24.assessment.json`") is None
+# --- the work-unit document and packet baseline a receipt binds to ---------------------------
+# Inserted identifiers (SWF-33: PY-09B) and any BIU family (Issue #83: ARP-01, FDH-01) resolve;
+# the identifier is one plain segment, so nothing outside the work-unit and packet directories
+# can be read (Issue #83, JC R1: `..`, `/` and prefixes never reach a file).
+
+def reader(files: dict[str, bytes]):
+    asked = []
+
+    def read(path: PurePosixPath):
+        asked.append(str(path))
+        return files.get(str(path))
+    return read, asked
 
 
-def test_a_wave1_record_in_another_directory_is_rejected():
-    assert assessment_record_path("`docs/evidence/elsewhere/PY-05.assessment.json`") is None
-    assert assessment_record_path("`docs/evidence/wave2-readiness-assessments/WO-220202.assessment.json`") is None
-
-
-def test_a_wave1_record_reached_through_a_parent_segment_is_rejected():
-    assert assessment_record_path("`../docs/work-units/python/PY-05.assessment.json`") is None
-    assert assessment_record_path(
-        "`docs/work-units/python/../../docs/work-units/python/PY-05.assessment.json`") is None
-    assert assessment_record_path(
-        "https://github.com/AlienLogicLab/alienintent/blob/main/../../docs/work-units/python/"
-        "PY-05.assessment.json") is None
-
-
-# --- Issue #83, JC R1 (repair cycle 2): WAVE1_DIR must be the whole prefix, not its suffix --------
-
-PREFIXED_WAVE1_CITATIONS = [
-    f"{where}docs/work-units/python/{biu}.assessment.json"
-    for where in ("docs/evidence/elsewhere/", "docs/evidence/wave2-readiness-assessments/ARP/",
-                  "x/", "/", "./")
-    for biu in ("PY-05", "WO-220202")
-]
-
-
-@pytest.mark.parametrize("path", PREFIXED_WAVE1_CITATIONS)
-def test_a_wave1_directory_under_another_prefix_is_rejected(path):
-    assert assessment_record_path(f"Readiness record `{path}`.") is None
-
-
-def test_a_wave1_blob_url_with_a_multi_segment_ref_is_rejected():
-    assert assessment_record_path(
-        "https://github.com/AlienLogicLab/alienintent/blob/main/sub/docs/work-units/python/"
-        "PY-05.assessment.json") is None
-
-
-@pytest.mark.parametrize("url", [
-    "https://github.com/Other/alienintent/blob/main/docs/work-units/python/PY-05.assessment.json",
-    "https://example.com/AlienLogicLab/alienintent/blob/main/docs/work-units/python/PY-05.assessment.json",
-    "https://github.com/AlienLogicLab/alienintent/tree/main/docs/work-units/python/PY-05.assessment.json",
-    "http://github.com/AlienLogicLab/alienintent/blob/main/docs/work-units/python/PY-05.assessment.json",
+@pytest.mark.parametrize("unit, path", [
+    ("PY-09B", "docs/work-units/python/PY-09B.md"),
+    ("PY-10", "docs/work-units/python/PY-10.md"),
+    ("WO-220101", "docs/work-units/wave2/WO-220101.md"),
+    ("ARP-01", "docs/work-units/wave2/ARP-01.md"),
+    ("FDH-01", "docs/work-units/wave2/FDH-01.md"),
+    ("SF-REQ-057", "docs/work-units/SF-REQ-057.md"),
 ])
-def test_a_wave1_url_that_is_not_a_blob_of_this_repository_is_rejected(url):
-    assert assessment_record_path(url) is None
+def test_a_work_unit_document_for_any_biu_identifier_is_found(unit, path):
+    read, _ = reader({path: b"packet"})
+    assert work_unit_document(unit, read) == (PurePosixPath(path), b"packet")
 
 
-def test_a_wave1_blob_url_at_a_commit_still_resolves():
-    assert str(assessment_record_path(
-        "https://github.com/AlienLogicLab/alienintent/blob/474343a4142316941340762a243e965ef44bb15c/"
-        "docs/work-units/python/PY-05.assessment.json")) == "docs/work-units/python/PY-05.assessment.json"
+def test_the_wave2_document_wins_over_another_directory():
+    read, _ = reader({"docs/work-units/wave2/WO-220202.md": b"wave2", "docs/work-units/WO-220202.md": b"other"})
+    assert work_unit_document("WO-220202", read)[1] == b"wave2"
 
 
-def test_a_wave1_identifier_embedded_in_a_longer_name_is_rejected():
-    assert assessment_record_path("`XPY-05.assessment.json`") is None
-    assert assessment_record_path("`v1.PY-05.assessment.json`") is None
-
-
-def test_a_wave1_record_path_continued_past_the_file_is_rejected():
-    assert assessment_record_path("`docs/work-units/python/PY-05.assessment.json/../x`") is None
-
-
-@pytest.mark.parametrize("text, biu", [
-    # The citation forms of every Wave 1 Issue body on record (#2, #50-#58, #68).
-    ("docs/work-units/python/PY-01.assessment.json", "PY-01"),
-    ("[`PY-09B.assessment.json`](https://github.com/AlienLogicLab/alienintent/blob/main/"
-     "docs/work-units/python/PY-09B.assessment.json)", "PY-09B"),
-    ("https://github.com/AlienLogicLab/alienintent/blob/main/docs/work-units/python/PY-10.assessment.json",
-     "PY-10"),
-    ("see [`PY-10.assessment.json`](.../PY-10.assessment.json)", "PY-10"),
+@pytest.mark.parametrize("unit", [
+    None, "", "../etc/passwd", "WO-220202/../../x", "docs/work-units/wave2/WO-220202", "WO-220202.md",
+    "WO-220202.s", "ARP/01", "wo-220202", "PY05", "-PY-05", "PY-05/", "XPY-05 ", "PY-05\n",
 ])
-def test_every_wave1_citation_form_on_record_still_resolves(text, biu):
-    assert str(assessment_record_path(text)) == f"docs/work-units/python/{biu}.assessment.json"
+def test_an_identifier_that_is_not_one_plain_segment_names_no_file(unit):
+    read, asked = reader({})
+    assert work_unit_document(unit, read) == (None, None)
+    assert packet_baseline(unit, read) is None
+    assert asked == []
+
+
+def test_a_missing_document_is_none():
+    read, asked = reader({})
+    assert work_unit_document("WO-220202", read) == (None, None)
+    assert asked == [f"{d}/WO-220202.md" for d in ("docs/work-units/wave2", "docs/work-units/python", "docs/work-units")]
+
+
+def packet(**authority):
+    return json.dumps({"biu_id": "WO-220202", "starting_authority": authority}).encode()
+
+
+def test_the_packet_admission_baseline_wins_over_its_contract_baseline():
+    read, asked = reader({"docs/evidence/wave2-execution-packets/WO-220102.packet.json": packet(
+        admission_baseline_sha="a80a26bc1a9999ae1f082ad0a80c47c1c5baffec",
+        candidate_contract_baseline_sha="2528e3acd773f53de116f6f28537244d1f1f8b2f")})
+    assert packet_baseline("WO-220102", read) == "a80a26bc1a9999ae1f082ad0a80c47c1c5baffec"
+    assert asked == ["docs/evidence/wave2-execution-packets/WO-220102.packet.json"]
+
+
+def test_a_packet_baseline_sha_is_read():
+    read, _ = reader({"docs/evidence/wave2-execution-packets/WO-220202.packet.json": packet(baseline_sha="6c3f843")})
+    assert packet_baseline("WO-220202", read) == "6c3f843"
+
+
+@pytest.mark.parametrize("raw", [None, b"not json", b"[]", packet(), packet(baseline_sha="main"),
+                                 packet(baseline_sha="6c3f843 extra"), packet(baseline_sha=123)])
+def test_a_missing_or_malformed_packet_names_no_baseline(raw):
+    files = {} if raw is None else {"docs/evidence/wave2-execution-packets/WO-220202.packet.json": raw}
+    read, _ = reader(files)
+    assert packet_baseline("WO-220202", read) is None

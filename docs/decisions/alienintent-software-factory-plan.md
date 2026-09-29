@@ -870,6 +870,16 @@ Select next eligible READY BIU by external priority, then FIFO among equals/unpr
 
 A failed check is a refusal to transition, not a warning. This does not replace Agent-Ready or the dependency/WIP conditions; it is the record-completeness gate in front of them.
 
+**Amendment (2026-09-29, Founder decision in the lifecycle repair thread) — structural release record.** Preconditions 1–4 keep their guarantees and lose their prose. The durable release record is the BIU's committed execution packet together with its bound native Agent Ready receipt; no comment wording is read.
+
+1. **Explicitly authorized** means SWF-35's standing grant applies: the newest native Agent Ready receipt on the Issue (posted, and not edited, by an authorized operator) is `READY` and is **bound to the current task packet**: the work-unit document it names, read at the release point, has the receipt's input digest. A packet edited after its assessment needs a fresh assessment, never an edit (SWF-35).
+2. **Exact baseline** is the one the BIU's execution packet names at the release point (`starting_authority.admission_baseline_sha`, else `baseline_sha`).
+3. and 4. are unchanged: the baseline resolves and is reachable from the release point.
+5. is unchanged: stale "not authorized" Issue wording without a superseding statement refuses, because a producer reading it would refuse.
+6. is unchanged.
+
+The Director and the gate read the disposition through one function, so they cannot disagree about it. Refusal codes: `receipt_bound` (replacing `implementation_authorized`), `baseline_named`, `baseline_resolves`, `baseline_ancestral`, `authority_wording_consistent`.
+
 **Dependency satisfaction is a lifecycle question ([SWF-31](2026-09-20-wave1-closure-policy.md)).** The bootstrap evaluates it through GitHub's native blocked-by links, which read Issue state — a **projection** the control plane writes to, not lifecycle authority. Project `DONE` is the authoritative state. Canonical Python must evaluate dependency satisfaction against lifecycle state it owns, never against a secondary projection that can lag or be edited externally.
 
 ## SF-REQ-003 — Solve for N

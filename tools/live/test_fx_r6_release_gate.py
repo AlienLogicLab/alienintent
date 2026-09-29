@@ -16,8 +16,8 @@ def test_formal_authority_alone_does_not_admit():
     gate = load_gate()
     facts = {
         "status": "READY", "agent_ready": "READY",
-        "release_record": {"authorizes_implement": True, "baseline": "a" * 40},
-        "baseline_resolves": True, "baseline_ancestral": True,
+        "receipt": {"disposition": "READY", "work_unit_id": "WO-220511", "input_sha256": "b" * 64},
+        "work_unit_sha256": "b" * 64, "baseline": "a" * 40, "baseline_resolves": True, "baseline_ancestral": True,
         "body": "", "open_dependencies": [], "active_invocations": [], "held": False,
         "wip_limit": 1, "active_claims_total": 0,
         "priority_reconciliation": {"status": "ALREADY_MATCHED"},

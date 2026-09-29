@@ -42,6 +42,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "live"))
 
 import project_materialization as materialization  # noqa: E402
+from release_admission import MalformedReceipt, agent_ready_disposition  # noqa: E402
 from app_github_reader import AppGitHubReader  # noqa: E402
 from factory_director_host import DirectorInputs  # noqa: E402
 
@@ -49,7 +50,6 @@ HOST_CONFIG_SCHEMA_VERSION = 1
 HOLD_RECORD_SCHEMA_VERSION = 1
 LIFECYCLE_STATES = frozenset(materialization.STATUS_OPTIONS)
 WORKER_STATES = frozenset({"IMPLEMENT", "VERIFY", "ACCEPT"})
-ASSESSMENT_MARKER = re.compile(r"<!--\s*AGENT_READY_ASSESSMENT:(.*?)-->", re.DOTALL)
 INBOX_ENTRY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.json$")
 HOLD_KEYS = frozenset({"issue", "reason", "kind"})
 HOLD_OPTIONAL_KEYS = frozenset({"recordedAt", "recordedBy"})
@@ -371,32 +371,11 @@ def read_inbox(inbox: Path, board: dict[int, str] | None = None) -> tuple[tuple[
 
 
 def retained_assessment_disposition(comments: list[dict], issue: int, operators: frozenset[str]) -> str | None:
-    """Return the latest authorized retained Agent Ready disposition for an Issue."""
-    latest = None
-    for comment in comments:
-        if not isinstance(comment, dict) or not isinstance(comment.get("body"), str):
-            raise SourceUnavailable(f"issue #{issue} comment is malformed")
-        author, editor = comment.get("author"), comment.get("editor")
-        if not isinstance(author, str) or author.lower() not in operators:
-            continue
-        if editor is not None and (not isinstance(editor, str) or editor.lower() not in operators):
-            continue
-        if editor is None and comment.get("lastEditedAt"):
-            continue
-        for match in ASSESSMENT_MARKER.finditer(comment["body"]):
-            try:
-                record = json.loads(match.group(1).strip())
-            except json.JSONDecodeError as exc:
-                raise SourceUnavailable(f"issue #{issue} has an unparsable Agent Ready assessment") from exc
-            disposition = record.get("disposition") if isinstance(record, dict) else None
-            if not isinstance(disposition, str) or not disposition.strip():
-                raise SourceUnavailable(f"issue #{issue} has a malformed Agent Ready assessment")
-            latest = disposition.strip().upper()
-    return latest
-
-
-def has_retained_assessment(comments: list[dict], issue: int, operators: frozenset[str]) -> bool:
-    return retained_assessment_disposition(comments, issue, operators) is not None
+    """The Issue's Agent Ready disposition, from the reader the release gate uses."""
+    try:
+        return agent_ready_disposition(comments, operators)
+    except MalformedReceipt as exc:
+        raise SourceUnavailable(f"issue #{issue}: {exc}") from exc
 
 
 # --- mapping ------------------------------------------------------------------------------

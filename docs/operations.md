@@ -345,10 +345,17 @@ Before every READY → IMPLEMENT release, and before any worker is launched:
 python3 ~/.local/share/alienintent-bootstrap/release_admission.py <issue>
 ```
 
-It checks the six preconditions of the [SF-REQ-002 admission amendment](decisions/alienintent-software-factory-plan.md)
-— implementation explicitly authorized, exact baseline named, baseline resolves, baseline reachable
-from the release point, no stale "not authorized" wording without a superseding record — prints each
-failure with its reason, and exits non-zero. **A failed check is a refusal to transition, not a
+It checks the preconditions of the [SF-REQ-002 admission amendments](decisions/alienintent-software-factory-plan.md)
+in their 2026-09-29 structural form, then dependencies, active invocations, holds, WIP capacity and
+priority. Authority is a native READY receipt bound to the current task packet: the newest receipt
+posted by an authorized operator (the one reader, `agent_ready_receipt`, shared with the Factory
+Director inputs adapter) names its work unit, and that work unit's document at the release point
+has the receipt's input digest. The exact baseline is the one the BIU's execution packet names
+(`starting_authority.admission_baseline_sha`, else `baseline_sha`), and it must resolve and be
+reachable from the release point. Stale "not authorized" wording in the Issue body without a
+superseding statement still refuses. Comment prose ("IMPLEMENT is authorized", a baseline in
+backticks) and records cited in the Issue body are not read. The gate prints each failure with its
+reason and exits non-zero. **A failed check is a refusal to transition, not a
 warning.** The checklist is in [SWF-21](decisions/2026-09-20-wave1-release-coordinator.md); the
 incident that produced it is in [evidence](evidence/2026-09-21-liveness-retry-and-release-admission.md).
 

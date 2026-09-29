@@ -1,8 +1,11 @@
-"""Release admission reads readiness records from the release point (Issue #83, BRD-83).
+"""Release admission reads work units and execution packets from the release point (Issue #83,
+BRD-83), and binds the Agent Ready receipt to them (SF-REQ-002 amendment 2026-09-29).
 
-The fault: a record landed on origin/main was invisible to the gate because the gate read the
+The #83 fault: a record landed on origin/main was invisible to the gate because the gate read the
 shared checkout's working tree, which had not pulled it. #80 and #81 were then released only
-with a hand-made native-receipt comment.
+with a hand-made native-receipt comment. The same rule now covers what the receipt is bound to:
+the work-unit document whose digest the receipt carries, and the execution packet that names the
+exact baseline, are read at the release point, never from a working tree.
 
 Every test here runs the real CLI against a disposable world: a bare `origin` repository, a
 separate clone standing in for the shared checkout, and a fake `gh` that answers from a JSON
@@ -10,6 +13,7 @@ file and logs each call. Nothing reaches GitHub, the live Project or the live st
 """
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import shutil
@@ -21,9 +25,10 @@ import pytest
 
 GATE = Path(__file__).with_name("release_admission.py")
 ISSUE = 901
-RECORD_DIR = "docs/evidence/wave2-readiness-assessments"
-READY_RECORD = {"record_kind": "ReadinessAssessment", "outcome": "ASSESSED", "disposition": "READY",
-                "provenance": {"producer": "agent-ready-cli", "input_sha256": "0" * 64}}
+OPERATOR = "sanookdu"
+UNIT_DIR = "docs/work-units/wave2"
+PACKET_DIR = "docs/evidence/wave2-execution-packets"
+DOCUMENT = "# {unit}\nThe task packet exactly as Agent Ready assessed it.\n"
 FAKE_GH = """#!{python}
 import json, os, sys
 args = sys.argv[1:]
@@ -42,8 +47,15 @@ else:
 """
 
 
-def record_path(biu: str) -> str:
-    return f"{RECORD_DIR}/{biu}.2026-09-24T000000.000000Z.assessment.json"
+def digest(text: str) -> str:
+    return hashlib.sha256(text.encode()).hexdigest()
+
+
+def receipt(unit: str, input_sha256: str, disposition: str = "READY", **overrides) -> str:
+    record = {"record_kind": "ReadinessAssessment", "outcome": "ASSESSED", "disposition": disposition,
+              "work_unit_id": unit, "provenance": {"producer": "agent-ready-cli", "input_sha256": input_sha256}}
+    record.update(overrides)
+    return f"Native Agent Ready receipt.\n<!-- AGENT_READY_ASSESSMENT: {json.dumps(record)} -->"
 
 
 class World:
@@ -61,11 +73,14 @@ class World:
         self.env.pop("ALIENINTENT_WORKDIR", None)
         (root / "home").mkdir()
         (root / "bin").mkdir()
-        # Isolated wipLimit/active-claims state so admission is not affected by the real
-        # host's configuration or currently running invocations.
+        # Isolated wipLimit, operators and active-claims state so admission is not affected by
+        # the real host's configuration or currently running invocations.
         host_config_dir = root / "home" / ".config" / "alienintent"
         host_config_dir.mkdir(parents=True)
-        (host_config_dir / "factory-director-host.json").write_text(json.dumps({"wipLimit": 1}))
+        (host_config_dir / "self-hosting.json").write_text(json.dumps(
+            {"operator": {"authorizedGithubLogins": [OPERATOR]}}))
+        (host_config_dir / "factory-director-host.json").write_text(json.dumps(
+            {"wipLimit": 1, "selfHostingConfig": str(host_config_dir / "self-hosting.json")}))
         runtime_state_dir = root / "home" / ".local" / "state" / "alienintent"
         runtime_state_dir.mkdir(parents=True)
         (runtime_state_dir / "state.json").write_text(json.dumps({"active": {}}))
@@ -93,36 +108,40 @@ class World:
         return subprocess.run(["git", *args], cwd=cwd, env=self.env, check=True,
                               capture_output=True, text=True).stdout
 
-    def land(self, path: str, record: dict = READY_RECORD) -> None:
-        """Commit a record on origin/main from elsewhere; the shared checkout does not see it."""
-        target = self.seed / path
-        target.parent.mkdir(parents=True, exist_ok=True)
-        target.write_text(json.dumps(record))
-        self.git(self.seed, "add", path)
-        self.git(self.seed, "commit", "-q", "-m", f"land {path}")
+    def files(self, unit: str, directory: str = UNIT_DIR, document: str | None = None,
+              baseline: str | None = None) -> dict[str, str]:
+        text = DOCUMENT.format(unit=unit) if document is None else document
+        packet = {"biu_id": unit, "starting_authority": {"baseline_sha": baseline or self.baseline}}
+        return {f"{directory}/{unit}.md": text, f"{PACKET_DIR}/{unit}.packet.json": json.dumps(packet)}
+
+    def land(self, unit: str, **files_options) -> str:
+        """Commit a work unit and its packet on origin/main from elsewhere; the shared checkout
+        does not see it. Returns the document's digest."""
+        files = self.files(unit, **files_options)
+        for path, text in files.items():
+            target = self.seed / path
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(text)
+            self.git(self.seed, "add", path)
+        self.git(self.seed, "commit", "-q", "-m", f"land {unit}")
         self.git(self.seed, "push", "-q", "origin", "main")
+        return digest(next(text for path, text in files.items() if path.endswith(".md")))
 
-    def issue(self, body: str = "", comments: tuple[str, ...] = ()) -> None:
-        release = (f"RELEASED. IMPLEMENT is authorized for this BIU. Admission baseline "
-                   f"`{self.baseline}` (current origin/main).")
+    def issue(self, body: str = "", comments: tuple[str, ...] = (), author: str = OPERATOR) -> None:
         payload = {"body": body, "labels": [],
-                   "comments": [{"body": text} for text in (*comments, release)],
+                   "comments": [{"author": {"login": author}, "body": text} for text in comments],
                    "projectItems": [{"title": "AlienIntent", "status": {"name": "READY"}}]}
         (self.root / "issue.json").write_text(json.dumps(payload))
 
-    def release_with_record(self, path: str, body: str = "") -> None:
-        """The Director's release record itself cites the readiness record."""
-        release = (f"RELEASED. IMPLEMENT is authorized for this BIU. Admission baseline "
-                   f"`{self.baseline}`; native READY record `{path}`.")
-        payload = {"body": body, "labels": [], "comments": [{"body": release}],
-                   "projectItems": [{"title": "AlienIntent", "status": {"name": "READY"}}]}
-        (self.root / "issue.json").write_text(json.dumps(payload))
+    def assessed(self, unit: str, input_sha256: str | None = None, **overrides) -> None:
+        """The Issue carries the operator's native READY receipt for `unit`."""
+        self.issue(comments=(receipt(unit, input_sha256 or digest(DOCUMENT.format(unit=unit)), **overrides),))
 
-    def admit(self, gate: Path = GATE, cwd: Path | None = None, workdir: Path | None = None):
+    def admit(self, gate: Path = GATE, cwd: Path | None = None, workdir: Path | None = None, *extra: str):
         env = dict(self.env)
         if workdir is not None:
             env["ALIENINTENT_WORKDIR"] = str(workdir)
-        return subprocess.run([sys.executable, str(gate), str(ISSUE)], cwd=cwd or self.root,
+        return subprocess.run([sys.executable, str(gate), str(ISSUE), *extra], cwd=cwd or self.root,
                               env=env, capture_output=True, text=True)
 
     def gh_calls(self) -> list[list[str]]:
@@ -139,169 +158,174 @@ def _admitted(result) -> bool:
     return result.returncode == 0 and "ADMITTED" in result.stdout
 
 
-def test_a_record_landed_at_the_release_point_but_absent_from_the_checkout_is_found(world):
-    path = record_path("ARP-01")
-    world.land(path)
-    world.issue(body=f"Readiness record `{path}`.")
-    assert not (world.work / path).exists()
+def _refused(result, check: str) -> bool:
+    return result.returncode == 1 and f"- {check}:" in result.stdout
+
+
+def test_a_work_unit_landed_at_the_release_point_but_absent_from_the_checkout_is_found(world):
+    world.land("ARP-01")
+    world.assessed("ARP-01")
+    assert not (world.work / UNIT_DIR / "ARP-01.md").exists()
     assert world.git(world.work, "rev-parse", "origin/main").strip() == world.baseline  # stale ref
 
     result = world.admit(workdir=world.work)
 
     assert _admitted(result), result.stdout + result.stderr
     assert "agent_ready=READY" in result.stdout
+    assert f"work_unit={UNIT_DIR}/ARP-01.md baseline={world.baseline}" in result.stdout
     assert "(fetched)" in result.stderr
-    assert not (world.work / path).exists()  # read from git, the working tree is untouched
+    assert not (world.work / UNIT_DIR / "ARP-01.md").exists()  # read from git, the working tree is untouched
 
 
-def test_a_record_present_only_in_the_working_tree_is_not_used(world):
-    path = record_path("FDH-01")
-    (world.work / path).parent.mkdir(parents=True)
-    (world.work / path).write_text(json.dumps(READY_RECORD))
-    world.issue(body=f"Readiness record `{path}`.")
+def test_a_work_unit_present_only_in_the_working_tree_is_not_used(world):
+    for path, text in world.files("FDH-01").items():
+        (world.work / path).parent.mkdir(parents=True, exist_ok=True)
+        (world.work / path).write_text(text)
+    world.assessed("FDH-01")
 
     result = world.admit(workdir=world.work)
 
-    assert result.returncode == 1, result.stdout
-    assert "agent_ready=None" in result.stdout
-    assert "- agent_ready:" in result.stdout
+    assert _refused(result, "receipt_bound") and _refused(result, "baseline_named"), result.stdout
+    assert "work_unit=None" in result.stdout
 
 
-def test_a_record_committed_only_in_the_local_checkout_is_not_used(world):
-    path = record_path("FDH-01")
-    (world.work / path).parent.mkdir(parents=True)
-    (world.work / path).write_text(json.dumps(READY_RECORD))
-    world.git(world.work, "add", path)
+def test_a_work_unit_committed_only_in_the_local_checkout_is_not_used(world):
+    for path, text in world.files("FDH-01").items():
+        (world.work / path).parent.mkdir(parents=True, exist_ok=True)
+        (world.work / path).write_text(text)
+        world.git(world.work, "add", path)
     world.git(world.work, "commit", "-q", "-m", "local only, never pushed")
-    world.issue(body=f"Readiness record `{path}`.")
+    world.assessed("FDH-01")
 
     result = world.admit(workdir=world.work)
 
-    assert result.returncode == 1, result.stdout
-    assert "agent_ready=None" in result.stdout
+    assert _refused(result, "receipt_bound"), result.stdout
+    assert "work_unit=None" in result.stdout
 
 
-@pytest.mark.parametrize("biu", ["ARP-01", "FDH-01", "WO-220202"])
-@pytest.mark.parametrize("cited_in", ["body", "release_record"])
-def test_a_record_for_any_biu_is_admitted_from_the_body_or_the_release_record(world, biu, cited_in):
-    path = record_path(biu)
-    world.land(path)
-    if cited_in == "body":
-        world.issue(body=f"**Contract:** docs/work-units/wave2/{biu}.md · readiness record `{path}`")
-    else:
-        world.release_with_record(path, body=f"**Contract:** docs/work-units/wave2/{biu}.md")
+@pytest.mark.parametrize("unit, directory", [
+    ("ARP-01", UNIT_DIR), ("FDH-01", UNIT_DIR), ("WO-220202", UNIT_DIR),
+    ("PY-09B", "docs/work-units/python"), ("SF-REQ-057", "docs/work-units")])
+def test_a_bound_receipt_for_any_biu_is_admitted(world, unit, directory):
+    world.land(unit, directory=directory)
+    world.assessed(unit)
 
     result = world.admit(workdir=world.work)
 
     assert _admitted(result), result.stdout + result.stderr
-    assert "agent_ready=READY" in result.stdout
+    assert f"work_unit={directory}/{unit}.md" in result.stdout
+
+
+def test_a_task_packet_edited_after_its_ready_assessment_is_refused_until_reassessed(world):
+    """SWF-35: the released text is the assessed text. The receipt was for the first version."""
+    world.land("WO-220611")
+    world.assessed("WO-220611")
+    edited = world.land("WO-220611", document=DOCUMENT.format(unit="WO-220611") + "A new requirement.\n")
+
+    stale = world.admit(workdir=world.work)
+    world.issue(comments=(receipt("WO-220611", digest(DOCUMENT.format(unit="WO-220611"))),
+                          receipt("WO-220611", edited)))
+    fresh = world.admit(workdir=world.work)
+
+    assert _refused(stale, "receipt_bound") and "fresh assessment" in stale.stdout, stale.stdout
+    assert _admitted(fresh), fresh.stdout + fresh.stderr
 
 
 def test_an_explicit_release_point_is_read_instead_of_origin_main(world):
-    path = record_path("ARP-01")
-    world.land(path)
+    world.land("ARP-01")
     world.git(world.seed, "push", "-q", "origin", f"{world.baseline}:refs/heads/older")
     world.git(world.work, "fetch", "-q", "origin")
-    world.issue(body=f"Readiness record `{path}`.")
+    world.assessed("ARP-01")
 
-    older = subprocess.run([sys.executable, str(GATE), str(ISSUE), "origin/older"], cwd=world.root,
-                           env={**world.env, "ALIENINTENT_WORKDIR": str(world.work)},
-                           capture_output=True, text=True)
+    older = world.admit(GATE, None, world.work, "origin/older")
 
-    assert older.returncode == 1 and "agent_ready=None" in older.stdout, older.stdout
+    assert _refused(older, "receipt_bound") and "work_unit=None" in older.stdout, older.stdout
 
 
-@pytest.mark.parametrize("path", [
-    f"{where}{biu}.s.assessment.json"
-    for where in ("docs/evidence/elsewhere/", "docs/evidence/wave2-readiness-assessments/../../../",
-                  "docs/evidence/wave2-readiness-assessments/ARP/")
-    for biu in ("WO-220202", "PY-05")
-])
-def test_a_rejected_citation_never_admits_through_the_wave1_record(world, path):
-    """JC R1: the Wave 1 record for the same identifier is READY at the release point, and no
-    native receipt exists. A rejected citation must refuse, not resolve to that record."""
-    biu = path.rsplit("/", 1)[1].split(".")[0]
-    world.land(f"docs/work-units/python/{biu}.assessment.json")
-    world.issue(body=f"Readiness record `{path}`.")
+def test_a_packet_baseline_that_does_not_resolve_is_refused(world):
+    world.land("ARP-01", baseline="0123456789abcdef0123456789abcdef01234567")
+    world.assessed("ARP-01")
+
+    assert _refused(world.admit(workdir=world.work), "baseline_resolves")
+
+
+def test_a_packet_baseline_outside_the_release_point_ancestry_is_refused(world):
+    world.git(world.seed, "checkout", "-q", "-b", "side")
+    (world.seed / "side").write_text("side\n")
+    world.git(world.seed, "add", "side")
+    world.git(world.seed, "commit", "-q", "-m", "side")
+    side = world.git(world.seed, "rev-parse", "HEAD").strip()
+    world.git(world.seed, "push", "-q", "origin", "side")
+    world.git(world.seed, "checkout", "-q", "main")
+    world.land("ARP-01", baseline=side)
+    world.git(world.work, "fetch", "-q", "origin")
+    world.assessed("ARP-01")
+
+    assert _refused(world.admit(workdir=world.work), "baseline_ancestral")
+
+
+def test_a_packet_without_a_baseline_is_refused(world):
+    world.land("ARP-01")
+    (world.seed / PACKET_DIR / "ARP-01.packet.json").write_text(json.dumps({"starting_authority": {}}))
+    world.git(world.seed, "commit", "-q", "-am", "packet without baseline")
+    world.git(world.seed, "push", "-q", "origin", "main")
+    world.assessed("ARP-01")
+
+    assert _refused(world.admit(workdir=world.work), "baseline_named")
+
+
+def test_release_prose_without_a_bound_receipt_is_refused(world):
+    world.land("ARP-01")
+    world.issue(comments=(f"RELEASED. IMPLEMENT is authorized for this BIU. Admission baseline "
+                          f"`{world.baseline}` (current origin/main).",))
+
+    result = world.admit(workdir=world.work)
+
+    assert _refused(result, "receipt_bound") and _refused(result, "agent_ready"), result.stdout
+
+
+def test_a_later_comment_mentioning_released_without_a_baseline_does_not_refuse(world):
+    """#125: later comments mentioning RELEASED were taken as the newest release record."""
+    digest_ = world.land("WO-220505")
+    world.issue(comments=(receipt("WO-220505", digest_), "RELEASED earlier; see the receipt above.",
+                          "Director note: released work continues."))
+
+    assert _admitted(world.admit(workdir=world.work))
+
+
+def test_a_marker_that_is_not_an_agent_ready_assessment_yields_no_disposition(world):
+    world.land("ARP-01")
+    world.assessed("ARP-01", outcome="EXECUTION_FAILURE")
 
     result = world.admit(workdir=world.work)
 
     assert result.returncode == 1 and "agent_ready=None" in result.stdout, result.stdout
 
 
-@pytest.mark.parametrize("path", [
-    f"{where}docs/work-units/python/{biu}.assessment.json"
-    for where in ("docs/evidence/elsewhere/", "docs/evidence/wave2-readiness-assessments/ARP/",
-                  "https://github.com/Other/alienintent/blob/main/")
-    for biu in ("PY-05", "WO-220202")
-])
-def test_a_prefixed_wave1_directory_never_admits_through_the_wave1_record(world, path):
-    """JC R1, repair cycle 2: only `docs/work-units/python/<BIU>.assessment.json` is READY at the
-    release point, and no native receipt exists. A citation that merely ends in that directory
-    names another file and must refuse."""
-    biu = path.rsplit("/", 1)[1].split(".")[0]
-    world.land(f"docs/work-units/python/{biu}.assessment.json")
-    world.issue(body=f"Readiness record `{path}`.")
+def test_a_receipt_from_a_non_operator_is_not_counted(world):
+    digest_ = world.land("ARP-01")
+    world.issue(comments=(receipt("ARP-01", digest_),), author="drive-by")
 
     result = world.admit(workdir=world.work)
 
     assert result.returncode == 1 and "agent_ready=None" in result.stdout, result.stdout
 
 
-def test_a_wave1_record_cited_by_its_blob_url_is_still_admitted(world):
-    world.land("docs/work-units/python/PY-10.assessment.json")
-    world.issue(body="https://github.com/AlienLogicLab/alienintent/blob/main/"
-                     "docs/work-units/python/PY-10.assessment.json")
+@pytest.mark.parametrize("unit", ["wave2/ARP-01", "../work-units/wave2/ARP-01", "ARP-01.md"])
+def test_a_receipt_naming_a_path_instead_of_an_identifier_binds_nothing(world, unit):
+    """Issue #83, JC R1: nothing outside the work-unit directories is read. `wave2/ARP-01` would
+    reach a real document through `docs/work-units/`; it is refused, not resolved."""
+    world.land("ARP-01")
+    world.assessed(unit, input_sha256=digest(DOCUMENT.format(unit="ARP-01")))
 
     result = world.admit(workdir=world.work)
 
-    assert _admitted(result), result.stdout + result.stderr
-    assert "agent_ready=READY" in result.stdout
-
-
-def test_a_wave1_record_cited_by_its_own_path_is_still_admitted(world):
-    world.land("docs/work-units/python/PY-05.assessment.json")
-    world.issue(body="Assessment: docs/work-units/python/PY-05.assessment.json")  # the form of #2
-
-    result = world.admit(workdir=world.work)
-
-    assert _admitted(result), result.stdout + result.stderr
-    assert "agent_ready=READY" in result.stdout
-
-
-def test_the_native_receipt_fallback_is_unchanged_when_no_record_is_cited(world):
-    receipt = ("<!-- AGENT_READY_ASSESSMENT: " + json.dumps(READY_RECORD) + " -->")
-    world.issue(body="no record path here", comments=(receipt,))
-
-    result = world.admit(workdir=world.work)
-
-    assert _admitted(result), result.stdout + result.stderr
-    assert "agent_ready=READY" in result.stdout
-
-
-def test_the_native_receipt_fallback_is_unchanged_when_the_cited_record_is_absent(world):
-    receipt = ("<!-- AGENT_READY_ASSESSMENT: " + json.dumps(READY_RECORD) + " -->")
-    world.issue(body=f"Readiness record `{record_path('ARP-01')}`.", comments=(receipt,))
-
-    result = world.admit(workdir=world.work)
-
-    assert _admitted(result), result.stdout + result.stderr
-
-
-def test_a_cited_record_that_is_not_an_agent_ready_assessment_still_yields_no_disposition(world):
-    path = record_path("ARP-01")
-    world.land(path, {**READY_RECORD, "outcome": "EXECUTION_FAILURE"})
-    world.issue(body=f"Readiness record `{path}`.")
-
-    result = world.admit(workdir=world.work)
-
-    assert result.returncode == 1 and "agent_ready=None" in result.stdout, result.stdout
+    assert _refused(result, "receipt_bound") and "work_unit=None" in result.stdout, result.stdout
 
 
 def test_the_repository_is_derived_from_the_gate_location_without_an_override(world):
-    path = record_path("ARP-01")
-    world.land(path)
-    world.issue(body=f"Readiness record `{path}`.")
+    world.land("ARP-01")
+    world.assessed("ARP-01")
     gate = world.work / "tools/live/release_admission.py"
     gate.parent.mkdir(parents=True)
     shutil.copy(GATE, gate)
@@ -313,9 +337,8 @@ def test_the_repository_is_derived_from_the_gate_location_without_an_override(wo
 
 
 def test_a_live_copy_outside_any_repository_uses_the_current_directory(world):
-    path = record_path("ARP-01")
-    world.land(path)
-    world.issue(body=f"Readiness record `{path}`.")
+    world.land("ARP-01")
+    world.assessed("ARP-01")
     gate = world.root / "live-copy" / "release_admission.py"
     gate.parent.mkdir()
     shutil.copy(GATE, gate)
@@ -327,9 +350,8 @@ def test_a_live_copy_outside_any_repository_uses_the_current_directory(world):
 
 
 def test_the_gate_only_reads_from_github(world):
-    path = record_path("ARP-01")
-    world.land(path)
-    world.issue(body=f"Readiness record `{path}`.")
+    world.land("ARP-01")
+    world.assessed("ARP-01")
 
     world.admit(workdir=world.work)
 
@@ -340,11 +362,9 @@ def test_the_gate_only_reads_from_github(world):
 
 
 def test_a_release_point_shaped_like_an_option_is_never_passed_to_fetch(world):
-    world.issue(body="no record path here")
+    world.issue(body="no receipt here")
 
-    result = subprocess.run([sys.executable, str(GATE), str(ISSUE), "origin/--upload-pack=touch PWNED"],
-                            cwd=world.root, env={**world.env, "ALIENINTENT_WORKDIR": str(world.work)},
-                            capture_output=True, text=True)
+    result = world.admit(GATE, None, world.work, "origin/--upload-pack=touch PWNED")
 
     assert result.returncode == 1, result.stdout
     assert not (world.work / "PWNED").exists()

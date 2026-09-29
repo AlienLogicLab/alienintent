@@ -97,6 +97,14 @@ one. Earlier chats, summaries and memory are not authority. Every run:
    reports. Execution limits are enforced by the runtime from its profile; no readback of a
    "staged" limit is required before work proceeds. Move a BIU backward only when its own
    task packet is invalidated, and record that invalidation.
+   **Release admission is structural.** `release_admission.py` admits a READY BIU only when
+   its newest native Agent Ready receipt names the work unit it assessed, that work unit's
+   document at the release point has the receipt's input digest, and the BIU's execution
+   packet names a baseline that resolves and is reachable from the release point (SF-REQ-002
+   amendment 2026-09-29). No release comment is needed or read. A `receipt_bound` refusal means
+   the task packet changed after its assessment: assess the current packet again and post the
+   new receipt; do not move the BIU backward for it. A `baseline_named` refusal means the
+   execution packet must be bound before release (SWF-35).
 7. Before exit, make sure the durable record explains the next state. Issue comments,
    evidence, hold entries and inbox receipts all count. A successor must be able to act on
    that record alone.
@@ -151,7 +159,7 @@ The host reads these, and only these, through the read-only adapter
 | Source | Default path | Schema | Absent means |
 |---|---|---|---|
 | Project #1 | GitHub, via `tools/live/project_materialization.py` `read_board` | complete board; Issue items of `AlienLogicLab/alienintent` only; one item per Issue; every item has a lifecycle Status | fail closed |
-| Retained Agent Ready assessment (TASKS only) | Issue comments containing `<!-- AGENT_READY_ASSESSMENT: {json} -->` (the native receipt the Factory Director posts beside the retained `docs/evidence/wave2-readiness-assessments/` record) | counted **only** in comments by a login in self-hosting `operator.authorizedGithubLogins`; JSON object with a string `disposition`. An unparsable marker from such a login fails closed. Markers from anyone else are ignored | not assessed |
+| Retained Agent Ready assessment (TASKS only) | Issue comments containing `<!-- AGENT_READY_ASSESSMENT: {json} -->` (the native receipt the Factory Director posts beside the retained `docs/evidence/wave2-readiness-assessments/` record) | read by `agent_ready_disposition` in `tools/live/release_admission.py`, the same reader release admission uses. The newest native receipt counts: `record_kind` `ReadinessAssessment`, `outcome` `ASSESSED`, an `agent-ready` producer and a non-empty `provenance.input_sha256`, in a comment written (and, if edited, edited) by a login in self-hosting `operator.authorizedGithubLogins`. An unparsable marker from such a login fails closed. Other markers carry no disposition | not assessed |
 | Node runtime state | `paths.stateFile` from `selfHostingConfig` | object with an `active` map; optional `limitEscalations` and `founderExceptions` maps | fail closed |
 | Founder-hold record | `~/.local/state/alienintent/factory-director/founder-holds.json` | `{"schemaVersion": 1, "holds": [{"issue": <int>, "kind": "FOUNDER_DECISION", "reason": "<text>", "recordedAt"?: "...", "recordedBy"?: "..."}]}`; no other keys; no duplicates | **fail closed**. "No holds" is written as `"holds": []` |
 | Director inbox | `~/.local/state/alienintent/factory-director/inbox/` | entry = `<id>.json` directly inside (id `[A-Za-z0-9][A-Za-z0-9._-]*`); receipt = `processed/<id>.json`. A visible `*.json` file with any other name fails closed | **fail closed**. "No entries" is an empty directory |
