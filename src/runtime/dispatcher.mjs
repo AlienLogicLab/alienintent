@@ -10,6 +10,19 @@ const routedSignal = claim => claim?.control ?? claim?.result;
 const recoverable = outcome => ["COMPLETION_ERROR", "DURABLE_RESULT_MISSING", "WORKER_IDENTITY_MISMATCH"].includes(outcome);
 const hasClaimTransfer = (state, invocationId, lane) => Object.entries(state.claimTransfers ?? {}).some(([key, transfer]) =>
   key === invocationId || transfer?.invocationId === invocationId || (lane && transfer?.lane === lane));
+const claimTransferProofSubject = request => ({
+  lane: request.lane, invocationId: request.invocationId, resourceId: request.resourceId,
+  path: request.path, branch: request.branch, unit: request.unit, cgroup: request.cgroup,
+  manager: request.manager, expectedHead: request.expectedHead,
+});
+function assertClaimTransferHostProof(proof, request) {
+  const observedAt = Date.parse(proof?.observedAt);
+  if (!proof || typeof proof.then === "function" || !/^[a-f0-9]{64}$/.test(proof.digest ?? "")
+      || typeof proof.observedAt !== "string" || !Number.isFinite(observedAt)
+      || Math.abs(Date.now() - observedAt) > 30000
+      || !isDeepStrictEqual(proof.subject, claimTransferProofSubject(request)))
+    throw new Error("CLAIM_TRANSFER_HOST_PROOF_INVALID");
+}
 // State-only part of claim transfer admission. Host, ledger-head, marker and
 // delivery-payload proof remain separate prerequisites before any owner grant.
 export function assertClaimTransferState(state, request) {
@@ -170,11 +183,7 @@ export class EventRelay {
         || !/^[a-f0-9]{40,64}$/.test(ownership.head ?? ""))
       throw new Error("CLAIM_TRANSFER_WORKTREE_MISMATCH");
     const proof = prove({ request: structuredClone(request), state: structuredClone(state) });
-    const observedAt = Date.parse(proof?.observedAt);
-    if (!proof || typeof proof.then === "function" || !/^[a-f0-9]{64}$/.test(proof.digest ?? "")
-        || typeof proof.observedAt !== "string" || !Number.isFinite(observedAt)
-        || Math.abs(Date.now() - observedAt) > 30000)
-      throw new Error("CLAIM_TRANSFER_HOST_PROOF_INVALID");
+    assertClaimTransferHostProof(proof, request);
     if (existing) {
       if (existing.schemaVersion !== 1 || existing.status !== "COMMITTED"
           || existing.operationId !== request.operationId || existing.nextOwner !== request.nextOwner
@@ -223,11 +232,7 @@ export class EventRelay {
     const prove = this.options.claimTransferHostProof;
     if (typeof prove !== "function") throw new Error("CLAIM_TRANSFER_HOST_PROOF_REQUIRED");
     const proof = prove({ request: structuredClone(request), state: structuredClone(state) });
-    const observedAt = Date.parse(proof?.observedAt);
-    if (!proof || typeof proof.then === "function" || !/^[a-f0-9]{64}$/.test(proof.digest ?? "")
-        || typeof proof.observedAt !== "string" || !Number.isFinite(observedAt)
-        || Math.abs(Date.now() - observedAt) > 30000)
-      throw new Error("CLAIM_TRANSFER_HOST_PROOF_INVALID");
+    assertClaimTransferHostProof(proof, request);
     if (!isDeepStrictEqual(this.fence(), expectedHead))
       throw new Error("CLAIM_TRANSFER_EDIT_STATE_CHANGED");
     return { invocationId: request.invocationId, path: request.path, branch: request.branch,
