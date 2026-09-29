@@ -1,6 +1,7 @@
 import crypto from "node:crypto";
 import { inspectWorker, workerLogPath } from "./worker-runner.mjs";
 import { isAbsolute } from "node:path";
+import { isDeepStrictEqual } from "node:util";
 import { allowedSignals, attemptsResultSignal, parseInvocationSignal } from "../github/authority.mjs";
 import { NodeStateLedger } from "./node-state-ledger.mjs";
 const defaultRoleNames = { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" };
@@ -151,6 +152,46 @@ export class EventRelay {
   }
   state() { return this.ledger.read(); }
   save(state) { return this.ledger.save(state); }
+  commitClaimTransfer(request) {
+    const prove = this.options.claimTransferHostProof;
+    if (typeof prove !== "function") throw new Error("CLAIM_TRANSFER_HOST_PROOF_REQUIRED");
+    const state = this.state();
+    const existing = state.claimTransfers?.[request?.invocationId];
+    // A committed transfer remains fenced by the original claim. For replay,
+    // validate that claim again without treating its own record as a conflict.
+    const checkState = existing ? { ...state, claimTransfers: Object.fromEntries(
+      Object.entries(state.claimTransfers).filter(([key]) => key !== request.invocationId)) } : state;
+    assertClaimTransferState(checkState, request);
+    const proof = prove({ request: structuredClone(request), state: structuredClone(state) });
+    const observedAt = Date.parse(proof?.observedAt);
+    if (!proof || typeof proof.then === "function" || !/^[a-f0-9]{64}$/.test(proof.digest ?? "")
+        || typeof proof.observedAt !== "string" || !Number.isFinite(observedAt)
+        || Math.abs(Date.now() - observedAt) > 30000)
+      throw new Error("CLAIM_TRANSFER_HOST_PROOF_INVALID");
+    if (existing) {
+      if (existing.schemaVersion !== 1 || existing.status !== "COMMITTED"
+          || existing.operationId !== request.operationId || existing.nextOwner !== request.nextOwner
+          || existing.lane !== request.lane || existing.resourceId !== request.resourceId
+          || existing.path !== request.path || existing.branch !== request.branch
+          || !isDeepStrictEqual(existing.expectedHead, request.expectedHead))
+        throw new Error("CLAIM_TRANSFER_REPLAY_MISMATCH");
+      this.fence();
+      return existing;
+    }
+    const record = { schemaVersion: 1, status: "COMMITTED", operationId: request.operationId,
+      invocationId: request.invocationId, lane: request.lane, resourceId: request.resourceId,
+      path: request.path, branch: request.branch,
+      oldOwner: { invocationId: request.invocationId, workerLogin: state.active[request.lane].workerLogin ?? null },
+      nextOwner: request.nextOwner, expectedHead: request.expectedHead,
+      hostProof: { digest: proof.digest, observedAt: proof.observedAt },
+      grantId: crypto.randomUUID(), committedAt: new Date().toISOString() };
+    state.claimTransfers ??= {};
+    state.claimTransfers[request.invocationId] = record;
+    this.ledger.saveIfHead(request.expectedHead, state);
+    const readback = this.state().claimTransfers?.[request.invocationId];
+    if (!isDeepStrictEqual(readback, record)) throw new Error("CLAIM_TRANSFER_COMMIT_READBACK_MISMATCH");
+    return readback;
+  }
   get events() { return this._events; } emit(event) { const record = { at: new Date().toISOString(), ...event }; this._events.push(record); this.options.onEvent?.(record); }
   lane(item, role) { return `${item.repository}#${item.issue}:${role}`; } invocation(item, role) { return `${this.lane(item, role)}:${crypto.randomUUID()}`; }
   biuKey(item) { return `${item.repository}#${item.issue}`; }
