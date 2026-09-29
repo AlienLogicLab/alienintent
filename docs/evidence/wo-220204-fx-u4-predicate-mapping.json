@@ -10,7 +10,7 @@
   "design": {
     "path": "docs/evidence/wave2-design-contracts.json",
     "locator": "contracts[requirement_id=SF-REQ-014]",
-    "sha256": "56676dd97cd09031882ee01e61af2a15071f1b92f6c914fde2169b682f056242"
+    "sha256": "1cd1fe512e6d24cb7e90d813fd01eb0532e17564d95c99cdf63f63addbe05e80"
   },
   "review": {
     "reviewer": "POSTW1-VERIFY-010",

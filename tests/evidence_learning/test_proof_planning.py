@@ -27,7 +27,7 @@ from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOpera
 ROOT = Path(__file__).resolve().parents[2]
 PROJECT, PROFILE, REQUIREMENT = "AlienLogicLab/alienintent", "fx-u4", "SF-REQ-014"
 MAPPING = "docs/evidence/wo-220204-fx-u4-predicate-mapping.json"
-MAPPING_SHA256 = "aed79fa4dcb1bed44b493b015b0a3e14e1d042fcc24d3dab3c76856874aae00c"
+MAPPING_SHA256 = "2509943daa36a095e2caff9e37fcfcf13b4575fffbb91f2792aa6d3daaa8a62c"
 PREMISE_MAPPING = "docs/evidence/wo-220203-fx-u3-premise-mapping.json"
 PREMISE_SHA256 = "598abb9c11791428069e2b5605b51f7ebf61afd537f2ca02c39e6bc8ec1bd589"
 RETAINED = ("docs/evidence/py09b-live-checks-2026-09-21.json", "docs/evidence/py10/proof-run.json")
