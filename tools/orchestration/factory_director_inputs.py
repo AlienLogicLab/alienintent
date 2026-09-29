@@ -27,16 +27,18 @@ Source paths, schemas and the idle-reason precedence are documented in
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import os
 import re
 import shutil
 import sys
+from collections.abc import Callable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from hashlib import sha256
 from pathlib import Path
-from typing import Callable
+from urllib.parse import quote
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "live"))
@@ -53,12 +55,17 @@ WORKER_STATES = frozenset({"IMPLEMENT", "VERIFY", "ACCEPT"})
 INBOX_ENTRY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.json$")
 HOLD_KEYS = frozenset({"issue", "reason", "kind"})
 HOLD_OPTIONAL_KEYS = frozenset({"recordedAt", "recordedBy"})
+MAX_FOUNDER_FILE_BYTES = 4 * 1024 * 1024
 
 UNAVAILABLE = DirectorInputs(False, False, False, False, False, False, False, False, False)
 
 
 class SourceUnavailable(Exception):
     """A durable source is absent, unreadable, partial or inconsistent."""
+
+
+class ProvenanceUnavailable(SourceUnavailable):
+    """A required external read failed; no authoritative projection can be published."""
 
 
 def _now() -> str:
@@ -83,6 +90,14 @@ def _read_json(path: Path, label: str):
         raise SourceUnavailable(f"{label} is absent: {path}") from exc
     except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
         raise SourceUnavailable(f"{label} is unreadable or unparsable: {path}") from exc
+
+
+def _read_founder_file(path: Path) -> bytes:
+    with path.open("rb") as stream:
+        data = stream.read(MAX_FOUNDER_FILE_BYTES + 1)
+    if len(data) > MAX_FOUNDER_FILE_BYTES:
+        raise SourceUnavailable(f"Founder file exceeds {MAX_FOUNDER_FILE_BYTES} bytes: {path}")
+    return data
 
 
 def _absolute_path(value, label: str) -> Path:
@@ -304,12 +319,92 @@ def _ids(directory: Path) -> frozenset[str]:
     return frozenset(path.stem for path in directory.iterdir() if path.is_file() and INBOX_ENTRY.match(path.name))
 
 
-def read_inbox(inbox: Path, board: dict[int, str] | None = None) -> tuple[tuple[str, ...], frozenset[str]]:
-    """Unprocessed entry ids (``<id>.json`` with no ``processed/<id>.json``) and the escalation
-    acknowledgement ids in ``escalations/``.
+def validate_founder_receipt(entry_id: str, source: bytes, receipt: dict, rows: list[dict],
+                             provenance_reader: Callable[[str, str, int], tuple[str, str]]) -> int:
+    """Return the uniquely verified Issue number or explain why the receipt cannot clear intake."""
+    try:
+        entry = json.loads(source)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise SourceUnavailable(f"Founder entry {entry_id}: source bytes are unparsable") from exc
+    if not isinstance(entry, dict) or entry.get("kind") != "FOUNDER_REQUIREMENT":
+        raise SourceUnavailable(f"Founder entry {entry_id}: source kind changed")
+    for key in ("title", "authority", "requirement", "priority"):
+        if not isinstance(entry.get(key), str) or not entry[key]:
+            raise SourceUnavailable(f"Founder entry {entry_id}: {key} is absent")
+    acceptance = entry.get("acceptance")
+    if not isinstance(acceptance, list) or not acceptance or not all(
+            isinstance(item, str) and item for item in acceptance):
+        raise SourceUnavailable(f"Founder entry {entry_id}: acceptance is absent or malformed")
+    material = receipt.get("materialization") if isinstance(receipt, dict) else None
+    provenance = receipt.get("provenance") if isinstance(receipt, dict) else None
+    if not isinstance(material, dict) or not isinstance(provenance, dict):
+        raise SourceUnavailable(f"Founder entry {entry_id}: materialization or provenance is absent")
+    if (receipt.get("entry") != entry_id or receipt.get("sourceSha256") != sha256(source).hexdigest()
+            or provenance.get("sourceTitle") != entry["title"]
+            or provenance.get("sourceAuthority") != entry["authority"]):
+        raise SourceUnavailable(f"Founder entry {entry_id}: source identity, digest, title or authority differs")
+    revision, artifact, issue = (material.get("revision"), material.get("canonicalArtifact"),
+                                 material.get("issue"))
+    if not isinstance(revision, str) or not re.fullmatch(r"[0-9a-f]{40}", revision):
+        raise SourceUnavailable(f"Founder entry {entry_id}: revision is not a full SHA")
+    if (not isinstance(artifact, str) or artifact.startswith("/") or not artifact.strip()
+            or any(part in ("", ".", "..") for part in artifact.split("/"))):
+        raise SourceUnavailable(f"Founder entry {entry_id}: canonical artifact path is invalid")
+    if not _positive_int(issue) or material.get("project") != materialization.PROJECT_NUMBER:
+        raise SourceUnavailable(f"Founder entry {entry_id}: Issue or configured Project identity differs")
+    matches = [row for row in rows if row.get("type") == "ISSUE" and row.get("issue") == issue]
+    if (len(matches) != 1 or matches[0].get("repository") != materialization.REPO
+            or matches[0].get("id") != material.get("projectItem")):
+        raise SourceUnavailable(f"Founder entry {entry_id}: unique Project item identity differs")
+    if material.get("priority") != entry["priority"] or matches[0].get("priority") != entry["priority"]:
+        raise SourceUnavailable(f"Founder entry {entry_id}: Founder priority differs")
+    try:
+        canonical_text, issue_body = provenance_reader(revision, artifact, issue)
+    except Exception as exc:
+        raise ProvenanceUnavailable(f"Founder entry {entry_id}: {exc}"[:300]) from exc
+    for key, value in [("requirement", entry["requirement"]),
+                       *(("acceptance", item) for item in acceptance)]:
+        if value not in canonical_text and value not in issue_body:
+            raise SourceUnavailable(f"Founder entry {entry_id}: exact {key} is absent from canonical/Issue")
+    return issue
+
+
+def prepare_founder_receipt_migration(entry_id: str, source: bytes, old_receipt: dict,
+                                      rows: list[dict], provenance_reader: Callable[[str, str, int],
+                                      tuple[str, str]]) -> dict:
+    """Build a checked enrichment without writing operational state or replacing old evidence.
+
+    The Director owns the eventual atomic write after independent live readback. Repeating
+    this preparation over either the old or enriched receipt produces the same result.
+    """
+    if not isinstance(old_receipt, dict):
+        raise SourceUnavailable(f"Founder entry {entry_id}: old receipt is not an object")
+    try:
+        entry = json.loads(source)
+    except (UnicodeDecodeError, json.JSONDecodeError) as exc:
+        raise SourceUnavailable(f"Founder entry {entry_id}: source bytes are unparsable") from exc
+    if not isinstance(entry, dict):
+        raise SourceUnavailable(f"Founder entry {entry_id}: source is not an object")
+    candidate = json.loads(json.dumps(old_receipt))
+    expected = {"entry": entry_id, "sourceSha256": sha256(source).hexdigest(),
+                "provenance": {"sourceTitle": entry.get("title"),
+                               "sourceAuthority": entry.get("authority")}}
+    for key, value in expected.items():
+        if key in candidate and candidate[key] != value:
+            raise SourceUnavailable(f"Founder entry {entry_id}: existing {key} conflicts with source")
+        candidate[key] = value
+    validate_founder_receipt(entry_id, source, candidate, rows, provenance_reader)
+    return candidate
+
+
+def read_inbox(inbox: Path, board: dict[int, str] | None = None, *, rows: list[dict] | None = None,
+               provenance_reader: Callable[[str, str, int], tuple[str, str]] | None = None,
+               failures: dict[str, str] | None = None) -> tuple[tuple[str, ...], frozenset[str]]:
+    """Active entry ids and escalation acknowledgements in ``escalations/``.
 
     A visible ``*.json`` file whose name is not a valid entry id fails closed rather than
     being silently ignored; dot-files and non-``.json`` names (temporary files) are not entries.
+    A Founder receipt discharges its entry only after exact provenance and Project DONE.
     """
     if not inbox.is_dir():
         raise SourceUnavailable(f"Director inbox directory is absent: {inbox}")
@@ -336,8 +431,9 @@ def read_inbox(inbox: Path, board: dict[int, str] | None = None) -> tuple[tuple[
     for entry_id in sorted(entries & receipts):
         entry_path = inbox / f"{entry_id}.json"
         try:
-            entry = json.loads(entry_path.read_text())
-        except (OSError, json.JSONDecodeError) as exc:
+            source = _read_founder_file(entry_path)
+            entry = json.loads(source)
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             raise SourceUnavailable(f"Director inbox entry {entry_id!r} cannot be parsed: {exc}"[:240]) from exc
         if not isinstance(entry, dict):
             raise SourceUnavailable(f"Director inbox entry {entry_id!r} is not an object")
@@ -345,26 +441,27 @@ def read_inbox(inbox: Path, board: dict[int, str] | None = None) -> tuple[tuple[
             continue
         receipt_path = processed / f"{entry_id}.json"
         try:
-            receipt = json.loads(receipt_path.read_text())
-        except (OSError, json.JSONDecodeError):
+            receipt = json.loads(_read_founder_file(receipt_path))
+        except (OSError, UnicodeDecodeError, json.JSONDecodeError) as exc:
             valid_receipts.discard(entry_id)
+            if failures is not None:
+                failures[entry_id] = f"Founder entry {entry_id}: receipt is unreadable or unparsable: {exc}"[:300]
             continue
-        materialization = receipt.get("materialization") if isinstance(receipt, dict) else None
-        valid = (
-            isinstance(materialization, dict)
-            and _positive_int(materialization.get("issue"))
-            and isinstance(materialization.get("canonicalArtifact"), str)
-            and bool(materialization["canonicalArtifact"].strip())
-            and isinstance(materialization.get("revision"), str)
-            and bool(re.fullmatch(r"[0-9a-f]{40}", materialization["revision"].strip()))
-        )
-        if not valid:
+        try:
+            if rows is None or provenance_reader is None or board is None:
+                raise SourceUnavailable("complete Project and provenance readers are required")
+            issue = validate_founder_receipt(entry_id, source, receipt, rows, provenance_reader)
+        except ProvenanceUnavailable:
+            raise
+        except SourceUnavailable as exc:
             valid_receipts.discard(entry_id)
+            if failures is not None:
+                failures[entry_id] = str(exc)
             continue
         # Materialization is a checkpoint, not completion. When authoritative board state is
         # available, a Founder requirement remains an active Director obligation until its
         # linked backlog item reaches DONE. This prevents materialized-but-forgotten intent.
-        if board is not None and board.get(materialization["issue"]) != "DONE":
+        if board.get(issue) != "DONE":
             valid_receipts.discard(entry_id)
 
     return tuple(sorted(entries - valid_receipts)), acknowledgements
@@ -473,6 +570,9 @@ class AuthoritativeDirectorInputs:
         self._app_reader: AppGitHubReader | None = None
         self.last_foreign_project_items: tuple[str, ...] = ()
         self.last_biu_issues: frozenset[int] = frozenset()
+        self.last_board_rows: list[dict] = []
+        self.inbox_failures: dict[str, str] = {}
+        self.provenance_reader: Callable[[str, str, int], tuple[str, str]] | None = None
 
     # Each reader is a separate method so a negative control can break exactly one source.
     def app_reader(self, config: AdapterConfig) -> AppGitHubReader:
@@ -494,7 +594,45 @@ class AuthoritativeDirectorInputs:
         except Exception as exc:  # MaterializationFailed, gh failure, malformed payload
             raise SourceUnavailable(f"Project board read failed: {exc}"[:300]) from exc
         self.last_foreign_project_items = foreign
+        self.last_board_rows = rows
         return board
+
+    def read_founder_provenance(self, config: AdapterConfig, revision: str,
+                                artifact: str, issue: int) -> tuple[str, str]:
+        """Bounded GitHub App reads of canonical main ancestry, artifact and Issue body."""
+        reader = self.app_reader(config)
+        owner, name = materialization.REPO.split("/")
+        root = f"https://api.github.com/repos/{quote(owner)}/{quote(name)}"
+
+        def get(url: str, label: str) -> dict:
+            try:
+                response = reader.transport.request("GET", url,
+                                                    reader.credentials.authorization() | {"Accept": "application/vnd.github+json"})
+                if response.status != 200:
+                    raise SourceUnavailable(f"{label} returned HTTP {response.status}")
+                value = json.loads(response.body)
+                if not isinstance(value, dict):
+                    raise TypeError("not an object")
+                return value
+            except SourceUnavailable:
+                raise
+            except Exception as exc:
+                raise SourceUnavailable(f"{label} unavailable: {type(exc).__name__}: {exc}"[:300]) from exc
+
+        comparison = get(f"{root}/compare/{revision}...main?per_page=1", "canonical remote comparison")
+        if comparison.get("status") not in ("ahead", "identical"):
+            raise SourceUnavailable(f"revision {revision} is not ancestral to canonical remote main")
+        content = get(f"{root}/contents/{quote(artifact, safe='/')}?ref={revision}", "canonical artifact")
+        if content.get("type") != "file" or content.get("encoding") != "base64":
+            raise SourceUnavailable("canonical artifact is not a base64 file at revision")
+        try:
+            artifact_text = base64.b64decode(content["content"].replace("\n", ""), validate=True).decode("utf-8")
+        except (KeyError, ValueError, UnicodeDecodeError) as exc:
+            raise SourceUnavailable("canonical artifact content cannot be decoded") from exc
+        issue_doc = get(f"{root}/issues/{issue}", f"issue #{issue}")
+        if issue_doc.get("number") != issue or not isinstance(issue_doc.get("body"), str):
+            raise SourceUnavailable(f"issue #{issue} body or identity differs")
+        return artifact_text, issue_doc["body"]
 
     def read_runtime(self, config: AdapterConfig) -> RuntimeView:
         repository, state_file, self.operators = validate_self_hosting(
@@ -505,7 +643,11 @@ class AuthoritativeDirectorInputs:
         return validate_holds(_read_json(config.founder_hold_record, "Founder-hold record"))
 
     def read_inbox(self, config: AdapterConfig, board: dict[int, str] | None = None) -> tuple[tuple[str, ...], frozenset[str]]:
-        return read_inbox(config.director_inbox, board)
+        self.inbox_failures = {}
+        reader = self.provenance_reader or (lambda revision, artifact, issue:
+            self.read_founder_provenance(config, revision, artifact, issue))
+        return read_inbox(config.director_inbox, board, rows=self.last_board_rows,
+                          provenance_reader=reader, failures=self.inbox_failures)
 
     def read_pause(self, config: AdapterConfig) -> bool:
         try:
@@ -543,6 +685,7 @@ class AuthoritativeDirectorInputs:
                                 acknowledgements, biu_issues=self.last_biu_issues,
                                 prepared_buffer_target=config.prepared_buffer_target)
             evaluation.observations["foreignProjectItems"] = list(self.last_foreign_project_items)
+            evaluation.observations["inboxFailures"] = self.inbox_failures
             return evaluation
         except SourceUnavailable as exc:
             return Evaluation(UNAVAILABLE, str(exc))

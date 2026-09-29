@@ -177,12 +177,26 @@ Director obligations on these sources:
   receipt `processed/<id>.json`, after acting on the entry. A receipt with no entry is
   ignored. Files whose names do not match the entry pattern (`.partial` and temporary
   files, for example) are not entries. For `kind: FOUNDER_REQUIREMENT`, acknowledgement is
-  not completion: the receipt counts as processed only when it contains
-  `materialization.issue`, `materialization.canonicalArtifact`, and an exact 40-hex
-  `materialization.revision`. Without that tuple the entry remains pending. Even with that
-  tuple, materialization is only a checkpoint: the entry remains an active Director
-  obligation until the linked Project item reaches DONE. The receipt is the durable pointer
-  used by successor episodes to continue the exact requirement; it is not a tombstone.
+  not completion. A `FOUNDER_REQUIREMENT` receipt must bind its entry id, SHA-256 of the
+  complete source bytes (`sourceSha256`), and verbatim `provenance.sourceTitle` and
+  `provenance.sourceAuthority`. `materialization` must name a full 40-hex `revision`,
+  relative `canonicalArtifact`, positive `issue`, configured `project`, exact `projectItem`,
+  and retained `priority`. The read-only adapter checks that revision is ancestral to
+  canonical remote `main`, reads that artifact and the Issue through the configured GitHub
+  App, compares the exact requirement and every acceptance string, and checks one matching
+  Project item and priority on the complete board. A malformed or conflicting receipt stays
+  pending with a named `inboxFailures` diagnostic. An unavailable external read makes the
+  whole projection non-authoritative. Even a valid materialization remains an active
+  obligation at every status short of authoritative Project `DONE`. The receipt is a
+  durable pointer for successor episodes, not a tombstone.
+
+  Existing receipts without `sourceSha256` remain active. For the #147 migration, a Director
+  first reads the unchanged source bytes, canonical remote revision and artifact, Issue, and
+  unique Project/P0 item. `prepare_founder_receipt_migration` builds and validates an
+  enrichment without writing state; it preserves every existing receipt field and rejects
+  conflicting identity. The Director owns the separate atomic receipt replacement after
+  readback. Repeating preparation after interruption yields the same content. A mismatch
+  leaves the original receipt and active obligation for repair.
 - **Pause.** Create `PAUSE` to stop new launches. Delete it to resume. Pausing never kills
   a live episode.
 - **Escalations.** The Node runtime never removes or resolves a `limitEscalations` entry.
