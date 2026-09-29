@@ -1756,3 +1756,16 @@ test("(10) a lost IMPLEMENT webhook and a worker that exited without a result ar
   relay.stop();
   assert.equal(ticks().at(-1).cleared, true);
 });
+
+test("(11)(12) the control tick leaves a lane this process owns to its owner: no re-read, no second worker", async () => {
+  let reads = 0;
+  const { relay, launches } = boardSubject({ eligible: facts(), board: [{ issue: 303, status: "IMPLEMENT" }] });
+  relay.options.authority.durableResult = async () => { reads++; return null; };
+  await relay.acceptEvent({ ...event("IMPLEMENT", "owned"), payload: { ...event("IMPLEMENT").payload, projects_v2_item: { id: "PVTI_303", content_node_id: "I_303" } } });
+  const events = relay.events.length;
+  await relay.reconcile();
+  await relay.reconcile();
+  assert.deepEqual(launches, ["PRODUCER"]);
+  assert.equal(reads, 0);
+  assert.deepEqual(relay.events.slice(events), []);
+});
