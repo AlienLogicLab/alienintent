@@ -106,6 +106,7 @@ export class GitHubAuthority {
           && declaresReleaseForIssue(comment.body, item.issue))) {
         return { eligible: false, reason: "RELEASE_UNVERIFIED" };
       }
+      if (await this.currentStatus(item) !== status) return { eligible: false, reason: "STALE_PROJECT_ITEM" };
       return { eligible: true };
     } catch { return { eligible: false, reason: "AUTHORITY_UNAVAILABLE" }; }
   }

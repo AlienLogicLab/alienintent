@@ -170,6 +170,32 @@ test("release declaration for another Issue cannot authorize a cross-referenced 
   assert.deepEqual(await authority.admissionEvidence(item, "IMPLEMENT"), { eligible: false, reason: "RELEASE_UNVERIFIED" });
 });
 
+test("admission refuses a Project item moved out of IMPLEMENT while release evidence is read", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVTI_303", status: "IMPLEMENT" };
+  let status = "IMPLEMENT";
+  const gh = args => {
+    const path = args[1];
+    if (path === `repos/${item.repository}/issues/${item.issue}`) return JSON.stringify({ number: 303, state: "open", labels: [] });
+    if (path?.endsWith("/dependencies/blocked_by")) return "[]";
+    if (path?.endsWith("/comments")) {
+      status = "READY";
+      return JSON.stringify([{ user: { login: "operator" }, body: "**RELEASED — Issue #303.**" }]);
+    }
+    throw new Error(`unexpected ${path}`);
+  };
+  const authority = new GitHubAuthority({ gh, owner: "ExampleOrg", projectNumber: 1,
+    repository: item.repository, authorizedOperatorLogins: ["operator"] });
+  authority.resolveItem = current => current;
+  authority.currentStatus = async () => status;
+  const { relay, launches } = subject({ admissionEvidence: authority.admissionEvidence.bind(authority),
+    getWipLimit: () => 1,
+    biuLimits: { "ExampleOrg/sample-project#303": { maxCycles: 3, maxReplacementsPerPhase: 1 } } });
+  assert.equal(await relay.start(item, "PRODUCER", "IMPLEMENT"), false);
+  assert.deepEqual(relay.state().active, {});
+  assert.deepEqual(launches, []);
+  assert.equal(relay.events.at(-1).reason, "STALE_PROJECT_ITEM");
+});
+
 test("startup skips unrelated Project history before recovering a persisted claim", async () => {
   const history = Array.from({ length: 80 }, (_, index) => ({ repository: "ExampleOrg/sample-project",
     issue: index + 1, itemId: `PVT_${index + 1}`, status: index % 2 ? "READY" : "DONE" }));
