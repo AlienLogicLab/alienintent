@@ -34,6 +34,15 @@ function parseRepository(repository) {
   return { owner, name };
 }
 
+function declaresReleaseForIssue(body, issue) {
+  if (typeof body !== "string") return false;
+  return body.split(/\r?\n/).some(line => {
+    if (!/^\s*(?:\*\*)?RELEASED\b/.test(line)) return false;
+    const issueReferences = [...line.matchAll(/\bIssue\s*#([1-9][0-9]*)\b/g)];
+    return issueReferences.length === 1 && Number(issueReferences[0][1]) === issue;
+  });
+}
+
 export class GitHubAuthority {
   constructor({ gh, owner, projectNumber, repository, roleNames = defaultRoleNames, workerLogins = {}, authorizedOperatorLogins = [] }) {
     this.gh = gh;
@@ -94,8 +103,7 @@ export class GitHubAuthority {
       if (!Array.isArray(dependencies) || dependencies.some(dependency => dependency.state !== "closed")) return { eligible: false, reason: "DEPENDENCY_UNRESOLVED" };
       const comments = JSON.parse(this.gh(["api", `repos/${this.repository}/issues/${item.issue}/comments`, "--paginate"]));
       if (!Array.isArray(comments) || !comments.some(comment => this.authorizedOperatorLogins.includes(comment.user?.login)
-          && /^\s*(?:\*\*)?RELEASED\b/m.test(comment.body ?? "")
-          && new RegExp(`(?:Issue\\s*)?#${item.issue}(?![0-9])`).test(comment.body ?? ""))) {
+          && declaresReleaseForIssue(comment.body, item.issue))) {
         return { eligible: false, reason: "RELEASE_UNVERIFIED" };
       }
       return { eligible: true };

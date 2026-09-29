@@ -583,7 +583,7 @@ export class EventRelay {
       this.save(persisted);
     }
     if (this.options.getWipLimit) {
-      const capacity = this.options.getWipLimit();
+      const capacity = this.options.getWipLimit(item);
       if (!Number.isSafeInteger(capacity) || capacity < 1) {
         this.emit({ issue: item.issue, role, outcome: "WIP_LIMIT_UNAVAILABLE" }); return false;
       }
