@@ -202,10 +202,13 @@ test("preflight returns a typed reason for every refusal", async () => {
   const request = { role: "PRODUCER", item: { issue: 7 }, invocationId: "inv", worktree: "/wt", resource: { path: "/wt", invocationId: "inv" } };
   const refusal = (stdout) => () => { const error = new Error("exit 1"); error.stdout = stdout; throw error; };
   const run = (execute, overrides = {}) => createPreflight({ repository: "o/r", workers: { PRODUCER: {} }, node: "node", script: "pf",
-    execute, environment: () => ({}) })({ ...request, ...overrides });
+    execute, environment: ({ role, worker }) => ({ ROLE: role, WT: worker.worktree }) })({ ...request, ...overrides });
   const calls = [];
   assert.deepEqual(await run((...args) => { calls.push(args); return JSON.stringify({ safe_to_start: true }); }), { ok: true });
   assert.deepEqual(calls[0].slice(0, 2), ["node", ["pf", "--repository", "o/r", "--issue", "7", "--json"]]);
+  assert.equal(calls[0][2].cwd, "/wt");
+  assert.deepEqual(calls[0][2].env, { ROLE: "PRODUCER", WT: "/wt" });
+  assert.deepEqual(JSON.parse(calls[0][2].input), { role: "PRODUCER", worktree: "/wt", resource: request.resource, invocationId: "inv" });
   assert.deepEqual(await run(() => "{}", { resource: { path: "/other", invocationId: "inv" } }), { ok: false, reason: "WORKTREE_MISMATCH" });
   assert.deepEqual(await run(refusal(JSON.stringify({ safe_to_start: false, classification: "GITHUB_VERIFICATION_UNAVAILABLE" }))), { ok: false, reason: "GITHUB_VERIFICATION_UNAVAILABLE" });
   assert.deepEqual(await run(refusal(undefined)), { ok: false, reason: "PREFLIGHT_UNAVAILABLE" });

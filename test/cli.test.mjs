@@ -10,14 +10,11 @@ const source = readFileSync(new URL("../bin/alienintent.mjs", import.meta.url), 
 test("webhook CLI verifies HMAC and acknowledges asynchronously", () => { assert.match(source, /verifyWebhookSignature/); assert.match(source, /response\.writeHead\(202\)/); assert.doesNotMatch(source, /setInterval|LeaseStore|WorkerProcessRegistry/); });
 test("preflight executes the canonical repository script from each disposable worker cwd", () => {
   assert.match(source, /config\.executables\.preflight/);
-  assert.match(source, /execFileSync\(config\.executables\.node, \[preflightScript,/);
-  assert.match(source, /cwd: worker\.worktree/);
-  assert.match(source, /env: workerEnvironment\(\{ role, worker \}\)/);
+  // createPreflight (worker-runner) runs it with the worker's cwd, input and environment; see worker-runner.test.mjs.
+  assert.match(source, /createPreflight\(\{ repository: config\.repository, workers: config\.workers,\s+node: config\.executables\.node, script: preflightScript \}\)/);
+  assert.match(source, /inspectionIntervalMs: config\.inspectionIntervalMs, preflight,/);
 });
 test("preflight receives the dispatched item issue", () => {
-  assert.match(source, /const preflight = async \(\{ role, item, invocationId, worktree, resource \}\)/);
-  assert.match(source, /"--issue", String\(item\.issue\)/);
-  assert.match(source, /input: JSON\.stringify\(worker\)/);
   assert.doesNotMatch(source, /config\.preflightIssue \?\? 11/);
 });
 
