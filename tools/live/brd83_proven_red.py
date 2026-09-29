@@ -121,6 +121,14 @@ VARIANTS: tuple[tuple[str, str, str, str], ...] = (
         f"{FIXTURE}::test_without_a_packet_an_unbound_receipt_names_no_baseline",
     ),
     (
+        "work_unit_commit_is_the_oldest",
+        '    log = _git(root, "log", "-1", "--format=%H", release_commit, "--", str(path))\n'
+        '    value = log.stdout.strip() if log.returncode == 0 else ""\n',
+        '    log = _git(root, "log", "--format=%H", release_commit, "--", str(path))\n'
+        '    value = log.stdout.split()[-1] if log.returncode == 0 and log.stdout.split() else ""\n',
+        f"{FIXTURE}::test_without_a_packet_the_newest_commit_of_the_assessed_spec_is_the_baseline",
+    ),
+    (
         "work_unit_commit_before_packet",
         '    baseline = packet_baseline(unit, read)\n',
         "    baseline = None\n",

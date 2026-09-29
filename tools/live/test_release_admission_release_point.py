@@ -289,6 +289,26 @@ def test_without_a_packet_the_baseline_is_the_commit_that_landed_the_assessed_wo
     assert f"baseline={landed} (work_unit_commit)" in result.stdout
 
 
+def test_without_a_packet_the_newest_commit_of_the_assessed_spec_is_the_baseline(world):
+    """The spec was revised and re-assessed: the baseline is the commit that landed the revision,
+    not the commit that first added the spec."""
+    world.land("SF-REQ-057", directory="docs/work-units")
+    world.git(world.seed, "rm", "-q", f"{PACKET_DIR}/SF-REQ-057.packet.json")
+    world.git(world.seed, "commit", "-q", "-m", "no packet")
+    first = world.git(world.seed, "rev-parse", "HEAD~1").strip()
+    revised = DOCUMENT.format(unit="SF-REQ-057") + "Revised scope.\n"
+    (world.seed / "docs/work-units/SF-REQ-057.md").write_text(revised)
+    world.git(world.seed, "commit", "-q", "-am", "revise spec")
+    landed = world.git(world.seed, "rev-parse", "HEAD").strip()
+    world.git(world.seed, "push", "-q", "origin", "main")
+    world.assessed("SF-REQ-057", input_sha256=digest(revised))
+
+    result = world.admit(workdir=world.work)
+
+    assert _admitted(result), result.stdout + result.stderr
+    assert f"baseline={landed} (work_unit_commit)" in result.stdout and first not in result.stdout
+
+
 def test_without_a_packet_an_unbound_receipt_names_no_baseline(world):
     world.land("SF-REQ-057", directory="docs/work-units")
     world.git(world.seed, "rm", "-q", f"{PACKET_DIR}/SF-REQ-057.packet.json")
