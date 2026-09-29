@@ -41,8 +41,12 @@ export function createSystemdSupervisor(config, dependencies = {}) {
     if (!/^[1-9][0-9]*$/.test(identity.UserspaceTimestampMonotonic ?? '') || !/^\/user.slice\/user-[0-9]+.slice\/user@[0-9]+.service$/.test(identity.ControlGroup ?? '')) throw new Error('SUPERVISION_MANAGER_IDENTITY_REQUIRED');
     return { uid: (dependencies.uid ?? process.getuid)(), bootId: readFile('/proc/sys/kernel/random/boot_id').trim(), startedAtMonotonic: identity.UserspaceTimestampMonotonic, cgroup: identity.ControlGroup };
   }
+  const wellFormedManager = value => Number.isSafeInteger(value?.uid) && value.uid >= 0
+    && ['bootId', 'startedAtMonotonic', 'cgroup'].every(key => typeof value[key] === 'string' && value[key] !== '');
   function verifyManager(owner) {
-    if (JSON.stringify(manager()) !== JSON.stringify(owner.manager)) throw new Error('SUPERVISION_MANAGER_CHANGED');
+    const current = manager();
+    if (!wellFormedManager(current) || !wellFormedManager(owner.manager)
+        || ['uid', 'bootId', 'startedAtMonotonic', 'cgroup'].some(key => current[key] !== owner.manager[key])) throw new Error('SUPERVISION_MANAGER_CHANGED');
   }
   function empty(owner) {
     try {
@@ -103,6 +107,16 @@ export function createSystemdSupervisor(config, dependencies = {}) {
       // It is not release; the normal observer must still capture terminal proof.
       owned(owner, show(owner.unit));
       transport(config.systemctl, ['--user', 'kill', '--signal=SIGKILL', '--kill-whom=all', '--', owner.unit]);
+    },
+    absent(owner, resourcePath) {
+      if (owner.systemdInvocationId || owner.terminalReceipt || owner.cancellationIntent || owner.stopIntent) return false;
+      verifyManager(owner);
+      if (typeof owner.invocationId !== 'string' || !owner.invocationId || typeof resourcePath !== 'string' || !resourcePath.startsWith('/')) return false;
+      const expectedDigest = createHash('sha256').update(JSON.stringify([owner.invocationId, resourcePath])).digest('hex');
+      const expectedUnit = `alienintent-${expectedDigest}.service`;
+      if (owner.unit !== expectedUnit || owner.binding !== `AlienIntent invocation ${expectedDigest}`
+          || owner.cgroup !== `${owner.manager.cgroup}/app.slice/${expectedUnit}`) return false;
+      return show(owner.unit).LoadState === 'not-found' && empty(owner);
     },
     observe(owner, persist) {
       verifyManager(owner);

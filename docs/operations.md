@@ -450,8 +450,16 @@ of dispatcher progress or launcher-client death. Deliberate same-user/privileged
 cgroup migration is outside this guarantee. Ownership remains held on missing,
 unavailable or mismatched readback. A terminal receipt is persisted before stopping
 the exact empty owned unit; an owned failed unit is reset only after that receipt.
-Only confirmed terminal collection permits resource release. Neither timeout nor
-exit status supplies a durable workflow result or new retry entitlement.
+Only confirmed terminal collection permits resource release. A persisted
+`LAUNCHING` claim with no recorded PID has one narrower recovery path: its exact
+lane must retain `WORKER_TECHNICAL_FAILURE / SUPERVISION_MANAGER_CHANGED` from the
+pre-spawn supervisor check, and the same manager must confirm the deterministic
+unit is absent and the exact cgroup is empty or absent. The dispatcher records
+`PRE_SPAWN_MANAGER_REFUSAL`, retains the old worktree and historical evidence,
+and admits a replacement through the normal lane and finite phase budget. An
+absent unit alone does not establish that a worker never ran or authorize
+release; other missing-unit histories remain held. Neither timeout nor exit
+status supplies a durable workflow result or new retry entitlement.
 
 Run the non-provider disposable host proof explicitly with
 `rtk proxy node test/host/systemd-supervision.mjs`. It needs user-manager access,

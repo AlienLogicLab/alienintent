@@ -64,6 +64,24 @@ test("wrong repository, Issue, author, invocation, role result, duplicate marker
 test("liveness inspects but never kills a quiet live child", async () => { const { relay, children } = subject(); await relay.acceptEvent(event("IMPLEMENT")); assert.equal(await relay.inspectLiveness([...relay.active.values()][0].invocationId), "HEALTHY_ACTIVE"); assert.equal(children[0].exitCode, null); });
 test("startup scans exactly once and launches actionable work", async () => { let scans = 0; const { relay, launches } = subject({ authority: { enrichContentNode: async () => null, durableResult: async () => null, transition: async () => {}, listItems: async () => { scans++; return [{ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "IMPLEMENT" }]; } } }); await relay.startupReconcile(); await relay.startupReconcile(); assert.equal(scans, 1); assert.deepEqual(launches, ["PRODUCER"]); });
 
+test("startup skips unrelated Project history before recovering a persisted claim", async () => {
+  const history = Array.from({ length: 80 }, (_, index) => ({ repository: "ExampleOrg/sample-project",
+    issue: index + 1, itemId: `PVT_${index + 1}`, status: index % 2 ? "READY" : "DONE" }));
+  const target = { repository: "ExampleOrg/sample-project", issue: 149, itemId: "PVT_149", status: "IMPLEMENT" };
+  const { relay, launches, statePath } = subject({ isProcessAlive: () => false,
+    authority: { listItems: async () => [...history, target], durableResult: async () => null } });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: {
+    "ExampleOrg/sample-project#149:PRODUCER": { invocationId: "stale", item: target, role: "PRODUCER",
+      status: "IMPLEMENT", startedAt: "2026-09-04T00:00:00.000Z", pid: 4455 },
+  } }));
+  const originalState = relay.state.bind(relay); let reads = 0;
+  relay.state = () => { reads++; return originalState(); };
+  await relay.startupReconcile();
+  assert.deepEqual(launches, ["PRODUCER"]);
+  assert.notEqual(relay.state().active["ExampleOrg/sample-project#149:PRODUCER"].invocationId, "stale");
+  assert.ok(reads < 30, `startup replayed the ledger ${reads} times for unrelated cards`);
+});
+
 test("startup leaves a persisted claim alone only when its launched worker still exists", async () => { const { relay, launches, statePath } = subject({ isProcessAlive: (pid) => pid === 4455, authority: { enrichContentNode: async () => null, durableResult: async () => null, transition: async () => {}, listItems: async () => [{ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "IMPLEMENT" }] } }); writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: { "ExampleOrg/sample-project#303:PRODUCER": { invocationId: "surviving", startedAt: "2026-09-04T00:00:00.000Z", pid: 4455 } } })); await relay.startupReconcile(); assert.deepEqual(launches, []); assert.equal(relay.events.at(-1).outcome, "SURVIVING_INVOCATION_EXISTS"); });
 
 test("startup routes an exact durable result before probing the persisted worker", async () => { const { relay, launches, transitions, statePath } = subject({ isProcessAlive: () => true, authority: { enrichContentNode: async () => null, durableResult: async () => "VERIFY", transition: async (_item, target) => transitions.push(target), listItems: async () => [{ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "IMPLEMENT" }] } }); writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: { "ExampleOrg/sample-project#303:PRODUCER": { invocationId: "completed", startedAt: "2026-09-04T00:00:00.000Z", pid: 4455 } } })); await relay.startupReconcile(); assert.deepEqual(transitions, ["VERIFY"]); assert.deepEqual(launches, []); });
