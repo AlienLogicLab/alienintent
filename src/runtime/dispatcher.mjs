@@ -614,7 +614,10 @@ export class EventRelay {
     const interval = Number.isFinite(requested) ? Math.min(3600000, Math.max(1000, requested)) : 300000;
     this.refillTimer = (this.options.setTimeout ?? setTimeout)(() => {
       this.refillTimer = undefined;
-      this.requestRefill().finally(() => this.scheduleRefill());
+      // The same tick re-drives typed claim recovery when that runtime provides it.
+      Promise.resolve().then(() => this.redriveRecoverable?.())
+        .catch(error => this.emit({ outcome: "RECOVERY_REDRIVE_ERROR", error: error.message }))
+        .then(() => this.requestRefill()).finally(() => this.scheduleRefill());
     }, interval);
     this.refillTimer?.unref?.();
   }
