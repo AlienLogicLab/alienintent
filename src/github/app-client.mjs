@@ -145,7 +145,7 @@ export function createGitHubAppClient(config, {
     const endpoint = args[1].replace(/^\//, "");
     const issueRoot = `repos/${repository}/issues`;
     const issuePath = endpoint === issueRoot || (endpoint.startsWith(`${issueRoot}/`)
-      && /^\d+(?:\/comments)?$/.test(endpoint.slice(issueRoot.length + 1)));
+      && /^\d+(?:\/comments|\/dependencies\/blocked_by)?$/.test(endpoint.slice(issueRoot.length + 1)));
     if (endpoint !== "graphql" && endpoint !== "installation/repositories" && !issuePath) {
       throw new Error("AlienIntent: control-plane endpoint is outside the configured authority");
     }

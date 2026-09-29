@@ -557,7 +557,19 @@ export class EventRelay {
       this.save(persisted);
     }
     if (this.options.executionEnabled === false) { this.emit({ issue: item.issue, role, outcome: "DRY_RUN_ACTIONABLE" }); return false; }
+    if (this.options.admissionEvidence) {
+      const evidence = await this.options.admissionEvidence(item, status, role);
+      if (!evidence?.eligible) {
+        this.emit({ issue: item.issue, role, outcome: "ADMISSION_REFUSED", reason: evidence?.reason ?? "UNAVAILABLE" });
+        return false;
+      }
+      persisted = this.state();
+      if (persisted.active[lane]) return false;
+    }
     const limit = this.limitFor(item);
+    if (this.options.admissionEvidence && !limit) {
+      this.emit({ issue: item.issue, role, outcome: "BIU_LIMIT_MISSING" }); return false;
+    }
     if (limit && (status === "IMPLEMENT" || status === "VERIFY")) {
       const account = this.limitState(persisted, item, status);
       if (account.phase !== status) {
@@ -569,6 +581,15 @@ export class EventRelay {
         return false;
       }
       this.save(persisted);
+    }
+    if (this.options.getWipLimit) {
+      const capacity = this.options.getWipLimit(item);
+      if (!Number.isSafeInteger(capacity) || capacity < 1) {
+        this.emit({ issue: item.issue, role, outcome: "WIP_LIMIT_UNAVAILABLE" }); return false;
+      }
+      if (Object.keys(persisted.active).length >= capacity) {
+        this.emit({ issue: item.issue, role, outcome: "WIP_CAPACITY_FULL", capacity }); return false;
+      }
     }
     const invocationId = this.invocation(item, role);
     const workerLogin = this.configuredWorkerLogin(role);
@@ -820,5 +841,20 @@ export class EventRelay {
     // recovering current actionable Project work. Running it first can starve dispatch
     // for minutes when many retained resources require inspection.
     this.scheduleResourceCleanup();
+  }
+  async reconcileAdmissions() {
+    if (this.stopped || this.admissionScan) return;
+    this.admissionScan = true;
+    try {
+      this.metrics.projectLists++;
+      const items = await this.options.authority.listItems();
+      for (const item of items) {
+        if (this.stopped) break;
+        const role = this.roles[item.status?.toUpperCase()];
+        if (!role) continue;
+        try { await this.start(item, role, item.status); }
+        catch (error) { this.emit({ issue: item.issue, outcome: "ADMISSION_RECONCILIATION_ERROR", error: error.message }); }
+      }
+    } finally { this.admissionScan = false; }
   }
 }

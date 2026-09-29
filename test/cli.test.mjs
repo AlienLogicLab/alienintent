@@ -7,7 +7,7 @@ import test from "node:test";
 import { syntheticProfile } from "./helpers/profile.mjs";
 import { generateKeyPairSync } from "node:crypto";
 const source = readFileSync(new URL("../bin/alienintent.mjs", import.meta.url), "utf8");
-test("webhook CLI verifies HMAC and acknowledges asynchronously", () => { assert.match(source, /verifyWebhookSignature/); assert.match(source, /response\.writeHead\(202\)/); assert.doesNotMatch(source, /setInterval|LeaseStore|WorkerProcessRegistry/); });
+test("webhook CLI verifies HMAC and acknowledges asynchronously", () => { assert.match(source, /verifyWebhookSignature/); assert.match(source, /response\.writeHead\(202\)/); assert.doesNotMatch(source, /LeaseStore|WorkerProcessRegistry/); });
 test("preflight executes the canonical repository script from each disposable worker cwd", () => {
   assert.match(source, /config\.executables\.preflight/);
   // createPreflight (worker-runner) runs it with the worker's cwd, input and environment; see worker-runner.test.mjs.
@@ -74,8 +74,9 @@ test("production CLI dry-run reports actionable item without worker/preflight or
 test("CLI service shutdown reaches relay timer cancellation", () => {
   assert.match(source, /process\.once\("SIGTERM", shutdown\)/);
   assert.match(source, /process\.once\("SIGINT", shutdown\)/);
-  assert.match(source, /const shutdown = \(\) => \{ relay\.stop\(\)/);
-  assert.match(source, /server\.once\("close", \(\) => relay\.stop\(\)\)/);
+  assert.match(source, /const admissionTimer = setInterval/);
+  assert.match(source, /const shutdown = \(\) => \{ clearInterval\(admissionTimer\); relay\.stop\(\)/);
+  assert.match(source, /server\.once\("close", \(\) => \{ clearInterval\(admissionTimer\); relay\.stop\(\); \}\)/);
 });
 
 

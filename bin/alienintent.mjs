@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 import { createServer } from "node:http";
-import { mkdirSync } from "node:fs";
-import { dirname } from "node:path";
+import { mkdirSync, readFileSync, statSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { homedir } from "node:os";
 import { EventRelay, verifyWebhookSignature } from "../src/runtime/dispatcher.mjs";
 import { GitHubAuthority } from "../src/github/authority.mjs";
 import { createGitHubAppClient } from "../src/github/app-client.mjs";
@@ -24,7 +25,21 @@ if (process.argv.includes("--preflight-only")) process.exit(0);
 mkdirSync(dirname(config.statePath), { recursive: true });
 const authority = new GitHubAuthority({ gh: appClient.gh, owner: config.projectOwner,
   projectNumber: config.projectNumber, repository: config.repository,
-  workerLogins: config.workerLogins, roleNames: config.roleNames });
+  workerLogins: config.workerLogins, roleNames: config.roleNames,
+  authorizedOperatorLogins: config.authorizedOperatorLogins });
+const factoryPolicy = () => {
+  try {
+    const host = JSON.parse(readFileSync(join(homedir(), ".config/alienintent/factory-director-host.json"), "utf8"));
+    if (!Number.isSafeInteger(host.wipLimit) || host.wipLimit < 1 || typeof host.founderHoldRecord !== "string") return null;
+    const holds = JSON.parse(readFileSync(host.founderHoldRecord, "utf8"));
+    if (holds.schemaVersion !== 1 || !Array.isArray(holds.holds)
+        || holds.holds.some(hold => !Number.isSafeInteger(hold.issue) || hold.issue < 1 || hold.kind !== "FOUNDER_DECISION")) return null;
+    let paused = false;
+    try { statSync(host.pauseFlag); paused = true; }
+    catch (error) { if (error.code !== "ENOENT") return null; }
+    return { wipLimit: host.wipLimit, holds: holds.holds, paused };
+  } catch { return null; }
+};
 const preflightScript = config.executables.preflight;
 const preflight = createPreflight({ repository: config.repository, workers: config.workers,
   node: config.executables.node, script: preflightScript });
@@ -34,6 +49,17 @@ const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(eve
   authorizedOperatorLogins: config.authorizedOperatorLogins, appIdentity: appEvidence.identity,
   workerDisplayNames: Object.fromEntries(Object.entries(config.workers).map(([role, worker]) => [role, worker.displayName])),
   executionEnabled: config.executionEnabled, biuLimits: config.biuLimits, authority, workers: config.workers,
+  admissionEvidence: async (item, status) => {
+    const policy = factoryPolicy();
+    if (!policy || policy.paused || policy.holds.some(hold => hold.issue === item.issue))
+      return { eligible: false, reason: "FACTORY_POLICY_UNAVAILABLE_OR_HELD" };
+    return authority.admissionEvidence(item, status);
+  },
+  getWipLimit: item => {
+    const policy = factoryPolicy();
+    return policy && !policy.paused && !policy.holds.some(hold => hold.issue === item.issue)
+      ? policy.wipLimit : null;
+  },
   worktreeManager: config.executionEnabled ? createWorktreeManager({ repository: config.repository,
     repositoryStore: config.repositoryStore, worktreeRoot: config.worktreeRoot,
     baselineRef: config.baselineRef, git: config.executables.git }) : undefined,
@@ -58,7 +84,12 @@ const server = createServer(async (request, response) => {
     response.writeHead(202).end();
   } catch (error) { console.error(`AlienIntent webhook failed: ${error.message}`); response.writeHead(500).end(); }
 }).listen(config.port, config.host);
-const shutdown = () => { relay.stop(); server.close(); server.closeIdleConnections(); };
+const admissionTimer = setInterval(() => relay.reconcileAdmissions().catch(error =>
+  console.error(`AlienIntent admission reconciliation failed: ${error.message}`)), 60000);
+admissionTimer.unref();
+server.once("listening", () => relay.reconcileAdmissions().catch(error =>
+  console.error(`AlienIntent admission reconciliation failed: ${error.message}`)));
+const shutdown = () => { clearInterval(admissionTimer); relay.stop(); server.close(); server.closeIdleConnections(); };
 process.once("SIGTERM", shutdown);
 process.once("SIGINT", shutdown);
-server.once("close", () => relay.stop());
+server.once("close", () => { clearInterval(admissionTimer); relay.stop(); });

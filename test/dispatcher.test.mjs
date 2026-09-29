@@ -64,6 +64,138 @@ test("wrong repository, Issue, author, invocation, role result, duplicate marker
 test("liveness inspects but never kills a quiet live child", async () => { const { relay, children } = subject(); await relay.acceptEvent(event("IMPLEMENT")); assert.equal(await relay.inspectLiveness([...relay.active.values()][0].invocationId), "HEALTHY_ACTIVE"); assert.equal(children[0].exitCode, null); });
 test("startup scans exactly once and launches actionable work", async () => { let scans = 0; const { relay, launches } = subject({ authority: { enrichContentNode: async () => null, durableResult: async () => null, transition: async () => {}, listItems: async () => { scans++; return [{ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "IMPLEMENT" }]; } } }); await relay.startupReconcile(); await relay.startupReconcile(); assert.equal(scans, 1); assert.deepEqual(launches, ["PRODUCER"]); });
 
+test("post-listener reconciliation admits a lost released transition once", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "IMPLEMENT" };
+  let visible = false;
+  const { relay, launches } = subject({
+    authority: { listItems: async () => visible ? [item] : [], durableResult: async () => null,
+      enrichContentNode: async () => item },
+    admissionEvidence: async () => ({ eligible: true }), getWipLimit: () => 1,
+    biuLimits: { "ExampleOrg/sample-project#303": { maxCycles: 3, maxReplacementsPerPhase: 1 } },
+  });
+  await relay.startupReconcile();
+  visible = true;
+  await relay.reconcileAdmissions();
+  await relay.reconcileAdmissions();
+  await relay.acceptEvent(event("IMPLEMENT", "repeat"));
+  assert.deepEqual(launches, ["PRODUCER"]);
+  assert.equal(Object.keys(relay.state().active).length, 1);
+});
+
+test("global WIP reservation refuses competing Issue and handoff while occupied", async () => {
+  const limits = Object.fromEntries([303, 304].map(issue => [`ExampleOrg/sample-project#${issue}`, { maxCycles: 3, maxReplacementsPerPhase: 1 }]));
+  const { relay, launches } = subject({ admissionEvidence: async () => ({ eligible: true }),
+    getWipLimit: () => 1, biuLimits: limits });
+  const first = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "IMPLEMENT" };
+  const second = { ...first, issue: 304, itemId: "PVT_2" };
+  assert.equal(await relay.start(first, "PRODUCER", "IMPLEMENT"), true);
+  assert.equal(await relay.start(second, "PRODUCER", "IMPLEMENT"), false);
+  assert.equal(await relay.start(second, "VERIFIER", "VERIFY"), false);
+  assert.deepEqual(launches, ["PRODUCER"]);
+  assert.equal(Object.keys(relay.state().active).length, 1);
+});
+
+test("admission refuses missing capacity, limit and current authority without a claim", async () => {
+  for (const options of [
+    { getWipLimit: () => null, biuLimits: { "ExampleOrg/sample-project#303": { maxCycles: 3, maxReplacementsPerPhase: 1 } } },
+    { getWipLimit: () => 1 },
+    { getWipLimit: () => 1, admissionEvidence: async () => ({ eligible: false, reason: "DEPENDENCY_UNRESOLVED" }) },
+  ]) {
+    const { relay, launches } = subject({ admissionEvidence: async () => ({ eligible: true }), ...options });
+    assert.equal(await relay.start({ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" }, "PRODUCER", "IMPLEMENT"), false);
+    assert.deepEqual(launches, []);
+    assert.deepEqual(relay.state().active, {});
+  }
+});
+
+test("reservation refuses a pause or Founder hold added while reading Issue authority", async () => {
+  for (const change of ["pause", "hold"]) {
+    let paused = false; const held = new Set();
+    const { relay, launches } = subject({
+      admissionEvidence: async () => {
+        if (change === "pause") paused = true;
+        else held.add(303);
+        return { eligible: true };
+      },
+      getWipLimit: item => paused || (item && held.has(item.issue)) ? null : 1,
+      biuLimits: { "ExampleOrg/sample-project#303": { maxCycles: 3, maxReplacementsPerPhase: 1 } },
+    });
+    assert.equal(await relay.start({ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" }, "PRODUCER", "IMPLEMENT"), false);
+    assert.deepEqual(relay.state().active, {});
+    assert.deepEqual(launches, []);
+  }
+});
+
+test("current Issue admission evidence rejects stale, held, blocked, unreleased and ambiguous items", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVTI_303" };
+  let status = "IMPLEMENT", held = false, blocked = false, released = true, ambiguous = false;
+  const gh = args => {
+    const path = args[1];
+    if (path === `repos/${item.repository}/issues/${item.issue}`) return JSON.stringify({ number: 303, state: "open", labels: held ? [{ name: "hold" }] : [] });
+    if (path?.endsWith("/dependencies/blocked_by")) return JSON.stringify(blocked ? [{ number: 302, state: "open" }] : []);
+    if (path?.endsWith("/comments")) return JSON.stringify(released ? [{ user: { login: "operator" }, body: "**RELEASED — Issue #303.**" }] : []);
+    throw new Error(`unexpected ${path}`);
+  };
+  const authority = new GitHubAuthority({ gh, owner: "ExampleOrg", projectNumber: 1,
+    repository: item.repository, authorizedOperatorLogins: ["operator"] });
+  authority.resolveItem = current => ambiguous ? { ...current, itemId: "PVTI_OTHER" } : current;
+  authority.currentStatus = async () => status;
+  assert.deepEqual(await authority.admissionEvidence(item, "IMPLEMENT"), { eligible: true });
+  for (const [change, reason] of [
+    [() => { status = "READY"; }, "STALE_PROJECT_ITEM"],
+    [() => { status = "IMPLEMENT"; held = true; }, "ISSUE_HELD_OR_INVALID"],
+    [() => { held = false; blocked = true; }, "DEPENDENCY_UNRESOLVED"],
+    [() => { blocked = false; released = false; }, "RELEASE_UNVERIFIED"],
+    [() => { released = true; ambiguous = true; }, "STALE_PROJECT_ITEM"],
+  ]) {
+    change();
+    assert.deepEqual(await authority.admissionEvidence(item, "IMPLEMENT"), { eligible: false, reason });
+  }
+});
+
+test("release declaration for another Issue cannot authorize a cross-referenced Issue", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVTI_303" };
+  const gh = args => {
+    const path = args[1];
+    if (path === `repos/${item.repository}/issues/${item.issue}`) return JSON.stringify({ number: 303, state: "open", labels: [] });
+    if (path?.endsWith("/dependencies/blocked_by")) return "[]";
+    if (path?.endsWith("/comments")) return JSON.stringify([{ user: { login: "operator" },
+      body: "**RELEASED — MAINT-149 / Issue #149.**\n#303 remains READY." }]);
+    throw new Error(`unexpected ${path}`);
+  };
+  const authority = new GitHubAuthority({ gh, owner: "ExampleOrg", projectNumber: 1,
+    repository: item.repository, authorizedOperatorLogins: ["operator"] });
+  authority.resolveItem = current => current;
+  authority.currentStatus = async () => "IMPLEMENT";
+  assert.deepEqual(await authority.admissionEvidence(item, "IMPLEMENT"), { eligible: false, reason: "RELEASE_UNVERIFIED" });
+});
+
+test("admission refuses a Project item moved out of IMPLEMENT while release evidence is read", async () => {
+  const item = { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVTI_303", status: "IMPLEMENT" };
+  let status = "IMPLEMENT";
+  const gh = args => {
+    const path = args[1];
+    if (path === `repos/${item.repository}/issues/${item.issue}`) return JSON.stringify({ number: 303, state: "open", labels: [] });
+    if (path?.endsWith("/dependencies/blocked_by")) return "[]";
+    if (path?.endsWith("/comments")) {
+      status = "READY";
+      return JSON.stringify([{ user: { login: "operator" }, body: "**RELEASED — Issue #303.**" }]);
+    }
+    throw new Error(`unexpected ${path}`);
+  };
+  const authority = new GitHubAuthority({ gh, owner: "ExampleOrg", projectNumber: 1,
+    repository: item.repository, authorizedOperatorLogins: ["operator"] });
+  authority.resolveItem = current => current;
+  authority.currentStatus = async () => status;
+  const { relay, launches } = subject({ admissionEvidence: authority.admissionEvidence.bind(authority),
+    getWipLimit: () => 1,
+    biuLimits: { "ExampleOrg/sample-project#303": { maxCycles: 3, maxReplacementsPerPhase: 1 } } });
+  assert.equal(await relay.start(item, "PRODUCER", "IMPLEMENT"), false);
+  assert.deepEqual(relay.state().active, {});
+  assert.deepEqual(launches, []);
+  assert.equal(relay.events.at(-1).reason, "STALE_PROJECT_ITEM");
+});
+
 test("startup skips unrelated Project history before recovering a persisted claim", async () => {
   const history = Array.from({ length: 80 }, (_, index) => ({ repository: "ExampleOrg/sample-project",
     issue: index + 1, itemId: `PVT_${index + 1}`, status: index % 2 ? "READY" : "DONE" }));
