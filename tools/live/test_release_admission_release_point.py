@@ -264,14 +264,48 @@ def test_a_packet_baseline_outside_the_release_point_ancestry_is_refused(world):
     assert _refused(world.admit(workdir=world.work), "baseline_ancestral")
 
 
-def test_a_packet_without_a_baseline_is_refused(world):
-    world.land("ARP-01")
-    (world.seed / PACKET_DIR / "ARP-01.packet.json").write_text(json.dumps({"starting_authority": {}}))
-    world.git(world.seed, "commit", "-q", "-am", "packet without baseline")
-    world.git(world.seed, "push", "-q", "origin", "main")
+def test_no_baseline_is_named_without_a_packet_or_a_work_unit(world):
     world.assessed("ARP-01")
 
     assert _refused(world.admit(workdir=world.work), "baseline_named")
+
+
+def test_without_a_packet_the_baseline_is_the_commit_that_landed_the_assessed_work_unit(world):
+    """#147 (SF-REQ-057) and #126 (WO-220506) have READY receipts bound to their specs and no
+    execution packet. Their baseline is the release-point commit that landed the assessed text."""
+    world.land("SF-REQ-057", directory="docs/work-units")
+    world.git(world.seed, "rm", "-q", f"{PACKET_DIR}/SF-REQ-057.packet.json")
+    world.git(world.seed, "commit", "-q", "-m", "no packet")
+    landed = world.git(world.seed, "rev-parse", "HEAD~1").strip()
+    (world.seed / "unrelated").write_text("later\n")
+    world.git(world.seed, "add", "unrelated")
+    world.git(world.seed, "commit", "-q", "-m", "later unrelated change")
+    world.git(world.seed, "push", "-q", "origin", "main")
+    world.assessed("SF-REQ-057")
+
+    result = world.admit(workdir=world.work)
+
+    assert _admitted(result), result.stdout + result.stderr
+    assert f"baseline={landed} (work_unit_commit)" in result.stdout
+
+
+def test_without_a_packet_an_unbound_receipt_names_no_baseline(world):
+    world.land("SF-REQ-057", directory="docs/work-units")
+    world.git(world.seed, "rm", "-q", f"{PACKET_DIR}/SF-REQ-057.packet.json")
+    world.git(world.seed, "commit", "-q", "-m", "no packet")
+    world.git(world.seed, "push", "-q", "origin", "main")
+    world.assessed("SF-REQ-057", input_sha256="f" * 64)
+
+    result = world.admit(workdir=world.work)
+
+    assert _refused(result, "receipt_bound") and _refused(result, "baseline_named"), result.stdout
+
+
+def test_a_packet_baseline_wins_over_the_work_unit_commit(world):
+    world.land("ARP-01")
+    world.assessed("ARP-01")
+
+    assert f"baseline={world.baseline} (packet)" in world.admit(workdir=world.work).stdout
 
 
 def test_release_prose_without_a_bound_receipt_is_refused(world):

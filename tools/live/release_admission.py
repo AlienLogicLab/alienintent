@@ -81,8 +81,8 @@ def admit(facts: dict) -> list[dict]:
 
     baseline = facts.get("baseline")
     if not baseline:
-        fail("baseline_named", f"The execution packet for {unit or 'this BIU'} does not name an "
-             "exact baseline revision.")
+        fail("baseline_named", f"Neither an execution packet for {unit or 'this BIU'} nor the commit "
+             "that landed its assessed work unit names an exact baseline revision.")
     elif not facts.get("baseline_resolves"):
         fail("baseline_resolves", f"Baseline {baseline} does not resolve to a real repository revision.")
     elif not facts.get("baseline_ancestral"):
@@ -339,6 +339,15 @@ def packet_baseline(unit: str | None, read) -> str | None:
     return None
 
 
+def assessed_document_commit(root, release_commit: str, path: PurePosixPath) -> str | None:
+    """The baseline of a BIU that has no execution packet: the release-point commit that landed
+    the work-unit document exactly as assessed (the newest commit changing it, called only when
+    the document at the release point has the receipt's digest). Structural, never prose."""
+    log = _git(root, "log", "-1", "--format=%H", release_commit, "--", str(path))
+    value = log.stdout.strip() if log.returncode == 0 else ""
+    return value if SHA.fullmatch(value) else None
+
+
 def gather(issue: int, release_point: str = "origin/main") -> dict:
     root = repository_root()
     fetched = refresh_release_point(root, release_point) if root else None
@@ -366,6 +375,12 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
     unit = (receipt or {}).get("work_unit_id")
     document_path, document = work_unit_document(unit, read)
     baseline = packet_baseline(unit, read)
+    baseline_source = "packet" if baseline else None
+    work_unit_sha256 = hashlib.sha256(document).hexdigest() if document is not None else None
+    if not baseline and root and release_commit and work_unit_sha256 \
+            and work_unit_sha256 == (receipt or {}).get("input_sha256"):
+        baseline = assessed_document_commit(root, release_commit, document_path)
+        baseline_source = "work_unit_commit" if baseline else None
 
     resolves = ancestral = False
     if root and baseline:
@@ -400,9 +415,10 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
         "agent_ready_unreadable": unreadable,
         "receipt": receipt,
         "work_unit_path": str(document_path) if document_path else None,
-        "work_unit_sha256": hashlib.sha256(document).hexdigest() if document is not None else None,
+        "work_unit_sha256": work_unit_sha256,
         "body": body,
         "baseline": baseline,
+        "baseline_source": baseline_source,
         "baseline_resolves": resolves,
         "baseline_ancestral": ancestral,
         "open_dependencies": open_deps,
@@ -438,7 +454,7 @@ def main(argv: list[str]) -> int:
           file=sys.stderr)
     failures = admit(facts)
     print(f"BIU #{issue}: status={facts['status']} agent_ready={facts['agent_ready']} "
-          f"work_unit={facts['work_unit_path']} baseline={facts['baseline']} "
+          f"work_unit={facts['work_unit_path']} baseline={facts['baseline']} ({facts['baseline_source']}) "
           f"resolves={facts['baseline_resolves']} ancestral={facts['baseline_ancestral']}")
     if not failures:
         print("ADMITTED: READY -> IMPLEMENT may proceed.")

@@ -351,7 +351,8 @@ priority. Authority is a native READY receipt bound to the current task packet: 
 posted by an authorized operator (the one reader, `agent_ready_receipt`, shared with the Factory
 Director inputs adapter) names its work unit, and that work unit's document at the release point
 has the receipt's input digest. The exact baseline is the one the BIU's execution packet names
-(`starting_authority.admission_baseline_sha`, else `baseline_sha`), and it must resolve and be
+(`starting_authority.admission_baseline_sha`, else `baseline_sha`); without a packet it is the
+release-point commit that landed the work-unit document exactly as assessed. It must resolve and be
 reachable from the release point. Stale "not authorized" wording in the Issue body without a
 superseding statement still refuses. Comment prose ("IMPLEMENT is authorized", a baseline in
 backticks) and records cited in the Issue body are not read. The gate prints each failure with its

@@ -112,7 +112,19 @@ VARIANTS: tuple[tuple[str, str, str, str], ...] = (
         "baseline_not_required",
         '    if not baseline:\n        fail("baseline_named"',
         '    if False:\n        fail("baseline_named"',
-        f"{FIXTURE}::test_a_packet_without_a_baseline_is_refused",
+        f"{FIXTURE}::test_no_baseline_is_named_without_a_packet_or_a_work_unit",
+    ),
+    (
+        "unbound_work_unit_names_a_baseline",
+        '            and work_unit_sha256 == (receipt or {}).get("input_sha256"):\n',
+        "            :\n",
+        f"{FIXTURE}::test_without_a_packet_an_unbound_receipt_names_no_baseline",
+    ),
+    (
+        "work_unit_commit_before_packet",
+        '    baseline = packet_baseline(unit, read)\n',
+        "    baseline = None\n",
+        f"{FIXTURE}::test_a_packet_baseline_wins_over_the_work_unit_commit",
     ),
     (
         "baseline_not_resolved",

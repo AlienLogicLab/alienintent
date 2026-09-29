@@ -2,6 +2,7 @@
 
 Date: 2026-09-22. Status: **Founder decision — binding, standing**.
 Source: direct Founder instruction, recorded verbatim by the resident bootstrap coordinator (local Program Director).
+Amended: the 2026-09-21 release-admission preconditions are read in their structural form since the [SF-REQ-002 amendment of 2026-09-29](alienintent-software-factory-plan.md) (a native READY receipt bound to the current work unit by its input digest; the exact baseline from the execution packet, or the commit that landed the assessed work unit). The Founder decision below is unchanged.
 Predecessor: [SWF-21](2026-09-20-wave1-release-coordinator.md) (temporary, Wave 1-only release coordinator policy). This record is SWF-21's **Wave 2 successor**: SWF-21's nine release conditions and the 2026-09-21 release-admission preconditions remain in force unchanged; this grant supplies the Founder release authority that SWF-21's Wave 1 scope did not carry over (FD-01 §3; W2-P01).
 
 ## Founder decision (verbatim)
