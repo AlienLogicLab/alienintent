@@ -93,12 +93,15 @@ export function createSystemdSupervisor(config, dependencies = {}) {
       transport(config.systemctl, ['--user', 'kill', '--signal=SIGKILL', '--kill-whom=all', '--', owner.unit]);
     },
     // Proof that a launch never started: the owner never saw a unit, the manager is
-    // the one it planned under, that manager has no unit by this name and the cgroup
-    // holds no process. Read-only; a changed manager or a read failure throws, so the
-    // caller keeps holding.
+    // the one it planned under or the machine has rebooted since (no process survives
+    // the boot that ended), the manager has no unit by this name and the cgroup holds
+    // no process. Read-only; a same-boot manager change or a read failure throws, so
+    // the caller keeps holding.
     absent(owner) {
       if (owner.systemdInvocationId || owner.terminalReceipt || owner.cancellationIntent) return false;
-      verifyManager(owner);
+      const current = manager();
+      if (!wellFormed(current) || !wellFormed(owner.manager)) throw new Error('SUPERVISION_MANAGER_CHANGED');
+      if (current.bootId === owner.manager.bootId) verifyManager(owner);
       return show(owner.unit).LoadState === 'not-found' && empty(owner);
     },
     observe(owner, persist) {

@@ -176,3 +176,18 @@ test('an unreadable boot identity fails closed even when the stored copy is equa
   assert.throws(() => adapter.absent(owner), /MANAGER_CHANGED/);
   assert.deepEqual(launched, []);
 });
+test('a launch planned before a reboot is absent; a same-boot manager restart still holds', () => {
+  const f = fixture();
+  const rebooted = { ...f.owner, manager: { ...f.owner.manager, bootId: 'previous-boot', startedAtMonotonic: '42' } };
+  assert.equal(f.adapter.absent(rebooted), true, 'no process survives the boot that ended');
+  f.populated = true;
+  assert.equal(f.adapter.absent(rebooted), false, 'a populated cgroup is never absent');
+  f.populated = false; f.running(); f.populated = false;
+  assert.equal(f.adapter.absent(rebooted), false, 'a unit by that name is never absent');
+  f.unit = null;
+  assert.equal(f.adapter.absent({ ...rebooted, systemdInvocationId: 'b'.repeat(32) }), false, 'a unit seen running is not a launch that never started');
+  assert.throws(() => f.adapter.absent({ ...rebooted, manager: { ...rebooted.manager, uid: 'x' } }), /MANAGER_CHANGED/);
+  const restarted = { ...f.owner, manager: { ...f.owner.manager, startedAtMonotonic: '42' } };
+  assert.throws(() => f.adapter.absent(restarted), /MANAGER_CHANGED/, 'same boot, other manager: hold');
+  assert.deepEqual(f.effects, []);
+});

@@ -453,7 +453,7 @@ the exact empty owned unit; an owned failed unit is reset only after that receip
 Only confirmed terminal collection permits resource release. The one exception is
 a launch that never started: no pid was recorded, the owner never saw its unit,
 the manager is the one it planned under (uid, boot ID, start time and cgroup,
-compared field by field), that manager reports no unit by that name and its cgroup
+compared field by field) or the machine has rebooted since, that manager reports no unit by that name and its cgroup
 holds no process. A launch
 that throws with that proof releases its claim at once with the error on
 `resource.launchFailed`. At startup, a `LAUNCHING` resource with that proof past
