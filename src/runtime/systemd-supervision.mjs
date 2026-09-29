@@ -41,10 +41,14 @@ export function createSystemdSupervisor(config, dependencies = {}) {
     if (!/^[1-9][0-9]*$/.test(identity.UserspaceTimestampMonotonic ?? '') || !/^\/user.slice\/user-[0-9]+.slice\/user@[0-9]+.service$/.test(identity.ControlGroup ?? '')) throw new Error('SUPERVISION_MANAGER_IDENTITY_REQUIRED');
     return { uid: (dependencies.uid ?? process.getuid)(), bootId: readFile('/proc/sys/kernel/random/boot_id').trim(), startedAtMonotonic: identity.UserspaceTimestampMonotonic, cgroup: identity.ControlGroup };
   }
-  // Field by field: the state ledger persists records with sorted keys.
+  // Typed, field by field: the state ledger persists records with sorted keys.
+  // A missing or malformed field on either side fails closed.
+  const wellFormed = value => Number.isSafeInteger(value?.uid) && value.uid >= 0
+    && ['bootId', 'startedAtMonotonic', 'cgroup'].every(key => typeof value[key] === 'string' && value[key] !== '');
   function verifyManager(owner) {
     const current = manager();
-    if (['uid', 'bootId', 'startedAtMonotonic', 'cgroup'].some(key => current[key] !== owner.manager?.[key])) throw new Error('SUPERVISION_MANAGER_CHANGED');
+    if (!wellFormed(current) || !wellFormed(owner.manager)
+        || ['uid', 'bootId', 'startedAtMonotonic', 'cgroup'].some(key => current[key] !== owner.manager[key])) throw new Error('SUPERVISION_MANAGER_CHANGED');
   }
   function empty(owner) {
     try {
@@ -88,11 +92,13 @@ export function createSystemdSupervisor(config, dependencies = {}) {
       owned(owner, show(owner.unit));
       transport(config.systemctl, ['--user', 'kill', '--signal=SIGKILL', '--kill-whom=all', '--', owner.unit]);
     },
-    // Proof that a launch never started: the owner never saw a unit, the current
-    // manager has none by this name and its cgroup holds no process. Read-only;
-    // a manager read failure throws, so the caller keeps holding.
+    // Proof that a launch never started: the owner never saw a unit, the manager is
+    // the one it planned under, that manager has no unit by this name and the cgroup
+    // holds no process. Read-only; a changed manager or a read failure throws, so the
+    // caller keeps holding.
     absent(owner) {
       if (owner.systemdInvocationId || owner.terminalReceipt || owner.cancellationIntent) return false;
+      verifyManager(owner);
       return show(owner.unit).LoadState === 'not-found' && empty(owner);
     },
     observe(owner, persist) {

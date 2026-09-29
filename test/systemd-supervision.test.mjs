@@ -122,7 +122,7 @@ test('absence proof needs no unit, an empty cgroup and an owner never seen runni
   f.unit = null;
   assert.equal(f.adapter.absent({ ...f.owner, systemdInvocationId: 'b'.repeat(32) }), false);
   f.managerId = 'c'.repeat(32);
-  assert.equal(f.adapter.absent(f.owner), true, 'a changed manager does not hide a unit it would report');
+  assert.throws(() => f.adapter.absent(f.owner), /MANAGER_CHANGED/, 'absence under another manager proves nothing');
   assert.deepEqual(f.effects, []);
 });
 test('absence proof throws when the manager or the cgroup cannot be read', () => {
@@ -156,6 +156,23 @@ test('a manager identity persisted with sorted keys still verifies; a changed va
   for (const key of ['uid', 'bootId', 'startedAtMonotonic', 'cgroup']) {
     const changed = { ...sorted, manager: { ...sorted.manager, [key]: key === 'uid' ? 1001 : 'other' } };
     assert.throws(() => f.adapter.launch(changed, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log'), /MANAGER_CHANGED/, key);
+    const { [key]: _dropped, ...rest } = sorted.manager;
+    assert.throws(() => f.adapter.launch({ ...sorted, manager: rest }, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log'), /MANAGER_CHANGED/, `missing ${key}`);
+    const malformed = { ...sorted, manager: { ...sorted.manager, [key]: key === 'uid' ? '1000' : 7 } };
+    assert.throws(() => f.adapter.launch(malformed, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log'), /MANAGER_CHANGED/, `malformed ${key}`);
   }
+  assert.throws(() => f.adapter.launch({ ...sorted, manager: undefined }, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log'), /MANAGER_CHANGED/);
   assert.deepEqual(f.effects, ['launch']);
+});
+test('an unreadable boot identity fails closed even when the stored copy is equally empty', () => {
+  const root = '/user.slice/user-1000.slice/user@1000.service', launched = [];
+  const adapter = module.createSystemdSupervisor(config, { uid: () => 1000,
+    readFile: path => path.endsWith('/boot_id') ? '\n' : path.endsWith('/cgroup.controllers') ? 'cpu memory' : 'populated 0\n',
+    transport: (_command, args) => args.includes('--') ? { LoadState: 'not-found' } : { UserspaceTimestampMonotonic: '100', ControlGroup: root },
+    spawn: () => { launched.push(1); return {}; } });
+  const owner = adapter.plan({ invocationId: 'org/repo#1:PRODUCER:id', resource: { path: '/tmp/work' } });
+  assert.equal(owner.manager.bootId, '');
+  assert.throws(() => adapter.launch(owner, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log'), /MANAGER_CHANGED/);
+  assert.throws(() => adapter.absent(owner), /MANAGER_CHANGED/);
+  assert.deepEqual(launched, []);
 });
