@@ -346,8 +346,12 @@ python3 ~/.local/share/alienintent-bootstrap/release_admission.py <issue>
 ```
 
 It checks the preconditions of the [SF-REQ-002 admission amendments](decisions/alienintent-software-factory-plan.md)
-in their 2026-09-29 structural form, then dependencies, active invocations, holds, WIP capacity and
-priority. Authority is a native READY receipt bound to the current task packet: the newest receipt
+in their 2026-09-29 structural form, then dependencies, active invocations, holds, WIP capacity,
+priority inheritance and queue order. Queue order uses the canonical scheduler
+(`domain/scheduling.py` `select_admissible`, read from the release point): Priority, then the
+lower Issue number, over the READY items that could be released now. A BIU behind such an item
+is refused with `priority_order`, naming the one to release first; an unrankable queue is
+refused with `priority_order_known`. Authority is a native READY receipt bound to the current task packet: the newest receipt
 posted by an authorized operator (the one reader, `agent_ready_receipt`, shared with the Factory
 Director inputs adapter) names its work unit, and that work unit's document at the release point
 has the receipt's input digest. The exact baseline is the one the BIU's execution packet names

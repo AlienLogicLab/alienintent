@@ -105,6 +105,12 @@ one. Earlier chats, summaries and memory are not authority. Every run:
    the task packet changed after its assessment: assess the current packet again and post the
    new receipt; do not move the BIU backward for it. A `baseline_named` refusal means the
    execution packet must be bound before release (SWF-35).
+   **The READY queue is ordered by code, not by reading.** The gate ranks every READY item with
+   the canonical `select_admissible` read from the release point: Priority (P0 first, unset last),
+   then the lower Issue number. An item counts only if it could be released now: its own gate
+   passes apart from WIP and queue order, its `blocked_by` dependencies are closed and no Founder
+   hold covers it. A `priority_order` refusal names the Issue to release instead; release that
+   one. Do not reorder work by choosing a different Issue.
 7. Before exit, make sure the durable record explains the next state. Issue comments,
    evidence, hold entries and inbox receipts all count. A successor must be able to act on
    that record alone.

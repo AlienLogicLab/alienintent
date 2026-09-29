@@ -31,6 +31,7 @@ import os
 import re
 import subprocess
 import sys
+import types
 from pathlib import Path, PurePosixPath
 
 REPO = "AlienLogicLab/alienintent"
@@ -120,7 +121,84 @@ def admit(facts: dict) -> list[dict]:
         fail("priority_inheritance_reconciled",
              f"BIU priority could not be deterministically reconciled: {priority}.")
 
+    order = facts.get("priority_order")
+    if order is not None:
+        if order.get("status") != "RANKED":
+            fail("priority_order_known", f"The READY queue could not be ranked: {order.get('reason')}.")
+        elif order.get("first") != facts.get("issue"):
+            fail("priority_order", f"READY #{order.get('first')} ranks ahead (Priority, then lower Issue "
+                 "number, with dependencies satisfied) and can be released now; release it first.")
+
     return failures
+
+
+# Checks that describe the shared slot or the queue, not whether one BIU could go next.
+QUEUE_CHECKS = frozenset({"wip_limit_known", "wip_capacity_known", "wip_capacity_available",
+                          "priority_order", "priority_order_known"})
+
+
+def rank_ready(issue: int, items: list[dict], releasable, scheduler, own_priority: str | None = None) -> dict:
+    """Order the READY queue with the canonical scheduler (`select_admissible`).
+
+    Priority (P0 first, unset last), then the lower Issue number. Every other READY item is
+    releasable only if its own gate passes apart from the queue checks and no Founder hold
+    covers it, so a stale or held item never blocks the one behind it.
+    """
+    others = [row for row in items
+              if isinstance((row.get("content") or {}).get("number"), int)
+              and (row.get("content") or {}).get("number") != issue
+              and str(row.get("status")).upper() == "READY"
+              and (row.get("content") or {}).get("repository") in (None, REPO)]
+    if not others:  # a queue of one needs no ordering
+        return {"status": "RANKED", "first": issue}
+    Capacity, ScheduledItem, select_admissible = scheduler()
+
+    def item(number, label, releasable_now):
+        return ScheduledItem(identity=str(number), fifo=number, repository=REPO, profile="biu",
+                             priority=int(label[1:]) if label in PRIORITY_OPTIONS else None,
+                             dependencies_satisfied=True, released_or_releasable=releasable_now)
+    own = next((row.get("priority") for row in items
+                if (row.get("content") or {}).get("number") == issue), own_priority)
+    ready = [item(row["content"]["number"], row.get("priority"), releasable(row["content"]["number"]))
+             for row in others]
+    # The Issue's own status comes from its Issue readback; list transport may omit it.
+    ready.append(item(issue, own, True))
+    first = select_admissible(tuple(ready), (), Capacity(global_limit=1, profile_mutating_limit=1))
+    return {"status": "RANKED", "first": first[0].fifo if first else issue}
+
+
+SCHEDULER = PurePosixPath("src/alienintent/execution_coordination/domain/scheduling.py")
+
+
+def canonical_scheduler(read):
+    """The canonical scheduling rule, read from the release point like every other record,
+    never a copy and never a working tree. It is side-effect free (see its docstring)."""
+    source = read(SCHEDULER)
+    if source is None:
+        raise LookupError(f"{SCHEDULER} is absent at the release point")
+    module = types.ModuleType("release_point_scheduling")
+    sys.modules[module.__name__] = module  # dataclasses resolve annotations through sys.modules
+    try:
+        exec(compile(source, str(SCHEDULER), "exec"), module.__dict__)
+    finally:
+        sys.modules.pop(module.__name__, None)
+    return module.Capacity, module.ScheduledItem, module.select_admissible
+
+
+def queue_releasable(number: int, holds: frozenset[int], facts_of) -> bool:
+    """Whether another READY item could be released now: no Founder hold, and its own gate
+    passes apart from the queue checks it shares with the Issue being ranked."""
+    if number in holds:
+        return False
+    return not [f for f in admit(facts_of(number)) if f["check"] not in QUEUE_CHECKS]
+
+
+def founder_holds(host_config: dict) -> frozenset[int]:
+    path = host_config.get("founderHoldRecord")
+    if not path:
+        return frozenset()
+    raw = json.loads(Path(path).read_text())
+    return frozenset(hold["issue"] for hold in raw["holds"])
 
 
 # --- live fact gathering -------------------------------------------------------
@@ -348,7 +426,7 @@ def assessed_document_commit(root, release_commit: str, path: PurePosixPath) -> 
     return value if SHA.fullmatch(value) else None
 
 
-def gather(issue: int, release_point: str = "origin/main") -> dict:
+def gather(issue: int, release_point: str = "origin/main", *, queue: bool = True) -> dict:
     root = repository_root()
     fetched = refresh_release_point(root, release_point) if root else None
     rev = _git(root, "rev-parse", "--verify", "--quiet", f"{release_point}^{{commit}}") if root else None
@@ -391,7 +469,9 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
 
     items = _gh_json(root, "project", "item-list", "1", "--owner", "AlienLogicLab",
                      "--format", "json", "-L", "500").get("items", [])
-    priority_reconciliation = reconcile_inherited_priority(root, issue, items)
+    # Another item's gate is only read while ranking: never repair its Priority from here.
+    priority_reconciliation = reconcile_inherited_priority(root, issue, items) if queue \
+        else {"status": "NOT_CHECKED"}
     if priority_reconciliation.get("status") == "REPAIRED":
         items = _gh_json(root, "project", "item-list", "1", "--owner", "AlienLogicLab",
                          "--format", "json", "-L", "500").get("items", [])
@@ -407,6 +487,18 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
         all_active = None
     active = [k for k in (all_active or {}) if f"#{issue}:" in k]
     active_claims_total = len(all_active) if all_active is not None else None
+
+    priority_order = None
+    if queue:
+        try:
+            holds = founder_holds(host_config)
+
+            def releasable(number):
+                return queue_releasable(number, holds, lambda n: gather(n, release_point, queue=False))
+            priority_order = rank_ready(issue, items, releasable, lambda: canonical_scheduler(read),
+                                        priority_reconciliation.get("priority"))
+        except Exception as exc:  # an unrankable queue fails closed, it never admits
+            priority_order = {"status": "UNAVAILABLE", "reason": f"{type(exc).__name__}: {exc}"[:200]}
 
     return {
         "issue": issue,
@@ -431,6 +523,7 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
         "release_commit": release_commit,
         "release_point_fetched": fetched,
         "priority_reconciliation": priority_reconciliation,
+        "priority_order": priority_order,
     }
 
 
