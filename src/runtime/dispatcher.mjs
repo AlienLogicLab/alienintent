@@ -618,7 +618,19 @@ export class EventRelay {
     if (this.started || this.stopped) return;
     this.assertActiveConfiguration();
     this.started = true; this.metrics.projectLists++;
-    for (const item of await this.options.authority.listItems()) {
+    const snapshot = this.state();
+    const activeIssues = new Set(Object.keys(snapshot.active ?? {}).map(lane => lane.slice(0, lane.lastIndexOf(":"))));
+    const recoveryIssues = new Set(Object.entries(snapshot.diagnostics ?? {})
+      .filter(([, diagnostic]) => recoverable(diagnostic.outcome)
+        || (diagnostic.pendingSignal?.target && !routedSignal(diagnostic)))
+      .map(([lane]) => lane.slice(0, lane.lastIndexOf(":"))));
+    const items = await this.options.authority.listItems();
+    const hasActiveClaim = item => activeIssues.has(`${item.repository}#${item.issue}`);
+    const needsRecovery = item => recoveryIssues.has(`${item.repository}#${item.issue}`);
+    const actionable = item => Boolean(this.roles[item.status?.toUpperCase()]);
+    const ordered = [...items.filter(hasActiveClaim), ...items.filter(item => !hasActiveClaim(item) && needsRecovery(item)),
+      ...items.filter(item => !hasActiveClaim(item) && !needsRecovery(item) && actionable(item))];
+    for (const item of ordered) {
       if (this.stopped) return;
       try {
       const snapshot = this.state();
