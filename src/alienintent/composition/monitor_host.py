@@ -170,7 +170,17 @@ class HostedMonitor:
 
     def cycle(self) -> None:
         self.monitor.monitor.tick()
-        self.liveness.reconciler.scan()
+        report = self.liveness.reconciler.scan()
+        # These are short-lived operational readbacks, not the fixture archive.
+        # Reuse a fixed window so an indefinitely supervised host cannot grow
+        # its SQLite aggregate set on every scan. The fixture copies selected
+        # observations to immutable evidence before they roll out of the window.
+        interval = max(1, int(self.liveness.reconciler.policy.interval_micros))
+        slot = (report.at // interval) % 64
+        key = f"liveness-scan:{slot:02d}"
+        version, _ = self.liveness.store.read_state(self.config.profile, key)
+        self.liveness.store.commit(self.config.profile, key, version,
+            {"schema_version": 1, "launch_id": self.launch_id, **asdict(report)})
 
 
 def run_host(config: SupervisionConfig, launch_id: str, stop: Callable[[], bool],
