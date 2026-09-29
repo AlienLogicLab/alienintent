@@ -41,8 +41,10 @@ export function createSystemdSupervisor(config, dependencies = {}) {
     if (!/^[1-9][0-9]*$/.test(identity.UserspaceTimestampMonotonic ?? '') || !/^\/user.slice\/user-[0-9]+.slice\/user@[0-9]+.service$/.test(identity.ControlGroup ?? '')) throw new Error('SUPERVISION_MANAGER_IDENTITY_REQUIRED');
     return { uid: (dependencies.uid ?? process.getuid)(), bootId: readFile('/proc/sys/kernel/random/boot_id').trim(), startedAtMonotonic: identity.UserspaceTimestampMonotonic, cgroup: identity.ControlGroup };
   }
+  // Field by field: the state ledger persists records with sorted keys.
   function verifyManager(owner) {
-    if (JSON.stringify(manager()) !== JSON.stringify(owner.manager)) throw new Error('SUPERVISION_MANAGER_CHANGED');
+    const current = manager();
+    if (['uid', 'bootId', 'startedAtMonotonic', 'cgroup'].some(key => current[key] !== owner.manager?.[key])) throw new Error('SUPERVISION_MANAGER_CHANGED');
   }
   function empty(owner) {
     try {

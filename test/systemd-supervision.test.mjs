@@ -147,3 +147,15 @@ test('absence proof throws when the manager or the cgroup cannot be read', () =>
   unitRead = 'ok'; cgroupRead = 'denied';
   assert.throws(() => adapter.absent(owner), /EACCES/);
 });
+test('a manager identity persisted with sorted keys still verifies; a changed value does not', () => {
+  const f = fixture();
+  const sorted = { ...f.owner, manager: Object.fromEntries(Object.keys(f.owner.manager).sort().map(key => [key, f.owner.manager[key]])) };
+  assert.notEqual(JSON.stringify(sorted.manager), JSON.stringify(f.owner.manager), 'fixture must reorder the keys');
+  f.adapter.launch(sorted, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log');
+  assert.deepEqual(f.effects, ['launch']);
+  for (const key of ['uid', 'bootId', 'startedAtMonotonic', 'cgroup']) {
+    const changed = { ...sorted, manager: { ...sorted.manager, [key]: key === 'uid' ? 1001 : 'other' } };
+    assert.throws(() => f.adapter.launch(changed, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log'), /MANAGER_CHANGED/, key);
+  }
+  assert.deepEqual(f.effects, ['launch']);
+});
