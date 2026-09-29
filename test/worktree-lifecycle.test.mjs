@@ -268,3 +268,90 @@ test('persisted #149 style claim reaches a new Producer through the real supervi
   assert.equal(state.resources[invocationId].launchFailed, 'PRE_SPAWN_MANAGER_REFUSAL');
   assert.deepEqual(f.removed, []);
 });
+
+test('missing RUNNING unit records UNKNOWN history and permits bounded replacement without deleting custody', async t => {
+  const f = fixture(t);
+  const item = { ...f.item(149), status: 'IMPLEMENT' }, lane = 'ExampleOrg/sample-project#149:PRODUCER', invocationId = `${lane}:old`;
+  const resource = { ...f.manager.plan({ invocationId, item, role: 'PRODUCER' }), lifecycle: 'RUNNING', pid: 3300637 };
+  const config = { mode: 'systemd', runtimeMilliseconds: 7200000, startupMilliseconds: 120000,
+    stopGraceMilliseconds: 300000, systemdRun: '/bin/systemd-run', systemctl: '/bin/systemctl', env: '/usr/bin/env' };
+  const managerCgroup = '/user.slice/user-1000.slice/user@1000.service';
+  const supervisor = createSystemdSupervisor(config, { uid: () => 1000,
+    checkProcess: () => { throw Object.assign(new Error('gone'), { code: 'ESRCH' }); },
+    readFile: path => {
+      if (path.endsWith('/boot_id')) return 'boot-id\n';
+      if (path.endsWith('/cgroup.controllers')) return 'cpu memory\n';
+      if (path.endsWith('/cgroup.events')) throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      throw new Error(`unexpected read ${path}`);
+    },
+    transport: (_command, args) => args.includes('--')
+      ? { Id: args.at(-1), LoadState: 'not-found', ActiveState: 'inactive', MainPID: '0', InvocationID: '', ControlGroup: '' }
+      : { UserspaceTimestampMonotonic: '59846494', ControlGroup: managerCgroup } });
+  resource.supervision = supervisor.plan({ invocationId, resource });
+  f.relay.save({ deliveries: {}, resources: { [invocationId]: resource },
+    active: { [lane]: { invocationId, item, role: 'PRODUCER', status: 'IMPLEMENT', pid: 3300637,
+      startedAt: '2026-09-29T03:17:19Z', worktree: resource.path } } });
+  f.relay.options.workers.PRODUCER.supervision = config;
+  f.relay.options.launch = createWorkerLauncher({ workers: f.relay.options.workers, supervisorFactory: () => supervisor,
+    runner: request => { const child = new EventEmitter(); child.pid = 34567; child.stdout = new EventEmitter(); child.stderr = new EventEmitter();
+      f.launches.push({ ...request, child }); return child; } });
+  f.relay.options.authority.listItems = async () => [item];
+  await f.relay.startupReconcile();
+  const state = f.relay.state();
+  assert.equal(f.launches.length, 1);
+  assert.notEqual(state.active[lane].invocationId, invocationId);
+  assert.equal(state.resources[invocationId].supervision.absenceRecovery.historicalResult, 'UNKNOWN');
+  assert.equal(state.resources[invocationId].supervision.terminalReceipt, undefined);
+  assert.equal(state.resources[invocationId].exitedAt, undefined);
+  assert.deepEqual(f.removed, []);
+});
+
+test('unknown missing-unit recovery retains orphan evidence across replay and refuses conflicting claims', async t => {
+  const f = fixture(t, { isProcessAlive: () => false });
+  const item = f.item(138), invocationId = 'orphan-138';
+  const resource = { ...f.manager.plan({ invocationId, item, role: 'PRODUCER' }), lifecycle: 'RUNNING', pid: 3300637,
+    supervision: { mode: 'systemd', invocationId } };
+  f.relay.save({ deliveries: {}, active: {}, resources: { [invocationId]: resource } });
+  let writes = 0;
+  f.relay.options.launch.observe = (_record, persist, recoverMissing) => {
+    assert.equal(recoverMissing, true);
+    if (!_record.supervision.absenceRecovery) {
+      persist({ ..._record.supervision, absenceRecovery: { historicalExitCode: 'UNKNOWN', historicalResult: 'UNKNOWN', historicalEffect: 'UNKNOWN' } });
+      writes++;
+    }
+    return { terminal: true, unknown: true };
+  };
+  f.relay.reconcileResources(); f.relay.reconcileResources();
+  assert.equal(writes, 1);
+  assert.equal(f.relay.state().resources[invocationId].exitedAt, undefined);
+  assert.deepEqual(f.removed, []);
+  const state = f.relay.state();
+  state.active['conflict:PRODUCER'] = { invocationId: 'other', pid: resource.pid, worktree: '/tmp/other' };
+  f.relay.save(state);
+  assert.equal(f.relay.canRecoverMissingUnit(resource, resource), false);
+});
+
+test('dead supervised client cannot turn an UNKNOWN missing-unit recovery into a known exit', async t => {
+  const f = fixture(t); supervise(f);
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  const active = [...f.relay.active.values()][0];
+  active.closed = true; active.child.exitCode = 0;
+  f.relay.options.launch.observe = (resource, persist) => {
+    persist({ ...resource.supervision, absenceRecovery: { historicalExitCode: 'UNKNOWN', historicalResult: 'UNKNOWN', historicalEffect: 'UNKNOWN' } });
+    return { terminal: true, unknown: true };
+  };
+  await f.relay.complete(active);
+  const resource = f.relay.state().resources[active.invocationId];
+  assert.equal(resource.exitedAt, undefined);
+  assert.equal(resource.supervision.terminalReceipt, undefined);
+  assert.deepEqual(f.removed, []);
+});
+
+test('unknown observation without a persisted absence record cannot release the claim', async t => {
+  const f = fixture(t); supervise(f);
+  await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  const active = [...f.relay.active.values()][0];
+  f.relay.options.launch.observe = () => ({ terminal: true, unknown: true });
+  assert.equal(f.relay.ownedWorkAlive(active), true);
+  assert.equal(f.relay.state().active[active.lane].invocationId, active.invocationId);
+});
