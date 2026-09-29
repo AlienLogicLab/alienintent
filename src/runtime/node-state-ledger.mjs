@@ -165,6 +165,25 @@ export class NodeStateLedger {
     this.hooks.afterProjection?.(record);
     return record;
   }
+  saveIfHead(expectedHead, state) {
+    // The live writer owns this synchronous compare-and-append section. Callers
+    // must finish host/resource checks before entering it; no async work belongs
+    // between this comparison and the append.
+    const previous = this.replay();
+    if (!existsSync(this.statePath) || digest(JSON.parse(readFileSync(this.statePath, "utf8"))) !== previous.stateDigest)
+      throw new Error("LEDGER_PROJECTION_FENCE_UNAVAILABLE");
+    if (!expectedHead || previous.revision !== expectedHead.revision
+        || previous.sequence !== expectedHead.sequence || previous.digest !== expectedHead.digest)
+      throw new Error("LEDGER_EXPECTED_HEAD_CHANGED");
+    const record = this.appendRecord(previous, state);
+    this.hooks.beforeProjection?.(record);
+    atomic(this.statePath, `${JSON.stringify(record.state, null, 2)}\n`);
+    this.hooks.afterProjection?.(record);
+    const readback = this.assertFence();
+    if (readback.revision !== record.revision || readback.sequence !== record.sequence
+        || readback.digest !== record.digest) throw new Error("LEDGER_COMMIT_READBACK_MISMATCH");
+    return record;
+  }
   assertFence() {
     const record = this.replay();
     if (!existsSync(this.statePath) || digest(JSON.parse(readFileSync(this.statePath, "utf8"))) !== record.stateDigest)
