@@ -10,6 +10,8 @@ const lane = "AlienLogicLab/alienintent#149:PRODUCER";
 const path = "/worktrees/resource-1";
 const branch = "b-disp/resource-1";
 const manager = { uid: 1000, bootId: "boot-1", startedAtMonotonic: "123", cgroup: "/user.slice/user-1000.slice/user@1000.service" };
+const worktreeManager = { inspectOwnership: () => ({ invocationId, resourceId: "resource-1", path, branch, head: "a".repeat(40) }) };
+const transferRelay = options => new EventRelay({ worktreeManager, ...options });
 
 function fixture() {
   const request = { schemaVersion: 1, operationId: "operation-1", nextOwner: "director-episode-1",
@@ -74,7 +76,7 @@ test("a committed transfer is read back and replays to the same opaque grant", (
   const { state, request } = fixture();
   const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-commit-")), "state.json");
   const proof = { digest: "a".repeat(64), observedAt: new Date().toISOString() };
-  const relay = new EventRelay({ statePath, claimTransferHostProof: () => proof });
+  const relay = transferRelay({ statePath, claimTransferHostProof: () => proof });
   relay.save(state);
   request.expectedHead = relay.fence();
 
@@ -85,19 +87,19 @@ test("a committed transfer is read back and replays to the same opaque grant", (
   assert.deepEqual(grant.hostProof, proof);
   assert.equal(relay.state().active[lane].invocationId, invocationId);
   assert.deepEqual(relay.commitClaimTransfer(request), grant);
-  assert.deepEqual(new EventRelay({ statePath, claimTransferHostProof: () => proof }).commitClaimTransfer(request), grant);
+  assert.deepEqual(transferRelay({ statePath, claimTransferHostProof: () => proof }).commitClaimTransfer(request), grant);
 });
 
 test("transfer commit refuses missing proof, stale head and conflicting replay", () => {
   const { state, request } = fixture();
   const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-refuse-")), "state.json");
-  const relay = new EventRelay({ statePath });
+  const relay = transferRelay({ statePath });
   relay.save(state);
   request.expectedHead = relay.fence();
   assert.throws(() => relay.commitClaimTransfer(request), /CLAIM_TRANSFER_HOST_PROOF_REQUIRED/);
   assert.equal(relay.state().claimTransfers, undefined);
 
-  const proven = new EventRelay({ statePath, claimTransferHostProof: () =>
+  const proven = transferRelay({ statePath, claimTransferHostProof: () =>
     ({ digest: "a".repeat(64), observedAt: new Date().toISOString() }) });
   const stale = { ...request, expectedHead: { ...request.expectedHead, sequence: request.expectedHead.sequence + 1 } };
   assert.throws(() => proven.commitClaimTransfer(stale), /LEDGER_EXPECTED_HEAD_CHANGED/);
@@ -108,17 +110,33 @@ test("transfer commit refuses missing proof, stale head and conflicting replay",
   assert.deepEqual(proven.state().claimTransfers[invocationId], grant);
 });
 
+test("transfer commit requires exact read-only worktree ownership inspection", () => {
+  const { state, request } = fixture();
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-owner-")), "state.json");
+  const proof = { digest: "d".repeat(64), observedAt: new Date().toISOString() };
+  const relay = new EventRelay({ statePath, claimTransferHostProof: () => proof });
+  relay.save(state); request.expectedHead = relay.fence();
+  assert.throws(() => relay.commitClaimTransfer(request), /CLAIM_TRANSFER_WORKTREE_INSPECTION_REQUIRED/);
+  assert.equal(relay.state().claimTransfers, undefined);
+
+  const wrong = transferRelay({ statePath, claimTransferHostProof: () => proof,
+    worktreeManager: { inspectOwnership: () => ({ invocationId, resourceId: "different",
+      path, branch, head: "a".repeat(40) }) } });
+  assert.throws(() => wrong.commitClaimTransfer(request), /CLAIM_TRANSFER_WORKTREE_MISMATCH/);
+  assert.equal(wrong.state().claimTransfers, undefined);
+});
+
 test("an interrupted transfer append replays one committed grant after restart", () => {
   const { state, request } = fixture();
   const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-interrupt-")), "state.json");
   const proof = { digest: "b".repeat(64), observedAt: new Date().toISOString() };
   const hooks = {};
-  const relay = new EventRelay({ statePath, claimTransferHostProof: () => proof, ledgerHooks: hooks });
+  const relay = transferRelay({ statePath, claimTransferHostProof: () => proof, ledgerHooks: hooks });
   relay.save(state);
   request.expectedHead = relay.fence();
   hooks.afterAppend = () => { throw new Error("INTERRUPTED_AFTER_APPEND"); };
   assert.throws(() => relay.commitClaimTransfer(request), /INTERRUPTED_AFTER_APPEND/);
-  const resumed = new EventRelay({ statePath, claimTransferHostProof: () => proof });
+  const resumed = transferRelay({ statePath, claimTransferHostProof: () => proof });
   const grant = resumed.commitClaimTransfer(request);
   assert.equal(grant.status, "COMMITTED");
   assert.equal(resumed.state().active[lane].invocationId, invocationId);
@@ -130,12 +148,12 @@ test("an interruption after projection returns the existing grant on replay", ()
   const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-projection-")), "state.json");
   const proof = { digest: "c".repeat(64), observedAt: new Date().toISOString() };
   const hooks = {};
-  const relay = new EventRelay({ statePath, claimTransferHostProof: () => proof, ledgerHooks: hooks });
+  const relay = transferRelay({ statePath, claimTransferHostProof: () => proof, ledgerHooks: hooks });
   relay.save(state);
   request.expectedHead = relay.fence();
   hooks.afterProjection = () => { throw new Error("INTERRUPTED_AFTER_PROJECTION"); };
   assert.throws(() => relay.commitClaimTransfer(request), /INTERRUPTED_AFTER_PROJECTION/);
-  const resumed = new EventRelay({ statePath, claimTransferHostProof: () => proof });
+  const resumed = transferRelay({ statePath, claimTransferHostProof: () => proof });
   const grant = resumed.commitClaimTransfer(request);
   assert.equal(grant.status, "COMMITTED");
   assert.deepEqual(resumed.state().claimTransfers[invocationId], grant);
@@ -144,12 +162,12 @@ test("an interruption after projection returns the existing grant on replay", ()
 test("transfer commit refuses malformed host proof and another transfer record", () => {
   const { state, request } = fixture();
   const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-proof-")), "state.json");
-  const relay = new EventRelay({ statePath, claimTransferHostProof: () => ({ digest: "missing", observedAt: "bad" }) });
+  const relay = transferRelay({ statePath, claimTransferHostProof: () => ({ digest: "missing", observedAt: "bad" }) });
   relay.save(state);
   request.expectedHead = relay.fence();
   assert.throws(() => relay.commitClaimTransfer(request), /CLAIM_TRANSFER_HOST_PROOF_INVALID/);
   assert.equal(relay.state().claimTransfers, undefined);
-  const stale = new EventRelay({ statePath, claimTransferHostProof: () =>
+  const stale = transferRelay({ statePath, claimTransferHostProof: () =>
     ({ digest: "a".repeat(64), observedAt: new Date(Date.now() - 60000).toISOString() }) });
   assert.throws(() => stale.commitClaimTransfer(request), /CLAIM_TRANSFER_HOST_PROOF_INVALID/);
   assert.equal(stale.state().claimTransfers, undefined);

@@ -94,6 +94,8 @@ export function createWorktreeManager({ repository, repositoryStore, worktreeRoo
         fail('worktree registration/branch mismatch');
       if (realpathSync(run(record.path, 'rev-parse', '--path-format=absolute', '--git-common-dir')) !== commonDir)
         fail('worktree repository mismatch');
+      if (run(record.path, 'status', '--porcelain=v1', '--untracked-files=all', '--ignored'))
+        fail('dirty worktree retained');
       return { resourceId: record.resourceId, invocationId: record.invocationId,
         path: record.path, branch: record.branch,
         head: run(record.path, 'rev-parse', '--verify', 'HEAD') };

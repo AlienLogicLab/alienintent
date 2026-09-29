@@ -155,6 +155,8 @@ export class EventRelay {
   commitClaimTransfer(request) {
     const prove = this.options.claimTransferHostProof;
     if (typeof prove !== "function") throw new Error("CLAIM_TRANSFER_HOST_PROOF_REQUIRED");
+    const inspect = this.options.worktreeManager?.inspectOwnership;
+    if (typeof inspect !== "function") throw new Error("CLAIM_TRANSFER_WORKTREE_INSPECTION_REQUIRED");
     const state = this.state();
     const existing = state.claimTransfers?.[request?.invocationId];
     // A committed transfer remains fenced by the original claim. For replay,
@@ -162,6 +164,11 @@ export class EventRelay {
     const checkState = existing ? { ...state, claimTransfers: Object.fromEntries(
       Object.entries(state.claimTransfers).filter(([key]) => key !== request.invocationId)) } : state;
     assertClaimTransferState(checkState, request);
+    const ownership = inspect.call(this.options.worktreeManager, state.resources[request.invocationId]);
+    if (ownership?.invocationId !== request.invocationId || ownership.resourceId !== request.resourceId
+        || ownership.path !== request.path || ownership.branch !== request.branch
+        || !/^[a-f0-9]{40,64}$/.test(ownership.head ?? ""))
+      throw new Error("CLAIM_TRANSFER_WORKTREE_MISMATCH");
     const proof = prove({ request: structuredClone(request), state: structuredClone(state) });
     const observedAt = Date.parse(proof?.observedAt);
     if (!proof || typeof proof.then === "function" || !/^[a-f0-9]{64}$/.test(proof.digest ?? "")

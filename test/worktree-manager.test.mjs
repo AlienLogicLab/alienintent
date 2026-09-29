@@ -53,6 +53,12 @@ test('transfer ownership inspection binds marker, registered checkout and branch
   git(a.path, 'switch', '-c', 'other-owner');
   assert.throws(() => f.manager.inspectOwnership(a), /branch mismatch/);
 });
+test('transfer ownership inspection refuses uncommitted or ignored worker content', t => {
+  const f = fixture(t); const a = f.manager.allocate(f.plan(), f.worker);
+  writeFileSync(join(a.path, 'ignored'), 'unique worker evidence');
+  assert.throws(() => f.manager.inspectOwnership(a), /dirty/i);
+  assert.equal(existsSync(a.path), true);
+});
 test('path escapes, canonical path, collisions and cross-owner cleanup fail closed', t => {
   const f = fixture(t); const a = f.plan();
   assert.throws(() => f.manager.allocate({ ...a, path: f.repositoryStore }, f.worker));
