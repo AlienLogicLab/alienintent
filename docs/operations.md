@@ -345,10 +345,14 @@ Before every READY → IMPLEMENT release, and before any worker is launched:
 python3 ~/.local/share/alienintent-bootstrap/release_admission.py <issue>
 ```
 
-It checks the six preconditions of the [SF-REQ-002 admission amendment](decisions/alienintent-software-factory-plan.md)
-— implementation explicitly authorized, exact baseline named, baseline resolves, baseline reachable
-from the release point, no stale "not authorized" wording without a superseding record — prints each
-failure with its reason, and exits non-zero. **A failed check is a refusal to transition, not a
+It checks structured state only: Project status READY, a READY Agent Ready disposition, no open
+dependency, no active invocation, no hold, WIP capacity, and reconciled priority. It prints each
+failure with its reason and exits non-zero. The disposition comes from the one reader shared with
+the Factory Director inputs adapter (`agent_ready_disposition`): the newest native Agent Ready
+receipt posted by an authorized operator. Comment prose ("IMPLEMENT is authorized", a baseline in
+backticks) and records cited in the Issue body are not read; the 2026-09-29 repair removed them
+because they disagreed with the Director's reader and refused valid READY work (#125, #147).
+**A failed check is a refusal to transition, not a
 warning.** The checklist is in [SWF-21](decisions/2026-09-20-wave1-release-coordinator.md); the
 incident that produced it is in [evidence](evidence/2026-09-21-liveness-retry-and-release-admission.md).
 
