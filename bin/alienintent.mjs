@@ -8,7 +8,6 @@ import { GitHubAuthority } from "../src/github/authority.mjs";
 import { createGitHubAppClient } from "../src/github/app-client.mjs";
 import { createWorkerLauncher, workerEnvironment, inspectWorker } from "../src/runtime/worker-runner.mjs";
 import { createWorktreeManager } from "../src/runtime/worktree-manager.mjs";
-import { createLifecycleEligibility } from "../src/runtime/lifecycle-eligibility.mjs";
 import { loadProfile } from "../src/config/profile.mjs";
 import { resolveRoute } from "../src/config/model-routing.mjs";
 
@@ -55,14 +54,10 @@ const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(eve
     repositoryStore: config.repositoryStore, worktreeRoot: config.worktreeRoot,
     baselineRef: config.baselineRef, git: config.executables.git }) : undefined,
   inspectionIntervalMs: config.inspectionIntervalMs, preflight,
-  eligibility: config.executionEnabled ? createLifecycleEligibility({ python: config.executables.python,
-    directorHostConfig: config.control.directorHostConfig,
-    environment: () => appClient.childEnvironment(process.env.HOME ? { HOME: process.env.HOME } : {}) }) : undefined,
-  tickIntervalMs: config.control.tickIntervalMs,
   inspectWorker: child => inspectWorker(child, { executable: config.executables.processInspector }),
   launch: createWorkerLauncher({ workers: config.workers, routeResolver: resolveRoute }) });
 await relay.startupReconcile();
-if (process.argv.includes("--once")) { await relay.refilling; relay.stop(); process.exit(0); }
+if (process.argv.includes("--once")) { relay.stop(); process.exit(0); }
 const server = createServer(async (request, response) => {
   const chunks = []; let size = 0;
   for await (const chunk of request) {

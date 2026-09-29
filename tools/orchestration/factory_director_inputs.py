@@ -42,7 +42,6 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "live"))
 
 import project_materialization as materialization  # noqa: E402
-from release_admission import MalformedReceipt, agent_ready_disposition  # noqa: E402
 from app_github_reader import AppGitHubReader  # noqa: E402
 from factory_director_host import DirectorInputs  # noqa: E402
 
@@ -50,6 +49,7 @@ HOST_CONFIG_SCHEMA_VERSION = 1
 HOLD_RECORD_SCHEMA_VERSION = 1
 LIFECYCLE_STATES = frozenset(materialization.STATUS_OPTIONS)
 WORKER_STATES = frozenset({"IMPLEMENT", "VERIFY", "ACCEPT"})
+ASSESSMENT_MARKER = re.compile(r"<!--\s*AGENT_READY_ASSESSMENT:(.*?)-->", re.DOTALL)
 INBOX_ENTRY = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]*\.json$")
 HOLD_KEYS = frozenset({"issue", "reason", "kind"})
 HOLD_OPTIONAL_KEYS = frozenset({"recordedAt", "recordedBy"})
@@ -229,11 +229,6 @@ class RuntimeView:
     claimed_issues: frozenset[int]
     escalations: tuple[tuple[str, dict], ...]
     founder_exceptions: int
-    # Issues the runtime refuses permanently (EXECUTION_CYCLE_LIMIT): a typed technical blocker,
-    # visible here and in the escalation, never eligible work and never a Founder decision.
-    blocked: frozenset[int] = frozenset()
-    # The runtime's latest typed refusal per TASKS/READY BIU (observation only).
-    refusals: tuple[tuple[str, dict], ...] = ()
 
 
 def validate_runtime_state(raw, repository: str) -> RuntimeView:
@@ -263,15 +258,7 @@ def validate_runtime_state(raw, repository: str) -> RuntimeView:
     for key, entry in exceptions.items():
         if not isinstance(entry, dict):
             raise SourceUnavailable(f"runtime founderExceptions entry {key!r} is malformed")
-    refusals = raw.get("admissionRefusals", {})
-    if not isinstance(refusals, dict) or any(
-            not isinstance(entry, dict) or not isinstance(entry.get("checks"), list) for entry in refusals.values()):
-        raise SourceUnavailable("runtime admissionRefusals is malformed")
-    blocked = frozenset(int(number) for key, entry in escalations.items()
-                        for owner, _, number in [key.rpartition("#")]
-                        if owner == repository and number.isdigit() and entry["outcome"] == "EXECUTION_CYCLE_LIMIT")
-    return RuntimeView(len(active), frozenset(claimed), tuple(sorted(escalations.items())), len(exceptions),
-                       blocked, tuple(sorted(refusals.items())))
+    return RuntimeView(len(active), frozenset(claimed), tuple(sorted(escalations.items())), len(exceptions))
 
 
 def escalation_receipt_id(key: str, entry: dict) -> str:
@@ -384,11 +371,32 @@ def read_inbox(inbox: Path, board: dict[int, str] | None = None) -> tuple[tuple[
 
 
 def retained_assessment_disposition(comments: list[dict], issue: int, operators: frozenset[str]) -> str | None:
-    """The Issue's Agent Ready disposition, from the reader the release gate uses."""
-    try:
-        return agent_ready_disposition(comments, operators)
-    except MalformedReceipt as exc:
-        raise SourceUnavailable(f"issue #{issue}: {exc}") from exc
+    """Return the latest authorized retained Agent Ready disposition for an Issue."""
+    latest = None
+    for comment in comments:
+        if not isinstance(comment, dict) or not isinstance(comment.get("body"), str):
+            raise SourceUnavailable(f"issue #{issue} comment is malformed")
+        author, editor = comment.get("author"), comment.get("editor")
+        if not isinstance(author, str) or author.lower() not in operators:
+            continue
+        if editor is not None and (not isinstance(editor, str) or editor.lower() not in operators):
+            continue
+        if editor is None and comment.get("lastEditedAt"):
+            continue
+        for match in ASSESSMENT_MARKER.finditer(comment["body"]):
+            try:
+                record = json.loads(match.group(1).strip())
+            except json.JSONDecodeError as exc:
+                raise SourceUnavailable(f"issue #{issue} has an unparsable Agent Ready assessment") from exc
+            disposition = record.get("disposition") if isinstance(record, dict) else None
+            if not isinstance(disposition, str) or not disposition.strip():
+                raise SourceUnavailable(f"issue #{issue} has a malformed Agent Ready assessment")
+            latest = disposition.strip().upper()
+    return latest
+
+
+def has_retained_assessment(comments: list[dict], issue: int, operators: frozenset[str]) -> bool:
+    return retained_assessment_disposition(comments, issue, operators) is not None
 
 
 # --- mapping ------------------------------------------------------------------------------
@@ -405,18 +413,18 @@ class Evaluation:
 
 
 def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: dict[int, str],
-                   supply_candidates: frozenset[int] = frozenset(),
-                   blocked: frozenset[int] = frozenset()) -> str | None:
-    """Why this Issue alone would make Director control required, ignoring holds.
-
-    TASKS -> READY (a READY Agent Ready receipt) and READY -> IMPLEMENT are mechanical: the Node
-    runtime's lifecycle refill advances them and records a typed refusal for a BIU that waits.
-    Neither is Director control, so a Director never competes with admission or parks supply.
-    HOLD, CLARIFY and SPLIT wait for a changed task packet and a new assessment."""
-    if state in WORKER_STATES and issue not in claimed and issue not in blocked:
+                   supply_candidates: frozenset[int] = frozenset()) -> str | None:
+    """Why this Issue alone would make Director control required, ignoring holds."""
+    if state == "READY":
+        return "eligible:READY"
+    if state in WORKER_STATES and issue not in claimed:
         return f"eligible:{state}_UNCLAIMED"
     if state == "REVIEW":
         return "selection:REVIEW"
+    # Only a READY verdict is work the Director can advance. HOLD, CLARIFY and SPLIT wait for a
+    # changed task packet and a new assessment; counting them kept selection true forever.
+    if state == "TASKS" and assessed.get(issue) == "READY":
+        return "selection:TASKS_ASSESSED"
     if state == "TASKS" and issue in supply_candidates:
         return "selection:TASKS_SUPPLY"
     return None
@@ -435,7 +443,7 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
                                   and issue in biu_issues and issue not in assessed and issue not in holds)
     reasons = {issue: reason for issue, state in board.items()
                if (reason := control_reason(issue, state, runtime.claimed_issues, assessed,
-                                            supply_candidates, runtime.blocked))}
+                                            supply_candidates))}
     unheld = {issue: reason for issue, reason in reasons.items() if issue not in holds}
     held = {issue: reason for issue, reason in reasons.items() if issue in holds}
     eligible = any(reason.startswith("eligible:") for reason in unheld.values())
@@ -465,8 +473,6 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
         "unresolvedLimitEscalations": list(escalations),
         "escalationReceiptIds": {key: escalation_receipt_id(key, entry) for key, entry in runtime.escalations},
         "founderExceptions": runtime.founder_exceptions,
-        "technicalBlockers": sorted(issue for issue in runtime.blocked if board.get(issue) in WORKER_STATES),
-        "admissionRefusals": {key: entry for key, entry in runtime.refusals},
         "unprocessedInboxEntries": list(unprocessed),
     }
     fingerprint = sha256(json.dumps({

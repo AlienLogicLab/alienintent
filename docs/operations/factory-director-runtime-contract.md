@@ -81,35 +81,22 @@ one. Earlier chats, summaries and memory are not authority. Every run:
    --expect-status <STATE>`, or the same read path). Read the Issues that the diagnostics
    name, including their RELEASED, result and Agent Ready comments.
 4. Read the Node runtime state (`paths.stateFile` in
-   `~/.config/alienintent/self-hosting.json`): active claims, `diagnostics`,
-   `admissionRefusals`, `limitEscalations`, `founderExceptions`, `executionLimits`.
+   `~/.config/alienintent/self-hosting.json`): active claims, `limitEscalations`,
+   `founderExceptions`, `executionLimits`.
 5. Read the Founder-hold record, the pause flag and the Director inbox (section 9).
 6. Choose the next authorized control action in this order: unresolved attention
-   (escalations), unprocessed inbox entries, lifecycle selection (`REVIEW`, unassessed
-   `TASKS` supply), then unclaimed `IMPLEMENT`/`VERIFY`/`ACCEPT` work.
+   (escalations), unprocessed inbox entries, lifecycle selection (`REVIEW`, assessed
+   `TASKS`), then eligible work (`READY`, and unclaimed `IMPLEMENT`/`VERIFY`/`ACCEPT`).
    Take that action within authority, record it durably, and continue while useful
    authorized work remains within this bounded episode.
-   **TASKS → READY and READY → IMPLEMENT are mechanical; the Director does not perform
-   them.** The Node runtime's control tick (after startup, every
-   `execution.control.tickIntervalMilliseconds`, and after every terminal worker result)
-   evaluates each TASKS and READY BIU with the one eligibility function
-   (`eligibility` in `tools/live/release_admission.py`, via `scripts/lifecycle-eligibility`)
-   in Project Priority order (P0 first, then lower Issue number). A TASKS BIU whose newest
-   native Agent Ready receipt is `READY` and whose preparation checks pass moves to READY. A
-   READY BIU that passes every check, while live claims are below `wipLimit`, moves to
-   IMPLEMENT and its PRODUCER is dispatched. Each transition is read back. A BIU that waits
-   keeps its exact checks in the runtime state under `admissionRefusals`. The same tick
-   re-drives unclaimed `IMPLEMENT`/`VERIFY`/`ACCEPT` lanes (a lost webhook, a failed
-   preflight, a worker that exited without a result) and releases a dead claim whose card is
-   in a status no worker owns.
    **Lifecycle is forward-only for runtime concerns.** Never move a BIU backward (READY,
-   IMPLEMENT, VERIFY or ACCEPT to TASKS, or IMPLEMENT to READY) because of runtime or
-   admission state: a stale webhook delivery, another BIU's stale worker record, a failed
-   preflight, an unavailable read, WIP, or an execution limit. These are typed runtime
-   conditions (`diagnostics`, `admissionRefusals`, `limitEscalations`) that the runtime
-   re-drives or reports. Execution limits are enforced by the runtime from its profile; no
-   readback of a "staged" limit is required before work proceeds. Move a BIU backward only
-   when its own task packet is invalidated, and record that invalidation.
+   IMPLEMENT, VERIFY or ACCEPT to TASKS, or IMPLEMENT to READY) because of runtime state: a
+   stale webhook delivery, another BIU's stale worker record, a failed preflight, an
+   unavailable read or WIP. Those are typed runtime conditions (`diagnostics`,
+   `limitEscalations`) that the runtime or the bootstrap liveness watcher re-drives or
+   reports. Execution limits are enforced by the runtime from its profile; no readback of a
+   "staged" limit is required before work proceeds. Move a BIU backward only when its own
+   task packet is invalidated, and record that invalidation.
 7. Before exit, make sure the durable record explains the next state. Issue comments,
    evidence, hold entries and inbox receipts all count. A successor must be able to act on
    that record alone.
@@ -164,8 +151,8 @@ The host reads these, and only these, through the read-only adapter
 | Source | Default path | Schema | Absent means |
 |---|---|---|---|
 | Project #1 | GitHub, via `tools/live/project_materialization.py` `read_board` | complete board; Issue items of `AlienLogicLab/alienintent` only; one item per Issue; every item has a lifecycle Status | fail closed |
-| Retained Agent Ready assessment (TASKS only) | Issue comments containing `<!-- AGENT_READY_ASSESSMENT: {json} -->` (the native receipt the Factory Director posts beside the retained `docs/evidence/wave2-readiness-assessments/` record) | read by `agent_ready_disposition` in `tools/live/release_admission.py`, the same reader release admission uses. The newest native receipt counts: `record_kind` `ReadinessAssessment`, `outcome` `ASSESSED`, an `agent-ready` producer and a non-empty `provenance.input_sha256`, in a comment written (and, if edited, edited) by a login in self-hosting `operator.authorizedGithubLogins`. An unparsable marker from such a login fails closed. Other markers carry no disposition | not assessed |
-| Node runtime state | `paths.stateFile` from `selfHostingConfig` | object with an `active` map; optional `limitEscalations`, `founderExceptions` and `admissionRefusals` maps (each refusal has a `checks` list) | fail closed |
+| Retained Agent Ready assessment (TASKS only) | Issue comments containing `<!-- AGENT_READY_ASSESSMENT: {json} -->` (the native receipt the Factory Director posts beside the retained `docs/evidence/wave2-readiness-assessments/` record) | counted **only** in comments by a login in self-hosting `operator.authorizedGithubLogins`; JSON object with a string `disposition`. An unparsable marker from such a login fails closed. Markers from anyone else are ignored | not assessed |
+| Node runtime state | `paths.stateFile` from `selfHostingConfig` | object with an `active` map; optional `limitEscalations` and `founderExceptions` maps | fail closed |
 | Founder-hold record | `~/.local/state/alienintent/factory-director/founder-holds.json` | `{"schemaVersion": 1, "holds": [{"issue": <int>, "kind": "FOUNDER_DECISION", "reason": "<text>", "recordedAt"?: "...", "recordedBy"?: "..."}]}`; no other keys; no duplicates | **fail closed**. "No holds" is written as `"holds": []` |
 | Director inbox | `~/.local/state/alienintent/factory-director/inbox/` | entry = `<id>.json` directly inside (id `[A-Za-z0-9][A-Za-z0-9._-]*`); receipt = `processed/<id>.json`. A visible `*.json` file with any other name fails closed | **fail closed**. "No entries" is an empty directory |
 | Explicit pause | `~/.local/state/alienintent/factory-director/PAUSE` | presence only (any file type or content). A location that cannot be checked (for example, permission denied) fails closed | not paused |
@@ -200,12 +187,10 @@ Director obligations on these sources:
   Issue #89 (https://github.com/AlienLogicLab/alienintent/issues/89#issuecomment-5809931372). The digest is the first 32 hex characters of
   sha256(`<key>\n<outcome>\n<at>`); `inputs.diagnostics.json` lists each id under
   `escalationReceiptIds`. Write the acknowledgement only after the escalation is durably
-  handled. `EXECUTION_CYCLE_LIMIT` is a typed technical blocker, not a Founder decision:
-  the Node runtime refuses that BIU permanently, and the adapter lists it under
-  `technicalBlockers` instead of eligible work, so no Founder hold is recorded for it and
-  its Issue is not moved backward. Acknowledge it once handled (for example, the budget was
-  raised in the runtime profile or the task packet was re-planned). A newer escalation of
-  the same BIU (a new `at`) needs a new acknowledgement.
+  handled. For `EXECUTION_CYCLE_LIMIT`, the Node runtime refuses that BIU permanently, so
+  first record a Founder hold on its Issue. Without the hold, the Issue stays eligible work
+  and episodes keep launching. A newer escalation of the same BIU (a new `at`) needs a new
+  acknowledgement.
 - **Founder exceptions.** A `FOUNDER_EXCEPTION` result leaves its Issue unclaimed in a
   worker state, so the mapping counts it as eligible work. Record a Founder hold for each
   open Founder exception. Until you do, the host keeps launching episodes for it.
@@ -218,8 +203,8 @@ The adapter derives nine booleans and writes them atomically to
 | Predicate | True when |
 |---|---|
 | `authoritative_state` | every source above was read successfully and is internally consistent. Any read failure, partial board, parse error or schema mismatch makes this and every other predicate false |
-| `eligible_authorized_work` | an unheld Issue is `IMPLEMENT`/`VERIFY`/`ACCEPT` with no active runtime claim and no `EXECUTION_CYCLE_LIMIT` escalation. `READY` is not Director control: the runtime admits it (section 5 step 6) |
-| `lifecycle_requires_selection` | an unheld Issue is `REVIEW`, or the prepared buffer is below `preparedBufferTarget` and an unassessed `biu`-labelled `TASKS` Issue can be prepared as supply. A `TASKS` Issue with a `READY` receipt is prepared supply the runtime advances; `HOLD`, `CLARIFY` and `SPLIT` wait for a new assessment. Neither counts |
+| `eligible_authorized_work` | an unheld Issue is `READY`, or an unheld Issue is `IMPLEMENT`/`VERIFY`/`ACCEPT` with no active runtime claim |
+| `lifecycle_requires_selection` | an unheld Issue is `REVIEW`; an unheld `TASKS` Issue has a retained Agent Ready assessment whose disposition is `READY` (`HOLD`, `CLARIFY` and `SPLIT` wait for a changed task packet and a new assessment); or the prepared buffer is below `preparedBufferTarget` and an unassessed `biu`-labelled `TASKS` Issue can be prepared as supply |
 | `attention_required` | the runtime state has an unresolved `limitEscalations` entry (section 9) |
 | `pending_director_inbox` | at least one inbox entry has no receipt |
 | `executable_capacity` | active runtime claims < WIP limit |

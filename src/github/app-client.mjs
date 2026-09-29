@@ -201,12 +201,5 @@ export function createGitHubAppClient(config, {
       repository, projectId: project.id, projectCanUpdate: true, tokenExpiresAt: new Date(cached.expiresAt).toISOString() };
   }
 
-  // The release-admission gate reads GitHub as this App: the short-lived,
-  // single-repository installation token goes to that one child process only.
-  function childEnvironment(inherit = {}) {
-    return { ...inherit, PATH: runtimePath, GH_CONFIG_DIR: "/proc/self/fd", GH_TOKEN: installationToken(),
-      GH_PROMPT_DISABLED: "1", GH_PAGER: "cat", LANG: "C.UTF-8" };
-  }
-
-  return { gh, preflight, childEnvironment };
+  return { gh, preflight };
 }

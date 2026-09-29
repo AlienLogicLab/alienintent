@@ -30,17 +30,8 @@ from factory_director_inputs import (  # noqa: E402
 
 REPO = "AlienLogicLab/alienintent"
 OPERATOR = "sanookdu"
-
-
-def receipt(disposition="READY", **overrides):
-    """A native Agent Ready receipt in the shape readiness_assessment.py records."""
-    record = {"record_kind": "ReadinessAssessment", "outcome": "ASSESSED", "disposition": disposition,
-              "work_unit_id": "X", "provenance": {"producer": "agent-ready-cli", "input_sha256": "0" * 64}}
-    record.update(overrides)
-    return f"**Native Agent Ready receipt.**\n<!-- AGENT_READY_ASSESSMENT: {json.dumps(record)} -->"
-
-
-ASSESSMENT_BODY = receipt()
+ASSESSMENT_BODY = ('**Native Agent Ready receipt.**\n<!-- AGENT_READY_ASSESSMENT: '
+              '{"disposition":"READY","record_kind":"ReadinessAssessment","work_unit_id":"X"} -->')
 ASSESSMENT = {"author": OPERATOR, "body": ASSESSMENT_BODY}
 
 
@@ -142,49 +133,8 @@ def test_authoritative_state(sources):
 
 def test_eligible_authorized_work(sources):
     assert sources.inputs().eligible_authorized_work is False
-    sources.issue(1, "IMPLEMENT")
+    sources.issue(1, "READY")
     assert sources.inputs().eligible_authorized_work is True
-
-
-def prepared_depth(sources) -> int:
-    """The observable effect of the shared Agent Ready reader: a READY receipt is prepared supply."""
-    return sources.adapter().evaluate().observations["preparedBufferDepth"]
-
-
-def test_ready_and_ready_assessed_tasks_are_runtime_owned_not_director_control(sources):
-    """READY -> IMPLEMENT and TASKS -> READY are the Node runtime's lifecycle refill. A Director
-    launched for them could only compete with admission or park supply (#125, #147)."""
-    sources.issue(1, "READY").issue(2, "TASKS")
-    sources.comments[2] = [ASSESSMENT]
-    values = sources.inputs()
-    assert (values.eligible_authorized_work, values.lifecycle_requires_selection) == (False, False)
-    assert prepared_depth(sources) == 2
-
-
-def test_execution_cycle_limit_is_a_typed_technical_blocker_not_eligible_work(sources):
-    sources.issue(70, "VERIFY").issue(71, "IMPLEMENT")
-    sources.state["limitEscalations"] = {f"{REPO}#70": {"outcome": "EXECUTION_CYCLE_LIMIT", "at": "2026-09-29T00:00:00Z"},
-                                         f"{REPO}#71": {"outcome": "PHASE_REPLACEMENT_LIMIT", "at": "2026-09-29T00:00:00Z"}}
-    sources.flush()
-    evaluation = sources.adapter().evaluate()
-    assert evaluation.observations["controlRequiredBy"] == {"71": "eligible:IMPLEMENT_UNCLAIMED"}
-    assert evaluation.observations["technicalBlockers"] == [70]
-    # The escalation still asks for acknowledgement (attention), never a Founder decision.
-    assert evaluation.inputs.attention_required is True
-    assert evaluation.inputs.founder_decision_pending is False
-
-
-def test_runtime_lifecycle_refusals_are_observed_without_changing_predicates(sources):
-    sources.issue(125, "READY")
-    before = sources.adapter().evaluate()
-    sources.state["admissionRefusals"] = {f"{REPO}#125": {"issue": 125, "status": "READY", "checks": ["dependencies_satisfied"], "at": "x"}}
-    sources.flush()
-    evaluation = sources.adapter().evaluate()
-    assert evaluation.inputs == before.inputs and evaluation.fingerprint == before.fingerprint
-    assert evaluation.observations["admissionRefusals"][f"{REPO}#125"]["checks"] == ["dependencies_satisfied"]
-    sources.state["admissionRefusals"] = {f"{REPO}#125": {"checks": "dependencies_satisfied"}}
-    sources.flush()
-    assert sources.inputs().authoritative_state is False
 
 
 @pytest.mark.parametrize("state", ["IMPLEMENT", "VERIFY", "ACCEPT"])
@@ -220,7 +170,7 @@ def test_hold_assessment_does_not_inflate_prepared_buffer(sources):
     raw["preparedBufferTarget"] = 20
     sources.config.write_text(json.dumps(raw))
     sources.issue(66, "TASKS", labels=("biu",))
-    sources.comments[66] = [comment(receipt("HOLD"), author=OPERATOR)]
+    sources.comments[66] = [comment('<!-- AGENT_READY_ASSESSMENT: {"disposition":"HOLD"} -->', author=OPERATOR)]
     evaluation = sources.adapter().evaluate()
     assert evaluation.observations["preparedBufferDepth"] == 0
     # Assessed HOLD is neither supply nor selection: it waits for a changed task packet.
@@ -231,29 +181,16 @@ def test_hold_assessment_does_not_inflate_prepared_buffer(sources):
 @pytest.mark.parametrize("disposition", ["HOLD", "CLARIFY", "SPLIT"])
 def test_a_non_ready_assessment_never_requires_selection(sources, disposition):
     sources.issue(68, "TASKS", labels=("biu",))
-    sources.comments[68] = [comment(receipt(disposition), author=OPERATOR)]
+    sources.comments[68] = [comment(f'<!-- AGENT_READY_ASSESSMENT: {{"disposition":"{disposition}"}} -->', author=OPERATOR)]
     assert sources.inputs().lifecycle_requires_selection is False
 
 
-def test_the_newest_receipt_decides_selection(sources):
+def test_the_newest_assessment_decides_selection(sources):
     sources.issue(69, "TASKS")
-    sources.comments[69] = [ASSESSMENT, comment(receipt("CLARIFY"), author=OPERATOR)]
-    assert prepared_depth(sources) == 0
+    sources.comments[69] = [ASSESSMENT, comment('<!-- AGENT_READY_ASSESSMENT: {"disposition":"CLARIFY"} -->', author=OPERATOR)]
+    assert sources.inputs().lifecycle_requires_selection is False
     sources.comments[69].append(ASSESSMENT)
-    assert prepared_depth(sources) == 1
-
-
-@pytest.mark.parametrize("change", [
-    {"outcome": "EXECUTION_FAILURE"},
-    {"provenance": {"producer": "surrogate-bootstrap-assessor", "input_sha256": "0" * 64}},
-    {"provenance": {"producer": "agent-ready-cli"}},
-    {"record_kind": None},
-])
-def test_a_marker_that_is_not_a_native_receipt_carries_no_disposition(sources, change):
-    sources.issue(70, "TASKS")
-    sources.comments[70] = [comment(receipt(**change), author=OPERATOR)]
-    values = sources.inputs()
-    assert (values.authoritative_state, values.lifecycle_requires_selection) == (True, False)
+    assert sources.inputs().lifecycle_requires_selection is True
 
 
 def test_ready_assessment_counts_toward_prepared_buffer(sources):
@@ -261,7 +198,7 @@ def test_ready_assessment_counts_toward_prepared_buffer(sources):
     raw["preparedBufferTarget"] = 20
     sources.config.write_text(json.dumps(raw))
     sources.issue(67, "TASKS", labels=("biu",))
-    sources.comments[67] = [comment(receipt(), author=OPERATOR)]
+    sources.comments[67] = [comment('<!-- AGENT_READY_ASSESSMENT: {"disposition":"READY"} -->', author=OPERATOR)]
     evaluation = sources.adapter().evaluate()
     assert evaluation.observations["preparedBufferDepth"] == 1
 
@@ -298,7 +235,7 @@ def test_supply_control_is_not_suppressed_by_full_worker_wip(sources):
 def test_non_issue_project_item_does_not_block_authoritative_state(sources):
     """A benign non-Issue card (a GitHub ``DRAFT_ISSUE``, for example) is board pollution, not
     corruption: it must not make all Director state unavailable while real Issues are fine."""
-    sources.issue(40, "IMPLEMENT")
+    sources.issue(40, "READY")
     sources.board.append({"id": "PVTI_draft", "type": "DRAFT_ISSUE", "issue": None, "status": "READY"})
     values = sources.inputs()
     assert values.authoritative_state is True
@@ -320,12 +257,12 @@ def test_lifecycle_requires_selection_for_review(sources):
     assert sources.inputs().lifecycle_requires_selection is True
 
 
-def test_assessed_tasks_is_prepared_supply(sources):
+def test_lifecycle_requires_selection_for_assessed_tasks(sources):
     sources.issue(6, "TASKS")
     sources.comments[6] = [comment("an ordinary comment")]
-    assert prepared_depth(sources) == 0
+    assert sources.inputs().lifecycle_requires_selection is False
     sources.comments[6].append(ASSESSMENT)
-    assert prepared_depth(sources) == 1
+    assert sources.inputs().lifecycle_requires_selection is True
 
 
 def test_attention_required(sources):
@@ -356,9 +293,9 @@ def test_wip_intentionally_full(sources):
 
 
 def test_founder_decision_pending(sources):
-    sources.issue(11, "IMPLEMENT").hold(11)
+    sources.issue(11, "READY").hold(11)
     assert sources.inputs().founder_decision_pending is True
-    sources.issue(12, "IMPLEMENT")
+    sources.issue(12, "READY")
     assert sources.inputs().founder_decision_pending is False
 
 
@@ -521,13 +458,13 @@ def reconcile(sources):
 
 
 def test_hold_on_some_ready_items_does_not_idle_while_another_ready_item_is_unheld(sources):
-    sources.issue(30, "IMPLEMENT").issue(31, "IMPLEMENT").issue(32, "IMPLEMENT").hold(30).hold(31)
+    sources.issue(30, "READY").issue(31, "READY").issue(32, "READY").hold(30).hold(31)
     result, launcher = reconcile(sources)
     assert result.reason == "DIRECTOR_CONTINUITY_FAULT" and len(launcher.launched) == 1
 
 
 def test_all_eligible_items_held_idles_founder_decision_pending(sources):
-    sources.issue(30, "IMPLEMENT").issue(31, "IMPLEMENT").hold(30).hold(31)
+    sources.issue(30, "READY").issue(31, "READY").hold(30).hold(31)
     result, launcher = reconcile(sources)
     assert (result.reason, result.state) == ("FOUNDER_DECISION_PENDING", HostState.IDLE)
     assert launcher.launched == []
@@ -576,7 +513,7 @@ def test_founder_requirement_materialization_stays_pending_until_done(sources):
     assert sources.inputs().pending_director_inbox is False
 
 def test_pending_inbox_entry_launches_despite_holds_and_its_receipt_stops_it(sources):
-    sources.issue(34, "IMPLEMENT").hold(34).inbox_entry("founder-2026-09-24")
+    sources.issue(34, "READY").hold(34).inbox_entry("founder-2026-09-24")
     result, launcher = reconcile(sources)
     assert result.reason == "DIRECTOR_CONTINUITY_FAULT" and len(launcher.launched) == 1
 
@@ -630,7 +567,7 @@ def overlap(sources, issue, state):
 
 
 def test_overlap_with_only_worker_work_pending_idles_wip_intentionally_full(sources):
-    overlap(sources, 81, "VERIFY").issue(50, "IMPLEMENT")  # criterion 1: the #81 08:55:32Z case
+    overlap(sources, 81, "VERIFY").issue(50, "READY")  # criterion 1: the #81 08:55:32Z case
     values = sources.inputs()
     assert (values.executable_capacity, values.wip_intentionally_full) == (False, True)
     assert values.eligible_authorized_work and not values.director_only_control()
@@ -663,13 +600,13 @@ def test_overlap_never_suppresses_director_only_control(sources, control):
 # --- publication and the read-only audit ---------------------------------------------------
 
 def test_projection_is_published_atomically_and_reads_back_strictly(sources):
-    sources.issue(40, "IMPLEMENT")
+    sources.issue(40, "READY")
     values = sources.inputs()
 
     assert JsonDirectorInputs(sources.projection)() == values
     diagnostics = json.loads(sources.projection.with_name("inputs.diagnostics.json").read_text())
     assert diagnostics["failure"] is None
-    assert diagnostics["observations"]["controlRequiredBy"] == {"40": "eligible:IMPLEMENT_UNCLAIMED"}
+    assert diagnostics["observations"]["controlRequiredBy"] == {"40": "eligible:READY"}
     assert not list(sources.projection.parent.glob("*.partial"))
 
 
@@ -785,9 +722,9 @@ def test_escalation_receipt_is_not_an_unprocessed_inbox_entry(sources):
 def test_assessment_marker_counts_only_from_an_authorized_operator(sources):
     sources.issue(53, "TASKS")
     sources.comments[53] = [comment(ASSESSMENT_BODY, author="drive-by")]
-    assert prepared_depth(sources) == 0
+    assert sources.inputs().lifecycle_requires_selection is False
     sources.comments[53].append(ASSESSMENT)
-    assert prepared_depth(sources) == 1
+    assert sources.inputs().lifecycle_requires_selection is True
 
 
 def test_malformed_marker_from_an_unauthorized_author_is_ignored_not_fatal(sources):
@@ -823,9 +760,9 @@ def test_board_rows_from_the_read_path_carry_the_issue_repository():
 def test_marker_in_an_operator_comment_edited_by_someone_else_is_ignored(sources):
     sources.issue(56, "TASKS")
     sources.comments[56] = [{**ASSESSMENT, "editor": "morty-worker"}]
-    assert prepared_depth(sources) == 0
+    assert sources.inputs().lifecycle_requires_selection is False
     sources.comments[56] = [{**ASSESSMENT, "editor": OPERATOR}]
-    assert prepared_depth(sources) == 1
+    assert sources.inputs().lifecycle_requires_selection is True
 
 
 def test_marker_in_an_edited_comment_with_an_unknown_editor_is_ignored(sources):
@@ -855,7 +792,7 @@ def test_fingerprint_tracks_durable_progress_but_not_worker_claims(sources):
 # --- App-backed default read path ---------------------------------------------------------
 
 def test_default_read_path_does_not_depend_on_operator_gh_path(sources, tmp_path, monkeypatch):
-    sources.issue(62, "TASKS").issue(63, "IMPLEMENT")
+    sources.issue(62, "TASKS").issue(63, "READY")
     sources.comments[62] = [ASSESSMENT]
     class FakeAppReader:
         def board(self): return list(sources.board)
@@ -868,8 +805,7 @@ def test_default_read_path_does_not_depend_on_operator_gh_path(sources, tmp_path
     values = adapter()
     assert values.authoritative_state is True
     assert values.eligible_authorized_work is True
-    # The comments reached the shared reader through the App path: #62 is prepared supply.
-    assert adapter.evaluate().observations["preparedBufferDepth"] == 1
+    assert values.lifecycle_requires_selection is True
     assert adapter.last_failure is None
 
 

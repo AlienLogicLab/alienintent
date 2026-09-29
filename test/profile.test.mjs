@@ -166,20 +166,6 @@ test("execution profile rejects malformed per-BIU execution limits", () => {
   }
 });
 
-test("the control tick always runs with a validated cadence and Director-host configuration", () => {
-  const defaults = fixture().load().control;
-  assert.equal(defaults.tickIntervalMs, 300000);
-  assert.match(defaults.directorHostConfig, /\/\.config\/alienintent\/factory-director-host\.json$/);
-  const f = fixture();
-  f.value.execution.control = { tickIntervalMilliseconds: 60000, directorHostConfig: "/etc/alienintent/factory-director-host.json" };
-  assert.deepEqual(f.load().control, { tickIntervalMs: 60000, directorHostConfig: "/etc/alienintent/factory-director-host.json" });
-  for (const value of [{ directorHostConfig: "relative.json" }, { tickIntervalMilliseconds: 5 }, { enabled: false }]) {
-    const g = fixture();
-    g.value.execution.control = value;
-    assert.throws(() => g.load(), /invalid config\.execution\.control/);
-  }
-});
-
 const fullLifecycle = ["CAPTURE", "SPECIFY", "PLAN", "TASKS", "READY", "IMPLEMENT", "VERIFY", "REVIEW", "ACCEPT", "DONE"];
 test("profile accepts the full lifecycle without changing worker roles", () => {
   const f = fixture();
