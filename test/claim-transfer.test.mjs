@@ -11,13 +11,15 @@ const path = "/worktrees/resource-1";
 const branch = "b-disp/resource-1";
 const manager = { uid: 1000, bootId: "boot-1", startedAtMonotonic: "123", cgroup: "/user.slice/user-1000.slice/user@1000.service" };
 const worktreeManager = { inspectOwnership: () => ({ invocationId, resourceId: "resource-1", path, branch, head: "a".repeat(40) }) };
+const absentUnit = owner => ({ unit: owner.unit, cgroup: owner.cgroup, manager: owner.manager,
+  loadState: "not-found", cgroupPopulated: false });
 const subject = request => ({ lane: request.lane, invocationId: request.invocationId,
   resourceId: request.resourceId, path: request.path, branch: request.branch,
   unit: request.unit, cgroup: request.cgroup, manager: request.manager,
   expectedHead: request.expectedHead });
 const boundProof = (request, letter = "a") => ({ digest: letter.repeat(64),
   observedAt: new Date().toISOString(), subject: subject(request) });
-const transferRelay = options => new EventRelay({ worktreeManager, ...options });
+const transferRelay = options => new EventRelay({ worktreeManager, claimTransferUnitInspector: absentUnit, ...options });
 
 function fixture() {
   const request = { schemaVersion: 1, operationId: "operation-1", nextOwner: "director-episode-1",
@@ -148,11 +150,29 @@ test("a committed transfer is read back and replays to the same opaque grant", (
   assert.deepEqual(transferRelay({ statePath, claimTransferHostProof: ({ request }) => boundProof(request) }).commitClaimTransfer(request), grant);
 });
 
+test("a new transfer grant requires fresh exact-unit absence before commit", () => {
+  const { state, request } = fixture();
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-commit-unit-")), "state.json");
+  const relay = transferRelay({ statePath, claimTransferUnitInspector: undefined,
+    claimTransferHostProof: ({ request }) => boundProof(request) });
+  relay.save(state); request.expectedHead = relay.fence();
+  assert.throws(() => relay.commitClaimTransfer(request), /CLAIM_TRANSFER_UNIT_INSPECTOR_REQUIRED/);
+  assert.equal(relay.state().claimTransfers, undefined);
+
+  relay.options.claimTransferUnitInspector = owner => ({ ...absentUnit(owner), cgroupPopulated: true });
+  assert.throws(() => relay.commitClaimTransfer(request), /CLAIM_TRANSFER_UNIT_PROOF_MISMATCH/);
+  assert.equal(relay.state().claimTransfers, undefined);
+
+  relay.options.claimTransferUnitInspector = absentUnit;
+  assert.equal(relay.commitClaimTransfer(request).status, "COMMITTED");
+});
+
 test("an edit grant is usable only by its named owner while the exact claim and worktree still match", () => {
   const { state, request } = fixture();
   const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-edit-")), "state.json");
   let head = "a".repeat(40);
-  const relay = new EventRelay({ statePath, claimTransferHostProof: ({ request }) => boundProof(request, "e"),
+  const relay = new EventRelay({ statePath, claimTransferUnitInspector: absentUnit,
+    claimTransferHostProof: ({ request }) => boundProof(request, "e"),
     worktreeManager: { inspectOwnership: () => ({ invocationId, resourceId: "resource-1", path, branch, head }) } });
   relay.save(state); request.expectedHead = relay.fence();
   const grant = relay.commitClaimTransfer(request);
@@ -204,7 +224,7 @@ test("transfer commit refuses missing proof, stale head and conflicting replay",
 
   const proven = transferRelay({ statePath, claimTransferHostProof: ({ request }) => boundProof(request) });
   const stale = { ...request, expectedHead: { ...request.expectedHead, sequence: request.expectedHead.sequence + 1 } };
-  assert.throws(() => proven.commitClaimTransfer(stale), /LEDGER_EXPECTED_HEAD_CHANGED/);
+  assert.throws(() => proven.commitClaimTransfer(stale), /CLAIM_TRANSFER_UNIT_STATE_CHANGED/);
   assert.equal(proven.state().claimTransfers, undefined);
   const grant = proven.commitClaimTransfer(request);
   assert.throws(() => proven.commitClaimTransfer({ ...request, nextOwner: "other" }), /CLAIM_TRANSFER_REPLAY_MISMATCH/);

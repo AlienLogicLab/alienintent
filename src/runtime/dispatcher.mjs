@@ -200,6 +200,7 @@ export class EventRelay {
         || ownership.path !== request.path || ownership.branch !== request.branch
         || !/^[a-f0-9]{40,64}$/.test(ownership.head ?? ""))
       throw new Error("CLAIM_TRANSFER_WORKTREE_MISMATCH");
+    if (!existing) this.inspectClaimTransferUnit(request);
     const proof = prove({ request: structuredClone(request), state: structuredClone(state) });
     assertClaimTransferHostProof(proof, request);
     if (existing) {
