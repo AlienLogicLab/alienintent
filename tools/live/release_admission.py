@@ -121,6 +121,10 @@ def admit(facts: dict) -> list[dict]:
         fail("priority_inheritance_reconciled",
              f"BIU priority could not be deterministically reconciled: {priority}.")
 
+    if facts.get("unread"):
+        fail("live_facts_readable", f"Live state could not be read, so nothing it would show can be "
+             f"ruled out: {facts['unread']}.")
+
     order = facts.get("priority_order")
     if order is not None:
         if order.get("status") != "RANKED":
@@ -190,7 +194,10 @@ def queue_releasable(number: int, holds: frozenset[int], facts_of) -> bool:
     passes apart from the queue checks it shares with the Issue being ranked."""
     if number in holds:
         return False
-    return not [f for f in admit(facts_of(number)) if f["check"] not in QUEUE_CHECKS]
+    facts = facts_of(number)
+    if facts.get("unread"):  # an item that cannot be read may rank ahead: never skip it
+        raise LookupError(f"READY #{number} could not be read: {facts['unread']}")
+    return not [f for f in admit(facts) if f["check"] not in QUEUE_CHECKS]
 
 
 def founder_holds(host_config: dict) -> frozenset[int]:
@@ -224,8 +231,19 @@ def _git(root, *args) -> subprocess.CompletedProcess:
     return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True)
 
 
-def _gh_json(root, *args):
-    out = subprocess.run(["gh", *args], cwd=root, capture_output=True, text=True).stdout
+def _gh_json(root, *args, unread: list | None = None):
+    """A gh JSON read. With `unread`, a failed, empty or unparsable read is recorded there
+    (and reads as `{}`), so the gate can refuse rather than treat it as "nothing found"."""
+    run = subprocess.run(["gh", *args], cwd=root, capture_output=True, text=True)
+    out = run.stdout
+    if unread is not None:
+        try:
+            if run.returncode != 0 or not out.strip():
+                raise ValueError(f"exit {run.returncode}")
+            return json.loads(out)
+        except ValueError as exc:
+            unread.append(f"gh {' '.join(args[:2])}: {exc}"[:120])
+            return {}
     return json.loads(out) if out.strip() else {}
 
 
@@ -435,7 +453,9 @@ def gather(issue: int, release_point: str = "origin/main", *, queue: bool = True
     def read(path):
         return read_at_release_point(root, release_commit, path) if root else None
 
-    data = _gh_json(root, "issue", "view", str(issue), "-R", REPO, "--json", "body,comments,labels,projectItems")
+    unread: list[str] = []
+    data = _gh_json(root, "issue", "view", str(issue), "-R", REPO, "--json", "body,comments,labels,projectItems",
+                    unread=unread)
     body = data.get("body", "")
 
     try:
@@ -468,16 +488,18 @@ def gather(issue: int, release_point: str = "origin/main", *, queue: bool = True
                              release_commit or release_point).returncode == 0
 
     items = _gh_json(root, "project", "item-list", "1", "--owner", "AlienLogicLab",
-                     "--format", "json", "-L", "500").get("items", [])
+                     "--format", "json", "-L", "500", unread=unread).get("items", [])
     # Another item's gate is only read while ranking: never repair its Priority from here.
     priority_reconciliation = reconcile_inherited_priority(root, issue, items) if queue \
         else {"status": "NOT_CHECKED"}
     if priority_reconciliation.get("status") == "REPAIRED":
         items = _gh_json(root, "project", "item-list", "1", "--owner", "AlienLogicLab",
-                         "--format", "json", "-L", "500").get("items", [])
+                         "--format", "json", "-L", "500", unread=unread).get("items", [])
     mine = next((i for i in items if (i.get("content") or {}).get("number") == issue), {})
 
-    blocked_by = _gh_json(root, "api", f"repos/{REPO}/issues/{issue}/dependencies/blocked_by")
+    blocked_by = _gh_json(root, "api", f"repos/{REPO}/issues/{issue}/dependencies/blocked_by", unread=unread)
+    if not isinstance(blocked_by, list) and not unread:
+        unread.append("gh api blocked_by: not a list")
     open_deps = [d["number"] for d in (blocked_by if isinstance(blocked_by, list) else [])
                  if d.get("state") != "closed"]
 
@@ -524,6 +546,7 @@ def gather(issue: int, release_point: str = "origin/main", *, queue: bool = True
         "release_point_fetched": fetched,
         "priority_reconciliation": priority_reconciliation,
         "priority_order": priority_order,
+        "unread": unread,
     }
 
 

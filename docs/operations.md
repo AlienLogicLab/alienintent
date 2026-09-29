@@ -351,7 +351,9 @@ priority inheritance and queue order. Queue order uses the canonical scheduler
 (`domain/scheduling.py` `select_admissible`, read from the release point): Priority, then the
 lower Issue number, over the READY items that could be released now. A BIU behind such an item
 is refused with `priority_order`, naming the one to release first; an unrankable queue is
-refused with `priority_order_known`. Authority is a native READY receipt bound to the current task packet: the newest receipt
+refused with `priority_order_known`. A failed, empty or unparsable live read (the Issue, the
+Project item list or its `blocked_by` dependencies) is refused with `live_facts_readable`; it is
+never read as "no dependencies" or "nothing ahead". Authority is a native READY receipt bound to the current task packet: the newest receipt
 posted by an authorized operator (the one reader, `agent_ready_receipt`, shared with the Factory
 Director inputs adapter) names its work unit, and that work unit's document at the release point
 has the receipt's input digest. The exact baseline is the one the BIU's execution packet names

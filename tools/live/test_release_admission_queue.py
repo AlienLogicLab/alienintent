@@ -115,3 +115,101 @@ def test_another_item_is_judged_by_its_own_gate_minus_the_shared_queue_checks():
     assert queue_releasable(125, frozenset({125}), facts.__getitem__) is False, "a Founder hold is honored"
     assert queue_releasable(126, frozenset(), facts.__getitem__) is False, "an open dependency waits"
     assert queue_releasable(127, frozenset(), facts.__getitem__) is False, "a stale receipt waits"
+
+
+# --- the live wiring in gather(): a failed read refuses, it never admits -----------------------
+
+import subprocess  # noqa: E402
+
+import release_admission as gate  # noqa: E402
+
+
+class World:
+    """gh answers from `self.answers`; a verb listed in `self.failing` exits non-zero."""
+
+    def __init__(self, monkeypatch, tmp_path):
+        self.failing, self.issues = set(), {}
+        self.items = []
+        state, config = tmp_path / "state.json", tmp_path / "host.json"
+        state.write_text(json.dumps({"active": {}}))
+        config.write_text(json.dumps({"wipLimit": 1}))
+        monkeypatch.setattr(gate, "STATE", state)
+        monkeypatch.setattr(gate, "HOST_CONFIG", config)
+        monkeypatch.setattr(gate, "repository_root", lambda: str(tmp_path))
+        monkeypatch.setattr(gate, "refresh_release_point", lambda root, point: True)
+        monkeypatch.setattr(gate, "_git", lambda root, *args: subprocess.CompletedProcess(args, 0 if args[0] == "rev-parse" else 1, "c" * 40 + "\n", ""))
+        monkeypatch.setattr(gate, "read_at_release_point",
+                            lambda root, commit, path: (ROOT / path).read_bytes() if path == SCHEDULER else None)
+        monkeypatch.setattr(gate, "reconcile_inherited_priority",
+                            lambda root, issue, items: {"status": "ALREADY_MATCHED", "priority": "P0"})
+        monkeypatch.setattr(gate.subprocess, "run", self.run)
+
+    def add(self, number, priority="P0"):
+        self.items.append(row(number, priority=priority))
+        self.issues[number] = {"body": "", "comments": [], "labels": [],
+                               "projectItems": [{"status": {"name": "READY"}}]}
+
+    def run(self, args, **_kwargs):
+        verb = "blocked_by" if args[1] == "api" else " ".join(args[1:3])
+        if verb in self.failing or (verb == "issue view" and int(args[3]) in self.failing):
+            # gh can print a JSON error body and still exit non-zero.
+            return subprocess.CompletedProcess(args, 1, '{"message": "Bad Gateway"}', "HTTP 502")
+        if verb == "issue view":
+            payload = self.issues[int(args[3])]
+        elif verb == "project item-list":
+            payload = {"items": self.items}
+        else:
+            payload = []
+        return subprocess.CompletedProcess(args, 0, json.dumps(payload), "")
+
+
+@pytest.fixture
+def world(monkeypatch, tmp_path):
+    return World(monkeypatch, tmp_path)
+
+
+def test_a_fully_read_queue_is_ranked(world):
+    world.add(147)
+    world.add(125)  # ranks ahead, but has no bound receipt, so it cannot be released now
+    facts = gate.gather(147)
+    assert facts["unread"] == []
+    assert facts["priority_order"] == {"status": "RANKED", "first": 147}
+
+
+@pytest.mark.parametrize("verb", ["issue view", "project item-list", "blocked_by"])
+def test_a_failed_read_of_the_biu_itself_refuses(world, verb):
+    world.add(147)
+    world.failing.add(verb)
+    failures = [f["check"] for f in gate.admit(gate.gather(147))]
+    assert "live_facts_readable" in failures
+
+
+def test_blocked_by_that_is_not_a_list_refuses(world, monkeypatch):
+    world.add(147)
+    original = world.run
+
+    def run(args, **kwargs):
+        if args[1] == "api":
+            return subprocess.CompletedProcess(args, 0, json.dumps({"message": "Not Found"}), "")
+        return original(args, **kwargs)
+    monkeypatch.setattr(gate.subprocess, "run", run)
+    assert "live_facts_readable" in [f["check"] for f in gate.admit(gate.gather(147))]
+
+
+def test_an_item_ahead_that_cannot_be_read_refuses_the_one_behind(world):
+    world.add(147)
+    world.add(125)
+    world.failing.add(125)  # only #125's Issue read fails
+    facts = gate.gather(147)
+    assert facts["unread"] == []
+    assert facts["priority_order"]["status"] == "UNAVAILABLE"
+    assert "#125" in facts["priority_order"]["reason"]
+    assert "priority_order_known" in [f["check"] for f in gate.admit(facts)]
+
+
+def test_an_empty_answer_is_a_failed_read_not_an_empty_result(world, monkeypatch):
+    world.add(147)
+    original = world.run
+    monkeypatch.setattr(gate.subprocess, "run", lambda args, **kwargs: subprocess.CompletedProcess(args, 0, "", "")
+                        if args[1] == "api" else original(args, **kwargs))
+    assert "live_facts_readable" in [f["check"] for f in gate.admit(gate.gather(147))]
