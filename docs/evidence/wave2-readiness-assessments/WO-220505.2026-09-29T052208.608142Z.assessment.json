@@ -1,0 +1,72 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Deliver WO-220505 by proving the canonical live liveness replacement path for SF-REQ-056, including isolated operational discrimination and a bounded real #125 lane live-workload recovery, without retiring the bootstrap mechanism or affecting unrelated BIUs.",
+    "implementation_unknowns": [
+      "How to implement or expose the missing real dispatcher observation and fenced Project-effect adapter for the #125 lane while preserving existing interfaces and one-writer ownership.",
+      "How the candidate will safely orchestrate systemd user units, service stop/start, restart, and readback while retaining exact command, exit status, and observation evidence.",
+      "How to reliably create and observe the real #125 gap between PRODUCER cycles without accidentally correlating to the parked FOUNDER_EXCEPTION generation or suppressing the required recovery.",
+      "How duplicate-effect refusal, delayed-delivery behavior, judgment suppression, and exact readback are represented in existing stores and Project mutations.",
+      "How the evidence bundle will preserve immutable references, branch/SHA custody, phase separation, and independent verifier retrieval records.",
+      "How to handle timing races around grace, interval, confirmation, dispatcher active-map state, bootstrap liveness pause, and the launch of PRODUCER B."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The plan intentionally pauses the existing bootstrap liveness service during a bounded live window; failure to restart it would be operationally material.",
+      "The phase 2 proof touches the real Issue #125 lane and Project item, so a defective adapter or orchestration error could mutate the wrong resource unless the blast-radius checks work.",
+      "The schedule depends on precise lifecycle generation handling; confusing the parked FOUNDER_EXCEPTION generation with the fresh IMPLEMENT generation could invalidate the proof.",
+      "Real wall-clock timing and dispatcher state can introduce races that may produce incomplete or non-discriminating evidence.",
+      "Authority, dependency completion, and target availability are reported by the supplied text but not independently verified by this assessment.",
+      "A NO_GAP_OBSERVED result or synthetic continuation would not satisfy the stated acceptance rule, requiring rerun or repair.",
+      "The final proof depends on independent verifier access to the exact final SHA and retained evidence; custody or retrieval mismatch would block acceptance."
+    ],
+    "next_action": "Hand off for IMPLEMENT under the stated execution allocation, beginning with the proof-capable candidate and evidence harness while preserving the pinned two-phase schedule and stop conditions.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The controlling condition is readiness rather than clarification, split, or hold. The supplied work defines a single governing outcome, fixes the previously open owner decisions, binds both the isolated and real-workload proof targets, states custody and budget, reports dependency completion, and provides concrete observable acceptance criteria with an independent verifier path. The remaining uncertainties are engineering and execution details, not unresolved product or authority intent. Although the work is technically large and operationally risky, the risks are bounded to the liveness replacement proof and #125 lane, with explicit stop conditions and verification evidence requirements.",
+    "semantic_split_recommendation": [],
+    "summary": "The proposed work is a cohesive liveness-replacement proof with explicit scope, non-goals, authority history, dependencies, target binding, two-phase acceptance plan, evidence obligations, custody, and independent verification. The supplied text reports that prior owner holds have been disposed, phase 2 has a bound real workload target, dependencies are done, and the remaining work is implementation plus execution of the pinned proof schedule. No material owner-intent question remains on the face of the supplied task data.",
+    "verification_assessment": "Acceptance is observable if the actor produces the specified phase 1 FX-B2 operational evidence and the phase 2 bounded real #125 lane evidence, including actual gap, single recovery mutation, duplicate refusal, judgment suppression, exact Project/store readback, bootstrap restart, one-writer confirmation, final branch/SHA, and independent verifier retrieval and verdict. One independent verification verdict is meaningful because the phases are explicitly tied to one replacement proof and the final verifier can judge the retained evidence, final candidate, and custody chain together. Offline or synthetic-only success is explicitly insufficient."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-29T05:22:37.231231+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 33023,
+    "input_sha256": "e7a6e6f0f1a1ad99306ba40e705ade73dd8ecd7f708891cbc2169f5317b5927d",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-zxclsekv/WO-220505.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-29T05:22:08.608142+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "WO-220505"
+}
