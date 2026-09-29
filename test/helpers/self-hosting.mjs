@@ -47,7 +47,12 @@ childProcess.execFileSync=(command,args,options)=>{
  }
  if(command!==${JSON.stringify(join(directory, 'gh'))})return real(command,args,options);
  if(args[1]==='/installation/repositories')return respond({total_count:1,repositories:[{full_name:'ExampleOrg/sample-project'}]});
- if(args[1]==='repos/ExampleOrg/sample-project/issues/1/comments')return respond(args.includes('--slurp')?[read().comments]:read().comments);
+ if(args[1]==='repos/ExampleOrg/sample-project/issues/1')return respond({number:1,state:'open',labels:[]});
+ if(args[1]==='repos/ExampleOrg/sample-project/issues/1/dependencies/blocked_by')return respond(args.includes('--slurp')?[[]]:[]);
+ if(args[1]==='repos/ExampleOrg/sample-project/issues/1/comments'){
+  const comments=[{user:{login:'project-operator'},body:'**RELEASED — Issue #1.**'},...read().comments];
+  return respond(args.includes('--slurp')?[comments]:comments);
+ }
  const query=args.find(arg=>arg.startsWith('query='))??'';
  if(query.includes('viewerCanUpdate'))return respond({data:{viewer:{login:'rehearsal[bot]'},repository:{nameWithOwner:'ExampleOrg/sample-project',issues:{nodes:[]}},organization:{projectV2:{id:'project',viewerCanUpdate:true,fields}}}});
  if(query.includes('items(first:'))return respond({data:{organization:{projectV2:{items:{pageInfo:{hasNextPage:false},nodes:[{id:'PVTI_selfhost',content:{__typename:'Issue',number:1,repository:{nameWithOwner:'ExampleOrg/sample-project'}},fieldValues:{pageInfo:{hasNextPage:false},nodes:[{name:read().status,field:{name:'Status'}}]}}]}}}}});

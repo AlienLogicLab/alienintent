@@ -28,6 +28,14 @@ test('OFFLINE synthetic self-hosting rehearsal composes CLI, signed events, isol
     const fixture=setupRehearsal(directory,source,port);
     const routingDir=join(directory,'.config','alienintent'); mkdirSync(routingDir,{recursive:true});
     const profile=JSON.parse(readFileSync(fixture.config,'utf8'));
+    profile.execution.biuLimits = { 'ExampleOrg/sample-project#1': { maxCycles: 3, maxReplacementsPerPhase: 1 } };
+    writeFileSync(fixture.config, JSON.stringify(profile));
+    const holdRecord = join(directory, 'founder-holds.json');
+    writeFileSync(holdRecord, JSON.stringify({ schemaVersion: 1, holds: [] }));
+    writeFileSync(join(routingDir, 'factory-director-host.json'), JSON.stringify({
+      schemaVersion: 1, wipLimit: 1, founderHoldRecord: holdRecord,
+      pauseFlag: join(directory, 'PAUSE'),
+    }));
     writeFileSync(join(routingDir,'model-routing.json'),JSON.stringify({schemaVersion:1,default:{provider:'codex',model:'synthetic-model'},providers:{codex:{executable:fixture.provider,permissionMode:'workspace-write'},claude:{executable:fixture.provider,permissionMode:'bypassPermissions'}},roles:{VERIFIER:{provider:'claude'}}}));
     const read=path=>JSON.parse(readFileSync(path,'utf8'));
     const launches=()=>existsSync(fixture.launches)?readFileSync(fixture.launches,'utf8').trim().split('\n').filter(Boolean).map(JSON.parse):[];
