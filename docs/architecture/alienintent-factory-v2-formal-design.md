@@ -3,7 +3,7 @@
 Date: 2026-09-29  
 Status: **Canonical AlienIntent Factory v2 architecture. Architecture only: no v1 runtime change, cutover, migration, repository-visibility change, or retirement is authorized merely by this document.**
 
-This document supersedes `AlienIntent_Factory_Director_Role_and_Buildout_2026-09-23.md` as a separate design authority and incorporates its enduring Factory Director/flywheel model. It also incorporates the Founder-approved private-canonical/public-publication repository architecture recorded on 2026-09-28. Historical decision records remain provenance, not competing design authorities.
+This document supersedes `AlienIntent_Factory_Director_Role_and_Buildout_2026-09-23.md` as a separate design authority and incorporates its enduring Factory Director/flywheel model. It also incorporates the Founder-approved private-canonical/public-publication repository architecture recorded on 2026-09-28, the protocol-neutral Operator Control Plane/interface design, and the foundational v1 architecture that remains correct for v2: Domain-Driven Design, the canonical Ubiquitous Language, modular-monolith bounded contexts, Hexagonal ports/adapters with Anti-Corruption Layers, provider-neutral contracts, Python engineering discipline, architecture fitness and advanced coding/testing standards. Historical decision/design records remain provenance and source evidence, not competing v2 design authorities.
 
 ## 1. Purpose
 
@@ -1002,8 +1002,338 @@ For every non-DONE WorkItem, the system must be able to answer mechanically:
 
 If the answer requires reconstructing a conversation, interpreting prose, or asking a model what probably happened, v2 has failed its design objective.
 
-## 32. Governing principle
+## 32. Foundational software architecture
+
+AlienIntent v2 preserves the strongest architectural ideas from v1 and makes them binding before implementation begins.
+
+### 32.1 Domain-Driven Design
+
+AlienIntent is modeled around its own domain, not around GitHub, model providers, FastAPI, SQLite, MCP, or any other framework/vendor.
+
+The default structural bias is:
+
+> **modular monolith + explicit DDD bounded contexts + Hexagonal ports/adapters + distribution only when evidence justifies it**
+
+Initial bounded-context candidates include:
+
+- Product Intent / Requirements;
+- Planning / BIU Compilation;
+- Execution;
+- Verification / Acceptance;
+- Evidence / Trajectory;
+- Decisions / Authority;
+- Factory Control / Scheduling;
+- Publication;
+- Integration / Adapters.
+
+Context boundaries are refined through the Ubiquitous Language and executable dependency rules before package topology is frozen.
+
+### 32.2 Ubiquitous Language
+
+`docs/architecture/alienintent-ubiquitous-language-v0.1.md` is the starting language baseline. v2 may refine it, but may not casually fork terminology in code, prompts, APIs, documents, dashboards, or adapters.
+
+Canonical terms include at minimum: Project, Proposal, Requirement Source, Source Record, Requirement, Requirement Provenance, Specification, Design Contract, Design Verification, Plan, Wave, BIU, BIU Compiler, Replan, Obligation, Obligation Conservation, Readiness Assessment, Allocation, Execution Packet, Worker, Invocation, Execution Cycle, Candidate, Candidate Custody, Observation, Verdict, Evidence, Quality Evidence, Engineering Trajectory, Attention Item, Founder Decision, Decision Inbox, Work Management Provider, Projection, Release, Monitoring, Factory Director, Learning Proposal and Assessment Feedback.
+
+External provider vocabulary is translated at Anti-Corruption Layers. A GitHub Issue is not intrinsically a Requirement; a Jira Epic is not intrinsically a Plan; a Project status is not canonical lifecycle truth.
+
+### 32.3 Hexagonal Architecture and Anti-Corruption Layers
+
+Domain code depends only on domain values and policies. Application services coordinate domain operations through abstract ports. Adapters implement ports. Composition performs dependency injection.
+
+The core must not import vendor SDK types, concrete databases, filesystem/process APIs, transport frameworks, or provider-specific payloads.
+
+Every external integration declares:
+
+- port contract version;
+- supported capabilities;
+- success/rejection/unavailable semantics;
+- identity/version/provenance mapping;
+- deterministic failure behavior;
+- conformance tests.
+
+Ambiguous or incomplete translation fails closed.
+
+### 32.4 Core port families
+
+The v2 foundation retains and rationalizes these port families:
+
+- `RequirementSource`
+- `WorkManagement`
+- `EventIngress`
+- `SourceControl`
+- `WorkerProvider`
+- `Workspace`
+- `OperationalStore`
+- `EvidenceStore`
+- `ContextSource`
+- `SecretProvider`
+- `ReadinessAssessment`
+- `AssessmentFeedback`
+- `Clock`
+- `Identifier`
+- Operator `Query`, `Command`, and `Event` ports
+- Publication input/output ports
+
+Ports express AlienIntent semantics only. Adapters absorb provider syntax, authentication, pagination, transport errors, and vendor identity.
+
+## 33. Input/output and Operator Control Plane architecture
+
+AlienIntent v2 is designed as a product with stable typed input/output contracts, not as a collection of internal scripts.
+
+### 33.1 Protocol-neutral application surface
+
+The Operator Control Plane exposes three semantic interfaces:
+
+- **Query** — observe canonical state and derived health without mutation;
+- **Command** — request an authorized state-changing operation through normal domain rules;
+- **Event** — submit or subscribe to durable domain observations/events.
+
+All protocol adapters must call the same application services. There is no transport-specific business logic and no direct-state mutation backdoor.
+
+### 33.2 Initial adapters
+
+The initial externally useful surface is deliberately small:
+
+1. **REST + OpenAPI** — first network API and canonical machine-readable public contract.
+2. **MCP** — first-class agent/tool interface over the same Query/Command/Event application services.
+3. **CLI** — mandatory local/operator adapter for bootstrap, diagnostics, automation and recovery.
+
+GraphQL is deferred until a demonstrated query-shape problem justifies it. A2A-style interfaces are reserved for actual agent-to-agent collaboration, not basic factory control. Domain-event export should be CloudEvents-compatible where practical without making CloudEvents a domain dependency.
+
+### 33.3 Canonical response semantics
+
+Queries never fabricate certainty. Relevant factual fields use explicit knowledge states such as:
+
+- `KNOWN`
+- `UNKNOWN`
+- `UNAVAILABLE`
+- `STALE`
+- `INCONSISTENT`
+
+`UNKNOWN` is never silently converted to zero, false, empty, DONE or healthy.
+
+Responses carry identity, version, provenance, observed-at time and source where needed to interpret truthfully.
+
+### 33.4 Minimum REST/MCP resource model
+
+The first API/MCP surface should cover the highest-leverage product concepts before convenience endpoints:
+
+- projects/profiles;
+- requirements and provenance;
+- work items / BIUs;
+- lifecycle state;
+- dependencies;
+- READY queue and execution claims;
+- blockers/decisions;
+- workers/invocations;
+- candidates/evidence;
+- effects/projections;
+- health/doctor diagnostics;
+- publication candidates/status.
+
+Mutation commands include only legitimate domain actions such as capture requirement, resolve decision, release work, cancel/abort, reconcile, retry where policy permits, and approve publication. Raw `set_status` or arbitrary state editing is not an API feature.
+
+### 33.5 Requirements/UX input interface
+
+The first purpose-built UX should optimize **product-intent capture and clarification**, not dashboard spectacle.
+
+The UX is an adapter over the same Requirements/Decision/Query ports and should support:
+
+- submit requirement/proposal in natural language or structured form;
+- preserve exact source and provenance;
+- show the canonical interpretation separately from source text;
+- expose ambiguity, missing authority and unresolved questions;
+- show requirement relationships/dependencies;
+- show lifecycle/progress from CAPTURE through DONE;
+- allow authoritative clarification/decision without editing internal state directly;
+- show specification/design/plan/BIU derivation and traceability;
+- make `why is this waiting?` mechanically answerable;
+- accept external UX/product artifacts as provenance-bearing inputs where configured.
+
+The UX may use models to assist interpretation, but authority-bearing mutations flow through typed application commands and deterministic policy.
+
+## 34. Python engineering standard
+
+Python is the implementation language for the v2 control plane and must be treated as a production engineering choice, not a scripting convenience.
+
+### 34.1 Repository and dependency structure
+
+- use a `src/` layout;
+- organize packages by approved bounded contexts, not framework/vendor;
+- keep domain/application/ports/adapters/composition distinguishable;
+- use explicit dependency injection in composition;
+- no service locator;
+- no shared mutable global configuration/state;
+- no vendor/framework objects in domain interfaces.
+
+### 34.2 Type and data discipline
+
+- complete meaningful type annotations at public/internal boundaries;
+- typed immutable domain value objects for IDs, versions, authority, grants and evidence refs;
+- constructors validate invariants;
+- mutable orchestration/persistence objects stay outside domain values;
+- explicit result/error categories rather than stringly typed control flow;
+- exhaustiveness where practical for enums/state transitions;
+- schemas/versioning for every durable serialized contract.
+
+Static checking uses `mypy` and/or `pyright` at a strictness level chosen once the package baseline exists. Formatting/linting uses `ruff`-class tooling with a single canonical configuration.
+
+### 34.3 Async/resource safety
+
+- cancellation propagates;
+- timeouts and retries are bounded;
+- subprocesses, sessions, files and DB transactions close on every exit path;
+- blocking Git/provider/database work does not stall the event loop;
+- retry policy is centralized data/policy, not nested ad hoc loops;
+- shutdown is explicit and testable.
+
+### 34.4 Test strategy
+
+Use the cheapest discriminating proof first:
+
+1. pure unit tests for invariants and transition functions;
+2. property-based/state-machine tests for lifecycle and replay;
+3. port contract tests shared by every adapter;
+4. targeted integration tests at real boundaries;
+5. deterministic test-worker scenarios for factory behavior;
+6. end-to-end proof only where integration itself is the requirement.
+
+Tests must prove negative paths. A guard that has never been proven red is not trusted evidence.
+
+### 34.5 Architecture fitness
+
+CI mechanically rejects, where practical:
+
+- vendor SDK imports in domain;
+- reverse dependency violations;
+- adapter leakage into application/domain;
+- direct DB/state mutation outside approved persistence services;
+- direct Project/GitHub lifecycle authority;
+- duplicate transition implementations;
+- untyped public contract drift;
+- secret/sensitive diagnostic leakage;
+- unbounded retry/timeout paths;
+- unsupported dependency cycles;
+- architecture rules without negative controls.
+
+### 34.6 Coding standard
+
+Implementation favors clarity over cleverness:
+
+- small cohesive modules;
+- pure functions for policy/selection/transition logic;
+- explicit invariants near the code that owns them;
+- composition over inheritance;
+- exhaustive typed state rather than boolean combinations;
+- deterministic identifiers/idempotency keys where semantics require them;
+- structured logging with correlation IDs and sanitized details;
+- docstrings/comments explain invariants and rationale, not obvious syntax;
+- no speculative abstraction without a second real consumer or clear invariant;
+- no one-off issue-number branches in production control code.
+
+Refactoring toward simplicity is part of correctness, not cosmetic cleanup.
+
+## 35. Cognition architecture and local-model selection
+
+### 35.1 Model-neutral core
+
+No model is part of canonical control logic. Factory Director cognition is an adapter/provider behind typed cognition contracts. Changing model must not change lifecycle semantics or canonical state rules.
+
+### 35.2 Director cognition role
+
+The model may:
+
+- interpret ambiguous product intent;
+- propose specification/design/plan artifacts;
+- classify novel blockers;
+- choose among already-authorized nontrivial coordination options;
+- explain canonical state;
+- propose commands.
+
+The model may not directly:
+
+- mutate lifecycle state;
+- invent priority;
+- bypass dependencies/WIP;
+- fabricate evidence/effect completion;
+- change architecture authority;
+- publish private artifacts;
+- grant itself new tool authority.
+
+### 35.3 Current local-model evaluation candidates
+
+The current Founder-directed comparison is:
+
+- **Qwen3.5-9B** — general local Director cognition baseline;
+- **Stanford/NVIDIA CLM-8B** — specifically interesting because reusable/cached agent-action behavior may materially reduce repeated Director reasoning cost and latency.
+
+No other model is in the canonical shortlist unless explicitly added by the Founder.
+
+Model choice is made by a versioned benchmark over real or faithfully replayed Director episodes, not generic benchmark reputation. Required dimensions include:
+
+- exact state reconstruction;
+- legal next-action selection;
+- priority/dependency/WIP discipline;
+- authority restraint;
+- blocker classification;
+- structured-output/port-contract adherence;
+- recovery quality;
+- context-window sufficiency;
+- latency and throughput on target hardware;
+- token/compute efficiency;
+- repeated-task cache/reuse benefit;
+- escalation rate to frontier models;
+- disagreement with deterministic policy (must be zero on mechanically decidable rules).
+
+Fine-tuning/QLoRA is deferred until baseline prompting, normalized state packets and benchmark evidence show a specific repeatable deficiency worth training.
+
+### 35.4 Shadow-first deployment
+
+A local Director model first runs shadow-only against canonical state packets. It produces proposed typed actions and explanations but receives no mutation authority. Promotion requires demonstrated correctness on the benchmark corpus and live shadow traffic.
+
+## 36. Implementation-agent policy
+
+The initial v2 foundation is built with **Claude Code as the default PRODUCER implementation agent** because the Founder currently judges it stronger for this architecture-heavy foundation work.
+
+This is an execution policy, not a product dependency. AlienIntent remains provider-neutral.
+
+Independent verification uses a separate invocation/workspace/context and may use another capable model/provider where that materially strengthens independence. Codex is not the default foundation builder.
+
+Every implementation assignment must point to:
+
+- exact architecture/design authority;
+- exact Work Unit;
+- immutable baseline;
+- bounded files/scope;
+- acceptance tests/proof obligations;
+- prohibited behavior;
+- candidate publication requirements.
+
+The implementation agent is never asked to infer project plan or architecture from repository history.
+
+## 37. Requirements-first delivery discipline
+
+The architecture is implemented requirement-by-requirement through one canonical v2 Project Plan.
+
+Planning rules:
+
+1. Every Work Unit maps to explicit `SF-REQ-*` requirements and architecture sections.
+2. Build the smallest vertical capability that produces new usable/provable value.
+3. Do not implement polish before prerequisite correctness.
+4. Prefer one canonical mechanism over compatibility wrappers and duplicate paths.
+5. Do not port v1 code merely because it exists; port only proven requirements/invariants.
+6. Reuse v1 tests/incidents as negative-control evidence where semantics remain valid.
+7. Each milestone has an executable demonstration and an explicit exit criterion.
+8. A milestone may defer lower-value requirements, but it must never hide them; deferred requirements remain mapped to a later milestone.
+9. Work Unit order follows dependencies and leverage, not historical Issue order.
+10. Optimize for **minimal work / maximum verified capability**.
+
+The canonical execution companion is `docs/decisions/alienintent-v2-canonical-project-plan.md`. That plan may evolve under normal planning authority; this architecture document owns the invariants it must respect.
+
+## 38. Governing principle
 
 > **AlienIntent v2 should be difficult to make clever and easy to prove correct.**
 
 The intelligence belongs in creating and improving software. The factory mechanism itself should be boring, deterministic machinery.
+
+> **Efficient, elegant, refined, robust, resilient and reliable — Swiss-watch behavior achieved by reducing moving parts and proving every critical mechanism.**
