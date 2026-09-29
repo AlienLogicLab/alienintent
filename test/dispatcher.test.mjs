@@ -1499,3 +1499,133 @@ test("an unknown B-DISP directive is reported as invalid rather than ignored", a
   await relay.acceptEvent(resultEvent({ body: "<!-- B-DISP: INVOCATION=x RESULT=BANANA -->", id: "bogus-directive" }));
   assert.equal(relay.events.at(-1).outcome, "INVALID_RESULT_COMMENT");
 });
+
+// READY refill: a Project board fake whose Status the dispatcher itself moves.
+function refillSubject({ board, admit, ...overrides } = {}) {
+  const items = new Map(board.map(entry => [entry.issue, { repository: "ExampleOrg/sample-project", itemId: `PVTI_${entry.issue}`, ...entry }]));
+  const asked = [];
+  const fixture = subject({ authority: {
+    listItems: async () => [...items.values()].map(item => ({ ...item })),
+    resolveItem: async item => ({ repository: item.repository, issue: item.issue, itemId: item.itemId }),
+    currentStatus: async item => items.get(item.issue).status,
+    transition: async (item, status) => { fixture.transitions.push(`${item.issue}:${status}`); items.get(item.issue).status = status; },
+    enrichContentNode: async () => null, durableResult: async () => null,
+  }, admitReady: async request => { asked.push([request.item.issue, request.activeClaims]); return admit(request); }, ...overrides });
+  return { ...fixture, items, asked };
+}
+const admitted = { admitted: true, failures: [] };
+const refused = (...checks) => ({ admitted: false, failures: checks.map(check => ({ check, why: check })) });
+const wip = limit => ({ activeClaims }) => activeClaims < limit ? admitted : refused("wip_capacity_available");
+
+test("refill admits the highest-priority READY BIU and fills WIP up to the gate's limit", async () => {
+  const { relay, asked, transitions, launches } = refillSubject({ admit: wip(1), board: [
+    { issue: 310, status: "READY", priority: "P2" }, { issue: 312, status: "READY", priority: "P1" },
+    { issue: 311, status: "READY", priority: "P1" }, { issue: 313, status: "TASKS", priority: "P0" }] });
+  await relay.requestRefill();
+  assert.deepEqual(asked, [[311, 0], [312, 1]]);
+  assert.deepEqual(transitions, ["311:IMPLEMENT"]);
+  assert.deepEqual(launches, ["PRODUCER"]);
+  assert.equal(relay.state().active["ExampleOrg/sample-project#311:PRODUCER"].status, "IMPLEMENT");
+  assert.deepEqual(relay.state().admissionRefusals["ExampleOrg/sample-project#312"].checks, ["wip_capacity_available"]);
+});
+
+test("refill skips an ineligible higher-priority BIU, records its typed checks and admits the next", async () => {
+  const { relay, transitions, launches } = refillSubject({
+    admit: ({ item }) => item.issue === 320 ? refused("dependencies_satisfied", "agent_ready") : admitted,
+    board: [{ issue: 320, status: "READY", priority: "P0" }, { issue: 321, status: "READY", priority: "P3" }] });
+  await relay.requestRefill();
+  assert.deepEqual(transitions, ["321:IMPLEMENT"]);
+  assert.deepEqual(launches, ["PRODUCER"]);
+  const refusal = relay.state().admissionRefusals["ExampleOrg/sample-project#320"];
+  assert.deepEqual(refusal.checks, ["agent_ready", "dependencies_satisfied"]);
+  await relay.requestRefill();
+  assert.equal(relay.state().admissionRefusals["ExampleOrg/sample-project#320"].at, refusal.at);
+  assert.equal(relay.events.filter(event => event.outcome === "READY_REFUSED").length, 1);
+});
+
+test("refill counts only live claims, not a persisted record whose worker is gone", async () => {
+  const { relay, statePath, asked, transitions } = refillSubject({ isProcessAlive: () => false, admit: wip(1),
+    board: [{ issue: 330, status: "READY", priority: "P1" }] });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: { "ExampleOrg/sample-project#138:PRODUCER": {
+    invocationId: "gone", item: { repository: "ExampleOrg/sample-project", issue: 138 }, role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-25T00:00:00.000Z", pid: 4455 } } }));
+  await relay.requestRefill();
+  assert.deepEqual(asked, [[330, 0]]);
+  assert.deepEqual(transitions, ["330:IMPLEMENT"]);
+});
+
+test("refill counts a live claim against WIP and never re-admits a BIU it already claims", async () => {
+  const { relay, statePath, asked, transitions } = refillSubject({ isProcessAlive: pid => pid === 4455, admit: wip(1),
+    board: [{ issue: 340, status: "READY", priority: "P0" }, { issue: 341, status: "READY", priority: "P1" }] });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: { "ExampleOrg/sample-project#340:PRODUCER": {
+    invocationId: "live", item: { repository: "ExampleOrg/sample-project", issue: 340 }, role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-25T00:00:00.000Z", pid: 4455 } } }));
+  await relay.requestRefill();
+  assert.deepEqual(asked, [[341, 1]]);
+  assert.deepEqual(transitions, []);
+  assert.deepEqual(relay.state().admissionRefusals["ExampleOrg/sample-project#340"].checks, ["no_active_invocation"]);
+});
+
+test("a global refusal such as pause ends the pass without asking about lower-priority work", async () => {
+  const { relay, asked, transitions } = refillSubject({ admit: () => refused("factory_paused"),
+    board: [{ issue: 350, status: "READY", priority: "P0" }, { issue: 351, status: "READY", priority: "P1" }] });
+  await relay.requestRefill();
+  assert.deepEqual(asked, [[350, 0]]);
+  assert.deepEqual(transitions, []);
+});
+
+test("refill leaves a BIU another actor moved after the gate read it", async () => {
+  const fixture = refillSubject({ admit: () => { fixture.items.get(360).status = "TASKS"; return admitted; },
+    board: [{ issue: 360, status: "READY", priority: "P0" }] });
+  await fixture.relay.requestRefill();
+  assert.deepEqual(fixture.transitions, []);
+  assert.deepEqual(fixture.launches, []);
+});
+
+test("refill is inert without the gate or with execution disabled", async () => {
+  for (const overrides of [{ admitReady: undefined }, { executionEnabled: false }]) {
+    let listed = 0;
+    const { relay, transitions } = refillSubject({ admit: () => admitted, board: [{ issue: 370, status: "READY" }], ...overrides });
+    relay.options.authority.listItems = async () => { listed++; return []; };
+    await relay.requestRefill();
+    assert.equal(listed, 0); assert.deepEqual(transitions, []);
+  }
+});
+
+test("concurrent refill requests and the resulting IMPLEMENT webhook launch exactly one worker", async () => {
+  const { relay, transitions, launches } = refillSubject({ admit: wip(1),
+    board: [{ issue: 303, status: "READY", priority: "P0" }] });
+  relay.options.authority.enrichContentNode = async () => ({ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVTI_303" });
+  await Promise.all([relay.requestRefill(), relay.requestRefill(), relay.requestRefill()]);
+  await relay.acceptEvent(event("IMPLEMENT", "refill-echo"));
+  assert.deepEqual(transitions, ["303:IMPLEMENT"]);
+  assert.deepEqual(launches, ["PRODUCER"]);
+  assert.equal(relay.events.at(-1).outcome, "ACTIVE_INVOCATION_EXISTS");
+});
+
+test("a terminal worker result refills the freed WIP slot without a Status event", async () => {
+  const { relay, children, transitions, launches } = refillSubject({ admit: wip(1),
+    board: [{ issue: 303, status: "READY", priority: "P1" }, { issue: 304, status: "READY", priority: "P2" }] });
+  relay.options.authority.durableResult = async claim => claim.item.issue === 303 ? "VERIFY" : null;
+  await relay.requestRefill();
+  assert.deepEqual(transitions, ["303:IMPLEMENT"]);
+  children[0].emit("close", 0);
+  await new Promise(resolve => setTimeout(resolve, 20));
+  assert.deepEqual(transitions, ["303:IMPLEMENT", "303:VERIFY", "304:IMPLEMENT"]);
+  assert.deepEqual(launches, ["PRODUCER", "PRODUCER"]);
+});
+
+test("startup refills once and then on a periodic tick that stop cancels", async () => {
+  const timers = [];
+  const { relay, asked } = refillSubject({ admit: () => refused("dependencies_satisfied"), refillIntervalMs: 60000,
+    setTimeout: (callback, ms) => { const timer = { callback, ms, cleared: false }; timers.push(timer); return timer; },
+    clearTimeout: timer => { timer.cleared = true; },
+    board: [{ issue: 380, status: "READY", priority: "P0" }] });
+  await relay.startupReconcile();
+  assert.equal(asked.length, 1);
+  assert.equal(timers.at(-1).ms, 60000);
+  await timers.at(-1).callback();
+  await new Promise(resolve => setImmediate(resolve));
+  assert.equal(asked.length, 2);
+  assert.equal(timers.length, 2);
+  relay.stop();
+  assert.equal(timers.at(-1).cleared, true);
+});

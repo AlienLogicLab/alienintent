@@ -28,6 +28,12 @@ export function parseInvocationSignal(body, claim, roleNames = defaultRoleNames)
   return value === "RETURN_TO_IMPLEMENT" ? null : value;
 }
 
+// Project Priority is a P0..P5 single select; anything else is left unset and sorts last.
+function priorityOf(item) {
+  const name = item.fieldValues.nodes.find((value) => value.field?.name === "Priority")?.name;
+  return typeof name === "string" && /^P[0-9]$/.test(name) ? { priority: name } : {};
+}
+
 function parseRepository(repository) {
   const [owner, name] = repository.split("/");
   if (!owner || !name) throw new Error("repository must be owner/name");
@@ -74,7 +80,7 @@ export class GitHubAuthority {
     if (items.some(item => !Array.isArray(item.fieldValues?.nodes) || item.fieldValues.pageInfo?.hasNextPage !== false)) {
       throw new Error("Project item field values are unavailable or incomplete");
     }
-    return items.map((item) => ({ repository: this.repository, issue: item.content.number, itemId: item.id, status: item.fieldValues.nodes.find((value) => value.field?.name === "Status")?.name?.toUpperCase(), dependencies: [], founderException: false }));
+    return items.map((item) => ({ repository: this.repository, issue: item.content.number, itemId: item.id, status: item.fieldValues.nodes.find((value) => value.field?.name === "Status")?.name?.toUpperCase(), ...priorityOf(item), dependencies: [], founderException: false }));
   }
 
   enrichContentNode(contentNodeId, itemId) {

@@ -6,6 +6,9 @@ import { NodeStateLedger } from "./node-state-ledger.mjs";
 const defaultRoleNames = { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" };
 
 const routedSignal = claim => claim?.control ?? claim?.result;
+// Admission refusals that apply to every READY candidate end the refill pass.
+const globalRefusals = new Set(["wip_limit_known", "wip_capacity_known", "wip_capacity_available", "factory_paused", "factory_pause_unknown", "founder_holds_unknown"]);
+const priorityRank = item => /^P[0-9]$/.test(item.priority ?? "") ? Number(item.priority.slice(1)) : 10;
 const recoverable = outcome => ["COMPLETION_ERROR", "DURABLE_RESULT_MISSING", "WORKER_IDENTITY_MISMATCH"].includes(outcome);
 function workerBootstrap(role, item, invocationId, status, roleNames, workerDisplayNames = {}) {
   const displayName = workerDisplayNames[role] ?? (role === roleNames.PRODUCER ? "PRODUCER" : "VERIFIER");
@@ -19,7 +22,7 @@ function workerBootstrap(role, item, invocationId, status, roleNames, workerDisp
 }
 export function verifyWebhookSignature(secret, rawBody, signature) { if (!secret || !signature?.startsWith("sha256=")) return false; const expected = Buffer.from(`sha256=${crypto.createHmac("sha256", secret).update(rawBody).digest("hex")}`); const received = Buffer.from(signature); return expected.length === received.length && crypto.timingSafeEqual(expected, received); }
 export class EventRelay {
-  constructor(options) { this.options = options; this.ledger = new NodeStateLedger(options.statePath, options.ledgerPath, options.ledgerHooks); this.roleNames = options.roleNames ?? defaultRoleNames; this.roles = { IMPLEMENT: this.roleNames.PRODUCER, VERIFY: this.roleNames.VERIFIER, ACCEPT: this.roleNames.PRODUCER }; this.active = new Map(); this.deliveriesInFlight = new Set(); this.started = false; this.stopped = false; this.routing = new Map(); this.metrics = { projectLists: 0 }; this._events = []; }
+  constructor(options) { this.options = options; this.ledger = new NodeStateLedger(options.statePath, options.ledgerPath, options.ledgerHooks); this.roleNames = options.roleNames ?? defaultRoleNames; this.roles = { IMPLEMENT: this.roleNames.PRODUCER, VERIFY: this.roleNames.VERIFIER, ACCEPT: this.roleNames.PRODUCER }; this.active = new Map(); this.deliveriesInFlight = new Set(); this.started = false; this.stopped = false; this.routing = new Map(); this.metrics = { projectLists: 0, refills: 0 }; this.refilling = null; this.refillTimer = undefined; this._events = []; }
   fence() { return this.ledger.assertFence(); }
   isClosure(claim) { return claim?.role === this.roleNames.PRODUCER && claim.status === "ACCEPT"; }
   configuredWorkerLogin(role) { return this.options.workerLogins?.[role] ?? this.options.authority.workerLogins?.[role]; }
@@ -218,6 +221,7 @@ export class EventRelay {
             this.release(claim); this.active.delete(claim.invocationId);
             this.reconcileResources();
             if (completed && routedSignal(completed)) await this.resumeAfterClosure(completed);
+            await this.requestRefill();
           }
         } else await this.routeResult(claim, signal);
       }
@@ -534,6 +538,7 @@ export class EventRelay {
         if (active.closed || active.child?.exitCode != null || active.child?.signalCode != null) this.updateResource(active.invocationId, { exitedAt: new Date(this.now()).toISOString() });
         this.reconcileResources();
         if (completedClaim?.invocationId === active.invocationId) await this.resumeAfterClosure(completedClaim);
+        await this.requestRefill();
       }
     })();
     return active.completing;
@@ -578,6 +583,89 @@ export class EventRelay {
   stop() {
     this.stopped = true;
     for (const active of this.active.values()) this.cancelInspection(active);
+    if (this.refillTimer !== undefined) (this.options.clearTimeout ?? clearTimeout)(this.refillTimer);
+    this.refillTimer = undefined;
+  }
+  // A claim counts against WIP only while its worker is owned in this process or
+  // still alive. A persisted record whose process is gone is not active work.
+  liveClaims() {
+    return Object.entries(this.state().active ?? {}).filter(([lane, claim]) =>
+      [...this.active.values()].some(entry => entry.invocationId === claim.invocationId)
+      || this.ownedWorkAlive({ ...claim, lane }));
+  }
+  // READY refill: while WIP has room, admit the highest-priority READY BIU that the
+  // release-admission gate accepts, move it to IMPLEMENT and dispatch its PRODUCER.
+  // Runs after startup, on a periodic tick and after each terminal worker result.
+  // Concurrent requests coalesce into one follow-up pass, never a second admitter.
+  requestRefill() {
+    if (!this.options.admitReady || this.stopped || this.options.executionEnabled === false) return Promise.resolve();
+    if (this.refilling) { this.refillAgain = true; return this.refilling; }
+    this.refilling = (async () => {
+      try {
+        do { this.refillAgain = false; await this.refill(); } while (this.refillAgain && !this.stopped);
+      } catch (error) { this.emit({ outcome: "REFILL_ERROR", error: error.message }); }
+      finally { this.refilling = null; }
+    })();
+    return this.refilling;
+  }
+  scheduleRefill() {
+    if (!this.options.admitReady || this.stopped || this.refillTimer !== undefined) return;
+    const requested = this.options.refillIntervalMs ?? 300000;
+    const interval = Number.isFinite(requested) ? Math.min(3600000, Math.max(1000, requested)) : 300000;
+    this.refillTimer = (this.options.setTimeout ?? setTimeout)(() => {
+      this.refillTimer = undefined;
+      this.requestRefill().finally(() => this.scheduleRefill());
+    }, interval);
+    this.refillTimer?.unref?.();
+  }
+  async refill() {
+    this.state(); this.fence();
+    this.metrics.refills++;
+    const ready = (await this.options.authority.listItems())
+      .filter(item => item.status === "READY")
+      .sort((a, b) => priorityRank(a) - priorityRank(b) || a.issue - b.issue);
+    const refusals = {};
+    for (const listed of ready) {
+      if (this.stopped) return;
+      const key = this.biuKey(listed);
+      const live = this.liveClaims();
+      if (live.some(([, claim]) => claim.item?.repository === listed.repository && claim.item.issue === listed.issue)) {
+        refusals[key] = { issue: listed.issue, checks: ["no_active_invocation"] };
+        continue;
+      }
+      const verdict = await this.options.admitReady({ item: listed, activeClaims: live.length });
+      if (verdict?.admitted !== true) {
+        const failures = Array.isArray(verdict?.failures) && verdict.failures.length ? verdict.failures : [{ check: "admission_verdict_invalid" }];
+        const checks = [...new Set(failures.map(failure => String(failure?.check)))].sort();
+        refusals[key] = { issue: listed.issue, checks };
+        if (checks.some(check => globalRefusals.has(check))) break;
+        continue;
+      }
+      const item = await this.options.authority.resolveItem(listed);
+      this.fence();
+      // The gate read READY; a concurrent mover wins and this candidate is skipped.
+      if (await this.options.authority.currentStatus(item) !== "READY") continue;
+      await this.options.authority.transition(item, "IMPLEMENT");
+      if (await this.options.authority.currentStatus(item) !== "IMPLEMENT") {
+        refusals[key] = { issue: listed.issue, checks: ["transition_unconfirmed"] };
+        continue;
+      }
+      this.emit({ issue: item.issue, outcome: "READY_ADMITTED", priority: listed.priority ?? null, activeClaims: live.length });
+      // The IMPLEMENT webhook for this move meets the same lane guard and is a no-op.
+      await this.start(item, this.roleNames.PRODUCER, "IMPLEMENT");
+    }
+    this.recordRefusals(refusals);
+  }
+  // The latest typed refusal per READY BIU, so blocked supply shows its exact checks.
+  recordRefusals(refusals) {
+    const state = this.state(), previous = state.admissionRefusals ?? {};
+    const same = (key, value) => JSON.stringify(previous[key]?.checks) === JSON.stringify(value.checks);
+    const entries = Object.entries(refusals);
+    if (entries.length === Object.keys(previous).length && entries.every(([key, value]) => same(key, value))) return;
+    const at = new Date(this.now()).toISOString();
+    state.admissionRefusals = Object.fromEntries(entries.map(([key, value]) => [key, same(key, value) ? previous[key] : { ...value, at }]));
+    this.save(state);
+    for (const [key, value] of entries) if (!same(key, value)) this.emit({ issue: value.issue, outcome: "READY_REFUSED", biu: key, checks: value.checks });
   }
   async startupReconcile() {
     if (this.started || this.stopped) return;
@@ -666,5 +754,7 @@ export class EventRelay {
     // recovering current actionable Project work. Running it first can starve dispatch
     // for minutes when many retained resources require inspection.
     this.reconcileResources();
+    await this.requestRefill();
+    this.scheduleRefill();
   }
 }
