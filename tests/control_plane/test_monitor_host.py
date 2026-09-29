@@ -225,6 +225,23 @@ def test_launch_binds_the_owned_unit_to_the_monitor_invocation(world):
     assert actions == ["LAUNCH_INTENT", "LAUNCHED"]
 
 
+def test_host_retains_gap_intent_and_readback_events_in_its_store(world):
+    hosted = world.running()
+    store = hosted.liveness.store
+    authority = "authority:dispatch"
+    version, _ = store.read_state(PROFILE, authority)
+    store.commit(PROFILE, authority, version, {"schema_version": 1, "active": True,
+        "epoch": 1, "invocation": "fx-c5", "expires_at": T0 / 1_000_000 + 3600})
+    world.clock.now = T0 + 300 * 1_000_000
+
+    hosted.cycle()
+
+    records = store.list_states(PROFILE, "liveness-scan:")
+    assert any([event["kind"] for event in body["events"]] ==
+               ["liveness.gap", "liveness.recovery_intent", "liveness.readback_confirmed"]
+               for _, _, body in records)
+
+
 def test_host_refuses_to_run_outside_its_owned_unit(world):
     world.seed_pending()
     world.supervisor.launch(world.grant())
