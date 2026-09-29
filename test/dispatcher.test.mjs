@@ -1108,6 +1108,12 @@ for (const mode of ["explicit", "bot", "stale", "missing-time", "preflight-faile
     assert.deepEqual(f.relay.state().founderExceptions[claim.invocationId], prior);
   }
   assert.deepEqual(f.relay.state().diagnostics[claim.lane], prior);
+  if (mode === "preflight-failed") {
+    // The retry re-presents the operator's own admission event; it gains no new authority.
+    const recovery = f.relay.state().recovery[claim.lane];
+    assert.equal(recovery.reason, "PREFLIGHT_FAILED");
+    assert.deepEqual(recovery.operatorEvent.sender, received.payload.sender);
+  }
 });
 
 test("surviving closure hands off when its PID exits after the restart webhook", async () => {
@@ -1498,4 +1504,175 @@ test("an unknown B-DISP directive is reported as invalid rather than ignored", a
   const { relay } = subject();
   await relay.acceptEvent(resultEvent({ body: "<!-- B-DISP: INVOCATION=x RESULT=BANANA -->", id: "bogus-directive" }));
   assert.equal(relay.events.at(-1).outcome, "INVALID_RESULT_COMMENT");
+});
+
+// Typed recovery: a released or refused claim leaves a durable, typed reason on the lane,
+// and the refill step's single redrive pass re-drives only RETRY conditions that are due.
+const recoveryLane = "ExampleOrg/sample-project#303:PRODUCER";
+function recoverySubject(overrides = {}) {
+  let now = Date.parse("2026-09-29T00:00:00.000Z");
+  const f = subject({ now: () => now, ...overrides });
+  f.advance = ms => { now += ms; };
+  f.status = "IMPLEMENT";
+  f.relay.options.authority.currentStatus = async () => f.status;
+  return f;
+}
+
+test("preflight failure persists a typed RETRY condition that one redrive pass relaunches once", async () => {
+  let ok = false;
+  const f = recoverySubject({ preflight: async () => ({ ok, reason: "GITHUB_VERIFICATION_UNAVAILABLE" }) });
+  await f.relay.startupReconcile();
+  await f.relay.acceptEvent(event("IMPLEMENT", "preflight-down"));
+  const state = f.relay.state();
+  assert.equal(state.active[recoveryLane], undefined);
+  assert.equal(state.deliveries["preflight-down"].state, "PROCESSED");
+  const record = state.recovery[recoveryLane];
+  assert.equal(record.condition, "RETRY");
+  assert.equal(record.reason, "PREFLIGHT_FAILED");
+  assert.equal(record.status, "IMPLEMENT");
+  assert.equal(record.role, "PRODUCER");
+  assert.equal(record.preflightReason, "GITHUB_VERIFICATION_UNAVAILABLE");
+  assert.equal(record.attempts, 1);
+  assert.deepEqual(await f.relay.redriveRecoverable(), [], "a condition is not re-driven before it is due");
+  f.advance(60000);
+  ok = true;
+  assert.deepEqual((await f.relay.redriveRecoverable()).map(o => o.outcome), ["RECOVERY_REDRIVEN"]);
+  assert.deepEqual(f.launches, ["PRODUCER"]);
+  f.advance(3600000);
+  await f.relay.redriveRecoverable();
+  assert.deepEqual(f.launches, ["PRODUCER"], "a live claim shadows its lane's condition");
+});
+
+test("repeated preflight failure backs off and never regresses lifecycle state", async () => {
+  const f = recoverySubject({ preflight: async () => ({ ok: false }) });
+  await f.relay.startupReconcile();
+  await f.relay.acceptEvent(event("IMPLEMENT", "preflight-down"));
+  f.advance(60000);
+  await f.relay.redriveRecoverable();
+  const record = f.relay.state().recovery[recoveryLane];
+  assert.equal(record.attempts, 2);
+  assert.equal(Date.parse(record.notBefore) - Date.parse(record.at), 120000);
+  assert.deepEqual(f.transitions, []);
+  assert.deepEqual(f.launches, []);
+});
+
+test("a missing durable result records RETRY, is re-driven, and a routed result clears it", async () => {
+  const f = recoverySubject();
+  await f.relay.startupReconcile();
+  await f.relay.acceptEvent(event("IMPLEMENT", "first"));
+  f.children[0].emit("close", 1);
+  await new Promise(resolve => setImmediate(resolve));
+  const record = f.relay.state().recovery[recoveryLane];
+  assert.equal(record.reason, "DURABLE_RESULT_MISSING");
+  assert.equal(f.relay.state().active[recoveryLane], undefined);
+  f.advance(60000);
+  await f.relay.redriveRecoverable();
+  assert.deepEqual(f.launches, ["PRODUCER", "PRODUCER"]);
+  const invocationId = f.relay.state().active[recoveryLane].invocationId;
+  assert.notEqual(invocationId, record.invocationId);
+  await f.relay.acceptEvent(resultEvent({ invocationId, id: "routed" }));
+  assert.deepEqual(f.transitions, ["VERIFY"]);
+  assert.equal(f.relay.state().recovery[recoveryLane], undefined);
+});
+
+test("a stage limit is a typed BLOCKED condition: no relaunch, no Founder hold, no transition", async () => {
+  const f = recoverySubject({ biuLimits: { "ExampleOrg/sample-project#303": { maxCycles: 3, maxReplacementsPerPhase: 0 } } });
+  await f.relay.startupReconcile();
+  await f.relay.acceptEvent(event("IMPLEMENT", "first"));
+  f.children[0].emit("close", 1);
+  await new Promise(resolve => setImmediate(resolve));
+  f.advance(60000);
+  await f.relay.redriveRecoverable();
+  const state = f.relay.state();
+  assert.equal(state.recovery[recoveryLane].condition, "BLOCKED");
+  assert.equal(state.recovery[recoveryLane].reason, "PHASE_REPLACEMENT_LIMIT");
+  assert.equal(state.limitEscalations["ExampleOrg/sample-project#303"].outcome, "PHASE_REPLACEMENT_LIMIT");
+  assert.equal(state.founderExceptions, undefined);
+  f.advance(3600000);
+  await f.relay.redriveRecoverable();
+  assert.deepEqual(f.launches, ["PRODUCER"]);
+  assert.deepEqual(f.transitions, []);
+});
+
+test("a condition whose lane moved on is superseded without launching", async () => {
+  const f = recoverySubject({ preflight: async () => ({ ok: false }) });
+  await f.relay.startupReconcile();
+  await f.relay.acceptEvent(event("IMPLEMENT", "preflight-down"));
+  f.status = "DONE";
+  f.advance(60000);
+  assert.deepEqual((await f.relay.redriveRecoverable()).map(o => o.outcome), ["RECOVERY_SUPERSEDED"]);
+  assert.equal(f.relay.state().recovery[recoveryLane], undefined);
+  assert.deepEqual(f.launches, []);
+});
+
+test("a failed webhook delivery is kept and replayed once by the redrive pass", async () => {
+  let fail = true;
+  const f = recoverySubject();
+  f.relay.options.authority.enrichContentNode = async () => {
+    if (fail) throw new Error("GitHub unavailable");
+    return { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" };
+  };
+  await f.relay.startupReconcile();
+  await assert.rejects(f.relay.acceptEvent(event("IMPLEMENT", "lost")), /GitHub unavailable/);
+  const record = f.relay.state().recovery["delivery:lost"];
+  assert.equal(record.reason, "DELIVERY_FAILED");
+  assert.equal(record.error, "GitHub unavailable");
+  assert.equal(record.event.headers["x-github-delivery"], "lost");
+  assert.equal(f.relay.state().deliveries.lost, undefined);
+  fail = false;
+  f.advance(60000);
+  assert.deepEqual((await f.relay.redriveRecoverable()).map(o => o.outcome), ["DELIVERY_REPLAYED"]);
+  assert.deepEqual(f.launches, ["PRODUCER"]);
+  assert.equal(f.relay.state().recovery["delivery:lost"], undefined);
+  assert.equal(f.relay.state().deliveries.lost.state, "PROCESSED");
+});
+
+test("a persisted claim whose worker died is recorded as ORPHANED_CLAIM and re-driven", async () => {
+  let alive = true;
+  const f = recoverySubject({ isProcessAlive: () => alive });
+  f.relay.options.authority.listItems = async () => [{ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1", status: "IMPLEMENT" }];
+  writeFileSync(f.statePath, JSON.stringify({ deliveries: {}, active: { [recoveryLane]: {
+    invocationId: "orphan", item: { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" },
+    role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-28T00:00:00.000Z", pid: 4455 } } }));
+  await f.relay.startupReconcile();
+  assert.deepEqual(f.launches, [], "a live survivor is not replaced");
+  await f.relay.redriveRecoverable();
+  assert.equal(f.relay.state().recovery?.[recoveryLane], undefined, "a live survivor is not an orphan");
+  alive = false;
+  await f.relay.redriveRecoverable();
+  const record = f.relay.state().recovery[recoveryLane];
+  assert.equal(record.reason, "ORPHANED_CLAIM");
+  assert.equal(record.invocationId, "orphan");
+  f.advance(60000);
+  await f.relay.redriveRecoverable();
+  assert.deepEqual(f.launches, ["PRODUCER"]);
+  assert.notEqual(f.relay.state().active[recoveryLane].invocationId, "orphan");
+  assert.equal(f.relay.state().diagnostics[recoveryLane].outcome, "DURABLE_RESULT_MISSING");
+});
+
+test("redrive does nothing before startup reconciliation owns the persisted claims", async () => {
+  const f = recoverySubject({ isProcessAlive: () => false });
+  writeFileSync(f.statePath, JSON.stringify({ deliveries: {}, active: { [recoveryLane]: {
+    invocationId: "persisted", item: { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" },
+    role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-28T00:00:00.000Z", pid: 4455 } } }));
+  assert.deepEqual(await f.relay.redriveRecoverable(), []);
+  assert.equal(f.relay.state().recovery, undefined);
+});
+
+test("an orphaned claim whose Issue moved on is released instead of holding WIP", async () => {
+  const f = recoverySubject({ isProcessAlive: () => false });
+  writeFileSync(f.statePath, JSON.stringify({ deliveries: {}, active: { [recoveryLane]: {
+    invocationId: "orphan", item: { repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVT_1" },
+    role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-28T00:00:00.000Z", pid: 4455 } } }));
+  f.relay.started = true; // the claim appeared after startup, as a stale record would
+  await f.relay.redriveRecoverable();
+  assert.equal(f.relay.state().recovery[recoveryLane].reason, "ORPHANED_CLAIM");
+  f.status = "DONE";
+  f.advance(60000);
+  assert.deepEqual((await f.relay.redriveRecoverable()).map(o => o.outcome), ["RECOVERY_SUPERSEDED"]);
+  const state = f.relay.state();
+  assert.equal(state.active[recoveryLane], undefined);
+  assert.equal(state.recovery[recoveryLane], undefined);
+  assert.equal(state.diagnostics[recoveryLane].outcome, "ORPHANED_CLAIM_RELEASED");
+  assert.deepEqual(f.launches, []);
 });

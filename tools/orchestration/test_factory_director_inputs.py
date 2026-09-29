@@ -802,3 +802,28 @@ def test_default_app_read_failure_fails_closed(sources, monkeypatch):
     values = adapter()
     assert values.authoritative_state is False
     assert "app project unavailable" in adapter.last_failure
+
+
+def test_recovery_conditions_are_observed_without_changing_predicates(sources):
+    sources.issue(70, "IMPLEMENT")
+    before = sources.adapter().evaluate()
+    sources.state["recovery"] = {f"{REPO}#70:PRODUCER": {
+        "condition": "RETRY", "reason": "PREFLIGHT_FAILED", "lane": f"{REPO}#70:PRODUCER",
+        "item": {"repository": REPO, "issue": 70, "itemId": "PVTI_70"}, "role": "PRODUCER",
+        "status": "IMPLEMENT", "attempts": 2, "since": "2026-09-29T00:00:00.000Z",
+        "at": "2026-09-29T00:01:00.000Z", "notBefore": "2026-09-29T00:03:00.000Z"}}
+    sources.flush()
+    evaluation = sources.adapter().evaluate()
+    assert evaluation.inputs == before.inputs
+    assert evaluation.fingerprint == before.fingerprint
+    assert evaluation.observations["recoveryConditions"] == {f"{REPO}#70:PRODUCER": {
+        "condition": "RETRY", "reason": "PREFLIGHT_FAILED", "issue": 70, "role": "PRODUCER",
+        "status": "IMPLEMENT", "attempts": 2, "since": "2026-09-29T00:00:00.000Z",
+        "notBefore": "2026-09-29T00:03:00.000Z"}}
+
+
+def test_malformed_recovery_condition_fails_closed(sources):
+    sources.issue(70, "IMPLEMENT")
+    sources.state["recovery"] = {f"{REPO}#70:PRODUCER": {"condition": "PARKED", "reason": "X"}}
+    sources.flush()
+    assert sources.adapter().evaluate().inputs.authoritative_state is False

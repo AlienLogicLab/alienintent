@@ -144,7 +144,7 @@ The host reads these, and only these, through the read-only adapter
 |---|---|---|---|
 | Project #1 | GitHub, via `tools/live/project_materialization.py` `read_board` | complete board; Issue items of `AlienLogicLab/alienintent` only; one item per Issue; every item has a lifecycle Status | fail closed |
 | Retained Agent Ready assessment (TASKS only) | Issue comments containing `<!-- AGENT_READY_ASSESSMENT: {json} -->` (the native receipt the Factory Director posts beside the retained `docs/evidence/wave2-readiness-assessments/` record) | counted **only** in comments by a login in self-hosting `operator.authorizedGithubLogins`; JSON object with a string `disposition`. An unparsable marker from such a login fails closed. Markers from anyone else are ignored | not assessed |
-| Node runtime state | `paths.stateFile` from `selfHostingConfig` | object with an `active` map; optional `limitEscalations` and `founderExceptions` maps | fail closed |
+| Node runtime state | `paths.stateFile` from `selfHostingConfig` | object with an `active` map; optional `limitEscalations`, `founderExceptions` and `recovery` maps | fail closed |
 | Founder-hold record | `~/.local/state/alienintent/factory-director/founder-holds.json` | `{"schemaVersion": 1, "holds": [{"issue": <int>, "kind": "FOUNDER_DECISION", "reason": "<text>", "recordedAt"?: "...", "recordedBy"?: "..."}]}`; no other keys; no duplicates | **fail closed**. "No holds" is written as `"holds": []` |
 | Director inbox | `~/.local/state/alienintent/factory-director/inbox/` | entry = `<id>.json` directly inside (id `[A-Za-z0-9][A-Za-z0-9._-]*`); receipt = `processed/<id>.json`. A visible `*.json` file with any other name fails closed | **fail closed**. "No entries" is an empty directory |
 | Explicit pause | `~/.local/state/alienintent/factory-director/PAUSE` | presence only (any file type or content). A location that cannot be checked (for example, permission denied) fails closed | not paused |
@@ -183,6 +183,19 @@ Director obligations on these sources:
   first record a Founder hold on its Issue. Without the hold, the Issue stays eligible work
   and episodes keep launching. A newer escalation of the same BIU (a new `at`) needs a new
   acknowledgement.
+- **Recovery conditions.** The Node runtime records why a lane has no claim, or why a
+  webhook delivery failed, in `recovery`, keyed by lane (`<repo>#<issue>:<ROLE>`) or
+  `delivery:<id>`. Each entry has `condition` (`RETRY` or `BLOCKED`), a typed `reason`,
+  `attempts`, `since` and `notBefore`. `RETRY` (`PREFLIGHT_FAILED`,
+  `WORKER_TECHNICAL_FAILURE`, `DURABLE_RESULT_MISSING`, `COMPLETION_ERROR`,
+  `ORPHANED_CLAIM`, `DELIVERY_FAILED`) is re-driven by the runtime's
+  `redriveRecoverable()` pass. `BLOCKED` (`PHASE_REPLACEMENT_LIMIT`,
+  `BIU_LIMIT_PHASE_MISMATCH`, `EXECUTION_CYCLE_LIMIT`) is a technical blocker. The runtime
+  clears an entry when the lane routes a result, its Issue reaches `DONE`, or its Status
+  moves away. An entry on a lane that currently holds a live claim is history, not a
+  condition. The adapter lists entries under `recoveryConditions` in
+  `inputs.diagnostics.json`; they change no predicate. Neither condition is a Founder
+  decision or a reason to move lifecycle state backward.
 - **Founder exceptions.** A `FOUNDER_EXCEPTION` result leaves its Issue unclaimed in a
   worker state, so the mapping counts it as eligible work. Record a Founder hold for each
   open Founder exception. Until you do, the host keeps launching episodes for it.

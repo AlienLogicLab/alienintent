@@ -27,17 +27,22 @@ const authority = new GitHubAuthority({ gh: appClient.gh, owner: config.projectO
   projectNumber: config.projectNumber, repository: config.repository,
   workerLogins: config.workerLogins, roleNames: config.roleNames });
 const preflightScript = config.executables.preflight;
+// The reason is persisted on the lane's typed recovery condition.
 const preflight = async ({ role, item, invocationId, worktree, resource }) => {
+  if (!worktree || resource?.path !== worktree || resource?.invocationId !== invocationId) return { ok: false, reason: "WORKTREE_MISMATCH" };
+  let output, failed = false;
   try {
-    if (!worktree || resource?.path !== worktree || resource?.invocationId !== invocationId) return { ok: false };
     const worker = { ...config.workers[role], role, worktree, resource, invocationId };
-    const value = JSON.parse(execFileSync(config.executables.node, [preflightScript,
+    output = execFileSync(config.executables.node, [preflightScript,
       "--repository", config.repository, "--issue", String(item.issue), "--json"], {
       cwd: worker.worktree, encoding: "utf8", input: JSON.stringify(worker),
       env: workerEnvironment({ role, worker }),
-    }));
-    return { ok: value.safe_to_start === true };
-  } catch { return { ok: false }; }
+    });
+  } catch (error) { failed = true; output = error.stdout; }
+  let value;
+  try { value = JSON.parse(output); } catch { return { ok: false, reason: failed ? "PREFLIGHT_UNAVAILABLE" : "PREFLIGHT_OUTPUT_INVALID" }; }
+  if (!failed && value.safe_to_start === true) return { ok: true };
+  return { ok: false, reason: typeof value.classification === "string" ? value.classification : "PREFLIGHT_REFUSED" };
 };
 const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(event)),
   statePath: config.statePath, repository: config.repository, projectOwner: config.projectOwner,

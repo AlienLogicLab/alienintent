@@ -7,6 +7,39 @@ const defaultRoleNames = { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" };
 
 const routedSignal = claim => claim?.control ?? claim?.result;
 const recoverable = outcome => ["COMPLETION_ERROR", "DURABLE_RESULT_MISSING", "WORKER_IDENTITY_MISMATCH"].includes(outcome);
+// Typed recovery conditions (state.recovery): why a lane or delivery holds no claim and
+// what may re-drive it. RETRY is re-driven by redriveRecoverable(); BLOCKED is a typed
+// technical blocker that only a status change, a routed result or DONE clears. Neither
+// moves lifecycle state backward, and neither is a Founder decision.
+const recoveryConditions = {
+  PREFLIGHT_FAILED: "RETRY", WORKER_TECHNICAL_FAILURE: "RETRY", DURABLE_RESULT_MISSING: "RETRY",
+  COMPLETION_ERROR: "RETRY", ORPHANED_CLAIM: "RETRY", DELIVERY_FAILED: "RETRY",
+  PHASE_REPLACEMENT_LIMIT: "BLOCKED", BIU_LIMIT_PHASE_MISMATCH: "BLOCKED", EXECUTION_CYCLE_LIMIT: "BLOCKED",
+};
+const retryDelayMs = attempts => Math.min(3600000, 60000 * 2 ** Math.max(0, attempts - 1));
+const deliveryKey = delivery => `delivery:${delivery}`;
+const operatorEventRecord = event => ({
+  sender: event.sender,
+  changes: { field_value: event.changes?.field_value },
+  projects_v2_item: { updated_at: event.projects_v2_item?.updated_at },
+});
+// Only the fields acceptEvent reads, so a failed delivery can be replayed exactly.
+function replayableEvent(headers, payload) {
+  const item = payload?.projects_v2_item, comment = payload?.comment;
+  return {
+    headers: { "x-github-event": headers["x-github-event"], "x-github-delivery": headers["x-github-delivery"] },
+    payload: {
+      action: payload?.action,
+      ...(payload?.organization ? { organization: { login: payload.organization.login } } : {}),
+      ...(payload?.sender ? { sender: { type: payload.sender.type, login: payload.sender.login } } : {}),
+      ...(item ? { projects_v2_item: { id: item.id, node_id: item.node_id, content_node_id: item.content_node_id, updated_at: item.updated_at } } : {}),
+      ...(payload?.changes ? { changes: { field_value: payload.changes.field_value } } : {}),
+      ...(payload?.repository ? { repository: { full_name: payload.repository.full_name } } : {}),
+      ...(payload?.issue ? { issue: { number: payload.issue.number } } : {}),
+      ...(comment ? { comment: { id: comment.id, body: comment.body, created_at: comment.created_at, user: { login: comment.user?.login } } } : {}),
+    },
+  };
+}
 function workerBootstrap(role, item, invocationId, status, roleNames, workerDisplayNames = {}) {
   const displayName = workerDisplayNames[role] ?? (role === roleNames.PRODUCER ? "PRODUCER" : "VERIFIER");
   const verifierName = workerDisplayNames[roleNames.VERIFIER] ?? "VERIFIER";
@@ -163,12 +196,18 @@ export class EventRelay {
       throw error;
     }
   }
-  releaseFailedDelivery(delivery) {
+  releaseFailedDelivery(delivery, event, error) {
     const retryable = this.state();
-    if (retryable.deliveries[delivery]?.state === "PROCESSING") {
-      delete retryable.deliveries[delivery];
-      this.save(retryable);
-    }
+    if (retryable.deliveries[delivery]?.state === "PROCESSING") delete retryable.deliveries[delivery];
+    // GitHub does not redeliver a failed webhook on its own; keep the exact event.
+    if (event) this.recordRecovery(retryable, deliveryKey(delivery), "DELIVERY_FAILED", { event, error: error?.message ?? String(error) });
+    this.save(retryable);
+  }
+  processedDelivery(delivery) {
+    const processed = this.state();
+    processed.deliveries[delivery] = { state: "PROCESSED", at: new Date().toISOString() };
+    if (processed.recovery) delete processed.recovery[deliveryKey(delivery)];
+    this.save(processed);
   }
   async acceptEvent({ headers, payload }) {
     this.state(); this.fence();
@@ -180,8 +219,8 @@ export class EventRelay {
     const status = this.eventStatus(payload), role = this.roles[status]; if (!role || !payload?.projects_v2_item?.content_node_id || !payload.projects_v2_item.id) return { accepted: false, reason: "IRRELEVANT" };
     const delivery = headers["x-github-delivery"];
     if (!this.reserveDelivery(delivery)) return { accepted: true, duplicate: true };
-    try { const identity = await this.options.authority.enrichContentNode(payload.projects_v2_item.content_node_id, payload.projects_v2_item.node_id ?? payload.projects_v2_item.id); if (!identity?.repository || !Number.isInteger(identity.issue) || !identity.itemId) { this.emit({ outcome: "CONTENT_ENRICHMENT_FAILED" }); } else await this.start(identity, role, status, undefined, payload); const processed = this.state(); processed.deliveries[delivery] = { state: "PROCESSED", at: new Date().toISOString() }; this.save(processed); return { accepted: true }; }
-    catch (error) { this.releaseFailedDelivery(delivery); throw error; }
+    try { const identity = await this.options.authority.enrichContentNode(payload.projects_v2_item.content_node_id, payload.projects_v2_item.node_id ?? payload.projects_v2_item.id); if (!identity?.repository || !Number.isInteger(identity.issue) || !identity.itemId) { this.emit({ outcome: "CONTENT_ENRICHMENT_FAILED" }); } else await this.start(identity, role, status, undefined, payload); this.processedDelivery(delivery); return { accepted: true }; }
+    catch (error) { this.releaseFailedDelivery(delivery, replayableEvent(headers, payload), error); throw error; }
     finally { this.deliveriesInFlight.delete(delivery); }
   }
   async acceptResultComment(delivery, payload) {
@@ -221,8 +260,8 @@ export class EventRelay {
           }
         } else await this.routeResult(claim, signal);
       }
-      const processed = this.state(); processed.deliveries[delivery] = { state: "PROCESSED", at: new Date().toISOString() }; this.save(processed); return { accepted: true };
-    } catch (error) { this.releaseFailedDelivery(delivery); throw error; }
+      this.processedDelivery(delivery); return { accepted: true };
+    } catch (error) { this.releaseFailedDelivery(delivery, replayableEvent({ "x-github-event": "issue_comment", "x-github-delivery": delivery }, payload), error); throw error; }
     finally { this.deliveriesInFlight.delete(delivery); }
   }
   now() { return (this.options.now ?? Date.now)(); }
@@ -234,12 +273,106 @@ export class EventRelay {
     const previous = state.diagnostics[claim.lane];
     const consumed = previous?.invocationId === claim.invocationId && ["FOUNDER_EXCEPTION", "VERIFY_TO_VERIFY", "ACCEPT_TO_ACCEPT", "REJECT_TO_IMPLEMENT", "DONE_TO_DONE", "RETURN_TO_IMPLEMENT_TO_IMPLEMENT", "EXECUTION_CYCLE_LIMIT"].includes(previous.outcome);
     state.diagnostics[claim.lane] = { invocationId: claim.invocationId, item: claim.item, role: claim.role, status: claim.status, ...(current.workerLogin !== undefined ? { workerLogin: current.workerLogin } : {}), signalEvidence: current.signalEvidence ?? claim.signalEvidence, pendingSignal: current.pendingSignal, pendingStatus: current.pendingStatus, pendingOperatorEvent: current.pendingOperatorEvent, result: current.result, control: current.control, startedAt: claim.startedAt, at: new Date(this.now()).toISOString(), outcome: consumed ? previous.outcome : outcome, ...evidence };
+    this.recordLaneRecovery(state, claim, state.diagnostics[claim.lane].outcome);
     this.save(state);
     this.emit({ issue: claim.item.issue, role: claim.role, invocationId: claim.invocationId, outcome, ...evidence });
   }
   release(claim) {
     const state = this.state();
     if (state.active[claim.lane]?.invocationId === claim.invocationId) { delete state.active[claim.lane]; this.save(state); }
+  }
+  // attempts counts consecutive failures since the lane last routed a result.
+  recordRecovery(state, key, reason, fields) {
+    const condition = recoveryConditions[reason];
+    if (!condition) return;
+    state.recovery ??= {};
+    const previous = state.recovery[key];
+    const attempts = (previous?.attempts ?? 0) + 1, at = new Date(this.now()).toISOString();
+    state.recovery[key] = { ...fields, condition, reason, attempts, since: previous?.since ?? at, at,
+      notBefore: new Date(this.now() + retryDelayMs(attempts)).toISOString() };
+  }
+  recordLaneRecovery(state, claim, reason, evidence = {}) {
+    const role = claim.role ?? claim.lane.slice(claim.lane.lastIndexOf(":") + 1);
+    const status = claim.status ?? (role === this.roleNames.VERIFIER ? "VERIFY" : "IMPLEMENT");
+    this.recordRecovery(state, claim.lane, reason, { lane: claim.lane, item: claim.item, role, status,
+      ...(claim.invocationId ? { invocationId: claim.invocationId } : {}), ...evidence });
+  }
+  clearRecovery(state, key) {
+    if (!state.recovery?.[key]) return false;
+    delete state.recovery[key];
+    return true;
+  }
+  laneOwned(lane) { return [...this.active.values()].some(entry => entry.lane === lane); }
+  // A persisted claim whose worker is gone and that no in-process owner will complete.
+  recordOrphanedClaims() {
+    for (const [lane, claim] of Object.entries(this.state().active ?? {})) {
+      if (this.laneOwned(lane) || this.routing.has(claim.invocationId) || !claim.item) continue;
+      if (this.ownedWorkAlive({ ...claim, lane })) continue;
+      const state = this.state();
+      if (state.active[lane]?.invocationId !== claim.invocationId) continue;
+      if (state.recovery?.[lane]?.reason === "ORPHANED_CLAIM" && state.recovery[lane].invocationId === claim.invocationId) continue;
+      this.recordLaneRecovery(state, { ...claim, lane }, "ORPHANED_CLAIM");
+      this.save(state);
+      this.emit({ issue: claim.item.issue, role: claim.role, invocationId: claim.invocationId, outcome: "ORPHANED_CLAIM" });
+    }
+  }
+  deferRecovery(key, record) {
+    const state = this.state();
+    if (state.recovery?.[key]?.at !== record.at) return;
+    state.recovery[key].notBefore = new Date(this.now() + retryDelayMs(record.attempts ?? 1)).toISOString();
+    this.save(state);
+  }
+  recoveryConditions() {
+    return Object.entries(this.state().recovery ?? {}).map(([key, record]) => ({ key, ...record }));
+  }
+  // One bounded pass for the refill step: re-drive due RETRY conditions exactly once
+  // each, clear conditions whose lane has moved on, and never start a timer or loop.
+  async redriveRecoverable() {
+    if (!this.started || this.stopped) return [];
+    this.fence();
+    this.recordOrphanedClaims();
+    const outcomes = [];
+    for (const [key, record] of Object.entries(this.state().recovery ?? {})) {
+      if (this.stopped) break;
+      if (Date.parse(record.notBefore) > this.now()) continue;
+      try {
+        if (record.reason === "DELIVERY_FAILED") {
+          await this.acceptEvent(record.event);
+          const state = this.state();
+          if (state.recovery?.[key]?.at === record.at && this.clearRecovery(state, key)) this.save(state);
+          outcomes.push({ key, outcome: "DELIVERY_REPLAYED" });
+          continue;
+        }
+        const claim = this.state().active[key];
+        if (claim && (this.laneOwned(key) || this.ownedWorkAlive({ ...claim, lane: key }))) continue;
+        const status = await this.options.authority.currentStatus(record.item);
+        if (status !== record.status) {
+          // A dead, unowned claim must not outlive its lifecycle state (for example a
+          // DONE Issue still counted as WIP). An unsettled routing intent is left to
+          // startup reconciliation, which owns interrupted transitions.
+          if (claim && !claim.pendingSignal && !routedSignal(claim)) {
+            this.diagnostic({ ...claim, lane: key }, "ORPHANED_CLAIM_RELEASED", { observedStatus: status });
+            this.release({ ...claim, lane: key });
+          }
+          const state = this.state();
+          if (state.recovery?.[key]?.at === record.at && this.clearRecovery(state, key)) this.save(state);
+          this.emit({ issue: record.item.issue, role: record.role, outcome: "RECOVERY_SUPERSEDED", reason: record.reason, observedStatus: status });
+          outcomes.push({ key, outcome: "RECOVERY_SUPERSEDED" });
+          continue;
+        }
+        if (record.condition !== "RETRY") { this.deferRecovery(key, record); continue; }
+        const launched = await this.start(record.item, record.role, record.status, undefined, record.operatorEvent);
+        // A refusal that recorded no newer condition must not be retried hot.
+        if (!launched) this.deferRecovery(key, record);
+        outcomes.push({ key, outcome: launched ? "RECOVERY_REDRIVEN" : "RECOVERY_DEFERRED" });
+      } catch (error) {
+        const state = this.state();
+        if (state.recovery?.[key]?.at === record.at && record.reason !== "DELIVERY_FAILED") this.deferRecovery(key, record);
+        this.emit({ outcome: "RECOVERY_REDRIVE_ERROR", key, error: error.message });
+        outcomes.push({ key, outcome: "RECOVERY_REDRIVE_ERROR" });
+      }
+    }
+    return outcomes;
   }
   async routeResult(claim, result) {
     this.fence();
@@ -301,6 +434,7 @@ export class EventRelay {
       if (state.active[claim.lane]?.invocationId === claim.invocationId) {
         const field = result === "RETURN_TO_IMPLEMENT" ? "control" : "result";
         state.active[claim.lane][field] = result;
+        if (this.clearRecovery(state, claim.lane)) this.save(state);
         if (this.isClosure(claim)) {
           state.closures ??= {};
           state.closures[claim.invocationId] = { ...state.active[claim.lane], completedAt: new Date(this.now()).toISOString() };
@@ -351,6 +485,9 @@ export class EventRelay {
     }
     let persisted = this.state();
     if (persisted.limitEscalations?.[this.biuKey(item)]?.outcome === "EXECUTION_CYCLE_LIMIT") {
+      if (persisted.recovery?.[lane]?.reason !== "EXECUTION_CYCLE_LIMIT") {
+        this.recordLaneRecovery(persisted, { lane, item, role, status }, "EXECUTION_CYCLE_LIMIT"); this.save(persisted);
+      }
       this.emit({ issue: item.issue, role, outcome: "EXECUTION_CYCLE_LIMIT", biu: this.biuKey(item) }); return false;
     }
     if (operatorEvent && (routedSignal(persisted.active[lane]) === "FOUNDER_EXCEPTION"
@@ -361,11 +498,7 @@ export class EventRelay {
       // Preserve the triggering event while the stopped invocation still owns
       // its PID. Fresh admission validates its author and remote time after exit.
       persisted.active[lane].pendingStatus = status;
-      persisted.active[lane].pendingOperatorEvent = {
-        sender: operatorEvent.sender,
-        changes: { field_value: operatorEvent.changes?.field_value },
-        projects_v2_item: { updated_at: operatorEvent.projects_v2_item?.updated_at },
-      };
+      persisted.active[lane].pendingOperatorEvent = operatorEventRecord(operatorEvent);
       this.save(persisted);
     }
     if ((status === "ACCEPT" || this.isClosure(persisted.active[lane])) && persisted.active[lane] && persisted.active[lane].status !== status) {
@@ -437,10 +570,12 @@ export class EventRelay {
     if (limit && (status === "IMPLEMENT" || status === "VERIFY")) {
       const account = this.limitState(persisted, item, status);
       if (account.phase !== status) {
+        this.recordLaneRecovery(persisted, { lane, item, role, status }, "BIU_LIMIT_PHASE_MISMATCH", { expectedPhase: account.phase });
         this.limitHold(persisted, item, "BIU_LIMIT_PHASE_MISMATCH", { cycle: account.cycle, expectedPhase: account.phase, observedPhase: status });
         return false;
       }
       if (account.phaseInvocations.length >= 1 + limit.maxReplacementsPerPhase) {
+        this.recordLaneRecovery(persisted, { lane, item, role, status }, "PHASE_REPLACEMENT_LIMIT");
         this.limitHold(persisted, item, "PHASE_REPLACEMENT_LIMIT", { cycle: account.cycle, phase: status, maxReplacementsPerPhase: limit.maxReplacementsPerPhase });
         return false;
       }
@@ -459,6 +594,15 @@ export class EventRelay {
       const preflight = await this.options.preflight({ role, item, invocationId, worktree: active.worktree, resource });
       if (!preflight?.ok || this.stopped) {
         this.updateResource(invocationId, { admissionFailed: true });
+        if (!this.stopped) {
+          // Diagnostics keep the lane's prior history (a Founder exception gates
+          // re-admission); the retry keeps the exact operator event it was admitted on.
+          const failed = this.state();
+          this.recordLaneRecovery(failed, active, "PREFLIGHT_FAILED", {
+            ...(preflight?.reason ? { preflightReason: preflight.reason } : {}),
+            ...(operatorEvent ? { operatorEvent: operatorEventRecord(operatorEvent) } : {}) });
+          this.save(failed);
+        }
         this.release(active); this.active.delete(invocationId); this.reconcileResources();
         this.emit({ issue: item.issue, role, outcome: this.stopped ? "SERVICE_STOPPED" : "PREFLIGHT_FAILED" }); return false;
       }
@@ -592,6 +736,8 @@ export class EventRelay {
         // its lane. Retained resources and diagnostics are separate from WIP.
         for (const role of Object.values(this.roleNames)) {
           const lane = this.lane(item, role);
+          const cleared = this.state();
+          if (this.clearRecovery(cleared, lane)) this.save(cleared);
           const claim = snapshot.active[lane];
           if (!claim) continue;
           const owned = { ...claim, lane, item, role };

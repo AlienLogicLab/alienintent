@@ -11,7 +11,7 @@ The adapter reads only durable sources and derives the host's nine-boolean
   than failing the whole board closed), plus Issue comments for retained Agent Ready
   assessments;
 * the Node runtime state file named by ``self-hosting.json`` ``paths.stateFile``
-  (``active``, ``limitEscalations``, ``founderExceptions``);
+  (``active``, ``limitEscalations``, ``founderExceptions``, ``recovery``);
 * the Founder-hold record, the explicit-pause flag and the Director inbox named
   by the host configuration.
 
@@ -229,6 +229,10 @@ class RuntimeView:
     claimed_issues: frozenset[int]
     escalations: tuple[tuple[str, dict], ...]
     founder_exceptions: int
+    # Typed recovery conditions the Node runtime recorded for unclaimed lanes and failed
+    # deliveries. Observation only: RETRY is re-driven by the runtime, BLOCKED is a technical
+    # blocker. Neither is a Founder decision or a reason to move lifecycle state.
+    recovery: tuple[tuple[str, dict], ...] = ()
 
 
 def validate_runtime_state(raw, repository: str) -> RuntimeView:
@@ -258,7 +262,24 @@ def validate_runtime_state(raw, repository: str) -> RuntimeView:
     for key, entry in exceptions.items():
         if not isinstance(entry, dict):
             raise SourceUnavailable(f"runtime founderExceptions entry {key!r} is malformed")
-    return RuntimeView(len(active), frozenset(claimed), tuple(sorted(escalations.items())), len(exceptions))
+    recovery = raw.get("recovery", {})
+    if not isinstance(recovery, dict):
+        raise SourceUnavailable("runtime recovery is not an object")
+    for key, entry in recovery.items():
+        if (not isinstance(entry, dict) or entry.get("condition") not in ("RETRY", "BLOCKED")
+                or not isinstance(entry.get("reason"), str)):
+            raise SourceUnavailable(f"runtime recovery entry {key!r} is malformed")
+    return RuntimeView(len(active), frozenset(claimed), tuple(sorted(escalations.items())), len(exceptions),
+                       tuple(sorted(recovery.items())))
+
+
+def recovery_observation(entry: dict) -> dict:
+    item = entry.get("item") if isinstance(entry.get("item"), dict) else {}
+    return {key: value for key, value in {
+        "condition": entry["condition"], "reason": entry["reason"], "issue": item.get("issue"),
+        "role": entry.get("role"), "status": entry.get("status"), "attempts": entry.get("attempts"),
+        "since": entry.get("since"), "notBefore": entry.get("notBefore"),
+    }.items() if value is not None}
 
 
 def escalation_receipt_id(key: str, entry: dict) -> str:
@@ -471,6 +492,7 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
         "unresolvedLimitEscalations": list(escalations),
         "escalationReceiptIds": {key: escalation_receipt_id(key, entry) for key, entry in runtime.escalations},
         "founderExceptions": runtime.founder_exceptions,
+        "recoveryConditions": {key: recovery_observation(entry) for key, entry in runtime.recovery},
         "unprocessedInboxEntries": list(unprocessed),
     }
     fingerprint = sha256(json.dumps({
