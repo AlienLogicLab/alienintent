@@ -1,0 +1,13 @@
+# MAINT-146 Producer no-change implementation record
+
+Issue: AlienLogicLab/alienintent#146. Admission source: `c1c38fc5b5d8fa7aa1ace7ddb672fd1f23015c32` on remote `main`; assessed packet `docs/work-units/MAINT-146.md` has SHA-256 `d9835bc8f3ea8a13d65fb8bd63b00fb320439f247f9c0e93edd10c085c8552df`. This candidate reuses the already merged implementation `921fdfbf3783bf73749fa3b7957fa2c88460560e` and its follow-up `2566f44` that counts only native READY assessments. No Director behavior is changed here.
+
+## Acceptance review
+
+1. `derive` counts actual READY board items and TASKS items whose latest retained native disposition is READY. HOLD, CLARIFY, and SPLIT are excluded. `test_hold_assessment_does_not_inflate_prepared_buffer`, `test_a_non_ready_assessment_never_requires_selection`, and `test_ready_assessment_counts_toward_prepared_buffer` exercise the relevant paths.
+2. Below `preparedBufferTarget`, an unassessed actionable BIU or work-unit TASKS item is a `selection:TASKS_SUPPLY` candidate. `lifecycle_requires_selection` makes that Director-only control, including when worker WIP is full. The supply and full-WIP tests exercise both input and host behavior.
+3. With READY at zero and actionable unassessed TASKS supply present, prepared depth is zero and Director control remains required after an active claim closes. The same supply path is independent of the claim count; `test_director_only_control_launches_even_when_worker_wip_is_full` covers host launch at full WIP.
+4. `Evaluation.observations` publishes `preparedBufferDepth`, `preparedBufferTarget`, `supplyCandidates`, and `controlRequiredBy`. The installed adapter's retained `inputs.diagnostics.json` readback at `2026-09-29T13:49:25.412979+00:00` showed depth 2, target 20, and `controlRequiredBy` for #125 and #146. That timestamped readback is an observation, not a current Project verdict or independent verification.
+5. On this checkout, `pytest -q tools/orchestration/test_factory_director_inputs.py tools/orchestration/test_factory_director_host.py` passed 216 tests. The narrower assessment/buffer/supply selection passed 10 tests.
+
+The supply calculation scans one current Project board snapshot and retains only the current issue set, candidate set, and bounded diagnostics overwritten on each publication. It adds no historical-ledger replay, durable queue, or growing resource. This record does not change #125, #138, Project state, the installed host, or the Node runtime. The independent Verifier must retrieve the published candidate SHA and judge these claims, including the resource and quality obligations; this Producer record is not its verdict.
