@@ -86,9 +86,9 @@ export function createWorkerLauncher({ workers, runner = spawnWorker, supervisor
     if (!supervisors[resource.role]) throw new Error('SUPERVISION_CONFIGURATION_REQUIRED');
     return supervisors[resource.role].absent(resource.supervision, resource.path);
   };
-  launch.observe = (resource, persist) => {
+  launch.observe = (resource, persist, recoverMissing = false) => {
     if (!supervisors[resource.role]) throw new Error("SUPERVISION_CONFIGURATION_REQUIRED");
-    return supervisors[resource.role].observe(resource.supervision, persist);
+    return supervisors[resource.role].observe(resource.supervision, persist, resource, recoverMissing);
   };
   return launch;
 }

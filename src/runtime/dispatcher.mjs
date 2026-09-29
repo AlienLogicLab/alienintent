@@ -83,14 +83,36 @@ export class EventRelay {
       this.updateResource(claim.invocationId, { launchFailed: 'PRE_SPAWN_MANAGER_REFUSAL' });
     return true;
   }
+  canRecoverMissingUnit(claim, resource) {
+    if (resource?.lifecycle !== 'RUNNING' || !resource.supervision
+        || claim.invocationId !== resource.invocationId || claim.pid !== resource.pid
+        || !Number.isSafeInteger(resource.pid) || resource.pid <= 0
+        || (claim.worktree !== undefined && claim.worktree !== resource.path)) return false;
+    const state = this.state();
+    if (Object.values(state.resources ?? {}).some(other => other !== resource
+        && other.invocationId !== resource.invocationId
+        && (other.path === resource.path || other.pid === resource.pid))) return false;
+    const claims = Object.entries(state.active ?? {}).filter(([, current]) =>
+      current.invocationId === resource.invocationId || current.worktree === resource.path || current.pid === resource.pid);
+    if (claim.lane) return claims.length === 1 && claims[0][0] === claim.lane
+      && claims[0][1].invocationId === claim.invocationId && claims[0][1].pid === resource.pid
+      && claims[0][1].worktree === resource.path;
+    return claims.length === 0;
+  }
   ownedWorkAlive(claim) {
     const resource = this.state().resources?.[claim.invocationId];
     if (!resource?.supervision) return this.processAlive(claim.pid);
     if (this.preSpawnManagerRefusal(claim, resource)) return false;
     try {
       if (!this.options.launch.observe) throw new Error("SUPERVISION_OBSERVER_REQUIRED");
-      const observation = this.options.launch.observe(resource, supervision => this.updateResource(claim.invocationId, { supervision }));
-      if (observation.terminal) this.updateResource(claim.invocationId, { exitedAt: resource.exitedAt ?? new Date(this.now()).toISOString() });
+      const observation = this.options.launch.observe(resource, supervision => this.updateResource(claim.invocationId, { supervision }), this.canRecoverMissingUnit(claim, resource));
+      if (observation.unknown) {
+        const recovery = this.state().resources?.[claim.invocationId]?.supervision?.absenceRecovery;
+        if (!observation.terminal || !recovery
+            || ['historicalExitCode', 'historicalResult', 'historicalEffect'].some(key => recovery[key] !== 'UNKNOWN'))
+          throw new Error('SUPERVISION_ABSENCE_RECORD_REQUIRED');
+      }
+      if (observation.terminal && !observation.unknown) this.updateResource(claim.invocationId, { exitedAt: resource.exitedAt ?? new Date(this.now()).toISOString() });
       return !observation.terminal;
     } catch (error) {
       if (resource.supervisionDiagnostic !== error.message)
@@ -107,6 +129,7 @@ export class EventRelay {
       if (resource.lifecycle === "REMOVED" || resource.launchFailed === 'PRE_SPAWN_MANAGER_REFUSAL' || this.active.has(invocationId)
           || Object.values(state.active).some(claim => claim.invocationId === invocationId)) continue;
       if (resource.supervision && this.ownedWorkAlive(resource)) continue;
+      if (this.state().resources?.[invocationId]?.supervision?.absenceRecovery) continue;
       // PID reuse can cause conservative retention; permission errors are unknown.
       // A crash between spawn and PID persistence must never authorize deletion.
       if (!resource.supervision && !resource.exitedAt && !["ALLOCATING", "READY"].includes(resource.lifecycle)) {
@@ -559,7 +582,9 @@ export class EventRelay {
         completedClaim = this.state().active[active.lane];
         this.release(active);
         if (this.active.get(active.invocationId) === active) this.active.delete(active.invocationId);
-        if (active.closed || active.child?.exitCode != null || active.child?.signalCode != null) this.updateResource(active.invocationId, { exitedAt: new Date(this.now()).toISOString() });
+        if ((active.closed || active.child?.exitCode != null || active.child?.signalCode != null)
+            && !this.state().resources?.[active.invocationId]?.supervision?.absenceRecovery)
+          this.updateResource(active.invocationId, { exitedAt: new Date(this.now()).toISOString() });
         this.reconcileResources();
         if (completedClaim?.invocationId === active.invocationId) await this.resumeAfterClosure(completedClaim);
       }
