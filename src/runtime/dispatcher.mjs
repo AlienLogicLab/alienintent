@@ -187,7 +187,7 @@ export class EventRelay {
     }
     const record = { schemaVersion: 1, status: "COMMITTED", operationId: request.operationId,
       invocationId: request.invocationId, lane: request.lane, resourceId: request.resourceId,
-      path: request.path, branch: request.branch,
+      path: request.path, branch: request.branch, worktreeHead: ownership.head,
       oldOwner: { invocationId: request.invocationId, workerLogin: state.active[request.lane].workerLogin ?? null },
       nextOwner: request.nextOwner, expectedHead: request.expectedHead,
       hostProof: { digest: proof.digest, observedAt: proof.observedAt },
@@ -198,6 +198,40 @@ export class EventRelay {
     const readback = this.state().claimTransfers?.[request.invocationId];
     if (!isDeepStrictEqual(readback, record)) throw new Error("CLAIM_TRANSFER_COMMIT_READBACK_MISMATCH");
     return readback;
+  }
+  authorizeClaimTransferEdit(request) {
+    const state = this.state();
+    const expectedHead = this.fence();
+    const grant = state.claimTransfers?.[request?.invocationId];
+    if (!grant || grant.schemaVersion !== 1 || grant.status !== "COMMITTED"
+        || !/^[a-f0-9-]{36}$/.test(grant.grantId ?? "")
+        || request.grantId !== grant.grantId || request.operationId !== grant.operationId
+        || request.nextOwner !== grant.nextOwner || request.lane !== grant.lane
+        || request.resourceId !== grant.resourceId || request.path !== grant.path
+        || request.branch !== grant.branch || !isDeepStrictEqual(request.expectedHead, grant.expectedHead))
+      throw new Error("CLAIM_TRANSFER_EDIT_GRANT_MISMATCH");
+    const checkState = { ...state, claimTransfers: Object.fromEntries(
+      Object.entries(state.claimTransfers).filter(([key]) => key !== request.invocationId)) };
+    assertClaimTransferState(checkState, request);
+    const inspect = this.options.worktreeManager?.inspectOwnership;
+    if (typeof inspect !== "function") throw new Error("CLAIM_TRANSFER_WORKTREE_INSPECTION_REQUIRED");
+    const ownership = inspect.call(this.options.worktreeManager, state.resources[request.invocationId]);
+    if (ownership?.invocationId !== request.invocationId || ownership.resourceId !== request.resourceId
+        || ownership.path !== request.path || ownership.branch !== request.branch
+        || ownership.head !== grant.worktreeHead)
+      throw new Error("CLAIM_TRANSFER_WORKTREE_MISMATCH");
+    const prove = this.options.claimTransferHostProof;
+    if (typeof prove !== "function") throw new Error("CLAIM_TRANSFER_HOST_PROOF_REQUIRED");
+    const proof = prove({ request: structuredClone(request), state: structuredClone(state) });
+    const observedAt = Date.parse(proof?.observedAt);
+    if (!proof || typeof proof.then === "function" || !/^[a-f0-9]{64}$/.test(proof.digest ?? "")
+        || typeof proof.observedAt !== "string" || !Number.isFinite(observedAt)
+        || Math.abs(Date.now() - observedAt) > 30000)
+      throw new Error("CLAIM_TRANSFER_HOST_PROOF_INVALID");
+    if (!isDeepStrictEqual(this.fence(), expectedHead))
+      throw new Error("CLAIM_TRANSFER_EDIT_STATE_CHANGED");
+    return { invocationId: request.invocationId, path: request.path, branch: request.branch,
+      nextOwner: request.nextOwner, grantId: grant.grantId };
   }
   get events() { return this._events; } emit(event) { const record = { at: new Date().toISOString(), ...event }; this._events.push(record); this.options.onEvent?.(record); }
   lane(item, role) { return `${item.repository}#${item.issue}:${role}`; } invocation(item, role) { return `${this.lane(item, role)}:${crypto.randomUUID()}`; }

@@ -90,6 +90,53 @@ test("a committed transfer is read back and replays to the same opaque grant", (
   assert.deepEqual(transferRelay({ statePath, claimTransferHostProof: () => proof }).commitClaimTransfer(request), grant);
 });
 
+test("an edit grant is usable only by its named owner while the exact claim and worktree still match", () => {
+  const { state, request } = fixture();
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-edit-")), "state.json");
+  let head = "a".repeat(40);
+  const proof = { digest: "e".repeat(64), observedAt: new Date().toISOString() };
+  const relay = new EventRelay({ statePath, claimTransferHostProof: () => proof,
+    worktreeManager: { inspectOwnership: () => ({ invocationId, resourceId: "resource-1", path, branch, head }) } });
+  relay.save(state); request.expectedHead = relay.fence();
+  const grant = relay.commitClaimTransfer(request);
+  const edit = { ...request, grantId: grant.grantId };
+
+  assert.deepEqual(relay.authorizeClaimTransferEdit(edit), {
+    invocationId, path, branch, nextOwner: request.nextOwner, grantId: grant.grantId,
+  });
+  const resumed = new EventRelay({ statePath, claimTransferHostProof: () => proof,
+    worktreeManager: { inspectOwnership: () => ({ invocationId, resourceId: "resource-1", path, branch, head }) } });
+  assert.deepEqual(resumed.authorizeClaimTransferEdit(edit), {
+    invocationId, path, branch, nextOwner: request.nextOwner, grantId: grant.grantId,
+  });
+  assert.throws(() => relay.authorizeClaimTransferEdit({ ...edit, grantId: "wrong" }), /CLAIM_TRANSFER_EDIT_GRANT_MISMATCH/);
+  assert.throws(() => relay.authorizeClaimTransferEdit({ ...edit, nextOwner: "other" }), /CLAIM_TRANSFER_EDIT_GRANT_MISMATCH/);
+  head = "b".repeat(40);
+  assert.throws(() => relay.authorizeClaimTransferEdit(edit), /CLAIM_TRANSFER_WORKTREE_MISMATCH/);
+  head = "a".repeat(40);
+  const changed = relay.state(); changed.deliveries.unresolved = { state: "PROCESSING" }; relay.save(changed);
+  assert.throws(() => relay.authorizeClaimTransferEdit(edit), /CLAIM_TRANSFER_DELIVERY_UNRESOLVED/);
+  assert.equal(relay.state().active[lane].invocationId, invocationId);
+});
+
+test("an edit grant refuses a ledger change during fresh host proof", () => {
+  const { state, request } = fixture();
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-edit-fence-")), "state.json");
+  const proof = { digest: "f".repeat(64), observedAt: new Date().toISOString() };
+  const relay = transferRelay({ statePath, claimTransferHostProof: () => proof });
+  relay.save(state); request.expectedHead = relay.fence();
+  const grant = relay.commitClaimTransfer(request);
+  relay.options.claimTransferHostProof = () => {
+    const changed = relay.state(); changed.diagnostics = { unrelated: { outcome: "OBSERVED" } };
+    relay.save(changed);
+    return proof;
+  };
+
+  assert.throws(() => relay.authorizeClaimTransferEdit({ ...request, grantId: grant.grantId }),
+    /CLAIM_TRANSFER_EDIT_STATE_CHANGED/);
+  assert.equal(relay.state().active[lane].invocationId, invocationId);
+});
+
 test("transfer commit refuses missing proof, stale head and conflicting replay", () => {
   const { state, request } = fixture();
   const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-refuse-")), "state.json");
