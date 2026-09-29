@@ -88,6 +88,29 @@ test('missing unit without receipt, wrong identity and reused manager invocation
   f.unit.InvocationID = 'd'.repeat(32);
   assert.throws(() => f.adapter.observe(saved, () => {}), /OWNERSHIP/);
 });
+test('transfer unit inspection proves the exact planned unit and cgroup are presently absent', () => {
+  const f = fixture();
+  f.unit = { Id: f.owner.unit, LoadState: 'not-found', ActiveState: 'inactive', SubState: 'dead',
+    MainPID: '0', InvocationID: '', ControlGroup: '' };
+  const proof = f.adapter.inspectClaimTransferUnit(f.owner);
+  assert.deepEqual(proof, { unit: f.owner.unit, cgroup: f.owner.cgroup,
+    manager: f.owner.manager, loadState: 'not-found', cgroupPopulated: false });
+  assert.deepEqual(f.effects, []);
+});
+test('transfer unit inspection refuses manager drift, a loaded unit or a populated cgroup', () => {
+  const f = fixture();
+  f.unit = { Id: f.owner.unit, LoadState: 'not-found', ActiveState: 'inactive', SubState: 'dead',
+    MainPID: '0', InvocationID: '', ControlGroup: '' };
+  f.managerId = 'c'.repeat(32);
+  assert.throws(() => f.adapter.inspectClaimTransferUnit(f.owner), /MANAGER/);
+  f.managerId = 'a'.repeat(32);
+  f.running();
+  assert.throws(() => f.adapter.inspectClaimTransferUnit(f.owner), /UNIT/);
+  f.unit = { Id: f.owner.unit, LoadState: 'not-found', ActiveState: 'inactive', SubState: 'dead',
+    MainPID: '0', InvocationID: '', ControlGroup: '' };
+  assert.throws(() => f.adapter.inspectClaimTransferUnit(f.owner), /CGROUP/);
+  assert.deepEqual(f.effects, []);
+});
 test('cancellation targets only a matching unit and holds until its cgroup is empty', () => {
   const f = fixture(); f.running();
   assert.equal(typeof f.adapter.cancel, 'function');

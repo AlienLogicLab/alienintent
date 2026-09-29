@@ -2,7 +2,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
-const fields = ['Id', 'LoadState', 'Description', 'InvocationID', 'ControlGroup', 'ActiveState', 'SubState', 'Type', 'ExitType', 'Restart', 'KillMode', 'SendSIGKILL', 'RemainAfterExit', 'RuntimeMaxUSec', 'TimeoutStartUSec', 'TimeoutStopUSec', 'RuntimeRandomizedExtraUSec', 'ExecMainCode', 'ExecMainStatus', 'Result'];
+const fields = ['Id', 'LoadState', 'Description', 'InvocationID', 'ControlGroup', 'ActiveState', 'SubState', 'MainPID', 'Type', 'ExitType', 'Restart', 'KillMode', 'SendSIGKILL', 'RemainAfterExit', 'RuntimeMaxUSec', 'TimeoutStartUSec', 'TimeoutStopUSec', 'RuntimeRandomizedExtraUSec', 'ExecMainCode', 'ExecMainStatus', 'Result'];
 const parse = text => Object.fromEntries(String(text).trim().split('\n').filter(line => line.includes('=')).map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]));
 function milliseconds(text) {
   if (text === '0') return 0;
@@ -61,6 +61,24 @@ export function createSystemdSupervisor(config, dependencies = {}) {
     for (const [key, value] of [['RuntimeMaxUSec', owner.limits.runtimeMilliseconds], ['TimeoutStartUSec', owner.limits.startupMilliseconds], ['TimeoutStopUSec', owner.limits.stopGraceMilliseconds], ['RuntimeRandomizedExtraUSec', 0]]) if (milliseconds(unit[key]) !== value) throw new Error('SUPERVISION_PROPERTIES_MISMATCH');
   }
   return {
+    // Narrow, read-only evidence for transfer preflight. It does not prove
+    // process or delivery absence and cannot itself authorize a grant.
+    inspectClaimTransferUnit(owner) {
+      const observedManager = manager();
+      if (!owner?.manager || ['uid', 'bootId', 'startedAtMonotonic', 'cgroup'].some(
+        field => observedManager[field] !== owner.manager[field])) throw new Error('CLAIM_TRANSFER_MANAGER_MISMATCH');
+      if (typeof owner.unit !== 'string' || !owner.unit || typeof owner.cgroup !== 'string'
+          || !owner.cgroup.startsWith(`${observedManager.cgroup}/`))
+        throw new Error('CLAIM_TRANSFER_UNIT_IDENTITY_INVALID');
+      const unit = show(owner.unit);
+      if (unit.Id !== owner.unit || unit.LoadState !== 'not-found'
+          || unit.ActiveState !== 'inactive' || unit.SubState !== 'dead'
+          || unit.MainPID !== '0' || unit.InvocationID !== '' || unit.ControlGroup !== '')
+        throw new Error('CLAIM_TRANSFER_UNIT_NOT_ABSENT');
+      if (!empty(owner)) throw new Error('CLAIM_TRANSFER_CGROUP_POPULATED');
+      return { unit: owner.unit, cgroup: owner.cgroup, manager: observedManager,
+        loadState: 'not-found', cgroupPopulated: false };
+    },
     plan({ invocationId, resource }) {
       if (!invocationId || !resource?.path?.startsWith('/')) throw new Error('SUPERVISION_RESOURCE_REQUIRED');
       const identity = manager();
