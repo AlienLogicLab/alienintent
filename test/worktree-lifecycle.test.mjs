@@ -5,6 +5,8 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { EventRelay } from '../src/runtime/dispatcher.mjs';
+import { createWorkerLauncher } from '../src/runtime/worker-runner.mjs';
+import { createSystemdSupervisor } from '../src/runtime/systemd-supervision.mjs';
 
 function fixture(t, overrides = {}) {
   const root = mkdtempSync(join(tmpdir(), 'b-disp-resource-'));
@@ -183,5 +185,86 @@ test('launch transport exception after supervised intent holds claim across rest
   assert.equal(Object.keys(f.relay.state().active).length, 1);
   f.relay.active.clear();
   await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
+  assert.deepEqual(f.removed, []);
+});
+
+test('recorded pre-spawn manager refusal admits a replacement even inside the startup interval', async t => {
+  const f = fixture(t, { now: () => Date.parse('2026-09-29T07:00:00Z') }); supervise(f);
+  const item = { ...f.item(149), status: 'IMPLEMENT' };
+  const lane = 'ExampleOrg/sample-project#149:PRODUCER';
+  const invocationId = `${lane}:old`;
+  const resource = { ...f.manager.plan({ invocationId, item, role: 'PRODUCER' }), lifecycle: 'LAUNCHING', pid: null,
+    supervision: { mode: 'systemd', invocationId, unit: 'old.service', limits: { startupMilliseconds: 120000 } } };
+  f.relay.save({ deliveries: {}, resources: { [invocationId]: resource },
+    active: { [lane]: { invocationId, item, role: 'PRODUCER', status: 'IMPLEMENT', startedAt: '2026-09-29T06:59:30Z', worktree: resource.path } },
+    diagnostics: { [lane]: { invocationId, item, role: 'PRODUCER', status: 'IMPLEMENT', startedAt: '2026-09-29T06:59:30Z',
+      outcome: 'WORKER_TECHNICAL_FAILURE', error: 'SUPERVISION_MANAGER_CHANGED' } },
+    executionLimits: { 'ExampleOrg/sample-project#149': { cycle: 1, phase: 'IMPLEMENT', phaseInvocations: [invocationId] } } });
+  f.relay.options.biuLimits = { 'ExampleOrg/sample-project#149': { maxCycles: 3, maxReplacementsPerPhase: 1 } };
+  f.relay.options.authority.listItems = async () => [item];
+  f.relay.options.launch.observe = () => { throw new Error('SUPERVISION_UNIT_MISSING'); };
+  f.relay.options.launch.absent = () => true;
+  await f.relay.startupReconcile();
+  const state = f.relay.state();
+  assert.equal(f.launches.length, 1);
+  assert.notEqual(state.active[lane].invocationId, invocationId);
+  assert.notEqual(state.active[lane].worktree, resource.path);
+  assert.equal(state.resources[invocationId].launchFailed, 'PRE_SPAWN_MANAGER_REFUSAL');
+  assert.deepEqual(state.executionLimits['ExampleOrg/sample-project#149'].phaseInvocations.length, 2);
+  assert.deepEqual(f.removed, [], 'the historical worktree and evidence stay retained');
+});
+
+test('missing unit without a recorded pre-spawn refusal keeps the claim and worktree', async t => {
+  const f = fixture(t); supervise(f);
+  const item = { ...f.item(149), status: 'IMPLEMENT' }, lane = 'ExampleOrg/sample-project#149:PRODUCER', invocationId = `${lane}:old`;
+  const resource = { ...f.manager.plan({ invocationId, item, role: 'PRODUCER' }), lifecycle: 'LAUNCHING', pid: null,
+    supervision: { mode: 'systemd', invocationId, unit: 'old.service', limits: { startupMilliseconds: 120000 } } };
+  f.relay.save({ deliveries: {}, resources: { [invocationId]: resource },
+    active: { [lane]: { invocationId, item, role: 'PRODUCER', status: 'IMPLEMENT', startedAt: '2026-09-29T03:17:19Z', worktree: resource.path } } });
+  f.relay.options.authority.listItems = async () => [item];
+  f.relay.options.launch.observe = () => { throw new Error('SUPERVISION_UNIT_MISSING'); };
+  f.relay.options.launch.absent = () => true;
+  await f.relay.startupReconcile();
+  assert.equal(f.relay.state().active[lane].invocationId, invocationId);
+  assert.equal(f.launches.length, 0);
+  assert.deepEqual(f.removed, []);
+});
+
+test('persisted #149 style claim reaches a new Producer through the real supervisor absence adapter', async t => {
+  const f = fixture(t);
+  const item = { ...f.item(149), status: 'IMPLEMENT' }, lane = 'ExampleOrg/sample-project#149:PRODUCER', invocationId = `${lane}:old`;
+  const resource = { ...f.manager.plan({ invocationId, item, role: 'PRODUCER' }), lifecycle: 'LAUNCHING', pid: null };
+  const config = { mode: 'systemd', runtimeMilliseconds: 7200000, startupMilliseconds: 120000,
+    stopGraceMilliseconds: 300000, systemdRun: '/bin/systemd-run', systemctl: '/bin/systemctl', env: '/usr/bin/env' };
+  const managerCgroup = '/user.slice/user-1000.slice/user@1000.service';
+  const supervisor = createSystemdSupervisor(config, { uid: () => 1000,
+    readFile: path => {
+      if (path.endsWith('/boot_id')) return '74e260e0-13bd-43fe-94ed-d20c1f167ad5\n';
+      if (path.endsWith('/cgroup.controllers')) return 'cpu memory\n';
+      if (path.endsWith('/cgroup.events')) throw Object.assign(new Error('ENOENT'), { code: 'ENOENT' });
+      throw new Error(`unexpected read ${path}`);
+    },
+    transport: (_command, args) => args.includes('--') ? { LoadState: 'not-found' }
+      : { UserspaceTimestampMonotonic: '59846494', ControlGroup: managerCgroup } });
+  resource.supervision = supervisor.plan({ invocationId, resource });
+  f.relay.save({ deliveries: {}, resources: { [invocationId]: resource },
+    active: { [lane]: { invocationId, item, role: 'PRODUCER', status: 'IMPLEMENT', startedAt: '2026-09-29T03:17:19Z', worktree: resource.path } },
+    diagnostics: { [lane]: { invocationId, item, role: 'PRODUCER', status: 'IMPLEMENT', startedAt: '2026-09-29T03:17:19Z',
+      outcome: 'WORKER_TECHNICAL_FAILURE', error: 'SUPERVISION_MANAGER_CHANGED' } } });
+  const launches = [];
+  f.relay.options.workers.PRODUCER.supervision = config;
+  f.relay.options.launch = createWorkerLauncher({ workers: f.relay.options.workers, supervisorFactory: () => supervisor,
+    runner: request => {
+      launches.push(request);
+      const child = new EventEmitter(); child.pid = 34567; child.stdout = new EventEmitter(); child.stderr = new EventEmitter();
+      return child;
+    } });
+  f.relay.options.authority.listItems = async () => [item];
+  await f.relay.startupReconcile();
+  const state = f.relay.state();
+  assert.equal(launches.length, 1);
+  assert.notEqual(state.active[lane].invocationId, invocationId);
+  assert.notEqual(state.active[lane].worktree, resource.path);
+  assert.equal(state.resources[invocationId].launchFailed, 'PRE_SPAWN_MANAGER_REFUSAL');
   assert.deepEqual(f.removed, []);
 });

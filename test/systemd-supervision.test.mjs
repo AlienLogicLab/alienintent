@@ -112,3 +112,32 @@ test('timeout metadata is captured before clearing only the owned failed unit', 
   assert.equal(saved.terminalReceipt.result, 'timeout');
   assert.deepEqual(f.effects, ['stop', 'reset-failed']);
 });
+
+test('persisted manager key order cannot refuse the same manager or accept a changed one', () => {
+  const f = fixture();
+  const reordered = { ...f.owner, manager: Object.fromEntries(Object.entries(f.owner.manager).reverse()) };
+  assert.notEqual(JSON.stringify(reordered.manager), JSON.stringify(f.owner.manager));
+  f.adapter.launch(reordered, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log');
+  assert.deepEqual(f.effects, ['launch']);
+  for (const key of ['uid', 'bootId', 'startedAtMonotonic', 'cgroup']) {
+    const changed = { ...reordered, manager: { ...reordered.manager, [key]: key === 'uid' ? 1001 : 'changed' } };
+    assert.throws(() => f.adapter.launch(changed, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log'), /SUPERVISION_MANAGER_CHANGED/);
+    const missing = { ...reordered.manager }; delete missing[key];
+    assert.throws(() => f.adapter.launch({ ...reordered, manager: missing }, '/provider', [], { env: {}, cwd: '/tmp' }, '/tmp/log'), /SUPERVISION_MANAGER_CHANGED/);
+  }
+  assert.deepEqual(f.effects, ['launch']);
+});
+
+test('pre-spawn absence proof refuses changed resource identity, a unit, or a populated cgroup', () => {
+  const f = fixture();
+  assert.equal(f.adapter.absent(f.owner, f.request.resource.path), true);
+  assert.equal(f.adapter.absent({ ...f.owner, unit: 'alienintent-other.service' }, f.request.resource.path), false);
+  assert.equal(f.adapter.absent(f.owner, '/tmp/other-worktree'), false);
+  f.running();
+  assert.equal(f.adapter.absent(f.owner, f.request.resource.path), false);
+  f.unit = null; f.populated = true;
+  assert.equal(f.adapter.absent(f.owner, f.request.resource.path), false);
+  f.populated = false; f.managerId = 'c'.repeat(32);
+  assert.throws(() => f.adapter.absent(f.owner, f.request.resource.path), /SUPERVISION_MANAGER_CHANGED/);
+  assert.deepEqual(f.effects, []);
+});

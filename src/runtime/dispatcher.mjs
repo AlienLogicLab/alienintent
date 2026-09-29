@@ -66,9 +66,27 @@ export class EventRelay {
     if (!state.resources?.[invocationId]) return;
     Object.assign(state.resources[invocationId], changes); this.save(state);
   }
+  preSpawnManagerRefusal(claim, resource) {
+    if (!claim?.lane || !resource?.supervision || resource.lifecycle !== 'LAUNCHING'
+        || resource.invocationId !== claim.invocationId || resource.path !== claim.worktree
+        || resource.pid != null || claim.pid != null || resource.supervision.invocationId !== claim.invocationId
+        || !this.options.launch.absent) return false;
+    const state = this.state();
+    const diagnostic = state.diagnostics?.[claim.lane];
+    if (state.active?.[claim.lane]?.invocationId !== claim.invocationId
+        || diagnostic?.invocationId !== claim.invocationId || diagnostic.outcome !== 'WORKER_TECHNICAL_FAILURE'
+        || diagnostic.error !== 'SUPERVISION_MANAGER_CHANGED') return false;
+    try {
+      if (this.options.launch.absent(resource) !== true) return false;
+    } catch { return false; }
+    if (resource.launchFailed !== 'PRE_SPAWN_MANAGER_REFUSAL')
+      this.updateResource(claim.invocationId, { launchFailed: 'PRE_SPAWN_MANAGER_REFUSAL' });
+    return true;
+  }
   ownedWorkAlive(claim) {
     const resource = this.state().resources?.[claim.invocationId];
     if (!resource?.supervision) return this.processAlive(claim.pid);
+    if (this.preSpawnManagerRefusal(claim, resource)) return false;
     try {
       if (!this.options.launch.observe) throw new Error("SUPERVISION_OBSERVER_REQUIRED");
       const observation = this.options.launch.observe(resource, supervision => this.updateResource(claim.invocationId, { supervision }));
@@ -85,7 +103,7 @@ export class EventRelay {
     this.assertResourcePaths();
     for (const invocationId of Object.keys(this.state().resources ?? {})) {
       const state = this.state(), resource = state.resources[invocationId];
-      if (resource.lifecycle === "REMOVED" || this.active.has(invocationId)
+      if (resource.lifecycle === "REMOVED" || resource.launchFailed === 'PRE_SPAWN_MANAGER_REFUSAL' || this.active.has(invocationId)
           || Object.values(state.active).some(claim => claim.invocationId === invocationId)) continue;
       if (resource.supervision && this.ownedWorkAlive(resource)) continue;
       // PID reuse can cause conservative retention; permission errors are unknown.
