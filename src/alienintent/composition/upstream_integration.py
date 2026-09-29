@@ -19,8 +19,10 @@ from pathlib import Path
 from alienintent.composition.compilation import CurrentProofPlanDocuments
 from alienintent.composition.upstream_profile import UpstreamProfile
 from alienintent.context_assembly.application.design_admission_service import DesignStateInvalid
+from alienintent.context_assembly.application.publication_input import (
+    AssessedPublicationInput, Reading, attempt_refusal, bound, change, pinned, receipt, refusal)
 from alienintent.context_assembly.domain.ambiguity import ELIGIBLE, AmbiguityHold, snapshot_from_document
-from alienintent.context_assembly.domain.compilation import CompilationHold, canonical
+from alienintent.context_assembly.domain.compilation import UNREADABLE, CompilationHold, canonical
 from alienintent.context_assembly.domain.design_admission import DesignInvalid, design_from_document, inspect_design
 from alienintent.context_assembly.domain.initial_compilation import CompilationCandidate
 from alienintent.context_assembly.domain.inventory import InventoryHold
@@ -148,3 +150,48 @@ class UpstreamIntegration:
         """Read-time readiness of a previously assessed candidate against the current upstream."""
         refreshed = self._refreshed(candidate, proof_plan)
         return refreshed if isinstance(refreshed, LintHold) else self.profile.readiness.current(refreshed, proof_plan)
+
+    def _reading(self, compiled: CompilationCandidate, identity: str,
+                 decisions: tuple[str, ...]) -> Reading | Hold | LintHold:
+        """One derivation of the unit from compiled, its current readiness and the latest retained attempt."""
+        try:
+            candidate = self.candidate(compiled, identity, decisions)
+            plan = self.proof_plan(compiled, identity)
+        except StopIteration:
+            return refusal(identity, "identity", "no such unit in the compiled candidate")
+        except UNREADABLE as error:
+            return refusal(identity, "compiled", f"unreadable: {type(error).__name__}: {error}")
+        derived = pinned(identity, candidate, plan)
+        if isinstance(derived, Hold):
+            return derived
+        eligibility = self.current(candidate, plan)
+        if not isinstance(eligibility, ReadinessEligibility):
+            return eligibility
+        return Reading(derived, eligibility, self.profile.readiness_consumer.latest(identity))
+
+    def publication_input(self, compiled: CompilationCandidate, identity: str,
+                          decisions: tuple[str, ...]) -> AssessedPublicationInput | Hold | LintHold:
+        """The assessed text and contract of one unit bound to its latest applicable READY attempt and raw receipt.
+
+        A snapshot for a later publisher, which must rebind immediately before writing: it is neither permission to
+        implement nor a publication receipt. Nothing is written here beyond the audit records current() retains.
+        """
+        consumer = self.profile.readiness_consumer
+        first = self._reading(compiled, identity, decisions)
+        if not isinstance(first, Reading):
+            return first
+        held = attempt_refusal(identity, first)
+        if held is not None:
+            return held
+        try:
+            retained = consumer.raw(identity, first.eligibility.attempt_id)
+        except EvidenceHold as hold:
+            return refusal(identity, "raw_ref", f"unreadable: {hold.reason_code}", first.eligibility.attempt_id)
+        raw_ref = receipt(identity, first, retained, consumer.project, consumer.profile)
+        if isinstance(raw_ref, Hold):
+            return raw_ref
+        # compiled.body is mutable and the attempt pointer can move: derive and read again, then compare by value.
+        last = self._reading(compiled, identity, decisions)
+        if not isinstance(last, Reading):
+            return last
+        return change(identity, first, last) or bound(identity, first, raw_ref)
