@@ -229,6 +229,11 @@ class RuntimeView:
     claimed_issues: frozenset[int]
     escalations: tuple[tuple[str, dict], ...]
     founder_exceptions: int
+    # Issues the runtime refuses permanently (EXECUTION_CYCLE_LIMIT): a typed technical blocker,
+    # visible here and in the escalation, never eligible work and never a Founder decision.
+    blocked: frozenset[int] = frozenset()
+    # The runtime's latest typed refusal per TASKS/READY BIU (observation only).
+    refusals: tuple[tuple[str, dict], ...] = ()
 
 
 def validate_runtime_state(raw, repository: str) -> RuntimeView:
@@ -258,7 +263,15 @@ def validate_runtime_state(raw, repository: str) -> RuntimeView:
     for key, entry in exceptions.items():
         if not isinstance(entry, dict):
             raise SourceUnavailable(f"runtime founderExceptions entry {key!r} is malformed")
-    return RuntimeView(len(active), frozenset(claimed), tuple(sorted(escalations.items())), len(exceptions))
+    refusals = raw.get("admissionRefusals", {})
+    if not isinstance(refusals, dict) or any(
+            not isinstance(entry, dict) or not isinstance(entry.get("checks"), list) for entry in refusals.values()):
+        raise SourceUnavailable("runtime admissionRefusals is malformed")
+    blocked = frozenset(int(number) for key, entry in escalations.items()
+                        for owner, _, number in [key.rpartition("#")]
+                        if owner == repository and number.isdigit() and entry["outcome"] == "EXECUTION_CYCLE_LIMIT")
+    return RuntimeView(len(active), frozenset(claimed), tuple(sorted(escalations.items())), len(exceptions),
+                       blocked, tuple(sorted(refusals.items())))
 
 
 def escalation_receipt_id(key: str, entry: dict) -> str:
@@ -392,18 +405,18 @@ class Evaluation:
 
 
 def control_reason(issue: int, state: str, claimed: frozenset[int], assessed: dict[int, str],
-                   supply_candidates: frozenset[int] = frozenset()) -> str | None:
-    """Why this Issue alone would make Director control required, ignoring holds."""
-    if state == "READY":
-        return "eligible:READY"
-    if state in WORKER_STATES and issue not in claimed:
+                   supply_candidates: frozenset[int] = frozenset(),
+                   blocked: frozenset[int] = frozenset()) -> str | None:
+    """Why this Issue alone would make Director control required, ignoring holds.
+
+    TASKS -> READY (a READY Agent Ready receipt) and READY -> IMPLEMENT are mechanical: the Node
+    runtime's lifecycle refill advances them and records a typed refusal for a BIU that waits.
+    Neither is Director control, so a Director never competes with admission or parks supply.
+    HOLD, CLARIFY and SPLIT wait for a changed task packet and a new assessment."""
+    if state in WORKER_STATES and issue not in claimed and issue not in blocked:
         return f"eligible:{state}_UNCLAIMED"
     if state == "REVIEW":
         return "selection:REVIEW"
-    # Only a READY verdict is work the Director can advance. HOLD, CLARIFY and SPLIT wait for a
-    # changed task packet and a new assessment; counting them kept selection true forever.
-    if state == "TASKS" and assessed.get(issue) == "READY":
-        return "selection:TASKS_ASSESSED"
     if state == "TASKS" and issue in supply_candidates:
         return "selection:TASKS_SUPPLY"
     return None
@@ -422,7 +435,7 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
                                   and issue in biu_issues and issue not in assessed and issue not in holds)
     reasons = {issue: reason for issue, state in board.items()
                if (reason := control_reason(issue, state, runtime.claimed_issues, assessed,
-                                            supply_candidates))}
+                                            supply_candidates, runtime.blocked))}
     unheld = {issue: reason for issue, reason in reasons.items() if issue not in holds}
     held = {issue: reason for issue, reason in reasons.items() if issue in holds}
     eligible = any(reason.startswith("eligible:") for reason in unheld.values())
@@ -452,6 +465,8 @@ def derive(board: dict[int, str], runtime: RuntimeView, holds: dict[int, str],
         "unresolvedLimitEscalations": list(escalations),
         "escalationReceiptIds": {key: escalation_receipt_id(key, entry) for key, entry in runtime.escalations},
         "founderExceptions": runtime.founder_exceptions,
+        "technicalBlockers": sorted(issue for issue in runtime.blocked if board.get(issue) in WORKER_STATES),
+        "admissionRefusals": {key: entry for key, entry in runtime.refusals},
         "unprocessedInboxEntries": list(unprocessed),
     }
     fingerprint = sha256(json.dumps({

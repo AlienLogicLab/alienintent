@@ -8,7 +8,7 @@ import { GitHubAuthority } from "../src/github/authority.mjs";
 import { createGitHubAppClient } from "../src/github/app-client.mjs";
 import { createWorkerLauncher, workerEnvironment, inspectWorker } from "../src/runtime/worker-runner.mjs";
 import { createWorktreeManager } from "../src/runtime/worktree-manager.mjs";
-import { createReleaseAdmission } from "../src/runtime/release-admission.mjs";
+import { createLifecycleEligibility } from "../src/runtime/lifecycle-eligibility.mjs";
 import { loadProfile } from "../src/config/profile.mjs";
 import { resolveRoute } from "../src/config/model-routing.mjs";
 
@@ -28,17 +28,22 @@ const authority = new GitHubAuthority({ gh: appClient.gh, owner: config.projectO
   projectNumber: config.projectNumber, repository: config.repository,
   workerLogins: config.workerLogins, roleNames: config.roleNames });
 const preflightScript = config.executables.preflight;
+// The typed reason is persisted on the lane's PREFLIGHT_FAILED diagnostic.
 const preflight = async ({ role, item, invocationId, worktree, resource }) => {
+  if (!worktree || resource?.path !== worktree || resource?.invocationId !== invocationId) return { ok: false, reason: "WORKTREE_MISMATCH" };
+  let output, failed = false;
   try {
-    if (!worktree || resource?.path !== worktree || resource?.invocationId !== invocationId) return { ok: false };
     const worker = { ...config.workers[role], role, worktree, resource, invocationId };
-    const value = JSON.parse(execFileSync(config.executables.node, [preflightScript,
+    output = execFileSync(config.executables.node, [preflightScript,
       "--repository", config.repository, "--issue", String(item.issue), "--json"], {
       cwd: worker.worktree, encoding: "utf8", input: JSON.stringify(worker),
       env: workerEnvironment({ role, worker }),
-    }));
-    return { ok: value.safe_to_start === true };
-  } catch { return { ok: false }; }
+    });
+  } catch (error) { failed = true; output = error.stdout; }
+  let value;
+  try { value = JSON.parse(output); } catch { return { ok: false, reason: failed ? "PREFLIGHT_UNAVAILABLE" : "PREFLIGHT_OUTPUT_INVALID" }; }
+  if (!failed && value.safe_to_start === true) return { ok: true };
+  return { ok: false, reason: typeof value.classification === "string" ? value.classification : "PREFLIGHT_REFUSED" };
 };
 const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(event)),
   statePath: config.statePath, repository: config.repository, projectOwner: config.projectOwner,
@@ -50,10 +55,10 @@ const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(eve
     repositoryStore: config.repositoryStore, worktreeRoot: config.worktreeRoot,
     baselineRef: config.baselineRef, git: config.executables.git }) : undefined,
   inspectionIntervalMs: config.inspectionIntervalMs, preflight,
-  admitReady: config.executionEnabled && config.readyRefill ? createReleaseAdmission({ python: config.executables.python,
-    directorHostConfig: config.readyRefill.directorHostConfig,
+  eligibility: config.executionEnabled ? createLifecycleEligibility({ python: config.executables.python,
+    directorHostConfig: config.control.directorHostConfig,
     environment: () => appClient.childEnvironment(process.env.HOME ? { HOME: process.env.HOME } : {}) }) : undefined,
-  refillIntervalMs: config.readyRefill?.intervalMs,
+  tickIntervalMs: config.control.tickIntervalMs,
   inspectWorker: child => inspectWorker(child, { executable: config.executables.processInspector }),
   launch: createWorkerLauncher({ workers: config.workers, routeResolver: resolveRoute }) });
 await relay.startupReconcile();

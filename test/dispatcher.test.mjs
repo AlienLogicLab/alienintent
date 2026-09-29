@@ -1500,132 +1500,259 @@ test("an unknown B-DISP directive is reported as invalid rather than ignored", a
   assert.equal(relay.events.at(-1).outcome, "INVALID_RESULT_COMMENT");
 });
 
-// READY refill: a Project board fake whose Status the dispatcher itself moves.
-function refillSubject({ board, admit, ...overrides } = {}) {
-  const items = new Map(board.map(entry => [entry.issue, { repository: "ExampleOrg/sample-project", itemId: `PVTI_${entry.issue}`, ...entry }]));
+// Lifecycle refill and the control tick: a Project board fake whose Status the dispatcher moves.
+const REPO = "ExampleOrg/sample-project";
+function boardSubject({ board, eligible, ...overrides } = {}) {
+  const items = new Map(board.map(entry => [entry.issue, { repository: REPO, itemId: `PVTI_${entry.issue}`, ...entry }]));
   const asked = [];
   const fixture = subject({ authority: {
     listItems: async () => [...items.values()].map(item => ({ ...item })),
     resolveItem: async item => ({ repository: item.repository, issue: item.issue, itemId: item.itemId }),
     currentStatus: async item => items.get(item.issue).status,
     transition: async (item, status) => { fixture.transitions.push(`${item.issue}:${status}`); items.get(item.issue).status = status; },
-    enrichContentNode: async () => null, durableResult: async () => null,
-  }, admitReady: async request => { asked.push([request.item.issue, request.activeClaims]); return admit(request); }, ...overrides });
+    enrichContentNode: async (_content, itemId) => { const item = [...items.values()].find(value => value.itemId === itemId); return item && { repository: REPO, issue: item.issue, itemId }; },
+    durableResult: async () => null,
+  }, eligibility: async request => { asked.push([request.item.issue, request.activeClaims]); return eligible(request); }, ...overrides });
   return { ...fixture, items, asked };
 }
-const admitted = { admitted: true, failures: [] };
-const refused = (...checks) => ({ admitted: false, failures: checks.map(check => ({ check, why: check })) });
-const wip = limit => ({ activeClaims }) => activeClaims < limit ? admitted : refused("wip_capacity_available");
+// The gate's typed result for one BIU: `failures` are check names; capacity checks are the gate's own.
+const capacity = new Set(["status_ready", "no_active_invocation", "wip_limit_known", "wip_capacity_known", "wip_capacity_available"]);
+function gate({ agentReady = "READY", checks = [] } = {}) {
+  const failures = checks.map(check => ({ check, why: check }));
+  return { agentReady, prepared: failures.every(failure => capacity.has(failure.check)), admitted: failures.length === 0, failures };
+}
+// A gate over structured facts: READY receipt, WIP limit, per-Issue refusals and Project status.
+function facts({ wipLimit = 1, agentReady = {}, refuse = {} } = {}) {
+  return ({ item, activeClaims }) => gate({ agentReady: agentReady[item.issue] ?? "READY", checks: [
+    ...(item.status === "READY" ? [] : ["status_ready"]), ...(agentReady[item.issue] && agentReady[item.issue] !== "READY" ? ["agent_ready"] : []),
+    ...(refuse[item.issue] ?? []), ...(activeClaims >= wipLimit ? ["wip_capacity_available"] : [])] });
+}
+const settle = () => new Promise(resolve => setTimeout(resolve, 20));
+const liveLane = (issue, pid, role = "PRODUCER", status = "IMPLEMENT") => ({ [`${REPO}#${issue}:${role}`]: {
+  invocationId: `inv-${issue}`, item: { repository: REPO, issue, itemId: `PVTI_${issue}` }, role, status, startedAt: "2026-09-25T00:00:00.000Z", pid } });
 
-test("refill admits the highest-priority READY BIU and fills WIP up to the gate's limit", async () => {
-  const { relay, asked, transitions, launches } = refillSubject({ admit: wip(1), board: [
-    { issue: 310, status: "READY", priority: "P2" }, { issue: 312, status: "READY", priority: "P1" },
-    { issue: 311, status: "READY", priority: "P1" }, { issue: 313, status: "TASKS", priority: "P0" }] });
+test("(1) a TASKS BIU with a READY receipt and satisfied prerequisites becomes READY, then IMPLEMENT", async () => {
+  const { relay, transitions, launches } = boardSubject({ eligible: facts(), board: [{ issue: 147, status: "TASKS", priority: "P1" }] });
   await relay.requestRefill();
-  assert.deepEqual(asked, [[311, 0], [312, 1]]);
-  assert.deepEqual(transitions, ["311:IMPLEMENT"]);
+  assert.deepEqual(transitions, ["147:READY", "147:IMPLEMENT"]);
   assert.deepEqual(launches, ["PRODUCER"]);
-  assert.equal(relay.state().active["ExampleOrg/sample-project#311:PRODUCER"].status, "IMPLEMENT");
-  assert.deepEqual(relay.state().admissionRefusals["ExampleOrg/sample-project#312"].checks, ["wip_capacity_available"]);
+  assert.deepEqual(relay.events.filter(event => /PREPARED|ADMITTED/.test(event.outcome)).map(event => event.outcome), ["TASKS_PREPARED", "READY_ADMITTED"]);
 });
 
-test("refill skips an ineligible higher-priority BIU, records its typed checks and admits the next", async () => {
-  const { relay, transitions, launches } = refillSubject({
-    admit: ({ item }) => item.issue === 320 ? refused("dependencies_satisfied", "agent_ready") : admitted,
+test("(1) HOLD, CLARIFY and SPLIT receipts are never READY supply and record no refusal", async () => {
+  const { relay, transitions } = boardSubject({ eligible: facts({ agentReady: { 401: "HOLD", 402: "CLARIFY", 403: "SPLIT" } }),
+    board: [{ issue: 401, status: "TASKS" }, { issue: 402, status: "TASKS" }, { issue: 403, status: "TASKS" }] });
+  await relay.requestRefill();
+  assert.deepEqual(transitions, []);
+  assert.equal(relay.state().admissionRefusals, undefined);
+});
+
+test("(1) prepared supply advances to READY even while WIP is full; admission waits for capacity", async () => {
+  const { relay, statePath, transitions, launches } = boardSubject({ isProcessAlive: pid => pid === 4455, eligible: facts(),
+    board: [{ issue: 138, status: "IMPLEMENT" }, { issue: 147, status: "TASKS", priority: "P0" }] });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: liveLane(138, 4455) }));
+  await relay.requestRefill();
+  assert.deepEqual(transitions, ["147:READY"]);
+  assert.deepEqual(launches, []);
+  assert.deepEqual(relay.state().admissionRefusals[`${REPO}#147`], { issue: 147, status: "READY", checks: ["wip_capacity_available"], at: relay.state().admissionRefusals[`${REPO}#147`].at });
+});
+
+test("(2)(3) READY refills WIP in priority order: P0 before P1, then lower Issue number", async () => {
+  const { relay, asked, transitions, launches } = boardSubject({ eligible: facts({ wipLimit: 1 }), board: [
+    { issue: 310, status: "READY", priority: "P2" }, { issue: 312, status: "READY", priority: "P1" },
+    { issue: 311, status: "READY", priority: "P1" }, { issue: 313, status: "READY" }, { issue: 309, status: "READY", priority: "P0" }] });
+  await relay.requestRefill();
+  assert.deepEqual(asked, [[309, 0], [311, 1]]);
+  assert.deepEqual(transitions, ["309:IMPLEMENT"]);
+  assert.deepEqual(launches, ["PRODUCER"]);
+  assert.deepEqual(Object.values(relay.state().admissionRefusals).map(refusal => [refusal.issue, refusal.checks]).sort(),
+    [[310, ["wip_capacity_available"]], [311, ["wip_capacity_available"]], [312, ["wip_capacity_available"]], [313, ["wip_capacity_available"]]]);
+});
+
+test("(3) a blocked higher-priority BIU keeps its typed checks while the next eligible BIU is admitted", async () => {
+  const { relay, transitions } = boardSubject({ eligible: facts({ wipLimit: 2, refuse: { 320: ["dependencies_satisfied"] } }),
     board: [{ issue: 320, status: "READY", priority: "P0" }, { issue: 321, status: "READY", priority: "P3" }] });
   await relay.requestRefill();
   assert.deepEqual(transitions, ["321:IMPLEMENT"]);
-  assert.deepEqual(launches, ["PRODUCER"]);
-  const refusal = relay.state().admissionRefusals["ExampleOrg/sample-project#320"];
-  assert.deepEqual(refusal.checks, ["agent_ready", "dependencies_satisfied"]);
+  const refusal = relay.state().admissionRefusals[`${REPO}#320`];
+  assert.deepEqual(refusal.checks, ["dependencies_satisfied"]);
   await relay.requestRefill();
-  assert.equal(relay.state().admissionRefusals["ExampleOrg/sample-project#320"].at, refusal.at);
-  assert.equal(relay.events.filter(event => event.outcome === "READY_REFUSED").length, 1);
+  assert.equal(relay.state().admissionRefusals[`${REPO}#320`].at, refusal.at);
+  assert.equal(relay.events.filter(event => event.outcome === "LIFECYCLE_REFUSED" && event.issue === 320).length, 1);
 });
 
-test("refill counts only live claims, not a persisted record whose worker is gone", async () => {
-  const { relay, statePath, asked, transitions } = refillSubject({ isProcessAlive: () => false, admit: wip(1),
+test("(9) unrelated runtime uncertainty never moves READY or IMPLEMENT backward", async () => {
+  // A stale PROCESSING delivery, a dead RUNNING record of another BIU, an unreconciled priority
+  // and a gate that cannot read GitHub: each is a typed refusal; nothing moves backward.
+  const { relay, statePath, transitions } = boardSubject({ isProcessAlive: () => false,
+    eligible: request => { if (request.item.issue === 126) throw new Error("gh: HTTP 502"); return facts({ refuse: { 125: ["priority_inheritance_reconciled"] } })(request); },
+    board: [{ issue: 125, status: "READY", priority: "P0" }, { issue: 126, status: "READY", priority: "P1" },
+      { issue: 127, status: "READY", priority: "P2" }, { issue: 147, status: "TASKS", priority: "P0" }] });
+  writeFileSync(statePath, JSON.stringify({ deliveries: { "stuck-since-09-25": { state: "PROCESSING", at: "2026-09-25T00:00:00.000Z" } },
+    active: liveLane(138, 9999) }));
+  await relay.requestRefill();
+  await relay.reconcile();
+  assert.deepEqual(transitions, ["147:READY", "147:IMPLEMENT"]);
+  const refusals = relay.state().admissionRefusals;
+  assert.deepEqual(refusals[`${REPO}#125`].checks, ["priority_inheritance_reconciled"]);
+  assert.deepEqual(refusals[`${REPO}#126`].checks, ["eligibility_unavailable"]);
+  assert.deepEqual(refusals[`${REPO}#127`].checks, ["wip_capacity_available"]);
+  for (const issue of [125, 126, 127]) assert.equal(await relay.options.authority.currentStatus({ issue }), "READY");
+});
+
+test("(10) restart with no active claim resumes eligible IMPLEMENT, VERIFY and ACCEPT work and READY supply", async () => {
+  const { relay, transitions, launches } = boardSubject({ eligible: facts({ wipLimit: 4 }), board: [
+    { issue: 501, status: "IMPLEMENT" }, { issue: 502, status: "VERIFY" }, { issue: 503, status: "ACCEPT" }, { issue: 504, status: "READY", priority: "P0" }] });
+  await relay.startupReconcile();
+  assert.deepEqual(launches, ["PRODUCER", "VERIFIER", "PRODUCER", "PRODUCER"]);
+  assert.deepEqual(transitions, ["504:IMPLEMENT"]);
+  relay.stop();
+});
+
+test("(7) restart where runtime and Project disagree converges: a dead IMPLEMENT claim on a TASKS/READY card is released", async () => {
+  const { relay, statePath, transitions, launches } = boardSubject({ isProcessAlive: () => false, eligible: facts(),
+    board: [{ issue: 125, status: "READY", priority: "P0" }, { issue: 147, status: "TASKS" }] });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: { ...liveLane(125, 4455), ...liveLane(147, 4456) } }));
+  await relay.startupReconcile();
+  relay.stop();
+  assert.deepEqual(relay.events.filter(event => event.outcome === "STALE_CLAIM_RELEASED").map(event => event.issue).sort(), [125, 147]);
+  assert.deepEqual(transitions, ["125:IMPLEMENT", "147:READY"]);
+  assert.deepEqual(Object.keys(relay.state().active), [`${REPO}#125:PRODUCER`]);
+  assert.deepEqual(launches, ["PRODUCER"]);
+});
+
+test("(12) a live claim on a READY card is kept and counts against WIP; the card is not re-admitted", async () => {
+  const { relay, statePath, asked, transitions } = boardSubject({ isProcessAlive: pid => pid === 4455, eligible: facts(),
+    board: [{ issue: 340, status: "READY", priority: "P0" }, { issue: 341, status: "READY", priority: "P1" }] });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: liveLane(340, 4455) }));
+  await relay.reconcile();
+  await relay.requestRefill();
+  assert.deepEqual(asked, [[341, 1]]);
+  assert.deepEqual(transitions, []);
+  assert.ok(relay.state().active[`${REPO}#340:PRODUCER`]);
+  assert.deepEqual(relay.state().admissionRefusals[`${REPO}#340`].checks, ["no_active_invocation"]);
+});
+
+test("(12) a persisted record whose worker is gone does not occupy WIP", async () => {
+  const { relay, statePath, asked, transitions } = boardSubject({ isProcessAlive: () => false, eligible: facts(),
     board: [{ issue: 330, status: "READY", priority: "P1" }] });
-  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: { "ExampleOrg/sample-project#138:PRODUCER": {
-    invocationId: "gone", item: { repository: "ExampleOrg/sample-project", issue: 138 }, role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-25T00:00:00.000Z", pid: 4455 } } }));
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: liveLane(138, 4455) }));
   await relay.requestRefill();
   assert.deepEqual(asked, [[330, 0]]);
   assert.deepEqual(transitions, ["330:IMPLEMENT"]);
 });
 
-test("refill counts a live claim against WIP and never re-admits a BIU it already claims", async () => {
-  const { relay, statePath, asked, transitions } = refillSubject({ isProcessAlive: pid => pid === 4455, admit: wip(1),
-    board: [{ issue: 340, status: "READY", priority: "P0" }, { issue: 341, status: "READY", priority: "P1" }] });
-  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: { "ExampleOrg/sample-project#340:PRODUCER": {
-    invocationId: "live", item: { repository: "ExampleOrg/sample-project", issue: 340 }, role: "PRODUCER", status: "IMPLEMENT", startedAt: "2026-09-25T00:00:00.000Z", pid: 4455 } } }));
-  await relay.requestRefill();
-  assert.deepEqual(asked, [[341, 1]]);
-  assert.deepEqual(transitions, []);
-  assert.deepEqual(relay.state().admissionRefusals["ExampleOrg/sample-project#340"].checks, ["no_active_invocation"]);
-});
-
-test("a global refusal such as pause ends the pass without asking about lower-priority work", async () => {
-  const { relay, asked, transitions } = refillSubject({ admit: () => refused("factory_paused"),
-    board: [{ issue: 350, status: "READY", priority: "P0" }, { issue: 351, status: "READY", priority: "P1" }] });
+test("a halting refusal such as pause ends the pass without asking about lower-priority work", async () => {
+  const { relay, asked, transitions } = boardSubject({ eligible: () => gate({ checks: ["factory_paused"] }),
+    board: [{ issue: 350, status: "READY", priority: "P0" }, { issue: 351, status: "TASKS", priority: "P1" }] });
   await relay.requestRefill();
   assert.deepEqual(asked, [[350, 0]]);
   assert.deepEqual(transitions, []);
 });
 
 test("refill leaves a BIU another actor moved after the gate read it", async () => {
-  const fixture = refillSubject({ admit: () => { fixture.items.get(360).status = "TASKS"; return admitted; },
+  const fixture = boardSubject({ eligible: () => { fixture.items.get(360).status = "IMPLEMENT"; return gate(); },
     board: [{ issue: 360, status: "READY", priority: "P0" }] });
   await fixture.relay.requestRefill();
   assert.deepEqual(fixture.transitions, []);
   assert.deepEqual(fixture.launches, []);
 });
 
-test("refill is inert without the gate or with execution disabled", async () => {
-  for (const overrides of [{ admitReady: undefined }, { executionEnabled: false }]) {
+test("refill is inert without the eligibility gate or with execution disabled", async () => {
+  for (const overrides of [{ eligibility: undefined }, { executionEnabled: false }]) {
     let listed = 0;
-    const { relay, transitions } = refillSubject({ admit: () => admitted, board: [{ issue: 370, status: "READY" }], ...overrides });
+    const { relay, transitions } = boardSubject({ eligible: () => gate(), board: [{ issue: 370, status: "READY" }], ...overrides });
     relay.options.authority.listItems = async () => { listed++; return []; };
     await relay.requestRefill();
     assert.equal(listed, 0); assert.deepEqual(transitions, []);
   }
 });
 
-test("concurrent refill requests and the resulting IMPLEMENT webhook launch exactly one worker", async () => {
-  const { relay, transitions, launches } = refillSubject({ admit: wip(1),
-    board: [{ issue: 303, status: "READY", priority: "P0" }] });
-  relay.options.authority.enrichContentNode = async () => ({ repository: "ExampleOrg/sample-project", issue: 303, itemId: "PVTI_303" });
+test("(11) duplicate refill requests, a replayed tick and the IMPLEMENT webhook echo launch exactly one worker", async () => {
+  const { relay, transitions, launches } = boardSubject({ eligible: facts(), board: [{ issue: 303, status: "READY", priority: "P0" }] });
   await Promise.all([relay.requestRefill(), relay.requestRefill(), relay.requestRefill()]);
-  await relay.acceptEvent(event("IMPLEMENT", "refill-echo"));
-  assert.deepEqual(transitions, ["303:IMPLEMENT"]);
-  assert.deepEqual(launches, ["PRODUCER"]);
-  assert.equal(relay.events.at(-1).outcome, "ACTIVE_INVOCATION_EXISTS");
-});
-
-test("a terminal worker result refills the freed WIP slot without a Status event", async () => {
-  const { relay, children, transitions, launches } = refillSubject({ admit: wip(1),
-    board: [{ issue: 303, status: "READY", priority: "P1" }, { issue: 304, status: "READY", priority: "P2" }] });
-  relay.options.authority.durableResult = async claim => claim.item.issue === 303 ? "VERIFY" : null;
+  await relay.acceptEvent({ ...event("IMPLEMENT", "refill-echo"), payload: { ...event("IMPLEMENT").payload, projects_v2_item: { id: "PVTI_303", content_node_id: "I_303" } } });
+  await relay.acceptEvent({ ...event("IMPLEMENT", "refill-echo"), payload: { ...event("IMPLEMENT").payload, projects_v2_item: { id: "PVTI_303", content_node_id: "I_303" } } });
+  await relay.reconcile();
   await relay.requestRefill();
   assert.deepEqual(transitions, ["303:IMPLEMENT"]);
-  children[0].emit("close", 0);
-  await new Promise(resolve => setTimeout(resolve, 20));
-  assert.deepEqual(transitions, ["303:IMPLEMENT", "303:VERIFY", "304:IMPLEMENT"]);
-  assert.deepEqual(launches, ["PRODUCER", "PRODUCER"]);
+  assert.deepEqual(launches, ["PRODUCER"]);
 });
 
-test("startup refills once and then on a periodic tick that stop cancels", async () => {
+test("(4)(5)(6)(2) the full lifecycle runs to DONE and each terminal result refills the freed WIP slot", async () => {
+  const results = new Map();
+  const { relay, children, transitions, launches, items } = boardSubject({ eligible: facts({ wipLimit: 1 }),
+    board: [{ issue: 601, status: "TASKS", priority: "P0" }, { issue: 602, status: "READY", priority: "P1" }] });
+  relay.options.authority.durableResult = async claim => results.get(`${claim.item.issue}:${claim.role}:${claim.status}`) ?? null;
+  await relay.requestRefill();
+  assert.deepEqual(transitions, ["601:READY", "601:IMPLEMENT"]);
+  // IMPLEMENT producer success with a candidate -> VERIFY, and the verifier starts on the Status webhook.
+  results.set("601:PRODUCER:IMPLEMENT", "VERIFY"); children[0].emit("close", 0); await settle();
+  assert.deepEqual(transitions.slice(2), ["601:VERIFY", "602:IMPLEMENT"]);
+  await relay.acceptEvent({ ...event("VERIFY", "v-601"), payload: { ...event("VERIFY").payload, projects_v2_item: { id: "PVTI_601", content_node_id: "I_601" } } });
+  // VERIFY ACCEPT -> ACCEPT, then closure DONE -> DONE.
+  results.set("601:VERIFIER:VERIFY", "ACCEPT"); children[2].emit("close", 0); await settle();
+  assert.equal(items.get(601).status, "ACCEPT");
+  await relay.acceptEvent({ ...event("ACCEPT", "a-601"), payload: { ...event("ACCEPT").payload, projects_v2_item: { id: "PVTI_601", content_node_id: "I_601" } } });
+  results.set("601:PRODUCER:ACCEPT", "DONE"); children[3].emit("close", 0); await settle();
+  assert.equal(items.get(601).status, "DONE");
+  assert.deepEqual(launches, ["PRODUCER", "PRODUCER", "VERIFIER", "PRODUCER"]);
+  assert.deepEqual(Object.keys(relay.state().active), [`${REPO}#602:PRODUCER`]);
+});
+
+test("(7) verifier REJECT returns to IMPLEMENT within the configured cycle budget, then blocks typed", async () => {
+  const { relay, children, transitions, launches, items } = boardSubject({ eligible: facts({ wipLimit: 1 }),
+    biuLimits: { [`${REPO}#701`]: { maxCycles: 2, maxReplacementsPerPhase: 1 } },
+    board: [{ issue: 701, status: "READY", priority: "P0" }] });
+  let result = "VERIFY";
+  relay.options.authority.durableResult = async () => result;
+  const verifyEvent = id => ({ ...event("VERIFY", id), payload: { ...event("VERIFY").payload, projects_v2_item: { id: "PVTI_701", content_node_id: "I_701" } } });
+  const implementEvent = id => ({ ...event("IMPLEMENT", id), payload: { ...event("IMPLEMENT").payload, projects_v2_item: { id: "PVTI_701", content_node_id: "I_701" } } });
+  await relay.requestRefill();
+  children.at(-1).emit("close", 0); await settle();
+  await relay.acceptEvent(verifyEvent("v1")); result = "REJECT"; children.at(-1).emit("close", 0); await settle();
+  assert.equal(items.get(701).status, "IMPLEMENT");
+  await relay.acceptEvent(implementEvent("i2")); result = "VERIFY"; children.at(-1).emit("close", 0); await settle();
+  await relay.acceptEvent(verifyEvent("v2")); result = "REJECT"; children.at(-1).emit("close", 0); await settle();
+  // The second REJECT would start cycle 3 of 2: the lane is held as a typed technical blocker in VERIFY.
+  assert.deepEqual(transitions, ["701:IMPLEMENT", "701:VERIFY", "701:IMPLEMENT", "701:VERIFY"]);
+  assert.equal(items.get(701).status, "VERIFY");
+  assert.equal(relay.state().limitEscalations[`${REPO}#701`].outcome, "EXECUTION_CYCLE_LIMIT");
+  assert.equal(relay.state().founderExceptions, undefined);
+  await relay.reconcile();
+  assert.deepEqual(launches, ["PRODUCER", "VERIFIER", "PRODUCER", "VERIFIER"]);
+  assert.deepEqual(transitions.filter(value => value.endsWith(":TASKS")), []);
+});
+
+test("(8) a failed preflight is a typed diagnostic the next control tick re-drives, never a Founder hold", async () => {
+  let preflights = 0;
+  const { relay, launches } = boardSubject({ eligible: facts(), board: [{ issue: 801, status: "IMPLEMENT" }],
+    preflight: async () => (++preflights === 1 ? { ok: false, reason: "GITHUB_VERIFICATION_UNAVAILABLE" } : { ok: true }) });
+  await relay.reconcile();
+  assert.deepEqual(launches, []);
+  const diagnostic = relay.state().diagnostics[`${REPO}#801:PRODUCER`];
+  assert.equal(diagnostic.outcome, "PREFLIGHT_FAILED");
+  assert.equal(diagnostic.reason, "GITHUB_VERIFICATION_UNAVAILABLE");
+  assert.equal(relay.state().active[`${REPO}#801:PRODUCER`], undefined);
+  await relay.reconcile();
+  assert.deepEqual(launches, ["PRODUCER"]);
+});
+
+test("(10) a lost IMPLEMENT webhook and a worker that exited without a result are both re-driven by the tick", async () => {
   const timers = [];
-  const { relay, asked } = refillSubject({ admit: () => refused("dependencies_satisfied"), refillIntervalMs: 60000,
+  const { relay, statePath, launches } = boardSubject({ isProcessAlive: () => false, eligible: facts(), tickIntervalMs: 45000,
     setTimeout: (callback, ms) => { const timer = { callback, ms, cleared: false }; timers.push(timer); return timer; },
     clearTimeout: timer => { timer.cleared = true; },
-    board: [{ issue: 380, status: "READY", priority: "P0" }] });
-  await relay.startupReconcile();
-  assert.equal(asked.length, 1);
-  assert.equal(timers.at(-1).ms, 60000);
-  await timers.at(-1).callback();
-  await new Promise(resolve => setImmediate(resolve));
-  assert.equal(asked.length, 2);
-  assert.equal(timers.length, 2);
+    board: [{ issue: 901, status: "IMPLEMENT" }, { issue: 902, status: "VERIFY" }] });
+  writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: {}, diagnostics: { [`${REPO}#902:VERIFIER`]: {
+    invocationId: "exited", item: { repository: REPO, issue: 902, itemId: "PVTI_902" }, role: "VERIFIER", status: "VERIFY", startedAt: "2026-09-25T00:00:00.000Z", outcome: "DURABLE_RESULT_MISSING" } } }));
+  const ticks = () => timers.filter(timer => timer.ms === 45000);
+  relay.started = true;
+  relay.scheduleTick();
+  assert.equal(ticks().length, 1);
+  await ticks()[0].callback();
+  assert.deepEqual(launches.sort(), ["PRODUCER", "VERIFIER"]);
+  assert.equal(ticks().length, 2);
   relay.stop();
-  assert.equal(timers.at(-1).cleared, true);
+  assert.equal(ticks().at(-1).cleared, true);
 });

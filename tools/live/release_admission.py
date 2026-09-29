@@ -76,6 +76,22 @@ def admit(facts: dict) -> list[dict]:
     return failures
 
 
+# Checks that only execution admission (READY -> IMPLEMENT) decides. Every other check is a
+# preparation fact, so READY means exactly "prepared; only execution admission remains".
+ADMISSION_CHECKS = frozenset({"status_ready", "no_active_invocation", "wip_limit_known",
+                              "wip_capacity_known", "wip_capacity_available"})
+
+
+def eligibility(facts: dict, extra_failures: list[dict] = ()) -> dict:
+    """The one lifecycle eligibility result for a TASKS or READY BIU. `prepared` permits
+    TASKS -> READY; `admitted` permits READY -> IMPLEMENT. Neither is ever a reason to move a
+    BIU backward: a failed check leaves it where it is, refused with that check."""
+    failures = admit(facts) + list(extra_failures)
+    return {"agentReady": facts.get("agent_ready"),
+            "prepared": all(f["check"] in ADMISSION_CHECKS for f in failures),
+            "admitted": not failures, "failures": failures}
+
+
 class MalformedReceipt(ValueError):
     """An operator's Agent Ready marker that cannot be read: fail closed, never skip it."""
 
