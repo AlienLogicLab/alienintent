@@ -2,7 +2,7 @@ import { execFileSync, spawn } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 
-const fields = ['Id', 'LoadState', 'Description', 'InvocationID', 'ControlGroup', 'ActiveState', 'SubState', 'Type', 'ExitType', 'Restart', 'KillMode', 'SendSIGKILL', 'RemainAfterExit', 'RuntimeMaxUSec', 'TimeoutStartUSec', 'TimeoutStopUSec', 'RuntimeRandomizedExtraUSec', 'ExecMainCode', 'ExecMainStatus', 'Result'];
+const fields = ['Id', 'LoadState', 'Description', 'InvocationID', 'ControlGroup', 'ActiveState', 'SubState', 'MainPID', 'Type', 'ExitType', 'Restart', 'KillMode', 'SendSIGKILL', 'RemainAfterExit', 'RuntimeMaxUSec', 'TimeoutStartUSec', 'TimeoutStopUSec', 'RuntimeRandomizedExtraUSec', 'ExecMainCode', 'ExecMainStatus', 'Result'];
 const parse = text => Object.fromEntries(String(text).trim().split('\n').filter(line => line.includes('=')).map(line => [line.slice(0, line.indexOf('=')), line.slice(line.indexOf('=') + 1)]));
 function milliseconds(text) {
   if (text === '0') return 0;
@@ -25,6 +25,7 @@ export function createSystemdSupervisor(config, dependencies = {}) {
   for (const key of ['runtimeMilliseconds', 'stopGraceMilliseconds', 'startupMilliseconds']) if (!Number.isSafeInteger(config[key]) || config[key] <= 0 || config[key] > 2147483647) throw new Error('SUPERVISION_LIMIT_REQUIRED');
   for (const key of ['systemdRun', 'systemctl', 'env']) if (typeof config[key] !== 'string' || !config[key].startsWith('/') || config[key].includes('\0')) throw new Error('SUPERVISION_EXECUTABLE_REQUIRED');
   const readFile = dependencies.readFile ?? (path => readFileSync(path, 'utf8'));
+  const checkProcess = dependencies.checkProcess ?? ((pid) => process.kill(pid, 0));
   const env = managerEnvironment(dependencies.environment ?? process.env);
   const transport = dependencies.transport ?? ((command, args) => {
     try { return parse(execFileSync(command, args, { env, encoding: 'utf8', timeout: 5000, stdio: ['ignore', 'pipe', 'pipe'] })); }
@@ -51,9 +52,38 @@ export function createSystemdSupervisor(config, dependencies = {}) {
   function empty(owner) {
     try {
       const text = readFile(`/sys/fs/cgroup${owner.cgroup}/cgroup.events`);
-      if (!/^populated [01]$/m.test(text)) throw new Error('SUPERVISION_CGROUP_UNAVAILABLE');
-      return /^populated 0$/m.test(text);
+      const populated = String(text).trim().split('\n').filter(line => line.startsWith('populated '));
+      if (populated.length !== 1 || !/^populated [01]$/.test(populated[0])) throw new Error('SUPERVISION_CGROUP_UNAVAILABLE');
+      return populated[0] === 'populated 0';
     } catch (error) { if (error.code === 'ENOENT') return true; throw error; }
+  }
+  function missingRecovery(owner, unit, resource, persist) {
+    if (resource?.lifecycle !== 'RUNNING' || resource.invocationId !== owner.invocationId
+        || typeof resource.path !== 'string' || !resource.path.startsWith('/')
+        || !Number.isSafeInteger(resource.pid) || resource.pid <= 0
+        || owner.terminalReceipt || owner.cancellationIntent || owner.stopIntent) throw new Error('SUPERVISION_ABSENCE_UNPROVEN');
+    const digest = createHash('sha256').update(JSON.stringify([owner.invocationId, resource.path])).digest('hex');
+    const expectedUnit = `alienintent-${digest}.service`;
+    if (owner.unit !== expectedUnit || owner.binding !== `AlienIntent invocation ${digest}`
+        || owner.cgroup !== `${owner.manager.cgroup}/app.slice/${expectedUnit}`
+        || unit.Id !== owner.unit || unit.ActiveState !== 'inactive' || unit.MainPID !== '0'
+        || unit.InvocationID !== '' || unit.ControlGroup !== '' || !empty(owner)) throw new Error('SUPERVISION_ABSENCE_UNPROVEN');
+    try { checkProcess(resource.pid); throw new Error('SUPERVISION_PROCESS_PRESENT'); }
+    catch (error) { if (error.code !== 'ESRCH') throw error; }
+    const recovery = owner.absenceRecovery;
+    if (recovery) {
+      if (recovery.invocationId !== owner.invocationId || recovery.unit !== owner.unit
+          || recovery.cgroup !== owner.cgroup || recovery.pid !== resource.pid
+          || !wellFormedManager(recovery.manager)
+          || ['uid', 'bootId', 'startedAtMonotonic', 'cgroup'].some(key => recovery.manager[key] !== owner.manager[key])
+          || recovery.historicalExitCode !== 'UNKNOWN' || recovery.historicalResult !== 'UNKNOWN'
+          || recovery.historicalEffect !== 'UNKNOWN') throw new Error('SUPERVISION_ABSENCE_RECORD_MISMATCH');
+    } else {
+      persist({ ...owner, absenceRecovery: { invocationId: owner.invocationId, manager: owner.manager,
+        unit: owner.unit, cgroup: owner.cgroup, pid: resource.pid, observedAt: new Date().toISOString(),
+        historicalExitCode: 'UNKNOWN', historicalResult: 'UNKNOWN', historicalEffect: 'UNKNOWN' } });
+    }
+    return { terminal: true, unknown: true };
   }
   function owned(owner, unit) {
     if (unit.LoadState !== 'loaded' || unit.Id !== owner.unit || unit.Description !== owner.binding
@@ -100,11 +130,12 @@ export function createSystemdSupervisor(config, dependencies = {}) {
           || owner.cgroup !== `${owner.manager.cgroup}/app.slice/${expectedUnit}`) return false;
       return show(owner.unit).LoadState === 'not-found' && empty(owner);
     },
-    observe(owner, persist) {
+    observe(owner, persist, resource, recoverMissing = false) {
       verifyManager(owner);
       let unit = show(owner.unit);
       if (unit.LoadState === 'not-found') {
         if (owner.terminalReceipt && owner.stopConfirmed && empty(owner)) return { terminal: true, receipt: owner.terminalReceipt };
+        if (recoverMissing) return missingRecovery(owner, unit, resource, persist);
         throw new Error('SUPERVISION_UNIT_MISSING');
       }
       owned(owner, unit);

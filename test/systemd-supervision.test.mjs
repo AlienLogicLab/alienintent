@@ -7,12 +7,15 @@ function fixture(initialManagerId = 'a'.repeat(32)) {
   assert.equal(typeof module.createSystemdSupervisor, 'function', 'bounded ownership adapter must exist');
   const calls = [], effects = [], client = new EventEmitter(); client.pid = 123;
   let retainedFailure = false;
-  let unit = null, populated = false, managerId = initialManagerId;
+  let unit = null, populated = false, managerId = initialManagerId, processError = 'ESRCH', cgroupMissing = false, cgroupEvents = null;
   const root = '/user.slice/user-1000.slice/user@1000.service';
   const readFile = path => {
     if (path.endsWith('/boot_id')) return 'boot-id';
     if (path.endsWith('/cgroup.controllers')) return 'cpu memory';
-    if (path.endsWith('/cgroup.events')) return `populated ${populated ? 1 : 0}\nfrozen 0\n`;
+    if (path.endsWith('/cgroup.events')) {
+      if (cgroupMissing) throw Object.assign(new Error('missing'), { code: 'ENOENT' });
+      return cgroupEvents ?? `populated ${populated ? 1 : 0}\nfrozen 0\n`;
+    }
     throw new Error(`unexpected file ${path}`);
   };
   const transport = (command, args) => {
@@ -20,18 +23,20 @@ function fixture(initialManagerId = 'a'.repeat(32)) {
     if (args.includes('show')) {
       if (!args.includes('--')) return { UserspaceTimestampMonotonic: managerId === 'c'.repeat(32) ? '200' : '100', ControlGroup: root };
       if (args.at(-1) === 'init.scope') return { Id: 'init.scope', InvocationID: managerId, ControlGroup: `${root}/init.scope`, LoadState: 'loaded' };
-      return unit ?? { LoadState: 'not-found' };
+      return unit ?? { Id: args.at(-1), LoadState: 'not-found', ActiveState: 'inactive', MainPID: '0', InvocationID: '', ControlGroup: '' };
     }
     if (args.includes('reset-failed')) { effects.push('reset-failed'); unit = null; return {}; }
     if (args.includes('kill')) { effects.push('kill'); return {}; }
     if (args.includes('stop')) { effects.push('stop'); if (!retainedFailure) unit = null; populated = false; return {}; }
     throw new Error('unexpected command');
   };
-  const adapter = module.createSystemdSupervisor(config, { transport, readFile, uid: () => 1000, spawn: (command, args, options) => { calls.push({ command, args, options }); effects.push('launch'); return client; } });
+  const adapter = module.createSystemdSupervisor(config, { transport, readFile, uid: () => 1000,
+    checkProcess: () => { throw Object.assign(new Error(processError), { code: processError }); },
+    spawn: (command, args, options) => { calls.push({ command, args, options }); effects.push('launch'); return client; } });
   const request = { invocationId: 'org/repo#1:PRODUCER:id', resource: { path: '/tmp/work $ with spaces', invocationId: 'org/repo#1:PRODUCER:id' } };
   const owner = adapter.plan(request);
   const running = () => { populated = true; unit = { Id: owner.unit, Description: owner.binding, InvocationID: 'b'.repeat(32), ControlGroup: owner.cgroup, LoadState: 'loaded', ActiveState: 'active', SubState: 'running', Type: 'exec', ExitType: 'cgroup', Restart: 'no', KillMode: 'control-group', SendSIGKILL: 'yes', RemainAfterExit: 'yes', RuntimeMaxUSec: '12s', TimeoutStartUSec: '2s', TimeoutStopUSec: '1s', RuntimeRandomizedExtraUSec: '0', ExecMainCode: '1', ExecMainStatus: '0', Result: 'success' }; };
-  return { adapter, owner, request, calls, effects, client, running, get unit() { return unit; }, set unit(v) { unit = v; }, set populated(v) { populated = v; }, set managerId(v) { managerId = v; }, set retainedFailure(v) { retainedFailure = v; } };
+  return { adapter, owner, request, calls, effects, client, running, get unit() { return unit; }, set unit(v) { unit = v; }, set populated(v) { populated = v; }, set managerId(v) { managerId = v; }, set retainedFailure(v) { retainedFailure = v; }, set processError(v) { processError = v; }, set cgroupMissing(v) { cgroupMissing = v; }, set cgroupEvents(v) { cgroupEvents = v; } };
 }
 test('unit planning is deterministic and bound to immutable invocation and path', () => {
   const f = fixture();
@@ -140,4 +145,43 @@ test('pre-spawn absence proof refuses changed resource identity, a unit, or a po
   f.populated = false; f.managerId = 'c'.repeat(32);
   assert.throws(() => f.adapter.absent(f.owner, f.request.resource.path), /SUPERVISION_MANAGER_CHANGED/);
   assert.deepEqual(f.effects, []);
+});
+
+test('missing owned RUNNING unit persists unknown history and replays without a fabricated receipt', () => {
+  const f = fixture();
+  const resource = { ...f.request.resource, lifecycle: 'RUNNING', pid: 3300637 };
+  let saved = f.owner, writes = 0;
+  const persist = value => { saved = value; writes++; };
+  const first = f.adapter.observe(saved, persist, resource, true);
+  assert.deepEqual(first, { terminal: true, unknown: true });
+  assert.equal(saved.absenceRecovery.historicalExitCode, 'UNKNOWN');
+  assert.equal(saved.absenceRecovery.historicalResult, 'UNKNOWN');
+  assert.equal(saved.absenceRecovery.historicalEffect, 'UNKNOWN');
+  assert.equal(saved.terminalReceipt, undefined);
+  assert.equal(writes, 1);
+  assert.deepEqual(f.adapter.observe(saved, persist, resource, true), first);
+  assert.equal(writes, 1);
+  assert.throws(() => f.adapter.observe({ ...saved, absenceRecovery: { ...saved.absenceRecovery,
+    manager: { ...saved.absenceRecovery.manager, uid: 99 } } }, persist, resource, true), /RECORD_MISMATCH/);
+  f.cgroupMissing = true;
+  assert.deepEqual(f.adapter.observe(saved, persist, resource, true), first);
+});
+
+test('missing-unit recovery refuses manager, unit, cgroup, PID and identity ambiguity before persistence', () => {
+  const f = fixture();
+  const resource = { ...f.request.resource, lifecycle: 'RUNNING', pid: 3300637 };
+  const refuses = (owner = f.owner, candidate = resource) => {
+    let writes = 0;
+    assert.throws(() => f.adapter.observe(owner, () => { writes++; }, candidate, true));
+    assert.equal(writes, 0);
+  };
+  refuses(f.owner, { ...resource, pid: undefined });
+  refuses(f.owner, { ...resource, path: '/tmp/other' });
+  refuses({ ...f.owner, unit: 'foreign.service' });
+  f.processError = 'EPERM'; refuses(); f.processError = 'ESRCH';
+  f.populated = true; refuses(); f.populated = false;
+  f.cgroupEvents = 'populated 0\npopulated 1\n'; refuses(); f.cgroupEvents = null;
+  f.unit = { Id: f.owner.unit, LoadState: 'not-found', ActiveState: 'inactive', MainPID: '1', InvocationID: '', ControlGroup: '' }; refuses();
+  f.unit = { Id: f.owner.unit, LoadState: 'loaded' }; refuses(); f.unit = null;
+  f.managerId = 'c'.repeat(32); refuses();
 });
