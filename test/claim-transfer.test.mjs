@@ -181,7 +181,8 @@ test("an edit grant is usable only by its named owner while the exact claim and 
   assert.deepEqual(relay.authorizeClaimTransferEdit(edit), {
     invocationId, path, branch, nextOwner: request.nextOwner, grantId: grant.grantId,
   });
-  const resumed = new EventRelay({ statePath, claimTransferHostProof: ({ request }) => boundProof(request, "e"),
+  const resumed = new EventRelay({ statePath, claimTransferUnitInspector: absentUnit,
+    claimTransferHostProof: ({ request }) => boundProof(request, "e"),
     worktreeManager: { inspectOwnership: () => ({ invocationId, resourceId: "resource-1", path, branch, head }) } });
   assert.deepEqual(resumed.authorizeClaimTransferEdit(edit), {
     invocationId, path, branch, nextOwner: request.nextOwner, grantId: grant.grantId,
@@ -210,6 +211,21 @@ test("an edit grant refuses a ledger change during fresh host proof", () => {
 
   assert.throws(() => relay.authorizeClaimTransferEdit({ ...request, grantId: grant.grantId }),
     /CLAIM_TRANSFER_EDIT_STATE_CHANGED/);
+  assert.equal(relay.state().active[lane].invocationId, invocationId);
+});
+
+test("an edit grant rechecks exact unit absence after the transfer commits", () => {
+  const { state, request } = fixture();
+  const statePath = join(mkdtempSync(join(tmpdir(), "claim-transfer-edit-unit-")), "state.json");
+  const relay = transferRelay({ statePath, claimTransferHostProof: ({ request }) => boundProof(request) });
+  relay.save(state); request.expectedHead = relay.fence();
+  const grant = relay.commitClaimTransfer(request);
+  const edit = { ...request, grantId: grant.grantId };
+
+  relay.options.claimTransferUnitInspector = undefined;
+  assert.throws(() => relay.authorizeClaimTransferEdit(edit), /CLAIM_TRANSFER_UNIT_INSPECTOR_REQUIRED/);
+  relay.options.claimTransferUnitInspector = owner => ({ ...absentUnit(owner), cgroupPopulated: true });
+  assert.throws(() => relay.authorizeClaimTransferEdit(edit), /CLAIM_TRANSFER_UNIT_PROOF_MISMATCH/);
   assert.equal(relay.state().active[lane].invocationId, invocationId);
 });
 

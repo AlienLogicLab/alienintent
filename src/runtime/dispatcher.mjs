@@ -171,16 +171,19 @@ export class EventRelay {
     const head = this.fence();
     if (!isDeepStrictEqual(head, request.expectedHead))
       throw new Error("CLAIM_TRANSFER_UNIT_STATE_CHANGED");
+    const observed = this.inspectClaimTransferUnitEvidence(state.resources[request.invocationId], request);
+    if (!isDeepStrictEqual(this.fence(), head))
+      throw new Error("CLAIM_TRANSFER_UNIT_STATE_CHANGED");
+    return observed;
+  }
+  inspectClaimTransferUnitEvidence(resource, request) {
     const inspect = this.options.claimTransferUnitInspector ?? this.options.launch?.inspectClaimTransferUnit;
     if (typeof inspect !== "function") throw new Error("CLAIM_TRANSFER_UNIT_INSPECTOR_REQUIRED");
-    const resource = state.resources[request.invocationId];
     const observed = inspect(resource.supervision, resource.role);
     if (observed?.unit !== request.unit || observed.cgroup !== request.cgroup
         || !isDeepStrictEqual(observed.manager, request.manager)
         || observed.loadState !== "not-found" || observed.cgroupPopulated !== false)
       throw new Error("CLAIM_TRANSFER_UNIT_PROOF_MISMATCH");
-    if (!isDeepStrictEqual(this.fence(), head))
-      throw new Error("CLAIM_TRANSFER_UNIT_STATE_CHANGED");
     return observed;
   }
   commitClaimTransfer(request) {
@@ -241,6 +244,7 @@ export class EventRelay {
     const checkState = { ...state, claimTransfers: Object.fromEntries(
       Object.entries(state.claimTransfers).filter(([key]) => key !== request.invocationId)) };
     assertClaimTransferState(checkState, request);
+    this.inspectClaimTransferUnitEvidence(state.resources[request.invocationId], request);
     const inspect = this.options.worktreeManager?.inspectOwnership;
     if (typeof inspect !== "function") throw new Error("CLAIM_TRANSFER_WORKTREE_INSPECTION_REQUIRED");
     const ownership = inspect.call(this.options.worktreeManager, state.resources[request.invocationId]);
