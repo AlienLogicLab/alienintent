@@ -37,6 +37,8 @@ v1 is evidence and a requirements source, not an implementation template.
 The milestones deliberately add capability in this order:
 
 ```text
+M-1 Repository authority + deterministic publication boundary
+        |
 M0  Architecture locked
         |
 M1  Deterministic offline factory
@@ -49,10 +51,159 @@ M4  Production resilience + N projects + quality evidence
         |
 M5  Local Factory Director cognition + adaptive allocation/learning
         |
-M6  Publication/productization/community surfaces
+M6  Product polish + community surfaces
 ```
 
-Each milestone is useful on its own and reduces uncertainty for the next.
+Each milestone is useful on its own and reduces uncertainty for the next. **M-1 is a hard prerequisite for all v2 implementation work.** AlienIntent must first establish the correct private canonical engineering authority and public publication boundary so v2 is never built inside an accidentally public engineering record.
+
+# M-1 — Repository Authority and Deterministic Publication Boundary
+
+**Goal:** establish the repository/privacy/publication architecture in its intended operational form before v2 implementation begins.
+
+The current `AlienLogicLab/alienintent` repository is the active canonical engineering repository and is currently public. That is the first condition to correct.
+
+### V2-000A — Contain canonical engineering authority: make current repository PRIVATE
+
+Change `AlienLogicLab/alienintent` visibility from PUBLIC to PRIVATE while preserving repository identity, Issue numbers, Project relationships, branches, tags, GitHub App/webhook configuration and current v1 factory references.
+
+This is containment, not publication redesign completion. It must happen before v2 foundation coding.
+
+Acceptance:
+- GitHub reports the canonical repository PRIVATE;
+- existing clone/remote identity is unchanged;
+- no history rewrite;
+- current Issues/Project/branches/tags remain intact;
+- v1 remains capable of referencing the same repository identity.
+
+### V2-000B — Post-visibility integration health proof
+
+Immediately prove that making the canonical repository private did not break current operational integrations.
+
+Verify at minimum:
+- GitHub App installation/repository access;
+- webhook delivery and authentication path;
+- Project read/write;
+- worker repository access for authorized identities;
+- Factory Director read/control access;
+- source-control fetch/push for authorized factory identities;
+- relevant Actions/packages/release access if currently used.
+
+Any failure is repaired as an integration/configuration defect; do not revert to public visibility as the normal fix.
+
+### V2-000C — Publication classification and machine-readable allowlist
+
+Make the Founder-approved classification model operational:
+
+- `INTERNAL` — default;
+- `PUBLIC_SOURCE`;
+- `PUBLIC_DOCUMENTATION`.
+
+Unknown/unclassified means INTERNAL. There is no denylist publication mode.
+
+Deliver a versioned machine-readable allowlist/classification manifest rooted in the private canonical repository. The manifest is publication policy, not a manually remembered convention.
+
+### V2-000D — Deterministic publication assembler
+
+Build the smallest deterministic publication tool that consumes:
+
+- exact private canonical revision;
+- publication classification/allowlist;
+- explicit publication configuration;
+
+and produces an immutable public candidate.
+
+Required pipeline:
+
+```text
+private canonical revision
+  -> explicit allowlist/classification
+  -> reject unknown/unclassified public candidates
+  -> secret scan
+  -> private-reference/internal-path scan
+  -> public build/tests
+  -> API/package compatibility checks where applicable
+  -> immutable publication candidate
+```
+
+The assembler has no authority to publish by itself.
+
+### V2-000E — Establish separate public publication repository
+
+Create/configure a separate public publication target from a **fresh curated snapshot**, not from the full private Git object/history graph.
+
+Until v1 no longer depends on the active repository identity, do **not** rename the canonical private `AlienLogicLab/alienintent` repository merely to obtain the final preferred naming layout. Use a separate unambiguous publication repository name during coexistence if necessary.
+
+Public repository content is limited to explicitly approved artifacts such as:
+- released source and appropriate public tests;
+- README / LICENSE / CONTRIBUTING / SECURITY;
+- installation and stable API/extension documentation;
+- curated public architecture/contributor/security documentation;
+- intentional releases/tags.
+
+It excludes by default:
+- requirements and internal design/architecture source documents;
+- private ADRs/decisions;
+- work units;
+- factory evidence/trajectory;
+- internal Issues/Project state;
+- worker/candidate branches;
+- Director records/prompts/model evaluations;
+- private operations/continuity/migration material.
+
+### V2-000F — Public surface and leakage audit
+
+Audit both the now-private canonical repository and the new public publication surface.
+
+Audit at minimum:
+- repository tree;
+- public history/object ancestry included in the publication candidate;
+- branches and tags;
+- Issues/Discussions/Wiki if enabled;
+- releases;
+- Actions logs/artifacts;
+- packages;
+- Pages;
+- uploaded attachments;
+- public documentation links/references;
+- secrets/private references/internal path names;
+- candidate/worker branch leakage.
+
+The objective is future deterministic disclosure control, not an impossible claim that prior public copies/caches have been erased.
+
+### V2-000G — Publication authority and repeatability proof
+
+Add explicit publication authority after candidate assembly and prove:
+
+- commit to private canonical repo != publication;
+- publication requires explicit authority;
+- same canonical revision + same publication policy produces the same public candidate;
+- unknown classification fails closed;
+- secret/private-reference failures prevent publication;
+- worker/candidate branches are never mirrored;
+- public Issues cannot directly create requirements/BIUs/execution authority;
+- publication receipts record canonical revision, policy version, candidate identity and public target revision.
+
+### V2-000H — Repository-identity migration deferred boundary
+
+Record the desired long-term naming/layout explicitly, but defer canonical repository rename while v1 runtime identities/webhooks/Issues/Project/evidence still depend on the current repository identity.
+
+Preferred eventual shape may be:
+- private canonical engineering authority under an internal/private identity;
+- `AlienLogicLab/alienintent` as the curated public product/distribution repository.
+
+The identity swap/rename is its own later migration Work Unit after v1 authority has been retired or proven independent of the old repository identity. This deferral does **not** delay the privacy/publication boundary itself.
+
+**M-1 exit:**
+- canonical engineering repository is PRIVATE;
+- v1 integrations remain healthy after visibility change;
+- public publication is a separate configured target;
+- publication is generated only by deterministic allowlist-based tooling from an exact private revision;
+- first public candidate has passed secret/private-reference/build/API checks and manual review;
+- internal Issues/Project/evidence/work units/worker branches are not public;
+- publication authority is explicit and repeatable;
+- the long-term repository identity migration is documented and safely deferred rather than conflated with publication.
+
+Only after all M-1 exit criteria pass does `V2-001` begin.
 
 # M0 — Architecture Locked
 
@@ -358,41 +509,29 @@ Requirements: SF-REQ-031/032.
 
 **M5 demonstration:** the selected local Director model operates in shadow with materially lower cost/latency than frontier cognition, zero violations of deterministic policy, and sufficient quality to receive bounded proposal authority for explicitly selected cognitive decisions.
 
-# M6 — Publication, Productization and Community Surfaces
+# M6 — Product Polish and Community Surfaces
 
-**Goal:** finish external product surfaces only after the factory core is reliable.
+**Goal:** finish optional/polished external product surfaces after the factory core is reliable. Publication foundations already exist from M-1; M6 extends them only where the finished product requires additional UX/integration polish.
 
-### V2-601 — Publication classification + allowlist assembler
-
-Implement INTERNAL/PUBLIC_SOURCE/PUBLIC_DOCUMENTATION classification, fail-closed allowlist assembly, secret/private-reference scanning, public build/test/API checks and immutable publication candidates.
-
-Requirements: canonical v2 publication architecture.
-
-### V2-602 — Separate public repository publication adapter
-
-Publish an explicitly authorized fresh curated snapshot/release without worker branches/internal Issues/Project/work units/evidence/private history.
-
-Requirements: publication architecture; SF-REQ-023 where publication is an outcome obligation.
-
-### V2-603 — Factory dashboard
+### V2-601 — Factory dashboard
 
 Build a read-oriented dashboard over Query ports for active/queued/completed work, WIP/capacity, workers, stage, elapsed time, costs, decisions, events and integration health. It owns no truth.
 
 Requirements: SF-REQ-036.
 
-### V2-604 — Installer/doctor product polish
+### V2-602 — Installer/doctor product polish
 
 Complete discovery, guided configuration, upgrades/migrations, rollback, noninteractive automation and external publication-target setup.
 
 Requirements: SF-REQ-037/038.
 
-### V2-605 — Opt-in community learning
+### V2-603 — Opt-in community learning
 
 Contribute generalized/anonymized evidence without proprietary code, secrets or sensitive project content; preserve explicit consent/revocation and trust boundaries.
 
 Requirements: SF-REQ-033.
 
-**M6 demonstration:** install AlienIntent, operate the factory, expose polished operator UX, and publish an intentional public distribution repository entirely from deterministic publication policy without exposing canonical engineering internals.
+**M6 demonstration:** install AlienIntent, operate the factory, expose polished operator/community UX, and continue publishing intentional public releases through the deterministic M-1 publication boundary without exposing canonical engineering internals.
 
 # 4. Active requirement coverage
 
@@ -422,7 +561,7 @@ Every active canonical requirement is assigned. SF-REQ-054 is retired and intent
 | SF-REQ-020 | V2-102, V2-402 |
 | SF-REQ-021 | V2-108, V2-304, V2-402 |
 | SF-REQ-022 | V2-104 foundation, V2-402 |
-| SF-REQ-023 | V2-406, V2-602 where publication applies |
+| SF-REQ-023 | V2-406; V2-000D/V2-000G where publication is a closure obligation |
 | SF-REQ-024 | V2-403 |
 | SF-REQ-025 | V2-303 foundation, V2-504 |
 | SF-REQ-026 | V2-501–V2-504 |
@@ -432,12 +571,12 @@ Every active canonical requirement is assigned. SF-REQ-054 is retired and intent
 | SF-REQ-030 | V2-403 |
 | SF-REQ-031 | V2-506 |
 | SF-REQ-032 | V2-503, V2-506 |
-| SF-REQ-033 | V2-605 |
+| SF-REQ-033 | V2-603 |
 | SF-REQ-034 | V2-002, V2-106, V2-201, V2-202, V2-405 |
 | SF-REQ-035 | V2-104, V2-205, V2-405 |
-| SF-REQ-036 | V2-603 |
-| SF-REQ-037 | V2-306, V2-604 |
-| SF-REQ-038 | V2-003 foundation, V2-106, V2-306, V2-604 |
+| SF-REQ-036 | V2-601 |
+| SF-REQ-037 | V2-306, V2-602 |
+| SF-REQ-038 | V2-003 foundation, V2-106, V2-306, V2-602 |
 | SF-REQ-039 | V2-005, V2-107 |
 | SF-REQ-040 | V2-005, V2-105, V2-107 |
 | SF-REQ-055 | V2-204 foundation, V2-404 complete |
@@ -448,6 +587,9 @@ Every active canonical requirement is assigned. SF-REQ-054 is retired and intent
 The shortest path to a trustworthy autonomous v2 factory is:
 
 ```text
+V2-000A -> V2-000B -> V2-000C -> V2-000D -> V2-000E -> V2-000F -> V2-000G -> V2-000H
+                                                                          |
+                                                                          v
 V2-001 -> V2-002 -> V2-003 -> V2-004 -> V2-005
                                          |
                                          v
@@ -477,7 +619,7 @@ During foundation construction:
 - architectural changes discovered during implementation return to architecture authority before code continues;
 - do not accumulate more than a small READY buffer until actual throughput demonstrates value.
 
-The plan intentionally prioritizes correctness and low rework over artificial parallelism during M0/M1.
+The plan intentionally prioritizes correctness and low rework over artificial parallelism during M-1/M0/M1.
 
 # 7. Definition of milestone completion
 
@@ -493,8 +635,13 @@ A milestone is DONE only when:
 
 # 8. First action
 
-The first v2 implementation work is **V2-001**, not a runtime port and not a model integration.
+The first v2 programme work is **V2-000A: make the current canonical AlienIntent repository PRIVATE**, then complete M-1 through deterministic publication-boundary proof.
 
-Before Claude Code writes substantial v2 code, M0 must freeze the Ubiquitous Language/context map, port contracts, Python engineering baseline, canonical domain/event schema and conformance harness.
+No v2 foundation implementation starts until M-1 exits successfully.
 
-That is the smallest investment most likely to prevent a second v1.
+After M-1, the first v2 software-foundation Work Unit is **V2-001**. M0 then freezes the Ubiquitous Language/context map, port contracts, Python engineering baseline, canonical domain/event schema and conformance harness before substantial runtime implementation.
+
+This ordering prevents two classes of repeat failure before they can compound:
+
+1. building private engineering truth in an accidentally public repository;
+2. building control machinery before semantics and boundaries are mechanically clear.
