@@ -8,6 +8,7 @@ import { GitHubAuthority } from "../src/github/authority.mjs";
 import { createGitHubAppClient } from "../src/github/app-client.mjs";
 import { createWorkerLauncher, workerEnvironment, inspectWorker } from "../src/runtime/worker-runner.mjs";
 import { createWorktreeManager } from "../src/runtime/worktree-manager.mjs";
+import { createReleaseAdmission } from "../src/runtime/release-admission.mjs";
 import { loadProfile } from "../src/config/profile.mjs";
 import { resolveRoute } from "../src/config/model-routing.mjs";
 
@@ -49,6 +50,10 @@ const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(eve
     repositoryStore: config.repositoryStore, worktreeRoot: config.worktreeRoot,
     baselineRef: config.baselineRef, git: config.executables.git }) : undefined,
   inspectionIntervalMs: config.inspectionIntervalMs, preflight,
+  admitReady: config.executionEnabled && config.readyRefill ? createReleaseAdmission({ python: config.executables.python,
+    directorHostConfig: config.readyRefill.directorHostConfig,
+    environment: () => appClient.childEnvironment(process.env.HOME ? { HOME: process.env.HOME } : {}) }) : undefined,
+  refillIntervalMs: config.readyRefill?.intervalMs,
   inspectWorker: child => inspectWorker(child, { executable: config.executables.processInspector }),
   launch: createWorkerLauncher({ workers: config.workers, routeResolver: resolveRoute }) });
 await relay.startupReconcile();

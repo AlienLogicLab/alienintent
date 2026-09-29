@@ -48,6 +48,17 @@ function authority(overrides = {}) {
 }
 
 
+test("listItems carries a P0..P5 Project Priority and omits any other value", () => {
+  const item = (id, issue, priority) => ({ id, content: { __typename: "Issue", number: issue, repository: { nameWithOwner: "ExampleOrg/sample-project" } },
+    fieldValues: { pageInfo: { hasNextPage: false }, nodes: [{ name: "Ready", field: { name: "Status" } },
+      ...(priority ? [{ name: priority, field: { name: "Priority" } }] : [])] } });
+  const page = { data: { organization: { projectV2: { items: { pageInfo: { hasNextPage: false, endCursor: null },
+    nodes: [item("PVTI_1", 301, "P1"), item("PVTI_2", 302), item("PVTI_3", 303, "Urgent")] } } } } };
+  const { subject } = authority({ gh: () => JSON.stringify(page) });
+  assert.deepEqual(subject.listItems().map(value => [value.issue, value.status, value.priority]),
+    [[301, "READY", "P1"], [302, "READY", undefined], [303, "READY", undefined]]);
+});
+
 test("listItems paginates the complete Project before returning authority", () => {
   const calls = [];
   const item = (id, issue) => ({ id, content: { __typename: "Issue", number: issue, repository: { nameWithOwner: "ExampleOrg/sample-project" } },

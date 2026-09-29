@@ -89,6 +89,14 @@ one. Earlier chats, summaries and memory are not authority. Every run:
    `TASKS`), then eligible work (`READY`, and unclaimed `IMPLEMENT`/`VERIFY`/`ACCEPT`).
    Take that action within authority, record it durably, and continue while useful
    authorized work remains within this bounded episode.
+   READY admission is also mechanical: when the Node runtime profile enables
+   `execution.readyRefill`, the dispatcher runs the release-admission gate
+   (`tools/live/release_admission.py`, via `scripts/release-admission-verdict`) for READY
+   BIUs in Project Priority order (P0 first, then lower Issue number) after startup, on its
+   refill interval and after every terminal worker result. It moves the first admitted BIU
+   to IMPLEMENT and dispatches its PRODUCER. Only claims whose worker is alive count
+   against `wipLimit`. Each refused BIU's gate checks are kept in the runtime state under
+   `admissionRefusals`, so a READY BIU that waits shows exactly which checks refused it.
 7. Before exit, make sure the durable record explains the next state. Issue comments,
    evidence, hold entries and inbox receipts all count. A successor must be able to act on
    that record alone.

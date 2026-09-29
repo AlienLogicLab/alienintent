@@ -70,11 +70,19 @@ export function loadProfile(profilePath) {
   const port = positive(p.webhook.listenPort, "webhook.listenPort");
   if (port > 65535) fail("webhook.listenPort");
   path(p.webhook.secretFile, "webhook.secretFile");
-  object(p.execution, "execution", ["enabled", "inspectionIntervalMilliseconds", "supervision", "biuLimits"]);
+  object(p.execution, "execution", ["enabled", "inspectionIntervalMilliseconds", "supervision", "biuLimits", "readyRefill"]);
   if (typeof p.execution.enabled !== "boolean") fail("execution.enabled");
   const inspectionIntervalMs = p.execution.inspectionIntervalMilliseconds ?? 60000;
   if (!Number.isSafeInteger(inspectionIntervalMs) || inspectionIntervalMs < 1000 || inspectionIntervalMs > 300000) fail("execution.inspectionIntervalMilliseconds");
   const configuredBiuLimits = biuLimits(p.execution.biuLimits, "execution.biuLimits", `${p.repository.owner}/${p.repository.name}`);
+  // READY refill is opt-in: absent, the dispatcher never admits READY work itself.
+  let readyRefill;
+  if (p.execution.readyRefill !== undefined) {
+    object(p.execution.readyRefill, "execution.readyRefill", ["intervalMilliseconds", "directorHostConfig"]);
+    const intervalMs = p.execution.readyRefill.intervalMilliseconds ?? 300000;
+    if (!Number.isSafeInteger(intervalMs) || intervalMs < 10000 || intervalMs > 3600000) fail("execution.readyRefill.intervalMilliseconds");
+    readyRefill = { intervalMs, directorHostConfig: path(p.execution.readyRefill.directorHostConfig, "execution.readyRefill.directorHostConfig") };
+  }
   const supervision = p.execution.supervision;
   if (supervision !== undefined) {
     object(supervision, "execution.supervision", ["mode", "runtimeMilliseconds", "stopGraceMilliseconds", "startupMilliseconds", "systemdRun", "systemctl", "env"]);
@@ -92,9 +100,10 @@ export function loadProfile(profilePath) {
   for (const key of ["stateFile", "workerLogDirectory", "worktreeRoot"]) path(p.paths[key], `paths.${key}`);
   for (const key of ["temporaryDirectory", "evidenceDirectory", "repositoryStore"]) if (p.paths[key] !== undefined) path(p.paths[key], `paths.${key}`);
   if (p.execution.enabled) path(p.paths.repositoryStore, "paths.repositoryStore");
-  object(p.executables, "executables", ["node", "githubCli", "curl", "processInspector", "preflight", "git"]);
-  const executables = { git: "/usr/bin/git", ...p.executables };
+  object(p.executables, "executables", ["node", "githubCli", "curl", "processInspector", "preflight", "git", "python"]);
+  const executables = { git: "/usr/bin/git", python: "/usr/bin/python3", ...p.executables };
   path(executables.git, "executables.git");
+  path(executables.python, "executables.python");
   for (const key of ["node", "githubCli", "curl", "processInspector"]) path(executables[key], `executables.${key}`);
   executables.preflight ??= fileURLToPath(new URL("../../scripts/worker-preflight", import.meta.url));
   path(executables.preflight, "executables.preflight");
@@ -158,7 +167,7 @@ export function loadProfile(profilePath) {
   const config = { repository: `${p.repository.owner}/${p.repository.name}`, projectOwner: p.project.owner,
     projectNumber: p.project.number, githubApp, host, port, webhookSecret,
     repositoryStore: p.paths.repositoryStore, worktreeRoot: p.paths.worktreeRoot, baselineRef: p.repository.baselineRef,
-    statePath: p.paths.stateFile, executionEnabled: p.execution.enabled, inspectionIntervalMs, biuLimits: configuredBiuLimits,
+    statePath: p.paths.stateFile, executionEnabled: p.execution.enabled, inspectionIntervalMs, biuLimits: configuredBiuLimits, readyRefill,
     roleNames, workers, workerLogins, authorizedOperatorLogins, executables, runtimePath };
   verifyStateCompatibility(config);
   return config;
