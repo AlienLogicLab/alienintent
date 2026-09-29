@@ -32,7 +32,8 @@ def run(tmp_path, monkeypatch, capsys, *, facts=None, holds=None, paused=False, 
     host.write_text(json.dumps({"wipLimit": 1, "founderHoldRecord": str(hold_path), "pauseFlag": str(pause)}))
     seen = {}
 
-    def gather(number):
+    def gather(number, *, stop_without_ready_receipt):
+        assert stop_without_ready_receipt is True
         seen["host_config"] = script.release_admission.HOST_CONFIG
         return dict(facts or GOOD, issue=number, active_claims_total=99, active_invocations=["stale#55:PRODUCER"])
 
@@ -76,3 +77,25 @@ def test_founder_hold_and_pause_refuse(tmp_path, monkeypatch, capsys):
 def test_unreadable_hold_record_fails_closed(tmp_path, monkeypatch, capsys):
     result, checks = run(tmp_path, monkeypatch, capsys, holds=None)
     assert (result["prepared"], result["admitted"], checks) == (False, False, {"founder_holds_unknown"})
+
+
+def test_gather_stops_before_project_reads_for_work_that_is_not_ready_supply(tmp_path, monkeypatch):
+    """No Project list, dependency read or priority repair runs for a TASKS Issue without a READY receipt."""
+    ra = script.release_admission
+    calls = []
+    host = tmp_path / "host.json"
+    self_hosting = tmp_path / "self-hosting.json"
+    self_hosting.write_text(json.dumps({"operator": {"authorizedGithubLogins": ["op"]}}))
+    host.write_text(json.dumps({"wipLimit": 1, "selfHostingConfig": str(self_hosting)}))
+    monkeypatch.setattr(ra, "HOST_CONFIG", host)
+
+    def gh(root, *args):
+        calls.append(args[:2])
+        return {"comments": [], "labels": [], "projectItems": [{"status": {"name": "TASKS"}}]} if args[0] == "issue" else {}
+
+    monkeypatch.setattr(ra, "_gh_json", gh)
+    facts = ra.gather(147, stop_without_ready_receipt=True)
+    assert calls == [("issue", "view")]
+    result = ra.eligibility(dict(facts, active_claims_total=0, active_invocations=[]))
+    assert (result["agentReady"], result["prepared"], {f["check"] for f in result["failures"]}) == (
+        None, False, {"status_ready", "agent_ready"})

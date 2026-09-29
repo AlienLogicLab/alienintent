@@ -222,7 +222,10 @@ def comments_from_gh(comments: list[dict]) -> list[dict]:
              "body": c.get("body")} for c in comments if isinstance(c, dict)]
 
 
-def gather(issue: int) -> dict:
+def gather(issue: int, *, stop_without_ready_receipt: bool = False) -> dict:
+    """Live facts for `admit`. With `stop_without_ready_receipt`, an Issue whose disposition is
+    not READY is refused on that fact alone: no Project, dependency or priority read or repair
+    runs for work that is not READY supply (the dispatcher asks about every TASKS BIU)."""
     root = None  # gh addresses the repository explicitly (-R); no checkout is read
     data = _gh_json(root, "issue", "view", str(issue), "-R", REPO, "--json", "body,comments,labels,projectItems")
 
@@ -238,6 +241,9 @@ def gather(issue: int) -> dict:
                                               read_operators(host_config))
     except (MalformedReceipt, OSError, KeyError, TypeError, ValueError) as exc:
         unreadable = f"assessment unreadable: {exc}"[:200]
+    if stop_without_ready_receipt and agent_ready != "READY":
+        return {"issue": issue, "status": project_status_from_issue(data), "agent_ready": agent_ready,
+                "agent_ready_unreadable": unreadable, "wip_limit": wip_limit}
 
     items = _gh_json(root, "project", "item-list", "1", "--owner", "AlienLogicLab",
                      "--format", "json", "-L", "500").get("items", [])

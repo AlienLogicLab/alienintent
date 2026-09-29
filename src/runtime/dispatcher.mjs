@@ -223,7 +223,8 @@ export class EventRelay {
             this.release(claim); this.active.delete(claim.invocationId);
             this.reconcileResources();
             if (completed && routedSignal(completed)) await this.resumeAfterClosure(completed);
-            await this.requestRefill();
+            // Not awaited: a webhook response must not wait on a refill pass.
+            this.requestRefill();
           }
         } else await this.routeResult(claim, signal);
       }
@@ -711,7 +712,8 @@ export class EventRelay {
     this.assertActiveConfiguration();
     this.started = true;
     await this.reconcile();
-    await this.requestRefill();
+    // Refill runs behind the webhook server's start; `refilling` is the pass in flight.
+    this.requestRefill();
     this.scheduleTick();
   }
   async reconcile() {

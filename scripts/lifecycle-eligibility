@@ -58,7 +58,7 @@ def main(argv: list[str]) -> int:
     host = json.loads(host_path.read_text())
     # The gate reads wipLimit and operators from the same host configuration the Director host uses.
     release_admission.HOST_CONFIG = host_path
-    facts = release_admission.gather(args.issue)
+    facts = release_admission.gather(args.issue, stop_without_ready_receipt=True)
     facts["active_claims_total"] = args.active_claims
     # The dispatcher never asks about a BIU it holds a live claim for.
     facts["active_invocations"] = []

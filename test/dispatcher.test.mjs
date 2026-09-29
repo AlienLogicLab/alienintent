@@ -1604,6 +1604,7 @@ test("(10) restart with no active claim resumes eligible IMPLEMENT, VERIFY and A
   const { relay, transitions, launches } = boardSubject({ eligible: facts({ wipLimit: 4 }), board: [
     { issue: 501, status: "IMPLEMENT" }, { issue: 502, status: "VERIFY" }, { issue: 503, status: "ACCEPT" }, { issue: 504, status: "READY", priority: "P0" }] });
   await relay.startupReconcile();
+  await relay.refilling;
   assert.deepEqual(launches, ["PRODUCER", "VERIFIER", "PRODUCER", "PRODUCER"]);
   assert.deepEqual(transitions, ["504:IMPLEMENT"]);
   relay.stop();
@@ -1614,6 +1615,7 @@ test("(7) restart where runtime and Project disagree converges: a dead IMPLEMENT
     board: [{ issue: 125, status: "READY", priority: "P0" }, { issue: 147, status: "TASKS" }] });
   writeFileSync(statePath, JSON.stringify({ deliveries: {}, active: { ...liveLane(125, 4455), ...liveLane(147, 4456) } }));
   await relay.startupReconcile();
+  await relay.refilling;
   relay.stop();
   assert.deepEqual(relay.events.filter(event => event.outcome === "STALE_CLAIM_RELEASED").map(event => event.issue).sort(), [125, 147]);
   assert.deepEqual(transitions, ["125:IMPLEMENT", "147:READY"]);

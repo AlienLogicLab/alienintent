@@ -62,7 +62,7 @@ const relay = new EventRelay({ onEvent: event => console.info(JSON.stringify(eve
   inspectWorker: child => inspectWorker(child, { executable: config.executables.processInspector }),
   launch: createWorkerLauncher({ workers: config.workers, routeResolver: resolveRoute }) });
 await relay.startupReconcile();
-if (process.argv.includes("--once")) { relay.stop(); process.exit(0); }
+if (process.argv.includes("--once")) { await relay.refilling; relay.stop(); process.exit(0); }
 const server = createServer(async (request, response) => {
   const chunks = []; let size = 0;
   for await (const chunk of request) {
