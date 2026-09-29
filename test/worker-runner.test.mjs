@@ -217,3 +217,12 @@ test("preflight returns a typed reason for every refusal", async () => {
   // A nonzero exit is a refusal even if the output claims it is safe to start.
   assert.deepEqual(await run(refusal(JSON.stringify({ safe_to_start: true }))), { ok: false, reason: "PREFLIGHT_REFUSED" });
 });
+
+test('worker launcher asks the role supervisor for absence proof and refuses unsupervised roles', () => {
+  const asked = [];
+  const launch = createWorkerLauncher({ workers: { PRODUCER: { ...fixture('codex'), supervision: { mode: 'systemd' } } },
+    supervisorFactory: () => ({ absent: owner => { asked.push(owner); return true; } }), runner: () => ({}) });
+  assert.equal(launch.absent({ role: 'PRODUCER', supervision: { unit: 'owned.service' } }), true);
+  assert.deepEqual(asked, [{ unit: 'owned.service' }]);
+  assert.throws(() => launch.absent({ role: 'VERIFIER', supervision: { unit: 'other.service' } }), /SUPERVISION_CONFIGURATION_REQUIRED/);
+});

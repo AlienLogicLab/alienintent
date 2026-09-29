@@ -66,15 +66,29 @@ export class EventRelay {
     if (!state.resources?.[invocationId]) return;
     Object.assign(state.resources[invocationId], changes); this.save(state);
   }
+  // A supervised launch that never produced a pid is dead only on the supervisor's proof
+  // that no unit and no process exist; any read failure keeps the conservative hold.
+  launchNeverStarted(resource) {
+    if (!resource?.supervision || resource.lifecycle !== "LAUNCHING" || Number.isInteger(resource.pid) || !this.options.launch.absent) return false;
+    try { return this.options.launch.absent(resource) === true; } catch { return false; }
+  }
   ownedWorkAlive(claim) {
     const resource = this.state().resources?.[claim.invocationId];
     if (!resource?.supervision) return this.processAlive(claim.pid);
+    if (resource.launchFailed && !Number.isInteger(resource.pid)) return false;
     try {
       if (!this.options.launch.observe) throw new Error("SUPERVISION_OBSERVER_REQUIRED");
       const observation = this.options.launch.observe(resource, supervision => this.updateResource(claim.invocationId, { supervision }));
       if (observation.terminal) this.updateResource(claim.invocationId, { exitedAt: resource.exitedAt ?? new Date(this.now()).toISOString() });
       return !observation.terminal;
     } catch (error) {
+      // After the startup window a LAUNCHING resource with no pid and no unit never started.
+      const age = this.now() - Date.parse(resource.launchingAt ?? claim.startedAt ?? resource.createdAt);
+      if (age > resource.supervision.limits?.startupMilliseconds && this.launchNeverStarted(resource)) {
+        this.updateResource(claim.invocationId, { launchFailed: "LAUNCH_NEVER_STARTED", supervisionDiagnostic: error.message });
+        this.emit({ invocationId: claim.invocationId, outcome: "LAUNCH_NEVER_STARTED", error: error.message });
+        return false;
+      }
       this.updateResource(claim.invocationId, { supervisionDiagnostic: error.message });
       this.emit({ invocationId: claim.invocationId, outcome: "SUPERVISION_HOLD", error: error.message });
       return true;
@@ -479,7 +493,7 @@ export class EventRelay {
         account.phaseInvocations.push(invocationId);
         this.save(accounting);
       }
-      this.updateResource(invocationId, { lifecycle: "LAUNCHING", ...(supervision ? { supervision } : {}) });
+      this.updateResource(invocationId, { lifecycle: "LAUNCHING", launchingAt: new Date(this.now()).toISOString(), ...(supervision ? { supervision } : {}) });
       this.fence();
       const child = this.options.launch({ role, item, invocationId, worktree: active.worktree, resource: this.state().resources?.[invocationId], bootstrap: workerBootstrap(role, item, invocationId, status, this.roleNames, this.options.workerDisplayNames) });
       active.child = child;
@@ -501,9 +515,11 @@ export class EventRelay {
       return true;
     } catch (error) {
       this.diagnostic(active, "WORKER_TECHNICAL_FAILURE", { error: error.message });
-      if (!active.child && !this.state().resources?.[invocationId]?.supervision) {
-        const resource = this.state().resources?.[invocationId];
+      const resource = this.state().resources?.[invocationId];
+      // A supervised launch that threw releases its claim only when no unit exists.
+      if (!active.child && (!resource?.supervision || this.launchNeverStarted(resource))) {
         if (resource && ["ALLOCATING", "READY"].includes(resource.lifecycle)) this.updateResource(invocationId, { admissionFailed: true });
+        if (resource?.supervision) this.updateResource(invocationId, { launchFailed: error.message });
         this.release(active); this.active.delete(invocationId); this.reconcileResources();
       }
       throw error;

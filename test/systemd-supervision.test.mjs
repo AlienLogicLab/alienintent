@@ -112,3 +112,16 @@ test('timeout metadata is captured before clearing only the owned failed unit', 
   assert.equal(saved.terminalReceipt.result, 'timeout');
   assert.deepEqual(f.effects, ['stop', 'reset-failed']);
 });
+test('absence proof needs no unit, an empty cgroup and an owner never seen running', () => {
+  const f = fixture();
+  assert.equal(f.adapter.absent(f.owner), true);
+  f.populated = true;
+  assert.equal(f.adapter.absent(f.owner), false);
+  f.populated = false; f.running(); f.populated = false;
+  assert.equal(f.adapter.absent(f.owner), false);
+  f.unit = null;
+  assert.equal(f.adapter.absent({ ...f.owner, systemdInvocationId: 'b'.repeat(32) }), false);
+  f.managerId = 'c'.repeat(32);
+  assert.equal(f.adapter.absent(f.owner), true, 'a changed manager does not hide a unit it would report');
+  assert.deepEqual(f.effects, []);
+});

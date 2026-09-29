@@ -86,6 +86,13 @@ export function createSystemdSupervisor(config, dependencies = {}) {
       owned(owner, show(owner.unit));
       transport(config.systemctl, ['--user', 'kill', '--signal=SIGKILL', '--kill-whom=all', '--', owner.unit]);
     },
+    // Proof that a launch never started: the owner never saw a unit, the current
+    // manager has none by this name and its cgroup holds no process. Read-only;
+    // a manager read failure throws, so the caller keeps holding.
+    absent(owner) {
+      if (owner.systemdInvocationId || owner.terminalReceipt || owner.cancellationIntent) return false;
+      return show(owner.unit).LoadState === 'not-found' && empty(owner);
+    },
     observe(owner, persist) {
       verifyManager(owner);
       let unit = show(owner.unit);

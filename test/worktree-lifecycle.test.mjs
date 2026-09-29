@@ -185,3 +185,54 @@ test('launch transport exception after supervised intent holds claim across rest
   await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT');
   assert.deepEqual(f.removed, []);
 });
+test('a supervised launch that throws before any unit exists releases its claim with a typed reason', async t => {
+  const f = fixture(t); supervise(f);
+  let absent = true; const original = f.relay.options.launch;
+  f.relay.options.launch = Object.assign(() => { throw new Error('SUPERVISION_MANAGER_CHANGED'); }, original, { absent: () => absent });
+  await assert.rejects(f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT'), /MANAGER_CHANGED/);
+  const [invocationId, resource] = Object.entries(f.relay.state().resources)[0];
+  assert.deepEqual(f.relay.state().active, {}, 'a launch that never started must not hold WIP');
+  assert.equal(resource.launchFailed, 'SUPERVISION_MANAGER_CHANGED');
+  const diagnostic = Object.values(f.relay.state().diagnostics)[0];
+  assert.equal(diagnostic.invocationId, invocationId);
+  assert.equal(diagnostic.outcome, 'WORKER_TECHNICAL_FAILURE');
+  assert.equal(diagnostic.error, 'SUPERVISION_MANAGER_CHANGED');
+  f.relay.options.launch = original;
+  assert.equal(await f.relay.start(f.item(1), 'PRODUCER', 'IMPLEMENT'), true);
+  assert.equal(f.launches.length, 1);
+  // Negative control: a unit by that name exists, so the claim holds.
+  const g = fixture(t); supervise(g); absent = false;
+  g.relay.options.launch = Object.assign(() => { throw new Error('SUPERVISION_MANAGER_CHANGED'); }, g.relay.options.launch, { absent: () => absent });
+  await assert.rejects(g.relay.start(g.item(1), 'PRODUCER', 'IMPLEMENT'), /MANAGER_CHANGED/);
+  assert.equal(Object.keys(g.relay.state().active).length, 1);
+});
+test('restart releases a supervised claim left LAUNCHING with no pid and no unit past the startup window', async t => {
+  const now = Date.parse('2026-09-29T05:00:00Z');
+  const scenario = (startedAt, absent) => {
+    const f = fixture(t, { now: () => now }); supervise(f);
+    const item = { ...f.item(149), status: 'IMPLEMENT' };
+    f.relay.options.authority.listItems = async () => [item];
+    f.relay.options.launch.observe = () => { throw new Error('SUPERVISION_MANAGER_CHANGED'); };
+    f.relay.options.launch.absent = () => absent;
+    const invocationId = 'ExampleOrg/sample-project#149:PRODUCER:stale';
+    const lane = 'ExampleOrg/sample-project#149:PRODUCER';
+    const record = { ...f.manager.plan({ invocationId, item, role: 'PRODUCER' }), lifecycle: 'LAUNCHING', pid: null,
+      supervision: { mode: 'systemd', invocationId, unit: 'stale.service', limits: { startupMilliseconds: 60000 } } };
+    f.relay.save({ deliveries: {}, diagnostics: {}, resources: { [invocationId]: record },
+      active: { [lane]: { invocationId, item, role: 'PRODUCER', status: 'IMPLEMENT', startedAt } } });
+    return { f, lane, invocationId };
+  };
+  const stale = scenario(new Date(now - 180 * 60000).toISOString(), true);
+  await stale.f.relay.startupReconcile();
+  assert.equal(stale.f.relay.state().resources[stale.invocationId].launchFailed, 'LAUNCH_NEVER_STARTED');
+  assert.equal(stale.f.launches.length, 1, 'the lane is re-driven through the existing successor path');
+  assert.notEqual(stale.f.relay.state().active[stale.lane].invocationId, stale.invocationId);
+  // Negative controls: inside the startup window, or with a unit present, the claim holds.
+  for (const [startedAt, absent] of [[new Date(now - 30000).toISOString(), true], [new Date(now - 180 * 60000).toISOString(), false]]) {
+    const held = scenario(startedAt, absent);
+    await held.f.relay.startupReconcile();
+    assert.equal(held.f.launches.length, 0);
+    assert.equal(held.f.relay.state().active[held.lane].invocationId, held.invocationId);
+    assert.equal(held.f.relay.state().resources[held.invocationId].launchFailed, undefined);
+  }
+});

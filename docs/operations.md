@@ -450,7 +450,13 @@ of dispatcher progress or launcher-client death. Deliberate same-user/privileged
 cgroup migration is outside this guarantee. Ownership remains held on missing,
 unavailable or mismatched readback. A terminal receipt is persisted before stopping
 the exact empty owned unit; an owned failed unit is reset only after that receipt.
-Only confirmed terminal collection permits resource release. Neither timeout nor
+Only confirmed terminal collection permits resource release. The one exception is
+a launch that never started: no pid was recorded, the owner never saw its unit,
+the manager reports no unit by that name and its cgroup holds no process. A launch
+that throws with that proof releases its claim at once with the error on
+`resource.launchFailed`. At startup, a `LAUNCHING` resource with that proof past
+`startupMilliseconds` releases its claim as `LAUNCH_NEVER_STARTED`, and the lane is
+re-driven through the existing successor path. Neither timeout nor
 exit status supplies a durable workflow result or new retry entitlement.
 
 Run the non-provider disposable host proof explicitly with
