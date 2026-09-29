@@ -152,9 +152,9 @@ Cognitive agents live outside the kernel. They receive bounded assignments and r
 
 The initial v2 reference persistence is a **single SQLite database in WAL mode** on the factory host. PostgreSQL may be substituted later without changing domain semantics.
 
-The database owns:
+The database owns canonical current state and the event-history manifest:
 
-- immutable `events`;
+- local immutable `events`, verified checkpoints and the ordered, digest-linked manifest of archived or retention-expired event segments;
 - current `work_items` projection;
 - dependencies;
 - claims;
@@ -180,9 +180,23 @@ External effects occur **after** commit. Effect completion is recorded separatel
 
 ### 5.3 Replay invariant
 
-Replaying all committed events from genesis must reproduce the canonical projection exactly.
+Replaying every retained event after the latest verified checkpoint must reproduce the canonical projection exactly. While genesis events remain within retention, a full-genesis replay must produce the same result. A checkpoint commits the complete projection, last applied sequence, schema version, and digest of the preceding event chain; it cannot be accepted merely because its bytes parse. Retention expiry leaves a manifest receipt for the expired segment's range and digest, so sequence continuity and evidence disposition remain inspectable even when its payload can no longer be replayed.
 
 A projection mismatch is a fatal control-plane integrity fault; the factory stops mutation, notifies the operator, and remains read-only until repaired.
+
+Routine admission and transitions read the transactionally maintained projection; they do not replay the historical event stream. Replay is an integrity and repair operation with a measured time and resource budget.
+
+### 5.4 Bounded storage and resource lifecycle
+
+Every persisted or temporary object has an owner, purpose, size or growth budget, retention class, and terminal disposition. This includes event segments, projections, logs, worktrees, worker processes, caches, downloads, effect receipts, and diagnostic records. A creator must define cleanup or archival behavior before the object is created; cancellation, crash, timeout, and partial external effects are part of that design.
+
+- Keep current operational state in indexed projections with explicit size budgets. Appends must not copy the entire prior ledger, and routine admission must not perform work proportional to total historical event count.
+- Preserve accepted evidence and replayability through integrity-checked, immutable event segments and checkpoints. The SQLite manifest records each segment's contiguous sequence range, schema version, digest, predecessor digest, retention class and archive location or authorized expiry receipt under the same canonical ledger identity. Archival first writes and verifies an immutable segment, then commits its manifest entry; only after that commit and a verified checkpoint may local event rows be pruned. A crash between steps retains either redundant copies or the manifest-backed archive, never an unreferenced gap. Replay loads the verified checkpoint and later manifest-listed segments in order, checks their identities, digests and sequence linkage, then applies remaining local events. Missing or corrupt required segments fail closed as an integrity fault. Archive payloads are historical ledger custody, not a second operational state authority. A segment may expire only under its approved retention policy after a later checkpoint is verified; accepted evidence referenced by the projection follows its own retention class and cannot be erased by operational compaction. Never truncate a live ledger or silently discard accepted evidence to recover capacity.
+- Give caches explicit invalidation, maximum size, and eviction rules. A cache is a performance aid, not a substitute for storage lifecycle management or a second authority.
+- Reconcile owned temporary resources after interruption using stable identities and idempotent cleanup. Unknown ownership, dirty state, or failed cleanup retains evidence and raises a bounded operator diagnostic; it must not silently delete another owner's data or repeatedly persist an identical full-state snapshot.
+- Keep historical cleanup and archival off the admission critical path. Apply backpressure or a visible capacity hold before configured disk, memory, or inode limits are exhausted; do not let unbounded growth become an implicit scheduler failure.
+
+Each implementation packet states concrete budgets, retention periods, high-water behavior, cleanup ownership, and verification for the object classes it introduces. Tests cover long histories, restart and crash boundaries, interrupted cleanup, disk-pressure behavior, and measured admission cost as history grows.
 
 ## 6. Domain model
 
@@ -635,7 +649,7 @@ When capacity opens, no lower-priority eligible READY item is selected ahead of 
 Repeating the same command/event/effect receipt cannot produce a second semantic transition/effect.
 
 ### S9 — Replay equivalence
-Replaying the event ledger reproduces the current projection exactly.
+Replaying from a verified retained checkpoint through every subsequent event reproduces the current projection exactly; the manifest preserves sequence and digest continuity for older expired segments.
 
 ### S10 — Ownership safety
 At most one active owner exists for a WorkItem phase/generation.
@@ -969,7 +983,9 @@ Deliver:
 - transactional event append + projection update;
 - replay;
 - optimistic concurrency;
-- corruption/replay tests.
+- corruption/replay and checkpoint-consistency tests;
+- bounded local growth, checkpoint/archive integrity and recovery tests;
+- an admission-cost test showing no full-history replay on the normal path.
 
 ### Phase V2-2 — Deterministic scheduler
 
@@ -1045,7 +1061,7 @@ v2 is not production-ready because unit tests pass.
 
 Before cutover it must demonstrate:
 
-- deterministic replay from empty database to exact expected state;
+- deterministic replay from a verified retained checkpoint and event tail to exact expected state, plus full-genesis replay while genesis events remain within retention;
 - property-based state-machine testing across large generated transition sequences;
 - fault injection at every transaction/effect boundary;
 - duplicate event/effect immunity;
@@ -1309,6 +1325,9 @@ CI mechanically rejects, where practical:
 - untyped public contract drift;
 - secret/sensitive diagnostic leakage;
 - unbounded retry/timeout paths;
+- unbounded memory, disk, inode, log or temporary-resource growth;
+- missing ownership, retention, cleanup or high-water behavior for created resources;
+- replay or historical cleanup on routine admission paths;
 - unsupported dependency cycles;
 - architecture rules without negative controls.
 
@@ -1328,6 +1347,14 @@ Implementation favors clarity over cleverness:
 - no one-off issue-number branches in production control code.
 
 Refactoring toward simplicity is part of correctness, not cosmetic cleanup.
+
+Agent-generated code receives no quality presumption. The producer identifies established patterns used for resource ownership, persistence, failure handling, and separation of concerns, and supplies evidence that the implementation meets its budgets and lifecycle rules. An independent verifier/reviewer explicitly checks applicable known antipatterns and code slop, including:
+
+- leaks and unbounded storage, memory, inode, log or temporary-resource growth;
+- duplicate authority, hidden global state, uncontrolled concurrency/retries, broad exception handling and insecure defaults;
+- needless abstraction, copy-pasted logic, dead code, ornamental tests, vague boilerplate and claims unsupported by executable or source evidence.
+
+Findings record a concrete location and consequence. An unchecked applicable category or unproven resource lifecycle cannot be waived by a passing happy-path test. Keep the checklist current as new failure classes are learned rather than claiming any finite list is exhaustive.
 
 ## 35. Cognition architecture and local-model selection
 

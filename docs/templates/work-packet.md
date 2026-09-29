@@ -19,6 +19,15 @@ Specify observable acceptance criteria, checks, independent review, finding repa
 evidence and meaningful commit requirements. Execute established steps without
 routine confirmation. Distinguish local evidence from verified external state.
 
+For v2/Python factory code that creates or retains data, processes, files, caches or other resources,
+name the owner, size/growth budget, retention or expiry, and behavior at disk/memory
+high water. Specify recovery and archival for durable objects; specify cleanup of
+temporary resources after normal exit, cancellation and crash. Include a test or
+measurement that exposes unbounded growth or history-dependent admission cost.
+Require the independent verifier/reviewer to inspect applicable known antipatterns
+and code slop, record concrete findings and evidence, and reject unsupported claims
+even when happy-path tests pass. Use the [v2 quality contract](../architecture/alienintent-factory-v2-formal-design.md).
+
 ## Boundaries and continuation
 
 Identify concrete authority gaps, conflicts, destructive operations and unavailable

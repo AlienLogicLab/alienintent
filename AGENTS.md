@@ -61,3 +61,16 @@ runtime-managed `b-disp/<uuid>` ownership/retention rules remain authoritative.
 Prefix shell commands with `rtk`; use `rtk proxy` for unfiltered output.
 RAI remains unwired. Keep installation secrets and operational state outside the
 repository. Preserve compatibility markers and persisted resource identities.
+
+For v2/Python work, treat generated code as untrusted until its resource and
+quality obligations are proved. Every created object needs an owner, bounded
+growth, a retention or expiry rule, and a disk/memory pressure response. Durable
+objects need recovery and archival or retention behavior across process exits;
+temporary resources need cleanup on normal and interrupted paths. Routine
+admission must not replay the whole historical ledger or wait on historical
+cleanup. Producers use established
+patterns and show tests or measurements for these obligations. Independent
+verifiers/reviewers explicitly inspect applicable known antipatterns and code slop,
+record concrete findings, and reject unsupported quality claims. Follow the
+[canonical v2 design](docs/architecture/alienintent-factory-v2-formal-design.md)
+without changing v1 Node runtime as part of this v2 rule.
