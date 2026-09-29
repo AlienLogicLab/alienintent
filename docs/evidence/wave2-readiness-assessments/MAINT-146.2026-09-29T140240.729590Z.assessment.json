@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "CLARIFY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Complete Issue #146 before #125 by validating or repairing the Factory Director READY supply invariant so READY starvation remains visible when actionable supply exists, using an isolated Producer and independent Verifier without expanding into unrelated BIU work.",
+    "implementation_unknowns": [
+      "Whether commit 921fdfbf3783bf73749fa3b7957fa2c88460560e actually satisfies the five #146 acceptance criteria on the exact candidate SHA.",
+      "Which existing focused tests and feature regression packs are applicable to the Director input/host supply calculation.",
+      "Where and how to obtain the live installed Director adapter readback and the running engine readback for maxCycles and maxReplacementsPerPhase.",
+      "Whether any concrete failed acceptance check requires a code repair versus publishing a no-change candidate record."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The prior commit may be reported as sufficient but fail one or more acceptance criteria under current baseline conditions.",
+      "Ambiguous Project Priority assignment could cause incorrect scheduling state or rework in project metadata.",
+      "Verification could be weakened if live adapter readback is treated as an independent verdict rather than an observation.",
+      "Unbounded object retention or historical-ledger replay could be introduced if the repair strays outside the bounded Director supply calculation.",
+      "Accidental movement of #125, #138, unrelated project cards, or WIP state would violate explicit boundaries."
+    ],
+    "next_action": "Obtain the exact Project Priority value for #146, then proceed as a single bounded implementation-and-verification handoff against the exact candidate SHA.",
+    "owner_clarifications": [
+      "What exact Project Priority value should Issue #146 be assigned before release/admission?"
+    ],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The work has coherent governing intent, bounded code ownership, explicit acceptance checks, and a viable independent verification model. It should not be split merely because it includes Producer, Verifier, landing, and readback steps; those are sequential controls for one issue. However, assigning Project Priority is a scheduling/ownership decision, not engineering research, and the packet requires it before release without specifying the value. That unresolved owner intent is the controlling readiness condition.",
+    "semantic_split_recommendation": [],
+    "summary": "The proposed work is mostly cohesive and bounded around one reliability invariant, with clear reuse guidance, acceptance criteria, verification flow, and explicit exclusions. The controlling blocker is one material owner/scheduling decision: the packet requires assigning #146 its own Project Priority before release but does not specify the priority value or who is authorized to choose it.",
+    "verification_assessment": "Acceptance is observable: the candidate branch and full SHA must be published, focused and applicable feature regressions must pass on that exact SHA, diagnostics must expose actual prepared depth, target, and supply candidates, and an independent Verifier must retrieve the same SHA and check the five criteria plus antipatterns. One independent verdict is meaningful because the Producer scope is bounded and the Verifier has a concrete candidate and criteria. The missing Project Priority value prevents fully ready release/admission execution."
+  },
+  "disposition": "CLARIFY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-29T14:03:16.500978+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 3386,
+    "input_sha256": "c386d334983e832753aa99df8c76eda74bc6a0c260bb25d2b5450624e7426f17",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-h681t2jk/MAINT-146.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-29T14:02:40.729590+00:00",
+    "timeout_s": 900
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "MAINT-146"
+}

@@ -1,6 +1,6 @@
 # MAINT-146 — READY supply invariant closure
 
-**Issue:** AlienLogicLab/alienintent#146. **Admission baseline:** `90d803135083e9597737a2a9647084629dc78d03` (`origin/main`, 2026-09-29). **Authority:** the bounded factory reliability repair in Issue #146 and the Founder's instruction to complete #146 before #125. This packet does not change the Wave 2 DAG or authorize other BIU work.
+**Issue:** AlienLogicLab/alienintent#146. **Project Priority:** P0 for this bounded sequence, set by the authorized Founder operator because the Founder directed #146 to DONE before the existing P0 #125. **Admission baseline:** `90d803135083e9597737a2a9647084629dc78d03` (`origin/main`, 2026-09-29). **Authority:** the bounded factory reliability repair in Issue #146 and the Founder's instruction to complete #146 before #125. This packet does not change the Wave 2 DAG or authorize other BIU work.
 
 ## Intent and ownership
 
@@ -18,6 +18,6 @@ The Producer publishes the candidate branch and full SHA before `RESULT=VERIFY`.
 
 ## Release and boundaries
 
-Run native Agent Ready against these exact bytes after this packet lands on remote `main`; post its native ASSESSED receipt to #146. Bind the receipt to this packet and the admission baseline before release. The configured finite #146 limit is `maxCycles: 3`, `maxReplacementsPerPhase: 1`; read it back from the running engine before launch. #146 currently has no parent Issue; assign and read back its own Project Priority as an explicit scheduling choice. Only then issue RELEASED and use normal READY-to-IMPLEMENT admission. Keep #125 unclaimed until #146 reaches DONE, then return to its existing P0 sequence.
+Run native Agent Ready against these exact bytes after this packet lands on remote `main`; post its native ASSESSED receipt to #146. Bind the receipt to this packet and the admission baseline before release. The configured finite #146 limit is `maxCycles: 3`, `maxReplacementsPerPhase: 1`; read it back from the running engine before launch. #146 currently has no parent Issue; the Founder operator sets and reads back #146's own Project Priority P0. Only then issue RELEASED and use normal READY-to-IMPLEMENT admission. Keep #125 unclaimed until #146 reaches DONE, then return to its existing P0 sequence.
 
 No bootstrap liveness stop, protected-branch push by a BIU worker, manual runtime-state edit, #138 outcome inference, or unrelated card transition is authorized by this packet.
