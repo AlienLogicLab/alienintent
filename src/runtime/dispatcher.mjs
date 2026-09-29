@@ -7,6 +7,44 @@ const defaultRoleNames = { PRODUCER: "PRODUCER", VERIFIER: "VERIFIER" };
 
 const routedSignal = claim => claim?.control ?? claim?.result;
 const recoverable = outcome => ["COMPLETION_ERROR", "DURABLE_RESULT_MISSING", "WORKER_IDENTITY_MISMATCH"].includes(outcome);
+// State-only part of claim transfer admission. Host, ledger-head, marker and
+// delivery-payload proof remain separate prerequisites before any owner grant.
+export function assertClaimTransferState(state, request) {
+  const refuse = reason => { throw new Error(`CLAIM_TRANSFER_${reason}`); };
+  if (request?.schemaVersion !== 1 || typeof request.operationId !== "string" || !request.operationId.trim()
+      || typeof request.nextOwner !== "string" || !request.nextOwner.trim()) refuse("REQUEST_INVALID");
+  const { lane, invocationId, resourceId, path, branch } = request;
+  if ([lane, invocationId, resourceId, path, branch, request.unit, request.cgroup].some(value =>
+    typeof value !== "string" || !value)) refuse("IDENTITY_INCOMPLETE");
+  const claim = state?.active?.[lane], resource = state?.resources?.[invocationId];
+  if (!claim || claim.invocationId !== invocationId || claim.status !== "IMPLEMENT"
+      || claim.item?.repository !== lane.slice(0, lane.lastIndexOf("#"))
+      || lane !== `${claim.item.repository}#${claim.item.issue}:${claim.role}`
+      || claim.worktree !== path || routedSignal(claim) || claim.pendingSignal
+      || Number.isInteger(claim.pid) && claim.pid > 0) refuse("CLAIM_MISMATCH");
+  if (!resource || resource.invocationId !== invocationId || resource.resourceId !== resourceId
+      || resource.path !== path || resource.branch !== branch || resource.lifecycle !== "LAUNCHING"
+      || resource.repository !== claim.item.repository || resource.issue !== claim.item.issue
+      || resource.role !== claim.role || resource.exitedAt || Number.isInteger(resource.pid) && resource.pid > 0)
+    refuse("RESOURCE_MISMATCH");
+  const supervision = resource.supervision;
+  if (supervision?.mode !== "systemd" || supervision.invocationId !== invocationId
+      || supervision.unit !== request.unit || supervision.cgroup !== request.cgroup)
+    refuse("SUPERVISION_MISMATCH");
+  const manager = supervision.manager;
+  if (!manager || !request.manager || ["uid", "bootId", "startedAtMonotonic", "cgroup"].some(field =>
+    manager[field] !== request.manager[field] || manager[field] === undefined)) refuse("MANAGER_MISMATCH");
+  if (Object.entries(state.active).some(([otherLane, other]) => otherLane !== lane
+      && (other?.invocationId === invocationId || other?.worktree === path))) refuse("COMPETING_CLAIM");
+  if (Object.entries(state.resources).some(([otherId, other]) => otherId !== invocationId
+      && (other?.resourceId === resourceId || other?.path === path))) refuse("COMPETING_RESOURCE");
+  // A PROCESSING delivery has no target or effect proof in the projection. The
+  // control path must classify its retained payload before transfer is possible.
+  if (!state.deliveries || Object.values(state.deliveries).some(delivery => delivery?.state !== "PROCESSED"))
+    refuse("DELIVERY_UNRESOLVED");
+  if (state.claimTransfers && Object.keys(state.claimTransfers).length) refuse("TRANSFER_EXISTS");
+  return Object.freeze({ lane, invocationId, resourceId, path, branch });
+}
 function workerBootstrap(role, item, invocationId, status, roleNames, workerDisplayNames = {}) {
   const displayName = workerDisplayNames[role] ?? (role === roleNames.PRODUCER ? "PRODUCER" : "VERIFIER");
   const verifierName = workerDisplayNames[roleNames.VERIFIER] ?? "VERIFIER";
