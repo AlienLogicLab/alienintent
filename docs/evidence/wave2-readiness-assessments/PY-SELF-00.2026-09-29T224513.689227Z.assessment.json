@@ -1,0 +1,69 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "HIGH",
+    "governing_intent": "Add a bounded publication-input binding method that proves the assessed task text, reconstructed contract, readiness eligibility, latest READY attempt, and retained raw receipt all correspond exactly before returning a frozen snapshot for later publication.",
+    "implementation_unknowns": [
+      "Exact existing type names, module locations, and constructors for UpstreamIntegration, CompilationCandidate, AssessedPublicationInput, Hold, LintHold, ReadinessEligibility, BiuContract, Ref, digest, ref_from_document, and readiness consumer APIs.",
+      "How current() represents or propagates LintHold/current-readiness holds and how to preserve existing audit writes without broad side effects.",
+      "Exact shape of candidate payload and contract payload needed by contract_from_payload, including how malformed content is reported.",
+      "How to simulate latest-attempt changes and in-memory compiled text mutation in the existing test framework without adding broader infrastructure.",
+      "Whether existing digest helpers return hex strings, bytes, or structured values and how equality is currently normalized."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "Race-condition coverage may be subtle because the method intentionally re-derives candidate and proof plan and re-reads latest readiness state before returning.",
+      "Incorrectly treating retained raw text as original task bytes or reassessing it would violate the requested binding semantics.",
+      "Accidentally coercing missing fields to passing defaults could create false publication evidence.",
+      "Coupling the helper inward to GitHub/Git/project publication concerns would breach the stated ownership limits.",
+      "Existing readiness current() side effects must be preserved where they already exist, while avoiding any new durable storage or publication receipt semantics."
+    ],
+    "next_action": "Hand off for implementation in the stated preparation/integration area with focused tests covering the happy path, each mismatch hold, missing or inaccessible raw evidence, latest-attempt changes, and in-memory text mutation between reads.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The controlling condition is readiness: owner intent is specific, bounded, and internally coherent; the work has a single governing outcome; remaining uncertainty is engineering discovery within the existing codebase rather than unresolved product or architectural authority. The task does not require semantic splitting because the comparisons, frozen snapshot, and tests are all part of the same binding contract and can be accepted or rejected together.",
+    "semantic_split_recommendation": [],
+    "summary": "The proposed work is cohesive: implement one orchestration path, a frozen return value or helper as needed, exact comparison logic against existing readiness artifacts, and focused tests for mismatch and race/change cases. The text defines the authority boundaries, excludes durable publication/storage behavior, and provides observable acceptance criteria.",
+    "verification_assessment": "Acceptance is observable through unit/integration tests using real compiled candidates and retained readiness-consumer fixtures or fakes. One independent verdict is meaningful because success or hold behavior can be checked across the specified comparisons: text digest, contract digest, identity, attempt, fingerprint, latest READY outcome, raw reference retrieval, raw Ref logical/project/profile identity, repeated unchanged inputs, and simulated intervening changes. No live GitHub or worker verification is required."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-29T22:45:34.400642+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 5987,
+    "input_sha256": "a9132c3419e64f4ae9a22d409c755e5902d85ee17f999b5e8efa363c86556665",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-ou13s_zn/PY-SELF-00.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-29T22:45:13.689227+00:00",
+    "timeout_s": 600
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "PY-SELF-00"
+}

@@ -1,6 +1,6 @@
 # Python self-building 00 — bind assessed text to its work contract
 
-**Status:** Proposed first hand-fed code task. Independent adversarial review found no remaining blocker to Agent Ready. Founder design approval and assessment of this exact text remain pending; no PRODUCER is released.
+**Status:** Founder approved this work unit on 2026-09-30 (Asia/Bangkok). Independent adversarial review found no remaining blocker. A fresh Agent Ready assessment of this exact text is required before PRODUCER release.
 **Plan source:** The [self-building sequence](python-self-building-candidate-sequence.md) joins Python's existing preparation and live execution paths. The six-task sandbox already ran prepared work; the first missing publication input is proof that the task text and contract are exactly what the latest assessment checked. Saving those bytes in Git is separate.
 
 ## One result and exact call
