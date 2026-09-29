@@ -1,45 +1,40 @@
 #!/usr/bin/env python3
 """Release admission preconditions for READY -> IMPLEMENT (SWF-21).
 
-Deterministic gate, not judgment: it answers whether the *record* of a release is complete
-and self-consistent before any worker is launched. It never decides that work should be
-released — the nine SWF-21 conditions and Agent-Ready still govern that.
+Deterministic gate, not judgment: it answers whether structured state admits a READY BIU to
+IMPLEMENT before any worker is launched. It never decides that work should be released — the
+nine SWF-21 conditions and Agent-Ready still govern that.
 
     python3 release_admission.py 55            # check a BIU Issue against live state
 
 Exit 0 admits; exit 1 prints each failed check and why.
 
-Readiness records are read from the release point (`git show <release-point>:<path>`, default
-origin/main), never from a working tree: a record landed on origin/main but absent from the
-shared checkout was invisible to the gate (Issue #83). The repository is derived, not
-hard-coded: ALIENINTENT_WORKDIR if set, else the checkout holding this file, else the
-checkout holding the current directory.
+The Agent-Ready disposition has one reader, `agent_ready_disposition`, shared with the Factory
+Director inputs adapter: the newest native Agent Ready receipt on the Issue, posted and not
+edited by an authorized operator. Authority to IMPLEMENT is structural (Project status READY
+plus a READY receipt plus the checks below), never a phrase in a comment.
 """
 from __future__ import annotations
 
 import json
-import os
 import re
 import subprocess
 import sys
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 
 REPO = "AlienLogicLab/alienintent"
-WORKDIR_ENV = "ALIENINTENT_WORKDIR"
 STATE = Path.home() / ".local/state/alienintent/state.json"
 HOST_CONFIG = Path.home() / ".config/alienintent/factory-director-host.json"
 PROJECT_ID = "PVT_kwDOEcrpC84Bj5i_"
 PRIORITY_FIELD = "PVTSSF_lADOEcrpC84Bj5i_zhiy9vQ"
 PRIORITY_OPTIONS = {"P0":"92998478","P1":"ae42b437","P2":"1da6e4a3","P3":"f10b964a","P4":"65e330b9","P5":"c29e1f42"}
 
-UNAUTHORIZED_WORDING = re.compile(r"implementation is\s+\*{0,2}not\*{0,2}\s+authorized", re.I)
-SUPERSEDING_WORDING = re.compile(r"\bRELEASED\b.*\bauthoriz", re.I)
-BASELINE_IN_RECORD = re.compile(r"baseline[^`]*`([0-9a-f]{7,40})`", re.I)
-AUTHORIZES_IMPLEMENT = re.compile(r"IMPLEMENT is authorized", re.I)
+NATIVE_RECEIPT = re.compile(r"<!--\s*AGENT_READY_ASSESSMENT:(.*?)-->", re.S)
+AGENT_READY_DISPOSITIONS = frozenset({"READY", "CLARIFY", "SPLIT", "HOLD"})
 
 
 def admit(facts: dict) -> list[dict]:
-    """Return the failed checks. Empty list means the release record is admissible."""
+    """Return the failed checks. Empty list means the BIU is admissible."""
     failures = []
 
     def fail(check, why):
@@ -48,28 +43,9 @@ def admit(facts: dict) -> list[dict]:
     if facts.get("status") != "READY":
         fail("status_ready", f"Project status is {facts.get('status')!r}; release starts from READY.")
     if facts.get("agent_ready") != "READY":
-        fail("agent_ready", f"Agent-Ready disposition is {facts.get('agent_ready')!r}, not READY.")
-
-    record = facts.get("release_record")
-    if not record or not record.get("authorizes_implement"):
-        fail("implementation_authorized",
-             "No release record explicitly authorizes IMPLEMENT for this BIU.")
-    else:
-        if not record.get("baseline"):
-            fail("baseline_named", "The release record does not name an exact baseline revision.")
-        else:
-            if not facts.get("baseline_resolves"):
-                fail("baseline_resolves",
-                     f"Baseline {record['baseline']} does not resolve to a real repository revision.")
-            elif not facts.get("baseline_ancestral"):
-                fail("baseline_ancestral",
-                     f"Baseline {record['baseline']} is not reachable from the intended release point.")
-
-    body = facts.get("body") or ""
-    if UNAUTHORIZED_WORDING.search(body) and not SUPERSEDING_WORDING.search(body):
-        fail("authority_wording_consistent",
-             "The Issue still states implementation is not authorized, with no superseding release record. "
-             "A producer reading it will correctly refuse.")
+        unreadable = facts.get("agent_ready_unreadable")
+        fail("agent_ready", f"Agent-Ready disposition is {facts.get('agent_ready')!r}, not READY"
+             + (f" ({unreadable})." if unreadable else "."))
 
     if facts.get("open_dependencies"):
         fail("dependencies_satisfied", f"Open dependencies: {facts['open_dependencies']}.")
@@ -100,27 +76,57 @@ def admit(facts: dict) -> list[dict]:
     return failures
 
 
-# --- live fact gathering -------------------------------------------------------
+class MalformedReceipt(ValueError):
+    """An operator's Agent Ready marker that cannot be read: fail closed, never skip it."""
 
 
-def repository_root() -> str | None:
-    """The repository whose release point the gate reads. An explicit ALIENINTENT_WORKDIR
-    wins outright; otherwise the checkout holding this file, then the one holding the current
-    directory, so a live copy outside the repository still works when run from inside it."""
-    override = os.environ.get(WORKDIR_ENV)
-    for where in [override] if override else [str(Path(__file__).resolve().parent), os.getcwd()]:
-        try:
-            top = subprocess.run(["git", "rev-parse", "--show-toplevel"], cwd=where,
-                                 capture_output=True, text=True)
-        except OSError:
+def receipt_disposition(record) -> str | None:
+    """A disposition counts only if the Agent Ready product produced it for a fingerprinted task
+    packet: a ReadinessAssessment envelope, outcome ASSESSED, an agent-ready producer and a
+    retained input digest. A compatible shape is not evidence (Architecture Authority
+    amendment (b)); anything else carries no disposition."""
+    if not isinstance(record, dict) or record.get("record_kind") != "ReadinessAssessment":
+        return None
+    provenance = record.get("provenance")
+    if not isinstance(provenance, dict) or not provenance.get("input_sha256"):
+        return None
+    if record.get("outcome") != "ASSESSED" or not str(provenance.get("producer", "")).startswith("agent-ready"):
+        return None
+    disposition = record.get("disposition")
+    disposition = disposition.strip().upper() if isinstance(disposition, str) else None
+    return disposition if disposition in AGENT_READY_DISPOSITIONS else None
+
+
+def agent_ready_disposition(comments: list[dict], operators: frozenset[str]) -> str | None:
+    """The Agent Ready disposition of the Issue's current task packet: the newest native receipt
+    (`<!-- AGENT_READY_ASSESSMENT: {json} -->`) in a comment written, and not edited, by an
+    authorized operator. Comments arrive oldest first. This is the only reader: the release gate
+    and the Factory Director inputs adapter both call it, so they cannot disagree. Records
+    cited from an Issue body or a release comment are not consulted; they can be older than the
+    newest receipt. Raises MalformedReceipt for an unparsable operator marker."""
+    latest = None
+    for comment in comments:
+        if not isinstance(comment, dict) or not isinstance(comment.get("body"), str):
+            raise MalformedReceipt("comment is malformed")
+        author, editor = comment.get("author"), comment.get("editor")
+        if not isinstance(author, str) or author.lower() not in operators:
             continue
-        if top.returncode == 0 and top.stdout.strip():
-            return top.stdout.strip()
-    return None
+        if editor is not None and (not isinstance(editor, str) or editor.lower() not in operators):
+            continue
+        if editor is None and comment.get("lastEditedAt"):
+            continue
+        for match in NATIVE_RECEIPT.finditer(comment["body"]):
+            try:
+                record = json.loads(match.group(1).strip())
+            except json.JSONDecodeError as exc:
+                raise MalformedReceipt("unparsable Agent Ready assessment") from exc
+            disposition = receipt_disposition(record)
+            if disposition is not None:
+                latest = disposition
+    return latest
 
 
-def _git(root, *args) -> subprocess.CompletedProcess:
-    return subprocess.run(["git", *args], cwd=root, capture_output=True, text=True)
+# --- live fact gathering -------------------------------------------------------
 
 
 def _gh_json(root, *args):
@@ -182,55 +188,40 @@ def reconcile_inherited_priority(root: str, issue: int, items: list[dict]) -> di
     return {"status": "REPAIRED", "priority": expected, "parent_issue": parent_issue}
 
 
-def refresh_release_point(root, release_point: str) -> bool | None:
-    """Fetch a remote-tracking release point before reading it: a stale origin/main in the
-    shared checkout hides a newly landed record exactly as the working tree did. None when
-    the release point is not `<remote>/<branch>`; otherwise whether the fetch succeeded. A
-    failed fetch is reported, not fatal: the gate then reads the local ref as it stands.
-    Neither part may start with `-`: `git fetch` would take it as an option."""
-    remote, _, branch = release_point.partition("/")
-    if not branch or remote.startswith("-") or branch.startswith("-"):
-        return None
-    if _git(root, "remote", "get-url", remote).returncode != 0:
-        return None
-    return _git(root, "fetch", "--quiet", remote, branch).returncode == 0
+def read_operators(host_config: dict) -> frozenset[str]:
+    """Authorized operator logins, from the same self-hosting configuration the Factory
+    Director reads (`operator.authorizedGithubLogins`)."""
+    raw = json.loads(Path(host_config["selfHostingConfig"]).read_text())
+    logins = (raw.get("operator") or {}).get("authorizedGithubLogins")
+    if not isinstance(logins, list) or not all(isinstance(login, str) and login for login in logins):
+        raise ValueError("operator.authorizedGithubLogins is not a list of logins")
+    return frozenset(login.lower() for login in logins)
 
 
-def read_at_release_point(root, commit: str | None, path: PurePosixPath) -> str | None:
-    """The committed content of `path` at the release point, or None. Never the working tree."""
-    if not commit:
-        return None
-    shown = _git(root, "show", f"{commit}:{path}")
-    return shown.stdout if shown.returncode == 0 else None
+def comments_from_gh(comments: list[dict]) -> list[dict]:
+    """`gh issue view` comments in the reader's shape. gh names no editor, so an edited comment
+    has an unknown editor and is not counted."""
+    return [{"author": (c.get("author") or {}).get("login"), "editor": None,
+             "lastEditedAt": "edited" if c.get("includesCreatedEdit") else None,
+             "body": c.get("body")} for c in comments if isinstance(c, dict)]
 
 
-def release_record_from(body: str, comments: list[dict]) -> dict | None:
-    """The newest record that authorizes IMPLEMENT and names a baseline (body or comment)."""
-    for text in [c.get("body", "") for c in reversed(comments)] + [body]:
-        if AUTHORIZES_IMPLEMENT.search(text) or SUPERSEDING_WORDING.search(text):
-            match = BASELINE_IN_RECORD.search(text)
-            return {"authorizes_implement": True, "baseline": match.group(1) if match else None,
-                    "text": text}
-    return None
-
-
-def gather(issue: int, release_point: str = "origin/main") -> dict:
-    root = repository_root()
-    fetched = refresh_release_point(root, release_point) if root else None
-    rev = _git(root, "rev-parse", "--verify", "--quiet", f"{release_point}^{{commit}}") if root else None
-    release_commit = rev.stdout.strip() if rev is not None and rev.returncode == 0 else None
-
+def gather(issue: int) -> dict:
+    root = None  # gh addresses the repository explicitly (-R); no checkout is read
     data = _gh_json(root, "issue", "view", str(issue), "-R", REPO, "--json", "body,comments,labels,projectItems")
-    body, comments = data.get("body", ""), data.get("comments", [])
-    record = release_record_from(body, comments)
 
-    resolves = ancestral = False
-    if root and record and record.get("baseline"):
-        baseline = record["baseline"]
-        resolves = _git(root, "cat-file", "-e", f"{baseline}^{{commit}}").returncode == 0
-        if resolves:
-            ancestral = _git(root, "merge-base", "--is-ancestor", baseline,
-                             release_commit or release_point).returncode == 0
+    try:
+        host_config = json.loads(HOST_CONFIG.read_text())
+    except Exception:
+        host_config = {}
+    wip_limit = host_config.get("wipLimit") if isinstance(host_config.get("wipLimit"), int) else None
+
+    agent_ready, unreadable = None, None
+    try:
+        agent_ready = agent_ready_disposition(comments_from_gh(data.get("comments") or []),
+                                              read_operators(host_config))
+    except (MalformedReceipt, OSError, KeyError, TypeError, ValueError) as exc:
+        unreadable = f"assessment unreadable: {exc}"[:200]
 
     items = _gh_json(root, "project", "item-list", "1", "--owner", "AlienLogicLab",
                      "--format", "json", "-L", "500").get("items", [])
@@ -251,104 +242,18 @@ def gather(issue: int, release_point: str = "origin/main") -> dict:
     active = [k for k in (all_active or {}) if f"#{issue}:" in k]
     active_claims_total = len(all_active) if all_active is not None else None
 
-    try:
-        wip_limit = json.loads(HOST_CONFIG.read_text()).get("wipLimit")
-        if not isinstance(wip_limit, int):
-            wip_limit = None
-    except Exception:
-        wip_limit = None
-
     return {
         "issue": issue,
         "status": project_status_from_issue(data) or mine.get("status"),
-        "agent_ready": _assessment_disposition(
-            body, comments, (record or {}).get("text"),
-            lambda path: read_at_release_point(root, release_commit, path)),
-        "body": body,
-        "release_record": record,
-        "baseline_resolves": resolves,
-        "baseline_ancestral": ancestral,
+        "agent_ready": agent_ready,
+        "agent_ready_unreadable": unreadable,
         "open_dependencies": open_deps,
         "active_invocations": active,
         "active_claims_total": active_claims_total,
         "wip_limit": wip_limit,
         "held": any("hold" in l.lower() for l in (data.get("labels") or []) if isinstance(l, str)),
-        "repository": root,
-        "release_point": release_point,
-        "release_commit": release_commit,
-        "release_point_fetched": fetched,
         "priority_reconciliation": priority_reconciliation,
     }
-
-
-def biu_from_body(body: str) -> str | None:
-    r"""The BIU whose assessment this Issue points at.
-
-    The suffix is not optional decoration: SWF-33 inserted PY-09B under the repository's
-    existing convention, and a pattern of `PY-\d\d` silently returned None for it — which
-    the gate then reported as a missing assessment for a BIU whose assessment said READY.
-    """
-    match = re.search(r"(PY-\d\d[A-Z]?|WO-\d{6})\b[^\s]*\.assessment\.json", body or "")
-    return match.group(1) if match else None
-
-
-WAVE2_DIR = "docs/evidence/wave2-readiness-assessments"
-# `<ID>.<stamp>.assessment.json` directly in WAVE2_DIR, for any BIU identifier (Issue #83: ARP-01
-# and FDH-01 fell back to the native receipt). The ID is one segment of letters, digits and
-# hyphens; the stamp is dot-separated non-empty segments of the same. Neither can hold `/` or
-# `..`, and the path may not be preceded or continued by further path characters, so
-# `../docs/...`, `.../<dir>/<ID>...` and `...json/..` are not readiness records.
-WAVE2_RECORD = re.compile(
-    r"(?<![\w./-])" + re.escape(WAVE2_DIR) + r"/"
-    r"([A-Za-z0-9-]+\.[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)*?\.assessment\.json)"
-    r"(?!\.?[\w/-])")
-
-WAVE1_DIR = "docs/work-units/python"
-# A Wave 1 citation names the file `<BIU>.assessment.json` exactly: bare, or under WAVE1_DIR
-# (a repository path or a GitHub blob URL). Anything else carrying a PY/WO identifier (a stamped
-# Wave 2 name, another directory, a `..` segment) is not a Wave 1 record: reinterpreting a
-# rejected Wave 2 citation as `WAVE1_DIR/<BIU>.assessment.json` admitted a record the Issue
-# never cited (Issue #83, JC R1).
-WAVE1_RECORD = re.compile(
-    r"(?<![\w./-])([^\s`'\"()\[\]<>]*/)?(PY-\d\d[A-Z]?|WO-\d{6})\.assessment\.json(?!\.?[\w/-])")
-# The directory must be the whole prefix: WAVE1_DIR itself, or a blob URL of this repository at
-# a single-segment ref followed by WAVE1_DIR, so no `..` segment can occur. A prefix that merely ends in WAVE1_DIR
-# (`docs/evidence/elsewhere/docs/work-units/python/`) names another file (Issue #83, JC R1,
-# repair cycle 2).
-WAVE1_PREFIX = re.compile(
-    r"(?:https://github\.com/" + re.escape(REPO) + r"/blob/[A-Za-z0-9][\w.-]*/)?"
-    + re.escape(WAVE1_DIR) + r"/")
-
-
-def _wave1_biu(body: str) -> str | None:
-    for match in WAVE1_RECORD.finditer(body or ""):
-        prefix = match.group(1) or ""
-        if not prefix or WAVE1_PREFIX.fullmatch(prefix):
-            return match.group(2)
-    return None
-
-
-def assessment_record_path(body: str) -> PurePosixPath | None:
-    """Wave 2 (2026-09-22): the retained record is a ReadinessAssessment envelope produced by
-    the Agent Ready product, linked from the Issue; Wave 1 records stay where they were.
-    The path is repository-relative: it is read at the release point, not from a checkout."""
-    match = WAVE2_RECORD.search(body or "")
-    if match:
-        return PurePosixPath(WAVE2_DIR) / match.group(1)
-    biu = _wave1_biu(body)
-    return PurePosixPath(WAVE1_DIR) / f"{biu}.assessment.json" if biu else None
-
-
-def disposition_from_record(record: dict) -> str | None:
-    """A disposition counts only if the Agent Ready product produced it. A ReadinessAssessment
-    envelope whose outcome is not ASSESSED, or whose producer is not Agent Ready, has none —
-    a compatible shape is not evidence (Architecture Authority amendment (b))."""
-    if record.get("record_kind") == "ReadinessAssessment":
-        producer = str((record.get("provenance") or {}).get("producer", ""))
-        if record.get("outcome") != "ASSESSED" or not producer.startswith("agent-ready"):
-            return None
-        return record.get("disposition")
-    return record.get("disposition")
 
 
 def project_status_from_issue(issue: dict) -> str | None:
@@ -359,60 +264,16 @@ def project_status_from_issue(issue: dict) -> str | None:
     return next(iter(statuses)) if len(statuses) == 1 else None
 
 
-NATIVE_COMMENT = re.compile(r"<!--\s*AGENT_READY_ASSESSMENT:\s*(\{.*?\})\s*-->", re.S)
-
-
-def disposition_from_native_comment(text: str) -> str | None:
-    """Accept only a self-identifying native Agent Ready receipt with a retained input digest."""
-    match = NATIVE_COMMENT.search(text or "")
-    if not match:
-        return None
-    try:
-        record = json.loads(match.group(1))
-    except json.JSONDecodeError:
-        return None
-    provenance = record.get("provenance") or {}
-    if not provenance.get("input_sha256"):
-        return None
-    return disposition_from_record(record)
-
-
-def _assessment_disposition(body: str, comments: list[dict] | None = None,
-                            release_text: str | None = None, read=lambda path: None) -> str | None:
-    """The Issue body's record first (as before), then the release record's; a record counts
-    only if `read` finds it at the release point. Otherwise the native receipt, unchanged."""
-    for text in (body, release_text):
-        path = assessment_record_path(text)
-        raw = read(path) if path else None
-        if raw is not None:
-            try:
-                return disposition_from_record(json.loads(raw))
-            except Exception:
-                pass
-    for comment in reversed(comments or []):
-        disposition = disposition_from_native_comment(comment.get("body", ""))
-        if disposition:
-            return disposition
-    return None
-
-
 def main(argv: list[str]) -> int:
-    if not argv:
-        print("usage: release_admission.py <issue-number> [release-point]", file=sys.stderr)
+    if len(argv) != 1:
+        print("usage: release_admission.py <issue-number>", file=sys.stderr)
         return 2
     issue = int(argv[0])
-    facts = gather(issue, argv[1] if len(argv) > 1 else "origin/main")
-    fetched = {None: "not a remote ref", True: "fetched", False: "FETCH FAILED; local ref used"}
-    print(f"release point {facts['release_point']} -> {facts['release_commit'] or 'UNRESOLVED'} "
-          f"({fetched[facts['release_point_fetched']]}) in {facts['repository'] or 'NO REPOSITORY'}",
-          file=sys.stderr)
+    facts = gather(issue)
     failures = admit(facts)
-    record = facts.get("release_record") or {}
-    print(f"BIU #{issue}: status={facts['status']} agent_ready={facts['agent_ready']} "
-          f"baseline={record.get('baseline')} resolves={facts['baseline_resolves']} "
-          f"ancestral={facts['baseline_ancestral']}")
+    print(f"BIU #{issue}: status={facts['status']} agent_ready={facts['agent_ready']}")
     if not failures:
-        print("ADMITTED: release record complete; READY -> IMPLEMENT may proceed.")
+        print("ADMITTED: READY -> IMPLEMENT may proceed.")
         return 0
     print("REFUSED: do not transition and do not launch a worker.")
     for f in failures:

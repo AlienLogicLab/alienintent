@@ -30,8 +30,17 @@ from factory_director_inputs import (  # noqa: E402
 
 REPO = "AlienLogicLab/alienintent"
 OPERATOR = "sanookdu"
-ASSESSMENT_BODY = ('**Native Agent Ready receipt.**\n<!-- AGENT_READY_ASSESSMENT: '
-              '{"disposition":"READY","record_kind":"ReadinessAssessment","work_unit_id":"X"} -->')
+
+
+def receipt(disposition="READY", **overrides):
+    """A native Agent Ready receipt in the shape readiness_assessment.py records."""
+    record = {"record_kind": "ReadinessAssessment", "outcome": "ASSESSED", "disposition": disposition,
+              "work_unit_id": "X", "provenance": {"producer": "agent-ready-cli", "input_sha256": "0" * 64}}
+    record.update(overrides)
+    return f"**Native Agent Ready receipt.**\n<!-- AGENT_READY_ASSESSMENT: {json.dumps(record)} -->"
+
+
+ASSESSMENT_BODY = receipt()
 ASSESSMENT = {"author": OPERATOR, "body": ASSESSMENT_BODY}
 
 
@@ -170,10 +179,40 @@ def test_hold_assessment_does_not_inflate_prepared_buffer(sources):
     raw["preparedBufferTarget"] = 20
     sources.config.write_text(json.dumps(raw))
     sources.issue(66, "TASKS", labels=("biu",))
-    sources.comments[66] = [comment('<!-- AGENT_READY_ASSESSMENT: {"disposition":"HOLD"} -->', author=OPERATOR)]
+    sources.comments[66] = [comment(receipt("HOLD"), author=OPERATOR)]
     evaluation = sources.adapter().evaluate()
     assert evaluation.observations["preparedBufferDepth"] == 0
-    assert evaluation.observations["controlRequiredBy"] == {"66": "selection:TASKS_ASSESSED"}
+    # Assessed HOLD is neither supply nor selection: it waits for a changed task packet.
+    assert evaluation.observations["controlRequiredBy"] == {}
+    assert evaluation.inputs.lifecycle_requires_selection is False
+
+
+@pytest.mark.parametrize("disposition", ["HOLD", "CLARIFY", "SPLIT"])
+def test_a_non_ready_assessment_never_requires_selection(sources, disposition):
+    sources.issue(68, "TASKS", labels=("biu",))
+    sources.comments[68] = [comment(receipt(disposition), author=OPERATOR)]
+    assert sources.inputs().lifecycle_requires_selection is False
+
+
+def test_the_newest_receipt_decides_selection(sources):
+    sources.issue(69, "TASKS")
+    sources.comments[69] = [ASSESSMENT, comment(receipt("CLARIFY"), author=OPERATOR)]
+    assert sources.inputs().lifecycle_requires_selection is False
+    sources.comments[69].append(ASSESSMENT)
+    assert sources.inputs().lifecycle_requires_selection is True
+
+
+@pytest.mark.parametrize("change", [
+    {"outcome": "EXECUTION_FAILURE"},
+    {"provenance": {"producer": "surrogate-bootstrap-assessor", "input_sha256": "0" * 64}},
+    {"provenance": {"producer": "agent-ready-cli"}},
+    {"record_kind": None},
+])
+def test_a_marker_that_is_not_a_native_receipt_carries_no_disposition(sources, change):
+    sources.issue(70, "TASKS")
+    sources.comments[70] = [comment(receipt(**change), author=OPERATOR)]
+    values = sources.inputs()
+    assert (values.authoritative_state, values.lifecycle_requires_selection) == (True, False)
 
 
 def test_ready_assessment_counts_toward_prepared_buffer(sources):
@@ -181,7 +220,7 @@ def test_ready_assessment_counts_toward_prepared_buffer(sources):
     raw["preparedBufferTarget"] = 20
     sources.config.write_text(json.dumps(raw))
     sources.issue(67, "TASKS", labels=("biu",))
-    sources.comments[67] = [comment('<!-- AGENT_READY_ASSESSMENT: {"disposition":"READY"} -->', author=OPERATOR)]
+    sources.comments[67] = [comment(receipt(), author=OPERATOR)]
     evaluation = sources.adapter().evaluate()
     assert evaluation.observations["preparedBufferDepth"] == 1
 
