@@ -35,13 +35,14 @@ function parseRepository(repository) {
 }
 
 export class GitHubAuthority {
-  constructor({ gh, owner, projectNumber, repository, roleNames = defaultRoleNames, workerLogins = {} }) {
+  constructor({ gh, owner, projectNumber, repository, roleNames = defaultRoleNames, workerLogins = {}, authorizedOperatorLogins = [] }) {
     this.gh = gh;
     this.roleNames = roleNames;
     this.owner = owner;
     this.projectNumber = projectNumber;
     this.repository = repository;
     this.workerLogins = workerLogins;
+    this.authorizedOperatorLogins = authorizedOperatorLogins;
   }
 
   listItems() {
@@ -74,7 +75,31 @@ export class GitHubAuthority {
     if (items.some(item => !Array.isArray(item.fieldValues?.nodes) || item.fieldValues.pageInfo?.hasNextPage !== false)) {
       throw new Error("Project item field values are unavailable or incomplete");
     }
-    return items.map((item) => ({ repository: this.repository, issue: item.content.number, itemId: item.id, status: item.fieldValues.nodes.find((value) => value.field?.name === "Status")?.name?.toUpperCase(), dependencies: [], founderException: false }));
+    const issues = new Set();
+    return items.map((item) => {
+      if (!Number.isSafeInteger(item.content.number) || issues.has(item.content.number)) throw new Error("Project Issue identity is ambiguous");
+      issues.add(item.content.number);
+      return { repository: this.repository, issue: item.content.number, itemId: item.id, status: item.fieldValues.nodes.find((value) => value.field?.name === "Status")?.name?.toUpperCase(), dependencies: [], founderException: false };
+    });
+  }
+
+  async admissionEvidence(item, status) {
+    try {
+      const resolved = this.resolveItem(item);
+      if (resolved.itemId !== item.itemId || await this.currentStatus(item) !== status) return { eligible: false, reason: "STALE_PROJECT_ITEM" };
+      const issue = JSON.parse(this.gh(["api", `repos/${this.repository}/issues/${item.issue}`]));
+      if (issue.number !== item.issue || issue.state !== "open" || issue.pull_request
+          || issue.labels?.some(label => /hold/i.test(label.name))) return { eligible: false, reason: "ISSUE_HELD_OR_INVALID" };
+      const dependencies = JSON.parse(this.gh(["api", `repos/${this.repository}/issues/${item.issue}/dependencies/blocked_by`, "--paginate"]));
+      if (!Array.isArray(dependencies) || dependencies.some(dependency => dependency.state !== "closed")) return { eligible: false, reason: "DEPENDENCY_UNRESOLVED" };
+      const comments = JSON.parse(this.gh(["api", `repos/${this.repository}/issues/${item.issue}/comments`, "--paginate"]));
+      if (!Array.isArray(comments) || !comments.some(comment => this.authorizedOperatorLogins.includes(comment.user?.login)
+          && /^\s*(?:\*\*)?RELEASED\b/m.test(comment.body ?? "")
+          && new RegExp(`(?:Issue\\s*)?#${item.issue}(?![0-9])`).test(comment.body ?? ""))) {
+        return { eligible: false, reason: "RELEASE_UNVERIFIED" };
+      }
+      return { eligible: true };
+    } catch { return { eligible: false, reason: "AUTHORITY_UNAVAILABLE" }; }
   }
 
   enrichContentNode(contentNodeId, itemId) {
