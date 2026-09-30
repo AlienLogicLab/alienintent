@@ -30,6 +30,7 @@ from alienintent.context_assembly.domain.readiness import LintHold, Outcome
 from alienintent.evidence_learning.domain.records import ref_from_document
 from alienintent.evidence_learning.domain.refs import EvidenceHold
 from alienintent.execution_coordination.domain.readiness import Hold, ReadinessEligibility
+from alienintent.execution_coordination.ports.operational_store import StoreUnavailable
 
 UNAVAILABLE = "UNAVAILABLE"
 NO_DESIGN_VECTOR = {"design": None}  # Applicability of an absent or unreadable design is a hold, never current.
@@ -187,6 +188,8 @@ class UpstreamIntegration:
             retained = consumer.raw(identity, first.eligibility.attempt_id)
         except EvidenceHold as hold:
             return refusal(identity, "raw_ref", f"unreadable: {hold.reason_code}", first.eligibility.attempt_id)
+        except StoreUnavailable as error:
+            return refusal(identity, "raw_ref", f"unreadable: {error}", first.eligibility.attempt_id)
         raw_ref = receipt(identity, first, retained, consumer.project, consumer.profile)
         if isinstance(raw_ref, Hold):
             return raw_ref
