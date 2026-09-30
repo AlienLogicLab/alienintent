@@ -563,6 +563,22 @@ Projection rules:
 
 The same rule applies to dashboards, notifications, local files, and future integrations.
 
+### 18.1 Keep the existing GitHub connections
+
+Founder decision, 2026-09-30: the Python application replaces the implementation behind the existing GitHub connections. It must use the exact same webhook, user accounts, GitHub App and installation, repository, GitHub Project board, and other external GitHub resources used by the previous application.
+
+The current engineering repository is AlienLogicLab/alienintent. The existing board is [AlienIntent, Project 1](https://github.com/orgs/AlienLogicLab/projects/1), with identity PVT_kwDOEcrpC84Bj5i_. Keep its existing fields, field choices, Issues, links and history. Do not create a replacement board or silently select another board.
+
+Keep the existing public webhook address, GitHub registration and authentication settings. Python may replace the receiving program behind that address. Keep account identities and permissions; changing the model assigned to a worker role does not change the GitHub account it uses.
+
+Use the protected installation settings as the source for connection details. Read and check the actual installed values rather than copying example settings or guessing account names. Secret values stay outside documents, Issue comments and logs. If a required setting cannot be read or does not match the existing installation, report the specific problem and refuse the affected operation.
+
+Before Python performs real work, prove that the existing webhook reaches it, authenticated requests are checked, the existing accounts can read and write the intended resources, and a board update can be read back from the same item. Record resource identities and results without secrets.
+
+Separate test resources may be used for controlled tests. They cannot count as proof that the existing live connections work. Any later, separately approved repository move must preserve and recheck these connections; it does not authorize replacing accounts, the webhook or the board.
+
+The existing Python GitHub connection code provides part of this capability. This decision is a required design rule, not a claim that the complete live replacement has already been verified.
+
 ## 19. Runtime revision and deployment
 
 When a WorkItem's DONE predicate includes runtime behavior, canonical state records:
@@ -1263,6 +1279,34 @@ The UX is an adapter over the same Requirements/Decision/Query ports and should 
 - accept external UX/product artifacts as provenance-bearing inputs where configured.
 
 The UX may use models to assist interpretation, but authority-bearing mutations flow through typed application commands and deterministic policy.
+
+### 33.6 Reliable facts for agents
+
+Founder requirement, 2026-09-30: an agent must be able to ask AlienIntent for facts the application can determine directly. It must not have to reconstruct those facts from old conversations, logs, files or guesses. This interface is part of the required application, including work preparation.
+
+| An agent needs to know | What the application must supply |
+| --- | --- |
+| What am I assigned to do? | The exact approved work description, requirements, limits and checks, together with their recorded versions. |
+| What may I change? | The assigned role, allowed actions, owned working directory, approved starting revision and applicable rules. |
+| Which model and settings apply? | The current assignment for the requested role, from the one shared assignment source. |
+| What happens next? | Current work status, priority, dependencies, blockers, and the next eligible work item or the reason none can start. |
+| What has already been proved? | The exact candidate revision, assessment, test results, independent verdict and links to retained evidence. |
+| Has an external action finished? | The recorded request, its completion or failure, and the result read back from GitHub or another affected system. |
+| What changed since I last checked? | The changed facts and their versions, or an explicit instruction to obtain a fresh current view. |
+
+Every answer must identify the work or resource, the recorded version, the source of the information and when it was checked. Related facts must describe a consistent current view. Missing, unavailable, out-of-date or conflicting information must be stated plainly; absence is not permission and is not evidence of success.
+
+The interface reads the same current state and applies the same permissions as the rest of AlienIntent. It must not invent another source of authority, another model-assignment file, or a separate history-rebuilding service. Asking for facts does not change work status. Requests to change anything use the existing authorized application operations.
+
+At launch, each worker receives a facts provider and a view of its assignment. Supplying that provider is dependency injection: the worker is given the dependency it needs. Injection alone does not mean rereading a file, notifying a running process, or replacing a running model.
+
+The application must also supply changed model assignments and other relevant facts during operation. One shared provider owns the current assignment version; all code that depends on assignments receives that provider at launch. Changed assignments become available through that provider without manual file reading or another user request. Before each new model invocation, the application uses the current assignment. An invocation already under way keeps its recorded assignment unless an explicit cancellation or replacement rule applies. Supplying changed facts does not itself replace a running model.
+
+Updates must identify their version. After a missed update or a restart, a consumer obtains a fresh bounded current view instead of replaying all history. The eventual implementation packet must fix the update-delivery rules, numeric size and time limits, retention, ownership, and recovery behavior before implementation. Queries request only the needed work or resources; responses and updates have explicit limits and continuation rules. Expired temporary data is cleaned up.
+
+Document the callable operations, accepted fields, response fields, permissions, failures, consistency rules and examples before a PRODUCER implements this interface. Human tools, local commands and agent tools must use the same underlying application services. Existing structured command and network-interface choices in sections 33.1–33.4 remain applicable.
+
+**Current implementation limits:** section 35.1A describes the existing model-assignment resolver and its injection into the Director launcher. That resolver supplies four assignment fields when called. It is useful existing code to reuse; it does not yet provide the complete facts interface above or automatic update delivery to every running consumer. Neither capability may be reported complete without independent tests for real consumers, missed updates, restart, missing information, permissions and bounded requests.
 
 ## 34. Python engineering standard
 

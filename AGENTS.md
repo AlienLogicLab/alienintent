@@ -1,7 +1,9 @@
 # AlienIntent agent instructions
 
 Follow the [governing directive](docs/migration/agent-packages/GOVERNING_AGENT_DIRECTIVE.md).
-Direct user instructions take priority. Use the [work packet template](docs/templates/work-packet.md)
+Direct user instructions take priority. Write user-facing explanations and documents in plain English.
+Use role names such as PRODUCER and VERIFIER; explain technical terms only when
+they are needed, and do not substitute model names for roles. Use the [work packet template](docs/templates/work-packet.md)
 and [operator guidance](docs/operations/forward-momentum.md).
 
 Classify working changes by authority and provenance. Known authorized work may
@@ -18,6 +20,14 @@ Continue authorized edits, tests, independent review, repairs and meaningful loc
 commits without routine confirmation. Stop at a concrete authority gap, conflicting
 baseline, destructive action or unavailable external prerequisite. A local commit
 does not authorize publication or live operation.
+
+**PRODUCER self-review is required before VERIFY.** Before handing off a candidate,
+the PRODUCER reviews its complete final diff against the assigned baseline for
+requirements, architecture, type and data invariants, resource lifetime, security,
+duplicated mechanisms and test strength. It repairs its own findings, reruns affected
+checks, and records the review findings, repairs and exact candidate revision.
+Passing tests alone do not satisfy this obligation. Independent VERIFIER review
+remains required and cannot be replaced by the PRODUCER's self-review.
 
 **Candidate publication is required before VERIFY.** A PRODUCER must push its
 candidate branch to the configured remote before signalling `RESULT=VERIFY`, and

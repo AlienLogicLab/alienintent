@@ -23,7 +23,7 @@ v1 is evidence and a requirements source, not an implementation template.
 2. Every Work Unit maps to explicit `SF-REQ-*` requirements and architecture sections.
 3. A Work Unit must produce one cohesive, independently verifiable increment.
 4. No implementation agent invents architecture, product priority, or missing authority.
-5. Claude Code is the default PRODUCER for the v2 foundation unless the Founder changes that policy.
+5. Use PRODUCER, VERIFIER, REVIEWER and CLOSURE as role names. Model names are assignments supplied by the shared configuration, not architectural roles. The Founder may change those assignments.
 6. Verification uses a separate invocation/workspace/context and exact candidate identity.
 7. Deterministic/mechanical proof runs before expensive model review.
 8. Prefer vertical slices that create demonstrable capability over horizontal infrastructure with no user-visible/provable outcome.
@@ -32,48 +32,51 @@ v1 is evidence and a requirements source, not an implementation template.
 11. No milestone is DONE until its end-to-end demonstration succeeds from a clean environment/restart boundary.
 12. Work after the current milestone may be specified/prepared in parallel, but implementation priority follows this plan unless the Founder explicitly changes priority.
 
+## 2.1 Existing connections, reliable facts and visible progress
+
+Founder decisions, 2026-09-30:
+
+- Python must use the exact same webhook, user accounts, GitHub App installation, repository, existing AlienIntent Project 1 board, and other external GitHub resources as the previous application. Read the actual protected settings and prove access to those resources; do not substitute example settings or create replacement infrastructure. The formal design, section 18.1, defines the required checks.
+- Reliable facts for agents are part of the application, not an optional future convenience. The formal design, section 33.6, defines what an agent can ask, how answers identify their source and version, and how shared model assignments are supplied at launch and updated during operation. Use the existing assignment resolver where it fits; do not report the broader interface complete merely because that resolver exists.
+- Every active work unit must have a real Issue on the existing board, with its actual stage, current owner, candidate code link, independent review result and specific blocker when waiting. An implementation repair returns to IMPLEMENT; independent review uses VERIFY. Passing checks do not authorize DONE before independent acceptance and separate closure.
+- Keep the queue of Founder-inspected, independently checked and Agent Ready-approved work visible on that same board. Do not create a second backlog or a separate progress system.
+- The approved first work unit is [Issue 153](https://github.com/AlienLogicLab/alienintent/issues/153). Its exact approved packet remains unchanged. It provides checked assessed work for a later queue-publishing step; it does not itself complete live queue publishing or the self-building milestone.
+
+These requirements guide the missing connections on the shortest path. They do not authorize widening the already approved first implementation packet.
+
 ## 3. Milestone strategy
 
-The milestones deliberately add capability in this order:
+The first delivery target is a Python factory that can build AlienIntent under its own control. Reuse working Python code and implement only missing connections.
 
-```text
-M-1 Repository authority + deterministic publication boundary
-        |
-M0  Architecture locked
-        |
-M1  Deterministic offline factory
-        |
-M2  Product intent -> READY through stable interfaces
-        |
-M3  Real single-project autonomous delivery
-        |
-M4  Production resilience + N projects + quality evidence
-        |
-M5  Local Factory Director cognition + adaptive allocation/learning
-        |
-M6  Product polish + community surfaces
-```
+1. For the work immediately ahead, describe what it must do, which part of the application owns it, and how we will check it.
+2. Run prepared and approved work through implementation and independent verification, with one active work item and recovery after a crash.
+3. Prepare approved work from a requirement, including its description, plan, assessment and priority.
+4. Complete real AlienIntent work, prove the intended result, finish it accurately, then restart and take the next eligible item automatically.
+5. Complete the remaining replacement obligations, then perform the separately approved repository and publication changes.
+6. Add broader product capabilities when justified.
 
-Each milestone is useful on its own and reduces uncertainty for the next. **M-1 is a hard prerequisite for all v2 implementation work.** AlienIntent must first establish the correct private canonical engineering authority and public publication boundary so v2 is never built inside an accidentally public engineering record.
+The fourth step is the first credible self-building milestone. It requires preparation, real implementation, independent verification of the exact code, a proved outcome, and automatic continuation. Merely taking a second manually prepared item does not prove that the factory prepares its own work. Repository and publication changes remain later work; they are not a prerequisite to building Python.
 
-# M-1 — Repository Authority and Deterministic Publication Boundary
+The existing numbered milestone and work-unit identifiers below remain reference labels for their detailed requirements.
 
-**Goal:** establish the repository/privacy/publication architecture in its intended operational form before v2 implementation begins.
+# M-1 — Repository Authority and Deterministic Publication Boundary (after Node retirement)
 
-The current `AlienLogicLab/alienintent` repository is the active canonical engineering repository and is currently public. That is the first condition to correct.
+**Goal:** establish the private canonical engineering repository and curated public publication boundary after the Python factory builds itself and all AlienIntent Node duties are retired.
+
+The current `AlienLogicLab/alienintent` identity remains in use through the self-building and retirement proofs. V2-000A begins the repository migration afterward.
 
 ### V2-000A — Contain canonical engineering authority: make current repository PRIVATE
 
 Change `AlienLogicLab/alienintent` visibility from PUBLIC to PRIVATE while preserving repository identity, Issue numbers, Project relationships, branches, tags, GitHub App/webhook configuration and current v1 factory references.
 
-This is containment, not publication redesign completion. It must happen before v2 foundation coding.
+This containment is the first repository migration action after accepted Node retirement.
 
 Acceptance:
 - GitHub reports the canonical repository PRIVATE;
 - existing clone/remote identity is unchanged;
 - no history rewrite;
 - current Issues/Project/branches/tags remain intact;
-- v1 remains capable of referencing the same repository identity.
+- Python factory integrations remain capable of referencing the same repository identity.
 
 ### V2-000B — Post-visibility integration health proof
 
@@ -84,7 +87,7 @@ Verify at minimum:
 - webhook delivery and authentication path;
 - Project read/write;
 - worker repository access for authorized identities;
-- Factory Director read/control access;
+- Python factory operator/control-plane read access;
 - source-control fetch/push for authorized factory identities;
 - relevant Actions/packages/release access if currently used.
 
@@ -131,7 +134,7 @@ The assembler has no authority to publish by itself.
 
 Create/configure a separate public publication target from a **fresh curated snapshot**, not from the full private Git object/history graph.
 
-Until v1 no longer depends on the active repository identity, do **not** rename the canonical private `AlienLogicLab/alienintent` repository merely to obtain the final preferred naming layout. Use a separate unambiguous publication repository name during coexistence if necessary.
+V2-000H owns the post-retirement identity migration and its Python integration readback. Create the public `AlienLogicLab/alienintent` target only after the private canonical identity has moved and the publication candidate passes review.
 
 Public repository content is limited to explicitly approved artifacts such as:
 - released source and appropriate public tests;
@@ -183,27 +186,23 @@ Add explicit publication authority after candidate assembly and prove:
 - public Issues cannot directly create requirements/BIUs/execution authority;
 - publication receipts record canonical revision, policy version, candidate identity and public target revision.
 
-### V2-000H — Repository-identity migration deferred boundary
+### V2-000H — Repository-identity migration after Node retirement
 
-Record the desired long-term naming/layout explicitly, but defer canonical repository rename while v1 runtime identities/webhooks/Issues/Project/evidence still depend on the current repository identity.
+The target identity is settled: `AlienLogicLab/alienintent-internal` is the private canonical engineering repository; `AlienLogicLab/alienintent` is the curated public distribution repository created from a fresh approved snapshot.
 
-Preferred eventual shape may be:
-- private canonical engineering authority under an internal/private identity;
-- `AlienLogicLab/alienintent` as the curated public product/distribution repository.
-
-The identity swap/rename is its own later migration Work Unit after v1 authority has been retired or proven independent of the old repository identity. This deferral does **not** delay the privacy/publication boundary itself.
+After accepted Node retirement, inventory live Python repository references and exact evidence identities, freeze writers and checkpoint effects. Make the existing canonical repository private and verify integrations, then migrate the private canonical identity to `alienintent-internal`, reconfigure and read back Python webhooks, workers, Project access and Git remotes. Establish the public `alienintent` repository through the explicit allowlist/publication gate. A failed name or integration preflight is a typed blocker to resolve within M-1, not indefinite deferral.
 
 **M-1 exit:**
 - canonical engineering repository is PRIVATE;
-- v1 integrations remain healthy after visibility change;
+- Python factory integrations remain healthy after visibility and identity changes;
 - public publication is a separate configured target;
 - publication is generated only by deterministic allowlist-based tooling from an exact private revision;
 - first public candidate has passed secret/private-reference/build/API checks and manual review;
 - internal Issues/Project/evidence/work units/worker branches are not public;
 - publication authority is explicit and repeatable;
-- the long-term repository identity migration is documented and safely deferred rather than conflated with publication.
+- the private canonical identity is `AlienLogicLab/alienintent-internal`, the curated public identity is `AlienLogicLab/alienintent`, and Python integrations pass readback after migration.
 
-Only after all M-1 exit criteria pass does `V2-001` begin.
+M-1 does not gate M0–M3 or the self-building proof. Its exit follows accepted Node retirement.
 
 # M0 — Architecture Locked
 
@@ -415,9 +414,9 @@ Configure one project/profile, persistence, repository, work-management adapter 
 
 Requirements: SF-REQ-037 minimum, 038.
 
-**M3 demonstration:** from a fresh installation, ingest one authorized requirement, produce READY work, implement it in a real Git repository with Claude Code, independently verify the exact candidate, land it, project state to GitHub and reach truthful DONE after restart/fault injection.
+**M3 demonstration:** from a fresh installation, ingest one authorized AlienIntent requirement, specify/assess/prioritize its READY BIU, implement it in a real Git repository with a configured real worker, independently verify the exact candidate, land it, prove the required product outcome, project truthful DONE, recover across restart/fault injection and take the next eligible BIU without a manual lane edit.
 
-**First production milestone:** M3 is the earliest point at which v2 can credibly replace a narrow slice of v1 production authority.
+**First self-building milestone:** M3 is the earliest point at which Python can credibly take an AlienIntent requirement through assessed READY work, real implementation, independent exact-candidate verification, landed outcome and truthful DONE, then recover and continue. M3 proves a narrow slice of production authority; it does not by itself retire every Node duty.
 
 # M4 — Production Resilience, N Projects and Quality Evidence
 
@@ -584,30 +583,9 @@ Every active canonical requirement is assigned. SF-REQ-054 is retired and intent
 
 # 5. Critical path
 
-The shortest path to a trustworthy autonomous v2 factory is:
+The capability path to Python self-building is M0's necessary contracts → M1 run prepared BIUs → M2 turn a requirement into an assessed READY BIU → M3 implement and independently verify in the real repository, recover and continue. Existing Python code and accepted predecessor BIUs are evidence to assess and reuse; V2-001–306 identify capability owners, not an instruction to rewrite functioning components or complete unrelated breadth first.
 
-```text
-V2-000A -> V2-000B -> V2-000C -> V2-000D -> V2-000E -> V2-000F -> V2-000G -> V2-000H
-                                                                          |
-                                                                          v
-V2-001 -> V2-002 -> V2-003 -> V2-004 -> V2-005
-                                         |
-                                         v
-V2-101 -> V2-102 -> V2-103 -> V2-104 -> V2-105
-                         |                 |
-                         v                 v
-                      V2-107 <- V2-108 <-+
-                         |
-                         v
-V2-201 -> V2-203 -> V2-205 -> V2-206 -> V2-207 -> V2-208
-   |          |
-V2-202     V2-204
-                         |
-                         v
-V2-301 -> V2-302 -> V2-303 -> V2-304 -> V2-305 -> V2-306
-```
-
-M4–M6 build on that proven spine. Do not pull later sophistication onto the critical path unless it removes a demonstrated blocker.
+After M3, prove the remaining liveness, observation, admission, attention/mailbox, launcher/alias and bootstrap successors under the full Python-only cutover contract. **Node retirement precedes M-1.** V2-000A–H then establish repository authority and publication. M4–M6 add broader product capability as justified; their minimum quality requirements needed for truthful M3 closure are pulled into that gate.
 
 # 6. Work-in-progress policy for building v2
 
@@ -619,7 +597,7 @@ During foundation construction:
 - architectural changes discovered during implementation return to architecture authority before code continues;
 - do not accumulate more than a small READY buffer until actual throughput demonstrates value.
 
-The plan intentionally prioritizes correctness and low rework over artificial parallelism during M-1/M0/M1.
+The plan prioritizes correctness and low rework over artificial parallelism during M0–M3 and the later retirement/migration work.
 
 # 7. Definition of milestone completion
 
@@ -635,13 +613,6 @@ A milestone is DONE only when:
 
 # 8. First action
 
-The first v2 programme work is **V2-000A: make the current canonical AlienIntent repository PRIVATE**, then complete M-1 through deterministic publication-boundary proof.
+The first implementation work is to assess the existing Python coordinator, persistence, GitHub backlog and real worker against the M0–M3 contracts. Identify the smallest missing connection for M1's prepared-work path, then prove M2's requirement-to-READY path and M3's real self-building run. Use bounded BIUs and independently verified receipts; do not recreate already working Python capabilities merely because a planned V2 unit has not been materialized as an Issue.
 
-No v2 foundation implementation starts until M-1 exits successfully.
-
-After M-1, the first v2 software-foundation Work Unit is **V2-001**. M0 then freezes the Ubiquitous Language/context map, port contracts, Python engineering baseline, canonical domain/event schema and conformance harness before substantial runtime implementation.
-
-This ordering prevents two classes of repeat failure before they can compound:
-
-1. building private engineering truth in an accidentally public repository;
-2. building control machinery before semantics and boundaries are mechanically clear.
+Once the Python factory builds itself, complete the remaining Node retirement gates. **Then** start M-1 with V2-000A. Repository migration is not a prerequisite to Python implementation or self-building.
