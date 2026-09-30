@@ -19,7 +19,7 @@ from alienintent.evidence_learning.domain.refs import EvidenceHold, Ref
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.readiness import (
     ATTEMPT_FAILURE, NO_ASSESSMENT, AttemptMetadata, Hold, digest)
-from alienintent.execution_coordination.ports.operational_store import StoreUnavailable
+from alienintent.execution_coordination.ports.operational_store import SchemaIncompatible, StoreUnavailable
 from tests.composition.test_upstream_integration_capstone import (
     DECISION, DECISIONS, PROFILE, PROJECT, SCOPE, U1, U2, Harness, ready, revise_decision)
 from tests.context_assembly.test_initial_compilation import R1
@@ -110,8 +110,11 @@ def test_unchanged_inputs_bind_the_same_value(make):
     compiled, *_ = ready(h)
     first = bind(h, compiled)
     assert type(first) is AssessedPublicationInput
+    records, state = len(h.evidence()), h.store.list_states(PROFILE)
     assert bind(h, compiled) == first
     assert h.profile.readiness_consumer.history(U1)[-1]["attempt_id"] == first.attempt_id
+    # Repeated binding retains nothing new: the existing lint records are content-addressed and applicability holds.
+    assert (len(h.evidence()), h.store.list_states(PROFILE)) == (records, state)
 
 
 def test_bound_value_is_frozen(make):
@@ -324,6 +327,34 @@ def newer_attempt(h: Harness) -> str:
     return attempt
 
 
+def unreadable_store(error: Exception, at_read: int = 1):
+    """The retained attempt pointer cannot be served at the given read; every other read is the consumer's own."""
+    def latest(entry, read):
+        if read == at_read:
+            raise error
+        return entry
+    return latest
+
+
+@pytest.mark.parametrize("error", [StoreUnavailable("latest unavailable"), SchemaIncompatible("schema 9 is newer")])
+def test_unreadable_latest_attempt_holds_after_current_readiness(make, error):
+    h = make()
+    compiled, _, _, outcome = ready(h)
+    consumer = altered(h, latest=unreadable_store(error))
+    held = refused(bind(h, compiled), "latest")
+    assert str(error) in held.detail and held.attempt_id == outcome.attempt_id
+    assert consumer.latest_reads == 1 and len(h.producer.calls) == 1
+
+
+def test_unreadable_latest_attempt_at_the_last_read_holds(make):
+    h = make()
+    compiled, _, _, outcome = ready(h)
+    consumer = altered(h, latest=unreadable_store(StoreUnavailable("latest unavailable"), at_read=2))
+    held = refused(bind(h, compiled), "latest")
+    assert "latest unavailable" in held.detail and held.attempt_id == outcome.attempt_id
+    assert consumer.latest_reads == 2
+
+
 def test_older_ready_attempt_never_substitutes_for_a_later_open_attempt(make):
     h = make()
     compiled, _, _, outcome = ready(h)
@@ -364,6 +395,10 @@ def unavailable(_):
     raise StoreUnavailable("immutable evidence read failed")
 
 
+def incompatible(_):
+    raise SchemaIncompatible("schema 9 is newer")
+
+
 def relocated(name: str, value: str):
     """The latest entry and the retrieved receipt agree on a reference that is not this attempt's raw receipt."""
     def reference(ref: dict) -> dict:
@@ -376,6 +411,7 @@ ALTERED_RECEIPTS = {
     "not retained": (dict(raw=lambda retained: None), "no retained raw receipt"),
     "access denied": (dict(raw=raising), "ACCESS_DENIED"),
     "store unavailable": (dict(raw=unavailable), "immutable evidence read failed"),
+    "store schema incompatible": (dict(raw=incompatible), "schema 9 is newer"),
     "another reference": (dict(raw=lambda r: ({**r[0], "revision_digest": OTHER}, r[1])), "latest raw_ref"),
     "value is bytes": (dict(raw=lambda r: (r[0], r[1].encode())), "not text"),
     "malformed reference": (dict(latest=lambda e, _: {**e, "raw_ref": {"locator": e["raw_ref"]["locator"]}},

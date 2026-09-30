@@ -101,16 +101,16 @@ def pinned(identity: object, candidate: dict, proof_plan: object) -> PinnedInput
 
 def attempt_refusal(identity: str, reading: Reading) -> Hold | None:
     """Why the latest retained attempt is not the READY assessment of exactly this text and contract."""
-    bound, eligibility, latest = reading.pinned, reading.eligibility, reading.latest
+    derived, eligibility, latest = reading.pinned, reading.eligibility, reading.latest
     attempt = eligibility.attempt_id
     if not isinstance(latest, dict):
         return refusal(identity, "latest", "no retained attempt", attempt)
     comparisons = (("identity", identity, eligibility.identity),
                    ("attempt_id", eligibility.attempt_id, latest.get("attempt_id")),
                    ("input_fingerprint", eligibility.input_fingerprint, latest.get("input_fingerprint")),
-                   ("contract_digest", bound.contract.content_digest, eligibility.contract_digest),
-                   ("contract_digest", bound.contract.content_digest, latest.get("contract_digest")),
-                   ("text_digest", digest(bound.text), latest.get("input_sha256")))
+                   ("contract_digest", derived.contract.content_digest, eligibility.contract_digest),
+                   ("contract_digest", derived.contract.content_digest, latest.get("contract_digest")),
+                   ("text_digest", digest(derived.text), latest.get("input_sha256")))
     for field, expected, observed in comparisons:
         if type(observed) is not str or observed != expected:
             return refusal(identity, field, f"expected={expected} observed={observed}", attempt)
