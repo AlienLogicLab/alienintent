@@ -196,6 +196,8 @@ Every persisted or temporary object has an owner, purpose, size or growth budget
 - Reconcile owned temporary resources after interruption using stable identities and idempotent cleanup. Unknown ownership, dirty state, or failed cleanup retains evidence and raises a bounded operator diagnostic; it must not silently delete another owner's data or repeatedly persist an identical full-state snapshot.
 - Keep historical cleanup and archival off the admission critical path. Apply backpressure or a visible capacity hold before configured disk, memory, or inode limits are exhausted; do not let unbounded growth become an implicit scheduler failure.
 
+Work-item definitions, origin records, meaningful workflow history and their supporting evidence have a minimum retention of the project's duration (section 6.1A). The general event-expiry policy cannot erase that required trace. Raw temporary output and replaceable diagnostics may have shorter retention only when the required outcome, failure and evidence records remain intact. After project closure, archival or deletion requires an explicit approved retention policy; DONE alone does not authorize deletion.
+
 Each implementation packet states concrete budgets, retention periods, high-water behavior, cleanup ownership, and verification for the object classes it introduces. Tests cover long histories, restart and crash boundaries, interrupted cleanup, disk-pressure behavior, and measured admission cost as history grows.
 
 ## 6. Domain model
@@ -221,6 +223,31 @@ Required fields:
 - `runtime_target` when applicable.
 
 Mutable operational facts are not stored in `intent_ref` documents.
+
+### 6.1A One identity and a durable history for every work item
+
+Each work item, including every BIU, has one immutable factory identity allocated when the item is materialized. The same identity is used from its recorded origin through preparation, READY, implementation, verification, acceptance, closure and DONE. Cancellation, rejection, repair, reassessment, restart, a different model, a moved repository or a changed GitHub card do not create a new identity. Definition versions, assessment attempts, worker attempts, candidates and external actions have their own identifiers and always name the work item they belong to.
+
+The identity is allocated and registered through controlled application operations. GitHub numbers, titles, editable Issue text and content fingerprints do not allocate or redefine it. Existing identifiers and identity reservations must be reused through their owning interfaces; the connection must define an explicit mapping to the existing `BiuContract.identity`, not invent a competing identity owner. A repeated materialization request returns the same recorded item; a conflicting identity or origin association is refused with an attributable reason.
+
+The durable record must tie together:
+
+- the project, exact originating input or requirement, its retained contents or immutable reference, materialization record, responsible authority and any parent or split relationships;
+- every definition version, its requirements, design, permitted scope, dependencies, priority, assessment and approval evidence, and the currently authorized definition reference;
+- every meaningful workflow transition, blocker, decision, reassessment, worker assignment, attempt, self-review, independent finding, rejection and repair;
+- each exact code candidate, retained checks and verdicts, external action and confirmed result, separate closure result and final outcome.
+
+Changing approved instructions creates a new definition version under the same work identity. The current definition is usable only with applicable assessment and authorization for that version. An already-running attempt keeps its recorded definition version unless an authorized cancellation or replacement operation says otherwise. Splitting work creates separately identified children linked to the retained parent; it does not reuse the parent's identity for different obligations. Work Preparation owns preparation and correction of definitions; Execution Coordination owns their execution and progress. Both use the same recorded work identity and existing canonical storage boundaries. No reader or worker may repair intent by guessing.
+
+GitHub associations are recorded against that identity and reconciled through the existing projection adapter. External edits become explicit proposed commands or recorded discrepancies; they do not change executable authority. A discrepancy in displayed information is corrected from canonical state with a confirmed readback. A defect in the definition returns to Work Preparation with an owned blocker; a material change requires the appropriate authority and renewed checks. The implementation packet must fix repair ownership, bounded attempts and escalation before enabling automatic repair.
+
+Records and the evidence needed to reconstruct each item's meaningful history are retained for the duration of the project, including DONE, cancelled and discarded items and failed attempts. Archival may move verified history out of the live database, but may not discard it or break references while the project continues. A fingerprint or deletion receipt alone is not a replacement for retained history. Queries provide the current item and bounded history pages without replaying the whole project.
+
+### 6.1B Existing code and the missing connection
+
+The existing `BiuContract` is a validated execution-description value, not the complete persistent work item above. Preparation already retains structured compiled definitions in the shared EvidenceRepository and references them through the OperationalStore. Readiness assessments and release authorizations have their own retained records. Issue 153 also provides an `AssessedPublicationInput` that binds a description and its instructions to assessment evidence; it is an in-memory snapshot, not publication or implementation permission.
+
+These are parts to reuse. The current live execution composition still obtains work associations from Issue text and reconstructs contracts from repository documents; the coordinator's saved execution state does not itself retain the full definition. The controlled connection must identify the current assessed and authorized definition, supply it to execution by work identity, retain the origin-to-outcome trace and reconcile GitHub. Its application operations, version rules, identity allocation, record layout, recovery and repair checks require a bounded design before implementation. This section states required behavior, not a claim that the connection is implemented.
 
 ### 6.2 Dependency
 

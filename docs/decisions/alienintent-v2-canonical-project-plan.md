@@ -60,6 +60,14 @@ The existing reliable-facts design is the model-facing connection described in f
 
 After this proof, connect preparation of new work from requirements to establish complete self-building. Do not describe a manually prepared queue as proof that the factory prepares its own work.
 
+## 2.3 One work identity and project-lifetime traceability
+
+Every work item and BIU keeps one immutable factory identity from materialization to its final outcome. Its durable record connects the exact origin, every definition version, applicable assessments and approvals, attempts, decisions, candidates, independent findings, external results and closure evidence. DONE, cancellation and cleanup do not erase that record; verified archival preserves its history for the duration of the project.
+
+The executable definition comes from the validated, assessed and authorized Python work record through controlled application operations. GitHub displays it and its progress; editable Issue text does not establish executable authority. Work Preparation owns definition correction. Execution Coordination routes owned blockers and uses confirmed external effects to correct displayed information without guessing intent.
+
+Before revising or releasing the next queue-connection packet, design how the existing BiuContract, retained compilation, assessed publication input, assessment records and release authorizations connect to that identity and its current definition. Reuse their existing storage and identity owners. Formal-design sections 6.1A and 6.1B define the required trace and the actual implementation limits. The earlier text-reader assessment does not assess this changed authority model. The revised bounded packet needs independent adversarial review, Agent Ready assessment and Founder design approval.
+
 ## 3. Milestone strategy
 
 The first delivery target is a Python factory that can build AlienIntent under its own control. Reuse working Python code and implement only missing connections.
