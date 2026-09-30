@@ -23,7 +23,7 @@ v1 is evidence and a requirements source, not an implementation template.
 2. Every Work Unit maps to explicit `SF-REQ-*` requirements and architecture sections.
 3. A Work Unit must produce one cohesive, independently verifiable increment.
 4. No implementation agent invents architecture, product priority, or missing authority.
-5. Claude Code is the default PRODUCER for the v2 foundation unless the Founder changes that policy.
+5. Use PRODUCER, VERIFIER, REVIEWER and CLOSURE as role names. Model names are assignments supplied by the shared configuration, not architectural roles. The Founder may change those assignments.
 6. Verification uses a separate invocation/workspace/context and exact candidate identity.
 7. Deterministic/mechanical proof runs before expensive model review.
 8. Prefer vertical slices that create demonstrable capability over horizontal infrastructure with no user-visible/provable outcome.
@@ -32,21 +32,32 @@ v1 is evidence and a requirements source, not an implementation template.
 11. No milestone is DONE until its end-to-end demonstration succeeds from a clean environment/restart boundary.
 12. Work after the current milestone may be specified/prepared in parallel, but implementation priority follows this plan unless the Founder explicitly changes priority.
 
+## 2.1 Existing connections, reliable facts and visible progress
+
+Founder decisions, 2026-09-30:
+
+- Python must use the exact same webhook, user accounts, GitHub App installation, repository, existing AlienIntent Project 1 board, and other external GitHub resources as the previous application. Read the actual protected settings and prove access to those resources; do not substitute example settings or create replacement infrastructure. The formal design, section 18.1, defines the required checks.
+- Reliable facts for agents are part of the application, not an optional future convenience. The formal design, section 33.6, defines what an agent can ask, how answers identify their source and version, and how shared model assignments are supplied at launch and updated during operation. Use the existing assignment resolver where it fits; do not report the broader interface complete merely because that resolver exists.
+- Every active work unit must have a real Issue on the existing board, with its actual stage, current owner, candidate code link, independent review result and specific blocker when waiting. An implementation repair returns to IMPLEMENT; independent review uses VERIFY. Passing checks do not authorize DONE before independent acceptance and separate closure.
+- Keep the queue of Founder-inspected, independently checked and Agent Ready-approved work visible on that same board. Do not create a second backlog or a separate progress system.
+- The approved first work unit is [Issue 153](https://github.com/AlienLogicLab/alienintent/issues/153). Its exact approved packet remains unchanged. It provides checked assessed work for a later queue-publishing step; it does not itself complete live queue publishing or the self-building milestone.
+
+These requirements guide the missing connections on the shortest path. They do not authorize widening the already approved first implementation packet.
+
 ## 3. Milestone strategy
 
-The first delivery target is a Python factory that can build AlienIntent under its own control. Use the current Python codebase, prove missing capabilities, and implement only the gaps. The ordered capability gates are:
+The first delivery target is a Python factory that can build AlienIntent under its own control. Reuse working Python code and implement only missing connections.
 
-```text
-M0  Necessary architecture contracts
- -> M1  Run prepared READY work offline
- -> M2  Prepare assessed READY work from requirements
- -> M3  Deliver real AlienIntent BIUs and continue after restart
- -> Full Node retirement
- -> M-1 Repository authority and deterministic publication
- -> M4–M6 Broader resilience, cognition and product surfaces
-```
+1. For the work immediately ahead, describe what it must do, which part of the application owns it, and how we will check it.
+2. Run prepared and approved work through implementation and independent verification, with one active work item and recovery after a crash.
+3. Prepare approved work from a requirement, including its description, plan, assessment and priority.
+4. Complete real AlienIntent work, prove the intended result, finish it accurately, then restart and take the next eligible item automatically.
+5. Complete the remaining replacement obligations, then perform the separately approved repository and publication changes.
+6. Add broader product capabilities when justified.
 
-M3 is the first credible single-project self-building milestone. The first live claim requires source-to-BIU obligation coverage, independent exact-candidate verification and truthful outcome closure; a second pre-authorized READY BIU alone does not prove M2. **M-1 is deferred until after Python self-building and full Node retirement.** This supersedes the previous repository-first prerequisite without waiving M-1's eventual exit criteria.
+The fourth step is the first credible self-building milestone. It requires preparation, real implementation, independent verification of the exact code, a proved outcome, and automatic continuation. Merely taking a second manually prepared item does not prove that the factory prepares its own work. Repository and publication changes remain later work; they are not a prerequisite to building Python.
+
+The existing numbered milestone and work-unit identifiers below remain reference labels for their detailed requirements.
 
 # M-1 — Repository Authority and Deterministic Publication Boundary (after Node retirement)
 

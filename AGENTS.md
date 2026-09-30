@@ -1,7 +1,9 @@
 # AlienIntent agent instructions
 
 Follow the [governing directive](docs/migration/agent-packages/GOVERNING_AGENT_DIRECTIVE.md).
-Direct user instructions take priority. Use the [work packet template](docs/templates/work-packet.md)
+Direct user instructions take priority. Write user-facing explanations and documents in plain English.
+Use role names such as PRODUCER and VERIFIER; explain technical terms only when
+they are needed, and do not substitute model names for roles. Use the [work packet template](docs/templates/work-packet.md)
 and [operator guidance](docs/operations/forward-momentum.md).
 
 Classify working changes by authority and provenance. Known authorized work may
