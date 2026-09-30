@@ -249,6 +249,25 @@ The existing `BiuContract` is a validated execution-description value, not the c
 
 These are parts to reuse. The current live execution composition still obtains work associations from Issue text and reconstructs contracts from repository documents; the coordinator's saved execution state does not itself retain the full definition. The controlled connection must identify the current assessed and authorized definition, supply it to execution by work identity, retain the origin-to-outcome trace and reconcile GitHub. Its application operations, version rules, identity allocation, record layout, recovery and repair checks require a bounded design before implementation. This section states required behavior, not a claim that the connection is implemented.
 
+### 6.1C Splitting a work unit preserves its origin and obligations
+
+When Agent Ready concludes that a candidate must be split, retain that exact assessment against the parent's identity and definition version. Work Preparation owns creating the split proposal through controlled application operations. The assessment is a preparation decision; it does not itself create children, approve their designs or authorize implementation.
+
+A split creates at least two children. Each child is a separately registered durable work item from its creation, with its own immutable identity and first definition version. Its origin names the parent's identity and exact definition version, the assessment that called for the split, the split operation and the original requirement. The parent records every child, so the complete family can be followed in either direction through further splits and DONE. A child never borrows the parent's identity or assessment-attempt identifier.
+
+The split operation must:
+
+- reserve unique child identities through the existing identity owner and register the parent and all children together; repeating or recovering the same request returns the same child set, and a conflicting replay is refused;
+- verify that every original requirement, acceptance condition, design constraint, verification duty and required evidence remains assigned to a child or an explicitly retained integration owner, without weakening or losing obligations;
+- preserve dependencies and their required outcomes, identify new ordering between children and refuse invalid references or cycles;
+- keep the original unsplit definition out of dispatch and all proposed children out of READY until the split and each child's applicable checks and approvals permit advancement;
+- retain a separate exact description, design, proof plan, assessment and implementation authorization for each child; the parent's assessment or approval cannot stand in for a child's;
+- survive interruption without duplicate children, orphaned executable work, partly authorized work or broken history references.
+
+The parent remains in project history with an explicit record that it was split. Creating children does not mark it DONE. The split design names who proves that the original obligation has been delivered, including any integration duty, and how the parent's original work is recorded as fulfilled or replaced. Cleanup retains the full family and its supporting evidence for the project's duration.
+
+The identity and storage connection must support this lineage before child work is admitted. Full automatic split preparation may be delivered in a later bounded unit; no early registration operation may erase the lineage or imply that an assessment attempt is the work item's identity or definition version. Split checks cover repeated requests, interrupted creation, further child splits, missing obligations, changed parent versions and an attempted inherited approval.
+
 ### 6.2 Dependency
 
 A dependency is a canonical edge:

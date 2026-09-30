@@ -68,6 +68,8 @@ The executable definition comes from the validated, assessed and authorized Pyth
 
 Before revising or releasing the next queue-connection packet, design how the existing BiuContract, retained compilation, assessed publication input, assessment records and release authorizations connect to that identity and its current definition. Reuse their existing storage and identity owners. Formal-design sections 6.1A and 6.1B define the required trace and the actual implementation limits. The earlier text-reader assessment does not assess this changed authority model. The revised bounded packet needs independent adversarial review, Agent Ready assessment and Founder design approval.
 
+When Agent Ready calls for a split, Work Preparation retains the original candidate and assessment, creates at least two children with their own immutable identities, and links each child to the exact parent definition and original requirement. Every original obligation must remain assigned, including combined verification where needed. Each child requires its own definition, assessment and approval; neither the parent's approval nor creating children makes work READY or DONE. Repeated or interrupted split requests must preserve the same child identities and complete relationships. Formal-design section 6.1C defines these rules. The first identity and storage connection must preserve this family history; full automatic splitting can be a later bounded work unit.
+
 ## 3. Milestone strategy
 
 The first delivery target is a Python factory that can build AlienIntent under its own control. Reuse working Python code and implement only missing connections.
