@@ -1282,6 +1282,8 @@ The UX may use models to assist interpretation, but authority-bearing mutations 
 
 ### 33.6 Reliable facts for agents
 
+This section clarifies the existing design; it does not introduce a second interface. The earlier Director design in sections 25 and 35, together with the application interfaces in sections 33.1–33.4, already calls for checked current facts and a compact input packet for model reasoning. The planned work V2-501 gives that model-facing boundary the code name CognitionPort. Preserve that design and reuse its existing implementation where present. The shared model-assignment resolver is one input to it, not the whole interface.
+
 Founder requirement, 2026-09-30: an agent must be able to ask AlienIntent for facts the application can determine directly. It must not have to reconstruct those facts from old conversations, logs, files or guesses. This interface is part of the required application, including work preparation.
 
 | An agent needs to know | What the application must supply |
@@ -1479,6 +1481,36 @@ Fine-tuning/QLoRA is deferred until baseline prompting, normalized state packets
 ### 35.4 Shadow-first deployment
 
 A local Director model first runs shadow-only against canonical state packets. It produces proposed typed actions and explanations but receives no mutation authority. Promotion requires demonstrated correctness on the benchmark corpus and live shadow traffic.
+
+### 35.5 Where the models and router belong
+
+The Factory Director includes the following parts. A component drawing must name them explicitly rather than hide all of them inside one Director box.
+
+| Part | Responsibility | Present evidence and remaining work |
+| --- | --- | --- |
+| Reliable-facts interface | Supplies checked current facts and the actions already permitted, so a model need not reconstruct history or guess the workflow rules. | Required by the existing design in sections 25, 33 and 35 and planned work V2-501. Existing readers cover parts of the information; the complete Python connection is not proved. |
+| Model-assignment provider | Supplies the configured model and launch settings for each role from one source. | The resolver and Director launch connection described in section 35.1A exist and have tests. Other worker connections and update delivery remain. |
+| Model router | Chooses the least expensive model already proved capable of the particular reasoning task, using configured policy and recorded results. | Temporary routing tools exist under tools/orchestration. The complete product connection and measured local-model selection are not proved. This is a different responsibility from reading a role's configured assignment. |
+| CLM-8B model service | Handles repeated, bounded choices through reusable action representations, among actions the application has already permitted. | A named local candidate in the existing design. A running, qualified Python Director connection is not established by the model's presence or earlier experiments. |
+| Qwen3.5-9B model service | Handles more open-ended local reasoning, including unfamiliar or ambiguous situations. | A named local candidate in the existing design. Its evaluated, connected Director operation remains to be proved. |
+| Escalation path | Sends genuinely difficult reasoning to a more capable assigned model, or a reserved decision to the Founder. | Follow configured limits and recorded authority. Escalation does not grant permission to bypass checks. |
+| Director host | Notices work needing attention, starts a bounded Director episode, and checks again when that episode finishes. | Existing Python host code handles launch ownership and episode completion. Its current input adapter still reads the previous runtime's state; connection to the Python work state is required. |
+
+These parts cooperate: application code determines facts and permissions; the facts interface supplies them; the router chooses a capable model; that model proposes an action; application code checks and executes the permitted action. Neither local model is the owner of workflow state.
+
+### 35.6 Immediate priority: work advances without Founder prompts
+
+Founder direction, 2026-09-30: prioritize automatic movement through READY, IMPLEMENT, VERIFY, ACCEPT and DONE, followed by selection of the next approved READY item. Complete the current accepted work rather than restart it.
+
+Use the existing Director host, model-assignment source, worker execution, independent verification and closure mechanisms wherever they already satisfy the required checks. Build only missing connections. Do not wait for the full local-model evaluation program, learning system or broader work-preparation features before proving this execution loop with approved work.
+
+Completion or failure must leave a durable record and cause the next required control action without the Founder asking for an update. A missed signal or restart must recover from current work and recorded action identities. Keep one active work item; refuse duplicate workers, repeated landing, unapproved release and claims based only on process exit. Rejections return to a bounded repair path; exhausted attempts or missing authority produce a specific visible blocker.
+
+Ordinary workflow choices already settled by rules are made by application code. Use inexpensive cognition only for unresolved interpretation of a small factual packet; it cannot override an independent verdict, grant approval or invent priority. Models are chosen through the shared assignments and capability policy.
+
+A temporary monitor is permitted while these product connections are built. It must have an owner, a stated scope, an expiry, retained completion records and a replacement target. It must not be reported as the completed Python factory or quietly become another workflow engine.
+
+Prove two approved real work items in sequence, including a repair and a restart or deliberately missed completion signal, with independent verification, separate closure, correct board updates and removal of owned temporary resources. This is the immediate execution demonstration. Preparing new work from a requirement remains a separate required part of complete self-building; two prepared items alone do not prove it.
 
 ## 36. Implementation-agent policy
 
