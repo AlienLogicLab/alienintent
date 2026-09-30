@@ -44,6 +44,22 @@ Founder decisions, 2026-09-30:
 
 These requirements guide the missing connections on the shortest path. They do not authorize widening the already approved first implementation packet.
 
+## 2.2 First operational proof: automatic execution and continuation
+
+Founder priority, 2026-09-30: remove the need for repeated prompts to advance approved work. The immediate proof is READY → IMPLEMENT → VERIFY → ACCEPT → DONE → next approved READY item → IMPLEMENT.
+
+Finish the current accepted work through a separate CLOSURE instance. Then prepare the smallest missing connection needed for that loop, using the existing Python runner and Director host rather than building another workflow engine. Check the fixed work-version reader, assessment and release checks, shared assignments, exact candidate handoff, completion signals and separate closure as connected dependencies. Reuse working behavior; do not treat every listed part as a new implementation task.
+
+The Director must read checked current Python work state. Its existing input adapter reads the previous runtime's state, so starting that unchanged adapter does not satisfy this requirement. The existing host's episode-completion behavior is useful code to connect, not a reason to rebuild supervision.
+
+Give the next bounded packet a complete description and independent adversarial review before Agent Ready assessment and Founder inspection. No unapproved candidate is automatically released. After the Founder approves a queue item, ordinary advancement needs no additional prompt or repeated approval.
+
+A temporary inexpensive monitor may report completion and wake the responsible coordinator while the application connection is built. Its scope, owner, expiry and replacement are explicit. The full CLM-8B and Qwen3.5-9B evaluation and adaptive routing program remains later work; the minimum current-state interface and automatic continuation needed for this proof move onto the immediate path.
+
+The existing reliable-facts design is the model-facing connection described in formal-design sections 25, 33 and 35, with V2-501 as its planned implementation owner. The recently added section 33.6 clarifies the same design, not a competing interface. Sections 35.5 and 35.6 name the model/router parts and the immediate execution proof.
+
+After this proof, connect preparation of new work from requirements to establish complete self-building. Do not describe a manually prepared queue as proof that the factory prepares its own work.
+
 ## 3. Milestone strategy
 
 The first delivery target is a Python factory that can build AlienIntent under its own control. Reuse working Python code and implement only missing connections.
