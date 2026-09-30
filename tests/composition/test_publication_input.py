@@ -7,17 +7,19 @@ or, where no existing write can produce it, by altering one read of that real co
 a worker or a model.
 """
 from copy import deepcopy
-from dataclasses import FrozenInstanceError, asdict
+from dataclasses import FrozenInstanceError, asdict, fields, is_dataclass
 
 import pytest
 
 from alienintent.context_assembly.application.publication_input import (
-    CHANGED, UNBOUND, AssessedPublicationInput, pinned)
+    CHANGED, UNBOUND, AssessedPublicationInput, PinnedInput, pinned)
 from alienintent.context_assembly.domain.compilation import contract_from_payload
 from alienintent.context_assembly.domain.readiness import LintHold
 from alienintent.evidence_learning.domain.refs import EvidenceHold, Ref
+from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.readiness import (
-    ATTEMPT_FAILURE, NO_ASSESSMENT, AttemptMetadata, Hold, ReadinessEligibility, digest)
+    ATTEMPT_FAILURE, NO_ASSESSMENT, AttemptMetadata, Hold, digest)
+from alienintent.execution_coordination.ports.operational_store import StoreUnavailable
 from tests.composition.test_upstream_integration_capstone import (
     DECISION, DECISIONS, PROFILE, PROJECT, SCOPE, U1, U2, Harness, ready, revise_decision)
 from tests.context_assembly.test_initial_compilation import R1
@@ -118,6 +120,72 @@ def test_bound_value_is_frozen(make):
     bound = bind(h, compiled)
     with pytest.raises(FrozenInstanceError):
         bound.text = "rewritten"
+    with pytest.raises(FrozenInstanceError):
+        bound.contract.intent = "rewritten"
+
+
+def members(value) -> list:
+    """Every value reachable from a bound snapshot, through its frozen values and tuples."""
+    if is_dataclass(value):
+        assert value.__dataclass_params__.frozen, value
+        return [value, *(m for f in fields(value) for m in members(getattr(value, f.name)))]
+    return [value, *(m for v in value for m in members(v))] if type(value) is tuple else [value]
+
+
+def test_bound_value_shares_nothing_mutable_with_the_compiled_candidate(make):
+    h = make()
+    compiled, *_ = ready(h)
+    bound, before = bind(h, compiled), deepcopy(unit(compiled)["contract"])
+    reachable = members(bound)
+    assert {type(m) for m in reachable} <= {AssessedPublicationInput, BiuContract, BudgetPolicy, Ref, tuple, str,
+                                            int, type(None)}, reachable
+    digests = (bound.contract.content_digest, bound.text_digest)
+    contract = unit(compiled)["contract"]  # Every mutable member of the source is rewritten in place.
+    for value in contract.values():
+        if isinstance(value, list):
+            value.append("a later clause")
+    contract["budget_policy"]["hard_required_dimensions"].append("a later dimension")
+    contract["budget_policy"]["maximum_attempts"] += 1
+    assert bound.contract == contract_from_payload(before) and bound.text_digest == digest(bound.text)
+    assert (bound.contract.content_digest, bound.text_digest) == digests
+    assert bound.contract != contract_from_payload(contract)
+
+
+NOT_CONTRACT_VALUES = {
+    "nested clause": ({"non_goals": [{"clause": "before"}]}, "non_goals"),
+    "nested clause list": ({"completion_criteria": [["tests pass"]]}, "completion_criteria"),
+    "numeric clause": ({"authorized_scope": [7]}, "authorized_scope"),
+    "clauses as a mapping": ({"non_goals": {"clause": "before"}}, "non_goals"),
+    "clauses as text": ({"baselines": "main@04cdd8c"}, "baselines"),
+    "dependency mapping": ({"dependencies": [{"identity": "WO-000001"}]}, "dependencies"),
+    "intent mapping": ({"intent": {"statement": "before"}}, "intent"),
+    "policy list": ({"retry_policy": ["one replacement"]}, "retry_policy"),
+    "numeric version": ({"version": 1}, "version"),
+    "nested dimension": ({"budget_policy": {"hard_required_dimensions": [{"dimension": "attempts"}]}},
+                         "budget_policy.hard_required_dimensions"),
+    "boolean limit": ({"budget_policy": {"maximum_attempts": True}}, "budget_policy.maximum_attempts"),
+    "fractional limit": ({"budget_policy": {"hard_wall_clock_seconds": 7200.5}},
+                         "budget_policy.hard_wall_clock_seconds"),
+}
+
+
+@pytest.mark.parametrize("case", list(NOT_CONTRACT_VALUES))
+def test_contract_value_that_is_not_its_declared_text_or_number_holds(make, case):
+    """A nested value would stay mutable inside the frozen contract while its content digest stayed the same."""
+    h = make()
+    compiled, candidate, plan, _ = ready(h)
+    changes, field = NOT_CONTRACT_VALUES[case]
+    assert type(pinned(U1, deepcopy(candidate), plan)) is PinnedInput
+    document = deepcopy(candidate["contract"])
+    for name, value in changes.items():
+        document[name] = {**document[name], **value} if name == "budget_policy" else value
+    held = refused(pinned(U1, {**candidate, "contract": document}, plan), "contract")
+    assert field + " is not" in held.detail
+    # The same value in the compiled candidate is refused before any readiness read or retained record.
+    unit(compiled)["contract"].update(deepcopy(document))
+    records = len(h.evidence())
+    assert field + " is not" in refused(bind(h, compiled), "contract").detail
+    assert len(h.evidence()) == records
 
 
 # --- Text only: the readiness fingerprint does not include the text ----------------------------------------------
@@ -292,6 +360,10 @@ def raising(_):
     raise EvidenceHold("ACCESS_DENIED")
 
 
+def unavailable(_):
+    raise StoreUnavailable("immutable evidence read failed")
+
+
 def relocated(name: str, value: str):
     """The latest entry and the retrieved receipt agree on a reference that is not this attempt's raw receipt."""
     def reference(ref: dict) -> dict:
@@ -303,6 +375,7 @@ def relocated(name: str, value: str):
 ALTERED_RECEIPTS = {
     "not retained": (dict(raw=lambda retained: None), "no retained raw receipt"),
     "access denied": (dict(raw=raising), "ACCESS_DENIED"),
+    "store unavailable": (dict(raw=unavailable), "immutable evidence read failed"),
     "another reference": (dict(raw=lambda r: ({**r[0], "revision_digest": OTHER}, r[1])), "latest raw_ref"),
     "value is bytes": (dict(raw=lambda r: (r[0], r[1].encode())), "not text"),
     "malformed reference": (dict(latest=lambda e, _: {**e, "raw_ref": {"locator": e["raw_ref"]["locator"]}},
