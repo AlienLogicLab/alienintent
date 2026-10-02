@@ -108,6 +108,21 @@ def test_wrong_commit_or_bytes_is_refused_and_nothing_is_written(fx, case):
     assert fx.rows() == [] and "refs/tags/work/" not in git(fx.clone, "show-ref").decode()
 
 
+def test_register_compares_bytes_not_a_digest(fx, monkeypatch):
+    """Git returns other bytes for the real object id: only a byte comparison refuses (never an object-id match)."""
+    commit = fx.commit()
+    original = adapter_module.SQLiteWorkItemRepository._checked
+
+    def altered(self, location, *args, **options):
+        out = original(self, location, *args, **options)
+        return out + b"x" if args[:2] == ("cat-file", "blob") else out
+
+    monkeypatch.setattr(adapter_module.SQLiteWorkItemRepository, "_checked", altered)
+    with pytest.raises(PointerMismatch):
+        fx.register(commit)
+    assert fx.rows() == []
+
+
 def test_fault_before_commit_leaves_no_row_and_a_rerun_creates_it(fx, monkeypatch):
     commit = fx.commit()
     original = SQLiteWorkItemRepository._created
