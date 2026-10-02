@@ -14,7 +14,7 @@ import subprocess
 
 import pytest
 
-from alienintent.composition.work_registry import WorkRegistry
+from alienintent.composition.work_registry import SourceControlRefPublisher, WorkRegistry
 from alienintent.context_assembly.adapters import work_item_repository as adapter_module
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
@@ -26,7 +26,7 @@ from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.invocation_runtime.adapters import git_source_control as publisher_module
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
-from alienintent.invocation_runtime.ports.source_control import PublicationFailed
+from alienintent.context_assembly.ports.work_item_repository import PublicationFailed
 from tests.context_assembly.test_initial_compilation import PACKETS_BRANCH, PROJECT, REPO, Project, all_rows, git
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -103,7 +103,7 @@ def _service(database: str, clone: str) -> WorkIdentityService:
     from alienintent.context_assembly.ports.work_item_repository import RepositoryLocation
     locations = {REPO: RepositoryLocation(Path(clone), "origin", "main", PACKETS_BRANCH)}
     items = SQLiteWorkItemRepository(Path(database), locations)
-    return WorkIdentityService(items, GitSourceControl(), locations, {})
+    return WorkIdentityService(items, SourceControlRefPublisher(GitSourceControl()), locations, {})
 
 
 def _register_worker(database, clone, barrier, results, operation):
@@ -265,6 +265,14 @@ def test_empty_migration_is_a_no_op(fx):
         report = fx.service.migrate(empty, [A, B])
         assert (report.created, report.rekeyed, report.unchanged) == ((), (), ())
         assert fx.rows() == []
+
+
+def test_find_by_identifier_or_label(fx):
+    """Check 5: labels are not identities; a migrated name and a UUID are both found."""
+    fx.service.migrate({"active": [], "retired": ["PY-09"], "reserved": []}, [A])
+    item = fx.service.register("requirement:NEW", "New work", "BIU")
+    assert fx.service.find("PY-09").id == "PY-09" and fx.service.find(item.id) == item
+    assert fx.service.find("New work") == item and fx.service.find("missing") is None
 
 
 # --- check 4: optional parent and retirement by identifier -----------------------------------------------------

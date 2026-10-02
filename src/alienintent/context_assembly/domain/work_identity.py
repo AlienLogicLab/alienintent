@@ -29,6 +29,8 @@ EVIDENCE = ("assessment", "approval", "verification")
 # The per-profile reservation aggregate the earlier compiler wrote; read only by migration and the compiler's check.
 RESERVATIONS = "upstream:identity-reservations"
 TAG_PREFIX = "refs/tags/work/"
+# The evidence repository's own reference value: what a work item's three evidence columns hold.
+EvidenceRef = Ref
 _COMMIT = re.compile(r"\A[0-9a-f]{40}\Z")
 
 

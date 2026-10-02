@@ -29,7 +29,8 @@ from alienintent.context_assembly.domain.ambiguity import (
 from alienintent.context_assembly.domain.compilation import CompilationHold
 from alienintent.context_assembly.domain.design_admission import (
     MECHANICALLY_HELD, REVIEW_REQUIRED, MechanicalReport, ReviewAdmitted, design_from_document)
-from alienintent.context_assembly.domain.initial_compilation import CompilationCandidate, is_initial_compilation, items
+from alienintent.context_assembly.domain.initial_compilation import (
+    CompilationCandidate, is_initial_compilation, items, packet_bytes)
 from alienintent.context_assembly.domain.inventory import Manifest, assemble
 from alienintent.context_assembly.domain.readiness import LintHold
 from alienintent.context_assembly.domain.work_identity import RESERVATIONS, is_uuid
@@ -237,6 +238,24 @@ def test_chain_runs_in_order_to_eligibility(make):
                                      h.integration.proof_plan(compiled, U2))
     assert isinstance(dependent, LintHold) and (dependent.duty, dependent.field) == ("dependency", "dependencies")
     assert U1 in dependent.detail and len(h.producer.calls) == 1
+
+
+def test_fixture_requirements_register_as_uuids_with_pointers(make):
+    """Check 7: with no saved assignment the chain's compiler registers the fixture requirements as new UUIDs, each
+    pointing at the commit that holds its compiled packet, published to the remote."""
+    h = make(migrated=False)
+    upstream(h)
+    compiled = h.integration.compile(DKEY, deepcopy(LIMITS))
+    assert isinstance(compiled, CompilationCandidate), getattr(compiled, "findings", compiled)
+    rows = {row["id"]: row for row in h.pointed()}
+    units = compiled.document()["units"]
+    assert {u["identity"] for u in units} == set(rows) and all(is_uuid(i) for i in rows)
+    remote = git(h.project.clone, "ls-remote", "origin").decode()
+    for unit in units:
+        row = rows[unit["identity"]]
+        assert git(h.project.clone, "show", f"{row['commit']}:{row['path']}") == packet_bytes(unit)
+        assert f"{row['commit']}\trefs/tags/work/{row['id']}" in remote
+    assert h.store.read_state(PROFILE, RESERVATIONS) == (0, {})  # The old aggregate is never written.
 
 
 def test_composition_requires_every_stage():

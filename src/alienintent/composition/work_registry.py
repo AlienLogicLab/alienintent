@@ -27,11 +27,14 @@ from pathlib import Path
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
-from alienintent.context_assembly.ports.work_item_repository import RepositoryLocation
+from alienintent.context_assembly.domain.work_identity import valid_path
+from alienintent.context_assembly.ports.work_item_repository import (
+    PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
 from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERSION, SQLiteOperationalStore
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
-from alienintent.invocation_runtime.ports.source_control import SourceControl
+from alienintent.invocation_runtime.ports import source_control
+from alienintent.invocation_runtime.ports.source_control import PublishRef, SourceControl
 
 
 class ConfigurationInvalid(ValueError):
@@ -66,8 +69,9 @@ def project_configuration(document: object, project: str) -> ProjectConfiguratio
     except (KeyError, TypeError, AttributeError, ValueError) as error:
         raise ConfigurationInvalid(f"project {project}: {type(error).__name__}: {error}") from None
     if configuration.packets_repository not in repositories or not profiles or not all(
-            isinstance(name, str) and name for name in [*repositories, *profiles]):
-        raise ConfigurationInvalid(f"project {project}: packets repository and profiles must be configured")
+            isinstance(name, str) and name for name in [*repositories, *profiles]) \
+            or not isinstance(configuration.packets_directory, str) or not valid_path(configuration.packets_directory):
+        raise ConfigurationInvalid(f"project {project}: packets repository, directory and profiles must be configured")
     return configuration
 
 
@@ -90,6 +94,22 @@ def read_only_store(path: Path) -> OperationalStore:
     return SQLiteOperationalStore(Path(path))
 
 
+class SourceControlRefPublisher(RefPublisher):
+    """Binds Work Preparation's RefPublisher to the one source-control `publish_refs` operation; no other code pushes
+    packet refs. Composition owns this bridge so context_assembly never imports the invocation runtime."""
+
+    def __init__(self, source_control: SourceControl) -> None:
+        self._source_control = source_control
+
+    def publish(self, clone: Path, remote: str, refs: tuple[PacketRef, ...]) -> None:
+        try:
+            self._source_control.publish_refs(clone, remote, tuple(PublishRef(r.ref, r.commit, r.force) for r in refs))
+        except source_control.PublicationFailed as error:
+            raise PublicationFailed(error.refs, str(error)) from error
+        except ValueError as error:  # A ref value publish_refs refuses to push.
+            raise PublicationFailed(tuple(r.ref for r in refs), str(error)) from error
+
+
 class WorkRegistry:
     """The one work identity service of a project, with its repository adapter and publisher."""
 
@@ -98,10 +118,11 @@ class WorkRegistry:
         self.profile_stores = {name: read_only_store(path) for name, path in sorted(configuration.profiles.items())}
         self.items = SQLiteWorkItemRepository(configuration.database, configuration.repositories)
         self.source_control = source_control if source_control is not None else GitSourceControl()
-        self.identities = WorkIdentityService(self.items, self.source_control, configuration.repositories,
+        self.publisher = SourceControlRefPublisher(self.source_control)
+        self.identities = WorkIdentityService(self.items, self.publisher, configuration.repositories,
                                               self.profile_stores)
         self.registration = WorkRegistration(
-            self.identities, self.items, self.source_control,
+            self.identities, self.items, self.publisher,
             PacketLocation(configuration.packets_repository, configuration.packets_directory,
                            configuration.repositories[configuration.packets_repository]),
             self.profile_stores)

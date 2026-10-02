@@ -3,7 +3,8 @@
 Manual registration, the compiler, import of completed work and migration all go through here; the injected
 WorkItemRepository adapter is the only writer of `work_item`. The service holds no state and generates nothing:
 identifiers and timestamps come from the adapter, repeat safety from the database's uniqueness and transactions.
-Every operation that saves a packet reference publishes the row's `work/<id>` tag through `publish_refs`.
+Every operation that saves a packet reference publishes the row's `work/<id>` tag through the injected RefPublisher,
+which composition binds to the one source-control `publish_refs` operation.
 """
 from __future__ import annotations
 
@@ -13,10 +14,10 @@ from dataclasses import dataclass
 from alienintent.context_assembly.domain.work_identity import (
     CAPTURE, INSERT, ISSUE, REKEY, STATES, InvalidRequestRef, InvalidWorkItem, MigrationConflict, Pointer,
     RESERVATIONS, TransactionHeld, WorkItem, check_evidence, migration_action, parse_request_ref, plan_migration)
-from alienintent.context_assembly.ports.work_item_repository import RepositoryLocation, WorkItemRepository
+from alienintent.context_assembly.ports.work_item_repository import (
+    PacketRef, RefPublisher, RepositoryLocation, WorkItemRepository)
 from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
-from alienintent.invocation_runtime.ports.source_control import PublishRef, SourceControl
 
 
 @dataclass(frozen=True)
@@ -27,7 +28,7 @@ class MigrationReport:
 
 
 class WorkIdentityService:
-    def __init__(self, items: WorkItemRepository, publisher: SourceControl,
+    def __init__(self, items: WorkItemRepository, publisher: RefPublisher,
                  repositories: Mapping[str, RepositoryLocation], profile_stores: Mapping[str, OperationalStore]) -> None:
         self.items, self.publisher = items, publisher
         self.repositories, self.profile_stores = dict(repositories), dict(profile_stores)
@@ -113,5 +114,5 @@ class WorkIdentityService:
         if item.pointer is None:
             return
         location = self.repositories[item.pointer.repo]
-        self.publisher.publish_refs(location.clone, location.remote,
-                                    (PublishRef(item.tag, item.pointer.commit, force=item.state == CAPTURE),))
+        self.publisher.publish(location.clone, location.remote,
+                               (PacketRef(item.tag, item.pointer.commit, force=item.state == CAPTURE),))

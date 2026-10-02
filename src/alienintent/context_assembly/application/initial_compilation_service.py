@@ -31,12 +31,12 @@ from alienintent.context_assembly.domain.work_identity import (
     UnknownWorkItem, WorkItem, valid_path)
 from alienintent.context_assembly.ports.compilation import (
     DependencyLifecycle, DesignGate, InspectionSource, InventorySource, ProofPlans, VerifiedDesigns)
-from alienintent.context_assembly.ports.work_item_repository import RepositoryLocation, WorkItemRepository
+from alienintent.context_assembly.ports.work_item_repository import (
+    PacketRef, PublicationFailed, RefPublisher, RepositoryLocation, WorkItemRepository)
 from alienintent.evidence_learning.domain.records import Header, Observation, ref_from_document
 from alienintent.evidence_learning.domain.refs import EvidenceHold, Ref
 from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, VersionConflict
-from alienintent.invocation_runtime.ports.source_control import PublicationFailed, PublishRef, SourceControl
 
 DERIVED_EVENT, HELD_EVENT = "compilation.derived", "compilation.held"
 UNREADABLE = (AmbiguityHold, InventoryHold, EvidenceHold, KeyError, TypeError, ValueError)
@@ -62,7 +62,7 @@ class WorkRegistration:
     """The project-level identity collaborators composition injects into the compiler."""
     identities: WorkIdentityService
     items: WorkItemRepository
-    publisher: SourceControl
+    publisher: RefPublisher
     packets: PacketLocation
     profile_stores: Mapping[str, OperationalStore]
 
@@ -172,10 +172,10 @@ class InitialCompilation:
         head = reg.items.packets_head(packets.repo)
         if head is None:  # The transaction above left every unit on the packets branch; a missing branch is a fault.
             return hold(INITIAL, candidate.input_digest, [("CLONE_UNAVAILABLE", (str(packets.location.clone),))])
-        refs = (PublishRef("refs/heads/" + packets.location.packets_branch, head, force=False),) + tuple(
-            PublishRef(item.tag, item.pointer.commit, force=rows[i].state == CAPTURE) for i, item in pointed.items())
+        refs = (PacketRef("refs/heads/" + packets.location.packets_branch, head, force=False),) + tuple(
+            PacketRef(item.tag, item.pointer.commit, force=rows[i].state == CAPTURE) for i, item in pointed.items())
         try:
-            reg.publisher.publish_refs(packets.location.clone, packets.location.remote, refs)
+            reg.publisher.publish(packets.location.clone, packets.location.remote, refs)
         except PublicationFailed as error:
             return hold(INITIAL, candidate.input_digest, [(error.code, error.refs)])
         return None
