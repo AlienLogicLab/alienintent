@@ -106,6 +106,11 @@ class RegistryBusy(WorkIdentityRefused):
     code = "WORK_REGISTRY_BUSY"
 
 
+class RegistryUnavailable(WorkIdentityRefused):
+    """The project database could not be opened or written (missing directory, permissions, disk full)."""
+    code = "WORK_REGISTRY_UNAVAILABLE"
+
+
 class TransactionHeld(WorkIdentityRefused):
     """A call that publishes after its own commit was made inside a caller-held transaction."""
     code = "TRANSACTION_HELD"
@@ -162,7 +167,7 @@ def _packet_value(value: str, repositories: Iterable[str]) -> bool:
 def valid_path(path: str) -> bool:
     parts = path.split("/")
     return bool(path) and path.isascii() and all(p and p not in (".", "..") for p in parts) \
-        and not any(c in path for c in "\0\n\r:")
+        and not any(c in path for c in '\0\n\r:"\\')
 
 
 def is_uuid(identity: object) -> bool:

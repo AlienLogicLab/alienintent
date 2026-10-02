@@ -16,11 +16,13 @@ import json
 from pathlib import Path
 import sqlite3
 import subprocess
+import threading
 from uuid import uuid4
 
 from alienintent.context_assembly.domain.work_identity import (
     CAPTURE, DONE, EVIDENCE, KINDS, STATES, CloneUnavailable, CommitNotRetained, GitReadFailed, InvalidWorkItem,
-    LabelInUse, MigrationEntry, ParentNotRegistered, Pointer, PointerMismatch, RegistryBusy, RequestRef,
+    LabelInUse, MigrationEntry, ParentNotRegistered, Pointer, PointerMismatch, RegistryBusy, RegistryUnavailable,
+    RequestRef,
     StoredPointer, TagWriteFailed, UnknownWorkItem, WorkIdentityRefused, WorkItem, check_evidence, check_kind,
     check_label, check_pointer_change, check_transition, valid_path)
 from alienintent.context_assembly.ports.work_item_repository import RepositoryLocation, WorkItemRepository
@@ -60,15 +62,14 @@ COMMITTER = "AlienIntent Work Preparation <work-preparation@alienintent.invalid>
 class SQLiteWorkItemRepository(WorkItemRepository):
     """One project database file and the configured clone of each repository name.
 
-    One instance serves one thread: the open transaction's connection and the tags it will write after COMMIT
-    are the only state, created at the outermost `transaction()` and dropped when it ends, on every path."""
+    The only state is per thread: the open transaction's connection and the tags it will write after COMMIT, created
+    at the outermost `transaction()` and dropped when it ends, on every path. Between transactions nothing is held."""
 
     def __init__(self, path: Path, repositories: Mapping[str, RepositoryLocation], *, busy_timeout: float = 5.0,
                  git_timeout: float = 120.0) -> None:
         self._path, self._repositories = path, dict(repositories)
         self._busy_timeout, self._git_timeout = busy_timeout, git_timeout
-        self._connection: sqlite3.Connection | None = None
-        self._pending: dict[tuple[str, str], str] = {}
+        self._local = threading.local()
         with self._session() as connection:
             self._execute(connection, SCHEMA)
 
@@ -80,8 +81,16 @@ class SQLiteWorkItemRepository(WorkItemRepository):
             connection.row_factory = sqlite3.Row
             connection.execute("PRAGMA foreign_keys = ON")
         except sqlite3.Error as error:
-            raise RegistryBusy(str(self._path), str(error)) from error
+            raise RegistryUnavailable(str(self._path), str(error)) from error
         return connection
+
+    @property
+    def _connection(self) -> sqlite3.Connection | None:
+        return getattr(self._local, "connection", None)
+
+    @property
+    def _pending(self) -> dict[tuple[str, str], str]:
+        return self._local.pending
 
     @contextmanager
     def _session(self) -> Iterator[sqlite3.Connection]:
@@ -106,7 +115,7 @@ class SQLiteWorkItemRepository(WorkItemRepository):
             yield
             return
         connection = self._connect()
-        self._connection, self._pending = connection, {}
+        self._local.connection, self._local.pending = connection, {}
         committed = False
         try:
             self._execute(connection, "BEGIN IMMEDIATE")
@@ -118,7 +127,8 @@ class SQLiteWorkItemRepository(WorkItemRepository):
                 if not committed and connection.in_transaction:
                     connection.execute("ROLLBACK")
         finally:
-            pending, self._connection, self._pending = self._pending, None, {}
+            pending = self._local.pending
+            self._local.connection, self._local.pending = None, {}
             connection.close()
         self._write_tags(pending)
 
@@ -136,7 +146,7 @@ class SQLiteWorkItemRepository(WorkItemRepository):
         except sqlite3.OperationalError as error:
             if "locked" in str(error) or "busy" in str(error):
                 raise RegistryBusy("work_item", str(error)) from error
-            raise
+            raise RegistryUnavailable("work_item", str(error)) from error  # e.g. database or disk is full
 
     def _write(self) -> sqlite3.Connection:
         if self._connection is None:
@@ -368,10 +378,9 @@ class SQLiteWorkItemRepository(WorkItemRepository):
         the database stays committed and a repeat of the request writes the tag."""
         failed, detail = [], ""
         for (repo, identity), commit in sorted(pending.items()):
-            location = self._repositories[repo]
             try:
-                result = self._git(location, "tag", "-f", "work/" + identity, commit, failure=GitReadFailed)
-            except GitReadFailed as error:
+                result = self._git(self._location(repo), "tag", "-f", "work/" + identity, commit)
+            except (GitReadFailed, InvalidWorkItem) as error:
                 failed.append("work/" + identity)
                 detail = str(error)
                 continue

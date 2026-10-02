@@ -13,12 +13,10 @@ change (POINTER_PRESENT); the packets branch and the units' work/<id> tags are p
 upstream:initial-compilation:<input digest> pointer. The reservation aggregate is never written. Nothing here writes
 factory:* or release:* state, Issues or work-management projections; a candidate is admitted for assessment only.
 """
-from dataclasses import asdict
+from collections.abc import Mapping
+from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
-
-from collections.abc import Mapping
-from dataclasses import dataclass
 
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.domain.ambiguity import AmbiguityHold, snapshot_from_document
@@ -134,6 +132,9 @@ class InitialCompilation:
                 for requirement in requirements:
                     key = unit_key(requirement)
                     for profile, mapping in records.items():
+                        if not isinstance(mapping, Mapping):  # An unreadable old record cannot prove migration.
+                            missing.append(f"{requirement}:{profile}")
+                            continue
                         name = mapping.get(key)
                         if name is None:
                             continue
