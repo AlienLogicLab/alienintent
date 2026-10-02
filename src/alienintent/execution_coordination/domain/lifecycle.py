@@ -42,10 +42,17 @@ class ExecutionState:
     accepted: bool = False
     completed_closure_actions: frozenset[str] = frozenset()
     contract: BiuContract | None = None
+    # Cycle counts recorded with the transitions; None is unknown and stays unknown.
+    implement_cycles: int | None = None
+    verify_cycles: int | None = None
 
     @classmethod
     def for_contract(cls, contract: BiuContract) -> ExecutionState:
-        return cls(contract=contract)
+        return cls(contract=contract, implement_cycles=0, verify_cycles=0)
+
+
+def _plus_one(count: int | None) -> int | None:
+    return None if count is None else count + 1
 
 
 def transition(state: ExecutionState, expected_version: int, action: str, *, candidate: CandidateRef | None = None, verdict: Verdict | None = None, completed_closure_actions: frozenset[str] = frozenset()) -> ExecutionState:
@@ -65,11 +72,13 @@ def transition(state: ExecutionState, expected_version: int, action: str, *, can
             candidate=None,
             accepted=False,
             completed_closure_actions=frozenset(),
+            implement_cycles=_plus_one(state.implement_cycles),
         )
     if action == "verify" and state.stage is LifecycleStage.IMPLEMENT:
         if candidate is None or not candidate.verify_admissible:
             raise LifecycleError("VERIFY requires a CandidateRef with independent read-back")
-        return replace(state, stage=LifecycleStage.VERIFY, version=state.version + 1, candidate=candidate)
+        return replace(state, stage=LifecycleStage.VERIFY, version=state.version + 1, candidate=candidate,
+                       verify_cycles=_plus_one(state.verify_cycles))
     if action == "review" and state.stage is LifecycleStage.VERIFY:
         return replace(state, stage=LifecycleStage.REVIEW, version=state.version + 1)
     if action == "accept" and state.stage is LifecycleStage.REVIEW:

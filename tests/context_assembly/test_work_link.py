@@ -542,3 +542,27 @@ def test_only_the_permitted_requests_are_sent(fx):
     # Board: only the card add, its read-back and the duplicate's removal; never a scan or a field write.
     assert set(fx.github.log) <= {"list", "create", "get", "add", "read-card", "delete", "close"}
     assert "other-graphql" not in fx.github.log
+
+
+# --- unit 6b check 8: the cycle-count line, from the coordinator state the caller reads ----------------------------
+
+
+def test_the_cycle_line_is_rendered_only_when_counts_are_given_and_unknown_is_written(fx):
+    item = fx.item("X")
+    assert render(item, None) == render(item) and "cycles" not in render(item).body
+    assert render(item, (3, 2)).body == render(item).body + "\nIMPLEMENT cycles: 3 · VERIFY cycles: 2"
+    assert render(item, (None, 0)).body.endswith("\nIMPLEMENT cycles: unknown · VERIFY cycles: 0")
+    assert fx.links.cycles is None  # without the readiness entry there is no coordinator state to read
+
+
+def test_link_and_display_render_with_the_counts_the_reader_returns(fx):
+    item = fx.item("X")
+    counts: dict[str, tuple[int | None, int | None] | None] = {item.id: (1, 0)}
+    fx.links.cycles = counts.get
+    linked = fx.links.link("X")
+    issue = fx.github.issues[linked.issue_number]
+    assert issue["body"] == render(item, (1, 0)).body
+    counts[item.id] = (2, 1)
+    assert fx.links.display("X").display == "updated" and issue["body"] == render(item, (2, 1)).body
+    del counts[item.id]
+    assert fx.links.display("X").display == "updated" and issue["body"] == render(item).body

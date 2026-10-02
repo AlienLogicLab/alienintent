@@ -314,6 +314,24 @@ class SQLiteOperationalStore(FencedOperationalStore):
             connection.execute("INSERT INTO reservations VALUES (?, ?, ?, ?, ?)", (profile, scope, key, owner, fence))
             return Reservation(scope, key, owner, fence)
 
+    def acquire_within(self, profile: str, scope: str, key: str, owner: str, limit: int) -> Reservation:
+        """Capacity-limited acquire: the existing check, count and insert share one BEGIN IMMEDIATE transaction, so
+        two stores on one database can never both take the last free reservation of `scope`."""
+        with self._transaction() as connection:
+            held = connection.execute("SELECT owner, fence FROM reservations WHERE profile=? AND scope=? AND resource_key=?", (profile, scope, key)).fetchone()
+            if held:
+                if held["owner"] != owner:
+                    raise ReservationRejected("resource already reserved")
+                return Reservation(scope, key, owner, held["fence"])
+            count = connection.execute("SELECT COUNT(*) FROM reservations WHERE profile=? AND scope=?", (profile, scope)).fetchone()[0]
+            if count >= limit:
+                raise ReservationRejected("reservation limit reached")
+            prior = connection.execute("SELECT fence FROM fences WHERE profile=? AND scope=? AND resource_key=?", (profile, scope, key)).fetchone()
+            fence = (prior["fence"] if prior else 0) + 1
+            connection.execute("INSERT INTO fences VALUES (?, ?, ?, ?) ON CONFLICT(profile, scope, resource_key) DO UPDATE SET fence=excluded.fence", (profile, scope, key, fence))
+            connection.execute("INSERT INTO reservations VALUES (?, ?, ?, ?, ?)", (profile, scope, key, owner, fence))
+            return Reservation(scope, key, owner, fence)
+
     def release(self, profile: str, scope: str, key: str, owner: str, fence: int) -> None:
         with self._transaction() as connection:
             row = connection.execute("SELECT owner, fence FROM reservations WHERE profile=? AND scope=? AND resource_key=?", (profile, scope, key)).fetchone()

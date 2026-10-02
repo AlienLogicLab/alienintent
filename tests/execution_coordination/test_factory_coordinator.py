@@ -833,3 +833,353 @@ def test_allocation_counts_durable_rejections_as_consumed_attempts(tmp_path: Pat
     assert summary.authority_blocked == ("reworked",)
     assert coordinator.state("reworked").record["correlation"] == "release"
     assert coordinator.state("reworked").record["rejections"] == allocated
+
+
+# --- READY-SELECTION-RELEASE-GATE-WIP-ADMISSION: configurable WIP admission and cycle counts ---------------------
+
+RECEIPT = "feature-regressions:sha256:" + "a" * 64
+
+
+class WipWorker(ScriptedWorker):
+    """A verifier step ``reject`` is a receipted rejection (the one verdict that reworks); ``observe`` runs before
+    every invocation, while the coordinator has recorded the launch and holds its reservations."""
+
+    def __init__(self, artifacts, outcomes, *, observe=None, **options) -> None:
+        super().__init__(artifacts, outcomes, **options)
+        self.observe = observe
+        self.cancelled: list[str] = []
+
+    def cancel(self, identity: str, reason: str) -> None:
+        self.cancelled.append(identity)
+
+    def start(self, invocation, context, grants, budget):
+        _, _, _, provider = _api()
+        if self.observe is not None:
+            self.observe(invocation)
+        steps = self.verdicts.get(invocation.work_identity)
+        if invocation.role != provider.VERIFIER or not steps or steps[0] != "reject":
+            return super().start(invocation, context, grants, budget)
+        steps.pop(0)
+        self.invocations.append((invocation.work_identity, invocation.role, invocation.correlation_id))
+        outcome = provider.WorkerOutcome.reject(invocation.candidate, ("finding",), receipts=(RECEIPT,))
+        self.observed[invocation.correlation_id] = outcome
+        if self.durable:
+            path = self._path(invocation.correlation_id)
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(json.dumps({"kind": outcome.kind, "candidate": outcome.candidate.__dict__,
+                                        "findings": list(outcome.findings), "receipts": list(outcome.receipts)}))
+        return outcome
+
+
+class Limit:
+    """An injected WIP limit that counts how often it is read."""
+
+    def __init__(self, value: int | None) -> None:
+        self.value, self.reads = value, 0
+
+    def __call__(self) -> int | None:
+        self.reads += 1
+        return self.value
+
+
+def _attempts(identity: str, fifo: int, priority: int, maximum_attempts: int = 3, *, automatic: bool = True):
+    item = _custom_item(identity, budget_policy=BudgetPolicy(hard_required_dimensions=("attempts",),
+                                                             maximum_attempts=maximum_attempts))
+    if not automatic:
+        contract = replace(item.contract, release_policy=EXPLICIT_HUMAN_OFF)
+        item = replace(item, contract=contract, readiness_digest=contract.content_digest, automatic_release=False)
+    return replace(item, fifo=fifo, priority=priority)
+
+
+def _wip(tmp_path: Path, items, outcomes, limit, *, verdicts=None, observe=None, store=None, durable: bool = False):
+    coordinator_module, custody, _, _ = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = store if store is not None else SQLiteOperationalStore(tmp_path / "run.sqlite")
+    worker = WipWorker(artifacts, outcomes, verdicts=verdicts, observe=observe, durable=durable)
+    return coordinator_module.FactoryCoordinator(store, MemoryWorkManagement(list(items)), worker, artifacts, "offline",
+                                                 wip_limit=limit), worker, store
+
+
+def _slots(store) -> dict[str, int]:
+    return {r.key: r.fence for r in store.recovery_reservations("offline") if r.scope == "wip" and r.owner == f"work:{r.key}"}
+
+
+def test_check1_a_slot_is_a_work_item_kept_from_producer_through_verifier_and_rework(tmp_path: Path) -> None:
+    """Limit 1: A keeps one slot PRODUCER -> VERIFIER -> rejected -> PRODUCER; B, released while A is in flight and
+    ranked before A, is refused and the run continues A to DONE; the next run admits B."""
+    from alienintent.execution_coordination.domain.release import ReleaseSource
+    _, _, _, provider = _api()
+    a, b = _attempts("A", 1, 2), _attempts("B", 0, 0, automatic=False)
+    seen: list[tuple[str, str, dict[str, int]]] = []
+
+    def observe(invocation) -> None:
+        seen.append((invocation.work_identity, invocation.role, _slots(store)))
+        if invocation.work_identity == "A" and len(seen) == 1:  # the Founder releases B while A is in IMPLEMENT
+            store.commit("offline", "release:B", 0, {"identity": "B", "source": ReleaseSource.EXPLICIT_HUMAN})
+
+    coordinator, worker, store = _wip(tmp_path, [b, a], {"A": ["success", "success"], "B": ["success"]}, Limit(1),
+                                      verdicts={"A": ["reject", "accept"]}, observe=observe)
+    summary = coordinator.start()
+    assert summary.stop_reason.value == "capacity-unavailable"
+    assert worker.dispatched == ["A", "A"] and summary.dispatched == ("A", "A")
+    assert [(identity, role) for identity, role, _ in seen] == [
+        ("A", provider.PRODUCER), ("A", provider.VERIFIER), ("A", provider.PRODUCER), ("A", provider.VERIFIER),
+        ("A", provider.CLOSURE)]
+    assert {tuple(slots) for _, _, slots in seen} == {("A",)} and len({slots["A"] for _, _, slots in seen}) == 1
+    assert coordinator.state("A").stage is LifecycleStage.DONE and "B" not in [i for i, _, _ in worker.invocations]
+    assert _slots(store) == {}
+    second = coordinator.start()
+    assert worker.dispatched == ["A", "A", "B"] and second.dispatched == ("B",)
+    assert coordinator.state("B").stage is LifecycleStage.DONE and _slots(store) == {}
+
+
+def test_check3_the_limit_is_n_and_a_changed_file_is_seen_at_the_next_admission(tmp_path: Path) -> None:
+    """Limit 3 from the shared file: three admitted (held at authority-block), the fourth refused; raising the file's
+    wipLimit to 4 admits it at the next admission."""
+    from functools import partial
+    from alienintent.composition.work_registry import wip_limit
+    host = tmp_path / "factory-director-host.json"
+    host.write_text(json.dumps({"wipLimit": 3}))
+    items = [_item(f"n{index}", index, index) for index in range(1, 5)]
+    outcomes = {"n1": ["authority-block"], "n2": ["authority-block"], "n3": ["authority-block"], "n4": ["success"]}
+    coordinator, worker, store = _wip(tmp_path, items, outcomes, partial(wip_limit, host))
+    summary = coordinator.start()
+    assert summary.stop_reason.value == "capacity-unavailable" and worker.dispatched == ["n1", "n2", "n3"]
+    assert set(_slots(store)) == {"n1", "n2", "n3"}
+    host.write_text(json.dumps({"wipLimit": 4}))
+    summary = coordinator.start()
+    assert worker.dispatched == ["n1", "n2", "n3", "n4"] and summary.dispatched == ("n4",)
+    assert coordinator.state("n4").stage is LifecycleStage.DONE and set(_slots(store)) == {"n1", "n2", "n3"}
+
+
+def test_check4_lowering_the_limit_stops_admission_but_never_held_work(tmp_path: Path) -> None:
+    """Three held slots, limit lowered to 1: W is refused while the three continue to DONE; the next run, with fewer
+    than 1 slot held, admits W. The limit is read only for W's admission, never for work holding its slot."""
+    items = [_item("W", 0, 0), _item("x", 1, 1), _item("y", 2, 2), _item("z", 3, 3)]
+    limit = Limit(1)
+    coordinator, worker, store = _wip(tmp_path, items, {key: ["success"] for key in "Wxyz"}, limit)
+    for key in "xyz":  # admitted under the earlier limit 3
+        store.acquire_within("offline", "wip", key, f"work:{key}", 3)
+    summary = coordinator.start()
+    assert summary.stop_reason.value == "capacity-unavailable" and limit.reads == 1
+    assert worker.dispatched == ["x", "y", "z"] and _slots(store) == {}
+    assert all(coordinator.state(key).stage is LifecycleStage.DONE for key in "xyz")
+    assert coordinator.start().dispatched == ("W",) and limit.reads == 2 and _slots(store) == {}
+
+
+@pytest.mark.parametrize("document", [None, {"wipLimit": 0}, {"wipLimit": -1}, {"wipLimit": "2"}, {"wipLimit": 2.0},
+                                      {"wipLimit": True}, {}, [1], "not json"])
+def test_check5_an_unavailable_limit_admits_nothing_new_and_is_reread_each_time(tmp_path: Path, document) -> None:
+    from functools import partial
+    from alienintent.composition.work_registry import wip_limit
+    host = tmp_path / "factory-director-host.json"
+    if document is not None:
+        host.write_text(document if isinstance(document, str) else json.dumps(document))
+    coordinator, worker, store = _wip(tmp_path, [_item("fresh", 0, 0), _item("held", 1, 1)],
+                                      {"fresh": ["success"], "held": ["success"]}, partial(wip_limit, host))
+    store.acquire_within("offline", "wip", "held", "work:held", 1)
+    summary = coordinator.start()
+    assert summary.stop_reason.value == "wip-limit-unavailable"
+    assert worker.dispatched == ["held"] and coordinator.state("held").stage is LifecycleStage.DONE
+    with pytest.raises(KeyError):
+        coordinator.state("fresh")  # nothing was recorded for the work item that was not admitted
+    host.write_text(json.dumps({"wipLimit": 1}))
+    assert coordinator.start().dispatched == ("fresh",) and _slots(store) == {}
+
+
+def test_check6_retries_reworks_and_resumable_results_keep_the_slot_until_done(tmp_path: Path) -> None:
+    """missing-terminal-result, ineligible and a VERIFY rejection all keep H's one slot; it is admitted once."""
+    _, _, _, provider = _api()
+    seen: list[dict[str, int]] = []
+    limit = Limit(1)
+    coordinator, worker, store = _wip(
+        tmp_path, [_attempts("H", 0, 1)],
+        {"H": [provider.MISSING_TERMINAL_RESULT, "ineligible", "success", "success"]}, limit,
+        verdicts={"H": ["reject", "accept"]}, observe=lambda invocation: seen.append(_slots(store)))
+    coordinator.start()
+    assert worker.dispatched == ["H"] * 4 and len(seen) == 7
+    assert all(slots == seen[0] and list(slots) == ["H"] for slots in seen) and limit.reads == 1
+    assert coordinator.state("H").stage is LifecycleStage.DONE and _slots(store) == {}
+
+
+def test_check6_final_outcomes_release_the_slot_and_authority_holds_keep_it(tmp_path: Path) -> None:
+    from alienintent.execution_coordination.domain.escalation import DecisionRecord, DecisionRecorded, DecisionSubmission
+    items = [_item("failed", 0, 1), _item("timed", 1, 2), _attempts("exhausted", 2, 3, maximum_attempts=1),
+             _item("operator", 3, 4), _item("decided", 4, 5)]
+    outcomes = {"failed": ["failure"], "timed": ["timeout"], "exhausted": ["success"],
+                "operator": ["authority-block"], "decided": ["authority-block"]}
+    coordinator, worker, store = _wip(tmp_path, items, outcomes, Limit(5), verdicts={"exhausted": ["reject"]})
+    summary = coordinator.start()
+    assert worker.dispatched == ["failed", "timed", "exhausted", "operator", "decided"]
+    assert coordinator.state("exhausted").record["hold_reason"] == "attempt-budget-exhausted"
+    assert set(_slots(store)) == {"operator", "decided"} and summary.authority_blocked == ("operator", "decided")
+    version, _ = store.read_state("offline", "factory:operator")
+    coordinator.cancel("operator", "morty", "SWF-21", version, "stop", "cancel-operator")
+    assert set(_slots(store)) == {"decided"}
+    submission = DecisionSubmission("morty", "SWF-21", "decided", 0, 0, "cancel-decided", "cancel")
+    coordinator.record_decision(DecisionRecord(submission, DecisionRecorded("decided", 0, "cancel-decided", "morty")))
+    assert coordinator.state("decided").outcome == "cancelled-by-decision" and _slots(store) == {}
+
+
+def test_check6_an_authority_block_keeps_its_slot_across_restart_and_an_authorize_decision(tmp_path: Path) -> None:
+    """V is held at VERIFY by an authority block: restart keeps the slot and launches nothing; the authorize decision
+    resumes V at VERIFY still holding the same slot, and DONE releases it."""
+    from alienintent.control_plane.application.decision_inbox import DecisionInbox
+    from alienintent.execution_coordination.domain.escalation import DecisionSubmission
+    _, _, _, provider = _api()
+    coordinator, worker, store = _wip(tmp_path, [_item("V", 0, 1)], {"V": ["success"]}, Limit(1),
+                                      verdicts={"V": ["unattested"]})
+    assert coordinator.start().authority_blocked == ("V",)
+    held = _slots(store)
+    assert list(held) == ["V"] and coordinator.state("V").stage is LifecycleStage.VERIFY
+    seen: list[tuple[str, dict[str, int]]] = []
+    restarted_store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    restarted, restarted_worker, _ = _wip(tmp_path, [_item("V", 0, 1)], {}, Limit(None), verdicts={"V": ["accept"]},
+                                          store=restarted_store,
+                                          observe=lambda invocation: seen.append((invocation.role, _slots(restarted_store))))
+    assert restarted.start().stop_reason.value == "dependencies-or-authority-blocked"
+    assert restarted_worker.invocations == [] and _slots(restarted_store) == held
+    inbox = DecisionInbox(restarted_store, restarted, "offline")
+    request = inbox.show("V")
+    inbox.submit(DecisionSubmission("morty", "SWF-21", "V", request.biu_version, request.biu_version, "authorize-V", "authorize"))
+    assert seen[0] == (provider.VERIFIER, held)
+    assert restarted.state("V").stage is LifecycleStage.DONE and _slots(restarted_store) == {}
+
+
+def test_check6_restart_frees_completed_slots_and_keeps_active_ones(tmp_path: Path) -> None:
+    """The Founder's restart confirmation. A crash between the recorded result and the WIP release (DONE, and the final
+    outcome `failure`) is completed by the next start; authority-block, blocked-by-authority and a work item no longer
+    in the READY snapshot keep their slots; nothing is admitted twice."""
+    coordinator_module, _, _, _ = _api()
+
+    class CrashBeforeWipRelease(SQLiteOperationalStore):
+        crash = {"failed", "done"}
+
+        def release(self, profile, scope, key, owner, fence):
+            if scope == "wip" and key in self.crash:
+                self.crash.discard(key)
+                raise RuntimeError(f"crash before releasing {key}")
+            return super().release(profile, scope, key, owner, fence)
+
+    blocked, gone, failed, done = _item("blocked", 0, 1), _item("gone", 1, 2), _item("failed", 2, 3), _item("done", 3, 4)
+    dependent = _item("dependent", 4, 5)
+    outcomes = {"blocked": ["authority-block"], "gone": ["authority-block"], "failed": ["failure"], "done": ["success"]}
+    store = CrashBeforeWipRelease(tmp_path / "run.sqlite")
+    first, worker, _ = _wip(tmp_path, [blocked, gone, failed], outcomes, Limit(10), store=store, durable=True)
+    with pytest.raises(RuntimeError, match="crash before releasing failed"):
+        first.start()
+    assert first.state("failed").outcome == "failure" and "failed" in _slots(store)
+    # A work item admitted earlier, then blocked by an authority hold on a work item it now depends on.
+    store.acquire_within("offline", "wip", "dependent", "work:dependent", 10)
+    state = coordinator_module.ExecutionState.for_contract(dependent.contract)
+    store.commit("offline", "factory:dependent", 0, coordinator_module.FactoryCoordinator._encode(state)
+                 | {"outcome": "blocked-by-authority", "blocked_by": "blocked"})
+    second, _, _ = _wip(tmp_path, [blocked, gone, failed, done], outcomes, Limit(10), store=store, durable=True)
+    with pytest.raises(RuntimeError, match="crash before releasing done"):
+        second.start()  # its recovery has already completed the release of `failed`
+    assert second.state("done").stage is LifecycleStage.DONE
+    held = _slots(store)
+    assert set(held) == {"blocked", "gone", "dependent", "done"}
+    assert any(r.scope == "repository" for r in store.recovery_reservations("offline"))
+
+    restarted_store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    snapshot = [blocked, failed, done, dependent, _item("new", 5, 6)]  # `gone` has left the READY view
+    limit = Limit(3)
+    restarted, restarted_worker, _ = _wip(tmp_path, snapshot, {"new": ["success"]}, limit, store=restarted_store,
+                                          durable=True)
+    summary = restarted.start()
+    kept = {key: fence for key, fence in held.items() if key != "done"}
+    assert _slots(restarted_store) == kept  # same fences: kept, never re-admitted
+    assert restarted_store.recovery_reservations("offline") == tuple(
+        r for r in restarted_store.recovery_reservations("offline") if r.scope == "wip")
+    assert summary.stop_reason.value == "capacity-unavailable" and restarted_worker.invocations == []
+    assert limit.reads == 1  # only `new` asked for admission
+    limit.value = 4
+    assert restarted.start().dispatched == ("new",) and _slots(restarted_store) == kept
+
+
+def test_check8_cycle_counts_change_only_with_recorded_transitions(tmp_path: Path) -> None:
+    """Admission and the first launch make IMPLEMENT 1 (recorded with the launch); retried launches change nothing;
+    two reworks give IMPLEMENT 3 and VERIFY 2; a restart that reconciles the duplicate outcome changes nothing."""
+    _, _, _, provider = _api()
+
+    class ReleaseFailsOnceStore(SQLiteOperationalStore):
+        fail = True
+
+        def release(self, profile, scope, key, owner, fence):
+            if self.fail and scope == "repository":
+                self.fail = False
+                raise RuntimeError("crash before repository release")
+            return super().release(profile, scope, key, owner, fence)
+
+    seen: list[tuple[str, int | None, int | None]] = []
+
+    def observe(invocation) -> None:
+        state = coordinator.state("C")
+        seen.append((invocation.role, state.implement_cycles, state.verify_cycles))
+
+    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    coordinator, worker, _ = _wip(
+        tmp_path, [_attempts("C", 0, 1)],
+        {"C": [provider.MISSING_TERMINAL_RESULT, "ineligible", "success", "success", "success"]}, Limit(1),
+        verdicts={"C": ["reject", "reject", "accept"]}, observe=observe, store=store, durable=True)
+    coordinator.start()
+    assert seen == [(provider.PRODUCER, 1, 0), (provider.PRODUCER, 1, 0), (provider.PRODUCER, 1, 0),
+                    (provider.VERIFIER, 1, 1), (provider.PRODUCER, 2, 1), (provider.VERIFIER, 2, 2),
+                    (provider.PRODUCER, 3, 2), (provider.VERIFIER, 3, 3), (provider.CLOSURE, 3, 3)]
+    done = coordinator.state("C")
+    assert (done.stage, done.implement_cycles, done.verify_cycles) == (LifecycleStage.DONE, 3, 3)
+
+    (tmp_path / "again").mkdir()
+    crashing = ReleaseFailsOnceStore(tmp_path / "again" / "run.sqlite")
+    first, _, _ = _wip(tmp_path / "again", [_attempts("D", 0, 1)], {"D": ["success"]}, Limit(1), store=crashing,
+                       durable=True)
+    with pytest.raises(RuntimeError, match="before repository release"):
+        first.start()
+    before = first.state("D")
+    restarted, restarted_worker, _ = _wip(tmp_path / "again", [_attempts("D", 0, 1)], {"D": ["success"]}, Limit(1),
+                                          store=SQLiteOperationalStore(tmp_path / "again" / "run.sqlite"), durable=True)
+    restarted.start()
+    after = restarted.state("D")
+    assert (before.stage, before.implement_cycles, before.verify_cycles) == (LifecycleStage.VERIFY, 1, 1)
+    assert after.stage is LifecycleStage.DONE and (after.implement_cycles, after.verify_cycles) == (1, 1)
+    assert restarted_worker.dispatched == []
+
+
+def test_check8_a_release_gate_refusal_leaves_implement_at_zero(tmp_path: Path) -> None:
+    coordinator, worker = _gated(tmp_path, _item("gated", 0, 1), record=None)
+    coordinator.start()
+    state = coordinator.state("gated")
+    assert worker.invocations == [] and (state.implement_cycles, state.verify_cycles) == (0, 0)
+
+
+def test_check8_older_records_decode_only_what_their_history_proves(tmp_path: Path) -> None:
+    """Counts are derived from retained `rejections`, `findings`, `producer_correlation` and a stage past IMPLEMENT;
+    a record without launch evidence is unknown, stays unknown through transitions and is never re-derived."""
+    coordinator_module, _, _, _ = _api()
+    decode = coordinator_module.FactoryCoordinator.decode
+    base = {"version": 3, "accepted": False, "closure": [], "candidate": None}
+
+    def counts(**raw):
+        state = decode(base | raw)
+        return state.implement_cycles, state.verify_cycles
+
+    assert counts(stage="VERIFY") == (1, 1)
+    assert counts(stage="IMPLEMENT", producer_correlation="launch:x:0") == (1, 0)
+    assert counts(stage="IMPLEMENT", rejections=2, findings=[{}, {}]) == (3, 2)
+    assert counts(stage="DONE", rejections=1, findings=[{}], accepted=True) == (2, 2)
+    assert counts(stage="IMPLEMENT", findings=[{"source": "verifier"}]) == (1, 0)
+    assert counts(stage="IMPLEMENT", correlation="release", outcome="authority-block") == (None, None)
+    assert counts(stage="IMPLEMENT", role="PRODUCER") == (None, None)  # `role` proves nothing
+    assert counts(stage="VERIFY", implement_cycles=None, verify_cycles=None) == (None, None)  # recorded unknown
+    assert counts(stage="IMPLEMENT", implement_cycles=0, verify_cycles=0, rejections=4) == (0, 0)
+
+    # An older record with no launch evidence runs to DONE: unknown stays unknown, through the first launch too.
+    item = _item("legacy", 0, 1)
+    coordinator, worker, store = _wip(tmp_path, [item], {"legacy": ["success"]}, Limit(1))
+    store.commit("offline", "factory:legacy", 0, base | {"version": 0, "stage": "IMPLEMENT", "correlation": "release",
+                                                         "outcome": "decision-recorded"})
+    coordinator.start()
+    state = coordinator.state("legacy")
+    assert state.stage is LifecycleStage.DONE and (state.implement_cycles, state.verify_cycles) == (None, None)
+    assert state.record["implement_cycles"] is None and state.record["producer_correlation"]

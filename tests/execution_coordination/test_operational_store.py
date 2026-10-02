@@ -311,3 +311,71 @@ def test_real_sigkill_boundaries_recover_without_repeating_effect(tmp_path: Path
                 EffectExecutor(restarted, send).execute("alpha", "effect-1")
             assert EffectExecutor(restarted, send).reconcile("alpha", "effect-1", lambda effect: "confirmed") is True
             assert marker.read_text() == "1"
+
+
+# --- READY-SELECTION-RELEASE-GATE-WIP-ADMISSION: capacity-limited acquire (acceptance check 2) ---------------------
+
+
+def test_acquire_within_returns_the_owners_reservation_and_refuses_at_the_limit(store: OperationalStore) -> None:
+    """The owner's own reservation is returned, not counted twice; a full scope refuses; a lower limit releases nothing."""
+    first = store.acquire_within("alpha", "wip", "item-1", "work:item-1", 2)
+    assert store.acquire_within("alpha", "wip", "item-1", "work:item-1", 1) == first
+    second = store.acquire_within("alpha", "wip", "item-2", "work:item-2", 2)
+    with pytest.raises(ReservationRejected):
+        store.acquire_within("alpha", "wip", "item-3", "work:item-3", 2)
+    with pytest.raises(ReservationRejected):
+        store.acquire_within("alpha", "wip", "item-3", "work:item-3", 1)
+    with pytest.raises(ReservationRejected):
+        store.acquire_within("alpha", "wip", "item-1", "work:someone-else", 5)
+    assert store.acquire_within("beta", "wip", "item-3", "work:item-3", 1).fence == 1  # profile-scoped
+    assert set(store.recovery_reservations("alpha")) == {first, second}
+    store.release("alpha", "wip", "item-1", "work:item-1", first.fence)
+    assert store.acquire_within("alpha", "wip", "item-3", "work:item-3", 2).fence == 1
+    assert store.acquire_within("alpha", "wip", "item-1", "work:item-1", 3).fence == first.fence + 1
+
+
+def test_two_stores_racing_acquire_within_for_the_last_slot_reserve_exactly_one(tmp_path: Path) -> None:
+    """Check 2: two SQLiteOperationalStore instances on one database file, each in its own thread, both already
+    inside BEGIN IMMEDIATE while a third connection holds the write lock; when it lets go, exactly one takes the one
+    free slot and the other is refused. A check-then-reserve implementation (count outside the write transaction)
+    lets both read a free slot here and reserves two."""
+    import threading
+
+    path = tmp_path / "operational.sqlite"
+    SQLiteOperationalStore(path).acquire_within("alpha", "wip", "held", "work:held", 2)  # one of two slots taken
+    entered = [threading.Event(), threading.Event()]
+    stores = [SQLiteOperationalStore(path), SQLiteOperationalStore(path)]
+    for store, event in zip(stores, entered):
+        original = store._connect
+
+        def traced(original=original, event=event) -> sqlite3.Connection:
+            connection = original()
+            connection.set_trace_callback(lambda statement: event.set() if statement.startswith("BEGIN IMMEDIATE") else None)
+            return connection
+        store._connect = traced
+    lock = sqlite3.connect(path, isolation_level=None)
+    lock.execute("BEGIN IMMEDIATE")
+    results: dict[int, object] = {}
+
+    def admit(index: int) -> None:
+        try:
+            results[index] = stores[index].acquire_within("alpha", "wip", f"racer-{index}", f"work:racer-{index}", 2)
+        except ReservationRejected as refused:
+            results[index] = refused
+
+    threads = [threading.Thread(target=admit, args=(index,)) for index in (0, 1)]
+    try:
+        for thread in threads:
+            thread.start()
+        assert all(event.wait(5) for event in entered)  # both are contending for the write lock
+        assert results == {}
+    finally:
+        lock.execute("ROLLBACK")
+        lock.close()
+    for thread in threads:
+        thread.join(10)
+    reserved = [value for value in results.values() if not isinstance(value, Exception)]
+    refused = [value for value in results.values() if isinstance(value, ReservationRejected)]
+    assert len(reserved) == 1 and len(refused) == 1
+    assert {r.key for r in SQLiteOperationalStore(path).recovery_reservations("alpha") if r.scope == "wip"} == {
+        "held", reserved[0].key}

@@ -523,3 +523,112 @@ def test_an_unreadable_board_fails_the_snapshot_with_no_rows_and_no_items(board)
     assert board.registry.ready_refusals() == ()  # An unread board clears nothing.
     assert WorkRegistry(project_configuration(board.document, PROJECT), transport=board.github).ready_refusals() == ()
     assert len(ready_view_items(board.registry)) == 1
+
+
+# --- READY selection, release gate and WIP admission (unit 6b, checks 5, 7 and 8) ---------------------------------
+
+from alienintent.composition.work_registry import wip_limit  # noqa: E402
+from alienintent.execution_coordination.domain.lifecycle import LifecycleStage  # noqa: E402
+from alienintent.execution_coordination.domain.release import ReleaseAuthorization  # noqa: E402
+
+
+@pytest.mark.parametrize(("document", "expected"), [
+    ({"wipLimit": 1}, 1), ({"wipLimit": 7, "founderHoldRecord": 3}, 7), ({"wipLimit": 0}, None),
+    ({"wipLimit": -2}, None), ({"wipLimit": "1"}, None), ({"wipLimit": 1.0}, None), ({"wipLimit": True}, None),
+    ({"wipLimit": 2 ** 53}, None), ({}, None), ([1], None), ("{", None), (None, None)])
+def test_check5_the_wip_limit_reader_reads_the_file_on_every_call(tmp_path, document, expected):
+    host = tmp_path / "factory-director-host.json"
+    if document is not None:
+        host.write_text(document if isinstance(document, str) else json.dumps(document))
+    assert wip_limit(host) == expected
+    host.write_text(json.dumps({"wipLimit": 5}))
+    assert wip_limit(host) == 5  # nothing kept from the previous call
+    host.unlink()
+    assert wip_limit(host) is None  # no default
+
+
+def _registry_run(board, tmp_path, label: str, *, record: dict | None, release: bool = True):
+    """A READY-view work item, an optional release record on the registry store, and one coordinator run."""
+    from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+    from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
+    item = board.ready(label, at="2026-10-03T10:00:00Z")
+    if record is not None:
+        values = {"identity": item.id, "record_ref": f"issue:{item.id}:release", "authorizes_implement": True,
+                  "baseline": item.pointer.commit, "text": "IMPLEMENT is authorized."} | record
+        board.registry.assessment.authorizations.record(ReleaseAuthorization(**values))
+    host = tmp_path / "factory-director-host.json"
+    host.write_text(json.dumps({"wipLimit": 1}))
+    registry = WorkRegistry(project_configuration(board.document, PROJECT), transport=board.github,
+                            host_configuration=host)
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    worker = ScriptedWorker(artifacts, {item.id: ["success"]})
+    coordinator = registry.coordinator(worker, artifacts)
+    summary = coordinator.release_and_start(item.id) if release else coordinator.start()
+    return registry, coordinator, worker, summary, item
+
+
+def test_check7_a_released_registry_item_passes_the_gate_on_the_registry_store(board, tmp_path):
+    """The release gate reads the release record from the readiness store (profile `registry`) and checks the starting
+    revision in the packets repository's clone against its default branch; WIP admission and the launch follow."""
+    registry, coordinator, worker, summary, item = _registry_run(board, tmp_path, "RV-OK", record={})
+    assert (coordinator._profile, coordinator._automatic_release) == ("registry", False)
+    assert coordinator._store is registry.assessment.consumer.store and worker.dispatched == [item.id]
+    state = coordinator.state(item.id)
+    # contract_payload allows one attempt and requires evidence no verifier gives: REVIEW reworks into `failure`.
+    assert (state.outcome, state.record["hold_reason"]) == ("failure", "attempt-budget-exhausted")
+    assert summary.dispatched == (item.id,) and registry.cycles(item.id) == (2, 1)
+    assert [r for r in registry.assessment.consumer.store.recovery_reservations("registry")] == []
+
+
+@pytest.mark.parametrize(("record", "check"), [
+    (None, "implementation-authorized"), ({"baseline": "side"}, "baseline-reachable"),
+    ({"baseline": "0" * 40}, "baseline-resolves")])
+def test_check7_without_a_valid_release_record_nothing_is_launched(board, tmp_path, record, check):
+    if record is not None and record["baseline"] == "side":
+        record = {"baseline": commit_file(board.clone, "side", "docs/side.md", b"side\n")}
+    registry, coordinator, worker, summary, item = _registry_run(board, tmp_path, "RV-NO", record=record)
+    projected = coordinator.state(item.id)
+    assert worker.invocations == [] and summary.authority_blocked == (item.id,)
+    assert (projected.outcome, projected.record["hold_reason"]) == ("authority-block", f"release-precondition:{check}")
+    assert registry.cycles(item.id) == (0, 0)  # a gate refusal never entered implementation
+    assert registry.assessment.consumer.store.recovery_reservations("registry") == ()
+
+
+def test_check7_a_registry_item_is_never_selected_without_release_and_start(board, tmp_path):
+    registry, coordinator, worker, summary, item = _registry_run(board, tmp_path, "RV-HELD", record={}, release=False)
+    assert worker.invocations == [] and summary.stop_reason.value == "dependencies-or-authority-blocked"
+    with pytest.raises(KeyError):
+        coordinator.state(item.id)
+    assert registry.cycles(item.id) is None
+
+
+def test_check8_work_display_shows_the_counts_from_the_coordinator_state(board, tmp_path):
+    """After a transition the READY view reports DISPLAY_DIFFERS until `repair_displays` writes the counts; then it
+    no longer differs. A work item without coordinator state renders as before; unknown counts are shown unknown."""
+    registry, coordinator, _, _, item = _registry_run(board, tmp_path, "RV-COUNT", record={})
+    plain = board.ready("RV-PLAIN", at="2026-10-03T11:00:00Z")
+    imported, refusals = board.snapshot(registry)
+    assert {(r.card, r.kind) for r in refusals} == {(item.card_id, DISPLAY_DIFFERS)}
+    [repaired] = registry.repair_displays()
+    assert repaired.display == UPDATED
+    body = board.github.issues[item.issue_number]["body"]
+    assert body == render(item, (2, 1)).body and body.endswith("\nIMPLEMENT cycles: 2 · VERIFY cycles: 1")
+    assert board.github.issues[plain.issue_number]["body"] == render(plain).body
+    assert "IMPLEMENT cycles" not in render(plain).body and registry.cycles(plain.id) is None
+    _, refusals = board.snapshot(registry)
+    assert [(r.card, r.kind, r.cleared) for r in refusals] == [(item.card_id, DISPLAY_DIFFERS, True)]
+    assert registry.links.display(item.id).display == "unchanged"  # a display repair changes no count
+    assert registry.cycles(item.id) == (2, 1)
+
+    store = registry.assessment.consumer.store  # an older record without launch evidence: unknown, shown unknown
+    store.commit("registry", f"factory:{plain.id}", 0, {"stage": LifecycleStage.IMPLEMENT.value, "version": 0,
+                                                       "accepted": False, "closure": [], "candidate": None})
+    assert registry.cycles(plain.id) == (None, None)
+    assert registry.links.display(plain.id).display == UPDATED
+    assert board.github.issues[plain.issue_number]["body"].endswith("\nIMPLEMENT cycles: unknown · VERIFY cycles: unknown")
+
+
+def test_the_coordinator_needs_the_ready_view(tmp_path):
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    with pytest.raises(ConfigurationInvalid):
+        WorkRegistry(project_configuration(entry(tmp_path, readiness=readiness(tmp_path)), PROJECT)).coordinator(None, None)
