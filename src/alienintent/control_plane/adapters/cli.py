@@ -9,7 +9,8 @@ import sys
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
-from alienintent.control_plane.application.operator import OperatorControlPlane, OperatorDenied, migrate_work
+from alienintent.control_plane.application.operator import (
+    OperatorControlPlane, OperatorDenied, import_work, migrate_work, register_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
@@ -17,7 +18,11 @@ from alienintent.execution_coordination.ports.operational_store import VersionCo
 
 # Typed work-registry refusals the operator may see by code; every other code stays internal.
 _WORK_CODES = {"MIGRATION_CONFLICT": "migration-conflict", "INVALID_REQUEST_REF": "invalid-request-ref",
-               "WORK_REGISTRY_BUSY": "work-registry-busy"}
+               "WORK_REGISTRY_BUSY": "work-registry-busy", "WORK_REGISTRY_UNAVAILABLE": "work-registry-unavailable",
+               "POINTER_MISMATCH": "pointer-mismatch", "COMMIT_NOT_RETAINED": "commit-not-retained",
+               "PARENT_NOT_REGISTERED": "parent-not-registered", "LABEL_IN_USE": "label-in-use",
+               "INVALID_WORK_ITEM": "invalid-work-item", "GIT_READ_FAILED": "git-read-failed",
+               "TAG_WRITE_FAILED": "tag-write-failed", "PUBLICATION_FAILED": "publication-failed"}
 
 
 def _sanitize(value: object) -> str:
@@ -76,7 +81,18 @@ def _parser() -> argparse.ArgumentParser:
     work = _sanitized(sub.add_parser("work")).add_subparsers(dest="work_command", required=True)
     migrate = _sanitized(work.add_parser("migrate")); migrate.add_argument("--snapshot", required=True)
     migrate.add_argument("--profile", dest="profiles", action="append", required=True)
+    register = _sanitized(work.add_parser("register")); _packet(register)
+    register.add_argument("--parent"); register.add_argument("--kind", default="BIU")
+    imported = _sanitized(work.add_parser("import")); _packet(imported); imported.add_argument("--issue", required=True)
+    for name in ("assessment", "approval", "verification"):
+        imported.add_argument("--" + name)
+    show_work_item = _sanitized(work.add_parser("show")); show_work_item.add_argument("target")
     return parser
+
+
+def _packet(parser: argparse.ArgumentParser) -> None:
+    for name in ("file", "repo", "path", "commit", "label"):
+        parser.add_argument("--" + name, required=True)
 
 
 def _mutation(parser: argparse.ArgumentParser) -> None:
@@ -113,9 +129,25 @@ def main(argv: list[str] | None = None) -> int:
             if registry is None:
                 _render({"error": "work-registry-not-configured"}, args.json)
                 return 1
-            with open(args.snapshot, encoding="utf-8") as handle:
-                snapshot = json.load(handle)
-            _render(migrate_work(registry.identities, snapshot, args.profiles), args.json)
+            if args.work_command == "show":
+                _render(show_work(registry.records, args.target), args.json)
+                return 0
+            if args.work_command == "migrate":
+                with open(args.snapshot, encoding="utf-8") as handle:
+                    snapshot = json.load(handle)
+                _render(migrate_work(registry.identities, snapshot, args.profiles), args.json)
+                return 0
+            with open(args.file, "rb") as handle:
+                packet = handle.read()
+            if args.work_command == "register":
+                value = register_work(registry.records, packet, args.repo, args.path, args.commit, args.label,
+                                      args.kind, args.parent)
+            else:
+                evidence = {name: None if getattr(args, name) is None else json.loads(getattr(args, name))
+                            for name in ("assessment", "approval", "verification")}
+                value = import_work(registry.records, packet, args.repo, args.path, args.commit, args.label,
+                                    args.issue, evidence)
+            _render(value, args.json)
             return 0
         service = OperatorControlPlane(profile.name, profile.store, profile.work, profile.coordinator, profile.readiness, lambda: datetime.now(UTC).isoformat())
         if args.command == "status": value = service.status()
