@@ -40,6 +40,9 @@ _WRITE_MUTATION = """mutation($project:ID!,$item:ID!,$field:ID!,$option:String!)
 _ADD_DRAFT_MUTATION = """mutation($project:ID!,$title:String!,$body:String!){ addProjectV2DraftIssue(input:{projectId:$project,title:$title,body:$body}){
   projectItem { id project { id number } } } }"""
 
+_ADD_ISSUE_MUTATION = """mutation($project:ID!,$content:ID!){ addProjectV2ItemById(input:{projectId:$project,contentId:$content}){
+  item { id project { id number } } } }"""
+
 _DELETE_MUTATION = """mutation($project:ID!,$item:ID!){ deleteProjectV2Item(input:{projectId:$project,itemId:$item}){ deletedItemId } }"""
 
 
@@ -121,6 +124,14 @@ class GitHubProjectsV2Directory(ProjectDirectory):
             raise ProjectUnavailable("Project refused the probe item")
         self._resolve(added["projectItem"].get("project"))
         return str(added["projectItem"]["id"])
+
+    def add_issue_item(self, issue_node_id: str) -> str:
+        """The Issue's card on the configured Project; GitHub returns the existing card when it is already there."""
+        added = self._graphql(_ADD_ISSUE_MUTATION, {"project": self._address.project_id, "content": issue_node_id}).get("addProjectV2ItemById")
+        if not isinstance(added, Mapping) or not isinstance(added.get("item"), Mapping) or not added["item"].get("id"):
+            raise ProjectUnavailable("Project refused the Issue card")
+        self._resolve(added["item"].get("project"))
+        return str(added["item"]["id"])
 
     def delete_item(self, item_id: str) -> str:
         deleted = self._graphql(_DELETE_MUTATION, {"project": self._address.project_id, "item": item_id}).get("deleteProjectV2Item")

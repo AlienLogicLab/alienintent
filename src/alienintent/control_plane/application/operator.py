@@ -88,6 +88,25 @@ def assess_work(assessment: WorkAssessment, id_or_label: str, revision: tuple[by
     return value
 
 
+class WorkLinks(Protocol):
+    """The project's link service as `work link` and `work display` use it (bound by the profile's composition)."""
+
+    def link(self, id_or_label: str, issue: int | None) -> Any: ...
+
+    def display(self, id_or_label: str) -> Any: ...
+
+
+def link_work(links: WorkLinks, id_or_label: str, issue: int | None) -> dict[str, object]:
+    """`work link`: the item's Issue, card and the duplicates closed, or a refusal returned as the read answer
+    naming its code, the way `work show` answers UNKNOWN_IDENTITY."""
+    return asdict(links.link(id_or_label, issue))
+
+
+def display_work(links: WorkLinks, id_or_label: str) -> dict[str, object]:
+    """`work display`: `unchanged` or `updated` once read back, or a refusal returned as the read answer."""
+    return asdict(links.display(id_or_label))
+
+
 class OperatorControlPlane:
     def __init__(self, profile: str, store: Any, work: Any, coordinator: Any, readiness: Callable[[], bool], clock: Callable[[], str] = lambda: "not-recorded") -> None:
         self._profile, self._store, self._work, self._coordinator, self._readiness, self._clock = profile, store, work, coordinator, readiness, clock

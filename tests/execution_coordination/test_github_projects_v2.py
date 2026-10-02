@@ -183,3 +183,40 @@ def test_a_refusing_provider_is_unavailable_rather_than_an_empty_project() -> No
 
     with pytest.raises(ProjectUnavailable):
         GitHubProjectsV2Directory(address(), transport, lambda: {}).schema()
+
+
+# --- work link: an Issue's card on the configured Project --------------------
+
+
+def _adding(project_id: str = SANDBOX_PROJECT, number: int = 2, answer: dict | None = None):
+    seen: list[dict] = []
+
+    def graphql(query: str, variables: dict) -> object:
+        seen.append({"query": query, "variables": variables})
+        return answer if answer is not None else {"data": {"addProjectV2ItemById": {
+            "item": {"id": "PVTI_card", "project": {"id": project_id, "number": number}}}}}
+    return graphql, seen
+
+
+def test_an_issue_card_is_added_to_the_configured_project_and_its_id_returned() -> None:
+    graphql, seen = _adding()
+    live = GitHubProjectsV2Directory(address(), RecordedTransport({}, graphql), lambda: {})
+    assert live.add_issue_item("I_issue") == "PVTI_card"
+    [request] = seen
+    assert "addProjectV2ItemById" in request["query"]
+    assert request["variables"] == {"project": SANDBOX_PROJECT, "content": "I_issue"}
+    assert live.addressed == [SANDBOX_PROJECT]
+
+
+def test_an_issue_card_answered_for_another_project_or_refused_is_never_returned() -> None:
+    graphql, _ = _adding(project_id=FOREIGN_PROJECT)
+    with pytest.raises(ProjectAddressRejected):
+        GitHubProjectsV2Directory(address(), RecordedTransport({}, graphql), lambda: {}).add_issue_item("I_issue")
+    for answer in ({"errors": [{"message": "refused"}]}, {"data": {"addProjectV2ItemById": None}}):
+        graphql, _ = _adding(answer=answer)
+        with pytest.raises(ProjectUnavailable):
+            GitHubProjectsV2Directory(address(), RecordedTransport({}, graphql), lambda: {}).add_issue_item("I_x")
+
+
+def test_a_card_removal_answers_the_deleted_card_id() -> None:
+    assert directory().delete_item("PVTI_card") == "PVTI_card"

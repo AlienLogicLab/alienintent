@@ -167,3 +167,39 @@ def test_assessment_launches_the_bound_executable_with_the_attempt_markers(tmp_p
     assert "ANTHROPIC_API_KEY" not in launched
     assert registry.records.show(item.id).item.assessment_ref == ref_from_document(attempt["raw_ref"])
     assert (tmp_path / "readiness.sqlite").is_file() and any((tmp_path / "evidence").rglob("*"))
+
+
+def github(root: Path, **changes) -> dict:
+    value = {"repository": "AlienLogicLab/alienintent-sandbox", "application_id": 1000001,
+             "installation_id": 2000002, "private_key_path": str(root / "key.pem"),
+             "project": {"project_id": "PVT_kwDOfixtureSandboxProject", "project_number": 2,
+                         "organization": "AlienLogicLab", "status_field_id": "PVTSSF_s",
+                         "priority_field_id": "PVTSSF_p"}}
+    value.update(changes)
+    return value
+
+
+def test_without_github_there_is_no_link_service_and_with_it_nothing_is_sent_at_composition(tmp_path):
+    from alienintent.context_assembly.application.work_link import WorkLink
+    from tests.support.live_github import RecordedTransport
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    configuration = project_configuration(entry(tmp_path), PROJECT)
+    assert configuration.github is None and WorkRegistry(configuration).links is None
+    configuration = project_configuration(entry(tmp_path, github=github(tmp_path)), PROJECT)
+    assert (configuration.github.repository, configuration.github.private_key_path,
+            configuration.github.project.project_number) == (
+        "AlienLogicLab/alienintent-sandbox", tmp_path / "key.pem", 2)
+    transport = RecordedTransport({})
+    registry = WorkRegistry(configuration, transport=transport)
+    assert isinstance(registry.links, WorkLink) and registry.links.records is registry.records
+    assert registry.links.items is registry.items and transport.calls == []
+
+
+@pytest.mark.parametrize("value", [
+    lambda root: github(root, application_id="4990774"), lambda root: github(root, installation_id=0),
+    lambda root: github(root, repository="alienintent"), lambda root: github(root, private_key_path=""),
+    lambda root: github(root, extra=1), lambda root: github(root, project={"project_id": "PVT_x"}),
+    lambda root: github(root, project=dict(github(root)["project"], project_id="not-a-node")), lambda root: []])
+def test_a_malformed_github_entry_is_refused(tmp_path, value):
+    with pytest.raises(ConfigurationInvalid):
+        project_configuration(entry(tmp_path, github=value(tmp_path)), PROJECT)

@@ -25,6 +25,7 @@ from alienintent.context_assembly.domain.work_identity import (
     RequestRef,
     StoredPointer, TagWriteFailed, UnknownWorkItem, WorkIdentityRefused, WorkItem, check_evidence, check_kind,
     check_label, check_pointer_change, check_transition, valid_path)
+from alienintent.context_assembly.domain.work_link import IssueAlreadyLinked, ItemAlreadyLinked
 from alienintent.context_assembly.ports.work_item_repository import RepositoryLocation, WorkItemRepository
 from alienintent.evidence_learning.domain.records import ref_from_document
 from alienintent.evidence_learning.domain.refs import Ref
@@ -53,6 +54,11 @@ CREATE TABLE IF NOT EXISTS work_item (
 NOW = "strftime('%Y-%m-%dT%H:%M:%fZ', 'now')"
 COLUMNS = ("id, request_ref, label, parent_id, kind, state, retired_at, repo, path, \"commit\", assessment_ref, "
            "approval_ref, verification_ref, created_at, updated_at")
+# The link to the item's one GitHub Issue and card (`work link`): added at open to a table that lacks them (SQLite
+# cannot add a UNIQUE column), with a unique index giving one item per Issue.
+LINK_COLUMNS = (("issue_number", "INTEGER"), ("issue_node_id", "TEXT"), ("card_id", "TEXT"))
+LINK_INDEX = "CREATE UNIQUE INDEX IF NOT EXISTS work_item_issue ON work_item(issue_number)"
+READ_COLUMNS = COLUMNS + "".join(", " + name for name, _ in LINK_COLUMNS)
 INSERT = (f"INSERT INTO work_item ({COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, CASE WHEN ? THEN {NOW} END, ?, ?, ?, ?, ?, ?, "
           f"{NOW}, {NOW}) ON CONFLICT(request_ref) DO NOTHING")
 ZERO = "0" * 40
@@ -72,6 +78,17 @@ class SQLiteWorkItemRepository(WorkItemRepository):
         self._local = threading.local()
         with self._session() as connection:
             self._execute(connection, SCHEMA)
+            missing = self._missing_link_columns(connection)
+        if missing:
+            with self.transaction():  # Re-read under the write lock: another process may have added them.
+                for name, kind in self._missing_link_columns(self._write()):
+                    self._execute(self._write(), f"ALTER TABLE work_item ADD COLUMN {name} {kind}")
+        with self._session() as connection:
+            self._execute(connection, LINK_INDEX)
+
+    def _missing_link_columns(self, connection: sqlite3.Connection) -> list[tuple[str, str]]:
+        present = {row["name"] for row in self._execute(connection, "PRAGMA table_info(work_item)").fetchall()}
+        return [(name, kind) for name, kind in LINK_COLUMNS if name not in present]
 
     # --- connection and transaction ------------------------------------------------------------------------------
 
@@ -144,8 +161,8 @@ class SQLiteWorkItemRepository(WorkItemRepository):
 
     @staticmethod
     def _execute(connection: sqlite3.Connection, sql: str, parameters: tuple = (), *, label: str | None = None,
-                 parent: str | None = None) -> sqlite3.Cursor:
-        """One statement; constraint failures become typed refusals. Callers that can hit the label or parent
+                 parent: str | None = None, issue: int | None = None) -> sqlite3.Cursor:
+        """One statement; constraint failures become typed refusals. Callers that can hit the label, parent or Issue
         constraint name the refused value explicitly; any other constraint is INVALID_WORK_ITEM."""
         try:
             return connection.execute(sql, parameters)
@@ -155,6 +172,8 @@ class SQLiteWorkItemRepository(WorkItemRepository):
                 raise LabelInUse(label) from error
             if parent is not None and kind == "SQLITE_CONSTRAINT_FOREIGNKEY":
                 raise ParentNotRegistered(parent) from error
+            if issue is not None and kind == "SQLITE_CONSTRAINT_UNIQUE" and message.endswith("work_item.issue_number"):
+                raise IssueAlreadyLinked(str(issue)) from error
             raise InvalidWorkItem("constraint", message) from error
         except sqlite3.OperationalError as error:
             if "locked" in str(error) or "busy" in str(error):
@@ -170,7 +189,7 @@ class SQLiteWorkItemRepository(WorkItemRepository):
 
     def _rows(self, where: str, parameters: tuple) -> list[WorkItem]:
         with self._session() as connection:
-            rows = self._execute(connection, f"SELECT {COLUMNS} FROM work_item WHERE {where}", parameters).fetchall()
+            rows = self._execute(connection, f"SELECT {READ_COLUMNS} FROM work_item WHERE {where}", parameters).fetchall()
         return [_item(row) for row in rows]
 
     def find(self, id_or_label: str) -> WorkItem | None:
@@ -179,6 +198,10 @@ class SQLiteWorkItemRepository(WorkItemRepository):
 
     def find_request(self, request_ref: str) -> WorkItem | None:
         rows = self._rows("request_ref = ?", (request_ref,))
+        return rows[0] if rows else None
+
+    def find_by_issue(self, number: int) -> WorkItem | None:
+        rows = self._rows("issue_number = ?", (number,))
         return rows[0] if rows else None
 
     def children(self, identity: str) -> tuple[WorkItem, ...]:
@@ -268,6 +291,21 @@ class SQLiteWorkItemRepository(WorkItemRepository):
                 item = self._by_id(identity)
             self._tag_later(item)
             return item
+
+    def set_link(self, identity: str, issue_number: int, issue_node_id: str, card_id: str) -> WorkItem:
+        """Store the item's one Issue and card, only while it has none: ITEM_ALREADY_LINKED when the item gained a
+        link first, ISSUE_ALREADY_LINKED when another item holds the Issue."""
+        if not isinstance(issue_number, int) or issue_number <= 0 or not issue_node_id or not card_id:
+            raise InvalidWorkItem("link", f"{issue_number!r}:{issue_node_id!r}:{card_id!r}")
+        with self.transaction():
+            self._by_id(identity)
+            cursor = self._execute(self._write(), f"UPDATE work_item SET issue_number = ?, issue_node_id = ?, "
+                                                  f"card_id = ?, updated_at = {NOW} "
+                                                  "WHERE id = ? AND issue_number IS NULL",
+                                   (issue_number, issue_node_id, card_id, identity), issue=issue_number)
+            if cursor.rowcount != 1:
+                raise ItemAlreadyLinked(identity, str(self._by_id(identity).issue_number))
+            return self._by_id(identity)
 
     def insert_migrated(self, entry: MigrationEntry) -> WorkItem:
         with self.transaction():
@@ -420,4 +458,4 @@ def _item(row: sqlite3.Row) -> WorkItem:
             for name in EVIDENCE}
     return WorkItem(row["id"], row["request_ref"], row["label"], row["parent_id"], row["kind"], row["state"],
                     row["retired_at"], pointer, refs["assessment"], refs["approval"], refs["verification"],
-                    row["created_at"], row["updated_at"])
+                    row["created_at"], row["updated_at"], row["issue_number"], row["issue_node_id"], row["card_id"])

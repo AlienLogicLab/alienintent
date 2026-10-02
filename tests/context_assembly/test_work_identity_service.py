@@ -653,3 +653,43 @@ def test_every_push_goes_through_publish_refs(fx, monkeypatch):
     fx.service.import_completed("issue:153", "Done", "BIU", fx.packet(path="docs/q.md", data=b"q\n"), {})
     assert pushes and all(through for through, _ in pushes)
     assert all(not any(a in ("--tags", "--mirror", "--all") or "*" in a for a in args) for _, args in pushes)
+
+
+# --- work link: the stored link (github-association-and-display) -----------------------------------------------
+
+
+def test_set_link_stores_one_issue_per_item_and_one_item_per_issue(fx):
+    from alienintent.context_assembly.domain.work_link import IssueAlreadyLinked, ItemAlreadyLinked
+    x = fx.service.register("requirement:SF-REQ-1", "X", "BIU")
+    y = fx.service.register("requirement:SF-REQ-2", "Y", "BIU")
+    assert (x.issue_number, x.issue_node_id, x.card_id) == (None, None, None)
+    linked = fx.items.set_link(x.id, 5, "I_5", "PVTI_5")
+    assert (linked.issue_number, linked.issue_node_id, linked.card_id) == (5, "I_5", "PVTI_5")
+    with pytest.raises(ItemAlreadyLinked):
+        fx.items.set_link(x.id, 6, "I_6", "PVTI_6")
+    with pytest.raises(IssueAlreadyLinked):
+        fx.items.set_link(y.id, 5, "I_5", "PVTI_5")
+    assert fx.items.find(y.id).issue_number is None and fx.items.find(x.id) == linked
+    assert fx.items.find_by_issue(5) == linked and fx.items.find_by_issue(6) is None
+
+
+def test_an_existing_database_gains_the_link_columns_and_index_with_its_rows_unchanged(tmp_path):
+    database = tmp_path / "work.sqlite"
+    connection = sqlite3.connect(database)
+    connection.execute(adapter_module.SCHEMA)  # The table as the earlier units created it.
+    connection.execute(adapter_module.INSERT, ("fx-old", "legacy:fx-old", "fx-old", None, "BIU", "CAPTURE", False,
+                                               None, None, None, None, None, None))
+    connection.commit()
+    before = connection.execute("SELECT * FROM work_item").fetchall()
+    connection.close()
+    for _ in range(2):  # Opening again changes nothing further.
+        items = SQLiteWorkItemRepository(database, {})
+    connection = sqlite3.connect(database)
+    columns = [row[1] for row in connection.execute("PRAGMA table_info(work_item)")]
+    assert columns[-3:] == ["issue_number", "issue_node_id", "card_id"]
+    assert [tuple(row[:-3]) for row in connection.execute("SELECT * FROM work_item").fetchall()] == before
+    assert connection.execute("SELECT \"unique\" FROM pragma_index_list('work_item') "
+                              "WHERE name = 'work_item_issue'").fetchone() == (1,)
+    connection.close()
+    assert items.find("fx-old").issue_number is None
+    assert items.set_link("fx-old", 9, "I_9", "PVTI_9").issue_number == 9

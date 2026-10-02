@@ -8,7 +8,9 @@ database path. Each profile's database is opened read-only in effect (it must al
 so opening it writes nothing) for the compiler's migration check and `work migrate`. The same WorkIdentityService,
 repository adapter and publisher are handed to every client of the project. The optional `readiness` object configures
 `work assess`: its own assessment store and evidence folder, and the Agent Ready executable and provider; without it
-the project has no assessment service.
+the project has no assessment service. The optional `github` object configures `work link` and `work display`: the
+one repository and board the project's work items are linked to, and the GitHub App installation that writes them
+(its private key file named directly); without it the project has no link service.
 
 Configuration document (JSON):
 
@@ -19,7 +21,11 @@ Configuration document (JSON):
         "packets": {"repository": "<name>", "directory": "work-packets"},
         "profiles": {"<profile>": "<path to that profile's operational state.sqlite>"},
         "readiness": {"database": "<path>", "evidence_root": "<path>", "executable": "<agent-ready path>",
-                      "provider": "<provider>"}}}}
+                      "provider": "<provider>"},
+        "github": {"repository": "<owner>/<name>", "application_id": <int>, "installation_id": <int>,
+                   "private_key_path": "<path to the App private key file>",
+                   "project": {"project_id": "PVT_...", "project_number": <int>, "organization": "<owner>",
+                               "status_field_id": "<id>", "priority_field_id": "<id>"}}}}}
 """
 from __future__ import annotations
 
@@ -29,13 +35,16 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+import time
 from types import SimpleNamespace
 
 from alienintent.composition.readiness import assessment_environment, compose_producer, resolve_binding
+from alienintent.composition.sandbox_profile import APP_KEY_REFERENCE
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
+from alienintent.context_assembly.application.work_link import WorkLink
 from alienintent.context_assembly.application.work_registration import WorkRecordService
 from alienintent.context_assembly.domain.work_identity import valid_path
 from alienintent.context_assembly.ports.work_item_repository import (
@@ -44,8 +53,17 @@ from alienintent.evidence_learning.adapters.local_evidence_repository import Loc
 from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.execution_coordination.adapters import assessment_consumer
 from alienintent.execution_coordination.adapters.assessment_consumer import RetainedAssessmentConsumer
+from alienintent.execution_coordination.adapters.github_projects_v2 import GitHubProjectsV2Directory
+from alienintent.execution_coordination.adapters.github_repository_api import GitHubRepositoryApi
 from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERSION, SQLiteOperationalStore
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
+from alienintent.installation.adapters.app_jwt import app_assertion
+from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
+from alienintent.installation.adapters.urllib_github_transport import UrllibGitHubTransport
+from alienintent.installation.application.installation_credentials import InstallationCredentials
+from alienintent.installation.domain.app_credentials import AppIdentity
+from alienintent.installation.domain.project_identity import ProjectAddress
+from alienintent.installation.ports.github_transport import GitHubTransport
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.domain.runtime import INVOCATION_MARKER, INVOCATION_OWNER_MARKER, owner_token
@@ -67,6 +85,16 @@ class ReadinessConfiguration:
 
 
 @dataclass(frozen=True)
+class GitHubConfiguration:
+    """`work link` and `work display`: the one repository and board, and the App installation that writes them."""
+    repository: str
+    application_id: int
+    installation_id: int
+    private_key_path: Path
+    project: ProjectAddress
+
+
+@dataclass(frozen=True)
 class ProjectConfiguration:
     project: str
     database: Path
@@ -75,6 +103,7 @@ class ProjectConfiguration:
     packets_directory: str
     profiles: Mapping[str, Path]
     readiness: ReadinessConfiguration | None = None
+    github: GitHubConfiguration | None = None
 
 
 def project_configuration(document: object, project: str) -> ProjectConfiguration:
@@ -89,8 +118,9 @@ def project_configuration(document: object, project: str) -> ProjectConfiguratio
         packets = entry["packets"]
         profiles = {name: Path(path) for name, path in entry["profiles"].items()}
         readiness = _readiness(entry["readiness"]) if "readiness" in entry else None
+        github = _github(entry["github"]) if "github" in entry else None
         configuration = ProjectConfiguration(project, Path(entry["database"]), repositories, packets["repository"],
-                                             packets["directory"], profiles, readiness)
+                                             packets["directory"], profiles, readiness, github)
     except ConfigurationInvalid:
         raise
     except (KeyError, TypeError, AttributeError, ValueError) as error:
@@ -111,6 +141,19 @@ def _readiness(value: object) -> ReadinessConfiguration:
         raise ConfigurationInvalid("readiness needs exactly database, evidence_root, executable and provider")
     return ReadinessConfiguration(Path(value["database"]), Path(value["evidence_root"]), Path(value["executable"]),
                                   value["provider"])
+
+
+def _github(value: object) -> GitHubConfiguration:
+    fields = {"repository", "application_id", "installation_id", "private_key_path", "project"}
+    if not isinstance(value, dict) or set(value) != fields or not isinstance(value["repository"], str) \
+            or value["repository"].count("/") != 1 or not all(value["repository"].split("/")) \
+            or not all(type(value[name]) is int and value[name] > 0 for name in ("application_id", "installation_id")) \
+            or not isinstance(value["private_key_path"], str) or not value["private_key_path"] \
+            or not isinstance(value["project"], dict):
+        raise ConfigurationInvalid("github needs exactly repository, application_id, installation_id, "
+                                   "private_key_path and project")
+    return GitHubConfiguration(value["repository"], value["application_id"], value["installation_id"],
+                               Path(value["private_key_path"]), ProjectAddress(**value["project"]))
 
 
 def load_project_configuration(path: Path, project: str) -> ProjectConfiguration:
@@ -154,7 +197,8 @@ class WorkRegistry:
     """The one work identity service of a project, with its repository adapter, publisher and the operator's
     work-record operations (`records`); `registration` is the compiler's."""
 
-    def __init__(self, configuration: ProjectConfiguration, source_control: SourceControl | None = None) -> None:
+    def __init__(self, configuration: ProjectConfiguration, source_control: SourceControl | None = None,
+                 transport: GitHubTransport | None = None) -> None:
         self.configuration = configuration
         self.profile_stores = {name: read_only_store(path) for name, path in sorted(configuration.profiles.items())}
         self.items = SQLiteWorkItemRepository(configuration.database, configuration.repositories)
@@ -169,6 +213,19 @@ class WorkRegistry:
             self.profile_stores)
         self.records = WorkRecordService(self.identities, self.items, self.items.read_packet)
         self.assessment = self._assessment(configuration) if configuration.readiness is not None else None
+        self.links = self._links(configuration.github, transport) if configuration.github is not None else None
+
+    def _links(self, github: GitHubConfiguration, transport: GitHubTransport | None) -> WorkLink:
+        """`work link` and `work display` over the same constructors SandboxProfileComposition uses, without its
+        profile document; nothing is read or sent until a command runs."""
+        transport = transport or UrllibGitHubTransport()
+        credentials = InstallationCredentials(
+            AppIdentity(github.application_id, github.installation_id, APP_KEY_REFERENCE),
+            ProtectedLocalFileSecretProvider({APP_KEY_REFERENCE: github.private_key_path}), transport, time.time,
+            app_assertion)
+        return WorkLink(self.records, self.items,
+                        GitHubRepositoryApi(github.repository, transport, credentials.authorization),
+                        GitHubProjectsV2Directory(github.project, transport, credentials.authorization), credentials)
 
     def _assessment(self, configuration: ProjectConfiguration) -> PacketAssessment:
         """`work assess` over its own retained-assessment store; each attempt's Agent Ready launch carries the
