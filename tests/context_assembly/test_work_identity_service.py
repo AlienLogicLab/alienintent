@@ -19,7 +19,7 @@ from alienintent.context_assembly.adapters import work_item_repository as adapte
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.domain.work_identity import (
-    RESERVATIONS, CommitNotRetained, RequestRef, GitReadFailed, IllegalTransition, InvalidRequestRef, LabelInUse,
+    RESERVATIONS, CommitNotRetained, InvalidWorkItem, RequestRef, GitReadFailed, IllegalTransition, InvalidRequestRef, LabelInUse,
     MigrationConflict, ParentNotRegistered, Pointer, PointerMismatch, PointerPresent, TagWriteFailed,
     TransactionHeld, is_uuid)
 from alienintent.evidence_learning.domain.refs import Ref
@@ -273,6 +273,53 @@ def test_find_by_identifier_or_label(fx):
     item = fx.service.register("requirement:NEW", "New work", "BIU")
     assert fx.service.find("PY-09").id == "PY-09" and fx.service.find(item.id) == item
     assert fx.service.find("New work") == item and fx.service.find("missing") is None
+
+
+def test_request_reference_is_unique_in_the_database_itself(fx):
+    """UNIQUE(request_ref) is a database constraint, not only the adapter's look-up-before-insert."""
+    item = fx.service.register("requirement:UNIQUE-1", "Unique one", "BIU")
+    other = fx.service.register("requirement:UNIQUE-2", "Unique two", "BIU")
+    connection = sqlite3.connect(fx.project.database)
+    try:
+        with pytest.raises(sqlite3.IntegrityError, match=r"UNIQUE constraint failed: work_item\.request_ref"):
+            connection.execute(
+                "INSERT INTO work_item (id, request_ref, label, kind, state, created_at, updated_at) "
+                "VALUES ('00000000-0000-4000-8000-0000000000aa', ?, 'Direct duplicate', 'BIU', 'CAPTURE', 'x', 'x')",
+                (item.request_ref,))
+    finally:
+        connection.close()
+    fx.service.migrate({"active": ["PY-01"], "retired": [], "reserved": []}, [A])
+    with pytest.raises(InvalidWorkItem) as error:  # The re-key path must also meet the constraint.
+        fx.items.rekey("PY-01", other.request_ref)
+    assert isinstance(error.value.__cause__, sqlite3.IntegrityError) and "request_ref" in str(error.value.__cause__)
+    assert fx.items.find("PY-01").request_ref == "legacy:PY-01" and len(fx.rows()) == 3
+
+
+class _FailingRollback:
+    """A real connection whose ROLLBACK fails (stands in for an I/O error while rolling back)."""
+
+    def __init__(self, connection):
+        self._connection = connection
+
+    def __getattr__(self, name):
+        return getattr(self._connection, name)
+
+    def execute(self, sql, *args):
+        if sql == "ROLLBACK":
+            raise sqlite3.OperationalError("disk I/O error during ROLLBACK")
+        return self._connection.execute(sql, *args)
+
+
+def test_failing_rollback_keeps_the_original_typed_error(fx, monkeypatch):
+    original = SQLiteWorkItemRepository._connect
+    monkeypatch.setattr(SQLiteWorkItemRepository, "_connect", lambda self: _FailingRollback(original(self)))
+    good = fx.packet()
+    with pytest.raises(PointerMismatch) as error:
+        fx.service.register("packet:alienintent/docs/p.md", "Packet", "BIU",
+                            pointer=Pointer(REPO, good.path, good.commit, b"other bytes"))
+    assert any("ROLLBACK failed" in note for note in getattr(error.value, "__notes__", ()))
+    monkeypatch.setattr(SQLiteWorkItemRepository, "_connect", original)
+    assert fx.rows() == []
 
 
 # --- check 4: optional parent and retirement by identifier -----------------------------------------------------

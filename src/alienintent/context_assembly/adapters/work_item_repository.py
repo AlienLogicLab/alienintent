@@ -116,16 +116,14 @@ class SQLiteWorkItemRepository(WorkItemRepository):
             return
         connection = self._connect()
         self._local.connection, self._local.pending = connection, {}
-        committed = False
         try:
             self._execute(connection, "BEGIN IMMEDIATE")
             try:
                 yield
                 self._execute(connection, "COMMIT")
-                committed = True
-            finally:
-                if not committed and connection.in_transaction:
-                    connection.execute("ROLLBACK")
+            except BaseException as error:
+                self._rollback(connection, error)
+                raise
         finally:
             pending = self._local.pending
             self._local.connection, self._local.pending = None, {}
@@ -133,15 +131,30 @@ class SQLiteWorkItemRepository(WorkItemRepository):
         self._write_tags(pending)
 
     @staticmethod
-    def _execute(connection: sqlite3.Connection, sql: str, parameters: tuple = ()) -> sqlite3.Cursor:
+    def _rollback(connection: sqlite3.Connection, error: BaseException) -> None:
+        """Roll back after `error`; a failing ROLLBACK never replaces it (closing the connection, which always
+        follows, discards the open transaction) and is recorded on it as a note."""
+        if not connection.in_transaction:
+            return
+        try:
+            connection.execute("ROLLBACK")
+        except sqlite3.Error as failure:
+            error.add_note(f"ROLLBACK failed ({type(failure).__name__}: {failure}); the connection is closed, "
+                           "which discards the transaction")
+
+    @staticmethod
+    def _execute(connection: sqlite3.Connection, sql: str, parameters: tuple = (), *, label: str | None = None,
+                 parent: str | None = None) -> sqlite3.Cursor:
+        """One statement; constraint failures become typed refusals. Callers that can hit the label or parent
+        constraint name the refused value explicitly; any other constraint is INVALID_WORK_ITEM."""
         try:
             return connection.execute(sql, parameters)
         except sqlite3.IntegrityError as error:
-            message = str(error)
-            if "work_item.label" in message:
-                raise LabelInUse(*(str(p) for p in parameters[2:3])) from error
-            if "FOREIGN KEY" in message:
-                raise ParentNotRegistered(*(str(p) for p in parameters[3:4])) from error
+            kind, message = getattr(error, "sqlite_errorname", ""), str(error)
+            if label is not None and kind == "SQLITE_CONSTRAINT_UNIQUE" and message.endswith("work_item.label"):
+                raise LabelInUse(label) from error
+            if parent is not None and kind == "SQLITE_CONSTRAINT_FOREIGNKEY":
+                raise ParentNotRegistered(parent) from error
             raise InvalidWorkItem("constraint", message) from error
         except sqlite3.OperationalError as error:
             if "locked" in str(error) or "busy" in str(error):
@@ -199,7 +212,7 @@ class SQLiteWorkItemRepository(WorkItemRepository):
                 self._execute(self._write(), INSERT, (
                     str(uuid4()), str(request_ref), label, parent_id, kind, state, False,
                     *((pointer.repo, pointer.path, pointer.commit) if pointer else (None, None, None)),
-                    *(_ref_text(refs.get(name)) for name in EVIDENCE)))
+                    *(_ref_text(refs.get(name)) for name in EVIDENCE)), label=label, parent=parent_id or "")
             item = self._created(str(request_ref))
             self._tag_later(item)
             return item
@@ -259,7 +272,7 @@ class SQLiteWorkItemRepository(WorkItemRepository):
     def insert_migrated(self, entry: MigrationEntry) -> WorkItem:
         with self.transaction():
             self._execute(self._write(), INSERT, (entry.id, entry.request_ref, entry.id, None, "BIU", CAPTURE,
-                                                  entry.retired, None, None, None, None, None, None))
+                                                  entry.retired, None, None, None, None, None, None), label=entry.id)
             return self._by_id(entry.id)
 
     def rekey(self, identity: str, request_ref: str) -> WorkItem:

@@ -821,7 +821,11 @@ def test_recompile_with_the_remote_down_holds_and_never_pushes_under_the_lock(ha
 
 
 def test_state_change_waits_for_the_pointer_transaction(harness, monkeypatch):
-    """A concurrent set_state lands after the compiler's single transaction: all three pointers are written."""
+    """A concurrent set_state lands after the compiler's single transaction: all three pointers are written.
+
+    The competing writer is started while the rows are read and must still be blocked when the last pointer is
+    written, and the reads, the POINTER_PRESENT check and every write must share one outermost transaction (one
+    project-database connection): a split check/write transaction fails here deterministically."""
     import os
     import sys
     import time
@@ -836,7 +840,18 @@ def test_state_change_waits_for_the_pointer_transaction(harness, monkeypatch):
             "print(items.set_state(sys.argv[2], 'SPECIFY').state, flush=True)")
     from alienintent.context_assembly.application.initial_compilation_service import InitialCompilation
     original = InitialCompilation._row
-    started = []
+    original_connect, original_set_pointer = adapter.SQLiteWorkItemRepository._connect, \
+        adapter.SQLiteWorkItemRepository.set_pointer
+    started, connections, at_reads, at_writes = [], [0], [], []
+
+    def counting_connect(self):
+        connections[0] += 1
+        return original_connect(self)
+
+    def observed_set_pointer(self, identity, pointer):
+        if started:
+            at_writes.append((identity, connections[0], self.in_transaction(), started[0].poll()))
+        return original_set_pointer(self, identity, pointer)
 
     def racing(self, identity):
         # Between the compiler's read of the rows (and its POINTER_PRESENT check) and its first write.
@@ -847,12 +862,19 @@ def test_state_change_waits_for_the_pointer_transaction(harness, monkeypatch):
             assert started[0].stdout.readline().strip() == "ready"
             time.sleep(0.5)  # The writer is now waiting on the compiler's lock.
             assert started[0].poll() is None, "the rows were read outside the pointer write transaction"
+            at_reads.append(connections[0])
         return original(self, identity)
 
     monkeypatch.setattr(InitialCompilation, "_row", racing)
+    monkeypatch.setattr(adapter.SQLiteWorkItemRepository, "_connect", counting_connect)
+    monkeypatch.setattr(adapter.SQLiteWorkItemRepository, "set_pointer", observed_set_pointer)
     before = pointers(h)
     result = h.compile(THREE, limits=changed())
     assert isinstance(result, CompilationCandidate), getattr(result, "findings", result)
+    assert [w[0] for w in at_writes] == [h.id(R0), h.id(R1), h.id(R2)]
+    assert all(c == at_reads[0] and held for _, c, held, _ in at_writes), \
+        "the POINTER_PRESENT check and the pointer writes ran in different transactions"
+    assert at_writes[-1][3] is None, "the competing writer ran before the last pointer was written"
     assert started[0].communicate(timeout=30)[0].strip() == "SPECIFY"
     after = pointers(h)
     assert all(after[i][2] != before[i][2] for i in before) and after[target][3] == "SPECIFY"
