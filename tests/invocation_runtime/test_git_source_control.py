@@ -81,7 +81,7 @@ def test_retry_pushes_only_what_is_missing_and_a_complete_retry_changes_nothing(
 def test_a_moved_tag_moves_on_the_remote_only_with_force(repo):
     clone, _, commits = repo
     GitSourceControl().publish_refs(clone, "origin", (PublishRef("refs/tags/work/x", commits[0], force=True),))
-    with pytest.raises(PublicationFailed) as error:
+    with pytest.raises(PublicationFailed, match="rejected") as error:
         GitSourceControl().publish_refs(clone, "origin", (PublishRef("refs/tags/work/x", commits[1]),))
     assert error.value.refs == ("refs/tags/work/x",) and remote_refs(clone)["refs/tags/work/x"] == commits[0]
     GitSourceControl().publish_refs(clone, "origin", (PublishRef("refs/tags/work/x", commits[1], force=True),))
@@ -94,7 +94,7 @@ def test_rejected_push_is_publication_failed_naming_the_refs(repo, tmp_path):
     hook.write_text("#!/bin/sh\nexit 1\n")
     hook.chmod(0o755)
     refs = (PublishRef("refs/heads/packets", commits[0]), PublishRef("refs/tags/work/y", commits[0], force=True))
-    with pytest.raises(PublicationFailed) as error:
+    with pytest.raises(PublicationFailed, match="push of refs/heads/packets rejected") as error:
         GitSourceControl().publish_refs(clone, "origin", refs)
     assert error.value.refs == ("refs/heads/packets", "refs/tags/work/y") and remote_refs(clone) == {}
 
