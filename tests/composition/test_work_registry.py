@@ -3,7 +3,7 @@
 The entry is looked up by the project string; it names the one project database, maps each repository name to one
 configured clone with an explicit remote, and lists every profile with its own operational database, which must
 already exist (opening it writes nothing). UpstreamProfile composes initial compilation only with the registry of
-its own project.
+its own project. The optional `readiness` entry composes `work assess` over its own database and evidence folder.
 """
 from __future__ import annotations
 
@@ -15,8 +15,13 @@ import pytest
 
 from alienintent.composition.work_registry import (
     ConfigurationInvalid, WorkRegistry, load_project_configuration, project_configuration, read_only_store)
+from alienintent.evidence_learning.domain.records import ref_from_document
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
-from tests.context_assembly.test_initial_compilation import PROJECT, REPO, Harness, Project
+from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+from alienintent.invocation_runtime.domain.runtime import owner_token
+from tests.context_assembly.test_initial_compilation import PROJECT, REPO, Harness, Project, project_clone
+from tests.context_assembly.test_readiness_consumer import fixture_package
+from tests.context_assembly.test_work_identity_service import commit_file
 
 
 def entry(root: Path, **changes) -> dict:
@@ -105,3 +110,60 @@ def test_profile_factory_reads_two_required_environment_variables(tmp_path, monk
     monkeypatch.delenv(missing)
     with pytest.raises(ConfigurationInvalid):
         work_registry_profile()
+
+
+def readiness(root: Path, **changes) -> dict:
+    value = {"database": str(root / "readiness.sqlite"), "evidence_root": str(root / "evidence"),
+             "executable": str(root / "fixture-agent-ready" / "bin" / "agent-ready"), "provider": "claude"}
+    value.update(changes)
+    return value
+
+
+def fixture_agent_ready(root: Path, launched: Path) -> Path:
+    """FIXTURE_PACKAGE_NOT_AGENT_READY: an executable an `agent-ready` distribution declares; it records the
+    environment it was launched with and prints a READY result."""
+    executable = fixture_package(root)
+    executable.write_text(f"#!/bin/sh\nenv > '{launched}'\nprintf '%s' '{{\"disposition\": \"READY\"}}'\n")
+    executable.chmod(0o700)
+    return executable
+
+
+@pytest.mark.parametrize("change", [
+    lambda root: {"database": str(root / "work.sqlite")}, lambda root: {"database": str(root / "fx.sqlite")},
+    lambda root: {"provider": ""}, lambda root: {"executable": 7}, lambda root: {"extra": "x"}])
+def test_malformed_readiness_or_a_shared_database_is_refused(tmp_path, change):
+    with pytest.raises(ConfigurationInvalid):
+        project_configuration(entry(tmp_path, readiness=readiness(tmp_path, **change(tmp_path))), PROJECT)
+    with pytest.raises(ConfigurationInvalid):
+        project_configuration(entry(tmp_path, readiness={"database": str(tmp_path / "r.sqlite")}), PROJECT)
+
+
+def test_without_readiness_there_is_no_assessment_service(tmp_path):
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    configuration = project_configuration(entry(tmp_path), PROJECT)
+    assert configuration.readiness is None and WorkRegistry(configuration).assessment is None
+
+
+def test_assessment_launches_the_bound_executable_with_the_attempt_markers(tmp_path, monkeypatch):
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fixture-key-never-passed")
+    clone, _ = project_clone(tmp_path)
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    executable = fixture_agent_ready(tmp_path, tmp_path / "launched.env")
+    repositories = {REPO: {"clone": str(clone), "remote": "origin", "default_branch": "main",
+                           "packets_branch": "alienintent/work-packets"}}
+    registry = WorkRegistry(project_configuration(entry(tmp_path, repositories=repositories,
+                                                        readiness=readiness(tmp_path, executable=str(executable))),
+                                                  PROJECT))
+    assert isinstance(registry.assessment.ownership, ProcOwnership)
+    packet = b"# Work unit: fixture\n"
+    item = registry.records.register(packet, REPO, "docs/p.md", commit_file(clone, "main", "docs/p.md", packet), "P")
+    result = registry.assessment.assess(item.id)
+    assert result.disposition == "READY"
+    [attempt] = registry.assessment.consumer.history(item.id)
+    launched = dict(line.split("=", 1) for line in (tmp_path / "launched.env").read_text().splitlines() if "=" in line)
+    assert launched["ALIENINTENT_INVOCATION_ID"] == result.attempt_id
+    assert attempt["owner"] == dict(ProcOwnership().current())
+    assert launched["ALIENINTENT_INVOCATION_OWNER"] == owner_token(attempt["owner"])
+    assert "ANTHROPIC_API_KEY" not in launched
+    assert registry.records.show(item.id).item.assessment_ref == ref_from_document(attempt["raw_ref"])
+    assert (tmp_path / "readiness.sqlite").is_file() and any((tmp_path / "evidence").rglob("*"))

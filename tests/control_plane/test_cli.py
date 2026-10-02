@@ -394,3 +394,38 @@ def test_cli_work_register_refuses_a_mismatch_and_show_reads_the_pinned_packet(t
     assert shown.returncode == 0 and json.loads(shown.stdout)["packet"] == packet.decode()
     assert json.loads(shown.stdout)["item"] == item
     assert json.loads(_registry_cli(tmp_path, "show", "missing").stdout) == {"answer": "UNKNOWN_IDENTITY"}
+
+
+def test_cli_work_assess_with_and_without_the_readiness_entry(tmp_path: Path) -> None:
+    """Check 6: without a readiness entry `work assess` answers readiness-not-configured and moves nothing; with one
+    it assesses once, a repeat runs nothing, and `work show` names the saved reference."""
+    from tests.composition.test_work_registry import fixture_agent_ready
+    from tests.context_assembly.test_work_identity_service import commit_file
+    clone, commit, packet = _registry_project(tmp_path)
+    item = json.loads(_registry_cli(tmp_path, "register", "--file", str(tmp_path / "packet.md"), "--repo", "r",
+                                    "--path", "docs/packet.md", "--commit", commit, "--label", "PACKET").stdout)
+    revised = commit_file(clone, "main", "docs/packet.md", packet + b"revised\n")
+    (tmp_path / "revised.md").write_bytes(packet + b"revised\n")
+    for args in ((), ("--file", str(tmp_path / "revised.md"), "--commit", revised)):
+        refused = _registry_cli(tmp_path, "assess", "PACKET", *args)
+        assert refused.returncode == 1 and json.loads(refused.stdout) == {"error": "readiness-not-configured"}
+    shown = json.loads(_registry_cli(tmp_path, "show", "PACKET").stdout)["item"]
+    assert shown == item and _remote_tag(str(tmp_path / "remote.git"), item["id"]) == commit
+    for args in (("--file", "x"), ("--commit", revised), ("--file", "x", "--commit", revised, "--recover", "a")):
+        invalid = _registry_cli(tmp_path, "assess", "PACKET", *args)
+        assert invalid.returncode == 2 and json.loads(invalid.stdout) == {"error": "invalid-command-arguments"}
+    document = json.loads((tmp_path / "projects.json").read_text())
+    document["projects"]["P"]["readiness"] = {
+        "database": str(tmp_path / "readiness.sqlite"), "evidence_root": str(tmp_path / "evidence"),
+        "executable": str(fixture_agent_ready(tmp_path, tmp_path / "launched.env")), "provider": "claude"}
+    (tmp_path / "projects.json").write_text(json.dumps(document))
+    assessed = _registry_cli(tmp_path, "assess", "PACKET")
+    assert assessed.returncode == 0, assessed.stdout + assessed.stderr
+    value = json.loads(assessed.stdout)
+    assert (value["identity"], value["disposition"], value["reused"]) == (item["id"], "READY", False)
+    again = json.loads(_registry_cli(tmp_path, "assess", item["id"]).stdout)
+    assert (again["attempt_id"], again["reused"]) == (value["attempt_id"], True)
+    shown = json.loads(_registry_cli(tmp_path, "show", "PACKET").stdout)["item"]
+    assert shown["assessment_ref"] == value["assessment_ref"] and shown["state"] == "CAPTURE"
+    assert json.loads(_registry_cli(tmp_path, "assess", "missing").stdout) == {
+        "answer": "UNKNOWN_IDENTITY", "identity": "missing", "attempt_id": None, "detail": ""}

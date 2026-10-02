@@ -10,7 +10,7 @@ from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from alienintent.control_plane.application.operator import (
-    OperatorControlPlane, OperatorDenied, import_work, migrate_work, register_work, show_work)
+    OperatorControlPlane, OperatorDenied, assess_work, import_work, migrate_work, register_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
@@ -87,6 +87,8 @@ def _parser() -> argparse.ArgumentParser:
     for name in ("assessment", "approval", "verification"):
         imported.add_argument("--" + name)
     show_work_item = _sanitized(work.add_parser("show")); show_work_item.add_argument("target")
+    assess = _sanitized(work.add_parser("assess")); assess.add_argument("target")
+    assess.add_argument("--file"); assess.add_argument("--commit"); assess.add_argument("--recover")
     return parser
 
 
@@ -131,6 +133,18 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             if args.work_command == "show":
                 _render(show_work(registry.records, args.target), args.json)
+                return 0
+            if args.work_command == "assess":
+                if (args.file is None) != (args.commit is None) or (args.file is not None and args.recover):
+                    raise ValueError("--file and --commit only together, and never with --recover")
+                if getattr(registry, "assessment", None) is None:
+                    _render({"error": "readiness-not-configured"}, args.json)
+                    return 1
+                revision = None
+                if args.file is not None:
+                    with open(args.file, "rb") as handle:
+                        revision = (handle.read(), args.commit)
+                _render(assess_work(registry.assessment, args.target, revision, args.recover), args.json)
                 return 0
             if args.work_command == "migrate":
                 with open(args.snapshot, encoding="utf-8") as handle:

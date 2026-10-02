@@ -74,6 +74,15 @@ class WorkIdentityService:
     def set_evidence(self, identity: str, which: str, ref: Ref) -> WorkItem:
         return self.items.set_evidence(identity, check_evidence(which), ref)
 
+    def set_pointer(self, identity: str, pointer: Pointer) -> WorkItem:
+        """The repository's pointer rules (equal bytes keep it; different bytes replace it at CAPTURE; POINTER_PRESENT
+        past CAPTURE), then the row's `work/<id>` tag is published exactly as `register` publishes it:
+        PUBLICATION_FAILED leaves the committed row and repeating the request publishes again."""
+        self._outside_transaction(pointer)
+        item = self.items.set_pointer(identity, pointer)
+        self._publish(item)
+        return item
+
     def set_state(self, identity: str, state: str) -> WorkItem:
         """The only change of state after creation: a row of the 7.3 transition table, read and written in one
         write transaction; anything else is ILLEGAL_TRANSITION and changes nothing."""
