@@ -671,6 +671,28 @@ def test_set_link_stores_one_issue_per_item_and_one_item_per_issue(fx):
         fx.items.set_link(y.id, 5, "I_5", "PVTI_5")
     assert fx.items.find(y.id).issue_number is None and fx.items.find(x.id) == linked
     assert fx.items.find_by_issue(5) == linked and fx.items.find_by_issue(6) is None
+    assert fx.items.find_by_card("PVTI_5") == linked and fx.items.find_by_card("PVTI_6") is None
+    with pytest.raises(IssueAlreadyLinked):  # One card names at most one item.
+        fx.items.set_link(y.id, 7, "I_7", "PVTI_5")
+    assert fx.items.find(y.id).card_id is None
+
+
+def test_opening_a_database_whose_rows_share_a_card_is_refused_and_changes_nothing(tmp_path):
+    database = tmp_path / "work.sqlite"
+    SQLiteWorkItemRepository(database, {})
+    connection = sqlite3.connect(database)
+    connection.execute("DROP INDEX work_item_card")
+    for name, issue in (("a", 1), ("b", 2)):
+        connection.execute(adapter_module.INSERT, (name, "legacy:" + name, name, None, "BIU", "CAPTURE", False,
+                                                   None, None, None, None, None, None))
+        connection.execute("UPDATE work_item SET issue_number = ?, issue_node_id = ?, card_id = 'PVTI_same' "
+                           "WHERE id = ?", (issue, f"I_{issue}", name))
+    connection.commit()
+    connection.close()
+    with pytest.raises(InvalidWorkItem, match="card_id"):
+        SQLiteWorkItemRepository(database, {})
+    connection = sqlite3.connect(database)
+    assert connection.execute("SELECT count(*) FROM work_item WHERE card_id = 'PVTI_same'").fetchone() == (2,)
 
 
 def test_an_existing_database_gains_the_link_columns_and_index_with_its_rows_unchanged(tmp_path):

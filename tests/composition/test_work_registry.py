@@ -203,3 +203,296 @@ def test_without_github_there_is_no_link_service_and_with_it_nothing_is_sent_at_
 def test_a_malformed_github_entry_is_refused(tmp_path, value):
     with pytest.raises(ConfigurationInvalid):
         project_configuration(entry(tmp_path, github=value(tmp_path)), PROJECT)
+
+
+# --- the READY view of board #1 (checks 2-7) ------------------------------------------------------------------------
+
+from alienintent.composition.work_registry import (  # noqa: E402
+    ASSESSMENT_MISSING, CONTRACT_INVALID, DISPLAY_DIFFERS, NO_LINK, NOT_ELIGIBLE, OPERATOR, READY_VIEW, ROW_REFUSED,
+    WORK_PREPARATION)
+from alienintent.context_assembly.domain.work_contract import UNCLOSED  # noqa: E402
+from alienintent.context_assembly.domain.work_identity import Pointer  # noqa: E402
+from alienintent.context_assembly.domain.work_link import UPDATED, render  # noqa: E402
+from alienintent.context_assembly.domain.work_contract import contract_block  # noqa: E402
+from tests.context_assembly.test_readiness_consumer import fixture_package as _package  # noqa: E402
+from tests.context_assembly.test_work_contract import contract_payload  # noqa: E402
+from tests.context_assembly.test_work_link import Linked, RecordedGitHub  # noqa: E402
+from tests.support.live_github import PRIORITY_FIELD, SANDBOX_PROJECT, STATUS_FIELD  # noqa: E402
+
+
+class Board(RecordedGitHub):
+    """The recorded GitHub of `work link`, whose board also answers the paginated items read with each card's Status
+    (and its READY-entry time) and Priority, and its Issue's current title and body."""
+
+    def __init__(self) -> None:
+        super().__init__()
+        self.fields: dict[str, dict[str, str | None]] = {}
+
+    def _board(self, query: str, variables: dict) -> object:
+        if "items(first:100,after:$cursor)" not in query:
+            return super()._board(query, variables)
+        self.log.append("items")
+        nodes = [self._node(card) for card in self.cards]
+        return {"data": {"node": {"id": SANDBOX_PROJECT, "number": 2, "items": {
+            "totalCount": len(nodes), "pageInfo": {"hasNextPage": False, "endCursor": "end"}, "nodes": nodes}}}}
+
+    def _node(self, card: str) -> dict:
+        issue = next((i for i in self.issues.values() if i["node_id"] == self.cards[card]), None)
+        fields = self.fields.get(card, {})
+        values = [{"name": fields["Status"], "updatedAt": fields.get("at"), "field": {"id": STATUS_FIELD, "name": "Status"}}]
+        if fields.get("Priority"):
+            values.append({"name": fields["Priority"], "updatedAt": None,
+                           "field": {"id": PRIORITY_FIELD, "name": "Priority"}})
+        content = {"id": self.cards[card], "title": issue["title"], "body": issue["body"]} if issue else None
+        return {"id": card, "content": content, "fieldValues": {"nodes": values if fields.get("Status") else []}}
+
+
+class ReadyBoard(Linked):
+    """A fixture project with both the `github` and `readiness` entries over the recorded board; Agent Ready is a
+    fixture executable answering the disposition written in `answer`."""
+
+    def __init__(self, root: Path) -> None:
+        super().__init__(root)
+        self.answer = root / "disposition"
+        self.answer.write_text("READY")
+        executable = _package(root)
+        executable.write_text(f"#!/bin/sh\nprintf '{{\"disposition\": \"%s\"}}' \"$(cat '{self.answer}')\"\n")
+        executable.chmod(0o700)
+        self.document["projects"][PROJECT]["readiness"] = readiness(root, executable=str(executable))
+        self.github = Board()
+        self.registry = self.second()
+        self.links = self.registry.links
+
+    def second(self) -> WorkRegistry:
+        """Another registry instance over the same configuration, as another process would build it."""
+        return WorkRegistry(project_configuration(self.document, PROJECT), transport=self.github)
+
+    def packet(self, item, *, payload: dict | None = None, raw: str | None = None) -> bytes:
+        payload = payload(item) if callable(payload) else payload
+        text = raw if raw is not None else json.dumps(payload or contract_payload(item.id), indent=1)
+        return (f"# Work unit: {item.label}\n\nidentity: not-this-one\n\n```json alienintent-contract\n{text}\n```\n"
+                .encode())
+
+    def ready(self, label: str, *, at: str, priority: str | None = "P1", payload=None, raw: str | None = None,
+              assess: bool = True, link: bool = True):
+        """Register, give the packet its contract block at a new commit, assess it, link it and put it in READY."""
+        item = self.item(label)
+        data = self.packet(item, payload=payload, raw=raw)
+        commit = commit_file(self.clone, "main", f"docs/{label}.md", data)
+        if assess:
+            self.registry.assessment.assess(item.id, (data, commit))
+        else:
+            self.registry.identities.set_pointer(item.id, Pointer(REPO, f"docs/{label}.md", commit, data))
+        if link:
+            card = self.links.link(item.id).card_id
+            self.github.fields[card] = {"Status": "READY", "at": at, "Priority": priority}
+        return self.stored(label)
+
+    def snapshot(self, registry: WorkRegistry | None = None):
+        registry = registry or self.registry
+        imported = registry.ready_view.import_ready_snapshot()
+        return imported, registry.ready_refusals()
+
+
+@pytest.fixture
+def board(tmp_path) -> ReadyBoard:
+    return ReadyBoard(tmp_path / "fx")
+
+
+def kinds(refusals) -> dict[tuple[str, str], object]:
+    return {(refusal.card, refusal.kind): refusal for refusal in refusals}
+
+
+def ready_view_items(registry: WorkRegistry) -> list:
+    return [item for item in registry._attention.list_pending() if item.origin.lane == READY_VIEW]
+
+
+def test_the_view_exists_only_with_both_the_github_and_readiness_entries(tmp_path):
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    for changes in ({}, {"github": github(tmp_path)}, {"readiness": readiness(tmp_path)}):
+        assert WorkRegistry(project_configuration(entry(tmp_path, **changes), PROJECT)).ready_view is None
+    view = WorkRegistry(project_configuration(entry(tmp_path, github=github(tmp_path), readiness=readiness(tmp_path)),
+                                              PROJECT)).ready_view
+    assert view._profile == "registry" and view._projection_fields == {} and view._projection_write is None
+    assert view._status_mapping["READY"] == "READY" and view._repository == "AlienLogicLab/alienintent-sandbox"
+
+
+def test_check2_the_row_comes_from_the_record_and_the_display_is_repaired_separately(board):
+    item = board.ready("RV-A", at="2026-10-02T10:00:00Z",
+                       payload=lambda item: contract_payload(item.id, dependencies=["dep-1"]))
+    issue = board.github.issues[item.issue_number]
+    other = contract_payload("other-identity", dependencies=["dep-9"])
+    issue.update(title="OTHER", body="biu: other-identity\ncontract: biu/OTHER.json\ndepends_on: dep-9\n"
+                 f"```json alienintent-contract\n{json.dumps(other)}\n```\n")
+    board.github.log.clear()
+    calls = len(board.github.calls)
+
+    imported, refusals = board.snapshot()
+
+    [row] = imported
+    expected = contract_block(board.registry.records.show(item.id).packet, item.id)
+    assert (row.identity, row.dependencies, row.contract, row.readiness_digest) == (
+        item.id, ("dep-1",), expected, expected.content_digest)
+    assert row.readiness_evidence == item.assessment_ref.logical_id and row.priority == 1
+    assert [(r.card, r.kind, r.owner, r.recorded) for r in refusals] == [
+        (item.card_id, DISPLAY_DIFFERS, WORK_PREPARATION, True)]
+    assert board.github.log == ["items"]  # The snapshot read the board and wrote nothing.
+    assert [url for _, url in board.github.calls[calls:] if not url.endswith(("/graphql", "/access_tokens"))] == []
+
+    [repaired] = board.registry.repair_displays()
+    assert repaired.display == UPDATED and repaired.answer is None
+    assert board.github.writes() == ["update"]
+    assert (issue["title"], issue["body"]) == (render(item).title, render(item).body)
+
+    imported, refusals = board.snapshot()
+    assert [r.identity for r in imported] == [item.id]
+    assert [(r.kind, r.cleared) for r in refusals] == [(DISPLAY_DIFFERS, True)]
+    assert board.registry.repair_displays() == ()
+
+
+@pytest.mark.parametrize(("change", "detail"), [
+    ({"raw": '{"identity": "x",'}, "invalid JSON"),
+    ({"payload": lambda item: contract_payload("another-item")}, "identity is not the work item's id"),
+    ({"payload": lambda item: contract_payload(item.id, intent="")}, "refused by the validator")])
+def test_check3_an_invalid_block_is_contract_invalid_naming_which(board, change, detail):
+    board.ready("RV-C", at="2026-10-02T10:00:00Z", **change)
+
+    imported, refusals = board.snapshot()
+
+    assert imported == ()
+    [refusal] = refusals
+    assert (refusal.kind, refusal.owner) == (CONTRACT_INVALID, WORK_PREPARATION) and detail in refusal.reason
+
+
+def test_check3_an_unclosed_block_is_contract_invalid(board):
+    item = board.item("RV-U")
+    data = f"# Work unit\n\n```json alienintent-contract\n{json.dumps(contract_payload(item.id))}\n".encode()
+    commit = commit_file(board.clone, "main", "docs/RV-U.md", data)
+    board.registry.assessment.assess(item.id, (data, commit))
+    board.github.fields[board.links.link(item.id).card_id] = {"Status": "READY", "at": "t", "Priority": "P1"}
+
+    [refusal] = board.snapshot()[1]
+    assert refusal.kind == CONTRACT_INVALID and UNCLOSED in refusal.reason
+
+
+def test_check4_only_a_ready_assessment_of_the_exact_commit_imports(board):
+    unassessed = board.ready("RV-N", at="2026-10-02T10:00:01Z", assess=False)
+    board.answer.write_text("HOLD")
+    held = board.ready("RV-H", at="2026-10-02T10:00:02Z")
+    board.answer.write_text("READY")
+    moved = board.ready("RV-M", at="2026-10-02T10:00:03Z")
+    data = board.packet(moved) + b"\nA later edit.\n"
+    board.registry.identities.set_pointer(moved.id, Pointer(REPO, "docs/RV-M.md",
+                                                            commit_file(board.clone, "main", "docs/RV-M.md", data), data))
+    assert board.stored("RV-M").assessment_ref == moved.assessment_ref  # READY, but of the earlier commit
+
+    imported, refusals = board.snapshot()
+
+    assert imported == ()
+    found = kinds(refusals)
+    assert {key[1] for key in found} == {ASSESSMENT_MISSING}
+    assert {key[0] for key in found} == {unassessed.card_id, held.card_id, moved.card_id}
+    assert "HOLD" in found[(held.card_id, ASSESSMENT_MISSING)].reason
+    assert "current pointer" in found[(moved.card_id, ASSESSMENT_MISSING)].reason
+
+
+def test_check5_a_ready_card_with_no_link_is_never_imported(board):
+    number = board.github.seed(json.dumps(contract_payload("free")), title="free")
+    board.github.cards["PVTI_free"] = board.github.issues[number]["node_id"]
+    board.github.fields["PVTI_free"] = {"Status": "READY", "at": "2026-10-02T10:00:00Z", "Priority": "P0"}
+
+    imported, refusals = board.snapshot()
+
+    assert imported == ()
+    assert [(r.card, r.kind, r.owner) for r in refusals] == [("PVTI_free", NO_LINK, WORK_PREPARATION)]
+
+
+def test_check6_one_bad_card_of_each_kind_never_stalls_the_valid_ones_and_order_is_kept(board):
+    first = board.ready("RV-Z", at="2026-10-02T10:00:05Z")
+    second = board.ready("RV-Y", at="2026-10-02T10:00:01Z")
+    tied = board.ready("RV-A", at="2026-10-02T10:00:05Z")  # same second as RV-Z: the card id decides, not the title
+    board.github.cards["PVTI_free"] = "I_free"
+    board.github.fields["PVTI_free"] = {"Status": "READY", "at": "2026-10-02T10:00:00Z", "Priority": "P0"}
+    retired = board.ready("RV-R", at="2026-10-02T10:00:00Z")
+    board.registry.identities.retire(retired.id)
+    unassessed = board.ready("RV-N", at="2026-10-02T10:00:00Z", assess=False)
+    invalid = board.ready("RV-I", at="2026-10-02T10:00:00Z", raw="not json")
+    unprioritized = board.ready("RV-P", at="2026-10-02T10:00:00Z", priority=None)
+    not_ready = board.ready("RV-X", at="2026-10-02T09:00:00Z")
+    board.github.fields[not_ready.card_id]["Status"] = "IMPLEMENT"
+
+    imported, refusals = board.snapshot()
+
+    ordered = sorted([first, second, tied], key=lambda item: (
+        board.github.fields[item.card_id]["at"], item.card_id))
+    assert [row.identity for row in imported] == [item.id for item in ordered]
+    assert ordered == [second, first, tied] and first.card_id < tied.card_id
+    assert [row.fifo for row in imported] == sorted(row.fifo for row in imported)
+    assert {(r.card, r.kind, r.owner, r.recorded) for r in refusals} == {
+        ("PVTI_free", NO_LINK, WORK_PREPARATION, True),
+        (retired.card_id, NOT_ELIGIBLE, WORK_PREPARATION, True),
+        (unassessed.card_id, ASSESSMENT_MISSING, WORK_PREPARATION, True),
+        (invalid.card_id, CONTRACT_INVALID, WORK_PREPARATION, True),
+        (unprioritized.card_id, ROW_REFUSED, OPERATOR, True)}
+    assert len({r.attention for r in refusals}) == 5 and len(ready_view_items(board.registry)) == 5
+
+
+def test_check7_one_open_item_per_card_and_kind_across_snapshots_and_instances(board):
+    card = board.ready("RV-7", at="2026-10-02T10:00:00Z", priority=None).card_id
+    instances, seen = (board.registry, board.second()), set()
+    for number in range(50):  # Alternating instances, and the reason text changes between them.
+        board.github.fields[card]["Priority"] = None if number % 2 else "P9"
+        imported, refusals = board.snapshot(instances[number % 2])
+        [refusal] = refusals
+        assert (imported, refusal.kind, refusal.recorded, refusal.cleared) == ((), ROW_REFUSED, True, False)
+        seen.add((refusal.attention, refusal.reason))
+    assert len({attention for attention, _ in seen}) == 1 and len({reason for _, reason in seen}) == 2
+    [item] = ready_view_items(board.second())
+    assert (item.origin.work_ref, item.origin.event_identity, item.origin.kind, item.origin.required_authority,
+            item.version) == (card, ROW_REFUSED, "JUDGMENT", OPERATOR, 1)
+
+    issue = board.github.issues[board.stored("RV-7").issue_number]
+    issue["title"] = "edited"
+    _, refusals = board.snapshot(board.second())
+    found = kinds(refusals)
+    assert set(found) == {(card, ROW_REFUSED), (card, DISPLAY_DIFFERS)}
+    assert found[(card, ROW_REFUSED)].attention == item.identity != found[(card, DISPLAY_DIFFERS)].attention
+    assert len(ready_view_items(board.registry)) == 2
+
+    board.github.fields[card]["Priority"] = "P1"
+    issue["title"] = "RV-7"
+    imported, refusals = board.snapshot()
+    assert [row.identity for row in imported] == [board.stored("RV-7").id]
+    assert {(r.kind, r.cleared, r.attention) for r in refusals} == {
+        (ROW_REFUSED, True, item.identity), (DISPLAY_DIFFERS, True, found[(card, DISPLAY_DIFFERS)].attention)}
+    assert all(i.status != "RESOLVED" for i in ready_view_items(board.registry))
+
+
+def test_an_unwritable_attention_store_marks_refusals_unrecorded_and_import_continues(board):
+    good = board.ready("RV-G", at="2026-10-02T10:00:00Z")
+    board.github.cards["PVTI_free"] = "I_free"
+    board.github.fields["PVTI_free"] = {"Status": "READY", "at": "2026-10-02T10:00:00Z", "Priority": "P0"}
+
+    def unwritable(*_):
+        raise OSError("read-only")
+    board.registry._attention.repository.save = unwritable
+
+    imported, refusals = board.snapshot()
+    assert [row.identity for row in imported] == [good.id]
+    assert [(r.card, r.kind, r.recorded, r.attention) for r in refusals] == [("PVTI_free", NO_LINK, False, None)]
+
+
+def test_an_unreadable_board_fails_the_snapshot_with_no_rows_and_no_items(board):
+    from alienintent.execution_coordination.ports.work_management import WorkUnavailable
+    board.github.cards["PVTI_free"] = "I_free"
+    board.github.fields["PVTI_free"] = {"Status": "READY", "at": "t", "Priority": "P0"}
+    board.snapshot()
+    original = board.github._graphql
+    board.github._graphql = lambda query, variables: (
+        {"errors": [{"message": "fault"}]} if "items(first:100" in query else original(query, variables))
+    with pytest.raises(WorkUnavailable):
+        board.registry.ready_view.import_ready_snapshot()
+    assert board.registry.ready_view.last_refusals == ()
+    assert board.registry.ready_refusals() == ()  # An unread board clears nothing.
+    assert WorkRegistry(project_configuration(board.document, PROJECT), transport=board.github).ready_refusals() == ()
+    assert len(ready_view_items(board.registry)) == 1

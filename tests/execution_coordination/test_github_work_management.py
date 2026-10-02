@@ -49,17 +49,45 @@ def test_import_maps_priority_dependencies_and_keeps_wave_as_metadata() -> None:
 
 
 def test_ready_item_without_inherited_requirement_priority_fails_closed() -> None:
-    from alienintent.execution_coordination.ports.work_management import WorkRejected
+    work = adapter([item(priority=None) | {"card": "PVTI_1"}])
 
-    with pytest.raises(WorkRejected, match="inherited requirement priority"):
-        adapter([item(priority=None)]).import_ready_snapshot()
+    assert work.import_ready_snapshot() == ()
+    assert work.last_refusals == (("PVTI_1", "READY item is missing inherited requirement priority"),)
 
 
 @pytest.mark.parametrize("bad", [item(status="MYSTERY"), item(complete=False), item(membership=False)])
 def test_ambiguous_status_missing_membership_and_incomplete_pages_fail_closed(bad: dict[str, object]) -> None:
+    work = adapter([bad])
+
+    assert work.import_ready_snapshot() == ()
+    assert [card for card, _ in work.last_refusals] == [""]
+
+
+def test_rows_are_translated_one_at_a_time_so_one_refused_row_never_stops_the_others() -> None:
+    """READY-view check 6 at the adapter: the refused rows are kept with their card, the others import in order."""
+    work = adapter([item("PY-01") | {"card": "PVTI_1"}, item("PY-02", priority=None) | {"card": "PVTI_2"},
+                    item("PY-03", priority="P9") | {"card": "PVTI_3"}, item("PY-04") | {"card": "PVTI_4"}])
+
+    imported = work.import_ready_snapshot()
+
+    assert [(ready.identity, ready.fifo) for ready in imported] == [("PY-01", 0), ("PY-04", 3)]
+    assert work.last_refusals == (("PVTI_2", "READY item is missing inherited requirement priority"),
+                                  ("PVTI_3", "unsupported priority"))
+    work._snapshot = lambda: (item("PY-01"),)
+    assert len(work.import_ready_snapshot()) == 1 and work.last_refusals == ()
+
+
+def test_a_refusal_from_the_row_contract_resolver_still_stops_the_import() -> None:
+    """The sandbox reader's own contract checks are unchanged: its resolver's refusal is not collected."""
+    from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
     from alienintent.execution_coordination.ports.work_management import WorkRejected
-    with pytest.raises(WorkRejected):
-        adapter([bad]).import_ready_snapshot()
+
+    def resolver(row):
+        raise WorkRejected("contract names other work")
+    work = GitHubProjectsWorkManagement("alpha", "AlienLogicLab/alienintent", {"READY": "READY"}, {},
+                                        lambda: (item(),), resolver)
+    with pytest.raises(WorkRejected, match="contract names other work"):
+        work.import_ready_snapshot()
 
 
 def test_complete_board_allows_many_to_one_non_ready_status_mappings() -> None:

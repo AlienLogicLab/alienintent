@@ -25,8 +25,8 @@ GITHUB_GRAPHQL = "https://api.github.com/graphql"
 _SCHEMA_QUERY = """query($project:ID!){ node(id:$project){ ... on ProjectV2 { id number title
   fields(first:50){ nodes { ... on ProjectV2SingleSelectField { id name options { id name } } } } } } }"""
 
-_ITEMS_QUERY = """query($project:ID!,$limit:Int!){ node(id:$project){ ... on ProjectV2 { id number
-  items(first:$limit){ nodes { id content { ... on Issue { id title body } ... on DraftIssue { id title body } }
+_ITEMS_QUERY = """query($project:ID!,$cursor:String){ node(id:$project){ ... on ProjectV2 { id number
+  items(first:100,after:$cursor){ totalCount pageInfo { hasNextPage endCursor } nodes { id content { ... on Issue { id title body } ... on DraftIssue { id title body } }
     fieldValues(first:20){ nodes { ... on ProjectV2ItemFieldSingleSelectValue { name updatedAt field { ... on ProjectV2SingleSelectField { id name } } } } } } } } } }"""
 
 _ITEM_QUERY = """query($item:ID!){ node(id:$item){ ... on ProjectV2Item { id project { id number }
@@ -42,6 +42,9 @@ _ADD_DRAFT_MUTATION = """mutation($project:ID!,$title:String!,$body:String!){ ad
 
 _ADD_ISSUE_MUTATION = """mutation($project:ID!,$content:ID!){ addProjectV2ItemById(input:{projectId:$project,contentId:$content}){
   item { id project { id number } } } }"""
+
+# The board is read in pages of 100; a board needing more pages than this is refused rather than cut short.
+ITEMS_PAGE_LIMIT = 10
 
 _DELETE_MUTATION = """mutation($project:ID!,$item:ID!){ deleteProjectV2Item(input:{projectId:$project,itemId:$item}){ deletedItemId } }"""
 
@@ -76,9 +79,40 @@ class GitHubProjectsV2Directory(ProjectDirectory):
             str(status["id"]), _options(status), str(priority["id"]), _options(priority),
         )
 
-    def items(self, limit: int = 50) -> tuple[ProjectItemState, ...]:
-        project = self._project(self._graphql(_ITEMS_QUERY, {"project": self._address.project_id, "limit": limit}))
-        return tuple(_item_state(node) for node in _nodes(project.get("items")) if isinstance(node, Mapping))
+    def items(self) -> tuple[ProjectItemState, ...]:
+        """The whole board, page by page; ProjectUnavailable unless the pages are provably the complete board.
+
+        Every page must report the same `totalCount`, each cursor used must be non-empty and new, `hasNextPage`
+        is false only on the last page (at most ITEMS_PAGE_LIMIT), item ids are unique and the number read equals
+        `totalCount`."""
+        states: list[ProjectItemState] = []
+        total: int | None = None
+        cursor: str | None = None
+        cursors: set[str] = set()
+        for _ in range(ITEMS_PAGE_LIMIT):
+            project = self._project(self._graphql(_ITEMS_QUERY, {"project": self._address.project_id, "cursor": cursor}))
+            page = project.get("items")
+            info = page.get("pageInfo") if isinstance(page, Mapping) else None
+            count = page.get("totalCount") if isinstance(page, Mapping) else None
+            if not isinstance(info, Mapping) or type(count) is not int or not isinstance(info.get("hasNextPage"), bool):
+                raise ProjectUnavailable("Project items page carries no totalCount or pageInfo")
+            if total is not None and count != total:
+                raise ProjectUnavailable("Project items pages disagree on totalCount")
+            total = count
+            states.extend(_item_state(node) for node in _nodes(page) if isinstance(node, Mapping))
+            if not info["hasNextPage"]:
+                break
+            cursor = info.get("endCursor")
+            if not isinstance(cursor, str) or not cursor or cursor in cursors:
+                raise ProjectUnavailable("Project items cursor is empty or repeated")
+            cursors.add(cursor)
+        else:
+            raise ProjectUnavailable(f"Project items exceed {ITEMS_PAGE_LIMIT} pages")
+        if len({state.item_id for state in states}) != len(states):
+            raise ProjectUnavailable("Project items repeat an item id")
+        if len(states) != total:
+            raise ProjectUnavailable("Project items read do not equal totalCount")
+        return tuple(states)
 
     def read_status(self, item_id: str) -> ProjectItemState:
         node = self._graphql(_ITEM_QUERY, {"item": item_id}).get("node")

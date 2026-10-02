@@ -10,7 +10,9 @@ repository adapter and publisher are handed to every client of the project. The 
 `work assess`: its own assessment store and evidence folder, and the Agent Ready executable and provider; without it
 the project has no assessment service. The optional `github` object configures `work link` and `work display`: the
 one repository and board the project's work items are linked to, and the GitHub App installation that writes them
-(its private key file named directly); without it the project has no link service.
+(its private key file named directly); without it the project has no link service. With both, the registry has a
+READY view of that board (`ready_view`, `ready_refusals`, `repair_displays`): each READY row is built only from the
+card's registered work record, and the view's attention items are kept in the `readiness` store and evidence folder.
 
 Configuration document (JSON):
 
@@ -30,13 +32,15 @@ Configuration document (JSON):
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from hashlib import sha256
 import json
 import os
 from pathlib import Path
 import time
 from types import SimpleNamespace
+from uuid import uuid4
 
 from alienintent.composition.readiness import assessment_environment, compose_producer, resolve_binding
 from alienintent.composition.sandbox_profile import APP_KEY_REFERENCE
@@ -46,17 +50,27 @@ from alienintent.context_assembly.application.packet_assessment import PacketAss
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.application.work_link import WorkLink
 from alienintent.context_assembly.application.work_registration import WorkRecordService
-from alienintent.context_assembly.domain.work_identity import valid_path
+from alienintent.context_assembly.domain.packet_assessment import fingerprint
+from alienintent.context_assembly.domain.work_contract import contract_block
+from alienintent.context_assembly.domain.work_identity import STATES, valid_path
+from alienintent.context_assembly.domain.work_link import LinkResult, render
 from alienintent.context_assembly.ports.work_item_repository import (
     PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
+from alienintent.control_plane.adapters.attention_repository import DurableAttentionRepository
+from alienintent.control_plane.application.attention import AttentionService
+from alienintent.control_plane.domain.attention import AttentionOrigin
 from alienintent.evidence_learning.adapters.local_evidence_repository import LocalEvidenceRepository
+from alienintent.evidence_learning.domain.records import Header, Observation, canonical_bytes
 from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.execution_coordination.adapters import assessment_consumer
 from alienintent.execution_coordination.adapters.assessment_consumer import RetainedAssessmentConsumer
 from alienintent.execution_coordination.adapters.github_projects_v2 import GitHubProjectsV2Directory
 from alienintent.execution_coordination.adapters.github_repository_api import GitHubRepositoryApi
+from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
 from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERSION, SQLiteOperationalStore
+from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
+from alienintent.execution_coordination.ports.project_directory import ProjectItemState
 from alienintent.installation.adapters.app_jwt import app_assertion
 from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
 from alienintent.installation.adapters.urllib_github_transport import UrllibGitHubTransport
@@ -69,6 +83,15 @@ from alienintent.invocation_runtime.adapters.process_ownership import ProcOwners
 from alienintent.invocation_runtime.domain.runtime import INVOCATION_MARKER, INVOCATION_OWNER_MARKER, owner_token
 from alienintent.invocation_runtime.ports import source_control
 from alienintent.invocation_runtime.ports.source_control import PublishRef, SourceControl
+
+
+# The READY view: its refusal kinds, the owner of each, and the fixed values of every attention origin it records.
+READY_VIEW = "ready-view"
+NO_LINK, NOT_ELIGIBLE, ASSESSMENT_MISSING = "NO_LINK", "NOT_ELIGIBLE", "ASSESSMENT_MISSING"
+CONTRACT_INVALID, DISPLAY_DIFFERS, ROW_REFUSED = "CONTRACT_INVALID", "DISPLAY_DIFFERS", "ROW_REFUSED"
+WORK_PREPARATION, OPERATOR = "Work Preparation", "Operator"
+OWNERS = {NO_LINK: WORK_PREPARATION, NOT_ELIGIBLE: WORK_PREPARATION, ASSESSMENT_MISSING: WORK_PREPARATION,
+          CONTRACT_INVALID: WORK_PREPARATION, DISPLAY_DIFFERS: WORK_PREPARATION, ROW_REFUSED: OPERATOR}
 
 
 class ConfigurationInvalid(ValueError):
@@ -175,6 +198,35 @@ def read_only_store(path: Path) -> OperationalStore:
     return SQLiteOperationalStore(Path(path))
 
 
+@dataclass(frozen=True)
+class ReadyRefusal:
+    """A READY card the view did not import (or whose display differs from its record), with its one open attention
+    item. `recorded` is False when that item could not be written; `cleared` marks an open item whose defect the last
+    snapshot no longer observed."""
+    card: str
+    kind: str
+    owner: str
+    reason: str
+    attention: str | None
+    recorded: bool
+    cleared: bool = False
+
+
+class _Refused(Exception):
+    def __init__(self, kind: str, reason: str) -> None:
+        self.kind, self.reason = kind, reason
+        super().__init__(f"{kind}: {reason}")
+
+
+def _step(kind: str, call):
+    """One step of building a READY row; any failure of it (an unreadable database, store or packet) is that step's
+    refusal naming the error, so the other cards continue."""
+    try:
+        return call()
+    except Exception as error:
+        raise _Refused(kind, f"{type(error).__name__}: {error}") from error
+
+
 class SourceControlRefPublisher(RefPublisher):
     """Binds Work Preparation's RefPublisher to the one source-control `publish_refs` operation; no other code pushes
     packet refs. Composition owns this bridge so context_assembly never imports the invocation runtime."""
@@ -214,6 +266,8 @@ class WorkRegistry:
         self.records = WorkRecordService(self.identities, self.items, self.items.read_packet)
         self.assessment = self._assessment(configuration) if configuration.readiness is not None else None
         self.links = self._links(configuration.github, transport) if configuration.github is not None else None
+        self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
+            else None
 
     def _links(self, github: GitHubConfiguration, transport: GitHubTransport | None) -> WorkLink:
         """`work link` and `work display` over the same constructors SandboxProfileComposition uses, without its
@@ -226,6 +280,113 @@ class WorkRegistry:
         return WorkLink(self.records, self.items,
                         GitHubRepositoryApi(github.repository, transport, credentials.authorization),
                         GitHubProjectsV2Directory(github.project, transport, credentials.authorization), credentials)
+
+    def _ready_view(self, configuration: ProjectConfiguration) -> GitHubProjectsWorkManagement:
+        """The READY view of board #1: profile `registry`, each formal workflow state mapped to itself, no projection
+        fields or writes; rows from `_ready_snapshot` and each row's contract the one that snapshot read for it.
+        Attention items live in the `readiness` store and evidence folder, under the assessment profile."""
+        consumer = self.assessment.consumer
+        project, profile = configuration.project, consumer.profile
+        self._attention = AttentionService(
+            DurableAttentionRepository(consumer.store, consumer.repository, project=project, profile=profile,
+                                       invocation=READY_VIEW),
+            project=project, profile=profile, clock=lambda: datetime.now(UTC).isoformat(),
+            next_id=lambda: str(uuid4()), resolvers=())
+        # Fixed, so the content-addressed repository answers the same source Ref in every process.
+        self._definition = Ref(project, profile, READY_VIEW + "/definition",
+                               "sha256:" + sha256(b"alienintent.composition.work_registry:ready-view").hexdigest(),
+                               "python:alienintent.composition.work_registry")
+        self._observed: tuple[tuple[str, str, str], ...] = ()  # (card, kind, reason) refused by the snapshot
+        self._differs: tuple[tuple[str, str], ...] = ()  # (card, item id) whose display differs from its record
+        self._contracts: dict[str, BiuContract] = {}
+        self._board_read = False  # Whether the last snapshot read the whole board; only then can a defect clear.
+        return GitHubProjectsWorkManagement("registry", configuration.github.repository,
+                                            {state: state for state in STATES}, {}, self._ready_snapshot,
+                                            lambda row: self._contracts[str(row["card"])])
+
+    def _ready_snapshot(self) -> tuple[dict[str, object], ...]:
+        """The READY column of the whole board in the sandbox reader's order (READY-entry time, then card id), one
+        row per card built from its work record; nothing is written to GitHub."""
+        self._observed, self._differs, self._contracts, self._board_read = (), (), {}, False
+        cards = sorted((card for card in self.links.board.items() if card.status == "READY"),
+                       key=lambda card: (card.status_updated_at or "", card.item_id))
+        rows, observed, differs = [], [], []
+        for card in cards:
+            try:
+                rows.append(self._ready_row(card, differs))
+            except _Refused as refused:
+                observed.append((card.item_id, refused.kind, refused.reason))
+        self._observed, self._differs, self._board_read = tuple(observed), tuple(differs), True
+        return tuple(rows)
+
+    def _ready_row(self, card: ProjectItemState, differs: list[tuple[str, str]]) -> dict[str, object]:
+        linked = _step(NO_LINK, lambda: self.items.find_by_card(card.item_id))
+        if linked is None:
+            raise _Refused(NO_LINK, "no work item is linked to this card")
+        record = _step(NOT_ELIGIBLE, lambda: self.records.show(linked.id))
+        item = record.item if record is not None else None
+        if item is None or item.retired or item.pointer is None:
+            raise _Refused(NOT_ELIGIBLE, "no record" if item is None else "retired" if item.retired else
+                           "no packet pointer")
+        history = _step(ASSESSMENT_MISSING, lambda: self.assessment.consumer.history(item.id))
+        assessed = next((entry for entry in history if item.assessment_ref is not None
+                         and entry["raw_ref"] == asdict(item.assessment_ref)), None)
+        if assessed is None:
+            raise _Refused(ASSESSMENT_MISSING, "no retained assessment is the row's assessment_ref")
+        if assessed["input_fingerprint"] != fingerprint(item.id, item.pointer):
+            raise _Refused(ASSESSMENT_MISSING, "the assessment is not of the current pointer")
+        outcome = assessed["outcome"] or {}
+        if outcome.get("failure_class") or outcome.get("disposition") != "READY":
+            raise _Refused(ASSESSMENT_MISSING, f"outcome {outcome.get('disposition') or outcome.get('failure_class')}")
+        contract = _step(CONTRACT_INVALID, lambda: contract_block(record.packet, item.id))
+        rendered = render(item)  # The card's text is compared with the display, never read for anything else.
+        if (card.title, card.body or "") != (rendered.title, rendered.body):
+            differs.append((card.item_id, item.id))
+        self._contracts[card.item_id] = contract
+        return {"complete": True, "membership": True, "repository": self.configuration.github.repository,
+                "status": card.status, "priority": card.priority, "identity": item.id,
+                "contract_digest": contract.content_digest, "readiness": item.assessment_ref.logical_id,
+                "dependencies": list(contract.dependencies), "card": card.item_id}
+
+    def ready_refusals(self) -> tuple[ReadyRefusal, ...]:
+        """After `ready_view.import_ready_snapshot()`: every refusal of that snapshot and of its translation, and every
+        display difference, each with its one open attention item (ensured, so a rerun finds the same item); then
+        every open READY-view item whose defect was not observed again, listed as cleared — only when that snapshot
+        read the whole board. Nothing is resolved."""
+        observed = [*self._observed,
+                    *((card, DISPLAY_DIFFERS, f"work item {identity}") for card, identity in self._differs),
+                    *((card, ROW_REFUSED, reason) for card, reason in self.ready_view.last_refusals)]
+        refusals = [self._ensure(card, kind, reason) for card, kind, reason in observed]
+        seen = {(refusal.card, refusal.kind) for refusal in refusals}
+        try:
+            pending = self._attention.list_pending() if self._board_read else ()
+        except Exception:  # noqa: BLE001 - an unreadable store lists no cleared items; the refusals still stand
+            pending = ()
+        return (*refusals, *(ReadyRefusal(item.origin.work_ref, item.origin.event_identity,
+                                          item.origin.required_authority, "", item.identity, True, True)
+                             for item in pending if item.origin.lane == READY_VIEW
+                             and (item.origin.work_ref, item.origin.event_identity) not in seen))
+
+    def _ensure(self, card: str, kind: str, reason: str) -> ReadyRefusal:
+        """One JUDGMENT item per card and kind whose origin, source evidence included, is the same in every process;
+        the reason is reported, never stored."""
+        owner, consumer = OWNERS[kind], self.assessment.consumer
+        try:
+            source = consumer.repository.put(Observation(
+                Header(consumer.repository.project, consumer.repository.profile, f"{READY_VIEW}/{kind}/{card}", "1",
+                       (self._definition,)),
+                self._definition, READY_VIEW, READY_VIEW + "/v1", (),
+                canonical_bytes({"kind": kind, "card": card}).decode(), None, READY_VIEW, READY_VIEW))
+            item = self._attention.ensure(AttentionOrigin(card, kind, "JUDGMENT", READY_VIEW, READY_VIEW, owner,
+                                                          READY_VIEW, source))
+        except Exception:  # noqa: BLE001 - an unwritable attention store marks the refusal unrecorded
+            return ReadyRefusal(card, kind, owner, reason, None, False)
+        return ReadyRefusal(card, kind, owner, reason, item.identity, True)
+
+    def repair_displays(self) -> tuple[LinkResult, ...]:
+        """The one GitHub write of the READY view, never called by a snapshot: `work display` (with its read-back) for
+        each item the last snapshot found with DISPLAY_DIFFERS; Issue title and body only, never Status or fields."""
+        return tuple(self.links.display(identity) for _, identity in self._differs)
 
     def _assessment(self, configuration: ProjectConfiguration) -> PacketAssessment:
         """`work assess` over its own retained-assessment store; each attempt's Agent Ready launch carries the
