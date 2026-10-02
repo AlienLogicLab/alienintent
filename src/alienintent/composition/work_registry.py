@@ -22,11 +22,14 @@ from __future__ import annotations
 from collections.abc import Mapping
 from dataclasses import dataclass
 import json
+import os
 from pathlib import Path
+from types import SimpleNamespace
 
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
+from alienintent.context_assembly.application.work_registration import WorkRecordService
 from alienintent.context_assembly.domain.work_identity import valid_path
 from alienintent.context_assembly.ports.work_item_repository import (
     PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
@@ -113,7 +116,8 @@ class SourceControlRefPublisher(RefPublisher):
 
 
 class WorkRegistry:
-    """The one work identity service of a project, with its repository adapter and publisher."""
+    """The one work identity service of a project, with its repository adapter, publisher and the operator's
+    work-record operations (`records`); `registration` is the compiler's."""
 
     def __init__(self, configuration: ProjectConfiguration, source_control: SourceControl | None = None) -> None:
         self.configuration = configuration
@@ -128,3 +132,14 @@ class WorkRegistry:
             PacketLocation(configuration.packets_repository, configuration.packets_directory,
                            configuration.repositories[configuration.packets_repository]),
             self.profile_stores)
+        self.records = WorkRecordService(self.identities, self.items, self.items.read_packet)
+
+
+def work_registry_profile() -> SimpleNamespace:
+    """The CLI's `--profile-factory alienintent.composition.work_registry:work_registry_profile` for the `work`
+    commands: the project configuration file named by ALIENINTENT_PROJECT_CONFIGURATION and the project named by
+    ALIENINTENT_PROJECT, both required; exposes `work_registry`."""
+    path, project = (os.environ.get(name) for name in ("ALIENINTENT_PROJECT_CONFIGURATION", "ALIENINTENT_PROJECT"))
+    if not path or not project:
+        raise ConfigurationInvalid("ALIENINTENT_PROJECT_CONFIGURATION and ALIENINTENT_PROJECT are required")
+    return SimpleNamespace(work_registry=WorkRegistry(load_project_configuration(Path(path), project)))

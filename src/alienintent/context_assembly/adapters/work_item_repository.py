@@ -327,6 +327,12 @@ class SQLiteWorkItemRepository(WorkItemRepository):
             return False
         return self._checked(location, "cat-file", "blob", oid, path=pointer.path) == pointer.instructions
 
+    def read_packet(self, pointer: StoredPointer) -> bytes:
+        """`git show <commit>:<path>`: the registered instructions at the row's pinned commit, in one git call and
+        no history walk. Any failure of that call is GIT_READ_FAILED naming the path."""
+        return self._checked(self._location(pointer.repo), "show", "--no-textconv",
+                             f"{pointer.commit}:{pointer.path}", path=pointer.path)
+
     def _verify(self, pointer: Pointer, identity: str | None) -> None:
         if not self.holds(pointer):
             raise PointerMismatch(f"{pointer.repo}/{pointer.path}@{pointer.commit}", "bytes differ")

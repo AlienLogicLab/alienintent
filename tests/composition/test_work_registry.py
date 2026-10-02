@@ -86,3 +86,22 @@ def test_registry_of_another_project_or_profile_is_refused(tmp_path):
     with pytest.raises(ValueError, match="another project"):
         UpstreamProfile(h.repository, h.store, PROJECT, h.name, h.definition, "inv", "Founder",
                         frozenset({"private"}), work_registry=foreign)
+
+
+@pytest.mark.parametrize("missing", ["ALIENINTENT_PROJECT_CONFIGURATION", "ALIENINTENT_PROJECT"])
+def test_profile_factory_reads_two_required_environment_variables(tmp_path, monkeypatch, missing):
+    from alienintent.composition.work_registry import work_registry_profile
+    from alienintent.context_assembly.application.initial_compilation_service import WorkRegistration
+    from alienintent.context_assembly.application.work_registration import WorkRecordService
+    path = tmp_path / "projects.json"
+    path.write_text(json.dumps(entry(tmp_path)))
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    monkeypatch.setenv("ALIENINTENT_PROJECT_CONFIGURATION", str(path))
+    monkeypatch.setenv("ALIENINTENT_PROJECT", PROJECT)
+    registry = work_registry_profile().work_registry
+    assert registry.configuration == load_project_configuration(path, PROJECT)
+    assert isinstance(registry.records, WorkRecordService) and isinstance(registry.registration, WorkRegistration)
+    assert registry.records.identities is registry.identities and registry.records.items is registry.items
+    monkeypatch.delenv(missing)
+    with pytest.raises(ConfigurationInvalid):
+        work_registry_profile()

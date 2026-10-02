@@ -34,6 +34,43 @@ def migrate_work(identities: WorkMigration, snapshot: object, profiles: Sequence
     return asdict(report) if is_dataclass(report) else dict(report)
 
 
+class WorkRecords(Protocol):
+    """The project's work-record operations as `work register`, `work import` and `work show` use them (bound by
+    the profile's composition)."""
+
+    def register(self, packet: bytes, repo: str, path: str, commit: str, label: str, kind: str,
+                 parent_id: str | None) -> Any: ...
+
+    def import_completed(self, packet: bytes, repo: str, path: str, commit: str, label: str, issue: str,
+                         evidence: Mapping[str, object]) -> Any: ...
+
+    def show(self, id_or_label: str) -> Any: ...
+
+
+def register_work(records: WorkRecords, packet: bytes, repo: str, path: str, commit: str, label: str, kind: str,
+                  parent_id: str | None) -> dict[str, object]:
+    """`work register`: the packet file's bytes go to the project's work-record service, which owns the one
+    transaction and the byte comparison with Git; the operator surface only reports the row."""
+    return asdict(records.register(packet, repo, path, commit, label, kind, parent_id))
+
+
+def import_work(records: WorkRecords, packet: bytes, repo: str, path: str, commit: str, label: str, issue: str,
+                evidence: Mapping[str, object]) -> dict[str, object]:
+    """`work import`: earlier completed work at DONE with exactly the evidence references given."""
+    return asdict(records.import_completed(packet, repo, path, commit, label, issue, evidence))
+
+
+def show_work(records: WorkRecords, id_or_label: str) -> dict[str, object]:
+    """`work show`: the row, its parent, its children and the packet text at the pinned commit. A name no row holds
+    is the read answer UNKNOWN_IDENTITY, not a failure."""
+    record = records.show(id_or_label)
+    if record is None:
+        return {"answer": "UNKNOWN_IDENTITY"}
+    value = asdict(record)
+    value["packet"] = None if record.packet is None else record.packet.decode("utf-8")
+    return value
+
+
 class OperatorControlPlane:
     def __init__(self, profile: str, store: Any, work: Any, coordinator: Any, readiness: Callable[[], bool], clock: Callable[[], str] = lambda: "not-recorded") -> None:
         self._profile, self._store, self._work, self._coordinator, self._readiness, self._clock = profile, store, work, coordinator, readiness, clock

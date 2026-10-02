@@ -8,6 +8,8 @@ from pathlib import Path
 import subprocess
 import sys
 
+import pytest
+
 
 def test_cli_status_reports_real_execution_when_upstream_is_unavailable(tmp_path: Path) -> None:
     """Removing the CLI adapter or leaking an upstream secret breaks this proof."""
@@ -321,3 +323,74 @@ def test_cli_work_migrate_creates_rows_and_reports_conflicts(tmp_path: Path) -> 
     foreign = _work(tmp_path, "--snapshot", str(snapshot), "--profile", "fx", "--profile", "other-project")
     assert foreign.returncode == 2 and json.loads(foreign.stdout) == {"error": "migration-conflict"}
     assert "Traceback" not in foreign.stderr
+
+
+def _registry_cli(tmp_path: Path, *args: str) -> subprocess.CompletedProcess:
+    """`work` commands through the production profile factory, configured only by its two environment variables."""
+    environment = os.environ | {"PYTHONPATH": "src", "ALIENINTENT_PROJECT": "P",
+                                "ALIENINTENT_PROJECT_CONFIGURATION": str(tmp_path / "projects.json")}
+    return subprocess.run(
+        [sys.executable, "-m", "alienintent", "--profile-factory",
+         "alienintent.composition.work_registry:work_registry_profile", "--json", "work", *args],
+        text=True, capture_output=True, env=environment, check=False)
+
+
+def _registry_project(tmp_path: Path) -> tuple[Path, str, bytes]:
+    """A project with one clone and a local bare remote; one packet committed on main (TEST DATA)."""
+    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+    from tests.context_assembly.test_initial_compilation import project_clone
+    from tests.context_assembly.test_work_identity_service import commit_file
+    clone, _ = project_clone(tmp_path)
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    (tmp_path / "projects.json").write_text(json.dumps({"schema_version": 1, "projects": {"P": {
+        "database": str(tmp_path / "work.sqlite"),
+        "repositories": {"r": {"clone": str(clone), "remote": "origin", "default_branch": "main",
+                               "packets_branch": "packets"}},
+        "packets": {"repository": "r", "directory": "work-packets"},
+        "profiles": {"fx": str(tmp_path / "fx.sqlite")}}}}))
+    packet = b"# Work unit: fixture\n\nDo this.\n"
+    (tmp_path / "packet.md").write_bytes(packet)
+    return clone, commit_file(clone, "main", "docs/packet.md", packet), packet
+
+
+def _remote_tag(remote: str, identity: str) -> str | None:
+    lines = subprocess.run(["git", "ls-remote", remote, f"refs/tags/work/{identity}"], text=True,
+                           capture_output=True, check=True).stdout.split()
+    return lines[0] if lines else None
+
+
+@pytest.mark.parametrize("command", ["register", "import"])
+def test_cli_work_commands_publish_and_a_rerun_completes_a_failed_push(tmp_path: Path, command: str) -> None:
+    """Check 7: each command leaves work/<id> on the remote at the row's commit; a failed push exits non-zero
+    naming PUBLICATION_FAILED, the row stays, and rerunning the same command publishes and exits zero."""
+    clone, commit, _ = _registry_project(tmp_path)
+    args = [command, "--file", str(tmp_path / "packet.md"), "--repo", "r", "--path", "docs/packet.md",
+            "--commit", commit, "--label", "PY-SELF-00", *(("--issue", "153") if command == "import" else ())]
+    remote = subprocess.run(["git", "remote", "get-url", "origin"], cwd=clone, text=True, capture_output=True,
+                            check=True).stdout.strip()
+    subprocess.run(["git", "remote", "set-url", "origin", str(tmp_path / "missing.git")], cwd=clone, check=True)
+    failed = _registry_cli(tmp_path, *args)
+    assert failed.returncode != 0 and json.loads(failed.stdout) == {"error": "publication-failed"}
+    assert "Traceback" not in failed.stderr
+    shown = json.loads(_registry_cli(tmp_path, "show", "PY-SELF-00").stdout)
+    identity = shown["item"]["id"]
+    assert shown["item"]["pointer"]["commit"] == commit and _remote_tag(remote, identity) is None
+    subprocess.run(["git", "remote", "set-url", "origin", remote], cwd=clone, check=True)
+    rerun = _registry_cli(tmp_path, *args)
+    assert rerun.returncode == 0, rerun.stdout + rerun.stderr
+    item = json.loads(rerun.stdout)
+    assert item["id"] == identity and item["state"] == ("DONE" if command == "import" else "CAPTURE")
+    assert _remote_tag(remote, identity) == commit
+
+
+def test_cli_work_register_refuses_a_mismatch_and_show_reads_the_pinned_packet(tmp_path: Path) -> None:
+    _, commit, packet = _registry_project(tmp_path)
+    (tmp_path / "edited.md").write_bytes(packet + b"uncommitted edit\n")
+    base = ["--repo", "r", "--path", "docs/packet.md", "--commit", commit, "--label", "PACKET"]
+    refused = _registry_cli(tmp_path, "register", "--file", str(tmp_path / "edited.md"), *base)
+    assert refused.returncode != 0 and json.loads(refused.stdout) == {"error": "pointer-mismatch"}
+    item = json.loads(_registry_cli(tmp_path, "register", "--file", str(tmp_path / "packet.md"), *base).stdout)
+    shown = _registry_cli(tmp_path, "show", item["id"])
+    assert shown.returncode == 0 and json.loads(shown.stdout)["packet"] == packet.decode()
+    assert json.loads(shown.stdout)["item"] == item
+    assert json.loads(_registry_cli(tmp_path, "show", "missing").stdout) == {"answer": "UNKNOWN_IDENTITY"}
