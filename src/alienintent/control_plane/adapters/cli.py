@@ -10,8 +10,8 @@ from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from alienintent.control_plane.application.operator import (
-    OperatorControlPlane, OperatorDenied, assess_work, display_work, import_work, link_work, migrate_work, register_work,
-    show_work)
+    OperatorControlPlane, OperatorDenied, assess_work, authorize_work, display_work, import_work, link_work,
+    migrate_work, register_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
@@ -98,6 +98,9 @@ def _parser() -> argparse.ArgumentParser:
     show_work_item = _sanitized(work.add_parser("show")); show_work_item.add_argument("target")
     assess = _sanitized(work.add_parser("assess")); assess.add_argument("target")
     assess.add_argument("--file"); assess.add_argument("--commit"); assess.add_argument("--recover")
+    authorize = _sanitized(work.add_parser("authorize")); authorize.add_argument("target")
+    for name in ("commit", "attempt", "baseline", "quote"):
+        authorize.add_argument("--" + name, required=True)
     link = _sanitized(work.add_parser("link")); link.add_argument("target"); link.add_argument("--issue", type=int)
     display = _sanitized(work.add_parser("display")); display.add_argument("target")
     return parser
@@ -156,6 +159,13 @@ def main(argv: list[str] | None = None) -> int:
                     with open(args.file, "rb") as handle:
                         revision = (handle.read(), args.commit)
                 _render(assess_work(registry.assessment, args.target, revision, args.recover), args.json)
+                return 0
+            if args.work_command == "authorize":
+                if getattr(registry, "authorization", None) is None:
+                    _render({"error": "readiness-not-configured"}, args.json)
+                    return 1
+                _render(authorize_work(registry.authorization, args.target, args.commit, args.attempt, args.baseline,
+                                       args.quote), args.json)
                 return 0
             if args.work_command in ("link", "display"):
                 if getattr(registry, "links", None) is None:

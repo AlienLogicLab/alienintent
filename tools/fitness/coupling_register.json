@@ -106,6 +106,13 @@
     },
     {
       "consumer": "context_assembly",
+      "target": "alienintent.execution_coordination.domain.release",
+      "owner": "execution_coordination",
+      "classification": "PORT_CONTRACT",
+      "basis": "ReleaseAuthorization is the value of the ReleaseAuthorizationRecords port and admit_release_preconditions the release gate's own rule; work authorize writes that record and checks it with that rule (docs/work-units/python/release-record-from-authorization.md section 3)."
+    },
+    {
+      "consumer": "context_assembly",
       "target": "alienintent.execution_coordination.domain.verdict",
       "owner": "execution_coordination",
       "classification": "DOMAIN_LEAKAGE_HELD",

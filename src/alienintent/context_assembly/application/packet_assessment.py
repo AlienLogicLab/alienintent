@@ -5,7 +5,9 @@ service; the attempt, Agent Ready's raw output and the outcome are kept in the e
 and the item's `assessment_ref` names that raw output. A completed assessment of the same instructions is reused; a
 failed one is run again. An attempt left without an outcome is recovered only when the operator names it and every
 process that could still deliver its result has ended. The assessment is a record only: nothing here consumes it,
-changes the item's state, approves or releases anything.
+changes the item's state, approves or releases anything. Once `work authorize` has recorded the item's release
+authorization its instructions and assessment are fixed: AUTHORIZED_INSTRUCTIONS_FIXED before any pointer move or
+new attempt; the existing assessment is still returned when it is reused.
 """
 from __future__ import annotations
 
@@ -13,6 +15,7 @@ from collections.abc import Callable, Mapping
 from typing import Protocol
 
 from alienintent.context_assembly.application.readiness_service import PROVENANCE_HELD, ReadinessAdmission
+from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED, ReleaseRecords
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.application.work_registration import WorkRecordService
 from alienintent.context_assembly.domain.packet_assessment import (
@@ -42,9 +45,12 @@ class ProcessOwnership(Protocol):
 class PacketAssessment:
     def __init__(self, records: WorkRecordService, identities: WorkIdentityService, consumer: AssessmentConsumer,
                  binding: ProducerBinding | None, ownership: ProcessOwnership,
-                 producer: Callable[[str, Mapping[str, object]], ReadinessAssessment | None]) -> None:
+                 producer: Callable[[str, Mapping[str, object]], ReadinessAssessment | None],
+                 authorizations: ReleaseRecords) -> None:
+        """`authorizations` are the release records `work authorize` writes: an authorized item's instructions and
+        assessment are fixed, so neither its pointer moves nor a new attempt opens."""
         self.records, self.identities, self.consumer, self.binding = records, identities, consumer, binding
-        self.ownership, self.producer = ownership, producer
+        self.ownership, self.producer, self.authorizations = ownership, producer, authorizations
 
     def assess(self, id_or_label: str, revision: tuple[bytes, str] | None = None,
                recover: str | None = None) -> PacketAssessed | Hold:
@@ -68,6 +74,8 @@ class PacketAssessment:
                 "identity": item.id, "refusal": refusal, "binding": repr(self.binding), "launched": False})
             return Hold(CAPABILITY_PROVENANCE_HOLD, item.id, None, refusal)
         if revision is not None:
+            if self.authorizations.release_authorization(item.id) is not None:
+                return Hold(AUTHORIZED_INSTRUCTIONS_FIXED, item.id)
             packet, commit = revision
             if instructions_text(packet) is None:
                 return Hold(INSTRUCTIONS_NOT_TEXT, item.id)
@@ -100,6 +108,8 @@ class PacketAssessment:
         return self._run(item.id, text, current, input_sha256)
 
     def _run(self, identity: str, text: str, current: str, input_sha256: str) -> PacketAssessed | Hold:
+        if self.authorizations.release_authorization(identity) is not None:
+            return Hold(AUTHORIZED_INSTRUCTIONS_FIXED, identity)
         latest = self.consumer.latest(identity)
         predecessor = {"identity": identity, "attempt_id": latest["attempt_id"]} if latest is not None else None
         attempt = self.consumer.open(identity, current, input_sha256, None, predecessor, None, self.binding)

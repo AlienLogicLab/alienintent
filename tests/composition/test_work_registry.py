@@ -169,6 +169,33 @@ def test_assessment_launches_the_bound_executable_with_the_attempt_markers(tmp_p
     assert (tmp_path / "readiness.sqlite").is_file() and any((tmp_path / "evidence").rglob("*"))
 
 
+def test_authorization_is_wired_on_the_readiness_store_clone_and_default_branch(tmp_path):
+    """`work authorize` exists only with `readiness`; its release records are the ones `work assess` checks, on the
+    readiness store under profile `registry`; baselines are checked in the configured clone against its configured
+    default branch; the evidence goes to the assessment evidence folder."""
+    from alienintent.context_assembly.application.work_authorization import WorkAuthorization
+    from alienintent.execution_coordination.domain.release import ReleaseAuthorization
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    assert WorkRegistry(project_configuration(entry(tmp_path), PROJECT)).authorization is None
+    clone, _ = project_clone(tmp_path)
+    head = commit_file(clone, "main", "docs/p.md", b"p\n")
+    repositories = {REPO: {"clone": str(clone), "remote": "origin", "default_branch": "trunk",
+                           "packets_branch": "alienintent/work-packets"}}
+    registry = WorkRegistry(project_configuration(entry(tmp_path, repositories=repositories,
+                                                        readiness=readiness(tmp_path)), PROJECT))
+    authorization = registry.authorization
+    assert isinstance(authorization, WorkAuthorization)
+    assert authorization.releases is registry.assessment.authorizations
+    assert authorization.release_points == {REPO: "trunk"} and authorization.consumer is registry.assessment.consumer
+    assert authorization.evidence is registry.assessment.consumer.repository
+    assert authorization.revisions.resolves(REPO, head)
+    assert not authorization.revisions.is_reachable(REPO, head, "trunk")
+    authorization.releases.record(ReleaseAuthorization("fixture", "sha256:" + "a" * 64, True, head, "fixture"))
+    store = SQLiteOperationalStore(tmp_path / "readiness.sqlite")
+    _, raw = store.read_state("registry", "release-authorization:fixture")
+    assert raw["baseline"] == head
+
+
 def github(root: Path, **changes) -> dict:
     value = {"repository": "AlienLogicLab/alienintent-sandbox", "application_id": 1000001,
              "installation_id": 2000002, "private_key_path": str(root / "key.pem"),

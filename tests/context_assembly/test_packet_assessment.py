@@ -7,6 +7,7 @@ labels here are TEST DATA.
 """
 from __future__ import annotations
 
+from dataclasses import replace
 from hashlib import sha256
 import json
 import os
@@ -20,16 +21,19 @@ import pytest
 from alienintent.composition.readiness import resolve_binding
 from alienintent.composition.work_registry import WorkRegistry
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
+from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED
 from alienintent.context_assembly.domain.packet_assessment import PacketAssessed
 from alienintent.context_assembly.domain.work_identity import Pointer
 from alienintent.evidence_learning.adapters.local_evidence_repository import LocalEvidenceRepository
 from alienintent.evidence_learning.domain.records import ref_from_document
 from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.execution_coordination.adapters.assessment_consumer import RetainedAssessmentConsumer
+from alienintent.execution_coordination.adapters.release_admission import StoredReleaseAuthorizations
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.execution_coordination.domain.readiness import (
     ATTEMPT_CONFLICT, ATTEMPT_FAILURE, ATTEMPT_IN_PROGRESS, CAPABILITY_PROVENANCE_HOLD, DIRECT, NO_ASSESSMENT,
     PROVIDER_FAILURE, TIMEOUT, AttemptMetadata, CandidateWorkUnit, Hold, InvocationCustody, ProducerResponse)
+from alienintent.execution_coordination.domain.release import ReleaseAuthorization
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from tests.context_assembly.test_initial_compilation import PROJECT, REPO, Project, git
 from tests.context_assembly.test_readiness_consumer import fixture_package
@@ -116,11 +120,17 @@ class Fx:
                                                    "fixture work assess", SCOPE)
         self.binding = resolve_binding(fixture_package(root / "package", metadata=binding == "established"))
         self.producer = Producer(self.binding)
+        self.releases = StoredReleaseAuthorizations(self.store, "registry")  # Empty unless a test authorizes.
         self.service = self.make()
 
     def make(self, ownership=None, producer=None, binding=None, consumer=None, identities=None) -> PacketAssessment:
         return PacketAssessment(self.records, identities or self.identities, consumer or self.consumer,
-                                binding or self.binding, ownership or Ownership(), (producer or self.producer).build)
+                                binding or self.binding, ownership or Ownership(), (producer or self.producer).build,
+                                self.releases)
+
+    def authorize(self, identity: str) -> None:
+        """The release record `work authorize` writes (its own tests cover how)."""
+        self.releases.record(ReleaseAuthorization(identity, sha(b"evidence"), True, "a" * 40, "fixture"))
 
     def register(self, data: bytes = PACKET, label: str = "PACKET", path: str = PATH):
         return self.records.register(data, REPO, path, commit_file(self.clone, "main", path, data), label)
@@ -507,6 +517,36 @@ def test_refusals_open_nothing(fx, case):
         assert fx.row(item.id) == item  # An imported item's evidence is unchanged.
     if case == "imported":
         assert fx.row(item.id).assessment_ref == ref_from_document(evidence)
+
+
+# --- authorized instructions and assessment are fixed (release record, check 5) -------------------------------------
+# Every test above runs with an empty release store: the assess, reuse, revision and --recover paths are unchanged.
+
+
+def test_an_authorized_item_refuses_a_revision_before_moving_its_pointer(fx):
+    item = fx.register()
+    first = fx.service.assess(item.id)
+    fx.authorize(item.id)
+    revised = commit_file(fx.clone, "main", PATH, REVISED)
+    assert fx.service.assess(item.id, revision=(REVISED, revised)) == Hold(AUTHORIZED_INSTRUCTIONS_FIXED, item.id)
+    assert fx.row(item.id).pointer.commit == item.pointer.commit == tag_commit(fx.clone, item.id)
+    assert remote_refs(fx.clone)["refs/tags/work/" + item.id] == item.pointer.commit
+    assert [a["attempt_id"] for a in fx.consumer.history(item.id)] == [first.attempt_id] and len(fx.producer.calls) == 1
+
+
+def test_an_authorized_item_returns_its_reused_assessment_and_opens_no_new_attempt(fx):
+    item = fx.register()
+    first = fx.service.assess(item.id)
+    fx.authorize(item.id)
+    assert fx.service.assess(item.id) == replace(first, reused=True)
+    other = fx.register(label="FAILED", path="docs/failed.md")
+    fx.producer.script = raising
+    failed = fx.service.assess(other.id)
+    assert failed.reason_code == ATTEMPT_FAILURE
+    fx.authorize(other.id)
+    fx.producer.script = answer
+    assert fx.service.assess(other.id) == Hold(AUTHORIZED_INSTRUCTIONS_FIXED, other.id)
+    assert len(fx.consumer.history(other.id)) == 1 and len(fx.producer.calls) == 2
 
 
 def test_revision_cannot_be_combined_with_recovery(fx):
