@@ -28,6 +28,7 @@ class GitHubProjectsWorkManagement(WorkManagement):
         self._status_mapping, self._projection_fields, self._snapshot, self._contract, self._projection_write = dict(status_mapping), dict(projection_fields), snapshot, contract, projection_write
         self._decision_projection_write, self._directory = decision_projection_write, directory
         self._projected_revisions: dict[str, int] = {}
+        self.last_refusals: tuple[tuple[str, str], ...] = ()  # (card id, reason) of the last import's refused rows
 
     def resolve_project(self) -> ProjectSchema:
         """Resolve the live Project and its field and option identities.
@@ -47,14 +48,29 @@ class GitHubProjectsWorkManagement(WorkManagement):
         return schema
 
     def import_ready_snapshot(self) -> tuple[ReadyWorkItem, ...]:
+        """Rows are translated one at a time: a row the translation rules refuse is kept in `last_refusals` as
+        (card id, reason) and the others still import. The row's contract is resolved only for a row the rules
+        accept, and a refusal from that resolver still stops the import, as before."""
+        self.last_refusals = ()
         try:
             rows = self._snapshot()
         except Exception as error:
             raise WorkUnavailable("upstream snapshot unavailable") from error
-        imported = tuple(self._translate(row, position) for position, row in enumerate(rows))
+        imported, refusals = [], []
+        for position, row in enumerate(rows):
+            try:
+                accepted = self._translate(row)
+            except WorkRejected as error:
+                refusals.append((str(row.get("card", "")), str(error)))
+                continue
+            identity, priority, dependencies, digest, readiness, metadata = accepted
+            imported.append(ReadyWorkItem(identity, position, self._repository, self._profile, priority, dependencies,
+                                          self._contract_for(row), digest, readiness, metadata=metadata))
+        self.last_refusals = tuple(refusals)
         return tuple(item for item in imported if item.metadata and item.metadata["upstream_status"] == "READY")
 
-    def _translate(self, row: Mapping[str, object], fifo: int) -> ReadyWorkItem:
+    def _translate(self, row: Mapping[str, object]) -> tuple[str, int | None, tuple[str, ...], str, str, dict[str, str]]:
+        """The translation rules: the row's identity, priority, dependencies, digest, readiness and metadata."""
         if not row.get("complete") or not row.get("membership") or row.get("repository") != self._repository:
             raise WorkRejected("incomplete page or missing Project membership")
         status = row.get("status")
@@ -76,7 +92,7 @@ class GitHubProjectsWorkManagement(WorkManagement):
         if not isinstance(dependencies, list) or any(not isinstance(dep, str) or not dep for dep in dependencies):
             raise WorkRejected("unsupported dependency evidence")
         metadata = {"wave": str(row.get("wave", "")), "upstream_status": self._status_mapping[status], "source_version": str(row.get("source_version", "")), "contract_location": str(row.get("contract", ""))}
-        return ReadyWorkItem(identity, fifo, self._repository, self._profile, priority_value, tuple(dependencies), self._contract_for(row), digest, readiness, metadata=metadata)
+        return identity, priority_value, tuple(dependencies), digest, readiness, metadata
 
     def _contract_for(self, row: Mapping[str, object]) -> BiuContract:
         """The row's own contract, or the one shared contract a fixture binds."""

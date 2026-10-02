@@ -101,3 +101,7 @@ class WorkItemRepository(Protocol):
     def find_by_issue(self, number: int) -> WorkItem | None:
         """The item linked to this Issue number; read only by `work link`'s duplicate cleanup."""
         ...
+
+    def find_by_card(self, card_id: str) -> WorkItem | None:
+        """The one item linked to this board card (a unique index); read only by the READY view."""
+        ...

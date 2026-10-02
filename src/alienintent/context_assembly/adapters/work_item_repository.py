@@ -58,6 +58,8 @@ COLUMNS = ("id, request_ref, label, parent_id, kind, state, retired_at, repo, pa
 # cannot add a UNIQUE column), with a unique index giving one item per Issue.
 LINK_COLUMNS = (("issue_number", "INTEGER"), ("issue_node_id", "TEXT"), ("card_id", "TEXT"))
 LINK_INDEX = "CREATE UNIQUE INDEX IF NOT EXISTS work_item_issue ON work_item(issue_number)"
+# One card names at most one item (the READY view's card lookup); NULLs are allowed for unlinked items.
+CARD_INDEX = "CREATE UNIQUE INDEX IF NOT EXISTS work_item_card ON work_item(card_id)"
 READ_COLUMNS = COLUMNS + "".join(", " + name for name, _ in LINK_COLUMNS)
 INSERT = (f"INSERT INTO work_item ({COLUMNS}) VALUES (?, ?, ?, ?, ?, ?, CASE WHEN ? THEN {NOW} END, ?, ?, ?, ?, ?, ?, "
           f"{NOW}, {NOW}) ON CONFLICT(request_ref) DO NOTHING")
@@ -85,6 +87,7 @@ class SQLiteWorkItemRepository(WorkItemRepository):
                     self._execute(self._write(), f"ALTER TABLE work_item ADD COLUMN {name} {kind}")
         with self._session() as connection:
             self._execute(connection, LINK_INDEX)
+            self._execute(connection, CARD_INDEX)
 
     def _missing_link_columns(self, connection: sqlite3.Connection) -> list[tuple[str, str]]:
         present = {row["name"] for row in self._execute(connection, "PRAGMA table_info(work_item)").fetchall()}
@@ -172,7 +175,8 @@ class SQLiteWorkItemRepository(WorkItemRepository):
                 raise LabelInUse(label) from error
             if parent is not None and kind == "SQLITE_CONSTRAINT_FOREIGNKEY":
                 raise ParentNotRegistered(parent) from error
-            if issue is not None and kind == "SQLITE_CONSTRAINT_UNIQUE" and message.endswith("work_item.issue_number"):
+            if issue is not None and kind == "SQLITE_CONSTRAINT_UNIQUE" \
+                    and message.endswith(("work_item.issue_number", "work_item.card_id")):  # An Issue has one card.
                 raise IssueAlreadyLinked(str(issue)) from error
             raise InvalidWorkItem("constraint", message) from error
         except sqlite3.OperationalError as error:
@@ -202,6 +206,10 @@ class SQLiteWorkItemRepository(WorkItemRepository):
 
     def find_by_issue(self, number: int) -> WorkItem | None:
         rows = self._rows("issue_number = ?", (number,))
+        return rows[0] if rows else None
+
+    def find_by_card(self, card_id: str) -> WorkItem | None:
+        rows = self._rows("card_id = ?", (card_id,))
         return rows[0] if rows else None
 
     def children(self, identity: str) -> tuple[WorkItem, ...]:

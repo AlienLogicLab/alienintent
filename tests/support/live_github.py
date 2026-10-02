@@ -111,8 +111,14 @@ def project_graphql(
                     {"id": priority_field, "name": "Priority", "options": PRIORITY_OPTIONS},
                 ]},
             }}}
-        if "items(first:$limit)" in query:
-            return {"data": {"node": {"id": project_id, "number": project_number, "items": {"nodes": items or []}}}}
+        if "items(first:100,after:$cursor)" in query:
+            listed = items or []
+            start = int(variables.get("cursor") or 0)
+            page = listed[start:start + 100]
+            end = start + len(page)
+            return {"data": {"node": {"id": project_id, "number": project_number, "items": {
+                "totalCount": len(listed), "pageInfo": {"hasNextPage": end < len(listed), "endCursor": str(end) if page else None},
+                "nodes": page}}}}
         if "ProjectV2Item { id project" in query:
             return {"data": {"node": {
                 "id": variables["item"], "project": {"id": project_id, "number": project_number},

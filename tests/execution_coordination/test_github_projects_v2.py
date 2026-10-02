@@ -220,3 +220,92 @@ def test_an_issue_card_answered_for_another_project_or_refused_is_never_returned
 
 def test_a_card_removal_answers_the_deleted_card_id() -> None:
     assert directory().delete_item("PVTI_card") == "PVTI_card"
+
+
+# --- READY-view check 1: the whole board, or nothing --------------------------
+
+
+def _board_item(number: int) -> dict:
+    return {"id": f"PVTI_{number:03d}", "content": {"id": f"I_{number}", "title": f"t{number}", "body": "b"},
+            "fieldValues": {"nodes": []}}
+
+
+def _complete(count: int = 237) -> list[list]:
+    """[nodes, totalCount, hasNextPage, endCursor] per page of 100."""
+    nodes = [_board_item(number) for number in range(count)]
+    chunks = [nodes[start:start + 100] for start in range(0, count, 100)]
+    return [[chunk, count, index < len(chunks) - 1, f"cursor-{index}"] for index, chunk in enumerate(chunks)]
+
+
+def _paged(pages: list[list]):
+    cursors: list[object] = []
+
+    def graphql(query: str, variables: dict) -> object:
+        assert "items(first:100,after:$cursor){ totalCount pageInfo { hasNextPage endCursor }" in query
+        cursors.append(variables["cursor"])
+        nodes, total, more, cursor = pages[len(cursors) - 1]
+        return {"data": {"node": {"id": SANDBOX_PROJECT, "number": 2, "items": {
+            "totalCount": total, "pageInfo": {"hasNextPage": more, "endCursor": cursor}, "nodes": nodes}}}}
+    return GitHubProjectsV2Directory(address(), RecordedTransport({}, graphql), lambda: {}), cursors
+
+
+def test_a_board_of_237_items_is_read_whole_over_three_pages() -> None:
+    live, cursors = _paged(_complete())
+
+    items = live.items()
+
+    assert [item.item_id for item in items] == [f"PVTI_{number:03d}" for number in range(237)]
+    assert cursors == [None, "cursor-0", "cursor-1"]
+    assert set(live.addressed) == {SANDBOX_PROJECT}
+
+
+def _break_total(pages):
+    pages[1][1] = 238
+
+
+def _break_empty_cursor(pages):
+    pages[0][3] = ""
+
+
+def _break_repeated_cursor(pages):
+    pages[1][3] = "cursor-0"
+
+
+def _break_early_last_page(pages):
+    pages[1][2] = False
+
+
+def _break_repeated_item(pages):
+    pages[2][0][0] = _board_item(5)
+
+
+def _break_count(pages):
+    for page in pages:
+        page[1] = 238
+
+
+def _break_missing_page_info(pages):
+    pages[0][2] = None
+
+
+@pytest.mark.parametrize("broken", [_break_total, _break_empty_cursor, _break_repeated_cursor, _break_early_last_page,
+                                    _break_repeated_item, _break_count, _break_missing_page_info])
+def test_each_pagination_rule_broken_alone_refuses_the_whole_board(broken) -> None:
+    pages = _complete()
+    broken(pages)
+    live, _ = _paged(pages)
+
+    with pytest.raises(ProjectUnavailable):
+        live.items()
+
+
+def test_ten_pages_are_read_and_an_eleventh_is_refused_without_being_requested() -> None:
+    ten = [[[_board_item(number)], 10, number < 9, f"cursor-{number}"] for number in range(10)]
+    live, cursors = _paged(ten)
+    assert len(live.items()) == 10 and len(cursors) == 10
+
+    eleven = [[[_board_item(number)], 11, number < 10, f"cursor-{number}"] for number in range(11)]
+    live, cursors = _paged(eleven)
+    with pytest.raises(ProjectUnavailable, match="exceed 10 pages"):
+        live.items()
+    assert len(cursors) == 10
