@@ -1,0 +1,70 @@
+{
+  "assessment": {
+    "disposition": "READY",
+    "expected_rework_locality": "MEDIUM",
+    "governing_intent": "Create a bounded handoff from the existing Python preparation/readiness path to the existing Python live runner's GitHub-backed work queue, preserving the exact assessed work contract, design, dependencies, priority, source identity and readiness evidence without launching production execution or recreating adjacent subsystems.",
+    "implementation_unknowns": [
+      "Exact APIs, data models and extension points for UpstreamIntegration, SandboxRunProfile and the existing GitHub work adapter must be located in the codebase.",
+      "The current representation of work contract identity, readiness digest or assessment fingerprint must be identified and reused rather than redefined.",
+      "The existing persistence and effect-control mechanisms for idempotency, partial writes and unknown external outcomes must be found and applied correctly.",
+      "The precise readback fields and comparison rules needed to prove Project/repository identity must be determined from existing adapter behavior.",
+      "The test harness needed to simulate stale assessments, partial writes, ambiguous readback and duplicate handoff attempts must be identified or extended."
+    ],
+    "independent_decision_centers": [],
+    "material_risks": [
+      "The implementation could accidentally redefine readiness or duplicate coordinator responsibilities instead of reusing existing ownership boundaries.",
+      "Partial or ambiguous GitHub Project/repository writes could create duplicate or falsely eligible work if effect controls are not applied correctly.",
+      "A stale or mismatched work contract, requirement, design or assessment could be accepted if identity comparison is incomplete.",
+      "Tests may pass only happy paths unless negative cases are deliberately made capable of turning red.",
+      "The handoff could unintentionally trigger production execution if release and runner guards are bypassed rather than treated as separate checks.",
+      "Repository revision custody and Project descriptor identity may be inconsistently recorded if readback proof is not treated as authoritative."
+    ],
+    "next_action": "Proceed as one ready implementation unit after pinning the exact baseline and releasing the candidate packet with its approved design and current readiness assessment; implement only the handoff and require independent review before landing.",
+    "owner_clarifications": [],
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "rationale": "The work has clear governing intent, explicit non-goals, bounded authority, observable acceptance and coherent verification. The remaining uncertainty is primarily engineering discovery inside existing systems, not unresolved owner intent. The Project write and repository custody requirements should be reviewed together because the core safety property depends on their combined proof of the same immutable assessed contract. Splitting them would risk accepting an unprovable half-handoff, while no material external prerequisite is established as unavailable by the supplied text.",
+    "semantic_split_recommendation": [],
+    "summary": "The proposed work is a cohesive integration unit: it connects two existing subsystems at a single semantic boundary, with explicit ownership limits, non-goals, idempotency/staleness requirements, readback proof requirements and observable acceptance criteria. The controlling condition is that owner intent is sufficiently specified and the Project write plus repository custody are not independent decision centers here; they are coupled parts of proving one immutable assessed work item can be safely handed off once.",
+    "verification_assessment": "Acceptance is observable through repository/Project readback identities, runner eligibility behavior, duplicate prevention, refusal of stale or fabricated assessments, typed hold states for ambiguous writes and negative tests that fail when the protections are removed. One independent review verdict is meaningful because the changes serve one outcome: safely projecting an already-assessed Python work unit into the existing live queue without changing readiness semantics or runner execution policy."
+  },
+  "disposition": "READY",
+  "outcome": "ASSESSED",
+  "provenance": {
+    "agent_ready_checkout_commit": "338b0f07916d37024ccbaf9f43710ebeb86d720e",
+    "agent_ready_version": "0.1.0rc1",
+    "contract_version": "0.1.0rc1; bound to the package release; Agent Ready v0.1 results carry no schema version identifier (sanookdu/agent-ready#1)",
+    "ended_at": "2026-09-29T15:15:32.322182+00:00",
+    "executable": "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+    "exit_code": 0,
+    "input_chars": 4652,
+    "input_sha256": "20c7fc790d1933090584efe5d520db0a9de24f7911e57cb793883ab8f9350463",
+    "invocation": [
+      "/mnt/d/Projects/agent-ready/.venv/bin/agent-ready",
+      "assess",
+      "/tmp/readiness-assessment-tm4gjcah/PY-SELF-01.md",
+      "--provider",
+      "codex",
+      "--json"
+    ],
+    "model": "not exposed by Agent Ready v0.1 results; provider_evidence carries the CLI version only",
+    "native_agent_ready": true,
+    "producer": "agent-ready-cli",
+    "provider": "codex",
+    "provider_evidence": {
+      "capability_probe": "PASSED",
+      "compatibility": "COMPATIBLE_UNVERIFIED",
+      "provider": "codex",
+      "version": "codex-cli 0.158.0"
+    },
+    "started_at": "2026-09-29T15:15:04.354919+00:00",
+    "timeout_s": 600
+  },
+  "record_kind": "ReadinessAssessment",
+  "schema_version": "1",
+  "work_unit_id": "PY-SELF-01"
+}

@@ -8,6 +8,9 @@ and outcomes. It is developed by Alien Logic Lab.
 - [Bounded work packet template](templates/work-packet.md)
 - [Governing agent directive](migration/agent-packages/GOVERNING_AGENT_DIRECTIVE.md)
 - [Name and organization decision](decisions/2026-09-18-alienintent-name-and-organization.md)
+- [Agent-slop problem statement](product/alienintent-agent-slop-problem-statement.md)
+- [Agent-slop requirements gap analysis](research/alienintent-agent-slop-gap-requirements.md)
+- [Python replacement path analysis](operations/python-replacement-shortest-path-analysis.md)
 
 ## Where a document belongs
 
@@ -16,7 +19,9 @@ and outcomes. It is developed by Alien Logic Lab.
 | `decisions/` | canonical decision records only |
 | `proposals/` | submitted proposals, immutable provenance |
 | `research/` | research, prior-art and strategy analysis |
+| `product/` | product problem and intent statements; authority is stated in each document |
 | `strategy/` | strategic direction that guides but does not authorize |
+| `operations/` | operating contracts, runbooks and replacement path analysis |
 | `evidence/` | verification and proof records |
 | `architecture/` | architecture authority and contracts |
 | `work-units/` | BIUs, plans and planning notes |
