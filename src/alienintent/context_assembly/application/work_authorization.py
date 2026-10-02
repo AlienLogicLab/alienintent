@@ -3,11 +3,12 @@
 
 The command records the Founder's approval; it does not grant it. It writes only when the exact packet commit,
 assessment attempt and starting revision the Founder approved are still the item's current ones, the packet's
-contract block is valid for the item and the existing release gate's preconditions would accept the record. One
+contract block is valid for the item and the existing release gate's preconditions, over the same wording the gate
+checks at launch, would accept the record. One
 evidence record binds the item, its pointer, its assessment, its contract digest, the baseline, the approver and
 the Founder's words; its content digest is the release record's `record_ref`. Writes, in this order: the evidence
-record, the release record (the commit point, read back), the row's `approval_ref`. Nothing here changes the item's
-workflow state, writes to GitHub or launches anything.
+record, the release record (the commit point: written only if none exists, read back), the row's `approval_ref`.
+Nothing here changes the item's workflow state, writes to GitHub or launches anything.
 """
 from __future__ import annotations
 
@@ -26,11 +27,13 @@ from alienintent.evidence_learning.domain.records import Header, Observation, ca
 from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
 from alienintent.execution_coordination.domain.release import (
-    BaselineEvidence, ReleaseAuthorization, ReleasePreconditionRefused, admit_release_preconditions)
+    BaselineEvidence, ReleaseAuthorization, ReleasePreconditionRefused, admit_release_preconditions, release_wording)
+from alienintent.execution_coordination.ports.operational_store import VersionConflict
 from alienintent.execution_coordination.ports.readiness import AssessmentConsumer
 from alienintent.execution_coordination.ports.release_admission import RevisionResolver
 
-# Answers `work authorize` returns instead of writing; nothing is written on any of them.
+# Answers `work authorize` returns instead of writing: `ALREADY_AUTHORIZED` after a lost VersionConflict leaves this
+# run's evidence object unreferenced; every other refusal writes nothing.
 NOT_AUTHORIZABLE, AUTHORIZATION_STALE = "NOT_AUTHORIZABLE", "AUTHORIZATION_STALE"
 BASELINE_INVALID, GATE_WOULD_REFUSE, ALREADY_AUTHORIZED = "BASELINE_INVALID", "GATE_WOULD_REFUSE", "ALREADY_AUTHORIZED"
 # `work assess` refuses to move the pointer or open an attempt of an authorized item.
@@ -43,7 +46,8 @@ COMMIT = re.compile(r"[0-9a-f]{40}")
 class ReleaseRecords(Protocol):
     """The existing durable release records, as this service uses them (bound by composition)."""
 
-    def record(self, authorization: ReleaseAuthorization) -> None: ...
+    def record(self, authorization: ReleaseAuthorization) -> None:
+        """Create-only: VersionConflict when any release record already exists for the identity."""
 
     def release_authorization(self, identity: str) -> ReleaseAuthorization | None: ...
 
@@ -114,9 +118,13 @@ class WorkAuthorization:
             None, WORK_AUTHORIZATION, WORK_AUTHORIZATION)
         reference = record_ref(evidence)
         authorization = ReleaseAuthorization(item.id, reference.revision_digest, True, baseline, quote)
-        try:  # The release gate's own check, with the resolver and release point it is composed with.
+        # The release gate's own check, with the resolver and release point it is composed with, over the wording it
+        # checks at launch: this contract and the readiness evidence the READY view puts on the row (`readiness` is
+        # the assessment's logical id). Registry rows' metadata holds only system values, so none is passed here.
+        wording = release_wording(contract, item.assessment_ref.logical_id, {})
+        try:
             admit_release_preconditions(item.id, authorization, BaselineEvidence(release_point, resolves, reachable),
-                                        ())
+                                        wording)
         except ReleasePreconditionRefused as refused:
             return AuthorizationResult(item.id, GATE_WOULD_REFUSE, detail=refused.check)
         existing = self.releases.release_authorization(item.id)
@@ -125,9 +133,17 @@ class WorkAuthorization:
         if existing is None:
             if self.evidence.put(evidence) != reference:
                 raise RuntimeError("the evidence repository answered another reference")
-            self.releases.record(authorization)
-            if self.releases.release_authorization(item.id) != authorization:
-                raise RuntimeError("the release record did not read back as written")
+            try:
+                self.releases.record(authorization)
+            except VersionConflict:  # Another run recorded first: a repeat only if its record equals this one.
+                existing = self.releases.release_authorization(item.id)
+                if existing is None:
+                    raise RuntimeError("the release record conflicted but did not read back") from None
+                if existing != authorization:
+                    return AuthorizationResult(item.id, ALREADY_AUTHORIZED, authorization=asdict(existing))
+            else:
+                if self.releases.release_authorization(item.id) != authorization:
+                    raise RuntimeError("the release record did not read back as written")
         if item.approval_ref != reference:
             self.identities.set_evidence(item.id, "approval", reference)
         return AuthorizationResult(item.id, None, asdict(reference), asdict(authorization), existing is not None)

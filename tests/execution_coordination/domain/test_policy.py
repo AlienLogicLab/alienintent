@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from dataclasses import replace
+
 import pytest
 
 from alienintent.execution_coordination.domain.contract import BudgetPolicy
@@ -21,6 +23,7 @@ from alienintent.execution_coordination.domain.release import (
     ReleaseSource,
     admit_release,
     admit_release_preconditions,
+    release_wording,
 )
 from alienintent.execution_coordination.domain.scheduling import Capacity, ScheduledItem, select_admissible
 from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, VerdictKind, evaluate_verdict
@@ -110,6 +113,40 @@ def test_release_preconditions_refuse_unsuperseded_denial_wording() -> None:
     assert _refused(_authorization(text=DENIAL, superseding_record="issue#1:comment:2")) == "authority-wording-consistent"
     admit_release_preconditions("WO-1", _authorization(superseding_record="issue#1:comment:2"),
                                 BaselineEvidence("main", True, True), (DENIAL,))
+
+
+READINESS = "readiness/2232453f-9855-46cd-b155-34c11d88e43c/1/raw"
+METADATA = {"wave": "6", "upstream_status": "READY", "source_version": "v1", "contract_location": "docs/p.md"}
+# The fixed sequence: readiness evidence, metadata values, then the contract's string and string-tuple entries in
+# canonical payload order (budget_policy, a mapping, carries none; empty dependencies add none).
+WORDING = [READINESS, "6", "READY", "v1", "docs/p.md", "PY-02", "1", "Build a deterministic execution kernel",
+           "SF-REQ-010", "pure-domain", "execution-coordination", "adapters", "python", "no automatic retry",
+           "tests pass", "unit tests", "test output", "network", "independent read-back", "explicit-human-off",
+           "Founder", "SWF-15", "AlienLogicLab/alienintent", "main@8a82e563", "publish candidate", "authority conflict"]
+
+
+def test_release_wording_is_the_gate_wording_in_its_fixed_order() -> None:
+    from alienintent.execution_coordination.application.release_admission import _wording
+    from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
+
+    contract = valid_contract()
+    assert list(release_wording(contract, READINESS, METADATA)) == WORDING
+    assert list(release_wording(contract, READINESS, {})) == [READINESS, *WORDING[5:]]
+    item = ReadyWorkItem("PY-02", 0, "repo", "profile", 1, (), contract, contract.content_digest, READINESS,
+                         metadata=METADATA)
+    assert list(_wording(item)) == WORDING
+    assert list(_wording(replace(item, metadata=None))) == [READINESS, *WORDING[5:]]
+
+
+def test_release_wording_carries_denials_from_each_branch() -> None:
+    contract = valid_contract()
+    admit_release_preconditions("WO-1", _authorization(), BaselineEvidence("main", True, True),
+                                release_wording(contract, READINESS, METADATA))
+    for wording in (release_wording(contract, DENIAL, METADATA),
+                    release_wording(contract, READINESS, METADATA | {"wave": "release denied"}),
+                    release_wording(valid_contract(intent=DENIAL), READINESS, METADATA),
+                    release_wording(valid_contract(non_goals=("network", DENIAL)), READINESS, METADATA)):
+        assert _refused(_authorization(), wording=wording) == "authority-wording-consistent"
 
 
 def test_exhausted_attributable_budget_is_refused_by_the_existing_budget_check() -> None:

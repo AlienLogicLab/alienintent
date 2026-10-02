@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from enum import StrEnum
 import re
 from types import MappingProxyType
-from typing import Iterable, Mapping
+from typing import Iterable, Iterator, Mapping
 
 from .contract import BiuContract
 
@@ -133,6 +133,19 @@ class BaselineEvidence:
 
 def is_exact_revision(revision: str | None) -> bool:
     return bool(revision) and EXACT_REVISION.fullmatch(revision) is not None
+
+
+def release_wording(contract: BiuContract, readiness_evidence: str, metadata: Mapping[str, str]) -> Iterator[str]:
+    """Every human-readable text a release request carries, in order: the readiness evidence, every metadata value,
+    then every string and string-tuple entry of the contract's canonical payload. `work authorize` and the release
+    gate check this same wording."""
+    yield readiness_evidence
+    yield from metadata.values()
+    for value in contract.canonical_payload().values():
+        if isinstance(value, str):
+            yield value
+        elif isinstance(value, tuple):
+            yield from (entry for entry in value if isinstance(entry, str))
 
 
 def admit_release_preconditions(identity: str, authorization: ReleaseAuthorization | None,

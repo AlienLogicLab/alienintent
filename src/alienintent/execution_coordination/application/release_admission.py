@@ -7,7 +7,8 @@ from types import MappingProxyType
 from typing import Iterable, Mapping
 
 from alienintent.execution_coordination.domain.contract import BiuContract
-from alienintent.execution_coordination.domain.release import BaselineEvidence, admit_release_preconditions, is_exact_revision
+from alienintent.execution_coordination.domain.release import (
+    BaselineEvidence, admit_release_preconditions, is_exact_revision, release_wording)
 from alienintent.execution_coordination.ports.release_admission import ReleaseAuthorizationRecords, RevisionResolver
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
 
@@ -32,14 +33,8 @@ class ReleasePreconditionGate:
 
 
 def _wording(item: ReadyWorkItem) -> Iterable[str]:
-    """Every human-readable text the release request carries."""
-    yield item.readiness_evidence
-    yield from (item.metadata or {}).values()
-    for value in item.contract.canonical_payload().values():
-        if isinstance(value, str):
-            yield value
-        elif isinstance(value, tuple):
-            yield from (entry for entry in value if isinstance(entry, str))
+    """Every human-readable text the release request carries (the wording `work authorize` checks too)."""
+    return release_wording(item.contract, item.readiness_evidence, item.metadata or {})
 
 
 @dataclass(frozen=True)

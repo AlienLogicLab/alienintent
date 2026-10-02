@@ -1,4 +1,5 @@
-"""`work authorize`: the Founder's authorization recorded as the item's release record (acceptance checks 1-6).
+"""`work authorize`: the Founder's authorization recorded as the item's release record (acceptance checks 1-6), and
+the create-only release record and shared wording check of AUTHORIZATION-CONSISTENT-WITH-LAUNCH (its checks 1-3, 6).
 
 Every case uses the composed WorkRegistry over a temporary project database, a local clone with a local bare remote,
 the `readiness` store and evidence folder, and a fixture Agent Ready executable answering the disposition written in
@@ -21,11 +22,15 @@ from alienintent.context_assembly.application.work_authorization import (
 from alienintent.context_assembly.domain.work_contract import contract_block
 from alienintent.context_assembly.domain.work_identity import Pointer
 from alienintent.evidence_learning.domain.records import ref_from_document
+from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
 from alienintent.execution_coordination.adapters.release_admission import (
     GitRevisionResolver, StoredReleaseAuthorizations)
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.execution_coordination.domain.readiness import Hold
-from alienintent.execution_coordination.domain.release import BaselineEvidence, admit_release_preconditions
+from alienintent.execution_coordination.domain.release import (
+    BaselineEvidence, ReleaseAuthorization, ReleasePreconditionRefused, admit_release_preconditions)
+from alienintent.execution_coordination.ports.operational_store import VersionConflict
 from tests.context_assembly.test_initial_compilation import PROJECT, REPO, git, project_clone
 from tests.context_assembly.test_readiness_consumer import fixture_package
 from tests.context_assembly.test_work_contract import contract_payload
@@ -61,16 +66,17 @@ class Fx:
         """Another registry instance over the same configuration, as another process would build it."""
         return WorkRegistry(project_configuration(self.document, PROJECT))
 
-    def packet(self, item, payload: dict | None = None, raw: str | None = None) -> bytes:
-        text = raw if raw is not None else json.dumps(payload or contract_payload(item.id), indent=1)
+    def packet(self, item, payload: dict | None = None, raw: str | None = None, changes: dict | None = None) -> bytes:
+        text = raw if raw is not None else json.dumps(payload or contract_payload(item.id, **(changes or {})), indent=1)
         return f"# Work unit: {item.label}\n\n```json alienintent-contract\n{text}\n```\n".encode()
 
-    def ready(self, label: str = "UNIT", payload: dict | None = None, raw: str | None = None):
+    def ready(self, label: str = "UNIT", payload: dict | None = None, raw: str | None = None,
+              changes: dict | None = None):
         """Register, give the packet its contract block at a new commit and assess it: (row, attempt id)."""
         path = f"docs/{label}.md"
         first = b"# Work unit: " + label.encode() + b"\n"
         item = self.registry.records.register(first, REPO, path, commit_file(self.clone, "main", path, first), label)
-        data = self.packet(item, payload, raw)
+        data = self.packet(item, payload, raw, changes)
         result = self.registry.assessment.assess(item.id, (data, commit_file(self.clone, "main", path, data)))
         return self.row(item.id), result.attempt_id
 
@@ -349,3 +355,188 @@ def test_authorization_changes_no_state_and_calls_nothing_else(fx, monkeypatch):
     monkeypatch.setattr(fx.registry.identities, "set_state", forbidden)
     assert fx.authorize(item, attempt).answer is None
     assert fx.row(item.id).state == "CAPTURE"
+
+
+# --- AUTHORIZATION-CONSISTENT-WITH-LAUNCH ----------------------------------------------------------------------------
+
+
+class Interleaved:
+    """One run's release records, logging each read and write to `events`. `record` first runs `meanwhile` (another
+    run), so this run pauses between its "no record yet" check and its write; `after` runs once its write is done."""
+
+    def __init__(self, name: str, releases, events: list, meanwhile=None, after=None) -> None:
+        self.name, self.releases, self.events, self.meanwhile, self.after = name, releases, events, meanwhile, after
+
+    def release_authorization(self, identity: str):
+        found = self.releases.release_authorization(identity)
+        self.events.append((self.name, "none" if found is None else "found"))
+        return found
+
+    def record(self, authorization) -> None:
+        if self.meanwhile is not None:
+            self.meanwhile()
+        self.events.append((self.name, "write"))
+        self.releases.record(authorization)
+        if self.after is not None:
+            self.after()
+
+
+def run(fx: Fx, name: str, events: list, meanwhile=None, after=None):
+    """Another process's `work authorize`, its release records wrapped as `Interleaved`."""
+    service = fx.second().authorization
+    service.releases = Interleaved(name, service.releases, events, meanwhile, after)
+    return service
+
+
+def stored_version(fx: Fx, identity: str) -> int:
+    """How many times the item's release record was written (the store version)."""
+    return SQLiteOperationalStore(fx.root / "readiness.sqlite").read_state(
+        "registry", f"release-authorization:{identity}")[0]
+
+
+def test_check1_a_release_record_is_never_overwritten(tmp_path):
+    records = StoredReleaseAuthorizations(SQLiteOperationalStore(tmp_path / "s.sqlite"), "registry")
+    first = ReleaseAuthorization("X", "sha256:" + "a" * 64, True, "b" * 40, QUOTE)
+    records.record(first)
+    for other in (replace(first, record_ref="sha256:" + "c" * 64, baseline="c" * 40), first):
+        with pytest.raises(VersionConflict):
+            records.record(other)
+    assert records.release_authorization("X") == first
+
+
+def test_check2_competing_authorizations_leave_one_record_and_one_approval(fx):
+    item, attempt = fx.ready()
+    earlier = parent(fx, item)
+    commit_file(fx.clone, "main", "docs/later.md", b"later\n")
+    events, results, before = [], {}, fx.objects()
+    second = run(fx, "B", events)
+    first = run(fx, "A", events,
+                meanwhile=lambda: results.setdefault("B", fx.authorize(item, attempt, service=second)))
+    results["A"] = fx.authorize(item, attempt, baseline=earlier, service=first)
+    # Both runs passed the "no record yet" check before either wrote; B wrote first, A's write then conflicted.
+    assert events == [("A", "none"), ("B", "none"), ("B", "write"), ("B", "found"), ("A", "write"), ("A", "found")]
+    winner, loser = results["B"], results["A"]
+    assert (winner.answer, winner.repeated) == (None, False)
+    assert (loser.answer, loser.authorization) == (ALREADY_AUTHORIZED, winner.authorization)
+    assert asdict(fx.releases().release_authorization(item.id)) == winner.authorization
+    assert stored_version(fx, item.id) == 1
+    assert fx.row(item.id).approval_ref == ref_from_document(winner.evidence_ref)
+    assert len(fx.objects() - before) == 2  # The loser's evidence object is kept, unreferenced.
+
+
+def test_check4_an_equal_record_found_after_a_conflict_is_a_repeat(fx):
+    item, attempt = fx.ready()
+    events, results = [], {}
+    second = run(fx, "B", events)
+    first = run(fx, "A", events,
+                meanwhile=lambda: results.setdefault("B", fx.authorize(item, attempt, service=second)))
+    results["A"] = fx.authorize(item, attempt, service=first)
+    assert events == [("A", "none"), ("B", "none"), ("B", "write"), ("B", "found"), ("A", "write"), ("A", "found")]
+    assert (results["B"].answer, results["B"].repeated) == (None, False)
+    assert results["A"] == replace(results["B"], repeated=True)
+    assert fx.row(item.id).approval_ref == ref_from_document(results["A"].evidence_ref)
+    assert stored_version(fx, item.id) == 1
+
+
+def test_check6_a_conflict_loser_with_the_same_baseline_and_other_words_is_refused(fx):
+    item, attempt = fx.ready()
+    events, results = [], {}
+    second = run(fx, "B", events)
+    first = run(fx, "A", events,
+                meanwhile=lambda: results.setdefault("B", fx.authorize(item, attempt, service=second)))
+    results["A"] = fx.authorize(item, attempt, quote=QUOTE + " Again.", service=first)
+    assert events == [("A", "none"), ("B", "none"), ("B", "write"), ("B", "found"), ("A", "write"), ("A", "found")]
+    winner, loser = results["B"], results["A"]
+    assert (loser.answer, loser.authorization) == (ALREADY_AUTHORIZED, winner.authorization)
+    assert asdict(fx.releases().release_authorization(item.id)) == winner.authorization
+    assert fx.row(item.id).approval_ref == ref_from_document(winner.evidence_ref)
+
+
+def test_check6_a_conflict_loser_differing_only_in_record_ref_is_refused(fx):
+    item, attempt = fx.ready()
+    events: list = []
+    other = ReleaseAuthorization(item.id, "sha256:" + "e" * 64, True, fx.main(), QUOTE)
+    lost = fx.authorize(item, attempt, service=run(fx, "A", events,
+                                                   meanwhile=lambda: fx.releases().record(other)))
+    assert events == [("A", "none"), ("A", "write"), ("A", "found")]
+    assert (lost.answer, lost.authorization) == (ALREADY_AUTHORIZED, asdict(other))
+    assert fx.releases().release_authorization(item.id) == other and fx.row(item.id).approval_ref is None
+
+
+def test_check6_an_equal_conflict_loser_repairs_the_crashed_winners_approval(fx):
+    item, attempt = fx.ready()
+    events: list = []
+
+    def crash() -> None:
+        raise RuntimeError("process died after the release record, before approval_ref")
+
+    def winner_crashes() -> None:
+        with pytest.raises(RuntimeError, match="process died after the release record"):
+            fx.authorize(item, attempt, service=run(fx, "A", events, after=crash))
+
+    lost = fx.authorize(item, attempt, service=run(fx, "C", events, meanwhile=winner_crashes))
+    assert events == [("C", "none"), ("A", "none"), ("A", "write"), ("C", "write"), ("C", "found")]
+    assert (lost.answer, lost.repeated) == (None, True)
+    stored = fx.releases().release_authorization(item.id)
+    assert stored.record_ref == ref_from_document(lost.evidence_ref).revision_digest
+    assert fx.row(item.id).approval_ref == ref_from_document(lost.evidence_ref)
+    assert stored_version(fx, item.id) == 1
+
+
+def launch(fx: Fx, item, records) -> None:
+    """The release gate at launch over the row the READY view builds for the item (`work_registry`), imported."""
+    item = fx.row(item.id)
+    contract = contract_block(fx.registry.records.show(item.id).packet, item.id)
+    row = {"complete": True, "membership": True, "repository": REPO, "status": "READY", "priority": "P1",
+           "identity": item.id, "contract_digest": contract.content_digest, "readiness": item.assessment_ref.logical_id,
+           "dependencies": list(contract.dependencies), "card": "card"}
+    [ready] = GitHubProjectsWorkManagement("registry", REPO, {"READY": "READY"}, {}, lambda: (row,),
+                                           contract).import_ready_snapshot()
+    ReleasePreconditionGate(records, GitRevisionResolver({REPO: fx.clone}), "main").check(ready)
+
+
+@pytest.mark.parametrize("changes", [{"intent": "Implementation is not authorized yet."},
+                                     {"non_goals": ["none", "Release is refused pending review."]}])
+def test_check3_authorization_and_launch_refuse_the_same_contract_wording(fx, tmp_path, changes):
+    item, attempt = fx.ready(changes=changes)
+    before = fx.written()
+    result = fx.authorize(item, attempt)
+    assert (result.answer, result.detail) == (GATE_WOULD_REFUSE, "authority-wording-consistent")
+    assert fx.written() == before
+    records = StoredReleaseAuthorizations(SQLiteOperationalStore(tmp_path / "launch.sqlite"), "registry")
+    records.record(ReleaseAuthorization(item.id, "sha256:" + "a" * 64, True, fx.main(), QUOTE))
+    with pytest.raises(ReleasePreconditionRefused) as refused:
+        launch(fx, item, records)
+    assert refused.value.check == "authority-wording-consistent"
+    clean, clean_attempt = fx.ready("CLEAN")
+    assert fx.authorize(clean, clean_attempt).answer is None
+    launch(fx, clean, fx.releases())  # Accepted: no refusal raised.
+
+
+def test_check6_crash_then_compete_then_retry(fx):
+    item, attempt = fx.ready()
+    earlier = parent(fx, item)
+    commit_file(fx.clone, "main", "docs/later.md", b"later\n")
+    events: list = []
+
+    def crash() -> None:
+        raise RuntimeError("process died after the release record, before approval_ref")
+
+    def winner_crashes() -> None:
+        with pytest.raises(RuntimeError, match="process died after the release record"):
+            fx.authorize(item, attempt, service=run(fx, "A", events, after=crash))
+
+    # C passes its "no record yet" check, then the winner A writes and crashes, then C's write conflicts.
+    lost = fx.authorize(item, attempt, baseline=earlier, service=run(fx, "C", events, meanwhile=winner_crashes))
+    assert events == [("C", "none"), ("A", "none"), ("A", "write"), ("C", "write"), ("C", "found")]
+    stored = fx.releases().release_authorization(item.id)
+    assert stored.baseline == fx.main() and fx.row(item.id).approval_ref is None
+    assert (lost.answer, lost.authorization) == (ALREADY_AUTHORIZED, asdict(stored))
+    competing = fx.authorize(item, attempt, baseline=earlier, service=fx.second().authorization)
+    assert (competing.answer, competing.authorization) == (ALREADY_AUTHORIZED, asdict(stored))
+    assert fx.releases().release_authorization(item.id) == stored and fx.row(item.id).approval_ref is None
+    retry = fx.authorize(item, attempt, service=fx.second().authorization)
+    assert (retry.answer, retry.repeated) == (None, True)
+    assert fx.row(item.id).approval_ref == ref_from_document(retry.evidence_ref)
+    assert stored.record_ref == ref_from_document(retry.evidence_ref).revision_digest
+    assert fx.releases().release_authorization(item.id) == stored and stored_version(fx, item.id) == 1
