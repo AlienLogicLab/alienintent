@@ -784,6 +784,7 @@ def test_state_change_waits_for_the_pointer_transaction(harness, monkeypatch):
     """A concurrent set_state lands after the compiler's single transaction: all three pointers are written."""
     import os
     import sys
+    import time
     from alienintent.context_assembly.adapters import work_item_repository as adapter
     h = harness()
     prepared_three(h)
@@ -791,7 +792,7 @@ def test_state_change_waits_for_the_pointer_transaction(harness, monkeypatch):
     target = h.id(R1)
     code = ("import sys; from pathlib import Path; "
             "from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository; "
-            "items = SQLiteWorkItemRepository(Path(sys.argv[1]), {}); print('ready', flush=True); "
+            "items = SQLiteWorkItemRepository(Path(sys.argv[1]), {}, busy_timeout=60); print('ready', flush=True); "
             "print(items.set_state(sys.argv[2], 'SPECIFY').state, flush=True)")
     original = adapter.SQLiteWorkItemRepository.commit_packet
     started = []
@@ -802,7 +803,7 @@ def test_state_change_waits_for_the_pointer_transaction(harness, monkeypatch):
                 [sys.executable, "-c", code, str(h.registry.configuration.database), target], text=True,
                 stdout=subprocess.PIPE, env={**os.environ, "PYTHONPATH": str(ROOT / "src")}))
             assert started[0].stdout.readline().strip() == "ready"
-            subprocess.run(["sleep", "0.5"], check=True)  # The writer is now waiting on the compiler's lock.
+            time.sleep(0.5)  # The writer is now waiting on the compiler's lock.
             assert started[0].poll() is None
         return original(self, *args)
 
