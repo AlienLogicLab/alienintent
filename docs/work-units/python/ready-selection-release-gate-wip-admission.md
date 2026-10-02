@@ -1,7 +1,7 @@
 # Work unit: READY selection, release gate and configurable WIP admission
 
 **Label:** `READY-SELECTION-RELEASE-GATE-WIP-ADMISSION` (a document label; the permanent id is allocated when this draft is registered).
-**Status:** Draft revision 2 (work item `cbfd45ee-3020-40ca-853e-d15d3baf82b4`, at CAPTURE) for independent review, 2026-10-03. Not approved, not assessed, not released.
+**Status:** Draft revision 3 (work item `cbfd45ee-3020-40ca-853e-d15d3baf82b4`, at CAPTURE) for independent review, 2026-10-03. Not approved, not assessed, not released.
 **Position on the path:** unit 6b of the Founder's split of row 6 (6a authorization consistent with launch — landed `main` `16d3156`; 6b this unit; 6c worker launch, worker instructions, context delivery and shared model routing).
 **Roles:** one PRODUCER (self-reviews the complete diff); one fresh VERIFIER on the exact candidate; a separate CLOSURE owner lands it.
 
@@ -10,7 +10,7 @@
 ```json alienintent-contract
 {
  "identity": "cbfd45ee-3020-40ca-853e-d15d3baf82b4",
- "version": "revision-2",
+ "version": "revision-3",
  "intent": "Connect the work registry's READY view to the existing FactoryCoordinator through the existing release gate on the work registry's store, add configurable WIP admission that counts active work items atomically and survives restart, and record IMPLEMENT and VERIFY cycle counts in the coordinator's existing transitions, displayed by work display.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -21,7 +21,8 @@
   "Founder 2026-10-02: cycle counts belong with the recorded coordinator transitions and are displayed from that state.",
   "Worker launching, worker instructions, context delivery and model routing are unit 6c.",
   "This unit supersedes the path plan section 4A bullet that put cycle counts on work_item: they live in the coordinator state and change in the same commit as the transition.",
-  "Founder 2026-10-03: a WIP slot is released only on a recorded DONE or an authorized final stop; the shared wipLimit reaches Python only through runtime configuration injection, with no cached copy."
+  "Founder 2026-10-03: a WIP slot is released only on a recorded DONE or an authorized final stop; the shared wipLimit reaches Python only through runtime configuration injection, with no cached copy.",
+  "Founder 2026-10-03: the S0 frozen-kernel guard (tests/composition/test_offline_proof.py::test_s0_frozen_kernel_guard_rejects_authorized_s2_store_extension) must recognize this unit's authorized change to execution_coordination/domain/lifecycle.py; only that one expected-list entry is added; the guard's other protections are preserved."
  ],
  "authorized_scope": [
   "src/alienintent/execution_coordination/ports/operational_store.py",
@@ -35,7 +36,8 @@
   "tests/execution_coordination/test_factory_coordinator.py",
   "tests/composition/test_work_registry.py",
   "tests/context_assembly/test_work_link.py",
-  "tests/composition/test_lifecycle_capstone.py"
+  "tests/composition/test_lifecycle_capstone.py",
+  "tests/composition/test_offline_proof.py"
  ],
  "excluded_scope": [
   "launching workers for the work registry",
@@ -132,7 +134,7 @@ Worker launching, worker instructions, context delivery and model routing stay i
 
 ## 4. Exact permitted files
 
-Production: `src/alienintent/execution_coordination/ports/operational_store.py` and `src/alienintent/execution_coordination/adapters/sqlite_store.py` (`acquire_within`), `src/alienintent/execution_coordination/application/factory_coordinator.py` (admission, release in `_record_result`/`cancel`/`record_decision`, recovery, count encoding, public `decode`, `WIP_LIMIT_UNAVAILABLE`), `src/alienintent/execution_coordination/domain/lifecycle.py` (counts in `ExecutionState` and `transition`), `src/alienintent/composition/work_registry.py` (`coordinator`, limit reader, count reader for display), `src/alienintent/context_assembly/domain/work_link.py` and `src/alienintent/context_assembly/application/work_link.py` (the count line). Tests: `tests/execution_coordination/test_operational_store.py`, `tests/execution_coordination/test_factory_coordinator.py`, `tests/composition/test_work_registry.py`, `tests/context_assembly/test_work_link.py`, `tests/composition/test_lifecycle_capstone.py` (only if the new state fields require it).
+Production: `src/alienintent/execution_coordination/ports/operational_store.py` and `src/alienintent/execution_coordination/adapters/sqlite_store.py` (`acquire_within`), `src/alienintent/execution_coordination/application/factory_coordinator.py` (admission, release in `_record_result`/`cancel`/`record_decision`, recovery, count encoding, public `decode`, `WIP_LIMIT_UNAVAILABLE`), `src/alienintent/execution_coordination/domain/lifecycle.py` (counts in `ExecutionState` and `transition`), `src/alienintent/composition/work_registry.py` (`coordinator`, limit reader, count reader for display), `src/alienintent/context_assembly/domain/work_link.py` and `src/alienintent/context_assembly/application/work_link.py` (the count line). Tests: `tests/execution_coordination/test_operational_store.py`, `tests/execution_coordination/test_factory_coordinator.py`, `tests/composition/test_work_registry.py`, `tests/context_assembly/test_work_link.py`, `tests/composition/test_lifecycle_capstone.py` (only if the new state fields require it); `tests/composition/test_offline_proof.py` — only one change: add `"src/alienintent/execution_coordination/domain/lifecycle.py"` to the expected list of kernel files in `test_s0_frozen_kernel_guard_rejects_authorized_s2_store_extension`, because this unit's change to `lifecycle.py` is authorized; nothing else in that file or the guard changes.
 
 ## 5. Acceptance checks (each names the wrong implementation it catches)
 
@@ -144,13 +146,15 @@ Production: `src/alienintent/execution_coordination/ports/operational_store.py` 
 6. **Holds and restart.** A work item retried inside the worker, reworked after a VERIFY rejection, or given a `missing-terminal-result` or `ineligible` result keeps its slot until DONE or a final outcome is recorded; an admitted work item at `authority-block` keeps its slot, keeps it across a restart, and still holds it after an authorize decision resumes it at VERIFY. A store with held `wip` slots and no per-repository reservation: a new coordinator starts, keeps the slots (including one whose work item is no longer in the READY snapshot), admits no work item twice, and releases the slot of a work item already DONE or at a final outcome, including after a crash between the recorded result and the release. Catches releasing on resumable holds, recovery that refuses to start, and duplicate admissions.
 7. **Release gate for registry work items.** Through `release_and_start`, a READY-view work item with a valid release record passes the release gate on the registry store with the packets repository's clone and default branch; without a release record, with another starting revision or with an unreachable one, it is refused `authority-block` and nothing is launched; without `release_and_start` it is never selected. Catches a gate on the wrong store, repository or release point, and admission without the Founder's release.
 8. **Cycle counts.** A release-gate refusal leaves `implement_cycles = 0`; admission and the first PRODUCER launch make it 1; rework twice → `implement_cycles = 3`, `verify_cycles = 2`; a retried PRODUCER attempt, a duplicate outcome, a coordinator restart and a `work display` repair change neither; an older record that proves a launch decodes to counts derived from its retained `rejections` and stage, and an older record without launch evidence decodes to unknown, and unknown counts stay unknown and are shown as `unknown`; `work display` shows the line from the coordinator state, the next READY snapshot after `repair_displays` reports no `DISPLAY_DIFFERS` for that work item, and a work item with no state renders as before. Catches counts changed outside transitions, computed by the display, invented for older records, or a display that differs for ever.
-9. **Unchanged profiles.** The sandbox and other existing coordinator tests pass unchanged; the test files above and `check_architecture.py --check all` pass.
+9. **Unchanged profiles.** The sandbox and other existing coordinator tests pass unchanged, and the S0 frozen-kernel guard passes with only the one authorized `lifecycle.py` entry added; the test files above and `check_architecture.py --check all` pass.
 
 ## 6. Excluded
 
 Launching workers for the work registry, worker instructions, context delivery and model routing (unit 6c); changing the release gate's rules; choosing the best WIP level (Solve for N); board Status projection; changing `work_item.state`; changing earlier packets.
 
 ## 7. Review record
+
+**Revision 3 (2026-10-03).** VERIFIER round 1 of candidate `1ee87eb` stopped on one existing test outside scope: the S0 frozen-kernel guard pins the kernel files changed since the S0 baseline and did not list this unit's authorized change to `lifecycle.py`. The Founder authorized this narrow revision: `tests/composition/test_offline_proof.py` is added to scope for that one expected-list entry only. Nothing else changes.
 
 **Revision 2f (2026-10-03).** The REVIEWER's check of 2e: the first IMPLEMENT count is set on `current` before `prepared` is encoded (else the next result writes 0 back), only when exactly 0; launch proof for older records uses the fields the coordinator retains (`producer_correlation`, `rejections`, `findings`, a stage past IMPLEMENT), not `role`.
 
