@@ -48,7 +48,9 @@ HOLD_CODES = (
     "OBLIGATION_INVENTED", "UNMAPPED_OBLIGATION", "BOUNDS_WIDENED", "INVALIDATION_INCOMPLETE",
     "ASSESSMENT_HISTORY_MUTATED", "STALE_ASSESSMENT_AS_CURRENT", "PERSISTENCE_CONFLICT",
     # U8 initial compilation, appended so no existing code changes rank.
-    "INPUT_UNPINNED", "EXISTING_DECOMPOSITION", "IDENTITY_EXHAUSTED")
+    "INPUT_UNPINNED", "EXISTING_DECOMPOSITION", "IDENTITY_EXHAUSTED",
+    # Work identity service and packet pointers, appended so no existing code changes rank.
+    "MIGRATION_INCOMPLETE", "IDENTITY_RETIRED", "POINTER_PRESENT", "CLONE_UNAVAILABLE", "PUBLICATION_FAILED")
 _LIST_FIELDS = ("units", "obligations", "edges", "requirements", "original_edges", "original_obligations", "results",
                 "result_edges", "authorized_edges", "mapping", "reverse", "invalidation", "prior_assessments",
                 "elaboration_approvals")

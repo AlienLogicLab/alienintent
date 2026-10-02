@@ -90,6 +90,15 @@ class CloneUnavailable(WorkIdentityRefused):
     code = "CLONE_UNAVAILABLE"
 
 
+class MigrationIncomplete(WorkIdentityRefused):
+    """An old per-profile record assigns a requirement a name the table does not hold under that requirement."""
+    code = "MIGRATION_INCOMPLETE"
+
+
+class IdentityRetired(WorkIdentityRefused):
+    code = "IDENTITY_RETIRED"
+
+
 class RegistryBusy(WorkIdentityRefused):
     """The project database stayed locked beyond the busy timeout; nothing was written, rerun the request."""
     code = "WORK_REGISTRY_BUSY"

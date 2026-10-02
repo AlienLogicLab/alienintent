@@ -1,7 +1,7 @@
 """Named operator application services; CLI adapters never write the store."""
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
 import logging
 from typing import Any
@@ -15,6 +15,17 @@ logger = logging.getLogger(__name__)
 
 class OperatorDenied(ValueError):
     pass
+
+
+def migrate_work(identities: Any, snapshot: object, profiles: Sequence[str]) -> dict[str, object]:
+    """`work migrate`: hand the identity snapshot and the named profiles to the project's work identity service,
+    which owns the one transaction; the operator surface only validates the shape and reports."""
+    if isinstance(snapshot, Mapping) and isinstance(snapshot.get("identity_snapshot"), Mapping):
+        snapshot = snapshot["identity_snapshot"]  # An authority-limits document carries the snapshot inside.
+    if not isinstance(snapshot, Mapping) or not profiles or not all(isinstance(p, str) and p for p in profiles):
+        raise OperatorDenied("work migrate needs an identity snapshot object and at least one profile")
+    report = identities.migrate(snapshot, list(profiles))
+    return asdict(report) if is_dataclass(report) else dict(report)
 
 
 class OperatorControlPlane:

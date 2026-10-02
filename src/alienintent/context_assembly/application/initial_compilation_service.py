@@ -1,42 +1,83 @@
-"""Initial compilation (U8) for one store/profile: design gate, pinned inputs, derivation, reservation, one record.
+"""Initial compilation (U8) for one store/profile: design gate, pinned inputs, registered identities, derivation,
+packets committed to Git, published refs, one record.
 
 Order: the U5 design gate and the retained design of that exact verified revision, then the current U1 inventory,
-U2 inspection and U4 proof plans, then compile_initial. A derived candidate first commits its identity reservations
-(one expected-version upstream:identity-reservations aggregate), then is retained as an immutable Observation bound by
-an upstream:initial-compilation:<input digest> pointer. The same pinned input regenerates the same candidate and
-reserves nothing new. Nothing here writes factory:* or release:* state, Issues, work-management projections or any
-existing decomposition; a candidate is admitted for assessment only.
+U2 inspection and U4 proof plans. Then identities: the old upstream:identity-reservations record of every configured
+profile of the project is read (each from that profile's own operational database); a requirement any record maps
+must already be migrated (MIGRATION_INCOMPLETE otherwise), and one project-database transaction registers every
+requirement through the work identity service (a retired row holds IDENTITY_RETIRED). compile_initial receives the
+unit_key -> identity map, so every digest is final. A derived candidate's packets are then committed on the packets
+branch and every unit's pointer is set in ONE write transaction that also checks that no unit past CAPTURE would
+change (POINTER_PRESENT); the packets branch and the units' work/<id> tags are published through publish_refs
+(PUBLICATION_FAILED holds); only then is the candidate retained as an immutable Observation bound by an
+upstream:initial-compilation:<input digest> pointer. The reservation aggregate is never written. Nothing here writes
+factory:* or release:* state, Issues or work-management projections; a candidate is admitted for assessment only.
 """
 from dataclasses import asdict
 from hashlib import sha256
 import json
 
+from collections.abc import Mapping
+from dataclasses import dataclass
+
+from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.domain.ambiguity import AmbiguityHold, snapshot_from_document
 from alienintent.context_assembly.domain.compilation import INITIAL, CompilationHold, canonical, digest, hold
 from alienintent.context_assembly.domain.initial_compilation import (
-    CompilationCandidate, compile_initial, is_initial_compilation)
+    CompilationCandidate, compile_initial, input_digest, is_initial_compilation, packet_bytes, unit_key)
 from alienintent.context_assembly.domain.inventory import InventoryHold
+from alienintent.context_assembly.domain.work_identity import (
+    CAPTURE, RESERVATIONS, CloneUnavailable, IdentityRetired, MigrationIncomplete, Pointer, PointerPresent,
+    UnknownWorkItem, WorkItem, valid_path)
 from alienintent.context_assembly.ports.compilation import (
     DependencyLifecycle, DesignGate, InspectionSource, InventorySource, ProofPlans, VerifiedDesigns)
+from alienintent.context_assembly.ports.work_item_repository import RepositoryLocation, WorkItemRepository
 from alienintent.evidence_learning.domain.records import Header, Observation, ref_from_document
 from alienintent.evidence_learning.domain.refs import EvidenceHold, Ref
 from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, VersionConflict
+from alienintent.invocation_runtime.ports.source_control import PublicationFailed, PublishRef, SourceControl
 
 DERIVED_EVENT, HELD_EVENT = "compilation.derived", "compilation.held"
-RESERVATIONS = "upstream:identity-reservations"
 UNREADABLE = (AmbiguityHold, InventoryHold, EvidenceHold, KeyError, TypeError, ValueError)
+# Holds of the identity and pointer steps: returned before _persist, nothing committed for them.
+IDENTITY_HOLDS = (MigrationIncomplete, IdentityRetired)
+POINTER_HOLDS = (PointerPresent, CloneUnavailable)
+
+
+@dataclass(frozen=True)
+class PacketLocation:
+    """Where compiled packets live: a configured repository name, its location, and the packets directory."""
+    repo: str
+    directory: str
+    location: RepositoryLocation
+
+    def __post_init__(self) -> None:
+        if not self.repo or not valid_path(self.directory):
+            raise ValueError(f"packet location is not a repository and relative directory: {self!r}")
+
+
+@dataclass(frozen=True)
+class WorkRegistration:
+    """The project-level identity collaborators composition injects into the compiler."""
+    identities: WorkIdentityService
+    items: WorkItemRepository
+    publisher: SourceControl
+    packets: PacketLocation
+    profile_stores: Mapping[str, OperationalStore]
 
 
 class InitialCompilation:
     def __init__(self, repository: EvidenceRepository, store: OperationalStore, project: str, profile: str,
                  definition_ref: Ref, invocation: str, access_scope: frozenset[str], design: DesignGate,
                  designs: VerifiedDesigns, inventory: InventorySource, inspection: InspectionSource,
-                 proofs: ProofPlans, lifecycle: DependencyLifecycle) -> None:
+                 proofs: ProofPlans, lifecycle: DependencyLifecycle, registration: WorkRegistration) -> None:
         self.repository, self.store, self.project, self.profile = repository, store, project, profile
         self.definition_ref, self.invocation, self.access_scope = definition_ref, invocation, access_scope
         self.design, self.designs, self.inventory, self.inspection = design, designs, inventory, inspection
-        self.proofs, self.lifecycle = proofs, lifecycle
+        self.proofs, self.lifecycle, self.registration = proofs, lifecycle, registration
+        if profile not in registration.profile_stores:
+            raise ValueError(f"profile {profile} is not a configured profile of the project")
 
     @staticmethod
     def aggregate(identity: str) -> str:
@@ -61,36 +102,92 @@ class InitialCompilation:
             return self._persist(hold(INITIAL, digest({"design": design.digest}),
                                       [("INPUT_UNPINNED", ("unreadable:" + type(error).__name__,))]))
         plans = {r: self.proofs.document(r) for r in sorted(design.requirements)}
-        version, state = self.store.read_state(self.profile, RESERVATIONS)
-        reservations = dict(state.get("reservations") or {})
         existing = authority_limits.get("existing_decomposition") if isinstance(authority_limits, dict) else None
         # Only well-formed identities are looked up; a malformed value reaches compile_initial and holds there.
         stages = {i: self.lifecycle.stage(i) for i in sorted({
             i for ids in (existing.values() if isinstance(existing, dict) else ()) if isinstance(ids, list)
             for i in ids if isinstance(i, str)})}
-        result = compile_initial(inventory, inspection, design, getattr(decision.applicability, "review_digest", ""),
-                                 plans, authority_limits, reservations, stages)
+        review_digest = getattr(decision.applicability, "review_digest", "")
+        registered = self._register(sorted(design.requirements), input_digest(
+            inventory, inspection, design, review_digest, plans, authority_limits, stages))
+        if isinstance(registered, CompilationHold):
+            return registered
+        result = compile_initial(inventory, inspection, design, review_digest, plans, authority_limits,
+                                 {unit_key(r): item.id for r, item in registered.items()}, stages)
         if isinstance(result, CompilationCandidate):
-            added = {k: v for k, v in result.reservations if reservations.get(k) != v}
-            if added:  # An identical regeneration reserves nothing; a changed reservation set is a conflict.
-                try:
-                    self.store.commit(self.profile, RESERVATIONS, version, {
-                        "schema_version": 1, "reservations": dict(sorted({**reservations, **added}.items())),
-                        "history": [*(state.get("history") or []),
-                                    {"input_digest": result.input_digest, "reserved": dict(sorted(added.items()))}]})
-                except VersionConflict:
-                    # A concurrent identical compile may have reserved exactly these identities: that is success.
-                    current = self.reservations()
-                    if any(current.get(k) != v for k, v in result.reservations):
-                        return self._persist(hold(INITIAL, result.input_digest,
-                                                  [("PERSISTENCE_CONFLICT", (RESERVATIONS,))]))
+            held = self._point_and_publish(result)
+            if held is not None:
+                return held
         return self._persist(result)
+
+    def _register(self, requirements: list[str], identity: str) -> dict[str, WorkItem] | CompilationHold:
+        """Every configured profile's old assignment checked, then every requirement registered, in one transaction
+        on the project database; a hold rolls back so nothing is registered."""
+        reg = self.registration
+        records = {}
+        for profile, store in sorted(reg.profile_stores.items()):  # Sequential reads, each its own database.
+            _, state = store.read_state(profile, RESERVATIONS)
+            records[profile] = state.get("reservations") or {}
+        try:
+            with reg.items.transaction():
+                missing = []
+                for requirement in requirements:
+                    key = unit_key(requirement)
+                    for profile, mapping in records.items():
+                        name = mapping.get(key)
+                        if name is None:
+                            continue
+                        row = reg.items.find(name) if isinstance(name, str) else None
+                        if row is None or row.id != name or row.request_ref != key:
+                            missing.append(f"{requirement}:{profile}")
+                if missing:
+                    raise MigrationIncomplete(*sorted(missing))
+                items = {r: reg.identities.register(unit_key(r), unit_key(r), "BIU") for r in requirements}
+                retired = [f"{r}:{item.id}" for r, item in items.items() if item.retired]
+                if retired:
+                    raise IdentityRetired(*retired)
+        except IDENTITY_HOLDS as error:
+            return hold(INITIAL, identity, [(error.code, error.values)])
+        return items
+
+    def _point_and_publish(self, candidate: CompilationCandidate) -> CompilationHold | None:
+        """One write transaction: read every unit's row, refuse if a unit past CAPTURE would change, then commit each
+        packet to Git and set each pointer; after COMMIT (tags set) publish the packets branch and the units' tags."""
+        reg, packets = self.registration, self.registration.packets
+        units = [(u["identity"], packet_bytes(u)) for u in candidate.body["units"]]
+        pointed: dict[str, WorkItem] = {}
+        try:
+            with reg.items.transaction():
+                rows = {i: self._row(i) for i, _ in units}
+                present = [i for i, data in units if rows[i].state != CAPTURE and (
+                    rows[i].pointer is None or not reg.items.holds(rows[i].pointer.with_instructions(data)))]
+                if present:
+                    raise PointerPresent(*present)
+                for identity, data in units:
+                    path = f"{packets.directory}/{identity}.json"
+                    commit = reg.items.commit_packet(packets.repo, path, data, rows[identity].pointer)
+                    pointed[identity] = reg.items.set_pointer(identity, Pointer(packets.repo, path, commit, data))
+        except POINTER_HOLDS as error:
+            return hold(INITIAL, candidate.input_digest, [(error.code, error.values)])
+        head = reg.items.packets_head(packets.repo)
+        if head is None:  # The transaction above left every unit on the packets branch; a missing branch is a fault.
+            return hold(INITIAL, candidate.input_digest, [("CLONE_UNAVAILABLE", (str(packets.location.clone),))])
+        refs = (PublishRef("refs/heads/" + packets.location.packets_branch, head, force=False),) + tuple(
+            PublishRef(item.tag, item.pointer.commit, force=rows[i].state == CAPTURE) for i, item in pointed.items())
+        try:
+            reg.publisher.publish_refs(packets.location.clone, packets.location.remote, refs)
+        except PublicationFailed as error:
+            return hold(INITIAL, candidate.input_digest, [(error.code, error.refs)])
+        return None
+
+    def _row(self, identity: str) -> WorkItem:
+        item = self.registration.items.find(identity)
+        if item is None or item.id != identity:
+            raise UnknownWorkItem(identity)  # Registered in this compile's first transaction; never deleted.
+        return item
 
     def read(self, identity: str) -> tuple[int, dict]:
         return self.store.read_state(self.profile, self.aggregate(identity))
-
-    def reservations(self) -> dict[str, str]:
-        return dict(self.store.read_state(self.profile, RESERVATIONS)[1].get("reservations") or {})
 
     def retained(self, ref: Ref) -> Observation:
         record = self.repository.get(ref, self.access_scope)
