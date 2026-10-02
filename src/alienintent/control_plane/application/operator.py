@@ -4,7 +4,7 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
 import logging
-from typing import Any
+from typing import Any, Protocol
 
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
 from alienintent.execution_coordination.domain.escalation import DecisionSubmission
@@ -17,7 +17,13 @@ class OperatorDenied(ValueError):
     pass
 
 
-def migrate_work(identities: Any, snapshot: object, profiles: Sequence[str]) -> dict[str, object]:
+class WorkMigration(Protocol):
+    """The project's work identity service as `work migrate` uses it (bound by the profile's composition)."""
+
+    def migrate(self, snapshot: Mapping[str, object], profiles: Sequence[str]) -> object: ...
+
+
+def migrate_work(identities: WorkMigration, snapshot: object, profiles: Sequence[str]) -> dict[str, object]:
     """`work migrate`: hand the identity snapshot and the named profiles to the project's work identity service,
     which owns the one transaction; the operator surface only validates the shape and reports."""
     if isinstance(snapshot, Mapping) and isinstance(snapshot.get("identity_snapshot"), Mapping):
