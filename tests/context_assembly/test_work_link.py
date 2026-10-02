@@ -17,8 +17,8 @@ from alienintent.composition.work_registry import WorkRegistry, project_configur
 from alienintent.context_assembly.domain.work_identity import RegistryBusy
 from alienintent.context_assembly.domain.work_link import duplicate, duplicate_line, marker, render
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
-from alienintent.execution_coordination.ports.project_directory import ProjectUnavailable
-from alienintent.execution_coordination.ports.repository_directory import RepositoryUnavailable
+from alienintent.execution_coordination.ports.project_directory import ProjectRejected, ProjectUnavailable
+from alienintent.execution_coordination.ports.repository_directory import RepositoryRejected, RepositoryUnavailable
 from alienintent.installation.ports.github_transport import TransportResponse
 from tests.context_assembly.test_initial_compilation import PROJECT, REPO, project_clone
 from tests.context_assembly.test_work_identity_service import commit_file
@@ -38,7 +38,9 @@ class RecordedGitHub(RecordedTransport):
     """The recorded App and installation answers, plus Issues and board cards that remember what was written.
 
     `faults[label]` answers that step once with a failure; `hooks[label]` runs once just before that step (to
-    interleave a second run deterministically). Every Issue or board operation is logged in `log` by label."""
+    interleave a second run deterministically). Every Issue or board operation is logged in `log` by label. Writes
+    can be answered without the expected effect: `ignore_updates` and `ignore_closes` answer 200 and keep the Issue,
+    `created_as` stores a created Issue with other fields, `deleted_answer` answers another `deletedItemId`."""
 
     def __init__(self, permissions: dict[str, str] | None = None) -> None:
         super().__init__(rest_answers(installation_permissions=GRANTED if permissions is None else permissions,
@@ -48,7 +50,9 @@ class RecordedGitHub(RecordedTransport):
         self.log: list[str] = []
         self.faults: dict[str, int] = {}
         self.hooks: dict[str, Callable[[], object]] = {}
-        self.ignore_updates = False
+        self.ignore_updates = self.ignore_closes = False
+        self.created_as: dict[str, str] = {}
+        self.deleted_answer: str | None = None
         self._next_card = 0
 
     # --- seeding and inspection --------------------------------------------------------------------------------
@@ -93,7 +97,7 @@ class RecordedGitHub(RecordedTransport):
         if method == "POST" and rest == "":
             if self._step("create"):
                 return _answer(500, {"message": "fault"})
-            number = self.seed(payload["body"], title=payload["title"])
+            number = self.seed(**({"body": payload["body"], "title": payload["title"]} | self.created_as))
             return _answer(201, self.issues[number])
         number = int(rest.lstrip("/"))
         if number not in self.issues:
@@ -107,7 +111,8 @@ class RecordedGitHub(RecordedTransport):
         if "state" in payload:
             if self._step("close"):
                 return _answer(500, {"message": "fault"})
-            issue.update(state=payload["state"], state_reason=payload["state_reason"], body=payload["body"])
+            if not self.ignore_closes:
+                issue.update(state=payload["state"], state_reason=payload["state_reason"], body=payload["body"])
         else:
             if self._step("update"):
                 return _answer(500, {"message": "fault"})
@@ -131,6 +136,8 @@ class RecordedGitHub(RecordedTransport):
         if "deleteProjectV2Item" in query:
             if self._step("delete"):
                 return {"errors": [{"message": "fault"}]}
+            if self.deleted_answer is not None:
+                return {"data": {"deleteProjectV2Item": {"deletedItemId": self.deleted_answer}}}
             self.cards.pop(variables["item"], None)
             return {"data": {"deleteProjectV2Item": {"deletedItemId": variables["item"]}}}
         if "ProjectV2Item { id project" in query:
@@ -213,6 +220,29 @@ def test_an_unlinked_item_gets_one_rendered_issue_and_one_card_and_a_repeat_chan
     again = fx.links.link(item.id)
     assert again == result and fx.github.writes() == [] and issue_count(fx) == 1
     assert sqlite3.connect(fx.database).execute("SELECT * FROM work_item").fetchall() == rows
+
+
+def test_a_created_issue_that_reads_back_with_other_text_is_not_linked(fx):
+    """Check 1, unchecked writes: GitHub keeps the Issue with another body; nothing is stored for the step."""
+    fx.item("X")
+    fx.github.created_as = {"body": "not what was sent"}
+    with pytest.raises(RepositoryRejected) as failed:
+        fx.links.link("X")
+    assert "work link step: issue" in failed.value.__notes__
+    assert fx.stored("X").issue_number is None and fx.github.cards == {}
+
+
+def test_a_repeat_link_whose_stored_card_no_longer_holds_the_issue_is_refused_before_any_write(fx):
+    """Step 2: the stored link is returned only after the Issue and the card read back as the ones stored."""
+    item = fx.item("X")
+    linked = fx.links.link("X")
+    fx.github.seed(marker(item.id) + "\nleft by a crashed run")  # Would be cleaned up if the read-back passed.
+    fx.github.cards[linked.card_id] = "I_another_issue"
+    fx.github.log.clear()
+    with pytest.raises(ProjectRejected) as failed:
+        fx.links.link("X")
+    assert "work link step: read back" in failed.value.__notes__
+    assert fx.github.writes() == [] and "list" not in fx.github.log
 
 
 def test_an_item_without_a_pointer_renders_without_the_instructions_line(fx):
@@ -332,6 +362,28 @@ def test_a_safe_duplicate_is_closed_after_its_card_is_removed(fx):
     assert fx.github.card_for(number) is None
 
 
+def test_a_duplicate_card_removal_answered_for_another_card_stops_before_the_close(fx):
+    item = fx.item("X")
+    fx.links.link("X")
+    number = fx.github.seed(marker(item.id) + "\nleft by a crashed run")
+    fx.github.deleted_answer = "PVTI_someone_else"
+    with pytest.raises(ProjectRejected) as failed:
+        fx.links.link("X")
+    assert "work link step: cleanup" in failed.value.__notes__
+    assert fx.github.issues[number]["state"] == "open" and "close" not in fx.github.log
+
+
+def test_a_duplicate_close_answered_but_still_open_is_not_reported_closed(fx):
+    item = fx.item("X")
+    fx.links.link("X")
+    number = fx.github.seed(marker(item.id) + "\nleft by a crashed run")
+    fx.github.ignore_closes = True
+    with pytest.raises(RepositoryRejected) as failed:
+        fx.links.link("X")
+    assert "work link step: cleanup" in failed.value.__notes__
+    assert fx.github.issues[number]["state"] == "open"
+
+
 def test_an_interrupted_cleanup_is_finished_by_the_rerun_and_then_nothing_is_written(fx):
     item = fx.item("X")
     linked = fx.links.link("X")
@@ -407,6 +459,14 @@ def test_an_issue_with_the_marker_not_created_by_the_app_is_not_adopted(fx):
     result = fx.links.link("X")
     assert result.issue_number != foreign and fx.github.log.count("create") == 1
     assert fx.github.issues[foreign]["state"] == "open" and fx.github.card_for(foreign) is None
+
+
+def test_a_closed_app_issue_with_the_marker_is_not_adopted(fx):
+    item = fx.item("X")
+    closed = fx.github.seed(render(item).body, title="X", state="closed")
+    result = fx.links.link("X")
+    assert result.issue_number != closed and fx.github.log.count("create") == 1
+    assert fx.github.issues[closed]["state"] == "closed" and fx.github.card_for(closed) is None
 
 
 def test_adoption_takes_the_newest_open_app_issue_and_closes_the_older_one(fx):
