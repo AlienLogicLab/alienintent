@@ -231,6 +231,14 @@
         "schema_migrations"
       ],
       "basis": "SQLiteOperationalStore behind the OperationalStore port is the single operational store (docs/evidence/wave2-design-contracts.json#/shared_contracts/operational_storage); other modules persist only through the port. Namespaced aggregate payload ownership is not asserted mechanically here and stays an independent review item."
+    },
+    {
+      "owner": "context_assembly",
+      "path": "context_assembly/adapters/work_item_repository.py",
+      "tables": [
+        "work_item"
+      ],
+      "basis": "SQLiteWorkItemRepository behind the WorkItemRepository port is the single writer of the project work registry (formal design 6.1A; docs/work-units/python/identity-service-and-compiler-connection.md sections 5-6): every other caller registers work through WorkIdentityService."
     }
   ]
 }

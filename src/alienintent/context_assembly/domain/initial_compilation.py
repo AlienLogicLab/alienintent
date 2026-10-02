@@ -8,26 +8,25 @@ proof plan or the authority limits); no clause is composed, and the four obligat
 sources with a forward and reverse trace. The derived candidate is then passed unchanged through the U7 validator, so
 validation is a post-derivation check, never the derivation.
 
-Identities follow the SF-REQ-013 candidate identity design (INITIAL_IDENTITY_RESERVATION_v1): a persisted reservation
-per unit_key is reused; a new unit_key takes the lowest unused unsuffixed number of the configured family and width,
-excluding active, retired and reserved identities. New keys are assigned in unit_key value order, so identities never
-depend on input enumeration, and a persisted reservation never moves when other units are added. A requirement that
-already has a decomposition holds: that decomposition is immutable here. Nothing is released or materialized.
+Identities follow INITIAL_IDENTITY_REGISTRATION_v2: the work identity service registers every requirement before the
+compile runs and the compiler receives the unit_key -> identity map; every key takes exactly the identity the map
+gives it (a migrated name, or a service-issued UUID). Nothing here numbers, counts or chooses an identity, so every
+digest the compile derives is final. A requirement that already has a decomposition holds: that decomposition is
+immutable here. Nothing is released or materialized.
 """
 from dataclasses import dataclass
-import re
 from typing import Mapping
 
 from alienintent.context_assembly.domain.ambiguity import ELIGIBLE, InspectionReport, fields
 from alienintent.context_assembly.domain.compilation import (
-    CATEGORY_FIELDS, DONE, IDENTITY_GRAMMAR, INITIAL, CandidateInvalid, CompilationHold, ValidationReport, _ordered,
-    _text, _texts, digest, hold, identity_valid, validate)
+    CATEGORY_FIELDS, DONE, INITIAL, CandidateInvalid, CompilationHold, ValidationReport, _ordered, _text, _texts,
+    canonical, digest, hold, identity_valid, validate)
 from alienintent.context_assembly.domain.design_admission import DesignContract
 from alienintent.context_assembly.domain.inventory import InventorySnapshot, Requirement
 
 DERIVED = "DERIVED_FROM_PINNED_INPUTS"
 DERIVATION_RULE = "REQUIREMENT_BOUNDED_UNITS_v1"
-IDENTITY_RULE = "INITIAL_IDENTITY_RESERVATION_v1"
+IDENTITY_RULE = "INITIAL_IDENTITY_REGISTRATION_v2"
 BUDGET_RULE = "PER_UNIT_CAP_FROM_AUTHORITY_LIMITS"
 RATIONALE = ("One unit per requirement the verified design satisfies: the requirement is the smallest authorized "
              "boundary of intent; finer semantic boundaries are Agent Ready SPLIT judgment applied by an authorized "
@@ -60,6 +59,12 @@ class CompilationCandidate:
 
 def unit_key(requirement_id: str) -> str:
     return PREFIX + requirement_id
+
+
+def packet_bytes(unit: dict) -> bytes:
+    """The compiled packet of one candidate unit as committed to Git: the canonical serialization of its entry
+    (unit_key, identity, content digest and contract). The pointer's bytes are compared with exactly these."""
+    return canonical(unit).encode("utf-8")
 
 
 def items(value: str) -> list[str]:
@@ -291,37 +296,18 @@ def _plan_shape(plan: object) -> bool:
 
 
 def _reserve(keys: list[str], limits: dict, reservations: Mapping[str, str], findings) -> dict[str, str]:
-    """INITIAL_IDENTITY_RESERVATION_v1; collisions and exhaustion fail closed, never renumber. An identity of an
-    existing decomposition is occupied whether or not the snapshot lists it."""
-    policy, snapshot = limits["identity_policy"], limits["identity_snapshot"]
-    family, width = policy["family"], policy["width"]
-    occupied = {i for name in ("active", "retired") for i in snapshot.get(name, [])}
-    occupied |= {i for ids in limits.get("existing_decomposition", {}).values() for i in ids}
-    taken = occupied | set(snapshot.get("reserved", [])) | set(reservations.values())
-    assigned, grammar, collisions, exhausted = {}, [], [], []
-    for key in keys:  # Stable unit_key value order: never input enumeration.
+    """INITIAL_IDENTITY_REGISTRATION_v2: every key takes the identity the registered map gives it. A key the map
+    lacks, or an identity outside the grammar, is IDENTITY_GRAMMAR; nothing is numbered or substituted."""
+    policy = limits["identity_policy"]
+    assigned, grammar = {}, []
+    for key in keys:
         identity = reservations.get(key)
-        if identity is not None:
-            if not identity_valid(identity, policy):
-                grammar.append(f"{key}:{identity}")
-            elif identity in occupied or list(reservations.values()).count(identity) > 1:
-                # A reserved number found active or retired belongs to other work: its own decomposition held above.
-                collisions.append(f"{key}:{identity}")
-            assigned[key] = identity
-            continue
-        number = next((n for n in range(1, 10 ** width) if f"{family}-{n:0{width}d}" not in taken), None)
-        if number is None:
-            exhausted.append(f"{key}:{family}/{width}")
-            continue
-        identity = f"{family}-{number:0{width}d}"
-        if re.match(IDENTITY_GRAMMAR, identity) is None:
+        if identity is None or not identity_valid(identity, policy):
             grammar.append(f"{key}:{identity}")
-        taken.add(identity)
+            continue
         assigned[key] = identity
-    for code, refs in (("IDENTITY_GRAMMAR", grammar), ("IDENTITY_COLLISION", collisions),
-                       ("IDENTITY_EXHAUSTED", exhausted)):
-        if refs:
-            findings.append((code, _ordered(refs)))
+    if grammar:
+        findings.append(("IDENTITY_GRAMMAR", _ordered(grammar)))
     return assigned
 
 

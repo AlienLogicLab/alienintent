@@ -2,8 +2,12 @@
 
 inventory -> ambiguity -> premise/proof -> design applicability -> compiler-derived initial compilation -> lint and
 retained assessment consumption, over one real temporary SQLite store, local evidence, the FactoryCoordinator
-lifecycle and LocalWorkManagement (the Project stand-in). Every stage is the unchanged predecessor service; the only
-new source is the UpstreamIntegration wiring. The producer is the U9 scripted double bound to a disposable fixture
+lifecycle, LocalWorkManagement (the Project stand-in) and the project work registry (a temporary project database
+and a local clone with a local bare remote). Every stage is the unchanged predecessor service; the only
+new source is the UpstreamIntegration wiring. By default the fixture profile carries labelled TEST DATA (an old
+reservation record mapping R1 and R2 to WO-000005 and WO-000006) migrated through `work migrate`'s service before the
+chain runs, so the compiled identities are those migrated names; with `migrated=False` the work identity service
+registers the fixture requirements as new UUIDs. The producer is the U9 scripted double bound to a disposable fixture
 package (FIXTURE_PRODUCER_NOT_NATIVE); no Agent Ready, provider or model is invoked. One discriminating control per
 material failure class is applied by tools/evidence/fx_a_evidence.py.
 """
@@ -19,14 +23,17 @@ from alienintent.composition.design_admission import EDGE_AUTHORITY_GAP, Retaine
 from alienintent.composition.premise_evidence import RetainedDoctorPremiseEvidence
 from alienintent.composition.upstream_integration import UpstreamIntegration
 from alienintent.composition.upstream_profile import UpstreamProfile
+from alienintent.composition.work_registry import WorkRegistry
 from alienintent.context_assembly.domain.ambiguity import (
     SemanticQuestion, SemanticReview, fields, snapshot_from_document)
 from alienintent.context_assembly.domain.compilation import CompilationHold
 from alienintent.context_assembly.domain.design_admission import (
     MECHANICALLY_HELD, REVIEW_REQUIRED, MechanicalReport, ReviewAdmitted, design_from_document)
-from alienintent.context_assembly.domain.initial_compilation import CompilationCandidate, is_initial_compilation, items
+from alienintent.context_assembly.domain.initial_compilation import (
+    CompilationCandidate, is_initial_compilation, items, packet_bytes)
 from alienintent.context_assembly.domain.inventory import Manifest, assemble
 from alienintent.context_assembly.domain.readiness import LintHold
+from alienintent.context_assembly.domain.work_identity import RESERVATIONS, is_uuid
 from alienintent.evidence_learning.adapters.local_evidence_repository import LocalEvidenceRepository
 from alienintent.evidence_learning.domain.proof_plan import PredicateMapping, RequirementRevision
 from alienintent.evidence_learning.domain.refs import Ref
@@ -43,15 +50,17 @@ from tests.context_assembly.test_ambiguity import body, record
 from tests.context_assembly.test_design_admission import (
     DESIGN, DESIGN_SHA256, PREMISE_MAPPING, PREMISE_SHA256, REVIEWERS, _Recorded, review)
 from tests.context_assembly.test_initial_compilation import (
-    DKEY, EXISTING, LIMITS, MAPPING_REVIEWER, R1, R2, R3, SOURCES, SUPERSESSION, Mappings, design_document, predicate,
-    sha)
+    DKEY, EXISTING, LIMITS, MAPPING_REVIEWER, R1, R2, R3, SOURCES, SUPERSESSION, Mappings, Project, all_rows, git,
+    design_document, predicate, sha)
 from tests.context_assembly.test_readiness_consumer import FixtureProducer, fixture_package, scripted
 
 ROOT = Path(__file__).resolve().parents[2]
 PROJECT, PROFILE = "AlienLogicLab/alienintent", "fx-a"
 INVOCATION = "AlienLogicLab/alienintent#119:PRODUCER:c35b931d-a6be-43ba-8232-43c960067adb"
 SCOPE = frozenset({"private"})
-U1, U2 = "WO-000005", "WO-000006"  # The compiler-reserved identities of R1 and R2 (FX-U8 identity snapshot).
+U1, U2 = "WO-000005", "WO-000006"  # TEST DATA: the migrated names of R1 and R2 (FX-U8 identity snapshot).
+TEST_RESERVATIONS = {"schema_version": 1, "reservations": {"requirement:" + R1: U1, "requirement:" + R2: U2},
+                     "history": []}  # TEST DATA in the shape of the old per-profile record; not a historical record.
 DECISION = "decisions/FD-A-integration.md"
 DECISIONS = (DECISION,)
 # Everything the upstream chain may write; any other aggregate is lifecycle/Project/release state it must not touch.
@@ -68,9 +77,15 @@ def assessment(disposition: str = "READY") -> dict:
 class Harness:
     """One disposable profile with every Wave 2A stage composed through UpstreamProfile and the integration."""
 
-    def __init__(self, root: Path, executable: str | None = "package"):
+    def __init__(self, root: Path, executable: str | None = "package", migrated: bool = True):
         root.mkdir(mode=0o700)
         self.store = SQLiteOperationalStore(root / "operational.sqlite")
+        self.project = Project(root / "project", {PROFILE: root / "operational.sqlite"})
+        if migrated:
+            self.store.commit(PROFILE, RESERVATIONS, 0, TEST_RESERVATIONS)
+        self.registry = WorkRegistry(self.project.configuration)
+        if migrated:
+            self.registry.identities.migrate(LIMITS["identity_snapshot"], [PROFILE])
         self.repository = LocalEvidenceRepository(root / "evidence", PROJECT, PROFILE)
         self.work = LocalWorkManagement(root / "work", PROFILE, PROJECT, (), clock=lambda: 0.0)
         self.coordinator = FactoryCoordinator(self.store, self.work, None, LocalArtifactStore(root / "p", root / "v"),
@@ -91,7 +106,8 @@ class Harness:
                                                         PROFILE),
             design_reviewers=REVIEWERS, dependency_lifecycle=CoordinatorDependencyLifecycle(self.coordinator),
             readiness_producer=self.producer,
-            readiness_executable=fixture_package(root) if executable == "package" else None)
+            readiness_executable=fixture_package(root) if executable == "package" else None,
+            work_registry=self.registry)
         self.producer.binding, self.producer.consumer = self.profile.readiness_binding, self.profile.readiness_consumer
         self.integration = UpstreamIntegration(self.profile, self.decisions)
 
@@ -141,6 +157,10 @@ class Harness:
         return {"states": [(a, v, json.dumps(s, sort_keys=True)) for a, v, s in self.store.list_states(PROFILE)
                            if not a.startswith(UPSTREAM_NAMESPACES)],
                 "project_receipts": self.work.receipts(), "reservations": self.store.recovery_reservations(PROFILE)}
+
+    def pointed(self) -> list[dict]:
+        """Rows of the project database that carry a packet pointer."""
+        return [row for row in all_rows(self.project.database) if row["commit"] is not None]
 
     def evidence(self) -> list[dict]:
         return [json.loads(p.read_text())["payload"] for p in sorted((self.repository.root / "objects").iterdir())]
@@ -220,6 +240,24 @@ def test_chain_runs_in_order_to_eligibility(make):
     assert U1 in dependent.detail and len(h.producer.calls) == 1
 
 
+def test_fixture_requirements_register_as_uuids_with_pointers(make):
+    """Check 7: with no saved assignment the chain's compiler registers the fixture requirements as new UUIDs, each
+    pointing at the commit that holds its compiled packet, published to the remote."""
+    h = make(migrated=False)
+    upstream(h)
+    compiled = h.integration.compile(DKEY, deepcopy(LIMITS))
+    assert isinstance(compiled, CompilationCandidate), getattr(compiled, "findings", compiled)
+    rows = {row["id"]: row for row in h.pointed()}
+    units = compiled.document()["units"]
+    assert {u["identity"] for u in units} == set(rows) and all(is_uuid(i) for i in rows)
+    remote = git(h.project.clone, "ls-remote", "origin").decode()
+    for unit in units:
+        row = rows[unit["identity"]]
+        assert git(h.project.clone, "show", f"{row['commit']}:{row['path']}") == packet_bytes(unit)
+        assert f"{row['commit']}\trefs/tags/work/{row['id']}" in remote
+    assert h.store.read_state(PROFILE, RESERVATIONS) == (0, {})  # The old aggregate is never written.
+
+
 def test_composition_requires_every_stage():
     with pytest.raises(ValueError, match="initial compilation and readiness"):
         UpstreamIntegration(type("Partial", (), {"initial_compilation": None, "readiness": None})(), Path("."))
@@ -260,7 +298,7 @@ def test_failed_upstream_evidence_stops_before_design_and_compilation(make, stag
     assert isinstance(compiled, CompilationHold), "failed upstream evidence must not compile"
     assert (compiled.reason_code, compiled.detail) == ("DESIGN_HOLD", design_status), compiled.findings
     assert not h.profile.design_readiness.admit(DKEY, h.integration.current_vector(DKEY)).admitted
-    assert h.profile.initial_compilation.reservations() == {} and h.producer.calls == []
+    assert h.pointed() == [] and h.producer.calls == []
     if stage == "premise":
         assert report.status == design_status and not isinstance(reviewed, ReviewAdmitted)
 

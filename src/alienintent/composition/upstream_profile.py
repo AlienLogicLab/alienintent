@@ -7,6 +7,7 @@ from pathlib import Path
 from alienintent.composition.compilation import CurrentProofPlanDocuments, VerifiedDesignDecisions
 from alienintent.composition.design_admission import PremiseReaderCheck
 from alienintent.composition.readiness import compose_producer, resolve_binding
+from alienintent.composition.work_registry import WorkRegistry
 from alienintent.context_assembly.application.design_admission_service import DesignAdmission, DesignReadiness
 from alienintent.context_assembly.adapters.compilation_repository import EvidenceAssessmentHistory
 from alienintent.context_assembly.adapters.decision_resolution import DecisionInboxQuestions
@@ -51,7 +52,7 @@ class UpstreamProfile:
                  dependency_lifecycle: DependencyLifecycle | None = None,
                  readiness_producer: ReadinessAssessment | None = None, readiness_executable: Path | None = None,
                  readiness_transport: str = "cli", split_handoff: SplitTransactionHandoff | None = None,
-                 readiness_provider: str | None = None) -> None:
+                 readiness_provider: str | None = None, work_registry: WorkRegistry | None = None) -> None:
         self.inventory = InventoryService(repository, store, project, profile, definition_ref, invocation, access_scope)
         self.inbox = DecisionInbox(store, UpstreamQuestionAdmission(decision_actor), profile)
         self.questions = DecisionInboxQuestions(self.inbox, profile)
@@ -85,13 +86,19 @@ class UpstreamProfile:
                                                   EvidenceAssessmentHistory(repository, access_scope))
                             if self.design_readiness is not None and dependency_lifecycle is not None else None)
         # Initial compilation derives from the same gate, the retained verified design, inventory, inspection and
-        # proof plans; it takes no mapping input and writes only upstream: compilation and reservation records.
+        # proof plans; it takes no mapping input. Identities come from the project's one work identity service
+        # (looked up by this project string), packets go to Git through it, and it writes only upstream:
+        # compilation records in this profile's store.
+        if work_registry is not None and work_registry.configuration.project != project:
+            raise ValueError("work_registry belongs to another project")
+        self.work_registry = work_registry
         self.initial_compilation = (InitialCompilation(repository, store, project, profile, definition_ref, invocation,
                                                        access_scope, self.design_readiness,
                                                        VerifiedDesignDecisions(self.design), self.inventory,
                                                        self.ambiguity, CurrentProofPlanDocuments(self.proofs),
-                                                       dependency_lifecycle)
-                                    if self.compilation is not None and self.proofs is not None else None)
+                                                       dependency_lifecycle, work_registry.registration)
+                                    if self.compilation is not None and self.proofs is not None
+                                    and work_registry is not None else None)
         # Readiness admission sits behind the same design gate and lifecycle. The producer binding is resolved here,
         # from the configured executable's installed metadata; unbound or unestablished provenance holds before
         # launch. READY is eligibility for the existing release gate only; nothing here releases. A configured

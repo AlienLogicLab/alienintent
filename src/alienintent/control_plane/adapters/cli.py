@@ -9,14 +9,21 @@ import sys
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
-from alienintent.control_plane.application.operator import OperatorControlPlane, OperatorDenied
+from alienintent.control_plane.application.operator import OperatorControlPlane, OperatorDenied, migrate_work
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
 
 
+# Typed work-registry refusals the operator may see by code; every other code stays internal.
+_WORK_CODES = {"MIGRATION_CONFLICT": "migration-conflict", "INVALID_REQUEST_REF": "invalid-request-ref",
+               "WORK_REGISTRY_BUSY": "work-registry-busy"}
+
+
 def _sanitize(value: object) -> str:
     """Map trusted operator failures to a closed, secret-safe vocabulary."""
+    if getattr(value, "code", None) in _WORK_CODES:
+        return _WORK_CODES[getattr(value, "code")]
     if isinstance(value, OperatorDenied):
         if str(value).startswith("readiness gate failed"):
             return "readiness-gate-failed"
@@ -66,6 +73,9 @@ def _parser() -> argparse.ArgumentParser:
     _sanitized(decisions.add_parser("list"))
     show = _sanitized(decisions.add_parser("show")); show.add_argument("identity")
     decide = _sanitized(decisions.add_parser("decide")); decide.add_argument("identity"); decide.add_argument("--choice", required=True); decide.add_argument("--biu-version", type=int, required=True); _mutation(decide)
+    work = _sanitized(sub.add_parser("work")).add_subparsers(dest="work_command", required=True)
+    migrate = _sanitized(work.add_parser("migrate")); migrate.add_argument("--snapshot", required=True)
+    migrate.add_argument("--profile", dest="profiles", action="append", required=True)
     return parser
 
 
@@ -98,6 +108,15 @@ def main(argv: list[str] | None = None) -> int:
             report = doctor.run()
             _render(report.as_dict(), args.json)
             return report.exit_code
+        if args.command == "work":
+            registry = getattr(profile, "work_registry", None)
+            if registry is None:
+                _render({"error": "work-registry-not-configured"}, args.json)
+                return 1
+            with open(args.snapshot, encoding="utf-8") as handle:
+                snapshot = json.load(handle)
+            _render(migrate_work(registry.identities, snapshot, args.profiles), args.json)
+            return 0
         service = OperatorControlPlane(profile.name, profile.store, profile.work, profile.coordinator, profile.readiness, lambda: datetime.now(UTC).isoformat())
         if args.command == "status": value = service.status()
         elif args.command == "health": value = {"live": True, "ready": bool(profile.readiness())}

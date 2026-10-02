@@ -25,8 +25,11 @@ CANDIDATE_RULES = "PHASE5_CANDIDATE_MECHANISMS_NOT_INDEPENDENTLY_DESIGN_VERIFIED
 PREDICATED, HISTORICAL_EDGE_SET = "PREDICATED", "HISTORICAL_EDGE_SET"
 CHILD, INTEGRATION_PARENT = "CHILD", "INTEGRATION_PARENT"
 CURRENT = "CURRENT"
-# Candidate BIU grammar (C#/contracts/2/identities), full-string ASCII match; the configured policy binds family/width.
-IDENTITY_GRAMMAR = r"\A(?:(?:PG|PY)-[0-9]{2}|WO-[0-9]{6})(?:[A-Z])?\Z"
+# Candidate BIU grammar (C#/contracts/2/identities), full-string ASCII match; the configured policy binds family/width
+# of an existing name. A new identity is a lowercase version-4 UUID issued by the work identity service; it is valid
+# under any policy and never carries a letter suffix.
+UUID_GRAMMAR = r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}"
+IDENTITY_GRAMMAR = r"\A(?:(?:(?:PG|PY)-[0-9]{2}|WO-[0-9]{6})(?:[A-Z])?|" + UUID_GRAMMAR + r")\Z"
 CATEGORY_FIELDS = (("requirement", "satisfied_requirement_ids"), ("acceptance", "completion_criteria"),
                    ("verification", "verification_obligations"), ("evidence", "required_evidence"))
 BUDGET_LIMITS = ("maximum_attempts", "hard_wall_clock_seconds", "retry_limit", "concurrency_limit", "cancellation_limit")
@@ -45,7 +48,9 @@ HOLD_CODES = (
     "OBLIGATION_INVENTED", "UNMAPPED_OBLIGATION", "BOUNDS_WIDENED", "INVALIDATION_INCOMPLETE",
     "ASSESSMENT_HISTORY_MUTATED", "STALE_ASSESSMENT_AS_CURRENT", "PERSISTENCE_CONFLICT",
     # U8 initial compilation, appended so no existing code changes rank.
-    "INPUT_UNPINNED", "EXISTING_DECOMPOSITION", "IDENTITY_EXHAUSTED")
+    "INPUT_UNPINNED", "EXISTING_DECOMPOSITION", "IDENTITY_EXHAUSTED",
+    # Work identity service and packet pointers, appended so no existing code changes rank.
+    "MIGRATION_INCOMPLETE", "IDENTITY_RETIRED", "POINTER_PRESENT", "CLONE_UNAVAILABLE", "PUBLICATION_FAILED")
 _LIST_FIELDS = ("units", "obligations", "edges", "requirements", "original_edges", "original_obligations", "results",
                 "result_edges", "authorized_edges", "mapping", "reverse", "invalidation", "prior_assessments",
                 "elaboration_approvals")
@@ -241,6 +246,9 @@ def holds_clause(clause: str, unit: dict) -> bool:
 
 
 def identity_valid(identity: object, policy: Mapping[str, object]) -> bool:
+    """An existing name of the configured family and width, or a service-issued UUID under any policy."""
+    if isinstance(identity, str) and re.fullmatch(UUID_GRAMMAR, identity) is not None:
+        return True
     family, width = policy["family"], policy["width"]
     return (isinstance(identity, str) and identity.isascii() and re.match(IDENTITY_GRAMMAR, identity) is not None
             and re.match(rf"\A{re.escape(family)}-[0-9]{{{width}}}", identity) is not None)

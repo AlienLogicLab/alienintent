@@ -265,3 +265,59 @@ def test_cli_sanitizes_realistic_secret_shapes(tmp_path: Path) -> None:
     )
     assert result.returncode != 0
     assert sentinel not in result.stdout + result.stderr
+
+
+def _work_factory(tmp_path: Path) -> Path:
+    """A profile factory whose project work registry has one configured profile (fx) and no Git activity."""
+    factory = tmp_path / "work_factory.py"
+    factory.write_text(
+        """
+from pathlib import Path
+from alienintent.composition.work_registry import WorkRegistry, project_configuration
+from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+
+ROOT = Path(__file__).parent
+class Profile:
+    def __init__(self):
+        SQLiteOperationalStore(ROOT / 'fx.sqlite')
+        self.work_registry = WorkRegistry(project_configuration({'schema_version': 1, 'projects': {'P': {
+            'database': str(ROOT / 'work.sqlite'),
+            'repositories': {'r': {'clone': str(ROOT / 'clone'), 'remote': 'origin', 'default_branch': 'main',
+                                   'packets_branch': 'packets'}},
+            'packets': {'repository': 'r', 'directory': 'work-packets'},
+            'profiles': {'fx': str(ROOT / 'fx.sqlite')}}}}, 'P'))
+def make():
+    return Profile()
+"""
+    )
+    return factory
+
+
+def _work(tmp_path: Path, *args: str) -> subprocess.CompletedProcess:
+    return subprocess.run(
+        [sys.executable, "-m", "alienintent", "--profile-factory", "work_factory:make", "--json", "work", "migrate",
+         *args], text=True, capture_output=True, env=os.environ | {"PYTHONPATH": f"src:{tmp_path}"}, check=False)
+
+
+def test_cli_work_migrate_with_no_saved_assignments_is_a_repeatable_no_op(tmp_path: Path) -> None:
+    """Check 7: an empty snapshot and no reservation records migrate to nothing, twice."""
+    _work_factory(tmp_path)
+    snapshot = tmp_path / "snapshot.json"
+    snapshot.write_text(json.dumps({"identity_snapshot": {"active": [], "retired": [], "reserved": []}}))
+    for _ in range(2):
+        result = _work(tmp_path, "--snapshot", str(snapshot), "--profile", "fx")
+        assert result.returncode == 0, result.stdout + result.stderr
+        assert json.loads(result.stdout) == {"created": [], "rekeyed": [], "unchanged": []}
+
+
+def test_cli_work_migrate_creates_rows_and_reports_conflicts(tmp_path: Path) -> None:
+    _work_factory(tmp_path)
+    snapshot = tmp_path / "snapshot.json"
+    snapshot.write_text(json.dumps({"active": ["PY-01"], "retired": ["PY-09"], "reserved": []}))  # TEST DATA
+    created = _work(tmp_path, "--snapshot", str(snapshot), "--profile", "fx")
+    assert created.returncode == 0 and sorted(json.loads(created.stdout)["created"]) == ["PY-01", "PY-09"]
+    again = _work(tmp_path, "--snapshot", str(snapshot), "--profile", "fx")
+    assert json.loads(again.stdout) == {"created": [], "rekeyed": [], "unchanged": ["PY-01", "PY-09"]}
+    foreign = _work(tmp_path, "--snapshot", str(snapshot), "--profile", "fx", "--profile", "other-project")
+    assert foreign.returncode == 2 and json.loads(foreign.stdout) == {"error": "migration-conflict"}
+    assert "Traceback" not in foreign.stderr

@@ -1,4 +1,4 @@
-"""Git implementation of immutable remote candidate custody."""
+"""Git implementation of immutable remote candidate custody and of exact-ref publication."""
 
 from __future__ import annotations
 
@@ -9,7 +9,9 @@ from urllib.parse import urlsplit, urlunsplit
 
 from alienintent.execution_coordination.domain.custody import CandidateRef
 from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
-from alienintent.invocation_runtime.ports.source_control import SourceControl
+from alienintent.invocation_runtime.ports.source_control import PublicationFailed, PublishRef, SourceControl
+
+PUBLISH_TIMEOUT_SECONDS = 300
 
 
 class GitSourceControl(SourceControl):
@@ -56,6 +58,53 @@ class GitSourceControl(SourceControl):
             raise CandidateUnavailable("workspace HEAD differs from requested candidate revision")
         self._git("push", remote, f"{revision}:refs/heads/{branch}", cwd=workspace)
         return self.read_back_candidate(workspace, remote, branch, revision, verifier_workspace)
+
+    def publish_refs(self, clone: Path, remote: str, refs: tuple[PublishRef, ...]) -> None:
+        """Push exactly the given refs from `clone` to the named `remote`, then read the remote back.
+
+        One explicit refspec per ref (`+` only when `force`), never `--tags`, `--mirror` or a wildcard. Refs the remote
+        already holds at their commit are not pushed again, so a retry after a partial failure pushes only the rest
+        and a retry of a complete publication changes nothing. Returns only when the remote shows every ref at its
+        commit; any push or read-back failure is PublicationFailed naming the refs."""
+        refs = tuple(refs)
+        names = tuple(r.ref for r in refs)
+        if not refs or len(set(names)) != len(names) or not all(isinstance(r, PublishRef) for r in refs):
+            raise PublicationFailed(names, "refs must be distinct PublishRef values")
+        if not isinstance(remote, str) or not remote or remote.startswith("-") or any(c.isspace() for c in remote):
+            raise PublicationFailed(names, "remote must be a configured remote name")
+        current = self._remote_refs(clone, remote, refs)
+        for ref in refs:
+            if current.get(ref.ref) == ref.commit:
+                continue
+            spec = f"{'+' if ref.force else ''}{ref.commit}:{ref.ref}"
+            result = self._publish_git(clone, refs, "push", "--porcelain", remote, spec)
+            if result.returncode:
+                raise PublicationFailed(names, f"push of {ref.ref} rejected")
+        published = self._remote_refs(clone, remote, refs)
+        differing = tuple(r.ref for r in refs if published.get(r.ref) != r.commit)
+        if differing:
+            raise PublicationFailed(differing, "remote read-back differs")
+
+    def _remote_refs(self, clone: Path, remote: str, refs: tuple[PublishRef, ...]) -> dict[str, str]:
+        """Exactly the named refs on the remote (ls-remote matches ref tails, so keep only exact names)."""
+        result = self._publish_git(clone, refs, "ls-remote", remote, *(r.ref for r in refs))
+        if result.returncode:
+            raise PublicationFailed(tuple(r.ref for r in refs), "remote read-back failed")
+        wanted = {r.ref for r in refs}
+        advertised = {}
+        for line in result.stdout.splitlines():
+            commit, _, name = line.partition("\t")
+            if name in wanted:
+                advertised[name] = commit
+        return advertised
+
+    @staticmethod
+    def _publish_git(clone: Path, refs: tuple[PublishRef, ...], *args: str) -> subprocess.CompletedProcess:
+        try:
+            return subprocess.run(["git", *args], cwd=clone, text=True, capture_output=True, check=False,
+                                  timeout=PUBLISH_TIMEOUT_SECONDS)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise PublicationFailed(tuple(r.ref for r in refs), f"git {args[0]}: {type(error).__name__}") from error
 
     def retrieve_for_verification(self, candidate: CandidateRef, verifier_workspace: Path) -> CandidateRef:
         """Independently assemble verifier inputs from the immutable source reference."""
