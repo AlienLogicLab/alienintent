@@ -46,8 +46,9 @@ class StoredReleaseAuthorizations(ReleaseAuthorizationRecords):
         return f"release-authorization:{identity}"
 
     def record(self, authorization: ReleaseAuthorization) -> None:
-        version, _ = self._store.read_state(self._profile, self._aggregate(authorization.identity))
-        self._store.commit(self._profile, self._aggregate(authorization.identity), version, {
+        """Create-only: commits at expected version 0, so the store raises VersionConflict and overwrites nothing
+        when any release record already exists for the identity."""
+        self._store.commit(self._profile, self._aggregate(authorization.identity), 0, {
             "identity": authorization.identity, "record_ref": authorization.record_ref,
             "authorizes_implement": authorization.authorizes_implement, "baseline": authorization.baseline,
             "text": authorization.text, "superseding_record": authorization.superseding_record,
