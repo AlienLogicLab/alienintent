@@ -257,7 +257,7 @@ class Harness:
         return all_rows(self.registry.configuration.database)
 
     def id(self, requirement: str) -> str:
-        return self.identities.find(unit_key(requirement)).id
+        return self.registry.items.find_request(unit_key(requirement)).id
 
     def packets_head(self) -> str | None:
         result = subprocess.run(["git", "rev-parse", "--verify", "--quiet", f"refs/heads/{PACKETS_BRANCH}"],
@@ -623,3 +623,326 @@ def test_validator_only_supplied_mapping_cannot_complete(harness):
     assert not is_initial_compilation(report.document())
     assert not h.service.completed(report.candidate_digest)
     assert h.service.completed(derived.input_digest)
+
+
+
+# --- Class 5: the compiler obtains identities from the work identity service and points rows at Git (check 3) ----
+
+THREE = "SF-DESIGN-910"
+
+
+def prepared_three(h: Harness) -> dict:
+    """A three-unit candidate (R0, R1, R2)."""
+    revisions = h.requirements({r: SOURCES[r] for r in (R0, R1, R2, R3)})
+    document = h.design({r: revisions[r] for r in (R0, R1, R2)}, key=THREE)
+    for rid in (R0, R1, R2):
+        h.plan(rid, revisions[rid], document)
+    h.lifecycle(EXISTING, "DONE")
+    return revisions
+
+
+def changed(limits=None) -> dict:
+    """Changed authority limits: every unit's contract (and so its packet bytes) changes."""
+    value = deepcopy(LIMITS if limits is None else limits)
+    value["baselines"] = ["main@0000000"]
+    return value
+
+
+def pointers(h: Harness) -> dict[str, tuple]:
+    return {row["id"]: (row["repo"], row["path"], row["commit"], row["state"]) for row in h.rows()}
+
+
+def branch_commits(h: Harness) -> list[str]:
+    head = h.packets_head()
+    return git(h.clone, "rev-list", head).decode().split() if head else []
+
+
+def persisted(h: Harness, result) -> tuple[int, dict]:
+    return h.service.read(getattr(result, "input_digest", None) or result.candidate_digest)
+
+
+def test_every_unit_points_at_the_commit_holding_its_packet(harness):
+    h = harness()
+    prepared_three(h)
+    result = h.compile(THREE)
+    assert isinstance(result, CompilationCandidate), getattr(result, "findings", result)
+    commits = branch_commits(h)
+    baseline = git(h.clone, "rev-parse", "main").decode().strip()
+    seen = set()
+    for unit in result.document()["units"]:
+        row = h.identities.find(unit["identity"])
+        assert row.pointer.commit in commits and row.pointer.commit != baseline
+        assert h.show(row.pointer.commit, row.pointer.path) == packet_bytes(unit)
+        seen.add(row.pointer.commit)
+    assert len(seen) == 3 and len(commits) == 4  # One commit per unit on top of main; not one shared head.
+
+
+def test_fault_after_registration_leaves_rows_without_pointers_and_rerun_converges(harness, monkeypatch):
+    from alienintent.context_assembly.application.initial_compilation_service import InitialCompilation
+    h = harness()
+    prepared(h)
+    original = InitialCompilation._point_and_publish
+    monkeypatch.setattr(InitialCompilation, "_point_and_publish", lambda self, c: (_ for _ in ()).throw(
+        RuntimeError("process died before the pointer transaction")))
+    with pytest.raises(RuntimeError):
+        h.compile()
+    rows = h.rows()
+    assert len(rows) == 2 and all(r["commit"] is None for r in rows) and h.packets_head() is None
+    assert [a for a, _, _ in h.store.list_states(h.name) if a.startswith("upstream:initial-compilation:")] == []
+    monkeypatch.setattr(InitialCompilation, "_point_and_publish", original)
+    result = h.compile()
+    assert isinstance(result, CompilationCandidate) and [r["id"] for r in h.rows()] == [r["id"] for r in rows]
+    assert persisted(h, result)[0] == 1
+
+
+def test_fault_after_pointer_transaction_reruns_through_equal_bytes(harness, monkeypatch):
+    from alienintent.context_assembly.application.initial_compilation_service import InitialCompilation
+    h = harness()
+    prepared(h)
+    original = InitialCompilation._persist
+    monkeypatch.setattr(InitialCompilation, "_persist", lambda self, r: (_ for _ in ()).throw(
+        RuntimeError("process died before _persist")))
+    with pytest.raises(RuntimeError):
+        h.compile()
+    before, commits = pointers(h), branch_commits(h)
+    assert all(v[2] for v in before.values())
+    monkeypatch.setattr(InitialCompilation, "_persist", original)
+    result = h.compile()
+    assert isinstance(result, CompilationCandidate)
+    assert pointers(h) == before and branch_commits(h) == commits and persisted(h, result)[0] == 1
+
+
+def test_commit_packet_never_walks_history(harness, monkeypatch):
+    from alienintent.context_assembly.adapters import work_item_repository as adapter
+    h = harness()
+    prepared(h)
+    base = git(h.clone, "rev-parse", "main").decode().strip()
+    stream = b"".join(b"commit refs/heads/%s\ncommitter F <f@x.invalid> now\ndata 2\nn\n%sM 100644 inline n%d\n"
+                      b"data 1\nx\n\n" % (PACKETS_BRANCH.encode(), (b"from %s\n" % base.encode()) if n == 0 else b"",
+                                           n) for n in range(60))
+    git(h.clone, "fast-import", "--quiet", "--date-format=now", data=stream)
+    calls = []
+    original = adapter.SQLiteWorkItemRepository.commit_packet
+    real_run = subprocess.run
+
+    active = []
+
+    def counted(self, *args):
+        calls.append([])
+        active.append(True)
+        try:
+            return original(self, *args)
+        finally:
+            active.pop()
+
+    def recording(argv, *rest, **options):
+        if active:
+            calls[-1].append(list(argv))
+        return real_run(argv, *rest, **options)
+
+    monkeypatch.setattr(adapter.SQLiteWorkItemRepository, "commit_packet", counted)
+    monkeypatch.setattr(adapter.subprocess, "run", recording)
+    for _ in range(2):  # A first compile writes; the second finds the row's own commit.
+        assert isinstance(h.compile(), CompilationCandidate)
+    assert len(calls) == 4
+    for unit_calls in calls:
+        assert sum(1 for c in unit_calls if c[1:3] == ["cat-file", "blob"]) <= 1
+        assert not any(c[1] in ("log", "rev-list", "for-each-ref") for c in unit_calls)
+
+
+def test_recompile_at_capture_moves_the_pointer_and_its_published_tag(harness):
+    h = harness()
+    prepared(h)
+    first = h.compile()
+    before = pointers(h)
+    second = h.compile(limits=changed())
+    assert isinstance(second, CompilationCandidate) and second.candidate_digest != first.candidate_digest
+    after = pointers(h)
+    remote = h.remote_refs()
+    for unit in second.document()["units"]:
+        identity = unit["identity"]
+        assert after[identity][2] != before[identity][2] and after[identity][3] == "CAPTURE"
+        assert h.show(after[identity][2], after[identity][1]) == packet_bytes(unit)
+        assert remote["refs/tags/work/" + identity] == after[identity][2]
+    assert remote["refs/heads/" + PACKETS_BRANCH] == h.packets_head()
+
+
+def test_recompile_past_capture_holds_pointer_present_and_changes_nothing(harness):
+    h = harness()
+    prepared_three(h)
+    h.compile(THREE)
+    h.identities.set_state(h.id(R1), "SPECIFY")
+    before, commits = pointers(h), branch_commits(h)
+    result = h.compile(THREE, limits=changed())
+    assert_hold(result, "POINTER_PRESENT", (h.id(R1),))
+    assert pointers(h) == before and branch_commits(h) == commits and persisted(h, result) == (0, {})
+    # The same bytes past CAPTURE pass through unchanged.
+    assert isinstance(h.compile(THREE), CompilationCandidate) and pointers(h) == before
+
+
+def test_state_change_waits_for_the_pointer_transaction(harness, monkeypatch):
+    """A concurrent set_state lands after the compiler's single transaction: all three pointers are written."""
+    import os
+    import sys
+    from alienintent.context_assembly.adapters import work_item_repository as adapter
+    h = harness()
+    prepared_three(h)
+    h.compile(THREE)
+    target = h.id(R1)
+    code = ("import sys; from pathlib import Path; "
+            "from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository; "
+            "items = SQLiteWorkItemRepository(Path(sys.argv[1]), {}); print('ready', flush=True); "
+            "print(items.set_state(sys.argv[2], 'SPECIFY').state, flush=True)")
+    original = adapter.SQLiteWorkItemRepository.commit_packet
+    started = []
+
+    def racing(self, *args):
+        if not started:
+            started.append(subprocess.Popen(
+                [sys.executable, "-c", code, str(h.registry.configuration.database), target], text=True,
+                stdout=subprocess.PIPE, env={**os.environ, "PYTHONPATH": str(ROOT / "src")}))
+            assert started[0].stdout.readline().strip() == "ready"
+            subprocess.run(["sleep", "0.5"], check=True)  # The writer is now waiting on the compiler's lock.
+            assert started[0].poll() is None
+        return original(self, *args)
+
+    monkeypatch.setattr(adapter.SQLiteWorkItemRepository, "commit_packet", racing)
+    before = pointers(h)
+    result = h.compile(THREE, limits=changed())
+    assert isinstance(result, CompilationCandidate), getattr(result, "findings", result)
+    assert started[0].communicate(timeout=30)[0].strip() == "SPECIFY"
+    after = pointers(h)
+    assert all(after[i][2] != before[i][2] for i in before) and after[target][3] == "SPECIFY"
+
+
+def test_fault_mid_transaction_keeps_commits_and_rerun_writes_all_pointers(harness, monkeypatch):
+    from alienintent.context_assembly.adapters import work_item_repository as adapter
+    h = harness()
+    prepared_three(h)
+    original = adapter.SQLiteWorkItemRepository.commit_packet
+    made = []
+
+    def dying(self, *args):
+        if len(made) == 2:
+            raise RuntimeError("process died after the second commit_packet")
+        made.append(original(self, *args))
+        return made[-1]
+
+    monkeypatch.setattr(adapter.SQLiteWorkItemRepository, "commit_packet", dying)
+    with pytest.raises(RuntimeError):
+        h.compile(THREE)
+    assert all(row["commit"] is None for row in h.rows()) and len(branch_commits(h)) == 3
+    monkeypatch.setattr(adapter.SQLiteWorkItemRepository, "commit_packet", original)
+    result = h.compile(THREE)
+    assert isinstance(result, CompilationCandidate)
+    commits = {v[2] for v in pointers(h).values()}
+    assert len(branch_commits(h)) == 4 and len(commits & set(made)) >= 1 and all(c for c in commits)
+
+
+def test_migrated_requirement_keeps_its_name_and_retired_holds(tmp_path):
+    root = tmp_path / "m"
+    h = Harness(root)
+    py = {**deepcopy(LIMITS), "identity_policy": {"family": "PY", "width": 2}}
+    h.store.commit(h.name, RESERVATIONS, 0, {"schema_version": 1, "history": [],
+                                             "reservations": {"requirement:" + R1: "PY-10"}})  # TEST DATA
+    h.identities.migrate({"active": [], "retired": [], "reserved": ["PY-10"]}, [h.name])
+    prepared(h)
+    result = h.compile(limits=py)
+    assert isinstance(result, CompilationCandidate), getattr(result, "findings", result)
+    assert h.id(R1) == "PY-10" and len(h.rows()) == 2
+    h.identities.retire("PY-10")
+    assert_hold(h.compile(limits=py), "IDENTITY_RETIRED", (f"{R1}:PY-10",))
+
+
+def test_partial_migration_holds_in_every_profile_until_migrated(tmp_path):
+    B = "fx-u8-b"
+    (tmp_path / "a").mkdir(mode=0o700)
+    (tmp_path / "b").mkdir(mode=0o700)
+    SQLiteOperationalStore(tmp_path / "b" / "operational.sqlite")
+    project = Project(tmp_path / "project", {PROFILE: tmp_path / "a" / "operational.sqlite",
+                                             B: tmp_path / "b" / "operational.sqlite"})
+    a = Harness(tmp_path / "a", PROFILE, project)
+    b = Harness(tmp_path / "b", B, project)
+    b.store.commit(B, RESERVATIONS, 0, {"schema_version": 1, "history": [],
+                                         "reservations": {"requirement:" + R2: "PY-09"}})  # TEST DATA, profile B
+    a.identities.migrate({"active": [], "retired": [], "reserved": []}, [PROFILE])  # Profile A migrated only.
+    py = {**deepcopy(LIMITS), "identity_policy": {"family": "PY", "width": 2}}
+    revisions = {}
+    for h in (a, b):
+        revisions = prepared(h)
+        assert_hold(h.compile(limits=py), "MIGRATION_INCOMPLETE", (f"{R2}:{B}",))
+        assert a.rows() == []
+    solo = a.design({R1: revisions[R1]}, key="SF-DESIGN-SOLO")
+    a.plan(R1, revisions[R1], solo)
+    assert isinstance(a.compile("SF-DESIGN-SOLO", limits=py), CompilationCandidate)  # R1 is mapped by no record.
+    a.plan(R1, revisions[R1], design_document({r: revisions[r] for r in (R1, R2)}))  # Back to the two-unit design.
+    a.identities.migrate({"active": [], "retired": [], "reserved": []}, [PROFILE, B])
+    for h in (a, b):
+        result = h.compile(limits=py)
+        assert isinstance(result, CompilationCandidate), getattr(result, "findings", result)
+        assert h.id(R2) == "PY-09"
+    assert len(a.rows()) == 2
+
+
+def test_clone_write_failure_holds_clone_unavailable(harness, monkeypatch):
+    from alienintent.context_assembly.adapters import work_item_repository as adapter
+    h = harness()
+    prepared(h)
+    original = adapter.SQLiteWorkItemRepository._git
+
+    def full(self, location, *args, **options):
+        if args[0] == "fast-import":
+            return subprocess.CompletedProcess(["git", *args], 128, b"", b"fatal: No space left on device")
+        return original(self, location, *args, **options)
+
+    monkeypatch.setattr(adapter.SQLiteWorkItemRepository, "_git", full)
+    result = h.compile()
+    assert_hold(result, "CLONE_UNAVAILABLE")
+    assert str(h.clone) in result.affected_refs and "git fast-import" in result.affected_refs
+    assert all(r["commit"] is None for r in h.rows()) and persisted(h, result) == (0, {})
+    assert (h.clone / "README.md").exists() and h.packets_head() is None
+
+
+# --- Class 6: the packets branch and work tags are published before _persist (check 10) ---------------------------
+
+
+def test_compile_publishes_exactly_its_refs_before_persist(harness, monkeypatch):
+    from alienintent.invocation_runtime.adapters import git_source_control as publisher
+    h = harness()
+    prepared(h)
+    git(h.clone, "tag", "unrelated-local-tag")
+    pushes = []
+    real_run = subprocess.run
+
+    def recording(argv, *rest, **options):
+        if list(argv[:2]) == ["git", "push"]:
+            pushes.append(list(argv))
+        return real_run(argv, *rest, **options)
+
+    monkeypatch.setattr(publisher.subprocess, "run", recording)
+    result = h.compile()
+    assert isinstance(result, CompilationCandidate)
+    remote = h.remote_refs()
+    assert remote["refs/heads/" + PACKETS_BRANCH] == h.packets_head()
+    expected = {"refs/tags/work/" + i: v[2] for i, v in pointers(h).items()}
+    assert {k: v for k, v in remote.items() if k.startswith("refs/tags/")} == expected
+    specs = [p[-1] for p in pushes]
+    assert sorted(specs) == sorted([f"{h.packets_head()}:refs/heads/{PACKETS_BRANCH}"]
+                                   + [f"+{c}:{ref}" for ref, c in expected.items()])
+    assert not any(a in ("--tags", "--mirror", "--all") or "*" in a for p in pushes for a in p)
+
+
+def test_rejected_publication_holds_before_persist_and_rerun_publishes(harness):
+    h = harness()
+    prepared(h)
+    hook = h.project.remote / "hooks" / "pre-receive"
+    hook.write_text("#!/bin/sh\nexit 1\n")
+    hook.chmod(0o755)
+    result = h.compile()
+    assert_hold(result, "PUBLICATION_FAILED")
+    assert persisted(h, result) == (0, {}) and not h.service.completed(result.candidate_digest)
+    assert "refs/heads/" + PACKETS_BRANCH not in h.remote_refs()
+    hook.unlink()
+    again = h.compile()
+    assert isinstance(again, CompilationCandidate) and h.service.completed(again.input_digest)
+    assert h.remote_refs()["refs/heads/" + PACKETS_BRANCH] == h.packets_head()
