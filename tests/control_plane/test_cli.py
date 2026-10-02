@@ -431,6 +431,48 @@ def test_cli_work_assess_with_and_without_the_readiness_entry(tmp_path: Path) ->
         "answer": "UNKNOWN_IDENTITY", "identity": "missing", "attempt_id": None, "detail": ""}
 
 
+def test_cli_work_authorize_with_and_without_the_readiness_entry(tmp_path: Path) -> None:
+    """Release record check 7: without a readiness entry `work authorize` answers readiness-not-configured and writes
+    nothing; with one it records the authorization once and a repeat changes nothing."""
+    from tests.composition.test_work_registry import fixture_agent_ready
+    from tests.context_assembly.test_work_contract import block, contract_payload
+    from tests.context_assembly.test_work_identity_service import commit_file
+    clone, commit, packet = _registry_project(tmp_path)
+    item = json.loads(_registry_cli(tmp_path, "register", "--file", str(tmp_path / "packet.md"), "--repo", "r",
+                                    "--path", "docs/packet.md", "--commit", commit, "--label", "PACKET").stdout)
+    contracted = packet + block(contract_payload(item["id"])).encode()
+    (tmp_path / "contracted.md").write_bytes(contracted)
+    revised = commit_file(clone, "main", "docs/packet.md", contracted)
+    baseline = subprocess.run(["git", "rev-parse", "main"], cwd=clone, text=True, capture_output=True,
+                              check=True).stdout.strip()
+    quote = "I authorize implementation of this fixture unit."
+    args = ["authorize", "PACKET", "--commit", revised, "--attempt", "none", "--baseline", baseline, "--quote", quote]
+    refused = _registry_cli(tmp_path, *args)
+    assert refused.returncode == 1 and json.loads(refused.stdout) == {"error": "readiness-not-configured"}
+    invalid = _registry_cli(tmp_path, *args[:-2])
+    assert invalid.returncode == 2 and json.loads(invalid.stdout) == {"error": "invalid-command-arguments"}
+    document = json.loads((tmp_path / "projects.json").read_text())
+    document["projects"]["P"]["readiness"] = {
+        "database": str(tmp_path / "readiness.sqlite"), "evidence_root": str(tmp_path / "evidence"),
+        "executable": str(fixture_agent_ready(tmp_path, tmp_path / "launched.env")), "provider": "claude"}
+    (tmp_path / "projects.json").write_text(json.dumps(document))
+    assessed = json.loads(_registry_cli(tmp_path, "assess", "PACKET", "--file", str(tmp_path / "contracted.md"),
+                                        "--commit", revised).stdout)
+    args[args.index("none")] = assessed["attempt_id"]
+    authorized = _registry_cli(tmp_path, *args)
+    assert authorized.returncode == 0, authorized.stdout + authorized.stderr
+    value = json.loads(authorized.stdout)
+    assert (value["identity"], value["answer"], value["repeated"]) == (item["id"], None, False)
+    assert value["authorization"]["record_ref"] == value["evidence_ref"]["revision_digest"]
+    assert (value["authorization"]["baseline"], value["authorization"]["text"]) == (baseline, quote)
+    again = json.loads(_registry_cli(tmp_path, *args).stdout)
+    assert again == value | {"repeated": True}
+    shown = json.loads(_registry_cli(tmp_path, "show", "PACKET").stdout)["item"]
+    assert shown["approval_ref"] == value["evidence_ref"] and shown["state"] == "CAPTURE"
+    stale = json.loads(_registry_cli(tmp_path, *[commit if a == revised else a for a in args]).stdout)
+    assert (stale["answer"], stale["detail"]) == ("AUTHORIZATION_STALE", "--commit is not the pointer commit")
+
+
 def test_cli_work_link_and_display_with_and_without_the_github_entry(tmp_path: Path) -> None:
     """Check 7: without a `github` entry both commands answer github-not-configured; with one they are wired to the
     link service. Only answers reached before any GitHub request are exercised here (no network); the failing step

@@ -13,6 +13,9 @@ one repository and board the project's work items are linked to, and the GitHub 
 (its private key file named directly); without it the project has no link service. With both, the registry has a
 READY view of that board (`ready_view`, `ready_refusals`, `repair_displays`): each READY row is built only from the
 card's registered work record, and the view's attention items are kept in the `readiness` store and evidence folder.
+With `readiness`, `work authorize` (`authorization`) records release records on that store under profile `registry`
+and its evidence in that folder; the starting revision is checked in the pointer repository's configured clone
+against its `default_branch`, the values the release gate for registry items is composed with.
 
 Configuration document (JSON):
 
@@ -47,6 +50,7 @@ from alienintent.composition.sandbox_profile import APP_KEY_REFERENCE
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
+from alienintent.context_assembly.application.work_authorization import WorkAuthorization
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.application.work_link import WorkLink
 from alienintent.context_assembly.application.work_registration import WorkRecordService
@@ -67,6 +71,8 @@ from alienintent.execution_coordination.adapters.assessment_consumer import Reta
 from alienintent.execution_coordination.adapters.github_projects_v2 import GitHubProjectsV2Directory
 from alienintent.execution_coordination.adapters.github_repository_api import GitHubRepositoryApi
 from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
+from alienintent.execution_coordination.adapters.release_admission import (
+    GitRevisionResolver, StoredReleaseAuthorizations)
 from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERSION, SQLiteOperationalStore
 from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
@@ -265,6 +271,7 @@ class WorkRegistry:
             self.profile_stores)
         self.records = WorkRecordService(self.identities, self.items, self.items.read_packet)
         self.assessment = self._assessment(configuration) if configuration.readiness is not None else None
+        self.authorization = self._authorization(configuration) if self.assessment is not None else None
         self.links = self._links(configuration.github, transport) if configuration.github is not None else None
         self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
             else None
@@ -403,7 +410,18 @@ class WorkRegistry:
         return PacketAssessment(self.records, self.identities, consumer, binding, ProcOwnership(),
                                 lambda attempt, owner: compose_producer(binding, readiness.provider, {
                                     **assessment_environment(), INVOCATION_MARKER: attempt,
-                                    INVOCATION_OWNER_MARKER: owner_token(owner)}))
+                                    INVOCATION_OWNER_MARKER: owner_token(owner)}),
+                                StoredReleaseAuthorizations(consumer.store, "registry"))
+
+    def _authorization(self, configuration: ProjectConfiguration) -> WorkAuthorization:
+        """`work authorize`: release records on the `readiness` store under profile `registry` (the READY view's), the
+        evidence record in the assessment evidence folder, baselines checked in each repository's configured clone
+        against its configured default branch."""
+        consumer, repositories = self.assessment.consumer, configuration.repositories
+        return WorkAuthorization(self.records, self.identities, consumer, consumer.repository, consumer.project,
+                                 consumer.profile, self.assessment.authorizations,
+                                 GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
+                                 {name: location.default_branch for name, location in repositories.items()})
 
 
 def work_registry_profile() -> SimpleNamespace:

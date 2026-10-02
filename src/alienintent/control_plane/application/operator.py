@@ -88,6 +88,19 @@ def assess_work(assessment: WorkAssessment, id_or_label: str, revision: tuple[by
     return value
 
 
+class WorkAuthorizations(Protocol):
+    """The project's work authorization as `work authorize` uses it (bound by the profile's composition)."""
+
+    def authorize(self, id_or_label: str, commit: str, attempt: str, baseline: str, quote: str) -> Any: ...
+
+
+def authorize_work(authorization: WorkAuthorizations, id_or_label: str, commit: str, attempt: str, baseline: str,
+                   quote: str) -> dict[str, object]:
+    """`work authorize`: the item, its evidence reference and the recorded release authorization, or a refusal
+    returned as the read answer naming its code. It records the Founder's approval; it does not grant it."""
+    return asdict(authorization.authorize(id_or_label, commit, attempt, baseline, quote))
+
+
 class WorkLinks(Protocol):
     """The project's link service as `work link` and `work display` use it (bound by the profile's composition)."""
 

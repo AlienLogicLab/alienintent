@@ -1,0 +1,351 @@
+"""`work authorize`: the Founder's authorization recorded as the item's release record (acceptance checks 1-6).
+
+Every case uses the composed WorkRegistry over a temporary project database, a local clone with a local bare remote,
+the `readiness` store and evidence folder, and a fixture Agent Ready executable answering the disposition written in
+a file (FIXTURE_PACKAGE_NOT_AGENT_READY); nothing reaches GitHub. Packet texts, labels and quotes are TEST DATA.
+"""
+from __future__ import annotations
+
+from dataclasses import asdict, replace
+from hashlib import sha256
+import json
+from pathlib import Path
+import sqlite3
+
+import pytest
+
+from alienintent.composition.work_registry import WorkRegistry, project_configuration
+from alienintent.context_assembly.application.work_authorization import (
+    ALREADY_AUTHORIZED, AUTHORIZATION_STALE, AUTHORIZED_INSTRUCTIONS_FIXED, BASELINE_INVALID, GATE_WOULD_REFUSE,
+    NOT_AUTHORIZABLE)
+from alienintent.context_assembly.domain.work_contract import contract_block
+from alienintent.context_assembly.domain.work_identity import Pointer
+from alienintent.evidence_learning.domain.records import ref_from_document
+from alienintent.execution_coordination.adapters.release_admission import (
+    GitRevisionResolver, StoredReleaseAuthorizations)
+from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+from alienintent.execution_coordination.domain.readiness import Hold
+from alienintent.execution_coordination.domain.release import BaselineEvidence, admit_release_preconditions
+from tests.context_assembly.test_initial_compilation import PROJECT, REPO, git, project_clone
+from tests.context_assembly.test_readiness_consumer import fixture_package
+from tests.context_assembly.test_work_contract import contract_payload
+from tests.context_assembly.test_work_identity_service import commit_file
+
+SCOPE = frozenset({"public", "private"})
+QUOTE = "I authorize implementation of this unit exactly as approved."
+
+
+class Fx:
+    def __init__(self, root: Path) -> None:
+        root.mkdir(mode=0o700)
+        self.root = root
+        SQLiteOperationalStore(root / "fx.sqlite")
+        self.clone, _ = project_clone(root)
+        self.answer = root / "disposition"
+        self.answer.write_text("READY")
+        executable = fixture_package(root)
+        executable.write_text(f"#!/bin/sh\nprintf '{{\"disposition\": \"%s\"}}' \"$(cat '{self.answer}')\"\n")
+        executable.chmod(0o700)
+        self.document = {"schema_version": 1, "projects": {PROJECT: {
+            "database": str(root / "work.sqlite"),
+            "repositories": {REPO: {"clone": str(self.clone), "remote": "origin", "default_branch": "main",
+                                    "packets_branch": "alienintent/work-packets"}},
+            "packets": {"repository": REPO, "directory": "work-packets"},
+            "profiles": {"fx": str(root / "fx.sqlite")},
+            "readiness": {"database": str(root / "readiness.sqlite"), "evidence_root": str(root / "evidence"),
+                          "executable": str(executable), "provider": "claude"}}}}
+        self.registry = self.second()
+        self.service = self.registry.authorization
+
+    def second(self) -> WorkRegistry:
+        """Another registry instance over the same configuration, as another process would build it."""
+        return WorkRegistry(project_configuration(self.document, PROJECT))
+
+    def packet(self, item, payload: dict | None = None, raw: str | None = None) -> bytes:
+        text = raw if raw is not None else json.dumps(payload or contract_payload(item.id), indent=1)
+        return f"# Work unit: {item.label}\n\n```json alienintent-contract\n{text}\n```\n".encode()
+
+    def ready(self, label: str = "UNIT", payload: dict | None = None, raw: str | None = None):
+        """Register, give the packet its contract block at a new commit and assess it: (row, attempt id)."""
+        path = f"docs/{label}.md"
+        first = b"# Work unit: " + label.encode() + b"\n"
+        item = self.registry.records.register(first, REPO, path, commit_file(self.clone, "main", path, first), label)
+        data = self.packet(item, payload, raw)
+        result = self.registry.assessment.assess(item.id, (data, commit_file(self.clone, "main", path, data)))
+        return self.row(item.id), result.attempt_id
+
+    def row(self, identity: str):
+        return self.registry.identities.find(identity)
+
+    def main(self) -> str:
+        return git(self.clone, "rev-parse", "main").decode().strip()
+
+    def authorize(self, item, attempt: str, *, commit: str | None = None, baseline: str | None = None,
+                  quote: str = QUOTE, service=None):
+        return (service or self.service).authorize(item.id, commit or item.pointer.commit, attempt,
+                                                   baseline or self.main(), quote)
+
+    def objects(self) -> set[str]:
+        return {path.name for path in (self.root / "evidence" / "objects").iterdir()}
+
+    def written(self) -> tuple:
+        """Everything this command could write: both databases and the evidence folder."""
+        return dump(self.root / "work.sqlite"), dump(self.root / "readiness.sqlite"), self.objects()
+
+    def releases(self) -> StoredReleaseAuthorizations:
+        """The release records read back through a fresh store, profile `registry`."""
+        return StoredReleaseAuthorizations(SQLiteOperationalStore(self.root / "readiness.sqlite"), "registry")
+
+
+def dump(database: Path) -> str:
+    connection = sqlite3.connect(database)
+    try:
+        return "\n".join(connection.iterdump())
+    finally:
+        connection.close()
+
+
+@pytest.fixture
+def fx(tmp_path) -> Fx:
+    return Fx(tmp_path / "fx")
+
+
+def gate(fx: Fx, identity: str, authorization) -> None:
+    """The release gate's own preconditions as unit 6 composes them: the clone and its default branch."""
+    resolver = GitRevisionResolver({REPO: fx.clone})
+    resolves = resolver.resolves(REPO, authorization.baseline)
+    evidence = BaselineEvidence("main", resolves, resolves and resolver.is_reachable(REPO, authorization.baseline,
+                                                                                     "main"))
+    admit_release_preconditions(identity, authorization, evidence, ())
+
+
+# --- check 1: binding ------------------------------------------------------------------------------------------------
+
+
+def test_the_evidence_binds_the_item_and_the_release_record_is_accepted_by_the_gate(fx):
+    item, attempt = fx.ready()
+    baseline = fx.main()
+    result = fx.authorize(item, attempt, baseline=baseline)
+    assert (result.answer, result.repeated) == (None, False)
+    reference = ref_from_document(result.evidence_ref)
+    record = fx.registry.assessment.consumer.repository.get(reference, SCOPE)
+    [entry] = fx.registry.assessment.consumer.history(item.id)
+    assert json.loads(record.value) == {
+        "identity": item.id, "pointer": {"repo": REPO, "path": item.pointer.path, "commit": item.pointer.commit},
+        "attempt_id": attempt, "assessment_ref": asdict(item.assessment_ref),
+        "contract_digest": contract_block(fx.registry.records.show(item.id).packet, item.id).content_digest,
+        "baseline": baseline, "approver": "Founder", "quote": QUOTE}
+    assert entry["attempt_id"] == attempt and entry["raw_ref"] == asdict(item.assessment_ref)
+    assert reference.logical_id == f"work-authorization/{item.id}"
+    assert fx.row(item.id).approval_ref == reference
+    stored = fx.releases().release_authorization(item.id)
+    assert (stored.identity, stored.authorizes_implement, stored.baseline, stored.text) == (
+        item.id, True, baseline, QUOTE)
+    # record_ref is the exact content digest of the stored evidence object.
+    body = (fx.root / "evidence" / "objects" / reference.revision_digest.removeprefix("sha256:")).read_bytes()
+    assert stored.record_ref == reference.revision_digest == "sha256:" + sha256(body).hexdigest()
+    gate(fx, item.id, stored)  # Accepted: no refusal raised.
+    assert asdict(stored) == result.authorization
+
+
+# --- check 2: live and stale checks ----------------------------------------------------------------------------------
+
+
+def parent(fx, item) -> str:
+    """The commit before the item's pointer commit: a real commit that is not the pointer."""
+    return git(fx.clone, "rev-parse", item.pointer.commit + "^").decode().strip()
+
+
+def not_latest(fx, item, attempt):
+    consumer = fx.registry.assessment.consumer
+    consumer.open(item.id, "sha256:" + "1" * 64, "sha256:" + "2" * 64, None, None, None, fx.registry.assessment.binding)
+    return {}
+
+
+def older_pointer(fx, item, attempt):
+    data = fx.registry.records.show(item.id).packet + b"\nrevised\n"
+    commit = commit_file(fx.clone, "main", item.pointer.path, data)
+    fx.registry.identities.set_pointer(item.id, Pointer(REPO, item.pointer.path, commit, data))
+    return {"commit": commit}
+
+
+def side_branch(fx, item, attempt):
+    commit = commit_file(fx.clone, "side", "docs/side.md", b"side\n")
+    return {"baseline": commit}
+
+
+@pytest.mark.parametrize("prepare,code,detail", [
+    (lambda fx, item, attempt: fx.registry.identities.retire(item.id) and {}, "IDENTITY_RETIRED", ""),
+    (lambda fx, item, attempt: fx.registry.identities.set_state(item.id, "SPECIFY") and {}, NOT_AUTHORIZABLE,
+     "state SPECIFY"),
+    (lambda fx, item, attempt: {"commit": parent(fx, item)}, AUTHORIZATION_STALE, "--commit is not the pointer commit"),
+    (lambda fx, item, attempt: {"attempt": "not-an-attempt"}, AUTHORIZATION_STALE,
+     "--attempt is not the item's assessment"),
+    (not_latest, AUTHORIZATION_STALE, "--attempt is not the latest attempt"),
+    (older_pointer, AUTHORIZATION_STALE, "--attempt is not of the current pointer"),
+    (lambda fx, item, attempt: {"baseline": fx.main()[:12]}, BASELINE_INVALID, "not an exact 40-hex commit"),
+    (lambda fx, item, attempt: {"baseline": "f" * 40}, BASELINE_INVALID, f"does not resolve in {REPO}"),
+    (side_branch, BASELINE_INVALID, "not reachable from main"),
+    (lambda fx, item, attempt: {"quote": "Implementation is not authorized yet."}, GATE_WOULD_REFUSE,
+     "authority-wording-consistent"),
+])
+def test_each_refusal_names_its_check_and_writes_nothing(fx, prepare, code, detail):
+    item, attempt = fx.ready()
+    changes = prepare(fx, item, attempt) or {}
+    before = fx.written()
+    item = fx.row(item.id)
+    result = fx.service.authorize(item.id, changes.get("commit", item.pointer.commit), changes.get("attempt", attempt),
+                                  changes.get("baseline", fx.main()), changes.get("quote", QUOTE))
+    assert (result.answer, result.detail) == (code, detail)
+    assert fx.written() == before and fx.releases().release_authorization(item.id) is None
+
+
+def test_an_attempt_that_is_not_ready_is_stale(fx):
+    fx.answer.write_text("HOLD")
+    item, attempt = fx.ready()
+    before = fx.written()
+    result = fx.authorize(item, attempt)
+    assert (result.answer, result.detail) == (AUTHORIZATION_STALE, "--attempt is not READY")
+    assert fx.written() == before
+
+
+def test_the_latest_ready_attempt_is_stale_when_it_is_not_the_rows_assessment(fx, monkeypatch):
+    path, first = "docs/UNIT.md", b"# Work unit: UNIT\n"
+    item = fx.registry.records.register(first, REPO, path, commit_file(fx.clone, "main", path, first), "UNIT")
+    data = fx.packet(item)
+    original = fx.registry.identities.set_evidence
+
+    def crash(*args):
+        raise RuntimeError("process died before the assessment reference was saved")
+
+    monkeypatch.setattr(fx.registry.identities, "set_evidence", crash)
+    with pytest.raises(RuntimeError):
+        fx.registry.assessment.assess(item.id, (data, commit_file(fx.clone, "main", path, data)))
+    monkeypatch.setattr(fx.registry.identities, "set_evidence", original)
+    [entry] = fx.registry.assessment.consumer.history(item.id)
+    item = fx.row(item.id)
+    assert entry["outcome"]["disposition"] == "READY" and item.assessment_ref is None
+    before = fx.written()
+    result = fx.authorize(item, entry["attempt_id"])
+    assert (result.answer, result.detail) == (AUTHORIZATION_STALE, "--attempt is not the item's assessment")
+    assert fx.written() == before
+
+
+@pytest.mark.parametrize("contract", [{"raw": "{not json"}, {"payload": contract_payload("another-identity")}])
+def test_an_invalid_contract_block_is_refused(fx, contract):
+    item, attempt = fx.ready(**contract)
+    before = fx.written()
+    result = fx.authorize(item, attempt)
+    assert result.answer == "CONTRACT_INVALID" and result.detail.startswith("CONTRACT_INVALID: ")
+    assert fx.written() == before
+
+
+def test_unknown_and_pointerless_items_are_refused(fx, monkeypatch):
+    item, attempt = fx.ready()
+    before = fx.written()
+    assert fx.service.authorize("missing", "a" * 40, attempt, fx.main(), QUOTE).answer == "UNKNOWN_IDENTITY"
+    show = fx.registry.records.show
+    monkeypatch.setattr(fx.registry.records, "show", lambda name: replace(show(name), item=replace(
+        show(name).item, pointer=None)))
+    result = fx.authorize(item, attempt)
+    assert (result.answer, result.detail) == (NOT_AUTHORIZABLE, "no packet pointer")
+    assert fx.written() == before
+    with pytest.raises(ValueError):
+        fx.authorize(item, attempt, quote="  ")
+
+
+# --- check 3: repeat and crash ---------------------------------------------------------------------------------------
+
+
+def test_a_repeat_changes_nothing_in_this_or_another_process(fx):
+    item, attempt = fx.ready()
+    first = fx.authorize(item, attempt)
+    before = fx.written()
+    again = fx.authorize(item, attempt)
+    other = fx.authorize(item, attempt, service=fx.second().authorization)
+    assert again == other == replace(first, repeated=True)
+    assert fx.written() == before
+
+
+def test_a_crash_after_the_evidence_is_completed_by_the_rerun_without_a_second_record(fx, monkeypatch):
+    item, attempt = fx.ready()
+    before = fx.objects()
+
+    def crash(*args):
+        raise RuntimeError("process died after the evidence record")
+
+    monkeypatch.setattr(fx.service.releases, "record", crash)
+    with pytest.raises(RuntimeError):
+        fx.authorize(item, attempt)
+    written = fx.objects()
+    assert len(written - before) == 1 and fx.releases().release_authorization(item.id) is None
+    assert fx.row(item.id).approval_ref is None
+    rerun = fx.authorize(item, attempt, service=fx.second().authorization)
+    assert (rerun.answer, rerun.repeated) == (None, False) and fx.objects() == written
+    assert fx.row(item.id).approval_ref == ref_from_document(rerun.evidence_ref)
+
+
+def test_a_crash_after_the_release_record_is_repaired_by_the_rerun(fx, monkeypatch):
+    item, attempt = fx.ready()
+
+    def crash(*args):
+        raise RuntimeError("process died after the release record")
+
+    monkeypatch.setattr(fx.service.identities, "set_evidence", crash)
+    with pytest.raises(RuntimeError):
+        fx.authorize(item, attempt)
+    written, stored = fx.objects(), fx.releases().release_authorization(item.id)
+    assert stored is not None and fx.row(item.id).approval_ref is None
+    rerun = fx.authorize(item, attempt, service=fx.second().authorization)
+    assert (rerun.answer, rerun.repeated) == (None, True) and fx.objects() == written
+    assert fx.row(item.id).approval_ref == ref_from_document(rerun.evidence_ref)
+    assert fx.releases().release_authorization(item.id) == stored
+
+
+# --- check 4: a different authorization ------------------------------------------------------------------------------
+
+
+def test_a_different_authorization_never_replaces_the_recorded_one(fx):
+    item, attempt = fx.ready()
+    earlier = parent(fx, item)
+    commit_file(fx.clone, "main", "docs/later.md", b"later\n")
+    first = fx.authorize(item, attempt)
+    stored, before = fx.releases().release_authorization(item.id), fx.written()
+    assert stored.record_ref == ref_from_document(first.evidence_ref).revision_digest
+    for changes, code in (({"baseline": earlier}, ALREADY_AUTHORIZED),
+                          ({"quote": QUOTE + " Again."}, ALREADY_AUTHORIZED),
+                          ({"commit": earlier}, AUTHORIZATION_STALE), ({"commit": fx.main()}, AUTHORIZATION_STALE)):
+        assert fx.authorize(item, attempt, **changes).answer == code
+    assert fx.authorize(item, "another-attempt").answer == AUTHORIZATION_STALE
+    assert fx.written() == before and fx.releases().release_authorization(item.id) == stored
+
+
+# --- check 5 (composed): instructions and assessment fixed ------------------------------------------------------------
+
+
+def test_after_authorization_assess_neither_moves_the_pointer_nor_opens_an_attempt(fx):
+    item, attempt = fx.ready()
+    fx.authorize(item, attempt)
+    data = fx.registry.records.show(item.id).packet + b"\nrevised\n"
+    revised = commit_file(fx.clone, "main", item.pointer.path, data)
+    assessment = fx.second().assessment
+    assert assessment.assess(item.id, (data, revised)) == Hold(AUTHORIZED_INSTRUCTIONS_FIXED, item.id)
+    assert fx.row(item.id).pointer.commit == item.pointer.commit
+    reused = assessment.assess(item.id)
+    assert (reused.attempt_id, reused.reused) == (attempt, True)
+    assert len(assessment.consumer.history(item.id)) == 1
+
+
+# --- check 6: no state change ----------------------------------------------------------------------------------------
+
+
+def test_authorization_changes_no_state_and_calls_nothing_else(fx, monkeypatch):
+    item, attempt = fx.ready()
+    assert item.state == "CAPTURE" and fx.registry.links is None
+
+    def forbidden(*args):
+        raise AssertionError("authorization must not change workflow state")
+
+    monkeypatch.setattr(fx.registry.identities, "set_state", forbidden)
+    assert fx.authorize(item, attempt).answer is None
+    assert fx.row(item.id).state == "CAPTURE"
