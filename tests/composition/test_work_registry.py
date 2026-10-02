@@ -128,14 +128,14 @@ def fixture_agent_ready(root: Path, launched: Path) -> Path:
     return executable
 
 
-@pytest.mark.parametrize("change", [
-    lambda root: {"database": str(root / "work.sqlite")}, lambda root: {"database": str(root / "fx.sqlite")},
-    lambda root: {"provider": ""}, lambda root: {"executable": 7}, lambda root: {"extra": "x"}])
-def test_malformed_readiness_or_a_shared_database_is_refused(tmp_path, change):
+@pytest.mark.parametrize("value", [
+    lambda root: readiness(root, database=str(root / "work.sqlite")),
+    lambda root: readiness(root, database=str(root / "fx.sqlite")), lambda root: readiness(root, provider=""),
+    lambda root: readiness(root, executable=7), lambda root: readiness(root, extra="x"),
+    lambda root: {"database": str(root / "r.sqlite")}])
+def test_malformed_readiness_or_a_shared_database_is_refused(tmp_path, value):
     with pytest.raises(ConfigurationInvalid):
-        project_configuration(entry(tmp_path, readiness=readiness(tmp_path, **change(tmp_path))), PROJECT)
-    with pytest.raises(ConfigurationInvalid):
-        project_configuration(entry(tmp_path, readiness={"database": str(tmp_path / "r.sqlite")}), PROJECT)
+        project_configuration(entry(tmp_path, readiness=value(tmp_path)), PROJECT)
 
 
 def test_without_readiness_there_is_no_assessment_service(tmp_path):
