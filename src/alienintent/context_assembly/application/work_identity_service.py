@@ -36,11 +36,15 @@ class WorkIdentityService:
     def register(self, request_ref: str, label: str, kind: str, parent_id: str | None = None,
                  pointer: Pointer | None = None) -> WorkItem:
         """Create the row at CAPTURE once; a repeat returns the existing row exactly as it is (and republishes its
-        tag when it has a pointer). PUBLICATION_FAILED leaves the committed row; repeating the request retries."""
+        tag when it has a pointer). PUBLICATION_FAILED leaves the committed row; repeating the request retries.
+        Inside a caller-held transaction (the compiler's registration step) nothing is published: nothing may push
+        while the project lock is held, and that caller publishes its rows' refs itself after COMMIT."""
         ref = parse_request_ref(request_ref, self.repositories)
         self._outside_transaction(pointer)
+        held = self.items.in_transaction()
         item = self.items.register(ref, label, kind, parent_id, pointer)
-        self._publish(item)
+        if not held:
+            self._publish(item)
         return item
 
     def import_completed(self, request_ref: str, label: str, kind: str, pointer: Pointer | None,

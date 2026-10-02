@@ -103,11 +103,13 @@ class SourceControlRefPublisher(RefPublisher):
 
     def publish(self, clone: Path, remote: str, refs: tuple[PacketRef, ...]) -> None:
         try:
-            self._source_control.publish_refs(clone, remote, tuple(PublishRef(r.ref, r.commit, r.force) for r in refs))
+            values = tuple(PublishRef(r.ref, r.commit, r.force) for r in refs)
+        except ValueError as error:  # A ref value publish_refs would refuse to push.
+            raise PublicationFailed(tuple(r.ref for r in refs), str(error)) from error
+        try:
+            self._source_control.publish_refs(clone, remote, values)
         except source_control.PublicationFailed as error:
             raise PublicationFailed(error.refs, str(error)) from error
-        except ValueError as error:  # A ref value publish_refs refuses to push.
-            raise PublicationFailed(tuple(r.ref for r in refs), str(error)) from error
 
 
 class WorkRegistry:

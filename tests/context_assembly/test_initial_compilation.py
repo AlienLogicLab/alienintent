@@ -776,8 +776,48 @@ def test_recompile_past_capture_holds_pointer_present_and_changes_nothing(harnes
     result = h.compile(THREE, limits=changed())
     assert_hold(result, "POINTER_PRESENT", (h.id(R1),))
     assert pointers(h) == before and branch_commits(h) == commits and persisted(h, result) == (0, {})
-    # The same bytes past CAPTURE pass through unchanged.
+    # The same bytes past CAPTURE pass through unchanged; only tags of rows read at CAPTURE may move (force).
+    published = []
+    original = h.registry.publisher.publish
+    h.registry.publisher.publish = lambda clone, remote, refs: published.append(refs) or original(clone, remote, refs)
     assert isinstance(h.compile(THREE), CompilationCandidate) and pointers(h) == before
+    forces = {r.ref.removeprefix("refs/tags/work/"): r.force for r in published[-1] if r.ref.startswith("refs/tags/")}
+    assert forces == {h.id(R0): True, h.id(R1): False, h.id(R2): True}
+
+
+def test_state_change_landing_first_holds_and_commits_nothing(harness, monkeypatch):
+    from alienintent.context_assembly.application.initial_compilation_service import InitialCompilation
+    h = harness()
+    prepared_three(h)
+    h.compile(THREE)
+    before, commits = pointers(h), branch_commits(h)
+    original = InitialCompilation._point_and_publish
+
+    def landed_first(self, candidate):  # Another writer's state change commits before the pointer transaction.
+        h.identities.set_state(h.id(R2), "SPECIFY")
+        return original(self, candidate)
+
+    monkeypatch.setattr(InitialCompilation, "_point_and_publish", landed_first)
+    result = h.compile(THREE, limits=changed())
+    assert_hold(result, "POINTER_PRESENT", (h.id(R2),))
+    assert {i: v[:3] for i, v in pointers(h).items()} == {i: v[:3] for i, v in before.items()}
+    assert branch_commits(h) == commits and persisted(h, result) == (0, {})
+
+
+def test_recompile_with_the_remote_down_holds_and_never_pushes_under_the_lock(harness, monkeypatch):
+    h = harness()
+    prepared(h)
+    assert isinstance(h.compile(), CompilationCandidate)
+    calls = []
+    original = h.registry.publisher.publish
+    h.registry.publisher.publish = lambda *a: calls.append(h.registry.items.in_transaction()) or original(*a)
+    remote = git(h.clone, "remote", "get-url", "origin").decode().strip()
+    git(h.clone, "remote", "set-url", "origin", str(h.root / "missing.git"))
+    result = h.compile(limits=changed())
+    assert_hold(result, "PUBLICATION_FAILED")
+    assert calls == [False] and persisted(h, result) == (0, {})
+    git(h.clone, "remote", "set-url", "origin", remote)
+    assert isinstance(h.compile(limits=changed()), CompilationCandidate) and calls == [False, False]
 
 
 def test_state_change_waits_for_the_pointer_transaction(harness, monkeypatch):
@@ -794,20 +834,22 @@ def test_state_change_waits_for_the_pointer_transaction(harness, monkeypatch):
             "from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository; "
             "items = SQLiteWorkItemRepository(Path(sys.argv[1]), {}, busy_timeout=60); print('ready', flush=True); "
             "print(items.set_state(sys.argv[2], 'SPECIFY').state, flush=True)")
-    original = adapter.SQLiteWorkItemRepository.commit_packet
+    from alienintent.context_assembly.application.initial_compilation_service import InitialCompilation
+    original = InitialCompilation._row
     started = []
 
-    def racing(self, *args):
-        if not started:
+    def racing(self, identity):
+        # Between the compiler's read of the rows (and its POINTER_PRESENT check) and its first write.
+        if not started and identity == h.id(R2):
             started.append(subprocess.Popen(
                 [sys.executable, "-c", code, str(h.registry.configuration.database), target], text=True,
                 stdout=subprocess.PIPE, env={**os.environ, "PYTHONPATH": str(ROOT / "src")}))
             assert started[0].stdout.readline().strip() == "ready"
             time.sleep(0.5)  # The writer is now waiting on the compiler's lock.
-            assert started[0].poll() is None
-        return original(self, *args)
+            assert started[0].poll() is None, "the rows were read outside the pointer write transaction"
+        return original(self, identity)
 
-    monkeypatch.setattr(adapter.SQLiteWorkItemRepository, "commit_packet", racing)
+    monkeypatch.setattr(InitialCompilation, "_row", racing)
     before = pointers(h)
     result = h.compile(THREE, limits=changed())
     assert isinstance(result, CompilationCandidate), getattr(result, "findings", result)
