@@ -247,6 +247,10 @@ class WorkItem:
     verification_ref: Ref | None
     created_at: str
     updated_at: str
+    # The item's one GitHub Issue and board card (`work link`); all three are set together or not at all.
+    issue_number: int | None = None
+    issue_node_id: str | None = None
+    card_id: str | None = None
 
     @property
     def retired(self) -> bool:

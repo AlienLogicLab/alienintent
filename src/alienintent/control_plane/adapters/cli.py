@@ -10,10 +10,13 @@ from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from alienintent.control_plane.application.operator import (
-    OperatorControlPlane, OperatorDenied, assess_work, import_work, migrate_work, register_work, show_work)
+    OperatorControlPlane, OperatorDenied, assess_work, display_work, import_work, link_work, migrate_work, register_work,
+    show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
+from alienintent.execution_coordination.ports.project_directory import ProjectRejected, ProjectUnavailable
+from alienintent.execution_coordination.ports.repository_directory import RepositoryRejected, RepositoryUnavailable
 
 
 # Typed work-registry refusals the operator may see by code; every other code stays internal.
@@ -23,6 +26,8 @@ _WORK_CODES = {"MIGRATION_CONFLICT": "migration-conflict", "INVALID_REQUEST_REF"
                "PARENT_NOT_REGISTERED": "parent-not-registered", "LABEL_IN_USE": "label-in-use",
                "INVALID_WORK_ITEM": "invalid-work-item", "GIT_READ_FAILED": "git-read-failed",
                "TAG_WRITE_FAILED": "tag-write-failed", "PUBLICATION_FAILED": "publication-failed"}
+# `work link` and `work display` mark a failed step on the error with this note (WorkLink's STEP_NOTE).
+_STEP_NOTE = "work link step: "
 
 
 def _sanitize(value: object) -> str:
@@ -35,6 +40,10 @@ def _sanitize(value: object) -> str:
         if str(value) == "stale expected version":
             return "stale-expected-version"
         return "authority-denied"
+    if isinstance(value, (RepositoryUnavailable, ProjectUnavailable)):
+        return "github-unavailable"
+    if isinstance(value, (RepositoryRejected, ProjectRejected)):
+        return "github-rejected"
     if isinstance(value, VersionConflict):
         return "stale-expected-version"
     if isinstance(value, SupersededDecision):
@@ -89,6 +98,8 @@ def _parser() -> argparse.ArgumentParser:
     show_work_item = _sanitized(work.add_parser("show")); show_work_item.add_argument("target")
     assess = _sanitized(work.add_parser("assess")); assess.add_argument("target")
     assess.add_argument("--file"); assess.add_argument("--commit"); assess.add_argument("--recover")
+    link = _sanitized(work.add_parser("link")); link.add_argument("target"); link.add_argument("--issue", type=int)
+    display = _sanitized(work.add_parser("display")); display.add_argument("target")
     return parser
 
 
@@ -146,6 +157,13 @@ def main(argv: list[str] | None = None) -> int:
                         revision = (handle.read(), args.commit)
                 _render(assess_work(registry.assessment, args.target, revision, args.recover), args.json)
                 return 0
+            if args.work_command in ("link", "display"):
+                if getattr(registry, "links", None) is None:
+                    _render({"error": "github-not-configured"}, args.json)
+                    return 1
+                _render(link_work(registry.links, args.target, args.issue) if args.work_command == "link"
+                        else display_work(registry.links, args.target), args.json)
+                return 0
             if args.work_command == "migrate":
                 with open(args.snapshot, encoding="utf-8") as handle:
                     snapshot = json.load(handle)
@@ -174,4 +192,6 @@ def main(argv: list[str] | None = None) -> int:
             value = getattr(service, args.command)(**vars(args))
         _render(value, args.json); return 0
     except Exception as error:
-        _render({"error": _sanitize(error)}, bool(getattr(args, "json", False))); return 2
+        steps = [note[len(_STEP_NOTE):] for note in getattr(error, "__notes__", ()) if note.startswith(_STEP_NOTE)]
+        _render({"error": _sanitize(error)} | ({"step": steps[0]} if steps else {}), bool(getattr(args, "json", False)))
+        return 2

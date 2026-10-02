@@ -429,3 +429,32 @@ def test_cli_work_assess_with_and_without_the_readiness_entry(tmp_path: Path) ->
     assert shown["assessment_ref"] == value["assessment_ref"] and shown["state"] == "CAPTURE"
     assert json.loads(_registry_cli(tmp_path, "assess", "missing").stdout) == {
         "answer": "UNKNOWN_IDENTITY", "identity": "missing", "attempt_id": None, "detail": ""}
+
+
+def test_cli_work_link_and_display_with_and_without_the_github_entry(tmp_path: Path) -> None:
+    """Check 7: without a `github` entry both commands answer github-not-configured; with one they are wired to the
+    link service. Only answers reached before any GitHub request are exercised here (no network); the failing step
+    is named on a credential failure, which happens before anything is sent."""
+    _, commit, _ = _registry_project(tmp_path)
+    item = json.loads(_registry_cli(tmp_path, "register", "--file", str(tmp_path / "packet.md"), "--repo", "r",
+                                    "--path", "docs/packet.md", "--commit", commit, "--label", "PACKET").stdout)
+    for args in (("link", "PACKET"), ("link", "PACKET", "--issue", "3"), ("display", "PACKET")):
+        refused = _registry_cli(tmp_path, *args)
+        assert refused.returncode == 1 and json.loads(refused.stdout) == {"error": "github-not-configured"}
+    document = json.loads((tmp_path / "projects.json").read_text())
+    document["projects"]["P"]["github"] = {
+        "repository": "AlienLogicLab/alienintent-sandbox", "application_id": 1000001, "installation_id": 2000002,
+        "private_key_path": str(tmp_path / "no-such-key.pem"),
+        "project": {"project_id": "PVT_kwDOfixtureSandboxProject", "project_number": 2, "organization": "AlienLogicLab",
+                    "status_field_id": "PVTSSF_s", "priority_field_id": "PVTSSF_p"}}
+    (tmp_path / "projects.json").write_text(json.dumps(document))
+    unknown = json.loads(_registry_cli(tmp_path, "link", "missing").stdout)
+    assert (unknown["answer"], unknown["identity"], unknown["issue_number"]) == ("UNKNOWN_IDENTITY", "missing", None)
+    shown = json.loads(_registry_cli(tmp_path, "display", "PACKET").stdout)
+    assert (shown["answer"], shown["identity"]) == ("NOT_LINKED", item["id"])
+    invalid = _registry_cli(tmp_path, "link", "PACKET", "--issue", "three")
+    assert invalid.returncode == 2 and json.loads(invalid.stdout) == {"error": "invalid-command-arguments"}
+    failed = _registry_cli(tmp_path, "link", "PACKET")
+    assert failed.returncode == 2 and json.loads(failed.stdout)["step"] == "permissions"
+    assert "Traceback" not in failed.stderr
+    assert json.loads(_registry_cli(tmp_path, "show", "PACKET").stdout)["item"]["issue_number"] is None
