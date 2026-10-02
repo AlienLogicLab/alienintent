@@ -9,7 +9,7 @@ login match and the display comparison; the instructions are the Git file at the
 """
 from __future__ import annotations
 
-from collections.abc import Iterator, Mapping
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from typing import Protocol
 
@@ -17,8 +17,8 @@ from alienintent.context_assembly.application.work_registration import WorkRecor
 from alienintent.context_assembly.domain.work_identity import WorkItem
 from alienintent.context_assembly.domain.work_link import (
     DISPLAY_NOT_CONFIRMED, IDENTITY_RETIRED, ISSUE_ALREADY_LINKED, ISSUE_NOT_FOUND, ITEM_ALREADY_LINKED, NOT_LINKED,
-    PERMISSION_MISSING, UNCHANGED, UNKNOWN_IDENTITY, UPDATED, IssueAlreadyLinked, ItemAlreadyLinked, LinkResult,
-    adoptable, app_login, body_of, closing_body, duplicate, missing_permissions, render)
+    PERMISSION_MISSING, UNCHANGED, UNKNOWN_IDENTITY, UPDATED, Display, IssueAlreadyLinked, ItemAlreadyLinked,
+    LinkResult, adoptable, app_login, body_of, closing_body, duplicate, missing_permissions, render)
 from alienintent.context_assembly.ports.work_item_repository import WorkItemRepository
 from alienintent.execution_coordination.ports.project_directory import ProjectDirectory, ProjectRejected
 from alienintent.execution_coordination.ports.repository_directory import RepositoryDirectory, RepositoryRejected
@@ -49,8 +49,11 @@ def _step(name: str) -> Iterator[None]:
 
 class WorkLink:
     def __init__(self, records: WorkRecordService, items: WorkItemRepository, issues: RepositoryDirectory,
-                 board: ProjectDirectory, app: AppInstallation) -> None:
+                 board: ProjectDirectory, app: AppInstallation,
+                 cycles: Callable[[str], tuple[int | None, int | None] | None] | None = None) -> None:
         self.records, self.items, self.issues, self.board, self.app = records, items, issues, board, app
+        # The cycle counts of a work item's recorded coordinator state (None when it has none), bound by composition.
+        self.cycles = cycles
 
     def link(self, id_or_label: str, issue: int | None = None) -> LinkResult:
         record = self.records.show(id_or_label)
@@ -116,8 +119,11 @@ class WorkLink:
         return next((entry for entry in self.issues.recent_issues(RECENT_ISSUES) if adoptable(entry, item.id, login)),
                     None)
 
+    def _rendered(self, item: WorkItem) -> Display:
+        return render(item, None if self.cycles is None else self.cycles(item.id))
+
     def _create(self, item: WorkItem) -> Mapping[str, object]:
-        rendered = render(item)
+        rendered = self._rendered(item)
         number = int(self.issues.create_issue(rendered.title, rendered.body)["number"])
         created = self.issues.issue(number)
         if created.get("title") != rendered.title or body_of(created) != rendered.body:
@@ -164,7 +170,7 @@ class WorkLink:
 
     def _display(self, item: WorkItem) -> LinkResult:
         """One write when the Issue's title or body differs from the rendered text, then read back."""
-        rendered = render(item)
+        rendered = self._rendered(item)
         current = self.issues.issue(item.issue_number)
         if current.get("title") == rendered.title and body_of(current) == rendered.body:
             return _linked(item, None, display=UNCHANGED)

@@ -57,12 +57,17 @@ def marker(identity: str) -> str:
     return f"<!-- {MARKER_NAME}: {identity} -->"
 
 
-def render(item: WorkItem) -> Display:
-    """Title and body from the stored row only; an item with no pointer has no `Instructions` line."""
+def render(item: WorkItem, cycles: tuple[int | None, int | None] | None = None) -> Display:
+    """Title and body from the stored row only; an item with no pointer has no `Instructions` line. `cycles` are the
+    IMPLEMENT and VERIFY cycle counts of the coordinator's recorded state, given only when that state exists; a
+    count that is None is shown as `unknown`."""
     lines = [marker(item.id), f"Work item `{item.label}` (`{item.id}`)"]
     if item.pointer is not None:
         lines.append(f"Instructions: `{item.pointer.repo}/{item.pointer.path}` at `{item.pointer.commit}`")
     lines.append("This text is a display only. The instructions are that file at that commit.")
+    if cycles is not None:
+        implement, verify = ("unknown" if count is None else count for count in cycles)
+        lines.append(f"IMPLEMENT cycles: {implement} · VERIFY cycles: {verify}")
     return Display(item.label, "\n".join(lines))
 
 

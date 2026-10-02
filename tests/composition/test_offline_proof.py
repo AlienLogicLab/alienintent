@@ -213,6 +213,7 @@ def test_s0_frozen_kernel_guard_rejects_authorized_s2_store_extension(tmp_path: 
     assert changed == [
         "src/alienintent/execution_coordination/adapters/sqlite_store.py",
         "src/alienintent/execution_coordination/application/factory_coordinator.py",
+        "src/alienintent/execution_coordination/domain/lifecycle.py",
         "src/alienintent/invocation_runtime/adapters/git_source_control.py",
         "src/alienintent/invocation_runtime/application/real_worker.py",
     ]

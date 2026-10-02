@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from enum import StrEnum
-from typing import Iterable, Mapping
+from typing import Callable, Iterable, Mapping
 
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore, verify_in_fresh_process
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
@@ -24,6 +24,10 @@ ROLE_BY_STAGE = {LifecycleStage.IMPLEMENT: PRODUCER, LifecycleStage.VERIFY: VERI
 VERIFIER_EVIDENCE = "independent-verifier-accepted"
 # Execution-record fields that survive every later commit of the same aggregate.
 CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict")
+# One WIP slot per admitted work item, held until its recorded state is DONE or a final outcome: an outcome the
+# coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
+WIP_SCOPE = "wip"
+FINAL_OUTCOMES = frozenset({"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"})
 
 
 @dataclass(frozen=True)
@@ -38,6 +42,13 @@ class StopReason(StrEnum):
     EXHAUSTED = "eligible-backlog-exhausted"
     BLOCKED = "dependencies-or-authority-blocked"
     CAPACITY_UNAVAILABLE = "capacity-unavailable"
+    WIP_LIMIT_UNAVAILABLE = "wip-limit-unavailable"
+
+
+class _WipSkip(StrEnum):
+    """A work item not admitted to IMPLEMENT this run; the run continues with other work items."""
+    REFUSED = "wip-refused"
+    UNAVAILABLE = "wip-limit-unavailable"
 
 
 class TerminalWork(ValueError):
@@ -64,7 +75,8 @@ class ProjectedState:
 
 class FactoryCoordinator:
     def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True, notifier: DecisionNotifier | None = None,
-                 release_gate: ReleasePreconditionGate | None = None, allocation: ExecutionAllocation | None = None) -> None:
+                 release_gate: ReleasePreconditionGate | None = None, allocation: ExecutionAllocation | None = None,
+                 wip_limit: Callable[[], int | None] | None = None) -> None:
         self._store, self._work, self._worker, self._artifacts, self._profile = store, work, worker, artifacts, profile
         self._automatic_release = automatic_release
         # SWF-21 release preconditions and the attributable per-BIU budget
@@ -72,6 +84,8 @@ class FactoryCoordinator:
         # admission behaviour; see _available_budget.
         self._release_gate, self._allocation = release_gate, allocation
         self._released: set[str] = set()
+        # The configured WIP limit, read on every admission; None (the default) means no WIP admission at all.
+        self._wip_limit = wip_limit
         self._notifier = notifier
         self.delivery_health: dict[str, DeliveryHealth] = {}
 
@@ -80,15 +94,22 @@ class FactoryCoordinator:
         if not self._recover(items):
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
         dispatched: list[str] = []
-        while (item := self._next_item(items)) is not None:
+        skipped: dict[str, _WipSkip] = {}
+        while (item := self._next_item([ready for ready in items if ready.identity not in skipped])) is not None:
             producing = self._role(item.identity) == PRODUCER
             result = self._run(item)
+            if isinstance(result, _WipSkip):
+                skipped[item.identity] = result
+                continue
             if result is StopReason.CAPACITY_UNAVAILABLE:
                 return RunSummary(result, tuple(dispatched))
             if result is None and producing:
                 dispatched.append(item.identity)
+        stop_reason = self._stop_reason(items)
+        if skipped:
+            stop_reason = StopReason.WIP_LIMIT_UNAVAILABLE if _WipSkip.UNAVAILABLE in skipped.values() else StopReason.CAPACITY_UNAVAILABLE
         return RunSummary(
-            self._stop_reason(items), tuple(dispatched),
+            stop_reason, tuple(dispatched),
             tuple(item.identity for item in items if self._outcome(item.identity) == "authority-block"),
             tuple(item.identity for item in items if self._outcome(item.identity) in {"failure", "timeout"}),
         )
@@ -104,7 +125,7 @@ class FactoryCoordinator:
         _, raw = self._store.read_state(self._profile, self._aggregate(identity))
         if not raw:
             raise KeyError(identity)
-        return ProjectedState(self._decode(raw), raw.get("outcome") if isinstance(raw.get("outcome"), str) else None, dict(raw))
+        return ProjectedState(self.decode(raw), raw.get("outcome") if isinstance(raw.get("outcome"), str) else None, dict(raw))
 
     def _role(self, identity: str) -> str | None:
         try:
@@ -162,6 +183,7 @@ class FactoryCoordinator:
         cancellation = {"actor": actor, "authority": authority, "reason": reason, "idempotency_key": idempotency_key}
         self._worker.cancel(identity, reason)
         self._store.commit(self._profile, self._aggregate(identity), version, raw | {"outcome": "cancelled-by-operator", "cancellation": cancellation})
+        self._release_ended_wip(identity)
         return {"status": "cancelled", "target": identity, "idempotent": False}
 
     def stop_owned(self, actor: str, authority: str, expected_version: int, reason: str, idempotency_key: str) -> dict[str, object]:
@@ -253,13 +275,15 @@ class FactoryCoordinator:
             pass
         return (self._is_automatic(item) or self._is_released(item.identity)) and all(self._is_done(dep) for dep in item.dependencies)
 
-    def _run(self, item: ReadyWorkItem) -> StopReason | None:
+    def _run(self, item: ReadyWorkItem) -> StopReason | _WipSkip | None:
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
-        current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+        current = replace(self.decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
         role = ROLE_BY_STAGE.get(current.stage)
         if role is None:
             return StopReason.BLOCKED
         if role == PRODUCER:
+            # A work item already holding its WIP slot is never admitted again and needs no limit to continue.
+            admitting = self._wip_limit is not None and not self._holds_wip(item.identity)
             # Release admission guards only the producer; a verifier or closure
             # invocation acts on work already admitted and never resets it.
             source = ReleaseSource.AUTOMATIC_POLICY if self._is_automatic(item) else ReleaseSource.EXPLICIT_HUMAN
@@ -280,6 +304,14 @@ class FactoryCoordinator:
                 self._register_escalation(self._authority_request(item, current.version, "Release admission requires authority not present in this profile."))
                 self._block_dependents(item, self._work.import_ready_snapshot())
                 return StopReason.BLOCKED
+            if admitting:
+                limit = self._wip_limit()
+                if limit is None:
+                    return _WipSkip.UNAVAILABLE
+                try:
+                    self._store.acquire_within(self._profile, WIP_SCOPE, item.identity, self._wip_owner(item.identity), limit)
+                except ReservationRejected:
+                    return _WipSkip.REFUSED
             self._work.propose_release(item)
             version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
         correlation = f"launch:{item.identity}:{version}"
@@ -289,6 +321,10 @@ class FactoryCoordinator:
             return StopReason.CAPACITY_UNAVAILABLE
         read_back = False
         try:
+            if role == PRODUCER and current.implement_cycles == 0:
+                # The first admitted PRODUCER launch enters IMPLEMENT: counted in this launch's own commit, on
+                # `current` so the recorded result built from it keeps the count. Unknown (None) stays unknown.
+                current = replace(current, implement_cycles=1)
             invocation = self._invocation(item, correlation, role, current)
             # The invocation's own candidate is retained: a later rework clears
             # the state's candidate, and recovery must re-ask the same question.
@@ -436,11 +472,44 @@ class FactoryCoordinator:
         persisted = self._encode(state) | self._carried(prior) | (fields or {}) | {"correlation": correlation, "outcome": outcome}
         self._store.commit(self._profile, self._aggregate(item.identity), version, persisted)
         _, read_back = self._store.read_state(self._profile, self._aggregate(item.identity))
-        return read_back.get("correlation") == correlation and read_back.get("outcome") == outcome
+        recorded = read_back.get("correlation") == correlation and read_back.get("outcome") == outcome
+        if recorded:
+            self._release_ended_wip(item.identity)
+        return recorded
+
+    @staticmethod
+    def _wip_owner(identity: str) -> str:
+        return f"work:{identity}"
+
+    def _wip_reservations(self, identity: str):
+        return [reservation for reservation in self._store.recovery_reservations(self._profile)
+                if reservation.scope == WIP_SCOPE and reservation.key == identity and reservation.owner == self._wip_owner(identity)]
+
+    def _holds_wip(self, identity: str) -> bool:
+        return bool(self._wip_reservations(identity))
+
+    def _release_ended_wip(self, identity: str) -> None:
+        """Release the work item's WIP slot once its recorded state reads back as DONE or a final outcome.
+
+        Every other state (authority holds, reworks, retries, unknown effects) keeps the slot.
+        """
+        _, raw = self._store.read_state(self._profile, self._aggregate(identity))
+        if raw.get("stage") != LifecycleStage.DONE.value and raw.get("outcome") not in FINAL_OUTCOMES:
+            return
+        for reservation in self._wip_reservations(identity):
+            self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
 
     def _recover(self, items: Iterable[ReadyWorkItem]) -> bool:
         by_identity = {item.identity: item for item in items}
-        for reservation in self._store.recovery_reservations(self._profile):
+        reservations = self._store.recovery_reservations(self._profile)
+        # WIP slots first, from the recorded work item state alone (not the READY snapshot): a crash between the
+        # recorded DONE or final outcome and its release is completed here; every other slot is kept.
+        for reservation in reservations:
+            if reservation.scope == WIP_SCOPE:
+                self._release_ended_wip(reservation.key)
+        for reservation in reservations:
+            if reservation.scope == WIP_SCOPE:
+                continue
             if reservation.scope != "repository" or not reservation.owner.startswith("launch:"):
                 return False
             try:
@@ -449,7 +518,7 @@ class FactoryCoordinator:
             except (ValueError, KeyError):
                 return False
             _, raw = self._store.read_state(self._profile, self._aggregate(identity))
-            current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+            current = replace(self.decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
             role = str(raw.get("role") or PRODUCER)
             given = raw.get("invocation_candidate")
             invocation = WorkerInvocation(identity, reservation.owner, item.contract.content_digest, role, self._decode_candidate(given) if isinstance(given, dict) else None)
@@ -489,7 +558,7 @@ class FactoryCoordinator:
     def _park_unknown_effect(self, item: ReadyWorkItem, reservation) -> bool:
         """Turn an unreadable FD-05 effect into a scoped, durable authority block."""
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
-        current = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+        current = replace(self.decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
         blocked = self._encode(current) | self._carried(raw) | {"correlation": reservation.owner, "outcome": "authority-block"}
         try:
             self._store.park_unknown_effect(self._profile, reservation.owner, version, blocked)
@@ -577,13 +646,34 @@ class FactoryCoordinator:
 
     @classmethod
     def _encode(cls, state: ExecutionState) -> dict[str, object]:
-        return {"stage": state.stage, "version": state.version, "accepted": state.accepted, "closure": sorted(state.completed_closure_actions), "candidate": cls._encode_candidate(state.candidate)}
+        return {"stage": state.stage, "version": state.version, "accepted": state.accepted, "closure": sorted(state.completed_closure_actions), "candidate": cls._encode_candidate(state.candidate),
+                "implement_cycles": state.implement_cycles, "verify_cycles": state.verify_cycles}
 
     @classmethod
-    def _decode(cls, raw: dict[str, object]) -> ExecutionState:
+    def decode(cls, raw: Mapping[str, object]) -> ExecutionState:
+        """The coordinator's own decoding of a recorded `factory:<identity>` state."""
         record = raw.get("candidate")
         candidate = cls._decode_candidate(record) if isinstance(record, dict) else None
-        return ExecutionState(LifecycleStage(str(raw["stage"])), int(raw["version"]), candidate, bool(raw["accepted"]), frozenset(raw["closure"]), None)
+        stage = LifecycleStage(str(raw["stage"]))
+        return ExecutionState(stage, int(raw["version"]), candidate, bool(raw["accepted"]), frozenset(raw["closure"]), None, *cls._cycles(raw, stage))
+
+    @staticmethod
+    def _cycles(raw: Mapping[str, object], stage: LifecycleStage) -> tuple[int | None, int | None]:
+        """Recorded counts; for an older record without them, only what its retained history proves.
+
+        A record proves a PRODUCER launch only by `producer_correlation`, a non-zero `rejections`, non-empty
+        `findings` or a stage past IMPLEMENT; every rework retains `rejections`. Anything else is unknown (None).
+        """
+        if "implement_cycles" in raw or "verify_cycles" in raw:
+            implement, verify = raw.get("implement_cycles"), raw.get("verify_cycles")
+            return (implement if type(implement) is int else None), (verify if type(verify) is int else None)
+        rejections = raw.get("rejections") or 0
+        if type(rejections) is not int:
+            return None, None
+        past_implement = stage is not LifecycleStage.IMPLEMENT
+        if not (isinstance(raw.get("producer_correlation"), str) or rejections or raw.get("findings") or past_implement):
+            return None, None
+        return 1 + rejections, rejections + (1 if past_implement else 0)
 
     def _register_escalation(self, escalation: HumanDecisionRequired) -> None:
         version, raw = self._store.read_state(self._profile, "decision-inbox")
@@ -611,7 +701,7 @@ class FactoryCoordinator:
                 version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
                 if raw.get("outcome") in {"authority-block", "blocked-by-authority"}:
                     continue
-                state = replace(self._decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+                state = replace(self.decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
                 self._store.commit(self._profile, self._aggregate(item.identity), version, self._encode(state) | {"outcome": "blocked-by-authority", "blocked_by": root.identity})
 
     def _cancel_blocked_dependents(self, root: str, items: Iterable[ReadyWorkItem]) -> None:
@@ -635,19 +725,21 @@ class FactoryCoordinator:
                 self._profile, self._aggregate(item.identity), version,
                 raw | {"outcome": "cancelled-by-decision", "cancelled_by": root},
             )
+            self._release_ended_wip(item.identity)
 
     def record_decision(self, record: DecisionRecord) -> None:
         version, raw = self._store.read_state(self._profile, self._aggregate(record.event.work_item))
         already_recorded = raw.get("decision_key") == record.event.idempotency_key
         if not already_recorded:
             self.validate_decision(record)
-        state = self._decode(raw)
+        state = self.decode(raw)
         items = self._work.import_ready_snapshot()
         if not already_recorded:
             outcome = "cancelled-by-decision" if record.submission.choice == "cancel" else "decision-recorded"
             decision_state = self._encode(state) | self._carried(raw) | {"outcome": outcome, "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice}
             if record.submission.choice == "cancel":
                 self._store.commit(self._profile, self._aggregate(record.event.work_item), version, decision_state)
+                self._release_ended_wip(record.event.work_item)
             else:
                 authorized = (
                     record.submission.choice == "authorize"
@@ -681,6 +773,6 @@ class FactoryCoordinator:
         _, raw = self._store.read_state(self._profile, self._aggregate(record.event.work_item))
         if not raw or raw.get("outcome") != "authority-block":
             raise SupersededDecision("decision target is not authority blocked")
-        state = self._decode(raw)
+        state = self.decode(raw)
         if state.version != record.submission.expected_version or record.submission.biu_version != state.version:
             raise SupersededDecision("decision target version is superseded")

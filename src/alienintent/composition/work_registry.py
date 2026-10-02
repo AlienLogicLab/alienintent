@@ -15,7 +15,10 @@ READY view of that board (`ready_view`, `ready_refusals`, `repair_displays`): ea
 card's registered work record, and the view's attention items are kept in the `readiness` store and evidence folder.
 With `readiness`, `work authorize` (`authorization`) records release records on that store under profile `registry`
 and its evidence in that folder; the starting revision is checked in the pointer repository's configured clone
-against its `default_branch`, the values the release gate for registry items is composed with.
+against its `default_branch`, the values the release gate for registry items is composed with. With the READY view,
+`coordinator(worker, artifacts)` composes the existing FactoryCoordinator over it on the `readiness` store (profile
+`registry`) with that release gate and the WIP limit read from the Factory Director host configuration on every
+admission; the work items' displays carry the IMPLEMENT and VERIFY cycle counts of that coordinator's state.
 
 Configuration document (JSON):
 
@@ -74,9 +77,13 @@ from alienintent.execution_coordination.adapters.github_work_management import G
 from alienintent.execution_coordination.adapters.release_admission import (
     GitRevisionResolver, StoredReleaseAuthorizations)
 from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERSION, SQLiteOperationalStore
+from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator
+from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
 from alienintent.execution_coordination.ports.project_directory import ProjectItemState
+from alienintent.execution_coordination.ports.worker_provider import WorkerProvider
 from alienintent.installation.adapters.app_jwt import app_assertion
 from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
 from alienintent.installation.adapters.urllib_github_transport import UrllibGitHubTransport
@@ -98,6 +105,9 @@ CONTRACT_INVALID, DISPLAY_DIFFERS, ROW_REFUSED = "CONTRACT_INVALID", "DISPLAY_DI
 WORK_PREPARATION, OPERATOR = "Work Preparation", "Operator"
 OWNERS = {NO_LINK: WORK_PREPARATION, NOT_ELIGIBLE: WORK_PREPARATION, ASSESSMENT_MISSING: WORK_PREPARATION,
           CONTRACT_INVALID: WORK_PREPARATION, DISPLAY_DIFFERS: WORK_PREPARATION, ROW_REFUSED: OPERATOR}
+# The shared Factory Director host configuration whose `wipLimit` is the WIP limit (bin/alienintent.mjs reads it too).
+HOST_CONFIGURATION = Path("~/.config/alienintent/factory-director-host.json")
+MAX_SAFE_INTEGER = 2 ** 53 - 1  # the Number.isSafeInteger bound of bin/alienintent.mjs; a JSON 1.0 is not an integer here
 
 
 class ConfigurationInvalid(ValueError):
@@ -193,6 +203,18 @@ def load_project_configuration(path: Path, project: str) -> ProjectConfiguration
     return project_configuration(document, project)
 
 
+def wip_limit(path: Path) -> int | None:
+    """The `wipLimit` of the host configuration at `path`, opened and parsed on every call: an integer of at least 1
+    (not a boolean), else None for a missing, unreadable or invalid file or value. Nothing is kept between calls and
+    there is no default."""
+    try:
+        document = json.loads(Path(path).expanduser().read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return None
+    value = document.get("wipLimit") if isinstance(document, dict) else None
+    return value if type(value) is int and 1 <= value <= MAX_SAFE_INTEGER else None
+
+
 def read_only_store(path: Path) -> OperationalStore:
     """A configured profile's existing operational database at the current schema: opening it writes nothing.
     A missing file or another schema is refused rather than created or migrated."""
@@ -256,8 +278,9 @@ class WorkRegistry:
     work-record operations (`records`); `registration` is the compiler's."""
 
     def __init__(self, configuration: ProjectConfiguration, source_control: SourceControl | None = None,
-                 transport: GitHubTransport | None = None) -> None:
+                 transport: GitHubTransport | None = None, host_configuration: Path = HOST_CONFIGURATION) -> None:
         self.configuration = configuration
+        self.host_configuration = host_configuration
         self.profile_stores = {name: read_only_store(path) for name, path in sorted(configuration.profiles.items())}
         self.items = SQLiteWorkItemRepository(configuration.database, configuration.repositories)
         self.source_control = source_control if source_control is not None else GitSourceControl()
@@ -286,7 +309,34 @@ class WorkRegistry:
             app_assertion)
         return WorkLink(self.records, self.items,
                         GitHubRepositoryApi(github.repository, transport, credentials.authorization),
-                        GitHubProjectsV2Directory(github.project, transport, credentials.authorization), credentials)
+                        GitHubProjectsV2Directory(github.project, transport, credentials.authorization), credentials,
+                        self.cycles if self.assessment is not None else None)
+
+    def cycles(self, identity: str) -> tuple[int | None, int | None] | None:
+        """The IMPLEMENT and VERIFY cycle counts of the work item's recorded `registry` coordinator state on the
+        `readiness` store, decoded by the coordinator's own decoder; None when it has no state."""
+        _, raw = self.assessment.consumer.store.read_state("registry", f"factory:{identity}")
+        if not raw:
+            return None
+        state = FactoryCoordinator.decode(raw)
+        return state.implement_cycles, state.verify_cycles
+
+    def coordinator(self, worker: WorkerProvider, artifacts: LocalArtifactStore) -> FactoryCoordinator:
+        """The existing FactoryCoordinator over the READY view on the `readiness` store under profile `registry`, with
+        the caller's worker and artifacts. Nothing is released automatically: a work item becomes eligible only through
+        `release_and_start`, and the release gate re-checks its release record against the packets repository's clone
+        and default branch (what `work authorize` checks) before every PRODUCER. The WIP limit is read on every
+        admission."""
+        if self.ready_view is None:
+            raise ConfigurationInvalid("the coordinator needs both the github and readiness entries")
+        configuration = self.configuration
+        packets, store = configuration.repositories[configuration.packets_repository], self.assessment.consumer.store
+        gate = ReleasePreconditionGate(StoredReleaseAuthorizations(store, "registry"),
+                                       GitRevisionResolver({configuration.github.repository: packets.clone}),
+                                       packets.default_branch)
+        return FactoryCoordinator(store, self.ready_view, worker, artifacts, "registry",
+                                  automatic_release=False, release_gate=gate,
+                                  wip_limit=lambda: wip_limit(self.host_configuration))
 
     def _ready_view(self, configuration: ProjectConfiguration) -> GitHubProjectsWorkManagement:
         """The READY view of board #1: profile `registry`, each formal workflow state mapped to itself, no projection
@@ -346,7 +396,7 @@ class WorkRegistry:
         if outcome.get("failure_class") or outcome.get("disposition") != "READY":
             raise _Refused(ASSESSMENT_MISSING, f"outcome {outcome.get('disposition') or outcome.get('failure_class')}")
         contract = _step(CONTRACT_INVALID, lambda: contract_block(record.packet, item.id))
-        rendered = render(item)  # The card's text is compared with the display, never read for anything else.
+        rendered = render(item, self.cycles(item.id))  # Compared with the card's text, never read for anything else.
         if (card.title, card.body or "") != (rendered.title, rendered.body):
             differs.append((card.item_id, item.id))
         self._contracts[card.item_id] = contract
