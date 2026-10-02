@@ -438,6 +438,51 @@ def test_check4_an_equal_record_found_after_a_conflict_is_a_repeat(fx):
     assert stored_version(fx, item.id) == 1
 
 
+def test_check6_a_conflict_loser_with_the_same_baseline_and_other_words_is_refused(fx):
+    item, attempt = fx.ready()
+    events, results = [], {}
+    second = run(fx, "B", events)
+    first = run(fx, "A", events,
+                meanwhile=lambda: results.setdefault("B", fx.authorize(item, attempt, service=second)))
+    results["A"] = fx.authorize(item, attempt, quote=QUOTE + " Again.", service=first)
+    assert events == [("A", "none"), ("B", "none"), ("B", "write"), ("B", "found"), ("A", "write"), ("A", "found")]
+    winner, loser = results["B"], results["A"]
+    assert (loser.answer, loser.authorization) == (ALREADY_AUTHORIZED, winner.authorization)
+    assert asdict(fx.releases().release_authorization(item.id)) == winner.authorization
+    assert fx.row(item.id).approval_ref == ref_from_document(winner.evidence_ref)
+
+
+def test_check6_a_conflict_loser_differing_only_in_record_ref_is_refused(fx):
+    item, attempt = fx.ready()
+    events: list = []
+    other = ReleaseAuthorization(item.id, "sha256:" + "e" * 64, True, fx.main(), QUOTE)
+    lost = fx.authorize(item, attempt, service=run(fx, "A", events,
+                                                   meanwhile=lambda: fx.releases().record(other)))
+    assert events == [("A", "none"), ("A", "write"), ("A", "found")]
+    assert (lost.answer, lost.authorization) == (ALREADY_AUTHORIZED, asdict(other))
+    assert fx.releases().release_authorization(item.id) == other and fx.row(item.id).approval_ref is None
+
+
+def test_check6_an_equal_conflict_loser_repairs_the_crashed_winners_approval(fx):
+    item, attempt = fx.ready()
+    events: list = []
+
+    def crash() -> None:
+        raise RuntimeError("process died after the release record, before approval_ref")
+
+    def winner_crashes() -> None:
+        with pytest.raises(RuntimeError, match="process died after the release record"):
+            fx.authorize(item, attempt, service=run(fx, "A", events, after=crash))
+
+    lost = fx.authorize(item, attempt, service=run(fx, "C", events, meanwhile=winner_crashes))
+    assert events == [("C", "none"), ("A", "none"), ("A", "write"), ("C", "write"), ("C", "found")]
+    assert (lost.answer, lost.repeated) == (None, True)
+    stored = fx.releases().release_authorization(item.id)
+    assert stored.record_ref == ref_from_document(lost.evidence_ref).revision_digest
+    assert fx.row(item.id).approval_ref == ref_from_document(lost.evidence_ref)
+    assert stored_version(fx, item.id) == 1
+
+
 def launch(fx: Fx, item, records) -> None:
     """The release gate at launch over the row the READY view builds for the item (`work_registry`), imported."""
     item = fx.row(item.id)
