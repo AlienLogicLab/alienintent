@@ -6,7 +6,9 @@ that clone publishes to, named explicitly, and the default and packets branches 
 where compiled packets are written, and lists every configured profile of the project with its own operational
 database path. Each profile's database is opened read-only in effect (it must already exist at the current schema,
 so opening it writes nothing) for the compiler's migration check and `work migrate`. The same WorkIdentityService,
-repository adapter and publisher are handed to every client of the project.
+repository adapter and publisher are handed to every client of the project. The optional `readiness` object configures
+`work assess`: its own assessment store and evidence folder, and the Agent Ready executable and provider; without it
+the project has no assessment service.
 
 Configuration document (JSON):
 
@@ -15,33 +17,53 @@ Configuration document (JSON):
         "repositories": {"<name>": {"clone": "<path>", "remote": "origin", "default_branch": "main",
                                     "packets_branch": "alienintent/work-packets"}},
         "packets": {"repository": "<name>", "directory": "work-packets"},
-        "profiles": {"<profile>": "<path to that profile's operational state.sqlite>"}}}}
+        "profiles": {"<profile>": "<path to that profile's operational state.sqlite>"},
+        "readiness": {"database": "<path>", "evidence_root": "<path>", "executable": "<agent-ready path>",
+                      "provider": "<provider>"}}}}
 """
 from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass
+from hashlib import sha256
 import json
 import os
 from pathlib import Path
 from types import SimpleNamespace
 
+from alienintent.composition.readiness import assessment_environment, compose_producer, resolve_binding
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
+from alienintent.context_assembly.application.packet_assessment import PacketAssessment
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.application.work_registration import WorkRecordService
 from alienintent.context_assembly.domain.work_identity import valid_path
 from alienintent.context_assembly.ports.work_item_repository import (
     PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
+from alienintent.evidence_learning.adapters.local_evidence_repository import LocalEvidenceRepository
+from alienintent.evidence_learning.domain.refs import Ref
+from alienintent.execution_coordination.adapters import assessment_consumer
+from alienintent.execution_coordination.adapters.assessment_consumer import RetainedAssessmentConsumer
 from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERSION, SQLiteOperationalStore
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
+from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+from alienintent.invocation_runtime.domain.runtime import INVOCATION_MARKER, INVOCATION_OWNER_MARKER, owner_token
 from alienintent.invocation_runtime.ports import source_control
 from alienintent.invocation_runtime.ports.source_control import PublishRef, SourceControl
 
 
 class ConfigurationInvalid(ValueError):
     """The project-level configuration entry is missing or malformed; nothing was opened."""
+
+
+@dataclass(frozen=True)
+class ReadinessConfiguration:
+    """`work assess`: its own assessment database and evidence folder, the Agent Ready executable and provider."""
+    database: Path
+    evidence_root: Path
+    executable: Path
+    provider: str
 
 
 @dataclass(frozen=True)
@@ -52,6 +74,7 @@ class ProjectConfiguration:
     packets_repository: str
     packets_directory: str
     profiles: Mapping[str, Path]
+    readiness: ReadinessConfiguration | None = None
 
 
 def project_configuration(document: object, project: str) -> ProjectConfiguration:
@@ -65,8 +88,9 @@ def project_configuration(document: object, project: str) -> ProjectConfiguratio
                         for name, value in entry["repositories"].items()}
         packets = entry["packets"]
         profiles = {name: Path(path) for name, path in entry["profiles"].items()}
+        readiness = _readiness(entry["readiness"]) if "readiness" in entry else None
         configuration = ProjectConfiguration(project, Path(entry["database"]), repositories, packets["repository"],
-                                             packets["directory"], profiles)
+                                             packets["directory"], profiles, readiness)
     except ConfigurationInvalid:
         raise
     except (KeyError, TypeError, AttributeError, ValueError) as error:
@@ -75,7 +99,18 @@ def project_configuration(document: object, project: str) -> ProjectConfiguratio
             isinstance(name, str) and name for name in [*repositories, *profiles]) \
             or not isinstance(configuration.packets_directory, str) or not valid_path(configuration.packets_directory):
         raise ConfigurationInvalid(f"project {project}: packets repository, directory and profiles must be configured")
+    if readiness is not None and readiness.database.resolve() in {
+            path.resolve() for path in (configuration.database, *profiles.values())}:
+        raise ConfigurationInvalid(f"project {project}: the readiness database must be its own database")
     return configuration
+
+
+def _readiness(value: object) -> ReadinessConfiguration:
+    if not isinstance(value, dict) or set(value) != {"database", "evidence_root", "executable", "provider"} \
+            or not all(isinstance(v, str) and v for v in value.values()):
+        raise ConfigurationInvalid("readiness needs exactly database, evidence_root, executable and provider")
+    return ReadinessConfiguration(Path(value["database"]), Path(value["evidence_root"]), Path(value["executable"]),
+                                  value["provider"])
 
 
 def load_project_configuration(path: Path, project: str) -> ProjectConfiguration:
@@ -133,6 +168,24 @@ class WorkRegistry:
                            configuration.repositories[configuration.packets_repository]),
             self.profile_stores)
         self.records = WorkRecordService(self.identities, self.items, self.items.read_packet)
+        self.assessment = self._assessment(configuration) if configuration.readiness is not None else None
+
+    def _assessment(self, configuration: ProjectConfiguration) -> PacketAssessment:
+        """`work assess` over its own retained-assessment store; each attempt's Agent Ready launch carries the
+        worker runtime's invocation markers naming that attempt and the recorded owner process."""
+        readiness, profile = configuration.readiness, "work-preparation"
+        definition_ref = Ref(configuration.project, profile, "readiness-consumer",
+                             "sha256:" + sha256(Path(assessment_consumer.__file__).read_bytes()).hexdigest(),
+                             "python:alienintent.execution_coordination.adapters.assessment_consumer")
+        consumer = RetainedAssessmentConsumer(
+            LocalEvidenceRepository(readiness.evidence_root, configuration.project, profile),
+            SQLiteOperationalStore(readiness.database), configuration.project, profile, definition_ref,
+            "alienintent work assess", frozenset({"public", "private"}))
+        binding = resolve_binding(readiness.executable, "cli")
+        return PacketAssessment(self.records, self.identities, consumer, binding, ProcOwnership(),
+                                lambda attempt, owner: compose_producer(binding, readiness.provider, {
+                                    **assessment_environment(), INVOCATION_MARKER: attempt,
+                                    INVOCATION_OWNER_MARKER: owner_token(owner)}))
 
 
 def work_registry_profile() -> SimpleNamespace:

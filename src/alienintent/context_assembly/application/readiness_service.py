@@ -98,6 +98,17 @@ class ReadinessAdmission:
             return current if isinstance(current, ReadinessEligibility) else None
         return None
 
+    @staticmethod
+    def produce(producer: ReadinessAssessment, candidate_work_unit: CandidateWorkUnit) -> ProducerResponse:
+        """Run the producer once for an opened attempt; whatever it does, the result is exactly a ProducerResponse."""
+        try:
+            response = producer.assess(candidate_work_unit)
+        except Exception as error:  # A raising adapter fails the opened attempt; it never leaves it open.
+            response = ProducerResponse(None, None, False, "raised:" + type(error).__name__, None)
+        if type(response) is not ProducerResponse:  # Exactly the frozen value: no subclass can intercept reads.
+            response = ProducerResponse(None, None, False, "invalid:" + type(response).__name__, None)
+        return response
+
     def _invoke(self, candidate: dict, report: LintReport, lint_ref: dict, fingerprint: str,
                 predecessor: dict | None, proof_plan: tuple[str, ...] | None) -> Outcome:
         identity, text = report.identity, str(candidate.get("text"))
@@ -106,12 +117,7 @@ class ReadinessAdmission:
                                      lint_ref, self.binding)
         if isinstance(attempt, Hold):
             return attempt
-        try:
-            response = self.producer.assess(CandidateWorkUnit(identity, text, attempt, fingerprint))
-        except Exception as error:  # A raising adapter fails the opened attempt; it never leaves it open.
-            response = ProducerResponse(None, None, False, "raised:" + type(error).__name__, None)
-        if type(response) is not ProducerResponse:  # Exactly the frozen value: no subclass can intercept reads.
-            response = ProducerResponse(None, None, False, "invalid:" + type(response).__name__, None)
+        response = self.produce(self.producer, CandidateWorkUnit(identity, text, attempt, fingerprint))
         metadata = AttemptMetadata(identity, attempt, fingerprint, input_sha256, response.exit_status,
                                    response.timed_out, response.custody, self.binding)
         observed = self.consumer.observe(response.raw, metadata, response.shape)

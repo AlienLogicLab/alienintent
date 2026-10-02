@@ -71,6 +71,23 @@ def show_work(records: WorkRecords, id_or_label: str) -> dict[str, object]:
     return value
 
 
+class WorkAssessment(Protocol):
+    """The project's packet assessment as `work assess` uses it (bound by the profile's composition)."""
+
+    def assess(self, id_or_label: str, revision: tuple[bytes, str] | None, recover: str | None) -> Any: ...
+
+
+def assess_work(assessment: WorkAssessment, id_or_label: str, revision: tuple[bytes, str] | None,
+                recover: str | None) -> dict[str, object]:
+    """`work assess`: the item id, attempt id, disposition and saved reference, or a refusal or hold returned as the
+    read answer naming its code, the way `work show` answers UNKNOWN_IDENTITY."""
+    result = assessment.assess(id_or_label, revision, recover)
+    value = asdict(result)
+    if "reason_code" in value:
+        value["answer"] = value.pop("reason_code")
+    return value
+
+
 class OperatorControlPlane:
     def __init__(self, profile: str, store: Any, work: Any, coordinator: Any, readiness: Callable[[], bool], clock: Callable[[], str] = lambda: "not-recorded") -> None:
         self._profile, self._store, self._work, self._coordinator, self._readiness, self._clock = profile, store, work, coordinator, readiness, clock

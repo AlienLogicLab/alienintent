@@ -608,6 +608,28 @@ def test_failed_push_leaves_the_row_and_a_repeat_publishes(fx, operation):
     assert item.id == row["id"] and remote_refs(fx.clone)["refs/tags/work/" + item.id] == pointer.commit
 
 
+def test_set_pointer_publishes_like_register_and_a_repeat_completes_a_failed_push(fx):
+    item = fx.service.register("packet:alienintent/docs/p.md", "Packet", "BIU", pointer=fx.packet())
+    revised = fx.packet(data=b"revised instructions\n")
+    moved = fx.service.set_pointer(item.id, revised)
+    assert (moved.id, moved.pointer.commit) == (item.id, revised.commit)
+    assert remote_refs(fx.clone)["refs/tags/work/" + item.id] == revised.commit
+    third = fx.packet(data=b"third\n")
+    remote = git(fx.clone, "remote", "get-url", "origin").decode().strip()
+    git(fx.clone, "remote", "set-url", "origin", str(fx.project.root / "missing.git"))
+    with pytest.raises(PublicationFailed) as error:
+        fx.service.set_pointer(item.id, third)
+    assert error.value.refs == ("refs/tags/work/" + item.id,)
+    assert fx.service.find(item.id).pointer.commit == third.commit  # The row stays committed.
+    git(fx.clone, "remote", "set-url", "origin", remote)
+    assert remote_refs(fx.clone)["refs/tags/work/" + item.id] == revised.commit
+    assert fx.service.set_pointer(item.id, third).pointer.commit == third.commit
+    assert remote_refs(fx.clone)["refs/tags/work/" + item.id] == third.commit
+    with fx.items.transaction():
+        with pytest.raises(TransactionHeld):
+            fx.service.set_pointer(item.id, third)
+
+
 def test_every_push_goes_through_publish_refs(fx, monkeypatch):
     inside, pushes = [], []
     original_publish, original_run = GitSourceControl.publish_refs, subprocess.run
