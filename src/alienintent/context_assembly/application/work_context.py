@@ -54,14 +54,18 @@ class SelfReviewExists(VersionConflict):
 @dataclass(frozen=True)
 class ContextCommand:
     """The read-only `work context` command line a worker runs for further facts: the installed executable, the
-    read-only worker profile and the two environment variables naming the project configuration."""
+    read-only worker profile and the two environment variables naming the project configuration. With the launched
+    invocation's contract digest it carries `--contract-digest`, so the worker's own later calls are checked
+    against the contract it was launched with."""
     executable: str
     profile_factory: str
     environment: Mapping[str, str]
 
-    def document(self, identity: str, role: str, correlation: str, candidate: str | None) -> dict[str, object]:
+    def document(self, identity: str, role: str, correlation: str, candidate: str | None,
+                 contract_digest: str | None = None) -> dict[str, object]:
         argv = [self.executable, "--profile-factory", self.profile_factory, "--json", "work", "context", identity,
-                "--role", role, "--correlation", correlation, *(("--candidate", candidate) if candidate else ())]
+                "--role", role, "--correlation", correlation, *(("--candidate", candidate) if candidate else ()),
+                *(("--contract-digest", contract_digest) if contract_digest else ())]
         return {"argv": argv, "environment": dict(self.environment)}
 
 
@@ -194,7 +198,7 @@ class WorkContext:
         if role == PRODUCER:
             fields["assessment"] = {"assessment_ref": asdict(item.assessment_ref), "attempt_id": entry["attempt_id"],
                                     "input_fingerprint": entry["input_fingerprint"]}
-            fields["context_command"] = self.command.document(item.id, role, correlation, None)
+            fields["context_command"] = self.command.document(item.id, role, correlation, None, contract_digest)
         else:
             # 8. The exact candidate, its self-review and its diff.
             held = state.candidate if state is not None else None
@@ -213,7 +217,8 @@ class WorkContext:
             except WorkIdentityRefused as error:
                 raise _hold(MISSING, "diff", detail=str(error)) from None
             fields["diff"] = {"base": release.baseline, "revision": revision, **content(diff)}
-            fields["context_command"] = self.command.document(item.id, role, correlation, held.locator)
+            fields["context_command"] = self.command.document(item.id, role, correlation, held.locator,
+                                                              contract_digest)
         return ContextPackage(role, json.loads(canonical(fields)))
 
     def _attempt(self, identity: str, correlation: str, version: int) -> int:

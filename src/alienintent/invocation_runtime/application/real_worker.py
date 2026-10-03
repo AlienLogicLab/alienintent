@@ -6,6 +6,7 @@ import json
 from hashlib import sha256
 from pathlib import Path
 from collections.abc import Callable, Mapping, Sequence
+from typing import Protocol
 
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
@@ -164,8 +165,22 @@ def _publishes_to(candidate: CandidateRef, branch: str) -> bool:
     return candidate.locator.rsplit("#", 1)[1].rsplit("@", 1)[0] == branch
 
 
+class WorkerPreparation(Protocol):
+    """An optional hook, in the style of the `branch` and `grant` hooks, run before a role's process starts.
+
+    `prepare` is called first in `_produce` (`clone` None) and in `_evaluate` right after the fresh candidate clone
+    is made (`clone` that clone). It returns the PRODUCER's starting revision (ignored for the VERIFIER) or a complete
+    refusal outcome, returned unchanged with nothing started. `published` is called after a PRODUCER candidate is
+    published and read back, with that candidate; it must not raise.
+    """
+
+    def prepare(self, invocation: WorkerInvocation, clone: Path | None) -> str | WorkerOutcome: ...
+
+    def published(self, invocation: WorkerInvocation, candidate: CandidateRef) -> None: ...
+
+
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -180,6 +195,7 @@ class RealWorkerProvider(WorkerProvider):
         self._sleep = sleep
         self._journal = journal
         self._ownership = ownership
+        self._preparation = preparation
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
@@ -242,6 +258,10 @@ class RealWorkerProvider(WorkerProvider):
             except CandidateUnavailable:
                 return WorkerOutcome("candidate-unavailable")
             self.verifier_provenance[invocation.correlation_id] = workspace.as_posix()
+            if self._preparation is not None:
+                prepared = self._preparation.prepare(invocation, workspace)
+                if isinstance(prepared, WorkerOutcome):
+                    return prepared
             verdict = workspace / VERDICT_PATH
             if verdict.exists():
                 # The candidate itself carries a verdict: a producer cannot approve its own work.
@@ -273,6 +293,13 @@ class RealWorkerProvider(WorkerProvider):
         return WorkerOutcome.closed(candidate, tuple(receipts))
 
     def _produce(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
+        starting_revision = "HEAD"
+        if self._preparation is not None:
+            prepared = self._preparation.prepare(invocation, None)
+            if isinstance(prepared, WorkerOutcome):
+                self._outcomes[invocation.correlation_id] = prepared
+                return prepared
+            starting_revision = prepared
         grant = self._grant_for(invocation)
         if budget.hard_wall_clock_seconds is None or budget.cancellation_limit is None or grant.invocation_id != invocation.correlation_id:
             return WorkerOutcome("ineligible")
@@ -292,7 +319,7 @@ class RealWorkerProvider(WorkerProvider):
                 return WorkerOutcome("ineligible")
         if self._workspaces is None:
             return WorkerOutcome("ineligible")
-        workspace = self._workspaces.allocate(invocation.correlation_id, invocation.work_identity, "HEAD")
+        workspace = self._workspaces.allocate(invocation.correlation_id, invocation.work_identity, starting_revision)
         self._active_workspaces[invocation.correlation_id] = workspace
         outcome = WorkerOutcome("failure")
         try:
@@ -316,6 +343,8 @@ class RealWorkerProvider(WorkerProvider):
                     self._journal.append({"event": PUBLICATION_STARTED, "correlation_id": invocation.correlation_id,
                                           "work_identity": invocation.work_identity, "role": invocation.role, "revision": revision})
                 candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
+                if self._preparation is not None:
+                    self._preparation.published(invocation, candidate)
                 outcome = WorkerOutcome.success(candidate)
         finally:
             if outcome.kind in {"success", "authority-block"}:

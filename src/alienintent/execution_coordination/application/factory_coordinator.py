@@ -28,6 +28,8 @@ CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejection
 # coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
 WIP_SCOPE = "wip"
 FINAL_OUTCOMES = frozenset({"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"})
+# `launch` answers that launch nothing.
+CLOSURE_NOT_AUTOMATED, NOT_ELIGIBLE = "closure-not-automated", "not-eligible"
 
 
 @dataclass(frozen=True)
@@ -124,6 +126,39 @@ class FactoryCoordinator:
             self._store.commit(self._profile, self._release_aggregate(identity), version, {"identity": identity, "source": ReleaseSource.EXPLICIT_HUMAN})
         self._released.add(identity)
         return self.start()
+
+    def launch(self, identity: str) -> RunSummary | str:
+        """One role step for exactly the named work item: the PRODUCER at IMPLEMENT or the VERIFIER at VERIFY.
+
+        At ACCEPT it answers CLOSURE_NOT_AUTOMATED and writes nothing (CLOSURE stays a separate manual role).
+        Otherwise it writes the explicit human release as `release_and_start` does, runs the existing recovery once
+        (which may record already-durable outcomes of other launches and starts no worker), and, only if the item is
+        in the READY snapshot and `_eligible` admits it, runs `_run` once for it. It never calls `start()`, so no
+        other work item runs and the next role waits for the next `launch`.
+        """
+        try:
+            if self.state(identity).stage is LifecycleStage.ACCEPT:
+                return CLOSURE_NOT_AUTOMATED
+        except KeyError:
+            pass
+        version, existing = self._store.read_state(self._profile, self._release_aggregate(identity))
+        if not existing:
+            self._store.commit(self._profile, self._release_aggregate(identity), version, {"identity": identity, "source": ReleaseSource.EXPLICIT_HUMAN})
+        self._released.add(identity)
+        items = self._work.import_ready_snapshot()
+        if not self._recover(items):
+            return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
+        item = next((ready for ready in items if ready.identity == identity), None)
+        if item is None or not self._eligible(item):
+            return NOT_ELIGIBLE
+        producing = self._role(identity) == PRODUCER
+        result = self._run(item)
+        if isinstance(result, _WipSkip):
+            return result.value
+        outcome = self._outcome(identity)
+        return RunSummary(result or self._stop_reason((item,)), (identity,) if result is None and producing else (),
+                          (identity,) if outcome == "authority-block" else (),
+                          (identity,) if outcome in {"failure", "timeout"} else ())
 
     def state(self, identity: str) -> ProjectedState:
         _, raw = self._store.read_state(self._profile, self._aggregate(identity))

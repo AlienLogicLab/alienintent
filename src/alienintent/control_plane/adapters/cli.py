@@ -12,7 +12,7 @@ from typing import Any
 
 from alienintent.control_plane.application.operator import (
     NOT_AVAILABLE_IN_WORKER_PROFILE, OperatorControlPlane, OperatorDenied, assess_work, authorize_work, context_work,
-    display_work, import_work, link_work, migrate_work, record_completed_work, register_work, show_work)
+    display_work, import_work, launch_work, link_work, migrate_work, record_completed_work, register_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
@@ -111,6 +111,8 @@ def _parser() -> argparse.ArgumentParser:
     context = _sanitized(work.add_parser("context")); context.add_argument("target")
     context.add_argument("--role", choices=("PRODUCER", "VERIFIER"), required=True)
     context.add_argument("--correlation", required=True); context.add_argument("--candidate")
+    context.add_argument("--contract-digest")
+    launch = _sanitized(work.add_parser("launch")); launch.add_argument("target")
     return parser
 
 
@@ -171,7 +173,13 @@ def main(argv: list[str] | None = None) -> int:
                     _render({"error": "readiness-not-configured"}, args.json)
                     return 1
                 _render(context_work(registry.context, args.target, args.role, args.correlation, args.candidate,
-                                     Path.cwd()), args.json)
+                                     Path.cwd(), args.contract_digest), args.json)
+                return 0
+            if args.work_command == "launch":
+                if getattr(registry, "launcher", None) is None:
+                    _render({"error": "readiness-not-configured"}, args.json)
+                    return 1
+                _render(launch_work(registry.launcher(), args.target), args.json)
                 return 0
             if args.work_command == "assess":
                 if (args.file is None) != (args.commit is None) or (args.file is not None and args.recover):

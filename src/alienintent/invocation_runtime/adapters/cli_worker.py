@@ -8,7 +8,7 @@ import signal
 import subprocess
 import sys
 import time
-from typing import Final, Mapping
+from typing import Callable, Final, Mapping, Sequence
 import uuid
 
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
@@ -18,18 +18,28 @@ from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
 
 # How often owned work is re-observed while the invocation waits for it.
 OWNED_WORK_POLL_SECONDS = 0.05
+# How much of each worker output stream `outputs` keeps, from the end.
+OUTPUT_TAIL = 4000
+# A per-invocation worker command: (invocation id, role, workspace) -> (argv, the text for standard input).
+WorkerCommand = Callable[[str, InvocationRole, Path], tuple[Sequence[str], str]]
 
 
 class CliWorkerProvider(WorkerProcess):
     _SAFE_MODES: Final = frozenset({"explicit", "read-only", "workspace-write", "danger-full-access", "manual", "bypassPermissions"})
 
-    def __init__(self, provider: str, executable: str, arguments: tuple[str, ...], permission_mode: str, dimensions: frozenset[str], environment: Mapping[str, str] | None = None, *, ownership: ProcessOwnership | None = None) -> None:
-        if permission_mode not in self._SAFE_MODES or not executable or any("\x00" in part for part in (executable, *arguments)):
+    def __init__(self, provider: str, executable: str | WorkerCommand, arguments: tuple[str, ...], permission_mode: str, dimensions: frozenset[str], environment: Mapping[str, str] | None = None, *, ownership: ProcessOwnership | None = None) -> None:
+        """`executable` with `arguments` is one fixed command line for every invocation, run with standard input
+        inherited; or a WorkerCommand (with no `arguments`) evaluated at every `run`, whose text goes to the worker's
+        standard input."""
+        fixed = (executable, *arguments) if isinstance(executable, str) else None
+        if permission_mode not in self._SAFE_MODES or not executable or (fixed is None and (not callable(executable) or arguments)) \
+                or any("\x00" in part for part in fixed or ()):
             raise ValueError("explicit safe permission mode and safe arguments are required")
         if environment is not None and any("\x00" in name or "\x00" in value for name, value in environment.items()):
             raise ValueError("explicit safe permission mode and safe arguments are required")
         self.capabilities = ProviderCapabilities(provider, dimensions)
         self._executable, self._arguments, self._active, self._completed = executable, arguments, {}, set()
+        self.outputs: dict[str, tuple[str, str]] = {}
         self._environment = None if environment is None else dict(environment)
         self._ownership = ProcOwnership() if ownership is None else ownership
         # This supervisor's owner marker: the owning process and this instance.
@@ -91,6 +101,16 @@ class CliWorkerProvider(WorkerProcess):
         return ProcessResult("success" if done.returncode == 0 else "failure",
                              done.returncode, True, BudgetRecord.unknown())
 
+    def _command(self, invocation_id: str, role: InvocationRole, workspace: Path) -> tuple[list[str], str | None]:
+        """This invocation's argv and standard input text (None: inherited, the fixed command's behaviour)."""
+        if isinstance(self._executable, str):
+            return [self._executable, *self._arguments], None
+        argv, text = self._executable(invocation_id, role, workspace)
+        argv = list(argv)
+        if not argv or not all(isinstance(part, str) and part and "\x00" not in part for part in argv) or not isinstance(text, str):
+            raise ValueError("the worker command must be non-empty safe arguments and a standard input text")
+        return argv, text
+
     def run(self, invocation_id: str, role: InvocationRole, workspace: Path, wall_clock_seconds: float) -> ProcessResult:
         """Run one worker process; the invocation ends only when everything it owns has ended.
 
@@ -108,12 +128,16 @@ class CliWorkerProvider(WorkerProcess):
             if regression.kind != "success":
                 self._completed.add(invocation_id)
                 return regression
+        argv, text = self._command(invocation_id, role, workspace)
         deadline = time.monotonic() + wall_clock_seconds
-        process = subprocess.Popen([self._executable, *self._arguments], cwd=workspace, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=self._child_environment(invocation_id, role), start_new_session=True)
+        stdin = None if text is None else subprocess.PIPE
+        process = subprocess.Popen(argv, cwd=workspace, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=self._child_environment(invocation_id, role), start_new_session=True)
         self._active[invocation_id] = process
         try:
             try:
-                process.communicate(timeout=wall_clock_seconds)
+                stdout, stderr = process.communicate(input=text, timeout=wall_clock_seconds)
+                # Diagnostics only (the end of each stream), for a person reading why a worker failed.
+                self.outputs[invocation_id] = (stdout[-OUTPUT_TAIL:], stderr[-OUTPUT_TAIL:])
             except subprocess.TimeoutExpired:
                 return ProcessResult("timeout", self._stop(invocation_id, process), not self._owned(invocation_id, process), BudgetRecord.unknown())
             if not self._await_owned(invocation_id, process, deadline):

@@ -484,3 +484,107 @@ def test_verifier_verdict_requires_exact_candidate_feature_regression_receipt(tm
     outcome = read_verdict(verdict, candidate)
     assert outcome.kind == "accept"
     assert outcome.receipts == ("feature-regressions:" + body["receipt_digest"],)
+
+
+# --- unit 6c-2: the per-invocation command and the preparation hook --------------------------------------------------
+
+
+def test_cli_adapter_builds_a_callable_command_at_every_run_and_gives_its_text_on_standard_input(tmp_path: Path) -> None:
+    """Change 4: the command is evaluated at `run` with the workspace, and its text reaches standard input; a fixed
+    command line with a callable is refused."""
+    from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import InvocationRole
+
+    calls = []
+
+    def command(invocation_id, role, workspace):
+        calls.append((invocation_id, role, workspace))
+        script = "import pathlib, sys; pathlib.Path('seen').write_text(sys.stdin.read() + '|' + sys.argv[1])"
+        return [sys.executable, "-c", script, f"model-{len(calls)}"], f"instructions for {invocation_id}"
+
+    provider = CliWorkerProvider("python", command, (), "explicit", frozenset({"wall-clock", "cancellation"}))
+    for number in (1, 2):
+        workspace = tmp_path / f"w{number}"
+        workspace.mkdir()
+        assert provider.run(f"run-{number}", InvocationRole.PRODUCER, workspace, 10).kind == "success"
+        assert (workspace / "seen").read_text() == f"instructions for run-{number}|model-{number}"
+    assert calls == [("run-1", InvocationRole.PRODUCER, tmp_path / "w1"), ("run-2", InvocationRole.PRODUCER, tmp_path / "w2")]
+    with pytest.raises(ValueError):
+        CliWorkerProvider("python", command, ("--extra",), "explicit", frozenset({"wall-clock"}))
+
+
+def _preparing_worker(tmp_path: Path, prepared, *, verifier: bool = False):
+    """A RealWorkerProvider over stub process, source and workspaces, with a preparation answering `prepared`."""
+    from alienintent.execution_coordination.domain.custody import CandidateRef
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import BudgetRecord, CapabilityGrant, InvocationRole, ProcessResult, ReservationBook
+
+    log: list[tuple] = []
+    candidate = CandidateRef.source_revision("sha256:" + "b" * 64, f"git:/remote#candidate/p@{'a' * 40}").with_independent_read_back()
+
+    class Process:
+        capabilities = type("Caps", (), {"enforceable_dimensions": frozenset({"wall-clock", "cancellation"})})()
+        def run(self, *args):
+            log.append(("run", args[1], args[2]))
+            return ProcessResult("success", 0, True, BudgetRecord.unknown())
+        def cancel(self, *_): return ProcessResult("cancelled", 0, True, BudgetRecord.unknown())
+    class Workspaces:
+        def allocate(self, invocation_id, owner, baseline):
+            log.append(("allocate", baseline))
+            return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
+        def cleanup(self, *_): pass
+    class Source:
+        def revision(self, _): return "a" * 40
+        def publish_and_read_back(self, *_):
+            log.append(("publish",))
+            return candidate
+        def retrieve_for_verification(self, given, workspace):
+            log.append(("clone", workspace))
+            workspace.mkdir(parents=True)
+            return given
+    class Preparation:
+        def prepare(self, invocation, clone):
+            log.append(("prepare", invocation.role, clone))
+            return prepared
+        def published(self, invocation, published):
+            log.append(("published", published))
+
+    role = InvocationRole.VERIFIER if verifier else InvocationRole.PRODUCER
+    grant = CapabilityGrant("g", "1", "p", role, "issue", "target", frozenset({"process-control", "git-write"}), 100)
+    worker = RealWorkerProvider(Process(), Source(), tmp_path, "origin", "candidate/p", tmp_path / "verify", grant, "target",
+                                Workspaces(), ReservationBook(1, 2), now=lambda: 1, sleep=lambda _: None, preparation=Preparation())
+    return worker, log, candidate
+
+
+def test_preparation_runs_first_and_its_refusal_is_returned_unchanged_with_nothing_started(tmp_path: Path) -> None:
+    """Change 3: `prepare` comes before the budget, grant and reservation checks; its refusal is the outcome."""
+    from alienintent.execution_coordination.domain.contract import BudgetPolicy
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome
+
+    refusal = WorkerOutcome("authority-block", findings=("MISSING_RECORD: budget_policy: no launch limits",))
+    worker, log, _ = _preparing_worker(tmp_path, refusal)
+    # No hard wall clock: without the hook this answers "ineligible".
+    assert worker.start(WorkerInvocation("W", "p"), None, frozenset(), BudgetPolicy()) is refusal
+    assert log == [("prepare", "PRODUCER", None)]
+
+
+def test_the_producer_starts_at_the_prepared_revision_and_publication_is_reported(tmp_path: Path) -> None:
+    from alienintent.execution_coordination.domain.contract import BudgetPolicy
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
+
+    worker, log, candidate = _preparing_worker(tmp_path, "c" * 40)
+    outcome = worker.start(WorkerInvocation("W", "p"), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1, cancellation_limit=1))
+    assert outcome.kind == "success" and outcome.candidate == candidate
+    assert log == [("prepare", "PRODUCER", None), ("allocate", "c" * 40), ("run", "PRODUCER", tmp_path),
+                   ("publish",), ("published", candidate)]
+
+
+def test_the_verifier_is_prepared_in_its_fresh_candidate_clone(tmp_path: Path) -> None:
+    from alienintent.execution_coordination.domain.contract import BudgetPolicy
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome
+
+    refusal = WorkerOutcome("authority-block", findings=("MISSING_RECORD: producer_self_review",))
+    worker, log, candidate = _preparing_worker(tmp_path, refusal, verifier=True)
+    outcome = worker.start(WorkerInvocation("W", "p", None, "VERIFIER", candidate), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1))
+    clone = tmp_path / "verify" / "verifier-p"
+    assert outcome is refusal and log == [("clone", clone), ("prepare", "VERIFIER", clone)]

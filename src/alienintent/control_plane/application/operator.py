@@ -150,12 +150,27 @@ class WorkContexts(Protocol):
 
 
 def context_work(context: WorkContexts, id_or_label: str, role: str, correlation: str, candidate: str | None,
-                 workspace: Path) -> dict[str, object]:
+                 workspace: Path, contract_digest: str | None = None) -> dict[str, object]:
     """`work context`: the role's context package for the work item and attempt, or the hold that prevents launch,
-    as the read answer. The command holds no invocation contract digest; a VERIFIER runs it in its candidate clone
-    (`workspace`), where the diff is taken."""
-    return context.assemble(id_or_label, role, correlation, None, candidate,
+    as the read answer. `contract_digest` is the launched invocation's (`--contract-digest`, which a launched
+    package's `context_command` carries): another digest is held DIGEST_MISMATCH; without it none is compared. A
+    VERIFIER runs it in its candidate clone (`workspace`), where the diff is taken."""
+    return context.assemble(id_or_label, role, correlation, contract_digest, candidate,
                             workspace if role == VERIFIER else None).document()
+
+
+class WorkLaunches(Protocol):
+    """The registry coordinator as `work launch` uses it (bound by the profile's composition)."""
+
+    def launch(self, identity: str) -> Any: ...
+
+
+def launch_work(coordinator: WorkLaunches, identity: str) -> dict[str, object]:
+    """`work launch`: one role step (PRODUCER at IMPLEMENT or VERIFIER at VERIFY) for exactly the named work item,
+    reported as its run summary, or the answer that nothing was launched (`closure-not-automated`, `not-eligible`,
+    `wip-refused`, `wip-limit-unavailable`)."""
+    result = coordinator.launch(identity)
+    return {"identity": identity, **({"answer": result} if isinstance(result, str) else asdict(result))}
 
 
 class OperatorControlPlane:

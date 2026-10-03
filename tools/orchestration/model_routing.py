@@ -1,26 +1,16 @@
+"""The model-routing reader and provider command builder, re-exported from its one copy.
+
+The code lives in `src/alienintent/composition/model_routing.py` (standard library only). It is loaded here by file
+path, never by importing the `alienintent` package, so the tools and their tests work with plain `python3`. The
+installed Director host gets that file itself as its `model_routing.py` (install_factory_director_host.sh).
+"""
 from __future__ import annotations
-import json, os, re
+import importlib.util
 from pathlib import Path
 
-_TOKEN = re.compile(r'^[a-zA-Z0-9][a-zA-Z0-9._:/-]*$')
-_PROVIDERS = {'codex', 'claude'}
-_PERMISSIONS = {'codex': {'read-only', 'workspace-write', 'danger-full-access'}, 'claude': {'manual', 'bypassPermissions'}}
+_SOURCE = Path(__file__).resolve().parents[2] / "src" / "alienintent" / "composition" / "model_routing.py"
+_SPEC = importlib.util.spec_from_file_location("_alienintent_composition_model_routing", _SOURCE)
+_MODULE = importlib.util.module_from_spec(_SPEC)
+_SPEC.loader.exec_module(_MODULE)
 
-def routing_path() -> Path:
-    return Path(os.environ.get('ALIENINTENT_MODEL_ROUTING', Path.home() / '.config/alienintent/model-routing.json'))
-
-def resolve_route(role: str, path: Path | str | None = None) -> dict[str, str]:
-    doc = json.loads(Path(path or routing_path()).read_text())
-    base = doc.get('default')
-    override = (doc.get('roles') or {}).get(role, {})
-    if doc.get('schemaVersion') != 1 or not isinstance(base, dict) or not isinstance(override, dict):
-        raise ValueError('MODEL_ROUTING_INVALID')
-    provider = override.get('provider', base.get('provider'))
-    model = override.get('model', base.get('model'))
-    cfg = (doc.get('providers') or {}).get(provider)
-    if provider not in _PROVIDERS or not isinstance(model, str) or not _TOKEN.fullmatch(model) or not isinstance(cfg, dict):
-        raise ValueError('MODEL_ROUTING_INVALID')
-    executable, permission = cfg.get('executable'), cfg.get('permissionMode')
-    if not isinstance(executable, str) or not executable.startswith('/') or permission not in _PERMISSIONS[provider]:
-        raise ValueError('MODEL_ROUTING_INVALID')
-    return {'provider': provider, 'model': model, 'executable': executable, 'permissionMode': permission}
+routing_path, resolve_route, provider_command = _MODULE.routing_path, _MODULE.resolve_route, _MODULE.provider_command
