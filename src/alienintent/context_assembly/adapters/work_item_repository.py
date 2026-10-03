@@ -26,7 +26,8 @@ from alienintent.context_assembly.domain.work_identity import (
     StoredPointer, TagWriteFailed, UnknownWorkItem, WorkIdentityRefused, WorkItem, check_evidence, check_kind,
     check_label, check_pointer_change, check_transition, valid_path)
 from alienintent.context_assembly.domain.work_link import IssueAlreadyLinked, ItemAlreadyLinked
-from alienintent.context_assembly.ports.work_item_repository import RepositoryLocation, WorkItemRepository
+from alienintent.context_assembly.ports.work_item_repository import (
+    COMPLETION_CONFLICT, NOT_RECORDABLE, CompletionRefused, RepositoryLocation, WorkItemRepository)
 from alienintent.evidence_learning.domain.records import ref_from_document
 from alienintent.evidence_learning.domain.refs import Ref
 
@@ -241,6 +242,28 @@ class SQLiteWorkItemRepository(WorkItemRepository):
     def import_completed(self, request_ref: RequestRef, label: str, kind: str, pointer: Pointer | None,
                          evidence: dict[str, Ref]) -> WorkItem:
         return self._create(request_ref, label, kind, None, pointer, DONE, evidence)
+
+    def record_completed(self, identity: str, pointer_commit: str, ref: Ref) -> tuple[WorkItem, bool]:
+        """`import_completed`'s rule for a row that already exists: straight to DONE with exactly this verification
+        reference, no transition; `approval_ref`, the pointer and the tag are never touched."""
+        if not isinstance(ref, Ref):
+            raise InvalidWorkItem("evidence", repr(ref))
+        with self.transaction():
+            item = self._by_id(identity)
+            if item.retired:
+                raise CompletionRefused(NOT_RECORDABLE, "retired")
+            if item.state == DONE:
+                if item.verification_ref == ref:
+                    return item, False
+                raise CompletionRefused(COMPLETION_CONFLICT, "DONE with other evidence")
+            cursor = self._execute(self._write(), f"UPDATE work_item SET state = ?, verification_ref = ?, "
+                                                  f"updated_at = {NOW} WHERE id = ? AND state = ? "
+                                                  'AND "commit" = ? AND retired_at IS NULL',
+                                   (DONE, _ref_text(ref), identity, item.state, pointer_commit))
+            if cursor.rowcount != 1:
+                raise CompletionRefused(NOT_RECORDABLE, "retired" if self._by_id(identity).retired
+                                        else "pointer changed")
+            return self._by_id(identity), True
 
     def _create(self, request_ref: RequestRef, label: str, kind: str, parent_id: str | None, pointer: Pointer | None,
                 state: str, evidence: dict[str, Ref]) -> WorkItem:

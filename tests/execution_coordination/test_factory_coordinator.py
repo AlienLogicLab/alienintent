@@ -1183,3 +1183,55 @@ def test_check8_older_records_decode_only_what_their_history_proves(tmp_path: Pa
     state = coordinator.state("legacy")
     assert state.stage is LifecycleStage.DONE and (state.implement_cycles, state.verify_cycles) == (None, None)
     assert state.record["implement_cycles"] is None and state.record["producer_correlation"]
+
+
+# --- RECORD-COMPLETED-WORK check 4: a dependency recorded complete ----------------------------------------------------
+
+
+def _dependent(tmp_path: Path, reader, dependency_stage: str | None = None):
+    """Work item B depends on hand-built A, which is not in the READY snapshot; A's coordinator record, if any, is at
+    `dependency_stage`; `reader` is the injected reader of recorded completions."""
+    coordinator_module, custody, _, _ = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    worker = ScriptedWorker(artifacts, {"B": ["success"]})
+    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    if dependency_stage is not None:
+        store.commit("offline", "factory:A", 0, {"stage": dependency_stage, "version": 0, "accepted": False,
+                                                 "closure": [], "candidate": None})
+    coordinator = coordinator_module.FactoryCoordinator(store, MemoryWorkManagement([_item("B", 0, 1, ("A",))]),
+                                                        worker, artifacts, "offline", recorded_completion=reader)
+    return coordinator, worker, store
+
+
+@pytest.mark.parametrize("recorded,stage,admitted", [
+    (True, None, True),  # recorded complete, no coordinator record
+    (False, None, False),  # the reader refuses: a bare or imported DONE row, a retired row, CAPTURE
+    (True, "IMPLEMENT", False),  # the row says DONE while the coordinator records active work
+    (True, "VERIFY", False),
+    (False, "DONE", True),  # a coordinator record at DONE still counts, whatever the row says
+])
+def test_a_dependency_counts_by_its_coordinator_record_first_then_the_recorded_completion(
+        tmp_path: Path, recorded, stage, admitted) -> None:
+    asked = []
+    coordinator, worker, _ = _dependent(tmp_path, lambda identity: asked.append(identity) or recorded, stage)
+    summary = coordinator.start()
+    assert worker.dispatched == (["B"] if admitted else [])
+    assert summary.stop_reason.value == ("eligible-backlog-exhausted" if admitted else
+                                         "dependencies-or-authority-blocked")
+    assert set(asked) <= ({"A"} if stage is None else set())  # the reader is asked only without a coordinator record
+
+
+def test_guard_account_names_a_conflicting_dependency_dependencies_incomplete(tmp_path: Path) -> None:
+    """The same decision through `guard_account`: recorded complete with no coordinator record is eligible; the row
+    still recorded complete once the coordinator records active work is `dependencies-incomplete`."""
+    coordinator, worker, store = _dependent(tmp_path, lambda identity: True)
+    record = {"stage": "IMPLEMENT", "version": 0, "accepted": False, "closure": [], "candidate": None}
+    store.commit("offline", "factory:B", 0, record)
+    assert coordinator.guard_account("B")["reason"] == "eligible"
+    store.commit("offline", "factory:A", 0, record)
+    assert coordinator.guard_account("B")["reason"] == "dependencies-incomplete"
+
+
+def test_without_the_reader_a_dependency_without_a_coordinator_record_never_counts(tmp_path: Path) -> None:
+    coordinator, worker, _ = _dependent(tmp_path, None)
+    assert coordinator.start().stop_reason.value == "dependencies-or-authority-blocked" and worker.dispatched == []

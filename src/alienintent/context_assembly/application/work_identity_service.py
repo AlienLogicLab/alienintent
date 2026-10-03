@@ -62,6 +62,14 @@ class WorkIdentityService:
         self._publish(item)
         return item
 
+    def record_completed(self, identity: str, pointer_commit: str, ref: Ref) -> tuple[WorkItem, bool]:
+        """`import_completed`'s historical-record rule for an existing row: straight to DONE with exactly this
+        verification reference, guarded by the checked pointer commit; no transition, no new row, no tag change.
+        Only `work record-completed` (WorkCompletion) calls this."""
+        if not isinstance(ref, Ref):
+            raise InvalidWorkItem("evidence", "not an evidence Ref")
+        return self.items.record_completed(identity, pointer_commit, ref)
+
     def retire(self, identity: str) -> WorkItem:
         return self.items.retire(identity)
 

@@ -12,7 +12,7 @@ from typing import Any
 
 from alienintent.control_plane.application.operator import (
     NOT_AVAILABLE_IN_WORKER_PROFILE, OperatorControlPlane, OperatorDenied, assess_work, authorize_work, context_work,
-    display_work, import_work, link_work, migrate_work, register_work, show_work)
+    display_work, import_work, link_work, migrate_work, record_completed_work, register_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
@@ -102,6 +102,10 @@ def _parser() -> argparse.ArgumentParser:
     authorize = _sanitized(work.add_parser("authorize")); authorize.add_argument("target")
     for name in ("commit", "attempt", "baseline", "quote"):
         authorize.add_argument("--" + name, required=True)
+    completed = _sanitized(work.add_parser("record-completed")); completed.add_argument("target")
+    for name in ("candidate", "landing", "record", "approval", "quote"):
+        completed.add_argument("--" + name, required=True)
+    completed.add_argument("--verification", dest="verifications", action="append", required=True)
     link = _sanitized(work.add_parser("link")); link.add_argument("target"); link.add_argument("--issue", type=int)
     display = _sanitized(work.add_parser("display")); display.add_argument("target")
     context = _sanitized(work.add_parser("context")); context.add_argument("target")
@@ -113,6 +117,12 @@ def _parser() -> argparse.ArgumentParser:
 def _packet(parser: argparse.ArgumentParser) -> None:
     for name in ("file", "repo", "path", "commit", "label"):
         parser.add_argument("--" + name, required=True)
+
+
+def _given(path: str) -> tuple[str, bytes]:
+    """A file given to `work record-completed`: its resolved absolute path and its exact bytes."""
+    resolved = Path(path).resolve()
+    return str(resolved), resolved.read_bytes()
 
 
 def _mutation(parser: argparse.ArgumentParser) -> None:
@@ -181,6 +191,14 @@ def main(argv: list[str] | None = None) -> int:
                     return 1
                 _render(authorize_work(registry.authorization, args.target, args.commit, args.attempt, args.baseline,
                                        args.quote), args.json)
+                return 0
+            if args.work_command == "record-completed":
+                if getattr(registry, "completion", None) is None:
+                    _render({"error": "readiness-not-configured"}, args.json)
+                    return 1
+                _render(record_completed_work(registry.completion, args.target, args.candidate, args.landing,
+                                              args.record, [_given(path) for path in args.verifications],
+                                              _given(args.approval), args.quote), args.json)
                 return 0
             if args.work_command in ("link", "display"):
                 if getattr(registry, "links", None) is None:

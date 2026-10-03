@@ -15,10 +15,13 @@ READY view of that board (`ready_view`, `ready_refusals`, `repair_displays`): ea
 card's registered work record, and the view's attention items are kept in the `readiness` store and evidence folder.
 With `readiness`, `work authorize` (`authorization`) records release records on that store under profile `registry`
 and its evidence in that folder; the starting revision is checked in the pointer repository's configured clone
-against its `default_branch`, the values the release gate for registry items is composed with. With the READY view,
+against its `default_branch`, the values the release gate for registry items is composed with. With `readiness`,
+`work record-completed` (`completion`) records an existing item's completed work: its evidence in that folder,
+landings checked the same way, and the `registry` coordinator's record read from that store. With the READY view,
 `coordinator(worker, artifacts)` composes the existing FactoryCoordinator over it on the `readiness` store (profile
-`registry`) with that release gate and the WIP limit read from the Factory Director host configuration on every
-admission; the work items' displays carry the IMPLEMENT and VERIFY cycle counts of that coordinator's state.
+`registry`) with that release gate, the WIP limit read from the Factory Director host configuration on every
+admission and `completion`'s reader of recorded completions for dependencies; the work items' displays carry the
+IMPLEMENT and VERIFY cycle counts of that coordinator's state.
 With `readiness` and a configuration loaded from its file, `context` (WorkContext) assembles each role's context
 package from those same records; `work_context_profile` is the read-only worker profile its `work context` command
 runs under, opening the work and `readiness` databases with SQLite `mode=ro`.
@@ -59,6 +62,7 @@ from alienintent.context_assembly.adapters.work_item_repository import SQLiteWor
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
 from alienintent.context_assembly.application.work_authorization import WorkAuthorization
+from alienintent.context_assembly.application.work_completion import WorkCompletion
 from alienintent.context_assembly.application.work_context import ContextCommand, WorkContext
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.application.work_link import WorkLink
@@ -302,6 +306,7 @@ class WorkRegistry:
         self.records = WorkRecordService(self.identities, self.items, self.items.read_packet)
         self.assessment = self._assessment(configuration) if configuration.readiness is not None else None
         self.authorization = self._authorization(configuration) if self.assessment is not None else None
+        self.completion = self._completion(configuration) if self.assessment is not None else None
         self.links = self._links(configuration.github, transport) if configuration.github is not None else None
         self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
             else None
@@ -347,7 +352,8 @@ class WorkRegistry:
                                        packets.default_branch)
         return FactoryCoordinator(store, self.ready_view, worker, artifacts, "registry",
                                   automatic_release=False, release_gate=gate,
-                                  wip_limit=lambda: wip_limit(self.host_configuration))
+                                  wip_limit=lambda: wip_limit(self.host_configuration),
+                                  recorded_completion=self.completion.recorded)
 
     def _ready_view(self, configuration: ProjectConfiguration) -> GitHubProjectsWorkManagement:
         """The READY view of board #1: profile `registry`, each formal workflow state mapped to itself, no projection
@@ -477,6 +483,18 @@ class WorkRegistry:
                                  consumer.profile, self.assessment.authorizations,
                                  GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
                                  {name: location.default_branch for name, location in repositories.items()})
+
+    def _completion(self, configuration: ProjectConfiguration) -> WorkCompletion:
+        """`work record-completed`: the evidence record in the assessment evidence folder, landings checked in each
+        repository's configured clone against its configured default branch (what `work authorize` checks), the
+        landing record read with the repository adapter's `read_packet`, and the `registry` coordinator's
+        `factory:<id>` record on the `readiness` store (the record `cycles` reads)."""
+        consumer, repositories = self.assessment.consumer, configuration.repositories
+        return WorkCompletion(self.records, self.identities, consumer.repository, consumer.project, consumer.profile,
+                              GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
+                              {name: location.default_branch for name, location in repositories.items()},
+                              self.items.read_packet,
+                              lambda identity: consumer.store.read_state("registry", f"factory:{identity}")[1])
 
 
 def _consumer(configuration: ProjectConfiguration, store: OperationalStore) -> RetainedAssessmentConsumer:

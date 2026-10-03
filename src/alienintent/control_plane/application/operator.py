@@ -103,6 +103,22 @@ def authorize_work(authorization: WorkAuthorizations, id_or_label: str, commit: 
     return asdict(authorization.authorize(id_or_label, commit, attempt, baseline, quote))
 
 
+class WorkCompletions(Protocol):
+    """The project's completed-work recording as `work record-completed` uses it (bound by the profile's
+    composition)."""
+
+    def record(self, id_or_label: str, candidate: str, landing: str, record_path: str, verifications: Sequence[Any],
+               approval: Any, quote: str) -> Any: ...
+
+
+def record_completed_work(completion: WorkCompletions, id_or_label: str, candidate: str, landing: str,
+                          record_path: str, verifications: Sequence[Any], approval: Any,
+                          quote: str) -> dict[str, object]:
+    """`work record-completed`: the item and its `work-completion` evidence reference once the row is DONE, or a
+    refusal returned as the read answer naming its code. It records completed work; it does not judge it."""
+    return asdict(completion.record(id_or_label, candidate, landing, record_path, verifications, approval, quote))
+
+
 class WorkLinks(Protocol):
     """The project's link service as `work link` and `work display` use it (bound by the profile's composition)."""
 
