@@ -605,9 +605,7 @@ class FactoryCoordinator:
             elif role == PRODUCER:
                 # A recovered PRODUCER result disposes of its worktree, owned by the correlation; a recorded
                 # missing-terminal-result keeps it (its progress stays for diagnosis).
-                missing = outcome.kind == MISSING_TERMINAL_RESULT
-                self._finalize_workspace(identity, reservation.owner, retain=missing,
-                                         reason=MISSING_TERMINAL_RESULT if missing else None)
+                self._finalize_workspace(identity, reservation.owner, retain=outcome.kind == MISSING_TERMINAL_RESULT)
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
         return True
 
@@ -617,7 +615,7 @@ class FactoryCoordinator:
         ))
         self._block_dependents(item, items)
         if role == PRODUCER:
-            self._finalize_workspace(item.identity, correlation, retain=True, reason="parked")
+            self._finalize_workspace(item.identity, correlation, retain=True)
 
     def _effect_status(self, correlation: str) -> str | None:
         """The correlation's effect status in the store's read-only ledger, "none" when it has no effect row, or None
@@ -639,16 +637,13 @@ class FactoryCoordinator:
             return False
         self._register_escalation(self._authority_request(item, current.version, reason or "The external effect outcome is unknown and requires reconciliation authority."))
         self._block_dependents(item, self._work.import_ready_snapshot())
-        self._finalize_workspace(item.identity, reservation.owner, retain=True, reason="parked")
+        self._finalize_workspace(item.identity, reservation.owner, retain=True)
         return True
 
-    def _finalize_workspace(self, identity: str, correlation: str, *, retain: bool, reason: str | None = None) -> None:
+    def _finalize_workspace(self, identity: str, correlation: str, *, retain: bool) -> None:
         finalize = getattr(self._worker, "finalize", None)
         if callable(finalize):
-            if reason is None:
-                finalize(WorkerInvocation(identity, correlation), retain)
-            else:
-                finalize(WorkerInvocation(identity, correlation), retain, reason)
+            finalize(WorkerInvocation(identity, correlation), retain)
 
     def _is_done(self, identity: str) -> bool:
         try:

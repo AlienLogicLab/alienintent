@@ -10,7 +10,8 @@ from typing import Protocol
 
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
-from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.execution_coordination.ports.worker_provider import (
+    MISSING_TERMINAL_RESULT, WorkerInvocation, WorkerOutcome, WorkerProvider)
 from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
@@ -404,12 +405,11 @@ class RealWorkerProvider(WorkerProvider):
         """
         return self._branch(invocation) if callable(self._branch) else self._branch
 
-    def finalize(self, invocation: WorkerInvocation, retain: bool, reason: str | None = None) -> None:
-        """Complete workspace disposition after the coordinator durably records truth; `reason` names why the
-        caller keeps it (`parked`, `missing-terminal-result`)."""
+    def finalize(self, invocation: WorkerInvocation, retain: bool) -> None:
+        """Complete workspace disposition after the coordinator durably records truth."""
         workspace = self._finished_workspaces.pop(invocation.correlation_id, None)
         if workspace is None:
-            self._finalize_recovered(invocation, retain, reason)
+            self._finalize_recovered(invocation, retain)
             return
         if retain:
             self.retained_workspaces[invocation.correlation_id] = workspace.path
@@ -419,7 +419,7 @@ class RealWorkerProvider(WorkerProvider):
         except Exception as error:
             self.cleanup_diagnostics[invocation.correlation_id] = type(error).__name__
 
-    def _finalize_recovered(self, invocation: WorkerInvocation, retain: bool, kept: str | None = None) -> None:
+    def _finalize_recovered(self, invocation: WorkerInvocation, retain: bool) -> None:
         """After a restart: the PRODUCER worktree at its fixed path, owned by its correlation.
 
         It is cleaned only when the journaled owner has ended and no owned work runs (`owner-terminated` or
@@ -431,7 +431,7 @@ class RealWorkerProvider(WorkerProvider):
         workspace = None if self._recovered_workspace is None else self._recovered_workspace(invocation)
         if workspace is None or self._workspaces is None or not workspace.path.exists():
             return
-        reason = (kept or "retained") if retain else self.attest_ownership(invocation).kind
+        reason = self._kept_reason(invocation) if retain else self.attest_ownership(invocation).kind
         if reason in {OWNER_TERMINATED, EFFECT_UNKNOWN}:
             try:
                 self._workspaces.cleanup(workspace, self._owner_pid(invocation))
@@ -440,6 +440,17 @@ class RealWorkerProvider(WorkerProvider):
                 reason = str(error) or type(error).__name__
         self.retained_workspaces[invocation.correlation_id] = workspace.path
         self.cleanup_diagnostics[invocation.correlation_id] = f"{invocation.work_identity}: {reason}"
+
+    def _kept_reason(self, invocation: WorkerInvocation) -> str:
+        """Why a recovered worktree the coordinator keeps is kept, from this correlation's journal: a journaled
+        `missing-terminal-result` outcome, else (no outcome) a parked launch."""
+        try:
+            records = self._journal.records() if self._journal is not None else []
+        except JournalUnreadable:
+            records = []
+        missing = any(record.get("event") == "invocation-outcome" and record.get("kind") == MISSING_TERMINAL_RESULT
+                      and record.get("correlation_id") == invocation.correlation_id for record in records)
+        return MISSING_TERMINAL_RESULT if missing else "parked"
 
     def _owner_pid(self, invocation: WorkerInvocation) -> int | None:
         """The owner process id of the correlation's one `invocation-started` record."""

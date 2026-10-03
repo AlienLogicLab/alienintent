@@ -1305,10 +1305,10 @@ def test_restart_continuation_recovery_releases_parks_and_still_records_the_next
     store.acquire("offline", "repository", unsaved.repository, "launch:a-unsaved:0")
 
     class Finalizing(ScriptedWorker):
-        finalized: list[tuple[str, bool, str | None]] = []
+        finalized: list[tuple[str, bool]] = []
 
-        def finalize(self, invocation, retain, reason=None):
-            self.finalized.append((invocation.correlation_id, retain, reason))
+        def finalize(self, invocation, retain):
+            self.finalized.append((invocation.correlation_id, retain))
     worker = Finalizing(artifacts, {"a-unsaved": ["success"], "c-finished": ["success"],
                                     "d-missing": [provider.MISSING_TERMINAL_RESULT]}, durable=True)
     for item, claimed in ((pending, False), (finished, True), (missing, True)):
@@ -1336,8 +1336,7 @@ def test_restart_continuation_recovery_releases_parks_and_still_records_the_next
     assert [invocation[0] for invocation in worker.invocations] == ["c-finished", "d-missing"]  # no worker for b
     assert coordinator.state(finished.identity).stage is LifecycleStage.VERIFY
     assert coordinator.state(missing.identity).outcome == provider.MISSING_TERMINAL_RESULT
-    assert worker.finalized == [("launch:b-pending:0", True, "parked"), ("launch:c-finished:0", False, None),
-                                ("launch:d-missing:0", True, provider.MISSING_TERMINAL_RESULT)]
+    assert worker.finalized == [("launch:b-pending:0", True), ("launch:c-finished:0", False), ("launch:d-missing:0", True)]
     assert {(r.scope, r.key) for r in store.recovery_reservations("offline")} == {
         ("launch", "registry"), ("wip", "b-pending"), ("wip", "c-finished"), ("wip", "d-missing")}
 

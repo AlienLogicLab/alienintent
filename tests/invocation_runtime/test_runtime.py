@@ -635,11 +635,14 @@ def test_an_abandoned_producer_worktree_is_cleaned_only_when_its_owner_ended(tmp
     for invocation, state, work, retain, reason in (
             (clean, "terminated", (), False, None), (dirty, "terminated", (), False, None),
             (live, "alive", (), False, None), (active, "terminated", (4242,), False, None),
-            (unowned, "terminated", (), False, None), (parked, "terminated", (), True, "parked"),
+            (unowned, "terminated", (), False, None), (parked, "terminated", (), True, None),
             (missing, "terminated", (), True, "missing-terminal-result"),
             (WorkerInvocation("W", "../outside"), "terminated", (), False, None)):
         owners.state, owners.work = state, work
-        worker.finalize(invocation, retain, reason)
+        if reason is not None:
+            journal.append({"event": "invocation-outcome", "correlation_id": invocation.correlation_id,
+                            "work_identity": "W", "role": "PRODUCER", "kind": reason})
+        worker.finalize(invocation, retain)
     assert not (root / clean.correlation_id).exists() and outside.exists()
     assert worker.cleanup_diagnostics == {
         dirty.correlation_id: "W: workspace is not quiescent; retained for diagnosis",

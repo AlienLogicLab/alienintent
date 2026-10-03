@@ -122,13 +122,10 @@ class RoleBindingGuard(WorkerProvider):
     def cancel(self, invocation_id: str, reason: str) -> object:
         return self.provider.cancel(invocation_id, reason)  # type: ignore[attr-defined]
 
-    def finalize(self, invocation: WorkerInvocation, retain: bool, reason: str | None = None) -> None:
+    def finalize(self, invocation: WorkerInvocation, retain: bool) -> None:
         finalize = getattr(self.provider, "finalize", None)
         if callable(finalize):
-            if reason is None:
-                finalize(invocation, retain)
-            else:
-                finalize(invocation, retain, reason)
+            finalize(invocation, retain)
 
     # --- binding -------------------------------------------------------------
 
