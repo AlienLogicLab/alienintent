@@ -588,3 +588,66 @@ def test_the_verifier_is_prepared_in_its_fresh_candidate_clone(tmp_path: Path) -
     outcome = worker.start(WorkerInvocation("W", "p", None, "VERIFIER", candidate), None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=1))
     clone = tmp_path / "verify" / "verifier-p"
     assert outcome is refusal and log == [("clone", clone), ("prepare", "VERIFIER", clone)]
+
+
+def _dead_pid() -> int:
+    return next(pid for pid in range(4_194_000, 1, -1) if not Path(f"/proc/{pid}").exists())
+
+
+def test_an_abandoned_producer_worktree_is_cleaned_only_when_its_owner_ended(tmp_path: Path) -> None:
+    """RESTART-CONTINUATION check 4: after a restart `finalize(retain=False)` finds the worktree a correlation owns at
+    its fixed path and cleans it only for `owner-terminated`/`effect-unknown`; a dirty tree, a live owner, running
+    owned work, no journaled owner or a retained one is kept and reported; nothing outside the root is touched."""
+    from alienintent.composition.work_registry import _producer_worktree
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
+    from alienintent.invocation_runtime.adapters.git_worktree import GitWorktreeAdapter
+    from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+
+    repo = tmp_path / "repo"
+    subprocess.run(["git", "init", "-q", str(repo)], check=True)
+    subprocess.run(["git", "-C", str(repo), "-c", "user.email=t@example.invalid", "-c", "user.name=T", "commit", "-q",
+                    "--allow-empty", "-m", "seed"], check=True)
+    root = tmp_path / "worktrees"
+    adapter, journal = GitWorktreeAdapter(repo, root), JsonlInvocationJournal(tmp_path / "journal.jsonl", time.time)
+
+    class Owners:
+        state, work = "terminated", ()
+        def owner_state(self, owner): return self.state
+        def owned_work(self, correlation, owner=None): return self.work
+    owners = Owners()
+    worker = RealWorkerProvider(None, None, repo, "origin", "candidate", tmp_path / "verifier", None, "repo", adapter,
+                                now=time.time, sleep=lambda _: None, journal=journal, ownership=owners,
+                                recovered_workspace=lambda invocation: _producer_worktree(root, invocation))
+    owner = {"pid": _dead_pid(), "start": 1, "boot": "b", "pidns": 1}
+
+    def abandoned(n: int, *, owned: bool = True) -> WorkerInvocation:
+        correlation = f"launch:W:{n}"
+        adapter.allocate(correlation, "W", "HEAD")
+        journal.append({"event": "invocation-started", "correlation_id": correlation, "work_identity": "W",
+                        "role": "PRODUCER"} | ({"owner": owner} if owned else {}))
+        return WorkerInvocation("W", correlation)
+
+    clean, dirty, live, active, unowned, parked, missing = (abandoned(n, owned=n != 5) for n in range(1, 8))
+    (root / dirty.correlation_id / "partial.txt").write_text("uncommitted")
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    for invocation, state, work, retain, reason in (
+            (clean, "terminated", (), False, None), (dirty, "terminated", (), False, None),
+            (live, "alive", (), False, None), (active, "terminated", (4242,), False, None),
+            (unowned, "terminated", (), False, None), (parked, "terminated", (), True, None),
+            (missing, "terminated", (), True, "missing-terminal-result"),
+            (WorkerInvocation("W", "../outside"), "terminated", (), False, None)):
+        owners.state, owners.work = state, work
+        if reason is not None:
+            journal.append({"event": "invocation-outcome", "correlation_id": invocation.correlation_id,
+                            "work_identity": "W", "role": "PRODUCER", "kind": reason})
+        worker.finalize(invocation, retain)
+    assert not (root / clean.correlation_id).exists() and outside.exists()
+    assert worker.cleanup_diagnostics == {
+        dirty.correlation_id: "W: workspace is not quiescent; retained for diagnosis",
+        live.correlation_id: "W: owner-alive", active.correlation_id: "W: owned-work-active",
+        unowned.correlation_id: "W: owner-unattested", parked.correlation_id: "W: parked",
+        missing.correlation_id: "W: missing-terminal-result"}
+    assert set(worker.retained_workspaces) == set(worker.cleanup_diagnostics)
+    assert all(path.exists() for path in worker.retained_workspaces.values())

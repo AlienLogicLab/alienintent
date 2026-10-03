@@ -22,8 +22,11 @@ import pytest
 from alienintent.composition import work_registry
 from alienintent.composition.model_routing import provider_command
 from alienintent.composition.work_registry import WorkRegistry, launch_root, load_project_configuration
+from alienintent.control_plane.application.operator import exclusive_launch_work
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.execution_coordination.domain.release import ReleaseSource
+from alienintent.invocation_runtime.adapters.git_worktree import ref_safe
+from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from tests.composition.test_work_registry import ReadyBoard
 from tests.context_assembly.test_initial_compilation import PROJECT, git
 from tests.context_assembly.test_work_contract import contract_payload
@@ -135,10 +138,10 @@ class Launch(ReadyBoard):
         else:
             self.routing.write_text(json.dumps(document))
 
-    def loaded(self) -> WorkRegistry:
+    def loaded(self, ownership=None) -> WorkRegistry:
         """A registry built as `work launch` builds it in its own process."""
         return WorkRegistry(load_project_configuration(self.configuration_file, PROJECT), transport=self.github,
-                            host_configuration=self.host)
+                            host_configuration=self.host, ownership=ownership)
 
     def launch(self, identity: str):
         return self.loaded().launcher().launch(identity)
@@ -370,3 +373,187 @@ def test_a_work_item_outside_the_ready_view_is_not_eligible(fx):
     item = fx.authorized("ABSENT")
     fx.github.fields[item.card_id]["Status"] = "IMPLEMENT"
     assert fx.launch(item.id) == "not-eligible" and fx.runs() == []
+
+
+# --- RESTART-CONTINUATION: restart continuation for registry launches -------------------------------------------------
+
+class Owners(ProcOwnership):
+    """The existing ProcOwnership, with the owner state or the owned work stated by the test where given."""
+
+    def __init__(self, state: str | None = None, work: tuple[int, ...] | None = None) -> None:
+        super().__init__()
+        self.state, self.work = state, work
+
+    def owner_state(self, owner):
+        return self.state or super().owner_state(owner)
+
+    def owned_work(self, invocation_id, owner=None):
+        return super().owned_work(invocation_id, owner) if self.work is None else self.work
+
+
+def work_launch(fx: Launch, identity: str, ownership=None) -> dict:
+    registry = fx.loaded(ownership)
+    return exclusive_launch_work(registry.launcher, identity, registry.store, registry.ownership)
+
+
+def dead_owner() -> dict:
+    return dict(ProcOwnership().current()) | {"pid": next(p for p in range(4_194_000, 1, -1)
+                                                          if not Path(f"/proc/{p}").exists())}
+
+
+def saved_launch(fx: Launch, identity: str, *, claimed: bool = False) -> str:
+    """The store state of a crash after `commit_with_effect` (and, `claimed`, after `claim_effect`), written with
+    the store's own calls; the first PRODUCER launch counted its IMPLEMENT cycle in that commit."""
+    correlation = f"launch:{identity}:0"
+    fx.store.acquire_within("registry", "wip", identity, f"work:{identity}", 3)
+    fx.store.acquire("registry", "repository", fx.loaded().configuration.github.repository, correlation)
+    fx.store.commit_with_effect("registry", f"factory:{identity}", 0, {
+        "stage": "IMPLEMENT", "version": 0, "accepted": False, "closure": [], "candidate": None, "implement_cycles": 1,
+        "verify_cycles": 0, "role": "PRODUCER", "invocation_candidate": None}, correlation,
+        {"correlation": correlation, "work": identity, "role": "PRODUCER"})
+    if claimed:
+        fx.store.claim_effect("registry", correlation)
+    return correlation
+
+
+def ran(fx: Launch, identity: str) -> bool:
+    return any(identity in run["env"]["ALIENINTENT_INVOCATION_ID"] for run in fx.runs())
+
+
+def test_restart_continuation_one_launch_at_a_time_both_leaks_and_a_never_started_park(fx, monkeypatch):
+    """Checks 0-3 through `work launch` and `work decide`: one launch at a time; the first leak is released with
+    nothing written; the second is parked and keeps its slot and counts; `work decide` defers, refuses an unproven
+    start, never offers cancel, authorizes without launching, and the next `work launch` is a new correlation; only
+    `work launch` runs recovery in the registry profile."""
+    from types import SimpleNamespace
+    from alienintent.control_plane.adapters import cli
+    from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator, NEVER_STARTED
+    recovered = []
+    original = FactoryCoordinator._recover
+    monkeypatch.setattr(FactoryCoordinator, "_recover", lambda self, items: recovered.append(1) or original(self, items))
+    fx.host.write_text(json.dumps({"wipLimit": 2}))
+    unsaved, parked, other = fx.authorized("UNSAVED"), fx.authorized("PARKED"), fx.authorized("OTHER")
+    repository = fx.loaded().configuration.github.repository
+    # The first leak: a crash after the repository reservation, before `commit_with_effect`.
+    fx.store.acquire_within("registry", "wip", unsaved.id, f"work:{unsaved.id}", 2)
+    fx.store.acquire("registry", "repository", repository, f"launch:{unsaved.id}:0")
+
+    # Check 0: a live launcher's reservation (this process) answers LAUNCH_IN_PROGRESS and writes nothing, and its
+    # reservation of a launch with no effect is not released; an unknown owner state is never taken over.
+    me = "launcher:" + json.dumps(dict(ProcOwnership().current()), sort_keys=True, separators=(",", ":"))
+    held = fx.store.acquire("registry", "launch", "registry", me)
+    before = fx.dump()
+    assert work_launch(fx, other.id) == {"identity": other.id, "answer": "LAUNCH_IN_PROGRESS", "owner_state": "alive"}
+    assert work_launch(fx, other.id, Owners("unknown"))["owner_state"] == "unknown"
+    assert work_launch(fx, other.id, SimpleNamespace(current=lambda: None)) == {
+        "identity": other.id, "answer": "LAUNCH_OWNER_UNAVAILABLE"}
+    assert fx.dump() == before and not fx.runs() and not recovered
+    fx.store.release("registry", "launch", "registry", me, held.fence)
+    fx.store.acquire("registry", "launch", "registry", "launcher:" + json.dumps(dead_owner(), sort_keys=True))
+
+    # Check 1: an ended launcher's reservation is taken over; the unsaved reservation is released, the record is
+    # unchanged, no decision is requested and the launch proceeds.
+    summary = work_launch(fx, other.id)
+    assert summary["dispatched"] == (other.id,) and recovered == [1]
+    assert fx.store.read_state("registry", f"factory:{unsaved.id}") == (0, {})
+    assert unsaved.id not in fx.store.read_state("registry", "decision-inbox")[1].get("open", {})
+    assert {(r.scope, r.key) for r in fx.store.recovery_reservations("registry")} == {
+        ("wip", unsaved.id), ("wip", other.id)}
+
+    # Check 2: a crash after `commit_with_effect`, before `claim_effect`, is parked by the next `work launch`.
+    correlation = saved_launch(fx, parked.id)
+    summary = work_launch(fx, other.id)  # OTHER's VERIFIER step still runs in the same command
+    coordinator = fx.loaded().coordinator(None, None)
+    assert summary["stop_reason"] != "capacity-unavailable" and coordinator.state(other.id).stage is LifecycleStage.ACCEPT
+    state = coordinator.state(parked.id)
+    assert (state.outcome, state.implement_cycles, state.verify_cycles) == ("authority-block", 1, 0)
+    assert fx.wip_held(parked.id) and not ran(fx, parked.id)
+    [request] = fx.loaded().store.read_state("registry", "decision-inbox")[1]["open"].values()
+    assert (request["reason"], request["options"]) == (f"{NEVER_STARTED}: {correlation}", ["authorize", "defer"])
+
+    # Check 3: defer keeps it parked (a repeat is a repeat); an unproven start and `cancel` write nothing.
+    deferred = fx.loaded().decide(parked.id, "defer", QUOTE)
+    assert fx.loaded().decide(parked.id, "defer", QUOTE) == deferred and deferred["answer"] is None
+    assert fx.loaded().coordinator(None, None).state(parked.id).outcome == "authority-block"
+    before = fx.dump()
+    assert fx.loaded(Owners(work=(4242,))).decide(parked.id, "authorize", QUOTE)["answer"] == "START_UNPROVEN"
+    with pytest.raises(ValueError):
+        fx.loaded().decide(parked.id, "cancel", QUOTE)
+    assert fx.dump() == before
+    version, inbox = fx.store.read_state("registry", "decision-inbox")
+    fx.store.commit("registry", "decision-inbox", version, {"open": {parked.id: request | {"reason": "other"}}})
+    before = fx.dump()
+    assert fx.loaded().decide(parked.id, "authorize", QUOTE)["answer"] == "START_UNPROVEN"
+    assert fx.dump() == before
+    fx.store.commit("registry", "decision-inbox", version + 1, inbox)
+    # authorize lifts the effect and launches nothing; a repeat is a repeat; the next `work launch` is a new attempt.
+    runs = len(fx.runs())
+    decided = fx.loaded().decide(parked.id, "authorize", QUOTE)
+    assert decided["answer"] is None and decided["decision"]["submission"]["actor"] == "Founder"
+    assert fx.loaded().decide(parked.id, "authorize", QUOTE)["decision"] == decided["decision"]
+    assert len(fx.runs()) == runs and fx.loaded().coordinator(None, None).state(parked.id).outcome == "decision-recorded"
+    assert fx.loaded().decide(other.id, "authorize", QUOTE) == {"answer": "NO_OPEN_DECISION"}
+    assert work_launch(fx, parked.id)["dispatched"] == (parked.id,)
+    relaunched = fx.loaded().coordinator(None, None).state(parked.id)
+    assert relaunched.record["correlation"] != correlation and relaunched.implement_cycles == 1
+
+    # Only `work launch` runs recovery in the registry profile: every other command reaches no coordinator recovery.
+    monkeypatch.setattr(cli, "_factory", lambda _: SimpleNamespace(work_registry=fx.loaded()))
+    count, mutation = len(recovered), ["--actor", "a", "--authority", "a", "--intent", "i", "--expected-version", "0",
+                                       "--reason", "r", "--idempotency-key", "k"]
+    for argv in (["run", *mutation], ["resume", parked.id, *mutation], ["reconcile", parked.id, *mutation],
+                 ["cancel", parked.id, *mutation], ["stop", *mutation], ["status"], ["explain", parked.id],
+                 ["decisions", "list"], ["decisions", "decide", parked.id, "--choice", "authorize", "--biu-version", "0",
+                                         *mutation], ["work", "show", parked.id],
+                 ["work", "decide", other.id, "--choice", "authorize", "--quote", QUOTE],
+                 ["work", "decide", parked.id, "--choice", "cancel", "--quote", QUOTE]):
+        cli.main(["--json", "--profile-factory", "x:y", *argv])
+    assert len(recovered) == count
+
+
+def test_restart_continuation_authorize_reconciles_a_started_publication_against_the_remote(fx, monkeypatch):
+    """Check 3 after a publish began: `authorize` is refused while the owner runs, is accepted only when the remote
+    has no candidate branch and the attestation is `effect-unknown`, and every other remote answer writes nothing."""
+    from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
+    from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
+    from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
+    item = fx.authorized("PUB")
+    correlation = saved_launch(fx, item.id, claimed=True)
+    root = launch_root(fx.loaded().configuration)
+    worktree = root / "workspaces" / correlation
+    git(fx.clone, "worktree", "add", "-q", "-b", "invocation/launch-x", str(worktree), "main")
+    revision = fx.main()
+    journal = JsonlInvocationJournal(root / "invocation-journal.jsonl", lambda: 0.0)
+    attribution = {"correlation_id": correlation, "work_identity": item.id, "role": "PRODUCER"}
+    journal.append({"event": "invocation-started", **attribution, "contract_digest": None, "owner": dead_owner()})
+    journal.append({"event": "publication-started", **attribution, "revision": revision})
+    assert work_launch(fx, item.id) == {"identity": item.id, "answer": "not-eligible"}  # recovery parked it
+    assert fx.loaded().coordinator(None, None).state(item.id).outcome == "authority-block"
+    branch = f"candidate/{ref_safe(correlation)}"
+    remote = fx.loaded().configuration.repositories[fx.loaded().configuration.packets_repository].remote
+
+    def refused(answer: str, ownership=None) -> dict:
+        before = fx.dump()
+        result = fx.loaded(ownership).decide(item.id, "authorize", QUOTE)
+        assert result["answer"] == answer and fx.dump() == before
+        return result
+    assert refused("OWNER_STILL_RUNNING", Owners("alive"))["attestation"] == "owner-alive"
+    assert refused("OWNER_STILL_RUNNING", Owners(work=(4242,)))["attestation"] == "owned-work-active"
+    git(fx.clone, "push", "-q", remote, f"{revision}:refs/heads/{branch}")
+    assert refused("CANDIDATE_PUBLISHED") == {"answer": "CANDIDATE_PUBLISHED", "branch": branch,
+                                                   "revision": revision, "correlation": correlation,
+                                                   "retained_worktree": str(worktree.resolve())}
+    git(fx.clone, "push", "-q", "-f", remote, f"{revision}^:refs/heads/{branch}")
+    assert refused("REMOTE_CONFLICT")["revision"] != revision
+    git(fx.clone, "push", "-q", remote, f":refs/heads/{branch}")
+    assert refused("REMOTE_UNVERIFIED", Owners("unknown"))["attestation"] == "owner-unattested"
+    with monkeypatch.context() as patched:
+        patched.setattr(GitSourceControl, "remote_revision", lambda *_: (_ for _ in ()).throw(CandidateUnavailable("x")))
+        assert refused("REMOTE_UNVERIFIED")["missing"] == "a readable remote"
+    worktree.rename(worktree.with_name("moved"))
+    assert refused("REMOTE_UNVERIFIED")["missing"] == "the PRODUCER worktree"
+    worktree.with_name("moved").rename(worktree)
+    decided = fx.loaded().decide(item.id, "authorize", QUOTE)
+    assert decided["answer"] is None and decided["retained_worktree"] == str(worktree.resolve())
+    assert decided["cleanup_diagnostics"] == {correlation: f"{item.id}: authorized and relaunched"}
+    assert fx.loaded().coordinator(None, None).state(item.id).outcome == "decision-recorded" and not ran(fx, item.id)

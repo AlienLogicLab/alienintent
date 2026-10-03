@@ -3,12 +3,15 @@ from __future__ import annotations
 
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
+import json
 import logging
 from pathlib import Path
 from typing import Any, Protocol
 
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
+from alienintent.execution_coordination.application.factory_coordinator import LAUNCH_KEY, LAUNCH_SCOPE
 from alienintent.execution_coordination.domain.escalation import DecisionSubmission
+from alienintent.execution_coordination.ports.operational_store import ReservationRejected
 from alienintent.execution_coordination.ports.worker_provider import VERIFIER
 
 
@@ -171,6 +174,68 @@ def launch_work(coordinator: WorkLaunches, identity: str) -> dict[str, object]:
     `wip-refused`, `wip-limit-unavailable`)."""
     result = coordinator.launch(identity)
     return {"identity": identity, **({"answer": result} if isinstance(result, str) else asdict(result))}
+
+
+# `work launch` answers when another launch holds the one exclusive registry-wide reservation, or when this process
+# cannot name itself as its owner. Both write nothing.
+LAUNCH_IN_PROGRESS, LAUNCH_OWNER_UNAVAILABLE = "LAUNCH_IN_PROGRESS", "LAUNCH_OWNER_UNAVAILABLE"
+
+
+class LaunchOwnership(Protocol):
+    """The existing process ownership observation, as the exclusive `work launch` reservation uses it."""
+
+    def current(self) -> Mapping[str, object] | None: ...
+
+    def owner_state(self, owner: Mapping[str, object]) -> str: ...
+
+
+def exclusive_launch_work(launcher: Callable[[], WorkLaunches], identity: str, store: Any, ownership: LaunchOwnership,
+                          profile: str = "registry") -> dict[str, object]:
+    """`work launch`, one at a time: `launch_work` inside one exclusive registry-wide reservation (the store's atomic
+    `acquire`, scope `launch`, key `registry`, owner `launcher:<this process as canonical JSON>`), released with its
+    owner and fence afterwards. A held reservation is taken over only when its owner has `terminated`; while it is
+    `alive` or `unknown`, or when another process took it over first, the answer is LAUNCH_IN_PROGRESS."""
+    current = ownership.current()
+    if current is None:
+        return {"identity": identity, "answer": LAUNCH_OWNER_UNAVAILABLE}
+    owner = "launcher:" + json.dumps(dict(current), sort_keys=True, separators=(",", ":"))
+    try:
+        reservation = store.acquire(profile, LAUNCH_SCOPE, LAUNCH_KEY, owner)
+    except ReservationRejected:
+        held = next((r for r in store.recovery_reservations(profile) if (r.scope, r.key) == (LAUNCH_SCOPE, LAUNCH_KEY)),
+                    None)
+        state = "unknown"
+        if held is not None:
+            try:
+                recorded = json.loads(held.owner.removeprefix("launcher:"))
+            except ValueError:
+                recorded = None
+            state = ownership.owner_state(recorded) if isinstance(recorded, dict) else "unknown"
+        if held is None or state != "terminated":
+            return {"identity": identity, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
+        try:
+            store.release(profile, held.scope, held.key, held.owner, held.fence)  # StaleFence: taken over first
+            reservation = store.acquire(profile, LAUNCH_SCOPE, LAUNCH_KEY, owner)
+        except ReservationRejected:
+            return {"identity": identity, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
+    try:
+        return launch_work(launcher(), identity)
+    finally:
+        store.release(profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+
+
+class WorkDecisions(Protocol):
+    """The registry decision path as `work decide` uses it (bound by the profile's composition)."""
+
+    def decide(self, identity: str, choice: str, quote: str) -> Mapping[str, object]: ...
+
+
+def decide_work(decisions: WorkDecisions, identity: str, choice: str, quote: str) -> dict[str, object]:
+    """`work decide`: a choice the work item's open decision request offers, through the existing decision path; it
+    never launches anything (the next step is always an explicit `work launch`)."""
+    if not quote.strip():
+        raise OperatorDenied("work decide needs the Founder's words")
+    return {"identity": identity, **decisions.decide(identity, choice, quote)}
 
 
 class OperatorControlPlane:

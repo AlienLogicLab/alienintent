@@ -634,11 +634,13 @@ def test_the_worker_profile_answers_every_other_command_with_the_stated_error(tm
 # --- unit 6c-2: `work launch` and `work context --contract-digest` ---------------------------------------------------
 
 
-def test_work_launch_renders_one_step_and_work_context_passes_the_contract_digest(monkeypatch, capsys) -> None:
+def test_work_launch_renders_one_step_and_work_context_passes_the_contract_digest(monkeypatch, capsys, tmp_path) -> None:
     """`work launch <id>` calls the registry launcher's `launch` for exactly that id and renders its answer or run
     summary; `--contract-digest` reaches `assemble` (None without it)."""
     from types import SimpleNamespace
     from alienintent.control_plane.adapters import cli
+    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
     from alienintent.execution_coordination.application.factory_coordinator import RunSummary, StopReason
     calls = []
     answers = iter(["closure-not-automated", RunSummary(StopReason.BLOCKED, ("ITEM",))])
@@ -648,7 +650,8 @@ def test_work_launch_renders_one_step_and_work_context_passes_the_contract_diges
         def assemble(self, *args):
             calls.append(("assemble", args[3]))
             return SimpleNamespace(document=lambda: {"status": "HOLD"})
-    registry = SimpleNamespace(launcher=lambda: launcher, context=Context())
+    registry = SimpleNamespace(launcher=lambda: launcher, context=Context(),
+                               store=SQLiteOperationalStore(tmp_path / "launch.sqlite"), ownership=ProcOwnership())
     monkeypatch.setattr(cli, "_factory", lambda _: SimpleNamespace(work_registry=registry))
 
     assert cli.main(["--json", "--profile-factory", "x:y", "work", "launch", "ITEM"]) == 0
@@ -661,3 +664,32 @@ def test_work_launch_renders_one_step_and_work_context_passes_the_contract_diges
                          "--correlation", "launch:ITEM:0", *extra]) == 0
         capsys.readouterr()
     assert calls == [("launch", "ITEM"), ("launch", "ITEM"), ("assemble", "sha256:abc"), ("assemble", None)]
+
+
+def test_two_launchers_taking_over_one_stale_launch_reservation_exactly_one_wins(tmp_path) -> None:
+    """RESTART-CONTINUATION check 0: the loser of a takeover race (its release meets a stale fence) answers
+    LAUNCH_IN_PROGRESS and launches nothing; the winner launches once and releases the reservation."""
+    from types import SimpleNamespace
+    from alienintent.control_plane.application.operator import exclusive_launch_work
+    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+    store = SQLiteOperationalStore(tmp_path / "launch.sqlite")
+    dead = dict(ProcOwnership().current()) | {"pid": next(p for p in range(4_194_000, 1, -1)
+                                                          if not Path(f"/proc/{p}").exists())}
+    store.acquire("registry", "launch", "registry", "launcher:" + json.dumps(dead, sort_keys=True))
+    launched, answers = [], []
+    coordinator = lambda name: SimpleNamespace(launch=lambda identity: launched.append(name) or "not-eligible")
+
+    class Racing(ProcOwnership):
+        raced = False
+
+        def owner_state(self, owner):
+            state = super().owner_state(owner)
+            if not Racing.raced:  # the other launcher takes the same stale reservation over meanwhile
+                Racing.raced = True
+                answers.append(exclusive_launch_work(lambda: coordinator("winner"), "B", store, Racing()))
+            return state
+    loser = exclusive_launch_work(lambda: coordinator("loser"), "A", store, Racing())
+    assert loser == {"identity": "A", "answer": "LAUNCH_IN_PROGRESS", "owner_state": "terminated"}
+    assert answers == [{"identity": "B", "answer": "not-eligible"}] and launched == ["winner"]
+    assert store.recovery_reservations("registry") == ()

@@ -1288,3 +1288,57 @@ def test_launch_answers_a_wip_skip(tmp_path: Path, limit, answer) -> None:
                                             wip_limit=lambda: limit)
     store.acquire_within("offline", "wip", "other", "work:other", 1)
     assert coordinator.launch("a") == answer and worker.invocations == []
+
+
+def test_restart_continuation_recovery_releases_parks_and_still_records_the_next_launch(tmp_path: Path) -> None:
+    """RESTART-CONTINUATION checks 0-2 and 4 in one recovery pass, inside the running `work launch` reservation:
+    an unsaved reservation is released with nothing written; a saved, never-claimed (`pending`) launch is parked
+    naming the reason, keeping its WIP slot and counts, with no worker started; later reservations (other
+    repositories) are still recovered, a recovered PRODUCER result disposes of its worktree and a recorded
+    missing-terminal-result keeps it; the next launch is not `capacity-unavailable`."""
+    coordinator_module, custody, _, provider = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    unsaved, pending, finished, missing = (replace(_item(name, n, 1), repository=f"repo-{n}") for n, name in
+                                           enumerate(("a-unsaved", "b-pending", "c-finished", "d-missing")))
+    store.acquire("offline", coordinator_module.LAUNCH_SCOPE, coordinator_module.LAUNCH_KEY, "launcher:{}")
+    store.acquire("offline", "repository", unsaved.repository, "launch:a-unsaved:0")
+
+    class Finalizing(ScriptedWorker):
+        finalized: list[tuple[str, bool]] = []
+
+        def finalize(self, invocation, retain):
+            self.finalized.append((invocation.correlation_id, retain))
+    worker = Finalizing(artifacts, {"a-unsaved": ["success"], "c-finished": ["success"],
+                                    "d-missing": [provider.MISSING_TERMINAL_RESULT]}, durable=True)
+    for item, claimed in ((pending, False), (finished, True), (missing, True)):
+        correlation = f"launch:{item.identity}:0"
+        store.acquire_within("offline", "wip", item.identity, f"work:{item.identity}", 4)
+        store.acquire("offline", "repository", item.repository, correlation)
+        state = replace(coordinator_module.ExecutionState.for_contract(item.contract), implement_cycles=1)
+        store.commit_with_effect("offline", f"factory:{item.identity}", 0, coordinator_module.FactoryCoordinator._encode(state)
+                                 | {"role": provider.PRODUCER, "invocation_candidate": None}, correlation, {"correlation": correlation})
+        if claimed:
+            store.claim_effect("offline", correlation)
+            worker.start(provider.WorkerInvocation(item.identity, correlation), item.contract, frozenset(), item.contract.budget_policy)
+    coordinator = coordinator_module.FactoryCoordinator(store, MemoryWorkManagement([unsaved, pending, finished, missing]), worker, artifacts, "offline")
+
+    coordinator.reconcile(pending.identity)  # raises ReservationRejected if recovery returned False
+
+    with pytest.raises(KeyError):
+        coordinator.state(unsaved.identity)
+    parked = coordinator.state(pending.identity)
+    assert (parked.outcome, parked.implement_cycles, parked.verify_cycles) == ("authority-block", 1, 0)
+    _, inbox = store.read_state("offline", "decision-inbox")
+    assert set(inbox["open"]) == {pending.identity}
+    assert inbox["open"][pending.identity]["reason"] == f"{coordinator_module.NEVER_STARTED}: launch:b-pending:0"
+    assert dict((identity, status) for identity, status, _ in store.effect_ledger("offline"))["launch:b-pending:0"] == "unknown"
+    assert [invocation[0] for invocation in worker.invocations] == ["c-finished", "d-missing"]  # no worker for b
+    assert coordinator.state(finished.identity).stage is LifecycleStage.VERIFY
+    assert coordinator.state(missing.identity).outcome == provider.MISSING_TERMINAL_RESULT
+    assert worker.finalized == [("launch:b-pending:0", True), ("launch:c-finished:0", False), ("launch:d-missing:0", True)]
+    assert {(r.scope, r.key) for r in store.recovery_reservations("offline")} == {
+        ("launch", "registry"), ("wip", "b-pending"), ("wip", "c-finished"), ("wip", "d-missing")}
+
+    summary = coordinator.launch(unsaved.identity)
+    assert summary.stop_reason.value != "capacity-unavailable" and summary.dispatched == (unsaved.identity,)

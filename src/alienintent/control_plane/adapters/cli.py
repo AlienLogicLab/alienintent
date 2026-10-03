@@ -12,7 +12,8 @@ from typing import Any
 
 from alienintent.control_plane.application.operator import (
     NOT_AVAILABLE_IN_WORKER_PROFILE, OperatorControlPlane, OperatorDenied, assess_work, authorize_work, context_work,
-    display_work, import_work, launch_work, link_work, migrate_work, record_completed_work, register_work, show_work)
+    decide_work, display_work, exclusive_launch_work, import_work, link_work, migrate_work, record_completed_work,
+    register_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
@@ -113,6 +114,9 @@ def _parser() -> argparse.ArgumentParser:
     context.add_argument("--correlation", required=True); context.add_argument("--candidate")
     context.add_argument("--contract-digest")
     launch = _sanitized(work.add_parser("launch")); launch.add_argument("target")
+    work_decide = _sanitized(work.add_parser("decide")); work_decide.add_argument("target")
+    work_decide.add_argument("--choice", choices=("authorize", "defer"), required=True)
+    work_decide.add_argument("--quote", required=True)
     return parser
 
 
@@ -179,7 +183,14 @@ def main(argv: list[str] | None = None) -> int:
                 if getattr(registry, "launcher", None) is None:
                     _render({"error": "readiness-not-configured"}, args.json)
                     return 1
-                _render(launch_work(registry.launcher(), args.target), args.json)
+                _render(exclusive_launch_work(registry.launcher, args.target, registry.store, registry.ownership),
+                        args.json)
+                return 0
+            if args.work_command == "decide":
+                if getattr(registry, "decide", None) is None:
+                    _render({"error": "readiness-not-configured"}, args.json)
+                    return 1
+                _render(decide_work(registry, args.target, args.choice, args.quote), args.json)
                 return 0
             if args.work_command == "assess":
                 if (args.file is None) != (args.commit is None) or (args.file is not None and args.recover):
