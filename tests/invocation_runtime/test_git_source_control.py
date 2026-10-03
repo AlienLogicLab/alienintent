@@ -122,3 +122,21 @@ def test_unknown_remote_and_invalid_refs_are_refused(repo):
         with pytest.raises(ValueError):
             PublishRef(ref, commit)
     assert "unrelated-local-tag" not in "".join(remote_refs(clone))
+
+
+def test_remote_revision_reads_only_the_exact_branch_and_creates_or_pushes_nothing(repo, tmp_path):
+    """RESTART-CONTINUATION check 3: the read-only remote answer `work decide` reconciles a publication with."""
+    from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
+    clone, remote, commits = repo
+    git(clone, "push", "-q", "origin", f"{commits[1]}:refs/heads/candidate/exact",
+        f"{commits[2]}:refs/heads/x/refs/heads/candidate/absent", f"{commits[2]}:refs/heads/candidate/absent-longer")
+    before, listing = remote_refs(clone), sorted(tmp_path.iterdir())
+    control = GitSourceControl()
+    assert control.remote_revision(clone, "origin", "candidate/exact") == commits[1]
+    assert control.remote_revision(clone, "origin", "candidate/absent") is None  # only longer refs share its tail
+    assert remote_refs(clone) == before and sorted(tmp_path.iterdir()) == listing
+    git(clone, "remote", "set-url", "origin", str(tmp_path / "missing.git"))
+    with pytest.raises(CandidateUnavailable):
+        control.remote_revision(clone, "origin", "candidate/exact")
+    with pytest.raises(CandidateUnavailable):
+        control.remote_revision(tmp_path / "no-worktree", "origin", "candidate/exact")

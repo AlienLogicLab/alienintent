@@ -30,6 +30,11 @@ WIP_SCOPE = "wip"
 FINAL_OUTCOMES = frozenset({"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"})
 # `launch` answers that launch nothing.
 CLOSURE_NOT_AUTOMATED, NOT_ELIGIBLE = "closure-not-automated", "not-eligible"
+# The one registry-wide `work launch` reservation (an ordinary store reservation). Only `work launch` takes and releases
+# it; recovery runs inside it and never touches it, so another launch's reservation recovery acts on is a dead one.
+LAUNCH_SCOPE, LAUNCH_KEY = "launch", "registry"
+# The park reason of a launch that was saved (its effect `pending`) but never claimed, so never started.
+NEVER_STARTED = "launch saved but never started"
 
 
 @dataclass(frozen=True)
@@ -547,7 +552,7 @@ class FactoryCoordinator:
             if reservation.scope == WIP_SCOPE:
                 self._release_ended_wip(reservation.key)
         for reservation in reservations:
-            if reservation.scope == WIP_SCOPE:
+            if reservation.scope == WIP_SCOPE or (reservation.scope, reservation.key) == (LAUNCH_SCOPE, LAUNCH_KEY):
                 continue
             if reservation.scope != "repository" or not reservation.owner.startswith("launch:"):
                 return False
@@ -556,6 +561,20 @@ class FactoryCoordinator:
                 item = by_identity[identity]
             except (ValueError, KeyError):
                 return False
+            effect = self._effect_status(reservation.owner)
+            if effect == "none":
+                # Crashed after the repository reservation and before `commit_with_effect`: with the record still at
+                # the launch's version, nothing was saved or started, so only the reservation is released.
+                version, _ = self._store.read_state(self._profile, self._aggregate(identity))
+                if str(version) == reservation.owner.rsplit(":", 1)[1]:
+                    self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+                    continue
+            elif effect == "pending":
+                # Saved but never claimed (a worker starts only after `claim_effect`): parked for a decision.
+                self._store.claim_effect(self._profile, reservation.owner)
+                if not self._park_unknown_effect(item, reservation, f"{NEVER_STARTED}: {reservation.owner}"):
+                    return False
+                continue
             _, raw = self._store.read_state(self._profile, self._aggregate(identity))
             current = replace(self.decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
             role = str(raw.get("role") or PRODUCER)
@@ -583,6 +602,10 @@ class FactoryCoordinator:
                 return False
             if advanced.outcome == "authority-block":
                 self._restore_authority_block(item, current, outcome, reservation.owner, items, role, advanced.hold)
+            elif role == PRODUCER:
+                # A recovered PRODUCER result disposes of its worktree, owned by the correlation; a recorded
+                # missing-terminal-result keeps it (its progress stays for diagnosis).
+                self._finalize_workspace(identity, reservation.owner, retain=outcome.kind == MISSING_TERMINAL_RESULT)
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
         return True
 
@@ -594,7 +617,15 @@ class FactoryCoordinator:
         if role == PRODUCER:
             self._finalize_workspace(item.identity, correlation, retain=True)
 
-    def _park_unknown_effect(self, item: ReadyWorkItem, reservation) -> bool:
+    def _effect_status(self, correlation: str) -> str | None:
+        """The correlation's effect status in the store's read-only ledger, "none" when it has no effect row, or None
+        when the store keeps no ledger."""
+        ledger = getattr(self._store, "effect_ledger", None)
+        if not callable(ledger):
+            return None
+        return next((status for identity, status, _ in ledger(self._profile) if identity == correlation), "none")
+
+    def _park_unknown_effect(self, item: ReadyWorkItem, reservation, reason: str | None = None) -> bool:
         """Turn an unreadable FD-05 effect into a scoped, durable authority block."""
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
         current = replace(self.decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
@@ -604,7 +635,7 @@ class FactoryCoordinator:
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
         except ReservationRejected:
             return False
-        self._register_escalation(self._authority_request(item, current.version, "The external effect outcome is unknown and requires reconciliation authority."))
+        self._register_escalation(self._authority_request(item, current.version, reason or "The external effect outcome is unknown and requires reconciliation authority."))
         self._block_dependents(item, self._work.import_ready_snapshot())
         self._finalize_workspace(item.identity, reservation.owner, retain=True)
         return True

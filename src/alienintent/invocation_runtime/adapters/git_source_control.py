@@ -53,6 +53,20 @@ class GitSourceControl(SourceControl):
         evidence_remote = self._evidence_remote(remote_url)
         return CandidateRef.source_revision(digest, f"git:{evidence_remote}#{branch}@{revision}", identity=f"revision:{evidence_remote}@{branch}@{revision}@{digest}").with_independent_read_back()
 
+    def remote_revision(self, workspace: Path, remote: str, branch: str) -> str | None:
+        """Read-only: the revision the remote holds at exactly `refs/heads/<branch>`, or None when the remote was read
+        and lists no such ref. The same `ls-remote` `read_back_candidate` runs, keeping only the exact ref name (as
+        `_remote_refs` does); it clones and pushes nothing. An unreadable remote is CandidateUnavailable."""
+        if not workspace.is_dir():
+            raise CandidateUnavailable("workspace is missing; the remote cannot be read from it")
+        remote_url = self._git("remote", "get-url", remote, cwd=workspace)
+        wanted = f"refs/heads/{branch}"
+        for line in self._git("ls-remote", remote_url, wanted, cwd=workspace).splitlines():
+            commit, _, name = line.partition("\t")
+            if name == wanted:
+                return commit
+        return None
+
     def publish_and_read_back(self, workspace: Path, remote: str, branch: str, revision: str, verifier_workspace: Path) -> CandidateRef:
         if self.revision(workspace) != revision:
             raise CandidateUnavailable("workspace HEAD differs from requested candidate revision")

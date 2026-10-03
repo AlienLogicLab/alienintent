@@ -84,6 +84,8 @@ from alienintent.context_assembly.ports.work_item_repository import (
     PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
 from alienintent.control_plane.adapters.attention_repository import DurableAttentionRepository
 from alienintent.control_plane.application.attention import AttentionService
+from alienintent.control_plane.application.decision_inbox import DecisionInbox
+from alienintent.control_plane.application.operator import OperatorControlPlane
 from alienintent.control_plane.domain.attention import AttentionOrigin
 from alienintent.evidence_learning.adapters.local_evidence_repository import LocalEvidenceRepository
 from alienintent.evidence_learning.domain.records import Header, Observation, canonical_bytes
@@ -96,12 +98,12 @@ from alienintent.execution_coordination.adapters.github_work_management import G
 from alienintent.execution_coordination.adapters.release_admission import (
     GitRevisionResolver, StoredReleaseAuthorizations)
 from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERSION, SQLiteOperationalStore
-from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator
+from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.execution_coordination.domain.custody import CandidateRef
-from alienintent.execution_coordination.domain.escalation import HumanDecisionRequired
+from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
 from alienintent.execution_coordination.ports.project_directory import ProjectItemState
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
@@ -114,12 +116,15 @@ from alienintent.installation.domain.project_identity import ProjectAddress
 from alienintent.installation.ports.github_transport import GitHubTransport
 from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
-from alienintent.invocation_runtime.adapters.git_worktree import GitWorktreeAdapter, ref_safe
+from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, GitWorktreeAdapter, ref_safe
 from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
-from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+from alienintent.invocation_runtime.application.real_worker import (
+    EFFECT_UNKNOWN, OWNED_WORK_ACTIVE, OWNER_ALIVE, PUBLICATION_STARTED, RealWorkerProvider)
 from alienintent.invocation_runtime.domain.runtime import (
-    INVOCATION_MARKER, INVOCATION_OWNER_MARKER, CapabilityGrant, InvocationRole, ReservationBook, owner_token)
+    INVOCATION_MARKER, INVOCATION_OWNER_MARKER, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable,
+    ReservationBook, owner_token)
+from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
 from alienintent.invocation_runtime.ports import source_control
 from alienintent.invocation_runtime.ports.source_control import PublishRef, SourceControl
 
@@ -305,8 +310,11 @@ class WorkRegistry:
     work-record operations (`records`); `registration` is the compiler's."""
 
     def __init__(self, configuration: ProjectConfiguration, source_control: SourceControl | None = None,
-                 transport: GitHubTransport | None = None, host_configuration: Path = HOST_CONFIGURATION) -> None:
+                 transport: GitHubTransport | None = None, host_configuration: Path = HOST_CONFIGURATION,
+                 ownership: ProcessOwnership | None = None) -> None:
         self.configuration = configuration
+        # The existing process ownership observation: the launch chain's, and the exclusive `work launch` owner's.
+        self.ownership = ownership if ownership is not None else ProcOwnership()
         self.host_configuration = host_configuration
         self.profile_stores = {name: read_only_store(path) for name, path in sorted(configuration.profiles.items())}
         self.items = SQLiteWorkItemRepository(configuration.database, configuration.repositories)
@@ -378,6 +386,94 @@ class WorkRegistry:
         packets repository's clone with the invocation journal, GitWorktreeAdapter, ProcOwnership and one grant per
         dispatch, then RoleBindingGuard. Its state lives beside the `readiness` database, in `launch/`. No other
         configuration is read; the model routing file is read by `prepare` at every launch."""
+        return self._launch_chain()[0]
+
+    @property
+    def store(self) -> OperationalStore:
+        """The `readiness` store the `registry` coordinator and the exclusive `work launch` reservation live in."""
+        return self.assessment.consumer.store
+
+    def decide(self, identity: str, choice: str, quote: str) -> dict[str, object]:
+        """`work decide`: the choice on the work item's open decision request, submitted through the existing path of
+        `decisions decide` (OperatorControlPlane.decisions_decide: DecisionInbox.submit, then the registry
+        coordinator's `validate_decision` and `record_decision`) with an admission whose resume does nothing, so it
+        never launches. Before an `authorize` it refuses, writing nothing, while the owner or owned work runs, when an
+        empty journal does not prove the launch never started, and until a publication that began is reconciled
+        against the remote. The answer names the retained PRODUCER worktree of the launch it resolves."""
+        coordinator, worker, root = self._launch_chain()
+        store, workspaces = self.store, root / "workspaces"
+        inbox = DecisionInbox(store, _DecisionOnly(coordinator), "registry")
+        request = next((entry for entry in inbox.list_open() if entry.work_item == identity), None)
+        if request is None:
+            recorded = None
+            try:
+                recorded = inbox.show(identity)
+            except KeyError:
+                pass
+            if not isinstance(recorded, DecisionRecord) or recorded.submission.choice != choice:
+                return {"answer": NO_OPEN_DECISION}
+            biu_version = recorded.submission.biu_version  # A repeat: the same idempotency key answers it.
+        else:
+            biu_version = request.biu_version
+        revision, raw = store.read_state("registry", f"factory:{identity}")
+        correlation = raw.get("correlation") if isinstance(raw.get("correlation"), str) else None
+        worktree = None if correlation is None else _producer_worktree(workspaces, WorkerInvocation(identity, correlation))
+        retained = worktree.path if worktree is not None and worktree.path.is_dir() else None
+        parked = correlation is not None and any(effect.identity == correlation
+                                                 for effect in store.unresolved_effects("registry"))
+        if request is not None and choice == "authorize" and parked:
+            refusal = self._authorize_refusal(worker, identity, correlation, request.reason, workspaces / correlation)
+            if refusal is not None:
+                return refusal | {"correlation": correlation, "retained_worktree": None if retained is None
+                                  else str(retained)}
+        packet = self.records.show(identity)
+        issuer = contract_block(packet.packet, identity).authority_issuer
+        decided = OperatorControlPlane("registry", store, None, _DecisionOnly(coordinator), lambda: True)\
+            .decisions_decide(identity, actor=issuer, authority=issuer, target=identity, intent=choice, reason=quote,
+                              expected_version=revision, idempotency_key=f"work-decide:{identity}:{biu_version}:{choice}",
+                              biu_version=biu_version, choice=choice)
+        return {"answer": None, "decision": decided, "correlation": correlation,
+                "retained_worktree": None if retained is None else str(retained)}
+
+    def _authorize_refusal(self, worker: RealWorkerProvider, identity: str, correlation: str, reason: str,
+                           workspace: Path) -> dict[str, object] | None:
+        """Why `authorize` may not lift the parked launch's effect yet, or None."""
+        invocation = WorkerInvocation(identity, correlation)
+        attested = worker.attest_ownership(invocation).kind
+        if attested in {OWNER_ALIVE, OWNED_WORK_ACTIVE}:
+            return {"answer": OWNER_STILL_RUNNING, "attestation": attested}
+        try:
+            records = [record for record in worker.journal.records() if record.get("correlation_id") == correlation]
+        except JournalUnreadable:
+            return {"answer": START_UNPROVEN, "missing": "a readable invocation journal"}
+        if not records:
+            # An empty journal is not proof of no start: recovery must have found the effect `pending` and parked it,
+            # and no process may carry the correlation's marker.
+            if reason != f"{NEVER_STARTED}: {correlation}":
+                return {"answer": START_UNPROVEN, "missing": f"the park reason '{NEVER_STARTED}'"}
+            if self.ownership.owned_work(correlation) != ():
+                return {"answer": START_UNPROVEN, "missing": "no process carrying the correlation's marker"}
+            return None
+        published = [record.get("revision") for record in records if record.get("event") == PUBLICATION_STARTED]
+        if not published:
+            return None
+        branch = worker.candidate_branch(invocation)
+        if not workspace.is_dir():
+            return {"answer": REMOTE_UNVERIFIED, "branch": branch, "missing": "the PRODUCER worktree"}
+        packets = self.configuration.repositories[self.configuration.packets_repository]
+        try:
+            remote = self.source_control.remote_revision(workspace, packets.remote, branch)
+        except CandidateUnavailable:
+            return {"answer": REMOTE_UNVERIFIED, "branch": branch, "missing": "a readable remote"}
+        if remote is None:
+            return None if attested == EFFECT_UNKNOWN else {"answer": REMOTE_UNVERIFIED, "branch": branch,
+                                                            "attestation": attested}
+        if remote == published[-1]:
+            return {"answer": CANDIDATE_PUBLISHED, "branch": branch, "revision": remote}
+        return {"answer": REMOTE_CONFLICT, "branch": branch, "revision": remote}
+
+    def _launch_chain(self) -> tuple[FactoryCoordinator, RealWorkerProvider, Path]:
+        """The `launcher()` coordinator, its RealWorkerProvider and the launch folder."""
         if self.context is None or self.ready_view is None:
             raise ConfigurationInvalid("work launch needs the github and readiness entries and a configuration file")
         configuration = self.configuration
@@ -388,7 +484,7 @@ class WorkRegistry:
                           root / "context", root / "worker-tmp"):
             directory.mkdir(parents=True, exist_ok=True)
         preparation = LaunchPreparation(self.context, root / "context", repository)
-        ownership = ProcOwnership()
+        ownership = self.ownership
         process = CliWorkerProvider("routed", preparation.command, (), "explicit", PROVIDER_DIMENSIONS,
                                     environment=worker_environment(root) | dict(self.context.command.environment),
                                     ownership=ownership)
@@ -398,9 +494,10 @@ class WorkRegistry:
             lambda invocation: f"candidate/{ref_safe(invocation.correlation_id)}", root / "verifier",
             lambda invocation: launch_grant(invocation, repository), repository,
             GitWorktreeAdapter(packets.clone, root / "workspaces"), ReservationBook(1, 2), now=time.time,
-            sleep=time.sleep, journal=journal, ownership=ownership, preparation=preparation)
+            sleep=time.sleep, journal=journal, ownership=ownership, preparation=preparation,
+            recovered_workspace=lambda invocation: _producer_worktree(root / "workspaces", invocation))
         guard = RoleBindingGuard(worker, journal, store, "registry", repository, time.time)
-        return self.coordinator(guard, LocalArtifactStore(root / "artifacts", root / "custody"))
+        return self.coordinator(guard, LocalArtifactStore(root / "artifacts", root / "custody")), worker, root
 
     def _ready_view(self, configuration: ProjectConfiguration) -> GitHubProjectsWorkManagement:
         """The READY view of board #1: profile `registry`, each formal workflow state mapped to itself, no projection
@@ -643,6 +740,37 @@ VERIFIER_RESULT = """Your current working directory is a fresh clone of the cand
 Then write .alienintent/verdict.json in that directory as {{"revision": "<the candidate commit, git rev-parse HEAD>",
 "verdict": "accept" or "reject", "findings": ["<finding>", ...]}}; a reject needs at least one finding."""
 GRANT_SECONDS = 3600
+
+
+# `work decide` answers that write nothing (command answers, not outcome kinds).
+NO_OPEN_DECISION, OWNER_STILL_RUNNING, START_UNPROVEN = "NO_OPEN_DECISION", "OWNER_STILL_RUNNING", "START_UNPROVEN"
+REMOTE_UNVERIFIED, REMOTE_CONFLICT, CANDIDATE_PUBLISHED = "REMOTE_UNVERIFIED", "REMOTE_CONFLICT", "CANDIDATE_PUBLISHED"
+
+
+class _DecisionOnly:
+    """The registry coordinator as the DecisionInbox admission of `work decide`: validation and recording only."""
+
+    def __init__(self, coordinator: FactoryCoordinator) -> None:
+        self._coordinator = coordinator
+
+    def validate_decision(self, record: DecisionRecord) -> None:
+        self._coordinator.validate_decision(record)
+
+    def record_decision(self, record: DecisionRecord) -> None:
+        self._coordinator.record_decision(record)
+
+    def resume_after_decision(self) -> None:
+        """Nothing: the next step is always an explicit `work launch`."""
+
+
+def _producer_worktree(root: Path, invocation: WorkerInvocation) -> GitWorkspace | None:
+    """The PRODUCER worktree a correlation owns at its fixed path `<root>/<correlation>` (what
+    GitWorktreeAdapter.allocate creates), or None for an identity that could name a path outside the root."""
+    correlation = invocation.correlation_id
+    if not correlation or any(part in correlation for part in ("/", "\\", "..", "\x00")):
+        return None
+    return GitWorkspace(correlation, invocation.work_identity, root.resolve() / correlation,
+                        f"invocation/{ref_safe(correlation)}")
 
 
 def launch_root(configuration: ProjectConfiguration) -> Path:

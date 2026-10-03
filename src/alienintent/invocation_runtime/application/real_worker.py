@@ -16,7 +16,7 @@ from alienintent.invocation_runtime.ports.invocation_journal import InvocationJo
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
 from alienintent.invocation_runtime.ports.source_control import SourceControl
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
-from alienintent.invocation_runtime.ports.workspace import WorkspaceManager
+from alienintent.invocation_runtime.ports.workspace import Workspace, WorkspaceManager
 
 
 def encode_candidate(candidate: CandidateRef | None) -> dict[str, object] | None:
@@ -180,7 +180,7 @@ class WorkerPreparation(Protocol):
 
 
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -196,6 +196,8 @@ class RealWorkerProvider(WorkerProvider):
         self._journal = journal
         self._ownership = ownership
         self._preparation = preparation
+        # The PRODUCER worktree a correlation owns at its fixed path, for one this process did not run (or None).
+        self._recovered_workspace = recovered_workspace
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
@@ -406,6 +408,7 @@ class RealWorkerProvider(WorkerProvider):
         """Complete workspace disposition after the coordinator durably records truth."""
         workspace = self._finished_workspaces.pop(invocation.correlation_id, None)
         if workspace is None:
+            self._finalize_recovered(invocation, retain)
             return
         if retain:
             self.retained_workspaces[invocation.correlation_id] = workspace.path
@@ -414,6 +417,40 @@ class RealWorkerProvider(WorkerProvider):
             self._workspaces.cleanup(workspace, None)
         except Exception as error:
             self.cleanup_diagnostics[invocation.correlation_id] = type(error).__name__
+
+    def _finalize_recovered(self, invocation: WorkerInvocation, retain: bool) -> None:
+        """After a restart: the PRODUCER worktree at its fixed path, owned by its correlation.
+
+        It is cleaned only when the journaled owner has ended and no owned work runs (`owner-terminated` or
+        `effect-unknown`), with the existing cleanup guards and the journaled owner's process id. Every worktree kept
+        is reported in `cleanup_diagnostics` with its work item and reason.
+        """
+        if invocation.correlation_id in self.cleanup_diagnostics or invocation.correlation_id in self.retained_workspaces:
+            return  # This process already disposed of it (and reported why it was kept).
+        workspace = None if self._recovered_workspace is None else self._recovered_workspace(invocation)
+        if workspace is None or self._workspaces is None or not workspace.path.exists():
+            return
+        reason = "retained" if retain else self.attest_ownership(invocation).kind
+        if reason in {OWNER_TERMINATED, EFFECT_UNKNOWN}:
+            try:
+                self._workspaces.cleanup(workspace, self._owner_pid(invocation))
+                return
+            except Exception as error:
+                reason = str(error) or type(error).__name__
+        self.retained_workspaces[invocation.correlation_id] = workspace.path
+        self.cleanup_diagnostics[invocation.correlation_id] = f"{invocation.work_identity}: {reason}"
+
+    def _owner_pid(self, invocation: WorkerInvocation) -> int | None:
+        """The owner process id of the correlation's one `invocation-started` record."""
+        try:
+            records = self._journal.records() if self._journal is not None else []
+        except JournalUnreadable:
+            records = []
+        started = [record for record in records if record.get("event") == "invocation-started"
+                   and record.get("correlation_id") == invocation.correlation_id]
+        owner = started[0].get("owner") if len(started) == 1 else None
+        pid = owner.get("pid") if isinstance(owner, Mapping) else None
+        return pid if type(pid) is int else None
 
     def cancel(self, invocation_id: str, reason: str):
         """Fence a live owned invocation; its runner performs quiescent cleanup."""
