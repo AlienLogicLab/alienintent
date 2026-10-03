@@ -91,6 +91,8 @@ class Cx(Fx):
         # The PRODUCER launch's journal entry (its effect payload) carries the marker too.
         self.store.commit_with_effect("registry", f"factory:{item.id}", 0, state, f"launch:{item.id}:0",
                                       {"correlation": f"launch:{item.id}:0", "role": "PRODUCER", "output": MARKER})
+        self.store.claim_effect("registry", f"launch:{item.id}:0")  # The PRODUCER ran and reported.
+        self.store.confirm_effect("registry", f"launch:{item.id}:0", "outcome:candidate")
         consumer = self.registry.assessment.consumer  # The PRODUCER's invocation output kept as evidence.
         consumer.repository.put(Observation(Header(PROJECT, consumer.profile, "producer-output", "1",
                                                    (self.context.definition,)),
@@ -140,7 +142,7 @@ def test_a_first_producer_gets_exactly_its_fields_from_the_records(cx):
     assert fields["stop_condition"] == {"completion_criteria": ["tests"], "maximum_attempts": 1}
     assert fields["escalation_condition"] == ["scope"]
     # Attempt 1: no coordinator state yet is version 0 with no cycles, not a hold.
-    assert fields["attempt"] == {"correlation": f"launch:{item.id}:0", "store_version": 0}
+    assert fields["attempt"] == 0
     assert fields["history"] == {"stage": None, "version": None, "implement_cycles": 0, "verify_cycles": 0,
                                  "rejections": 0, "findings": []}
     assert fields["resources"]["wip"]["owner"] == f"work:{item.id}"
@@ -363,3 +365,96 @@ def test_assembly_is_byte_identical_and_writes_nothing(cx):
     assert producer[0].canonical_bytes() == producer[1].canonical_bytes()
     assert verifier[0].canonical_bytes() == verifier[1].canonical_bytes()
     assert cx.written() == before and cx.store.recovery_reservations("registry") == reservations
+
+
+# --- revision 4b, check 4: the running worker's own call, in the coordinator's real launch order -------------------
+
+
+def launched(cx, item, role: str, claim: bool = True) -> str:
+    """FactoryCoordinator._run's order: the correlation from the store version, the repository reservation, the
+    launch saved with `commit_with_effect` for that correlation (store version v + 1), then `claim_effect`."""
+    version, raw = cx.store.read_state("registry", f"factory:{item.id}")
+    correlation = f"launch:{item.id}:{version}"
+    cx.reserve(item, correlation)
+    state = raw or {"stage": "IMPLEMENT", "version": 0, "accepted": False, "closure": [], "candidate": None,
+                    "implement_cycles": 0, "verify_cycles": 0}
+    cx.store.commit_with_effect("registry", f"factory:{item.id}", version, state | {
+        "role": role, "implement_cycles": 1 if role == PRODUCER else state["implement_cycles"]}, correlation,
+        {"correlation": correlation, "work": item.id, "role": role})
+    if claim:
+        cx.store.claim_effect("registry", correlation)
+    return correlation
+
+
+def test_the_running_workers_own_calls_get_their_package(cx):
+    """A worker is never locked out by its own launch save: before and after `commit_with_effect` and
+    `claim_effect`, the same correlation gets the package with `attempt` v."""
+    item = cx.admitted(reserve=False)
+    cx.reserve(item, f"launch:{item.id}:0")
+    before = cx.context.assemble(item.id, PRODUCER, f"launch:{item.id}:0", cx.digest(item))
+    correlation = launched(cx, item, PRODUCER)
+    running = cx.context.assemble(item.id, PRODUCER, correlation, cx.digest(item))
+    assert isinstance(before, ContextPackage) and isinstance(running, ContextPackage)
+    assert correlation == f"launch:{item.id}:0" and before.fields["attempt"] == running.fields["attempt"] == 0
+    assert running.fields["history"]["stage"] == "IMPLEMENT" and running.fields["history"]["implement_cycles"] == 1
+    other = cx.admitted("OTHER")
+    _, candidate, clone = cx.produced(other)
+    verifier = launched(cx, other, VERIFIER)
+    assert verifier == f"launch:{other.id}:1"
+    package = cx.context.assemble(other.id, VERIFIER, verifier, cx.digest(other), candidate.locator, clone)
+    assert isinstance(package, ContextPackage) and package.fields["attempt"] == 1
+
+
+def confirmed(cx, item, correlation):
+    cx.store.confirm_effect("registry", correlation, "outcome:candidate")
+
+
+def parked(cx, item, correlation):
+    """The worker's outcome is unknown: the effect stays `unknown` and the store moves to v + 2."""
+    version, raw = cx.store.read_state("registry", f"factory:{item.id}")
+    cx.store.park_unknown_effect("registry", correlation, version, raw | {"outcome": "authority-block"})
+
+
+def saved_again(cx, item, correlation):
+    version, raw = cx.store.read_state("registry", f"factory:{item.id}")
+    cx.store.commit("registry", f"factory:{item.id}", version, raw | {"outcome": "rework"})
+
+
+@pytest.mark.parametrize("after,claim", [(confirmed, True), (parked, True), (saved_again, False)])
+def test_a_finished_parked_or_superseded_launch_is_version_drift(cx, after, claim):
+    item = cx.admitted(reserve=False)
+    correlation = launched(cx, item, PRODUCER, claim=claim)
+    after(cx, item, correlation)
+    hold(cx.context.assemble(item.id, PRODUCER, correlation, None), "VERSION_DRIFT", "attempt")
+
+
+def test_another_version_another_item_or_a_save_without_this_effect_is_version_drift(cx):
+    item, other = cx.admitted(reserve=False), cx.admitted("OTHER", reserve=False)
+    launched(cx, item, PRODUCER)
+    for correlation in (f"launch:{item.id}:2", f"launch:{item.id}:00", f"launch:{other.id}:0",
+                        f"launch:{item.id}:-1", f"other:{item.id}:0"):
+        hold(cx.context.assemble(item.id, PRODUCER, correlation, None), "VERSION_DRIFT", "attempt")
+    # Not yet launched (store version 0): another item's correlation, or a non-canonical version, is still refused.
+    for correlation in (f"launch:{item.id}:0", f"launch:{other.id}:00"):
+        hold(cx.context.assemble(other.id, PRODUCER, correlation, None), "VERSION_DRIFT", "attempt")
+    # v + 1 reached by a plain save, with no effect for launch:<other>:0.
+    cx.store.commit("registry", f"factory:{other.id}", 0, {"stage": "IMPLEMENT", "version": 0, "accepted": False,
+                                                           "closure": [], "candidate": None})
+    cx.reserve(other, f"launch:{other.id}:0")
+    hold(cx.context.assemble(other.id, PRODUCER, f"launch:{other.id}:0", None), "VERSION_DRIFT", "attempt")
+
+
+def test_a_running_worker_stays_bound_to_the_approved_instructions(cx):
+    """Handoff section 4: in the running launch, a moved pointer or a release record that no longer matches holds
+    the worker's own call; it is never given a package for other instructions."""
+    item = cx.admitted(reserve=False)
+    correlation = launched(cx, item, PRODUCER)
+    data = cx.registry.records.show(item.id).packet + b"\nother instructions\n"
+    commit = commit_file(cx.clone, "main", item.pointer.path, data)
+    cx.registry.identities.set_pointer(item.id, Pointer(REPO, item.pointer.path, commit, data))
+    hold(cx.context.assemble(item.id, PRODUCER, correlation, None), "MISSING_RECORD", "assessment")
+    other = cx.admitted("OTHER", reserve=False)
+    running = launched(cx, other, PRODUCER)
+    evidence_differs(cx, other, "contract_digest", "sha256:" + "4" * 64)
+    hold(cx.context.assemble(other.id, PRODUCER, running, None), "DIGEST_MISMATCH", "release_record",
+         "contract_digest")

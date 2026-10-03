@@ -534,21 +534,24 @@ def installed(root: Path) -> Path:
 
 
 def test_work_context_runs_with_only_the_worker_environment(tmp_path: Path) -> None:
-    """Founder check (a) / acceptance check 7: the package's own `context_command`, run from a worktree (the
-    VERIFIER's from its candidate clone) with only the stated worker environment plus its two variables, prints
-    exactly the package the operator side assembled. A command needing PYTHONPATH, an inherited ALIENINTENT_*
-    variable or the operator's working directory fails here."""
+    """Founder check (a) / acceptance checks 4 and 7: in a running launch (saved with `commit_with_effect` and
+    claimed, as the coordinator does before the worker starts), the package's own `context_command`, run from a
+    worktree (the VERIFIER's from its candidate clone) with only the stated worker environment plus its two
+    variables, prints exactly the package `assemble` gives for the same work item, attempt and store version. A
+    command needing PYTHONPATH, an inherited ALIENINTENT_* variable or the operator's working directory, or one
+    locked out by its own launch save, fails here."""
     from alienintent.composition.sandbox_run_profile import worker_environment
     from tests.context_assembly.test_initial_compilation import PROJECT, git
-    from tests.context_assembly.test_work_context import Cx
+    from tests.context_assembly.test_work_context import Cx, launched
     python = installed(tmp_path)
     cx = Cx(tmp_path / "cx")
-    item = cx.admitted()
-    producer = f"launch:{item.id}:0"
+    item = cx.admitted(reserve=False)
+    producer = launched(cx, item, "PRODUCER")
     worktree = tmp_path / "producer-worktree"
     git(cx.clone, "worktree", "add", "-q", "--detach", str(worktree))
     other = cx.admitted("OTHER")
-    verifier, _, clone = cx.produced(other)
+    _, _, clone = cx.produced(other)
+    verifier = launched(cx, other, "VERIFIER")
     (tmp_path / "worker-tmp").mkdir()
     for identity, role, correlation, cwd, candidate_clone in (
             (item.id, "PRODUCER", producer, worktree, ""), (other.id, "VERIFIER", verifier, clone, str(clone))):

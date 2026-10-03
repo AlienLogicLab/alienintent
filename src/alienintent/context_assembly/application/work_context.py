@@ -16,6 +16,7 @@ from dataclasses import asdict, dataclass
 from hashlib import sha256
 import json
 from pathlib import Path
+import re
 
 from alienintent.context_assembly.application.work_authorization import ReleaseRecords
 from alienintent.context_assembly.application.work_registration import WorkRecordService
@@ -142,8 +143,7 @@ class WorkContext:
         if contract_digest is not None and contract_digest != contract.content_digest:
             raise _hold(MISMATCH, "contract_digest", detail="the invocation's contract digest is not the contract's")
         version, raw = self._read("history", lambda: self.store.read_state(self.store_profile, f"factory:{item.id}"))
-        if correlation != f"launch:{item.id}:{version}":
-            raise _hold(DRIFT, "attempt", detail=f"the store version of factory:{item.id} is {version}")
+        attempt = self._attempt(item.id, correlation, version)
         try:
             state = self.decode(raw) if raw else None
             rejections, findings = raw.get("rejections", 0), raw.get("findings", [])
@@ -164,7 +164,7 @@ class WorkContext:
         references = [self._reference(pointer, reference) for reference in contract.authority_references]
         fields: dict[str, object] = {
             "identity": item.id, "label": item.label, "role": role,
-            "attempt": {"correlation": correlation, "store_version": version},
+            "attempt": attempt,
             "goal": contract.intent,
             "instructions": {"repository": pointer.repo, "path": pointer.path, "commit": pointer.commit,
                              **content(record.packet)},
@@ -215,6 +215,23 @@ class WorkContext:
             fields["diff"] = {"base": release.baseline, "revision": revision, **content(diff)}
             fields["context_command"] = self.command.document(item.id, role, correlation, held.locator)
         return ContextPackage(role, json.loads(canonical(fields)))
+
+    def _attempt(self, identity: str, correlation: str, version: int) -> int:
+        """Step 5's attempt check: `launch:<identity>:<v>` is current when it names this work item and either the
+        store version of `factory:<identity>` is v (the launch is not yet saved) or it is v + 1 and the store's effect
+        record for exactly this correlation is `pending` or `unknown` (the coordinator saved this launch and its
+        worker has not reported). The attempt is v; anything else is VERSION_DRIFT."""
+        prefix, _, number = correlation.rpartition(":")
+        attempt = int(number) if prefix == f"launch:{identity}" and re.fullmatch(r"0|[1-9][0-9]*", number) else None
+        if attempt is not None and version == attempt:
+            return attempt
+        if attempt is not None and version == attempt + 1:
+            ledger = self._read("attempt", lambda: self.store.effect_ledger(  # type: ignore[attr-defined]
+                self.store_profile))
+            if any(effect == correlation and status in ("pending", "unknown") for effect, status, _ in ledger):
+                return attempt
+        raise _hold(DRIFT, "attempt", detail=f"{correlation} is not a current launch of factory:{identity} "
+                                             f"(store version {version})")
 
     def _show(self, identity: str, field: str) -> WorkRecord | None:
         try:
