@@ -698,3 +698,17 @@ def test_the_worker_profile_assembles_read_only_over_wal_databases(tmp_path, mon
     assert (file_bytes(work), file_bytes(readiness_database)) == before
     monkeypatch.undo()
     assert cx.registry.context.assemble(item.id, PRODUCER, f"launch:{item.id}:0", None) == package
+
+
+# --- unit 6c-2: the launch composition ------------------------------------------------------------------------------
+
+
+def test_the_launcher_needs_the_ready_view_and_a_configuration_file(board, tmp_path):
+    """`work launch` needs the context command, which names the configuration file; and the READY view."""
+    with pytest.raises(ConfigurationInvalid):
+        board.registry.launcher()  # loaded from a document, not a file: no context command
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    path = tmp_path / "readiness-only.json"
+    path.write_text(json.dumps(entry(tmp_path, readiness=readiness(tmp_path))))
+    with pytest.raises(ConfigurationInvalid):
+        WorkRegistry(load_project_configuration(path, PROJECT)).launcher()

@@ -25,6 +25,10 @@ IMPLEMENT and VERIFY cycle counts of that coordinator's state.
 With `readiness` and a configuration loaded from its file, `context` (WorkContext) assembles each role's context
 package from those same records; `work_context_profile` is the read-only worker profile its `work context` command
 runs under, opening the work and `readiness` databases with SQLite `mode=ro`.
+With both, `launcher()` (`work launch`, unit 6c-2) is that coordinator over the existing worker chain, launching one
+PRODUCER or VERIFIER step with its package assembled at launch and its model routed from the shared routing file at
+every launch (LaunchPreparation). Workers keep their user's filesystem access: no operating-system containment is
+claimed.
 
 Configuration document (JSON):
 
@@ -43,7 +47,7 @@ Configuration document (JSON):
 """
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -56,7 +60,10 @@ import time
 from types import SimpleNamespace
 from uuid import uuid4
 
+from alienintent.composition.model_routing import provider_command, resolve_route
 from alienintent.composition.readiness import assessment_environment, compose_producer, resolve_binding
+from alienintent.composition.role_binding import ROLE_OPERATIONS, RoleBindingGuard
+from alienintent.composition.sandbox_run_profile import PROVIDER_DIMENSIONS, worker_environment
 from alienintent.composition.sandbox_profile import APP_KEY_REFERENCE
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
@@ -68,8 +75,10 @@ from alienintent.context_assembly.application.work_identity_service import WorkI
 from alienintent.context_assembly.application.work_link import WorkLink
 from alienintent.context_assembly.application.work_registration import WorkRecordService
 from alienintent.context_assembly.domain.packet_assessment import fingerprint
-from alienintent.context_assembly.domain.work_contract import contract_block
-from alienintent.context_assembly.domain.work_identity import STATES, GitReadFailed, valid_path
+from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason
+from alienintent.context_assembly.domain.work_context import PRODUCER, VERIFIER
+from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
+from alienintent.context_assembly.domain.work_identity import STATES, GitReadFailed, WorkIdentityRefused, valid_path
 from alienintent.context_assembly.domain.work_link import LinkResult, render
 from alienintent.context_assembly.ports.work_item_repository import (
     PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
@@ -91,9 +100,11 @@ from alienintent.execution_coordination.application.factory_coordinator import F
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.execution_coordination.domain.contract import BiuContract
+from alienintent.execution_coordination.domain.custody import CandidateRef
+from alienintent.execution_coordination.domain.escalation import HumanDecisionRequired
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
 from alienintent.execution_coordination.ports.project_directory import ProjectItemState
-from alienintent.execution_coordination.ports.worker_provider import WorkerProvider
+from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.installation.adapters.app_jwt import app_assertion
 from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
 from alienintent.installation.adapters.urllib_github_transport import UrllibGitHubTransport
@@ -101,9 +112,14 @@ from alienintent.installation.application.installation_credentials import Instal
 from alienintent.installation.domain.app_credentials import AppIdentity
 from alienintent.installation.domain.project_identity import ProjectAddress
 from alienintent.installation.ports.github_transport import GitHubTransport
+from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
+from alienintent.invocation_runtime.adapters.git_worktree import GitWorktreeAdapter, ref_safe
+from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
-from alienintent.invocation_runtime.domain.runtime import INVOCATION_MARKER, INVOCATION_OWNER_MARKER, owner_token
+from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+from alienintent.invocation_runtime.domain.runtime import (
+    INVOCATION_MARKER, INVOCATION_OWNER_MARKER, CapabilityGrant, InvocationRole, ReservationBook, owner_token)
 from alienintent.invocation_runtime.ports import source_control
 from alienintent.invocation_runtime.ports.source_control import PublishRef, SourceControl
 
@@ -355,6 +371,37 @@ class WorkRegistry:
                                   wip_limit=lambda: wip_limit(self.host_configuration),
                                   recorded_completion=self.completion.recorded)
 
+    def launcher(self) -> FactoryCoordinator:
+        """`work launch` (unit 6c-2): `coordinator(worker, artifacts)` with the existing worker chain of
+        SandboxRunProfile — CliWorkerProvider (its command built at every run from the route `prepare` read, with the
+        `worker_environment` allowlist plus the two variables the context command names), RealWorkerProvider over the
+        packets repository's clone with the invocation journal, GitWorktreeAdapter, ProcOwnership and one grant per
+        dispatch, then RoleBindingGuard. Its state lives beside the `readiness` database, in `launch/`. No other
+        configuration is read; the model routing file is read by `prepare` at every launch."""
+        if self.context is None or self.ready_view is None:
+            raise ConfigurationInvalid("work launch needs the github and readiness entries and a configuration file")
+        configuration = self.configuration
+        packets = configuration.repositories[configuration.packets_repository]
+        repository, store = configuration.github.repository, self.assessment.consumer.store
+        root = launch_root(configuration)
+        for directory in (root / "workspaces", root / "verifier", root / "custody", root / "artifacts",
+                          root / "context", root / "worker-tmp"):
+            directory.mkdir(parents=True, exist_ok=True)
+        preparation = LaunchPreparation(self.context, root / "context", repository)
+        ownership = ProcOwnership()
+        process = CliWorkerProvider("routed", preparation.command, (), "explicit", PROVIDER_DIMENSIONS,
+                                    environment=worker_environment(root) | dict(self.context.command.environment),
+                                    ownership=ownership)
+        journal = JsonlInvocationJournal(root / "invocation-journal.jsonl", time.time)
+        worker = RealWorkerProvider(
+            process, GitSourceControl(), packets.clone, packets.remote,
+            lambda invocation: f"candidate/{ref_safe(invocation.correlation_id)}", root / "verifier",
+            lambda invocation: launch_grant(invocation, repository), repository,
+            GitWorktreeAdapter(packets.clone, root / "workspaces"), ReservationBook(1, 2), now=time.time,
+            sleep=time.sleep, journal=journal, ownership=ownership, preparation=preparation)
+        guard = RoleBindingGuard(worker, journal, store, "registry", repository, time.time)
+        return self.coordinator(guard, LocalArtifactStore(root / "artifacts", root / "custody"))
+
     def _ready_view(self, configuration: ProjectConfiguration) -> GitHubProjectsWorkManagement:
         """The READY view of board #1: profile `registry`, each formal workflow state mapped to itself, no projection
         fields or writes; rows from `_ready_snapshot` and each row's contract the one that snapshot read for it.
@@ -569,3 +616,134 @@ def work_registry_profile() -> SimpleNamespace:
     if not path or not project:
         raise ConfigurationInvalid("ALIENINTENT_PROJECT_CONFIGURATION and ALIENINTENT_PROJECT are required")
     return SimpleNamespace(work_registry=WorkRegistry(load_project_configuration(Path(path), project)))
+
+
+# --- unit 6c-2: the registry worker launch ---------------------------------------------------------------------------
+
+# The one instruction text a launched worker receives on standard input. It names where the package is and where the
+# result goes; everything else the worker needs is in its package.
+INSTRUCTIONS = """You are the {role} for AlienIntent work item {identity}, invocation {invocation}.
+
+Your context package is this JSON file:
+{package}
+Read it first and do only what it states: its goal, instructions, contract, allowed scope and stop conditions bind you.
+
+For further facts, run the package's `context_command`: its `argv` exactly, with its `environment` added to yours. It
+is read-only and answers a package or a named hold.
+
+Only the control plane publishes: do not push, do not open a pull request, and do not change any branch or
+repository outside your current working directory. This is a workflow rule.
+
+{result}
+"""
+PRODUCER_RESULT = """Your current working directory is your git worktree at the package's starting_revision. Make the
+change there and commit it. Then write your self-review of the complete diff, as plain text, to this file:
+{self_review}"""
+VERIFIER_RESULT = """Your current working directory is a fresh clone of the candidate. Verify it against the package.
+Then write .alienintent/verdict.json in that directory as {{"revision": "<the candidate commit, git rev-parse HEAD>",
+"verdict": "accept" or "reject", "findings": ["<finding>", ...]}}; a reject needs at least one finding."""
+GRANT_SECONDS = 3600
+
+
+def launch_root(configuration: ProjectConfiguration) -> Path:
+    """The launch state folder: `launch/` beside the `readiness` database (the existing registry folder)."""
+    return configuration.readiness.database.parent / "launch"
+
+
+def launch_grant(invocation: WorkerInvocation, repository: str) -> CapabilityGrant:
+    """One capability grant per dispatch, naming the invocation and the role it authorizes, issued by profile
+    `registry` for the work items' repository (what RoleBindingGuard checks)."""
+    role = InvocationRole(invocation.role)
+    return CapabilityGrant(f"registry-{invocation.work_identity}", "1", invocation.correlation_id, role, "registry",
+                           repository, ROLE_OPERATIONS[str(role)], int(time.time()) + GRANT_SECONDS)
+
+
+class LaunchPreparation:
+    """RealWorkerProvider's preparation hook for registry launches, and the per-invocation worker command.
+
+    `prepare` refuses with a complete authority-block outcome (its one finding the same text as the escalation's
+    reason) when the contract's budget states no execution or shutdown limit, when assembly holds, or when the role
+    has no usable route; otherwise it writes the package to `<context root>/<invocation id>.json`, keeps the route
+    and the instruction text, and returns the starting revision. `command` builds the provider command at `run`.
+    `published` records the PRODUCER's self-review file against the published, read-back candidate; it never
+    raises."""
+
+    def __init__(self, context: WorkContext, context_root: Path, repository: str,
+                 route: Callable[[str], dict[str, str]] = resolve_route) -> None:
+        self.context, self.context_root, self.repository, self.route = context, Path(context_root), repository, route
+        self.kept: dict[str, tuple[dict[str, str], str]] = {}
+
+    def package_path(self, invocation_id: str) -> Path:
+        return self.context_root / f"{invocation_id}.json"
+
+    def self_review_path(self, invocation_id: str) -> Path:
+        return self.context_root / f"{invocation_id}.self-review.md"
+
+    def prepare(self, invocation: WorkerInvocation, clone: Path | None) -> str | WorkerOutcome:
+        identity, role = invocation.work_identity, invocation.role
+        if not self._budget_stated(identity):
+            return self._refusal(invocation, f"{HoldReason.MISSING_RECORD}: budget_policy: the contract's "
+                                             "budget_policy states no hard_wall_clock_seconds or cancellation_limit")
+        package = self.context.assemble(identity, role, invocation.correlation_id, invocation.contract_digest,
+                                        invocation.candidate if role == VERIFIER else None, clone)
+        if isinstance(package, ContextHold):
+            return self._refusal(invocation, f"{package.reason}: {', '.join(package.affected_refs)}: {package.detail}")
+        try:
+            route = self.route(role)
+        except (OSError, ValueError, TypeError, AttributeError) as error:
+            return self._refusal(invocation, f"model-routing-unavailable: {role}: {type(error).__name__}: {error}")
+        self.deliver(invocation, package.document(), route)
+        return str(package.fields["starting_revision"])
+
+    def deliver(self, invocation: WorkerInvocation, document: Mapping[str, object], route: dict[str, str]) -> Path:
+        """Write the package outside any worktree and keep the route and the instruction text for `command`."""
+        path = self.package_path(invocation.correlation_id)
+        self.context_root.mkdir(parents=True, exist_ok=True)
+        path.write_text(json.dumps(dict(document), indent=1, sort_keys=True), encoding="utf-8")
+        result = PRODUCER_RESULT.format(self_review=self.self_review_path(invocation.correlation_id)) \
+            if invocation.role == PRODUCER else VERIFIER_RESULT
+        self.kept[invocation.correlation_id] = (dict(route), INSTRUCTIONS.format(
+            role=invocation.role, identity=invocation.work_identity, invocation=invocation.correlation_id,
+            package=path, result=result))
+        return path
+
+    def command(self, invocation_id: str, role: object, workspace: Path) -> tuple[list[str], str]:
+        """CliWorkerProvider's per-invocation command: the provider command for the kept route and this workspace,
+        and the instruction text for standard input."""
+        route, text = self.kept[invocation_id]
+        return provider_command(route, workspace), text
+
+    def published(self, invocation: WorkerInvocation, candidate: CandidateRef) -> None:
+        try:
+            text = self.self_review_path(invocation.correlation_id).read_text(encoding="utf-8")
+            if text.strip():
+                self.context.record_self_review(invocation.work_identity, candidate, text)
+        except Exception:  # noqa: BLE001 - nothing is recorded; the VERIFIER's launch is held MISSING_RECORD
+            pass
+
+    def _budget_stated(self, identity: str) -> bool:
+        """Whether the contract states both launch limits; a packet or contract that cannot be read is left to
+        assembly, which names it."""
+        try:
+            record = self.context.records.show(identity)
+            if record is None or record.packet is None:
+                return True
+            budget = contract_block(record.packet, identity).budget_policy
+        except (WorkIdentityRefused, ContractInvalid):
+            return True
+        return budget.hard_wall_clock_seconds is not None and budget.cancellation_limit is not None
+
+    def _refusal(self, invocation: WorkerInvocation, reason: str) -> WorkerOutcome:
+        """The complete authority-block outcome: an escalation naming the hold, and the same text as its finding."""
+        _, raw = self.context.store.read_state(self.context.store_profile, f"factory:{invocation.work_identity}")
+        version = raw.get("version") if isinstance(raw.get("version"), int) else 0
+        escalation = HumanDecisionRequired(
+            profile=self.context.store_profile, project=self.repository, work_item=invocation.work_identity,
+            biu_version=version,
+            decision="Resolve the launch hold, then authorize the blocked execution to continue.", reason=reason,
+            options=("authorize", "defer"), tradeoffs=("authorize permits one normal guarded re-admission",
+                                                       "defer retains the scoped authority block"),
+            recommendation="defer", affected_requirements=("authority-required",),
+            affected_architecture=("FD-05",), cost_of_waiting="The work item and its dependents remain blocked.",
+            authorizations=("authorize permits one normal guarded re-admission", "defer authorizes continued blocking"))
+        return WorkerOutcome("authority-block", None, escalation, (reason,))

@@ -21,7 +21,7 @@ from dataclasses import asdict, dataclass
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
-from model_routing import resolve_route
+from model_routing import provider_command, resolve_route
 from typing import Callable
 
 
@@ -201,12 +201,7 @@ class ProcessDirectorLauncher:
             return False
 
     def command(self, route: dict[str, str] | None = None) -> list[str]:
-        route = route or self._route()
-        if route["provider"] == "claude":
-            return [route["executable"], "-p", "--no-session-persistence", "--output-format", "json",
-                    "--permission-mode", route["permissionMode"], "--model", route["model"]]
-        return [route["executable"], "exec", "--ephemeral", "--json", "--sandbox", route["permissionMode"],
-                "-C", str(self.workdir), "--model", route["model"], "-"]
+        return provider_command(route or self._route(), self.workdir)
 
     def environment(self, route: dict[str, str]) -> dict[str, str]:
         if route["provider"] == "codex":

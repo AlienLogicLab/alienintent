@@ -1235,3 +1235,56 @@ def test_guard_account_names_a_conflicting_dependency_dependencies_incomplete(tm
 def test_without_the_reader_a_dependency_without_a_coordinator_record_never_counts(tmp_path: Path) -> None:
     coordinator, worker, _ = _dependent(tmp_path, None)
     assert coordinator.start().stop_reason.value == "dependencies-or-authority-blocked" and worker.dispatched == []
+
+
+# --- unit 6c-2: `launch`, one role step for one named work item ------------------------------------------------------
+
+
+def _launching(tmp_path: Path, items, outcomes, **kwargs):
+    coordinator_module, custody, _, _ = _api()
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    worker = ScriptedWorker(artifacts, outcomes)
+    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
+    return coordinator_module.FactoryCoordinator(store, MemoryWorkManagement(items), worker, artifacts, "offline",
+                                                 automatic_release=False, **kwargs), worker, store
+
+
+def test_launch_runs_one_role_step_of_the_named_item_and_never_closure(tmp_path: Path) -> None:
+    """Check 6: another released, eligible, higher-priority item is not run; each launch is one role step; at
+    ACCEPT the answer is closure-not-automated with no write."""
+    from alienintent.execution_coordination.domain.release import ReleaseSource
+    coordinator, worker, store = _launching(tmp_path, [_item("a", 0, 2, automatic=False), _item("b", 1, 1, automatic=False)],
+                                            {"a": ["success"], "b": ["success"]})
+    store.commit("offline", "release:b", 0, {"identity": "b", "source": ReleaseSource.EXPLICIT_HUMAN})
+
+    first = coordinator.launch("a")
+    assert first.dispatched == ("a",) and [role for _, role, _ in worker.invocations] == ["PRODUCER"]
+    assert coordinator.state("a").stage is LifecycleStage.VERIFY
+    second = coordinator.launch("a")
+    assert second.dispatched == () and [role for _, role, _ in worker.invocations] == ["PRODUCER", "VERIFIER"]
+    assert coordinator.state("a").stage is LifecycleStage.ACCEPT
+    before = store.list_states("offline", "")
+    assert coordinator.launch("a") == "closure-not-automated"
+    assert store.list_states("offline", "") == before and len(worker.invocations) == 2
+    assert {identity for identity, _, _ in worker.invocations} == {"a"}
+    with pytest.raises(KeyError):
+        coordinator.state("b")
+
+
+def test_launch_answers_not_eligible_outside_the_ready_snapshot_or_with_a_dependency_not_done(tmp_path: Path) -> None:
+    """The dependency check is the coordinator's own, through the injected reader of recorded completions."""
+    recorded: set[str] = set()
+    coordinator, worker, _ = _launching(tmp_path, [_item("child", 0, 1, ("dep",), automatic=False)], {"child": ["success"]},
+                                        recorded_completion=lambda identity: identity in recorded)
+    assert coordinator.launch("absent") == "not-eligible"
+    assert coordinator.launch("child") == "not-eligible" and worker.invocations == []
+    recorded.add("dep")
+    assert coordinator.launch("child").dispatched == ("child",)
+
+
+@pytest.mark.parametrize(("limit", "answer"), [(None, "wip-limit-unavailable"), (1, "wip-refused")])
+def test_launch_answers_a_wip_skip(tmp_path: Path, limit, answer) -> None:
+    coordinator, worker, store = _launching(tmp_path, [_item("a", 0, 1, automatic=False)], {"a": ["success"]},
+                                            wip_limit=lambda: limit)
+    store.acquire_within("offline", "wip", "other", "work:other", 1)
+    assert coordinator.launch("a") == answer and worker.invocations == []

@@ -629,3 +629,35 @@ def test_the_worker_profile_answers_every_other_command_with_the_stated_error(tm
     assert main(["--json", "--profile-factory", WORK_CONTEXT_PROFILE, *argv]) == 1
     assert json.loads(capsys.readouterr().out) == {"error": "not-available-in-worker-profile"}
     assert cx.written() == before
+
+
+# --- unit 6c-2: `work launch` and `work context --contract-digest` ---------------------------------------------------
+
+
+def test_work_launch_renders_one_step_and_work_context_passes_the_contract_digest(monkeypatch, capsys) -> None:
+    """`work launch <id>` calls the registry launcher's `launch` for exactly that id and renders its answer or run
+    summary; `--contract-digest` reaches `assemble` (None without it)."""
+    from types import SimpleNamespace
+    from alienintent.control_plane.adapters import cli
+    from alienintent.execution_coordination.application.factory_coordinator import RunSummary, StopReason
+    calls = []
+    answers = iter(["closure-not-automated", RunSummary(StopReason.BLOCKED, ("ITEM",))])
+    launcher = SimpleNamespace(launch=lambda identity: calls.append(("launch", identity)) or next(answers))
+
+    class Context:
+        def assemble(self, *args):
+            calls.append(("assemble", args[3]))
+            return SimpleNamespace(document=lambda: {"status": "HOLD"})
+    registry = SimpleNamespace(launcher=lambda: launcher, context=Context())
+    monkeypatch.setattr(cli, "_factory", lambda _: SimpleNamespace(work_registry=registry))
+
+    assert cli.main(["--json", "--profile-factory", "x:y", "work", "launch", "ITEM"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"identity": "ITEM", "answer": "closure-not-automated"}
+    assert cli.main(["--json", "--profile-factory", "x:y", "work", "launch", "ITEM"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"identity": "ITEM", "stop_reason": "dependencies-or-authority-blocked",
+                                                   "dispatched": ["ITEM"], "authority_blocked": [], "failed": []}
+    for extra, digest in ((["--contract-digest", "sha256:abc"], "sha256:abc"), ([], None)):
+        assert cli.main(["--json", "--profile-factory", "x:y", "work", "context", "ITEM", "--role", "PRODUCER",
+                         "--correlation", "launch:ITEM:0", *extra]) == 0
+        capsys.readouterr()
+    assert calls == [("launch", "ITEM"), ("launch", "ITEM"), ("assemble", "sha256:abc"), ("assemble", None)]

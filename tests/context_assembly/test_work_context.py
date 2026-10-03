@@ -152,7 +152,7 @@ def test_a_first_producer_gets_exactly_its_fields_from_the_records(cx):
     command = fields["context_command"]
     assert command["argv"][1:] == ["--profile-factory", "alienintent.composition.work_registry:work_context_profile",
                                    "--json", "work", "context", item.id, "--role", PRODUCER, "--correlation",
-                                   f"launch:{item.id}:0"]
+                                   f"launch:{item.id}:0", "--contract-digest", cx.digest(item)]
     assert Path(command["argv"][0]).is_absolute() and Path(command["argv"][0]).name == "alienintent"
     assert command["environment"] == {"ALIENINTENT_PROJECT_CONFIGURATION": str(cx.configuration_file.resolve()),
                                       "ALIENINTENT_PROJECT": PROJECT}
@@ -177,7 +177,8 @@ def test_the_verifier_gets_its_fields_and_never_the_producers_output(cx):
     assert fields["producer_self_review"]["label"] == SELF_REVIEW_LABEL
     assert fields["producer_self_review"]["text"] == REVIEW
     assert document.count("REVIEW-TEXT-91c2") == 1 and "REVIEW-TEXT" not in json.dumps(fields["history"])
-    assert fields["context_command"]["argv"][-2:] == ["--candidate", candidate.locator]
+    assert fields["context_command"]["argv"][-4:] == ["--candidate", candidate.locator, "--contract-digest",
+                                                      cx.digest(item)]
     # The exact CandidateRef is accepted the same way as its locator.
     assert cx.context.assemble(item.id, VERIFIER, correlation, cx.digest(item), candidate, clone) == package
 
