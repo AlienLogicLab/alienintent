@@ -432,8 +432,12 @@ class WorkRegistry:
             .decisions_decide(identity, actor=issuer, authority=issuer, target=identity, intent=choice, reason=quote,
                               expected_version=revision, idempotency_key=f"work-decide:{identity}:{biu_version}:{choice}",
                               biu_version=biu_version, choice=choice)
+        if request is not None and choice == "authorize" and parked and retained is not None:
+            worker.retained_workspaces[correlation] = retained
+            worker.cleanup_diagnostics[correlation] = f"{identity}: authorized and relaunched"
         return {"answer": None, "decision": decided, "correlation": correlation,
-                "retained_worktree": None if retained is None else str(retained)}
+                "retained_worktree": None if retained is None else str(retained),
+                "cleanup_diagnostics": dict(worker.cleanup_diagnostics)}
 
     def _authorize_refusal(self, worker: RealWorkerProvider, identity: str, correlation: str, reason: str,
                            workspace: Path) -> dict[str, object] | None:

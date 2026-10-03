@@ -628,20 +628,23 @@ def test_an_abandoned_producer_worktree_is_cleaned_only_when_its_owner_ended(tmp
                         "role": "PRODUCER"} | ({"owner": owner} if owned else {}))
         return WorkerInvocation("W", correlation)
 
-    clean, dirty, live, active, unowned, retained = (abandoned(n, owned=n != 5) for n in range(1, 7))
+    clean, dirty, live, active, unowned, parked, missing = (abandoned(n, owned=n != 5) for n in range(1, 8))
     (root / dirty.correlation_id / "partial.txt").write_text("uncommitted")
     outside = tmp_path / "outside"
     outside.mkdir()
-    for invocation, state, work, retain in ((clean, "terminated", (), False), (dirty, "terminated", (), False),
-                                            (live, "alive", (), False), (active, "terminated", (4242,), False),
-                                            (unowned, "terminated", (), False), (retained, "terminated", (), True),
-                                            (WorkerInvocation("W", "../outside"), "terminated", (), False)):
+    for invocation, state, work, retain, reason in (
+            (clean, "terminated", (), False, None), (dirty, "terminated", (), False, None),
+            (live, "alive", (), False, None), (active, "terminated", (4242,), False, None),
+            (unowned, "terminated", (), False, None), (parked, "terminated", (), True, "parked"),
+            (missing, "terminated", (), True, "missing-terminal-result"),
+            (WorkerInvocation("W", "../outside"), "terminated", (), False, None)):
         owners.state, owners.work = state, work
-        worker.finalize(invocation, retain)
+        worker.finalize(invocation, retain, reason)
     assert not (root / clean.correlation_id).exists() and outside.exists()
     assert worker.cleanup_diagnostics == {
         dirty.correlation_id: "W: workspace is not quiescent; retained for diagnosis",
         live.correlation_id: "W: owner-alive", active.correlation_id: "W: owned-work-active",
-        unowned.correlation_id: "W: owner-unattested", retained.correlation_id: "W: retained"}
+        unowned.correlation_id: "W: owner-unattested", parked.correlation_id: "W: parked",
+        missing.correlation_id: "W: missing-terminal-result"}
     assert set(worker.retained_workspaces) == set(worker.cleanup_diagnostics)
     assert all(path.exists() for path in worker.retained_workspaces.values())

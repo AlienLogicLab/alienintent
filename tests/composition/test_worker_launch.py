@@ -555,4 +555,5 @@ def test_restart_continuation_authorize_reconciles_a_started_publication_against
     worktree.with_name("moved").rename(worktree)
     decided = fx.loaded().decide(item.id, "authorize", QUOTE)
     assert decided["answer"] is None and decided["retained_worktree"] == str(worktree.resolve())
+    assert decided["cleanup_diagnostics"] == {correlation: f"{item.id}: authorized and relaunched"}
     assert fx.loaded().coordinator(None, None).state(item.id).outcome == "decision-recorded" and not ran(fx, item.id)

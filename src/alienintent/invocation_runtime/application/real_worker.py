@@ -404,11 +404,12 @@ class RealWorkerProvider(WorkerProvider):
         """
         return self._branch(invocation) if callable(self._branch) else self._branch
 
-    def finalize(self, invocation: WorkerInvocation, retain: bool) -> None:
-        """Complete workspace disposition after the coordinator durably records truth."""
+    def finalize(self, invocation: WorkerInvocation, retain: bool, reason: str | None = None) -> None:
+        """Complete workspace disposition after the coordinator durably records truth; `reason` names why the
+        caller keeps it (`parked`, `missing-terminal-result`)."""
         workspace = self._finished_workspaces.pop(invocation.correlation_id, None)
         if workspace is None:
-            self._finalize_recovered(invocation, retain)
+            self._finalize_recovered(invocation, retain, reason)
             return
         if retain:
             self.retained_workspaces[invocation.correlation_id] = workspace.path
@@ -418,7 +419,7 @@ class RealWorkerProvider(WorkerProvider):
         except Exception as error:
             self.cleanup_diagnostics[invocation.correlation_id] = type(error).__name__
 
-    def _finalize_recovered(self, invocation: WorkerInvocation, retain: bool) -> None:
+    def _finalize_recovered(self, invocation: WorkerInvocation, retain: bool, kept: str | None = None) -> None:
         """After a restart: the PRODUCER worktree at its fixed path, owned by its correlation.
 
         It is cleaned only when the journaled owner has ended and no owned work runs (`owner-terminated` or
@@ -430,7 +431,7 @@ class RealWorkerProvider(WorkerProvider):
         workspace = None if self._recovered_workspace is None else self._recovered_workspace(invocation)
         if workspace is None or self._workspaces is None or not workspace.path.exists():
             return
-        reason = "retained" if retain else self.attest_ownership(invocation).kind
+        reason = (kept or "retained") if retain else self.attest_ownership(invocation).kind
         if reason in {OWNER_TERMINATED, EFFECT_UNKNOWN}:
             try:
                 self._workspaces.cleanup(workspace, self._owner_pid(invocation))
