@@ -632,3 +632,42 @@ def test_the_coordinator_needs_the_ready_view(tmp_path):
     SQLiteOperationalStore(tmp_path / "fx.sqlite")
     with pytest.raises(ConfigurationInvalid):
         WorkRegistry(project_configuration(entry(tmp_path, readiness=readiness(tmp_path)), PROJECT)).coordinator(None, None)
+
+
+# --- unit 6c-1: the read-only worker profile -------------------------------------------------------------------------
+
+
+def test_the_worker_profile_assembles_read_only_over_wal_databases(tmp_path, monkeypatch):
+    """Founder check (b): both databases in WAL mode with -wal and -shm present, the last writes only in the -wal;
+    after assembly through the worker profile the database and -wal bytes are unchanged. A profile opening either
+    database writable checkpoints its -wal on close; one building WorkRegistry resolves the Agent Ready executable."""
+    from alienintent.composition import work_registry
+    from alienintent.composition.work_registry import work_context_profile
+    from alienintent.context_assembly.domain.work_context import PRODUCER, ContextPackage
+    from alienintent.execution_coordination.ports.operational_store import StoreUnavailable
+    from tests.context_assembly.test_work_context import Cx
+    from tests.execution_coordination.test_operational_store import file_bytes, leave_in_wal
+    cx = Cx(tmp_path / "cx")
+    item = cx.admitted(reserve=False)
+    work, readiness_database = cx.root / "work.sqlite", cx.root / "readiness.sqlite"
+    leave_in_wal(readiness_database, "INSERT INTO reservations VALUES ('registry', 'repository', 'repository-UNIT', "
+                                     f"'launch:{item.id}:0', 1)")
+    leave_in_wal(work, f"UPDATE work_item SET updated_at = '2026-10-03T00:00:00.000Z' WHERE id = '{item.id}'")
+    before = file_bytes(work), file_bytes(readiness_database)
+    monkeypatch.setenv("ALIENINTENT_PROJECT_CONFIGURATION", str(cx.configuration_file))
+    monkeypatch.setenv("ALIENINTENT_PROJECT", PROJECT)
+
+    def refused(*_, **__):
+        raise AssertionError("the worker profile builds only the readers work context needs")
+    monkeypatch.setattr(work_registry, "resolve_binding", refused)
+    monkeypatch.setattr(work_registry, "WorkRegistry", refused)
+    profile = work_context_profile()
+    assert profile.worker_profile is True and set(vars(profile.work_registry)) == {"context"}
+    context = profile.work_registry.context
+    package = context.assemble(item.id, PRODUCER, f"launch:{item.id}:0", None)
+    assert isinstance(package, ContextPackage)  # The reservation it needs exists only in the -wal file.
+    with pytest.raises(StoreUnavailable):
+        context.store.commit("registry", "anything", 0, {})
+    assert (file_bytes(work), file_bytes(readiness_database)) == before
+    monkeypatch.undo()
+    assert cx.registry.context.assemble(item.id, PRODUCER, f"launch:{item.id}:0", None) == package

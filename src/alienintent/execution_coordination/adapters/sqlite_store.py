@@ -49,16 +49,22 @@ def _vector(vector: GuardVector) -> dict[str, object]:
 class SQLiteOperationalStore(FencedOperationalStore):
     """Durable operational state; evidence and external adapters remain outside it."""
 
-    def __init__(self, path: Path, *, clock: Callable[[], float] | None = None) -> None:
+    def __init__(self, path: Path, *, clock: Callable[[], float] | None = None, read_only: bool = False) -> None:
+        """`read_only` opens the existing database with SQLite `mode=ro` and runs no schema creation or migration: a
+        missing database, or one at another schema, is refused, and every write through it fails."""
         self.path = path
         self._clock = clock
+        self._read_only = read_only
         try:
             self._initialize()
         except sqlite3.Error as error:
             raise StoreUnavailable(str(error)) from error
 
     def _connect(self) -> sqlite3.Connection:
-        connection = sqlite3.connect(self.path, isolation_level=None)
+        if self._read_only:
+            connection = sqlite3.connect(Path(self.path).resolve().as_uri() + "?mode=ro", uri=True, isolation_level=None)
+        else:
+            connection = sqlite3.connect(self.path, isolation_level=None)
         connection.row_factory = sqlite3.Row
         return connection
 
@@ -67,6 +73,8 @@ class SQLiteOperationalStore(FencedOperationalStore):
             preflight = self._preflight(connection)
             if preflight.current_version == SCHEMA_VERSION:
                 return
+            if self._read_only:
+                raise SchemaIncompatible(f"a read-only open needs an existing database at schema {SCHEMA_VERSION}")
             if preflight.migration:
                 self._migrate(connection, *preflight.migration)
                 return

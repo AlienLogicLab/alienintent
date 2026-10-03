@@ -74,10 +74,20 @@ class SQLiteWorkItemRepository(WorkItemRepository):
     at the outermost `transaction()` and dropped when it ends, on every path. Between transactions nothing is held."""
 
     def __init__(self, path: Path, repositories: Mapping[str, RepositoryLocation], *, busy_timeout: float = 5.0,
-                 git_timeout: float = 120.0) -> None:
+                 git_timeout: float = 120.0, read_only: bool = False) -> None:
+        """`read_only` opens the existing database with SQLite `mode=ro` and runs no schema, migration or index
+        statement: a missing database, or one without the current table, is refused, and every write fails."""
         self._path, self._repositories = path, dict(repositories)
         self._busy_timeout, self._git_timeout = busy_timeout, git_timeout
         self._local = threading.local()
+        self._read_only = read_only
+        if read_only:
+            with self._session() as connection:
+                present = self._execute(connection, "SELECT 1 FROM sqlite_master WHERE type = 'table' AND "
+                                                    "name = 'work_item'").fetchone()
+                if present is None or self._missing_link_columns(connection):
+                    raise RegistryUnavailable(str(path), "not a work database at the current schema")
+            return
         with self._session() as connection:
             self._execute(connection, SCHEMA)
             missing = self._missing_link_columns(connection)
@@ -97,7 +107,9 @@ class SQLiteWorkItemRepository(WorkItemRepository):
 
     def _connect(self) -> sqlite3.Connection:
         try:
-            connection = sqlite3.connect(self._path, isolation_level=None, timeout=self._busy_timeout)
+            database, uri = (Path(self._path).resolve().as_uri() + "?mode=ro", True) if self._read_only \
+                else (self._path, False)
+            connection = sqlite3.connect(database, isolation_level=None, timeout=self._busy_timeout, uri=uri)
             connection.row_factory = sqlite3.Row
             connection.execute("PRAGMA foreign_keys = ON")
         except sqlite3.Error as error:

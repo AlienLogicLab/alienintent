@@ -5,13 +5,14 @@ import argparse
 from datetime import UTC, datetime
 import importlib
 import json
+from pathlib import Path
 import sys
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from alienintent.control_plane.application.operator import (
-    OperatorControlPlane, OperatorDenied, assess_work, authorize_work, display_work, import_work, link_work,
-    migrate_work, register_work, show_work)
+    NOT_AVAILABLE_IN_WORKER_PROFILE, OperatorControlPlane, OperatorDenied, assess_work, authorize_work, context_work,
+    display_work, import_work, link_work, migrate_work, register_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
@@ -103,6 +104,9 @@ def _parser() -> argparse.ArgumentParser:
         authorize.add_argument("--" + name, required=True)
     link = _sanitized(work.add_parser("link")); link.add_argument("target"); link.add_argument("--issue", type=int)
     display = _sanitized(work.add_parser("display")); display.add_argument("target")
+    context = _sanitized(work.add_parser("context")); context.add_argument("target")
+    context.add_argument("--role", choices=("PRODUCER", "VERIFIER"), required=True)
+    context.add_argument("--correlation", required=True); context.add_argument("--candidate")
     return parser
 
 
@@ -132,6 +136,10 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "version": _render({"version": "0.0.0", "install": "python-package"}, args.json); return 0
         if not args.profile_factory: raise ValueError("--profile-factory is required")
         profile = _factory(args.profile_factory)
+        if getattr(profile, "worker_profile", False) and (args.command, getattr(args, "work_command", None)) \
+                != ("work", "context"):
+            _render({"error": NOT_AVAILABLE_IN_WORKER_PROFILE}, args.json)
+            return 1
         if args.command == "doctor":
             doctor = getattr(profile, "doctor", None)
             if doctor is None:
@@ -147,6 +155,13 @@ def main(argv: list[str] | None = None) -> int:
                 return 1
             if args.work_command == "show":
                 _render(show_work(registry.records, args.target), args.json)
+                return 0
+            if args.work_command == "context":
+                if getattr(registry, "context", None) is None:
+                    _render({"error": "readiness-not-configured"}, args.json)
+                    return 1
+                _render(context_work(registry.context, args.target, args.role, args.correlation, args.candidate,
+                                     Path.cwd()), args.json)
                 return 0
             if args.work_command == "assess":
                 if (args.file is None) != (args.commit is None) or (args.file is not None and args.recover):
