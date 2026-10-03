@@ -196,6 +196,29 @@ def test_authorization_is_wired_on_the_readiness_store_clone_and_default_branch(
     assert raw["baseline"] == head
 
 
+def test_completion_is_wired_on_the_readiness_store_clone_and_default_branch(tmp_path):
+    """`work record-completed` exists only with `readiness`: its evidence goes to the assessment evidence folder,
+    landings are checked in the configured clone against its configured default branch, the landing record is read
+    with the adapter's `read_packet`, and the coordinator record it checks is `factory:<id>` under profile `registry`
+    on the readiness store."""
+    from alienintent.context_assembly.application.work_completion import WorkCompletion
+    SQLiteOperationalStore(tmp_path / "fx.sqlite")
+    assert WorkRegistry(project_configuration(entry(tmp_path), PROJECT)).completion is None
+    clone, _ = project_clone(tmp_path)
+    head = commit_file(clone, "main", "docs/p.md", b"p\n")
+    repositories = {REPO: {"clone": str(clone), "remote": "origin", "default_branch": "trunk",
+                           "packets_branch": "alienintent/work-packets"}}
+    registry = WorkRegistry(project_configuration(entry(tmp_path, repositories=repositories,
+                                                        readiness=readiness(tmp_path)), PROJECT))
+    completion = registry.completion
+    assert isinstance(completion, WorkCompletion) and completion.records is registry.records
+    assert completion.evidence is registry.assessment.consumer.repository
+    assert completion.release_points == {REPO: "trunk"} and completion.read_packet == registry.items.read_packet
+    assert completion.revisions.resolves(REPO, head) and not completion.revisions.is_reachable(REPO, head, "trunk")
+    assert completion.coordinator_record("fixture") == {}
+    registry.assessment.consumer.store.commit("registry", "factory:fixture", 0, {"stage": "IMPLEMENT"})
+    assert completion.coordinator_record("fixture") == {"stage": "IMPLEMENT"}
+
 def github(root: Path, **changes) -> dict:
     value = {"repository": "AlienLogicLab/alienintent-sandbox", "application_id": 1000001,
              "installation_id": 2000002, "private_key_path": str(root / "key.pem"),
@@ -627,6 +650,10 @@ def test_check8_work_display_shows_the_counts_from_the_coordinator_state(board, 
     assert registry.links.display(plain.id).display == UPDATED
     assert board.github.issues[plain.issue_number]["body"].endswith("\nIMPLEMENT cycles: unknown · VERIFY cycles: unknown")
 
+
+def test_the_coordinator_counts_recorded_completions_through_the_completion_reader(board):
+    """RECORD-COMPLETED-WORK check 4: the registry coordinator is given `completion`'s reader for dependencies."""
+    assert board.registry.coordinator(None, None)._recorded_completion == board.registry.completion.recorded
 
 def test_the_coordinator_needs_the_ready_view(tmp_path):
     SQLiteOperationalStore(tmp_path / "fx.sqlite")

@@ -473,6 +473,38 @@ def test_cli_work_authorize_with_and_without_the_readiness_entry(tmp_path: Path)
     assert (stale["answer"], stale["detail"]) == ("AUTHORIZATION_STALE", "--commit is not the pointer commit")
 
 
+def test_cli_work_record_completed_passes_resolved_paths_and_exact_bytes(tmp_path: Path, monkeypatch, capsys) -> None:
+    """RECORD-COMPLETED-WORK: the command reads each given file once, as its resolved absolute path and exact bytes,
+    and answers the service's result; without a readiness entry it is readiness-not-configured."""
+    from types import SimpleNamespace
+    from alienintent.context_assembly.application.work_completion import CompletionResult
+    from alienintent.control_plane.adapters import cli
+    calls = []
+
+    class Completion:
+        def record(self, *args):
+            calls.append(args)
+            return CompletionResult(args[0], None, {"logical_id": "work-completion/UNIT"})
+
+    registry = SimpleNamespace(completion=None)
+    monkeypatch.setattr(cli, "_factory", lambda reference: SimpleNamespace(work_registry=registry))
+    monkeypatch.chdir(tmp_path)
+    for name, data in (("round1.md", b"REJECT\n"), ("round2.md", b"ACCEPT\r\nbytes \xff\n"), ("approval.json", b"{}")):
+        (tmp_path / name).write_bytes(data)
+    argv = ["--json", "--profile-factory", "x:y", "work", "record-completed", "UNIT", "--candidate", "c" * 40,
+            "--landing", "d" * 40, "--record", "docs/evidence/landing.md", "--verification", "round1.md",
+            "--verification", "./round2.md", "--approval", "approval.json", "--quote", "I approve."]
+    assert cli.main(argv) == 1 and json.loads(capsys.readouterr().out) == {"error": "readiness-not-configured"}
+    registry.completion = Completion()
+    assert cli.main(argv) == 0
+    assert json.loads(capsys.readouterr().out)["evidence_ref"] == {"logical_id": "work-completion/UNIT"}
+    root = tmp_path.resolve()
+    assert calls == [("UNIT", "c" * 40, "d" * 40, "docs/evidence/landing.md",
+                      [(str(root / "round1.md"), b"REJECT\n"), (str(root / "round2.md"), b"ACCEPT\r\nbytes \xff\n")],
+                      (str(root / "approval.json"), b"{}"), "I approve.")]
+    assert cli.main([a for a in argv if a not in ("--verification", "round1.md", "./round2.md")]) == 2
+    assert json.loads(capsys.readouterr().out) == {"error": "invalid-command-arguments"}
+
 def test_cli_work_link_and_display_with_and_without_the_github_entry(tmp_path: Path) -> None:
     """Check 7: without a `github` entry both commands answer github-not-configured; with one they are wired to the
     link service. Only answers reached before any GitHub request are exercised here (no network); the failing step
@@ -574,6 +606,8 @@ def test_work_context_runs_with_only_the_worker_environment(tmp_path: Path) -> N
 @pytest.mark.parametrize("argv", [
     ["work", "assess", "UNIT"],
     ["work", "authorize", "UNIT", "--commit", "c", "--attempt", "a", "--baseline", "b", "--quote", "q"],
+    ["work", "record-completed", "UNIT", "--candidate", "c", "--landing", "l", "--record", "r", "--verification", "v",
+     "--approval", "a", "--quote", "q"],
     ["work", "link", "UNIT"],
     ["work", "register", "--file", "f", "--repo", "r", "--path", "p", "--commit", "c", "--label", "l"],
     ["work", "display", "UNIT"],

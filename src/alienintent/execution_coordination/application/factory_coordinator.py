@@ -76,8 +76,12 @@ class ProjectedState:
 class FactoryCoordinator:
     def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True, notifier: DecisionNotifier | None = None,
                  release_gate: ReleasePreconditionGate | None = None, allocation: ExecutionAllocation | None = None,
-                 wip_limit: Callable[[], int | None] | None = None) -> None:
+                 wip_limit: Callable[[], int | None] | None = None,
+                 recorded_completion: Callable[[str], bool] | None = None) -> None:
         self._store, self._work, self._worker, self._artifacts, self._profile = store, work, worker, artifacts, profile
+        # Whether a dependency with no coordinator record is recorded complete (`work record-completed`); None (the
+        # default) counts only a coordinator record at DONE.
+        self._recorded_completion = recorded_completion
         self._automatic_release = automatic_release
         # SWF-21 release preconditions and the attributable per-BIU budget
         # (WO-220611). A profile that supplies neither keeps its prior
@@ -148,7 +152,7 @@ class FactoryCoordinator:
             reason = "authority-block"
         elif item is None:
             reason = "not-in-upstream-ready-snapshot"
-        elif not all(self._is_done(dependency) for dependency in item.dependencies):
+        elif not all(self._dependency_done(dependency) for dependency in item.dependencies):
             reason = "dependencies-incomplete"
         elif not eligible:
             reason = "release-not-admitted"
@@ -273,7 +277,7 @@ class FactoryCoordinator:
                 return False
         except KeyError:
             pass
-        return (self._is_automatic(item) or self._is_released(item.identity)) and all(self._is_done(dep) for dep in item.dependencies)
+        return (self._is_automatic(item) or self._is_released(item.identity)) and all(self._dependency_done(dep) for dep in item.dependencies)
 
     def _run(self, item: ReadyWorkItem) -> StopReason | _WipSkip | None:
         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
@@ -580,6 +584,14 @@ class FactoryCoordinator:
             return self.state(identity).stage is LifecycleStage.DONE
         except KeyError:
             return False
+
+    def _dependency_done(self, identity: str) -> bool:
+        """A dependency's coordinator record decides when it has one (DONE counts; any other stage does not, whatever
+        the work registry row says); with none, the injected reader of a recorded completion decides."""
+        try:
+            return self.state(identity).stage is LifecycleStage.DONE
+        except KeyError:
+            return self._recorded_completion is not None and self._recorded_completion(identity)
 
     def _stop_reason(self, items: Iterable[ReadyWorkItem]) -> StopReason:
         pending = [

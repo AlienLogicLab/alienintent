@@ -55,6 +55,18 @@ class PublicationFailed(Exception):
         super().__init__(f"{self.code}: {', '.join(self.refs)} ({detail})")
 
 
+NOT_RECORDABLE, COMPLETION_CONFLICT = "NOT_RECORDABLE", "COMPLETION_CONFLICT"
+
+
+class CompletionRefused(Exception):
+    """`record_completed` wrote nothing: NOT_RECORDABLE (`retired`, `pointer changed`) or COMPLETION_CONFLICT (the
+    row is DONE with other evidence, or none)."""
+
+    def __init__(self, code: str, detail: str) -> None:
+        self.code, self.detail = code, detail
+        super().__init__(f"{code}: {detail}")
+
+
 class RefPublisher(Protocol):
     def publish(self, clone: Path, remote: str, refs: tuple[PacketRef, ...]) -> None: ...
 
@@ -69,6 +81,12 @@ class WorkItemRepository(Protocol):
 
     def import_completed(self, request_ref: RequestRef, label: str, kind: str, pointer: Pointer | None,
                          evidence: dict[str, EvidenceRef]) -> WorkItem: ...
+
+    def record_completed(self, identity: str, pointer_commit: str, ref: EvidenceRef) -> tuple[WorkItem, bool]:
+        """The existing row straight to DONE with `verification_ref = ref`, in one write transaction guarded by the
+        state read, `pointer_commit` and not retired; (row, written). A repeat (DONE with `ref`) writes nothing;
+        anything else that cannot be written is CompletionRefused and changes nothing."""
+        ...
 
     def retire(self, identity: str) -> WorkItem: ...
 
