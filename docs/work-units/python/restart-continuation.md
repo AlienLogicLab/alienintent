@@ -1,7 +1,7 @@
 # Work unit: restart continuation for registry launches
 
 **Label:** `RESTART-CONTINUATION` (a document label; permanent id `bb39a588-bf9a-4d30-b573-b8245b8979a0`).
-**Status:** Draft revision 3 (work item `bb39a588-bf9a-4d30-b573-b8245b8979a0`, at CAPTURE) for independent review, 2026-10-03. Not approved, not assessed, not released.
+**Status:** Draft revision 5 (work item `bb39a588-bf9a-4d30-b573-b8245b8979a0`, at CAPTURE) for independent review, 2026-10-03. Not approved, not assessed, not released.
 **Position on the path:** path row 7, the first of the three connections still missing from the critical path. The other two, in order, are separate automated closure and cleanup (row 8), then automatic selection and launch of the next eligible item. Builds on `main` `893063e` (units 6b, 6c-1, 6c-2 and record-completed-work).
 **Scope (Founder, 2026-10-03):** only these three:
 - the two capacity leaks;
@@ -16,7 +16,7 @@ Reuse the existing recovery and cleanup code.
 ```json alienintent-contract
 {
  "identity": "bb39a588-bf9a-4d30-b573-b8245b8979a0",
- "version": "revision-3",
+ "version": "revision-5",
  "intent": "Make registry launches survive a restart without a profile-wide wedge: release a repository reservation whose launch was never saved, park a launch that was saved but never started through the existing unknown-effect path, let the Founder resolve a parked launch with the existing decision path through work decide without launching anything, and clean an abandoned launch's PRODUCER worktree by its correlation with the existing cleanup guards.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -24,7 +24,9 @@ Reuse the existing recovery and cleanup code.
  "fixed_decisions": [
   "Founder 2026-10-03: the critical path is not finished; prepare deterministic restart continuation next, before closure automation and next-item selection.",
   "Founder 2026-10-03: limit restart continuation to the two capacity leaks, resolving parked launches and ownership of abandoned worktrees; reuse the existing recovery and cleanup code; no new discovery.",
-  "Founder 2026-10-03: no new store, mechanism or configuration source; missing or conflicting facts stop, never guess; a held launch keeps its WIP slot."
+  "Founder 2026-10-03: no new store, mechanism or configuration source; missing or conflicting facts stop, never guess; a held launch keeps its WIP slot.",
+  "Founder 2026-10-03: recovery must not release another launch's reservation; one launch at a time is enforced in code with the existing store's atomic reservation while the configurable WIP limit is preserved.",
+  "Founder 2026-10-03: if publication may have partially succeeded, reconcile the exact candidate and remote result before permitting another attempt; the Founder's authorization cannot establish whether an external action happened."
  ],
  "authorized_scope": [
   "src/alienintent/execution_coordination/application/factory_coordinator.py",
@@ -32,14 +34,17 @@ Reuse the existing recovery and cleanup code.
   "src/alienintent/composition/work_registry.py",
   "src/alienintent/control_plane/adapters/cli.py",
   "src/alienintent/control_plane/application/operator.py",
+  "src/alienintent/invocation_runtime/adapters/git_source_control.py",
   "tests/execution_coordination/test_factory_coordinator.py",
   "tests/composition/test_worker_launch.py",
   "tests/invocation_runtime/test_runtime.py",
+  "tests/invocation_runtime/test_git_source_control.py",
   "tests/control_plane/test_cli.py"
  ],
  "excluded_scope": [
   "re-attaching to a running worker or continuing the same attempt",
-  "the READY-snapshot recovery failure, the binding-refused inbox reason, cancel() identity, concurrent work launch",
+  "recording an already published candidate as the PRODUCER result",
+  "the READY-snapshot recovery failure, the binding-refused inbox reason, cancel() identity",
   "closure and cleanup of landed work",
   "automatic next-item selection",
   "a new store, record kind, state, outcome kind or configuration source",
@@ -128,6 +133,16 @@ No new store, record kind, state, outcome kind, configuration source or recovery
 
 ## 1. The changes
 
+**0. One `work launch` at a time, enforced in code** (`composition/work_registry.py`, `control_plane/application/operator.py`, `execution_coordination/application/factory_coordinator.py`).
+- Before `FactoryCoordinator.launch` runs, `work launch` takes one exclusive registry-wide reservation with the store's existing atomic `acquire`: scope `launch`, key `registry`, owner `launcher:<ProcOwnership.current() as canonical JSON>`. It releases that reservation with its owner and fence in a `finally`.
+- If the reservation is held, `work launch` reads its owner and asks the existing `ProcOwnership.owner_state`:
+  - while the holder is `alive`, or its state is `unknown`, the answer is `LAUNCH_IN_PROGRESS`, naming the owner state, and nothing is written. Nothing is guessed. A reboot makes an earlier owner `terminated`;
+  - only when the holder is `terminated` is the stale reservation released with its owner and fence (the store's existing `release`). If that `release` raises `StaleFence`, another process took it over first, and the answer is `LAUNCH_IN_PROGRESS`. Otherwise `acquire` is tried once more, and a failure there is also `LAUNCH_IN_PROGRESS`.
+  - If `ProcOwnership.current()` gives no owner, `work launch` answers `LAUNCH_OWNER_UNAVAILABLE` and writes nothing.
+- `_recover` skips a reservation with scope `launch` and key `registry`, as it skips `WIP_SCOPE`. It never releases that reservation. Only `work launch` releases it.
+- `_recover` therefore runs only while this process holds the reservation. In the registry profile, `FactoryCoordinator.start()` and `reconcile()` are not reachable: `work_registry_profile` exposes only `work_registry`, and `work_registry` calls only `launch`. `work decide` does not run recovery. So a reservation with no effect, or with a `pending` effect, can only belong to a launch whose process has ended.
+- The configurable WIP limit is unchanged: several work items may hold WIP slots between their steps. Only the launch processes are serialized.
+
 **1. The first capacity leak** (`execution_coordination/application/factory_coordinator.py`, `_recover`). This covers a `repository` reservation owned by `launch:<id>:<v>` with no effect row for that correlation in the store's existing read-only `effect_ledger`. If the coordinator record `factory:<id>` is at store version `v`, the reservation is released with its owner and fence, through the existing `release`. Nothing else is written, and recovery continues. In any other version, the existing path applies unchanged.
 
 **2. The second capacity leak** (the same method). This covers a reservation whose correlation's effect is `pending`. The effect is claimed with the existing `claim_effect`, then parked with the existing `_park_unknown_effect`. The escalation names the correlation and the reason `launch saved but never started`. `_park_unknown_effect` gains an optional reason, which defaults to today's text, so other callers are unchanged. The WIP slot is kept, as for every authority block. The cycle counts are unchanged. Recovery continues for the other reservations, so the profile is no longer wedged.
@@ -135,7 +150,14 @@ No new store, record kind, state, outcome kind, configuration source or recovery
 **3. `work decide <id> --choice authorize|defer --quote "<the Founder's words>"`** (`control_plane/adapters/cli.py`, `control_plane/application/operator.py`, `composition/work_registry.py`). It submits a choice on the work item's open decision request through the same existing path as `decisions decide`: `DecisionInbox.submit`, then `FactoryCoordinator.validate_decision` and `record_decision`, on the registry coordinator. `biu_version` comes from the open request (`DecisionInbox.list_open`). The idempotency key is `work-decide:<id>:<biu_version>:<choice>`. `actor` and `authority` are the contract's `authority_issuer`, `intent` is the choice and `reason` is the quote. The approver is the contract's `authority_issuer`. It offers only the choices that request offers: for a parked unknown effect, that is `authorize` or `defer` (`cancel` is not offered, and its commit is refused while the effect is unknown).
 - The registry composition (`composition/work_registry.py`) gives `DecisionInbox` an admission that forwards `validate_decision` and `record_decision` to the registry coordinator, and whose `resume_after_decision` does nothing. `DecisionInbox` itself is unchanged. So `work decide` never calls `start()` and never launches a worker.
 - After `authorize`, the existing `authorize_unknown_effect` lifts the effect, and the next `work launch` is a fresh attempt with a new correlation. After `defer`, the launch stays parked.
-- One added refusal guards `authorize`. The registry composition holds the `RealWorkerProvider` it built in `launcher()` and calls its existing `attest_ownership` directly. `authorize` is refused (`OWNER_STILL_RUNNING`, nothing written) only when the answer is `owner-alive` or `owned-work-active`. Every other answer, including `effect-unknown` after a publish began and no journal record at all, is shown to the Founder in the answer and left to the Founder's decision.
+- Two added refusals guard `authorize`. Each writes nothing.
+  - **A live worker.** The registry composition holds the `RealWorkerProvider` it built in `launcher()` and calls its existing `attest_ownership` directly. `authorize` is refused with `OWNER_STILL_RUNNING` when the answer is `owner-alive` or `owned-work-active`.
+  - **A possibly partial publication.** When the correlation's journal holds `publication-started` (its `revision`, written just before the PRODUCER's push, real_worker.py:343-345), `authorize` first reconciles the exact candidate against the remote. `GitSourceControl` gains one public read-only method, `remote_revision(workspace, remote, branch) -> str | None`. It runs the same `ls-remote <remote url> refs/heads/<branch>` that `read_back_candidate` runs, keeps only the exact ref name (as `_remote_refs` does), clones nothing and pushes nothing. It returns the revision when the exact ref exists, and None only when `ls-remote` succeeds and the exact ref is not listed. When the remote cannot be read, it raises the existing `CandidateUnavailable`, and `authorize` answers `REMOTE_UNVERIFIED`. The branch is the existing `RealWorkerProvider.candidate_branch(invocation)` for the parked correlation. The workspace is the retained PRODUCER worktree `<workspace root>/<correlation>`; if it is missing, the answer is `REMOTE_UNVERIFIED`. Another attempt is allowed only when the remote shows nothing was published:
+    - the branch is absent on the remote and `attest_ownership` answers `effect-unknown` (the owner has ended and no owned work runs): nothing was published, and `authorize` may proceed. Absent with any other attestation is `REMOTE_UNVERIFIED`;
+    - the branch is at the journaled revision: the candidate was published, so `authorize` is refused with `CANDIDATE_PUBLISHED`, naming the branch and revision;
+    - the branch is at any other revision: `REMOTE_CONFLICT`;
+    - the remote cannot be read: `REMOTE_UNVERIFIED`. Nothing is guessed.
+- The Founder's authorization never stands in for that reconciliation. Recording an already published candidate as the PRODUCER's result is not part of this unit; such a work item stays parked and is reported.
 - A work item with no open decision request answers `NO_OPEN_DECISION`. A repeat of the same decision is a repeat under the existing idempotency key.
 
 **4. Abandoned PRODUCER worktrees** (`execution_coordination/application/factory_coordinator.py`, `invocation_runtime/application/real_worker.py`).
@@ -144,7 +166,7 @@ No new store, record kind, state, outcome kind, configuration source or recovery
 - A parked, unresolved launch keeps its worktree (`retain=True`, as today), so it stays available for diagnosis.
 - The `invocation/` branch and the pushed candidate branch are not touched. VERIFIER clones and PRODUCER read-back folders are left for row 8's cleanup.
 
-**Unresolved risk, stated.** Change 1 releases a reservation with no effect while its record is still at version `v`. If another `work launch` were running at that same moment between its reservation and its launch save, change 1 would release that live run's reservation. Concurrent `work launch` is already unsafe and excluded (section 2). The operating rule is one `work launch` at a time per registry, until a later unit makes concurrent launches safe.
+**Why recovery cannot release a live launch.** Changes 1 and 2 act on another launch's reservation only inside the exclusive reservation of change 0. That launch's process has therefore ended. No operating rule is relied on.
 
 ## 2. What stays out
 
@@ -153,7 +175,6 @@ No new store, record kind, state, outcome kind, configuration source or recovery
 - the profile-wide failure when a reservation's work item is missing from the READY snapshot (a separate defect, recorded for later);
 - the wrong decision-inbox reason after a `binding-refused` launch (recorded for later);
 - `cancel()` passing the work identity where the provider expects the correlation (recorded for later);
-- two `work launch` runs at the same time (recorded for later);
 - closure and the cleanup of landed work, and of VERIFIER clones, PRODUCER read-back folders and the CLOSURE clone `<verifier root>/closure-<correlation>` (row 8);
 - automatic next-item selection;
 - a new store, record kind, state, outcome kind or configuration source.
@@ -166,17 +187,30 @@ Production:
 - `src/alienintent/composition/work_registry.py`
 - `src/alienintent/control_plane/adapters/cli.py`
 - `src/alienintent/control_plane/application/operator.py`
+- `src/alienintent/invocation_runtime/adapters/git_source_control.py` (`remote_revision`)
 
 Tests:
 - `tests/execution_coordination/test_factory_coordinator.py`
 - `tests/composition/test_worker_launch.py`
 - `tests/invocation_runtime/test_runtime.py`
+- `tests/invocation_runtime/test_git_source_control.py`
 - `tests/control_plane/test_cli.py`
 
 ## 4. Acceptance checks (each names the wrong implementation it catches)
 
 All offline. The fake worker executables come from a test routing file, as in unit 6c-2. Each crash is reproduced by writing the exact store state with the store's own calls (`acquire`, then `commit_with_effect` for the second leak) before `work launch` runs. Owner liveness comes from a test `ProcOwnership` double or the test's own pid.
 
+0. **One launch at a time.**
+   - A second `work launch` while the first holds the exclusive reservation answers `LAUNCH_IN_PROGRESS` and writes nothing, even with WIP limit 2 and two eligible work items.
+   - A reservation left by an ended launcher is taken over.
+   - Two processes taking over the same stale reservation: exactly one wins.
+   - Releasing a reservation with no effect while its owner launcher is still alive cannot happen.
+   - An owner state of `unknown` answers `LAUNCH_IN_PROGRESS`, and the loser of a takeover race gets `LAUNCH_IN_PROGRESS`.
+   - `work launch` while holding the exclusive reservation does not answer `capacity-unavailable`.
+   - No registry-profile command except `work launch` calls `_recover`.
+   - When `ProcOwnership.current()` gives no owner, `work launch` answers `LAUNCH_OWNER_UNAVAILABLE`, takes no reservation and writes nothing.
+
+   Catches an unenforced rule, a lock that wedges after a crash, and a release of a live launch's reservation.
 1. **First leak.** A crash after the repository reservation and before `commit_with_effect` is followed by `work launch`:
    - the reservation is released;
    - the coordinator record is unchanged;
@@ -197,11 +231,13 @@ All offline. The fake worker executables come from a test routing file, as in un
    - `--choice defer` leaves the launch parked.
    - `cancel` is not offered.
    - `authorize` is refused (`OWNER_STILL_RUNNING`, nothing written) while the owner is alive or owned work is running.
-   - After a publish began, the attestation is shown in the answer and `authorize` is accepted.
+   - After a publish began, `authorize` is accepted only when the remote has no candidate branch and `attest_ownership` answers `effect-unknown`. An absent branch with any other attestation, or a missing PRODUCER worktree, answers `REMOTE_UNVERIFIED` and writes nothing.
+   - `remote_revision` returns the revision for an exact ref, returns None for an absent branch (including when only a longer ref with the same prefix exists), raises `CandidateUnavailable` for an unreadable remote, and creates no clone folder and pushes nothing.
+   - It answers `CANDIDATE_PUBLISHED` when the branch is at the journaled revision, `REMOTE_CONFLICT` at another revision, and `REMOTE_UNVERIFIED` when the remote cannot be read. Each writes nothing.
    - A work item with no open request gives `NO_OPEN_DECISION`.
    - The same decision twice is a repeat.
 
-   Catches a decision path that bypasses validation, an authorize over a live worker, a decision that launches by itself, and a launch blocked for ever.
+   Catches a decision path that bypasses validation, an authorize over a live worker, a decision that launches by itself, and a new attempt after a publication that may have succeeded.
 4. **Abandoned PRODUCER worktrees.** After a restart:
    - a recovered PRODUCER result removes its clean worktree;
    - a dirty worktree, one whose journaled owner is alive, or whose owned work (a worker carrying the correlation's marker) is still running after the owner died, or one with no journaled owner, is kept and reported;
@@ -231,6 +267,11 @@ See section 2. Also excluded: changing earlier packets.
 - F4: one `_finalize_workspace` call added in `_recover`; PRODUCER worktrees only, with the journaled owner's process id; folders go to row 8.
 - F5: the concurrent-release risk is stated, with the one-launch-at-a-time rule.
 - F6 and F7: `attest_ownership` is called on the composition's own `RealWorkerProvider`; the idempotency key and version come from the open request.
+- Revision 4, Founder 2026-10-03:
+  - "one launch at a time" is enforced in code (change 0, the store's atomic reservation with owner liveness), not an operating rule;
+  - after a publication that may have partly succeeded, `authorize` reconciles the exact candidate against the remote first.
+  - Fresh REVIEWER of `9fde64e` (FAIL): `_recover` skips the launcher's own reservation; an `unknown` owner state and a lost takeover race answer `LAUNCH_IN_PROGRESS`; a read-only `remote_revision` method is added, because `read_back_candidate` cannot tell the four remote cases apart; "absent" allows another attempt only with `effect-unknown`; recovery is reachable only through `work launch`.
+  - Fresh recheck of `0414092` (FAIL, text): G1-G4 (`remote_revision` raises on an unreadable remote; test 3 matches the rule; tests for `remote_revision` and `LAUNCH_OWNER_UNAVAILABLE`).
 - REVIEWER recheck of `2830b28` (FAIL):
   - R1: a do-nothing `resume_after_decision` admission;
   - R2: worktree cleanup gated on `attest_ownership`, because the journaled pid is the coordinator's, not the worker's;
