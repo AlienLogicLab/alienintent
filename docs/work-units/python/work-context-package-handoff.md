@@ -40,3 +40,24 @@ The VERIFIER rejects a candidate that returns `DIGEST_MISMATCH` for a missing ca
 - Test fixtures for the diff need a fresh candidate clone.
 - Stay inside `authorized_scope`; anything outside is a stop condition, reported, not done.
 - Accepted limit: the read-only profile protects only this API. Real isolation is unit 6c-2.
+
+## 4. Revision 4b (Founder re-approval, 2026-10-03)
+
+Re-approved packet: revision 4b at packets `5b25c8390a9fcf672ec6bc6a1ba85547685a8186` (sha256 544be3fe…),
+assessment `readiness/5befff2f-a0dd-4cea-9556-54c33ed86c1b/ee1d9eba-9299-41ed-9d13-36767f4c7170/raw` (READY).
+Sections 1-3 above still apply.
+
+- **Repair only.** The repair on candidate `4580d5b` changes only the attempt check (section 2 step 5) and its tests
+  (acceptance checks 4 and 7). The VERIFIER confirms the repair diff stays there and rechecks only it, plus the
+  three key checks of section 2. The round 1 verdict is kept.
+- **Later calls stay bound to the approved instructions, not merely the same launch.** Every call, including the
+  running worker's own `context_command`, re-reads the work item row and checks the READY assessment of its pointer
+  (step 3) and the release record's evidence pointer commit, assessment attempt and contract digest against it
+  (step 4). The release record is create-only and `work assess` refuses pointer moves after authorization. Prove it
+  with one test in the running-launch fixture (after `commit_with_effect` and `claim_effect`): when the row's pointer
+  or contract no longer matches the release record, the running worker's own call is held (`DIGEST_MISMATCH`, or
+  `MISSING_RECORD` for the assessment), never given a package for other instructions.
+- **Carried into unit 6c-2 (not this unit).** The `work context` command line has no contract fingerprint, so a
+  worker's own call does not compare against the fingerprint of the invocation it was launched with. Unit 6c-2 must
+  close this explicitly: the delivered `context_command` carries the launched invocation's contract digest and the
+  call checks it (step 5 `DIGEST_MISMATCH`), with a test.
