@@ -19,6 +19,9 @@ against its `default_branch`, the values the release gate for registry items is 
 `coordinator(worker, artifacts)` composes the existing FactoryCoordinator over it on the `readiness` store (profile
 `registry`) with that release gate and the WIP limit read from the Factory Director host configuration on every
 admission; the work items' displays carry the IMPLEMENT and VERIFY cycle counts of that coordinator's state.
+With `readiness` and a configuration loaded from its file, `context` (WorkContext) assembles each role's context
+package from those same records; `work_context_profile` is the read-only worker profile its `work context` command
+runs under, opening the work and `readiness` databases with SQLite `mode=ro`.
 
 Configuration document (JSON):
 
@@ -38,12 +41,14 @@ Configuration document (JSON):
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from hashlib import sha256
 import json
 import os
 from pathlib import Path
+import subprocess
+import sysconfig
 import time
 from types import SimpleNamespace
 from uuid import uuid4
@@ -54,12 +59,13 @@ from alienintent.context_assembly.adapters.work_item_repository import SQLiteWor
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
 from alienintent.context_assembly.application.work_authorization import WorkAuthorization
+from alienintent.context_assembly.application.work_context import ContextCommand, WorkContext
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.application.work_link import WorkLink
 from alienintent.context_assembly.application.work_registration import WorkRecordService
 from alienintent.context_assembly.domain.packet_assessment import fingerprint
 from alienintent.context_assembly.domain.work_contract import contract_block
-from alienintent.context_assembly.domain.work_identity import STATES, valid_path
+from alienintent.context_assembly.domain.work_identity import STATES, GitReadFailed, valid_path
 from alienintent.context_assembly.domain.work_link import LinkResult, render
 from alienintent.context_assembly.ports.work_item_repository import (
     PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
@@ -143,6 +149,7 @@ class ProjectConfiguration:
     profiles: Mapping[str, Path]
     readiness: ReadinessConfiguration | None = None
     github: GitHubConfiguration | None = None
+    path: Path | None = None  # The configuration file it was loaded from (load_project_configuration), if any.
 
 
 def project_configuration(document: object, project: str) -> ProjectConfiguration:
@@ -200,7 +207,7 @@ def load_project_configuration(path: Path, project: str) -> ProjectConfiguration
         document = json.loads(Path(path).read_text(encoding="utf-8"))
     except (OSError, ValueError) as error:
         raise ConfigurationInvalid(f"{path}: {type(error).__name__}") from None
-    return project_configuration(document, project)
+    return replace(project_configuration(document, project), path=Path(path).resolve())
 
 
 def wip_limit(path: Path) -> int | None:
@@ -298,6 +305,10 @@ class WorkRegistry:
         self.links = self._links(configuration.github, transport) if configuration.github is not None else None
         self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
             else None
+        # Each role's context package (unit 6c-1) over the `readiness` store and evidence folder; its command names
+        # the configuration file, so a configuration not loaded from a file has none.
+        self.context = _work_context(configuration, self.records, self.items, self.assessment.consumer) \
+            if self.assessment is not None and configuration.path is not None else None
 
     def _links(self, github: GitHubConfiguration, transport: GitHubTransport | None) -> WorkLink:
         """`work link` and `work display` over the same constructors SandboxProfileComposition uses, without its
@@ -448,14 +459,8 @@ class WorkRegistry:
     def _assessment(self, configuration: ProjectConfiguration) -> PacketAssessment:
         """`work assess` over its own retained-assessment store; each attempt's Agent Ready launch carries the
         worker runtime's invocation markers naming that attempt and the recorded owner process."""
-        readiness, profile = configuration.readiness, "work-preparation"
-        definition_ref = Ref(configuration.project, profile, "readiness-consumer",
-                             "sha256:" + sha256(Path(assessment_consumer.__file__).read_bytes()).hexdigest(),
-                             "python:alienintent.execution_coordination.adapters.assessment_consumer")
-        consumer = RetainedAssessmentConsumer(
-            LocalEvidenceRepository(readiness.evidence_root, configuration.project, profile),
-            SQLiteOperationalStore(readiness.database), configuration.project, profile, definition_ref,
-            "alienintent work assess", frozenset({"public", "private"}))
+        readiness = configuration.readiness
+        consumer = _consumer(configuration, SQLiteOperationalStore(readiness.database))
         binding = resolve_binding(readiness.executable, "cli")
         return PacketAssessment(self.records, self.identities, consumer, binding, ProcOwnership(),
                                 lambda attempt, owner: compose_producer(binding, readiness.provider, {
@@ -472,6 +477,70 @@ class WorkRegistry:
                                  consumer.profile, self.assessment.authorizations,
                                  GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
                                  {name: location.default_branch for name, location in repositories.items()})
+
+
+def _consumer(configuration: ProjectConfiguration, store: OperationalStore) -> RetainedAssessmentConsumer:
+    """The retained-assessment consumer of `work assess` over `store`, the `readiness` database."""
+    readiness, profile = configuration.readiness, "work-preparation"
+    definition_ref = Ref(configuration.project, profile, "readiness-consumer",
+                         "sha256:" + sha256(Path(assessment_consumer.__file__).read_bytes()).hexdigest(),
+                         "python:alienintent.execution_coordination.adapters.assessment_consumer")
+    return RetainedAssessmentConsumer(
+        LocalEvidenceRepository(readiness.evidence_root, configuration.project, profile), store,
+        configuration.project, profile, definition_ref, "alienintent work assess", frozenset({"public", "private"}))
+
+
+# The read-only worker profile `work context` runs under, and the installed executable that runs it.
+WORK_CONTEXT_PROFILE = "alienintent.composition.work_registry:work_context_profile"
+
+
+def installed_executable() -> Path:
+    """The `alienintent` console script installed with this interpreter (its scripts directory)."""
+    return Path(sysconfig.get_path("scripts")) / "alienintent"
+
+
+def _git_diff(clone: Path, base: str, revision: str) -> bytes:
+    """`git diff <base> <revision>` in the VERIFIER's candidate clone; any failure is GIT_READ_FAILED."""
+    try:
+        result = subprocess.run(["git", "diff", "--no-ext-diff", "--no-color", base, revision], cwd=clone,
+                                capture_output=True, check=False, timeout=120)
+    except (OSError, subprocess.TimeoutExpired) as error:
+        raise GitReadFailed("git diff", str(clone), type(error).__name__) from error
+    if result.returncode:
+        raise GitReadFailed("git diff", str(clone), result.stderr.decode(errors="replace").strip()[:200])
+    return result.stdout
+
+
+def _work_context(configuration: ProjectConfiguration, records: WorkRecordService, items: SQLiteWorkItemRepository,
+                  consumer: RetainedAssessmentConsumer) -> WorkContext:
+    """WorkContext over the `readiness` store (profile `registry`: coordinator state, reservations, release and
+    self-review records) and evidence folder; its command is `work context` under the read-only worker profile."""
+    command = ContextCommand(str(installed_executable()), WORK_CONTEXT_PROFILE, {
+        "ALIENINTENT_PROJECT_CONFIGURATION": str(configuration.path), "ALIENINTENT_PROJECT": configuration.project})
+    return WorkContext(records, items.read_packet, consumer, consumer.store, consumer.repository,
+                       StoredReleaseAuthorizations(consumer.store, "registry"), FactoryCoordinator.decode, _git_diff,
+                       command, consumer.project, consumer.profile, "registry")
+
+
+def work_context_profile() -> SimpleNamespace:
+    """The read-only worker profile (`--profile-factory alienintent.composition.work_registry:work_context_profile`):
+    the same configuration file and project as `work_registry_profile`, but only the readers `work context` needs,
+    with the work and `readiness` databases opened read-only (SQLite `mode=ro`). It builds no WorkRegistry, uses no
+    `github` entry and resolves no Agent Ready executable; the CLI answers every other command
+    `not-available-in-worker-profile`. It protects this API only, not other files a worker's shell can reach."""
+    path, project = (os.environ.get(name) for name in ("ALIENINTENT_PROJECT_CONFIGURATION", "ALIENINTENT_PROJECT"))
+    if not path or not project:
+        raise ConfigurationInvalid("ALIENINTENT_PROJECT_CONFIGURATION and ALIENINTENT_PROJECT are required")
+    configuration = load_project_configuration(Path(path), project)
+    if configuration.readiness is None:
+        raise ConfigurationInvalid(f"project {project}: work context needs the readiness entry")
+    items = SQLiteWorkItemRepository(configuration.database, configuration.repositories, read_only=True)
+    # Only `find` and `children` are used: no publisher and no profile stores, so nothing can publish or migrate.
+    records = WorkRecordService(WorkIdentityService(items, None, configuration.repositories, {}), items,
+                                items.read_packet)
+    consumer = _consumer(configuration, SQLiteOperationalStore(configuration.readiness.database, read_only=True))
+    return SimpleNamespace(worker_profile=True, work_registry=SimpleNamespace(
+        context=_work_context(configuration, records, items, consumer)))
 
 
 def work_registry_profile() -> SimpleNamespace:

@@ -500,3 +500,98 @@ def test_cli_work_link_and_display_with_and_without_the_github_entry(tmp_path: P
     assert failed.returncode == 2 and json.loads(failed.stdout)["step"] == "permissions"
     assert "Traceback" not in failed.stderr
     assert json.loads(_registry_cli(tmp_path, "show", "PACKET").stdout)["item"]["issue_number"] is None
+
+
+# --- unit 6c-1: `work context` and the read-only worker profile ------------------------------------------------------
+
+SOURCE = Path(__file__).resolve().parents[2] / "src"
+WORK_CONTEXT_PROFILE = "alienintent.composition.work_registry:work_context_profile"
+_ASSEMBLE = """
+import json, sys
+from pathlib import Path
+from alienintent.composition.work_registry import WorkRegistry, load_project_configuration
+configuration, project, identity, role, correlation, clone = sys.argv[1:]
+registry = WorkRegistry(load_project_configuration(Path(configuration), project))
+print(json.dumps(registry.context.assemble(identity, role, correlation, None, None, Path(clone) if clone else None)
+                 .document(), sort_keys=True))
+"""
+
+
+def installed(root: Path) -> Path:
+    """This checkout installed into a fresh virtual environment the way an editable pip install does: a .pth file
+    naming its source and the `alienintent` console script. Returns the environment's python."""
+    venv = root / "venv"
+    subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(venv)], check=True)
+    python = venv / "bin" / "python"
+    purelib = subprocess.run([python, "-c", "import sysconfig; print(sysconfig.get_path('purelib'))"],
+                             capture_output=True, text=True, check=True, env={}).stdout.strip()
+    Path(purelib, "alienintent-checkout.pth").write_text(f"{SOURCE}\n")
+    script = venv / "bin" / "alienintent"
+    script.write_text(f"#!{python}\nimport sys\nfrom alienintent.control_plane.adapters.cli import main\n"
+                      "sys.exit(main())\n")
+    script.chmod(0o755)
+    return python
+
+
+def test_work_context_runs_with_only_the_worker_environment(tmp_path: Path) -> None:
+    """Founder check (a) / acceptance checks 4 and 7: in a running launch (saved with `commit_with_effect` and
+    claimed, as the coordinator does before the worker starts), the package's own `context_command`, run from a
+    worktree (the VERIFIER's from its candidate clone) with only the stated worker environment plus its two
+    variables, prints exactly the package `assemble` gives for the same work item, attempt and store version. A
+    command needing PYTHONPATH, an inherited ALIENINTENT_* variable or the operator's working directory, or one
+    locked out by its own launch save, fails here."""
+    from alienintent.composition.sandbox_run_profile import worker_environment
+    from tests.context_assembly.test_initial_compilation import PROJECT, git
+    from tests.context_assembly.test_work_context import Cx, launched
+    python = installed(tmp_path)
+    cx = Cx(tmp_path / "cx")
+    item = cx.admitted(reserve=False)
+    producer = launched(cx, item, "PRODUCER")
+    worktree = tmp_path / "producer-worktree"
+    git(cx.clone, "worktree", "add", "-q", "--detach", str(worktree))
+    other = cx.admitted("OTHER")
+    _, _, clone = cx.produced(other)
+    verifier = launched(cx, other, "VERIFIER")
+    (tmp_path / "worker-tmp").mkdir()
+    for identity, role, correlation, cwd, candidate_clone in (
+            (item.id, "PRODUCER", producer, worktree, ""), (other.id, "VERIFIER", verifier, clone, str(clone))):
+        operator = subprocess.run([python, "-c", _ASSEMBLE, str(cx.configuration_file), PROJECT, identity, role,
+                                   correlation, candidate_clone], capture_output=True, text=True, check=True,
+                                  env={"PATH": os.environ["PATH"], "HOME": os.environ.get("HOME", str(tmp_path))})
+        package = json.loads(operator.stdout)
+        assert package["status"] == "PACKAGE", package
+        command = package["context_command"]
+        assert command["argv"][0] == str(python.with_name("alienintent"))
+        environment = worker_environment(tmp_path) | command["environment"]
+        assert "PYTHONPATH" not in environment and set(command["environment"]) == {
+            "ALIENINTENT_PROJECT_CONFIGURATION", "ALIENINTENT_PROJECT"}
+        assert not any(name.startswith("ALIENINTENT_") for name in worker_environment(tmp_path))
+        worker = subprocess.run(command["argv"], cwd=cwd, env=environment, capture_output=True, text=True)
+        assert worker.returncode == 0, worker.stdout + worker.stderr
+        assert worker.stdout.strip() == operator.stdout.strip()
+
+
+@pytest.mark.parametrize("argv", [
+    ["work", "assess", "UNIT"],
+    ["work", "authorize", "UNIT", "--commit", "c", "--attempt", "a", "--baseline", "b", "--quote", "q"],
+    ["work", "link", "UNIT"],
+    ["work", "register", "--file", "f", "--repo", "r", "--path", "p", "--commit", "c", "--label", "l"],
+    ["work", "display", "UNIT"],
+    ["work", "migrate", "--snapshot", "s", "--profile", "p"],
+    ["work", "show", "UNIT"],
+    ["status"],
+])
+def test_the_worker_profile_answers_every_other_command_with_the_stated_error(tmp_path, monkeypatch, capsys, argv):
+    """Acceptance check 7: through the read-only worker profile only `work context` runs; a profile exposing the
+    writing commands would run them (or fail as internal-error) instead of this stated answer."""
+    from alienintent.control_plane.adapters.cli import main
+    from tests.context_assembly.test_initial_compilation import PROJECT
+    from tests.context_assembly.test_work_context import Cx
+    cx = Cx(tmp_path / "cx")
+    cx.admitted()
+    monkeypatch.setenv("ALIENINTENT_PROJECT_CONFIGURATION", str(cx.configuration_file))
+    monkeypatch.setenv("ALIENINTENT_PROJECT", PROJECT)
+    before = cx.written()
+    assert main(["--json", "--profile-factory", WORK_CONTEXT_PROFILE, *argv]) == 1
+    assert json.loads(capsys.readouterr().out) == {"error": "not-available-in-worker-profile"}
+    assert cx.written() == before

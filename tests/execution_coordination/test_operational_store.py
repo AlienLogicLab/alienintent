@@ -379,3 +379,53 @@ def test_two_stores_racing_acquire_within_for_the_last_slot_reserve_exactly_one(
     assert len(reserved) == 1 and len(refused) == 1
     assert {r.key for r in SQLiteOperationalStore(path).recovery_reservations("alpha") if r.scope == "wip"} == {
         "held", reserved[0].key}
+
+
+# --- unit 6c-1: the read-only open (SQLite mode=ro) ------------------------------------------------------------------
+
+_LEAVE_WAL = """
+import os, sqlite3, sys
+connection = sqlite3.connect(sys.argv[1], isolation_level=None)
+connection.execute("PRAGMA journal_mode=WAL")
+connection.execute("PRAGMA wal_autocheckpoint=0")
+connection.execute(sys.argv[2])
+os._exit(0)  # No close: the write stays in the -wal file with the -shm file beside it.
+"""
+
+
+def leave_in_wal(database: Path, statement: str) -> None:
+    """Switch `database` to WAL mode and leave one write only in its -wal file, with -wal and -shm present."""
+    subprocess.run([sys.executable, "-c", _LEAVE_WAL, str(database), statement], check=True)
+    assert Path(f"{database}-wal").stat().st_size > 0 and Path(f"{database}-shm").exists()
+
+
+def file_bytes(database: Path) -> tuple[bytes, bytes]:
+    return database.read_bytes(), Path(f"{database}-wal").read_bytes()
+
+
+def test_a_read_only_open_reads_a_wal_database_and_writes_nothing(tmp_path: Path) -> None:
+    """A writable open (no mode=ro) checkpoints the -wal into the database on close and accepts writes."""
+    path = tmp_path / "operational.sqlite"
+    SQLiteOperationalStore(path).commit("p", "first", 0, {"n": 1})
+    leave_in_wal(path, """INSERT INTO aggregates VALUES ('p', 'only-in-wal', 1, '{"n": 2}')""")
+    before = file_bytes(path)
+    store = SQLiteOperationalStore(path, read_only=True)
+    assert store.read_state("p", "only-in-wal") == (1, {"n": 2}) and store.read_state("p", "first") == (1, {"n": 1})
+    with pytest.raises(StoreUnavailable, match="readonly"):
+        store.commit("p", "second", 0, {"n": 3})
+    with pytest.raises(StoreUnavailable, match="readonly"):
+        store.acquire("p", "wip", "item", "owner")
+    del store
+    assert file_bytes(path) == before
+
+
+def test_a_read_only_open_refuses_a_missing_or_other_schema_database(tmp_path: Path) -> None:
+    missing = tmp_path / "missing.sqlite"
+    with pytest.raises(StoreUnavailable):
+        SQLiteOperationalStore(missing, read_only=True)
+    assert not missing.exists()
+    empty = tmp_path / "empty.sqlite"
+    sqlite3.connect(empty).close()
+    with pytest.raises(SchemaIncompatible):
+        SQLiteOperationalStore(empty, read_only=True)
+    assert empty.read_bytes() == b""

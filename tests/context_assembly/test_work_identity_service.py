@@ -715,3 +715,33 @@ def test_an_existing_database_gains_the_link_columns_and_index_with_its_rows_unc
     connection.close()
     assert items.find("fx-old").issue_number is None
     assert items.set_link("fx-old", 9, "I_9", "PVTI_9").issue_number == 9
+
+
+# --- unit 6c-1: the read-only open (SQLite mode=ro) ------------------------------------------------------------------
+
+
+def test_a_read_only_open_reads_a_wal_database_and_writes_nothing(fx):
+    """A writable open runs the schema statements, checkpoints the -wal on close and accepts writes."""
+    from tests.execution_coordination.test_operational_store import file_bytes, leave_in_wal
+    item = fx.service.register("requirement:SF-REQ-1", "READ-ONLY", "BIU", None, fx.packet())
+    database = fx.project.database
+    leave_in_wal(database, "UPDATE work_item SET label = 'ONLY-IN-WAL' WHERE id = '" + item.id + "'")
+    before = file_bytes(database)
+    items = SQLiteWorkItemRepository(database, fx.project.configuration.repositories, read_only=True)
+    found = items.find(item.id)
+    assert found.label == "ONLY-IN-WAL" and items.read_packet(found.pointer) == INSTRUCTIONS
+    with pytest.raises(adapter_module.RegistryUnavailable, match="readonly"):
+        items.retire(item.id)
+    assert file_bytes(database) == before
+
+
+def test_a_read_only_open_refuses_a_missing_or_foreign_database(tmp_path):
+    locations = {}
+    with pytest.raises(adapter_module.RegistryUnavailable):
+        SQLiteWorkItemRepository(tmp_path / "missing.sqlite", locations, read_only=True)
+    assert not (tmp_path / "missing.sqlite").exists()
+    foreign = tmp_path / "foreign.sqlite"
+    sqlite3.connect(foreign).close()
+    with pytest.raises(adapter_module.RegistryUnavailable, match="current schema"):
+        SQLiteWorkItemRepository(foreign, locations, read_only=True)
+    assert foreign.read_bytes() == b""

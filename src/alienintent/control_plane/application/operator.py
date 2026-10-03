@@ -4,10 +4,12 @@ from __future__ import annotations
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
 import logging
+from pathlib import Path
 from typing import Any, Protocol
 
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
 from alienintent.execution_coordination.domain.escalation import DecisionSubmission
+from alienintent.execution_coordination.ports.worker_provider import VERIFIER
 
 
 logger = logging.getLogger(__name__)
@@ -118,6 +120,26 @@ def link_work(links: WorkLinks, id_or_label: str, issue: int | None) -> dict[str
 def display_work(links: WorkLinks, id_or_label: str) -> dict[str, object]:
     """`work display`: `unchanged` or `updated` once read back, or a refusal returned as the read answer."""
     return asdict(links.display(id_or_label))
+
+
+# The stated answer of the read-only worker profile to every command other than `work context`.
+NOT_AVAILABLE_IN_WORKER_PROFILE = "not-available-in-worker-profile"
+
+
+class WorkContexts(Protocol):
+    """The project's context assembly as `work context` uses it (bound by the profile's composition)."""
+
+    def assemble(self, identity: str, role: str, correlation: str, contract_digest: str | None,
+                 candidate: Any = None, clone: Path | None = None) -> Any: ...
+
+
+def context_work(context: WorkContexts, id_or_label: str, role: str, correlation: str, candidate: str | None,
+                 workspace: Path) -> dict[str, object]:
+    """`work context`: the role's context package for the work item and attempt, or the hold that prevents launch,
+    as the read answer. The command holds no invocation contract digest; a VERIFIER runs it in its candidate clone
+    (`workspace`), where the diff is taken."""
+    return context.assemble(id_or_label, role, correlation, None, candidate,
+                            workspace if role == VERIFIER else None).document()
 
 
 class OperatorControlPlane:
