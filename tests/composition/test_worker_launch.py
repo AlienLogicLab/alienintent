@@ -13,8 +13,10 @@ from __future__ import annotations
 
 from dataclasses import asdict
 import json
+import os
 from pathlib import Path
 import sqlite3
+import subprocess
 import sys
 
 import pytest
@@ -1050,6 +1052,95 @@ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(clo
     verifier_clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch:{item.id}"))
     assert foreign.is_dir() and verifier_clone.is_dir()
     assert Path(session["cwd"]).is_dir() is (case == "marked-child")
+
+
+def test_the_landing_token_reaches_only_the_authoritys_one_push_process(closing, monkeypatch):
+    """Check 7: the landing token marker (raw or in its Basic header) is in the environment of exactly one child
+    process, the Authority's push; never in the merge or record commit commands, the fetch, or a worker."""
+    from base64 import b64encode
+    item = closing.accepted()
+    secrets = ("ghs-marker-landing", b64encode(b"x-access-token:ghs-marker-landing").decode())
+    spawned: list[tuple[list[str], dict[str, str]]] = []
+    popen = subprocess.Popen
+
+    class Recording(popen):
+        def __init__(self, args, *rest, **kwargs):
+            env = kwargs.get("env")
+            spawned.append(([str(a) for a in args] if isinstance(args, (list, tuple)) else [str(args)],
+                            dict(os.environ if env is None else env)))
+            super().__init__(args, *rest, **kwargs)
+    monkeypatch.setattr(subprocess, "Popen", Recording)
+    closing.close(item.id)
+    monkeypatch.setattr(subprocess, "Popen", popen)
+    assert closing.state(item.id).stage is LifecycleStage.DONE and closing.pushes == ["pushed"]
+    carrying = [argv for argv, env in spawned if any(s in value for s in secrets for value in env.values())]
+    assert len(carrying) == 1 and "push" in carrying[0]
+    assert not [argv for argv, _ in spawned if any(s in " ".join(argv) for s in secrets)]
+    for argv, env in spawned:  # the merge and record commits, the fetch, and every worker run carry no token
+        if any(word in argv for word in ("commit", "merge", "fetch", "commit-tree")) or "ALIENINTENT_ROLE" in env:
+            assert not any(s in value for s in secrets for value in env.values()), argv
+    assert not any(s in value for s in secrets for value in os.environ.values())
+    assert not any(s in json.dumps(run) for s in secrets for run in closing.fx.runs())
+
+
+def test_a_correlation_with_no_journaled_owner_keeps_its_clone_and_then_issues_no_receipt(closing, monkeypatch):
+    """Check 14: an earlier correlation whose `invocation-started` event has no owner keeps its clone, which is named
+    in `cleanup_diagnostics`, and no `workspaces-cleaned` receipt is issued."""
+    item = closing.accepted()
+    registry = closing.fx.loaded()
+    verifier = launch_root(registry.configuration) / "verifier"
+    clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch:{item.id}"))
+    correlation = clone.name.removeprefix("verifier-")
+    journal = launch_root(registry.configuration) / "invocation-journal.jsonl"
+    records = [json.loads(line) for line in journal.read_text().splitlines()]
+    for record in records:
+        if record.get("event") == "invocation-started" and record.get("correlation_id") == correlation:
+            assert isinstance(record.pop("owner"), dict)
+    journal.write_text("".join(json.dumps(record) + "\n" for record in records))
+    seen: list[RegistryClosure] = []
+    cleanup = RegistryClosure._cleanup
+    monkeypatch.setattr(RegistryClosure, "_cleanup", lambda self, invocation: (seen.append(self),
+                                                                                 cleanup(self, invocation))[1])
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert receipt("workspaces-cleaned", item.id, revision_of(state)) not in state.record["receipts"]
+    assert clone.is_dir()
+    [closure] = seen
+    assert closure.cleanup_diagnostics[str(clone)] == "no journaled owner"
+
+
+def test_authorize_of_a_begun_landing_waits_for_a_readable_remote_and_writes_nothing(closing, monkeypatch):
+    """Change 7: `work decide --choice authorize` on a parked CLOSURE correlation with a `closure-ordered` event,
+    while the remote default branch cannot be read, answers `remote-unverified` and writes nothing."""
+    fx = closing.fx
+    item = closing.accepted()
+    other = fx.authorized("OTHER")
+    original = _crash(monkeypatch, LandingAuthority, "land", after=False)
+    with pytest.raises(Crash):
+        closing.close(item.id)
+    monkeypatch.setattr(LandingAuthority, "land", original)
+    # Recovery cannot settle the begun landing, so the CLOSURE correlation's effect is parked for a decision.
+    settle = work_registry.RealWorkerProvider.reconcile_closure
+    monkeypatch.setattr(work_registry.RealWorkerProvider, "reconcile_closure", lambda self, invocation: None)
+    closing.close(other.id)
+    monkeypatch.setattr(work_registry.RealWorkerProvider, "reconcile_closure", settle)
+    state = closing.state(item.id)
+    correlation = state.record["correlation"]
+    assert correlation in {effect.identity for effect in fx.store.unresolved_effects("registry")}
+    assert any(record.get("event") == "closure-ordered" and record.get("correlation_id") == correlation
+               for record in closing.journal())
+    journal = launch_root(fx.loaded().configuration) / "invocation-journal.jsonl"
+    before, journaled = fx.dump(), journal.read_text()
+    hidden = fx.root / "remote.hidden"
+    closing.remote.rename(hidden)
+    try:
+        answer = fx.loaded(Owners("terminated")).decide(item.id, "authorize", QUOTE)
+    finally:
+        hidden.rename(closing.remote)
+    assert answer["answer"] == work_registry.REMOTE_UNVERIFIED and answer["missing"] == "a readable remote"
+    assert answer["correlation"] == correlation
+    assert (fx.dump(), journal.read_text()) == (before, journaled)
+    assert fx.loaded(Owners("terminated")).decide(item.id, "authorize", QUOTE)["answer"] is None
 
 
 def test_started_item_needs_the_journaled_contract_digest_and_initial_admission_is_unchanged(closing):
