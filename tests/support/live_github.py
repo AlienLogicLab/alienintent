@@ -51,8 +51,23 @@ class RecordedTransport:
         for suffix, answer in self._answers.items():
             if url.endswith(suffix):
                 status, document = answer if isinstance(answer, tuple) else (200, answer)
+                if suffix == "/access_tokens" and body:
+                    document = _scoped(document, json.loads(body))
                 return TransportResponse(status, json.dumps(document).encode())
         return TransportResponse(404, b'{"message":"not recorded"}')
+
+
+def _scoped(answer: Mapping[str, object], request: Mapping[str, object]) -> dict[str, object]:
+    """A scoped mint's answer: exactly the requested permissions and `selected`, with every other field of today's
+    answer. An explicit installation permission or repository selection override that does not cover the request
+    wins, so a test can fake a mismatch."""
+    installed, requested = dict(answer.get("permissions") or {}), dict(request.get("permissions") or {})
+    rank = {"read": 1, "write": 2, "admin": 3}
+    covered = all(rank.get(installed.get(name, ""), 0) >= rank.get(level, 9) for name, level in requested.items())
+    scoped = dict(answer)
+    if covered:
+        scoped["permissions"] = requested
+    return scoped
 
 
 def rest_answers(

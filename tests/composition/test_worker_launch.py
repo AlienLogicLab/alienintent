@@ -74,6 +74,21 @@ if role == "PRODUCER":
     if not (mode.exists() and mode.read_text() == "no-review"):
         Path(review).write_text({review!r})
     print({marker!r})
+elif role == "CLOSURE":
+    plan_path = Path({plan!r})
+    plan = json.loads(plan_path.read_text()) if plan_path.exists() else {{}}
+    request = lines[next(i for i, line in enumerate(lines) if line.endswith("exactly one JSON file:")) + 1]
+    document = {{"identity": package["identity"], "revision": head, "actions": package["closure_actions"]["actions"],
+                "findings": []}}
+    document.update(plan.get("request", {{}}))
+    for key in plan.get("drop", []):
+        document.pop(key, None)
+    if "raw" in plan:
+        Path(request).write_text(plan["raw"])
+    elif not plan.get("no_request"):
+        Path(request).write_text(json.dumps(document))
+    if plan.get("push"):
+        subprocess.run(plan["push"], check=True, capture_output=True)
 else:
     Path(".alienintent").mkdir(exist_ok=True)
     Path(".alienintent/verdict.json").write_text(json.dumps({{"revision": head, "verdict": "accept", "findings": []}}))
@@ -109,7 +124,7 @@ class Launch(ReadyBoard):
         self.configuration_file.write_text(json.dumps(self.document))
         self.host = root / "factory-director-host.json"
         self.host.write_text(json.dumps({"wipLimit": 3}))
-        self.records, self.mode = root / "worker-records", root / "worker-mode"
+        self.records, self.mode, self.plan = root / "worker-records", root / "worker-mode", root / "closure-plan.json"
         bin_dir = root / "bin"
         bin_dir.mkdir()
         # Stands in for the installed console script (6c-1 check 7 proves the real install), answering its own path
@@ -126,7 +141,7 @@ class Launch(ReadyBoard):
         for fake in (self.codex, self.claude):
             fake.write_text(FAKE_PROVIDER.format(python=sys.executable, records=str(self.records),
                                                  mode=str(self.mode), other=OTHER_DIGEST, review=REVIEW,
-                                                 marker=MARKER))
+                                                 marker=MARKER, plan=str(self.plan)))
             fake.chmod(0o755)
         self.routing = root / "model-routing.json"
         self.route(routing(str(self.codex), str(self.claude)))
@@ -557,3 +572,534 @@ def test_restart_continuation_authorize_reconciles_a_started_publication_against
     assert decided["answer"] is None and decided["retained_worktree"] == str(worktree.resolve())
     assert decided["cleanup_diagnostics"] == {correlation: f"{item.id}: authorized and relaunched"}
     assert fx.loaded().coordinator(None, None).state(item.id).outcome == "decision-recorded" and not ran(fx, item.id)
+
+
+# --- AUTOMATED-CLOSURE: CLOSURE as a launched step ------------------------------------------------------------------
+
+from alienintent.composition.landing_authority import LANDING_PERMISSIONS, LandingAuthority  # noqa: E402
+from alienintent.composition.work_registry import (  # noqa: E402
+    DISPLAY_PERMISSIONS, RegistryClosure, landing_record_path, render_landing_record)
+from alienintent.context_assembly.domain.work_identity import GitReadFailed  # noqa: E402
+from alienintent.execution_coordination.domain.closure import ACTIONS, receipt  # noqa: E402
+from alienintent.installation.ports.github_transport import TransportResponse  # noqa: E402
+from tests.support.live_github import (  # noqa: E402
+    PRIORITY_FIELD, PRIORITY_OPTIONS, SANDBOX_PROJECT, STATUS_FIELD, STATUS_OPTIONS)
+
+FIXED = {"required_closure_actions": list(ACTIONS)}
+SESSION_TEXT = "SESSION-FINDING-TEXT-CLOSURE"
+
+
+class Closing:
+    """The launch fixture with a board that keeps each card's Status, recorded mint bodies and scope-marked tokens,
+    and (optionally) landing enabled, its Landing Authority pushing to the local bare remote."""
+
+    def __init__(self, fx: Launch, monkeypatch, *, landing: bool = True) -> None:
+        self.fx, self.remote = fx, fx.root / "remote.git"
+        self.mints: list[dict | None] = []
+        self.ignore_status = False
+        self.pushes: list[str] = []
+        github, graphql, request = fx.github, fx.github._graphql, fx.github.request
+
+        def board(query: str, variables: dict) -> object:
+            if "fields(first:50)" in query:
+                return {"data": {"node": {"id": SANDBOX_PROJECT, "number": 2, "title": "board", "fields": {"nodes": [
+                    {"id": STATUS_FIELD, "name": "Status", "options": STATUS_OPTIONS},
+                    {"id": PRIORITY_FIELD, "name": "Priority", "options": PRIORITY_OPTIONS}]}}}}
+            if "updateProjectV2ItemFieldValue" in query:
+                if not self.ignore_status:
+                    name = next(o["name"] for o in STATUS_OPTIONS if o["id"] == variables["option"])
+                    github.fields.setdefault(variables["item"], {})["Status"] = name
+                return {"data": {"updateProjectV2ItemFieldValue": {"projectV2Item": {
+                    "id": variables["item"], "project": {"id": SANDBOX_PROJECT, "number": 2}}}}}
+            answer = graphql(query, variables)
+            node = (answer.get("data") or {}).get("node") if isinstance(answer, dict) else None
+            if "ProjectV2Item { id project" in query and isinstance(node, dict):
+                status = github.fields.get(variables["item"], {}).get("Status")
+                node["fieldValues"] = {"nodes": [{"name": status, "field": {"id": STATUS_FIELD, "name": "Status"}}]
+                                       if status else []}
+            return answer
+
+        def transport(method, url, headers, body=None):
+            response = request(method, url, headers, body)
+            if url.endswith("/access_tokens"):
+                self.mints.append(json.loads(body) if body else None)
+                document = json.loads(response.body)
+                scope = "landing" if document.get("permissions", {}).get("contents") == "write" else "display"
+                document["token"] = f"ghs-marker-{scope}"
+                response = TransportResponse(response.status, json.dumps(document).encode())
+            return response
+
+        github._graphql, github.request = board, transport
+        remote, pushes = str(self.remote), self.pushes
+
+        class Local(LandingAuthority):
+            def __init__(self, *args, **kwargs):
+                super().__init__(*args, push_url=remote)
+
+            def land(self, order):
+                answer = super().land(order)
+                pushes.append(answer)
+                return answer
+
+        monkeypatch.setattr(work_registry, "LandingAuthority", Local)
+        self.landing(landing)
+
+    def landing(self, enabled: bool) -> None:
+        self.fx.document["projects"][PROJECT]["github"]["landing"] = enabled
+        self.fx.configuration_file.write_text(json.dumps(self.fx.document))
+
+    def accepted(self, label: str = "UNIT", **changes):
+        """An authorized fixed-name item launched through PRODUCER and VERIFIER to ACCEPT."""
+        item = self.fx.authorized(label, **(FIXED | changes))
+        self.fx.launch(item.id)
+        self.fx.launch(item.id)
+        assert self.state(item.id).stage is LifecycleStage.ACCEPT
+        return item
+
+    def state(self, identity: str):
+        return self.fx.loaded().coordinator(None, None).state(identity)
+
+    def close(self, identity: str, ownership=None):
+        return self.fx.loaded(ownership if ownership is not None else Owners("terminated")).launcher().launch(identity)
+
+    def plan(self, **plan) -> None:
+        self.fx.plan.write_text(json.dumps(plan))
+
+    def head(self) -> str:
+        return git(self.remote, "rev-parse", "main").decode().strip()
+
+    def journal(self) -> list[dict]:
+        path = launch_root(self.fx.loaded().configuration) / "invocation-journal.jsonl"
+        return [json.loads(line) for line in path.read_text().splitlines()] if path.exists() else []
+
+    def orders(self, identity: str) -> list[dict]:
+        return [r for r in self.journal() if r.get("event") == "closure-ordered" and r["work_identity"] == identity]
+
+    def card(self, identity: str) -> str | None:
+        card = self.fx.registry.records.show(identity).item.card_id
+        return self.fx.github.fields.get(card, {}).get("Status")
+
+
+@pytest.fixture
+def closing(fx, monkeypatch) -> Closing:
+    return Closing(fx, monkeypatch)
+
+
+def revision_of(state) -> str:
+    return state.candidate.locator.rpartition("@")[2]
+
+
+def test_closure_lands_through_the_authority_with_five_exact_receipts_and_the_row_projected(closing, monkeypatch):
+    """Checks 1, 4, 6, 7, 10, 13 and 14 over one real CLOSURE launch."""
+    fx = closing.fx
+    monkeypatch.setenv("GIT_AUTHOR_NAME", "Borrowed User")
+    monkeypatch.setenv("GIT_COMMITTER_NAME", "Borrowed User")
+    item = closing.accepted()
+    accepted = closing.state(item.id)
+    revision, base = revision_of(accepted), closing.head()
+    fx.route(routing(str(fx.codex), str(fx.claude), {"VERIFIER": {"provider": "claude", "model": "model-v"}}))
+    closing.plan(request={"findings": [SESSION_TEXT, f"ready-to-land:{revision}"]})
+    closing.close(item.id)
+    state = closing.state(item.id)
+    # Check 1: DONE through `close`, with the five exact receipts for this item and the accepted revision.
+    assert state.stage is LifecycleStage.DONE
+    assert state.record["receipts"] == sorted(receipt(a, item.id, revision) for a in ACTIONS)
+    # Check 4: a fresh session on the VERIFIER route, in its own clone, with a new correlation and no write grant.
+    [session] = fx.runs("CLOSURE")
+    assert session["argv"][0] == str(fx.claude) and session["argv"][-1] == "model-v"
+    correlation = session["env"]["ALIENINTENT_INVOCATION_ID"]
+    assert Path(session["cwd"]).name == f"closure-{correlation}" and correlation != accepted.record["verdict"][
+        "verifier_correlation"]
+    package = session["package"]
+    assert {"candidate", "diff", "verdict", "closure_actions"} <= set(package) and "producer_self_review" not in package
+    assert package["closure_actions"]["actions"] == list(ACTIONS) and set(session["env"]) <= ALLOWED
+    # The landing: record on main, its only parent the merge of (base, candidate) with the candidate's tree.
+    record = closing.head()
+    [order] = closing.orders(item.id)
+    assert order["order"]["record"] == record and order["order"]["base"] == base and closing.pushes == ["pushed"]
+    merge = git(closing.remote, "rev-parse", f"{record}^1").decode().strip()
+    assert git(closing.remote, "rev-list", "--parents", "-n", "1", merge).decode().split()[1:] == [base, revision]
+    assert git(closing.remote, "rev-parse", f"{merge}^{{tree}}") == git(closing.remote, "rev-parse", f"{revision}^{{tree}}")
+    identities = git(closing.remote, "log", "--format=%an <%ae>%n%cn <%ce>", "-2", record).decode().splitlines()
+    assert set(identities) == {"AlienIntent Landing <landing@alienintent.invalid>"}  # check 7: no borrowed user
+    # Check 13: the record's bytes are the deterministic rendering; no session text reaches the remote.
+    path = landing_record_path("UNIT", item.id, revision)
+    data = git(closing.remote, "show", f"{record}:{path}")
+    shown = fx.registry.records.show(item.id)
+    assert data == render_landing_record({
+        "identity": item.id, "label": "UNIT", "candidate": revision, "base": base, "merge": merge,
+        "instructions_sha256": __import__("hashlib").sha256(shown.packet).hexdigest(),
+        "verifier_correlation": accepted.record["verdict"]["verifier_correlation"], "closure_correlation": correlation,
+        "actions": list(ACTIONS), "request_sha256": order["order"]["request_sha256"]})
+    assert SESSION_TEXT.encode() not in git(closing.remote, "log", "-p", "--all")
+    assert f"closure-finding: {SESSION_TEXT}" in fx.journal_findings(item.id)
+    # Board: the card reads back DONE; check 10: the row projected with a work-completion record.
+    assert closing.card(item.id) == "DONE"
+    registry = fx.loaded()
+    assert registry.identities.find(item.id).state == "DONE" and registry.completion.recorded(item.id)
+    assert not fx.wip_held(item.id)
+    # Check 14: every workspace of this item's correlations is gone, the landing clone included.
+    verifier = launch_root(registry.configuration) / "verifier"
+    assert not [p.name for p in verifier.iterdir() if item.id in p.name]
+    # Checks 6 and 7: every mint is scoped; no token marker or key reaches a worker, the journal or the record.
+    name = SANDBOX_REPOSITORY.split("/")[1]
+    assert None not in closing.mints and {json.dumps(m, sort_keys=True) for m in closing.mints} == {
+        json.dumps({"permissions": DISPLAY_PERMISSIONS, "repositories": [name]}, sort_keys=True),
+        json.dumps({"permissions": LANDING_PERMISSIONS, "repositories": [name]}, sort_keys=True)}
+    key = fx.root / "key.pem"
+    seen = json.dumps(fx.runs()) + json.dumps(closing.journal()) + data.decode()
+    for secret in ("ghs-marker-landing", "ghs-marker-display", str(key), key.read_text().splitlines()[1]):
+        assert secret not in seen
+
+
+from tests.support.live_github import SANDBOX_REPOSITORY  # noqa: E402
+
+
+def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx, monkeypatch):
+    """Check 11 (and check 4: a routing change reaches the next CLOSURE command)."""
+    closing = Closing(fx, monkeypatch, landing=False)
+    item = closing.accepted()
+    other = fx.authorized("OTHER")
+    base = closing.head()
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "ready-to-land")
+    assert closing.head() == base and closing.orders(item.id) == [] and closing.card(item.id) == "READY"
+    [session] = fx.runs("CLOSURE")
+    clone = Path(session["cwd"])
+    assert clone.is_dir() and not fx.wip_held(item.id)
+    merge = state.record["ready_to_land"]
+    landing = clone.parent / f"landing-{session['env']['ALIENINTENT_INVOCATION_ID']}"
+    assert git(landing, "rev-list", "--parents", "-n", "1", merge).decode().split()[1:] == [base, revision_of(state)]
+    # Not blocking: with a WIP limit of 1 another item is admitted; a launch without landing starts nothing.
+    fx.host.write_text(json.dumps({"wipLimit": 1}))
+    assert fx.launch(other.id).dispatched == (other.id,)
+    assert closing.close(item.id) == "ready-to-land" and fx.loaded().launcher().start() is not None
+    assert len(fx.runs("CLOSURE")) == 1
+    # With landing on, the slot is re-acquired first: refused while taken, then a fresh CLOSURE lands.
+    closing.landing(True)
+    assert closing.close(item.id) == "wip-refused" and closing.state(item.id).outcome == "ready-to-land"
+    fx.host.write_text(json.dumps({"wipLimit": 2}))
+    fx.route(routing(str(fx.codex), str(fx.claude), {"VERIFIER": {"provider": "codex", "model": "model-c"}}))
+    closing.close(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.DONE
+    assert [r["argv"][r["argv"].index("--model") + 1] for r in fx.runs("CLOSURE")] == ["model-a", "model-c"]
+
+
+def test_a_failing_landing_runs_closure_once_per_start(closing, monkeypatch):
+    """Check 11: with landing on and the Authority refusing every time, one `start()` runs CLOSURE once."""
+    item = closing.accepted()
+    monkeypatch.setattr(LandingAuthority, "land", lambda self, order: "refused:fixture")
+    closing.fx.loaded(Owners("terminated")).launcher().release_and_start(item.id)
+    assert len(closing.fx.runs("CLOSURE")) == 1 and closing.state(item.id).outcome == "authority-block"
+
+
+@pytest.mark.parametrize(("plan", "landed"), [
+    ({"request": {"actions": ["candidate-published", "merged-to-main", "landing-record", "deploy"]}}, False),
+    ({"request": {"identity": "another-item"}}, False),
+    ({"request": {"revision": "0" * 40}}, False),
+    ({"request": {"extra": 1}}, False),
+    ({"request": {"actions": ["merged-to-main", "merged-to-main"]}}, False),
+    ({"request": {"findings": ["x" * 501]}}, False),
+    ({"no_request": True}, False),
+    ({"request": {"actions": ["candidate-published", "landing-record", "board-updated", "workspaces-cleaned"]}}, False),
+    ({"request": {"actions": ["candidate-published", "merged-to-main", "landing-record"]}}, True),
+    ({"request": {"actions": ["candidate-published"], "findings": [
+        "ready-to-land:" + "a" * 40, "closure-rework:base-moved:" + "a" * 40 + ":" + "b" * 40,
+        "closure-hold:landing-ambiguous", "merged-to-main:x:" + "a" * 40]}}, False),
+])
+def test_the_bounded_request_alone_steers_nothing(closing, plan, landed):
+    """Check 2 (and check 8's request without board-updated): nothing beyond the bounded request is performed and a
+    session finding never changes the outcome."""
+    item = closing.accepted()
+    base, revision = closing.head(), revision_of(closing.state(item.id))
+    closing.plan(**plan)
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "authority-block")
+    expected = [receipt("candidate-published", item.id, revision)]
+    if landed:
+        expected += [receipt(a, item.id, revision) for a in ("merged-to-main", "landing-record")]
+    assert state.record["receipts"] == sorted(expected)
+    assert (closing.head() != base) is landed and closing.card(item.id) == "READY"
+    for finding in plan.get("request", {}).get("findings", []):
+        if len(finding) <= 500:  # a refused request carries none of its findings
+            assert f"closure-finding: {finding}" in closing.fx.journal_findings(item.id)
+
+
+def _unrelated(closing: Closing, base: str) -> str:
+    """A commit on the remote's base that does not contain the candidate."""
+    clone = closing.fx.clone
+    git(clone, "fetch", "-q", "origin")
+    git(clone, "checkout", "-q", "-b", "unrelated", base)
+    sha = commit_file(clone, "unrelated", "docs/unrelated.md", b"unrelated\n")
+    git(clone, "checkout", "-q", "main")
+    return sha
+
+
+def test_the_control_plane_trusts_neither_the_session_nor_the_authority(closing, monkeypatch):
+    """Check 3 and check 12's non-ancestor rule: a session's own push to main is reworked, never landed; an
+    Authority that answers `pushed` without pushing, a record without the instructions sha256 and a card left in
+    another column get no receipt."""
+    fx = closing.fx
+    item = closing.accepted()
+    base = closing.head()
+    other = _unrelated(closing, base)
+    closing.plan(push=["git", "-C", str(fx.clone), "push", "-q", str(closing.remote), f"{other}:refs/heads/main"],
+                 request={"findings": ["all effects succeeded"]})
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert state.stage is LifecycleStage.IMPLEMENT and closing.head() == other
+    assert closing.pushes == [] and state.record["rejections"] == 1  # the moved base is never handed over
+    assert any(f.startswith("closure-rework:base-moved:") for f in state.record["findings"][-1]["findings"])
+    assert item.id not in json.dumps(fx.store.read_state("registry", "decision-inbox")[1])
+
+
+@pytest.mark.parametrize("fault", ["pushed-without-push", "no-instructions-digest", "card-elsewhere"])
+def test_no_receipt_without_read_back(closing, monkeypatch, fault):
+    item = closing.accepted()
+    revision = revision_of(closing.state(item.id))
+    if fault == "pushed-without-push":
+        monkeypatch.setattr(LandingAuthority, "land", lambda self, order: "pushed")
+    if fault == "no-instructions-digest":
+        monkeypatch.setattr(work_registry, "render_landing_record",
+                            lambda facts: (facts["identity"] + " " + facts["candidate"] + "\n").encode())
+    if fault == "card-elsewhere":
+        closing.ignore_status = True
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "authority-block")
+    kept = {r.split(":", 1)[0] for r in state.record["receipts"]}
+    missing = {"pushed-without-push": "merged-to-main", "no-instructions-digest": "landing-record",
+               "card-elsewhere": "board-updated"}[fault]
+    assert missing not in kept and receipt("candidate-published", item.id, revision) in state.record["receipts"]
+
+
+class Crash(Exception):
+    """An injected crash of the launching process."""
+
+
+def _crash(monkeypatch, target, name, *, after: bool):
+    original = getattr(target, name)
+
+    def crashing(self, *args, **kwargs):
+        if after:
+            original(self, *args, **kwargs)
+        raise Crash(name)
+    monkeypatch.setattr(target, name, crashing)
+    return original
+
+
+@pytest.mark.parametrize("point", ["before-push", "after-push", "after-board"])
+def test_a_crash_is_recovered_from_the_journal_without_a_session(closing, monkeypatch, point):
+    """Checks 8, 9 and 10: the next launch of another item settles the begun landing without a model session; a
+    card already in DONE does not block recovery; the row is projected."""
+    fx = closing.fx
+    item = closing.accepted()
+    other = fx.authorized("OTHER")
+    if point == "after-board":
+        original = _crash(monkeypatch, RegistryClosure, "_cleanup", after=False)
+    else:
+        original = _crash(monkeypatch, LandingAuthority, "land", after=point == "after-push")
+    with pytest.raises(Crash):
+        closing.close(item.id)
+    assert len(closing.orders(item.id)) == 1
+    if point == "after-board":
+        assert closing.card(item.id) == "DONE"  # gone from the READY view
+    monkeypatch.setattr(RegistryClosure if point == "after-board" else LandingAuthority,
+                        "_cleanup" if point == "after-board" else "land", original)
+    sessions = len(fx.runs())
+    summary = closing.close(other.id)
+    assert summary.stop_reason != "capacity-unavailable" and summary.dispatched == (other.id,)
+    assert len(fx.runs("CLOSURE")) == 1 and len(fx.runs()) == sessions + 1  # only OTHER's PRODUCER ran
+    state = closing.state(item.id)
+    assert state.stage is LifecycleStage.DONE and closing.card(item.id) == "DONE"
+    assert len(closing.orders(item.id)) == 1 and fx.loaded().identities.find(item.id).state == "DONE"
+    # Exactly one push reaches the remote: the retried order (before-push), the crashed one (after-push: the crash
+    # hid its answer and recovery pushes nothing), or the original (after-board).
+    assert closing.pushes == {"before-push": ["pushed"], "after-push": [], "after-board": ["pushed"]}[point]
+    assert git(closing.remote, "rev-parse", "main").decode().strip() == closing.orders(item.id)[0]["order"]["record"]
+
+
+def test_a_request_without_board_update_crashing_after_the_push_recovers_without_moving_the_card(closing, monkeypatch):
+    item = closing.accepted()
+    other = closing.fx.authorized("OTHER")
+    closing.plan(request={"actions": ["candidate-published", "merged-to-main", "landing-record"]})
+    original = _crash(monkeypatch, LandingAuthority, "land", after=True)
+    with pytest.raises(Crash):
+        closing.close(item.id)
+    monkeypatch.setattr(LandingAuthority, "land", original)
+    closing.close(other.id)
+    state = closing.state(item.id)
+    assert state.outcome == "authority-block" and closing.card(item.id) == "READY"
+    assert {r.split(":", 1)[0] for r in state.record["receipts"]} == {
+        "candidate-published", "merged-to-main", "landing-record"}
+
+
+@pytest.mark.parametrize("ambiguity", ["fast-forwarded", "unreadable"])
+def test_an_ambiguous_landing_holds_with_facts_and_is_settled_before_any_later_session(closing, monkeypatch, ambiguity):
+    """Check 8: the candidate already in the remote head, or an unreadable remote: a hold naming the facts, no push;
+    after `authorize`, the next launch settles the earlier order before any session."""
+    fx = closing.fx
+    item = closing.accepted()
+    other = fx.authorized("OTHER")
+    revision = revision_of(closing.state(item.id))
+    original = _crash(monkeypatch, LandingAuthority, "land", after=False)
+    with pytest.raises(Crash):
+        closing.close(item.id)
+    monkeypatch.setattr(LandingAuthority, "land", original)
+    if ambiguity == "fast-forwarded":
+        git(closing.remote, "update-ref", "refs/heads/main", revision)
+    url = RegistryClosure._url
+    if ambiguity == "unreadable":
+        monkeypatch.setattr(RegistryClosure, "_url", lambda self: str(closing.fx.root / "missing.git"))
+    closing.close(other.id)
+    state = closing.state(item.id)
+    [order] = closing.orders(item.id)
+    assert (state.outcome, state.record["hold_reason"]) == ("authority-block", "closure-hold:landing-ambiguous")
+    assert closing.pushes == []
+    facts = [order["order"][k] for k in ("base", "merge", "record")]
+    escalation = json.dumps(fx.store.read_state("registry", "decision-inbox")[1]["open"][item.id])
+    assert all(fact in escalation for fact in facts)
+    if ambiguity == "unreadable":
+        monkeypatch.setattr(RegistryClosure, "_url", url)
+    assert fx.loaded().decide(item.id, "authorize", QUOTE)["answer"] is None
+    sessions = len(fx.runs("CLOSURE"))
+    closing.close(item.id)
+    assert len(fx.runs("CLOSURE")) == sessions + (0 if ambiguity == "fast-forwarded" else 1)
+    assert closing.pushes == ([] if ambiguity == "fast-forwarded" else ["pushed"])
+
+
+def _ancestors(closing: Closing, base: str, revision: str) -> list[str]:
+    """The candidate's proper ancestors above the remote base, oldest first."""
+    return git(closing.fx.clone, "rev-list", "--first-parent", "--reverse", f"{base}..{revision}").decode().split()[:-1]
+
+
+@pytest.mark.parametrize("moves", [1, 3])
+def test_main_moving_to_an_ancestor_rebuilds_the_order_at_most_three_times(closing, monkeypatch, moves):
+    """Check 12: each move to a proper ancestor of the candidate journals a new order; a third move holds."""
+    for index in range(3):
+        commit_file(closing.fx.clone, "main", f"docs/history-{index}.md", b"history\n")
+    item = closing.accepted()
+    base, revision = closing.head(), revision_of(closing.state(item.id))
+    steps = iter(_ancestors(closing, base, revision)[:moves])
+    original = LandingAuthority.land
+
+    def moving(self, order):
+        step = next(steps, None)
+        if step is not None:
+            git(closing.remote, "update-ref", "refs/heads/main", step)
+        return original(self, order)
+    monkeypatch.setattr(LandingAuthority, "land", moving)
+    closing.close(item.id)
+    state = closing.state(item.id)
+    orders = closing.orders(item.id)
+    if moves == 1:
+        assert [o["order"]["attempt"] for o in orders] == [1, 2] and state.stage is LifecycleStage.DONE
+        record = closing.head()
+        assert git(closing.remote, "rev-parse", f"{record}^1^{{tree}}") == git(
+            closing.remote, "rev-parse", f"{revision}^{{tree}}")
+    else:
+        assert [o["order"]["attempt"] for o in orders] == [1, 2, 3]
+        assert (state.outcome, state.record["hold_reason"]) == ("authority-block", "closure-hold:base-unstable")
+
+
+@pytest.mark.parametrize("move", ["fast-forward", "merged"])
+def test_main_already_holding_the_candidate_is_ambiguous_not_rework(closing, monkeypatch, move):
+    item = closing.accepted()
+    revision = revision_of(closing.state(item.id))
+    original = LandingAuthority.land
+
+    def moving(self, order):
+        if move == "fast-forward":
+            git(closing.remote, "update-ref", "refs/heads/main", revision)
+        else:
+            clone = closing.fx.clone
+            git(clone, "fetch", "-q", "origin")
+            git(clone, "checkout", "-q", "-b", "remote-merge", "origin/main")
+            git(clone, "-c", "user.name=F", "-c", "user.email=f@example.invalid", "merge", "-q", "--no-ff", "-m", "m",
+                revision)
+            git(clone, "push", "-q", "origin", "remote-merge:main")
+            git(clone, "checkout", "-q", "main")
+        return original(self, order)
+    monkeypatch.setattr(LandingAuthority, "land", moving)
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert (state.stage, state.record["hold_reason"]) == (LifecycleStage.ACCEPT, "closure-hold:landing-ambiguous")
+    assert closing.pushes == ["refused:base-moved"]
+
+
+@pytest.mark.parametrize("case", ["marked-child", "owner-alive"])
+def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(closing, monkeypatch, case):
+    """Check 14: a marked process of the running CLOSURE correlation keeps its clone; an earlier correlation whose
+    owner is alive (this test process) keeps its clone; another item's workspace is never touched; no receipt."""
+    item = closing.accepted()
+    verifier = launch_root(closing.fx.loaded().configuration) / "verifier"
+    foreign = verifier / "verifier-launch:another-item:1"
+    foreign.mkdir()
+    ownership = Owners("terminated") if case == "marked-child" else ProcOwnership()
+    if case == "marked-child":  # a marked process of the running correlation outlives the session
+        cleanup = RegistryClosure._cleanup
+        monkeypatch.setattr(RegistryClosure, "_cleanup", lambda self, invocation: (
+            setattr(ownership, "work", (1,)), cleanup(self, invocation))[1])
+    closing.close(item.id, ownership=ownership)
+    state = closing.state(item.id)
+    assert state.outcome == "authority-block" and closing.card(item.id) == "DONE"
+    assert receipt("workspaces-cleaned", item.id, revision_of(state)) not in state.record["receipts"]
+    [session] = closing.fx.runs("CLOSURE")
+    verifier_clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch:{item.id}"))
+    assert foreign.is_dir() and verifier_clone.is_dir()
+    assert Path(session["cwd"]).is_dir() is (case == "marked-child")
+
+
+def test_started_item_needs_the_journaled_contract_digest_and_initial_admission_is_unchanged(closing):
+    """Check 9: a started item is built from its registry record only with the journaled digest; an item with no
+    coordinator record whose card is not READY is not eligible."""
+    fx = closing.fx
+    item = closing.accepted()
+    registry = fx.loaded()
+    correlation = closing.state(item.id).record["correlation"]
+    assert registry._started_item(item.id, correlation).contract.content_digest == next(
+        r["contract_digest"] for r in closing.journal() if r.get("correlation_id") == correlation)
+    journal = launch_root(registry.configuration) / "invocation-journal.jsonl"
+    journal.write_text(journal.read_text().replace(next(
+        r["contract_digest"] for r in closing.journal() if r.get("correlation_id") == correlation), OTHER_DIGEST))
+    assert registry._started_item(item.id, correlation) is None
+    waiting = fx.authorized("WAITING")
+    fx.github.fields[fx.registry.records.show(waiting.id).item.card_id]["Status"] = "IMPLEMENT"
+    assert fx.launch(waiting.id) == "not-eligible"
+
+
+def test_a_projection_failure_never_stops_a_launch_and_is_repaired_later(closing, monkeypatch):
+    """Check 10: the coordinator's DONE with the row write failing, or the remote unreadable: the launch of another
+    item still runs, and a later launch projects the row."""
+    from alienintent.context_assembly.application.work_completion import WorkCompletion
+    item = closing.accepted()
+    other, third = closing.fx.authorized("OTHER"), closing.fx.authorized("THIRD")
+    original = WorkCompletion.record_coordinated
+    monkeypatch.setattr(WorkCompletion, "record_coordinated", lambda *a: (_ for _ in ()).throw(RuntimeError("down")))
+    closing.close(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.DONE
+    assert closing.fx.loaded().identities.find(item.id).state != "DONE"
+    monkeypatch.setattr(WorkCompletion, "record_coordinated", original)
+    fetch = work_registry.WorkRegistry._fetch
+    monkeypatch.setattr(work_registry.WorkRegistry, "_fetch", lambda self, repo: (_ for _ in ()).throw(
+        GitReadFailed("git fetch", "remote", "unreadable")))
+    assert closing.close(other.id).dispatched == (other.id,)
+    assert closing.fx.loaded().identities.find(item.id).state != "DONE"
+    monkeypatch.setattr(work_registry.WorkRegistry, "_fetch", fetch)
+    closing.close(third.id)
+    assert closing.fx.loaded().identities.find(item.id).state == "DONE"
+
+
+@pytest.mark.parametrize("other", ["item", "candidate"])
+def test_receipts_naming_another_item_or_candidate_never_count(closing, monkeypatch, other):
+    """Check 1: the coordinator keeps only receipts naming this work item and the full custodied revision."""
+    item = closing.accepted()
+    real = work_registry.receipt
+    monkeypatch.setattr(work_registry, "receipt", lambda action, identity, revision: real(
+        action, "another-item" if other == "item" else identity, "b" * 40 if other == "candidate" else revision))
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "authority-block")
+    assert state.record["hold_reason"] == "closure-receipts-incomplete"

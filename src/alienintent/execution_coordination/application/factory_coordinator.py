@@ -8,6 +8,8 @@ from typing import Callable, Iterable, Mapping
 
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore, verify_in_fresh_process
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+from alienintent.execution_coordination.domain.closure import (
+    ACTIONS, CANDIDATE_PUBLISHED, CLOSURE_HOLD, CLOSURE_REWORK, READY_TO_LAND, is_fixed, parse_finding, parse_receipt)
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired, SupersededDecision
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
@@ -84,7 +86,10 @@ class FactoryCoordinator:
     def __init__(self, store: OperationalStore, work: WorkManagement, worker: WorkerProvider, artifacts: LocalArtifactStore, profile: str, *, automatic_release: bool = True, notifier: DecisionNotifier | None = None,
                  release_gate: ReleasePreconditionGate | None = None, allocation: ExecutionAllocation | None = None,
                  wip_limit: Callable[[], int | None] | None = None,
-                 recorded_completion: Callable[[str], bool] | None = None) -> None:
+                 recorded_completion: Callable[[str], bool] | None = None,
+                 landing_enabled: Callable[[], bool] = lambda: False,
+                 started_item: Callable[[str, str], ReadyWorkItem | None] | None = None,
+                 completed: Callable[[str], None] | None = None) -> None:
         self._store, self._work, self._worker, self._artifacts, self._profile = store, work, worker, artifacts, profile
         # Whether a dependency with no coordinator record is recorded complete (`work record-completed`); None (the
         # default) counts only a coordinator record at DONE.
@@ -99,6 +104,10 @@ class FactoryCoordinator:
         self._wip_limit = wip_limit
         self._notifier = notifier
         self.delivery_health: dict[str, DeliveryHealth] = {}
+        # Automated closure: whether landing is enabled, the resolver of a started item from its registry record
+        # (when the READY view no longer lists it) and the DONE projection hook, which never raises into this class.
+        self._landing_enabled, self._started_item, self._completed = landing_enabled, started_item, completed
+        self.projection_diagnostics: dict[str, str] = {}
 
     def start(self) -> RunSummary:
         items = self._work.import_ready_snapshot()
@@ -106,8 +115,12 @@ class FactoryCoordinator:
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
         dispatched: list[str] = []
         skipped: dict[str, _WipSkip] = {}
-        while (item := self._next_item([ready for ready in items if ready.identity not in skipped])) is not None:
+        closed_once: set[str] = set()  # CLOSURE runs at most once per item in one call
+        while (item := self._next_item([ready for ready in items if ready.identity not in skipped
+                                        and ready.identity not in closed_once])) is not None:
             producing = self._role(item.identity) == PRODUCER
+            if self._role(item.identity) == CLOSURE:
+                closed_once.add(item.identity)
             result = self._run(item)
             if isinstance(result, _WipSkip):
                 skipped[item.identity] = result
@@ -133,19 +146,29 @@ class FactoryCoordinator:
         return self.start()
 
     def launch(self, identity: str) -> RunSummary | str:
-        """One role step for exactly the named work item: the PRODUCER at IMPLEMENT or the VERIFIER at VERIFY.
+        """One role step for exactly the named work item: the PRODUCER at IMPLEMENT, the VERIFIER at VERIFY or
+        CLOSURE at ACCEPT.
 
-        At ACCEPT it answers CLOSURE_NOT_AUTOMATED and writes nothing (CLOSURE stays a separate manual role).
+        At ACCEPT, writing nothing before the last step: the item is resolved from the READY snapshot, or else
+        `started_item`; a contract whose closure actions are not exactly the five fixed names answers
+        CLOSURE_NOT_AUTOMATED; an item at `ready-to-land` while landing is not enabled answers READY_TO_LAND.
         Otherwise it writes the explicit human release as `release_and_start` does, runs the existing recovery once
-        (which may record already-durable outcomes of other launches and starts no worker), and, only if the item is
-        in the READY snapshot and `_eligible` admits it, runs `_run` once for it. It never calls `start()`, so no
-        other work item runs and the next role waits for the next `launch`.
+        (which may record already-durable outcomes of other launches and starts no worker), projects every recorded
+        DONE through `completed`, and, only if the item is in the READY snapshot (or, at ACCEPT, resolved by
+        `started_item`) and `_eligible` admits it, runs `_run` once for it. It never calls `start()`, so no other
+        work item runs and the next role waits for the next `launch`.
         """
+        accepted: ReadyWorkItem | None = None
         try:
-            if self.state(identity).stage is LifecycleStage.ACCEPT:
-                return CLOSURE_NOT_AUTOMATED
+            projected = self.state(identity)
         except KeyError:
-            pass
+            projected = None
+        if projected is not None and projected.stage is LifecycleStage.ACCEPT:
+            accepted = self._resolve(identity, self._work.import_ready_snapshot(), projected.record or {})
+            if accepted is None or not is_fixed(accepted.contract.required_closure_actions):
+                return CLOSURE_NOT_AUTOMATED
+            if projected.outcome == READY_TO_LAND and not self._landing_enabled():
+                return READY_TO_LAND
         version, existing = self._store.read_state(self._profile, self._release_aggregate(identity))
         if not existing:
             self._store.commit(self._profile, self._release_aggregate(identity), version, {"identity": identity, "source": ReleaseSource.EXPLICIT_HUMAN})
@@ -153,7 +176,8 @@ class FactoryCoordinator:
         items = self._work.import_ready_snapshot()
         if not self._recover(items):
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
-        item = next((ready for ready in items if ready.identity == identity), None)
+        self._project_done()
+        item = next((ready for ready in items if ready.identity == identity), accepted)
         if item is None or not self._eligible(item):
             return NOT_ELIGIBLE
         producing = self._role(identity) == PRODUCER
@@ -315,6 +339,9 @@ class FactoryCoordinator:
                 return False
             if projected.stage not in ROLE_BY_STAGE:
                 return False
+            if projected.stage is LifecycleStage.ACCEPT and projected.outcome == READY_TO_LAND \
+                    and not self._landing_enabled():
+                return False
         except KeyError:
             pass
         return (self._is_automatic(item) or self._is_released(item.identity)) and all(self._dependency_done(dep) for dep in item.dependencies)
@@ -358,6 +385,16 @@ class FactoryCoordinator:
                     return _WipSkip.REFUSED
             self._work.propose_release(item)
             version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
+        elif role == CLOSURE and raw.get("outcome") == READY_TO_LAND and self._wip_limit is not None \
+                and not self._holds_wip(item.identity):
+            # `ready-to-land` released the slot; landing work is in progress again only within the limit.
+            limit = self._wip_limit()
+            if limit is None:
+                return _WipSkip.UNAVAILABLE
+            try:
+                self._store.acquire_within(self._profile, WIP_SCOPE, item.identity, self._wip_owner(item.identity), limit)
+            except ReservationRejected:
+                return _WipSkip.REFUSED
         correlation = f"launch:{item.identity}:{version}"
         try:
             reservation = self._store.acquire(self._profile, "repository", item.repository, correlation)
@@ -400,6 +437,8 @@ class FactoryCoordinator:
                     self._finalize_workspace(item.identity, correlation, retain=True)
             elif read_back and role == PRODUCER:
                 self._finalize_workspace(item.identity, correlation, retain=False)
+            if read_back and advanced.state.stage is LifecycleStage.DONE:
+                self._project(item.identity)
             self._work.project_execution_state(item.identity, advanced.state.stage, advanced.state.version)
             return None
         finally:
@@ -484,11 +523,38 @@ class FactoryCoordinator:
                 return self._rework(item, reviewed, prior, invocation, "review", (verdict.reason,))
             accepted = transition(reviewed, reviewed.version, "accept", verdict=verdict)
             return _Advance(accepted, "accept", {"verdict": {"kind": str(verdict.kind), "reason": verdict.reason, "verifier_correlation": invocation.correlation_id}})
+        if is_fixed(item.contract.required_closure_actions):
+            return self._advance_closure(item, current, prior, invocation, outcome)
         receipts = frozenset(outcome.receipts)
         if outcome.kind != "closed" or not self._same_candidate(outcome.candidate, current.candidate) or not set(item.contract.required_closure_actions) <= receipts:
             return _Advance(current, "authority-block", {"hold_reason": "closure-receipts-incomplete", "receipts": sorted(receipts)},
                             "Closure did not read back every required closure action for the accepted candidate.")
         return _Advance(transition(current, current.version, "close", completed_closure_actions=receipts), "closed", {"receipts": sorted(receipts)})
+
+    def _advance_closure(self, item: ReadyWorkItem, current: ExecutionState, prior: dict[str, object],
+                         invocation: WorkerInvocation, outcome: WorkerOutcome) -> _Advance:
+        """The fixed-name rule: only receipts naming this item and the full custodied revision count."""
+        revision = None if current.candidate is None else current.candidate.locator.rpartition("@")[2]
+        exact = sorted(text for text in outcome.receipts
+                       if (parsed := parse_receipt(text)) is not None and parsed[1:] == (item.identity, revision))
+        kept = {text.split(":", 1)[0] for text in exact}
+        if outcome.kind == "closed" and self._same_candidate(outcome.candidate, current.candidate):
+            if kept == set(ACTIONS):
+                return _Advance(transition(current, current.version, "close", completed_closure_actions=frozenset(kept)),
+                                "closed", {"receipts": exact})
+            control = [parsed for text in outcome.findings if (parsed := parse_finding(text)) is not None]
+            kinds = [kind for kind, _ in control]
+            if kept == {CANDIDATE_PUBLISHED} and kinds == [READY_TO_LAND]:
+                return _Advance(current, READY_TO_LAND, {"receipts": exact, "ready_to_land": control[0][1][0]})
+            if CLOSURE_REWORK in kinds and CLOSURE_HOLD not in kinds:
+                return self._rework(item, current, prior, invocation, "closure", tuple(outcome.findings))
+            held = next((parts for kind, parts in control if kind == CLOSURE_HOLD), None)
+            if held is not None:
+                return _Advance(current, "authority-block", {"hold_reason": f"closure-hold:{held[0]}", "receipts": exact},
+                                f"Closure holds ({held[0]}): {':'.join(held[1:]) or 'no facts'}.")
+        missing = [action for action in ACTIONS if action not in kept]
+        return _Advance(current, "authority-block", {"hold_reason": "closure-receipts-incomplete", "receipts": exact},
+                        f"Closure did not read back these closure actions for the accepted candidate: {', '.join(missing)}.")
 
     @staticmethod
     def _same_candidate(reported: CandidateRef | None, custodied: CandidateRef | None) -> bool:
@@ -538,7 +604,7 @@ class FactoryCoordinator:
         Every other state (authority holds, reworks, retries, unknown effects) keeps the slot.
         """
         _, raw = self._store.read_state(self._profile, self._aggregate(identity))
-        if raw.get("stage") != LifecycleStage.DONE.value and raw.get("outcome") not in FINAL_OUTCOMES:
+        if raw.get("stage") != LifecycleStage.DONE.value and raw.get("outcome") not in FINAL_OUTCOMES | {READY_TO_LAND}:
             return
         for reservation in self._wip_reservations(identity):
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
@@ -558,8 +624,13 @@ class FactoryCoordinator:
                 return False
             try:
                 _, identity, _ = reservation.owner.rsplit(":", 2)
-                item = by_identity[identity]
-            except (ValueError, KeyError):
+            except ValueError:
+                return False
+            item = by_identity.get(identity)
+            if item is None and self._started_item is not None:
+                # Recovery of a started item never depends on its board status.
+                item = self._started_item(identity, reservation.owner)
+            if item is None:
                 return False
             effect = self._effect_status(reservation.owner)
             if effect == "none":
@@ -581,6 +652,10 @@ class FactoryCoordinator:
             given = raw.get("invocation_candidate")
             invocation = WorkerInvocation(identity, reservation.owner, item.contract.content_digest, role, self._decode_candidate(given) if isinstance(given, dict) else None)
             outcome = self._worker.read_back(invocation)
+            reconcile = getattr(self._worker, "reconcile_closure", None)
+            if outcome is None and role == CLOSURE and callable(reconcile):
+                # A begun landing is settled from the journal and the remote, never by a model session.
+                outcome = reconcile(invocation)
             if outcome is None:
                 if not self._park_unknown_effect(item, reservation):
                     return False
@@ -600,6 +675,8 @@ class FactoryCoordinator:
             advanced = self._advance(item, current, raw, invocation, outcome)
             if not self._record_result(item, advanced.state, reservation.owner, advanced.outcome, advanced.fields | {"role": role, "outcome_kind": outcome.kind, "invocation_candidate": given}):
                 return False
+            if advanced.state.stage is LifecycleStage.DONE:
+                self._project(identity)
             if advanced.outcome == "authority-block":
                 self._restore_authority_block(item, current, outcome, reservation.owner, items, role, advanced.hold)
             elif role == PRODUCER:
@@ -608,6 +685,37 @@ class FactoryCoordinator:
                 self._finalize_workspace(identity, reservation.owner, retain=outcome.kind == MISSING_TERMINAL_RESULT)
             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
         return True
+
+    def _resolve(self, identity: str, items: Iterable[ReadyWorkItem], raw: Mapping[str, object]) -> ReadyWorkItem | None:
+        """The READY row of a work item at ACCEPT, else the item built from its registry record (`started_item`)."""
+        item = next((ready for ready in items if ready.identity == identity), None)
+        correlation = raw.get("correlation")
+        if item is None and self._started_item is not None and isinstance(correlation, str):
+            item = self._started_item(identity, correlation)
+        return item
+
+    def _project(self, identity: str) -> None:
+        """The DONE projection hook; a refusal or error is a diagnostic, never raised into the coordinator."""
+        if self._completed is None:
+            return
+        try:
+            self._completed(identity)
+            self.projection_diagnostics.pop(identity, None)
+        except Exception as error:  # noqa: BLE001 - the row stays unchanged and the next launch retries
+            self.projection_diagnostics[identity] = f"{identity}: {type(error).__name__}: {error}"
+
+    def _project_done(self) -> None:
+        """Every recorded DONE is projected again, whatever its board status, so any crash is repaired."""
+        if self._completed is None:
+            return
+        try:
+            states = self._store.list_states(self._profile, "factory:")
+        except Exception as error:  # noqa: BLE001 - an unreadable store is a diagnostic; the launch continues
+            self.projection_diagnostics["*"] = f"list_states: {type(error).__name__}"
+            return
+        for aggregate, _, raw in states:
+            if raw.get("stage") == LifecycleStage.DONE.value:
+                self._project(aggregate.removeprefix("factory:"))
 
     def _restore_authority_block(self, item: ReadyWorkItem, state: ExecutionState, outcome: WorkerOutcome, correlation: str, items: Iterable[ReadyWorkItem], role: str = PRODUCER, hold: str | None = None) -> None:
         self._register_escalation(outcome.escalation or self._authority_request(

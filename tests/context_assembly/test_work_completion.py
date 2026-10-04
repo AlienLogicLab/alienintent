@@ -17,7 +17,8 @@ import sqlite3
 import pytest
 
 from alienintent.context_assembly.application.work_completion import (
-    APPROVAL_MISSING, CONFLICTING_RECORDS, LANDING_UNVERIFIED, VERIFICATION_MISSING)
+    APPROVAL_MISSING, COORDINATOR_INCOMPLETE, COORDINATOR_OWNED, LANDING_UNVERIFIED, VERIFICATION_MISSING)
+from alienintent.execution_coordination.domain.closure import ACTIONS, receipt
 from alienintent.context_assembly.domain.work_contract import contract_block
 from alienintent.context_assembly.domain.work_identity import Pointer
 from alienintent.context_assembly.ports.work_item_repository import COMPLETION_CONFLICT, NOT_RECORDABLE
@@ -35,9 +36,9 @@ RECORD = "docs/evidence/landing.md"
 class Done:
     """One registered, assessed work item with 6c-1-shaped evidence: the arguments of a valid request."""
 
-    def __init__(self, fx: Fx, label: str = "UNIT") -> None:
+    def __init__(self, fx: Fx, label: str = "UNIT", changes: dict | None = None) -> None:
         self.fx = fx
-        self.item, _ = fx.ready(label)
+        self.item, _ = fx.ready(label, changes=changes)
         self.instructions = fx.registry.records.show(self.item.id).packet
         self.digest = sha256(self.instructions).hexdigest()
         clone = fx.clone
@@ -193,20 +194,77 @@ def coordinator(fx: Fx, identity: str, stage: str) -> None:
         "stage": stage, "version": 0, "accepted": False, "closure": [], "candidate": None})
 
 
-@pytest.mark.parametrize("stage", ["IMPLEMENT", "VERIFY", "ACCEPT"])
-def test_a_coordinator_record_of_active_work_is_conflicting_records(fx, stage):
+@pytest.mark.parametrize("stage", ["IMPLEMENT", "VERIFY", "ACCEPT", "DONE"])
+def test_any_coordinator_record_is_coordinator_owned(fx, stage):
+    """AUTOMATED-CLOSURE check 10: `work record-completed` is never a second completion path."""
     done = Done(fx)
     coordinator(fx, done.item.id, stage)
     written = fx.written()
     result = done.record()
-    assert (result.answer, result.detail) == (CONFLICTING_RECORDS, f"coordinator stage {stage}")
+    assert (result.answer, result.detail) == (COORDINATOR_OWNED, f"coordinator stage {stage}")
+    assert fx.written() == written and fx.row(done.item.id).state != "DONE"
+
+
+# --- AUTOMATED-CLOSURE check 10: the coordinator's DONE projected to the row -----------------------------------------
+
+
+def closed(fx: Fx, done: Done, *, stage: str = "DONE", drop: str | None = None, version: int = 0) -> dict:
+    """A coordinator record closed with the five exact receipts, the landing pushed, and its journaled order."""
+    git(fx.clone, "push", "-q", "origin", "main")
+    receipts = [receipt(action, done.item.id, done.candidate) for action in ACTIONS if action != drop]
+    fx.registry.assessment.consumer.store.commit("registry", f"factory:{done.item.id}", version, {
+        "stage": stage, "version": 4, "accepted": True, "closure": list(ACTIONS), "receipts": sorted(receipts),
+        "candidate": {"kind": "source-revision", "identity": "c", "content_digest": "d", "provenance": "p",
+                      "locator": f"git:origin#candidate/x@{done.candidate}", "independent_read_back_proven": True},
+        "verdict": {"kind": "accept", "reason": "r", "verifier_correlation": "launch:v:2"}})
+    merge = git(fx.clone, "rev-parse", "main~1").decode().strip()
+    return {"event": "closure-ordered", "candidate": done.candidate, "order": {
+        "base": "0" * 40, "merge": merge, "record": done.landing, "record_path": RECORD, "attempt": 1,
+        "actions": list(ACTIONS), "request_sha256": "1" * 64}}
+
+
+def coordinated(fx: Fx) -> tuple[Done, dict]:
+    done = Done(fx, changes={"required_closure_actions": list(ACTIONS)})
+    return done, closed(fx, done)
+
+
+def test_record_coordinated_writes_a_real_work_completion_record_and_repeats_write_nothing(fx):
+    done, order = coordinated(fx)
+    result = fx.registry.completion.record_coordinated(done.item.id, order)
+    assert (result.answer, result.repeated) == (None, False), result.detail
+    reference = ref_from_document(result.evidence_ref)
+    row = fx.row(done.item.id)
+    assert (row.state, row.verification_ref) == ("DONE", reference)
+    stored = fx.registry.assessment.consumer.repository.get(reference, SCOPE)
+    value = json.loads(stored.value)
+    assert (stored.evidence_id, reference.logical_id) == ("work-completion", f"work-completion/{done.item.id}")
+    assert set(value) == {"identity", "source", "pointer", "contract_digest", "candidate", "landing", "coordinator",
+                          "release_record", "approver"}
+    assert (value["source"], value["candidate"], value["landing"]["commit"], value["landing"]["default_branch"]) == (
+        "coordinator", done.candidate, done.landing, "main")
+    assert value["coordinator"]["verdict"]["verifier_correlation"] == "launch:v:2"
+    assert value["coordinator"]["receipts"] == sorted(receipt(a, done.item.id, done.candidate) for a in ACTIONS)
+    assert fx.registry.completion.recorded(done.item.id) is True  # a dependent becomes admissible
+    written = fx.written()
+    again = fx.registry.completion.record_coordinated(done.item.id, order)
+    assert (again.answer, again.repeated, again.evidence_ref) == (None, True, result.evidence_ref)
     assert fx.written() == written
 
 
-def test_a_coordinator_record_at_done_does_not_stop_it(fx):
-    done = Done(fx)
-    coordinator(fx, done.item.id, "DONE")
-    assert done.record().answer is None
+@pytest.mark.parametrize("case", ["not-done", "receipt-missing", "no-order", "unreadable-remote", "record-elsewhere"])
+def test_record_coordinated_refuses_and_writes_nothing(fx, case):
+    done, order = coordinated(fx)
+    if case in ("not-done", "receipt-missing"):
+        order = closed(fx, done, stage="ACCEPT" if case == "not-done" else "DONE", version=1,
+                       drop="workspaces-cleaned" if case == "receipt-missing" else None)
+    if case == "unreadable-remote":
+        git(fx.clone, "remote", "set-url", "origin", str(fx.root / "missing.git"))
+    if case == "record-elsewhere":
+        order["order"]["record"] = done.candidate  # not a commit holding the landing record
+    written = fx.written()
+    result = fx.registry.completion.record_coordinated(done.item.id, None if case == "no-order" else order)
+    expected = COORDINATOR_INCOMPLETE if case in ("not-done", "receipt-missing") else LANDING_UNVERIFIED
+    assert result.answer == expected and fx.written() == written and fx.row(done.item.id).state != "DONE"
 
 
 def test_the_same_request_twice_is_a_repeat_and_other_evidence_is_completion_conflict(fx):

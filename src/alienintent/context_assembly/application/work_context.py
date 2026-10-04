@@ -23,7 +23,8 @@ from alienintent.context_assembly.application.work_registration import WorkRecor
 from alienintent.context_assembly.domain.packet_assessment import fingerprint
 from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason, canonical
 from alienintent.context_assembly.domain.work_context import (
-    FIELDS, PRODUCER, SELF_REVIEW, SELF_REVIEW_EXISTS, SELF_REVIEW_LABEL, VERIFIER, ContextPackage,
+    CLOSURE, CLOSURE_REQUEST, FIELDS, PRODUCER, SELF_REVIEW, SELF_REVIEW_EXISTS, SELF_REVIEW_LABEL, VERIFIER,
+    ContextPackage,
     candidate_document, candidate_revision, content, self_review_aggregate)
 from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
 from alienintent.context_assembly.domain.work_identity import (
@@ -97,8 +98,9 @@ class WorkContext:
         """The role's package, or the first failing check as a hold. `contract_digest` is the invocation's (None when
         the caller holds none, as the `work context` command); `candidate` is the VERIFIER's CandidateRef or its
         locator (None: the coordinator state's candidate); `clone` is the VERIFIER's fresh candidate clone."""
-        if role not in FIELDS or (role == PRODUCER and candidate is not None) or (role == VERIFIER and clone is None):
-            raise ValueError("role PRODUCER or VERIFIER; a candidate and a clone only for the VERIFIER")
+        if role not in FIELDS or (role == PRODUCER and candidate is not None) or (role != PRODUCER and clone is None):
+            raise ValueError("role PRODUCER, VERIFIER or CLOSURE; a candidate and a clone only for the VERIFIER and "
+                             "CLOSURE")
         try:
             return self._assemble(identity, role, correlation, contract_digest, candidate, clone)
         except ContextHold as hold:
@@ -208,7 +210,12 @@ class WorkContext:
                                           else candidate != held.locator):
                 raise _hold(MISMATCH, "candidate", detail="the candidate is not the coordinator state's candidate")
             fields["candidate"] = candidate_document(held)
-            fields["producer_self_review"] = {"label": SELF_REVIEW_LABEL, **self._self_review(item.id, held)}
+            if role == CLOSURE:
+                fields["verdict"] = raw.get("verdict")
+                fields["closure_actions"] = {"actions": list(contract.required_closure_actions),
+                                             "request": CLOSURE_REQUEST}
+            else:
+                fields["producer_self_review"] = {"label": SELF_REVIEW_LABEL, **self._self_review(item.id, held)}
             revision = candidate_revision(held)
             if revision is None:
                 raise _hold(MISSING, "diff", detail="the candidate is not a source revision git:<remote>#<branch>@<sha>")

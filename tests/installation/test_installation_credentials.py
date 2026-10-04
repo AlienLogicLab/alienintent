@@ -184,3 +184,58 @@ def test_live_repository_scope_findings_read_the_installation_rather_than_the_pr
     findings = credentials.repository_scope_findings(SANDBOX_REPOSITORY)
     assert "installation repository_selection is 'all', required 'selected'" in findings
     assert "installation scope includes AlienLogicLab/other" in findings
+
+
+# --- AUTOMATED-CLOSURE check 6: scoped minting ---------------------------------------------------------------------
+
+SCOPE = {"contents": "write", "metadata": "read"}
+
+
+def _scoped(tmp_path: Path, answer=None, **recorded):
+    credentials, transport = _credentials(tmp_path, lambda: 1758445000.0, **recorded)
+    bodies: list[bytes | None] = []
+    request = transport.request
+
+    def recording(method, url, headers, body=None):
+        if url.endswith("/access_tokens"):
+            bodies.append(body)
+            if answer is not None:
+                return answer
+        return request(method, url, headers, body)
+
+    transport.request = recording
+    credentials = InstallationCredentials(_identity(), credentials._secrets, transport, lambda: 1758445000.0,
+                                          app_assertion, permissions=SCOPE, repositories=("alienintent-sandbox",))
+    return credentials, bodies
+
+
+def test_a_scoped_mint_sends_exactly_its_scope_and_reads_it_back(tmp_path: Path) -> None:
+    import json
+    credentials, bodies = _scoped(tmp_path)
+    token = credentials.token()
+    assert dict(token.permissions) == SCOPE and token.repository_selection == "selected"
+    assert [json.loads(body) for body in bodies] == [{"permissions": SCOPE, "repositories": ["alienintent-sandbox"]}]
+
+
+@pytest.mark.parametrize("case", ["more-than-requested", "fewer-installed", "all-repositories"])
+def test_a_scoped_mint_answered_with_another_scope_is_unavailable(tmp_path: Path, case: str) -> None:
+    import json
+    from alienintent.installation.ports.github_transport import TransportResponse
+    answer = TransportResponse(201, json.dumps({"token": "ghs-x", "expires_at": "2026-09-21T11:00:00Z",
+                                                "permissions": LEAST_PRIVILEGE,
+                                                "repository_selection": "selected"}).encode()) \
+        if case == "more-than-requested" else None
+    recorded = {"fewer-installed": {"installation_permissions": {"metadata": "read"}},
+                "all-repositories": {"repository_selection": "all"}}.get(case, {})
+    credentials, _ = _scoped(tmp_path, answer, **recorded)
+    with pytest.raises(CredentialUnavailable):
+        credentials.token()
+
+
+def test_without_the_keywords_a_mint_sends_no_body(tmp_path: Path) -> None:
+    credentials, transport = _credentials(tmp_path, lambda: 1758445000.0)
+    bodies = []
+    request = transport.request
+    transport.request = lambda method, url, headers, body=None: (bodies.append(body), request(method, url, headers,
+                                                                                                body))[1]
+    assert credentials.token().value == "ghs-recorded-token" and bodies == [None]
