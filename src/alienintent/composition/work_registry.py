@@ -36,6 +36,13 @@ Authority, built only when the `github` entry sets `"landing": true`, with its o
 outcome is a verified `ready-to-land`. After the coordinator's DONE the row is projected to DONE through
 `WorkCompletion.record_coordinated`. Every token the registry mints is scoped: `work link`, `work display` and the
 READY view use DISPLAY_PERMISSIONS for the one repository.
+With the optional `worker_user` entry (unit WORKER-CREDENTIAL-BOUNDARY), every cognitive session and every command
+run on its behalf runs as that Unix user through the one sudo rule, in its own worker-owned clone under
+`launch/worker/`, with a HOME (`launch/worker/home`) recreated at each session holding only the routed provider's
+login file and a `safe.directory`-only `.gitconfig`. The candidate is handed over by exact object identity through a
+bundle imported into the control-plane-owned `launch/intake.git`, and published from there; worker results are read
+from `launch/results/<invocation>/` through checked descriptors only. Without it, launches run as today. This is a
+credential and authority boundary, not containment.
 
 Configuration document (JSON):
 
@@ -50,7 +57,8 @@ Configuration document (JSON):
         "github": {"repository": "<owner>/<name>", "application_id": <int>, "installation_id": <int>,
                    "private_key_path": "<path to the App private key file>", "landing": false,
                    "project": {"project_id": "PVT_...", "project_number": <int>, "organization": "<owner>",
-                               "status_field_id": "<id>", "priority_field_id": "<id>"}}}}}
+                               "status_field_id": "<id>", "priority_field_id": "<id>"}},
+        "worker_user": "alienintent-worker"}}}
 """
 from __future__ import annotations
 
@@ -61,6 +69,8 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+import pwd
+import re
 import shutil
 import subprocess
 import sysconfig
@@ -79,7 +89,7 @@ from alienintent.context_assembly.application.initial_compilation_service import
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
 from alienintent.context_assembly.application.work_authorization import WorkAuthorization
 from alienintent.context_assembly.application.work_completion import WorkCompletion
-from alienintent.context_assembly.application.work_context import ContextCommand, WorkContext
+from alienintent.context_assembly.application.work_context import EXPORT_FILE, ContextCommand, WorkContext
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.application.work_link import WorkLink
 from alienintent.context_assembly.application.work_registration import WorkRecordService
@@ -96,7 +106,7 @@ from alienintent.context_assembly.ports.work_item_repository import (
 from alienintent.control_plane.adapters.attention_repository import DurableAttentionRepository
 from alienintent.control_plane.application.attention import AttentionService
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
-from alienintent.control_plane.application.operator import OperatorControlPlane
+from alienintent.control_plane.application.operator import OperatorControlPlane, export_context
 from alienintent.control_plane.domain.attention import AttentionOrigin
 from alienintent.evidence_learning.adapters.local_evidence_repository import LocalEvidenceRepository
 from alienintent.evidence_learning.domain.records import Header, Observation, canonical_bytes
@@ -130,9 +140,10 @@ from alienintent.installation.application.installation_credentials import Instal
 from alienintent.installation.domain.app_credentials import AppIdentity
 from alienintent.installation.domain.project_identity import ProjectAddress
 from alienintent.installation.ports.github_transport import GitHubTransport
-from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
-from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl
-from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, GitWorktreeAdapter, ref_safe
+from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider, run_as_worker
+from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl, IntakeSourceControl
+from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, GitWorktreeAdapter, WorkerCloneAdapter, \
+    ref_safe
 from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.application.real_worker import (
@@ -194,6 +205,7 @@ class ProjectConfiguration:
     readiness: ReadinessConfiguration | None = None
     github: GitHubConfiguration | None = None
     path: Path | None = None  # The configuration file it was loaded from (load_project_configuration), if any.
+    worker_user: str | None = None  # The Unix user cognitive sessions run as; None runs them as today.
 
 
 def project_configuration(document: object, project: str) -> ProjectConfiguration:
@@ -209,8 +221,12 @@ def project_configuration(document: object, project: str) -> ProjectConfiguratio
         profiles = {name: Path(path) for name, path in entry["profiles"].items()}
         readiness = _readiness(entry["readiness"]) if "readiness" in entry else None
         github = _github(entry["github"]) if "github" in entry else None
+        worker_user = entry.get("worker_user")
+        if worker_user is not None and (not isinstance(worker_user, str) or not _USER_NAME.fullmatch(worker_user)):
+            raise ConfigurationInvalid(f"project {project}: worker_user must be a Unix user name")
         configuration = ProjectConfiguration(project, Path(entry["database"]), repositories, packets["repository"],
-                                             packets["directory"], profiles, readiness, github)
+                                             packets["directory"], profiles, readiness, github,
+                                             worker_user=worker_user)
     except ConfigurationInvalid:
         raise
     except (KeyError, TypeError, AttributeError, ValueError) as error:
@@ -223,6 +239,19 @@ def project_configuration(document: object, project: str) -> ProjectConfiguratio
             path.resolve() for path in (configuration.database, *profiles.values())}:
         raise ConfigurationInvalid(f"project {project}: the readiness database must be its own database")
     return configuration
+
+
+_USER_NAME = re.compile(r"[a-z_][a-z0-9_-]{0,31}")
+# Each provider's own login file, relative to HOME: the only credential a worker HOME holds.
+PROVIDER_LOGIN_FILES = {"codex": ".codex/auth.json", "claude": ".claude/.credentials.json"}
+
+
+def worker_uid(user: str) -> int:
+    try:
+        return pwd.getpwnam(user).pw_uid
+    except KeyError:
+        raise ConfigurationInvalid(f"worker_user {user} is not a Unix user (run tools/live/setup_worker_user.sh)") \
+            from None
 
 
 def _readiness(value: object) -> ReadinessConfiguration:
@@ -335,7 +364,8 @@ class WorkRegistry:
                  ownership: ProcessOwnership | None = None) -> None:
         self.configuration = configuration
         # The existing process ownership observation: the launch chain's, and the exclusive `work launch` owner's.
-        self.ownership = ownership if ownership is not None else ProcOwnership()
+        self.ownership = ownership if ownership is not None else ProcOwnership() if configuration.worker_user is None \
+            else ProcOwnership(worker_uid=worker_uid(configuration.worker_user))
         self.host_configuration = host_configuration
         self._transport = transport
         self.profile_stores = {name: read_only_store(path) for name, path in sorted(configuration.profiles.items())}
@@ -475,6 +505,7 @@ class WorkRegistry:
         against the remote. The answer names the retained PRODUCER worktree of the launch it resolves."""
         coordinator, worker, root = self._launch_chain()
         store, workspaces = self.store, root / "workspaces"
+        packets = self.configuration.repositories[self.configuration.packets_repository]
         inbox = DecisionInbox(store, _DecisionOnly(coordinator), "registry")
         request = next((entry for entry in inbox.list_open() if entry.work_item == identity), None)
         if request is None:
@@ -490,12 +521,17 @@ class WorkRegistry:
             biu_version = request.biu_version
         revision, raw = store.read_state("registry", f"factory:{identity}")
         correlation = raw.get("correlation") if isinstance(raw.get("correlation"), str) else None
-        worktree = None if correlation is None else _producer_worktree(workspaces, WorkerInvocation(identity, correlation))
+        worktree = None if correlation is None else _producer_worktree(
+            workspaces, WorkerInvocation(identity, correlation)) if self.configuration.worker_user is None \
+            else _producer_worktree(root / "worker", WorkerInvocation(identity, correlation), "producer-")
         retained = worktree.path if worktree is not None and worktree.path.is_dir() else None
         parked = correlation is not None and any(effect.identity == correlation
                                                  for effect in store.unresolved_effects("registry"))
         if request is not None and choice == "authorize" and parked:
-            refusal = self._authorize_refusal(worker, identity, correlation, request.reason, workspaces / correlation)
+            # With a worker user the remote is read from the Founder-owned packets clone, never the worker's.
+            refusal = self._authorize_refusal(worker, identity, correlation, request.reason,
+                                              workspaces / correlation if self.configuration.worker_user is None
+                                              else packets.clone)
             if refusal is not None:
                 return refusal | {"correlation": correlation, "retained_worktree": None if retained is None
                                   else str(retained)}
@@ -568,22 +604,47 @@ class WorkRegistry:
         for directory in (root / "workspaces", root / "verifier", root / "custody", root / "artifacts",
                           root / "context", root / "worker-tmp"):
             directory.mkdir(parents=True, exist_ok=True)
-        preparation = LaunchPreparation(self.context, root / "context", repository)
+        (root / "landing").mkdir(mode=0o700, exist_ok=True)
+        user = configuration.worker_user
+        if user is not None:  # `<launch>/context` stays Founder-only and is never named to a worker (0.6b)
+            os.chmod(root / "context", 0o700)
+        environment = worker_environment(root) | dict(self.context.command.environment)
+        if user is None:
+            source, workspaces, handover, preparation = GitSourceControl(), \
+                GitWorktreeAdapter(packets.clone, root / "workspaces"), None, \
+                LaunchPreparation(self.context, root / "context", repository)
+            recovered = lambda invocation: _producer_worktree(root / "workspaces", invocation)  # noqa: E731
+        else:
+            worker_root = root / "worker"
+            environment = environment | {"HOME": str(worker_root / "home"), "TMPDIR": str(worker_root / "tmp")}
+            for directory in (worker_root, root / "results", root / "handoff"):
+                if not directory.is_dir():  # normally made by the setup; made here as the worker, mode 0711
+                    run_as_worker(user, environment, ["mkdir", "-p", "-m", "0711", "--", str(directory)])
+            (root / "intake-bundles").mkdir(mode=0o700, exist_ok=True)
+            workspaces = WorkerCloneAdapter(packets.clone, worker_root, root / "results", user, environment)
+            source = handover = IntakeSourceControl(packets.clone, packets.remote, root, user, worker_uid(user),
+                                                    environment, os.environ, workspaces)
+            preparation = LaunchPreparation(self.context, root / "context", repository, worker=handover, user=user,
+                                            environment=environment, packets_clone=packets.clone,
+                                            exports=root / "exports")
+            recovered = lambda invocation: _producer_worktree(worker_root, invocation, "producer-")  # noqa: E731
         ownership = self.ownership
         process = CliWorkerProvider("routed", preparation.command, (), "explicit", PROVIDER_DIMENSIONS,
-                                    environment=worker_environment(root) | dict(self.context.command.environment),
-                                    ownership=ownership)
+                                    environment=environment, ownership=ownership, worker_user=user,
+                                    results=None if user is None else root / "results",
+                                    regression_base=None if user is None else preparation.starting.get,
+                                    work_identity=None if user is None else preparation.identities.get)
         journal = JsonlInvocationJournal(root / "invocation-journal.jsonl", time.time)
         closure = RegistryClosure(self, root, journal, preparation, self._landing_authority(journal))
         worker = RealWorkerProvider(
-            process, GitSourceControl(), packets.clone, packets.remote,
+            process, source, packets.clone, packets.remote,
             lambda invocation: f"candidate/{ref_safe(invocation.correlation_id)}", root / "verifier",
             lambda invocation: launch_grant(invocation, repository), repository,
-            GitWorktreeAdapter(packets.clone, root / "workspaces"), ReservationBook(1, 2), now=time.time,
+            workspaces, ReservationBook(1, 2), now=time.time,
             sleep=time.sleep, journal=journal, ownership=ownership, preparation=preparation,
-            recovered_workspace=lambda invocation: _producer_worktree(root / "workspaces", invocation),
-            closure=closure)
+            recovered_workspace=recovered, closure=closure, handover=handover)
         closure.worker = worker
+        closure.worker_workspaces = None if user is None else workspaces
         guard = RoleBindingGuard(worker, journal, store, "registry", repository, time.time)
         return self.coordinator(guard, LocalArtifactStore(root / "artifacts", root / "custody")), worker, root
 
@@ -797,15 +858,51 @@ def _git_diff(clone: Path, base: str, revision: str) -> bytes:
     return result.stdout
 
 
+def _intake_diff(intake: Path) -> Callable[[Path, str, str], bytes]:
+    """With a worker user: the VERIFIER's `diff`, computed in the control-plane-owned intake repository (explicit
+    GIT_DIR, hooks, fsmonitor, replace objects, external diff and textconv off) between two full SHAs; the worker's
+    clone is never read."""
+    environment = {k: v for k, v in os.environ.items() if not k.startswith("GIT_")} | {
+        "GIT_DIR": str(intake), "GIT_NO_REPLACE_OBJECTS": "1", "GIT_TERMINAL_PROMPT": "0"}
+
+    def diff(clone: Path, base: str, revision: str) -> bytes:
+        if not all(re.fullmatch(r"[0-9a-f]{40}", value or "") for value in (base, revision)):
+            raise GitReadFailed("git diff", str(intake), "not a full SHA")
+        try:
+            result = subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", "diff",
+                                     "--no-ext-diff", "--no-textconv", "--no-color", base, revision, "--"],
+                                    cwd=intake, env=environment, capture_output=True, check=False, timeout=120)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise GitReadFailed("git diff", str(intake), type(error).__name__) from error
+        if result.returncode:
+            raise GitReadFailed("git diff", str(intake), result.stderr.decode(errors="replace").strip()[:200])
+        return result.stdout
+    return diff
+
+
 def _work_context(configuration: ProjectConfiguration, records: WorkRecordService, items: SQLiteWorkItemRepository,
                   consumer: RetainedAssessmentConsumer) -> WorkContext:
     """WorkContext over the `readiness` store (profile `registry`: coordinator state, reservations, release and
-    self-review records) and evidence folder; its command is `work context` under the read-only worker profile."""
+    self-review records) and evidence folder; its command is `work context` under the read-only worker profile, or,
+    with a worker user, `work context --export` over the invocation's bounded export (no configuration path)."""
     command = ContextCommand(str(installed_executable()), WORK_CONTEXT_PROFILE, {
-        "ALIENINTENT_PROJECT_CONFIGURATION": str(configuration.path), "ALIENINTENT_PROJECT": configuration.project})
+        "ALIENINTENT_PROJECT_CONFIGURATION": str(configuration.path), "ALIENINTENT_PROJECT": configuration.project}) \
+        if configuration.worker_user is None else ContextCommand(str(installed_executable()), WORK_CONTEXT_PROFILE, {},
+                                                                 export_root=launch_root(configuration) / "exports")
     return WorkContext(records, items.read_packet, consumer, consumer.store, consumer.repository,
-                       StoredReleaseAuthorizations(consumer.store, "registry"), FactoryCoordinator.decode, _git_diff,
+                       StoredReleaseAuthorizations(consumer.store, "registry"), FactoryCoordinator.decode,
+                       _git_diff if configuration.worker_user is None
+                       else _intake_diff(launch_root(configuration) / "intake.git"),
                        command, consumer.project, consumer.profile, "registry")
+
+
+def context_export_reader() -> Callable[[str], dict[str, object]]:
+    """The CLI's `work context --export <file>` (WORKER-CREDENTIAL-BOUNDARY section 0.6b), loaded before and instead of
+    any profile factory: `export_context` over the worker's three identity variables. It builds no profile and opens
+    no database, evidence repository or configuration."""
+    environment = {name: os.environ.get(name, "") for name in (
+        "ALIENINTENT_WORK_IDENTITY", "ALIENINTENT_ROLE", "ALIENINTENT_CORRELATION")}
+    return lambda export: export_context(export, environment)
 
 
 def work_context_profile() -> SimpleNamespace:
@@ -849,14 +946,17 @@ Your context package is this JSON file:
 {package}
 Read it first and do only what it states: its goal, instructions, contract, allowed scope and stop conditions bind you.
 
-For further facts, run the package's `context_command`: its `argv` exactly, with its `environment` added to yours. It
-is read-only and answers a package or a named hold.
+{context}
 
 Only the control plane publishes: do not push, do not open a pull request, and do not change any branch or
 repository outside your current working directory. This is a workflow rule.
 
 {result}
 """
+CONTEXT_LINE = """For further facts, run the package's `context_command`: its `argv` exactly, with its `environment` added to yours. It
+is read-only and answers a package or a named hold."""
+EXPORT_CONTEXT_LINE = """To read your package again, run the package's `context_command`: its `argv` exactly, with its `environment` added
+to yours. It is read-only and prints the package exported for this invocation, or `not-in-export`."""
 PRODUCER_RESULT = """Your current working directory is your git worktree at the package's starting_revision. Make the
 change there and commit it. Then write your self-review of the complete diff, as plain text, to this file:
 {self_review}"""
@@ -868,6 +968,13 @@ as {{"identity": "<the work item id>", "revision": "<the candidate commit>", "ac
 VERIFIER_RESULT = """Your current working directory is a fresh clone of the candidate. Verify it against the package.
 Then write .alienintent/verdict.json in that directory as {{"revision": "<the candidate commit, git rev-parse HEAD>",
 "verdict": "accept" or "reject", "findings": ["<finding>", ...]}}; a reject needs at least one finding."""
+WORKER_VERIFIER_RESULT = """Your current working directory is a fresh clone of the candidate. Verify it against the package.
+Then write your verdict as one JSON file, to this file:
+{verdict}
+as {{"revision": "<the candidate commit, git rev-parse HEAD>", "verdict": "accept" or "reject",
+"findings": ["<finding>", ...]}}; a reject needs at least one finding."""
+# The worker results the control plane reads, each in `<launch>/results/<invocation>/`.
+SELF_REVIEW, CLOSURE_REQUEST, VERDICT = "self-review.md", "closure-request.json", "verdict.json"
 GRANT_SECONDS = 3600
 
 
@@ -892,13 +999,14 @@ class _DecisionOnly:
         """Nothing: the next step is always an explicit `work launch`."""
 
 
-def _producer_worktree(root: Path, invocation: WorkerInvocation) -> GitWorkspace | None:
+def _producer_worktree(root: Path, invocation: WorkerInvocation, prefix: str = "") -> GitWorkspace | None:
     """The PRODUCER worktree a correlation owns at its fixed path `<root>/<correlation>` (what
-    GitWorktreeAdapter.allocate creates), or None for an identity that could name a path outside the root."""
+    GitWorktreeAdapter.allocate creates; with a worker user `<launch>/worker/producer-<correlation>`, what
+    WorkerCloneAdapter.allocate creates), or None for an identity that could name a path outside the root."""
     correlation = invocation.correlation_id
     if not correlation or any(part in correlation for part in ("/", "\\", "..", "\x00")):
         return None
-    return GitWorkspace(correlation, invocation.work_identity, root.resolve() / correlation,
+    return GitWorkspace(correlation, invocation.work_identity, root.resolve() / f"{prefix}{correlation}",
                         f"invocation/{ref_safe(correlation)}")
 
 
@@ -923,22 +1031,53 @@ class LaunchPreparation:
     has no usable route; otherwise it writes the package to `<context root>/<invocation id>.json`, keeps the route
     and the instruction text, and returns the starting revision. `command` builds the provider command at `run`.
     `published` records the PRODUCER's self-review file against the published, read-back candidate; it never
-    raises."""
+    raises.
+
+    With `worker` (the hand-over, unit WORKER-CREDENTIAL-BOUNDARY) every worker result lives in
+    `<launch>/results/<invocation>/` and is read only through `worker.read_result`, and `command` first recreates the
+    worker HOME, as the worker through the sudo rule, holding only the routed provider's login file and a
+    `safe.directory`-only `.gitconfig` for the packets clone and the intake repository."""
 
     def __init__(self, context: WorkContext, context_root: Path, repository: str,
-                 route: Callable[[str], dict[str, str]] = resolve_route) -> None:
+                 route: Callable[[str], dict[str, str]] = resolve_route, *, worker=None, user: str | None = None,
+                 environment: Mapping[str, str] | None = None, packets_clone: Path | None = None,
+                 login_source: Path | None = None, exports: Path | None = None) -> None:
         self.context, self.context_root, self.repository, self.route = context, Path(context_root), repository, route
         self.kept: dict[str, tuple[dict[str, str], str]] = {}
+        # Each invocation's starting revision from its package: the VERIFIER's regression base with a worker user.
+        self.starting: dict[str, str] = {}
+        self.worker, self.user, self.packets_clone = worker, user, packets_clone
+        self.environment = dict(environment or {})
+        self.login_source = Path.home() if login_source is None else Path(login_source)
+        # With a worker user: `<launch>/exports`, where each invocation's package is exported (section 0.6b).
+        self.exports = None if exports is None else Path(exports)
+        self.identities: dict[str, str] = {}  # each invocation's work item, for the worker's identity variables
 
     def package_path(self, invocation_id: str) -> Path:
+        """The package path named to the worker: with a worker user only its bounded export."""
+        if self.exports is not None:
+            return self.exports / invocation_id / EXPORT_FILE
         return self.context_root / f"{invocation_id}.json"
 
+    def _result(self, invocation_id: str, name: str) -> Path:
+        return self.worker.results / invocation_id / name
+
     def self_review_path(self, invocation_id: str) -> Path:
+        if self.worker is not None:
+            return self._result(invocation_id, SELF_REVIEW)
         return self.context_root / f"{invocation_id}.self-review.md"
 
     def closure_request_path(self, invocation_id: str) -> Path:
         """Where the CLOSURE session writes its one request, outside its clone."""
+        if self.worker is not None:
+            return self._result(invocation_id, CLOSURE_REQUEST)
         return self.context_root / f"{invocation_id}.closure-request.json"
+
+    def read(self, path: Path) -> bytes:
+        """A result file's bytes: with a worker user only through the hand-over's checked descriptor."""
+        if self.worker is not None:
+            return self.worker.read_result(path.parent.name, path.name)
+        return path.read_bytes()
 
     def prepare(self, invocation: WorkerInvocation, clone: Path | None) -> str | WorkerOutcome:
         identity, role = invocation.work_identity, invocation.role
@@ -956,31 +1095,83 @@ class LaunchPreparation:
         except (OSError, ValueError, TypeError, AttributeError) as error:
             return self._refusal(invocation, f"model-routing-unavailable: {role}: {type(error).__name__}: {error}")
         self.deliver(invocation, package.document(), route)
+        self.starting[invocation.correlation_id] = str(package.fields["starting_revision"])
         return str(package.fields["starting_revision"])
 
     def deliver(self, invocation: WorkerInvocation, document: Mapping[str, object], route: dict[str, str]) -> Path:
         """Write the package outside any worktree and keep the route and the instruction text for `command`."""
         path = self.package_path(invocation.correlation_id)
-        self.context_root.mkdir(parents=True, exist_ok=True)
-        path.write_text(json.dumps(dict(document), indent=1, sort_keys=True), encoding="utf-8")
+        data = json.dumps(dict(document), indent=1, sort_keys=True).encode("utf-8")
+        if self.exports is None:
+            self.context_root.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        else:
+            self._export(path, data)
+        self.identities[invocation.correlation_id] = invocation.work_identity
         result = PRODUCER_RESULT.format(self_review=self.self_review_path(invocation.correlation_id)) \
             if invocation.role == PRODUCER else CLOSURE_RESULT.format(
                 request=self.closure_request_path(invocation.correlation_id)) \
-            if invocation.role == CLOSURE else VERIFIER_RESULT
+            if invocation.role == CLOSURE else VERIFIER_RESULT if self.worker is None \
+            else WORKER_VERIFIER_RESULT.format(verdict=self._result(invocation.correlation_id, VERDICT))
         self.kept[invocation.correlation_id] = (dict(route), INSTRUCTIONS.format(
             role=invocation.role, identity=invocation.work_identity, invocation=invocation.correlation_id,
-            package=path, result=result))
+            package=path, result=result, context=CONTEXT_LINE if self.exports is None else EXPORT_CONTEXT_LINE))
         return path
+
+    def _export(self, path: Path, data: bytes) -> None:
+        """Write exactly the package to `<launch>/exports/<c>/context.json`: both folders the Founder's, mode 0711,
+        no ACL for the worker; the file the Founder's, mode 0640 with the one access ACL entry `u:<worker>:r`,
+        written to a temporary file in `<launch>/exports/<c>` and renamed into place."""
+        for folder in (path.parent.parent, path.parent):
+            folder.mkdir(mode=0o711, exist_ok=True)
+            if folder.is_symlink() or not folder.is_dir() or folder.lstat().st_uid != os.getuid():
+                raise OSError(f"the export folder is not the control plane's: {folder}")
+            os.chmod(folder, 0o711)
+        temporary = path.parent / f".{path.name}.{os.getpid()}.tmp"
+        descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+        try:
+            with os.fdopen(descriptor, "wb") as stream:
+                stream.write(data)
+                stream.flush()
+                os.fsync(stream.fileno())
+            os.chmod(temporary, 0o640)
+            granted = subprocess.run(["setfacl", "-m", f"u:{self.user}:r", "--", str(temporary)],
+                                     capture_output=True, check=False, timeout=30)
+            if granted.returncode:
+                raise OSError(f"the export cannot be granted to the worker: {granted.stderr.decode(errors='replace')}")
+            os.replace(temporary, path)
+        except BaseException:
+            temporary.unlink(missing_ok=True)
+            raise
 
     def command(self, invocation_id: str, role: object, workspace: Path) -> tuple[list[str], str]:
         """CliWorkerProvider's per-invocation command: the provider command for the kept route and this workspace,
         and the instruction text for standard input."""
         route, text = self.kept[invocation_id]
+        if self.worker is not None:
+            self.prepare_home(route["provider"])
         return provider_command(route, workspace), text
+
+    def prepare_home(self, provider: str) -> None:
+        """Recreate the worker HOME empty, as the worker through the sudo rule, holding only `provider`'s own login
+        file (its bytes read by the control plane from the login source and given on standard input) and a
+        `.gitconfig` whose only key is `safe.directory`, for the packets clone and the intake repository. No gh
+        login, credential helper, SSH key, configuration or App key."""
+        home, tmp = Path(self.environment["HOME"]), Path(self.environment["TMPDIR"])
+        login = PROVIDER_LOGIN_FILES[provider]
+        data = (self.login_source / login).read_bytes()
+        safe = "[safe]\n" + "".join(f"\tdirectory = {path}\n" for path in (self.packets_clone,
+                                                                            self.worker.intake))
+        write = ["sh", "-c", 'umask 077 && exec cat > "$1"', "sh"]
+        for argv, data_in in ((["rm", "-rf", "--", str(home)], None), (["mkdir", "-m", "0700", "--", str(home)], None),
+                              (["mkdir", "-p", "-m", "0700", "--", str((home / login).parent), str(tmp)], None),
+                              ([*write, str(home / login)], data), ([*write, str(home / ".gitconfig")], safe.encode())):
+            if run_as_worker(self.user, self.environment, argv, input=data_in).returncode:
+                raise OSError(f"the worker HOME cannot be prepared: {argv[0]}")
 
     def published(self, invocation: WorkerInvocation, candidate: CandidateRef) -> None:
         try:
-            text = self.self_review_path(invocation.correlation_id).read_text(encoding="utf-8")
+            text = self.read(self.self_review_path(invocation.correlation_id)).decode("utf-8")
             if text.strip():
                 self.context.record_self_review(invocation.work_identity, candidate, text)
         except Exception:  # noqa: BLE001 - nothing is recorded; the VERIFIER's launch is held MISSING_RECORD
@@ -1060,6 +1251,7 @@ class RegistryClosure:
         self._repository = configuration.packets_repository
         self._location = configuration.repositories[self._repository]
         self.worker: RealWorkerProvider | None = None  # set by `_launch_chain`, for PRODUCER worktree disposal
+        self.worker_workspaces: WorkerCloneAdapter | None = None  # with a worker user, its clones' removal
         self.cleanup_diagnostics: dict[str, str] = {}
 
     # --- ClosureActions -------------------------------------------------------------------------------------------
@@ -1067,7 +1259,7 @@ class RegistryClosure:
     def close(self, invocation: WorkerInvocation, candidate: CandidateRef, journal) -> tuple[tuple[str, ...], tuple[str, ...]]:
         identity, revision = invocation.work_identity, candidate.locator.rpartition("@")[2]
         try:
-            document = self._preparation.closure_request_path(invocation.correlation_id).read_bytes()
+            document = self._preparation.read(self._preparation.closure_request_path(invocation.correlation_id))
         except OSError:
             document = None
         request = parse_request(document, identity, revision)
@@ -1278,16 +1470,31 @@ class RegistryClosure:
                 except Exception as error:  # noqa: BLE001 - an unreadable observation keeps the workspace
                     reason = f"ownership unreadable: {type(error).__name__}"
             if entry.get("role") == PRODUCER and self.worker is not None:
-                worktree = _producer_worktree(self._root / "workspaces", WorkerInvocation(invocation.work_identity,
-                                                                                          correlation))
+                worktree = _producer_worktree(self._root / "workspaces", WorkerInvocation(
+                    invocation.work_identity, correlation)) if self.worker_workspaces is None else _producer_worktree(
+                    self._root / "worker", WorkerInvocation(invocation.work_identity, correlation), "producer-")
                 if worktree is not None and worktree.path.exists():
                     if reason is None:
                         self.worker.finalize(WorkerInvocation(invocation.work_identity, correlation), False)
                     if worktree.path.exists():
                         kept = True
                         self.cleanup_diagnostics[str(worktree.path)] = reason or "worktree kept"
+            if self.worker_workspaces is not None:  # worker clones: removed only as the worker
+                for prefix in ("verifier", "closure"):
+                    path = (self._root / "worker").resolve() / f"{prefix}-{correlation}"
+                    if not os.path.lexists(path):
+                        continue
+                    if reason is None:
+                        try:
+                            self.worker_workspaces.cleanup(GitWorkspace(correlation, invocation.work_identity, path,
+                                                                        ""), None)
+                        except CandidateUnavailable:
+                            pass
+                    if os.path.lexists(path):
+                        kept = True
+                        self.cleanup_diagnostics[str(path)] = reason or "not removable"
             for prefix in _WORKSPACE_PREFIXES:
-                path = verifier / f"{prefix}-{correlation}"
+                path = (self._root / "landing" if prefix == "landing" else verifier) / f"{prefix}-{correlation}"
                 if not path.exists():
                     continue
                 if reason is not None:
@@ -1314,7 +1521,7 @@ class RegistryClosure:
         return f"refs/remotes/landing/{self._location.default_branch}"
 
     def _clone(self, correlation: str) -> Path:
-        clone = self._root / "verifier" / f"landing-{correlation}"
+        clone = self._root / "landing" / f"landing-{correlation}"  # Founder-only, outside every worker root
         if not (clone / ".git").is_dir():
             clone.mkdir(parents=True, exist_ok=True)
             self._git(clone, "init", "-q")

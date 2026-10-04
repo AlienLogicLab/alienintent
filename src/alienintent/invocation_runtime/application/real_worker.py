@@ -114,9 +114,14 @@ def _revision_of(candidate: CandidateRef) -> str | None:
     return candidate.locator.rsplit("@", 1)[1]
 
 
-def _feature_regression_receipt(path: Path, candidate: CandidateRef) -> str | None:
+def _read_path(path: Path) -> bytes:
+    return path.read_bytes()
+
+
+def _feature_regression_receipt(path: Path, candidate: CandidateRef,
+                                read: Callable[[Path], bytes] = _read_path) -> str | None:
     try:
-        document = json.loads(path.read_text(encoding="utf-8"))
+        document = json.loads(read(path).decode("utf-8"))
     except (OSError, ValueError):
         return None
     if not isinstance(document, Mapping) or document.get("kind") != "FeatureRegressionReceipt" or document.get("passed") is not True:
@@ -137,14 +142,16 @@ def _feature_regression_receipt(path: Path, candidate: CandidateRef) -> str | No
     return "feature-regressions:" + digest
 
 
-def read_verdict(path: Path, candidate: CandidateRef) -> WorkerOutcome:
+def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], bytes] = _read_path) -> WorkerOutcome:
     """The verdict a verifier process left for exactly ``candidate``.
 
     A missing, malformed or other-revision verdict is not a verdict: it reads
-    as a kind the coordinator holds on, never as acceptance.
+    as a kind the coordinator holds on, never as acceptance. ``read`` reads the
+    verdict and the receipt beside it (with a worker user: through the
+    hand-over's checked descriptor, never a worker-chosen path).
     """
     try:
-        document = json.loads(path.read_text(encoding="utf-8"))
+        document = json.loads(read(path).decode("utf-8"))
     except (OSError, ValueError):
         return WorkerOutcome("verdict-missing")
     if not isinstance(document, Mapping):
@@ -154,7 +161,7 @@ def read_verdict(path: Path, candidate: CandidateRef) -> WorkerOutcome:
     findings = _strings(document.get("findings", []))
     if findings is None:
         return WorkerOutcome("verdict-malformed")
-    regression_receipt = _feature_regression_receipt(path.parent / "feature-regressions.json", candidate)
+    regression_receipt = _feature_regression_receipt(path.parent / "feature-regressions.json", candidate, read)
     if regression_receipt is None:
         return WorkerOutcome("feature-regressions-missing")
     receipts = (regression_receipt,)
@@ -185,6 +192,26 @@ class WorkerPreparation(Protocol):
     def published(self, invocation: WorkerInvocation, candidate: CandidateRef) -> None: ...
 
 
+class CandidateHandover(Protocol):
+    """With a worker user (unit WORKER-CREDENTIAL-BOUNDARY): the candidate's hand-over by exact object identity and
+    the worker's own clones. `revision` is the SHA the worker claims (run as the worker); `hand_over` imports exactly
+    that SHA into the control plane's intake repository; `publish_intake` publishes it from there and reads it back;
+    `candidate_clone` makes a VERIFIER or CLOSURE worker clone after the custody checks; `read_result` reads one file
+    of `<results>/<invocation>/` through a checked descriptor (OSError when refused)."""
+
+    results: Path
+
+    def revision(self, workspace: Path) -> str: ...
+
+    def hand_over(self, correlation: str, workspace: Path, claimed: str, starting: str) -> str: ...
+
+    def publish_intake(self, correlation: str, branch: str, revision: str, verifier_workspace: Path) -> CandidateRef: ...
+
+    def candidate_clone(self, prefix: str, invocation_id: str, owner: str, candidate: CandidateRef) -> Workspace: ...
+
+    def read_result(self, invocation_id: str, name: str) -> bytes: ...
+
+
 class ClosureActions(Protocol):
     """An optional hook, in the style of `WorkerPreparation`, that performs and reads back CLOSURE's effects.
 
@@ -201,7 +228,7 @@ class ClosureActions(Protocol):
 
 
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None, handover: CandidateHandover | None = None) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -221,6 +248,8 @@ class RealWorkerProvider(WorkerProvider):
         self._recovered_workspace = recovered_workspace
         # The only CLOSURE hook this provider holds: no credential and no Landing Authority.
         self._closure = closure
+        # With a worker user: the only source of a candidate (the intake import) and of every worker clone.
+        self._handover = handover
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
@@ -279,7 +308,11 @@ class RealWorkerProvider(WorkerProvider):
         try:
             workspace = self._verifier_root / f"verifier-{invocation.correlation_id}"
             try:
-                self._source.retrieve_for_verification(candidate, workspace)
+                if self._handover is not None:
+                    workspace = self._handover.candidate_clone("verifier", invocation.correlation_id,
+                                                               invocation.work_identity, candidate).path
+                else:
+                    self._source.retrieve_for_verification(candidate, workspace)
             except CandidateUnavailable:
                 return WorkerOutcome("candidate-unavailable")
             self.verifier_provenance[invocation.correlation_id] = workspace.as_posix()
@@ -287,14 +320,21 @@ class RealWorkerProvider(WorkerProvider):
                 prepared = self._preparation.prepare(invocation, workspace)
                 if isinstance(prepared, WorkerOutcome):
                     return prepared
-            verdict = workspace / VERDICT_PATH
-            if verdict.exists():
-                # The candidate itself carries a verdict: a producer cannot approve its own work.
-                return WorkerOutcome("verdict-preexisting")
+            if self._handover is not None:
+                # The verdict is a worker result in its fresh `<results>/<invocation>/` folder (it cannot preexist);
+                # nothing is read from the worker's clone.
+                handover = self._handover
+                verdict = handover.results / invocation.correlation_id / Path(VERDICT_PATH).name
+                read = lambda path: handover.read_result(path.parent.name, path.name)  # noqa: E731
+            else:
+                verdict, read = workspace / VERDICT_PATH, _read_path
+                if verdict.exists():
+                    # The candidate itself carries a verdict: a producer cannot approve its own work.
+                    return WorkerOutcome("verdict-preexisting")
             result = self._process.run(invocation.correlation_id, InvocationRole.VERIFIER, workspace, budget.hard_wall_clock_seconds)
             if result.kind != "success":
                 return WorkerOutcome(result.kind)
-            return read_verdict(verdict, candidate)
+            return read_verdict(verdict, candidate, read)
         finally:
             if self._reservations is not None:
                 self._reservations.release(invocation.correlation_id)
@@ -341,7 +381,11 @@ class RealWorkerProvider(WorkerProvider):
                 return WorkerOutcome("closed", candidate, findings=tuple(settled[1]), receipts=tuple(settled[0]))
         clone = self._verifier_root / f"closure-{invocation.correlation_id}"
         try:
-            self._source.retrieve_for_verification(candidate, clone)
+            if self._handover is not None:
+                clone = self._handover.candidate_clone("closure", invocation.correlation_id, invocation.work_identity,
+                                                       candidate).path
+            else:
+                self._source.retrieve_for_verification(candidate, clone)
         except CandidateUnavailable:
             return WorkerOutcome.closed(candidate, ())
         published = CANDIDATE_PUBLISHED_RECEIPT.format(identity=invocation.work_identity, revision=revision)
@@ -446,11 +490,16 @@ class RealWorkerProvider(WorkerProvider):
             if result.kind != "success" or ("token" in budget.required_dimensions and result.budget.token_cost is None) or ("monetary" in budget.required_dimensions and result.budget.monetary_cost is None):
                 outcome = WorkerOutcome(result.kind)
             else:
-                revision = self._source.revision(workspace.path)
+                # With a worker user the claim is the worker's and the candidate comes only from the intake import.
+                revision = (self._source if self._handover is None else self._handover).revision(workspace.path)
                 if self._journal is not None:
                     self._journal.append({"event": PUBLICATION_STARTED, "correlation_id": invocation.correlation_id,
                                           "work_identity": invocation.work_identity, "role": invocation.role, "revision": revision})
-                candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
+                if self._handover is not None:
+                    self._handover.hand_over(invocation.correlation_id, workspace.path, revision, starting_revision)
+                    candidate = self._handover.publish_intake(invocation.correlation_id, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
+                else:
+                    candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
                 if self._preparation is not None:
                     self._preparation.published(invocation, candidate)
                 outcome = WorkerOutcome.success(candidate)

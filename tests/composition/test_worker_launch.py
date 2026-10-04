@@ -59,8 +59,12 @@ command = package["context_command"]
 env = dict(os.environ) | command["environment"]
 own = subprocess.run(command["argv"], env=env, capture_output=True, text=True)
 argv = list(command["argv"])
-argv[argv.index("--contract-digest") + 1] = {other!r}
-other = subprocess.run(argv, env=env, capture_output=True, text=True)
+if "--contract-digest" in argv:
+    argv[argv.index("--contract-digest") + 1] = {other!r}
+    other = subprocess.run(argv, env=env, capture_output=True, text=True)
+else:  # the export mode (worker user): the same call for another correlation
+    other = subprocess.run(argv, env=env | {{"ALIENINTENT_CORRELATION": "another-invocation"}},
+                           capture_output=True, text=True)
 head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
 role = os.environ.get("ALIENINTENT_ROLE")
 record = {{"argv": sys.argv, "stdin": text, "env": dict(os.environ), "cwd": os.getcwd(), "head": head,
@@ -91,6 +95,9 @@ elif role == "CLOSURE":
         Path(request).write_text(json.dumps(document))
     if plan.get("push"):
         subprocess.run(plan["push"], check=True, capture_output=True)
+elif "Then write your verdict as one JSON file, to this file:" in lines:
+    verdict = lines[lines.index("Then write your verdict as one JSON file, to this file:") + 1]
+    Path(verdict).write_text(json.dumps({{"revision": head, "verdict": "accept", "findings": []}}))
 else:
     Path(".alienintent").mkdir(exist_ok=True)
     Path(".alienintent/verdict.json").write_text(json.dumps({{"revision": head, "verdict": "accept", "findings": []}}))
@@ -404,8 +411,8 @@ class Owners(ProcOwnership):
     def owner_state(self, owner):
         return self.state or super().owner_state(owner)
 
-    def owned_work(self, invocation_id, owner=None):
-        return super().owned_work(invocation_id, owner) if self.work is None else self.work
+    def owned_work(self, invocation_id, owner=None, **observed):
+        return super().owned_work(invocation_id, owner, **observed) if self.work is None else self.work
 
 
 def work_launch(fx: Launch, identity: str, ownership=None) -> dict:
@@ -771,7 +778,7 @@ def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx
     clone = Path(session["cwd"])
     assert clone.is_dir() and not fx.wip_held(item.id)
     merge = state.record["ready_to_land"]
-    landing = clone.parent / f"landing-{session['env']['ALIENINTENT_INVOCATION_ID']}"
+    landing = launch_root(fx.loaded().configuration) / "landing" / f"landing-{session['env']['ALIENINTENT_INVOCATION_ID']}"
     assert git(landing, "rev-list", "--parents", "-n", "1", merge).decode().split()[1:] == [base, revision_of(state)]
     # Not blocking: with a WIP limit of 1 another item is admitted; a launch without landing starts nothing.
     fx.host.write_text(json.dumps({"wipLimit": 1}))
@@ -1243,3 +1250,267 @@ def test_a_crash_then_main_moving_to_a_non_ancestor_reworks_without_a_push(closi
     assert state.stage is LifecycleStage.IMPLEMENT and state.record["rejections"] == 1
     assert any(f.startswith("closure-rework:base-moved:") for f in state.record["findings"][-1]["findings"])
     assert _unescalated(closing, item.id)
+
+
+# --- WORKER-CREDENTIAL-BOUNDARY: the launch with a worker user (acceptance checks 1, 2, 4 and 6) --------------------
+from tests.invocation_runtime.test_git_source_control import USER, install_fake_sudo, outside, record_git, \
+    sudo_calls  # noqa: E402
+
+# With a worker user: no configuration path; the three identity variables of the export-mode context command.
+WORKER_ALLOWED = ALLOWED - {"ALIENINTENT_PROJECT_CONFIGURATION", "ALIENINTENT_PROJECT"} | {
+    "ALIENINTENT_CORRELATION", "ALIENINTENT_WORK_IDENTITY"}
+LOGINS = {".codex/auth.json": "LOGIN-CODEX-TEST-DATA", ".claude/.credentials.json": "LOGIN-CLAUDE-TEST-DATA"}
+
+
+@pytest.fixture
+def workerized(fx, monkeypatch):
+    """The launch fixture with `worker_user` (the test's own user, behind a fake sudo that records its arguments),
+    a Founder HOME holding both provider login files and a Founder credential file, and the existing marker
+    observation (a real worker uid cannot be observed in a test; check 5 covers it over a fake /proc)."""
+    fx.document["projects"][PROJECT]["worker_user"] = USER
+    fx.configuration_file.write_text(json.dumps(fx.document))
+    founder = fx.root / "founder-home"
+    for name, text in LOGINS.items():
+        (founder / name).parent.mkdir(parents=True, exist_ok=True)
+        (founder / name).write_text(text)
+    (founder / ".git-credentials").write_text("https://x:FOUNDER-TOKEN@github.com\n")
+    monkeypatch.setenv("HOME", str(founder))
+    uids = []
+    monkeypatch.setattr(work_registry, "ProcOwnership",
+                        lambda *a, worker_uid=None, **k: (uids.append(worker_uid), Owners())[1])
+    fx.sudo_log, fx.uids = install_fake_sudo(fx.root / "sudo-bin", monkeypatch), uids
+    return fx
+
+
+def test_with_a_worker_user_no_privileged_git_touches_a_worker_repository_through_landing(workerized, monkeypatch):
+    """Checks 1, 4 and 6 over PRODUCER, VERIFIER and a landing CLOSURE: every session and worker-side command runs
+    through the one sudo rule in its own worker clone; the candidate comes only from the intake import; no
+    control-plane or Landing Authority git runs in, names GIT_DIR in, or has an argument under the worker, hand-over
+    or results folders; the worker HOME holds exactly the routed login file and a safe.directory-only .gitconfig."""
+    fx = workerized
+    closing = Closing(fx, monkeypatch)
+    item = fx.authorized("UNIT", **FIXED)
+    configuration = fx.loaded().configuration
+    root, packets = launch_root(configuration), configuration.repositories[configuration.packets_repository].clone
+    calls = record_git(monkeypatch)
+    from alienintent.invocation_runtime.adapters.git_source_control import IntakeSourceControl
+    reads, read_result = [], IntakeSourceControl.read_result
+    monkeypatch.setattr(IntakeSourceControl, "read_result", lambda self, invocation, name, *rest: (
+        reads.append(name), read_result(self, invocation, name, *rest))[1])
+    fx.launch(item.id)
+    [producer] = fx.runs("PRODUCER")
+    assert Path(producer["cwd"]).parent == root / "worker" and Path(producer["cwd"]).name.startswith("producer-")
+    assert not Path(producer["cwd"]).exists()  # removed as the worker after publication
+    home = root / "worker" / "home"
+    assert sorted(str(p.relative_to(home)) for p in home.rglob("*") if p.is_file()) == [".codex/auth.json",
+                                                                                       ".gitconfig"]
+    assert (home / ".codex/auth.json").read_text() == LOGINS[".codex/auth.json"]
+    assert (home / ".gitconfig").read_text() == \
+        f"[safe]\n\tdirectory = {packets}\n\tdirectory = {root / 'intake.git'}\n"
+    assert producer["env"]["HOME"] == str(home) and set(producer["env"]) <= WORKER_ALLOWED
+    assert_bounded_export(fx, root, producer)
+    (home / ".git-credentials").write_text("planted\n")  # recreated empty at the next session
+    fx.launch(item.id)
+    assert not (home / ".git-credentials").exists() and (home / ".gitconfig").is_file()
+    state = closing.state(item.id)
+    assert state.stage is LifecycleStage.ACCEPT
+    revision = revision_of(state)
+    intake_ref = f"refs/intake/{ref_safe(producer['env']['ALIENINTENT_INVOCATION_ID'])}"
+    [verifier] = fx.runs("VERIFIER")
+    assert Path(verifier["cwd"]).parent == root / "worker" and verifier["head"] == revision
+    assert "launch-candidate.txt" in verifier["package"]["diff"]["text"]
+    assert verifier["package"]["producer_self_review"]["text"] == REVIEW
+    closing.close(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.DONE and closing.pushes == ["pushed"]
+    [session] = fx.runs("CLOSURE")
+    assert Path(session["cwd"]).parent == root / "worker" and set(session["env"]) <= WORKER_ALLOWED
+    for run in (verifier, session):
+        assert_bounded_export(fx, root, run)
+    assert not [p.name for p in (root / "worker").iterdir() if item.id in p.name]  # every worker clone removed
+    outside(calls, root / "worker", root / "handoff", root / "results")
+    assert git(root / "intake.git", "rev-parse", intake_ref).decode().strip() == revision
+    assert os.getuid() in fx.uids  # the registry's ownership observes the worker's uid (the assessment's does not)
+    for call in sudo_calls(fx.sudo_log):
+        assert call["argv"][:7] == ["-n", "-u", USER, "--", "env", "-i", "PATH=/usr/bin:/bin"] \
+            or call["argv"][:4] == ["-n", "-u", USER, "kill"], call
+    assert "FOUNDER-TOKEN" not in json.dumps(fx.runs())
+    # Check 6b: every worker result was read through the checked descriptor reader, and nothing else.
+    assert sorted(set(reads)) == ["closure-request.json", "feature-regressions.json", "self-review.md", "verdict.json"]
+    # Check 4: each worker clone was removed as the worker, through the sudo rule.
+    removed = {Path(c["argv"][-1]).name.split("-")[0] for c in sudo_calls(fx.sudo_log) if c["argv"][-4:-1] == [
+        "rm", "-rf", "--"] and Path(c["argv"][-1]).parent == root / "worker"}
+    assert removed == {"home", "producer", "verifier", "closure"}  # the HOME is recreated as the worker too
+
+
+def assert_bounded_export(fx, root: Path, run: dict) -> None:
+    """Check 6d over a real session: the package named to the worker is its bounded export only, Founder-owned with
+    folders 0711 and no worker ACL, the file 0640 with the one ACL entry `u:<worker>:r`; its `context_command` is
+    the export mode with only the three identity variables and re-prints exactly that package; another correlation
+    answers `not-in-export`; no configuration path is named; `<launch>/context` holds no package for it."""
+    correlation = run["env"]["ALIENINTENT_INVOCATION_ID"]
+    export = root / "exports" / correlation / "context.json"
+    assert run["package_path"] == str(export)
+    package = json.loads(export.read_text())
+    assert run["package"] == package and package["role"] == run["env"]["ALIENINTENT_ROLE"]
+    assert package["context_command"] == {
+        "argv": [str(work_registry.installed_executable()), "--json", "work", "context", "--export", str(export)],
+        "environment": {"ALIENINTENT_WORK_IDENTITY": package["identity"], "ALIENINTENT_ROLE": package["role"],
+                        "ALIENINTENT_CORRELATION": correlation}}
+    assert {name: run["env"][name] for name in package["context_command"]["environment"]} == \
+        package["context_command"]["environment"]  # the sudo allowlist carries the three identity variables
+    assert json.loads(run["own_context"]) == package
+    assert json.loads(run["other_context"]) == {"error": "not-in-export"}
+    text = export.read_text()
+    assert "ALIENINTENT_PROJECT" not in text and str(fx.configuration_file) not in text
+    assert not (root / "context" / f"{correlation}.json").exists()
+    assert (root / "context").stat().st_mode & 0o7777 == 0o700  # Founder-only with a worker user
+    for folder in (root / "exports", export.parent):
+        assert folder.stat().st_uid == os.getuid() and folder.stat().st_mode & 0o7777 == 0o711
+        assert [line for line in _acl(folder) if not line.startswith(("user::", "group::", "other::"))] == []
+    assert export.stat().st_uid == os.getuid() and export.stat().st_mode & 0o7777 == 0o640
+    assert [line for line in _acl(export) if line.startswith("user:") and not line.startswith("user::")] == \
+        [f"user:{USER}:r--"]
+    assert not [p for p in export.parent.iterdir() if p.name != "context.json"]
+
+
+def _acl(path: Path) -> list[str]:
+    return subprocess.run(["getfacl", "-cp", str(path)], capture_output=True, text=True, check=True).stdout.split()
+
+
+def test_without_a_worker_user_nothing_runs_through_sudo_and_the_worktree_path_is_unchanged(fx, monkeypatch):
+    """Check 4: with no `worker_user` the launch uses the existing worktree under `launch/workspaces` and no sudo."""
+    log = install_fake_sudo(fx.root / "sudo-bin", monkeypatch)
+    item = fx.authorized("PLAIN")
+    fx.launch(item.id)
+    [producer] = fx.runs("PRODUCER")
+    root = launch_root(fx.loaded().configuration)
+    assert Path(producer["cwd"]).parent == root / "workspaces" and sudo_calls(log) == []
+    assert not (root / "worker").exists() and not (root / "intake.git").exists()
+
+
+SETUP = Path(__file__).resolve().parents[2] / "tools/live/setup_worker_user.sh"
+
+
+def test_the_setup_plan_grants_the_worker_no_write_on_any_control_plane_repository(tmp_path):
+    """Check 2: the dry-run plan gives `worker`, `results` and `handoff` mode 0711 owned by the worker; the intake,
+    intake-bundles and landing folders the Founder's, mode 0700; read and traverse only (`r-X`) on the packets clone
+    and the intake repository; traverse only (`--x`, no default ACL) on the launch folder; no write ACL for the
+    worker anywhere; removal of any write or default ACL; and final checks asserting it. It changes nothing."""
+    launch, packets = tmp_path / "launch", tmp_path / "packets"
+    configuration, evidence = tmp_path / "project.json", tmp_path / "evidence"
+    databases = (tmp_path / "work.sqlite", tmp_path / "readiness.sqlite")
+    result = subprocess.run(["bash", str(SETUP), "--dry-run", "--founder", "founder", "--launch", str(launch),
+                             "--packets", str(packets), "--key", str(tmp_path / "keys/app.pem"),
+                             "--configuration", str(configuration), "--database", str(databases[0]),
+                             "--database", str(databases[1]), "--evidence", str(evidence),
+                             "--read", str(tmp_path / "python")],
+                            capture_output=True, text=True, check=False, timeout=60)
+    assert result.returncode == 0, result.stderr
+    plan = result.stdout
+    assert not launch.exists()
+    for name in ("worker", "results", "handoff"):
+        assert f"install -d -o alienintent-worker -g alienintent-worker -m 0711 {launch / name}" in plan
+    for name in ("intake.git", "intake-bundles", "landing"):
+        assert f"install -d -o founder -m 0700 {launch / name}" in plan
+    for path in (packets, launch / "intake.git"):
+        assert f"setfacl -R -m u:alienintent-worker:r-X {path}" in plan
+        assert f"find {path} -type d -exec setfacl -d -m u:alienintent-worker:r-X \\{{\\}} +" in plan
+    assert f"setfacl -m u:alienintent-worker:--x {launch}" in plan
+    grants = [line for line in plan.splitlines() if line.startswith("setfacl") and " -m " in line]
+    assert grants
+    for line in grants:
+        entry = next(part for part in line.split() if part.startswith("u:alienintent-worker:"))
+        assert "w" not in entry.rsplit(":", 1)[1], line
+        if line.endswith(f" {launch}"):
+            assert " -d " not in line, line  # the traverse-only launch folder has no default ACL
+    for path in (packets, launch / "intake.git", launch / "intake-bundles", launch / "landing"):
+        assert f"setfacl -R -x u:alienintent-worker {path}" in plan
+        assert f"find {path} -type d -exec setfacl -x d:u:alienintent-worker \\{{\\}} +" in plan
+    assert f"setfacl -x u:alienintent-worker {launch}" in plan and f"setfacl -x d:u:alienintent-worker {launch}" in plan
+    assert "Defaults>alienintent-worker !use_pty, !log_output" in plan
+    assert "founder ALL=(alienintent-worker) NOPASSWD: /usr/bin/env, /usr/bin/kill" in plan
+    for check in ("check: not writable, not owned, no ACL beyond read and traverse:", "check: App key unreadable",
+                  "check: no credential in the packets clone config"):
+        assert check in plan
+    # Revision 7: the bounded export folder, traverse only for the worker.
+    assert f"install -d -o founder -m 0711 {launch / 'exports'}" in plan
+    assert f"setfacl -m u:alienintent-worker:--x {launch / 'exports'}" in plan
+    assert f"setfacl -x d:u:alienintent-worker {launch / 'exports'}" in plan
+
+
+def test_the_setup_grants_nothing_on_the_canonical_stores_and_restores_owner_only_modes(tmp_path):
+    """Check 6c: no ACL grant (access or default, any permission) names the work or readiness database, the evidence
+    repository (or objects/) or the registry configuration, nor any path inside them; every earlier entry is removed
+    (setfacl -b, and -k on folders), owner-only modes are restored (0600 files, 0700 evidence root and objects/), and
+    the final checks assert, as the worker, that none is readable or traversable and that UNSAFE_ROOT passes."""
+    launch, packets = tmp_path / "launch", tmp_path / "packets"
+    configuration, evidence = tmp_path / "project.json", tmp_path / "evidence"
+    databases = (tmp_path / "work.sqlite", tmp_path / "readiness.sqlite")
+    result = subprocess.run(["bash", str(SETUP), "--dry-run", "--founder", "founder", "--launch", str(launch),
+                             "--packets", str(packets), "--key", str(tmp_path / "keys/app.pem"),
+                             "--configuration", str(configuration), "--database", str(databases[0]),
+                             "--database", str(databases[1]), "--evidence", str(evidence),
+                             "--read", str(tmp_path / "python")], capture_output=True, text=True, check=False,
+                            timeout=60)
+    assert result.returncode == 0, result.stderr
+    plan = result.stdout.splitlines()
+    private = (configuration, *databases, evidence)
+    for line in plan:
+        if line.startswith(("setfacl", "find")) and (" -m " in line or "-d -m" in line):
+            assert not any(str(path) in line.split() or any(word.startswith(f"{path}/") for word in line.split())
+                           for path in private), line
+    for path in (configuration, *databases):
+        assert f"setfacl -b {path}" in plan and f"chmod 0600 {path}" in plan
+    for path in databases:  # the SQLite sidecar files too, when present
+        assert f"owner_only {path}-wal {path}-shm" in plan
+        for sidecar in (f"{path}-wal", f"{path}-shm"):
+            assert f"check: neither readable nor traversable by the worker: {sidecar}" in plan
+    assert f"setfacl -R -b {evidence}" in plan
+    assert f"find {evidence} -type d -exec setfacl -k \\{{\\}} +" in plan
+    assert f"chmod 0700 {evidence} {evidence / 'objects'}" in plan
+    for path in (configuration, *databases, evidence, evidence / "objects"):
+        assert f"check: neither readable nor traversable by the worker: {path}" in plan
+    assert f"check: the evidence repository's privacy check passes (UNSAFE_ROOT): {evidence}" in plan
+    assert not [line for line in plan if "configuration readable" in line]
+    missing = subprocess.run(["bash", str(SETUP), "--dry-run", "--founder", "founder", "--launch", str(launch),
+                              "--packets", str(packets), "--key", str(tmp_path / "k"), "--configuration",
+                              str(configuration)], capture_output=True, text=True, check=False, timeout=60)
+    assert missing.returncode == 2  # the canonical stores must be named, so none is left with an old grant
+
+
+def test_check_8d_mints_only_through_the_landing_authoritys_own_credentials(fx, monkeypatch, capsys):
+    """Check 8(d), offline: the proof builds the Landing Authority over its own InstallationCredentials from the
+    `github` entry and mints through exactly those, without building a WorkRegistry, opening a database or
+    constructing an evidence repository, and leaves the evidence root's mode unchanged. Its record states the claim
+    boundary of a pass (partial)."""
+    import importlib.util
+    import sqlite3
+    from alienintent.composition import landing_authority
+    from alienintent.evidence_learning.adapters import local_evidence_repository
+    from alienintent.installation.application.installation_credentials import InstallationCredentials
+    spec = importlib.util.spec_from_file_location("worker_boundary_check",
+                                                  SETUP.with_name("worker_boundary_check.py"))
+    check = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(check)
+    configuration = fx.loaded().configuration
+    evidence = configuration.readiness.evidence_root
+    evidence.mkdir(parents=True, exist_ok=True, mode=0o700)
+    mode = evidence.stat().st_mode
+    monkeypatch.setattr(work_registry.WorkRegistry, "__init__", lambda *a, **k: pytest.fail("a WorkRegistry"))
+    monkeypatch.setattr(local_evidence_repository.LocalEvidenceRepository, "__init__",
+                        lambda *a, **k: pytest.fail("an evidence repository"))
+    monkeypatch.setattr(sqlite3, "connect", lambda *a, **k: pytest.fail("a database was opened"))
+    built, minted = [], []
+    authority_init = landing_authority.LandingAuthority.__init__
+    monkeypatch.setattr(landing_authority.LandingAuthority, "__init__", lambda self, credentials, *rest, **k: (
+        built.append(credentials), authority_init(self, credentials, *rest, **k))[1])
+    from types import SimpleNamespace
+    monkeypatch.setattr(InstallationCredentials, "token", lambda self: (minted.append(self), SimpleNamespace(
+        permissions=dict(landing_authority.LANDING_PERMISSIONS), repository_selection="selected"))[1])
+    assert check.check_d(fx.configuration_file, PROJECT)
+    assert len(built) == 1 and minted == built  # minted only through the authority's own credentials
+    assert evidence.stat().st_mode == mode
+    line = json.loads(capsys.readouterr().out)
+    assert line["check"] == "8(d)" and line["partial"] is True and line["evidence_root_mode_unchanged"] is True
+    assert "InstallationCredentials only" in line["claim"]
+    assert check.main(["--dry-run", "--configuration", "x", "--project", "p", "--key", "k"]) == 0

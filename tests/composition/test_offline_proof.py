@@ -215,6 +215,7 @@ def test_s0_frozen_kernel_guard_rejects_authorized_s2_store_extension(tmp_path: 
         "src/alienintent/execution_coordination/application/factory_coordinator.py",
         "src/alienintent/execution_coordination/domain/lifecycle.py",
         "src/alienintent/invocation_runtime/adapters/git_source_control.py",
+        "src/alienintent/invocation_runtime/adapters/git_worktree.py",
         "src/alienintent/invocation_runtime/application/real_worker.py",
     ]
     assert {c["id"] for c in report["checks"]} == {"P1", "P2", "P3", "P4", "P5", "P6", "P7", "P10", "P11", "P12", "P13"}

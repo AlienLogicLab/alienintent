@@ -5,7 +5,9 @@ from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, is_dataclass
 import json
 import logging
+import os
 from pathlib import Path
+import stat
 from typing import Any, Protocol
 
 from alienintent.control_plane.application.decision_inbox import DecisionInbox
@@ -160,6 +162,63 @@ def context_work(context: WorkContexts, id_or_label: str, role: str, correlation
     VERIFIER runs it in its candidate clone (`workspace`), where the diff is taken."""
     return context.assemble(id_or_label, role, correlation, contract_digest, candidate,
                             workspace if role == VERIFIER else None).document()
+
+
+# `work context --export` (unit WORKER-CREDENTIAL-BOUNDARY section 0.6b): the answers when nothing is printed.
+NOT_IN_EXPORT, EXPORT_REFUSED = "not-in-export", "export-refused"
+EXPORT_LIMIT = 16 << 20
+
+
+def export_context(export: str, environment: Mapping[str, str], founder_uid: int | None = None) -> dict[str, object]:
+    """`work context --export <file>`: the package the control plane exported for this invocation, re-printed.
+
+    It opens only `<...>/exports/<correlation>/context.json`, where `<correlation>` is ALIENINTENT_CORRELATION:
+    each folder with O_PATH|O_DIRECTORY|O_NOFOLLOW, the file with O_RDONLY|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC, and
+    refuses by fstat on those descriptors anything but Founder-owned folders and a Founder-owned regular file (the
+    Founder's user is the owner of `exports`, unless `founder_uid` is given); it reads only from that descriptor. The
+    work item, role and correlation must be ALIENINTENT_WORK_IDENTITY, ALIENINTENT_ROLE and ALIENINTENT_CORRELATION.
+    A request for another correlation, path or argument answers `not-in-export` and reads nothing; another work item
+    or role is found only inside the file, so that answer comes after reading it. A refused file answers
+    `export-refused`. Without a trusted Founder fact for the worker, "the Founder's user" is the owner of `exports`. It builds no
+    profile and opens no database, evidence repository or configuration. The identity check is a consistency check of
+    this API, not an isolation boundary: every worker-user process can read any export whose path it learns."""
+    identity, role, correlation = (environment.get(name, "") for name in (
+        "ALIENINTENT_WORK_IDENTITY", "ALIENINTENT_ROLE", "ALIENINTENT_CORRELATION"))
+    path = Path(export)
+    if not (identity and role and correlation) or any(part in correlation for part in ("/", "\\", "..", "\x00")) \
+            or not path.is_absolute() or path.name != "context.json" or path.parent.name != correlation \
+            or path.parent.parent.name != "exports":
+        return {"error": NOT_IN_EXPORT}
+    folder_flags = os.O_PATH | os.O_DIRECTORY | os.O_NOFOLLOW | os.O_CLOEXEC
+    descriptors: list[int] = []
+    try:
+        descriptors.append(os.open(path.parent.parent, folder_flags))
+        descriptors.append(os.open(correlation, folder_flags, dir_fd=descriptors[0]))
+        descriptors.append(os.open(path.name, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC,
+                                   dir_fd=descriptors[1]))
+        exports, folder, opened = (os.fstat(descriptor) for descriptor in descriptors)
+        owner = exports.st_uid if founder_uid is None else founder_uid
+        if exports.st_uid != owner or folder.st_uid != owner or opened.st_uid != owner \
+                or not stat.S_ISREG(opened.st_mode) or opened.st_size > EXPORT_LIMIT:
+            return {"error": EXPORT_REFUSED}
+        data = b""
+        while chunk := os.read(descriptors[2], 1 << 16):
+            data += chunk
+            if len(data) > EXPORT_LIMIT:
+                return {"error": EXPORT_REFUSED}
+    except OSError:
+        return {"error": EXPORT_REFUSED}
+    finally:
+        for descriptor in descriptors:
+            os.close(descriptor)
+    try:
+        document = json.loads(data.decode("utf-8"))
+        named = document["context_command"]["environment"]["ALIENINTENT_CORRELATION"]
+    except (ValueError, TypeError, KeyError):
+        return {"error": EXPORT_REFUSED}
+    if document.get("identity") != identity or document.get("role") != role or named != correlation:
+        return {"error": NOT_IN_EXPORT}
+    return document
 
 
 class WorkLaunches(Protocol):

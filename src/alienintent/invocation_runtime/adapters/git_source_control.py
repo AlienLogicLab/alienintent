@@ -3,15 +3,55 @@
 from __future__ import annotations
 
 from hashlib import sha256
+import os
 from pathlib import Path
+import re
+import stat
 import subprocess
+from typing import Mapping
 from urllib.parse import urlsplit, urlunsplit
 
 from alienintent.execution_coordination.domain.custody import CandidateRef
+from alienintent.invocation_runtime.adapters.cli_worker import run_as_worker
+from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, WorkerCloneAdapter, ref_safe
 from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
 from alienintent.invocation_runtime.ports.source_control import PublicationFailed, PublishRef, SourceControl
 
 PUBLISH_TIMEOUT_SECONDS = 300
+_FULL_SHA = re.compile(r"[0-9a-f]{40}")
+# How one worker-written file is opened by the control plane: never through a final symbolic link, never blocking on
+# a FIFO, and checked by `fstat` on this descriptor (never a path `stat`) before anything is read from it.
+WORKER_FILE_FLAGS = os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK | os.O_CLOEXEC
+# Environment a control-plane git call never inherits: every repository-discovery or object-store override.
+_DISCOVERY = ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "GIT_OBJECT_DIRECTORY",
+              "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE", "GIT_REPLACE_REF_BASE", "GIT_CEILING_DIRECTORIES",
+              "GIT_DISCOVERY_ACROSS_FILESYSTEM", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS")
+
+
+def open_worker_file(path: Path, owner_uid: int) -> int:
+    """An open descriptor of `path`, a regular file owned by `owner_uid` (checked by `fstat` on the descriptor), or
+    OSError. The caller reads only from this descriptor and closes it."""
+    descriptor = os.open(path, WORKER_FILE_FLAGS)
+    try:
+        status = os.fstat(descriptor)
+        if not stat.S_ISREG(status.st_mode) or status.st_uid != owner_uid:
+            raise OSError("not a regular file owned by the worker")
+    except BaseException:
+        os.close(descriptor)
+        raise
+    return descriptor
+
+
+def read_descriptor(descriptor: int, limit: int) -> bytes:
+    chunks, total = [], 0
+    while True:
+        chunk = os.read(descriptor, 1 << 16)
+        if not chunk:
+            return b"".join(chunks)
+        total += len(chunk)
+        if total > limit:
+            raise OSError("worker file too large")
+        chunks.append(chunk)
 
 
 class GitSourceControl(SourceControl):
@@ -40,6 +80,10 @@ class GitSourceControl(SourceControl):
 
     def read_back_candidate(self, workspace: Path, remote: str, branch: str, revision: str, verifier_workspace: Path) -> CandidateRef:
         remote_url = self._git("remote", "get-url", remote, cwd=workspace)
+        return self._read_back(remote_url, branch, revision, verifier_workspace, workspace)
+
+    def _read_back(self, remote_url: str, branch: str, revision: str, verifier_workspace: Path,
+                   workspace: Path) -> CandidateRef:
         advertised = self._git("ls-remote", remote_url, f"refs/heads/{branch}", cwd=workspace)
         if not advertised or advertised.split()[0] != revision:
             raise CandidateUnavailable("candidate revision is not published at the requested branch")
@@ -142,3 +186,188 @@ class GitSourceControl(SourceControl):
         # The verifier evaluates the exact revision's tree, not an empty clone.
         self._git("checkout", "-q", "--detach", revision, cwd=verifier_workspace)
         return candidate.with_independent_read_back()
+
+
+class IntakeSourceControl(GitSourceControl, SourceControl):
+    """Candidate hand-over by exact object identity into the control-plane-owned intake repository (unit
+    WORKER-CREDENTIAL-BOUNDARY, packet 0.4 and 0.5).
+
+    The worker, through the sudo rule, reports the commit its workspace holds and bundles exactly that commit; the
+    control plane copies the bundle by an `fstat`-checked descriptor into its own folder, verifies and fetches only
+    the claimed SHA from that copy into `<launch>/intake.git`, checks the identity and ancestry, and publishes from
+    the intake repository to the packets remote's URL read from the Founder-owned packets clone. Every control-plane
+    git call runs with an explicit GIT_DIR (never discovered), hooks and fsmonitor off and no replace objects, and
+    none runs in, or names a path under, a worker workspace or the hand-over folder."""
+
+    def __init__(self, packets: Path, remote: str, launch: Path, user: str, worker_uid: int,
+                 environment: Mapping[str, str], control_environment: Mapping[str, str],
+                 workspaces: WorkerCloneAdapter) -> None:
+        self._packets, self._remote, launch = Path(packets), remote, Path(launch)
+        self.intake, self.handoff, self.bundles = launch / "intake.git", launch / "handoff", launch / "intake-bundles"
+        self.results = launch / "results"
+        self.worker_uid, self._user, self._environment = worker_uid, user, dict(environment)
+        self._control = {k: v for k, v in control_environment.items() if k not in _DISCOVERY}
+        self._workspaces = workspaces
+
+    # --- control-plane git, in the intake repository only ---------------------------------------------------------
+
+    def _intake_git(self, *args: str, timeout: float = PUBLISH_TIMEOUT_SECONDS) -> subprocess.CompletedProcess:
+        environment = self._control | {"GIT_DIR": str(self.intake), "GIT_NO_REPLACE_OBJECTS": "1",
+                                       "GIT_TERMINAL_PROMPT": "0"}
+        try:
+            return subprocess.run(["git", "-c", "core.hooksPath=/dev/null", "-c", "core.fsmonitor=false", *args],
+                                  cwd=self.intake, env=environment, capture_output=True, check=False,
+                                  timeout=timeout)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise CandidateUnavailable(f"intake git failed: {type(error).__name__}") from error
+
+    def _intake_out(self, *args: str) -> str:
+        result = self._intake_git(*args)
+        if result.returncode:
+            raise CandidateUnavailable("intake git operation failed")
+        return result.stdout.decode(errors="replace").strip()
+
+    def ensure_intake(self) -> None:
+        """`git init --bare` the intake repository when it is missing (as the control plane)."""
+        if not (self.intake / "HEAD").is_file():
+            self.intake.mkdir(mode=0o700, parents=True, exist_ok=True)
+            result = subprocess.run(["git", "init", "-q", "--bare", str(self.intake)], cwd=self.intake,
+                                    env=self._control | {"GIT_TERMINAL_PROMPT": "0"}, capture_output=True,
+                                    check=False, timeout=60)
+            if result.returncode:
+                raise CandidateUnavailable("intake repository cannot be created")
+
+    def remote_url(self) -> str:
+        """The packets remote's URL, read from the Founder-owned packets clone's own git directory."""
+        environment = self._control | {"GIT_DIR": str(self._packets / ".git"), "GIT_NO_REPLACE_OBJECTS": "1"}
+        result = subprocess.run(["git", "remote", "get-url", self._remote], cwd=self._packets, env=environment,
+                                capture_output=True, text=True, check=False, timeout=60)
+        if result.returncode or not result.stdout.strip():
+            raise CandidateUnavailable("the packets remote cannot be read")
+        return result.stdout.strip()
+
+    # --- the hand-over ---------------------------------------------------------------------------------------------
+
+    def _as_worker(self, workspace: Path, *argv: str) -> str:
+        try:
+            result = run_as_worker(self._user, self._environment, argv, cwd=workspace)
+        except (OSError, subprocess.TimeoutExpired) as error:
+            raise CandidateUnavailable(f"worker command failed: {type(error).__name__}") from error
+        if result.returncode:
+            raise CandidateUnavailable("worker command failed")
+        return result.stdout.decode(errors="replace").strip()
+
+    def revision(self, workspace: Path) -> str:
+        """The candidate SHA the worker claims: `git rev-parse --verify HEAD^{commit}`, run as the worker in its own
+        workspace. The output is data: it must be 40 hex characters, and it is trusted only once imported."""
+        claimed = self._as_worker(workspace, "git", "rev-parse", "--verify", "HEAD^{commit}")
+        if not _FULL_SHA.fullmatch(claimed):
+            raise CandidateUnavailable("candidate revision is not immutable")
+        return claimed
+
+    def intake_ref(self, correlation: str) -> str:
+        return f"refs/intake/{ref_safe(correlation)}"
+
+    def hand_over(self, correlation: str, workspace: Path, claimed: str, starting: str) -> str:
+        """Steps 0-4 of packet 0.4: the worker bundles exactly `claimed`; the control plane copies, verifies and
+        imports only that SHA into `refs/intake/<c>`, and checks identity and ancestry. Answers the intake ref."""
+        if not _FULL_SHA.fullmatch(claimed) or not _FULL_SHA.fullmatch(starting):
+            raise CandidateUnavailable("candidate or starting revision is not a full SHA")
+        name = f"{ref_safe(correlation)}.bundle"
+        handoff = self.handoff / name
+        self._as_worker(workspace, "git", "update-ref", "refs/alienintent/handoff", claimed)
+        self._as_worker(workspace, "git", "bundle", "create", "-q", str(handoff), "refs/alienintent/handoff")
+        self.ensure_intake()
+        copy = self._copy_bundle(handoff, self.bundles / name)
+        ref = self.intake_ref(correlation)
+        if self._intake_git("bundle", "verify", "-q", str(copy)).returncode:
+            raise CandidateUnavailable("candidate bundle fails verification")
+        if self._intake_git("-c", "transfer.fsckObjects=true", "-c", "protocol.allow=never",
+                            "-c", "protocol.file.allow=always", "fetch", "-q", "--no-tags", "--no-write-fetch-head",
+                            "--", str(copy), f"+{claimed}:{ref}").returncode:
+            raise CandidateUnavailable("candidate bundle does not hold the claimed commit")
+        if self._intake_out("rev-parse", "--verify", f"{ref}^{{commit}}") != claimed:
+            raise CandidateUnavailable("imported candidate differs from the claim")
+        if self._intake_git("merge-base", "--is-ancestor", starting, claimed).returncode:
+            raise CandidateUnavailable("candidate does not descend from the starting revision")
+        self._intake_out("rev-parse", "--verify", f"{claimed}^{{tree}}")  # custody facts, read in the intake only
+        return ref
+
+    def _copy_bundle(self, source: Path, target: Path) -> Path:
+        """Step 0: copy the worker's bundle, from a descriptor opened without following a link and checked by
+        `fstat` to be a regular file owned by the worker, into the Founder-only intake-bundles folder."""
+        self.bundles.mkdir(mode=0o700, parents=True, exist_ok=True)
+        os.chmod(self.bundles, 0o700)
+        try:
+            descriptor = open_worker_file(source, self.worker_uid)
+        except OSError as error:
+            raise CandidateUnavailable("candidate bundle is not a regular worker-owned file") from error
+        try:
+            target.unlink(missing_ok=True)
+            out = os.open(target, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW | os.O_CLOEXEC, 0o600)
+            try:
+                while chunk := os.read(descriptor, 1 << 20):
+                    os.write(out, chunk)
+            finally:
+                os.close(out)
+        except OSError as error:
+            raise CandidateUnavailable("candidate bundle cannot be copied") from error
+        finally:
+            os.close(descriptor)
+        return target.resolve()
+
+    # --- publication and the worker's candidate clones -------------------------------------------------------------
+
+    def publish_intake(self, correlation: str, branch: str, revision: str, verifier_workspace: Path) -> CandidateRef:
+        """Step 5: push `refs/intake/<c>` from the intake repository to the candidate branch on the packets remote's
+        URL, then the existing read-back (ls-remote and a fresh control-plane clone)."""
+        ref = self.intake_ref(correlation)
+        if self._intake_out("rev-parse", "--verify", f"{ref}^{{commit}}") != revision:
+            raise CandidateUnavailable("intake ref differs from requested candidate revision")
+        url = self.remote_url()
+        self._intake_out("push", "-q", "--", url, f"{ref}:refs/heads/{branch}")
+        return self._read_back(url, branch, revision, verifier_workspace, self.intake)
+
+    def candidate_clone(self, prefix: str, invocation_id: str, owner: str, candidate: CandidateRef) -> GitWorkspace:
+        """A VERIFIER or CLOSURE worker clone of the exact candidate, after the control plane's custody checks (the
+        `ls-remote` equality of the candidate branch, the digest, and the intake ref at that SHA)."""
+        try:
+            prefix_part, reference = candidate.locator.rsplit("#", 1)
+            remote = prefix_part.removeprefix("git:")
+            branch, revision = reference.rsplit("@", 1)
+            if not remote or prefix_part == remote or not branch.startswith("candidate/") \
+                    or not _FULL_SHA.fullmatch(revision):
+                raise ValueError
+        except ValueError:
+            raise CandidateUnavailable("candidate cannot be independently retrieved") from None
+        if candidate.content_digest != f"sha256:{sha256(revision.encode()).hexdigest()}":
+            raise CandidateUnavailable("candidate digest does not match immutable revision")
+        advertised = self._intake_out("ls-remote", "--", self.remote_url(), f"refs/heads/{branch}")
+        if not advertised or advertised.split()[0] != revision:
+            raise CandidateUnavailable("candidate revision is not retrievable for verifier")
+        ref = f"refs/intake/{branch.removeprefix('candidate/')}"
+        if self._intake_out("rev-parse", "--verify", f"{ref}^{{commit}}") != revision:
+            raise CandidateUnavailable("intake does not hold the exact candidate")
+        return self._workspaces.candidate_clone(prefix, invocation_id, owner, self.intake, ref, revision)
+
+    def read_result(self, invocation_id: str, name: str, limit: int = 1 << 20) -> bytes:
+        """A worker-written result `<results>/<invocation>/<name>`: the folder opened without following a link and
+        checked by `fstat` (a directory owned by the worker), then the file relative to that folder's descriptor,
+        opened and checked the same way; only that descriptor is read. Any refusal is OSError."""
+        if "/" in name or name in {"", ".", ".."} or "/" in invocation_id or invocation_id in {"", ".", ".."}:
+            raise OSError("unsafe result name")
+        folder = os.open(self.results / invocation_id, WORKER_FILE_FLAGS | os.O_DIRECTORY)
+        try:
+            status = os.fstat(folder)
+            if not stat.S_ISDIR(status.st_mode) or status.st_uid != self.worker_uid:
+                raise OSError("results folder is not the worker's")
+            descriptor = os.open(name, WORKER_FILE_FLAGS, dir_fd=folder)
+        finally:
+            os.close(folder)
+        try:
+            status = os.fstat(descriptor)
+            if not stat.S_ISREG(status.st_mode) or status.st_uid != self.worker_uid:
+                raise OSError("not a regular file owned by the worker")
+            return read_descriptor(descriptor, limit)
+        finally:
+            os.close(descriptor)

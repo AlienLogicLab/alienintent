@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+import re
 import signal
 import subprocess
 import sys
@@ -22,15 +23,57 @@ OWNED_WORK_POLL_SECONDS = 0.05
 OUTPUT_TAIL = 4000
 # A per-invocation worker command: (invocation id, role, workspace) -> (argv, the text for standard input).
 WorkerCommand = Callable[[str, InvocationRole, Path], tuple[Sequence[str], str]]
+# The only PATH a command run as the worker user gets (unit WORKER-CREDENTIAL-BOUNDARY).
+WORKER_PATH = "/usr/bin:/bin"
+_FULL_SHA = re.compile(r"[0-9a-f]{40}")
+_VARIABLE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def worker_prefix(user: str, environment: Mapping[str, str]) -> list[str]:
+    """The one sudo rule every command run on a worker's behalf starts with:
+    `sudo -n -u <user> -- env -i PATH=/usr/bin:/bin <the allowlisted variables>`. Nothing else is inherited."""
+    if not user or user.startswith("-") or any(c.isspace() or c == "\x00" for c in user):
+        raise ValueError("the worker user must be a plain user name")
+    variables = []
+    for name, value in sorted(environment.items()):
+        if not _VARIABLE.fullmatch(name) or "\x00" in value:
+            raise ValueError("worker environment variables must be plain names and values")
+        if name != "PATH":
+            variables.append(f"{name}={value}")
+    return ["sudo", "-n", "-u", user, "--", "env", "-i", f"PATH={WORKER_PATH}", *variables]
+
+
+def run_as_worker(user: str, environment: Mapping[str, str], argv: Sequence[str], *, cwd: Path | None = None,
+                  input: bytes | None = None, timeout: float = 300) -> subprocess.CompletedProcess:
+    """Run one command as the worker user through the sudo rule; its output is data, never trusted further."""
+    return subprocess.run([*worker_prefix(user, environment), *argv], cwd=cwd, input=input, capture_output=True,
+                          check=False, timeout=timeout)
+
+
+def kill_as_worker(user: str, signum: int, target: str) -> None:
+    """`sudo -n -u <user> kill -<signum> -- <target>` (a pid, or `-<pgid>` for a process group); no `env -i`."""
+    try:
+        subprocess.run(["sudo", "-n", "-u", user, "kill", f"-{int(signum)}", "--", target], capture_output=True,
+                       check=False, timeout=30)
+    except (OSError, subprocess.TimeoutExpired):
+        pass
 
 
 class CliWorkerProvider(WorkerProcess):
     _SAFE_MODES: Final = frozenset({"explicit", "read-only", "workspace-write", "danger-full-access", "manual", "bypassPermissions"})
 
-    def __init__(self, provider: str, executable: str | WorkerCommand, arguments: tuple[str, ...], permission_mode: str, dimensions: frozenset[str], environment: Mapping[str, str] | None = None, *, ownership: ProcessOwnership | None = None) -> None:
+    def __init__(self, provider: str, executable: str | WorkerCommand, arguments: tuple[str, ...], permission_mode: str, dimensions: frozenset[str], environment: Mapping[str, str] | None = None, *, ownership: ProcessOwnership | None = None, worker_user: str | None = None, results: Path | None = None, regression_base: Callable[[str], str | None] | None = None, work_identity: Callable[[str], str | None] | None = None) -> None:
         """`executable` with `arguments` is one fixed command line for every invocation, run with standard input
         inherited; or a WorkerCommand (with no `arguments`) evaluated at every `run`, whose text goes to the worker's
-        standard input."""
+        standard input.
+
+        With `worker_user` (it needs `environment`, `results` and `regression_base`), every session command and the
+        VERIFIER's feature-regression runner run through the sudo rule (`worker_prefix`), its receipt is written
+        under `<results>/<invocation id>/`, its `--base` is `regression_base(invocation id)` (the release record's
+        starting revision, a full SHA) and stopping goes through `sudo -n -u <user> kill`. The session's allowlist
+        also carries the three identity variables its export-mode `context_command` names: ALIENINTENT_ROLE,
+        ALIENINTENT_CORRELATION (the invocation id) and ALIENINTENT_WORK_IDENTITY (`work_identity(invocation id)`).
+        Without it, unchanged."""
         fixed = (executable, *arguments) if isinstance(executable, str) else None
         if permission_mode not in self._SAFE_MODES or not executable or (fixed is None and (not callable(executable) or arguments)) \
                 or any("\x00" in part for part in fixed or ()):
@@ -42,6 +85,12 @@ class CliWorkerProvider(WorkerProcess):
         self.outputs: dict[str, tuple[str, str]] = {}
         self._environment = None if environment is None else dict(environment)
         self._ownership = ProcOwnership() if ownership is None else ownership
+        if worker_user is not None and (environment is None or results is None or regression_base is None):
+            raise ValueError("a worker user needs an environment, a results folder and a regression base")
+        if worker_user is not None:
+            worker_prefix(worker_user, environment)  # refuses an unsafe user or environment now, not at run
+        self._worker_user, self._results, self._regression_base = worker_user, results, regression_base
+        self._work_identity = work_identity
         # This supervisor's owner marker: the owning process and this instance.
         owner = self._ownership.current()
         self._owner = None if owner is None else f"{owner_token(owner)}/{uuid.uuid4().hex}"
@@ -61,7 +110,10 @@ class CliWorkerProvider(WorkerProcess):
         if self._environment is None:
             return None
         owner = {} if self._owner is None else {INVOCATION_OWNER_MARKER: self._owner}
-        return self._environment | {INVOCATION_MARKER: invocation_id, "ALIENINTENT_ROLE": str(role)} | owner
+        identity = {} if self._worker_user is None else {"ALIENINTENT_CORRELATION": invocation_id} | (
+            {} if self._work_identity is None or not self._work_identity(invocation_id)
+            else {"ALIENINTENT_WORK_IDENTITY": str(self._work_identity(invocation_id))})
+        return self._environment | {INVOCATION_MARKER: invocation_id, "ALIENINTENT_ROLE": str(role)} | identity | owner
 
     def _feature_regressions(self, workspace: Path, wall_clock_seconds: float) -> ProcessResult:
         runner = workspace / "tools/verification/run_feature_regressions.py"
@@ -73,19 +125,39 @@ class CliWorkerProvider(WorkerProcess):
         if base.returncode != 0 or not base.stdout.strip():
             return ProcessResult("failure", base.returncode, True, BudgetRecord.unknown())
         receipt = workspace / FEATURE_REGRESSION_RECEIPT_PATH
+        return self._regressions([sys.executable, str(runner), "--base", base.stdout.strip(), "--candidate", "HEAD",
+                                  "--receipt", str(receipt)], workspace, wall_clock_seconds)
+
+    def _worker_feature_regressions(self, invocation_id: str, workspace: Path,
+                                    wall_clock_seconds: float) -> ProcessResult:
+        """With a worker user: the runner as the worker through the sudo rule. The control plane neither inspects
+        nor runs git in the worker's clone: the runner itself fails when it is missing, and `--base` is the control
+        plane's own fact, the release record's starting revision (a full SHA)."""
+        base = self._regression_base(invocation_id)
+        if not isinstance(base, str) or not _FULL_SHA.fullmatch(base):
+            return ProcessResult("failure", 2, True, BudgetRecord.unknown())
+        runner = workspace / "tools/verification/run_feature_regressions.py"
+        receipt = self._results / invocation_id / Path(FEATURE_REGRESSION_RECEIPT_PATH).name
+        return self._regressions([*worker_prefix(self._worker_user, self._environment), sys.executable, str(runner),
+                                  "--base", base, "--candidate", "HEAD", "--receipt", str(receipt)], workspace,
+                                 wall_clock_seconds)
+
+    def _regressions(self, argv: list[str], workspace: Path, wall_clock_seconds: float) -> ProcessResult:
         # The runner and every pack it starts form one process group, stopped
         # together at the wall clock; quiescence is observed, not assumed.
-        done = subprocess.Popen(
-            [sys.executable, str(runner), "--base", base.stdout.strip(), "--candidate", "HEAD",
-             "--receipt", str(receipt)],
-            cwd=workspace, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, start_new_session=True,
-        )
+        done = subprocess.Popen(argv, cwd=workspace, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                start_new_session=True)
         try:
             done.communicate(timeout=wall_clock_seconds)
         except subprocess.TimeoutExpired:
             for signum in (signal.SIGTERM, signal.SIGKILL):
+                if self._worker_user is not None:
+                    kill_as_worker(self._worker_user, signum, f"-{done.pid}")
                 try:
                     os.killpg(done.pid, signum)
+                except PermissionError:
+                    if self._worker_user is None:
+                        raise
                 except ProcessLookupError:
                     break
                 try:
@@ -95,6 +167,10 @@ class CliWorkerProvider(WorkerProcess):
             try:
                 os.killpg(done.pid, 0)
                 quiescent = False
+            except PermissionError:
+                if self._worker_user is None:
+                    raise
+                quiescent = False  # another user's process is still in the group
             except ProcessLookupError:
                 quiescent = True
             return ProcessResult("timeout", None, quiescent, BudgetRecord.unknown())
@@ -124,14 +200,19 @@ class CliWorkerProvider(WorkerProcess):
         """
         require_eligible(self.capabilities, frozenset({"wall-clock", "cancellation"}))
         if role is InvocationRole.VERIFIER:
-            regression = self._feature_regressions(workspace, wall_clock_seconds)
+            regression = self._feature_regressions(workspace, wall_clock_seconds) if self._worker_user is None \
+                else self._worker_feature_regressions(invocation_id, workspace, wall_clock_seconds)
             if regression.kind != "success":
                 self._completed.add(invocation_id)
                 return regression
         argv, text = self._command(invocation_id, role, workspace)
+        environment = self._child_environment(invocation_id, role)
+        if self._worker_user is not None:
+            # The sudo rule replaces the environment: `env -i` and the allowlisted variables only.
+            argv, environment = [*worker_prefix(self._worker_user, environment), *argv], None
         deadline = time.monotonic() + wall_clock_seconds
         stdin = None if text is None else subprocess.PIPE
-        process = subprocess.Popen(argv, cwd=workspace, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=self._child_environment(invocation_id, role), start_new_session=True)
+        process = subprocess.Popen(argv, cwd=workspace, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=environment, start_new_session=True)
         self._active[invocation_id] = process
         try:
             try:
@@ -166,6 +247,10 @@ class CliWorkerProvider(WorkerProcess):
             pass
         except PermissionError:
             return True
+        if self._worker_user is not None:
+            # By the worker's real uid and the launched session; an unreadable worker process (None) is alive.
+            work = self._ownership.owned_work(invocation_id, self._owner, session=process.pid)
+            return work is None or bool(work)
         return bool(self._ownership.owned_work(invocation_id, self._owner)) if self.marks_owned_work else False
 
     def _await_owned(self, invocation_id: str, process: subprocess.Popen, deadline: float) -> bool:
@@ -176,6 +261,13 @@ class CliWorkerProvider(WorkerProcess):
         return True
 
     def _signal(self, invocation_id: str, process: subprocess.Popen, signum: int) -> None:
+        if self._worker_user is not None:
+            # The session's group and each owned pid, as the worker; None (unreadable) is alive, so the group is
+            # always signalled and nothing is concluded from it.
+            kill_as_worker(self._worker_user, signum, f"-{process.pid}")
+            for pid in self._ownership.owned_work(invocation_id, self._owner, session=process.pid) or ():
+                kill_as_worker(self._worker_user, signum, str(pid))
+            return
         try:
             os.killpg(process.pid, signum)
         except (ProcessLookupError, PermissionError):

@@ -44,6 +44,8 @@ MISSING, MALFORMED = HoldReason.MISSING_RECORD, HoldReason.MALFORMED_RECORD
 MISMATCH, DRIFT = HoldReason.DIGEST_MISMATCH, HoldReason.VERSION_DRIFT
 SCOPE = frozenset({"public", "private"})
 # The release record evidence fields carried in the package (WorkAuthorization writes exactly these).
+# The one file of an invocation's bounded context export, `<launch>/exports/<correlation>/context.json`.
+EXPORT_FILE = "context.json"
 RELEASE_EVIDENCE = ("pointer", "attempt_id", "assessment_ref", "contract_digest", "baseline", "approver", "quote")
 
 
@@ -57,13 +59,23 @@ class ContextCommand:
     """The read-only `work context` command line a worker runs for further facts: the installed executable, the
     read-only worker profile and the two environment variables naming the project configuration. With the launched
     invocation's contract digest it carries `--contract-digest`, so the worker's own later calls are checked
-    against the contract it was launched with."""
+    against the contract it was launched with.
+
+    With `export_root` (a worker user, unit WORKER-CREDENTIAL-BOUNDARY section 0.6b) it is the export mode instead:
+    `<executable> --json work context --export <export_root>/<correlation>/context.json`, with only the three identity
+    variables, no profile factory and no configuration path. It re-prints the package exported at launch."""
     executable: str
     profile_factory: str
     environment: Mapping[str, str]
+    export_root: Path | None = None
 
     def document(self, identity: str, role: str, correlation: str, candidate: str | None,
                  contract_digest: str | None = None) -> dict[str, object]:
+        if self.export_root is not None:
+            return {"argv": [self.executable, "--json", "work", "context", "--export",
+                             str(self.export_root / correlation / EXPORT_FILE)],
+                    "environment": {"ALIENINTENT_WORK_IDENTITY": identity, "ALIENINTENT_ROLE": role,
+                                    "ALIENINTENT_CORRELATION": correlation}}
         argv = [self.executable, "--profile-factory", self.profile_factory, "--json", "work", "context", identity,
                 "--role", role, "--correlation", correlation, *(("--candidate", candidate) if candidate else ()),
                 *(("--contract-digest", contract_digest) if contract_digest else ())]

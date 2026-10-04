@@ -13,6 +13,11 @@ Two questions, both answered from the kernel rather than from any caller claim:
   supervisor. The owner marker binds the work to the process that started it,
   since an invocation identity alone repeats across profiles.
 
+With a worker user (unit WORKER-CREDENTIAL-BOUNDARY) the worker's environment cannot be read by the control
+plane, so owned work is every live process of that real uid in the launched session (``/proc/<pid>/status`` and
+``/proc/<pid>/stat``, both readable across users), and any process of that uid outside the session that cannot be
+read answers ``None`` (alive, not known). Another user's process is never the worker's.
+
 Anything that cannot be read is ``unknown`` (or ``None``), never ``terminated``.
 A descendant that clears its environment, or makes itself unreadable, is not
 observed: a missing marker is not proof of absence beyond that boundary.
@@ -31,8 +36,57 @@ ALIVE, TERMINATED, UNKNOWN = "alive", "terminated", "unknown"
 
 
 class ProcOwnership(ProcessOwnership):
-    def __init__(self, proc: Path = Path("/proc")) -> None:
+    def __init__(self, proc: Path = Path("/proc"), *, worker_uid: int | None = None) -> None:
         self._proc = Path(proc)
+        self._worker_uid = worker_uid
+
+    def _real_uid(self, pid: int) -> int | None:
+        """The real uid of ``pid`` from ``/proc/<pid>/status`` (world-readable), or None."""
+        try:
+            for line in (self._proc / str(pid) / "status").read_text(encoding="ascii", errors="replace").splitlines():
+                if line.startswith("Uid:"):
+                    return int(line.split()[1])
+        except (OSError, ValueError, IndexError):
+            return None
+        return None
+
+    def _session(self, pid: int) -> tuple[str, int]:
+        """(state, session id) of ``pid`` from ``/proc/<pid>/stat``."""
+        raw = (self._proc / str(pid) / "stat").read_text(encoding="ascii", errors="replace")
+        fields = raw[raw.rindex(")") + 2:].split()
+        return fields[0], int(fields[3])
+
+    def _worker_owned(self, invocation_id: str, owner: str | None, session: int | None,
+                      candidates: list[Path]) -> tuple[int, ...] | None:
+        marker = f"{INVOCATION_MARKER}={invocation_id}".encode()
+        prefix = f"{INVOCATION_OWNER_MARKER}=".encode()
+        owned, unreadable = [], False
+        for entry in candidates:
+            pid = int(entry.name)
+            if self._real_uid(pid) != self._worker_uid:
+                continue  # another user's process (root's included) is never the worker's
+            try:
+                state, sid = self._session(pid)
+            except (OSError, ValueError, IndexError):
+                continue  # gone meanwhile
+            if state in {"Z", "X"}:
+                continue
+            if session is not None and sid == session:
+                owned.append(pid)
+                continue
+            try:
+                variables = (entry / "environ").read_bytes().split(b"\0")
+            except OSError:
+                unreadable = True  # a worker process outside the session that cannot be read: alive, not known
+                continue
+            if marker not in variables:
+                continue
+            if owner is not None:
+                started_by = next((v[len(prefix):].decode(errors="replace") for v in variables if v.startswith(prefix)), None)
+                if started_by is None or (started_by != owner and not started_by.startswith(owner + "/")):
+                    continue
+            owned.append(pid)
+        return None if unreadable else tuple(sorted(owned))
 
     def _boot(self) -> str | None:
         try:
@@ -83,11 +137,15 @@ class ProcOwnership(ProcessOwnership):
             return TERMINATED
         return ALIVE
 
-    def owned_work(self, invocation_id: str, owner: str | None = None) -> tuple[int, ...] | None:
+    def owned_work(self, invocation_id: str, owner: str | None = None, *,
+                   session: int | None = None) -> tuple[int, ...] | None:
         """Live processes carrying this invocation's marker (and, given ``owner``, started under that owner).
 
         ``owner`` is either one supervisor's exact owner marker or an owner
-        token, which matches every supervisor that owner process ran.
+        token, which matches every supervisor that owner process ran. With a
+        worker uid: the worker's processes in ``session`` (the launched sudo
+        pid) and its readable marked processes elsewhere; None when one of its
+        processes outside the session cannot be read.
         """
         marker = f"{INVOCATION_MARKER}={invocation_id}".encode()
         prefix = f"{INVOCATION_OWNER_MARKER}=".encode()
@@ -95,6 +153,8 @@ class ProcOwnership(ProcessOwnership):
             candidates = [entry for entry in self._proc.iterdir() if entry.name.isdigit()]
         except OSError:
             return None
+        if self._worker_uid is not None:
+            return self._worker_owned(invocation_id, owner, session, candidates)
         owned = []
         for entry in candidates:
             try:
