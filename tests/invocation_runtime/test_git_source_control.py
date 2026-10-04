@@ -474,3 +474,22 @@ def test_a_result_file_not_owned_by_the_worker_is_refused_and_its_bytes_are_neve
     outcome = read_verdict(folder / "verdict.json", _candidate(revision),
                            lambda path: handover.source.read_result(path.parent.name, path.name))
     assert outcome.kind == "verdict-missing" and reads == []
+
+
+def test_the_worker_clone_and_fetch_give_the_ownership_exception_to_upload_pack_itself(handover):
+    """Live finding (check 8(e)): `git -c safe.directory=...` on the worker's command line never reaches git's
+    ownership check for a Founder-owned source (the local clone checks in-process, and the spawned upload-pack does
+    not inherit it), so the worker's clone refused the packets clone as dubious. The PRODUCER clone uses the
+    transport (`--no-local`) and the VERIFIER/CLOSURE fetch names the intake repository, each with the exception
+    given to upload-pack itself."""
+    workspace, claimed = handover.produce()
+    ref = handover.source.hand_over("c1", workspace, claimed, handover.base)
+    handover.workspaces.candidate_clone("verifier", "c2", "owner", handover.launch / "intake.git", ref, claimed)
+    calls = [json.loads(line)["argv"] for line in handover.log.read_text().splitlines()]
+    gits = [argv[argv.index("git"):] for argv in calls if "git" in argv]
+    clone = next(argv for argv in gits if "clone" in argv)
+    fetch = next(argv for argv in gits if "fetch" in argv)
+    assert "--no-local" in clone and "--no-hardlinks" not in clone
+    assert f"--upload-pack=git -c safe.directory={handover.packets / '.git'} upload-pack" in clone
+    assert f"--upload-pack=git -c safe.directory={handover.launch / 'intake.git'} upload-pack" in fetch
+    assert not [word for argv in (clone, fetch) for word in argv if word.startswith("safe.directory=")]

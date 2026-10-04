@@ -1545,3 +1545,73 @@ def test_check_8d_mints_only_through_the_landing_authoritys_own_credentials(fx, 
     assert line["check"] == "8(d)" and line["partial"] is True and line["evidence_root_mode_unchanged"] is True
     assert "InstallationCredentials only" in line["claim"]
     assert check.main(["--dry-run", "--configuration", "x", "--project", "p", "--key", "k"]) == 0
+
+
+def _proof_module():
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("worker_boundary_check", SETUP.with_name("worker_boundary_check.py"))
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_check_8d_records_the_safe_mint_reason_and_a_scope_the_installation_does_not_grant_is_unresolved(
+        fx, monkeypatch, capsys):
+    """Live finding: 8(d) recorded only `CredentialUnavailable`. It records the exception's own message (it never
+    holds a token). GitHub's 422 to the landing-scoped mint means the installation does not grant `contents: write`,
+    which waits for the Founder's App permission decision: UNRESOLVED, not PASS. Any other failure is FAIL."""
+    from alienintent.installation.application.installation_credentials import InstallationCredentials
+    from alienintent.installation.domain.app_credentials import CredentialUnavailable
+    check = _proof_module()
+    fx.loaded().configuration.readiness.evidence_root.mkdir(parents=True, exist_ok=True, mode=0o700)
+    for message, status in (("github answered 422 where 201 was required", "UNRESOLVED"),
+                            ("github answered 401 where 201 was required", "FAIL")):
+        def refuse(self, message=message):
+            raise CredentialUnavailable(message)
+        monkeypatch.setattr(InstallationCredentials, "token", refuse)
+        assert not check.check_d(fx.configuration_file, PROJECT)
+        line = json.loads(capsys.readouterr().out)
+        assert line["status"] == status and line["error"] == f"CredentialUnavailable: {message}"
+        assert line["partial"] is True
+        if status == "UNRESOLVED":
+            assert "App permission decision" in line["reason"]
+
+
+def test_proof_diagnostics_are_bounded_and_redacted_and_a_crashing_check_is_recorded_not_raised(tmp_path, capsys):
+    """Live finding: 8(c1) kept only a return code and 8(e) ended the proof with a traceback. Output tails are
+    bounded and redact token-like text (a 40-hex SHA stays readable); a check that raises is recorded FAIL with its
+    reason and the proof goes on to the next check."""
+    check = _proof_module()
+    sha = "a" * 40
+    text = (f"x" * 5000 + f" commit {sha} Authorization: Bearer abc.def token=s3cr3t sk-proj-ABCDEFGHIJKLMNOP "
+            "ghs_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345 eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIn0.c2lnbmF0dXJl").encode()
+    tail = check._tail(text)
+    assert len(tail) <= check.TAIL_LIMIT and sha in tail
+    for secret in ("abc.def", "s3cr3t", "sk-proj-ABCDEFGHIJKLMNOP", "ghs_ABCDEFGHIJKLMNOPQRSTUVWXYZ012345",
+                   "eyJhbGciOiJIUzI1NiJ9"):
+        assert secret not in tail
+    def crash():
+        raise RuntimeError("worker workspace operation failed")
+    assert check._guarded("e", crash) is False
+    line = json.loads(capsys.readouterr().out)
+    assert line["check"] == "8(e)" and line["status"] == "FAIL"
+    assert line["error"] == "RuntimeError: worker workspace operation failed"
+
+
+def test_check_8c1_keeps_a_bounded_redacted_tail_of_a_failed_provider_session(tmp_path, monkeypatch, capsys):
+    """A failed real provider session records the tails of its standard output and error, redacted."""
+    check = _proof_module()
+    founder, home = tmp_path / "founder", tmp_path / "home"
+    (founder / ".codex").mkdir(parents=True)
+    (founder / ".codex/auth.json").write_text("{}")
+    def worker(argv, environment=None, **options):
+        if argv[0] == "find":
+            return subprocess.CompletedProcess(argv, 0, f"{home}/.codex/auth.json\n".encode(), b"")
+        if argv[0] in {"rm", "mkdir", "sh"}:
+            return subprocess.CompletedProcess(argv, 0, b"", b"")
+        return subprocess.CompletedProcess(argv, 1, b"partial", b"ERROR: 401 Unauthorized Bearer sk-live-SECRETSECRET1")
+    monkeypatch.setattr(check, "as_worker", worker)
+    assert not check.check_c1(["node", "/x/codex", "exec", "-"], home, founder)
+    line = json.loads(capsys.readouterr().out)
+    assert line["status"] == "FAIL" and line["provider_returncode"] == 1 and line["stdout_tail"] == "partial"
+    assert "401 Unauthorized" in line["stderr_tail"] and "SECRETSECRET1" not in line["stderr_tail"]

@@ -24,6 +24,7 @@ import json
 import os
 from pathlib import Path
 import pwd
+import re
 import subprocess
 import sys
 import tempfile
@@ -54,6 +55,30 @@ CREDENTIAL_FILES = (".git-credentials", ".netrc", ".gitconfig", ".config/gh/host
 def record(step: str, status: str, **facts: object) -> bool:
     print(json.dumps({"check": f"8({step})", "status": status, "claim": STEPS[step], **facts}, sort_keys=True))
     return status == "PASS"
+
+
+TAIL_LIMIT = 2000
+_SECRETS = (re.compile(r"(?i)\b(authorization|bearer|token|password|secret|api[_-]?key)\b([\s:=]+)(?:(?:bearer|basic|token)\s+)?\S+"),
+            re.compile(r"\b(sk-[\w-]{8,}|gh[pousr]_\w{16,}|github_pat_\w+|eyJ[\w-]+\.[\w-]+\.[\w-]+)"),
+            re.compile(r"(?=[\w+/=-]{48,})(?![0-9a-f]+\b)[\w+/=-]{48,}"))
+
+
+def _tail(data: bytes | str) -> str:
+    """The last TAIL_LIMIT characters of a command's output, with token-like text replaced by [REDACTED]. Only
+    diagnostics: a 40- or 64-hex object name stays readable."""
+    text = data.decode(errors="replace") if isinstance(data, bytes) else data
+    text = _SECRETS[0].sub(lambda match: f"{match.group(1)}{match.group(2)}[REDACTED]", text)
+    for pattern in _SECRETS[1:]:
+        text = pattern.sub("[REDACTED]", text)
+    return text[-TAIL_LIMIT:]
+
+
+def _guarded(step: str, check, *arguments) -> bool:
+    """Run one check; a check that raises is recorded FAIL with its reason, and the proof goes on."""
+    try:
+        return check(*arguments)
+    except Exception as error:  # noqa: BLE001 - recorded, never raised
+        return record(step, "FAIL", error=_tail(f"{type(error).__name__}: {error}"))
 
 
 PROVIDER_LOGIN_FILES = {"codex": ".codex/auth.json", "claude": ".claude/.credentials.json"}
@@ -155,8 +180,9 @@ def check_c1(provider_argv: list[str] | None, home: Path | None, founder_home: P
     before = sorted(str(Path(line).relative_to(home)) for line in listed.stdout.decode(errors="replace").splitlines())
     session = as_worker(provider_argv, environment, input=b"Reply with the single word OK.\n", timeout=600)
     ok = listed.returncode == 0 and before == [login] and session.returncode == 0
+    tails = {} if ok else {"stdout_tail": _tail(session.stdout), "stderr_tail": _tail(session.stderr)}
     return record("c1", "PASS" if ok else "FAIL", provider=provider, home_files=before,
-                  provider_returncode=session.returncode)
+                  provider_returncode=session.returncode, **tails)
 
 
 def check_c2(package: Path | None, home: Path | None, configuration: Path, project: str) -> bool:
@@ -200,7 +226,12 @@ def check_d(configuration: Path, project: str) -> bool:
     try:
         token = authority._credentials.token()
     except Exception as error:  # noqa: BLE001 - recorded, never raised
-        return record("d", "FAIL", error=type(error).__name__, partial=True)
+        reason = _tail(f"{type(error).__name__}: {error}")  # the credentials' own message; it never holds a token
+        if str(error) == "github answered 422 where 201 was required":
+            return record("d", "UNRESOLVED", error=reason, partial=True,
+                          reason="the installation does not grant the landing scope (contents: write); this waits "
+                                 "for the Founder's App permission decision, which this unit does not make")
+        return record("d", "FAIL", error=reason, partial=True)
     unchanged = os.stat(evidence).st_mode == before
     ok = dict(token.permissions) == LANDING_PERMISSIONS and token.repository_selection == "selected" and unchanged
     return record("d", "PASS" if ok else "FAIL", permissions=dict(token.permissions), partial=True,
@@ -252,6 +283,27 @@ def _scratch_launch(scratch: Path) -> tuple[Path, Path, Path, str]:
 
 
 def check_e_g(scratch: Path) -> bool:
+    from alienintent.invocation_runtime.adapters import git_source_control, git_worktree
+    failures: list[dict[str, object]] = []
+    def recorded(run):  # keeps the last failed worker command's return code and bounded, redacted stderr
+        def run_and_record(user, environment, argv, **options):
+            result = run(user, environment, argv, **options)
+            if result.returncode:
+                failures[:] = [{"command": " ".join(argv[:2]), "returncode": result.returncode,
+                                "stderr_tail": _tail(result.stderr)}]
+            return result
+        return run_and_record
+    for module in (git_worktree, git_source_control):
+        if hasattr(module, "run_as_worker"):
+            module.run_as_worker = recorded(module.run_as_worker)
+    try:
+        return _check_e_g(scratch)
+    except Exception as error:  # noqa: BLE001 - recorded, never raised
+        record("e", "FAIL", error=_tail(f"{type(error).__name__}: {error}"), worker_failure=failures[-1:])
+        return record("g", "UNRESOLVED", reason="8(e) did not complete")
+
+
+def _check_e_g(scratch: Path) -> bool:
     from alienintent.invocation_runtime.adapters.git_source_control import IntakeSourceControl
     from alienintent.invocation_runtime.adapters.git_worktree import WorkerCloneAdapter
     remote, packets, launch, base = _scratch_launch(scratch)
@@ -269,9 +321,10 @@ def check_e_g(scratch: Path) -> bool:
              f"git config core.hooksPath /tmp && printf '[core]\\n\\tfsmonitor = /tmp/x\\n' > .git/config.worktree")
     planted = as_worker(["sh", "-c", plant], environment)
     claimed = source.revision(workspace.path)
+    ref = source.hand_over("proof", workspace.path, claimed, base)
+    # After the bundle (as the offline test does): a commondir and a .git file pointing elsewhere are planted too.
     as_worker(["sh", "-c", f"cd {path} && echo /nonexistent > .git/commondir && mkdir -p sub && "
                            f"echo 'gitdir: /nonexistent' > sub/.git"], environment)
-    ref = source.hand_over("proof", workspace.path, claimed, base)
     candidate = source.publish_intake("proof", "candidate/proof", claimed, launch / "verifier" / "producer-proof")
     published = subprocess.run(["git", "--git-dir", str(remote), "rev-parse", "refs/heads/candidate/proof"],
                                capture_output=True, text=True, check=False).stdout.strip()
@@ -333,10 +386,12 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     founder_home = Path(pwd.getpwuid(os.getuid()).pw_dir)
     provider = json.loads(arguments.provider_argv) if arguments.provider_argv else None
-    results = [check_a(arguments.key, arguments.configuration, arguments.project),
-               check_b(arguments.key, founder_home), check_c1(provider, arguments.home, founder_home),
-               check_c2(arguments.package, arguments.home, arguments.configuration, arguments.project),
-               check_d(arguments.configuration, arguments.project), check_e_g(arguments.scratch), check_f()]
+    results = [_guarded("a", check_a, arguments.key, arguments.configuration, arguments.project),
+               _guarded("b", check_b, arguments.key, founder_home),
+               _guarded("c1", check_c1, provider, arguments.home, founder_home),
+               _guarded("c2", check_c2, arguments.package, arguments.home, arguments.configuration, arguments.project),
+               _guarded("d", check_d, arguments.configuration, arguments.project),
+               _guarded("e", check_e_g, arguments.scratch), _guarded("f", check_f)]
     print(json.dumps({"claim_boundary": "worker credential boundary only; not the Factory Director boundary; not the "
                                         "protected-main landing authorization; no confidentiality between worker sessions is claimed",
                       "passed": all(results)}))

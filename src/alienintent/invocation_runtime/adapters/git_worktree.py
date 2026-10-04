@@ -10,6 +10,7 @@ from dataclasses import dataclass
 import os
 from pathlib import Path
 import re
+import shlex
 import subprocess
 from typing import Mapping
 
@@ -74,6 +75,13 @@ class GitWorktreeAdapter(WorkspaceManager):
         self._git("worktree", "remove", str(workspace.path))
 
 
+def _upload_pack(repository: Path) -> str:
+    """The worker's upload-pack for a Founder-owned source `repository`, with git's ownership exception for that one
+    repository given to upload-pack itself: `git -c safe.directory=...` on the worker's command line never reaches
+    the check (live finding, check 8(e)). The worker only reads the source; nothing is trusted from the worker."""
+    return f"--upload-pack=git -c safe.directory={shlex.quote(str(repository))} upload-pack"
+
+
 def _safe_identity(invocation_id: str) -> bool:
     return bool(invocation_id) and not any(part in invocation_id for part in ("/", "\\", "..", "\x00")) \
         and not invocation_id.startswith("-")
@@ -83,7 +91,7 @@ class WorkerCloneAdapter(WorkspaceManager):
     """Worker-owned workspaces `<root>/<role>-<invocation>` (`root` is `<launch>/worker`), each created, filled and
     removed only by the worker user through the sudo rule; the control plane never runs git in one.
 
-    The PRODUCER's clone is `git clone --no-hardlinks <packets clone>` at the starting revision's full SHA; a VERIFIER
+    The PRODUCER's clone is `git clone --no-local <packets clone>` (objects through the transport, as a pack) at the starting revision's full SHA; a VERIFIER
     or CLOSURE clone is `git init` and a fetch of one intake ref from the control-plane-owned intake repository, at
     the candidate's full SHA. Each allocation also creates the worker's `<results>/<invocation>/` folder (mode
     0755) for the files the session writes."""
@@ -112,7 +120,7 @@ class WorkerCloneAdapter(WorkspaceManager):
     def allocate(self, invocation_id: str, owner: str, baseline: str) -> GitWorkspace:
         """The PRODUCER clone of the packets clone, checked out at `baseline` (a full SHA)."""
         path = self._new("producer", invocation_id, owner, baseline)
-        self._worker("git", "-c", f"safe.directory={self._packets}", "clone", "-q", "--no-hardlinks", "--no-checkout",
+        self._worker("git", "clone", "-q", "--no-local", "--no-checkout", _upload_pack(self._packets / ".git"),
                      "--", str(self._packets), str(path))
         self._worker("git", "-C", str(path), "checkout", "-q", "--detach", baseline)
         return GitWorkspace(invocation_id, owner, path, baseline)
@@ -125,8 +133,7 @@ class WorkerCloneAdapter(WorkspaceManager):
             raise CandidateUnavailable("workspace identity is unsafe")
         path = self._new(prefix, invocation_id, owner, revision)
         self._worker("git", "init", "-q", "--", str(path))
-        self._worker("git", "-C", str(path), "-c", f"safe.directory={intake}", "fetch", "-q", "--no-tags", "--",
-                     str(intake), ref)
+        self._worker("git", "-C", str(path), "fetch", "-q", "--no-tags", _upload_pack(intake), "--", str(intake), ref)
         self._worker("git", "-C", str(path), "checkout", "-q", "--detach", revision)
         return GitWorkspace(invocation_id, owner, path, revision)
 
