@@ -62,7 +62,7 @@ REPLACEMENTS_PER_PHASE = 1
 ROLE_OPERATIONS = {
     PRODUCER: frozenset({"process-control", "git-write"}),
     VERIFIER: frozenset({"process-control"}),
-    CLOSURE: frozenset({"git-read"}),
+    CLOSURE: frozenset({"git-read", "process-control"}),  # never git-write: CLOSURE requests, it never lands
 }
 # Process-adapter answers that attest the owned process and its output holders are gone.
 TERMINAL_OWNERSHIP = frozenset({"already-finished"})
@@ -126,6 +126,11 @@ class RoleBindingGuard(WorkerProvider):
         finalize = getattr(self.provider, "finalize", None)
         if callable(finalize):
             finalize(invocation, retain)
+
+    def reconcile_closure(self, invocation: WorkerInvocation) -> WorkerOutcome | None:
+        """The provider's session-free settlement of a begun landing, only while the guard is bound."""
+        reconcile = getattr(self.provider, "reconcile_closure", None)
+        return reconcile(invocation) if self._bound() and callable(reconcile) else None
 
     # --- binding -------------------------------------------------------------
 

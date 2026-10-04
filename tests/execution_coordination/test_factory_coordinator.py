@@ -1342,3 +1342,31 @@ def test_restart_continuation_recovery_releases_parks_and_still_records_the_next
 
     summary = coordinator.launch(unsaved.identity)
     assert summary.stop_reason.value != "capacity-unavailable" and summary.dispatched == (unsaved.identity,)
+
+
+# --- AUTOMATED-CLOSURE checks 1 and 2: the fixed closure names, receipts and request ---------------------------------
+
+def test_fixed_closure_names_exact_receipts_and_the_bounded_request() -> None:
+    import json
+    from alienintent.execution_coordination.domain import closure
+    revision, identity = "a" * 40, "item"
+    assert closure.is_fixed(closure.ACTIONS) and not closure.is_fixed(["merge"]) and not closure.is_fixed(
+        [*closure.ACTIONS[:4], closure.ACTIONS[0]])
+    exact = closure.receipt("landing-record", identity, revision)
+    assert closure.parse_receipt(exact) == ("landing-record", identity, revision)
+    for loose in ("landing-record", f"landing-record:{identity}:{revision[:7]}", f"deploy:{identity}:{revision}"):
+        assert closure.parse_receipt(loose) is None
+    good = {"identity": identity, "revision": revision, "actions": list(closure.ACTIONS[:3]), "findings": ["ok"]}
+    assert closure.parse_request(json.dumps(good), identity, revision) == closure.ClosureRequest(
+        tuple(closure.ACTIONS[:3]), ("ok",))
+    for change, reason in (({"identity": "x"}, "request-identity"), ({"revision": "b" * 40}, "request-revision"),
+                           ({"extra": 1}, "request-keys"), ({"actions": ["deploy"]}, "request-actions"),
+                           ({"actions": ["landing-record"] * 2}, "request-actions"),
+                           ({"findings": ["x" * 501]}, "request-findings"),
+                           ({"findings": ["x"] * 21}, "request-findings")):
+        assert closure.parse_request(json.dumps(good | change), identity, revision) == reason
+    assert closure.parse_request(None, identity, revision) == "request-missing"
+    assert closure.performable(["merged-to-main", "board-updated"]) == ("candidate-published", "merged-to-main")
+    assert closure.parse_finding(closure.session_finding(closure.ready_to_land(revision))) is None
+    assert closure.parse_finding(closure.ready_to_land(revision)) == ("ready-to-land", (revision,))
+    assert closure.parse_finding(closure.hold("landing-ambiguous", revision, "unreadable"))[0] == "closure-hold"

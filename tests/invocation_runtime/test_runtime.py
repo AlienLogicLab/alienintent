@@ -651,3 +651,85 @@ def test_an_abandoned_producer_worktree_is_cleaned_only_when_its_owner_ended(tmp
         missing.correlation_id: "W: missing-terminal-result"}
     assert set(worker.retained_workspaces) == set(worker.cleanup_diagnostics)
     assert all(path.exists() for path in worker.retained_workspaces.values())
+
+
+# --- AUTOMATED-CLOSURE checks 4 and 8: the CLOSURE worker -----------------------------------------------------------
+
+def _closure_worker(tmp_path: Path, operations: frozenset[str], ownership=None):
+    import time
+    from types import SimpleNamespace
+    from alienintent.execution_coordination.domain.custody import CandidateRef
+    from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import CapabilityGrant, InvocationRole
+
+    digest = "sha256:" + "c" * 64
+    candidate = CandidateRef.source_revision(digest, "git:https://example.invalid/r.git#candidate/p@" + "a" * 40,
+                                             identity="revision:" + digest).with_independent_read_back()
+    calls: list[str] = []
+
+    class Hook:
+        def close(self, invocation, given, journal):
+            calls.append("close")
+            return (), ()
+
+        def reconcile(self, invocation, given, orders):
+            calls.append(f"reconcile:{len(orders)}")
+            return ("merged-to-main:item:" + "a" * 40,), ()
+
+    class Process:
+        def run(self, *args):
+            calls.append("session")
+            return SimpleNamespace(kind="success")
+
+    class Source:
+        def retrieve_for_verification(self, value, path):
+            return value
+
+    journal = JsonlInvocationJournal(tmp_path / "journal.jsonl", time.time)
+    grant = CapabilityGrant("g", "1", "launch:item:3", InvocationRole.CLOSURE, "registry", "target", operations, 10 ** 10)
+    worker = RealWorkerProvider(Process(), Source(), tmp_path, "origin", "b", tmp_path / "v", grant, "target", None,
+                                now=lambda: 1, sleep=lambda _: None, journal=journal, ownership=ownership,
+                                closure=Hook())
+    return worker, candidate, calls, journal
+
+
+def test_closure_without_process_control_starts_no_session(tmp_path: Path) -> None:
+    from types import SimpleNamespace
+    from alienintent.execution_coordination.domain.closure import receipt
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
+    from alienintent.invocation_runtime.application.real_worker import CANDIDATE_PUBLISHED_RECEIPT
+    worker, candidate, calls, _ = _closure_worker(tmp_path, frozenset({"git-read"}))
+    invocation = WorkerInvocation("item", "launch:item:3", None, "CLOSURE", candidate)
+    assert worker.start(invocation, None, frozenset(), SimpleNamespace(hard_wall_clock_seconds=60)).kind == "ineligible"
+    assert calls == []
+    assert CANDIDATE_PUBLISHED_RECEIPT.format(identity="item", revision="a" * 40) == receipt(
+        "candidate-published", "item", "a" * 40)
+
+
+def test_a_begun_landing_is_effect_unknown_and_settles_once_from_the_journal_without_a_session(tmp_path: Path) -> None:
+    from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
+    from alienintent.invocation_runtime.application.real_worker import (
+        CLOSURE_ORDERED, EFFECT_UNKNOWN, OWNER_TERMINATED)
+
+    class Ended:
+        def current(self):
+            return {"pid": 1}
+
+        def owner_state(self, owner):
+            return "terminated"
+
+        def owned_work(self, invocation_id, owner=None):
+            return ()
+
+    worker, candidate, calls, journal = _closure_worker(tmp_path, frozenset({"git-read", "process-control"}), Ended())
+    invocation = WorkerInvocation("item", "launch:item:3", None, "CLOSURE", candidate)
+    journal.append({"event": "invocation-started", "correlation_id": "launch:item:3", "work_identity": "item",
+                    "role": "CLOSURE", "contract_digest": None, "owner": {"pid": 1}})
+    assert worker.attest_ownership(invocation).kind == OWNER_TERMINATED and worker.reconcile_closure(invocation) is None
+    journal.append({"event": CLOSURE_ORDERED, "correlation_id": "launch:item:3", "work_identity": "item",
+                    "role": "CLOSURE", "candidate": "a" * 40, "order": {}})
+    assert worker.attest_ownership(invocation).kind == EFFECT_UNKNOWN
+    settled = worker.reconcile_closure(invocation)
+    assert (settled.kind, settled.receipts, calls) == ("closed", ("merged-to-main:item:" + "a" * 40,), ["reconcile:1"])
+    assert worker.read_back(invocation) == settled and worker.reconcile_closure(invocation) is None

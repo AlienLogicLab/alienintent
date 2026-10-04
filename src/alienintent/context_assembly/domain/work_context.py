@@ -13,14 +13,19 @@ import re
 
 from alienintent.context_assembly.domain.reconstruction import canonical
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
-from alienintent.execution_coordination.ports.worker_provider import PRODUCER, VERIFIER
+from alienintent.execution_coordination.ports.worker_provider import CLOSURE, PRODUCER, VERIFIER
 
-# Section 1: every role's fields, then what the PRODUCER alone and the VERIFIER alone receive.
+# Section 1: every role's fields, then what the PRODUCER, the VERIFIER and CLOSURE alone receive. CLOSURE never gets
+# the PRODUCER's transcript or self-review, and no package names a credential, key path or token.
 COMMON_FIELDS = ("identity", "label", "role", "attempt", "goal", "instructions", "contract", "release_record",
                  "starting_revision", "allowed_scope", "required_evidence", "stop_condition", "escalation_condition",
                  "dependencies", "design_rules", "history", "resources", "context_command")
 FIELDS = {PRODUCER: frozenset({*COMMON_FIELDS, "assessment"}),
-          VERIFIER: frozenset({*COMMON_FIELDS, "candidate", "diff", "producer_self_review"})}
+          VERIFIER: frozenset({*COMMON_FIELDS, "candidate", "diff", "producer_self_review"}),
+          CLOSURE: frozenset({*COMMON_FIELDS, "candidate", "diff", "verdict", "closure_actions"})}
+# CLOSURE's `closure_actions`: the contract's five fixed closure names and the one request it may write.
+CLOSURE_REQUEST = {"identity": "<work item id>", "revision": "<full candidate revision>",
+                               "actions": ["<some of the five names>"], "findings": ["<finding>"]}
 # Section 4: the self-review reaches the VERIFIER only under `producer_self_review`, with this fixed label.
 SELF_REVIEW_LABEL = "input to check — not findings and not a verdict"
 SELF_REVIEW = "self-review"

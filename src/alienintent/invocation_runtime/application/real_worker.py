@@ -47,6 +47,11 @@ OWNER_UNATTESTED, OWNER_ALIVE, OWNED_WORK_ACTIVE, EFFECT_UNKNOWN = "owner-unatte
 # Journaled just before a producer's publication, the one external effect a
 # role invocation performs; once present, a lost result's effect is UNKNOWN.
 PUBLICATION_STARTED = "publication-started"
+# Journaled by the control plane before a landing's first irreversible effect (the same rule).
+CLOSURE_ORDERED = "closure-ordered"
+# The exact `candidate-published` receipt (execution_coordination/domain/closure.py `receipt`, whose format this
+# repeats so the runtime takes no cross-module domain import): `<action>:<work item id>:<full candidate revision>`.
+CANDIDATE_PUBLISHED_RECEIPT = "candidate-published:{identity}:{revision}"
 
 
 # Outcome kinds that must name the exact candidate the role acted on.
@@ -180,8 +185,23 @@ class WorkerPreparation(Protocol):
     def published(self, invocation: WorkerInvocation, candidate: CandidateRef) -> None: ...
 
 
+class ClosureActions(Protocol):
+    """An optional hook, in the style of `WorkerPreparation`, that performs and reads back CLOSURE's effects.
+
+    `close` runs after the CLOSURE session ended, with the journal the provider writes; `reconcile` settles the
+    journaled `closure-ordered` events of this work item and candidate (`orders`, in journal order) with no session,
+    or answers None when the last of them provably did not land. Each answers (receipts, findings).
+    """
+
+    def close(self, invocation: WorkerInvocation, candidate: CandidateRef,
+              journal: InvocationJournal | None) -> tuple[tuple[str, ...], tuple[str, ...]]: ...
+
+    def reconcile(self, invocation: WorkerInvocation, candidate: CandidateRef,
+                  orders: tuple[Mapping[str, object], ...]) -> tuple[tuple[str, ...], tuple[str, ...]] | None: ...
+
+
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -199,6 +219,8 @@ class RealWorkerProvider(WorkerProvider):
         self._preparation = preparation
         # The PRODUCER worktree a correlation owns at its fixed path, for one this process did not run (or None).
         self._recovered_workspace = recovered_workspace
+        # The only CLOSURE hook this provider holds: no credential and no Landing Authority.
+        self._closure = closure
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
@@ -228,7 +250,7 @@ class RealWorkerProvider(WorkerProvider):
         if invocation.role == str(InvocationRole.VERIFIER):
             outcome = self._evaluate(invocation, budget)
         elif invocation.role == str(InvocationRole.CLOSURE):
-            outcome = self._close(invocation)
+            outcome = self._close(invocation, budget)
         elif invocation.role == str(InvocationRole.PRODUCER):
             return self._produce(invocation, context, grants, budget)
         else:
@@ -277,16 +299,22 @@ class RealWorkerProvider(WorkerProvider):
             if self._reservations is not None:
                 self._reservations.release(invocation.correlation_id)
 
-    def _close(self, invocation: WorkerInvocation) -> WorkerOutcome:
+    def _close(self, invocation: WorkerInvocation, budget: BudgetPolicy) -> WorkerOutcome:
         """Perform and read back the closure actions this adapter can attest.
 
-        Only ``candidate-published`` is performable here: the accepted exact
-        revision is re-read from the remote into a fresh directory. No other
-        action is claimed, so a contract requiring more holds at ACCEPT.
+        Without the `closure` hook only ``candidate-published`` is performable
+        here: the accepted exact revision is re-read from the remote into a
+        fresh directory. No other action is claimed, so a contract requiring
+        more holds at ACCEPT. With the hook: a fresh CLOSURE session on that
+        clone (granted `git-read` and `process-control` only), after which the
+        hook performs and reads back the requested actions; an earlier journaled
+        order of this item and candidate is settled first, with no session.
         """
         grant, candidate = self._grant_for(invocation), invocation.candidate
         if candidate is None or grant.invocation_id != invocation.correlation_id:
             return WorkerOutcome("ineligible")
+        if self._closure is not None:
+            return self._close_with(invocation, budget, grant, candidate)
         receipts: list[str] = []
         try:
             self._source.retrieve_for_verification(candidate, self._verifier_root / f"closure-{invocation.correlation_id}")
@@ -294,6 +322,83 @@ class RealWorkerProvider(WorkerProvider):
         except CandidateUnavailable:
             pass
         return WorkerOutcome.closed(candidate, tuple(receipts))
+
+    def _close_with(self, invocation: WorkerInvocation, budget: BudgetPolicy, grant: CapabilityGrant,
+                    candidate: CandidateRef) -> WorkerOutcome:
+        assert self._closure is not None
+        try:
+            grant.require("git-read", self._target, self._now())
+            grant.require("process-control", self._target, self._now())
+        except PermissionError:
+            return WorkerOutcome("ineligible")
+        revision = _revision_of(candidate)
+        if revision is None or budget.hard_wall_clock_seconds is None:
+            return WorkerOutcome("ineligible")
+        earlier = self._closure_orders(invocation, candidate)
+        if earlier:
+            settled = self._closure.reconcile(invocation, candidate, earlier)
+            if settled is not None:
+                return WorkerOutcome("closed", candidate, findings=tuple(settled[1]), receipts=tuple(settled[0]))
+        clone = self._verifier_root / f"closure-{invocation.correlation_id}"
+        try:
+            self._source.retrieve_for_verification(candidate, clone)
+        except CandidateUnavailable:
+            return WorkerOutcome.closed(candidate, ())
+        published = CANDIDATE_PUBLISHED_RECEIPT.format(identity=invocation.work_identity, revision=revision)
+        if self._preparation is not None:
+            prepared = self._preparation.prepare(invocation, clone)
+            if isinstance(prepared, WorkerOutcome):
+                return prepared
+        result = self._process.run(invocation.correlation_id, InvocationRole.CLOSURE, clone, budget.hard_wall_clock_seconds)
+        if result.kind != "success":
+            return WorkerOutcome(result.kind)
+        receipts, findings = self._closure.close(invocation, candidate, self._journal)
+        return WorkerOutcome("closed", candidate, findings=tuple(findings),
+                             receipts=tuple(dict.fromkeys((published, *receipts))))
+
+    def _closure_orders(self, invocation: WorkerInvocation, candidate: CandidateRef,
+                        records: Sequence[Mapping[str, object]] | None = None) -> tuple[Mapping[str, object], ...]:
+        """The journaled `closure-ordered` events of this work item and candidate, in journal order."""
+        if records is None:
+            try:
+                records = self._journal.records() if self._journal is not None else ()
+            except JournalUnreadable:
+                records = ()
+        return tuple(record for record in records if record.get("event") == CLOSURE_ORDERED
+                     and record.get("work_identity") == invocation.work_identity
+                     and record.get("candidate") == _revision_of(candidate))
+
+    def reconcile_closure(self, invocation: WorkerInvocation) -> WorkerOutcome | None:
+        """Settle a CLOSURE invocation that began a landing and left no outcome line, with no model session.
+
+        Only when its own events include `closure-ordered` and its owner ended with nothing owned alive
+        (`effect-unknown`). The settled outcome is journaled (`"reconciled": true`) and read back; otherwise None.
+        """
+        if invocation.role != str(InvocationRole.CLOSURE) or self._journal is None or self._closure is None \
+                or invocation.candidate is None:
+            return None
+        try:
+            records = self._journal.records()
+        except JournalUnreadable:
+            return None
+        own = [record for record in records if record.get("correlation_id") == invocation.correlation_id]
+        started = [record for record in own if record.get("event") == "invocation-started"]
+        if len(started) != 1 or any(record.get("event") == "invocation-outcome" for record in own) \
+                or not any(record.get("event") == CLOSURE_ORDERED for record in own):
+            return None
+        if self.attest_ownership(invocation).kind != EFFECT_UNKNOWN:
+            return None
+        settled = self._closure.reconcile(invocation, invocation.candidate,
+                                          self._closure_orders(invocation, invocation.candidate, records))
+        if settled is None:
+            return None
+        self._journal.append({
+            "event": "invocation-outcome", "correlation_id": invocation.correlation_id,
+            "work_identity": invocation.work_identity, "role": invocation.role,
+            "contract_digest": started[0].get("contract_digest"), "attempt": None, "kind": "closed",
+            "candidate": encode_candidate(invocation.candidate), "findings": list(settled[1]),
+            "receipts": list(settled[0]), "reconciled": True})
+        return self.read_back(invocation)
 
     def _produce(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         starting_revision = "HEAD"
@@ -515,7 +620,7 @@ class RealWorkerProvider(WorkerProvider):
         work = self._ownership.owned_work(invocation.correlation_id, owner_token(owner))
         if work is None or work:
             return answer(OWNED_WORK_ACTIVE)
-        if any(record.get("event") == PUBLICATION_STARTED for record in own):
+        if any(record.get("event") in (PUBLICATION_STARTED, CLOSURE_ORDERED) for record in own):
             return answer(EFFECT_UNKNOWN)
         return answer(OWNER_TERMINATED)
 

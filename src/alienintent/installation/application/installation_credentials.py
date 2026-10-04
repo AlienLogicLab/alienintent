@@ -3,6 +3,10 @@
 The App identity and private key resolve through the `SecretProvider`; the
 clock and the assertion signer arrive as callables, so expiry and refresh are
 exercised deterministically offline and the same code path runs live.
+
+Given `permissions` and `repositories`, every mint asks GitHub for exactly that scope (the token API's body) and
+reads the answer back: its `permissions` must equal the request and `repository_selection` must be `selected`, or
+the mint raises CredentialUnavailable before the token is used. Without them minting is unchanged.
 """
 
 from __future__ import annotations
@@ -40,11 +44,16 @@ class InstallationCredentials:
         assertion: Callable[[int, bytes, float], str],
         api_root: str = GITHUB_API,
         refresh_safety_seconds: float = 60.0,
+        *,
+        permissions: Mapping[str, str] | None = None,
+        repositories: tuple[str, ...] | None = None,
     ) -> None:
         self._identity, self._secrets, self._transport = identity, secrets, transport
         self._clock, self._assertion, self._api_root = clock, assertion, api_root
         self._refresh_safety_seconds = refresh_safety_seconds
         self._token: InstallationToken | None = None
+        self._scope = None if permissions is None else dict(permissions)
+        self._scope_repositories = repositories
         self.mints = 0
 
     # --- credential lifecycle ----------------------------------------------
@@ -62,11 +71,18 @@ class InstallationCredentials:
         return {"Authorization": f"token {self.token().value}", "Accept": _ACCEPT}
 
     def _mint(self) -> InstallationToken:
-        document = self._application_call("POST", f"/app/installations/{self._identity.installation_id}/access_tokens", expected=201)
+        body = None
+        if self._scope is not None or self._scope_repositories is not None:
+            body = json.dumps({"permissions": self._scope or {},
+                               "repositories": list(self._scope_repositories or ())}).encode()
+        document = self._application_call("POST", f"/app/installations/{self._identity.installation_id}/access_tokens", expected=201, body=body)
         value, expiry = document.get("token"), document.get("expires_at")
         if not isinstance(value, str) or not value or not isinstance(expiry, str):
             raise CredentialUnavailable("installation token response is incomplete")
         permissions = document.get("permissions")
+        if body is not None and (not isinstance(permissions, Mapping) or dict(permissions) != (self._scope or {})
+                                 or document.get("repository_selection") != "selected"):
+            raise CredentialUnavailable("installation token scope does not read back as requested")
         self.mints += 1
         return InstallationToken(
             value,
@@ -115,9 +131,11 @@ class InstallationCredentials:
         """An App-authenticated call; the assertion is minted per call and never held."""
         return self._application_call(method, path, expected)
 
-    def _application_call(self, method: str, path: str, expected: int = 200) -> Mapping[str, object]:
+    def _application_call(self, method: str, path: str, expected: int = 200, body: bytes | None = None) -> Mapping[str, object]:
         headers = {"Authorization": f"Bearer {self._app_assertion()}", "Accept": _ACCEPT}
-        return _document(self._transport.request(method, f"{self._api_root}{path}", headers), expected)
+        if body is None:
+            return _document(self._transport.request(method, f"{self._api_root}{path}", headers), expected)
+        return _document(self._transport.request(method, f"{self._api_root}{path}", headers, body=body), expected)
 
     def _installation_call(self, method: str, path: str, expected: int = 200) -> Mapping[str, object]:
         return _document(self._transport.request(method, f"{self._api_root}{path}", dict(self.authorization())), expected)

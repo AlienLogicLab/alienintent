@@ -28,7 +28,14 @@ runs under, opening the work and `readiness` databases with SQLite `mode=ro`.
 With both, `launcher()` (`work launch`, unit 6c-2) is that coordinator over the existing worker chain, launching one
 PRODUCER or VERIFIER step with its package assembled at launch and its model routed from the shared routing file at
 every launch (LaunchPreparation). Workers keep their user's filesystem access: no operating-system containment is
-claimed.
+claimed. At ACCEPT, for a contract whose `required_closure_actions` are exactly the five fixed closure names, the same
+launch runs a fresh CLOSURE session on the VERIFIER's route (granted `git-read` and `process-control` only) whose only
+output is a bounded closure request; `RegistryClosure` (the control plane) then performs and reads back each requested
+effect in the fixed order and alone issues the exact receipts. The landing itself is pushed only by the Landing
+Authority, built only when the `github` entry sets `"landing": true`, with its own landing-scoped token; without it the
+outcome is a verified `ready-to-land`. After the coordinator's DONE the row is projected to DONE through
+`WorkCompletion.record_coordinated`. Every token the registry mints is scoped: `work link`, `work display` and the
+READY view use DISPLAY_PERMISSIONS for the one repository.
 
 Configuration document (JSON):
 
@@ -41,7 +48,7 @@ Configuration document (JSON):
         "readiness": {"database": "<path>", "evidence_root": "<path>", "executable": "<agent-ready path>",
                       "provider": "<provider>"},
         "github": {"repository": "<owner>/<name>", "application_id": <int>, "installation_id": <int>,
-                   "private_key_path": "<path to the App private key file>",
+                   "private_key_path": "<path to the App private key file>", "landing": false,
                    "project": {"project_id": "PVT_...", "project_number": <int>, "organization": "<owner>",
                                "status_field_id": "<id>", "priority_field_id": "<id>"}}}}}
 """
@@ -54,12 +61,14 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+import shutil
 import subprocess
 import sysconfig
 import time
 from types import SimpleNamespace
 from uuid import uuid4
 
+from alienintent.composition.landing_authority import LANDING_PERMISSIONS, LandingAuthority, LandingOrder, git_environment
 from alienintent.composition.model_routing import provider_command, resolve_route
 from alienintent.composition.readiness import assessment_environment, compose_producer, resolve_binding
 from alienintent.composition.role_binding import ROLE_OPERATIONS, RoleBindingGuard
@@ -76,10 +85,12 @@ from alienintent.context_assembly.application.work_link import WorkLink
 from alienintent.context_assembly.application.work_registration import WorkRecordService
 from alienintent.context_assembly.domain.packet_assessment import fingerprint
 from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason
-from alienintent.context_assembly.domain.work_context import PRODUCER, VERIFIER
+from alienintent.context_assembly.application.work_completion import landing_check
+from alienintent.context_assembly.domain.work_context import CLOSURE, PRODUCER, VERIFIER
 from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
-from alienintent.context_assembly.domain.work_identity import STATES, GitReadFailed, WorkIdentityRefused, valid_path
-from alienintent.context_assembly.domain.work_link import LinkResult, render
+from alienintent.context_assembly.domain.work_identity import DONE, STATES, GitReadFailed, StoredPointer, \
+    WorkIdentityRefused, valid_path
+from alienintent.context_assembly.domain.work_link import REQUIRED_PERMISSIONS, LinkResult, render
 from alienintent.context_assembly.ports.work_item_repository import (
     PacketRef, PublicationFailed, RefPublisher, RepositoryLocation)
 from alienintent.control_plane.adapters.attention_repository import DurableAttentionRepository
@@ -101,11 +112,16 @@ from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERS
 from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+from alienintent.execution_coordination.domain.closure import (
+    BOARD_UPDATED, LANDING_RECORD, MERGED_TO_MAIN, WORKSPACES_CLEANED, hold, is_fixed, parse_request, performable,
+    ready_to_land, receipt, rework, session_finding)
 from alienintent.execution_coordination.domain.contract import BiuContract
+from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.execution_coordination.domain.custody import CandidateRef
 from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
 from alienintent.execution_coordination.ports.project_directory import ProjectItemState
+from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.installation.adapters.app_jwt import app_assertion
 from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
@@ -120,7 +136,7 @@ from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, G
 from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.application.real_worker import (
-    EFFECT_UNKNOWN, OWNED_WORK_ACTIVE, OWNER_ALIVE, PUBLICATION_STARTED, RealWorkerProvider)
+    CLOSURE_ORDERED, EFFECT_UNKNOWN, OWNED_WORK_ACTIVE, OWNER_ALIVE, PUBLICATION_STARTED, RealWorkerProvider)
 from alienintent.invocation_runtime.domain.runtime import (
     INVOCATION_MARKER, INVOCATION_OWNER_MARKER, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable,
     ReservationBook, owner_token)
@@ -138,6 +154,8 @@ OWNERS = {NO_LINK: WORK_PREPARATION, NOT_ELIGIBLE: WORK_PREPARATION, ASSESSMENT_
           CONTRACT_INVALID: WORK_PREPARATION, DISPLAY_DIFFERS: WORK_PREPARATION, ROW_REFUSED: OPERATOR}
 # The shared Factory Director host configuration whose `wipLimit` is the WIP limit (bin/alienintent.mjs reads it too).
 HOST_CONFIGURATION = Path("~/.config/alienintent/factory-director-host.json")
+# Every registry token is scoped: `work link`, `work display` and the READY view need these, for the one repository.
+DISPLAY_PERMISSIONS = dict(REQUIRED_PERMISSIONS) | {"metadata": "read"}
 MAX_SAFE_INTEGER = 2 ** 53 - 1  # the Number.isSafeInteger bound of bin/alienintent.mjs; a JSON 1.0 is not an integer here
 
 
@@ -162,6 +180,7 @@ class GitHubConfiguration:
     installation_id: int
     private_key_path: Path
     project: ProjectAddress
+    landing: bool = False  # The Founder's authorization of the landing App permission: builds the Landing Authority.
 
 
 @dataclass(frozen=True)
@@ -216,15 +235,17 @@ def _readiness(value: object) -> ReadinessConfiguration:
 
 def _github(value: object) -> GitHubConfiguration:
     fields = {"repository", "application_id", "installation_id", "private_key_path", "project"}
-    if not isinstance(value, dict) or set(value) != fields or not isinstance(value["repository"], str) \
+    if not isinstance(value, dict) or set(value) not in (fields, fields | {"landing"}) \
+            or type(value.get("landing", False)) is not bool or not isinstance(value["repository"], str) \
             or value["repository"].count("/") != 1 or not all(value["repository"].split("/")) \
             or not all(type(value[name]) is int and value[name] > 0 for name in ("application_id", "installation_id")) \
             or not isinstance(value["private_key_path"], str) or not value["private_key_path"] \
             or not isinstance(value["project"], dict):
         raise ConfigurationInvalid("github needs exactly repository, application_id, installation_id, "
-                                   "private_key_path and project")
+                                   "private_key_path and project (and the optional boolean landing)")
     return GitHubConfiguration(value["repository"], value["application_id"], value["installation_id"],
-                               Path(value["private_key_path"]), ProjectAddress(**value["project"]))
+                               Path(value["private_key_path"]), ProjectAddress(**value["project"]),
+                               value.get("landing", False))
 
 
 def load_project_configuration(path: Path, project: str) -> ProjectConfiguration:
@@ -316,6 +337,7 @@ class WorkRegistry:
         # The existing process ownership observation: the launch chain's, and the exclusive `work launch` owner's.
         self.ownership = ownership if ownership is not None else ProcOwnership()
         self.host_configuration = host_configuration
+        self._transport = transport
         self.profile_stores = {name: read_only_store(path) for name, path in sorted(configuration.profiles.items())}
         self.items = SQLiteWorkItemRepository(configuration.database, configuration.repositories)
         self.source_control = source_control if source_control is not None else GitSourceControl()
@@ -343,14 +365,20 @@ class WorkRegistry:
         """`work link` and `work display` over the same constructors SandboxProfileComposition uses, without its
         profile document; nothing is read or sent until a command runs."""
         transport = transport or UrllibGitHubTransport()
-        credentials = InstallationCredentials(
-            AppIdentity(github.application_id, github.installation_id, APP_KEY_REFERENCE),
-            ProtectedLocalFileSecretProvider({APP_KEY_REFERENCE: github.private_key_path}), transport, time.time,
-            app_assertion)
+        credentials = self._credentials(github, transport, DISPLAY_PERMISSIONS)
         return WorkLink(self.records, self.items,
                         GitHubRepositoryApi(github.repository, transport, credentials.authorization),
                         GitHubProjectsV2Directory(github.project, transport, credentials.authorization), credentials,
                         self.cycles if self.assessment is not None else None)
+
+    @staticmethod
+    def _credentials(github: GitHubConfiguration, transport: GitHubTransport,
+                     permissions: Mapping[str, str]) -> InstallationCredentials:
+        """The App installation's credentials, every mint scoped to `permissions` for the one repository."""
+        return InstallationCredentials(
+            AppIdentity(github.application_id, github.installation_id, APP_KEY_REFERENCE),
+            ProtectedLocalFileSecretProvider({APP_KEY_REFERENCE: github.private_key_path}), transport, time.time,
+            app_assertion, permissions=permissions, repositories=(github.repository.split("/", 1)[1],))
 
     def cycles(self, identity: str) -> tuple[int | None, int | None] | None:
         """The IMPLEMENT and VERIFY cycle counts of the work item's recorded `registry` coordinator state on the
@@ -366,7 +394,8 @@ class WorkRegistry:
         the caller's worker and artifacts. Nothing is released automatically: a work item becomes eligible only through
         `release_and_start`, and the release gate re-checks its release record against the packets repository's clone
         and default branch (what `work authorize` checks) before every PRODUCER. The WIP limit is read on every
-        admission."""
+        admission. Closure: `landing_enabled` is the `github` entry's `landing` flag, `started_item` builds a started
+        item from its registry record (0.9) and `completed` projects the row after DONE (0.8)."""
         if self.ready_view is None:
             raise ConfigurationInvalid("the coordinator needs both the github and readiness entries")
         configuration = self.configuration
@@ -377,7 +406,51 @@ class WorkRegistry:
         return FactoryCoordinator(store, self.ready_view, worker, artifacts, "registry",
                                   automatic_release=False, release_gate=gate,
                                   wip_limit=lambda: wip_limit(self.host_configuration),
-                                  recorded_completion=self.completion.recorded)
+                                  recorded_completion=self.completion.recorded,
+                                  landing_enabled=lambda: configuration.github.landing,
+                                  started_item=self._started_item, completed=self._project_completed)
+
+    def _journal_records(self) -> tuple[dict[str, object], ...]:
+        return JsonlInvocationJournal(launch_root(self.configuration) / "invocation-journal.jsonl", time.time).records()
+
+    def _started_item(self, identity: str, correlation: str) -> ReadyWorkItem | None:
+        """A started work item built from its registry record alone (not the board): the row (not retired, with a
+        pointer), its packet and contract block, and its assessment reference; the contract digest must be the one
+        the correlation's `invocation-started` event journaled. Otherwise None."""
+        try:
+            record = self.records.show(identity)
+            item = None if record is None else record.item
+            if item is None or item.retired or item.pointer is None or record.packet is None \
+                    or item.assessment_ref is None:
+                return None
+            contract = contract_block(record.packet, item.id)
+            started = [entry for entry in self._journal_records() if entry.get("event") == "invocation-started"
+                       and entry.get("correlation_id") == correlation and entry.get("work_identity") == item.id]
+            if len(started) != 1 or started[0].get("contract_digest") != contract.content_digest:
+                return None
+            return ReadyWorkItem(item.id, 0, self.configuration.github.repository, "registry", None,
+                                 tuple(contract.dependencies), contract, contract.content_digest,
+                                 item.assessment_ref.logical_id, automatic_release=False)
+        except Exception:  # noqa: BLE001 - an unusable registry record answers None, as recovery expects
+            return None
+
+    def _project_completed(self, identity: str) -> None:
+        """The coordinator's `completed` hook: nothing when the row is already DONE, otherwise
+        `record_coordinated` with the last journaled `closure-ordered` event of this item and its custodied
+        candidate (of any correlation). A refusal raises, which the coordinator records as a diagnostic."""
+        item = self.identities.find(identity)
+        if item is None:
+            raise LookupError("no work item")
+        if item.state == DONE:
+            return
+        _, raw = self.store.read_state("registry", f"factory:{identity}")
+        held = raw.get("candidate")
+        revision = str(held.get("locator", "")).rpartition("@")[2] if isinstance(held, dict) else None
+        orders = [entry for entry in self._journal_records() if entry.get("event") == CLOSURE_ORDERED
+                  and entry.get("work_identity") == identity and entry.get("candidate") == revision]
+        result = self.completion.record_coordinated(identity, orders[-1] if orders else None)
+        if result.answer is not None:
+            raise RuntimeError(f"{result.answer}: {result.detail}")
 
     def launcher(self) -> FactoryCoordinator:
         """`work launch` (unit 6c-2): `coordinator(worker, artifacts)` with the existing worker chain of
@@ -458,6 +531,14 @@ class WorkRegistry:
             if self.ownership.owned_work(correlation) != ():
                 return {"answer": START_UNPROVEN, "missing": "no process carrying the correlation's marker"}
             return None
+        if any(record.get("event") == CLOSURE_ORDERED for record in records):
+            # A begun landing: settled deterministically by the next CLOSURE, once the remote can be read.
+            packets = self.configuration.repositories[self.configuration.packets_repository]
+            try:
+                self.source_control.remote_revision(packets.clone, packets.remote, packets.default_branch)
+            except CandidateUnavailable:
+                return {"answer": REMOTE_UNVERIFIED, "branch": packets.default_branch, "missing": "a readable remote"}
+            return None
         published = [record.get("revision") for record in records if record.get("event") == PUBLICATION_STARTED]
         if not published:
             return None
@@ -493,15 +574,43 @@ class WorkRegistry:
                                     environment=worker_environment(root) | dict(self.context.command.environment),
                                     ownership=ownership)
         journal = JsonlInvocationJournal(root / "invocation-journal.jsonl", time.time)
+        closure = RegistryClosure(self, root, journal, preparation, self._landing_authority(journal))
         worker = RealWorkerProvider(
             process, GitSourceControl(), packets.clone, packets.remote,
             lambda invocation: f"candidate/{ref_safe(invocation.correlation_id)}", root / "verifier",
             lambda invocation: launch_grant(invocation, repository), repository,
             GitWorktreeAdapter(packets.clone, root / "workspaces"), ReservationBook(1, 2), now=time.time,
             sleep=time.sleep, journal=journal, ownership=ownership, preparation=preparation,
-            recovered_workspace=lambda invocation: _producer_worktree(root / "workspaces", invocation))
+            recovered_workspace=lambda invocation: _producer_worktree(root / "workspaces", invocation),
+            closure=closure)
+        closure.worker = worker
         guard = RoleBindingGuard(worker, journal, store, "registry", repository, time.time)
         return self.coordinator(guard, LocalArtifactStore(root / "artifacts", root / "custody")), worker, root
+
+    def _landing_authority(self, journal: JsonlInvocationJournal) -> LandingAuthority | None:
+        """Only with `"landing": true`: its own landing-scoped credentials (never `_links`'), the coordinator record's
+        custodied candidate at ACCEPT, and the launch journal's last `closure-ordered` event of a correlation."""
+        github = self.configuration.github
+        if not github.landing:
+            return None
+        packets = self.configuration.repositories[self.configuration.packets_repository]
+        store = self.store
+
+        def accepted(identity: str) -> str | None:
+            _, raw = store.read_state("registry", f"factory:{identity}")
+            held = raw.get("candidate")
+            if raw.get("stage") != LifecycleStage.ACCEPT.value or not isinstance(held, dict):
+                return None
+            return str(held.get("locator", "")).rpartition("@")[2]
+
+        def ordered(correlation: str) -> Mapping[str, object] | None:
+            found = [entry for entry in journal.records() if entry.get("event") == CLOSURE_ORDERED
+                     and entry.get("correlation_id") == correlation]
+            return found[-1] if found else None
+
+        return LandingAuthority(self._credentials(github, self._transport or UrllibGitHubTransport(),
+                                                  LANDING_PERMISSIONS),
+                                github.repository, packets.default_branch, accepted, ordered)
 
     def _ready_view(self, configuration: ProjectConfiguration) -> GitHubProjectsWorkManagement:
         """The READY view of board #1: profile `registry`, each formal workflow state mapped to itself, no projection
@@ -642,7 +751,18 @@ class WorkRegistry:
                               GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
                               {name: location.default_branch for name, location in repositories.items()},
                               self.items.read_packet,
-                              lambda identity: consumer.store.read_state("registry", f"factory:{identity}")[1])
+                              lambda identity: consumer.store.read_state("registry", f"factory:{identity}")[1],
+                              releases=StoredReleaseAuthorizations(consumer.store, "registry"), fetch=self._fetch)
+
+    def _fetch(self, repository: str) -> str:
+        """`git fetch <remote> <default branch>` in the repository's configured clone (only the remote-tracking ref
+        changes); answers that ref."""
+        location = self.configuration.repositories[repository]
+        result = subprocess.run(["git", "fetch", "--quiet", location.remote, location.default_branch],
+                                cwd=location.clone, capture_output=True, check=False, timeout=300)
+        if result.returncode:
+            raise GitReadFailed("git fetch", str(location.clone), result.stderr.decode(errors="replace")[:200])
+        return f"refs/remotes/{location.remote}/{location.default_branch}"
 
 
 def _consumer(configuration: ProjectConfiguration, store: OperationalStore) -> RetainedAssessmentConsumer:
@@ -740,6 +860,11 @@ repository outside your current working directory. This is a workflow rule.
 PRODUCER_RESULT = """Your current working directory is your git worktree at the package's starting_revision. Make the
 change there and commit it. Then write your self-review of the complete diff, as plain text, to this file:
 {self_review}"""
+CLOSURE_RESULT = """Your current working directory is a fresh read-only clone of the accepted candidate. Change
+nothing there. Read the package and decide which of its closure_actions to request. Then write exactly one JSON file:
+{request}
+as {{"identity": "<the work item id>", "revision": "<the candidate commit>", "actions": ["<some of the five names>"],
+"findings": ["<finding>", ...]}}. The control plane performs and checks every effect; nothing else you write is read."""
 VERIFIER_RESULT = """Your current working directory is a fresh clone of the candidate. Verify it against the package.
 Then write .alienintent/verdict.json in that directory as {{"revision": "<the candidate commit, git rev-parse HEAD>",
 "verdict": "accept" or "reject", "findings": ["<finding>", ...]}}; a reject needs at least one finding."""
@@ -811,17 +936,23 @@ class LaunchPreparation:
     def self_review_path(self, invocation_id: str) -> Path:
         return self.context_root / f"{invocation_id}.self-review.md"
 
+    def closure_request_path(self, invocation_id: str) -> Path:
+        """Where the CLOSURE session writes its one request, outside its clone."""
+        return self.context_root / f"{invocation_id}.closure-request.json"
+
     def prepare(self, invocation: WorkerInvocation, clone: Path | None) -> str | WorkerOutcome:
         identity, role = invocation.work_identity, invocation.role
         if not self._budget_stated(identity):
             return self._refusal(invocation, f"{HoldReason.MISSING_RECORD}: budget_policy: the contract's "
                                              "budget_policy states no hard_wall_clock_seconds or cancellation_limit")
+        if role == CLOSURE and not self._fixed(identity):
+            return WorkerOutcome("ineligible")  # A guard only: `launch` answers closure-not-automated first.
         package = self.context.assemble(identity, role, invocation.correlation_id, invocation.contract_digest,
-                                        invocation.candidate if role == VERIFIER else None, clone)
+                                        invocation.candidate if role in (VERIFIER, CLOSURE) else None, clone)
         if isinstance(package, ContextHold):
             return self._refusal(invocation, f"{package.reason}: {', '.join(package.affected_refs)}: {package.detail}")
         try:
-            route = self.route(role)
+            route = self.route(VERIFIER if role == CLOSURE else role)  # CLOSURE runs on the VERIFIER's route
         except (OSError, ValueError, TypeError, AttributeError) as error:
             return self._refusal(invocation, f"model-routing-unavailable: {role}: {type(error).__name__}: {error}")
         self.deliver(invocation, package.document(), route)
@@ -833,7 +964,9 @@ class LaunchPreparation:
         self.context_root.mkdir(parents=True, exist_ok=True)
         path.write_text(json.dumps(dict(document), indent=1, sort_keys=True), encoding="utf-8")
         result = PRODUCER_RESULT.format(self_review=self.self_review_path(invocation.correlation_id)) \
-            if invocation.role == PRODUCER else VERIFIER_RESULT
+            if invocation.role == PRODUCER else CLOSURE_RESULT.format(
+                request=self.closure_request_path(invocation.correlation_id)) \
+            if invocation.role == CLOSURE else VERIFIER_RESULT
         self.kept[invocation.correlation_id] = (dict(route), INSTRUCTIONS.format(
             role=invocation.role, identity=invocation.work_identity, invocation=invocation.correlation_id,
             package=path, result=result))
@@ -852,6 +985,14 @@ class LaunchPreparation:
                 self.context.record_self_review(invocation.work_identity, candidate, text)
         except Exception:  # noqa: BLE001 - nothing is recorded; the VERIFIER's launch is held MISSING_RECORD
             pass
+
+    def _fixed(self, identity: str) -> bool:
+        try:
+            record = self.context.records.show(identity)
+            return record is not None and record.packet is not None and is_fixed(
+                contract_block(record.packet, identity).required_closure_actions)
+        except (WorkIdentityRefused, ContractInvalid):
+            return False
 
     def _budget_stated(self, identity: str) -> bool:
         """Whether the contract states both launch limits; a packet or contract that cannot be read is left to
@@ -879,3 +1020,351 @@ class LaunchPreparation:
             affected_architecture=("FD-05",), cost_of_waiting="The work item and its dependents remain blocked.",
             authorizations=("authorize permits one normal guarded re-admission", "defer authorizes continued blocking"))
         return WorkerOutcome("authority-block", None, escalation, (reason,))
+
+
+# --- automated closure: the control plane ----------------------------------------------------------------------------
+
+LANDING_NAME, LANDING_EMAIL = "AlienIntent Landing", "landing@alienintent.invalid"
+MAX_ORDERS = 3
+_WORKSPACE_PREFIXES = ("producer", "verifier", "closure", "landing")
+
+
+def landing_record_path(label: str | None, identity: str, candidate: str) -> str:
+    """The existing naming: `docs/evidence/<label, lower case, or the id>-landing-<first 7 of the candidate>.md`."""
+    return f"docs/evidence/{(label or identity).lower()}-landing-{candidate[:7]}.md"
+
+
+def render_landing_record(facts: Mapping[str, object]) -> bytes:
+    """The one deterministic rendering of a landing record: fixed, bounded facts only, never session text."""
+    lines = [f"# Landing record: {facts['label'] or facts['identity']}", "",
+             f"- work item: {facts['identity']}", f"- label: {facts['label'] or ''}",
+             f"- candidate: {facts['candidate']}", f"- base: {facts['base']}", f"- merge: {facts['merge']}",
+             f"- instructions sha256: {facts['instructions_sha256']}",
+             f"- verifier correlation: {facts['verifier_correlation']}",
+             f"- closure correlation: {facts['closure_correlation']}",
+             f"- requested actions: {', '.join(facts['actions'])}",
+             f"- closure request sha256: {facts['request_sha256']}", ""]
+    return "\n".join(lines).encode()
+
+
+class RegistryClosure:
+    """The CLOSURE control plane (`ClosureActions`): it prepares the exact landing, journals the order before the first
+    irreversible effect, hands it to the Landing Authority, reads every effect back, recovers after a crash and alone
+    issues receipts and control-plane findings. It never runs or trusts a session."""
+
+    def __init__(self, registry: WorkRegistry, root: Path, journal: JsonlInvocationJournal,
+                 preparation: LaunchPreparation, authority: LandingAuthority | None) -> None:
+        self._registry, self._root, self._journal = registry, Path(root), journal
+        self._preparation, self._authority = preparation, authority
+        configuration = registry.configuration
+        self._repository = configuration.packets_repository
+        self._location = configuration.repositories[self._repository]
+        self.worker: RealWorkerProvider | None = None  # set by `_launch_chain`, for PRODUCER worktree disposal
+        self.cleanup_diagnostics: dict[str, str] = {}
+
+    # --- ClosureActions -------------------------------------------------------------------------------------------
+
+    def close(self, invocation: WorkerInvocation, candidate: CandidateRef, journal) -> tuple[tuple[str, ...], tuple[str, ...]]:
+        identity, revision = invocation.work_identity, candidate.locator.rpartition("@")[2]
+        try:
+            document = self._preparation.closure_request_path(invocation.correlation_id).read_bytes()
+        except OSError:
+            document = None
+        request = parse_request(document, identity, revision)
+        if isinstance(request, str):
+            return (), (hold(request),)
+        findings = tuple(session_finding(text) for text in request.findings)
+        actions = performable(request.actions)
+        if LANDING_RECORD not in actions:
+            return (), findings
+        clone = self._clone(invocation.correlation_id)
+        head = self._fetch(clone, candidate)
+        if head is None:
+            return (), (*findings, hold("remote-unreadable"))
+        if self._reachable(clone, revision, head):
+            return (), (*findings, hold("landing-ambiguous", head, revision))
+        if not self._ancestor(clone, head, revision):
+            return (), (*findings, rework(self._merge_base(clone, head, revision), head))
+        digest = sha256(document).hexdigest()
+        return self._order(invocation, candidate, clone, head, 1, actions, digest, findings)
+
+    def reconcile(self, invocation: WorkerInvocation, candidate: CandidateRef,
+                  orders: tuple[Mapping[str, object], ...]) -> tuple[tuple[str, ...], tuple[str, ...]] | None:
+        """Settle the last journaled order with no session. For an earlier correlation, None when it provably did
+        not land; for the invocation's own order, the recovery rules of 0.4."""
+        if not orders:
+            return None
+        last = orders[-1]
+        own = last.get("correlation_id") == invocation.correlation_id
+        clone = self._clone(invocation.correlation_id)
+        return self._settle(invocation, candidate, clone, orders, retry=own, earlier=not own)
+
+    # --- the landing ----------------------------------------------------------------------------------------------
+
+    def _order(self, invocation, candidate, clone, base, attempt, actions, digest, findings):
+        identity, revision = invocation.work_identity, candidate.locator.rpartition("@")[2]
+        built = self._build(clone, invocation, revision, base, actions, digest)
+        if isinstance(built, str):
+            return (), (*findings, hold(built, base, revision))
+        merge, record, path = built
+        if self._authority is None:
+            return (), (*findings, ready_to_land(merge))
+        event = {"event": CLOSURE_ORDERED, "correlation_id": invocation.correlation_id, "work_identity": identity,
+                 "role": invocation.role, "candidate": revision,
+                 "order": {"base": base, "merge": merge, "record": record, "record_path": path, "attempt": attempt,
+                           "actions": list(actions), "request_sha256": digest}}
+        try:
+            self._journal.append(event)
+            journaled = [entry for entry in self._journal.records() if entry.get("event") == CLOSURE_ORDERED
+                         and entry.get("correlation_id") == invocation.correlation_id]
+        except (JournalUnreadable, OSError):
+            journaled = []
+        if not journaled or {key: journaled[-1].get(key) for key in event} != event:
+            return (), (*findings, hold("order-unrecorded", base, merge, record))
+        self._authority.land(self._landing_order(journaled[-1], clone))  # Trusted in neither answer.
+        orders = tuple(entry for entry in self._journal.records() if entry.get("event") == CLOSURE_ORDERED
+                       and entry.get("work_identity") == identity and entry.get("candidate") == revision)
+        receipts, settled = self._settle(invocation, candidate, clone, orders, retry=False, earlier=False)
+        return receipts, (*findings, *settled)
+
+    def _settle(self, invocation, candidate, clone, orders, *, retry: bool, earlier: bool):
+        identity, revision = invocation.work_identity, candidate.locator.rpartition("@")[2]
+        last = orders[-1]
+        order = last["order"]
+        head = self._fetch(clone, candidate)
+        if head is None:
+            return (), (hold("landing-ambiguous", order["base"], order["merge"], order["record"], "unreadable"),)
+        published = (receipt("candidate-published", identity, revision),) \
+            if self._present(clone, revision) else ()
+        landed = next((entry for entry in reversed(orders) if self._reachable(clone, entry["order"]["record"], head)),
+                      None)
+        if landed is not None:
+            return self._after_landing(invocation, candidate, clone, landed, head, published)
+        if self._reachable(clone, revision, head) or self._path_taken(clone, head, order["record_path"]):
+            return published, (hold("landing-ambiguous", order["base"], order["merge"], order["record"], head),)
+        if earlier:
+            return None  # Provably not landed: a new session may start.
+        if head == order["base"]:
+            if self._authority is None:
+                return published, (ready_to_land(order["merge"]),)
+            if retry:
+                self._authority.land(self._landing_order(last, clone))
+                return self._settle(invocation, candidate, clone, orders, retry=False, earlier=False)
+            return published, (hold("landing-refused", order["base"], order["merge"], order["record"]),)
+        # Main moved and our order did not land (the push is fast-forward only).
+        if not self._ancestor(clone, head, revision):
+            return published, (rework(order["base"], head),)
+        if int(order["attempt"]) >= MAX_ORDERS:
+            return published, (hold("base-unstable", order["base"], head),)
+        actions = tuple(order["actions"])
+        receipts, findings = self._order(invocation, candidate, clone, head, int(order["attempt"]) + 1, actions,
+                                         str(order["request_sha256"]), ())
+        return tuple(dict.fromkeys((*published, *receipts))), findings
+
+    def _after_landing(self, invocation, candidate, clone, landed, head, published):
+        identity, revision = invocation.work_identity, candidate.locator.rpartition("@")[2]
+        order, actions = landed["order"], tuple(landed["order"]["actions"])
+        unverified = self._unverified(clone, identity, revision, order)
+        if unverified is not None:
+            return published, (hold("landing-unverified", order["merge"], order["record"], head),)
+        receipts = [*published, receipt(MERGED_TO_MAIN, identity, revision), receipt(LANDING_RECORD, identity, revision)]
+        if BOARD_UPDATED not in actions or not self._board(identity):
+            return tuple(receipts), ()
+        receipts.append(receipt(BOARD_UPDATED, identity, revision))
+        if WORKSPACES_CLEANED in actions and self._cleanup(invocation):
+            receipts.append(receipt(WORKSPACES_CLEANED, identity, revision))
+        return tuple(receipts), ()
+
+    def _build(self, clone: Path, invocation: WorkerInvocation, revision: str, base: str, actions, digest: str):
+        """The merge of the candidate onto `base` and the record commit on top, checked locally; or a hold reason."""
+        record = self._registry.records.show(invocation.work_identity)
+        if record is None or record.packet is None:
+            return "record-unreadable"
+        _, raw = self._registry.store.read_state("registry", f"factory:{invocation.work_identity}")
+        verdict = raw.get("verdict") if isinstance(raw.get("verdict"), dict) else {}
+        identity = ("-c", f"user.name={LANDING_NAME}", "-c", f"user.email={LANDING_EMAIL}", "-c", "commit.gpgsign=false")
+        if not self._git(clone, "checkout", "-q", "--detach", base, check=True) \
+                or not self._git(clone, *identity, "merge", "-q", "--no-ff", "--no-edit", "-m",
+                                 f"Land {invocation.work_identity} candidate {revision}", revision, check=True):
+            self._git(clone, "merge", "--abort")
+            return "merge-failed"
+        merge = self._git(clone, "rev-parse", "HEAD")
+        if self._parents(clone, merge) != [base, revision] or self._tree(clone, merge) != self._tree(clone, revision):
+            return "merge-tree"
+        path = landing_record_path(record.item.label, invocation.work_identity, revision)
+        data = render_landing_record({
+            "identity": invocation.work_identity, "label": record.item.label, "candidate": revision, "base": base,
+            "merge": merge, "instructions_sha256": sha256(record.packet).hexdigest(),
+            "verifier_correlation": verdict.get("verifier_correlation"),
+            "closure_correlation": invocation.correlation_id, "actions": list(actions), "request_sha256": digest})
+        target = clone / path
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        if not self._git(clone, "add", "--", path, check=True) or not self._git(
+                clone, *identity, "commit", "-q", "-m", f"Landing record for {invocation.work_identity}", check=True):
+            return "record-failed"
+        commit = self._git(clone, "rev-parse", "HEAD")
+        if self._parents(clone, commit) != [merge] or self._git(
+                clone, "diff-tree", "--no-commit-id", "--name-status", "-r", merge, commit) != f"A\t{path}":
+            return "record-changes"
+        return merge, commit, path
+
+    def _unverified(self, clone: Path, identity: str, revision: str, order: Mapping[str, object]) -> str | None:
+        """Read-back of a landed order: the record's only parent is the merge, the merge's parents are (base,
+        candidate) with the candidate's tree, and the shared landing check passes on the fetched default branch."""
+        merge, record = str(order["merge"]), str(order["record"])
+        if self._parents(clone, record) != [merge] or self._parents(clone, merge) != [order["base"], revision] \
+                or self._tree(clone, merge) != self._tree(clone, revision):
+            return "commits"
+        shown = self._registry.records.show(identity)
+
+        def read(pointer: StoredPointer) -> bytes:
+            result = subprocess.run(["git", "show", f"{pointer.commit}:{pointer.path}"], cwd=clone,
+                                    env=git_environment(clone), capture_output=True, check=False, timeout=120)
+            if result.returncode:
+                raise GitReadFailed("git show", str(clone), "missing")
+            return result.stdout
+
+        checked = landing_check(GitRevisionResolver({self._repository: clone}), read, self._repository,
+                                self._tracking, revision, record, str(order["record_path"]), identity,
+                                b"" if shown is None or shown.packet is None else shown.packet)
+        return checked if isinstance(checked, str) else None
+
+    def _landing_order(self, event: Mapping[str, object], clone: Path) -> LandingOrder:
+        order = event["order"]
+        return LandingOrder(str(event["work_identity"]), str(event["candidate"]), str(event["correlation_id"]),
+                            order["base"], order["merge"], order["record"], order["record_path"], clone,
+                            tuple(order["actions"]), order["attempt"])
+
+    # --- board and cleanup ----------------------------------------------------------------------------------------
+
+    def _board(self, identity: str) -> bool:
+        """`work display` reads back current, and the card's Status reads back DONE after the write."""
+        try:
+            links = self._registry.links
+            shown = links.display(identity)
+            if shown.answer is not None or shown.card_id is None:
+                return False
+            links.board.write_status(shown.card_id, "DONE", 0)
+            return links.board.read_status(shown.card_id).status == "DONE"
+        except Exception:  # noqa: BLE001 - an unconfirmed board update issues no receipt
+            return False
+
+    def _cleanup(self, invocation: WorkerInvocation) -> bool:
+        """Every workspace owned by a journaled correlation of this work item, under the ownership checks; the
+        running correlation's landing clone last. Anything kept is named in `cleanup_diagnostics`."""
+        try:
+            started = [entry for entry in self._journal.records() if entry.get("event") == "invocation-started"
+                       and entry.get("work_identity") == invocation.work_identity]
+        except JournalUnreadable:
+            self.cleanup_diagnostics[invocation.correlation_id] = "journal unreadable"
+            return False
+        ownership, verifier, kept, last = self._registry.ownership, self._root / "verifier", False, None
+        for entry in started:
+            correlation = str(entry.get("correlation_id"))
+            if not correlation or any(part in correlation for part in ("/", "\\", "..", "\x00")):
+                continue
+            running = correlation == invocation.correlation_id
+            owner = entry.get("owner")
+            reason = None
+            if not isinstance(owner, dict):
+                reason = "no journaled owner"
+            else:
+                try:
+                    if not running and ownership.owner_state(owner) != "terminated":
+                        reason = "owner alive"
+                    elif ownership.owned_work(correlation, owner_token(owner)) != ():
+                        reason = "marked process alive"
+                except Exception as error:  # noqa: BLE001 - an unreadable observation keeps the workspace
+                    reason = f"ownership unreadable: {type(error).__name__}"
+            if entry.get("role") == PRODUCER and self.worker is not None:
+                worktree = _producer_worktree(self._root / "workspaces", WorkerInvocation(invocation.work_identity,
+                                                                                          correlation))
+                if worktree is not None and worktree.path.exists():
+                    if reason is None:
+                        self.worker.finalize(WorkerInvocation(invocation.work_identity, correlation), False)
+                    if worktree.path.exists():
+                        kept = True
+                        self.cleanup_diagnostics[str(worktree.path)] = reason or "worktree kept"
+            for prefix in _WORKSPACE_PREFIXES:
+                path = verifier / f"{prefix}-{correlation}"
+                if not path.exists():
+                    continue
+                if reason is not None:
+                    kept = True
+                    self.cleanup_diagnostics[str(path)] = reason
+                elif running and prefix == "landing":
+                    last = path
+                else:
+                    shutil.rmtree(path, ignore_errors=True)
+                    if path.exists():
+                        kept = True
+                        self.cleanup_diagnostics[str(path)] = "not removable"
+        if last is not None:
+            shutil.rmtree(last, ignore_errors=True)
+            if last.exists():
+                kept = True
+                self.cleanup_diagnostics[str(last)] = "not removable"
+        return not kept
+
+    # --- git in the landing clone ---------------------------------------------------------------------------------
+
+    @property
+    def _tracking(self) -> str:
+        return f"refs/remotes/landing/{self._location.default_branch}"
+
+    def _clone(self, correlation: str) -> Path:
+        clone = self._root / "verifier" / f"landing-{correlation}"
+        if not (clone / ".git").is_dir():
+            clone.mkdir(parents=True, exist_ok=True)
+            self._git(clone, "init", "-q")
+        return clone
+
+    def _url(self) -> str:
+        return self._git(self._location.clone, "remote", "get-url", self._location.remote)
+
+    def _fetch(self, clone: Path, candidate: CandidateRef) -> str | None:
+        """Fetch the remote default branch (and the candidate branch) fresh, with no credential; the head or None."""
+        url, branch = self._url(), self._location.default_branch
+        if not url or not self._git(clone, "fetch", "-q", url, f"+refs/heads/{branch}:{self._tracking}", check=True):
+            return None
+        reference = candidate.locator.rpartition("#")[2].rpartition("@")[0]
+        if reference:
+            self._git(clone, "fetch", "-q", url, f"+refs/heads/{reference}:refs/remotes/landing/candidate", check=True)
+        head = self._git(clone, "rev-parse", self._tracking)
+        return head or None
+
+    def _present(self, clone: Path, revision: str) -> bool:
+        return self._git(clone, "cat-file", "-e", f"{revision}^{{commit}}", check=True)
+
+    def _reachable(self, clone: Path, commit: str, head: str) -> bool:
+        return self._present(clone, commit) and self._git(clone, "merge-base", "--is-ancestor", commit, head, check=True)
+
+    def _ancestor(self, clone: Path, head: str, revision: str) -> bool:
+        """`head` is a proper ancestor of the candidate."""
+        return head != revision and self._reachable(clone, head, revision)
+
+    def _merge_base(self, clone: Path, head: str, revision: str) -> str:
+        return self._git(clone, "merge-base", head, revision) or head
+
+    def _path_taken(self, clone: Path, head: str, path: str) -> bool:
+        return self._git(clone, "cat-file", "-e", f"{head}:{path}", check=True)
+
+    def _parents(self, clone: Path, commit: str) -> list[str]:
+        return self._git(clone, "rev-list", "--parents", "-n", "1", commit).split()[1:]
+
+    def _tree(self, clone: Path, commit: str) -> str:
+        return self._git(clone, "rev-parse", f"{commit}^{{tree}}")
+
+    @staticmethod
+    def _git(clone: Path, *args: str, check: bool = False):
+        """git with no user configuration and no credential; `check` answers success, else the trimmed output."""
+        try:
+            result = subprocess.run(["git", "-c", "credential.helper=", "-c", "core.hooksPath=/dev/null", *args],
+                                    cwd=clone, env=git_environment(clone), capture_output=True, check=False,
+                                    timeout=300)
+        except (OSError, subprocess.TimeoutExpired):
+            return False if check else ""
+        if check:
+            return result.returncode == 0
+        return result.stdout.decode(errors="replace").strip() if result.returncode == 0 else ""

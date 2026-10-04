@@ -331,3 +331,24 @@ def test_a_conclusively_lost_verifier_result_re_dispatches_the_verifier_on_the_s
     assert [kind for _, kind in verifiers] == [MISSING_TERMINAL_RESULT, "accept"] and verifiers[0][0] == dropped[0]
     started = [r for r in journaled(profile.journal.path, "invocation-started") if r["role"] == "VERIFIER"]
     assert len(started) == 2 and [role for role, _ in runs(tmp_path)] == ["PRODUCER", "VERIFIER", "VERIFIER"]
+
+
+# --- AUTOMATED-CLOSURE check 4: the CLOSURE grant and the session-free settlement ----------------------------------
+
+def test_closure_is_granted_read_and_process_control_only_and_settlement_passes_through_only_when_bound() -> None:
+    from alienintent.composition.role_binding import ROLE_OPERATIONS, RoleBindingGuard
+    from alienintent.execution_coordination.ports.worker_provider import CLOSURE, WorkerInvocation
+    assert ROLE_OPERATIONS[CLOSURE] == frozenset({"git-read", "process-control"})
+    journal, other = object(), object()
+
+    class Provider:
+        def __init__(self, held):
+            self.journal = held
+
+        def reconcile_closure(self, invocation):
+            return ("settled", invocation.correlation_id)
+
+    invocation = WorkerInvocation("item", "launch:item:3", None, CLOSURE)
+    assert RoleBindingGuard(Provider(journal), journal, None, "p", "r", lambda: 0).reconcile_closure(invocation) == (
+        "settled", "launch:item:3")
+    assert RoleBindingGuard(Provider(other), journal, None, "p", "r", lambda: 0).reconcile_closure(invocation) is None
