@@ -15,6 +15,7 @@ Automated closure is built and verified offline. Landing is disabled (no landing
   - `43e2660`: two tests added for B1 (test-only). Accepted in round 2.
 - Merge base: `origin/main` `942f393b13647b6b300cd3d25b74dec607afcef4`, the same commit as the candidate's base. The candidate was merged with `--no-ff`, so the accepted SHA stays in `main`'s history.
 - Approved packet: `docs/work-units/python/automated-closure.md`, revision 7, at packets commit `7cedff1` (`7cedff1c3dc2932022e988a03767cbb94bbc73b0`). It reached `main` in docs-only commit `942f393`, with its handoff `docs/work-units/python/automated-closure-handoff.md`. The candidate changes neither.
+- Packet bytes at the pointer: sha256 `e81ee7bc6f7e391140c8ebf895e1d15c840d4fe38eca1bc353ae0cea34761d27` (`git show 7cedff1c3dc2932022e988a03767cbb94bbc73b0:docs/work-units/python/automated-closure.md | sha256sum`).
 - Scope: `git diff 942f393 43e2660 --stat` lists 18 files (10 production, 8 test; 2230 insertions, 89 deletions), all inside the packet's authorized scope (round 1 verdict, check "Scope").
 
 ## Approvals (private records, outside the repo; paths only)
