@@ -1478,6 +1478,37 @@ def test_the_setup_grants_nothing_on_the_canonical_stores_and_restores_owner_onl
     assert missing.returncode == 2  # the canonical stores must be named, so none is left with an old grant
 
 
+def _unreachable(path):
+    """Run the setup's own `unreachable` final check on `path`, with the current user standing in for the worker."""
+    text = SETUP.read_text()
+    start = text.index("unreachable() {")
+    function = text[start:text.index("\n}\n", start) + 3]
+    script = f'as_worker() {{ "$@"; }}\n{function}unreachable "$1"'
+    return subprocess.run(["bash", "-c", script, "check", str(path)], check=False, timeout=60).returncode == 0
+
+
+@pytest.mark.skipif(os.geteuid() == 0, reason="root reads every file, so no file is unreachable to it")
+def test_the_unreachable_check_judges_files_by_their_contents_and_folders_by_listing_and_traverse(tmp_path):
+    """Check 6c's final check: a file whose name the worker can look up (`ls` succeeds) but whose contents it cannot
+    open is unreachable; a readable file is not; a folder is unreachable only when it can be neither listed nor
+    traversed; an absent SQLite sidecar is unreachable."""
+    private_file, readable_file = tmp_path / "work.sqlite", tmp_path / "readable.sqlite"
+    private_file.write_text("x"); readable_file.write_text("x")
+    private_file.chmod(0o000)
+    private_dir, open_dir = tmp_path / "evidence", tmp_path / "open"
+    private_dir.mkdir(); open_dir.mkdir()
+    private_dir.chmod(0o000)
+    try:
+        assert subprocess.run(["ls", "-a", "--", str(private_file)], capture_output=True).returncode == 0
+        assert _unreachable(private_file)
+        assert not _unreachable(readable_file)
+        assert _unreachable(private_dir)
+        assert not _unreachable(open_dir)
+        assert _unreachable(tmp_path / "work.sqlite-wal")
+    finally:
+        private_file.chmod(0o600); private_dir.chmod(0o700)
+
+
 def test_check_8d_mints_only_through_the_landing_authoritys_own_credentials(fx, monkeypatch, capsys):
     """Check 8(d), offline: the proof builds the Landing Authority over its own InstallationCredentials from the
     `github` entry and mints through exactly those, without building a WorkRegistry, opening a database or

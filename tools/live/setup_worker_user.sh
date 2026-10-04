@@ -150,8 +150,11 @@ for path in "$PACKETS" "$INTAKE" "$LAUNCH/intake-bundles" "$LAUNCH/landing"; do
 done
 check "check: App key unreadable: $KEY" "! as_worker head -c1 $(printf '%q' "$KEY") >/dev/null 2>&1"
 unreachable() {  # $1: a canonical store path the worker can neither read nor traverse
-  ! as_worker head -c1 -- "$1" >/dev/null 2>&1 && ! as_worker ls -a -- "$1" >/dev/null 2>&1 \
-    && ! as_worker test -x "$1" -a -d "$1"
+  if [ -d "$1" ]; then  # a folder: the worker can neither list nor traverse it
+    ! as_worker ls -a -- "$1" >/dev/null 2>&1 && ! as_worker test -x "$1"
+  elif [ -e "$1" ] || [ -L "$1" ]; then  # a file: the worker cannot open its contents (looking up its name is allowed)
+    ! as_worker test -r "$1" && ! as_worker head -c1 -- "$1" >/dev/null 2>&1
+  fi  # absent (a SQLite sidecar that does not exist): nothing to reach
 }
 private_evidence() {  # LocalEvidenceRepository's own UNSAFE_ROOT rule: no symlink, no group or other mode bits
   local path
