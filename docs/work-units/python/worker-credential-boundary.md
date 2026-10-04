@@ -1,7 +1,7 @@
 # Work unit: the worker credential boundary
 
 **Label:** `WORKER-CREDENTIAL-BOUNDARY` (a document label; permanent id `7efccee9-13f0-4905-a0a1-e80bc2faa748`).
-**Status:** Draft revision 3 (work item `7efccee9-13f0-4905-a0a1-e80bc2faa748`, at CAPTURE) for independent review, 2026-10-04. Not approved, not assessed, not released.
+**Status:** Draft revision 4 (work item `7efccee9-13f0-4905-a0a1-e80bc2faa748`, at CAPTURE) for independent review, 2026-10-04. Not approved, not assessed, not released.
 **Position on the path:** the prerequisite for the real protected-main proof of row 8 (AUTOMATED-CLOSURE, check 17). It comes after row 8 lands and before the Founder grants the factory App any landing permission.
 **Scope (Founder, 2026-10-04):** a specific credential boundary, not a claim that workers are fully contained. It must fit the existing launcher, with no elaborate new security framework. Its proof must show four things:
 - PRODUCER and VERIFIER cannot read the App key;
@@ -16,7 +16,7 @@
 ```json alienintent-contract
 {
  "identity": "7efccee9-13f0-4905-a0a1-e80bc2faa748",
- "version": "revision-3",
+ "version": "revision-4",
  "intent": "Establish a specific credential boundary for cognitive sessions: PRODUCER, VERIFIER and CLOSURE sessions run as a separate Unix user through one sudo rule, with a HOME holding only the provider login, so they cannot read the App key or reach any landing credential, while the control plane and deterministic Landing Authority keep the credential, process ownership and stopping still work across users, and the worker context and provider login still work.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -37,7 +37,8 @@
   "tools/live/worker_boundary_check.py",
   "tests/invocation_runtime/test_runtime.py",
   "tests/invocation_runtime/test_owned_work.py",
-  "tests/composition/test_worker_launch.py"
+  "tests/composition/test_worker_launch.py",
+  "tests/composition/test_offline_proof.py"
  ],
  "excluded_scope": [
   "containment beyond the credential boundary",
@@ -149,6 +150,7 @@ Tests:
 - `tests/invocation_runtime/test_runtime.py`
 - `tests/invocation_runtime/test_owned_work.py`
 - `tests/composition/test_worker_launch.py`
+- `tests/composition/test_offline_proof.py` (only: add `src/alienintent/invocation_runtime/adapters/git_worktree.py` to the frozen-kernel guard's expected changed-file list; nothing else in that test may change)
 
 ## 4. Acceptance checks (each names the wrong implementation it catches)
 
@@ -175,6 +177,8 @@ Offline, with a fake `sudo` on the test `PATH` that records its arguments and ru
 - a new store or configuration source beyond the optional `worker_user` entry.
 
 ## 6. Review record
+
+**Revision 4 (2026-10-04).** Narrow scope extension authorized by the Founder after the PRODUCER's stop condition: the frozen-kernel guard (`tests/composition/test_offline_proof.py:213`) correctly detects that `git_worktree.py` changed for this unit's control-plane git hardening. `tests/composition/test_offline_proof.py` is added to the scope solely to add `src/alienintent/invocation_runtime/adapters/git_worktree.py` to that guard's expected changed-file list. Nothing else in that test changes, and the guard's semantics are unchanged. The `git_worktree.py` hardening is kept.
 
 **Revision 3 (2026-10-04).** Recheck of `7380ebd` (FAIL: BLOCKING N1, MATERIAL N2-N3), fixes in its wording:
 - N1: control-plane git calls set `GIT_DIR`, `GIT_COMMON_DIR` and `GIT_WORK_TREE` explicitly, never following a worker-writable `.git` file or `commondir`, with replace objects off.
