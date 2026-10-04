@@ -11,3 +11,12 @@ assessment `readiness/7efccee9-13f0-4905-a0a1-e80bc2faa748/3b2d38df-384c-4be0-bf
 - From the revision 3 review: set `GIT_DIR` explicitly on control-plane git calls that reach the remote, as well as
   `GIT_COMMON_DIR`; check 6(e) also plants a `config.worktree` and shows it is not read.
 - Verdict files: first line exactly `ACCEPT` or `REJECT`, naming the work item and the full candidate SHA.
+
+## Revision 6 (structural ownership split, Founder decision B)
+- Build fresh from main against packet revision 6. Candidates a388f16, 71b88a8 and 0faf472 are retired; do not reuse
+  their branch. Reusing small, reviewed pieces of hardening is fine only where revision 6 still calls for them.
+- The round 2 checklist (`~/.local/state/alienintent/manual/worker-boundary-verification/round2-checklist.md`) and its
+  BLOCKING rule bind the VERIFIER.
+- The setup script's final checks also assert that the packets clone's `.git/config` holds no credential, URL user
+  information, `http.*.extraheader` or `url.*.insteadOf` (Agent Ready note on revision 6, attempt 0e9b282a).
+- Check 8(c) needs a genuinely registered, approved work item at proof time, or it is recorded as unresolved.
