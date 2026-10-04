@@ -1194,3 +1194,52 @@ def test_receipts_naming_another_item_or_candidate_never_count(closing, monkeypa
     state = closing.state(item.id)
     assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "authority-block")
     assert state.record["hold_reason"] == "closure-receipts-incomplete"
+
+
+def _unescalated(closing: Closing, item_id: str) -> bool:
+    return item_id not in json.dumps(closing.fx.store.read_state("registry", "decision-inbox")[1])
+
+
+def test_main_moving_to_a_non_ancestor_after_the_order_reworks_without_escalation(closing, monkeypatch):
+    """Check 12: the Authority refuses base-moved after the order is journaled."""
+    item = closing.accepted()
+    base = closing.head()
+    original = LandingAuthority.land
+    moved = []
+
+    def moving(self, order):
+        if not moved:
+            moved.append(_unrelated(closing, base))
+            git(closing.fx.clone, "push", "-q", str(closing.remote), f"{moved[0]}:refs/heads/main")
+        return original(self, order)
+    monkeypatch.setattr(LandingAuthority, "land", moving)
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert len(closing.orders(item.id)) == 1
+    assert closing.pushes == ["refused:base-moved"] and closing.head() == moved[0]
+    assert state.stage is LifecycleStage.IMPLEMENT and state.record["rejections"] == 1
+    assert any(f.startswith("closure-rework:base-moved:") for f in state.record["findings"][-1]["findings"])
+    assert _unescalated(closing, item.id)
+
+
+def test_a_crash_then_main_moving_to_a_non_ancestor_reworks_without_a_push(closing, monkeypatch):
+    """Check 8, third bullet: recovery of a journaled order after main moved past it."""
+    fx = closing.fx
+    item = closing.accepted()
+    other = fx.authorized("OTHER")
+    base = closing.head()
+    original = _crash(monkeypatch, LandingAuthority, "land", after=False)
+    with pytest.raises(Crash):
+        closing.close(item.id)
+    monkeypatch.setattr(LandingAuthority, "land", original)
+    assert len(closing.orders(item.id)) == 1
+    moved = _unrelated(closing, base)
+    git(fx.clone, "push", "-q", str(closing.remote), f"{moved}:refs/heads/main")
+    sessions = len(fx.runs())
+    closing.close(other.id)
+    state = closing.state(item.id)
+    assert len(fx.runs("CLOSURE")) == 1 and len(fx.runs()) == sessions + 1
+    assert closing.pushes == [] and closing.head() == moved
+    assert state.stage is LifecycleStage.IMPLEMENT and state.record["rejections"] == 1
+    assert any(f.startswith("closure-rework:base-moved:") for f in state.record["findings"][-1]["findings"])
+    assert _unescalated(closing, item.id)
