@@ -1,7 +1,7 @@
 # Work unit: automated closure and cleanup for registry work
 
 **Label:** `AUTOMATED-CLOSURE` (a document label; permanent id `0677f8bb-71c2-4c62-8b4a-d0e5318ba689`).
-**Status:** Draft revision 6 (work item `0677f8bb-71c2-4c62-8b4a-d0e5318ba689`, at CAPTURE) for independent review, 2026-10-04. Not approved, not assessed, not released.
+**Status:** Draft revision 7 (work item `0677f8bb-71c2-4c62-8b4a-d0e5318ba689`, at CAPTURE) for independent review, 2026-10-04. Not approved, not assessed, not released.
 **Position on the path:** path row 8, the second of the three connections still missing from the critical path. Row 7 (restart continuation) is landed at `main` `789240c`. Automatic selection and launch of the next eligible item follows.
 This packet is built by the manual workflow, not by `work launch`, so its budget carries no launch limits.
 **Roles:** one PRODUCER (self-reviews the complete diff); one fresh VERIFIER on the exact candidate; a separate CLOSURE owner lands it (by hand, because this unit is the one that automates closure).
@@ -13,7 +13,7 @@ This packet is built by the manual workflow, not by `work launch`, so its budget
 ```json alienintent-contract
 {
  "identity": "0677f8bb-71c2-4c62-8b4a-d0e5318ba689",
- "version": "revision-6",
+ "version": "revision-7",
  "intent": "Make closure a launched step for registry work: fixed closure action names with exact receipts tied to the work item and accepted candidate; a fresh CLOSURE session on the VERIFIER's configured provider and model that holds no landing credential and produces only a bounded closure request; a durable, secret-free landing order journaled before the first irreversible effect, with deterministic recovery that needs no model session; a deterministic Landing Authority that alone receives a landing-scoped App token and performs only the exact ordered protected-main landing; scoped App tokens for every other registry use, without contents write; control-plane read-back before every receipt; recovery of a started item from its registry record, not from its board status; one completion path (the coordinator's close transition), with the registry row moved to DONE afterwards through a reachable, repeatable projection that writes a real work-completion evidence record; and a verified ready-to-land result when landing is not enabled, which never blocks unrelated work.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -45,7 +45,8 @@ This packet is built by the manual workflow, not by `work launch`, so its budget
   "tests/invocation_runtime/test_runtime.py",
   "tests/installation/test_installation_credentials.py",
   "tests/context_assembly/test_work_context.py",
-  "tests/context_assembly/test_work_completion.py"
+  "tests/context_assembly/test_work_completion.py",
+  "tests/support/live_github.py"
  ],
  "excluded_scope": [
   "operating-system credential separation",
@@ -337,6 +338,7 @@ Tests:
 - `tests/installation/test_installation_credentials.py`
 - `tests/context_assembly/test_work_context.py`
 - `tests/context_assembly/test_work_completion.py`
+- `tests/support/live_github.py` (only: when an `/access_tokens` request carries a body, the fake answers with exactly the requested `permissions` and `repository_selection: selected`; a request without a body gets today's answer unchanged, so the sandbox and K2 tests are unaffected)
 
 ## 4. Acceptance checks (each names the wrong implementation it catches)
 
@@ -396,6 +398,8 @@ All offline. The provider is fake, from a test routing file, and counts its sess
 - changing earlier packets.
 
 ## 6. Review record
+
+**Revision 7 (2026-10-04).** Narrow scope revision after the PRODUCER's stop condition: the shared fake GitHub endpoint (`tests/support/live_github.py:72`) ignores the mint body and always answers fixed permissions, so scoped minting (changes 6 and 7) would fail every existing WorkLink and READY-view test. `tests/support/live_github.py` is added to the scope for that one change only. Nothing else changes.
 
 **Revision 6 (2026-10-04).** Fresh REVIEWER of `b711e70` (FAIL: BLOCKING B1, MATERIAL M1-M4). Changes:
 - B1: VERIFIER, CLOSURE and landing clones are removed by `RegistryClosure` with a correlated, marker-checked directory removal; the running CLOSURE's own clones are removed once its session has ended.

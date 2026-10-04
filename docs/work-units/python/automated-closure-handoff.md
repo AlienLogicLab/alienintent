@@ -13,3 +13,16 @@ the VERIFIER. The packet text is not changed.
 - The fake token endpoint answers with the requested permissions; real GitHub scoping is proved only in check 17.
 - Verdict files: the first line is exactly `ACCEPT` or `REJECT`, with nothing else on it, and the file names the
   work item and the full candidate SHA.
+
+## Revision 7 (narrow scope revision, 2026-10-04)
+- `tests/support/live_github.py` is in scope for one change: an `/access_tokens` request with a body is answered with
+  exactly the requested `permissions` and `repository_selection: selected`; a request without a body gets today's
+  answer unchanged (sandbox and K2).
+- The echo keeps `token_status` and every other field of today's answer. Explicit per-test overrides of the
+  installation permissions or repository selection still win over the echo, so tests can fake a mismatch (check 6).
+
+## Section 0.2 reading (Agent Ready note on revision 7, attempt 1c8053d4)
+The sentence order in 0.2 was broken by an insertion. The intended order is: RegistryClosure appends the
+`closure-ordered` event (with `actions` and `request_sha256`) **and reads the journal back**; if it does not read back,
+nothing is pushed. Separately: recovery performs only the journaled `actions`, and the Landing Authority compares
+`order.actions` with the journaled ones.
