@@ -20,3 +20,11 @@ assessment `readiness/7efccee9-13f0-4905-a0a1-e80bc2faa748/3b2d38df-384c-4be0-bf
 - The setup script's final checks also assert that the packets clone's `.git/config` holds no credential, URL user
   information, `http.*.extraheader` or `url.*.insteadOf` (Agent Ready note on revision 6, attempt 0e9b282a).
 - Check 8(c) needs a genuinely registered, approved work item at proof time, or it is recorded as unresolved.
+
+## Revision 7 (bounded context export, after the live proof)
+- Canonical evidence stays private. Do not weaken `LocalEvidenceRepository` or its `UNSAFE_ROOT` check. Workers get
+  only `<launch>/exports/<c>/context.json` (section 0.6b). The setup grants nothing on the databases, the evidence
+  repository or the registry configuration, and restores owner-only modes after removing old grants.
+- Build fresh from main against revision 7. Candidates up to 1f1e1e3 are retired; reuse only reviewed pieces that
+  revision 7 still calls for.
+- Checklist additions for revision 7 are in the round 2 checklist.

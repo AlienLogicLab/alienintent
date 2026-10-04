@@ -1,9 +1,9 @@
 # Work unit: the worker credential boundary
 
 **Label:** `WORKER-CREDENTIAL-BOUNDARY` (a document label; permanent id `7efccee9-13f0-4905-a0a1-e80bc2faa748`).
-**Status:** Draft revision 6 (work item `7efccee9-13f0-4905-a0a1-e80bc2faa748`, at CAPTURE) for independent review, 2026-10-04. Not approved, not assessed, not released.
+**Status:** Draft revision 7 (work item `7efccee9-13f0-4905-a0a1-e80bc2faa748`, at CAPTURE) for independent review, 2026-10-04. Not approved, not assessed, not released.
 **Position on the path:** the prerequisite for the real protected-main proof of row 8 (AUTOMATED-CLOSURE, check 17). It comes after row 8 lands and before the Founder grants the factory App any landing permission.
-**Scope (Founder, 2026-10-04):** a specific credential boundary, not a claim that workers are fully contained. It must fit the existing launcher, with no elaborate new security framework. Its proof must show four things:
+**Scope (Founder, 2026-10-04):** a specific credential boundary, not a claim that workers are fully contained. It must fit the existing launcher, with no elaborate new security framework. All cognitive sessions share the one `alienintent-worker` user, so no confidentiality between worker sessions is claimed; the boundary is authority and credential separation, not secrecy between workers. Its proof must show four things:
 - PRODUCER and VERIFIER cannot read the App key;
 - they cannot obtain equivalent landing credentials through another file or credential helper;
 - CLOSURE (through the deterministic Landing Authority) can obtain the credential it needs;
@@ -16,7 +16,7 @@
 ```json alienintent-contract
 {
  "identity": "7efccee9-13f0-4905-a0a1-e80bc2faa748",
- "version": "revision-6",
+ "version": "revision-7",
  "intent": "Make the worker credential and authority boundary structural: cognitive sessions run as a separate Unix user in their own worker-owned clones; no repository that can influence control-plane authority, release admission, verification custody or landing is writable by a cognitive worker; candidates are handed over by exact object identity through a bundle imported into a control-plane-owned intake repository; worker-owned repositories are never consumed as authority; process ownership and stopping work across users; the worker context and provider login still work.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -26,7 +26,8 @@
   "Founder 2026-10-04: the proof shows PRODUCER and VERIFIER cannot read the App key, cannot obtain equivalent landing credentials through another accessible file or credential helper, CLOSURE can obtain the required credentials (through the deterministic Landing Authority) and land the exact accepted candidate, and the normal worker context and provider login still function.",
   "Founder 2026-10-04: this is a specific credential boundary, not a claim that workers are completely contained.",
   "Founder 2026-10-04: do not grant the App protected-main bypass until this separation proof passes and the Founder explicitly authorizes the permission change.",
-  "Founder 2026-10-04 (decision B, structural): no repository that can influence control-plane authority, release admission, verification custody or landing may be writable by a cognitive worker; each cognitive role gets its own disposable worker-owned clone; the packets and release repository stay control-plane-owned; the candidate is handed over by exact object identity and imported into a trusted repository before any privileged use; worker refs, HEAD, config, alternates, .git files, commondir and replace refs never take part; the control plane never runs privileged git inside a worker copy."
+  "Founder 2026-10-04 (decision B, structural): no repository that can influence control-plane authority, release admission, verification custody or landing may be writable by a cognitive worker; each cognitive role gets its own disposable worker-owned clone; the packets and release repository stay control-plane-owned; the candidate is handed over by exact object identity and imported into a trusted repository before any privileged use; worker refs, HEAD, config, alternates, .git files, commondir and replace refs never take part; the control plane never runs privileged git inside a worker copy.",
+  "Founder 2026-10-04 (live-proof finding): canonical evidence remains control-plane-owned and private; a worker may receive only the bounded evidence and context explicitly exported for its invocation; do not weaken LocalEvidenceRepository, its UNSAFE_ROOT check or evidence-store privacy; check 8(d) must not depend on opening the evidence root."
  ],
  "authorized_scope": [
   "src/alienintent/invocation_runtime/adapters/cli_worker.py",
@@ -42,14 +43,20 @@
   "tests/invocation_runtime/test_git_source_control.py",
   "tests/invocation_runtime/test_real_worker_outcome.py",
   "tests/composition/test_worker_launch.py",
-  "tests/composition/test_offline_proof.py"
+  "tests/composition/test_offline_proof.py",
+  "src/alienintent/context_assembly/application/work_context.py",
+  "src/alienintent/control_plane/adapters/cli.py",
+  "src/alienintent/control_plane/application/operator.py",
+  "tests/context_assembly/test_work_context.py",
+  "tests/control_plane/test_cli.py"
  ],
  "excluded_scope": [
   "containment beyond the credential boundary",
   "the factory App permission change and the landing flag",
   "the Factory Director's own process",
   "a new store or configuration source beyond the optional worker_user entry",
-  "changing earlier packets"
+  "changing earlier packets",
+  "weakening LocalEvidenceRepository or its UNSAFE_ROOT privacy check"
  ],
  "dependencies": [
   "0677f8bb-71c2-4c62-8b4a-d0e5318ba689"
@@ -130,6 +137,8 @@ It has two halves, and the proof checks both:
 | Landing clones `<launch>/landing/landing-<c>` (moved from `<launch>/verifier/landing-<c>` by change 5) | Founder's user only | the Landing Authority |
 | `<launch>/verifier` (publication read-back clones), `<launch>/context`, `<launch>/custody`, `<launch>/artifacts`, `<launch>/workspaces`, `<launch>/intake-bundles`, the invocation journal | Founder's user only | the control plane |
 | PRODUCER, VERIFIER, CLOSURE workspaces `<launch>/worker/<role>-<c>` | `alienintent-worker` only | that one session |
+| The canonical work and readiness databases, the readiness evidence repository and the registry configuration | Founder's user only, private (no worker access at all) | the control plane's context assembly |
+| The per-invocation context export `<launch>/exports/<c>/context.json` | written by the Founder's user; readable by `alienintent-worker`; folder Founder-owned | the worker's `context_command` |
 | The candidate hand-over file `<launch>/handoff/<c>.bundle` | written by the worker, then read by the control plane as **data** | candidate import |
 
 ### 0.2 Sessions as `alienintent-worker`
@@ -163,6 +172,15 @@ Each is a fresh worker-owned clone, created as the worker from the intake reposi
 
 Worker workspaces are removed through the sudo rule (`rm -rf` as the worker) only after the existing ownership checks, which now find worker processes by real uid and session id (`/proc/<pid>/status` and `/proc/<pid>/stat`). An unreadable worker-user process outside the launched session gives None, which counts as alive. Stopping goes through `sudo -n -u alienintent-worker kill`. The Founder's git does not run `git status` or `git worktree remove` in worker workspaces any more.
 
+### 0.6b Context for workers: bounded export, never the canonical stores
+
+Invariant (Founder, 2026-10-04, after the live proof): canonical evidence remains control-plane-owned and private. A worker may receive only the bounded evidence and context explicitly exported for its invocation. All cognitive sessions share the one `alienintent-worker` user, so no confidentiality between worker sessions is claimed; the boundary is authority and credential separation, not secrecy between workers.
+- The control plane assembles each role's context package as the Founder's user (the existing `WorkContext.assemble` in `LaunchPreparation.prepare`), reading the canonical databases and the readiness evidence repository itself.
+- It writes exactly that package, and nothing else, to `<launch>/exports/<c>/context.json` (`<launch>/exports` and `<launch>/exports/<c>` owned by the Founder, mode 0711, no write or default ACL for `alienintent-worker`; the file owned by the Founder, mode 0640 with one access ACL entry `u:alienintent-worker:r`, written atomically by rename within `<launch>/exports/<c>`). It holds no credential, key path or token, as today. With a worker user, `deliver` writes the package only to this export, and the instruction text's package path is this export; `<launch>/context` stays Founder-only and is never named to a worker.
+- With a worker user, the package's `context_command` is `{"argv": [<installed alienintent>, "--json", "work", "context", "--export", "<launch>/exports/<c>/context.json"], "environment": {"ALIENINTENT_WORK_IDENTITY": <identity>, "ALIENINTENT_ROLE": <PRODUCER|VERIFIER|CLOSURE>, "ALIENINTENT_CORRELATION": <c>}}`, with no `--profile-factory` and no `ALIENINTENT_PROJECT_CONFIGURATION` or `ALIENINTENT_PROJECT`; the sudo allowlist carries those three identity variables and no longer carries the two configuration variables. The CLI dispatches `work context --export` before any profile factory is required or loaded, and refuses `--export` together with a target, `--role`, `--correlation`, `--candidate`, `--contract-digest` or `--profile-factory`. That mode opens only the named export file (with the opened-file rules of 0.5, accepting a regular file owned by the Founder's user), checks that its work item, role and correlation are the ones named in the worker's environment, and prints it. It builds no profile, opens no database, no evidence repository and no registry configuration, and takes no other path argument. A request for any other work item, correlation or evidence object answers `not-in-export` and reads nothing. The identity check is a consistency check of this API, not an isolation boundary: the worker supplies its own environment, and every `alienintent-worker` process can read any invocation's export whose path it learns. The export holds no credential or reusable authority, so this boundary claims no per-worker or per-invocation confidentiality of exported context (credential boundary, not containment).
+- The worker therefore needs no access to the canonical databases, the readiness evidence repository or the registry configuration. The setup grants none, and `LocalEvidenceRepository`'s privacy check (`UNSAFE_ROOT`) is unchanged.
+- What changes for the worker, stated plainly: with a worker user, `context_command` re-prints the package assembled at this launch; it does not recompute. The 6c-1 attempt check (VERSION_DRIFT after the attempt is confirmed, parked or superseded) and the 6c-2 `--contract-digest` re-check (DIGEST_MISMATCH) are no longer answered through `context_command`. They still hold where they matter: `prepare` assembles after the launch save, so each invocation's export is current at its start, and the control plane's own attempt check refuses a stale attempt's result. The old command never answered any other query, so no further fact is lost. Without a worker user, `work context` keeps every 6c-1 and 6c-2 behaviour. This is a deliberate change under the Founder's invariant of 2026-10-04, not a change to the earlier packets.
+
 ### 0.7 Nothing changes without a worker user
 
 The registry configuration gains one optional entry, `worker_user`. Without it, launches behave exactly as today, worktrees included. The real protected-main proof requires it.
@@ -175,10 +193,10 @@ This is a credential and authority boundary, not containment. A worker can still
 - create the system user `alienintent-worker` (home `/var/lib/alienintent-worker`, no login shell);
 - write `/etc/sudoers.d/alienintent-worker`, mode 0440, checked with `visudo -c`, exactly: `Defaults>alienintent-worker !use_pty, !log_output` and `<founder> ALL=(alienintent-worker) NOPASSWD: /usr/bin/env, /usr/bin/kill`. It grants nothing to `alienintent-worker`, and nothing as root or as the Founder;
 - create `<launch>/worker`, `<launch>/results` and `<launch>/handoff` owned by `alienintent-worker`, mode 0711; create `<launch>/intake.git`, `<launch>/intake-bundles` and `<launch>/landing` owned by the Founder, mode 0700;
-- give `alienintent-worker` **read and traverse only** (access and default ACL `r-X`) on the packets clone, the intake repository `<launch>/intake.git`, traverse only (access ACL `--x`, no default ACL) on `<launch>`, the context command's read paths (the work and readiness databases and their folders, and the evidence root), the registry configuration, and the named install folders of the interpreter and the provider CLI; traverse only on the folders from `/home/<founder>` down to them;
+- give `alienintent-worker` **read and traverse only** (access and default ACL `r-X`) on the packets clone, the intake repository `<launch>/intake.git` and the named install folders of the interpreter and the provider CLI; traverse only (access ACL `--x`, no default ACL) on `<launch>` and on `<launch>/exports`; traverse only on the folders from `/home/<founder>` down to them. It grants **nothing** on the work and readiness databases, the readiness evidence repository or the registry configuration, and removes any earlier grant there by removing every ACL entry (`setfacl -b`, and `-k` on folders) and restoring mode 0700 on the evidence root and `objects/`, and the databases' owner-only modes;
 - remove any write ACL or default ACL for `alienintent-worker` on every control-plane-owned path;
 - remove read for others from the Founder's credential files (`~/.git-credentials`, `~/.netrc`, `~/.gitconfig`, `~/.config/gh`, `~/.ssh`, the App key's folder);
-- final checks, as the worker: the App key is unreadable; the registry configuration is readable and holds no secret value; no control-plane-owned repository, no folder or file inside one, and no parent folder of one, is writable by `alienintent-worker`, owned by it, or carries an ACL entry for it beyond read and traverse.
+- final checks, as the worker: the App key is unreadable; the work and readiness databases, the readiness evidence repository (including `objects/`) and the registry configuration are neither readable nor traversable; the evidence repository's own privacy check still passes; no control-plane-owned repository, no folder or file inside one, and no parent folder of one, is writable by `alienintent-worker`, owned by it, or carries an ACL entry for it beyond read and traverse.
 
 ## 2. The changes
 
@@ -187,6 +205,9 @@ This is a credential and authority boundary, not containment. A worker can still
 3. **Worker workspaces and candidate import** (`invocation_runtime/adapters/git_source_control.py`, `invocation_runtime/adapters/git_worktree.py`): a worker-run clone for each role; the worker-run `git bundle create`; the control-plane import of 0.4 into the intake repository; publication from the intake repository; VERIFIER and CLOSURE clones made by the worker; workspace removal through sudo. Without a worker user, the existing worktree path is unchanged.
 4. **The worker role paths** (`invocation_runtime/application/real_worker.py`): `_produce`, `_evaluate` and `_close` use change 3 when a worker user is configured; the candidate comes only from the intake import.
 5. **The registry** (`composition/work_registry.py`): the optional `worker_user` entry; the worker HOME (recreated empty each launch, holding only the routed provider's login file and a `.gitconfig` whose only entries are `safe.directory` for the packets clone and the intake repository); the VERIFIER `diff` from the intake repository; the landing clone moves to `<launch>/landing/landing-<c>`; `_producer_worktree` recovery names `<launch>/worker/producer-<c>`.
+
+6. **The bounded context export** (`composition/work_registry.py`, `context_assembly/application/work_context.py`, `control_plane/adapters/cli.py`, `control_plane/application/operator.py`): `LaunchPreparation` writes the export of 0.6b; `ContextCommand` names the export mode when a worker user is configured; `work context --export <file>` reads only that file under the opened-file rules and the identity check of 0.6b. Without a worker user, `work context` and the read-only worker profile are unchanged; with one, `context_command` re-prints the launch-time export only (0.6b). In worker-user mode the instruction text's line about `context_command` reads: "To read your package again, run the package's `context_command`: its `argv` exactly, with its `environment` added to yours. It is read-only and prints the package exported for this invocation, or `not-in-export`."
+7. **The proof's check 8(d)** (`tools/live/worker_boundary_check.py`): it mints the landing-scoped token by building only the Landing Authority's own `InstallationCredentials` from the `github` entry, without building a `WorkRegistry`, a readiness store or an evidence repository.
 
 ## 3. Exact permitted files
 
@@ -197,6 +218,8 @@ Production:
 - `src/alienintent/invocation_runtime/adapters/git_worktree.py`
 - `src/alienintent/invocation_runtime/application/real_worker.py`
 - `src/alienintent/composition/work_registry.py`
+- `src/alienintent/context_assembly/application/work_context.py`
+- `src/alienintent/control_plane/adapters/cli.py`, `src/alienintent/control_plane/application/operator.py`
 - `tools/live/setup_worker_user.sh` (new)
 - `tools/live/worker_boundary_check.py` (new)
 
@@ -206,6 +229,8 @@ Tests:
 - `tests/invocation_runtime/test_git_source_control.py`
 - `tests/invocation_runtime/test_real_worker_outcome.py`
 - `tests/composition/test_worker_launch.py`
+- `tests/context_assembly/test_work_context.py`
+- `tests/control_plane/test_cli.py`
 - `tests/composition/test_offline_proof.py` (only: add `src/alienintent/invocation_runtime/adapters/git_worktree.py` to the frozen-kernel guard's expected changed-file list; nothing else in that test may change)
 
 ## 4. Acceptance checks (each names the wrong implementation it catches)
@@ -217,13 +242,15 @@ Offline, with a fake `sudo` on the test `PATH` that records its arguments and ru
 4. **Every worker-side command goes through the one rule.** Session commands, the regression runner, workspace creation, bundle creation and workspace removal start with exactly `sudo -n -u <user> -- env -i` and the allowlisted variables. Without a worker user, commands and the worktree path are unchanged. Catches a worker command left as the Founder.
 5. **Ownership and stopping across users.** A fake `/proc` with an unreadable root process gives (), not None; an unreadable worker-user process outside the session gives None; `_owned` returns True on None; kills go through sudo, including each owned pid. Catches "nothing is running" read from unreadable processes.
 6b. **Results are never read through a worker-chosen path.** A self-review, verdict, receipt or CLOSURE request that is a symlink is refused and its target is never read. A FIFO, or a `<c>` folder swapped for a symlink to a Founder-owned folder, is refused without blocking and without reading a Founder-owned file. Catches a privileged read through a worker-chosen path.
+6c. **Workers never reach the canonical evidence.** The setup plan grants `alienintent-worker` no read, traverse or default ACL on the work and readiness databases, the readiness evidence repository (including `objects/`) or the registry configuration, and removes any earlier grant; its final check asserts that the worker can neither traverse nor read them. Catches an evidence store opened to workers.
+6d. **Context comes only from the bounded export.** A worker's `context_command` prints exactly the exported package for its own invocation, with no database, evidence repository or configuration opened (recorded file opens). It refuses another work item, correlation or role (`not-in-export`), an export that is a symlink, FIFO or not owned by the Founder, and any extra path or evidence-object argument, reading nothing. The export folders and file are Founder-owned with the stated modes and no worker write or default ACL, and the exported package's `context_command.environment` names no configuration path. Catches a context command that reads canonical stores or arbitrary evidence, a worker-writable export folder, a world-readable export and a package that still names the configuration.
 6. **The worker HOME** holds exactly the provider login file and the `safe.directory`-only `.gitconfig`, recreated empty each launch. Catches a widened HOME.
-7. **Fitness.** The changed test files pass when run together (no full suite), with `tests/composition/test_landing_authority.py`, `tests/composition/test_sandbox_run_profile.py`, `tests/execution_coordination/test_role_orchestration.py` and `tests/context_assembly/test_work_context.py` unchanged; `tools/fitness/check_architecture.py --root src/alienintent --check all` passes.
+7. **Fitness.** The changed test files pass when run together (no full suite), with `tests/composition/test_landing_authority.py`, `tests/composition/test_sandbox_run_profile.py` and `tests/execution_coordination/test_role_orchestration.py` unchanged; `tools/fitness/check_architecture.py --root src/alienintent --check all` passes.
 8. **Real-use proof (Founder-run, after the setup).** `tools/live/worker_boundary_check.py` records:
-   - (a) as the worker, reading the App key fails; the registry configuration is readable and holds no secret;
+   - (a) as the worker, reading the App key fails; the registry configuration, the work and readiness databases and the readiness evidence repository (including `objects/`) are neither readable nor traversable, and the evidence repository's own privacy check still passes as the Founder;
    - (b) as the worker, no `gh` login, git credential helper, SSH key or token variable is reachable, each named credential file is unreadable, an installation-token mint fails, and `sudo -n -l` fails;
-   - (c) a real provider session as the worker starts with only its login file, and its `context_command` returns a real context package for a genuinely registered and approved work item. If none exists, 6(c) is recorded as unresolved and the proof does not pass;
-   - (d) as the Founder, the Landing Authority mints a landing-scoped token (partial: the landing path itself waits for row 8's check 17);
+   - (c) a real provider session as the worker starts with only its login file, and its `context_command` returns, from the bounded export only, the real context package of a genuinely registered and approved work item, while the canonical evidence repository stays unreadable to the worker. If none exists, 6(c) is recorded as unresolved and the proof does not pass;
+   - (d) as the Founder, the Landing Authority mints a landing-scoped token through its own `InstallationCredentials` only, without building a `WorkRegistry`, readiness store or evidence repository, and without changing the evidence root's permissions (partial: the landing path itself waits for row 8's check 17);
    - (e) a worker-owned repository with planted refs, replace refs, alternates, `.git` file, `commondir` and config does not affect the next control-plane import, diff or publication;
    - (f) the worker's session and process group match the sudo pid, and `cancel` leaves no worker process of that session;
    - (g) a finished worker's workspace is removed by the normal cleanup through the sudo rule.
@@ -237,6 +264,10 @@ Offline, with a fake `sudo` on the test `PATH` that records its arguments and ru
 - changing earlier packets.
 
 ## 6. Review record
+
+**Revision 7b (2026-10-04).** REVIEWER of `d58319c` (FAIL, text fixes; design sound): the old `work context` only re-ran `assemble` and the store does not move during an invocation, so only freshness is lost and nothing depends on it; B1 states that loss; B2 fixes check 8(a); B3 makes the export the only package path named to a worker; M1 states that the identity check is not isolation and that no confidentiality between workers is claimed; M2 specifies the export-mode command, environment and CLI dispatch; M3 fixes export ownership, modes and tests; M4 restores owner-only modes after removing ACLs, so `UNSAFE_ROOT` passes.
+
+**Revision 7 (2026-10-04).** Blocking live-proof finding: the setup granted the worker read on the canonical readiness evidence repository, and `LocalEvidenceRepository` correctly refused it (`UNSAFE_ROOT`). Founder: canonical evidence stays control-plane-owned and private; workers receive only the bounded context exported for their invocation. Changes: section 0.6b (context assembled by the control plane, exported per invocation; `work context --export`); the setup grants nothing on the databases, the evidence repository or the configuration; check 8(d) mints without building evidence infrastructure; new checks 6c and 6d. Candidate `1f1e1e3` is retired. `LocalEvidenceRepository` and its privacy check are unchanged.
 
 **Revision 6b (2026-10-04).** Recheck of `94ecfd7` (FAIL, MATERIAL M6): the bundle copy and every result read open with `O_RDONLY|O_NOFOLLOW|O_NONBLOCK|O_CLOEXEC`, check owner and type by `fstat` on the open descriptor, and read only from it; a FIFO or a swapped folder is refused without blocking. Minor: traverse-only `<launch>` has no default ACL; result modes are stated.
 
