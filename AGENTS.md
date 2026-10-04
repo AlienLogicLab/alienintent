@@ -6,6 +6,8 @@ Use role names such as PRODUCER and VERIFIER; explain technical terms only when
 they are needed, and do not substitute model names for roles. Use the [work packet template](docs/templates/work-packet.md)
 and [operator guidance](docs/operations/forward-momentum.md).
 
+For post-self-build CLM learning architecture, preserve the future evidence boundary defined in [CLM Production Evidence Wave 1](docs/decisions/2026-10-04-clm-production-evidence-wave1-plan.md). It is Founder-approved planning authority, not implementation authority: do not opportunistically add CLM behavior outside approved BIUs, and do not erase or hide decision/action/outcome provenance that the future evidence pipeline depends on.
+
 Classify working changes by authority and provenance. Known authorized work may
 proceed; investigate unexplained changes and resolve actual conflicts. Preserve
 baseline, identity, credential and publication boundaries. Do not infer unseen

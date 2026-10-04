@@ -498,6 +498,8 @@ Requirements: migration proof supporting all P0/P1 semantics.
 
 **Goal:** add cognition only after deterministic state, interfaces and evaluation packets exist.
 
+**Related Founder-approved planning baseline (2026-10-04):** [CLM Production Evidence Wave 1](2026-10-04-clm-production-evidence-wave1-plan.md) defines a later ten-unit planning cohort for continuous production-grade CLM decision evidence. It does not authorize implementation or renumber the work below; it must be reconciled and decomposed into Agent-Ready BIUs after the current self-building milestone and the already-planned first post-milestone cohort.
+
 ### V2-501 — Normalized Director cognition packet + CognitionPort
 
 Create the smallest provenance-bearing state packet sufficient for Factory Director interpretation/proposals; no raw repository/history dump and no mutation authority.

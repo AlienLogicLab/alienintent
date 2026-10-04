@@ -8,6 +8,7 @@ and outcomes. It is developed by Alien Logic Lab.
 - [Bounded work packet template](templates/work-packet.md)
 - [Governing agent directive](migration/agent-packages/GOVERNING_AGENT_DIRECTIVE.md)
 - [Name and organization decision](decisions/2026-09-18-alienintent-name-and-organization.md)
+- [CLM Production Evidence Wave 1 planning baseline](decisions/2026-10-04-clm-production-evidence-wave1-plan.md)
 - [Agent-slop problem statement](product/alienintent-agent-slop-problem-statement.md)
 - [Agent-slop requirements gap analysis](research/alienintent-agent-slop-gap-requirements.md)
 - [Python replacement path analysis](operations/python-replacement-shortest-path-analysis.md)
