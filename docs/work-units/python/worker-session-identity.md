@@ -31,14 +31,15 @@ direct merge to `main`.
  ],
  "excluded_scope": [
   "sandbox_run_profile.worker_environment and the non-worker path (without a worker user USER stays inherited)",
-  "tools/live scripts, the regression runner and its receipt format",
+  "tools/live scripts (including worker_launch_provider_check.py about line 213 and worker_boundary_check.py about line 92, which build their own worker environments and stay unchanged), the regression runner and its receipt format",
   "the coordinator, the board and the landing path",
   "any other environment variable"
  ],
  "dependencies": [],
  "required_capabilities": [
   "python",
-  "filesystem"
+  "filesystem",
+  "process-control"
  ],
  "budget_policy": {
   "maximum_attempts": 3,
@@ -82,7 +83,7 @@ direct merge to `main`.
   "workspaces-cleaned"
  ],
  "stop_escalation_conditions": [
-  "another place builds an environment for commands run as the worker user and does not get the change",
+  "another place outside tools/live in src/alienintent builds an environment for commands run as the worker user and does not get the change",
   "scope outside the authorized files"
  ]
 }
@@ -99,8 +100,9 @@ and test fixtures that use `getpass.getuser()` expect uid 1000: in work item `c6
 
 `AGENTS.md` (about line 52) says a verdict is inadmissible "unless the exact candidate carries a valid passing
 `.alienintent/feature-regressions.json` receipt". With a worker user the invocation runtime writes the receipt to
-`<launch>/results/<invocation>/feature-regressions.json` (`cli_worker.py` about line 140) and hands it to the coordinator;
-the candidate does not carry it. The VERIFIER of `c6814e01` rejected on that instruction. `docs/operations.md` (about
+`<launch>/results/<invocation>/feature-regressions.json` (`cli_worker.py` about line 140), beside the verdict, where
+`read_verdict` reads it before admitting the verdict (`real_worker.py` about lines 164 and 327-337); the candidate does not
+carry it. The VERIFIER of `c6814e01` rejected on that instruction. `docs/operations.md` (about
 line 93) has the same one-sided statement.
 
 ## 2. The change
@@ -112,8 +114,8 @@ line 93) has the same one-sided statement.
    passing `.alienintent/feature-regressions.json` receipt." with: "A verifier verdict is inadmissible unless the
    invocation runtime holds a valid passing feature-regression receipt for the exact candidate. Without a worker user
    the runtime writes it to `.alienintent/feature-regressions.json` in the workspace; with a worker user it writes it
-   to the launch results folder and hands it to the coordinator. A VERIFIER never requires the receipt to be committed
-   in the candidate."
+   to the launch results folder, beside the verdict, where the invocation runtime reads it before it admits the verdict. A
+   VERIFIER never requires the receipt to be committed in the candidate."
 3. **`docs/operations.md`** (about line 93): replace "A passing run writes `.alienintent/feature-regressions.json`, bound
    to the exact candidate revision" with "A passing run writes the receipt (`.alienintent/feature-regressions.json` in
    the workspace, or with a worker user `<launch>/results/<invocation>/feature-regressions.json`), bound to the exact
@@ -126,20 +128,32 @@ line 93) has the same one-sided statement.
 1. **The worker's name in its environment** (`test_worker_launch.py`): with a worker user configured and the launching
    process's `USER` set to another name, every command recorded by the fake sudo (session, regression runner, clone)
    carries `USER` and `LOGNAME` equal to the worker user. Fails on the starting revision.
-2. **Nothing else changes** (`test_worker_launch.py`): the recorded worker environment's names are exactly
-   `WORKER_ALLOWED`, and without a worker user `USER` is the inherited value and there is no `LOGNAME`.
-3. **The receipt rule cannot drift back** (`test_worker_launch.py`): `AGENTS.md` does not contain "exact candidate
-   carries a valid passing", and its VERIFY paragraph names both receipt locations; `docs/operations.md` names the
-   results-folder location.
+2. **Nothing else changes** (`test_worker_launch.py`): the recorded worker environment's names are a subset of
+   `WORKER_ALLOWED` and include `USER` and `LOGNAME`, and without a worker user `USER` is the inherited value and there is
+   no `LOGNAME`.
+3. **The receipt rule cannot drift back** (`test_worker_launch.py`): `AGENTS.md`, with every run of whitespace joined to
+   one space, does not contain "exact candidate carries a valid passing" and names both `.alienintent/feature-regressions.json`
+   and the launch results folder; `docs/operations.md`, joined the same way, names
+   `<launch>/results/<invocation>/feature-regressions.json`. Fails on the starting revision.
 4. **Through the factory's own construction, as the real worker** (run by the VERIFIER):
    - `env = WorkRegistry(load_project_configuration(<projects.json>, "AlienLogicLab/alienintent"))._launch_chain()[1]._process._environment`
-     (the exact environment the factory launches with), using the candidate's `src` on `PYTHONPATH`;
+     (the exact environment the factory launches with), using the candidate's `src` on `PYTHONPATH`. Calling
+     `_launch_chain` only makes the launch folders if they are missing and starts no session; the per-session identity
+     variables are not part of this environment;
    - `run_as_worker("alienintent-worker", env, ["sh", "-c", "id -un; id -u; echo $USER $LOGNAME"])` prints
      `alienintent-worker`, `997`, and `alienintent-worker alienintent-worker`;
-   - in a clone of the candidate at `<launch>/worker/verifier-launch-<this work item id>-99`, `run_as_worker` with the same
-     `env` runs `python3 -m pytest -q tests/composition/test_worker_launch.py`, which passes; the folder is removed afterwards.
+   - with the same `env`, as the worker: `git clone -q --no-local --no-checkout --upload-pack='git -c
+     safe.directory=<packets clone>/.git upload-pack' -- <packets clone> <launch>/worker/verifier-launch-<this work item id>-99`
+     (the factory's own clone form; a plain local clone is refused as dubious ownership), then fetch the candidate's
+     branch from GitHub into it and check it out detached; then `python3 -m pytest -q tests/composition/test_worker_launch.py`
+     there (pytest must import with `/usr/bin/python3`), which passes; the folder is removed afterwards.
    Plus `tools/fitness/check_architecture.py --root src/alienintent --check all` passes.
 
 ## 4. Review record
+
+**Revision 1b (2026-10-06).** REVIEWER of `948bf7a` (FAIL): check 3 joins whitespace (the old sentence spans two lines);
+the stop condition names tools/live; check 2 is a subset check; check 4's side effects, base environment and exact clone
+form (the REVIEWER's plain `--no-hardlinks` clone is refused for the worker, so the factory's `--no-local` form is used);
+the receipt is read beside the verdict; `process-control` capability.
 
 **Revision 1 (2026-10-06).** First draft, from the VERIFIER findings of `c6814e01` and the Founder's direction of 2026-10-06.
