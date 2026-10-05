@@ -1,7 +1,7 @@
 # Work unit: refuse READY for a packet whose deterministic lifecycle cannot complete
 
-**Label:** `LIFECYCLE-SATISFIABILITY-R3` (a document label; permanent id `PENDING`).
-**Status:** Draft revision 3 (at CAPTURE) for independent review, 2026-10-05. Not approved, not assessed, not released.
+**Label:** `LIFECYCLE-SATISFIABILITY-R3` (a document label; permanent id `a41075ab-be22-4c11-8dd3-2e87ba8f7c1d`).
+**Status:** Draft revision 3 (work item `a41075ab-be22-4c11-8dd3-2e87ba8f7c1d`, at CAPTURE) for independent review, 2026-10-05. Not approved, not assessed, not released.
 **Position on the path:** the first fully closed self-build item. Founder 2026-10-05: fix LIFECYCLE-SATISFIABILITY /
 READY-REACHABILITY so Agent Ready cannot approve another work item whose deterministic lifecycle is impossible, then
 prove READY → PRODUCER → VERIFIER → CLOSURE → automatic exact landing → DONE. Builds on `main`.
@@ -12,7 +12,7 @@ candidate, CLOSURE through the Landing Authority (landing is on).
 
 ```json alienintent-contract
 {
- "identity": "PENDING",
+ "identity": "a41075ab-be22-4c11-8dd3-2e87ba8f7c1d",
  "version": "revision-3",
  "intent": "Add one pure satisfiability check over a work item's contract and the host facts, using the same constants the factory coordinator uses, and run it in work assess (before any Agent Ready attempt) and in work authorize (before a release record is written), so a packet whose deterministic lifecycle cannot reach DONE is refused with a hold that names every failing field.",
  "satisfied_requirement_ids": [
