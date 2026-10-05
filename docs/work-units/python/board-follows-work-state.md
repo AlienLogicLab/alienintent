@@ -101,7 +101,7 @@ is in IMPLEMENT, VERIFY or ACCEPT, and moving the card would stop the next role.
 1. **Find a started work item from the work registry** (`factory_coordinator.py`, `launch`). Keep the ACCEPT-only
    early checks (`closure-not-automated`, `ready-to-land`, about lines 166-171) as they are. After
    `self._project_done()` (about line 179), resolve the item from a fresh read:
-   `item = next((r for r in items if r.identity == identity), None) or (self._resolve(identity, items, self.state(identity).record) if <the work item has a coordinator record> else None)`
+   `item = next((r for r in items if r.identity == identity), None)`; if that is None and `self.state(identity)` does not raise `KeyError`, `item = self._resolve(identity, items, self.state(identity).record)`
    (the existing `accepted` fallback for ACCEPT stays covered by this). `guard_account` resolves the same way. A work
    item with no coordinator record is found only in the READY snapshot, as today.
 2. **Keep the correlation through a decision** (`factory_coordinator.py`, `record_decision`, about line 925):
