@@ -1,7 +1,7 @@
 # Work unit: workspace and clone folder names safe in every path list
 
-**Label:** `WORKSPACE-FOLDER-NAMES` (a document label; permanent id `PENDING`).
-**Status:** Draft revision 1 (at CAPTURE) for independent review, 2026-10-05. Not approved, not assessed, not released.
+**Label:** `WORKSPACE-FOLDER-NAMES` (a document label; permanent id `6e06e5dc-34a6-4125-b69d-bdfce0d850a8`).
+**Status:** Draft revision 1 (work item `6e06e5dc-34a6-4125-b69d-bdfce0d850a8`, at CAPTURE) for independent review, 2026-10-05. Not approved, not assessed, not released.
 **Position on the path:** blocks every code work item from passing VERIFY. Built outside the factory (its own VERIFIER
 would fail the same way): one PRODUCER, one fresh VERIFIER on the exact candidate, direct merge to `main`.
 **Roles:** PRODUCER (self-reviews the complete diff); fresh VERIFIER on the exact candidate; CLOSURE by direct merge.
@@ -10,7 +10,7 @@ would fail the same way): one PRODUCER, one fresh VERIFIER on the exact candidat
 
 ```json alienintent-contract
 {
- "identity": "PENDING",
+ "identity": "6e06e5dc-34a6-4125-b69d-bdfce0d850a8",
  "version": "revision-1",
  "intent": "Make every workspace and clone folder the runtime names after a correlation id use one safe form, with only letters, digits, '.', '_' and '-', so a folder path never contains ':' and stays valid inside PYTHONPATH, PATH and any other ':'-separated list that tests or tools build from it.",
  "satisfied_requirement_ids": [
