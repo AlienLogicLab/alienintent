@@ -130,6 +130,7 @@ from alienintent.execution_coordination.domain.contract import BiuContract
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.execution_coordination.domain.custody import CandidateRef
 from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired
+from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
 from alienintent.execution_coordination.ports.operational_store import OperationalStore
 from alienintent.execution_coordination.ports.project_directory import ProjectItemState
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
@@ -407,6 +408,33 @@ class WorkRegistry:
                            configuration.repositories[configuration.packets_repository]),
             self.profile_stores)
         self.records = WorkRecordService(self.identities, self.items, self.items.read_packet)
+
+        def satisfiable(packet: bytes, commit: str, identity: str) -> tuple[str, ...]:
+            try:
+                contract = contract_block(packet, identity)
+            except ContractInvalid as error:
+                return (f"contract: {error}",)
+            record = self.records.show(identity)
+            pointer = record.item.pointer if record is not None else None
+            repo = pointer.repo if pointer is not None else None
+
+            def present_at_pointer(path: str) -> bool:
+                if repo is None or not valid_path(path):
+                    return False
+                try:
+                    return self.items.read_packet(StoredPointer(repo, path, commit)) is not None
+                except WorkIdentityRefused:
+                    return False
+
+            def registered(dependency: str) -> bool:
+                dependency_record = self.records.show(dependency)
+                return dependency_record is not None and not dependency_record.item.retired
+
+            return unsatisfiable(contract, landing=configuration.github is not None and configuration.github.landing,
+                                 present_at_pointer=present_at_pointer, registered=registered,
+                                 provider_dimensions=PROVIDER_DIMENSIONS)
+
+        self.satisfiable = satisfiable
         self.assessment = self._assessment(configuration) if configuration.readiness is not None else None
         self.authorization = self._authorization(configuration) if self.assessment is not None else None
         self.completion = self._completion(configuration) if self.assessment is not None else None
@@ -818,7 +846,7 @@ class WorkRegistry:
                                 lambda attempt, owner: compose_producer(binding, readiness.provider, {
                                     **assessment_environment(), INVOCATION_MARKER: attempt,
                                     INVOCATION_OWNER_MARKER: owner_token(owner)}),
-                                StoredReleaseAuthorizations(consumer.store, "registry"))
+                                StoredReleaseAuthorizations(consumer.store, "registry"), self.satisfiable)
 
     def _authorization(self, configuration: ProjectConfiguration) -> WorkAuthorization:
         """`work authorize`: release records on the `readiness` store under profile `registry` (the READY view's), the
@@ -828,7 +856,8 @@ class WorkRegistry:
         return WorkAuthorization(self.records, self.identities, consumer, consumer.repository, consumer.project,
                                  consumer.profile, self.assessment.authorizations,
                                  GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
-                                 {name: location.default_branch for name, location in repositories.items()})
+                                 {name: location.default_branch for name, location in repositories.items()},
+                                 self.satisfiable)
 
     def _completion(self, configuration: ProjectConfiguration) -> WorkCompletion:
         """`work record-completed`: the evidence record in the assessment evidence folder, landings checked in each

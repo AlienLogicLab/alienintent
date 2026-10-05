@@ -16,6 +16,7 @@ import pytest
 from alienintent.composition.work_registry import (
     ConfigurationInvalid, WorkRegistry, load_project_configuration, project_configuration, read_only_store)
 from alienintent.evidence_learning.domain.records import ref_from_document
+from alienintent.execution_coordination.domain.closure import ACTIONS
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.domain.runtime import owner_token
@@ -157,6 +158,7 @@ def test_assessment_launches_the_bound_executable_with_the_attempt_markers(tmp_p
     assert isinstance(registry.assessment.ownership, ProcOwnership)
     packet = b"# Work unit: fixture\n"
     item = registry.records.register(packet, REPO, "docs/p.md", commit_file(clone, "main", "docs/p.md", packet), "P")
+    registry.assessment.satisfiable = lambda packet, commit, identity: ()
     result = registry.assessment.assess(item.id)
     assert result.disposition == "READY"
     [attempt] = registry.assessment.consumer.history(item.id)
@@ -309,6 +311,7 @@ class ReadyBoard(Linked):
         executable.write_text(f"#!/bin/sh\nprintf '{{\"disposition\": \"%s\"}}' \"$(cat '{self.answer}')\"\n")
         executable.chmod(0o700)
         self.document["projects"][PROJECT]["readiness"] = readiness(root, executable=str(executable))
+        self.document["projects"][PROJECT]["github"]["landing"] = True
         self.github = Board()
         self.registry = self.second()
         self.links = self.registry.links
@@ -319,7 +322,11 @@ class ReadyBoard(Linked):
 
     def packet(self, item, *, payload: dict | None = None, raw: str | None = None) -> bytes:
         payload = payload(item) if callable(payload) else payload
-        text = raw if raw is not None else json.dumps(payload or contract_payload(item.id), indent=1)
+        default = contract_payload(item.id, required_evidence=["independent-verifier-accepted"],
+                                   budget_policy={"maximum_attempts": 1, "hard_wall_clock_seconds": 60,
+                                                  "cancellation_limit": 1}, authority_references=["README.md"],
+                                   required_closure_actions=list(ACTIONS))
+        text = raw if raw is not None else json.dumps(payload or default, indent=1)
         return (f"# Work unit: {item.label}\n\nidentity: not-this-one\n\n```json alienintent-contract\n{text}\n```\n"
                 .encode())
 
@@ -357,6 +364,23 @@ def ready_view_items(registry: WorkRegistry) -> list:
     return [item for item in registry._attention.list_pending() if item.origin.lane == READY_VIEW]
 
 
+def test_one_satisfiability_check_is_shared_and_reads_the_pointer_commit(board):
+    from alienintent.context_assembly.application.work_authorization import CONTRACT_UNSATISFIABLE
+
+    registry = board.registry
+    assert registry.assessment.satisfiable is registry.authorization.satisfiable is registry.satisfiable
+    item = board.item("SAT")
+    packet = board.packet(item, payload=contract_payload(
+        item.id, required_evidence=["independent-verifier-accepted"],
+        budget_policy={"maximum_attempts": 1, "hard_wall_clock_seconds": 60, "cancellation_limit": 1},
+        required_closure_actions=list(ACTIONS), authority_references=["docs/not-in-pointer.md"]))
+    commit = commit_file(board.clone, "main", "docs/SAT.md", packet)
+    held = registry.assessment.assess(item.id, (packet, commit))
+    assert held.reason_code == CONTRACT_UNSATISFIABLE
+    assert held.detail.startswith("authority_references:") and "docs/not-in-pointer.md" in held.detail
+    assert registry.assessment.consumer.history(item.id) == ()
+
+
 def test_the_view_exists_only_with_both_the_github_and_readiness_entries(tmp_path):
     SQLiteOperationalStore(tmp_path / "fx.sqlite")
     for changes in ({}, {"github": github(tmp_path)}, {"readiness": readiness(tmp_path)}):
@@ -368,6 +392,8 @@ def test_the_view_exists_only_with_both_the_github_and_readiness_entries(tmp_pat
 
 
 def test_check2_the_row_comes_from_the_record_and_the_display_is_repaired_separately(board):
+    # This tests projection of an older READY assessment with a dependency that was not registered.
+    board.registry.assessment.satisfiable = None
     item = board.ready("RV-A", at="2026-10-02T10:00:00Z",
                        payload=lambda item: contract_payload(item.id, dependencies=["dep-1"]))
     issue = board.github.issues[item.issue_number]
@@ -405,6 +431,7 @@ def test_check2_the_row_comes_from_the_record_and_the_display_is_repaired_separa
     ({"payload": lambda item: contract_payload("another-item")}, "identity is not the work item's id"),
     ({"payload": lambda item: contract_payload(item.id, intent="")}, "refused by the validator")])
 def test_check3_an_invalid_block_is_contract_invalid_naming_which(board, change, detail):
+    board.registry.assessment.satisfiable = None  # Historical READY attempt before the static guard.
     board.ready("RV-C", at="2026-10-02T10:00:00Z", **change)
 
     imported, refusals = board.snapshot()
@@ -415,6 +442,7 @@ def test_check3_an_invalid_block_is_contract_invalid_naming_which(board, change,
 
 
 def test_check3_an_unclosed_block_is_contract_invalid(board):
+    board.registry.assessment.satisfiable = None  # Historical READY attempt before the static guard.
     item = board.item("RV-U")
     data = f"# Work unit\n\n```json alienintent-contract\n{json.dumps(contract_payload(item.id))}\n".encode()
     commit = commit_file(board.clone, "main", "docs/RV-U.md", data)
@@ -466,7 +494,9 @@ def test_check6_one_bad_card_of_each_kind_never_stalls_the_valid_ones_and_order_
     retired = board.ready("RV-R", at="2026-10-02T10:00:00Z")
     board.registry.identities.retire(retired.id)
     unassessed = board.ready("RV-N", at="2026-10-02T10:00:00Z", assess=False)
+    board.registry.assessment.satisfiable = None
     invalid = board.ready("RV-I", at="2026-10-02T10:00:00Z", raw="not json")
+    board.registry.assessment.satisfiable = board.registry.satisfiable
     unprioritized = board.ready("RV-P", at="2026-10-02T10:00:00Z", priority=None)
     not_ready = board.ready("RV-X", at="2026-10-02T09:00:00Z")
     board.github.fields[not_ready.card_id]["Status"] = "IMPLEMENT"
@@ -597,10 +627,10 @@ def test_check7_a_released_registry_item_passes_the_gate_on_the_registry_store(b
     assert (coordinator._profile, coordinator._automatic_release) == ("registry", False)
     assert coordinator._store is registry.assessment.consumer.store and worker.dispatched == [item.id]
     state = coordinator.state(item.id)
-    # contract_payload allows one attempt and requires evidence no verifier gives: REVIEW reworks into `failure`.
-    assert (state.outcome, state.record["hold_reason"]) == ("failure", "attempt-budget-exhausted")
-    assert summary.dispatched == (item.id,) and registry.cycles(item.id) == (2, 1)
-    assert [r for r in registry.assessment.consumer.store.recovery_reservations("registry")] == []
+    assert (state.outcome, state.record["hold_reason"]) == ("authority-block", "closure-receipts-incomplete")
+    assert summary.dispatched == (item.id,) and registry.cycles(item.id) == (1, 1)
+    assert [(r.scope, r.key) for r in registry.assessment.consumer.store.recovery_reservations("registry")] == [
+        ("wip", item.id)]
 
 
 @pytest.mark.parametrize(("record", "check"), [
@@ -635,13 +665,13 @@ def test_check8_work_display_shows_the_counts_from_the_coordinator_state(board, 
     [repaired] = registry.repair_displays()
     assert repaired.display == UPDATED
     body = board.github.issues[item.issue_number]["body"]
-    assert body == render(item, (2, 1)).body and body.endswith("\nIMPLEMENT cycles: 2 · VERIFY cycles: 1")
+    assert body == render(item, (1, 1)).body and body.endswith("\nIMPLEMENT cycles: 1 · VERIFY cycles: 1")
     assert board.github.issues[plain.issue_number]["body"] == render(plain).body
     assert "IMPLEMENT cycles" not in render(plain).body and registry.cycles(plain.id) is None
     _, refusals = board.snapshot(registry)
     assert [(r.card, r.kind, r.cleared) for r in refusals] == [(item.card_id, DISPLAY_DIFFERS, True)]
     assert registry.links.display(item.id).display == "unchanged"  # a display repair changes no count
-    assert registry.cycles(item.id) == (2, 1)
+    assert registry.cycles(item.id) == (1, 1)
 
     store = registry.assessment.consumer.store  # an older record without launch evidence: unknown, shown unknown
     store.commit("registry", f"factory:{plain.id}", 0, {"stage": LifecycleStage.IMPLEMENT.value, "version": 0,

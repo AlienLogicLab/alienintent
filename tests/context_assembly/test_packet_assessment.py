@@ -21,7 +21,7 @@ import pytest
 from alienintent.composition.readiness import resolve_binding
 from alienintent.composition.work_registry import WorkRegistry
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
-from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED
+from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED, CONTRACT_UNSATISFIABLE
 from alienintent.context_assembly.domain.packet_assessment import PacketAssessed
 from alienintent.context_assembly.domain.work_identity import Pointer
 from alienintent.evidence_learning.adapters.local_evidence_repository import LocalEvidenceRepository
@@ -123,10 +123,11 @@ class Fx:
         self.releases = StoredReleaseAuthorizations(self.store, "registry")  # Empty unless a test authorizes.
         self.service = self.make()
 
-    def make(self, ownership=None, producer=None, binding=None, consumer=None, identities=None) -> PacketAssessment:
+    def make(self, ownership=None, producer=None, binding=None, consumer=None, identities=None,
+             satisfiable=None) -> PacketAssessment:
         return PacketAssessment(self.records, identities or self.identities, consumer or self.consumer,
                                 binding or self.binding, ownership or Ownership(), (producer or self.producer).build,
-                                self.releases)
+                                self.releases, satisfiable)
 
     def authorize(self, identity: str) -> None:
         """The release record `work authorize` writes (its own tests cover how)."""
@@ -156,6 +157,25 @@ def dump(database: Path) -> str:
         return "\n".join(connection.iterdump())
     finally:
         connection.close()
+
+
+def test_unsatisfiable_packet_is_held_before_any_attempt_and_a_valid_one_runs(fx):
+    item = fx.register()
+    seen = []
+
+    def satisfiable(packet, commit, identity):
+        seen.append((packet, commit, identity))
+        return ("required_evidence: unknown", "landing: DONE is unreachable")
+
+    service = fx.make(satisfiable=satisfiable)
+    held = service.assess(item.id)
+    assert (held.reason_code, held.detail) == (
+        CONTRACT_UNSATISFIABLE, "required_evidence: unknown; landing: DONE is unreachable")
+    assert seen == [(fx.records.show(item.id).packet, item.pointer.commit, item.id)]
+    assert fx.consumer.history(item.id) == () and fx.producer.calls == []
+    service.satisfiable = lambda packet, commit, identity: ()
+    assert service.assess(item.id).disposition == "READY"
+    assert len(fx.consumer.history(item.id)) == len(fx.producer.calls) == 1
 
 
 # --- check 1: exactly the registered instructions -----------------------------------------------------------------
@@ -254,6 +274,7 @@ def test_unestablished_binding_holds_before_launch_and_never_blocks_a_later_run(
 
 
 OWNER_SCRIPT = ("import json, sys, time\n"
+                f"sys.path.insert(0, {str(ROOT / 'src')!r})\n"
                 "from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership\n"
                 "print(json.dumps(dict(ProcOwnership().current())), flush=True)\n"
                 "time.sleep(300)\n")

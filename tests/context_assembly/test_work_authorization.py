@@ -18,7 +18,7 @@ import pytest
 from alienintent.composition.work_registry import WorkRegistry, project_configuration
 from alienintent.context_assembly.application.work_authorization import (
     ALREADY_AUTHORIZED, AUTHORIZATION_STALE, AUTHORIZED_INSTRUCTIONS_FIXED, BASELINE_INVALID, GATE_WOULD_REFUSE,
-    NOT_AUTHORIZABLE)
+    CONTRACT_UNSATISFIABLE, NOT_AUTHORIZABLE)
 from alienintent.context_assembly.domain.work_contract import contract_block
 from alienintent.context_assembly.domain.work_identity import Pointer
 from alienintent.evidence_learning.domain.records import ref_from_document
@@ -28,6 +28,7 @@ from alienintent.execution_coordination.adapters.release_admission import (
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.execution_coordination.domain.readiness import Hold
+from alienintent.execution_coordination.domain.closure import ACTIONS
 from alienintent.execution_coordination.domain.release import (
     BaselineEvidence, ReleaseAuthorization, ReleasePreconditionRefused, admit_release_preconditions)
 from alienintent.execution_coordination.ports.operational_store import VersionConflict
@@ -58,7 +59,12 @@ class Fx:
             "packets": {"repository": REPO, "directory": "work-packets"},
             "profiles": {"fx": str(root / "fx.sqlite")},
             "readiness": {"database": str(root / "readiness.sqlite"), "evidence_root": str(root / "evidence"),
-                          "executable": str(executable), "provider": "claude"}}}}
+                          "executable": str(executable), "provider": "claude"},
+            "github": {"repository": "AlienLogicLab/alienintent-sandbox", "application_id": 1000001,
+                       "installation_id": 2000002, "private_key_path": str(root / "key.pem"), "landing": True,
+                       "project": {"project_id": "PVT_kwDOfixtureSandboxProject", "project_number": 2,
+                                   "organization": "AlienLogicLab", "status_field_id": "PVTSSF_s",
+                                   "priority_field_id": "PVTSSF_p"}}}}}
         self.registry = self.second()
         self.service = self.registry.authorization
 
@@ -67,7 +73,12 @@ class Fx:
         return WorkRegistry(project_configuration(self.document, PROJECT))
 
     def packet(self, item, payload: dict | None = None, raw: str | None = None, changes: dict | None = None) -> bytes:
-        text = raw if raw is not None else json.dumps(payload or contract_payload(item.id, **(changes or {})), indent=1)
+        default = contract_payload(item.id, required_evidence=["independent-verifier-accepted"],
+                                   budget_policy={"maximum_attempts": 1, "hard_wall_clock_seconds": 60,
+                                                  "cancellation_limit": 1}, authority_references=["README.md"],
+                                   required_closure_actions=list(ACTIONS))
+        default.update(changes or {})
+        text = raw if raw is not None else json.dumps(payload or default, indent=1)
         return f"# Work unit: {item.label}\n\n```json alienintent-contract\n{text}\n```\n".encode()
 
     def ready(self, label: str = "UNIT", payload: dict | None = None, raw: str | None = None,
@@ -123,6 +134,19 @@ def gate(fx: Fx, identity: str, authorization) -> None:
     evidence = BaselineEvidence("main", resolves, resolves and resolver.is_reachable(REPO, authorization.baseline,
                                                                                      "main"))
     admit_release_preconditions(identity, authorization, evidence, ())
+
+
+def test_unsatisfiable_contract_writes_no_release_record_then_valid_contract_authorizes(fx):
+    # A historical READY assessment can exist for a packet now refused by the static guard.
+    fx.registry.assessment.satisfiable = None
+    item, attempt = fx.ready(changes={"required_evidence": ["unobservable"]})
+    before = fx.written()
+    result = fx.authorize(item, attempt)
+    assert result.answer == CONTRACT_UNSATISFIABLE and result.detail.startswith("required_evidence:")
+    assert fx.releases().release_authorization(item.id) is None and fx.written() == before
+    fx.registry.assessment.satisfiable = fx.registry.satisfiable
+    valid, valid_attempt = fx.ready(label="VALID")
+    assert fx.authorize(valid, valid_attempt).answer is None
 
 
 # --- check 1: binding ------------------------------------------------------------------------------------------------
@@ -239,6 +263,8 @@ def test_the_latest_ready_attempt_is_stale_when_it_is_not_the_rows_assessment(fx
 
 @pytest.mark.parametrize("contract", [{"raw": "{not json"}, {"payload": contract_payload("another-identity")}])
 def test_an_invalid_contract_block_is_refused(fx, contract):
+    # A historical READY attempt can predate this static assessment guard.
+    fx.registry.assessment.satisfiable = None
     item, attempt = fx.ready(**contract)
     before = fx.written()
     result = fx.authorize(item, attempt)
@@ -347,7 +373,7 @@ def test_after_authorization_assess_neither_moves_the_pointer_nor_opens_an_attem
 
 def test_authorization_changes_no_state_and_calls_nothing_else(fx, monkeypatch):
     item, attempt = fx.ready()
-    assert item.state == "CAPTURE" and fx.registry.links is None
+    assert item.state == "CAPTURE"
 
     def forbidden(*args):
         raise AssertionError("authorization must not change workflow state")
