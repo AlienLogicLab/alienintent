@@ -1,7 +1,7 @@
 # Work unit: the board shows each work item's real state; launch never depends on the card
 
-**Label:** `BOARD-FOLLOWS-WORK-STATE` (a document label; permanent id `PENDING`).
-**Status:** Draft revision 1 (at CAPTURE) for independent review, 2026-10-06. Not approved, not assessed, not released.
+**Label:** `BOARD-FOLLOWS-WORK-STATE` (a document label; permanent id `c6814e01-0099-436c-9c8a-e31124e217c2`).
+**Status:** Draft revision 1 (work item `c6814e01-0099-436c-9c8a-e31124e217c2`, at CAPTURE) for independent review, 2026-10-06. Not approved, not assessed, not released.
 **Position on the path:** the work item after the first factory DONE (`a41075ab`). Founder 2026-10-05: the GitHub
 Project board is a display of AlienIntent's work item state; at every state change the card's Status must match after
 read-back, and changing the card must never decide which role runs next.
@@ -11,7 +11,7 @@ read-back, and changing the card must never decide which role runs next.
 
 ```json alienintent-contract
 {
- "identity": "PENDING",
+ "identity": "c6814e01-0099-436c-9c8a-e31124e217c2",
  "version": "revision-1",
  "intent": "Make the GitHub Project card show each registry work item's recorded stage (IMPLEMENT, VERIFY, ACCEPT, DONE) from the moment its role starts, retry the card until it matches, and make work launch find a started work item from the work registry rather than from the card staying in READY; READY on the board means only the Founder's release to start.",
  "satisfied_requirement_ids": [
