@@ -1,0 +1,1 @@
+{"check": "8(d)", "claim": "as the Founder, the Landing Authority mints a landing-scoped token through its own InstallationCredentials only, building no WorkRegistry, readiness store or evidence repository (partial)", "evidence_root_mode_unchanged": true, "partial": true, "permissions": {"contents": "write", "metadata": "read"}, "status": "PASS"}
