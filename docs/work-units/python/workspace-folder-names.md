@@ -27,6 +27,7 @@ would fail the same way): one PRODUCER, one fresh VERIFIER on the exact candidat
   "src/alienintent/composition/work_registry.py",
   "src/alienintent/composition/offline_proof.py",
   "src/alienintent/composition/lifecycle_capstone.py",
+  "tools/live/py10_proven_red.py",
   "tests/invocation_runtime/test_workspace_folder.py",
   "tests/invocation_runtime/test_runtime.py",
   "tests/invocation_runtime/test_git_source_control.py",
@@ -90,7 +91,8 @@ would fail the same way): one PRODUCER, one fresh VERIFIER on the exact candidat
  "stop_escalation_conditions": [
   "a site in section 2 does not exist at the starting revision",
   "a workspace or clone folder is named after a correlation id by code outside the authorized scope",
-  "scope outside the authorized files"
+  "scope outside the authorized files",
+  "a folder whose name contains ':' exists under <launch>/worker, <launch>/workspaces, the verifier root or <launch>/landing for a work item that has not ended"
  ]
 }
 ```
@@ -112,16 +114,26 @@ cannot import `alienintent`. Work item `dc49e880` failed VERIFY this way: 2 of 4
 2. **Every site that names a folder after a correlation id uses it.** The form is `f"{prefix}-{workspace_folder(c)}"`,
    or `workspace_folder(c)` where there is no prefix today:
    - `git_worktree.py`: `GitWorktreeAdapter.allocate` (`self._root / invocation_id`) and `WorkerCloneAdapter._new`
-     (`f"{prefix}-{invocation_id}"`);
+     (`f"{prefix}-{invocation_id}"`); the `ref_safe` docstring line "The workspace path still uses the exact identity"
+     becomes "Workspace folders use `workspace_folder`, the same rule; `allocate` and `_new` refuse a path that already
+     exists, so a collision fails closed";
    - `real_worker.py`: the `verifier-`, two `closure-` and the `producer-` read-back folders (about lines 309, 360, 382
      and 550);
-   - `work_registry.py`: `_producer_worktree` (`f"{prefix}{correlation}"`), the cleanup paths
+   - `work_registry.py`: `_producer_worktree` (`f"{prefix}{correlation}"`), `_authorize_refusal`'s PRODUCER worktree
+     without a worker user (`workspaces / correlation`, about line 560, becomes `workspaces / workspace_folder(correlation)`),
+     the cleanup paths
      (`f"{prefix}-{correlation}"`, two places, about lines 1502 and 1515), and the landing clone
      (`f"landing-{correlation}"`, about line 1542);
    - `offline_proof.py` (about line 152) and `lifecycle_capstone.py` (about lines 367 and 369), which rebuild the same
-     paths for their proofs.
+     paths for their proofs;
+   - `tools/live/py10_proven_red.py` (about line 133), whose exact copy of the `real_worker.py` line becomes
+     `'        return self._verifier_root / f"producer-{workspace_folder(invocation.correlation_id)}"',`.
+   - Tests that assert the raw names change to the new form: `tests/composition/test_offline_proof.py` (about lines 116
+     and 130) and `tests/composition/test_worker_launch.py` (about lines 1047, 1059 and 1099).
    The guards that refuse unsafe ids (`/`, `\`, `..`, NUL) stay as they are, and run on the correlation id first.
-3. Nothing else changes. Folders that already exist for work items that have ended keep their names.
+3. Nothing else changes. Folders that already exist for work items that have ended keep their names. At the starting
+   revision no work item that has not ended has a folder whose name contains `:` (checked on 2026-10-05: the three
+   such folders belong to `6cf0fee9`, `8427eb3d` and `dc49e880`, which have ended); the stop condition covers a change.
 
 ## 3. Acceptance checks
 
@@ -129,20 +141,29 @@ cannot import `alienintent`. Work item `dc49e880` failed VERIFY this way: 2 of 4
    equals `"launch-dc49e880-0de2-46fd-89a7-bf827f35cccd-2"`; two different correlation ids of that form never give the
    same name; and the result never contains `:`, `/` or whitespace.
 2. **The real boundary** (`test_workspace_folder.py`): create a `WorkerCloneAdapter` workspace (with the existing fake
-   sudo pattern) for a correlation id containing `:`; copy or link a minimal `src/alienintent/__init__.py` into it; start
-   `sys.executable -c "import alienintent"` with `PYTHONPATH=<workspace>/src:<workspace>`. It must exit 0. The same
-   check against a folder named with the raw correlation id must exit non-zero, which shows the test reaches the real
-   failure.
+   sudo pattern) for a correlation id containing `:`; write a minimal `src/alienintent/__init__.py` into it; run
+   `sys.executable -c "import alienintent,sys; print(alienintent.__file__)"` with `cwd=tmp_path` and
+   `PYTHONPATH=<workspace>/src:<workspace>`, and assert it exits 0 and prints a path under `<workspace>/src`. The same
+   check in a folder named with the raw correlation id must not print a path under that folder's `src`, which shows the
+   test reaches the real failure.
 3. **Every site** (`test_workspace_folder.py`): for a correlation id containing `:`, the folders produced by
    `WorkerCloneAdapter` (PRODUCER, VERIFIER, CLOSURE), `RealWorkerProvider` (`verifier-`, `closure-`, `producer-`
-   read-back), `_producer_worktree`, the registry cleanup and the landing clone contain no `:`. Recovery and cleanup find
-   the folders that allocation created.
+   read-back), `_producer_worktree`, `_authorize_refusal`'s worktree, the registry cleanup and the landing clone contain
+   no `:`. `_producer_worktree(...).path` equals the path `WorkerCloneAdapter.allocate` returned for the same
+   correlation, and the registry cleanup removes the VERIFIER and CLOSURE clones `_new` made.
 4. **Fitness**: `python -m pytest tests/invocation_runtime tests/composition/test_worker_launch.py
    tests/composition/test_offline_proof.py tests/composition/test_lifecycle_capstone.py` passes, and
-   `tools/fitness/check_architecture.py --root src/alienintent --check all` passes. Also, as `alienintent-worker`, the
-   feature-regression runner passes on the candidate in a folder named exactly as the new rule names a VERIFIER
-   workspace.
+   `tools/fitness/check_architecture.py --root src/alienintent --check all` passes. Also, as `alienintent-worker`
+   (`sudo -n -u alienintent-worker -- env -i PATH=/usr/bin:/bin HOME=/var/lib/alienintent-worker`), in the folder
+   `<launch>/worker/verifier-launch-6e06e5dc-34a6-4125-b69d-bdfce0d850a8-99` holding the candidate, the command
+   `/home/netmarine/.local/state/alienintent/runtime-venv/bin/python tools/verification/run_feature_regressions.py
+   --base <starting revision> --candidate HEAD --receipt <that folder>/receipt.json` writes a receipt with
+   `"passed": true`; the folder is removed afterwards.
 
 ## 4. Review record
+
+**Revision 1b (2026-10-05).** REVIEWER of `fcde7c7` (FAIL): two missed sites (`work_registry.py` about line 560;
+`tools/live/py10_proven_red.py` about line 133), the `ref_safe` docstring, a stop condition for open work items with
+old folders, the test lines that assert raw names, and mechanical checks 2-4.
 
 **Revision 1 (2026-10-05).** First draft, from the VERIFY failure of `dc49e880` and the path-to-DONE walkthrough.
