@@ -21,7 +21,7 @@ import pytest
 from alienintent.composition.readiness import resolve_binding
 from alienintent.composition.work_registry import WorkRegistry
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
-from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED
+from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED, CONTRACT_UNSATISFIABLE
 from alienintent.context_assembly.domain.packet_assessment import PacketAssessed
 from alienintent.context_assembly.domain.work_identity import Pointer
 from alienintent.evidence_learning.adapters.local_evidence_repository import LocalEvidenceRepository
@@ -148,6 +148,21 @@ class Fx:
 @pytest.fixture
 def fx(tmp_path) -> Fx:
     return Fx(tmp_path / "fx")
+
+
+def test_unsatisfiable_packet_is_held_before_agent_ready_or_attempt(fx):
+    item = fx.register()
+    calls = []
+    fx.service.satisfiable = lambda packet, commit, identity: (calls.append((packet, commit, identity)) or
+                                                                  ("required_evidence: unknown", "landing: disabled"))
+    held = fx.service.assess(item.id)
+    assert (held.reason_code, held.detail) == (CONTRACT_UNSATISFIABLE,
+                                               "required_evidence: unknown; landing: disabled")
+    assert calls == [(PACKET, item.pointer.commit, item.id)]
+    assert fx.producer.calls == [] and not fx.consumer.history(item.id)
+    fx.service.satisfiable = lambda packet, commit, identity: ()
+    assert fx.service.assess(item.id).disposition == "READY"
+    assert len(fx.producer.calls) == 1
 
 
 def dump(database: Path) -> str:
