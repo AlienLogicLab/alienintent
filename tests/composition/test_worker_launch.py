@@ -699,6 +699,106 @@ def revision_of(state) -> str:
     return state.candidate.locator.rpartition("@")[2]
 
 
+def test_board_follows_each_started_role_and_done(closing, monkeypatch):
+    item = closing.fx.authorized("STAGES", **FIXED)
+    registry = closing.fx.loaded()
+    card = registry.records.show(item.id).item.card_id
+    shown: list[str] = []
+    original = WorkRegistry.show_stage
+
+    def observe(self, identity, correlation=None, role=None):
+        original(self, identity, correlation, role)
+        if identity == item.id and role is not None:
+            shown.append(self.links.board.read_status(card).status)
+
+    monkeypatch.setattr(WorkRegistry, "show_stage", observe)
+    assert registry.links.board.read_status(card).status == "READY"
+    closing.fx.launch(item.id)
+    assert registry.links.board.read_status(card).status == "VERIFY"
+    closing.fx.launch(item.id)
+    assert registry.links.board.read_status(card).status == "ACCEPT"
+    closing.close(item.id)
+    assert registry.links.board.read_status(card).status == "DONE"
+    assert shown == ["IMPLEMENT", "VERIFY", "ACCEPT"]
+
+
+def test_board_failure_is_diagnostic_and_next_launch_repairs_it(closing, monkeypatch):
+    item = closing.fx.authorized("RETRY", **FIXED)
+    registry = closing.fx.loaded()
+    card = registry.records.show(item.id).item.card_id
+    original = closing.fx.github._graphql
+
+    def broken(query, variables):
+        if "updateProjectV2ItemFieldValue" in query:
+            raise RuntimeError("board down")
+        return original(query, variables)
+
+    monkeypatch.setattr(closing.fx.github, "_graphql", broken)
+    registry.launcher().launch(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.VERIFY
+    assert registry.links.board.read_status(card).status == "READY"
+    assert item.id in registry.board_diagnostics
+    monkeypatch.setattr(closing.fx.github, "_graphql", original)
+    coordinator = registry.launcher()
+    run = coordinator._run
+
+    def checked_run(ready):
+        # The launch sweep must repair VERIFY before the VERIFIER can record ACCEPT.
+        assert registry.links.board.read_status(card).status == "VERIFY"
+        assert item.id not in registry.board_diagnostics
+        return run(ready)
+
+    monkeypatch.setattr(coordinator, "_run", checked_run)
+    coordinator.launch(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.ACCEPT
+    assert registry.links.board.read_status(card).status == "ACCEPT"
+    assert item.id not in registry.board_diagnostics
+
+
+def test_release_hold_does_not_move_card_or_record_board_failure(closing):
+    item = closing.fx.authorized("HELD", authorize=False, **FIXED)
+    registry = closing.fx.loaded()
+    card = registry.records.show(item.id).item.card_id
+    registry.launcher().launch(item.id)
+    assert closing.state(item.id).outcome == "authority-block"
+    assert closing.state(item.id).record["correlation"] == "release"
+    assert registry.links.board.read_status(card).status == "READY"
+    assert item.id not in registry.board_diagnostics
+    assert registry.decide(item.id, "authorize", QUOTE)["answer"] is None
+    [entry] = [record for record in registry.assessment.consumer.history(item.id)
+               if record["raw_ref"] == asdict(item.assessment_ref)]
+    assert registry.authorization.authorize(item.id, item.pointer.commit, entry["attempt_id"],
+                                            closing.fx.main(), QUOTE).answer is None
+    assert registry.launcher().launch(item.id).dispatched == (item.id,)
+    assert registry.links.board.read_status(card).status == "VERIFY"
+
+
+def test_decision_keeps_a_started_item_findable_after_card_leaves_ready(closing):
+    item = closing.fx.authorized("DECIDE", **FIXED, authority_references=["missing-reference.md"])
+    registry = closing.fx.loaded()
+    registry.launcher().launch(item.id)
+    held = closing.state(item.id)
+    assert held.outcome == "authority-block" and closing.card(item.id) == "IMPLEMENT"
+    assert registry.decide(item.id, "authorize", QUOTE)["answer"] is None
+    assert closing.state(item.id).record["correlation"] == held.record["correlation"]
+    registry.launcher().launch(item.id)
+    assert closing.state(item.id).record["correlation"] != held.record["correlation"]
+    assert closing.card(item.id) == "IMPLEMENT"
+
+
+def test_verifier_rejection_shows_rework_stage(closing):
+    item = closing.fx.authorized("REWORK", **FIXED, budget_policy={
+        "maximum_attempts": 3, "hard_wall_clock_seconds": 120, "cancellation_limit": 1})
+    closing.fx.launch(item.id)
+    assert closing.card(item.id) == "VERIFY"
+    script = closing.fx.codex
+    script.write_text(script.read_text().replace('"verdict": "accept", "findings": []',
+                                                 '"verdict": "reject", "findings": ["rework"]'))
+    closing.fx.launch(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.IMPLEMENT
+    assert closing.card(item.id) == "IMPLEMENT"
+
+
 def test_closure_lands_through_the_authority_with_five_exact_receipts_and_the_row_projected(closing, monkeypatch):
     """Checks 1, 4, 6, 7, 10, 13 and 14 over one real CLOSURE launch."""
     fx = closing.fx
@@ -774,7 +874,7 @@ def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx
     closing.close(item.id)
     state = closing.state(item.id)
     assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "ready-to-land")
-    assert closing.head() == base and closing.orders(item.id) == [] and closing.card(item.id) == "READY"
+    assert closing.head() == base and closing.orders(item.id) == [] and closing.card(item.id) == "ACCEPT"
     [session] = fx.runs("CLOSURE")
     clone = Path(session["cwd"])
     assert clone.is_dir() and not fx.wip_held(item.id)
@@ -796,11 +896,11 @@ def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx
     assert [r["argv"][r["argv"].index("--model") + 1] for r in fx.runs("CLOSURE")] == ["model-a", "model-c"]
 
 
-def test_a_failing_landing_runs_closure_once_per_start(closing, monkeypatch):
-    """Check 11: with landing on and the Authority refusing every time, one `start()` runs CLOSURE once."""
+def test_a_failing_landing_runs_closure_once_per_launch(closing, monkeypatch):
+    """Check 11: with landing on and the Authority refusing every time, one launch runs CLOSURE once."""
     item = closing.accepted()
     monkeypatch.setattr(LandingAuthority, "land", lambda self, order: "refused:fixture")
-    closing.fx.loaded(Owners("terminated")).launcher().release_and_start(item.id)
+    closing.close(item.id, Owners("terminated"))
     assert len(closing.fx.runs("CLOSURE")) == 1 and closing.state(item.id).outcome == "authority-block"
 
 
@@ -831,7 +931,7 @@ def test_the_bounded_request_alone_steers_nothing(closing, plan, landed):
     if landed:
         expected += [receipt(a, item.id, revision) for a in ("merged-to-main", "landing-record")]
     assert state.record["receipts"] == sorted(expected)
-    assert (closing.head() != base) is landed and closing.card(item.id) == "READY"
+    assert (closing.head() != base) is landed and closing.card(item.id) == "ACCEPT"
     for finding in plan.get("request", {}).get("findings", []):
         if len(finding) <= 500:  # a refused request carries none of its findings
             assert f"closure-finding: {finding}" in closing.fx.journal_findings(item.id)
@@ -941,7 +1041,7 @@ def test_a_request_without_board_update_crashing_after_the_push_recovers_without
     monkeypatch.setattr(LandingAuthority, "land", original)
     closing.close(other.id)
     state = closing.state(item.id)
-    assert state.outcome == "authority-block" and closing.card(item.id) == "READY"
+    assert state.outcome == "authority-block" and closing.card(item.id) == "ACCEPT"
     assert {r.split(":", 1)[0] for r in state.record["receipts"]} == {
         "candidate-published", "merged-to-main", "landing-record"}
 
@@ -1054,7 +1154,7 @@ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(clo
             setattr(ownership, "work", (1,)), cleanup(self, invocation))[1])
     closing.close(item.id, ownership=ownership)
     state = closing.state(item.id)
-    assert state.outcome == "authority-block" and closing.card(item.id) == "DONE"
+    assert state.outcome == "authority-block" and closing.card(item.id) == "ACCEPT"
     assert receipt("workspaces-cleaned", item.id, revision_of(state)) not in state.record["receipts"]
     [session] = closing.fx.runs("CLOSURE")
     verifier_clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch-{workspace_folder(item.id)}-"))
@@ -1152,19 +1252,28 @@ def test_authorize_of_a_begun_landing_waits_for_a_readable_remote_and_writes_not
     assert fx.loaded(Owners("terminated")).decide(item.id, "authorize", QUOTE)["answer"] is None
 
 
-def test_started_item_needs_the_journaled_contract_digest_and_initial_admission_is_unchanged(closing):
+def test_started_item_needs_the_journaled_contract_digest_and_initial_admission_is_unchanged(closing, monkeypatch):
     """Check 9: a started item is built from its registry record only with the journaled digest; an item with no
     coordinator record whose card is not READY is not eligible."""
     fx = closing.fx
     item = closing.accepted()
     registry = fx.loaded()
     correlation = closing.state(item.id).record["correlation"]
+    # Started-item admission reads only the needed tail, never materializing the historical journal.
+    with monkeypatch.context() as patch:
+        patch.setattr(work_registry.JsonlInvocationJournal, "records",
+                      lambda self: (_ for _ in ()).throw(AssertionError("full journal replay")))
+        assert registry._started_item(item.id, correlation) is not None
     assert registry._started_item(item.id, correlation).contract.content_digest == next(
         r["contract_digest"] for r in closing.journal() if r.get("correlation_id") == correlation)
     journal = launch_root(registry.configuration) / "invocation-journal.jsonl"
     journal.write_text(journal.read_text().replace(next(
         r["contract_digest"] for r in closing.journal() if r.get("correlation_id") == correlation), OTHER_DIGEST))
     assert registry._started_item(item.id, correlation) is None
+    card = registry.records.show(item.id).item.card_id
+    fx.github.fields[card]["Status"] = "READY"
+    registry.show_stage(item.id)
+    assert registry.board_diagnostics[item.id] == "not-started-item" and closing.card(item.id) == "READY"
     waiting = fx.authorized("WAITING")
     fx.github.fields[fx.registry.records.show(waiting.id).item.card_id]["Status"] = "IMPLEMENT"
     assert fx.launch(waiting.id) == "not-eligible"
