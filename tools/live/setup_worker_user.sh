@@ -123,9 +123,11 @@ traverse() {
 for path in "$LAUNCH" "$PACKETS" "${READS[@]}"; do traverse "$path"; done
 for path in "${READS[@]}"; do add setfacl -R -m "u:$WORKER:r-X" "$path"; done
 
-# 5. No read for others on the Founder's credential files, and no worker ACL entry on them.
+# 5. No read for others on the Founder's credential files (including the Founder's own provider logins), and no
+#    worker ACL entry on them.
 for path in "$FOUNDER_HOME/.git-credentials" "$FOUNDER_HOME/.netrc" "$FOUNDER_HOME/.gitconfig" \
-            "$FOUNDER_HOME/.config/gh" "$FOUNDER_HOME/.ssh" "$(dirname "$KEY")"; do
+            "$FOUNDER_HOME/.config/gh" "$FOUNDER_HOME/.ssh" "$(dirname "$KEY")" \
+            "$FOUNDER_HOME/.codex" "$FOUNDER_HOME/.claude"; do
   add chmod -R o-rwx "$path"
   add setfacl -R -x "u:$WORKER" "$path"
 done

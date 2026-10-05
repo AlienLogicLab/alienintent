@@ -3,8 +3,12 @@
 
 It records (a)-(g) of the packet, each PASS, FAIL or UNRESOLVED, as JSON lines on standard output, and exits 0 only
 when every item passes. (a), (b) and (f) run commands as the worker through the one sudo rule; (c1), with
---provider-argv and --home, recreates the worker HOME empty holding only the provider's own login file and runs one
-real provider call as the worker; (c2) runs, as the worker, the context command of a real launch's bounded export
+--provider-argv (a codex call) and --home (<launch>/worker/home), runs two consecutive real Codex invocations as the
+worker with the same persistent CODEX_HOME <launch>/worker/auth/codex, each first passing the same worker-run login
+check as LaunchPreparation.prepare and then prepared by the candidate's own prepare_worker_session (this tool holds no
+preparation code), then checks, by a stat run as the worker, that the store's auth.json is a regular worker-owned file
+of mode 0600, and that the Founder's ~/.codex/auth.json kept its inode, size and modification time (stat only, never
+opened); (c2) runs, as the worker, the context command of a real launch's bounded export
 (--package <launch>/exports/<invocation>/context.json), checks it re-prints exactly that package and that the
 canonical evidence repository stays unreadable to the worker, and is UNRESOLVED without one, so the proof then does
 not pass; (d) mints a landing-scoped installation token as the Founder through the Landing Authority's own
@@ -38,7 +42,9 @@ STEPS = {
          "evidence repository's own privacy check still passes as the Founder",
     "b": "as the worker, no gh login, git credential helper, SSH key or token variable; each credential file "
          "unreadable; an installation-token mint fails; sudo -n -l fails",
-    "c1": "a real provider session as the worker starts with only its login file",
+    "c1": "two consecutive real Codex invocations as the worker, each with a fresh HOME and the same persistent "
+          "CODEX_HOME <launch>/worker/auth/codex, both succeed; the store's auth.json is a regular worker-owned 0600 "
+          "file; the Founder's ~/.codex/auth.json is never opened and is unchanged",
     "c2": "the context_command returns, from the bounded export only, the real package of a registered, approved "
           "work item, while the canonical evidence repository stays unreadable to the worker",
     "d": "as the Founder, the Landing Authority mints a landing-scoped token through its own InstallationCredentials "
@@ -49,7 +55,7 @@ STEPS = {
     "g": "a finished worker's workspace is removed by the normal cleanup through the sudo rule",
 }
 CREDENTIAL_FILES = (".git-credentials", ".netrc", ".gitconfig", ".config/gh/hosts.yml", ".ssh/id_rsa",
-                    ".ssh/id_ed25519")
+                    ".ssh/id_ed25519", ".codex/auth.json", ".claude/.credentials.json")
 
 
 def record(step: str, status: str, **facts: object) -> bool:
@@ -79,10 +85,6 @@ def _guarded(step: str, check, *arguments) -> bool:
         return check(*arguments)
     except Exception as error:  # noqa: BLE001 - recorded, never raised
         return record(step, "FAIL", error=_tail(f"{type(error).__name__}: {error}"))
-
-
-PROVIDER_LOGIN_FILES = {"codex": ".codex/auth.json", "claude": ".claude/.credentials.json"}
-LOGIN_LIMIT = 1 << 20
 
 
 def as_worker(argv: list[str], environment: dict[str, str] | None = None, **options) -> subprocess.CompletedProcess:
@@ -144,45 +146,52 @@ def check_b(key: Path, founder_home: Path) -> bool:
                   sudo_list_returncode=sudo.returncode)
 
 
-def _provider(provider_argv: list[str]) -> str | None:
-    names = {name for name in PROVIDER_LOGIN_FILES for word in provider_argv if Path(word).name == name}
-    return names.pop() if len(names) == 1 else None
+def _founder_login(founder_home: Path) -> tuple[int, int, int] | None:
+    """The Founder's ~/.codex/auth.json inode, size and modification time, by stat only (never opened)."""
+    try:
+        facts = os.stat(founder_home / ".codex" / "auth.json")
+    except FileNotFoundError:
+        return None
+    return facts.st_ino, facts.st_size, facts.st_mtime_ns
 
 
-def check_c1(provider_argv: list[str] | None, home: Path | None, founder_home: Path) -> bool:
-    """Prepare --home as the worker through the sudo rule: removed, recreated empty (0700) and given only the
-    provider's own login file, whose bytes the Founder reads from an opened regular file of its own (O_NOFOLLOW,
-    O_NONBLOCK, checked by fstat on the descriptor); then one real provider call as the worker with that HOME."""
-    from alienintent.invocation_runtime.adapters.git_source_control import open_worker_file, read_descriptor
+def check_c1(provider_argv: list[str] | None, home: Path | None, founder_home: Path, configuration: Path,
+             project: str) -> bool:
+    """Two consecutive real Codex invocations as the worker with the same persistent CODEX_HOME
+    `<launch>/worker/auth/codex` (home being `<launch>/worker/home`). Each first passes the same worker-run login
+    check as LaunchPreparation.prepare (`worker_login_present`) and is then prepared by the candidate's own
+    `prepare_worker_session`; this tool holds no preparation code of its own and never reads or copies a login file."""
+    from alienintent.composition import work_registry
     if not provider_argv or home is None:
         return record("c1", "UNRESOLVED", reason="needs --provider-argv and --home (<launch>/worker/home)")
-    provider = _provider(provider_argv)
-    if provider is None:
-        return record("c1", "FAIL", reason="the provider (codex or claude) cannot be named from --provider-argv")
-    login = PROVIDER_LOGIN_FILES[provider]
-    try:
-        descriptor = open_worker_file(founder_home / login, os.getuid())
-        try:
-            data = read_descriptor(descriptor, LOGIN_LIMIT)
-        finally:
-            os.close(descriptor)
-    except OSError as error:
-        return record("c1", "FAIL", reason=f"the login file cannot be read: {type(error).__name__}", login=login)
-    environment = {"HOME": str(home)}
-    write = ["sh", "-c", 'umask 077 && exec cat > "$1"', "sh", str(home / login)]
-    for argv, data_in in ((["rm", "-rf", "--", str(home)], None), (["mkdir", "-m", "0700", "--", str(home)], None),
-                          (["mkdir", "-p", "-m", "0700", "--", str((home / login).parent)], None), (write, data)):
-        prepared = as_worker(argv, environment, input=data_in)
-        if prepared.returncode:
-            return record("c1", "FAIL", reason=f"the worker HOME cannot be prepared: {argv[0]}",
-                          returncode=prepared.returncode)
-    listed = as_worker(["find", str(home), "-type", "f"], environment)
-    before = sorted(str(Path(line).relative_to(home)) for line in listed.stdout.decode(errors="replace").splitlines())
-    session = as_worker(provider_argv, environment, input=b"Reply with the single word OK.\n", timeout=600)
-    ok = listed.returncode == 0 and before == [login] and session.returncode == 0
-    tails = {} if ok else {"stdout_tail": _tail(session.stdout), "stderr_tail": _tail(session.stderr)}
-    return record("c1", "PASS" if ok else "FAIL", provider=provider, home_files=before,
-                  provider_returncode=session.returncode, **tails)
+    if not any(Path(word).name == work_registry.WORKER_PROVIDER for word in provider_argv):
+        return record("c1", "FAIL", reason="--provider-argv must be a codex call (the one provider with a "
+                                           "persistent worker login)")
+    loaded = work_registry.load_project_configuration(configuration, project)
+    packets = loaded.repositories[loaded.packets_repository].clone
+    worker, launch = home.parent, home.parent.parent
+    store = worker / "auth" / "codex"
+    environment = {"HOME": str(home), "TMPDIR": str(worker / "tmp"), "CODEX_HOME": str(store)}
+    founder_before = _founder_login(founder_home)
+    invocations: list[dict[str, object]] = []
+    for _ in range(2):
+        if not work_registry.worker_login_present(WORKER, environment, store):
+            return record("c1", "FAIL", reason=f"worker provider login missing: {store}", invocations=invocations)
+        work_registry.prepare_worker_session(WORKER, environment, packets, launch / "intake.git")
+        session = as_worker(provider_argv, environment, input=b"Reply with the single word OK.\n", timeout=600)
+        entry: dict[str, object] = {"returncode": session.returncode}
+        if session.returncode:
+            entry |= {"stdout_tail": _tail(session.stdout), "stderr_tail": _tail(session.stderr)}
+        invocations.append(entry)
+    stat = as_worker(["stat", "-c", "%U:%a:%F", "--", str(store / "auth.json")], environment)
+    owner, _, rest = stat.stdout.decode(errors="replace").strip().partition(":")
+    mode, _, kind = rest.partition(":")
+    auth = {"owner": owner, "mode": mode, "type": kind}
+    unchanged = _founder_login(founder_home) == founder_before
+    ok = all(entry["returncode"] == 0 for entry in invocations) and stat.returncode == 0 \
+        and auth == {"owner": WORKER, "mode": "600", "type": "regular file"} and unchanged
+    return record("c1", "PASS" if ok else "FAIL", provider=work_registry.WORKER_PROVIDER, codex_home=str(store),
+                  invocations=invocations, auth_json=auth, founder_login_unchanged=unchanged)
 
 
 def check_c2(package: Path | None, home: Path | None, configuration: Path, project: str) -> bool:
@@ -373,8 +382,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--key", type=Path, required=True, help="the factory App's private key file")
     parser.add_argument("--package", type=Path,
                         help="a real launch's bounded export <launch>/exports/<invocation>/context.json")
-    parser.add_argument("--provider-argv", help="JSON list: one real provider call run as the worker for 8(c1)")
-    parser.add_argument("--home", type=Path, help="the worker HOME 8(c1) recreates (<launch>/worker/home)")
+    parser.add_argument("--provider-argv", help="JSON list: one real codex call run twice as the worker for 8(c1)")
+    parser.add_argument("--home", type=Path, help="the worker HOME 8(c1) has prepare_worker_session recreate "
+                                                  "(<launch>/worker/home)")
     parser.add_argument("--scratch", type=Path, default=Path(tempfile.gettempdir()),
                         help="where the temporary remote, packets clone and launch folder of 8(e) and 8(g) go")
     parser.add_argument("--dry-run", action="store_true", help="print the steps only")
@@ -388,7 +398,8 @@ def main(argv: list[str] | None = None) -> int:
     provider = json.loads(arguments.provider_argv) if arguments.provider_argv else None
     results = [_guarded("a", check_a, arguments.key, arguments.configuration, arguments.project),
                _guarded("b", check_b, arguments.key, founder_home),
-               _guarded("c1", check_c1, provider, arguments.home, founder_home),
+               _guarded("c1", check_c1, provider, arguments.home, founder_home, arguments.configuration,
+                        arguments.project),
                _guarded("c2", check_c2, arguments.package, arguments.home, arguments.configuration, arguments.project),
                _guarded("d", check_d, arguments.configuration, arguments.project),
                _guarded("e", check_e_g, arguments.scratch), _guarded("f", check_f)]

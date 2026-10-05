@@ -38,8 +38,9 @@ outcome is a verified `ready-to-land`. After the coordinator's DONE the row is p
 READY view use DISPLAY_PERMISSIONS for the one repository.
 With the optional `worker_user` entry (unit WORKER-CREDENTIAL-BOUNDARY), every cognitive session and every command
 run on its behalf runs as that Unix user through the one sudo rule, in its own worker-owned clone under
-`launch/worker/`, with a HOME (`launch/worker/home`) recreated at each session holding only the routed provider's
-login file and a `safe.directory`-only `.gitconfig`. The candidate is handed over by exact object identity through a
+`launch/worker/`, with a HOME (`launch/worker/home`) recreated at each session holding only a `safe.directory`-only
+`.gitconfig`, and the worker's own persistent Codex login in `launch/worker/auth/codex` as `CODEX_HOME` (the Founder's
+login is never read or copied). The candidate is handed over by exact object identity through a
 bundle imported into the control-plane-owned `launch/intake.git`, and published from there; worker results are read
 from `launch/results/<invocation>/` through checked descriptors only. Without it, launches run as today. This is a
 credential and authority boundary, not containment.
@@ -242,8 +243,34 @@ def project_configuration(document: object, project: str) -> ProjectConfiguratio
 
 
 _USER_NAME = re.compile(r"[a-z_][a-z0-9_-]{0,31}")
-# Each provider's own login file, relative to HOME: the only credential a worker HOME holds.
-PROVIDER_LOGIN_FILES = {"codex": ".codex/auth.json", "claude": ".claude/.credentials.json"}
+# The one provider with a persistent worker-owned login (revision 8): its store is `<launch>/worker/auth/codex`.
+WORKER_PROVIDER = "codex"
+_LOGIN_CHECK = 'test -d "$1" && ! test -L "$1" && test -f "$1/auth.json" && ! test -L "$1/auth.json"'
+
+
+def worker_login_present(user: str, environment: Mapping[str, str], store: Path) -> bool:
+    """Whether the worker's own login is in place, checked as the worker through the sudo rule: `store` a real
+    folder (not a symlink) holding a regular `auth.json` (not a symlink). Only the exit code is read."""
+    return run_as_worker(user, environment, ["sh", "-c", _LOGIN_CHECK, "sh", str(store)]).returncode == 0
+
+
+def prepare_worker_session(user: str, environment: Mapping[str, str], packets_clone: Path, intake: Path) -> None:
+    """Prepare one worker session, as the worker through the sudo rule, after `worker_login_present`: recreate the
+    HOME (`environment["HOME"]`) empty, mode 0700, holding only a `.gitconfig` whose only key is `safe.directory`,
+    for the packets clone and the intake repository, and make TMPDIR; then remove everything in the worker's
+    persistent login store (`environment["CODEX_HOME"]`) except `auth.json`, so no session leaves configuration or
+    instructions for the next. The control plane opens no file and never reads, writes or copies a login file; no
+    gh login, credential helper, SSH key, configuration or App key reaches the worker."""
+    home, tmp, store = Path(environment["HOME"]), Path(environment["TMPDIR"]), Path(environment["CODEX_HOME"])
+    safe = "[safe]\n" + "".join(f"\tdirectory = {path}\n" for path in (packets_clone, intake))
+    write = ["sh", "-c", 'umask 077 && exec cat > "$1"', "sh"]
+    for argv, data_in in ((["rm", "-rf", "--", str(home)], None), (["mkdir", "-m", "0700", "--", str(home)], None),
+                          (["mkdir", "-p", "-m", "0700", "--", str(tmp)], None),
+                          ([*write, str(home / ".gitconfig")], safe.encode()),
+                          (["find", "-P", str(store), "-mindepth", "1", "-maxdepth", "1", "!", "-name", "auth.json",
+                            "-exec", "rm", "-rf", "--", "{}", "+"], None)):
+        if run_as_worker(user, environment, argv, input=data_in).returncode:
+            raise OSError(f"the worker session cannot be prepared: {argv[0]}")
 
 
 def worker_uid(user: str) -> int:
@@ -616,7 +643,8 @@ class WorkRegistry:
             recovered = lambda invocation: _producer_worktree(root / "workspaces", invocation)  # noqa: E731
         else:
             worker_root = root / "worker"
-            environment = environment | {"HOME": str(worker_root / "home"), "TMPDIR": str(worker_root / "tmp")}
+            environment = environment | {"HOME": str(worker_root / "home"), "TMPDIR": str(worker_root / "tmp"),
+                                         "CODEX_HOME": str(worker_root / "auth" / "codex")}
             for directory in (worker_root, root / "results", root / "handoff"):
                 if not directory.is_dir():  # normally made by the setup; made here as the worker, mode 0711
                     run_as_worker(user, environment, ["mkdir", "-p", "-m", "0711", "--", str(directory)])
@@ -1034,21 +1062,22 @@ class LaunchPreparation:
     raises.
 
     With `worker` (the hand-over, unit WORKER-CREDENTIAL-BOUNDARY) every worker result lives in
-    `<launch>/results/<invocation>/` and is read only through `worker.read_result`, and `command` first recreates the
-    worker HOME, as the worker through the sudo rule, holding only the routed provider's login file and a
-    `safe.directory`-only `.gitconfig` for the packets clone and the intake repository."""
+    `<launch>/results/<invocation>/` and is read only through `worker.read_result`; `prepare` refuses a route whose
+    provider is not codex (`worker provider unsupported: <provider>`) and, after the worker-run
+    `worker_login_present`, a missing worker login (`worker provider login missing: <store>`); and `command` first
+    runs `prepare_worker_session`: the worker HOME recreated holding only the `safe.directory`-only `.gitconfig`,
+    and the worker's own login store (`CODEX_HOME`) cleaned of all but `auth.json`. No login file is read or copied."""
 
     def __init__(self, context: WorkContext, context_root: Path, repository: str,
                  route: Callable[[str], dict[str, str]] = resolve_route, *, worker=None, user: str | None = None,
                  environment: Mapping[str, str] | None = None, packets_clone: Path | None = None,
-                 login_source: Path | None = None, exports: Path | None = None) -> None:
+                 exports: Path | None = None) -> None:
         self.context, self.context_root, self.repository, self.route = context, Path(context_root), repository, route
         self.kept: dict[str, tuple[dict[str, str], str]] = {}
         # Each invocation's starting revision from its package: the VERIFIER's regression base with a worker user.
         self.starting: dict[str, str] = {}
         self.worker, self.user, self.packets_clone = worker, user, packets_clone
         self.environment = dict(environment or {})
-        self.login_source = Path.home() if login_source is None else Path(login_source)
         # With a worker user: `<launch>/exports`, where each invocation's package is exported (section 0.6b).
         self.exports = None if exports is None else Path(exports)
         self.identities: dict[str, str] = {}  # each invocation's work item, for the worker's identity variables
@@ -1094,6 +1123,12 @@ class LaunchPreparation:
             route = self.route(VERIFIER if role == CLOSURE else role)  # CLOSURE runs on the VERIFIER's route
         except (OSError, ValueError, TypeError, AttributeError) as error:
             return self._refusal(invocation, f"model-routing-unavailable: {role}: {type(error).__name__}: {error}")
+        if self.worker is not None:
+            if route.get("provider") != WORKER_PROVIDER:  # no persistent worker login exists for it yet
+                return self._refusal(invocation, f"worker provider unsupported: {route.get('provider')}")
+            store = Path(self.environment["CODEX_HOME"])
+            if not worker_login_present(self.user, self.environment, store):
+                return self._refusal(invocation, f"worker provider login missing: {store}")
         self.deliver(invocation, package.document(), route)
         self.starting[invocation.correlation_id] = str(package.fields["starting_revision"])
         return str(package.fields["starting_revision"])
@@ -1149,25 +1184,8 @@ class LaunchPreparation:
         and the instruction text for standard input."""
         route, text = self.kept[invocation_id]
         if self.worker is not None:
-            self.prepare_home(route["provider"])
+            prepare_worker_session(self.user, self.environment, self.packets_clone, self.worker.intake)
         return provider_command(route, workspace), text
-
-    def prepare_home(self, provider: str) -> None:
-        """Recreate the worker HOME empty, as the worker through the sudo rule, holding only `provider`'s own login
-        file (its bytes read by the control plane from the login source and given on standard input) and a
-        `.gitconfig` whose only key is `safe.directory`, for the packets clone and the intake repository. No gh
-        login, credential helper, SSH key, configuration or App key."""
-        home, tmp = Path(self.environment["HOME"]), Path(self.environment["TMPDIR"])
-        login = PROVIDER_LOGIN_FILES[provider]
-        data = (self.login_source / login).read_bytes()
-        safe = "[safe]\n" + "".join(f"\tdirectory = {path}\n" for path in (self.packets_clone,
-                                                                            self.worker.intake))
-        write = ["sh", "-c", 'umask 077 && exec cat > "$1"', "sh"]
-        for argv, data_in in ((["rm", "-rf", "--", str(home)], None), (["mkdir", "-m", "0700", "--", str(home)], None),
-                              (["mkdir", "-p", "-m", "0700", "--", str((home / login).parent), str(tmp)], None),
-                              ([*write, str(home / login)], data), ([*write, str(home / ".gitconfig")], safe.encode())):
-            if run_as_worker(self.user, self.environment, argv, input=data_in).returncode:
-                raise OSError(f"the worker HOME cannot be prepared: {argv[0]}")
 
     def published(self, invocation: WorkerInvocation, candidate: CandidateRef) -> None:
         try:
