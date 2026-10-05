@@ -124,7 +124,7 @@ is in IMPLEMENT, VERIFY or ACCEPT, and moving the card would stop the next role.
      in `__init__`), keyed by identity, and is never raised; a later success removes the entry.
 4. **Where it runs:**
    - `LaunchPreparation.__init__` takes `stage_shown: Callable[[str, str, str], None] | None = None` (identity,
-     correlation, role); both `LaunchPreparation(...)` calls in `_launch_chain` (about lines 648 and 666) pass a callable
+     correlation, role); both `LaunchPreparation(...)` calls in `_launch_chain` pass
      `stage_shown=lambda identity, correlation, role: self.show_stage(identity, correlation, role)` (the two calls are
      at about lines 644 and 657). In `prepare`, after `self.starting[...] = ...` (about line 1163) and before the
      `return`, call it with `invocation.work_identity`, `invocation.correlation_id` and the role, inside
