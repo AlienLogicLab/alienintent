@@ -98,10 +98,18 @@ elif role == "CLOSURE":
         subprocess.run(plan["push"], check=True, capture_output=True)
 elif "Then write your verdict as one JSON file, to this file:" in lines:
     verdict = lines[lines.index("Then write your verdict as one JSON file, to this file:") + 1]
-    Path(verdict).write_text(json.dumps({{"revision": head, "verdict": "accept", "findings": []}}))
+    plan_path = Path({plan!r})
+    plan = json.loads(plan_path.read_text()) if plan_path.exists() else {{}}
+    decision = plan.get("verifier_verdict", "accept")
+    Path(verdict).write_text(json.dumps({{"revision": head, "verdict": decision,
+                                        "findings": ["review finding"] if decision == "reject" else []}}))
 else:
     Path(".alienintent").mkdir(exist_ok=True)
-    Path(".alienintent/verdict.json").write_text(json.dumps({{"revision": head, "verdict": "accept", "findings": []}}))
+    plan_path = Path({plan!r})
+    plan = json.loads(plan_path.read_text()) if plan_path.exists() else {{}}
+    decision = plan.get("verifier_verdict", "accept")
+    Path(".alienintent/verdict.json").write_text(json.dumps({{"revision": head, "verdict": decision,
+                                                          "findings": ["review finding"] if decision == "reject" else []}}))
 '''
 
 
@@ -515,6 +523,7 @@ def test_restart_continuation_one_launch_at_a_time_both_leaks_and_a_never_starte
     runs = len(fx.runs())
     decided = fx.loaded().decide(parked.id, "authorize", QUOTE)
     assert decided["answer"] is None and decided["decision"]["submission"]["actor"] == "Founder"
+    assert fx.loaded().coordinator(None, None).state(parked.id).record["correlation"] == correlation
     assert fx.loaded().decide(parked.id, "authorize", QUOTE)["decision"] == decided["decision"]
     assert len(fx.runs()) == runs and fx.loaded().coordinator(None, None).state(parked.id).outcome == "decision-recorded"
     assert fx.loaded().decide(other.id, "authorize", QUOTE) == {"answer": "NO_OPEN_DECISION"}
@@ -699,6 +708,94 @@ def revision_of(state) -> str:
     return state.candidate.locator.rpartition("@")[2]
 
 
+def test_board_follows_each_launched_role_and_done(closing, monkeypatch):
+    item = closing.fx.authorized("STAGES", **FIXED)
+    prepared: list[tuple[str, str | None]] = []
+    original = work_registry.LaunchPreparation.prepare
+
+    def observe_preparation(self, invocation, clone):
+        result = original(self, invocation, clone)
+        prepared.append((invocation.role, closing.card(item.id)))
+        return result
+
+    monkeypatch.setattr(work_registry.LaunchPreparation, "prepare", observe_preparation)
+    assert closing.card(item.id) == "READY"
+    closing.fx.launch(item.id)
+    assert prepared[-1] == ("PRODUCER", "IMPLEMENT")
+    assert closing.card(item.id) == "VERIFY"
+    closing.fx.launch(item.id)
+    assert prepared[-1] == ("VERIFIER", "VERIFY")
+    assert closing.card(item.id) == "ACCEPT"
+    closing.close(item.id)
+    assert prepared[-1] == ("CLOSURE", "ACCEPT")
+    assert closing.state(item.id).stage is LifecycleStage.DONE
+    assert closing.card(item.id) == "DONE"
+
+
+def test_failed_board_write_is_diagnostic_and_next_launch_retries(closing, monkeypatch):
+    item = closing.fx.authorized("RETRY", **FIXED)
+    registry = closing.fx.loaded()
+    board = closing.fx.github._graphql
+
+    def failing_board(query, variables):
+        if "updateProjectV2ItemFieldValue" in query:
+            raise RuntimeError("board unavailable")
+        return board(query, variables)
+
+    monkeypatch.setattr(closing.fx.github, "_graphql", failing_board)
+    registry.launcher().launch(item.id)
+    assert registry.coordinator(None, None).state(item.id).stage is LifecycleStage.VERIFY
+    assert closing.card(item.id) == "READY"
+    assert "board unavailable" in registry.board_diagnostics[item.id]
+    monkeypatch.setattr(closing.fx.github, "_graphql", board)
+    registry.launcher().launch(item.id)
+    assert registry.coordinator(None, None).state(item.id).stage is LifecycleStage.ACCEPT
+    assert closing.card(item.id) == "ACCEPT"
+    assert item.id not in registry.board_diagnostics
+
+
+def test_release_hold_and_missing_started_item_do_not_move_card(closing):
+    item = closing.fx.authorized("HELD", **FIXED)
+    registry = closing.fx.loaded()
+    aggregate = f"factory:{item.id}"
+    registry.store.commit("registry", aggregate, 0, {"stage": "IMPLEMENT", "correlation": "release"})
+    registry.show_stage(item.id)
+    assert closing.card(item.id) == "READY" and registry.board_diagnostics == {}
+    version, raw = registry.store.read_state("registry", aggregate)
+    registry.store.commit("registry", aggregate, version, raw | {"correlation": f"launch:{item.id}:99"})
+    registry.show_stage(item.id)
+    assert closing.card(item.id) == "READY" and registry.board_diagnostics[item.id] == "not-started-item"
+
+
+def test_verifier_rejection_returns_card_to_implement(closing):
+    item = closing.fx.authorized("REWORK", **(FIXED | {"budget_policy": {
+        "maximum_attempts": 2, "hard_wall_clock_seconds": 120, "cancellation_limit": 1}}))
+    closing.plan(verifier_verdict="reject")
+    closing.fx.launch(item.id)
+    assert closing.card(item.id) == "VERIFY"
+    closing.fx.launch(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.IMPLEMENT
+    assert closing.card(item.id) == "IMPLEMENT"
+
+
+def test_stage_sweep_reads_journal_once_for_multiple_items(closing, monkeypatch):
+    first = closing.fx.authorized("FIRST", **FIXED)
+    second = closing.fx.authorized("SECOND", **FIXED)
+    closing.fx.launch(first.id)
+    closing.fx.launch(second.id)
+    registry = closing.fx.loaded()
+    original = registry._journal_records
+    reads = []
+
+    def counted():
+        reads.append(1)
+        return original()
+
+    monkeypatch.setattr(registry, "_journal_records", counted)
+    registry._sweep_stages(first.id)
+    assert len(reads) == 1
+
+
 def test_closure_lands_through_the_authority_with_five_exact_receipts_and_the_row_projected(closing, monkeypatch):
     """Checks 1, 4, 6, 7, 10, 13 and 14 over one real CLOSURE launch."""
     fx = closing.fx
@@ -774,7 +871,7 @@ def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx
     closing.close(item.id)
     state = closing.state(item.id)
     assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "ready-to-land")
-    assert closing.head() == base and closing.orders(item.id) == [] and closing.card(item.id) == "READY"
+    assert closing.head() == base and closing.orders(item.id) == [] and closing.card(item.id) == "ACCEPT"
     [session] = fx.runs("CLOSURE")
     clone = Path(session["cwd"])
     assert clone.is_dir() and not fx.wip_held(item.id)
@@ -796,11 +893,11 @@ def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx
     assert [r["argv"][r["argv"].index("--model") + 1] for r in fx.runs("CLOSURE")] == ["model-a", "model-c"]
 
 
-def test_a_failing_landing_runs_closure_once_per_start(closing, monkeypatch):
-    """Check 11: with landing on and the Authority refusing every time, one `start()` runs CLOSURE once."""
+def test_a_failing_landing_runs_closure_once_per_launch(closing, monkeypatch):
+    """With landing on and the Authority refusing, one named launch runs CLOSURE once."""
     item = closing.accepted()
     monkeypatch.setattr(LandingAuthority, "land", lambda self, order: "refused:fixture")
-    closing.fx.loaded(Owners("terminated")).launcher().release_and_start(item.id)
+    closing.close(item.id)
     assert len(closing.fx.runs("CLOSURE")) == 1 and closing.state(item.id).outcome == "authority-block"
 
 
@@ -831,7 +928,7 @@ def test_the_bounded_request_alone_steers_nothing(closing, plan, landed):
     if landed:
         expected += [receipt(a, item.id, revision) for a in ("merged-to-main", "landing-record")]
     assert state.record["receipts"] == sorted(expected)
-    assert (closing.head() != base) is landed and closing.card(item.id) == "READY"
+    assert (closing.head() != base) is landed and closing.card(item.id) == "ACCEPT"
     for finding in plan.get("request", {}).get("findings", []):
         if len(finding) <= 500:  # a refused request carries none of its findings
             assert f"closure-finding: {finding}" in closing.fx.journal_findings(item.id)
@@ -941,7 +1038,7 @@ def test_a_request_without_board_update_crashing_after_the_push_recovers_without
     monkeypatch.setattr(LandingAuthority, "land", original)
     closing.close(other.id)
     state = closing.state(item.id)
-    assert state.outcome == "authority-block" and closing.card(item.id) == "READY"
+    assert state.outcome == "authority-block" and closing.card(item.id) == "ACCEPT"
     assert {r.split(":", 1)[0] for r in state.record["receipts"]} == {
         "candidate-published", "merged-to-main", "landing-record"}
 
@@ -1054,7 +1151,7 @@ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(clo
             setattr(ownership, "work", (1,)), cleanup(self, invocation))[1])
     closing.close(item.id, ownership=ownership)
     state = closing.state(item.id)
-    assert state.outcome == "authority-block" and closing.card(item.id) == "DONE"
+    assert state.outcome == "authority-block" and closing.card(item.id) == "ACCEPT"
     assert receipt("workspaces-cleaned", item.id, revision_of(state)) not in state.record["receipts"]
     [session] = closing.fx.runs("CLOSURE")
     verifier_clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch-{workspace_folder(item.id)}-"))
@@ -1227,6 +1324,7 @@ def test_main_moving_to_a_non_ancestor_after_the_order_reworks_without_escalatio
     assert len(closing.orders(item.id)) == 1
     assert closing.pushes == ["refused:base-moved"] and closing.head() == moved[0]
     assert state.stage is LifecycleStage.IMPLEMENT and state.record["rejections"] == 1
+    assert closing.card(item.id) == "IMPLEMENT"
     assert any(f.startswith("closure-rework:base-moved:") for f in state.record["findings"][-1]["findings"])
     assert _unescalated(closing, item.id)
 

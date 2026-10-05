@@ -89,7 +89,9 @@ class FactoryCoordinator:
                  recorded_completion: Callable[[str], bool] | None = None,
                  landing_enabled: Callable[[], bool] = lambda: False,
                  started_item: Callable[[str, str], ReadyWorkItem | None] | None = None,
-                 completed: Callable[[str], None] | None = None) -> None:
+                 completed: Callable[[str], None] | None = None,
+                 stage_shown: Callable[[str], None] | None = None,
+                 stage_sweep: Callable[[str], None] | None = None) -> None:
         self._store, self._work, self._worker, self._artifacts, self._profile = store, work, worker, artifacts, profile
         # Whether a dependency with no coordinator record is recorded complete (`work record-completed`); None (the
         # default) counts only a coordinator record at DONE.
@@ -107,6 +109,7 @@ class FactoryCoordinator:
         # Automated closure: whether landing is enabled, the resolver of a started item from its registry record
         # (when the READY view no longer lists it) and the DONE projection hook, which never raises into this class.
         self._landing_enabled, self._started_item, self._completed = landing_enabled, started_item, completed
+        self._stage_shown, self._stage_sweep = stage_shown, stage_sweep
         self.projection_diagnostics: dict[str, str] = {}
 
     def start(self) -> RunSummary:
@@ -154,8 +157,8 @@ class FactoryCoordinator:
         CLOSURE_NOT_AUTOMATED; an item at `ready-to-land` while landing is not enabled answers READY_TO_LAND.
         Otherwise it writes the explicit human release as `release_and_start` does, runs the existing recovery once
         (which may record already-durable outcomes of other launches and starts no worker), projects every recorded
-        DONE through `completed`, and, only if the item is in the READY snapshot (or, at ACCEPT, resolved by
-        `started_item`) and `_eligible` admits it, runs `_run` once for it. It never calls `start()`, so no other
+        DONE through `completed`, and, if the READY snapshot or a started registry item resolves it and `_eligible`
+        admits it, runs `_run` once for it. It never calls `start()`, so no other
         work item runs and the next role waits for the next `launch`.
         """
         accepted: ReadyWorkItem | None = None
@@ -177,7 +180,19 @@ class FactoryCoordinator:
         if not self._recover(items):
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
         self._project_done()
-        item = next((ready for ready in items if ready.identity == identity), accepted)
+        if self._stage_sweep is not None:
+            try:
+                self._stage_sweep(identity)
+            except Exception as error:  # noqa: BLE001 - board projection cannot change a launch
+                self.projection_diagnostics[identity] = f"{identity}: {type(error).__name__}: {error}"
+        item = next((ready for ready in items if ready.identity == identity), None)
+        if item is None:
+            try:
+                record = self.state(identity).record
+            except KeyError:
+                record = None
+            if record is not None:
+                item = self._resolve(identity, items, record)
         if item is None or not self._eligible(item):
             return NOT_ELIGIBLE
         producing = self._role(identity) == PRODUCER
@@ -206,7 +221,8 @@ class FactoryCoordinator:
         version, raw = self._store.read_state(self._profile, self._aggregate(identity))
         if not raw:
             raise KeyError(f"unknown work item: {identity}")
-        item = next((candidate for candidate in self._work.import_ready_snapshot() if candidate.identity == identity), None)
+        items = self._work.import_ready_snapshot()
+        item = self._resolve(identity, items, raw)
         outcome = raw.get("outcome")
         terminal = raw.get("stage") == LifecycleStage.DONE.value or outcome in {"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"}
         eligible = bool(item is not None and self._eligible(item))
@@ -585,6 +601,11 @@ class FactoryCoordinator:
         recorded = read_back.get("correlation") == correlation and read_back.get("outcome") == outcome
         if recorded:
             self._release_ended_wip(item.identity)
+            if self._stage_shown is not None:
+                try:
+                    self._stage_shown(item.identity)
+                except Exception as error:  # noqa: BLE001 - state has already been recorded
+                    self.projection_diagnostics[item.identity] = f"{item.identity}: {type(error).__name__}: {error}"
         return recorded
 
     @staticmethod
@@ -687,7 +708,7 @@ class FactoryCoordinator:
         return True
 
     def _resolve(self, identity: str, items: Iterable[ReadyWorkItem], raw: Mapping[str, object]) -> ReadyWorkItem | None:
-        """The READY row of a work item at ACCEPT, else the item built from its registry record (`started_item`)."""
+        """The READY row, else the started item built from its registry record (`started_item`)."""
         item = next((ready for ready in items if ready.identity == identity), None)
         correlation = raw.get("correlation")
         if item is None and self._started_item is not None and isinstance(correlation, str):
@@ -923,6 +944,8 @@ class FactoryCoordinator:
         if not already_recorded:
             outcome = "cancelled-by-decision" if record.submission.choice == "cancel" else "decision-recorded"
             decision_state = self._encode(state) | self._carried(raw) | {"outcome": outcome, "decision_key": record.event.idempotency_key, "decision_choice": record.submission.choice}
+            if isinstance(raw.get("correlation"), str):
+                decision_state["correlation"] = raw["correlation"]
             if record.submission.choice == "cancel":
                 self._store.commit(self._profile, self._aggregate(record.event.work_item), version, decision_state)
                 self._release_ended_wip(record.event.work_item)
