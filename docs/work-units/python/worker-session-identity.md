@@ -1,7 +1,7 @@
 # Work unit: worker sessions carry the worker's own user name; AGENTS.md states the factory's receipt rule
 
-**Label:** `WORKER-SESSION-IDENTITY` (a document label; permanent id `PENDING`).
-**Status:** Draft revision 1 (at CAPTURE) for independent review, 2026-10-06. Not approved, not assessed, not released.
+**Label:** `WORKER-SESSION-IDENTITY` (a document label; permanent id `e0cffbb5-4037-4604-bb92-fef989661ae5`).
+**Status:** Draft revision 1 (work item `e0cffbb5-4037-4604-bb92-fef989661ae5`, at CAPTURE) for independent review, 2026-10-06. Not approved, not assessed, not released.
 **Position on the path:** repairs the execution and verification environment needed to evaluate BOARD-FOLLOWS-WORK-STATE
 correctly. **This work item does not change BOARD-FOLLOWS-WORK-STATE behaviour.** Built outside the factory (its own
 VERIFIER session would hit the user-name defect it fixes): one PRODUCER, one fresh VERIFIER on the exact candidate,
@@ -12,7 +12,7 @@ direct merge to `main`.
 
 ```json alienintent-contract
 {
- "identity": "PENDING",
+ "identity": "e0cffbb5-4037-4604-bb92-fef989661ae5",
  "version": "revision-1",
  "intent": "With a worker user, every command the factory runs as that user gets USER and LOGNAME equal to the worker user instead of the Founder's inherited values; and AGENTS.md and docs/operations.md state where the factory's feature-regression receipt actually lives, so a VERIFIER never requires a receipt committed inside the candidate when the invocation runtime keeps and hands over that receipt itself.",
  "satisfied_requirement_ids": [
