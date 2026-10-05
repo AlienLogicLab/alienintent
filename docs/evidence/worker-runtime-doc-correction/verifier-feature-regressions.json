@@ -1,0 +1,14 @@
+{
+  "base": "759b5dbb3e625d08d5b3f7ec4409660279104d01",
+  "candidate": "a82e848173e5b18489e31a9afdfeba5aa32a6ccc",
+  "changed_paths": [
+    "docs/work-units/python/worker-credential-boundary-handoff.md",
+    "docs/work-units/python/worker-credential-boundary.md"
+  ],
+  "kind": "FeatureRegressionReceipt",
+  "manifest_digest": "sha256:34dda425d30813e12a14d78704c3222f19debf2da2e0a4b1084e3cb3b7d01f5c",
+  "packs": [],
+  "passed": true,
+  "receipt_digest": "sha256:25ae23dd23d1aaae4c3ed99dde1d910c7ca8fd9f648d3b5528d7b162c88d74cf",
+  "schema_version": 1
+}
