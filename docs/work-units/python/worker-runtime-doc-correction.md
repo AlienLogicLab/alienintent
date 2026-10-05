@@ -93,7 +93,7 @@ The VERIFIER of `156ef20` found that the packet still says the PRODUCER clone us
 
 ## 2. The changes (exact; each "old" text occurs exactly once at the starting revision)
 
-A text written between double backticks (` `` ... `` `) excludes the one space next to each delimiter. The texts in fenced blocks are exact lines.
+A text written between double backticks is every character between them, except that in replacements 1 and 2 the one space just after the opening double backticks is not part of the text. The texts in fenced blocks are exact lines.
 
 In `docs/work-units/python/worker-credential-boundary.md`:
 
@@ -135,6 +135,6 @@ The launch itself is the evidence for check 8(c2) of the parent unit: the PRODUC
 
 ## 4. Review record
 
-**Revision 2 (2026-10-05).** REVIEWER of `0c77e62` (FAIL, one wording fix): F1, the `.gitconfig` is not needed rather than without effect (its intake entry does match). Optional notes applied (backtick spacing; the export is kept by the launch, not checked by the VERIFIER). Founder constraints added: an ordinary launch with nothing special-cased, no manual context, the full lifecycle, the wider exclusions.
+**Revision 2 (2026-10-05).** REVIEWER of `0c77e62` (FAIL, one wording fix): F1, the `.gitconfig` is not needed rather than without effect (its intake entry does match). Optional notes applied (backtick spacing, corrected by the follow-up of `1328290`, D1; the export is kept by the launch, not checked by the VERIFIER). Founder constraints added: an ordinary launch with nothing special-cased, no manual context, the full lifecycle, the wider exclusions.
 
 **Revision 1 (2026-10-05).** First draft, from the Founder's decision of 2026-10-05.
