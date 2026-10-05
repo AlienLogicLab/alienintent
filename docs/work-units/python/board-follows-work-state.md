@@ -82,7 +82,7 @@ read-back, and changing the card must never decide which role runs next.
  ],
  "stop_escalation_conditions": [
   "a named function does not exist at the starting revision",
-  "_started_item is None for a record that has a correlation and the card would need to move",
+  "_started_item is None for a record whose correlation starts with launch: and the card would need to move",
   "a card write could move a work item to a state where neither the READY view nor started_item can find it",
   "scope outside the authorized files"
  ]
@@ -107,11 +107,14 @@ is in IMPLEMENT, VERIFY or ACCEPT, and moving the card would stop the next role.
 2. **Keep the correlation through a decision** (`factory_coordinator.py`, `record_decision`, about line 925):
    `decision_state` also keeps `"correlation": raw["correlation"]` when `raw.get("correlation")` is a `str`, so a work
    item whose card has left READY can still be found after `work decide`.
-3. **One card-sync step** (`work_registry.py`): `WorkRegistry.show_stage(identity: str, correlation: str | None = None)`.
-   - The correlation is the given one, else the coordinator record's `correlation`. With none, it does nothing.
+3. **One card-sync step** (`work_registry.py`): `WorkRegistry.show_stage(identity: str, correlation: str | None = None,
+   role: str | None = None)`.
+   - The correlation is the given one, else the coordinator record's `correlation` only when it starts with `launch:`
+     (a release-time hold records `"release"`, `factory_coordinator.py` about lines 369 and 374). With none, it does
+     nothing and records no diagnostic.
    - If `self._started_item(identity, correlation)` is None, it writes nothing and records the diagnostic
      `not-started-item` (for example after a pointer change or retirement).
-   - The stage written is the given role's stage when called from `prepare` (PRODUCER → `IMPLEMENT`, VERIFIER →
+   - The stage written is the given `role`'s stage when `role` is given (from `prepare`) (PRODUCER → `IMPLEMENT`, VERIFIER →
      `VERIFY`, CLOSURE → `ACCEPT`), else the coordinator record's `stage`, only when it is `IMPLEMENT`, `VERIFY`, `ACCEPT`
      or `DONE`. `REVIEW` is never written.
    - `card_id = self.records.show(identity).item.card_id`; with None it does nothing. It reads
@@ -122,9 +125,11 @@ is in IMPLEMENT, VERIFY or ACCEPT, and moving the card would stop the next role.
 4. **Where it runs:**
    - `LaunchPreparation.__init__` takes `stage_shown: Callable[[str, str, str], None] | None = None` (identity,
      correlation, role); both `LaunchPreparation(...)` calls in `_launch_chain` (about lines 648 and 666) pass a callable
-     that calls `show_stage`. In `prepare`, after `self.starting[...] = ...` (about line 1163) and before the `return`,
-     call it with `invocation.work_identity`, `invocation.correlation_id` and the role. The journal already holds
-     `invocation-started` at that point (`real_worker.py` about line 269).
+     `stage_shown=lambda identity, correlation, role: self.show_stage(identity, correlation, role)` (the two calls are
+     at about lines 644 and 657). In `prepare`, after `self.starting[...] = ...` (about line 1163) and before the
+     `return`, call it with `invocation.work_identity`, `invocation.correlation_id` and the role, inside
+     `try/except Exception` whose result is ignored; the board transport's own request timeout bounds the delay. The
+     journal already holds `invocation-started` at that point (`real_worker.py` about line 269).
    - `FactoryCoordinator.__init__` takes `stage_shown: Callable[[str], None] | None = None`, after `completed`; inside
      `_record_result`, after `if recorded:` (about line 587), it calls `self._stage_shown(item.identity)` inside
      `try/except Exception` that stores the error in `projection_diagnostics[identity]`. `coordinator()` (about line 470)
@@ -132,7 +137,7 @@ is in IMPLEMENT, VERIFY or ACCEPT, and moving the card would stop the next role.
    - At the start of every `launch`, next to `_project_done`, one sweep calls `show_stage` for the named work item and
      every recorded work item whose stage is not `DONE` and whose outcome is not in {`failure`, `timeout`,
      `cancelled-by-operator`, `cancelled-by-decision`}. The sweep reads the journal once.
-5. A release-time hold (a record with no correlation) leaves the card in READY. CLOSURE's own `board-updated` write of
+5. A release-time hold (a record whose `correlation` is `"release"`) leaves the card in READY. CLOSURE's own `board-updated` write of
    DONE is unchanged.
 
 ## 3. Acceptance checks
@@ -150,7 +155,7 @@ Board tests use the existing status-keeping board of the `Closing` fixture in `t
    to raise): the coordinator record, the outcome and the next role are unchanged, `board_diagnostics` holds an entry, and
    the next launch writes the card and clears the entry. Catches a board error changing state, or no retry.
 4. **No early move, and decisions keep the work item findable** (`test_worker_launch.py`, `Closing`): a release-time
-   authority-block (no correlation) leaves the card in READY and `launch` after `work decide authorize` finds the work
+   authority-block (correlation `"release"`) leaves the card in READY and records no diagnostic, and `launch` after `work decide authorize` finds the work
    item; a worker authority-block at IMPLEMENT moves the card to IMPLEMENT, and after `work decide authorize` the next
    `launch` runs the PRODUCER. Catches a stranded work item.
 5. **Rework** (`test_worker_launch.py`, `Closing`): a VERIFIER rejection moves the card back to IMPLEMENT.
@@ -159,6 +164,10 @@ Board tests use the existing status-keeping board of the `Closing` fixture in `t
    `tools/fitness/check_architecture.py --root src/alienintent --check all` passes.
 
 ## 4. Review record
+
+**Revision 1c (2026-10-06).** Second REVIEWER of `58708b1` (FAIL): a release-time hold records the correlation
+`"release"`, so only a `launch:` correlation counts; `show_stage` takes `role`; the exact `prepare` callable, wrapped
+so a board error cannot change the outcome.
 
 **Revision 1b (2026-10-06).** REVIEWER of `32b9fb4` (FAIL): the record has no correlation while a role runs (pass it
 from `prepare`); `prepare` reaches the registry through a `stage_shown` callable; `record_decision` keeps the
