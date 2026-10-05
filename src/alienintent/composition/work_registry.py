@@ -151,7 +151,7 @@ from alienintent.invocation_runtime.application.real_worker import (
     CLOSURE_ORDERED, EFFECT_UNKNOWN, OWNED_WORK_ACTIVE, OWNER_ALIVE, PUBLICATION_STARTED, RealWorkerProvider)
 from alienintent.invocation_runtime.domain.runtime import (
     INVOCATION_MARKER, INVOCATION_OWNER_MARKER, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable,
-    ReservationBook, owner_token)
+    ReservationBook, owner_token, workspace_folder)
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
 from alienintent.invocation_runtime.ports import source_control
 from alienintent.invocation_runtime.ports.source_control import PublishRef, SourceControl
@@ -557,7 +557,7 @@ class WorkRegistry:
         if request is not None and choice == "authorize" and parked:
             # With a worker user the remote is read from the Founder-owned packets clone, never the worker's.
             refusal = self._authorize_refusal(worker, identity, correlation, request.reason,
-                                              workspaces / correlation if self.configuration.worker_user is None
+                                              workspaces / workspace_folder(correlation) if self.configuration.worker_user is None
                                               else packets.clone)
             if refusal is not None:
                 return refusal | {"correlation": correlation, "retained_worktree": None if retained is None
@@ -1028,13 +1028,13 @@ class _DecisionOnly:
 
 
 def _producer_worktree(root: Path, invocation: WorkerInvocation, prefix: str = "") -> GitWorkspace | None:
-    """The PRODUCER worktree a correlation owns at its fixed path `<root>/<correlation>` (what
-    GitWorktreeAdapter.allocate creates; with a worker user `<launch>/worker/producer-<correlation>`, what
+    """The PRODUCER worktree a correlation owns at its fixed path `<root>/<workspace_folder(correlation)>` (what
+    GitWorktreeAdapter.allocate creates; with a worker user `<launch>/worker/producer-<workspace_folder(correlation)>`, what
     WorkerCloneAdapter.allocate creates), or None for an identity that could name a path outside the root."""
     correlation = invocation.correlation_id
     if not correlation or any(part in correlation for part in ("/", "\\", "..", "\x00")):
         return None
-    return GitWorkspace(correlation, invocation.work_identity, root.resolve() / f"{prefix}{correlation}",
+    return GitWorkspace(correlation, invocation.work_identity, root.resolve() / f"{prefix}{workspace_folder(correlation)}",
                         f"invocation/{ref_safe(correlation)}")
 
 
@@ -1499,7 +1499,7 @@ class RegistryClosure:
                         self.cleanup_diagnostics[str(worktree.path)] = reason or "worktree kept"
             if self.worker_workspaces is not None:  # worker clones: removed only as the worker
                 for prefix in ("verifier", "closure"):
-                    path = (self._root / "worker").resolve() / f"{prefix}-{correlation}"
+                    path = (self._root / "worker").resolve() / f"{prefix}-{workspace_folder(correlation)}"
                     if not os.path.lexists(path):
                         continue
                     if reason is None:
@@ -1512,7 +1512,7 @@ class RegistryClosure:
                         kept = True
                         self.cleanup_diagnostics[str(path)] = reason or "not removable"
             for prefix in _WORKSPACE_PREFIXES:
-                path = (self._root / "landing" if prefix == "landing" else verifier) / f"{prefix}-{correlation}"
+                path = (self._root / "landing" if prefix == "landing" else verifier) / f"{prefix}-{workspace_folder(correlation)}"
                 if not path.exists():
                     continue
                 if reason is not None:
@@ -1539,7 +1539,7 @@ class RegistryClosure:
         return f"refs/remotes/landing/{self._location.default_branch}"
 
     def _clone(self, correlation: str) -> Path:
-        clone = self._root / "landing" / f"landing-{correlation}"  # Founder-only, outside every worker root
+        clone = self._root / "landing" / f"landing-{workspace_folder(correlation)}"  # Founder-only, outside every worker root
         if not (clone / ".git").is_dir():
             clone.mkdir(parents=True, exist_ok=True)
             self._git(clone, "init", "-q")

@@ -29,6 +29,7 @@ from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.execution_coordination.domain.release import ReleaseSource
 from alienintent.invocation_runtime.adapters.git_worktree import ref_safe
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+from alienintent.invocation_runtime.domain.runtime import workspace_folder
 from tests.composition.test_work_registry import ReadyBoard
 from tests.context_assembly.test_initial_compilation import PROJECT, git
 from tests.context_assembly.test_work_contract import contract_payload
@@ -281,7 +282,7 @@ def test_one_step_per_launch_each_role_gets_its_package_model_and_starting_revis
     assert json.loads(verifier["own_context"]) == package
     held(verifier["other_context"], "DIGEST_MISMATCH", "contract_digest")
     assert verifier["group_leader"] is True and set(verifier["env"]) <= ALLOWED
-    assert clone.name == f"verifier-{verifier['env']['ALIENINTENT_INVOCATION_ID']}"
+    assert clone.name == f"verifier-{workspace_folder(verifier['env']['ALIENINTENT_INVOCATION_ID'])}"
 
     # --- at ACCEPT: CLOSURE is not automated and nothing is written
     before = fx.dump()
@@ -544,7 +545,7 @@ def test_restart_continuation_authorize_reconciles_a_started_publication_against
     item = fx.authorized("PUB")
     correlation = saved_launch(fx, item.id, claimed=True)
     root = launch_root(fx.loaded().configuration)
-    worktree = root / "workspaces" / correlation
+    worktree = root / "workspaces" / workspace_folder(correlation)
     git(fx.clone, "worktree", "add", "-q", "-b", "invocation/launch-x", str(worktree), "main")
     revision = fx.main()
     journal = JsonlInvocationJournal(root / "invocation-journal.jsonl", lambda: 0.0)
@@ -717,7 +718,7 @@ def test_closure_lands_through_the_authority_with_five_exact_receipts_and_the_ro
     [session] = fx.runs("CLOSURE")
     assert session["argv"][0] == str(fx.claude) and session["argv"][-1] == "model-v"
     correlation = session["env"]["ALIENINTENT_INVOCATION_ID"]
-    assert Path(session["cwd"]).name == f"closure-{correlation}" and correlation != accepted.record["verdict"][
+    assert Path(session["cwd"]).name == f"closure-{workspace_folder(correlation)}" and correlation != accepted.record["verdict"][
         "verifier_correlation"]
     package = session["package"]
     assert {"candidate", "diff", "verdict", "closure_actions"} <= set(package) and "producer_self_review" not in package
@@ -778,7 +779,7 @@ def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx
     clone = Path(session["cwd"])
     assert clone.is_dir() and not fx.wip_held(item.id)
     merge = state.record["ready_to_land"]
-    landing = launch_root(fx.loaded().configuration) / "landing" / f"landing-{session['env']['ALIENINTENT_INVOCATION_ID']}"
+    landing = launch_root(fx.loaded().configuration) / "landing" / f"landing-{workspace_folder(session['env']['ALIENINTENT_INVOCATION_ID'])}"
     assert git(landing, "rev-list", "--parents", "-n", "1", merge).decode().split()[1:] == [base, revision_of(state)]
     # Not blocking: with a WIP limit of 1 another item is admitted; a launch without landing starts nothing.
     fx.host.write_text(json.dumps({"wipLimit": 1}))
@@ -1044,7 +1045,7 @@ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(clo
     owner is alive (this test process) keeps its clone; another item's workspace is never touched; no receipt."""
     item = closing.accepted()
     verifier = launch_root(closing.fx.loaded().configuration) / "verifier"
-    foreign = verifier / "verifier-launch:another-item:1"
+    foreign = verifier / f"verifier-{workspace_folder('launch:another-item:1')}"
     foreign.mkdir()
     ownership = Owners("terminated") if case == "marked-child" else ProcOwnership()
     if case == "marked-child":  # a marked process of the running correlation outlives the session
@@ -1056,7 +1057,7 @@ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(clo
     assert state.outcome == "authority-block" and closing.card(item.id) == "DONE"
     assert receipt("workspaces-cleaned", item.id, revision_of(state)) not in state.record["receipts"]
     [session] = closing.fx.runs("CLOSURE")
-    verifier_clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch:{item.id}"))
+    verifier_clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch-{workspace_folder(item.id)}-"))
     assert foreign.is_dir() and verifier_clone.is_dir()
     assert Path(session["cwd"]).is_dir() is (case == "marked-child")
 
@@ -1096,10 +1097,11 @@ def test_a_correlation_with_no_journaled_owner_keeps_its_clone_and_then_issues_n
     item = closing.accepted()
     registry = closing.fx.loaded()
     verifier = launch_root(registry.configuration) / "verifier"
-    clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch:{item.id}"))
-    correlation = clone.name.removeprefix("verifier-")
+    clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch-{workspace_folder(item.id)}-"))
     journal = launch_root(registry.configuration) / "invocation-journal.jsonl"
     records = [json.loads(line) for line in journal.read_text().splitlines()]
+    [correlation] = {r["correlation_id"] for r in records if r.get("event") == "invocation-started"
+                     and f"verifier-{workspace_folder(r['correlation_id'])}" == clone.name}
     for record in records:
         if record.get("event") == "invocation-started" and record.get("correlation_id") == correlation:
             assert isinstance(record.pop("owner"), dict)

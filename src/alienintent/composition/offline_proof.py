@@ -25,6 +25,7 @@ from alienintent.composition.offline_profile import OfflineProofSubstrate, Proof
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.invocation_runtime.adapters.scripted_worker import SCRIPTED_PROVIDER, ScriptedWorkerProcess, journal_outcome, journal_provider_calls, journal_records
+from alienintent.invocation_runtime.domain.runtime import workspace_folder
 
 PROBE_ADDRESS = ("192.0.2.1", 9)
 PROBE_REMOTE = "https://198.51.100.1/denied.git"
@@ -149,7 +150,7 @@ def evaluate(substrate: OfflineProofSubstrate, summary, kernel: dict[str, object
         branch, revision = _candidate_parts(state.candidate.locator)
         advertised[identity] = {"branch": branch, "revision": revision, "advertised": substrate.remote_advertises(branch)}
         correlation = facts["correlations"][identity]
-        producer_clone = substrate.producer_read_back / f"producer-{correlation}"
+        producer_clone = substrate.producer_read_back / f"producer-{workspace_folder(correlation)}"
         verifier_clone = substrate.verifier_root / revision
         resolved = {}
         for label, clone in (("producer_read_back", producer_clone), ("verifier_evidence", verifier_clone)):

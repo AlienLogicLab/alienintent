@@ -603,6 +603,7 @@ def test_an_abandoned_producer_worktree_is_cleaned_only_when_its_owner_ended(tmp
     from alienintent.invocation_runtime.adapters.git_worktree import GitWorktreeAdapter
     from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
     from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import workspace_folder
 
     repo = tmp_path / "repo"
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
@@ -629,7 +630,7 @@ def test_an_abandoned_producer_worktree_is_cleaned_only_when_its_owner_ended(tmp
         return WorkerInvocation("W", correlation)
 
     clean, dirty, live, active, unowned, parked, missing = (abandoned(n, owned=n != 5) for n in range(1, 8))
-    (root / dirty.correlation_id / "partial.txt").write_text("uncommitted")
+    (root / workspace_folder(dirty.correlation_id) / "partial.txt").write_text("uncommitted")
     outside = tmp_path / "outside"
     outside.mkdir()
     for invocation, state, work, retain, reason in (
@@ -643,7 +644,7 @@ def test_an_abandoned_producer_worktree_is_cleaned_only_when_its_owner_ended(tmp
             journal.append({"event": "invocation-outcome", "correlation_id": invocation.correlation_id,
                             "work_identity": "W", "role": "PRODUCER", "kind": reason})
         worker.finalize(invocation, retain)
-    assert not (root / clean.correlation_id).exists() and outside.exists()
+    assert not (root / workspace_folder(clean.correlation_id)).exists() and outside.exists()
     assert worker.cleanup_diagnostics == {
         dirty.correlation_id: "W: workspace is not quiescent; retained for diagnosis",
         live.correlation_id: "W: owner-alive", active.correlation_id: "W: owned-work-active",

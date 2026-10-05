@@ -130,7 +130,7 @@ GUARDS: tuple[tuple[str, str, str, str, str], ...] = (
     (
         "one_read_back_workspace_per_invocation",
         "src/alienintent/invocation_runtime/application/real_worker.py",
-        '        return self._verifier_root / f"producer-{invocation.correlation_id}"',
+        '        return self._verifier_root / f"producer-{workspace_folder(invocation.correlation_id)}"',
         "        return self._verifier_root",
         f"{SUITE}::test_successive_invocations_publish_to_their_own_branches_and_read_back_separately",
     ),

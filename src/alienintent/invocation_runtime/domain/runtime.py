@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from enum import StrEnum
+import re
 from typing import Mapping
 
 
@@ -23,6 +24,17 @@ INVOCATION_MARKER = "ALIENINTENT_INVOCATION_ID"
 # Which owner started that work: ``<owner token>/<supervisor instance>``. An
 # invocation identity repeats across profiles; together they do not.
 INVOCATION_OWNER_MARKER = "ALIENINTENT_INVOCATION_OWNER"
+
+
+_FOLDER_UNSAFE = re.compile(r"[^A-Za-z0-9._-]")
+
+
+def workspace_folder(correlation: str) -> str:
+    """The folder name for a workspace or clone named after `correlation`: every character outside
+    `[A-Za-z0-9._-]` becomes `-`, leading and trailing `.` and `-` are stripped, and `"invocation"` answers when
+    nothing is left. A correlation is `launch:<work>:<version>`; the name never contains `:`, so a path built from it
+    stays valid inside PYTHONPATH, PATH and any other ':'-separated list."""
+    return _FOLDER_UNSAFE.sub("-", correlation).strip(".-") or "invocation"
 
 
 def owner_token(owner: Mapping[str, object]) -> str:

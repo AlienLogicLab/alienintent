@@ -22,6 +22,7 @@ from alienintent.composition.offline_proof import EXIT_FAIL, EXIT_HOLD, EXIT_PAS
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation
 from alienintent.invocation_runtime.adapters.scripted_worker import journal_outcome, journal_provider_calls, journal_records
+from alienintent.invocation_runtime.domain.runtime import workspace_folder
 
 ROOT = Path(__file__).resolve().parents[2]
 MANIFEST = ROOT / "docs/evidence/wave2-proof-fixtures/FX-S0/manifest.json"
@@ -113,7 +114,7 @@ def test_the_existing_kernel_drains_the_seeded_item_through_the_local_substrate(
     assert subprocess.run(["git", "-C", str(composed.remote), "rev-parse", "--is-bare-repository"], capture_output=True, text=True).stdout.strip() == "true"
     assert composed.remote_advertises(branch) == revision
     assert composed.remote_advertises("main") == composed.baseline_revision
-    assert (composed.producer_read_back / "producer-launch:S0-PROBE:0" / ".git").exists()
+    assert (composed.producer_read_back / f"producer-{workspace_folder('launch:S0-PROBE:0')}" / ".git").exists()
     assert (composed.verifier_root / revision / ".git").exists()
     assert composed.commit_dates(revision) == (1758542400, 1758542400)
     assert [(r["receipt"], r.get("state")) for r in composed.work.receipts()] == [
@@ -127,7 +128,7 @@ def test_the_existing_kernel_drains_the_seeded_item_through_the_local_substrate(
     assert journal_provider_calls(composed.journal_path) == 0
     assert not hasattr(composed.process, "_store") and not hasattr(composed.worker, "_store")
     assert not any("stage" in e or "lifecycle" in e for e in journal_records(composed.journal_path))
-    assert not (composed.workspaces / "launch:S0-PROBE:0").exists()
+    assert not (composed.workspaces / workspace_folder("launch:S0-PROBE:0")).exists()
 
 
 def test_the_candidate_revision_is_determined_by_manifest_and_injected_clock(tmp_path: Path) -> None:

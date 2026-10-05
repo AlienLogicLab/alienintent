@@ -15,7 +15,7 @@ import subprocess
 from typing import Mapping
 
 from alienintent.invocation_runtime.adapters.cli_worker import run_as_worker
-from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable
+from alienintent.invocation_runtime.domain.runtime import CandidateUnavailable, workspace_folder
 from alienintent.invocation_runtime.ports.workspace import Workspace, WorkspaceManager
 
 _REF_SAFE = re.compile(r"[^A-Za-z0-9._-]")
@@ -26,10 +26,10 @@ def ref_safe(invocation_id: str) -> str:
     """A refname component Git will accept for this invocation identity.
 
     The coordinator correlates an invocation as `launch:<work>:<version>`, and
-    Git refuses a refname containing `:`. The workspace path still uses the
-    exact identity, so two different invocations always get different
-    directories; a branch name that did collide fails closed on `worktree add`
-    rather than quietly sharing a branch.
+    Git refuses a refname containing `:`. Workspace folders use
+    `workspace_folder`, the same rule; `allocate` and `_new` refuse a path that
+    already exists, and a branch name that collides fails closed on
+    `worktree add`, so a collision never quietly shares a folder or a branch.
     """
     return _REF_SAFE.sub("-", invocation_id).strip(".-") or "invocation"
 
@@ -54,7 +54,7 @@ class GitWorktreeAdapter(WorkspaceManager):
     def allocate(self, invocation_id: str, owner: str, baseline: str) -> GitWorkspace:
         if not invocation_id or not owner or any(part in invocation_id for part in ("/", "\\", "..", "\x00")):
             raise CandidateUnavailable("workspace identity is unsafe")
-        path = self._root / invocation_id
+        path = self._root / workspace_folder(invocation_id)
         if path.exists():
             raise CandidateUnavailable("workspace is already allocated")
         self._root.mkdir(parents=True, exist_ok=True)
@@ -111,7 +111,7 @@ class WorkerCloneAdapter(WorkspaceManager):
     def _new(self, prefix: str, invocation_id: str, owner: str, revision: str) -> Path:
         if not _safe_identity(invocation_id) or not owner or not _FULL_SHA.fullmatch(revision):
             raise CandidateUnavailable("workspace identity or revision is unsafe")
-        path = self._root / f"{prefix}-{invocation_id}"
+        path = self._root / f"{prefix}-{workspace_folder(invocation_id)}"
         if os.path.lexists(path):
             raise CandidateUnavailable("workspace is already allocated")
         self._worker("mkdir", "-m", "0755", "--", str(self._results / invocation_id))

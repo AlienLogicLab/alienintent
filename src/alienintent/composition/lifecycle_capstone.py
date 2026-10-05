@@ -61,7 +61,7 @@ from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvo
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.adapters.scripted_worker import SCRIPTED_PROVIDER, journal_provider_calls
 from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider, decode_candidate
-from alienintent.invocation_runtime.domain.runtime import INVOCATION_MARKER, INVOCATION_OWNER_MARKER, CapabilityGrant, InvocationRole, ReservationBook, owner_token
+from alienintent.invocation_runtime.domain.runtime import INVOCATION_MARKER, INVOCATION_OWNER_MARKER, CapabilityGrant, InvocationRole, ReservationBook, owner_token, workspace_folder
 
 FIXTURE, BIU = "FX-O", "WO-220404"
 EXIT_PASS, EXIT_FAIL, EXIT_HOLD = 0, 1, 2
@@ -364,9 +364,9 @@ def lifecycle(root: Path, document, manifest_path: Path, environment) -> tuple[l
     journal = journal_records(composed.journal_path)
     candidates = [decode_candidate(r["candidate"]) for r in journal if r.get("event") == "invocation-outcome" and r.get("role") == "PRODUCER"]
     revisions = [revision_of(c.locator) for c in candidates if c is not None]
-    verifier_heads = {c: git_head(composed.producer_read_back / f"verifier-{c}", composed.git_environment) for c, _ in verifiers}
+    verifier_heads = {c: git_head(composed.producer_read_back / f"verifier-{workspace_folder(c)}", composed.git_environment) for c, _ in verifiers}
     verified = [decode_candidate(r["candidate"]) for r in journal if r.get("event") == "invocation-outcome" and r.get("role") == "VERIFIER"]
-    closure_head = git_head(composed.producer_read_back / f"closure-{closures[0][0]}", composed.git_environment) if closures else None
+    closure_head = git_head(composed.producer_read_back / f"closure-{workspace_folder(closures[0][0])}", composed.git_environment) if closures else None
     receipts = [(r["receipt"], r.get("state")) for r in composed.work.receipts()]
     ledger = effects(composed)
     record = state["record"]
@@ -524,7 +524,7 @@ def conclusive_loss(name: str, prefix: str) -> Scenario:
         starts = started(restarted, "PRODUCER")
         runs = process_runs(restarted, "PRODUCER")
         begun = [r for r in journal_records(restarted.journal_path) if r.get("event") == "invocation-started" and r.get("correlation_id") == original]
-        progress = git_head(restarted.workspaces / original, restarted.git_environment) if (restarted.workspaces / original).exists() else None
+        progress = git_head(restarted.workspaces / workspace_folder(original), restarted.git_environment) if (restarted.workspaces / workspace_folder(original)).exists() else None
         ledger = effects(restarted)
         expected_runs = 1 if name == "crash-before-output" else 2
         checks = [

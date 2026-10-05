@@ -12,7 +12,7 @@ from alienintent.execution_coordination.domain.contract import BiuContract, Budg
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.ports.worker_provider import (
     MISSING_TERMINAL_RESULT, WorkerInvocation, WorkerOutcome, WorkerProvider)
-from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible
+from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
 from alienintent.invocation_runtime.ports.source_control import SourceControl
@@ -306,7 +306,7 @@ class RealWorkerProvider(WorkerProvider):
             except RuntimeError:
                 return WorkerOutcome("ineligible")
         try:
-            workspace = self._verifier_root / f"verifier-{invocation.correlation_id}"
+            workspace = self._verifier_root / f"verifier-{workspace_folder(invocation.correlation_id)}"
             try:
                 if self._handover is not None:
                     workspace = self._handover.candidate_clone("verifier", invocation.correlation_id,
@@ -357,7 +357,7 @@ class RealWorkerProvider(WorkerProvider):
             return self._close_with(invocation, budget, grant, candidate)
         receipts: list[str] = []
         try:
-            self._source.retrieve_for_verification(candidate, self._verifier_root / f"closure-{invocation.correlation_id}")
+            self._source.retrieve_for_verification(candidate, self._verifier_root / f"closure-{workspace_folder(invocation.correlation_id)}")
             receipts.append("candidate-published")
         except CandidateUnavailable:
             pass
@@ -379,7 +379,7 @@ class RealWorkerProvider(WorkerProvider):
             settled = self._closure.reconcile(invocation, candidate, earlier)
             if settled is not None:
                 return WorkerOutcome("closed", candidate, findings=tuple(settled[1]), receipts=tuple(settled[0]))
-        clone = self._verifier_root / f"closure-{invocation.correlation_id}"
+        clone = self._verifier_root / f"closure-{workspace_folder(invocation.correlation_id)}"
         try:
             if self._handover is not None:
                 clone = self._handover.candidate_clone("closure", invocation.correlation_id, invocation.work_identity,
@@ -547,7 +547,7 @@ class RealWorkerProvider(WorkerProvider):
         second candidate a profile publishes would fail against the root
         itself; each invocation reads back into its own child.
         """
-        return self._verifier_root / f"producer-{invocation.correlation_id}"
+        return self._verifier_root / f"producer-{workspace_folder(invocation.correlation_id)}"
 
     def _candidate_branch(self, invocation: WorkerInvocation) -> str:
         """The branch this candidate publishes to.
