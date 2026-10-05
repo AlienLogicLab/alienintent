@@ -114,12 +114,15 @@ cannot import `alienintent`. Work item `dc49e880` failed VERIFY this way: 2 of 4
 2. **Every site that names a folder after a correlation id uses it.** The form is `f"{prefix}-{workspace_folder(c)}"`,
    or `workspace_folder(c)` where there is no prefix today:
    - `git_worktree.py`: `GitWorktreeAdapter.allocate` (`self._root / invocation_id`) and `WorkerCloneAdapter._new`
-     (`f"{prefix}-{invocation_id}"`); the `ref_safe` docstring line "The workspace path still uses the exact identity"
-     becomes "Workspace folders use `workspace_folder`, the same rule; `allocate` and `_new` refuse a path that already
-     exists, so a collision fails closed";
+     (`f"{prefix}-{invocation_id}"`); the `ref_safe` docstring sentence "The workspace path still uses the exact identity,
+     so two different invocations always get different directories; a branch name that did collide fails closed on
+     `worktree add` rather than quietly sharing a branch." becomes "Workspace folders use `workspace_folder`, the same
+     rule; `allocate` and `_new` refuse a path that already exists, and a branch name that collides fails closed on
+     `worktree add`, so a collision never quietly shares a folder or a branch.";
    - `real_worker.py`: the `verifier-`, two `closure-` and the `producer-` read-back folders (about lines 309, 360, 382
      and 550);
-   - `work_registry.py`: `_producer_worktree` (`f"{prefix}{correlation}"`), `_authorize_refusal`'s PRODUCER worktree
+   - `work_registry.py`: `_producer_worktree` (`f"{prefix}{correlation}"`, which becomes
+     `f"{prefix}{workspace_folder(correlation)}"`, since its prefix already ends in `-`), `_authorize_refusal`'s PRODUCER worktree
      without a worker user (`workspaces / correlation`, about line 560, becomes `workspaces / workspace_folder(correlation)`),
      the cleanup paths
      (`f"{prefix}-{correlation}"`, two places, about lines 1502 and 1515), and the landing clone
@@ -161,6 +164,9 @@ cannot import `alienintent`. Work item `dc49e880` failed VERIFY this way: 2 of 4
    `"passed": true`; the folder is removed afterwards.
 
 ## 4. Review record
+
+**Revision 1c (2026-10-05).** Follow-up of `df582e8`: the full `ref_safe` docstring sentence, and the
+`_producer_worktree` form.
 
 **Revision 1b (2026-10-05).** REVIEWER of `fcde7c7` (FAIL): two missed sites (`work_registry.py` about line 560;
 `tools/live/py10_proven_red.py` about line 133), the `ref_safe` docstring, a stop condition for open work items with
