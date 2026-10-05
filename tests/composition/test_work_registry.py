@@ -15,8 +15,10 @@ import pytest
 
 from alienintent.composition.work_registry import (
     ConfigurationInvalid, WorkRegistry, load_project_configuration, project_configuration, read_only_store)
+from alienintent.context_assembly.application.work_authorization import CONTRACT_UNSATISFIABLE
 from alienintent.evidence_learning.domain.records import ref_from_document
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+from alienintent.execution_coordination.domain.closure import ACTIONS
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.domain.runtime import owner_token
 from tests.context_assembly.test_initial_compilation import PROJECT, REPO, Harness, Project, project_clone
@@ -154,6 +156,7 @@ def test_assessment_launches_the_bound_executable_with_the_attempt_markers(tmp_p
     registry = WorkRegistry(project_configuration(entry(tmp_path, repositories=repositories,
                                                         readiness=readiness(tmp_path, executable=str(executable))),
                                                   PROJECT))
+    registry.assessment.satisfiable = None  # Historical fixture packet has no contract block.
     assert isinstance(registry.assessment.ownership, ProcOwnership)
     packet = b"# Work unit: fixture\n"
     item = registry.records.register(packet, REPO, "docs/p.md", commit_file(clone, "main", "docs/p.md", packet), "P")
@@ -311,6 +314,7 @@ class ReadyBoard(Linked):
         self.document["projects"][PROJECT]["readiness"] = readiness(root, executable=str(executable))
         self.github = Board()
         self.registry = self.second()
+        self.registry.assessment.satisfiable = None
         self.links = self.registry.links
 
     def second(self) -> WorkRegistry:
@@ -342,6 +346,29 @@ class ReadyBoard(Linked):
         registry = registry or self.registry
         imported = registry.ready_view.import_ready_snapshot()
         return imported, registry.ready_refusals()
+
+
+def test_one_composed_satisfiability_callback_checks_pointer_references(tmp_path):
+    board = ReadyBoard(tmp_path / "board")
+    board.document["projects"][PROJECT]["github"]["landing"] = True
+    registry = board.second()
+    assert registry.assessment.satisfiable is registry.authorization.satisfiable is registry.satisfiable
+    item = board.item("SAT")
+    payload = contract_payload(item.id, required_evidence=["independent-verifier-accepted"],
+                               budget_policy={"maximum_attempts": 1, "hard_wall_clock_seconds": 10,
+                                              "cancellation_limit": 1}, required_closure_actions=list(ACTIONS),
+                               authority_references=["docs/missing.md explanation"])
+    packet = board.packet(item, payload=payload)
+    commit = commit_file(board.clone, "main", "docs/SAT.md", packet)
+    refused = registry.assessment.assess(item.id, (packet, commit))
+    assert refused.reason_code == CONTRACT_UNSATISFIABLE
+    assert refused.detail.startswith("authority_references:")
+    assert registry.assessment.consumer.history(item.id) == ()
+    payload["authority_references"] = ["docs/SAT.md explanation"]
+    revised = board.packet(item, payload=payload)
+    revision = commit_file(board.clone, "main", "docs/SAT.md", revised)
+    accepted = registry.assessment.assess(item.id, (revised, revision))
+    assert accepted.disposition == "READY"
 
 
 @pytest.fixture

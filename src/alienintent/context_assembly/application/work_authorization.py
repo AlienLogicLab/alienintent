@@ -12,7 +12,7 @@ Nothing here changes the item's workflow state, writes to GitHub or launches any
 """
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from dataclasses import asdict, dataclass
 from hashlib import sha256
 import re
@@ -38,6 +38,7 @@ NOT_AUTHORIZABLE, AUTHORIZATION_STALE = "NOT_AUTHORIZABLE", "AUTHORIZATION_STALE
 BASELINE_INVALID, GATE_WOULD_REFUSE, ALREADY_AUTHORIZED = "BASELINE_INVALID", "GATE_WOULD_REFUSE", "ALREADY_AUTHORIZED"
 # `work assess` refuses to move the pointer or open an attempt of an authorized item.
 AUTHORIZED_INSTRUCTIONS_FIXED = "AUTHORIZED_INSTRUCTIONS_FIXED"
+CONTRACT_UNSATISFIABLE = "CONTRACT_UNSATISFIABLE"
 # The evidence record's fixed values, the way the READY view fixes its own: the same inputs give the same reference.
 WORK_AUTHORIZATION = "work-authorization"
 COMMIT = re.compile(r"[0-9a-f]{40}")
@@ -67,11 +68,13 @@ class AuthorizationResult:
 class WorkAuthorization:
     def __init__(self, records: WorkRecordService, identities: WorkIdentityService, consumer: AssessmentConsumer,
                  evidence: EvidenceRepository, project: str, profile: str, releases: ReleaseRecords,
-                 revisions: RevisionResolver, release_points: Mapping[str, str]) -> None:
+                 revisions: RevisionResolver, release_points: Mapping[str, str],
+                 satisfiable: Callable[[bytes, str, str], tuple[str, ...]] | None = None) -> None:
         """`project` and `profile` are the evidence repository's; `release_points` maps each configured repository to
         its default branch, the release point the release gate is composed with."""
         self.records, self.identities, self.consumer, self.evidence = records, identities, consumer, evidence
         self.releases, self.revisions, self.release_points = releases, revisions, dict(release_points)
+        self.satisfiable = satisfiable
         self.definition = Ref(project, profile, WORK_AUTHORIZATION + "/definition",
                               "sha256:" + sha256(b"alienintent.context_assembly.application.work_authorization:"
                                                  b"work-authorization").hexdigest(),
@@ -96,6 +99,10 @@ class WorkAuthorization:
             contract = contract_block(record.packet, item.id)
         except ContractInvalid as error:
             return AuthorizationResult(item.id, CONTRACT_INVALID, detail=str(error))
+        if self.satisfiable is not None:
+            reasons = self.satisfiable(record.packet, item.pointer.commit, item.id)
+            if reasons:
+                return AuthorizationResult(item.id, CONTRACT_UNSATISFIABLE, detail="; ".join(reasons))
         repo = item.pointer.repo
         release_point = self.release_points.get(repo)
         if COMMIT.fullmatch(baseline) is None:

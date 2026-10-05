@@ -21,7 +21,7 @@ import pytest
 from alienintent.composition.readiness import resolve_binding
 from alienintent.composition.work_registry import WorkRegistry
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
-from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED
+from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED, CONTRACT_UNSATISFIABLE
 from alienintent.context_assembly.domain.packet_assessment import PacketAssessed
 from alienintent.context_assembly.domain.work_identity import Pointer
 from alienintent.evidence_learning.adapters.local_evidence_repository import LocalEvidenceRepository
@@ -156,6 +156,21 @@ def dump(database: Path) -> str:
         return "\n".join(connection.iterdump())
     finally:
         connection.close()
+
+
+def test_unsatisfiable_refuses_before_an_attempt_and_valid_packet_still_runs(fx):
+    item = fx.register()
+    seen = []
+    fx.service.satisfiable = lambda packet, commit, identity: seen.append((packet, commit, identity)) or (
+        "required_evidence: unknown", "landing: DONE is unreachable")
+    refused = fx.service.assess(item.id)
+    assert refused.reason_code == CONTRACT_UNSATISFIABLE
+    assert refused.detail == "required_evidence: unknown; landing: DONE is unreachable"
+    assert seen == [(PACKET, item.pointer.commit, item.id)]
+    assert fx.consumer.history(item.id) == () and fx.producer.calls == []
+    fx.service.satisfiable = lambda packet, commit, identity: ()
+    accepted = fx.service.assess(item.id)
+    assert accepted.disposition == "READY" and len(fx.consumer.history(item.id)) == 1
 
 
 # --- check 1: exactly the registered instructions -----------------------------------------------------------------

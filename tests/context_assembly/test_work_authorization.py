@@ -17,8 +17,8 @@ import pytest
 
 from alienintent.composition.work_registry import WorkRegistry, project_configuration
 from alienintent.context_assembly.application.work_authorization import (
-    ALREADY_AUTHORIZED, AUTHORIZATION_STALE, AUTHORIZED_INSTRUCTIONS_FIXED, BASELINE_INVALID, GATE_WOULD_REFUSE,
-    NOT_AUTHORIZABLE)
+    ALREADY_AUTHORIZED, AUTHORIZATION_STALE, AUTHORIZED_INSTRUCTIONS_FIXED, BASELINE_INVALID,
+    CONTRACT_UNSATISFIABLE, GATE_WOULD_REFUSE, NOT_AUTHORIZABLE)
 from alienintent.context_assembly.domain.work_contract import contract_block
 from alienintent.context_assembly.domain.work_identity import Pointer
 from alienintent.evidence_learning.domain.records import ref_from_document
@@ -64,7 +64,10 @@ class Fx:
 
     def second(self) -> WorkRegistry:
         """Another registry instance over the same configuration, as another process would build it."""
-        return WorkRegistry(project_configuration(self.document, PROJECT))
+        registry = WorkRegistry(project_configuration(self.document, PROJECT))
+        registry.assessment.satisfiable = None
+        registry.authorization.satisfiable = None
+        return registry
 
     def packet(self, item, payload: dict | None = None, raw: str | None = None, changes: dict | None = None) -> bytes:
         text = raw if raw is not None else json.dumps(payload or contract_payload(item.id, **(changes or {})), indent=1)
@@ -73,6 +76,9 @@ class Fx:
     def ready(self, label: str = "UNIT", payload: dict | None = None, raw: str | None = None,
               changes: dict | None = None):
         """Register, give the packet its contract block at a new commit and assess it: (row, attempt id)."""
+        # Legacy authorization fixtures exercise their own gate with historical contracts.
+        self.registry.assessment.satisfiable = None
+        self.service.satisfiable = None
         path = f"docs/{label}.md"
         first = b"# Work unit: " + label.encode() + b"\n"
         item = self.registry.records.register(first, REPO, path, commit_file(self.clone, "main", path, first), label)
@@ -114,6 +120,22 @@ def dump(database: Path) -> str:
 @pytest.fixture
 def fx(tmp_path) -> Fx:
     return Fx(tmp_path / "fx")
+
+
+def test_unsatisfiable_authorization_writes_no_release_and_valid_packet_authorizes(fx):
+    item, attempt = fx.ready()
+    calls = []
+    fx.service.satisfiable = lambda packet, commit, identity: calls.append((packet, commit, identity)) or (
+        "required_evidence: unknown", "landing: DONE is unreachable")
+    before = fx.written()
+    refused = fx.service.authorize(item.id, item.pointer.commit, attempt, fx.main(), QUOTE)
+    assert refused.answer == CONTRACT_UNSATISFIABLE
+    assert refused.detail == "required_evidence: unknown; landing: DONE is unreachable"
+    assert calls == [(fx.registry.records.show(item.id).packet, item.pointer.commit, item.id)]
+    assert fx.written() == before and fx.releases().release_authorization(item.id) is None
+    fx.service.satisfiable = lambda packet, commit, identity: ()
+    accepted = fx.service.authorize(item.id, item.pointer.commit, attempt, fx.main(), QUOTE)
+    assert accepted.answer is None and fx.releases().release_authorization(item.id) is not None
 
 
 def gate(fx: Fx, identity: str, authorization) -> None:
