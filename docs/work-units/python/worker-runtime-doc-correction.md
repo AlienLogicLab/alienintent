@@ -1,7 +1,7 @@
 # Work unit: correct the worker-boundary documentation to match main
 
 **Label:** `WORKER-RUNTIME-DOC-CORRECTION` (a document label; permanent id `c5200bcd-b2d4-4789-a1cb-90b6336f3f54`).
-**Status:** Draft revision 2 (work item `c5200bcd-b2d4-4789-a1cb-90b6336f3f54`, at CAPTURE) for independent review, 2026-10-05. Not approved, not assessed, not released.
+**Status:** Draft revision 3 (work item `c5200bcd-b2d4-4789-a1cb-90b6336f3f54`, at CAPTURE) for independent review, 2026-10-05. Not approved, not assessed, not released.
 **Position on the path:** the genuine work item for check 8(c2) of WORKER-CREDENTIAL-BOUNDARY (`7efccee9-13f0-4905-a0a1-e80bc2faa748`, its parent). The Founder decided on 2026-10-05: use the documentation mismatch the VERIFIER already found as real work, launched through the normal path, so the launched PRODUCER's `context_command` reads its bounded per-invocation export. Builds on `main` `723f162`.
 **Roles:** one PRODUCER (a real launched worker session); one fresh VERIFIER on the exact candidate; CLOSURE through the normal launch path (landing is off, so it ends at a verified ready-to-land result; the merge to main is done separately).
 
@@ -10,7 +10,7 @@
 ```json alienintent-contract
 {
  "identity": "c5200bcd-b2d4-4789-a1cb-90b6336f3f54",
- "version": "revision-2",
+ "version": "revision-3",
  "intent": "Bring the WORKER-CREDENTIAL-BOUNDARY packet and its handoff into exact agreement with the implementation landed on main at 723f162: the worker clone uses --no-local with git's ownership exception given to upload-pack, the VERIFIER and CLOSURE fetch gives the same exception to upload-pack, and the worker HOME's safe.directory .gitconfig is stated to be something no worker git operation depends on. Documentation only.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -39,7 +39,9 @@
   "git"
  ],
  "budget_policy": {
-  "maximum_attempts": 2
+  "maximum_attempts": 2,
+  "hard_wall_clock_seconds": 1800,
+  "cancellation_limit": 1
  },
  "retry_policy": "verifier rejection returns to the PRODUCER with the findings; at most 2 cycles",
  "completion_criteria": [
@@ -134,6 +136,8 @@ Nothing else changes. The PRODUCER uses its `context_command` for any further fa
 The launch itself is the evidence for check 8(c2) of the parent unit: the PRODUCER runs as `alienintent-worker`, its `context_command` reads `<launch>/exports/<invocation>/context.json`, and the Founder then runs the boundary proof with `--package` on that file. That proof, not this unit's VERIFIER, decides 8(c2).
 
 ## 4. Review record
+
+**Revision 3 (2026-10-05).** Launch finding: the first dispatched PRODUCER launch was refused by `LaunchPreparation.prepare` with `MISSING_RECORD: budget_policy` because the contract stated no `hard_wall_clock_seconds` or `cancellation_limit` (Founder rule of 2026-10-03, worker-launch.md: every launched packet states explicit execution and shutdown limits, approved with that packet; no hidden defaults). Added `hard_wall_clock_seconds: 1800` (each role session's hard time limit) and `cancellation_limit: 1`. Nothing else changes.
 
 **Revision 2 (2026-10-05).** REVIEWER of `0c77e62` (FAIL, one wording fix): F1, the `.gitconfig` is not needed rather than without effect (its intake entry does match). Optional notes applied (backtick spacing, corrected by the follow-up of `1328290`, D1; the export is kept by the launch, not checked by the VERIFIER). Founder constraints added: an ordinary launch with nothing special-cased, no manual context, the full lifecycle, the wider exclusions.
 
