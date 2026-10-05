@@ -1282,6 +1282,23 @@ def test_launch_answers_not_eligible_outside_the_ready_snapshot_or_with_a_depend
     assert coordinator.launch("child").dispatched == ("child",)
 
 
+def test_launch_finds_started_verify_and_accept_items_without_ready_card(tmp_path: Path) -> None:
+    from alienintent.execution_coordination.domain.closure import ACTIONS
+    item = _item("started", 0, 1, automatic=False)
+    contract = replace(item.contract, required_closure_actions=tuple(ACTIONS))
+    item = replace(item, contract=contract, readiness_digest=contract.content_digest)
+    coordinator, worker, _ = _launching(tmp_path, [item], {item.identity: ["success"]},
+                                        started_item=lambda identity, correlation: item if identity == item.identity else None)
+    assert coordinator.launch(item.identity).dispatched == (item.identity,)
+    assert coordinator.state(item.identity).stage is LifecycleStage.VERIFY
+    coordinator._work.items.clear()
+    coordinator.launch(item.identity)
+    assert worker.invocations[-1][1] == "VERIFIER"
+    assert coordinator.state(item.identity).stage is LifecycleStage.ACCEPT
+    coordinator.launch(item.identity)
+    assert worker.invocations[-1][1] == "CLOSURE"
+
+
 @pytest.mark.parametrize(("limit", "answer"), [(None, "wip-limit-unavailable"), (1, "wip-refused")])
 def test_launch_answers_a_wip_skip(tmp_path: Path, limit, answer) -> None:
     coordinator, worker, store = _launching(tmp_path, [_item("a", 0, 1, automatic=False)], {"a": ["success"]},

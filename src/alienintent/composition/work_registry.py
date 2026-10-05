@@ -413,6 +413,8 @@ class WorkRegistry:
         self.authorization = self._authorization(configuration) if self.assessment is not None else None
         self.completion = self._completion(configuration) if self.assessment is not None else None
         self.links = self._links(configuration.github, transport) if configuration.github is not None else None
+        self.board_diagnostics: dict[str, str] = {}
+        self._journal_snapshot: tuple[tuple[int, int, int] | None, tuple[dict[str, object], ...]] | None = None
         self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
             else None
         # Each role's context package (unit 6c-1) over the `readiness` store and evidence folder; its command names
@@ -467,10 +469,53 @@ class WorkRegistry:
                                   wip_limit=lambda: wip_limit(self.host_configuration),
                                   recorded_completion=self.completion.recorded,
                                   landing_enabled=lambda: configuration.github.landing,
-                                  started_item=self._started_item, completed=self._project_completed)
+                                  started_item=self._started_item, completed=self._project_completed,
+                                  stage_shown=self.show_stage)
+
+    def show_stage(self, identity: str, correlation: str | None = None, role: str | None = None) -> None:
+        """Read back the card's recorded lifecycle stage; retry failures on the next launch."""
+        try:
+            _, raw = self.store.read_state("registry", f"factory:{identity}")
+            if correlation is None:
+                recorded = raw.get("correlation")
+                correlation = recorded if isinstance(recorded, str) and recorded.startswith("launch:") else None
+            if correlation is None:
+                return
+            if self._started_item(identity, correlation) is None:
+                self.board_diagnostics[identity] = "not-started-item"
+                return
+            stage = {PRODUCER: "IMPLEMENT", VERIFIER: "VERIFY", CLOSURE: "ACCEPT"}.get(role) if role is not None \
+                else raw.get("stage")
+            if stage not in {"IMPLEMENT", "VERIFY", "ACCEPT", "DONE"}:
+                return
+            shown = self.records.show(identity)
+            card_id = None if shown is None or shown.item is None else shown.item.card_id
+            if card_id is None:
+                return
+            current = self.links.board.read_status(card_id)
+            if current.status != stage:
+                self.links.board.write_status(card_id, stage, 0)
+                current = self.links.board.read_status(card_id)
+            if current.status != stage:
+                self.board_diagnostics[identity] = f"read-back mismatch: expected {stage}, found {current.status}"
+            else:
+                self.board_diagnostics.pop(identity, None)
+        except Exception as error:  # noqa: BLE001 - board transport never controls the work state
+            self.board_diagnostics[identity] = f"{type(error).__name__}: {error}"
 
     def _journal_records(self) -> tuple[dict[str, object], ...]:
-        return JsonlInvocationJournal(launch_root(self.configuration) / "invocation-journal.jsonl", time.time).records()
+        """Reuse one journal read across a stage sweep; refresh after any journal change."""
+        path = launch_root(self.configuration) / "invocation-journal.jsonl"
+        try:
+            stat = path.stat()
+            signature = (stat.st_mtime_ns, stat.st_ctime_ns, stat.st_size)
+        except FileNotFoundError:
+            signature = None
+        if self._journal_snapshot is not None and self._journal_snapshot[0] == signature:
+            return self._journal_snapshot[1]
+        records = JsonlInvocationJournal(path, time.time).records()
+        self._journal_snapshot = (signature, records)
+        return records
 
     def _started_item(self, identity: str, correlation: str) -> ReadyWorkItem | None:
         """A started work item built from its registry record alone (not the board): the row (not retired, with a
@@ -641,7 +686,8 @@ class WorkRegistry:
         if user is None:
             source, workspaces, handover, preparation = GitSourceControl(), \
                 GitWorktreeAdapter(packets.clone, root / "workspaces"), None, \
-                LaunchPreparation(self.context, root / "context", repository)
+                LaunchPreparation(self.context, root / "context", repository,
+                                  stage_shown=lambda identity, correlation, role: self.show_stage(identity, correlation, role))
             recovered = lambda invocation: _producer_worktree(root / "workspaces", invocation)  # noqa: E731
         else:
             worker_root = root / "worker"
@@ -656,7 +702,8 @@ class WorkRegistry:
                                                     environment, os.environ, workspaces)
             preparation = LaunchPreparation(self.context, root / "context", repository, worker=handover, user=user,
                                             environment=environment, packets_clone=packets.clone,
-                                            exports=root / "exports")
+                                            exports=root / "exports",
+                                            stage_shown=lambda identity, correlation, role: self.show_stage(identity, correlation, role))
             recovered = lambda invocation: _producer_worktree(worker_root, invocation, "producer-")  # noqa: E731
         ownership = self.ownership
         process = CliWorkerProvider("routed", preparation.command, (), "explicit", PROVIDER_DIMENSIONS,
@@ -1101,7 +1148,8 @@ class LaunchPreparation:
     def __init__(self, context: WorkContext, context_root: Path, repository: str,
                  route: Callable[[str], dict[str, str]] = resolve_route, *, worker=None, user: str | None = None,
                  environment: Mapping[str, str] | None = None, packets_clone: Path | None = None,
-                 exports: Path | None = None) -> None:
+                 exports: Path | None = None,
+                 stage_shown: Callable[[str, str, str], None] | None = None) -> None:
         self.context, self.context_root, self.repository, self.route = context, Path(context_root), repository, route
         self.kept: dict[str, tuple[dict[str, str], str]] = {}
         # Each invocation's starting revision from its package: the VERIFIER's regression base with a worker user.
@@ -1111,6 +1159,7 @@ class LaunchPreparation:
         # With a worker user: `<launch>/exports`, where each invocation's package is exported (section 0.6b).
         self.exports = None if exports is None else Path(exports)
         self.identities: dict[str, str] = {}  # each invocation's work item, for the worker's identity variables
+        self.stage_shown = stage_shown
 
     def package_path(self, invocation_id: str) -> Path:
         """The package path named to the worker: with a worker user only its bounded export."""
@@ -1161,6 +1210,11 @@ class LaunchPreparation:
                 return self._refusal(invocation, f"worker provider login missing: {store}")
         self.deliver(invocation, package.document(), route)
         self.starting[invocation.correlation_id] = str(package.fields["starting_revision"])
+        if self.stage_shown is not None:
+            try:
+                self.stage_shown(identity, invocation.correlation_id, role)
+            except Exception:  # noqa: BLE001 - board display never refuses a prepared invocation
+                pass
         return str(package.fields["starting_revision"])
 
     def deliver(self, invocation: WorkerInvocation, document: Mapping[str, object], route: dict[str, str]) -> Path:
