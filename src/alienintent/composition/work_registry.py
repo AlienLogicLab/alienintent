@@ -123,6 +123,7 @@ from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERS
 from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
 from alienintent.execution_coordination.domain.closure import (
     BOARD_UPDATED, LANDING_RECORD, MERGED_TO_MAIN, WORKSPACES_CLEANED, hold, is_fixed, parse_request, performable,
     ready_to_land, receipt, rework, session_finding)
@@ -407,6 +408,7 @@ class WorkRegistry:
                            configuration.repositories[configuration.packets_repository]),
             self.profile_stores)
         self.records = WorkRecordService(self.identities, self.items, self.items.read_packet)
+        self.satisfiable = self._satisfiable
         self.assessment = self._assessment(configuration) if configuration.readiness is not None else None
         self.authorization = self._authorization(configuration) if self.assessment is not None else None
         self.completion = self._completion(configuration) if self.assessment is not None else None
@@ -818,7 +820,7 @@ class WorkRegistry:
                                 lambda attempt, owner: compose_producer(binding, readiness.provider, {
                                     **assessment_environment(), INVOCATION_MARKER: attempt,
                                     INVOCATION_OWNER_MARKER: owner_token(owner)}),
-                                StoredReleaseAuthorizations(consumer.store, "registry"))
+                                StoredReleaseAuthorizations(consumer.store, "registry"), self.satisfiable)
 
     def _authorization(self, configuration: ProjectConfiguration) -> WorkAuthorization:
         """`work authorize`: release records on the `readiness` store under profile `registry` (the READY view's), the
@@ -828,7 +830,35 @@ class WorkRegistry:
         return WorkAuthorization(self.records, self.identities, consumer, consumer.repository, consumer.project,
                                  consumer.profile, self.assessment.authorizations,
                                  GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
-                                 {name: location.default_branch for name, location in repositories.items()})
+                                 {name: location.default_branch for name, location in repositories.items()},
+                                 self.satisfiable)
+
+    def _satisfiable(self, packet: bytes, commit: str, identity: str) -> tuple[str, ...]:
+        try:
+            contract = contract_block(packet, identity)
+        except ContractInvalid as error:
+            return (f"contract: {error}",)
+
+        def present_at_pointer(path: str) -> bool:
+            if not valid_path(path):
+                return False
+            try:
+                record = self.records.show(identity)
+                if record is None or record.item.pointer is None:
+                    return False
+                self.items.read_packet(StoredPointer(record.item.pointer.repo, path, commit))
+            except WorkIdentityRefused:
+                return False
+            return True
+
+        def registered(dependency: str) -> bool:
+            item = self.identities.find(dependency)
+            return item is not None and not item.retired
+
+        github = self.configuration.github
+        return unsatisfiable(contract, landing=github is not None and github.landing,
+                             present_at_pointer=present_at_pointer, registered=registered,
+                             provider_dimensions=PROVIDER_DIMENSIONS)
 
     def _completion(self, configuration: ProjectConfiguration) -> WorkCompletion:
         """`work record-completed`: the evidence record in the assessment evidence folder, landings checked in each

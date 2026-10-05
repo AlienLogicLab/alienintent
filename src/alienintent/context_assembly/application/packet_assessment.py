@@ -15,7 +15,7 @@ from collections.abc import Callable, Mapping
 from typing import Protocol
 
 from alienintent.context_assembly.application.readiness_service import PROVENANCE_HELD, ReadinessAdmission
-from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED, ReleaseRecords
+from alienintent.context_assembly.application.work_authorization import AUTHORIZED_INSTRUCTIONS_FIXED, CONTRACT_UNSATISFIABLE, ReleaseRecords
 from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
 from alienintent.context_assembly.application.work_registration import WorkRecordService
 from alienintent.context_assembly.domain.packet_assessment import (
@@ -46,11 +46,13 @@ class PacketAssessment:
     def __init__(self, records: WorkRecordService, identities: WorkIdentityService, consumer: AssessmentConsumer,
                  binding: ProducerBinding | None, ownership: ProcessOwnership,
                  producer: Callable[[str, Mapping[str, object]], ReadinessAssessment | None],
-                 authorizations: ReleaseRecords) -> None:
+                 authorizations: ReleaseRecords,
+                 satisfiable: Callable[[bytes, str, str], tuple[str, ...]] | None = None) -> None:
         """`authorizations` are the release records `work authorize` writes: an authorized item's instructions and
         assessment are fixed, so neither its pointer moves nor a new attempt opens."""
         self.records, self.identities, self.consumer, self.binding = records, identities, consumer, binding
         self.ownership, self.producer, self.authorizations = ownership, producer, authorizations
+        self.satisfiable = satisfiable
 
     def assess(self, id_or_label: str, revision: tuple[bytes, str] | None = None,
                recover: str | None = None) -> PacketAssessed | Hold:
@@ -85,6 +87,10 @@ class PacketAssessment:
                 return Hold(error.code, item.id, None, ", ".join(error.values))
             record = self.records.show(item.id)
             item = record.item
+        if self.satisfiable is not None:
+            reasons = self.satisfiable(record.packet, item.pointer.commit, item.id)
+            if reasons:
+                return Hold(CONTRACT_UNSATISFIABLE, item.id, None, "; ".join(reasons))
         text = instructions_text(record.packet)
         current, input_sha256 = fingerprint(item.id, item.pointer), digest(text)
         history = self.consumer.history(item.id)

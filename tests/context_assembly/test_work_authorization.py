@@ -18,7 +18,7 @@ import pytest
 from alienintent.composition.work_registry import WorkRegistry, project_configuration
 from alienintent.context_assembly.application.work_authorization import (
     ALREADY_AUTHORIZED, AUTHORIZATION_STALE, AUTHORIZED_INSTRUCTIONS_FIXED, BASELINE_INVALID, GATE_WOULD_REFUSE,
-    NOT_AUTHORIZABLE)
+    NOT_AUTHORIZABLE, CONTRACT_UNSATISFIABLE)
 from alienintent.context_assembly.domain.work_contract import contract_block
 from alienintent.context_assembly.domain.work_identity import Pointer
 from alienintent.evidence_learning.domain.records import ref_from_document
@@ -64,7 +64,11 @@ class Fx:
 
     def second(self) -> WorkRegistry:
         """Another registry instance over the same configuration, as another process would build it."""
-        return WorkRegistry(project_configuration(self.document, PROJECT))
+        registry = WorkRegistry(project_configuration(self.document, PROJECT))
+        # These existing authorization cases exercise the earlier gates with their historical packet fixture.
+        registry.assessment.satisfiable = None
+        registry.authorization.satisfiable = None
+        return registry
 
     def packet(self, item, payload: dict | None = None, raw: str | None = None, changes: dict | None = None) -> bytes:
         text = raw if raw is not None else json.dumps(payload or contract_payload(item.id, **(changes or {})), indent=1)
@@ -114,6 +118,19 @@ def dump(database: Path) -> str:
 @pytest.fixture
 def fx(tmp_path) -> Fx:
     return Fx(tmp_path / "fx")
+
+
+def test_unsatisfiable_contract_is_refused_before_release_record_or_evidence(fx):
+    item, attempt = fx.ready()
+    before = fx.written()
+    fx.service.satisfiable = lambda packet, commit, identity: ("required_evidence: unknown", "landing: disabled")
+    answer = fx.authorize(item, attempt)
+    assert (answer.answer, answer.detail) == (CONTRACT_UNSATISFIABLE,
+                                              "required_evidence: unknown; landing: disabled")
+    assert fx.releases().release_authorization(item.id) is None
+    assert fx.written() == before
+    fx.service.satisfiable = lambda packet, commit, identity: ()
+    assert fx.authorize(item, attempt).answer is None
 
 
 def gate(fx: Fx, identity: str, authorization) -> None:

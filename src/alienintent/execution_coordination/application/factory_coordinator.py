@@ -14,6 +14,7 @@ from alienintent.execution_coordination.domain.custody import CandidateKind, Can
 from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired, SupersededDecision
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
 from alienintent.execution_coordination.domain.release import ReleasePreconditionRefused, ReleaseRequest, ReleaseSource, admit_release
+from alienintent.execution_coordination.domain.satisfiability import ARTIFACT_VERIFIED, BASE_CAPABILITIES, VERIFIER_EVIDENCE
 from alienintent.execution_coordination.domain.verdict import EvidenceDefinition, Observation, VerdictKind, evaluate_verdict
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
 from alienintent.execution_coordination.ports.release_admission import ExecutionAllocation
@@ -23,7 +24,6 @@ from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, 
 
 # K2: each nonterminal stage is advanced by exactly one canonical role.
 ROLE_BY_STAGE = {LifecycleStage.IMPLEMENT: PRODUCER, LifecycleStage.VERIFY: VERIFIER, LifecycleStage.ACCEPT: CLOSURE}
-VERIFIER_EVIDENCE = "independent-verifier-accepted"
 # Execution-record fields that survive every later commit of the same aggregate.
 CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict")
 # One WIP slot per admitted work item, held until its recorded state is DONE or a final outcome: an outcome the
@@ -361,7 +361,7 @@ class FactoryCoordinator:
             try:
                 if self._release_gate is not None:
                     self._release_gate.check(item)
-                capabilities = {"python", "filesystem", "process-control"}
+                capabilities = set(BASE_CAPABILITIES)
                 if self._has_authorizing_decision(item.identity):
                     capabilities.update(item.contract.required_capabilities)
                 admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset(capabilities), self._available_budget(item, raw), "offline-profile", source))
@@ -517,7 +517,7 @@ class FactoryCoordinator:
             if outcome.kind == "reject":
                 return self._rework(item, current, prior, invocation, "verifier", outcome.findings)
             reviewed = transition(current, current.version, "review")
-            observations = (Observation("artifact-verified", True, bool(current.candidate and current.candidate.verify_admissible)), Observation(VERIFIER_EVIDENCE, True, True))
+            observations = (Observation(ARTIFACT_VERIFIED, True, bool(current.candidate and current.candidate.verify_admissible)), Observation(VERIFIER_EVIDENCE, True, True))
             verdict = evaluate_verdict(EvidenceDefinition(frozenset(item.contract.required_evidence) | {VERIFIER_EVIDENCE}), observations, worker_claimed_success=True)
             if verdict.kind is not VerdictKind.ACCEPT:
                 return self._rework(item, reviewed, prior, invocation, "review", (verdict.reason,))

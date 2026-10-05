@@ -154,6 +154,7 @@ def test_assessment_launches_the_bound_executable_with_the_attempt_markers(tmp_p
     registry = WorkRegistry(project_configuration(entry(tmp_path, repositories=repositories,
                                                         readiness=readiness(tmp_path, executable=str(executable))),
                                                   PROJECT))
+    registry.assessment.satisfiable = None  # This legacy launch fixture has no contract block.
     assert isinstance(registry.assessment.ownership, ProcOwnership)
     packet = b"# Work unit: fixture\n"
     item = registry.records.register(packet, REPO, "docs/p.md", commit_file(clone, "main", "docs/p.md", packet), "P")
@@ -315,7 +316,10 @@ class ReadyBoard(Linked):
 
     def second(self) -> WorkRegistry:
         """Another registry instance over the same configuration, as another process would build it."""
-        return WorkRegistry(project_configuration(self.document, PROJECT), transport=self.github)
+        registry = WorkRegistry(project_configuration(self.document, PROJECT), transport=self.github)
+        registry.assessment.satisfiable = None  # Legacy READY-view packets exercise the existing view gates.
+        registry.authorization.satisfiable = None
+        return registry
 
     def packet(self, item, *, payload: dict | None = None, raw: str | None = None) -> bytes:
         payload = payload(item) if callable(payload) else payload
@@ -347,6 +351,25 @@ class ReadyBoard(Linked):
 @pytest.fixture
 def board(tmp_path) -> ReadyBoard:
     return ReadyBoard(tmp_path / "fx")
+
+
+def test_one_composed_check_refuses_an_authority_reference_missing_at_the_pointer(board):
+    from alienintent.execution_coordination.domain.closure import ACTIONS
+    from alienintent.context_assembly.application.work_authorization import CONTRACT_UNSATISFIABLE
+
+    registry = WorkRegistry(project_configuration(board.document, PROJECT), transport=board.github)
+    assert registry.assessment.satisfiable is registry.authorization.satisfiable is registry.satisfiable
+    item = board.item("MISSING-REFERENCE")
+    payload = contract_payload(
+        item.id, required_evidence=["independent-verifier-accepted"],
+        budget_policy={"maximum_attempts": 1, "hard_wall_clock_seconds": 60, "cancellation_limit": 1},
+        required_closure_actions=list(ACTIONS), authority_references=["docs/absent.md explanation"])
+    packet = board.packet(item, payload=payload)
+    commit = commit_file(board.clone, "main", "docs/MISSING-REFERENCE.md", packet)
+    result = registry.assessment.assess(item.id, (packet, commit))
+    assert result.reason_code == CONTRACT_UNSATISFIABLE
+    assert "authority_references: absent at pointer: docs/absent.md explanation" in result.detail
+    assert not registry.assessment.consumer.history(item.id)
 
 
 def kinds(refusals) -> dict[tuple[str, str], object]:
@@ -675,6 +698,8 @@ def test_the_worker_profile_assembles_read_only_over_wal_databases(tmp_path, mon
     from tests.context_assembly.test_work_context import Cx
     from tests.execution_coordination.test_operational_store import file_bytes, leave_in_wal
     cx = Cx(tmp_path / "cx")
+    cx.registry.assessment.satisfiable = None  # This preexisting WAL fixture uses a legacy contract.
+    cx.registry.authorization.satisfiable = None
     item = cx.admitted(reserve=False)
     work, readiness_database = cx.root / "work.sqlite", cx.root / "readiness.sqlite"
     leave_in_wal(readiness_database, "INSERT INTO reservations VALUES ('registry', 'repository', 'repository-UNIT', "
