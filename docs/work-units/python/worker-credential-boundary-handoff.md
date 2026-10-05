@@ -33,10 +33,10 @@ assessment `readiness/7efccee9-13f0-4905-a0a1-e80bc2faa748/3b2d38df-384c-4be0-bf
 - 7ca5f54: the setup's `unreachable` check judged by path type (verdict-7ca5f54.md).
 - 156ef20: the worker clone and fetch give `safe.directory` to upload-pack (`--no-local` for the clone). The proof
   keeps bounded, redacted diagnostics, and a 422 from 8(d) is UNRESOLVED (verdict-156ef20.md).
-- Packet wording to correct at the next packet revision: section at worker-credential-boundary.md:150 still says
-  `--no-hardlinks`; the code uses `--no-local` with the upload-pack exception.
-- Known, not fixed: prepare_home's `.gitconfig` names the packets clone without `/.git`. It is unused now that the
-  clone carries its own exception.
+- Corrected by WORKER-RUNTIME-DOC-CORRECTION: sections 0.3 and 0.5 of the packet now give the clone's and the
+  fetch's upload-pack exception, and `--no-local` replaces `--no-hardlinks`.
+- The worker HOME's `.gitconfig` (written by `prepare_worker_session`) is still written, but no worker git
+  operation depends on it; its packets-clone entry does not match. The packet now says so. The code is unchanged.
 
 ## Revision 8 (persistent worker-owned Codex login)
 - Build on 156ef20 (branch producer/worker-boundary-r7-7efccee9). Its other live checks passed (a, b, e, f, g).
