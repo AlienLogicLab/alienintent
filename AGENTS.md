@@ -48,8 +48,13 @@ authorized.
 to spend model cognition, the invocation runtime runs every registered
 feature-regression pack applicable to the candidate's changed paths via
 `tools/verification/run_feature_regressions.py`. Failure prevents verifier
-launch. A verifier verdict is inadmissible unless the exact candidate carries a
-valid passing `.alienintent/feature-regressions.json` receipt. Do not delete,
+launch. A verifier verdict is inadmissible unless the invocation runtime holds
+a valid passing feature-regression receipt for the exact candidate. Without a
+worker user the runtime writes it to `.alienintent/feature-regressions.json` in
+the workspace; with a worker user it writes it to the launch results folder,
+beside the verdict, where the invocation runtime reads it before it admits the
+verdict. A VERIFIER never requires the receipt to be committed in the
+candidate. Do not delete,
 weaken, bypass, or omit an applicable regression pack to make a candidate pass;
 change or supersede a regression only under the same authority that owns the
 feature behavior it protects.

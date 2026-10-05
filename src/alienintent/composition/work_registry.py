@@ -646,7 +646,8 @@ class WorkRegistry:
         else:
             worker_root = root / "worker"
             environment = environment | {"HOME": str(worker_root / "home"), "TMPDIR": str(worker_root / "tmp"),
-                                         "CODEX_HOME": str(worker_root / "auth" / "codex")}
+                                         "CODEX_HOME": str(worker_root / "auth" / "codex"),
+                                         "USER": user, "LOGNAME": user}
             for directory in (worker_root, root / "results", root / "handoff"):
                 if not directory.is_dir():  # normally made by the setup; made here as the worker, mode 0711
                     run_as_worker(user, environment, ["mkdir", "-p", "-m", "0711", "--", str(directory)])

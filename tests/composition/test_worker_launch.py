@@ -1260,7 +1260,7 @@ from tests.invocation_runtime.test_git_source_control import USER, install_fake_
 
 # With a worker user: no configuration path; the three identity variables of the export-mode context command.
 WORKER_ALLOWED = ALLOWED - {"ALIENINTENT_PROJECT_CONFIGURATION", "ALIENINTENT_PROJECT"} | {
-    "ALIENINTENT_CORRELATION", "ALIENINTENT_WORK_IDENTITY", "CODEX_HOME"}
+    "ALIENINTENT_CORRELATION", "ALIENINTENT_WORK_IDENTITY", "CODEX_HOME", "LOGNAME"}
 # The Founder's own provider logins: never read, copied or opened by the worker path (revision 8).
 LOGINS = {".codex/auth.json": "LOGIN-CODEX-TEST-DATA", ".claude/.credentials.json": "LOGIN-CLAUDE-TEST-DATA"}
 WORKER_LOGIN = "WORKER-OWN-CODEX-LOGIN-TEST-DATA"
@@ -1421,6 +1421,70 @@ def test_with_a_worker_user_no_privileged_git_touches_a_worker_repository_throug
     for call in sudo_calls(fx.sudo_log):
         if call["argv"][4:6] == ["env", "-i"]:
             assert f"CODEX_HOME={store}" in call["argv"], call  # beside HOME and TMPDIR in the one environment
+
+
+# --- WORKER-SESSION-IDENTITY: the worker's own user name; the receipt rule (acceptance checks 1-3) ---------------
+LAUNCHING = "launching-founder-name"
+
+
+def sudo_environments(log: Path) -> list[dict[str, str]]:
+    """The variables each command the fake sudo ran through `env -i` was given (after `PATH=/usr/bin:/bin`)."""
+    environments = []
+    for call in sudo_calls(log):
+        if call["argv"][4:6] == ["env", "-i"]:
+            variables, rest = {}, call["argv"][6:]
+            while rest and "=" in rest[0] and rest[0].split("=", 1)[0].isidentifier():
+                name, value = rest[0].split("=", 1)
+                variables[name], rest = value, rest[1:]
+            environments.append(variables)
+    return environments
+
+
+def test_with_a_worker_user_every_worker_command_carries_the_workers_own_user_name(workerized, monkeypatch):
+    """Checks 1 and 2: with the launching process's USER and LOGNAME another name, every command run through the
+    fake sudo (the sessions, the VERIFIER's regression runner, the clones) carries USER and LOGNAME equal to the
+    worker user; each session's environment names are within WORKER_ALLOWED and include both."""
+    fx = workerized
+    Closing(fx, monkeypatch)
+    monkeypatch.setenv("USER", LAUNCHING)
+    monkeypatch.setenv("LOGNAME", LAUNCHING)
+    item = fx.authorized("UNIT", **FIXED)
+    fx.launch(item.id)
+    fx.launch(item.id)
+    environments = sudo_environments(fx.sudo_log)
+    commands = worker_commands(fx.sudo_log)
+    assert any("run_feature_regressions.py" in " ".join(c) for c in commands)  # the regression runner
+    assert any(c[:2] == ["git", "clone"] for c in commands)  # a worker clone
+    assert environments and all(e.get("USER") == e.get("LOGNAME") == USER for e in environments), environments
+    runs = fx.runs()
+    assert fx.runs("PRODUCER") and fx.runs("VERIFIER")
+    for run in runs:
+        assert set(run["env"]) <= WORKER_ALLOWED and {"USER", "LOGNAME"} <= set(run["env"])
+        assert run["env"]["USER"] == run["env"]["LOGNAME"] == USER
+
+
+def test_without_a_worker_user_user_stays_inherited_and_there_is_no_logname(fx, monkeypatch):
+    """Check 2: without a worker user the session's USER is the launching process's and LOGNAME is absent."""
+    monkeypatch.setenv("USER", LAUNCHING)
+    monkeypatch.setenv("LOGNAME", LAUNCHING)
+    item = fx.authorized("PLAIN")
+    fx.launch(item.id)
+    [producer] = fx.runs("PRODUCER")
+    assert producer["env"]["USER"] == LAUNCHING and "LOGNAME" not in producer["env"]
+    assert set(producer["env"]) <= ALLOWED
+
+
+def _joined(name: str) -> str:
+    return " ".join((Path(__file__).resolve().parents[2] / name).read_text().split())
+
+
+def test_the_receipt_rule_names_where_the_receipt_lives_with_and_without_a_worker_user():
+    """Check 3: AGENTS.md no longer requires the receipt inside the candidate and names both places;
+    docs/operations.md names the launch results path."""
+    agents = _joined("AGENTS.md")
+    assert "exact candidate carries a valid passing" not in agents
+    assert "`.alienintent/feature-regressions.json`" in agents and "launch results folder" in agents
+    assert "`<launch>/results/<invocation>/feature-regressions.json`" in _joined("docs/operations.md")
 
 
 def assert_bounded_export(fx, root: Path, run: dict) -> None:

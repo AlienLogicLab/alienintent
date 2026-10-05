@@ -90,7 +90,9 @@ VERIFY, the invocation runtime selects packs from the candidate diff and runs
 them before launching the verifier model. A failing pack blocks verifier launch
 and therefore avoids spending cognition on a mechanically known regression.
 
-A passing run writes `.alienintent/feature-regressions.json`, bound to the exact
+A passing run writes the receipt (`.alienintent/feature-regressions.json` in
+the workspace, or with a worker user
+`<launch>/results/<invocation>/feature-regressions.json`), bound to the exact
 candidate revision and a digest of the registry. The real worker/verifier path
 will not admit an ACCEPT or REJECT verdict without a valid exact-candidate
 feature-regression receipt. This is cumulative: once a feature regression is
