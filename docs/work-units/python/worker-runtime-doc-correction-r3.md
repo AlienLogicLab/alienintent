@@ -1,7 +1,7 @@
 # Work unit: correct the worker-boundary documentation to match main
 
-**Label:** `WORKER-RUNTIME-DOC-CORRECTION-R3` (a document label; permanent id `PENDING`).
-**Status:** Draft revision 3 (at CAPTURE) for independent review, 2026-10-05. Not approved, not assessed, not released.
+**Label:** `WORKER-RUNTIME-DOC-CORRECTION-R3` (a document label; permanent id `c01f6c60-ce6c-42ab-979a-30cd5817b713`).
+**Status:** Draft revision 3 (work item `c01f6c60-ce6c-42ab-979a-30cd5817b713`, at CAPTURE) for independent review, 2026-10-05. Not approved, not assessed, not released.
 **Position on the path:** the genuine work item for check 8(c2) of WORKER-CREDENTIAL-BOUNDARY (`7efccee9-13f0-4905-a0a1-e80bc2faa748`, its parent). The Founder decided on 2026-10-05: use the documentation mismatch the VERIFIER already found as real work, launched through the normal path, so the launched PRODUCER's `context_command` reads its bounded per-invocation export. Builds on `main` `723f162`.
 **Roles:** one PRODUCER (a real launched worker session); one fresh VERIFIER on the exact candidate; CLOSURE through the normal launch path (landing is off, so it ends at a verified ready-to-land result; the merge to main is done separately).
 
@@ -9,7 +9,7 @@
 
 ```json alienintent-contract
 {
- "identity": "PENDING",
+ "identity": "c01f6c60-ce6c-42ab-979a-30cd5817b713",
  "version": "revision-3",
  "intent": "Bring the WORKER-CREDENTIAL-BOUNDARY packet and its handoff into exact agreement with the implementation landed on main at 723f162: the worker clone uses --no-local with git's ownership exception given to upload-pack, the VERIFIER and CLOSURE fetch gives the same exception to upload-pack, and the worker HOME's safe.directory .gitconfig is stated to be something no worker git operation depends on. Documentation only.",
  "satisfied_requirement_ids": [
