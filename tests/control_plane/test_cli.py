@@ -693,3 +693,125 @@ def test_two_launchers_taking_over_one_stale_launch_reservation_exactly_one_wins
     assert loser == {"identity": "A", "answer": "LAUNCH_IN_PROGRESS", "owner_state": "terminated"}
     assert answers == [{"identity": "B", "answer": "not-eligible"}] and launched == ["winner"]
     assert store.recovery_reservations("registry") == ()
+
+
+# --- WORKER-CREDENTIAL-BOUNDARY check 6d: `work context --export` reads only the bounded export -----------------
+SOURCE = Path(__file__).resolve().parents[2] / "src"
+OPENED: list[str] | None = None
+
+
+def _audit(event: str, args: tuple) -> None:
+    if OPENED is not None and event == "open" and args and isinstance(args[0], (str, bytes, os.PathLike)):
+        OPENED.append(os.fsdecode(args[0]))
+
+
+sys.addaudithook(_audit)
+
+
+@pytest.fixture
+def export(tmp_path, monkeypatch):
+    """One Founder-owned export (folders 0711, file 0640) and the worker's three identity variables."""
+    folder = tmp_path / "launch" / "exports" / "launch:c:1"
+    folder.mkdir(parents=True, mode=0o711)
+    path = folder / "context.json"
+    package = {"status": "PACKAGE", "identity": "item-1", "role": "PRODUCER", "goal": "TEST DATA",
+               "context_command": {"argv": ["alienintent", "--json", "work", "context", "--export", str(path)],
+                                   "environment": {"ALIENINTENT_WORK_IDENTITY": "item-1",
+                                                   "ALIENINTENT_ROLE": "PRODUCER",
+                                                   "ALIENINTENT_CORRELATION": "launch:c:1"}}}
+    path.write_text(json.dumps(package))
+    path.chmod(0o640)
+    for name, value in package["context_command"]["environment"].items():
+        monkeypatch.setenv(name, value)
+    return path, package
+
+
+def _run_export(argv: list[str], capsys) -> tuple[int, object, list[str]]:
+    """main() in process, recording every file it opens."""
+    global OPENED
+    from alienintent.control_plane.adapters import cli
+    OPENED = []
+    try:
+        code = cli.main(argv)
+    finally:
+        opened, OPENED = OPENED, None
+    return code, json.loads(capsys.readouterr().out), opened
+
+
+def test_the_export_mode_prints_exactly_the_export_and_opens_nothing_else(export, capsys, monkeypatch):
+    """Dispatched before any profile factory: it prints the exported package and opens only the export path; no
+    database, evidence repository or configuration is opened, and no profile is built."""
+    import sqlite3
+    from alienintent.composition import work_registry
+    path, package = export
+    monkeypatch.setattr(sqlite3, "connect", lambda *a, **k: pytest.fail("a database was opened"))
+    for name in ("work_registry_profile", "work_context_profile", "load_project_configuration"):
+        monkeypatch.setattr(work_registry, name, lambda *a, **k: pytest.fail("a profile was built"))
+    monkeypatch.setattr(work_registry.WorkRegistry, "__init__", lambda *a, **k: pytest.fail("a registry was built"))
+    code, answer, opened = _run_export(["--json", "work", "context", "--export", str(path)], capsys)
+    assert (code, answer) == (0, package)
+    assert set(opened) == {str(path.parent.parent), "launch:c:1", "context.json"}
+
+
+@pytest.mark.parametrize("variable, value", [("ALIENINTENT_WORK_IDENTITY", "item-2"), ("ALIENINTENT_ROLE", "VERIFIER"),
+                                             ("ALIENINTENT_CORRELATION", "launch:c:2")])
+def test_another_work_item_role_or_correlation_is_not_in_export(export, capsys, monkeypatch, variable, value):
+    path, _ = export
+    monkeypatch.setenv(variable, value)
+    code, answer, opened = _run_export(["--json", "work", "context", "--export", str(path)], capsys)
+    assert (code, answer) == (1, {"error": "not-in-export"})
+    if variable == "ALIENINTENT_CORRELATION":
+        assert opened == []  # another correlation's folder is never opened
+
+
+@pytest.mark.parametrize("extra", [["item-1"], ["--role", "PRODUCER"], ["--correlation", "launch:c:1"],
+                                   ["--candidate", "git:r#b@" + "a" * 40], ["--contract-digest", "sha256:0"],
+                                   ["--profile-factory", "os:getcwd"]])
+def test_any_further_argument_is_refused_reading_nothing(export, capsys, extra):
+    path, _ = export
+    code, answer, opened = _run_export(["--json", "work", "context", "--export", str(path), *extra], capsys)
+    assert (code, answer, opened) == (1, {"error": "not-in-export"}, [])
+
+
+def test_another_path_or_evidence_object_is_not_in_export_and_reads_nothing(export, capsys, tmp_path):
+    path, _ = export
+    evidence = tmp_path / "evidence" / "objects" / "ab"
+    evidence.parent.mkdir(parents=True)
+    evidence.write_text("EVIDENCE TEST DATA")
+    for other in (evidence, path.parent / "other.json", tmp_path / "launch" / "context" / "launch:c:1" / "context.json"):
+        code, answer, opened = _run_export(["--json", "work", "context", "--export", str(other)], capsys)
+        assert (code, answer, opened) == (1, {"error": "not-in-export"}, []), other
+
+
+def test_a_symlink_fifo_foreign_owner_or_swapped_folder_is_refused_without_reading_it(export, capsys, tmp_path):
+    from alienintent.control_plane.application.operator import export_context
+    path, package = export
+    secret = tmp_path / "founder-secret.json"
+    secret.write_text(json.dumps(package))
+    path.unlink()
+    path.symlink_to(secret)
+    code, answer, opened = _run_export(["--json", "work", "context", "--export", str(path)], capsys)
+    assert (code, answer) == (1, {"error": "export-refused"}) and str(secret) not in opened
+    path.unlink()
+    os.mkfifo(path)  # opened with O_NONBLOCK: refused without blocking
+    code, answer, _ = _run_export(["--json", "work", "context", "--export", str(path)], capsys)
+    assert (code, answer) == (1, {"error": "export-refused"})
+    path.unlink()
+    path.write_text(json.dumps(package))
+    assert export_context(str(path), os.environ, founder_uid=os.getuid() + 1) == {"error": "export-refused"}
+    assert export_context(str(path), os.environ) == package
+    folder = path.parent
+    folder.rename(folder.with_name("moved"))
+    folder.symlink_to(folder.with_name("moved"))  # a swapped <c> folder
+    assert export_context(str(path), os.environ) == {"error": "export-refused"}
+
+
+def test_the_export_mode_runs_as_a_process_with_no_profile_factory(export):
+    path, package = export
+    result = subprocess.run([sys.executable, "-c", "import sys; from alienintent.control_plane.adapters.cli import "
+                             "main; sys.exit(main())", "--json", "work", "context", "--export", str(path)],
+                            capture_output=True, text=True, check=False, timeout=60,
+                            env={"PATH": "/usr/bin:/bin", "PYTHONPATH": str(SOURCE),
+                                 **package["context_command"]["environment"]})
+    assert result.returncode == 0, result.stderr
+    assert json.loads(result.stdout) == package

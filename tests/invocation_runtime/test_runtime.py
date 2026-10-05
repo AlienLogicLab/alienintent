@@ -733,3 +733,46 @@ def test_a_begun_landing_is_effect_unknown_and_settles_once_from_the_journal_wit
     settled = worker.reconcile_closure(invocation)
     assert (settled.kind, settled.receipts, calls) == ("closed", ("merged-to-main:item:" + "a" * 40,), ["reconcile:1"])
     assert worker.read_back(invocation) == settled and worker.reconcile_closure(invocation) is None
+
+
+# --- WORKER-CREDENTIAL-BOUNDARY acceptance check 4: every worker-side command goes through the one rule ---------------
+def test_with_a_worker_user_the_session_and_the_regression_runner_run_through_the_sudo_rule(tmp_path, monkeypatch):
+    """The regression runner (with the control plane's starting revision as `--base`, its receipt under the results
+    folder) and the session start with exactly `sudo -n -u <user> -- env -i PATH=/usr/bin:/bin` and the allowlisted
+    variables; the control plane runs no git (no `merge-base`) in the worker's clone."""
+    from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
+    from alienintent.invocation_runtime.domain.runtime import InvocationRole
+    from tests.invocation_runtime.test_git_source_control import USER, install_fake_sudo, record_git, sudo_calls
+    log = install_fake_sudo(tmp_path / "bin", monkeypatch)
+    workspace = tmp_path / "worker" / "verifier-inv"
+    (workspace / "tools/verification").mkdir(parents=True)
+    (workspace / "tools/verification/run_feature_regressions.py").write_text("import sys\nsys.exit(0)\n")
+    client = tmp_path / "client.sh"
+    client.write_text("#!/bin/sh\nexit 0\n")
+    client.chmod(0o755)
+    base = "b" * 40
+    environment = {"HOME": "/launch/worker/home", "TMPDIR": "/launch/worker/tmp", "PATH": "/founder/bin"}
+    provider = CliWorkerProvider("fixture", str(client), (), "explicit", frozenset({"wall-clock", "cancellation"}),
+                                 environment, worker_user=USER, results=tmp_path / "results",
+                                 regression_base={"inv": base}.get, work_identity={"inv": "item-1"}.get)
+    calls = record_git(monkeypatch)
+    assert provider.run("inv", InvocationRole.VERIFIER, workspace, 30).kind == "success"
+    assert calls == []
+    runner, session = [c["argv"] for c in sudo_calls(log)]
+    prefix = ["-n", "-u", USER, "--", "env", "-i", "PATH=/usr/bin:/bin", "HOME=/launch/worker/home",
+              "TMPDIR=/launch/worker/tmp"]
+    assert runner == [*prefix, sys.executable, str(workspace / "tools/verification/run_feature_regressions.py"),
+                      "--base", base, "--candidate", "HEAD", "--receipt",
+                      str(tmp_path / "results" / "inv" / "feature-regressions.json")]
+    assert session[:7] == prefix[:7] and session[-1] == str(client)
+    assert {part.split("=", 1)[0] for part in session[7:-1]} == {
+        "HOME", "TMPDIR", "ALIENINTENT_INVOCATION_ID", "ALIENINTENT_ROLE", "ALIENINTENT_INVOCATION_OWNER",
+        "ALIENINTENT_CORRELATION", "ALIENINTENT_WORK_IDENTITY"}
+    # The three identity variables the export-mode context command names (WORKER-CREDENTIAL-BOUNDARY 0.6b).
+    assert {"ALIENINTENT_WORK_IDENTITY=item-1", "ALIENINTENT_ROLE=VERIFIER", "ALIENINTENT_CORRELATION=inv"} \
+        <= set(session[7:-1])
+    # No starting revision from the control plane: the runner is not started and nothing else runs.
+    other = CliWorkerProvider("fixture", str(client), (), "explicit", frozenset({"wall-clock", "cancellation"}),
+                              environment, worker_user=USER, results=tmp_path / "results", regression_base=lambda _: None)
+    assert other.run("inv2", InvocationRole.VERIFIER, workspace, 30).kind == "failure"
+    assert len(sudo_calls(log)) == 2 and calls == []

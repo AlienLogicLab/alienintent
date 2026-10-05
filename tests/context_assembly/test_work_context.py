@@ -459,3 +459,19 @@ def test_a_running_worker_stays_bound_to_the_approved_instructions(cx):
     evidence_differs(cx, other, "contract_digest", "sha256:" + "4" * 64)
     hold(cx.context.assemble(other.id, PRODUCER, running, None), "DIGEST_MISMATCH", "release_record",
          "contract_digest")
+
+
+def test_with_an_export_root_the_context_command_is_the_export_mode_and_names_no_configuration(tmp_path):
+    """WORKER-CREDENTIAL-BOUNDARY check 6d: with a worker user the package's `context_command` is
+    `work context --export <launch>/exports/<c>/context.json` with only the three identity variables: no profile
+    factory, no `ALIENINTENT_PROJECT_CONFIGURATION` or `ALIENINTENT_PROJECT`, no candidate or digest argument."""
+    from alienintent.context_assembly.application.work_context import ContextCommand
+    exports = tmp_path / "launch" / "exports"
+    command = ContextCommand("/opt/alienintent", "module:profile", {}, export_root=exports)
+    document = command.document("item-1", "VERIFIER", "launch:c:1", "git:r#b@" + "a" * 40, "sha256:" + "0" * 64)
+    assert document == {"argv": ["/opt/alienintent", "--json", "work", "context", "--export",
+                                 str(exports / "launch:c:1" / "context.json")],
+                        "environment": {"ALIENINTENT_WORK_IDENTITY": "item-1", "ALIENINTENT_ROLE": "VERIFIER",
+                                        "ALIENINTENT_CORRELATION": "launch:c:1"}}
+    plain = ContextCommand("/opt/alienintent", "module:profile", {"ALIENINTENT_PROJECT": "p"})
+    assert "--profile-factory" in plain.document("item-1", "PRODUCER", "c", None)["argv"]  # unchanged without one

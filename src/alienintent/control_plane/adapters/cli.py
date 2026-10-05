@@ -11,7 +11,8 @@ from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from alienintent.control_plane.application.operator import (
-    NOT_AVAILABLE_IN_WORKER_PROFILE, OperatorControlPlane, OperatorDenied, assess_work, authorize_work, context_work,
+    NOT_AVAILABLE_IN_WORKER_PROFILE, NOT_IN_EXPORT, OperatorControlPlane, OperatorDenied, assess_work, authorize_work,
+    context_work,
     decide_work, display_work, exclusive_launch_work, import_work, link_work, migrate_work, record_completed_work,
     register_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
@@ -75,6 +76,11 @@ def _factory(reference: str) -> Any:
     return getattr(importlib.import_module(module), name)()
 
 
+# `work context --export`: the composition's export reader (it reads the worker's three identity variables and
+# opens only the named export; WORKER-CREDENTIAL-BOUNDARY section 0.6b). No profile factory is loaded for it.
+EXPORT_READER = "alienintent.composition.work_registry:context_export_reader"
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = _sanitized(argparse.ArgumentParser(prog="alienintent"))
     parser.add_argument("--json", action="store_true")
@@ -109,9 +115,9 @@ def _parser() -> argparse.ArgumentParser:
     completed.add_argument("--verification", dest="verifications", action="append", required=True)
     link = _sanitized(work.add_parser("link")); link.add_argument("target"); link.add_argument("--issue", type=int)
     display = _sanitized(work.add_parser("display")); display.add_argument("target")
-    context = _sanitized(work.add_parser("context")); context.add_argument("target")
-    context.add_argument("--role", choices=("PRODUCER", "VERIFIER"), required=True)
-    context.add_argument("--correlation", required=True); context.add_argument("--candidate")
+    context = _sanitized(work.add_parser("context")); context.add_argument("target", nargs="?")
+    context.add_argument("--role", choices=("PRODUCER", "VERIFIER")); context.add_argument("--export")
+    context.add_argument("--correlation"); context.add_argument("--candidate")
     context.add_argument("--contract-digest")
     launch = _sanitized(work.add_parser("launch")); launch.add_argument("target")
     work_decide = _sanitized(work.add_parser("decide")); work_decide.add_argument("target")
@@ -150,6 +156,18 @@ def main(argv: list[str] | None = None) -> int:
                 index = raw.index(flag); values = raw[index:index + (2 if flag == "--profile-factory" else 1)]; del raw[index:index + len(values)]; raw[0:0] = values
         args = _parser().parse_args(raw)
         if args.command == "version": _render({"version": "0.0.0", "install": "python-package"}, args.json); return 0
+        if args.command == "work" and args.work_command == "context":
+            if args.export is not None:
+                # The export mode, before any profile factory is required or loaded (WORKER-CREDENTIAL-BOUNDARY).
+                if any(value is not None for value in (args.target, args.role, args.correlation, args.candidate,
+                                                       args.contract_digest, args.profile_factory)):
+                    _render({"error": NOT_IN_EXPORT}, args.json)
+                    return 1
+                answer = _factory(EXPORT_READER)(args.export)
+                _render(answer, args.json)
+                return 1 if "error" in answer else 0
+            if args.target is None or args.role is None or args.correlation is None:
+                raise ValueError("invalid command arguments")
         if not args.profile_factory: raise ValueError("--profile-factory is required")
         profile = _factory(args.profile_factory)
         if getattr(profile, "worker_profile", False) and (args.command, getattr(args, "work_command", None)) \
