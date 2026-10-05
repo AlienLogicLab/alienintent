@@ -98,10 +98,14 @@ elif role == "CLOSURE":
         subprocess.run(plan["push"], check=True, capture_output=True)
 elif "Then write your verdict as one JSON file, to this file:" in lines:
     verdict = lines[lines.index("Then write your verdict as one JSON file, to this file:") + 1]
-    Path(verdict).write_text(json.dumps({{"revision": head, "verdict": "accept", "findings": []}}))
+    rejecting = mode.exists() and mode.read_text() == "reject"
+    Path(verdict).write_text(json.dumps({{"revision": head, "verdict": "reject" if rejecting else "accept",
+                                        "findings": ["fix candidate"] if rejecting else []}}))
 else:
     Path(".alienintent").mkdir(exist_ok=True)
-    Path(".alienintent/verdict.json").write_text(json.dumps({{"revision": head, "verdict": "accept", "findings": []}}))
+    rejecting = mode.exists() and mode.read_text() == "reject"
+    Path(".alienintent/verdict.json").write_text(json.dumps({{"revision": head, "verdict":
+        "reject" if rejecting else "accept", "findings": ["fix candidate"] if rejecting else []}}))
 '''
 
 
@@ -606,6 +610,7 @@ class Closing:
     def __init__(self, fx: Launch, monkeypatch, *, landing: bool = True) -> None:
         self.fx, self.remote = fx, fx.root / "remote.git"
         self.mints: list[dict | None] = []
+        self.statuses: list[str] = []
         self.ignore_status = False
         self.pushes: list[str] = []
         github, graphql, request = fx.github, fx.github._graphql, fx.github.request
@@ -619,6 +624,7 @@ class Closing:
                 if not self.ignore_status:
                     name = next(o["name"] for o in STATUS_OPTIONS if o["id"] == variables["option"])
                     github.fields.setdefault(variables["item"], {})["Status"] = name
+                    self.statuses.append(name)
                 return {"data": {"updateProjectV2ItemFieldValue": {"projectV2Item": {
                     "id": variables["item"], "project": {"id": SANDBOX_PROJECT, "number": 2}}}}}
             answer = graphql(query, variables)
@@ -699,6 +705,98 @@ def revision_of(state) -> str:
     return state.candidate.locator.rpartition("@")[2]
 
 
+def test_board_follows_each_started_stage_through_done(closing):
+    item = closing.fx.authorized("STAGES", **FIXED)
+    assert closing.card(item.id) == "READY"
+    closing.fx.launch(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.VERIFY
+    assert closing.card(item.id) == "VERIFY"
+    closing.fx.launch(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.ACCEPT
+    assert closing.card(item.id) == "ACCEPT"
+    closing.close(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.DONE
+    assert closing.card(item.id) == "DONE"
+    assert closing.statuses == ["IMPLEMENT", "VERIFY", "ACCEPT", "DONE"]
+
+
+def test_failed_board_projection_is_recorded_and_retried_without_changing_role(closing):
+    item = closing.fx.authorized("RETRY", **FIXED)
+    registry = closing.fx.loaded()
+    board = closing.fx.github._graphql
+
+    def failing(query, variables):
+        if "updateProjectV2ItemFieldValue" in query:
+            raise RuntimeError("board unavailable")
+        return board(query, variables)
+
+    closing.fx.github._graphql = failing
+    registry.launcher().launch(item.id)
+    assert registry.coordinator(None, None).state(item.id).stage is LifecycleStage.VERIFY
+    assert closing.card(item.id) == "READY"
+    assert "board unavailable" in registry.board_diagnostics[item.id]
+    closing.fx.github._graphql = board
+    registry.launcher().launch(item.id)
+    assert registry.coordinator(None, None).state(item.id).stage is LifecycleStage.ACCEPT
+    assert closing.card(item.id) == "ACCEPT"
+    assert item.id not in registry.board_diagnostics
+    assert [run["env"]["ALIENINTENT_ROLE"] for run in closing.fx.runs()] == ["PRODUCER", "VERIFIER"]
+
+
+def test_board_retry_sweep_reads_the_invocation_journal_once(closing, monkeypatch):
+    item = closing.accepted("SWEEP")
+    waiting = closing.fx.authorized("WAITING")
+    registry = closing.fx.loaded()
+    reads = []
+    original = registry._journal_records
+    monkeypatch.setattr(registry, "_journal_records", lambda: (reads.append(1), original())[1])
+    registry.show_stages((item.id, waiting.id))
+    assert reads == [1]
+    assert closing.card(item.id) == "ACCEPT" and closing.card(waiting.id) == "READY"
+    assert waiting.id not in registry.board_diagnostics
+    monkeypatch.setattr(registry, "_journal_records", lambda: (_ for _ in ()).throw(OSError("journal unreadable")))
+    registry.show_stages((waiting.id,))
+    assert waiting.id not in registry.board_diagnostics
+
+
+def test_verifier_rework_returns_card_to_implement(closing):
+    item = closing.fx.authorized("REWORK", **(FIXED | {"budget_policy": {
+        "maximum_attempts": 3, "hard_wall_clock_seconds": 120, "cancellation_limit": 1}}))
+    closing.fx.launch(item.id)
+    assert closing.card(item.id) == "VERIFY"
+    closing.fx.mode.write_text("reject")
+    closing.fx.launch(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.IMPLEMENT
+    assert closing.card(item.id) == "IMPLEMENT"
+
+
+def test_release_hold_stays_ready_and_worker_decision_keeps_started_item_findable(closing):
+    unreleased = closing.fx.authorized("UNRELEASED", authorize=False, **FIXED)
+    registry = closing.fx.loaded()
+    registry.launcher().launch(unreleased.id)
+    assert closing.state(unreleased.id).record["correlation"] == "release"
+    assert closing.card(unreleased.id) == "READY"
+    assert unreleased.id not in registry.board_diagnostics
+    [entry] = [a for a in closing.fx.registry.assessment.consumer.history(unreleased.id)
+               if a["raw_ref"] == asdict(unreleased.assessment_ref)]
+    assert closing.fx.registry.authorization.authorize(unreleased.id, unreleased.pointer.commit,
+                                                      entry["attempt_id"], closing.fx.main(), QUOTE).answer is None
+    assert registry.decide(unreleased.id, "authorize", QUOTE)["answer"] is None
+    assert registry.launcher().launch(unreleased.id).dispatched == (unreleased.id,)
+
+    item = closing.fx.authorized("DECIDED", **FIXED)
+    closing.fx.route(None)
+    registry.launcher().launch(item.id)
+    blocked = closing.state(item.id)
+    assert blocked.outcome == "authority-block" and blocked.record["correlation"].startswith("launch:")
+    assert closing.card(item.id) == "IMPLEMENT"
+    assert registry.decide(item.id, "authorize", QUOTE)["answer"] is None
+    decided = closing.state(item.id)
+    assert decided.record["correlation"] == blocked.record["correlation"]
+    closing.fx.route(routing(str(closing.fx.codex), str(closing.fx.claude)))
+    assert registry.launcher().launch(item.id).dispatched == (item.id,)
+
+
 def test_closure_lands_through_the_authority_with_five_exact_receipts_and_the_row_projected(closing, monkeypatch):
     """Checks 1, 4, 6, 7, 10, 13 and 14 over one real CLOSURE launch."""
     fx = closing.fx
@@ -774,7 +872,7 @@ def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx
     closing.close(item.id)
     state = closing.state(item.id)
     assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "ready-to-land")
-    assert closing.head() == base and closing.orders(item.id) == [] and closing.card(item.id) == "READY"
+    assert closing.head() == base and closing.orders(item.id) == [] and closing.card(item.id) == "ACCEPT"
     [session] = fx.runs("CLOSURE")
     clone = Path(session["cwd"])
     assert clone.is_dir() and not fx.wip_held(item.id)
@@ -796,11 +894,11 @@ def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx
     assert [r["argv"][r["argv"].index("--model") + 1] for r in fx.runs("CLOSURE")] == ["model-a", "model-c"]
 
 
-def test_a_failing_landing_runs_closure_once_per_start(closing, monkeypatch):
-    """Check 11: with landing on and the Authority refusing every time, one `start()` runs CLOSURE once."""
+def test_a_failing_landing_runs_closure_once_per_launch(closing, monkeypatch):
+    """A named launch runs CLOSURE once even when the Landing Authority refuses."""
     item = closing.accepted()
     monkeypatch.setattr(LandingAuthority, "land", lambda self, order: "refused:fixture")
-    closing.fx.loaded(Owners("terminated")).launcher().release_and_start(item.id)
+    closing.close(item.id)
     assert len(closing.fx.runs("CLOSURE")) == 1 and closing.state(item.id).outcome == "authority-block"
 
 
@@ -831,7 +929,7 @@ def test_the_bounded_request_alone_steers_nothing(closing, plan, landed):
     if landed:
         expected += [receipt(a, item.id, revision) for a in ("merged-to-main", "landing-record")]
     assert state.record["receipts"] == sorted(expected)
-    assert (closing.head() != base) is landed and closing.card(item.id) == "READY"
+    assert (closing.head() != base) is landed and closing.card(item.id) == "ACCEPT"
     for finding in plan.get("request", {}).get("findings", []):
         if len(finding) <= 500:  # a refused request carries none of its findings
             assert f"closure-finding: {finding}" in closing.fx.journal_findings(item.id)
@@ -941,7 +1039,7 @@ def test_a_request_without_board_update_crashing_after_the_push_recovers_without
     monkeypatch.setattr(LandingAuthority, "land", original)
     closing.close(other.id)
     state = closing.state(item.id)
-    assert state.outcome == "authority-block" and closing.card(item.id) == "READY"
+    assert state.outcome == "authority-block" and closing.card(item.id) == "ACCEPT"
     assert {r.split(":", 1)[0] for r in state.record["receipts"]} == {
         "candidate-published", "merged-to-main", "landing-record"}
 
@@ -1054,7 +1152,7 @@ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(clo
             setattr(ownership, "work", (1,)), cleanup(self, invocation))[1])
     closing.close(item.id, ownership=ownership)
     state = closing.state(item.id)
-    assert state.outcome == "authority-block" and closing.card(item.id) == "DONE"
+    assert state.outcome == "authority-block" and closing.card(item.id) == "ACCEPT"
     assert receipt("workspaces-cleaned", item.id, revision_of(state)) not in state.record["receipts"]
     [session] = closing.fx.runs("CLOSURE")
     verifier_clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch-{workspace_folder(item.id)}-"))

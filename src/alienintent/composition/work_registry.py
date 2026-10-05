@@ -391,6 +391,7 @@ class WorkRegistry:
                  transport: GitHubTransport | None = None, host_configuration: Path = HOST_CONFIGURATION,
                  ownership: ProcessOwnership | None = None) -> None:
         self.configuration = configuration
+        self.board_diagnostics: dict[str, str] = {}
         # The existing process ownership observation: the launch chain's, and the exclusive `work launch` owner's.
         self.ownership = ownership if ownership is not None else ProcOwnership() if configuration.worker_user is None \
             else ProcOwnership(worker_uid=worker_uid(configuration.worker_user))
@@ -467,12 +468,14 @@ class WorkRegistry:
                                   wip_limit=lambda: wip_limit(self.host_configuration),
                                   recorded_completion=self.completion.recorded,
                                   landing_enabled=lambda: configuration.github.landing,
-                                  started_item=self._started_item, completed=self._project_completed)
+                                  started_item=self._started_item, completed=self._project_completed,
+                                  stage_shown=self.show_stage, stage_sweep=self.show_stages)
 
     def _journal_records(self) -> tuple[dict[str, object], ...]:
         return JsonlInvocationJournal(launch_root(self.configuration) / "invocation-journal.jsonl", time.time).records()
 
-    def _started_item(self, identity: str, correlation: str) -> ReadyWorkItem | None:
+    def _started_item(self, identity: str, correlation: str,
+                      journal_records: tuple[dict[str, object], ...] | None = None) -> ReadyWorkItem | None:
         """A started work item built from its registry record alone (not the board): the row (not retired, with a
         pointer), its packet and contract block, and its assessment reference; the contract digest must be the one
         the correlation's `invocation-started` event journaled. Otherwise None."""
@@ -483,7 +486,8 @@ class WorkRegistry:
                     or item.assessment_ref is None:
                 return None
             contract = contract_block(record.packet, item.id)
-            started = [entry for entry in self._journal_records() if entry.get("event") == "invocation-started"
+            started = [entry for entry in (journal_records if journal_records is not None else self._journal_records())
+                       if entry.get("event") == "invocation-started"
                        and entry.get("correlation_id") == correlation and entry.get("work_identity") == item.id]
             if len(started) != 1 or started[0].get("contract_digest") != contract.content_digest:
                 return None
@@ -492,6 +496,61 @@ class WorkRegistry:
                                  item.assessment_ref.logical_id, automatic_release=False)
         except Exception:  # noqa: BLE001 - an unusable registry record answers None, as recovery expects
             return None
+
+    def show_stage(self, identity: str, correlation: str | None = None, role: str | None = None) -> None:
+        """Project a started work item's recorded stage without changing its execution state."""
+        self._show_stage(identity, correlation, role, None)
+
+    def show_stages(self, identities: tuple[str, ...]) -> None:
+        """Retry active board projections against one invocation-journal snapshot."""
+        started: list[str] = []
+        for identity in identities:
+            try:
+                _, raw = self.store.read_state("registry", f"factory:{identity}")
+                if isinstance(raw.get("correlation"), str) and raw["correlation"].startswith("launch:"):
+                    started.append(identity)
+            except Exception as error:  # noqa: BLE001 - a state read failure is retried on the next launch
+                self.board_diagnostics[identity] = f"{type(error).__name__}: {error}"
+        if not started:
+            return
+        try:
+            journal_records = self._journal_records()
+        except Exception as error:  # noqa: BLE001 - keep a diagnostic for each item and retry next launch
+            for identity in started:
+                self.board_diagnostics[identity] = f"{type(error).__name__}: {error}"
+            return
+        for identity in started:
+            self._show_stage(identity, None, None, journal_records)
+
+    def _show_stage(self, identity: str, correlation: str | None, role: str | None,
+                    journal_records: tuple[dict[str, object], ...] | None) -> None:
+        try:
+            _, raw = self.store.read_state("registry", f"factory:{identity}")
+            if correlation is None:
+                recorded = raw.get("correlation")
+                correlation = recorded if isinstance(recorded, str) and recorded.startswith("launch:") else None
+            if correlation is None:
+                return  # A release-time hold has not started a role and leaves READY alone.
+            if self._started_item(identity, correlation, journal_records) is None:
+                self.board_diagnostics[identity] = "not-started-item"
+                return
+            stage = {PRODUCER: "IMPLEMENT", VERIFIER: "VERIFY", CLOSURE: "ACCEPT"}.get(role) \
+                if role is not None else raw.get("stage")
+            if stage not in {"IMPLEMENT", "VERIFY", "ACCEPT", "DONE"}:
+                return
+            record = self.records.show(identity)
+            card_id = None if record is None else record.item.card_id
+            if card_id is None or self.links is None:
+                return
+            board = self.links.board
+            if board.read_status(card_id).status != stage:
+                board.write_status(card_id, stage, 0)
+            if board.read_status(card_id).status != stage:
+                self.board_diagnostics[identity] = f"status-mismatch: {stage}"
+                return
+            self.board_diagnostics.pop(identity, None)
+        except Exception as error:  # noqa: BLE001 - board failures are retried on the next launch
+            self.board_diagnostics[identity] = f"{type(error).__name__}: {error}"
 
     def _project_completed(self, identity: str) -> None:
         """The coordinator's `completed` hook: nothing when the row is already DONE, otherwise
@@ -641,7 +700,7 @@ class WorkRegistry:
         if user is None:
             source, workspaces, handover, preparation = GitSourceControl(), \
                 GitWorktreeAdapter(packets.clone, root / "workspaces"), None, \
-                LaunchPreparation(self.context, root / "context", repository)
+                LaunchPreparation(self.context, root / "context", repository, stage_shown=self.show_stage)
             recovered = lambda invocation: _producer_worktree(root / "workspaces", invocation)  # noqa: E731
         else:
             worker_root = root / "worker"
@@ -656,7 +715,7 @@ class WorkRegistry:
                                                     environment, os.environ, workspaces)
             preparation = LaunchPreparation(self.context, root / "context", repository, worker=handover, user=user,
                                             environment=environment, packets_clone=packets.clone,
-                                            exports=root / "exports")
+                                            exports=root / "exports", stage_shown=self.show_stage)
             recovered = lambda invocation: _producer_worktree(worker_root, invocation, "producer-")  # noqa: E731
         ownership = self.ownership
         process = CliWorkerProvider("routed", preparation.command, (), "explicit", PROVIDER_DIMENSIONS,
@@ -1101,7 +1160,8 @@ class LaunchPreparation:
     def __init__(self, context: WorkContext, context_root: Path, repository: str,
                  route: Callable[[str], dict[str, str]] = resolve_route, *, worker=None, user: str | None = None,
                  environment: Mapping[str, str] | None = None, packets_clone: Path | None = None,
-                 exports: Path | None = None) -> None:
+                 exports: Path | None = None,
+                 stage_shown: Callable[[str, str, str], None] | None = None) -> None:
         self.context, self.context_root, self.repository, self.route = context, Path(context_root), repository, route
         self.kept: dict[str, tuple[dict[str, str], str]] = {}
         # Each invocation's starting revision from its package: the VERIFIER's regression base with a worker user.
@@ -1111,6 +1171,7 @@ class LaunchPreparation:
         # With a worker user: `<launch>/exports`, where each invocation's package is exported (section 0.6b).
         self.exports = None if exports is None else Path(exports)
         self.identities: dict[str, str] = {}  # each invocation's work item, for the worker's identity variables
+        self.stage_shown = stage_shown
 
     def package_path(self, invocation_id: str) -> Path:
         """The package path named to the worker: with a worker user only its bounded export."""
@@ -1161,6 +1222,11 @@ class LaunchPreparation:
                 return self._refusal(invocation, f"worker provider login missing: {store}")
         self.deliver(invocation, package.document(), route)
         self.starting[invocation.correlation_id] = str(package.fields["starting_revision"])
+        if self.stage_shown is not None:
+            try:
+                self.stage_shown(identity, invocation.correlation_id, role)
+            except Exception:  # noqa: BLE001 - a board failure cannot change the prepared invocation
+                pass
         return str(package.fields["starting_revision"])
 
     def deliver(self, invocation: WorkerInvocation, document: Mapping[str, object], route: dict[str, str]) -> Path:

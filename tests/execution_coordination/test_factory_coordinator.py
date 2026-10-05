@@ -1282,6 +1282,25 @@ def test_launch_answers_not_eligible_outside_the_ready_snapshot_or_with_a_depend
     assert coordinator.launch("child").dispatched == ("child",)
 
 
+def test_launch_and_guard_find_started_item_after_it_leaves_ready(tmp_path: Path) -> None:
+    item = replace(_custom_item("started", release_policy=EXPLICIT_HUMAN_OFF, required_closure_actions=(
+        "candidate-published", "merged-to-main", "landing-record", "board-updated", "workspaces-cleaned")),
+        automatic_release=False)
+    coordinator, worker, _ = _launching(tmp_path, [item], {item.identity: ["success"]},
+                                        started_item=lambda identity, correlation: item if
+                                        identity == item.identity and correlation.startswith("launch:") else None,
+                                        landing_enabled=lambda: True, wip_limit=lambda: 1)
+    first = coordinator.launch(item.identity)
+    assert first.dispatched == (item.identity,), first
+    coordinator._work.items.clear()
+    assert coordinator.guard_account(item.identity)["eligible"] is True
+    coordinator.launch(item.identity)
+    assert coordinator.state(item.identity).stage is LifecycleStage.ACCEPT
+    assert coordinator.guard_account(item.identity)["eligible"] is True
+    coordinator.launch(item.identity)
+    assert [role for _, role, _ in worker.invocations] == ["PRODUCER", "VERIFIER", "CLOSURE"]
+
+
 @pytest.mark.parametrize(("limit", "answer"), [(None, "wip-limit-unavailable"), (1, "wip-refused")])
 def test_launch_answers_a_wip_skip(tmp_path: Path, limit, answer) -> None:
     coordinator, worker, store = _launching(tmp_path, [_item("a", 0, 1, automatic=False)], {"a": ["success"]},
