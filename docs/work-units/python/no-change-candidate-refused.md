@@ -1,7 +1,7 @@
 # Work unit: a PRODUCER that changes nothing does not produce a candidate
 
 **Label:** `NO-CHANGE-CANDIDATE-REFUSED` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 1, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Status:** Draft revision 2, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
 **Position on the path:** a factory repair that must land before BOUNDED-ROUTINE-LAUNCH is retried. Work item
 `3d4e1215-c293-42d9-a112-57eabc289eed` was stopped (`cancelled-by-operator`, version 3). Its PRODUCER returned the
 starting revision `bceea00` unchanged, and the factory admitted it as a successful PRODUCER result with a candidate,
@@ -13,7 +13,7 @@ then advanced the item to VERIFY.
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-1",
+ "version": "revision-2",
  "intent": "When a PRODUCER's process succeeds but its claimed revision equals the starting revision, the factory publishes no candidate. It records a typed no-change PRODUCER result with a finding, and the work item stays in IMPLEMENT as a rework within its attempt budget. No VERIFIER attempt is used. A genuine descendant commit is admitted as today.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -31,6 +31,7 @@ then advanced the item to VERIFY.
   "src/alienintent/execution_coordination/application/factory_coordinator.py",
   "tests/invocation_runtime/test_no_change_candidate.py",
   "tests/invocation_runtime/test_git_source_control.py",
+  "tests/invocation_runtime/test_runtime.py",
   "tests/execution_coordination/test_factory_coordinator.py"
  ],
  "excluded_scope": [
@@ -110,12 +111,13 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-497).
    `MISSING_TERMINAL_RESULT`.
 2. **The PRODUCER refuses an unchanged revision** (`real_worker.py`, `_produce`). This is the one place the rule is
    decided, before both publication paths.
-   - **The starting SHA:**
-     - When preparation gave a full SHA, it is `starting_revision`.
-     - Otherwise (`starting_revision == "HEAD"`), it is the workspace's revision read with the same
-       `(self._source if self._handover is None else self._handover).revision(workspace.path)` call, made right after
-       `allocate` and before the session runs.
-   - **After a successful process,** when `revision == <starting SHA>`:
+   - **The starting SHA** has one source in every case: the workspace's own revision, read with
+     `(self._source if self._handover is None else self._handover).revision(workspace.path)`. This read is the first
+     statement inside the existing `try:` after `allocate` (`real_worker.py` line 477), before the session runs. The
+     workspace is checked out at the starting revision either way, and a raise there is cleaned up by the existing
+     `finally`. A prepared value is never compared directly.
+   - **After a successful process,** right after `revision = ...` (line 494) and before the `publication-started`
+     append (line 495), when `revision == <starting SHA>`:
      - The outcome is `WorkerOutcome(NO_CHANGE, None, findings=(f"no-change-candidate:{revision}: the PRODUCER returned the starting revision unchanged; IMPLEMENT requires a repository change",))`.
      - Nothing is handed over, nothing is published, and no `publication-started` record is written.
      - The outcome is journaled and read back like any other PRODUCER result, through the existing
@@ -135,14 +137,23 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-497).
      recorded finding with `source: "producer"`, and `attempt-budget-exhausted` → `failure` at the limit.
    - The next `launch` runs the PRODUCER again, exactly as after a VERIFIER rejection: stage IMPLEMENT, outcome `rework`.
      The recorded finding reaches it through the work context's `history.findings`.
+   - **Counts:** a no-change rework leaves `implement_cycles` and the state version unchanged. The lifecycle `rework`
+     transition adds one to each, but this path makes no transition.
+   - **Old records:** the `_cycles` fallback for records without stored counts (`factory_coordinator.py` lines 847-862)
+     assumes every rejection had a VERIFY. Records written after this change always store both counts, so the fallback
+     is never used for them.
+6. **Test fakes:** the three `class Source: pass` fakes in `tests/invocation_runtime/test_runtime.py` (lines 89, 118
+   and 150: the authority-block, exponential-retry and cancel tests) each gain `def revision(self, _): return "0" * 40`.
 5. **Limit stated in the module docstring of `real_worker.py`:** the current work item contract has no
    no-repository-change execution mode, so every PRODUCER result must change the repository.
 
 ## 3. Acceptance checks
 
 1. **No-change is refused** (`tests/invocation_runtime/test_no_change_candidate.py`, test
-   `test_unchanged_producer_revision_is_a_no_change_result`). Both ways of getting the starting SHA are tested:
-   with a worker user and preparation, and with no preparation (`"HEAD"`). In each case, a PRODUCER whose process
+   `test_unchanged_producer_revision_is_a_no_change_result`). It is parametrized over two set-ups:
+   - with a handover: a recording fake handover whose `revision` answers the starting SHA, and which asserts
+     `hand_over` and `publish_intake` are never called;
+   - without a handover: the existing git source of `test_runtime.py`, with no preparation (`"HEAD"`). In each case, a PRODUCER whose process
    succeeds without committing returns kind `no-change` with exactly the finding text of 2.2. Also:
    - there is no `publication-started` record;
    - no candidate branch exists on the remote, and no `refs/intake/<correlation>` ref exists;
@@ -153,9 +164,10 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-497).
    `claimed == starting` raises `CandidateUnavailable` matching `"candidate equals the starting revision"`. The test is named
    `test_hand_over_refuses_a_candidate_equal_to_the_starting_revision`.
 4. **No VERIFIER attempt is used** (`tests/execution_coordination/test_factory_coordinator.py`, test
-   `test_no_change_producer_result_reworks_without_a_verifier`). A scripted PRODUCER returns `no-change` with a finding.
+   `test_no_change_producer_result_reworks_without_a_verifier`). A subclass of `ScriptedWorker` (lines 81-83) lets a
+   PRODUCER step return `WorkerOutcome("no-change", None, findings=(...))`.
    - Afterwards the record is at stage IMPLEMENT, with outcome `rework`, `rejections` 1, and one finding whose `source`
-     is `producer`. `verify_cycles` and `candidate` are unchanged.
+     is `producer`. `verify_cycles`, `implement_cycles`, the state version and `candidate` are unchanged.
    - No VERIFIER invocation was started.
    - The next `launch` dispatches the PRODUCER.
    - With `maximum_attempts` 3, a third `no-change` ends in `failure` with `hold_reason` `attempt-budget-exhausted`.
@@ -173,6 +185,15 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-497).
    - `tools/fitness/check_architecture.py --root src/alienintent --check all`
 
 ## 4. Review record
+
+**Revision 2 (2026-10-06).** REVIEWER of `d8a3fb0` (FAIL, 7 findings):
+- the `test_runtime.py` fakes gain `revision`, with the file in scope;
+- the starting SHA is read inside the `try:`, from the workspace only, in every case;
+- the exact place of the check;
+- the `ScriptedWorker` subclass;
+- the counts asserted;
+- the old-record fallback stated;
+- the check 1 fakes named.
 
 **Revision 1 (2026-10-06).** First draft, from the Founder's decisions of 2026-10-06, after work item `3d4e1215`
 (stopped, version 3).
