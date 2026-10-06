@@ -1,7 +1,7 @@
 # Work unit: a routine launch reads no history
 
 **Label:** `BOUNDED-ROUTINE-LAUNCH` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 1, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Status:** Draft revision 2, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
 **Position on the path:** this comes before BOARD-FOLLOWS-WORK-STATE R4 (work item `6140fb56-fe5c-47c1-91c4-5eb7fc626077`,
 REVIEW FAILED). Founder 2026-10-06 decided on two work items. This one bounds every routine launch. R4 then builds the
 board on top of it and keeps all R3 review fixes.
@@ -14,7 +14,7 @@ board on top of it and keeps all R3 review fixes.
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-1",
+ "version": "revision-2",
  "intent": "Make a routine PRODUCER, VERIFIER and CLOSURE launch read a constant amount of current state, whatever the total factory history. Every fact the launch path takes from the invocation journal today comes instead from one immutable attempt receipt, read directly by correlation. The effect ledger scan becomes a primary-key lookup. The all-states DONE repair scan becomes one set of outstanding DONE-board obligations. The global journal stays as append-only history and is never read on the routine path.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -58,7 +58,7 @@ board on top of it and keeps all R3 review fixes.
   "the READY view, its refusals and its release meaning",
   "pruning the effects table or the global journal",
   "any change to what RoleBindingGuard refuses or accepts, other than where its facts are read from",
-  "recovery-only and repair-only readers: they may keep reading the global journal and must be listed in section 2.6"
+  "the readers listed in section 2.6, which may keep reading the global journal"
  ],
  "dependencies": [],
  "required_capabilities": [
@@ -72,7 +72,7 @@ board on top of it and keeps all R3 review fixes.
  },
  "retry_policy": "verifier rejection returns to the PRODUCER with the findings; at most 3 cycles",
  "completion_criteria": [
-  "acceptance checks 1-8 pass"
+  "acceptance checks 1-9 pass"
  ],
  "verification_obligations": [
   "independent VERIFIER on the exact candidate",
@@ -108,7 +108,8 @@ board on top of it and keeps all R3 review fixes.
  ],
  "stop_escalation_conditions": [
   "a named function or line does not exist at the starting revision",
-  "src appends more than one record of the same event for one correlation (invocation-started, publication-started, closure-ordered or invocation-outcome), so a write-once attempt receipt slot cannot hold it",
+  "src appends more than one invocation-started, publication-started or invocation-outcome record for one correlation, or more than one closure-ordered record for one correlation and order attempt, so a write-once attempt receipt slot cannot hold it",
+  "the one-time copy of the global journal into attempt receipts reports a conflict",
   "a routine reader needs a fact that is not in the attempt receipt as defined in section 2.1",
   "RoleBindingGuard would refuse or accept a launch differently from the starting revision for the same facts",
   "scope outside the authorized files"
@@ -123,10 +124,15 @@ for CLOSURE. Each read gets slower as the factory's history grows. The trace nam
 - `journal_append`, which reads the whole file twice for every append (`invocation_journal.py` lines 28 and 34);
 - `RoleBindingGuard.refusal`, which checks freshness, custody and replacements (`role_binding.py` lines 147, 201 and 208);
 - `RealWorkerProvider.read_back` (`real_worker.py` line 635);
-- the CLOSURE order readers (`real_worker.py` line 408; `work_registry.py` lines 508, 699, 1359, 1366 and 1498).
+- the CLOSURE order readers (`real_worker.py` line 408; `work_registry.py` lines 508, 699, 1359, 1366 and 1498);
+- the ownership readers that a routine CLOSURE reaches through `_cleanup` → `finalize` → `_finalize_recovered`
+  (`real_worker.py` lines 602, 612 and 658).
 
-Two store scans also grow with history: `WorkContext._attempt` reads every effect row through `effect_ledger`
-(`work_context.py` line 253), and `_project_done` reads every `factory:` row (`factory_coordinator.py` line 712).
+Three store scans also grow with history:
+- `WorkContext._attempt` reads every effect row through `effect_ledger` (`work_context.py` line 253).
+- `RoleBindingGuard._custody` reads every unresolved effect (`role_binding.py`, the `unresolved_effects` call).
+  A parked effect stays `unknown` until it is authorized, so cancelled items' parked effects pile up there.
+- `_project_done` reads every `factory:` row (`factory_coordinator.py` line 712).
 
 ## 2. The change
 
@@ -136,116 +142,151 @@ The term is always "attempt receipt" in full. "Receipt" alone already names the 
 action receipts.
 
 - **Port** (`invocation_runtime/ports/attempt_receipts.py`): `AttemptReceipts(Protocol)` with exactly these methods:
-  - `write(correlation: str, event: str, record: Mapping[str, object]) -> dict[str, object]`
-  - `read(correlation: str, event: str) -> dict[str, object] | None`
+  - `write(correlation: str, slot: str, record: Mapping[str, object]) -> dict[str, object]`
+  - `read(correlation: str, slot: str) -> dict[str, object] | None`
+  - `exists(correlation: str) -> bool`
+  - `last_order(correlation: str) -> dict[str, object] | None`
   - `lost(phase: str) -> tuple[dict[str, object], ...]`
   - `closure_orders(work_identity: str, revision: str) -> tuple[dict[str, object], ...]`
   - `started_for(work_identity: str) -> tuple[dict[str, object], ...]`
-- **The four events:** `event` is one of the four events src appends today: `invocation-started`,
-  `publication-started`, `closure-ordered` and `invocation-outcome`. Each event is a write-once slot. The record stored
-  is exactly the record the journal append writes today, with no `sequence` or `at` field.
+- **Slots:** a slot is the event name for `invocation-started`, `publication-started` and `invocation-outcome`. For a
+  `closure-ordered` record it is `closure-ordered-<order.attempt>` (one CLOSURE correlation orders up to `MAX_ORDERS`
+  times, `work_registry.py` lines 1268, 1330 and 1401). Each slot is written once.
+- **The record stored** is exactly the journal entry, including its `sequence` and `at`.
+  - `journal_append` computes the entry first (section 2.3), writes the slot, then appends the same entry to the
+    global journal.
+  - Orders are sorted by `(sequence, at, correlation_id, order.attempt)`. This gives `orders[-1]` and
+    `reversed(orders)` the same meaning as the journal order today (`work_registry.py` lines 510, 1336, 1373 and 1381).
 - **File adapter** (`invocation_runtime/adapters/attempt_receipts.py`): `FileAttemptReceipts(root: Path)`.
-  - **Slot file:** `root/<sha256(correlation)>/<event>.json`. It is created with `O_CREAT | O_EXCL`, fsynced, its
+  - **Slot file:** `root/<sha256(correlation)>/<slot>.json`. It is created with `O_CREAT | O_EXCL`, fsynced, its
     folder is fsynced, and it is read back identically before `write` returns.
   - **Writing the same slot again:** with an identical record, `write` returns the stored record. With a different
     record, it raises `AttemptReceiptConflict` and leaves the file unchanged.
   - **Reading:** `read` opens exactly one file and checks that its stored `correlation_id` equals the argument. If it
     does not match, `read` raises `JournalUnreadable`.
-  - **Index entries:** each is a write-once file holding only the correlation:
+  - **`exists`** is one `stat` of `root/<sha256(correlation)>`.
+  - **`last_order`** lists that one correlation's folder and returns the highest-attempt `closure-ordered-*` slot.
+  - **Index entries:** each is a write-once file holding only the correlation and the slot name:
     - for a `missing-terminal-result` outcome: `root/phases/<sha256(phase)>/<sha256(correlation)>`;
-    - for a `closure-ordered` record: `root/closures/<sha256(work|revision)>/<sha256(correlation)>`;
-    - for an `invocation-started` record: `root/items/<sha256(work)>/<sha256(correlation)>`.
+    - for a `closure-ordered` slot: `root/closures/<sha256(work|revision)>/<sha256(correlation)>-<attempt>`;
+    - for an `invocation-started` slot: `root/items/<sha256(work)>/<sha256(correlation)>`.
   - **The three index readers:** `lost`, `closure_orders` and `started_for` list one index folder, then read each
-    listed correlation's one slot.
-  - **Nothing on this path lists or reads `root` itself.**
+    listed slot.
+  - **Listing:** every folder listing goes through one module function, `_listed(folder: Path)`. Nothing lists or
+    reads `root` itself.
 - **Who writes:** only the deterministic control plane, through the same code that appends to the journal today:
   - `RealWorkerProvider`, at lines 269, 272, 439 and 496;
   - `RoleBindingGuard._retain_missing`, at line 261;
   - `RegistryClosure._order`, at line 1358.
 
-  At each of these points the attempt receipt slot is written first, then the existing journal append. A crash between
-  the two leaves the slot present. The next launch of that correlation is then refused as not fresh, which holds the
-  item safely.
+  The journal port's `append` does both steps: it writes the slot, then the journal line. So every appender keeps its
+  one call. `JsonlInvocationJournal` takes the keyword `receipts: AttemptReceipts | None = None`. When it is None, it
+  uses `FileAttemptReceipts(path.parent / "attempts")`, and it exposes it as `.receipts`.
+- **A crash between the slot write and the journal append** leaves the slot present. `_recover` then reads the outcome
+  from the slots (section 2.3), as it reads the journal today, and the correlation is never launched again
+  (`factory_coordinator.py` lines 612-680).
 - **Composition:**
-  - `RealWorkerProvider` takes the keyword `receipts: AttemptReceipts | None = None` and exposes it as `.receipts`.
-  - When `receipts` is None and the journal has a `path`, the provider uses `FileAttemptReceipts(journal.path.parent / "attempts")`.
-  - Every src composition site passes `receipts` explicitly: `work_registry.py`, `github_profile.py`,
+  - The registry root is `launch_root(configuration) / "attempts"`.
+  - Every src composition site gets its attempt receipts from its journal: `work_registry.py`, `github_profile.py`,
     `offline_profile.py`, `sandbox_run_profile.py` and `lifecycle_capstone.py`.
-  - For the registry, the root is `launch_root(configuration) / "attempts"`.
+  - `RealWorkerProvider` and `RoleBindingGuard` read `journal.receipts`.
 
 ### 2.2 RoleBindingGuard reads the attempt receipt, never the journal
 
-The guard keeps its second source: attempt receipts are files written by the provider, never the operational store.
-`_bound()` also requires `getattr(self.provider, "receipts", None)` to be present. If it is missing, the refusal is
-`durable-outcome-binding-missing`.
+The guard keeps its second source: attempt receipts are files written beside the journal, never the operational
+store. If the journal has no `receipts`, the refusal is `durable-outcome-binding-missing`.
 
 | fact | starting revision | after |
 |---|---|---|
-| freshness | no journal record has the correlation (line 150) | `receipts.read(correlation, "invocation-started") is None` and `receipts.read(correlation, "invocation-outcome") is None` |
-| unreadable | `records()` raises `JournalUnreadable` | `read` raises `JournalUnreadable` or `OSError`: same refusal text |
-| custody (VERIFIER, CLOSURE) | `correlated_outcome(records, producer invocation, branch)` (line 201) | `correlated_outcome` called on exactly the producer correlation's `invocation-started` and `invocation-outcome` attempt receipts (a list of at most two records); the function itself is unchanged |
+| freshness | no journal record of any event has the correlation (line 150) | `not receipts.exists(correlation)` (covers all slots) |
+| unreadable | `records()` raises `JournalUnreadable` | an attempt receipt read raises `JournalUnreadable` or `OSError`: same refusal text |
+| exactly one unresolved effect (`_custody`) | `unresolved_effects(profile)` filtered by identity | `store.effect(profile, correlation)` is present with status `unknown` (the primary key makes it at most one) |
+| custody (VERIFIER, CLOSURE) | `correlated_outcome(records, producer invocation, branch)` (line 201) | `correlated_outcome` on the producer correlation's `invocation-started` and `invocation-outcome` slots; the function is unchanged |
 | replacements | count of lost outcomes for the phase across the whole journal (line 208) | `len(receipts.lost(phase_of(invocation)))` |
-| `_retain_missing` | own records from the journal (line 244) | own four slots; the check "only `invocation-started`" is unchanged |
+| `_retain_missing` (line 244) | own records except `publication-started` must be exactly `[invocation-started]` | own slots except `publication-started` must be exactly `invocation-started` (a `closure-ordered-*` slot still blocks) |
 
-The `_custody` store reads (`read_state` and `unresolved_effects`) are unchanged.
+**One declared change, in `_retain_missing`:** today a failed journal append at line 270 retains nothing. After this
+change, once the `missing-terminal-result` slot has been written, the retention counts as done even if the journal line
+then fails, and the guard returns `read_back`. The guard's other store reads are unchanged.
 
 ### 2.3 Every other routine reader
 
 | reader (starting revision) | after |
 |---|---|
-| `journal_append` sequence (`invocation_journal.py:28`) | `sequence` is the last line's `sequence + 1` (0 for an empty file), read from the file's end only |
+| `journal_append` sequence (`invocation_journal.py:28`) | the last line's `sequence + 1` (0 for an empty file), reading the file's end only |
 | `journal_append` read-back (`:34`) | read back only the bytes just written, from the file's end |
 | `RealWorkerProvider.read_back` (`real_worker.py:635`) | `correlated_outcome` on the correlation's own two slots |
 | `_closure_orders` (`real_worker.py:408`) | `receipts.closure_orders(work, revision)` |
+| `reconcile_closure` (`real_worker.py:425`) | the correlation's own slots, plus `closure_orders` |
+| `_kept_reason`, `_owner_pid`, `attest_ownership` (`real_worker.py:602, 612, 658`) | the correlation's own slots |
 | `_started_item` (`work_registry.py:486`) | `receipts.read(correlation, "invocation-started")` |
 | `_project_completed` (`work_registry.py:508`) | `receipts.closure_orders(work, revision)` |
-| LandingAuthority `ordered` (`work_registry.py:699`) | `receipts.read(correlation, "closure-ordered")` |
-| `RegistryClosure._order` read-back (`work_registry.py:1359`) | the record returned by `receipts.write` |
+| LandingAuthority `ordered` (`work_registry.py:699`) | `receipts.last_order(correlation)` |
+| `RegistryClosure._order` read-back (`work_registry.py:1359`) | `receipts.last_order(correlation)` after the append |
 | `RegistryClosure` orders for `_settle` (`work_registry.py:1366`) | `receipts.closure_orders(work, revision)` |
 | `RegistryClosure._cleanup` (`work_registry.py:1498`) | `receipts.started_for(work)` |
-| `WorkContext._attempt` → `effect_ledger` (`work_context.py:253`) | new `OperationalStore.effect(profile, identity) -> Effect \| None`: one `SELECT` by `PRIMARY KEY(profile, identity)` in `SQLiteOperationalStore` |
+| `WorkContext._attempt` → `effect_ledger` (`work_context.py:253`) | new `OperationalStore.effect(profile, identity) -> Effect \| None`, with its status: one `SELECT` by `PRIMARY KEY(profile, identity)` in `SQLiteOperationalStore` |
+| `_effect_status` → `effect_ledger` (`factory_coordinator.py:731`) | `store.effect(profile, correlation)` |
 
-`WorkRegistry._journal_records` remains for the history readers only (section 2.6).
+- **`AttemptReceiptConflict`** raised inside `read_back`, `reconcile_closure` or `_retain_missing` answers None (a
+  hold). So `_recover` parks the work item and never aborts.
+- `WorkRegistry._journal_records` remains for the history readers only (section 2.6).
 
 ### 2.4 Outstanding DONE-board obligations
 
 - One aggregate, `board-owed`, in the coordinator's profile. Its state is `{"identities": [sorted work identities]}`,
   and it is read by `read_state`.
-- **Adding an entry:** in `FactoryCoordinator._record_result`, when `state.stage` is DONE, the identity is added to
-  `board-owed` with a version-checked `commit` *before* the work item's own commit at line 583.
-- **Removing an entry:** `_project` (line 697) removes the identity from `board-owed` with a version-checked `commit`
-  after `self._completed(identity)` returns. On a `VersionConflict` it keeps the entry, which is retried at the next
-  launch.
+- **Adding an entry:**
+  - Only when `self._completed is not None`.
+  - In `FactoryCoordinator._record_result`, when `state.stage` is DONE, the identity is added with a version-checked
+    `commit` *before* the work item's own commit (line 583).
+  - On `VersionConflict`, it re-reads and retries, at most 3 times. Adding to a set is idempotent.
+  - Any other store error propagates, exactly as a failed commit at line 583 does today.
+- **Removing an entry:**
+  - `completed(identity)` returning normally is the point where the card has been written and read back. R4 must keep
+    that meaning.
+  - `_project` (line 697) removes the identity with a version-checked `commit` after `self._completed(identity)`
+    returns. On a `VersionConflict` it keeps the entry, which is retried at the next launch.
 - **`_project_done`** reads only `board-owed`. For each identity it reads that work item's state:
   - at DONE, it calls `_project`;
-  - otherwise, it removes the entry. That happens only after a crash between the add and the DONE commit; when the item
-    later reaches DONE, `_record_result` adds it again first.
+  - otherwise, it removes the entry. That happens only after a crash between the add and the DONE commit. `_recover`
+    runs before `_project_done` (lines 177-179) and goes through `_record_result` again, which adds the entry again
+    first.
 - `_project_done` never calls `list_states`. The set's size is the number of outstanding obligations, not the number
   of DONE work items.
 
 ### 2.5 History is not on the routine path
 
-- **On the routine path:** a launch, its role, its recovery pass when nothing needs recovering, and `_project_done`
-  with no outstanding obligation. These never call `journal_records`, `JsonlInvocationJournal.records`,
-  `WorkRegistry._journal_records`, `effect_ledger` or `list_states`.
-- **Not on the routine path:** the cutover, the proofs, `work show`, and the recovery and repair readers.
+- **On the routine path:** a launch, its role (including CLOSURE's `_cleanup` of earlier worktrees), `_recover` when no
+  reservation is held, and `_project_done`. These never call `journal_records`, `JsonlInvocationJournal.records`,
+  `WorkRegistry._journal_records`, `effect_ledger`, `unresolved_effects` or `list_states`.
+- **Not on the routine path:** the cutover, the proofs, `work show` and `work decide`.
 
-### 2.6 History and recovery readers kept
+### 2.6 History readers kept
 
-These are the readers that may still read the global journal. The candidate must list each one in its module
-docstring, with this exact phrase: "history or recovery reader; never on the routine launch path".
-- `real_worker.py` lines 425, 602, 612 and 658, unless the candidate moves them onto attempt receipts;
+These are the readers that may still read the global journal. Each must say so in its own docstring, with the exact
+phrase "history reader; never on the routine launch path":
 - `work_registry.py` line 588 (`work decide`);
-- `_effect_status` (`factory_coordinator.py` line 731);
-- the proof readers in `lifecycle_capstone.py` and `offline_proof.py`.
+- the proof readers in `lifecycle_capstone.py` and `offline_proof.py`;
+- the one-time copy in section 2.7.
 
-Moving any of these onto attempt receipts is allowed.
+### 2.7 Upgrade
 
-### 2.7 Upgrade condition
-
-At landing, no work item may be in flight, and every DONE work item's card must already be DONE. The CLOSURE of this
-work item is the only exception. Attempts recorded before the upgrade have no attempt receipts. They are never read
-again on the routine path, because their work items are finished.
+- **The copy:** `copy_journal_to_attempt_receipts(journal_path: Path, receipts: AttemptReceipts) -> int` lives in
+  `invocation_runtime/adapters/attempt_receipts.py`.
+  - It writes every record of the global journal into its slot and index entries, and returns the number written.
+  - It is idempotent: identical records are returned as stored.
+  - It raises on any `AttemptReceiptConflict`.
+  - Only after a complete copy does it write `root/copied.json`, which holds the journal's line count.
+- **The launch refuses without the copy:**
+  - `WorkRegistry` refuses every launch with `attempt-receipts-not-copied` while `root/copied.json` is absent. This is
+    one `stat`.
+  - So the old history (lost outcomes, producer custody and old correlations) stays visible to the guard.
+- **After this item lands:**
+  1. Claude runs the copy once, from a registry script, before any other launch.
+  2. Claude checks that this work item's own registry state and card are DONE.
+  3. If either is not DONE, Claude adds its identity to `board-owed`. This item's own DONE was recorded by the old code,
+     which never adds to the set.
 
 ## 3. Acceptance checks
 
@@ -255,52 +296,77 @@ again on the routine path, because their work items are finished.
    - a different second write raises `AttemptReceiptConflict` and leaves the bytes unchanged;
    - a slot whose stored `correlation_id` differs raises `JournalUnreadable`;
    - `lost`, `closure_orders` and `started_for` return only their own index entries;
-   - a monkeypatched `os.listdir`/`Path.iterdir` records that only the one named index folder is listed.
+   - `closure_orders` is sorted by sequence across two correlations, each with attempts 1 and 2;
+   - `last_order` returns the highest attempt;
+   - with `_listed` wrapped and `os.scandir`, `os.listdir` and `Path.iterdir` patched to count, only the one named
+     folder is listed.
 2. **A routine launch reads no journal record** (`tests/composition/test_bounded_routine_launch.py`, test
-   `test_routine_launch_reads_no_journal_record`, using the `closing` fixture of `test_worker_launch.py`).
-   - **The armed set** of functions that raise when called:
+   `test_routine_launch_reads_no_journal_record`).
+   - **Set-up:** the `closing` fixture of `test_worker_launch.py`. The item is authorized with `fx.authorized(...,
+     **FIXED)`, and the plan carries `ready-to-land:<revision>`, as `test_worker_launch.py` lines 707-712 do.
+   - **The armed set**, patched on the classes so a store built per launch is covered (`test_worker_launch.py` lines
+     171-172). Each of these raises when called:
      - the module global `alienintent.invocation_runtime.adapters.invocation_journal.journal_records`;
      - `JsonlInvocationJournal.records`;
      - `WorkRegistry._journal_records`;
-     - the store's `effect_ledger` and `list_states`.
+     - `SQLiteOperationalStore.effect_ledger`, `.list_states` and `.unresolved_effects`.
    - **Order:**
      1. Arm, then `fx.launch(item.id)` (PRODUCER); disarm.
      2. Arm, then launch (VERIFIER); disarm.
      3. Arm, then `closing.close(item.id)` (CLOSURE that lands with the five exact receipts); disarm.
-   - **Expected result:** each launch succeeds, and the final state is DONE.
-   - The journal still receives its appended records, checked after disarming.
-   - This test fails at the starting revision.
+   - **Expected result:** each launch succeeds, and the final state is DONE. The journal still receives its appended
+     records, checked after disarming.
+   - **A second case** runs the same armed CLOSURE under the moving-main case of `test_worker_launch.py` lines 995-1004
+     (two orders in one correlation).
+   - Both cases fail at the starting revision.
 3. **History growth** (`test_bounded_routine_launch.py`, test `test_launch_cost_is_constant_as_history_grows`,
    parametrized N = 10, 100, 1000). Before the first launch, it seeds:
-   - N journal records of all four events for other work identities and correlations;
-   - N attempt receipt slots for those correlations;
+   - N records of all four events for other work identities and correlations, through `JsonlInvocationJournal.append`
+     (which writes their slots and index entries);
    - N confirmed effect rows on other aggregates, through `commit_with_effect`, `claim_effect` and `confirm_effect`;
-   - N DONE `factory:` rows with an empty `board-owed`.
+   - N parked `unknown` effect rows for cancelled work items;
+   - N DONE `factory:` rows, with an empty `board-owed`.
 
-   Counting wrappers then record, for PRODUCER, VERIFIER and CLOSURE:
-   - journal records read (must be 0);
+   Wrappers then count, for PRODUCER, VERIFIER and CLOSURE:
+   - journal records read;
    - attempt receipt files opened and folders listed;
-   - store method calls by name.
+   - for every `SQLiteOperationalStore` read method, its calls **and the total rows it returns**.
 
-   The test asserts each count is identical for every N, and that the final state and closure receipts are identical.
+   The test asserts:
+   - journal records read is 0;
+   - `effect_ledger`, `list_states` and `unresolved_effects` are called 0 times;
+   - every other count and row total is identical for every N;
+   - the final state and closure receipts are identical.
 4. **Outstanding DONE-board obligations are exact** (`test_factory_coordinator.py`, test
    `test_done_board_obligations_are_bounded`):
    - With 1,000 DONE rows and an empty `board-owed`, `launch` of an unregistered identity calls `completed` zero times.
    - With exactly two identities added to `board-owed` (both DONE), it calls `completed` exactly for those two and
      empties the set.
-   - With `completed` raising, the entries stay, and the next launch retries them.
    - An owed identity that is not DONE is removed without calling `completed`.
-5. **Guard safety unchanged** (`tests/composition/test_role_binding.py`; every existing test keeps passing). New test
-   `test_reused_correlation_is_refused_by_the_attempt_receipt`: an `invocation-started` attempt receipt slot exists
-   for a correlation the store has just claimed (a store rewound to an earlier version), and the launch is refused with
-   `durable-outcome-binding-not-fresh`. Further guard checks:
+5. **The entry is added** (`test_factory_coordinator.py`, test `test_done_adds_the_board_obligation_first`):
+   - A run to DONE with `completed` raising leaves the identity in `board-owed`; the next launch calls `completed` once
+     and empties the set.
+   - A store whose work item commit at DONE fails once, after the add, leaves the entry; the next launch removes it
+     without calling `completed`, then recovery records DONE and adds it again.
+   - A coordinator with `completed=None` never writes `board-owed`.
+6. **Guard safety unchanged** (`tests/composition/test_role_binding.py`; every existing test keeps passing). New test
+   `test_reused_correlation_is_refused_by_the_attempt_receipt`: the launch is refused with
+   `durable-outcome-binding-not-fresh` when, for a correlation the store has just claimed (a store rewound to an
+   earlier version), any one slot exists. The test is parametrized over all four slot kinds. Further guard checks:
    - a producer attempt receipt naming a different candidate is refused with `candidate-custody-unattributable`;
    - two `lost` entries in one phase are refused with `replacement-allowance-exhausted`;
-   - a provider with no `receipts` is refused with `durable-outcome-binding-missing`.
-6. **Effect lookup** (`test_operational_store.py`): `effect` returns the row for a present identity and None for a
-   missing one, and it reads exactly one row (checked through `sqlite3` `set_trace_callback`: one `SELECT` with
-   `identity=?`).
-7. **Mutations, run exactly by the pre-check and the VERIFIER:**
+   - a journal with no `receipts` is refused with `durable-outcome-binding-missing`;
+   - a failed journal line after the `missing-terminal-result` slot write still counts as retained (the declared
+     change in 2.2).
+7. **Effect lookup and upgrade:**
+   - In `test_operational_store.py`: `effect` returns the row and status for a present identity and None for a missing
+     one, through exactly one `SELECT` with `identity=?` (checked with `sqlite3` `set_trace_callback`).
+   - In `test_attempt_receipts.py`:
+     - `copy_journal_to_attempt_receipts` copies a journal holding two closure orders in one correlation;
+     - running it twice is idempotent;
+     - a conflicting slot raises and writes no `copied.json`.
+   - In `test_bounded_routine_launch.py`: a launch with no `copied.json` answers `attempt-receipts-not-copied`.
+8. **Mutations, run exactly by the pre-check and the VERIFIER:**
    - **M1:** in `src/alienintent/composition/role_binding.py` `refusal`, replace the freshness condition with `False`.
      Then `python3 -m pytest -q tests/composition/test_role_binding.py -k test_reused_correlation_is_refused_by_the_attempt_receipt`
      must FAIL. Revert, and it must pass.
@@ -311,11 +377,27 @@ again on the routine path, because their work items are finished.
    - **M3:** in `src/alienintent/invocation_runtime/adapters/invocation_journal.py` `journal_append`, compute
      `sequence` as `len(journal_records(path))`. Then `python3 -m pytest -q tests/composition/test_bounded_routine_launch.py -k test_routine_launch_reads_no_journal_record`
      must FAIL. Revert, and it must pass.
-8. **Fitness:** these all pass (no full suite):
+   - **M4:** in `_record_result`, remove the `board-owed` add. Then `python3 -m pytest -q tests/execution_coordination/test_factory_coordinator.py -k test_done_adds_the_board_obligation_first`
+     must FAIL. Revert, and it must pass.
+9. **Fitness:** these all pass (no full suite):
    - `python3 -m pytest -q tests/invocation_runtime tests/composition/test_role_binding.py tests/composition/test_worker_launch.py tests/composition/test_bounded_routine_launch.py tests/composition/test_lifecycle_capstone.py tests/composition/test_sandbox_run_profile.py tests/execution_coordination/test_factory_coordinator.py tests/execution_coordination/test_operational_store.py`
    - `tools/fitness/check_architecture.py --root src/alienintent --check all`
 
 ## 4. Review record
+
+**Revision 2 (2026-10-06).** REVIEWER of `bb47dfd` (FAIL, 13 findings), plus the main session's own pass.
+- `closure-ordered` repeats within one correlation, so it is keyed by order attempt.
+- Orders are sorted by journal `sequence`.
+- The ownership readers that a routine CLOSURE reaches are moved onto slots.
+- Freshness covers every slot.
+- The `_retain_missing` change is declared.
+- `AttemptReceiptConflict` is a hold.
+- `_custody`'s `unresolved_effects` scan becomes one effect lookup (own pass: parked effects never leave `unknown`).
+- The one-time copy, with a launch refusal until it is done, and this item's own DONE are handled.
+- The `board-owed` add has its conflict rule and a check (5, M4).
+- Check 3 counts returned rows and forbids the scans.
+- Check 2 has its exact set-up and the moving-main case.
+- Listing goes through one function.
 
 **Revision 1 (2026-10-06).** First draft. It is based on the full trace of routine-launch journal and history reads,
 and on the Founder's three decisions of 2026-10-06.
