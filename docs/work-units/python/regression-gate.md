@@ -1,7 +1,7 @@
 # Work unit: the regression gate runs the whole suite and the candidate never defines it
 
 **Label:** `REGRESSION-GATE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 1, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Status:** Draft revision 2, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
 **Position on the path:** this is the first of four in maintenance-required mode (Founder 2026-10-06). The order is:
 1. REGRESSION-GATE;
 2. MAIN-GREEN;
@@ -16,8 +16,8 @@ It is produced and verified by the hand-built maintenance path, because the fact
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-1",
- "intent": "Replace the VERIFIER's path-selected regression packs with one whole-suite comparison. The control plane runs every test under tests/ and tools/ at the release baseline and at the candidate, as the worker, and reads the per-test results itself. A candidate is inadmissible if any test that passed at the baseline fails, errors, disappears or cannot run at the candidate, or if a test that exists only at the candidate fails. The suite definition, the comparison and the baseline results come from the control plane's installed code and its own state, never from the candidate.",
+ "version": "revision-2",
+ "intent": "Before a VERIFIER session starts, the control plane runs one whole-suite comparison in place of the path-selected regression packs. It runs every test under tests/ and tools/ at the release baseline and at the candidate, as the worker, and reads the per-test results itself before any model session can touch them. A candidate is inadmissible if any test that passed at the baseline fails, errors, disappears or cannot run at the candidate, or if a test that exists only at the candidate fails. The suite definition, the comparison and the baseline results come from the control plane's installed code and its own state, never from the candidate.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
  ],
@@ -31,28 +31,26 @@ It is produced and verified by the hand-built maintenance path, because the fact
  ],
  "authorized_scope": [
   "src/alienintent/invocation_runtime/application/regression_gate.py",
-  "src/alienintent/invocation_runtime/adapters/cli_worker.py",
   "src/alienintent/invocation_runtime/application/real_worker.py",
-  "src/alienintent/invocation_runtime/adapters/scripted_worker.py",
-  "src/alienintent/invocation_runtime/domain/runtime.py",
+  "src/alienintent/invocation_runtime/adapters/cli_worker.py",
+  "src/alienintent/invocation_runtime/adapters/git_worktree.py",
   "src/alienintent/composition/work_registry.py",
   "tests/invocation_runtime/test_regression_gate.py",
   "tests/invocation_runtime/fixtures/regression_gate/cd5314b.xml",
   "tests/invocation_runtime/fixtures/regression_gate/057fbc1.xml",
-  "tests/support/feature_regressions.py",
-  "tests/invocation_runtime/test_runtime.py",
-  "tests/invocation_runtime/k1_fixture.py",
-  "tests/composition/k3_fixture.py",
   "tests/composition/test_worker_launch.py",
-  "tests/composition/test_sandbox_run_profile.py",
-  "tests/execution_coordination/test_factory_coordinator.py",
-  "tools/verification/replay_regression_gate.py"
+  "tests/composition/test_work_registry.py",
+  "tests/control_plane/test_cli.py",
+  "tests/composition/test_upstream_integration_capstone.py",
+  "tools/verification/replay_regression_gate.py",
+  "tests/invocation_runtime/fixtures/regression_gate/findings.txt"
  ],
  "excluded_scope": [
   "repairing any currently failing test (that is MAIN-GREEN)",
   "selecting tests by dependency or by changed path",
   "the coordinator's accept rule: it keeps requiring one feature-regressions:sha256: receipt for the exact candidate",
-  "deleting tools/verification/run_feature_regressions.py, its manifest or its tests (they stop deciding admission; their removal is separate)",
+  "deleting tools/verification/run_feature_regressions.py, its manifest or its tests (they stop deciding admission for the registry profile; their removal is separate)",
+  "the offline, sandbox, lifecycle-capstone and scripted-worker paths, which do not land on main: they keep today's worker-written receipt",
   "the tools/evidence and tools/live scripts"
  ],
  "dependencies": [],
@@ -107,8 +105,8 @@ It is produced and verified by the hand-built maintenance path, because the fact
  ],
  "stop_escalation_conditions": [
   "a named function or line does not exist at the starting revision",
-  "the replay of check 6 does not name exactly the tests the main session found (section 1)",
-  "an existing test outside authorized_scope depends on the old receipt being written by the worker",
+  "the replay of check 6 does not print exactly the 39 findings of findings.txt (section 1)",
+  "a test outside authorized_scope runs a VERIFIER through the registry profile and needs the suite runner replaced",
   "scope outside the authorized files"
  ]
 }
@@ -119,9 +117,20 @@ It is produced and verified by the hand-built maintenance path, because the fact
 The first factory DONE, `057fbc1` (work item `a41075ab`), landed 27 regressions in `tests/context_assembly`. The main
 session found them on 2026-10-06 and proved the cause:
 
-- **Which tests broke.** At `cd5314b`, `tests/context_assembly` had 2 failing tests. At `057fbc1` it has 29: 26 in
-  `test_work_context.py` (`authorize` answers `AUTHORIZATION_STALE`) and 1 more there that holds on a missing READY
-  assessment.
+- **Which tests broke.** The main session ran the whole suite (`tests` and `tools`) at `cd5314b` and at `057fbc1`, with
+  junit output.
+  - `cd5314b`: 2,853 test cases, 4 of them failing. These are the folder-name test in `test_sandbox_run_profile.py`,
+    `test_ambiguity`, `test_readiness_consumer` and `tools/orchestration/test_director.py`.
+  - `057fbc1`: 2,869 test cases.
+  - Under this packet's rules there are **39 findings**: 27 in `tests/context_assembly` and 12 in
+    `tests/control_plane`.
+  - The recorded files are in `manual/path-to-done/regression-replay/`:
+    - `cd5314b.xml` (sha256 `229913df3074a276…`);
+    - `057fbc1.xml` (sha256 `7bd9aa84b97aaf80…`);
+    - `findings.txt` (sha256 `5347c56c55daac14…`), which holds the exact 39 findings, one per line.
+
+  The two junit files become the fixtures of check 3, committed unchanged, and `findings.txt` is the exact expected
+  output of checks 3 and 6.
 - **Why the gate missed them.** The VERIFIER's regression runner, `tools/verification/run_feature_regressions.py`,
   runs only the packs whose hand-written path patterns match the changed files. For `057fbc1` it selected 4 of 13
   packs (`requirement-priority-continuity`, `wave2a-upstream-integration-capstone`,
@@ -134,114 +143,149 @@ session found them on 2026-10-06 and proved the cause:
 
 ## 2. The change
 
-### 2.1 One suite, defined by the control plane
+### 2.1 The comparison (control-plane code)
 
-`src/alienintent/invocation_runtime/application/regression_gate.py` is new, and it is control-plane code. It is
-imported from the installed runtime, never from the candidate.
+`src/alienintent/invocation_runtime/application/regression_gate.py` is new. It is imported from the installed
+runtime, never from the candidate.
 
 - **The suite command** is fixed:
-  `SUITE = ("python3", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--junitxml", "<results file>", "tests", "tools")`.
-  `tools/test_architecture_fitness.py` and `tools/verification/test_*.py` are inside `tools`, so the architecture
-  checks are part of the suite.
-- **`results(xml: bytes, exit_code: int) -> dict[str, str]`** maps each test's identity
-  (`<file>::<classname-path>::<name>`, built from the junit `classname` and `name`) to one of `passed`, `failed`,
-  `error` or `skipped`.
-  - A collection error appears in junit as an `error` test case naming the file; it is kept under that identity.
-  - If `exit_code` is not 0 or 1 (interrupted, usage error, internal error or no tests collected), or the XML cannot
-    be parsed, it raises `SuiteUnrunnable`.
-- **`compare(baseline: Mapping[str, str], candidate: Mapping[str, str]) -> tuple[str, ...]`** returns the sorted
-  findings. It is empty when the candidate is admissible. Each finding is one of:
-  - `regression:<id>:passed->failed`, `...:passed->error` or `...:passed->missing`, for every identity that is
-    `passed` at the baseline and not `passed` or `skipped` at the candidate (a test the candidate skips, when it
-    passed at the baseline, is also a finding: `passed->skipped`);
+  `SUITE = ("python3", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--continue-on-collection-errors", "--junitxml", <file>, "tests", "tools")`.
+  `tools/test_architecture_fitness.py` is inside `tools`, so the architecture checks are part of the suite.
+- **`SUITE_WALL_CLOCK = 1800`** seconds for each suite run. It is separate from the session's
+  `hard_wall_clock_seconds`.
+- **`results(xml: bytes, exit_code: int) -> dict[str, str]`** maps each test case's identity to one of `passed`,
+  `failed`, `error` or `skipped`.
+  - The identity is the junit `classname + "::" + name`, exactly as given.
+  - With `--continue-on-collection-errors`, a module that cannot be collected appears as an `error` test case.
+  - Exit codes 0 and 1 are results.
+  - For any other exit code (interrupted, internal error, usage error or no tests collected), for XML that cannot be
+    parsed, and for a timeout, it raises `SuiteUnrunnable`.
+- **`compare(baseline, candidate) -> tuple[str, ...]`** returns the sorted findings:
+  - `regression:<id>:passed-><outcome or missing>`, for every identity `passed` at the baseline whose candidate
+    outcome is not `passed`;
   - `new-test-fails:<id>:<outcome>`, for every identity absent at the baseline whose candidate outcome is `failed` or
     `error`.
 
-  A baseline identity that is `failed` or `error` at the baseline is never a finding.
-- **`receipt(baseline_sha, candidate_sha, baseline, candidate) -> str`** returns
-  `"feature-regressions:sha256:" + sha256` over the canonical JSON of
-  `{"baseline": baseline_sha, "candidate": candidate_sha, "baseline_results": baseline, "candidate_results": candidate}`.
-  It is called only when `compare` is empty.
+  Any identity that is `failed`, `error` or `skipped` at the baseline gives no finding.
+- **`receipt(baseline_sha, candidate_sha, baseline, candidate, findings) -> str`** returns
+  `"feature-regressions:sha256:" + sha256` over the canonical JSON of the five values.
+- **`class RegressionGate`** takes these arguments:
+  - `run: Callable[[Path, Path], int]`: runs `SUITE` in a folder, writes the junit file, returns the exit code, and
+    raises `SuiteUnrunnable` on timeout;
+  - `read: Callable[[Path], bytes]`;
+  - `checkout: Callable[[str], Path]`: a fresh worker clone at a full SHA;
+  - `baselines: Path`.
 
-### 2.2 Who runs it
+  `check(invocation_id, workspace, baseline_sha, candidate_sha) -> tuple[tuple[str, ...], str]` returns the findings
+  and the receipt.
 
-`cli_worker.py`: `_feature_regressions` and `_worker_feature_regressions` no longer run anything from the workspace's
-`tools/verification`.
-- **The candidate run:** the worker runs `SUITE` in the candidate workspace, through the existing sudo rule when there is
-  a worker user, with the existing process-group wall clock. The junit file goes to
-  `<results>/<invocation id>/candidate-junit.xml`, and the exit code is kept in memory.
-- **The baseline run:** the same `SUITE`, in a fresh worker workspace checked out at the baseline SHA (with a worker user,
-  `regression_base(invocation id)`; without one, `git merge-base HEAD origin/main` as today).
-  - Its results are stored by the control plane at `<launch root>/regression-baselines/<baseline sha>.json`, as
-    `{"baseline": sha, "results": {...}}` with mode 0644. That file is owned by the control-plane user, and the worker
-    cannot write to it.
-  - If that file already exists, the baseline is not run again.
+### 2.2 Where it runs: before the VERIFIER session, in the control plane
 
-### 2.3 Who decides
+`real_worker.py`, `_verify` (lines 308-337). `RealWorkerProvider` takes the keyword
+`regression_gate: RegressionGate | None = None`.
 
-`real_worker.py`, `read_verdict` (line 145): `_feature_regression_receipt` no longer reads a worker-written receipt.
-- **Reading:** it reads `candidate-junit.xml` through the same checked `read` the verdict uses, and the baseline results
-  from the control plane's own file.
-- **Deciding:** it calls `results` and then `compare`.
-  - If there are findings, the VERIFIER outcome is `reject` with those findings, whatever the worker's verdict says.
-    The existing route returns that to the PRODUCER.
-  - If the suite could not run, the outcome is `feature-regressions-missing`.
-  - Otherwise the receipt is `receipt(...)`, and the worker's verdict decides between accept and reject, as today.
-- The coordinator's accept rule (`factory_coordinator.py` line 512) is unchanged.
+When a gate is given:
+- **When it runs:** right after the candidate clone (line 312) and the preparation (line 319), and before the session
+  (line 334), the provider calls `gate.check(...)`. The baseline SHA is `regression_base(invocation id)`, the release
+  record's starting revision, which is a control-plane fact.
+- **The baseline:**
+  - **Cached:** if `<baselines>/<baseline sha>.json` exists, its results are used.
+  - **Not cached:**
+    1. `checkout(baseline sha)` makes a fresh worker clone of the packets clone at that SHA, using the existing
+       `allocate` of `git_worktree.py` (lines 120-126) with the identity `baseline-<sha>`.
+    2. The control plane checks that the clone's `rev-parse HEAD` equals the SHA, then runs the suite there.
+    3. It reads the junit bytes at once, and removes the clone.
+    4. It writes `{"baseline": sha, "results": ...}` to `<baselines>/<sha>.json` atomically, through a temporary file in
+       the same folder and a rename.
+  - `<baselines>` is `<launch root>/regression-baselines`. The control plane makes it with its own uid, not as a
+    symbolic link, with mode 0755, as `_export` does (`work_registry.py` lines 1191-1195). The worker cannot write
+    there.
+- **The candidate:** the suite runs in the VERIFIER's own candidate clone. Its junit file goes to
+  `<results>/<invocation id>/suite-junit.xml`. The control plane reads those bytes through the checked
+  `read_result` as soon as the suite ends, before the session starts. It decides from those bytes only and keeps the
+  decision in memory. A later rewrite of the file by the session changes nothing.
+- **The decision:**
+  - **With findings:** the session is not started. The outcome is `WorkerOutcome.reject(candidate, findings, (receipt,))`.
+    The coordinator's existing route (`factory_coordinator.py` lines 511-518) sends it to the PRODUCER as a rework.
+  - **With no findings:** the session runs as today. `read_verdict` takes the keyword `gate_receipt: str | None = None`.
+    When it is given, `read_verdict` uses it in place of `_feature_regression_receipt` and never reads a
+    worker-written `feature-regressions.json`.
+  - **`SuiteUnrunnable`** gives `WorkerOutcome("feature-regressions-missing")`.
 
-### 2.4 Test fixtures
+When no gate is given, nothing changes. This is the case for the offline, sandbox and lifecycle-capstone profiles,
+which never land on main.
 
-`tests/support/feature_regressions.py` is the one place fixtures build a passing regression result. It now writes a
-`candidate-junit.xml` with one passing test, and the matching baseline file. Each listed fixture uses it.
+### 2.3 Composition
 
-### 2.5 The replay
+- **`work_registry.py` `_launch_chain`** builds one `RegressionGate` and passes it to the `RealWorkerProvider`.
+  - `run` uses the worker's sudo rule and environment (`worker_prefix`), or runs directly when there is no worker user.
+  - `checkout` uses the producer allocator.
+  - `read` uses `handover.read_result`; without a worker user, the results folder is
+    `<launch root>/regression-results/<invocation>/`.
+  - `CliWorkerProvider` is built with the new keyword `feature_regressions=False`, so its old step
+    (`cli_worker.py` lines 202-207) does not run in the registry profile.
+- **Tests:** `WorkRegistry` takes the keyword `suite_run: Callable[[Path, Path], int] | None = None`, with the real
+  runner as the default. Test fixtures that launch a VERIFIER through the registry pass a fake that writes one passing
+  junit test case. The fixtures are in `test_worker_launch.py`, `test_work_registry.py`, `test_cli.py` and
+  `test_upstream_integration_capstone.py`.
+
+### 2.4 The replay (evidence tooling)
 
 `tools/verification/replay_regression_gate.py <base sha> <candidate sha>`:
 - checks out each revision into a temporary folder;
-- runs `SUITE` there with the current user;
-- prints the findings of `compare` as one JSON list.
+- runs `SUITE` with the current user;
+- prints the findings of `compare` as a JSON list, and writes both junit files beside it.
 
-It uses only the installed `regression_gate` module. It is evidence tooling: it is not part of the suite, and no test
-calls it.
+No test calls it.
 
 ## 3. Acceptance checks
 
-1. **Comparison** (`tests/invocation_runtime/test_regression_gate.py`): `compare` gives exactly one finding for each of
-   these cases, and no finding where none is due:
-   - passed→failed, passed→error, passed→missing and passed→skipped;
-   - a new test that fails, and a new test that errors;
-   - failed→failed and error→failed (no finding);
-   - passed→passed (no finding);
-   - a new test that passes (no finding).
-2. **Unrunnable suite:** `results` raises `SuiteUnrunnable` for exit codes 2, 3, 4 and 5, and for XML that cannot be
-   parsed.
-3. **The 057fbc1 case, recorded:** the junit files `fixtures/regression_gate/cd5314b.xml` and `057fbc1.xml`, produced by
-   the replay of check 6 and committed. `compare` on them gives findings that include every `test_work_context.py`
-   test that passes at `cd5314b` and fails at `057fbc1`. It gives no finding for the 2 tests already failing at
-   `cd5314b`.
-4. **The candidate cannot redefine the gate** (`test_regression_gate.py`, test
-   `test_the_candidate_workspace_does_not_define_the_gate`). In a candidate workspace whose
-   `tools/verification/run_feature_regressions.py` exits 0 and writes a passing receipt, and whose
-   `feature_regressions.json` selects no pack, a failing test that passed at the baseline still gives a `reject` with
-   its `regression:` finding.
-5. **A worker-written receipt is ignored:** a `feature-regressions.json` written in the worker results folder with
-   `passed: true` and a valid digest gives no receipt unless `compare` is empty.
-6. **Replay, run by the VERIFIER:** `python3 tools/verification/replay_regression_gate.py cd5314b 057fbc1` prints a
-   non-empty list naming the `test_work_context.py` tests of check 3. The VERIFIER records the output.
+1. **Comparison** (`tests/invocation_runtime/test_regression_gate.py`). Each case is its own test, named
+   `test_compare_<case>`, with these cases:
+   - `passed_to_failed`, `passed_to_error`, `passed_to_missing` and `passed_to_skipped`;
+   - `new_test_fails` and `new_test_errors`;
+   - `failed_stays_failed`, `error_to_failed` and `skipped_to_failed` (no finding);
+   - `passed_stays_passed` and `new_test_passes` (no finding).
+2. **Unrunnable suite:** `results` raises `SuiteUnrunnable` for exit codes 2, 3, 4 and 5 and for XML that cannot be
+   parsed. A collection-error test case in the XML with exit code 1 is a result.
+3. **The 057fbc1 case, recorded** (test `test_compare_names_the_057fbc1_regressions`). `fixtures/regression_gate/cd5314b.xml`
+   and `057fbc1.xml` are the junit files the main session recorded (section 1), committed unchanged. `compare` on them
+   gives exactly the findings listed in section 1. This proves `compare` on recorded data only; checks 6 and 8 are
+   the proof under real conditions.
+4. **The decision is taken before the session, from the control plane's own read** (test
+   `test_a_rewritten_junit_file_changes_nothing`). A fake suite run writes a junit file with a regression, and a fake
+   session then rewrites that file with all tests passing and leaves an `accept` verdict. The outcome is `reject` with
+   the `regression:` finding, and the session was never started.
+5. **The candidate cannot redefine the gate** (test `test_the_candidate_workspace_does_not_define_the_gate`). The
+   candidate workspace holds a `tools/verification/run_feature_regressions.py` that exits 0, a manifest selecting no
+   pack, and, in the worker results folder, a `feature-regressions.json` with `passed: true` and a valid digest. A
+   test that passed at the baseline and fails at the candidate still gives `reject` with its finding.
+6. **Replay, run by the VERIFIER:** `python3 tools/verification/replay_regression_gate.py cd5314b 057fbc1` prints
+   exactly the findings of section 1. The VERIFIER records the output.
 7. **Mutations, run exactly by the VERIFIER:**
-   - **M1:** in `regression_gate.py` `compare`, return `()`. Then
-     `python3 -m pytest -q tests/invocation_runtime/test_regression_gate.py -k 057fbc1` must FAIL. Revert, and it must
-     pass.
-   - **M2:** in `real_worker.py`, make `_feature_regression_receipt` read the worker's `feature-regressions.json` again.
-     Then `python3 -m pytest -q tests/invocation_runtime/test_regression_gate.py -k test_the_candidate_workspace_does_not_define_the_gate`
+   - **M1:** in `regression_gate.py` `compare`, `return ()`. Then
+     `python3 -m pytest -q tests/invocation_runtime/test_regression_gate.py -k test_compare_names_the_057fbc1_regressions`
      must FAIL. Revert, and it must pass.
-   - **M3:** in `compare`, drop the `passed->missing` case. Then
-     `python3 -m pytest -q tests/invocation_runtime/test_regression_gate.py -k missing` must FAIL. Revert, and it must
-     pass.
+   - **M2:** in `real_worker.py` `_verify`, call `gate.check` after the session instead of before it. Then
+     `python3 -m pytest -q tests/invocation_runtime/test_regression_gate.py -k test_a_rewritten_junit_file_changes_nothing`
+     must FAIL. Revert, and it must pass.
+   - **M3:** in `compare`, drop the missing case. Then
+     `python3 -m pytest -q tests/invocation_runtime/test_regression_gate.py -k test_compare_passed_to_missing` must
+     FAIL. Revert, and it must pass.
 8. **Whole-suite comparison by the VERIFIER:** the VERIFIER runs the whole suite at the starting revision and at the
-   candidate, using no gate code from the candidate, and compares them per test. The candidate must add no failing
-   test and change no passing test to failing.
+   candidate, using no gate code from the candidate, and compares them per test. The candidate adds no failing test
+   and changes no passing test to anything else.
 
 ## 4. Review record
+
+**Revision 2 (2026-10-06).** REVIEWER of `6d559d8` (FAIL, 14 findings). The gate is now one control-plane step
+before the VERIFIER session, in the registry profile only.
+- The decision is taken from bytes read before any session can rewrite them.
+- Exit code 1 is a result, and collection errors do not stop the run.
+- The baseline is a fresh clone at the SHA, checked, and written atomically into a folder the control plane owns.
+- Each suite run has its own wall clock.
+- No receipt written by the worker is used.
+- The profiles that never land are left unchanged, so the fixtures that depended on the old receipt stay as they are.
+- The identity rule, the comparison wording and the mutation names are exact.
 
 **Revision 1 (2026-10-06).** First draft, from the Founder's decisions of 2026-10-06 (maintenance-required mode).
