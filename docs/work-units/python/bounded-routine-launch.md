@@ -32,6 +32,7 @@ board on top of it and keeps all R3 review fixes.
  "authorized_scope": [
   "src/alienintent/invocation_runtime/ports/attempt_receipts.py",
   "src/alienintent/invocation_runtime/adapters/attempt_receipts.py",
+  "src/alienintent/invocation_runtime/ports/invocation_journal.py",
   "src/alienintent/invocation_runtime/adapters/invocation_journal.py",
   "src/alienintent/invocation_runtime/application/real_worker.py",
   "src/alienintent/composition/role_binding.py",
@@ -40,6 +41,7 @@ board on top of it and keeps all R3 review fixes.
   "src/alienintent/composition/offline_profile.py",
   "src/alienintent/composition/sandbox_run_profile.py",
   "src/alienintent/composition/lifecycle_capstone.py",
+  "src/alienintent/composition/offline_proof.py",
   "src/alienintent/execution_coordination/ports/operational_store.py",
   "src/alienintent/execution_coordination/adapters/sqlite_store.py",
   "src/alienintent/execution_coordination/application/factory_coordinator.py",
