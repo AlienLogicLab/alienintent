@@ -1,7 +1,7 @@
 # Work unit: a routine launch reads no history
 
 **Label:** `BOUNDED-ROUTINE-LAUNCH` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 2, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Status:** Draft revision 3, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
 **Position on the path:** this comes before BOARD-FOLLOWS-WORK-STATE R4 (work item `6140fb56-fe5c-47c1-91c4-5eb7fc626077`,
 REVIEW FAILED). Founder 2026-10-06 decided on two work items. This one bounds every routine launch. R4 then builds the
 board on top of it and keeps all R3 review fixes.
@@ -14,7 +14,7 @@ board on top of it and keeps all R3 review fixes.
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-2",
+ "version": "revision-3",
  "intent": "Make a routine PRODUCER, VERIFIER and CLOSURE launch read a constant amount of current state, whatever the total factory history. Every fact the launch path takes from the invocation journal today comes instead from one immutable attempt receipt, read directly by correlation. The effect ledger scan becomes a primary-key lookup. The all-states DONE repair scan becomes one set of outstanding DONE-board obligations. The global journal stays as append-only history and is never read on the routine path.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -35,6 +35,7 @@ board on top of it and keeps all R3 review fixes.
   "src/alienintent/invocation_runtime/ports/invocation_journal.py",
   "src/alienintent/invocation_runtime/adapters/invocation_journal.py",
   "src/alienintent/invocation_runtime/application/real_worker.py",
+  "src/alienintent/invocation_runtime/adapters/scripted_worker.py",
   "src/alienintent/composition/role_binding.py",
   "src/alienintent/composition/work_registry.py",
   "src/alienintent/composition/github_profile.py",
@@ -49,6 +50,11 @@ board on top of it and keeps all R3 review fixes.
   "tests/invocation_runtime/test_attempt_receipts.py",
   "tests/invocation_runtime/test_runtime.py",
   "tests/invocation_runtime/test_scripted_worker.py",
+  "tests/invocation_runtime/test_real_worker_outcome.py",
+  "tests/invocation_runtime/k1_fixture.py",
+  "tests/execution_coordination/test_role_orchestration.py",
+  "tests/execution_coordination/k2_fixture.py",
+  "tests/composition/k3_fixture.py",
   "tests/composition/test_role_binding.py",
   "tests/composition/test_worker_launch.py",
   "tests/composition/test_bounded_routine_launch.py",
@@ -79,7 +85,7 @@ board on top of it and keeps all R3 review fixes.
  "verification_obligations": [
   "independent VERIFIER on the exact candidate",
   "each acceptance check fails for its named wrong implementation",
-  "the VERIFIER runs mutations M1, M2 and M3 of section 3 exactly and records that each makes its named test fail and that reverting makes it pass"
+  "the VERIFIER runs mutations M1, M2, M3 and M4 of section 3 exactly and records that each makes its named test fail and that reverting makes it pass"
  ],
  "required_evidence": [
   "independent-verifier-accepted"
@@ -157,7 +163,9 @@ action receipts.
 - **The record stored** is exactly the journal entry, including its `sequence` and `at`.
   - `journal_append` computes the entry first (section 2.3), writes the slot, then appends the same entry to the
     global journal.
-  - Orders are sorted by `(sequence, at, correlation_id, order.attempt)`. This gives `orders[-1]` and
+  - Orders are sorted by `(sequence, order.attempt, correlation_id)`, never by `at`. A crash after a slot write and
+    before its journal line leaves a slot whose `sequence` the next append reuses. In recovery that next append is
+    the same correlation's next order attempt, so `order.attempt` breaks the tie. This gives `orders[-1]` and
     `reversed(orders)` the same meaning as the journal order today (`work_registry.py` lines 510, 1336, 1373 and 1381).
 - **File adapter** (`invocation_runtime/adapters/attempt_receipts.py`): `FileAttemptReceipts(root: Path)`.
   - **Slot file:** `root/<sha256(correlation)>/<slot>.json`. It is created with `O_CREAT | O_EXCL`, fsynced, its
@@ -166,7 +174,8 @@ action receipts.
     record, it raises `AttemptReceiptConflict` and leaves the file unchanged.
   - **Reading:** `read` opens exactly one file and checks that its stored `correlation_id` equals the argument. If it
     does not match, `read` raises `JournalUnreadable`.
-  - **`exists`** is one `stat` of `root/<sha256(correlation)>`.
+  - **`exists`** lists that one correlation's folder through `_listed` and answers true only when a slot file is
+    present. An empty folder left by a failed write answers false.
   - **`last_order`** lists that one correlation's folder and returns the highest-attempt `closure-ordered-*` slot.
   - **Index entries:** each is a write-once file holding only the correlation and the slot name:
     - for a `missing-terminal-result` outcome: `root/phases/<sha256(phase)>/<sha256(correlation)>`;
@@ -181,9 +190,17 @@ action receipts.
   - `RoleBindingGuard._retain_missing`, at line 261;
   - `RegistryClosure._order`, at line 1358.
 
-  The journal port's `append` does both steps: it writes the slot, then the journal line. So every appender keeps its
-  one call. `JsonlInvocationJournal` takes the keyword `receipts: AttemptReceipts | None = None`. When it is None, it
-  uses `FileAttemptReceipts(path.parent / "attempts")`, and it exposes it as `.receipts`.
+  - **The one place the slot is written** is `journal_append(path, clock, record)`. For the four events only, it
+    writes the slot and index entries into `FileAttemptReceipts(path.parent / "attempts")`, then the journal line.
+    It writes no slot for any other event (for example `process-run`, `process-cancel` and `workspace-finalized`). So
+    every appender keeps its one call, `ScriptedWorkerProvider._append` (`scripted_worker.py` line 203) included.
+  - **Where readers find the attempt receipts:** `JsonlInvocationJournal` exposes `.receipts`, the same
+    `FileAttemptReceipts(path.parent / "attempts")`. The `InvocationJournal` port gains the attribute
+    `receipts: AttemptReceipts`.
+  - **Test journal wrappers** forward `.receipts`: `DropOutcome` and `Miscorrelate` (`test_real_worker_outcome.py`
+    lines 55-66 and 113), `CrashAfterOutcome` (`k1_fixture.py` lines 178-186) and the wrapper in
+    `test_role_orchestration.py` line 186. A wrapper that today changes what `records()` returns changes the slot read
+    instead, so its test keeps its meaning.
 - **A crash between the slot write and the journal append** leaves the slot present. `_recover` then reads the outcome
   from the slots (section 2.3), as it reads the journal today, and the correlation is never launched again
   (`factory_coordinator.py` lines 612-680).
@@ -192,6 +209,7 @@ action receipts.
   - Every src composition site gets its attempt receipts from its journal: `work_registry.py`, `github_profile.py`,
     `offline_profile.py`, `sandbox_run_profile.py` and `lifecycle_capstone.py`.
   - `RealWorkerProvider` and `RoleBindingGuard` read `journal.receipts`.
+  - `ScriptedWorkerProvider`'s own journal read (`scripted_worker.py` line 54) moves onto its correlation's slots.
 
 ### 2.2 RoleBindingGuard reads the attempt receipt, never the journal
 
@@ -228,7 +246,7 @@ then fails, and the guard returns `read_back`. The guard's other store reads are
 | `RegistryClosure` orders for `_settle` (`work_registry.py:1366`) | `receipts.closure_orders(work, revision)` |
 | `RegistryClosure._cleanup` (`work_registry.py:1498`) | `receipts.started_for(work)` |
 | `WorkContext._attempt` → `effect_ledger` (`work_context.py:253`) | new `OperationalStore.effect(profile, identity) -> Effect \| None`, with its status: one `SELECT` by `PRIMARY KEY(profile, identity)` in `SQLiteOperationalStore` |
-| `_effect_status` → `effect_ledger` (`factory_coordinator.py:731`) | `store.effect(profile, correlation)` |
+| `_effect_status` → `effect_ledger` (`factory_coordinator.py:731`) | `store.effect(profile, correlation)`. It keeps both of today's answers: None when the store has no `effect` method, and `"none"` when `effect` returns None |
 
 - **`AttemptReceiptConflict`** raised inside `read_back`, `reconcile_closure` or `_retain_missing` answers None (a
   hold). So `_recover` parks the work item and never aborts.
@@ -281,8 +299,10 @@ phrase "history reader; never on the routine launch path":
   - It raises on any `AttemptReceiptConflict`.
   - Only after a complete copy does it write `root/copied.json`, which holds the journal's line count.
 - **The launch refuses without the copy:**
-  - `WorkRegistry` refuses every launch with `attempt-receipts-not-copied` while `root/copied.json` is absent. This is
-    one `stat`.
+  - `WorkRegistry` refuses every launch with `attempt-receipts-not-copied` while `root/copied.json` is absent and
+    the global journal file exists. This is two `stat` calls.
+  - When the journal file is absent (a new install or a test folder), `WorkRegistry` writes `copied.json` with count
+    0, and the launch goes ahead.
   - So the old history (lost outcomes, producer custody and old correlations) stays visible to the guard.
 - **After this item lands:**
   1. Claude runs the copy once, from a registry script, before any other launch.
@@ -299,6 +319,9 @@ phrase "history reader; never on the routine launch path":
    - a slot whose stored `correlation_id` differs raises `JournalUnreadable`;
    - `lost`, `closure_orders` and `started_for` return only their own index entries;
    - `closure_orders` is sorted by sequence across two correlations, each with attempts 1 and 2;
+   - two orders of one correlation that share a `sequence` and have a decreasing `at` sort by `order.attempt`;
+   - `exists` answers false for an empty correlation folder;
+   - `journal_append` writes slots for the four events and none for `process-run`;
    - `last_order` returns the highest attempt;
    - with `_listed` wrapped and `os.scandir`, `os.listdir` and `Path.iterdir` patched to count, only the one named
      folder is listed.
@@ -367,7 +390,9 @@ phrase "history reader; never on the routine launch path":
      - `copy_journal_to_attempt_receipts` copies a journal holding two closure orders in one correlation;
      - running it twice is idempotent;
      - a conflicting slot raises and writes no `copied.json`.
-   - In `test_bounded_routine_launch.py`: a launch with no `copied.json` answers `attempt-receipts-not-copied`.
+   - In `test_bounded_routine_launch.py`:
+     - a launch with a journal file but no `copied.json` answers `attempt-receipts-not-copied`;
+     - a launch with no journal file writes `copied.json` with count 0 and runs.
 8. **Mutations, run exactly by the pre-check and the VERIFIER:**
    - **M1:** in `src/alienintent/composition/role_binding.py` `refusal`, replace the freshness condition with `False`.
      Then `python3 -m pytest -q tests/composition/test_role_binding.py -k test_reused_correlation_is_refused_by_the_attempt_receipt`
@@ -386,6 +411,15 @@ phrase "history reader; never on the routine launch path":
    - `tools/fitness/check_architecture.py --root src/alienintent --check all`
 
 ## 4. Review record
+
+**Revision 3 (2026-10-06).** Follow-up REVIEWER of `7b24b9e` (FAIL): all 13 earlier findings fixed, 7 new ones.
+- A new install or test folder no longer refuses launch (N1).
+- The slot is written in one place, `journal_append`, for the four events only (N2).
+- The test journal wrappers forward `.receipts`, with their files in scope (N3).
+- The sort never uses `at`, and the shared-sequence case is defined (N4).
+- `exists` ignores an empty folder (N5).
+- `_effect_status` keeps both answers (N6).
+- The contract names M1-M4 (N7).
 
 **Revision 2 (2026-10-06).** REVIEWER of `bb47dfd` (FAIL, 13 findings), plus the main session's own pass.
 - `closure-ordered` repeats within one correlation, so it is keyed by order attempt.
