@@ -142,10 +142,10 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-497).
    - **Old records:** the `_cycles` fallback for records without stored counts (`factory_coordinator.py` lines 847-862)
      assumes every rejection had a VERIFY. Records written after this change always store both counts, so the fallback
      is never used for them.
-6. **Test fakes:** the three `class Source: pass` fakes in `tests/invocation_runtime/test_runtime.py` (lines 89, 118
-   and 150: the authority-block, exponential-retry and cancel tests) each gain `def revision(self, _): return "0" * 40`.
 5. **Limit stated in the module docstring of `real_worker.py`:** the current work item contract has no
    no-repository-change execution mode, so every PRODUCER result must change the repository.
+6. **Test fakes:** the three `class Source: pass` fakes in `tests/invocation_runtime/test_runtime.py` (lines 89, 118
+   and 150: the authority-block, exponential-retry and cancel tests) each gain `def revision(self, _): return "0" * 40`.
 
 ## 3. Acceptance checks
 
