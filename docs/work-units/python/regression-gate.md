@@ -1,7 +1,7 @@
 # Work unit: the regression gate runs the whole suite and the candidate never defines it
 
 **Label:** `REGRESSION-GATE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 2, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Status:** Draft revision 3, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
 **Position on the path:** this is the first of four in maintenance-required mode (Founder 2026-10-06). The order is:
 1. REGRESSION-GATE;
 2. MAIN-GREEN;
@@ -16,7 +16,7 @@ It is produced and verified by the hand-built maintenance path, because the fact
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-2",
+ "version": "revision-3",
  "intent": "Before a VERIFIER session starts, the control plane runs one whole-suite comparison in place of the path-selected regression packs. It runs every test under tests/ and tools/ at the release baseline and at the candidate, as the worker, and reads the per-test results itself before any model session can touch them. A candidate is inadmissible if any test that passed at the baseline fails, errors, disappears or cannot run at the candidate, or if a test that exists only at the candidate fails. The suite definition, the comparison and the baseline results come from the control plane's installed code and its own state, never from the candidate.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -51,7 +51,8 @@ It is produced and verified by the hand-built maintenance path, because the fact
   "the coordinator's accept rule: it keeps requiring one feature-regressions:sha256: receipt for the exact candidate",
   "deleting tools/verification/run_feature_regressions.py, its manifest or its tests (they stop deciding admission for the registry profile; their removal is separate)",
   "the offline, sandbox, lifecycle-capstone and scripted-worker paths, which do not land on main: they keep today's worker-written receipt",
-  "the tools/evidence and tools/live scripts"
+  "the tools/evidence and tools/live scripts, including tools/live/worker_boundary_check.py, a live check that builds a LandingAuthority but lands no candidate",
+  "docs/operations.md: its description of <launch>/results/<invocation>/feature-regressions.json becomes stale for the registry profile; the assertion of it in test_worker_launch.py (lines 1486-1487) is updated, and the document is corrected separately"
  ],
  "dependencies": [],
  "required_capabilities": [
@@ -181,29 +182,47 @@ runtime, never from the candidate.
 
 ### 2.2 Where it runs: before the VERIFIER session, in the control plane
 
-`real_worker.py`, `_verify` (lines 308-337). `RealWorkerProvider` takes the keyword
-`regression_gate: RegressionGate | None = None`.
+`real_worker.py`, `_evaluate` (lines 290-340). `RealWorkerProvider` takes two keywords:
+`regression_gate: RegressionGate | None = None` and `regression_base: Callable[[str], str | None] | None = None`.
 
 When a gate is given:
 - **When it runs:** right after the candidate clone (line 312) and the preparation (line 319), and before the session
-  (line 334), the provider calls `gate.check(...)`. The baseline SHA is `regression_base(invocation id)`, the release
-  record's starting revision, which is a control-plane fact.
+  (line 334), the provider calls `gate.check(...)`.
+- **The baseline SHA** is `regression_base(invocation id)`. The registry passes `preparation.starting.get` in both the
+  worker and the no-worker case; `LaunchPreparation.prepare` sets it for every role (`work_registry.py` line 1164) before
+  this point. A missing value, or one that is not a full SHA, gives `WorkerOutcome("feature-regressions-missing")`.
 - **The baseline:**
   - **Cached:** if `<baselines>/<baseline sha>.json` exists, its results are used.
   - **Not cached:**
-    1. `checkout(baseline sha)` makes a fresh worker clone of the packets clone at that SHA, using the existing
-       `allocate` of `git_worktree.py` (lines 120-126) with the identity `baseline-<sha>`.
-    2. The control plane checks that the clone's `rev-parse HEAD` equals the SHA, then runs the suite there.
-    3. It reads the junit bytes at once, and removes the clone.
-    4. It writes `{"baseline": sha, "results": ...}` to `<baselines>/<sha>.json` atomically, through a temporary file in
-       the same folder and a rename.
+    1. `checkout(baseline sha)` makes a fresh checkout at that SHA under the identity `baseline-<sha>-<invocation id>`,
+       so two VERIFIERs never collide.
+       - **With a worker user:** `WorkerCloneAdapter.allocate` (`git_worktree.py` lines 120-126), a fresh worker
+         clone of the packets clone.
+       - **Without one:** `GitWorktreeAdapter.allocate` (`git_worktree.py` line 54), a worktree.
+    2. The checkout's revision is read with `handover.revision(path)`, which runs `rev-parse` as the worker and checks
+       for 40 hex characters. The control plane runs no git in a worker clone. Without a worker user it is
+       `source.revision(path)`. The result must equal the SHA.
+    3. The suite runs there. Its junit goes to `<results>/suite-baseline-<sha>-<invocation id>/suite-junit.xml`, and the
+       control plane reads it at once with `read_result(..., limit=64 << 20)`.
+    4. The checkout and that results folder are removed (as the worker, when there is one).
+    5. The control plane writes `{"baseline": sha, "results": ...}` to `<baselines>/<sha>.json` atomically, through a
+       temporary file in the same folder and a rename. This file is the only state shared between invocations.
+  - Any `CandidateUnavailable` or `OSError` on this path gives `WorkerOutcome("feature-regressions-missing")`.
   - `<baselines>` is `<launch root>/regression-baselines`. The control plane makes it with its own uid, not as a
-    symbolic link, with mode 0755, as `_export` does (`work_registry.py` lines 1191-1195). The worker cannot write
-    there.
-- **The candidate:** the suite runs in the VERIFIER's own candidate clone. Its junit file goes to
-  `<results>/<invocation id>/suite-junit.xml`. The control plane reads those bytes through the checked
-  `read_result` as soon as the suite ends, before the session starts. It decides from those bytes only and keeps the
-  decision in memory. A later rewrite of the file by the session changes nothing.
+    symbolic link, with mode 0711. As `_export` does (`work_registry.py` lines 1189-1194), the folder's owner and that it
+    is not a link are checked. The worker cannot write there.
+- **The candidate:** the suite runs in the VERIFIER's own candidate clone, with `PYTHONDONTWRITEBYTECODE=1`.
+  - Its junit file goes to `<results>/suite-<invocation id>/suite-junit.xml`, a folder of its own and never the
+    session's `<results>/<invocation id>/`.
+  - The control plane reads those bytes with `read_result(..., limit=64 << 20)` as soon as the suite ends, before the
+    session starts. It decides from those bytes only and keeps the decision in memory. A later rewrite of the file
+    changes nothing.
+  - An `OSError` from that read is `SuiteUnrunnable`.
+- **The verdict path stays clean.** After the suite and before the session:
+  - With a worker user, `read_result(<invocation id>, "verdict.json")` must raise `FileNotFoundError`.
+  - Without one, `workspace / VERDICT_PATH` must not exist; this is checked both before and after the suite.
+  - Any other answer gives `WorkerOutcome("verdict-preexisting")`.
+  - Files the tests leave in the candidate clone stay there. The session sees them, as it sees any working tree.
 - **The decision:**
   - **With findings:** the session is not started. The outcome is `WorkerOutcome.reject(candidate, findings, (receipt,))`.
     The coordinator's existing route (`factory_coordinator.py` lines 511-518) sends it to the PRODUCER as a rework.
@@ -255,7 +274,8 @@ No test calls it.
 4. **The decision is taken before the session, from the control plane's own read** (test
    `test_a_rewritten_junit_file_changes_nothing`). A fake suite run writes a junit file with a regression, and a fake
    session then rewrites that file with all tests passing and leaves an `accept` verdict. The outcome is `reject` with
-   the `regression:` finding, and the session was never started.
+   the `regression:` finding, and the session was never started. A second case has the suite write a `verdict.json`
+   into `<results>/<invocation id>/`: the outcome is `verdict-preexisting`.
 5. **The candidate cannot redefine the gate** (test `test_the_candidate_workspace_does_not_define_the_gate`). The
    candidate workspace holds a `tools/verification/run_feature_regressions.py` that exits 0, a manifest selecting no
    pack, and, in the worker results folder, a `feature-regressions.json` with `passed: true` and a valid digest. A
@@ -266,7 +286,7 @@ No test calls it.
    - **M1:** in `regression_gate.py` `compare`, `return ()`. Then
      `python3 -m pytest -q tests/invocation_runtime/test_regression_gate.py -k test_compare_names_the_057fbc1_regressions`
      must FAIL. Revert, and it must pass.
-   - **M2:** in `real_worker.py` `_verify`, call `gate.check` after the session instead of before it. Then
+   - **M2:** in `real_worker.py` `_evaluate`, call `gate.check` after the session instead of before it. Then
      `python3 -m pytest -q tests/invocation_runtime/test_regression_gate.py -k test_a_rewritten_junit_file_changes_nothing`
      must FAIL. Revert, and it must pass.
    - **M3:** in `compare`, drop the missing case. Then
@@ -277,6 +297,19 @@ No test calls it.
    and changes no passing test to anything else.
 
 ## 4. Review record
+
+**Revision 3 (2026-10-06).** Follow-up REVIEWER of `2b9ecff` (FAIL; 13 of revision 1's 14 findings fixed). The
+recorded replay matches `findings.txt` exactly.
+- The method is `_evaluate` (B1).
+- `regression_base` is passed to the provider (B2).
+- Baseline identities are unique per invocation, with their junit folder and their cleanup named (B3).
+- The checkout revision is read as the worker (B4).
+- The allocator without a worker user is named (B5).
+- A 64 MiB read limit, with `OSError` handled (B6).
+- The suite gets its own results folder, with a check that the verdict file is absent (B7).
+- The excluded live check is named (B8).
+- The folder mode is 0711, checked as in `_export` (B9).
+- The stale documentation is named (B10).
 
 **Revision 2 (2026-10-06).** REVIEWER of `6d559d8` (FAIL, 14 findings). The gate is now one control-plane step
 before the VERIFIER session, in the registry profile only.
