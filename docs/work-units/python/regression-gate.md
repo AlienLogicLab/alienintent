@@ -1,7 +1,7 @@
 # Work unit: the regression gate runs the whole suite and the candidate never defines it
 
 **Label:** `REGRESSION-GATE` (a document label; permanent id `a38f0cb8-6803-463a-8031-0005f33aef01`).
-**Status:** Draft revision 4 (work item `a38f0cb8-6803-463a-8031-0005f33aef01`, at CAPTURE), 2026-10-06. Reviewed (final check PASS). Not not approved, not assessed, not released.
+**Status:** Draft revision 4 (work item `a38f0cb8-6803-463a-8031-0005f33aef01`, at CAPTURE), 2026-10-06. Reviewed (final check PASS). Not approved, not assessed, not released.
 **Position on the path:** this is the first of four in maintenance-required mode (Founder 2026-10-06). The order is:
 1. REGRESSION-GATE;
 2. MAIN-GREEN;
