@@ -52,7 +52,7 @@ It is produced and verified by the hand-built maintenance path, because the fact
   "deleting tools/verification/run_feature_regressions.py, its manifest or its tests (they stop deciding admission for the registry profile; their removal is separate)",
   "the offline, sandbox, lifecycle-capstone and scripted-worker paths, which do not land on main: they keep today's worker-written receipt",
   "the tools/evidence and tools/live scripts, including tools/live/worker_boundary_check.py, a live check that builds a LandingAuthority but lands no candidate",
-  "docs/operations.md: its description of <launch>/results/<invocation>/feature-regressions.json becomes stale for the registry profile; the assertion of that text in test_worker_launch.py line 1487 stays unchanged and still holds, and the document is corrected separately"
+  "docs/operations.md: its description of <launch>/results/<invocation>/feature-regressions.json becomes stale for the registry profile; the assertion of that text in test_worker_launch.py line 1486 stays unchanged and still holds, and the document is corrected separately"
  ],
  "dependencies": [],
  "required_capabilities": [
@@ -211,9 +211,11 @@ When a gate is given:
     4. The checkout is cleaned up after the cache file of step 5 is written.
        - **With a worker user:** through the existing `WorkerCloneAdapter.cleanup`. The folder carries the `producer-`
          prefix that `allocate` always uses.
-       - **Without one:** through the existing `GitWorktreeAdapter.cleanup`, followed by `git branch -D` of its
-         `invocation/baseline-...` branch in the packets clone.
-       - A cleanup refusal (for example files the tests left behind) is "workspace retained" and does not fail the gate.
+       - **Without one:** through the existing `GitWorktreeAdapter.cleanup`. Only after a successful cleanup, `git
+         branch -D` removes its `invocation/baseline-...` branch from the packets clone.
+       - A cleanup refusal (for example files the tests left behind) or a `branch -D` failure is "workspace retained"
+         and does not fail the gate.
+       - On any failure after step 1, the checkout is still cleaned up the same way.
        - Results folders are kept, as every invocation's results folder is kept today.
     5. The control plane writes `{"baseline": sha, "results": ...}` to `<baselines>/<sha>.json` atomically, through a
        temporary file in the same folder and a rename. This file is the only state shared between invocations.
@@ -322,6 +324,7 @@ No test calls it.
 - The protocol gains `limit` (N5).
 - `PYTHONDONTWRITEBYTECODE=1` is set for both runs (N6).
 - The `docs/operations.md` assertion stays unchanged (B10).
+- Final check of `474612d`: PASS, with low corrections L1 and L2 and the cleanup-on-failure wording applied.
 
 **Revision 3 (2026-10-06).** Follow-up REVIEWER of `2b9ecff` (FAIL; 13 of revision 1's 14 findings fixed). The
 recorded replay matches `findings.txt` exactly.
