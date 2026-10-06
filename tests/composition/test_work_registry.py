@@ -24,6 +24,13 @@ from tests.context_assembly.test_readiness_consumer import fixture_package
 from tests.context_assembly.test_work_identity_service import commit_file
 
 
+def passing_suite(folder: Path, junit: Path) -> int:
+    """REGRESSION-GATE's suite run for fixtures that launch a VERIFIER through the registry: one passing test case."""
+    junit.write_text('<?xml version="1.0"?><testsuites><testsuite name="pytest">'
+                     '<testcase classname="tests.fixture" name="test_passes"/></testsuite></testsuites>')
+    return 0
+
+
 def entry(root: Path, **changes) -> dict:
     value = {"database": str(root / "work.sqlite"),
              "repositories": {REPO: {"clone": str(root / "clone"), "remote": "upstream", "default_branch": "main",
@@ -316,7 +323,8 @@ class ReadyBoard(Linked):
 
     def second(self) -> WorkRegistry:
         """Another registry instance over the same configuration, as another process would build it."""
-        registry = WorkRegistry(project_configuration(self.document, PROJECT), transport=self.github)
+        registry = WorkRegistry(project_configuration(self.document, PROJECT), transport=self.github,
+                                suite_run=passing_suite)
         registry.assessment.satisfiable = None  # Legacy READY-view packets exercise the existing view gates.
         registry.authorization.satisfiable = None
         return registry

@@ -74,6 +74,12 @@ class GitWorktreeAdapter(WorkspaceManager):
             raise CandidateUnavailable("workspace is not quiescent; retained for diagnosis")
         self._git("worktree", "remove", str(workspace.path))
 
+    def remove_branch(self, workspace: GitWorkspace) -> None:
+        """`git branch -D` of a cleaned-up workspace's `invocation/...` branch in the repository."""
+        if not workspace.branch.startswith("invocation/") or workspace.path.exists():
+            raise CandidateUnavailable("workspace branch is not removable")
+        self._git("branch", "-D", workspace.branch)
+
 
 def _upload_pack(repository: Path) -> str:
     """The worker's upload-pack for a Founder-owned source `repository`, with git's ownership exception for that one

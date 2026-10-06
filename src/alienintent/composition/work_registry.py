@@ -63,7 +63,8 @@ Configuration document (JSON):
 """
 from __future__ import annotations
 
-from collections.abc import Callable, Mapping
+from collections.abc import Callable, Iterator, Mapping
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -73,6 +74,7 @@ from pathlib import Path
 import pwd
 import re
 import shutil
+import signal
 import subprocess
 import sysconfig
 import time
@@ -142,7 +144,8 @@ from alienintent.installation.application.installation_credentials import Instal
 from alienintent.installation.domain.app_credentials import AppIdentity
 from alienintent.installation.domain.project_identity import ProjectAddress
 from alienintent.installation.ports.github_transport import GitHubTransport
-from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider, run_as_worker
+from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider, kill_as_worker, run_as_worker, \
+    worker_prefix
 from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl, IntakeSourceControl
 from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, GitWorktreeAdapter, WorkerCloneAdapter, \
     ref_safe
@@ -150,6 +153,8 @@ from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvo
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.application.real_worker import (
     CLOSURE_ORDERED, EFFECT_UNKNOWN, OWNED_WORK_ACTIVE, OWNER_ALIVE, PUBLICATION_STARTED, RealWorkerProvider)
+from alienintent.invocation_runtime.application.regression_gate import (
+    SUITE_JUNIT_LIMIT, SUITE_WALL_CLOCK, RegressionGate, SuiteUnrunnable, suite)
 from alienintent.invocation_runtime.domain.runtime import (
     INVOCATION_MARKER, INVOCATION_OWNER_MARKER, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable,
     ReservationBook, owner_token, workspace_folder)
@@ -383,14 +388,57 @@ class SourceControlRefPublisher(RefPublisher):
             raise PublicationFailed(error.refs, str(error)) from error
 
 
+def suite_runner(user: str | None, environment: Mapping[str, str]) -> Callable[[Path, Path], int]:
+    """REGRESSION-GATE's suite run: `SUITE` in `folder` with PYTHONDONTWRITEBYTECODE=1, as the worker through the
+    sudo rule (`worker_prefix`), or directly without a worker user; one process group, stopped at SUITE_WALL_CLOCK,
+    which is `SuiteUnrunnable`. Answers the exit code."""
+    def run(folder: Path, junit: Path) -> int:
+        if user is None:
+            argv, child = suite(junit), dict(os.environ) | {"PYTHONDONTWRITEBYTECODE": "1"}
+        else:
+            argv, child = [*worker_prefix(user, dict(environment) | {"PYTHONDONTWRITEBYTECODE": "1"}),
+                           *suite(junit)], None
+        process = subprocess.Popen(argv, cwd=folder, env=child, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL, start_new_session=True)
+        try:
+            return process.wait(timeout=SUITE_WALL_CLOCK)
+        except subprocess.TimeoutExpired:
+            for signum in (signal.SIGTERM, signal.SIGKILL):
+                if user is not None:
+                    kill_as_worker(user, signum, f"-{process.pid}")
+                try:
+                    os.killpg(process.pid, signum)
+                except (ProcessLookupError, PermissionError):
+                    pass
+                try:
+                    process.wait(timeout=5)
+                    break
+                except subprocess.TimeoutExpired:
+                    continue
+            raise SuiteUnrunnable("the suite outran its wall clock") from None
+    return run
+
+
+def _read_junit(path: Path) -> bytes:
+    """A control-plane `regression-results` junit file, at most SUITE_JUNIT_LIMIT bytes (OSError beyond)."""
+    with path.open("rb") as stream:
+        data = stream.read(SUITE_JUNIT_LIMIT + 1)
+    if len(data) > SUITE_JUNIT_LIMIT:
+        raise OSError("the suite's junit file is too large")
+    return data
+
+
 class WorkRegistry:
     """The one work identity service of a project, with its repository adapter, publisher and the operator's
-    work-record operations (`records`); `registration` is the compiler's."""
+    work-record operations (`records`); `registration` is the compiler's. `suite_run` replaces REGRESSION-GATE's
+    real suite run (`suite_runner`) for tests."""
 
     def __init__(self, configuration: ProjectConfiguration, source_control: SourceControl | None = None,
                  transport: GitHubTransport | None = None, host_configuration: Path = HOST_CONFIGURATION,
-                 ownership: ProcessOwnership | None = None) -> None:
+                 ownership: ProcessOwnership | None = None, *,
+                 suite_run: Callable[[Path, Path], int] | None = None) -> None:
         self.configuration = configuration
+        self._suite_run = suite_run
         # The existing process ownership observation: the launch chain's, and the exclusive `work launch` owner's.
         self.ownership = ownership if ownership is not None else ProcOwnership() if configuration.worker_user is None \
             else ProcOwnership(worker_uid=worker_uid(configuration.worker_user))
@@ -664,20 +712,57 @@ class WorkRegistry:
                                     environment=environment, ownership=ownership, worker_user=user,
                                     results=None if user is None else root / "results",
                                     regression_base=None if user is None else preparation.starting.get,
-                                    work_identity=None if user is None else preparation.identities.get)
+                                    work_identity=None if user is None else preparation.identities.get,
+                                    feature_regressions=False)
         journal = JsonlInvocationJournal(root / "invocation-journal.jsonl", time.time)
         closure = RegistryClosure(self, root, journal, preparation, self._landing_authority(journal))
+        gate = self._regression_gate(root, user, environment, source, workspaces, handover)
         worker = RealWorkerProvider(
             process, source, packets.clone, packets.remote,
             lambda invocation: f"candidate/{ref_safe(invocation.correlation_id)}", root / "verifier",
             lambda invocation: launch_grant(invocation, repository), repository,
             workspaces, ReservationBook(1, 2), now=time.time,
             sleep=time.sleep, journal=journal, ownership=ownership, preparation=preparation,
-            recovered_workspace=recovered, closure=closure, handover=handover)
+            recovered_workspace=recovered, closure=closure, handover=handover, regression_gate=gate,
+            regression_base=preparation.starting.get)
         closure.worker = worker
         closure.worker_workspaces = None if user is None else workspaces
         guard = RoleBindingGuard(worker, journal, store, "registry", repository, time.time)
         return self.coordinator(guard, LocalArtifactStore(root / "artifacts", root / "custody")), worker, root
+
+    def _regression_gate(self, root: Path, user: str | None, environment: Mapping[str, str], source,
+                         workspaces: GitWorktreeAdapter | WorkerCloneAdapter, handover) -> RegressionGate:
+        """REGRESSION-GATE for the registry profile: the baseline is a fresh checkout by the producer allocator under
+        `baseline-<sha>-<invocation>`, its revision read (as the worker with one) and checked, removed when the block
+        ends (a refusal is "workspace retained" and does not fail the gate; without a worker user its branch is
+        deleted after a successful cleanup); each junit file is read by the control plane (with a worker user through
+        `read_result`, from `<results>/<identity>/`; without one from `<launch>/regression-results/<identity>/`, a
+        folder the control plane makes); baselines are cached in `<launch>/regression-baselines`."""
+        run = self._suite_run if self._suite_run is not None else suite_runner(user, environment)
+
+        @contextmanager
+        def checkout(sha: str, identity: str) -> Iterator[Path]:
+            workspace = workspaces.allocate(identity, identity, sha)
+            try:
+                if source.revision(workspace.path) != sha:
+                    raise CandidateUnavailable("the baseline checkout is not at its revision")
+                yield workspace.path
+            finally:
+                try:
+                    workspaces.cleanup(workspace, None)
+                    if handover is None:
+                        workspaces.remove_branch(workspace)
+                except (CandidateUnavailable, OSError):
+                    pass  # workspace retained; the gate's decision does not depend on it
+
+        if handover is not None:
+            read = lambda path: handover.read_result(path.parent.name, path.name, limit=SUITE_JUNIT_LIMIT)  # noqa: E731
+            return RegressionGate(run, read, checkout, root / "regression-baselines", handover.results)
+
+        def own(folder: Path, junit: Path) -> int:
+            junit.parent.mkdir(parents=True, exist_ok=True)
+            return run(folder, junit)
+        return RegressionGate(own, _read_junit, checkout, root / "regression-baselines", root / "regression-results")
 
     def _landing_authority(self, journal: JsonlInvocationJournal) -> LandingAuthority | None:
         """Only with `"landing": true`: its own landing-scoped credentials (never `_links`'), the coordinator record's

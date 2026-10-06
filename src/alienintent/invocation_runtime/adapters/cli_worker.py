@@ -62,7 +62,7 @@ def kill_as_worker(user: str, signum: int, target: str) -> None:
 class CliWorkerProvider(WorkerProcess):
     _SAFE_MODES: Final = frozenset({"explicit", "read-only", "workspace-write", "danger-full-access", "manual", "bypassPermissions"})
 
-    def __init__(self, provider: str, executable: str | WorkerCommand, arguments: tuple[str, ...], permission_mode: str, dimensions: frozenset[str], environment: Mapping[str, str] | None = None, *, ownership: ProcessOwnership | None = None, worker_user: str | None = None, results: Path | None = None, regression_base: Callable[[str], str | None] | None = None, work_identity: Callable[[str], str | None] | None = None) -> None:
+    def __init__(self, provider: str, executable: str | WorkerCommand, arguments: tuple[str, ...], permission_mode: str, dimensions: frozenset[str], environment: Mapping[str, str] | None = None, *, ownership: ProcessOwnership | None = None, worker_user: str | None = None, results: Path | None = None, regression_base: Callable[[str], str | None] | None = None, work_identity: Callable[[str], str | None] | None = None, feature_regressions: bool = True) -> None:
         """`executable` with `arguments` is one fixed command line for every invocation, run with standard input
         inherited; or a WorkerCommand (with no `arguments`) evaluated at every `run`, whose text goes to the worker's
         standard input.
@@ -73,7 +73,8 @@ class CliWorkerProvider(WorkerProcess):
         starting revision, a full SHA) and stopping goes through `sudo -n -u <user> kill`. The session's allowlist
         also carries the three identity variables its export-mode `context_command` names: ALIENINTENT_ROLE,
         ALIENINTENT_CORRELATION (the invocation id) and ALIENINTENT_WORK_IDENTITY (`work_identity(invocation id)`).
-        Without it, unchanged."""
+        Without it, unchanged. `feature_regressions=False` (the registry profile, where the control plane's
+        REGRESSION-GATE decides admission before the session) runs no feature-regression runner."""
         fixed = (executable, *arguments) if isinstance(executable, str) else None
         if permission_mode not in self._SAFE_MODES or not executable or (fixed is None and (not callable(executable) or arguments)) \
                 or any("\x00" in part for part in fixed or ()):
@@ -91,6 +92,7 @@ class CliWorkerProvider(WorkerProcess):
             worker_prefix(worker_user, environment)  # refuses an unsafe user or environment now, not at run
         self._worker_user, self._results, self._regression_base = worker_user, results, regression_base
         self._work_identity = work_identity
+        self._runs_feature_regressions = feature_regressions
         # This supervisor's owner marker: the owning process and this instance.
         owner = self._ownership.current()
         self._owner = None if owner is None else f"{owner_token(owner)}/{uuid.uuid4().hex}"
@@ -199,7 +201,7 @@ class CliWorkerProvider(WorkerProcess):
         recorded as finished only once no owned work is observed.
         """
         require_eligible(self.capabilities, frozenset({"wall-clock", "cancellation"}))
-        if role is InvocationRole.VERIFIER:
+        if role is InvocationRole.VERIFIER and self._runs_feature_regressions:
             regression = self._feature_regressions(workspace, wall_clock_seconds) if self._worker_user is None \
                 else self._worker_feature_regressions(invocation_id, workspace, wall_clock_seconds)
             if regression.kind != "success":

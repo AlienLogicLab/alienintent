@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from hashlib import sha256
 from pathlib import Path
+import re
 from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol
 
@@ -12,6 +13,7 @@ from alienintent.execution_coordination.domain.contract import BiuContract, Budg
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.ports.worker_provider import (
     MISSING_TERMINAL_RESULT, WorkerInvocation, WorkerOutcome, WorkerProvider)
+from alienintent.invocation_runtime.application.regression_gate import RegressionGate, SuiteUnrunnable
 from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
@@ -52,6 +54,9 @@ CLOSURE_ORDERED = "closure-ordered"
 # The exact `candidate-published` receipt (execution_coordination/domain/closure.py `receipt`, whose format this
 # repeats so the runtime takes no cross-module domain import): `<action>:<work item id>:<full candidate revision>`.
 CANDIDATE_PUBLISHED_RECEIPT = "candidate-published:{identity}:{revision}"
+
+
+_FULL_SHA = re.compile(r"[0-9a-f]{40}")
 
 
 # Outcome kinds that must name the exact candidate the role acted on.
@@ -142,13 +147,16 @@ def _feature_regression_receipt(path: Path, candidate: CandidateRef,
     return "feature-regressions:" + digest
 
 
-def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], bytes] = _read_path) -> WorkerOutcome:
+def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], bytes] = _read_path, *,
+                 gate_receipt: str | None = None) -> WorkerOutcome:
     """The verdict a verifier process left for exactly ``candidate``.
 
     A missing, malformed or other-revision verdict is not a verdict: it reads
     as a kind the coordinator holds on, never as acceptance. ``read`` reads the
     verdict and the receipt beside it (with a worker user: through the
-    hand-over's checked descriptor, never a worker-chosen path).
+    hand-over's checked descriptor, never a worker-chosen path). With
+    ``gate_receipt`` (the control plane's own REGRESSION-GATE receipt) no
+    worker-written ``feature-regressions.json`` is read.
     """
     try:
         document = json.loads(read(path).decode("utf-8"))
@@ -161,7 +169,8 @@ def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], byt
     findings = _strings(document.get("findings", []))
     if findings is None:
         return WorkerOutcome("verdict-malformed")
-    regression_receipt = _feature_regression_receipt(path.parent / "feature-regressions.json", candidate, read)
+    regression_receipt = gate_receipt if gate_receipt is not None \
+        else _feature_regression_receipt(path.parent / "feature-regressions.json", candidate, read)
     if regression_receipt is None:
         return WorkerOutcome("feature-regressions-missing")
     receipts = (regression_receipt,)
@@ -209,7 +218,7 @@ class CandidateHandover(Protocol):
 
     def candidate_clone(self, prefix: str, invocation_id: str, owner: str, candidate: CandidateRef) -> Workspace: ...
 
-    def read_result(self, invocation_id: str, name: str) -> bytes: ...
+    def read_result(self, invocation_id: str, name: str, limit: int = 1 << 20) -> bytes: ...
 
 
 class ClosureActions(Protocol):
@@ -228,7 +237,7 @@ class ClosureActions(Protocol):
 
 
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None, handover: CandidateHandover | None = None) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None, handover: CandidateHandover | None = None, regression_gate: RegressionGate | None = None, regression_base: Callable[[str], str | None] | None = None) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -250,6 +259,9 @@ class RealWorkerProvider(WorkerProvider):
         self._closure = closure
         # With a worker user: the only source of a candidate (the intake import) and of every worker clone.
         self._handover = handover
+        # REGRESSION-GATE: the control plane's whole-suite comparison before each VERIFIER session, against the
+        # baseline `regression_base(invocation id)` (the release record's starting revision). None: unchanged.
+        self._regression_gate, self._regression_base = regression_gate, regression_base
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
@@ -331,13 +343,50 @@ class RealWorkerProvider(WorkerProvider):
                 if verdict.exists():
                     # The candidate itself carries a verdict: a producer cannot approve its own work.
                     return WorkerOutcome("verdict-preexisting")
+            gate_receipt = None
+            if self._regression_gate is not None:
+                gated = self._gate(invocation, candidate, workspace, verdict)
+                if isinstance(gated, WorkerOutcome):
+                    return gated
+                gate_receipt = gated
             result = self._process.run(invocation.correlation_id, InvocationRole.VERIFIER, workspace, budget.hard_wall_clock_seconds)
             if result.kind != "success":
                 return WorkerOutcome(result.kind)
-            return read_verdict(verdict, candidate, read)
+            return read_verdict(verdict, candidate, read, gate_receipt=gate_receipt)
         finally:
             if self._reservations is not None:
                 self._reservations.release(invocation.correlation_id)
+
+    def _gate(self, invocation: WorkerInvocation, candidate: CandidateRef, workspace: Path,
+              verdict: Path) -> str | WorkerOutcome:
+        """REGRESSION-GATE, before the session: the receipt when the candidate has no findings, else the outcome.
+
+        The decision is taken from the bytes the control plane read as each suite ended and is kept in memory. With
+        findings the session is not started (a `reject` naming them); no result is `feature-regressions-missing`;
+        a verdict present after the suite is `verdict-preexisting`.
+        """
+        assert self._regression_gate is not None
+        base = None if self._regression_base is None else self._regression_base(invocation.correlation_id)
+        revision = _revision_of(candidate)
+        if not isinstance(base, str) or not _FULL_SHA.fullmatch(base) or revision is None:
+            return WorkerOutcome("feature-regressions-missing")
+        try:
+            findings, receipt = self._regression_gate.check(invocation.correlation_id, workspace, base, revision)
+        except (SuiteUnrunnable, CandidateUnavailable, OSError):
+            return WorkerOutcome("feature-regressions-missing")
+        if self._handover is not None:
+            try:
+                self._handover.read_result(invocation.correlation_id, verdict.name)
+                return WorkerOutcome("verdict-preexisting")
+            except FileNotFoundError:
+                pass
+            except OSError:
+                return WorkerOutcome("verdict-preexisting")
+        elif verdict.exists():
+            return WorkerOutcome("verdict-preexisting")
+        if findings:
+            return WorkerOutcome.reject(candidate, findings, (receipt,))
+        return receipt
 
     def _close(self, invocation: WorkerInvocation, budget: BudgetPolicy) -> WorkerOutcome:
         """Perform and read back the closure actions this adapter can attest.

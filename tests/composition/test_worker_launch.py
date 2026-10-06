@@ -30,7 +30,7 @@ from alienintent.execution_coordination.domain.release import ReleaseSource
 from alienintent.invocation_runtime.adapters.git_worktree import ref_safe
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.domain.runtime import workspace_folder
-from tests.composition.test_work_registry import ReadyBoard
+from tests.composition.test_work_registry import ReadyBoard, passing_suite
 from tests.context_assembly.test_initial_compilation import PROJECT, git
 from tests.context_assembly.test_work_contract import contract_payload
 from tests.context_assembly.test_work_identity_service import commit_file
@@ -166,7 +166,7 @@ class Launch(ReadyBoard):
     def loaded(self, ownership=None) -> WorkRegistry:
         """A registry built as `work launch` builds it in its own process."""
         return WorkRegistry(load_project_configuration(self.configuration_file, PROJECT), transport=self.github,
-                            host_configuration=self.host, ownership=ownership)
+                            host_configuration=self.host, ownership=ownership, suite_run=passing_suite)
 
     def launch(self, identity: str):
         return self.loaded().launcher().launch(identity)
@@ -1356,8 +1356,8 @@ def test_with_a_worker_user_no_privileged_git_touches_a_worker_repository_throug
     calls = record_git(monkeypatch)
     from alienintent.invocation_runtime.adapters.git_source_control import IntakeSourceControl
     reads, read_result = [], IntakeSourceControl.read_result
-    monkeypatch.setattr(IntakeSourceControl, "read_result", lambda self, invocation, name, *rest: (
-        reads.append(name), read_result(self, invocation, name, *rest))[1])
+    monkeypatch.setattr(IntakeSourceControl, "read_result", lambda self, invocation, name, *rest, **limit: (
+        reads.append(name), read_result(self, invocation, name, *rest, **limit))[1])
     store = root / "worker" / "auth" / "codex"
     founder_logins = (str(fx.founder / ".codex"), str(fx.founder / ".claude"))
     with recorded_opens() as opens:
@@ -1407,8 +1407,9 @@ def test_with_a_worker_user_no_privileged_git_touches_a_worker_repository_throug
         assert call["argv"][:7] == ["-n", "-u", USER, "--", "env", "-i", "PATH=/usr/bin:/bin"] \
             or call["argv"][:4] == ["-n", "-u", USER, "kill"], call
     assert "FOUNDER-TOKEN" not in json.dumps(fx.runs())
-    # Check 6b: every worker result was read through the checked descriptor reader, and nothing else.
-    assert sorted(set(reads)) == ["closure-request.json", "feature-regressions.json", "self-review.md", "verdict.json"]
+    # Check 6b: every worker result was read through the checked descriptor reader, and nothing else; REGRESSION-GATE
+    # reads the suite's junit files and no worker-written feature-regressions.json.
+    assert sorted(set(reads)) == ["closure-request.json", "self-review.md", "suite-junit.xml", "verdict.json"]
     # Check 4: each worker clone was removed as the worker, through the sudo rule.
     removed = {Path(c["argv"][-1]).name.split("-")[0] for c in sudo_calls(fx.sudo_log) if c["argv"][-4:-1] == [
         "rm", "-rf", "--"] and Path(c["argv"][-1]).parent == root / "worker"}
@@ -1442,8 +1443,8 @@ def sudo_environments(log: Path) -> list[dict[str, str]]:
 
 def test_with_a_worker_user_every_worker_command_carries_the_workers_own_user_name(workerized, monkeypatch):
     """Checks 1 and 2: with the launching process's USER and LOGNAME another name, every command run through the
-    fake sudo (the sessions, the VERIFIER's regression runner, the clones) carries USER and LOGNAME equal to the
-    worker user; each session's environment names are within WORKER_ALLOWED and include both."""
+    fake sudo (the sessions and the clones, the REGRESSION-GATE baseline clone among them) carries USER and LOGNAME
+    equal to the worker user; each session's environment names are within WORKER_ALLOWED and include both."""
     fx = workerized
     Closing(fx, monkeypatch)
     monkeypatch.setenv("USER", LAUNCHING)
@@ -1453,7 +1454,8 @@ def test_with_a_worker_user_every_worker_command_carries_the_workers_own_user_na
     fx.launch(item.id)
     environments = sudo_environments(fx.sudo_log)
     commands = worker_commands(fx.sudo_log)
-    assert any("run_feature_regressions.py" in " ".join(c) for c in commands)  # the regression runner
+    # REGRESSION-GATE: the candidate's feature-regression runner no longer runs in the registry profile.
+    assert not any("run_feature_regressions.py" in " ".join(c) for c in commands)
     assert any(c[:2] == ["git", "clone"] for c in commands)  # a worker clone
     assert environments and all(e.get("USER") == e.get("LOGNAME") == USER for e in environments), environments
     runs = fx.runs()
