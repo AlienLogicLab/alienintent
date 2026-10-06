@@ -202,8 +202,8 @@ action receipts.
     `receipts: AttemptReceipts`.
   - **Test journal wrappers** forward `.receipts`: `DropOutcome` and `Miscorrelate` (`test_real_worker_outcome.py`
     lines 55-66 and 113), `CrashAfterOutcome` (`k1_fixture.py` lines 178-186), `CrashAfterVerifierOutcome` (`k2_fixture.py` lines
-    164-177) and the wrapper in `test_role_orchestration.py` line 186. These are all five classes in src and tests that
-    define `def records(`. A wrapper that today changes what `records()` returns changes the slot read
+    164-177) and the wrapper in `test_role_orchestration.py` line 186. These are all five test classes that define
+    `def records(`; the other two are the `InvocationJournal` port and `JsonlInvocationJournal`. A wrapper that today changes what `records()` returns changes the slot read
     instead, so its test keeps its meaning.
 - **A crash between the slot write and the journal append** leaves the slot present. `_recover` then reads the outcome
   from the slots (section 2.3), as it reads the journal today, and the correlation is never launched again
@@ -421,6 +421,7 @@ phrase "history reader; never on the routine launch path":
 - D1: the wrapper `CrashAfterVerifierOutcome` was missing from the list.
 - D2: a `closure-ordered` record without `order.attempt` is now rejected, and the one test record that had none is
   named.
+- Final check of `c3c350e`: PASS, with one wording fix applied.
 
 **Revision 3 (2026-10-06).** Follow-up REVIEWER of `7b24b9e` (FAIL): all 13 earlier findings fixed, 7 new ones.
 - A new install or test folder no longer refuses launch (N1).
