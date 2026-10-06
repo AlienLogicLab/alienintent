@@ -1,7 +1,7 @@
 # Work unit: a routine launch reads no history
 
 **Label:** `BOUNDED-ROUTINE-LAUNCH` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 3, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Status:** Draft revision 4, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
 **Position on the path:** this comes before BOARD-FOLLOWS-WORK-STATE R4 (work item `6140fb56-fe5c-47c1-91c4-5eb7fc626077`,
 REVIEW FAILED). Founder 2026-10-06 decided on two work items. This one bounds every routine launch. R4 then builds the
 board on top of it and keeps all R3 review fixes.
@@ -14,7 +14,7 @@ board on top of it and keeps all R3 review fixes.
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-3",
+ "version": "revision-4",
  "intent": "Make a routine PRODUCER, VERIFIER and CLOSURE launch read a constant amount of current state, whatever the total factory history. Every fact the launch path takes from the invocation journal today comes instead from one immutable attempt receipt, read directly by correlation. The effect ledger scan becomes a primary-key lookup. The all-states DONE repair scan becomes one set of outstanding DONE-board obligations. The global journal stays as append-only history and is never read on the routine path.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -192,14 +192,18 @@ action receipts.
 
   - **The one place the slot is written** is `journal_append(path, clock, record)`. For the four events only, it
     writes the slot and index entries into `FileAttemptReceipts(path.parent / "attempts")`, then the journal line.
-    It writes no slot for any other event (for example `process-run`, `process-cancel` and `workspace-finalized`). So
+    It writes no slot for any other event (for example `process-run`, `process-cancel` and `workspace-finalized`).
+    It raises `JournalUnreadable` for a `closure-ordered` record without an integer `order.attempt`, before writing
+    anything. The one such test record, `test_runtime.py` line 731, becomes `"order": {"attempt": 1}`, and its
+    assertions (`"reconcile:1"`) stay unchanged. So
     every appender keeps its one call, `ScriptedWorkerProvider._append` (`scripted_worker.py` line 203) included.
   - **Where readers find the attempt receipts:** `JsonlInvocationJournal` exposes `.receipts`, the same
     `FileAttemptReceipts(path.parent / "attempts")`. The `InvocationJournal` port gains the attribute
     `receipts: AttemptReceipts`.
   - **Test journal wrappers** forward `.receipts`: `DropOutcome` and `Miscorrelate` (`test_real_worker_outcome.py`
-    lines 55-66 and 113), `CrashAfterOutcome` (`k1_fixture.py` lines 178-186) and the wrapper in
-    `test_role_orchestration.py` line 186. A wrapper that today changes what `records()` returns changes the slot read
+    lines 55-66 and 113), `CrashAfterOutcome` (`k1_fixture.py` lines 178-186), `CrashAfterVerifierOutcome` (`k2_fixture.py` lines
+    164-177) and the wrapper in `test_role_orchestration.py` line 186. These are all five classes in src and tests that
+    define `def records(`. A wrapper that today changes what `records()` returns changes the slot read
     instead, so its test keeps its meaning.
 - **A crash between the slot write and the journal append** leaves the slot present. `_recover` then reads the outcome
   from the slots (section 2.3), as it reads the journal today, and the correlation is never launched again
@@ -322,6 +326,7 @@ phrase "history reader; never on the routine launch path":
    - two orders of one correlation that share a `sequence` and have a decreasing `at` sort by `order.attempt`;
    - `exists` answers false for an empty correlation folder;
    - `journal_append` writes slots for the four events and none for `process-run`;
+   - a `closure-ordered` record without an integer `order.attempt` raises and writes neither a slot nor a journal line;
    - `last_order` returns the highest attempt;
    - with `_listed` wrapped and `os.scandir`, `os.listdir` and `Path.iterdir` patched to count, only the one named
      folder is listed.
@@ -411,6 +416,11 @@ phrase "history reader; never on the routine launch path":
    - `tools/fitness/check_architecture.py --root src/alienintent --check all`
 
 ## 4. Review record
+
+**Revision 4 (2026-10-06).** Follow-up check of `4f63553` (FAIL): N1-N7 are fixed, and there are two new findings.
+- D1: the wrapper `CrashAfterVerifierOutcome` was missing from the list.
+- D2: a `closure-ordered` record without `order.attempt` is now rejected, and the one test record that had none is
+  named.
 
 **Revision 3 (2026-10-06).** Follow-up REVIEWER of `7b24b9e` (FAIL): all 13 earlier findings fixed, 7 new ones.
 - A new install or test folder no longer refuses launch (N1).
