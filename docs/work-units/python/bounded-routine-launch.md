@@ -1,7 +1,7 @@
 # Work unit: a routine launch reads no history
 
-**Label:** `BOUNDED-ROUTINE-LAUNCH` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 4, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Label:** `BOUNDED-ROUTINE-LAUNCH` (a document label; permanent id `3d4e1215-c293-42d9-a112-57eabc289eed`).
+**Status:** Draft revision 4 (work item `3d4e1215-c293-42d9-a112-57eabc289eed`, at CAPTURE), 2026-10-06. Reviewed (final check PASS). Not not approved, not assessed, not released.
 **Position on the path:** this comes before BOARD-FOLLOWS-WORK-STATE R4 (work item `6140fb56-fe5c-47c1-91c4-5eb7fc626077`,
 REVIEW FAILED). Founder 2026-10-06 decided on two work items. This one bounds every routine launch. R4 then builds the
 board on top of it and keeps all R3 review fixes.
@@ -13,7 +13,7 @@ board on top of it and keeps all R3 review fixes.
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "3d4e1215-c293-42d9-a112-57eabc289eed",
  "version": "revision-4",
  "intent": "Make a routine PRODUCER, VERIFIER and CLOSURE launch read a constant amount of current state, whatever the total factory history. Every fact the launch path takes from the invocation journal today comes instead from one immutable attempt receipt, read directly by correlation. The effect ledger scan becomes a primary-key lookup. The all-states DONE repair scan becomes one set of outstanding DONE-board obligations. The global journal stays as append-only history and is never read on the routine path.",
  "satisfied_requirement_ids": [
