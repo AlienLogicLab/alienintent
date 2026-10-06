@@ -389,15 +389,17 @@ class SourceControlRefPublisher(RefPublisher):
 
 
 def suite_runner(user: str | None, environment: Mapping[str, str]) -> Callable[[Path, Path], int]:
-    """REGRESSION-GATE's suite run: `SUITE` in `folder` with PYTHONDONTWRITEBYTECODE=1, as the worker through the
-    sudo rule (`worker_prefix`), or directly without a worker user; one process group, stopped at SUITE_WALL_CLOCK,
-    which is `SuiteUnrunnable`. Answers the exit code."""
+    """REGRESSION-GATE's suite run: `SUITE` in `folder` with the worker's environment (never the control plane's
+    own) and PYTHONDONTWRITEBYTECODE=1, as the worker through the sudo rule (`worker_prefix`), or directly without a
+    worker user; one process group, stopped at SUITE_WALL_CLOCK, which is `SuiteUnrunnable`. Answers the exit
+    code."""
+    variables = dict(environment) | {"PYTHONDONTWRITEBYTECODE": "1"}
+
     def run(folder: Path, junit: Path) -> int:
         if user is None:
-            argv, child = suite(junit), dict(os.environ) | {"PYTHONDONTWRITEBYTECODE": "1"}
+            argv, child = suite(junit), variables
         else:
-            argv, child = [*worker_prefix(user, dict(environment) | {"PYTHONDONTWRITEBYTECODE": "1"}),
-                           *suite(junit)], None
+            argv, child = [*worker_prefix(user, variables), *suite(junit)], None
         process = subprocess.Popen(argv, cwd=folder, env=child, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL, start_new_session=True)
         try:
