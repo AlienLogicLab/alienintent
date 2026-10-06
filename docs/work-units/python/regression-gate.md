@@ -1,7 +1,7 @@
 # Work unit: the regression gate runs the whole suite and the candidate never defines it
 
-**Label:** `REGRESSION-GATE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 4, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Label:** `REGRESSION-GATE` (a document label; permanent id `a38f0cb8-6803-463a-8031-0005f33aef01`).
+**Status:** Draft revision 4 (work item `a38f0cb8-6803-463a-8031-0005f33aef01`, at CAPTURE), 2026-10-06. Reviewed (final check PASS). Not not approved, not assessed, not released.
 **Position on the path:** this is the first of four in maintenance-required mode (Founder 2026-10-06). The order is:
 1. REGRESSION-GATE;
 2. MAIN-GREEN;
@@ -15,7 +15,7 @@ It is produced and verified by the hand-built maintenance path, because the fact
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "a38f0cb8-6803-463a-8031-0005f33aef01",
  "version": "revision-4",
  "intent": "Before a VERIFIER session starts, the control plane runs one whole-suite comparison in place of the path-selected regression packs. It runs every test under tests/ and tools/ at the release baseline and at the candidate, as the worker, and reads the per-test results itself before any model session can touch them. A candidate is inadmissible if any test that passed at the baseline fails, errors, disappears or cannot run at the candidate, or if a test that exists only at the candidate fails. The suite definition, the comparison and the baseline results come from the control plane's installed code and its own state, never from the candidate.",
  "satisfied_requirement_ids": [
