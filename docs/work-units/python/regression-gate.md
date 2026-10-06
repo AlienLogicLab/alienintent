@@ -1,7 +1,7 @@
 # Work unit: the regression gate runs the whole suite and the candidate never defines it
 
 **Label:** `REGRESSION-GATE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 3, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Status:** Draft revision 4, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
 **Position on the path:** this is the first of four in maintenance-required mode (Founder 2026-10-06). The order is:
 1. REGRESSION-GATE;
 2. MAIN-GREEN;
@@ -16,7 +16,7 @@ It is produced and verified by the hand-built maintenance path, because the fact
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-3",
+ "version": "revision-4",
  "intent": "Before a VERIFIER session starts, the control plane runs one whole-suite comparison in place of the path-selected regression packs. It runs every test under tests/ and tools/ at the release baseline and at the candidate, as the worker, and reads the per-test results itself before any model session can touch them. A candidate is inadmissible if any test that passed at the baseline fails, errors, disappears or cannot run at the candidate, or if a test that exists only at the candidate fails. The suite definition, the comparison and the baseline results come from the control plane's installed code and its own state, never from the candidate.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -52,7 +52,7 @@ It is produced and verified by the hand-built maintenance path, because the fact
   "deleting tools/verification/run_feature_regressions.py, its manifest or its tests (they stop deciding admission for the registry profile; their removal is separate)",
   "the offline, sandbox, lifecycle-capstone and scripted-worker paths, which do not land on main: they keep today's worker-written receipt",
   "the tools/evidence and tools/live scripts, including tools/live/worker_boundary_check.py, a live check that builds a LandingAuthority but lands no candidate",
-  "docs/operations.md: its description of <launch>/results/<invocation>/feature-regressions.json becomes stale for the registry profile; the assertion of it in test_worker_launch.py (lines 1486-1487) is updated, and the document is corrected separately"
+  "docs/operations.md: its description of <launch>/results/<invocation>/feature-regressions.json becomes stale for the registry profile; the assertion of that text in test_worker_launch.py line 1487 stays unchanged and still holds, and the document is corrected separately"
  ],
  "dependencies": [],
  "required_capabilities": [
@@ -202,9 +202,19 @@ When a gate is given:
     2. The checkout's revision is read with `handover.revision(path)`, which runs `rev-parse` as the worker and checks
        for 40 hex characters. The control plane runs no git in a worker clone. Without a worker user it is
        `source.revision(path)`. The result must equal the SHA.
-    3. The suite runs there. Its junit goes to `<results>/suite-baseline-<sha>-<invocation id>/suite-junit.xml`, and the
-       control plane reads it at once with `read_result(..., limit=64 << 20)`.
-    4. The checkout and that results folder are removed (as the worker, when there is one).
+    3. The suite runs there, with `PYTHONDONTWRITEBYTECODE=1`.
+       - **With a worker user:** its junit goes to `<results>/baseline-<sha>-<invocation id>/suite-junit.xml`, the
+         folder `allocate` already makes (`git_worktree.py` lines 111-118). The control plane reads it at once with
+         `read_result("baseline-<sha>-<invocation id>", "suite-junit.xml", limit=64 << 20)`.
+       - **Without one:** the junit goes to `<launch root>/regression-results/baseline-<sha>-<invocation id>/suite-junit.xml`,
+         a folder the control plane creates itself, and is read directly.
+    4. The checkout is cleaned up after the cache file of step 5 is written.
+       - **With a worker user:** through the existing `WorkerCloneAdapter.cleanup`. The folder carries the `producer-`
+         prefix that `allocate` always uses.
+       - **Without one:** through the existing `GitWorktreeAdapter.cleanup`, followed by `git branch -D` of its
+         `invocation/baseline-...` branch in the packets clone.
+       - A cleanup refusal (for example files the tests left behind) is "workspace retained" and does not fail the gate.
+       - Results folders are kept, as every invocation's results folder is kept today.
     5. The control plane writes `{"baseline": sha, "results": ...}` to `<baselines>/<sha>.json` atomically, through a
        temporary file in the same folder and a rename. This file is the only state shared between invocations.
   - Any `CandidateUnavailable` or `OSError` on this path gives `WorkerOutcome("feature-regressions-missing")`.
@@ -212,10 +222,12 @@ When a gate is given:
     symbolic link, with mode 0711. As `_export` does (`work_registry.py` lines 1189-1194), the folder's owner and that it
     is not a link are checked. The worker cannot write there.
 - **The candidate:** the suite runs in the VERIFIER's own candidate clone, with `PYTHONDONTWRITEBYTECODE=1`.
-  - Its junit file goes to `<results>/suite-<invocation id>/suite-junit.xml`, a folder of its own and never the
-    session's `<results>/<invocation id>/`.
-  - The control plane reads those bytes with `read_result(..., limit=64 << 20)` as soon as the suite ends, before the
-    session starts. It decides from those bytes only and keeps the decision in memory. A later rewrite of the file
+  - **With a worker user:** its junit file goes to `<results>/<invocation id>/suite-junit.xml`, the invocation's
+    existing results folder (made when the candidate clone is made). It is read with
+    `read_result(<invocation id>, "suite-junit.xml", limit=64 << 20)`.
+  - **Without one:** it goes to `<launch root>/regression-results/<invocation id>/suite-junit.xml`, a folder the control
+    plane creates itself.
+  - The control plane reads those bytes as soon as the suite ends, before the session starts. It decides from those bytes only and keeps the decision in memory. A later rewrite of the file
     changes nothing.
   - An `OSError` from that read is `SuiteUnrunnable`.
 - **The verdict path stays clean.** After the suite and before the session:
@@ -239,8 +251,10 @@ which never land on main.
 - **`work_registry.py` `_launch_chain`** builds one `RegressionGate` and passes it to the `RealWorkerProvider`.
   - `run` uses the worker's sudo rule and environment (`worker_prefix`), or runs directly when there is no worker user.
   - `checkout` uses the producer allocator.
-  - `read` uses `handover.read_result`; without a worker user, the results folder is
-    `<launch root>/regression-results/<invocation>/`.
+  - `read` uses `handover.read_result`. Without a worker user it reads the `<launch root>/regression-results/` folders
+    of 2.2 directly.
+  - The `CandidateHandover` protocol's `read_result` (`real_worker.py` line 212) gains `limit: int = 1 << 20`, and test
+    fakes of it accept `limit`.
   - `CliWorkerProvider` is built with the new keyword `feature_regressions=False`, so its old step
     (`cli_worker.py` lines 202-207) does not run in the registry profile.
 - **Tests:** `WorkRegistry` takes the keyword `suite_run: Callable[[Path, Path], int] | None = None`, with the real
@@ -297,6 +311,17 @@ No test calls it.
    and changes no passing test to anything else.
 
 ## 4. Review record
+
+**Revision 4 (2026-10-06).** Follow-up check of `0632e75` (FAIL; B1-B10 fixed, plus new findings N1-N6).
+- The junit files go only into folders that already exist: the baseline folder `allocate` makes, and the invocation's
+  own results folder. Without a worker user, they go into control-plane folders (N1, N6).
+- No results folder is removed, as today (N2).
+- The cache is written before cleanup, a cleanup refusal does not fail the gate, and the baseline branch is deleted
+  without a worker user (N3).
+- The `producer-` prefix is stated (N4).
+- The protocol gains `limit` (N5).
+- `PYTHONDONTWRITEBYTECODE=1` is set for both runs (N6).
+- The `docs/operations.md` assertion stays unchanged (B10).
 
 **Revision 3 (2026-10-06).** Follow-up REVIEWER of `2b9ecff` (FAIL; 13 of revision 1's 14 findings fixed). The
 recorded replay matches `findings.txt` exactly.
