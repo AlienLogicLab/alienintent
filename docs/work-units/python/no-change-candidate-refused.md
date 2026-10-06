@@ -1,7 +1,7 @@
 # Work unit: a PRODUCER that changes nothing does not produce a candidate
 
 **Label:** `NO-CHANGE-CANDIDATE-REFUSED` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 2, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
+**Status:** Draft revision 3, 2026-10-06, for independent review. Not registered, not approved, not assessed, not released.
 **Position on the path:** a factory repair that must land before BOUNDED-ROUTINE-LAUNCH is retried. Work item
 `3d4e1215-c293-42d9-a112-57eabc289eed` was stopped (`cancelled-by-operator`, version 3). Its PRODUCER returned the
 starting revision `bceea00` unchanged, and the factory admitted it as a successful PRODUCER result with a candidate,
@@ -13,7 +13,7 @@ then advanced the item to VERIFY.
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-2",
+ "version": "revision-3",
  "intent": "When a PRODUCER's process succeeds but its claimed revision equals the starting revision, the factory publishes no candidate. It records a typed no-change PRODUCER result with a finding, and the work item stays in IMPLEMENT as a rework within its attempt budget. No VERIFIER attempt is used. A genuine descendant commit is admitted as today.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -32,7 +32,8 @@ then advanced the item to VERIFY.
   "tests/invocation_runtime/test_no_change_candidate.py",
   "tests/invocation_runtime/test_git_source_control.py",
   "tests/invocation_runtime/test_runtime.py",
-  "tests/execution_coordination/test_factory_coordinator.py"
+  "tests/execution_coordination/test_factory_coordinator.py",
+  "tests/composition/test_sandbox_run_profile.py"
  ],
  "excluded_scope": [
   "any contract or schema field that allows a no-change work item",
@@ -144,8 +145,23 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-497).
      is never used for them.
 5. **Limit stated in the module docstring of `real_worker.py`:** the current work item contract has no
    no-repository-change execution mode, so every PRODUCER result must change the repository.
-6. **Test fakes:** the three `class Source: pass` fakes in `tests/invocation_runtime/test_runtime.py` (lines 89, 118
-   and 150: the authority-block, exponential-retry and cancel tests) each gain `def revision(self, _): return "0" * 40`.
+6. **Existing tests that change.** These are exactly the tests that fail when the rule alone is applied. The main
+   session ran `tests/invocation_runtime`, `tests/composition` and `tests/execution_coordination` on a copy of main
+   `bceea00` with only the rule added: 6 failed and 891 passed. With these six corrections, both files pass (69
+   passed).
+   - `tests/invocation_runtime/test_runtime.py`, the three `class Source: pass` fakes (lines 89, 118 and 150: the
+     authority-block, exponential-retry and cancel tests). Each becomes
+     `class Source:` with `def revision(self, _): return "0" * 40`.
+   - Same file, the `Source` of `_preparing_worker` (lines 536-537), used by
+     `test_the_producer_starts_at_the_prepared_revision_and_publication_is_reported`. Its `revision` counts its calls:
+     the first returns `"c" * 40` and later calls return `"a" * 40`.
+   - Same file, `test_real_worker_returns_only_a_published_independently_read_back_source_candidate` (lines 353-380).
+     Its `CliWorkerProvider` command `("-c", "pass")` becomes
+     `("-c", "import subprocess; subprocess.run(['git', 'commit', '--allow-empty', '-qm', 'c'], check=True)")`, so the
+     PRODUCER commits.
+   - `tests/composition/test_sandbox_run_profile.py` line 357. This test already fails on main `bceea00`, because
+     WORKSPACE-FOLDER-NAMES changed folder names. `assert workspace.path.name == "launch:SB-01:0"` becomes
+     `== "launch-SB-01-0"`.
 
 ## 3. Acceptance checks
 
@@ -153,8 +169,9 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-497).
    `test_unchanged_producer_revision_is_a_no_change_result`). It is parametrized over two set-ups:
    - with a handover: a recording fake handover whose `revision` answers the starting SHA, and which asserts
      `hand_over` and `publish_intake` are never called;
-   - without a handover: the existing git source of `test_runtime.py`, with no preparation (`"HEAD"`). In each case, a PRODUCER whose process
-   succeeds without committing returns kind `no-change` with exactly the finding text of 2.2. Also:
+   - without a handover: the existing git source of `test_runtime.py`, with no preparation (`"HEAD"`).
+
+   In each case, a PRODUCER whose process succeeds without committing returns kind `no-change` with exactly the finding text of 2.2. Also:
    - there is no `publication-started` record;
    - no candidate branch exists on the remote, and no `refs/intake/<correlation>` ref exists;
    - `read_back` returns the same `no-change` outcome.
@@ -181,10 +198,15 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-497).
      `python3 -m pytest -q tests/invocation_runtime/test_git_source_control.py -k test_hand_over_refuses_a_candidate_equal_to_the_starting_revision`
      must FAIL. Revert, and it must pass.
 6. **Fitness:** these all pass (no full suite):
-   - `python3 -m pytest -q tests/invocation_runtime tests/execution_coordination/test_factory_coordinator.py tests/composition/test_worker_launch.py tests/composition/test_role_binding.py`
+   - `python3 -m pytest -q tests/invocation_runtime tests/execution_coordination/test_factory_coordinator.py tests/composition/test_worker_launch.py tests/composition/test_role_binding.py tests/composition/test_sandbox_run_profile.py`
    - `tools/fitness/check_architecture.py --root src/alienintent --check all`
 
 ## 4. Review record
+
+**Revision 3 (2026-10-06).** Follow-up check of `6f32264` (FAIL): two more existing tests expect success from a
+PRODUCER that never commits. The main session then proved the full list by running the rule on a copy of main. Exactly
+six tests change (2.6), including one already failing on main since WORKSPACE-FOLDER-NAMES. With the corrections, they
+pass.
 
 **Revision 2 (2026-10-06).** REVIEWER of `d8a3fb0` (FAIL, 7 findings):
 - the `test_runtime.py` fakes gain `revision`, with the file in scope;
