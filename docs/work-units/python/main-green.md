@@ -1,7 +1,7 @@
 # Work unit: main passes its whole suite
 
-**Label:** `MAIN-GREEN` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 3, 2026-10-08, for independent review. Not registered, not approved, not assessed, not released.
+**Label:** `MAIN-GREEN` (a document label; permanent id `ec72af73-e93c-47e2-b9b5-f8423dbffd2a`).
+**Status:** Draft revision 3 (work item `ec72af73-e93c-47e2-b9b5-f8423dbffd2a`, at CAPTURE), 2026-10-08. Reviewed (final check PASS). Not approved, not assessed, not released.
 **Position on the path:** this is the second of four in maintenance-required mode (Founder 2026-10-06). It runs after
 REGRESSION-GATE (`a38f0cb8`, DONE). It is the first work item judged by the whole-suite gate, through the normal
 factory: PRODUCER, a fresh VERIFIER on the exact candidate, then CLOSURE through the Landing Authority.
@@ -10,7 +10,7 @@ factory: PRODUCER, a fresh VERIFIER on the exact candidate, then CLOSURE through
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "ec72af73-e93c-47e2-b9b5-f8423dbffd2a",
  "version": "revision-3",
  "intent": "Make the whole suite (tests/ and tools/) pass on main, under the worker's real conditions, by repairing the causes of the 43 test cases that fail on main 201b2aa, and of the three owned-work markers that make two suite runs at once fail each other. No product behaviour changes except the architecture correction in 2.3 and the call-time default path in 2.4.",
  "satisfied_requirement_ids": [
