@@ -1,7 +1,7 @@
 # Work unit: main passes its whole suite
 
 **Label:** `MAIN-GREEN` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 2, 2026-10-08, for independent review. Not registered, not approved, not assessed, not released.
+**Status:** Draft revision 3, 2026-10-08, for independent review. Not registered, not approved, not assessed, not released.
 **Position on the path:** this is the second of four in maintenance-required mode (Founder 2026-10-06). It runs after
 REGRESSION-GATE (`a38f0cb8`, DONE). It is the first work item judged by the whole-suite gate, through the normal
 factory: PRODUCER, a fresh VERIFIER on the exact candidate, then CLOSURE through the Landing Authority.
@@ -11,7 +11,7 @@ factory: PRODUCER, a fresh VERIFIER on the exact candidate, then CLOSURE through
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-2",
+ "version": "revision-3",
  "intent": "Make the whole suite (tests/ and tools/) pass on main, under the worker's real conditions, by repairing the causes of the 43 test cases that fail on main 201b2aa, and of the three owned-work markers that make two suite runs at once fail each other. No product behaviour changes except the architecture correction in 2.3 and the call-time default path in 2.4.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -40,9 +40,9 @@ factory: PRODUCER, a fresh VERIFIER on the exact candidate, then CLOSURE through
   "the satisfiability rules themselves (execution_coordination/domain/satisfiability.py) and every other product rule",
   "the packet assessment, the work authorization and context assembly's application code (context_assembly/application/)",
   "the regression gate (invocation_runtime/application/regression_gate.py)",
-  "tests/context_assembly/test_work_authorization.py, including `satisfiable = None` in Fx.second (lines 64-70), which the authorization tests use on purpose",
+  "tests/context_assembly/test_work_authorization.py, including `satisfiable = None` in Fx.second (lines 65-70), which the authorization tests use on purpose",
   "tests/composition/test_work_registry.py, including its own `satisfiable = None` lines 164, 328-329 and 709-710 for legacy fixtures (they pass today and are known debt, recorded in section 4)",
-  "any test other than the ones named in section 1"
+  "any test other than the ones named in sections 1-3"
  ],
  "dependencies": [],
  "required_capabilities": [
@@ -113,7 +113,7 @@ recorded it:
 Main has changed since `883e4c5` only in docs and evidence. By cause (the REVIEWER counted these from the worker junit):
 
 1. **39 cases: fixture contracts the satisfiability check refuses.** Commit `057fbc1` turned the check off in
-   `Fx.second()` (`tests/context_assembly/test_work_authorization.py` lines 64-70) but not where a registry is built
+   `Fx.second()` (`tests/context_assembly/test_work_authorization.py` lines 65-70) but not where a registry is built
    another way. The packet these fixtures assess (`contract_payload`, `tests/context_assembly/test_work_contract.py`
    line 18) breaks the satisfiability rules, so `work assess` is not READY and `work authorize` answers
    `AUTHORIZATION_STALE` or `CONTRACT_UNSATISFIABLE`.
@@ -124,8 +124,11 @@ Main has changed since `883e4c5` only in docs and evidence. By cause (the REVIEW
        `ContextHold(MISSING_RECORD ...)`: its preparation `unauthorized` (line 199) calls `cx.ready` directly and never
        goes through `admitted`.
      - `[...refs7]`, `[...refs8]` and `[...refs9]` (lines 219-223) ask admission to accept a contract naming an
-       unregistered dependency, a reference absent at the pointer, and a reference that is not a path. The real rule
-       refuses exactly these (`satisfiability.py` lines 41-46, composed at `work_registry.py` lines 930-944). A
+       unregistered dependency, a reference absent at the pointer, and a free-text reference whose first word (`a`)
+       is a valid path absent at the pointer. Both admission and context assembly read only a reference's first
+       word, so refs9 tests the same branch as refs8 in another form; no case reaches `valid_path` false, on main or
+       after this change. The real rule refuses all three (`satisfiability.py` lines 38-44, composed at
+       `work_registry.py` lines 930-944). A
        satisfiable fixture alone cannot reach the state they test.
      - `test_a_first_producer_gets_exactly_its_fields_from_the_records` also asserts the old closure actions
        `["merge"]` at line 150. That assertion fails as soon as the fixture is satisfiable.
@@ -161,8 +164,9 @@ Main has changed since `883e4c5` only in docs and evidence. By cause (the REVIEW
 1. **A satisfiable fixture contract.**
    - `tests/context_assembly/test_work_contract.py` gains `satisfiable_payload(identity=IDENTITY, **changes) -> dict`:
      `contract_payload` with exactly the facts the rules require: `required_evidence` `["independent-verifier-accepted"]`,
-     `required_capabilities` `["python"]`, `budget_policy` with `maximum_attempts`, `hard_wall_clock_seconds` and
-     `cancellation_limit`, `required_closure_actions` `list(ACTIONS)` (from `execution_coordination.domain.closure`,
+     `required_capabilities` `["python"]`, `budget_policy`
+     `{"maximum_attempts": 1, "hard_wall_clock_seconds": 60, "cancellation_limit": 1}` (the values
+     `test_work_registry.py` line 373 uses; the context fields assert `maximum_attempts` 1), `required_closure_actions` `list(ACTIONS)` (from `execution_coordination.domain.closure`,
      as `test_work_registry.py` line 373 already does), and `release_policy` `explicit-human-off`. `changes` apply last.
    - `Cx` (`test_work_context.py`) overrides `packet` so that, with no `payload` given, it uses
      `satisfiable_payload(item.id, **changes)`. This covers `admitted`, `ready` and `unauthorized` alike. `Cx.__init__`
@@ -234,21 +238,22 @@ A prototype of 2.1, 2.2 and 2.5 on `201b2aa` passed (not the candidate; for the 
    a wrong implementation pass this; M3 is the deterministic proof of 2.6.
 6. **The defense-in-depth cases test context assembly's hold:**
    `python3 -m pytest -q tests/context_assembly/test_work_context.py -k test_each_missing_fact_is_a_hold_naming_it`
-   passes, and `grep -n seed_invalid_state_for_defense_in_depth_test tests` finds only its definition and the three
-   cases.
+   passes, and `grep -rn seed_invalid_state_for_defense_in_depth_test tests tools` finds only its definition and the
+   three cases (4 lines).
 7. **Mutations, run exactly by the VERIFIER** (each with `PYTHONDONTWRITEBYTECODE=1`; revert after each):
    - M1: in `context_assembly/domain/work_context.py`, restore the import of the three names from
      `execution_coordination.ports.worker_provider`. `python3 -m pytest -q tests/context_assembly/test_readiness_consumer.py -k test_no_new_cross_group_import_pair`
      must FAIL; revert, and it must pass.
-   - M2: in `Cx.packet`, use `contract_payload` instead of `satisfiable_payload`.
+   - M2: make `Cx.packet` return `super().packet(item, payload, raw, changes)` (the inherited `contract_payload`
+     default).
      `python3 -m pytest -q tests/context_assembly/test_work_context.py -k test_a_first_producer_gets_exactly_its_fields_from_the_records`
      must FAIL with `AUTHORIZATION_STALE`; revert, and it must pass.
    - M3: in `test_owned_work.py`, restore the fixed marker `launch:AC08:1` in
      `test_owned_work_outliving_the_wall_clock_is_stopped_with_the_client`. Running that test while a second process
-     holds the marker `launch:AC08:1` (the VERIFIER starts one with
-     `env ALIENINTENT_INVOCATION_ID=launch:AC08:1 setsid sleep 60`; `INVOCATION_MARKER` in
-     `invocation_runtime/domain/runtime.py` line 23 names the variable) must FAIL; revert, and it must pass with the
-     same process alive.
+     holds the marker `launch:AC08:1` must FAIL. The VERIFIER first starts that process in the background:
+     `(env ALIENINTENT_INVOCATION_ID=launch:AC08:1 setsid sleep 120 &)` (`INVOCATION_MARKER` in
+     `invocation_runtime/domain/runtime.py` line 23 names the variable). Revert, and the test must pass while the same
+     process is still alive.
    - M4: in `seed_invalid_state_for_defense_in_depth_test`, skip the direct deletes (the row and the blob).
      `python3 -m pytest -q tests/context_assembly/test_work_context.py -k test_each_missing_fact_is_a_hold_naming_it`
      must fail exactly the refs7, refs8 and refs9 cases; revert, and all must pass.
@@ -263,6 +268,17 @@ A prototype of 2.1, 2.2 and 2.5 on `201b2aa` passed (not the candidate; for the 
    failed and no error test case. The gate reports no finding.
 
 ## 4. Review record
+
+**Revision 3 (2026-10-08).** Follow-up REVIEWER of `76105b5` (FAIL; F1-F9 fixed; new findings N1-N7). The REVIEWER
+ran the prototype with the network off (`unshare -rn`, 126 passed) and confirmed that the helper fits the Founder's
+decision of 2026-10-08.
+- M2 replaces the override with the inherited default, so it fails for the stated reason, not a `NameError` (N1).
+- Check 6's grep is recursive (N2).
+- M3 starts the marker process in the background, with time for the revert run (N3).
+- excluded_scope allows the tests named in sections 1-3 (N4).
+- The `budget_policy` values are stated (N5).
+- refs9 is described as what it really tests (N6).
+- The satisfiability lines are 38-44, `Fx.second` 65-70 (N7).
 
 **Revision 2 (2026-10-08).** REVIEWER of `9ad902a` (FAIL; F1-F9). The Founder decided F2 on 2026-10-08.
 - F1: check 1's grep is limited to the files this packet changes. The `satisfiable = None` lines in
