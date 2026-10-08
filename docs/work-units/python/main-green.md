@@ -12,7 +12,7 @@ factory: PRODUCER, a fresh VERIFIER on the exact candidate, then CLOSURE through
 {
  "identity": "ec72af73-e93c-47e2-b9b5-f8423dbffd2a",
  "version": "revision-3",
- "intent": "Make the whole suite (tests/ and tools/) pass on main, under the worker's real conditions, by repairing the causes of the 43 test cases that fail on main 201b2aa, and of the three owned-work markers that make two suite runs at once fail each other. No product behaviour changes except the architecture correction in 2.3 and the call-time default path in 2.4.",
+ "intent": "Make the whole suite (tests/ and tools/) pass on main, under the worker's real conditions, by repairing the causes of the 43 test cases that fail on main 201b2aa, and of the three owned-work markers that make two suite runs at once fail each other. No product behaviour changes except the architecture correction in 2.4 and the call-time default path in 2.5.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
  ],
@@ -280,6 +280,8 @@ decision of 2026-10-08.
 - refs9 is described as what it really tests (N6).
 - The satisfiability lines are 38-44, `Fx.second` 65-70 (N7).
 - Final check of `483c9aa`: PASS, with one low correction (`list(ACTIONS)` is at line 374) applied.
+- Agent Ready (READY, attempt `25465fd4`, pointer `7741e14`) noted that the intent still named sections 2.3 and 2.4;
+  after revision 2 added 2.2 they are 2.4 and 2.5. Corrected on Founder direction, then reassessed.
 
 **Revision 2 (2026-10-08).** REVIEWER of `9ad902a` (FAIL; F1-F9). The Founder decided F2 on 2026-10-08.
 - F1: check 1's grep is limited to the files this packet changes. The `satisfiable = None` lines in
