@@ -353,6 +353,14 @@ def _registry_project(tmp_path: Path) -> tuple[Path, str, bytes]:
     return clone, commit_file(clone, "main", "docs/packet.md", packet), packet
 
 
+def _landing(document: dict, tmp_path: Path) -> None:
+    document["projects"]["P"]["github"] = {
+        "repository": "AlienLogicLab/alienintent", "application_id": 1, "installation_id": 1,
+        "private_key_path": str(tmp_path / "no-key.pem"),
+        "project": {"project_id": "PVT_fixture", "project_number": 1, "organization": "AlienLogicLab",
+                    "status_field_id": "S", "priority_field_id": "P"}, "landing": True}
+
+
 def _remote_tag(remote: str, identity: str) -> str | None:
     lines = subprocess.run(["git", "ls-remote", remote, f"refs/tags/work/{identity}"], text=True,
                            capture_output=True, check=True).stdout.split()
@@ -400,12 +408,15 @@ def test_cli_work_assess_with_and_without_the_readiness_entry(tmp_path: Path) ->
     """Check 6: without a readiness entry `work assess` answers readiness-not-configured and moves nothing; with one
     it assesses once, a repeat runs nothing, and `work show` names the saved reference."""
     from tests.composition.test_work_registry import fixture_agent_ready
+    from tests.context_assembly.test_work_contract import block, satisfiable_payload
     from tests.context_assembly.test_work_identity_service import commit_file
     clone, commit, packet = _registry_project(tmp_path)
     item = json.loads(_registry_cli(tmp_path, "register", "--file", str(tmp_path / "packet.md"), "--repo", "r",
                                     "--path", "docs/packet.md", "--commit", commit, "--label", "PACKET").stdout)
-    revised = commit_file(clone, "main", "docs/packet.md", packet + b"revised\n")
-    (tmp_path / "revised.md").write_bytes(packet + b"revised\n")
+    revision_packet = packet + block(satisfiable_payload(item["id"],
+                                                       authority_references=["docs/packet.md"])).encode()
+    revised = commit_file(clone, "main", "docs/packet.md", revision_packet)
+    (tmp_path / "revised.md").write_bytes(revision_packet)
     for args in ((), ("--file", str(tmp_path / "revised.md"), "--commit", revised)):
         refused = _registry_cli(tmp_path, "assess", "PACKET", *args)
         assert refused.returncode == 1 and json.loads(refused.stdout) == {"error": "readiness-not-configured"}
@@ -418,8 +429,10 @@ def test_cli_work_assess_with_and_without_the_readiness_entry(tmp_path: Path) ->
     document["projects"]["P"]["readiness"] = {
         "database": str(tmp_path / "readiness.sqlite"), "evidence_root": str(tmp_path / "evidence"),
         "executable": str(fixture_agent_ready(tmp_path, tmp_path / "launched.env")), "provider": "claude"}
+    _landing(document, tmp_path)
     (tmp_path / "projects.json").write_text(json.dumps(document))
-    assessed = _registry_cli(tmp_path, "assess", "PACKET")
+    assessed = _registry_cli(tmp_path, "assess", "PACKET", "--file", str(tmp_path / "revised.md"),
+                             "--commit", revised)
     assert assessed.returncode == 0, assessed.stdout + assessed.stderr
     value = json.loads(assessed.stdout)
     assert (value["identity"], value["disposition"], value["reused"]) == (item["id"], "READY", False)
@@ -435,12 +448,13 @@ def test_cli_work_authorize_with_and_without_the_readiness_entry(tmp_path: Path)
     """Release record check 7: without a readiness entry `work authorize` answers readiness-not-configured and writes
     nothing; with one it records the authorization once and a repeat changes nothing."""
     from tests.composition.test_work_registry import fixture_agent_ready
-    from tests.context_assembly.test_work_contract import block, contract_payload
+    from tests.context_assembly.test_work_contract import block, satisfiable_payload
     from tests.context_assembly.test_work_identity_service import commit_file
     clone, commit, packet = _registry_project(tmp_path)
     item = json.loads(_registry_cli(tmp_path, "register", "--file", str(tmp_path / "packet.md"), "--repo", "r",
                                     "--path", "docs/packet.md", "--commit", commit, "--label", "PACKET").stdout)
-    contracted = packet + block(contract_payload(item["id"])).encode()
+    contracted = packet + block(satisfiable_payload(item["id"],
+                                                    authority_references=["docs/packet.md"])).encode()
     (tmp_path / "contracted.md").write_bytes(contracted)
     revised = commit_file(clone, "main", "docs/packet.md", contracted)
     baseline = subprocess.run(["git", "rev-parse", "main"], cwd=clone, text=True, capture_output=True,
@@ -455,6 +469,7 @@ def test_cli_work_authorize_with_and_without_the_readiness_entry(tmp_path: Path)
     document["projects"]["P"]["readiness"] = {
         "database": str(tmp_path / "readiness.sqlite"), "evidence_root": str(tmp_path / "evidence"),
         "executable": str(fixture_agent_ready(tmp_path, tmp_path / "launched.env")), "provider": "claude"}
+    _landing(document, tmp_path)
     (tmp_path / "projects.json").write_text(json.dumps(document))
     assessed = json.loads(_registry_cli(tmp_path, "assess", "PACKET", "--file", str(tmp_path / "contracted.md"),
                                         "--commit", revised).stdout)

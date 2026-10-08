@@ -8,6 +8,9 @@ import json
 import pytest
 
 from alienintent.context_assembly.domain.compilation import contract_from_payload
+from alienintent.composition.sandbox_run_profile import PROVIDER_DIMENSIONS
+from alienintent.execution_coordination.domain.closure import ACTIONS
+from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
 from alienintent.context_assembly.domain.work_contract import (
     CONTRACT_INVALID, DUPLICATE, INVALID_JSON, MISSING, NOT_TEXT, OTHER_IDENTITY, REFUSED, UNCLOSED, ContractInvalid,
     contract_block)
@@ -26,6 +29,22 @@ def contract_payload(identity: str = IDENTITY, **changes) -> dict:
              "baselines": ["main"], "required_closure_actions": ["merge"], "stop_escalation_conditions": ["scope"]}
     value.update(changes)
     return value
+
+
+def satisfiable_payload(identity: str = IDENTITY, **changes) -> dict:
+    value = contract_payload(identity, required_evidence=["independent-verifier-accepted"],
+                             required_capabilities=["python"],
+                             budget_policy={"maximum_attempts": 1, "hard_wall_clock_seconds": 60,
+                                            "cancellation_limit": 1},
+                             required_closure_actions=list(ACTIONS), release_policy="explicit-human-off")
+    value.update(changes)
+    return value
+
+
+def test_the_satisfiable_fixture_passes_the_rules():
+    contract = contract_from_payload(satisfiable_payload())
+    assert unsatisfiable(contract, landing=True, present_at_pointer=lambda _: True,
+                         registered=lambda _: True, provider_dimensions=PROVIDER_DIMENSIONS) == ()
 
 
 def block(payload: dict | str) -> str:

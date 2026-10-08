@@ -230,8 +230,10 @@ def route(task_type: str, risk: RiskClass, deterministic_possible: bool,
         })
 
 
-def resolved_codex_model(config: Path = Path.home() / ".codex/config.toml") -> str:
+def resolved_codex_model(config: Path | None = None) -> str:
     """Resolve the configured model rather than hardcoding it (bootstrap requirement)."""
+    if config is None:
+        config = Path.home() / ".codex/config.toml"
     try:
         for line in config.read_text().splitlines():
             s = line.strip()

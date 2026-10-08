@@ -12,6 +12,8 @@ from dataclasses import asdict, replace
 from hashlib import sha256
 import json
 from pathlib import Path
+import sqlite3
+from uuid import uuid4
 
 import pytest
 
@@ -28,7 +30,9 @@ from alienintent.execution_coordination.domain.custody import CandidateRef
 from alienintent.execution_coordination.ports.operational_store import StoreUnavailable
 from tests.context_assembly.test_initial_compilation import PROJECT, REPO, git
 from tests.context_assembly.test_work_authorization import Fx, SCOPE
+from tests.context_assembly.test_work_contract import satisfiable_payload
 from tests.context_assembly.test_work_identity_service import commit_file
+from alienintent.execution_coordination.domain.closure import ACTIONS
 
 MARKER = "PRODUCER-PRIVATE-MARKER-7f3a"  # Planted in the PRODUCER's transcript, invocation output and journal.
 REVIEW = "Self-review: every acceptance check passes; REVIEW-TEXT-91c2."
@@ -40,11 +44,21 @@ class Cx(Fx):
 
     def __init__(self, root: Path) -> None:
         super().__init__(root)
+        self.document["projects"][PROJECT]["github"] = {
+            "repository": "AlienLogicLab/alienintent", "application_id": 1, "installation_id": 1,
+            "private_key_path": str(root / "no-key.pem"),
+            "project": {"project_id": "PVT_fixture", "project_number": 1, "organization": "AlienLogicLab",
+                        "status_field_id": "S", "priority_field_id": "P"}, "landing": True}
         self.configuration_file = root / "project.json"
         self.configuration_file.write_text(json.dumps(self.document))
         self.registry = WorkRegistry(load_project_configuration(self.configuration_file, PROJECT))
         self.service, self.context = self.registry.authorization, self.registry.context
         self.store = self.registry.assessment.consumer.store
+
+    def packet(self, item, payload: dict | None = None, raw: str | None = None,
+               changes: dict | None = None) -> bytes:
+        return super().packet(item, payload if payload is not None else satisfiable_payload(
+            item.id, **(changes or {})), raw, changes)
 
     def admitted(self, label: str = "UNIT", reserve: bool = True, **changes):
         """Registered, assessed READY, authorized and holding its WIP slot (and, with `reserve`, the repository
@@ -147,7 +161,7 @@ def test_a_first_producer_gets_exactly_its_fields_from_the_records(cx):
                                  "rejections": 0, "findings": []}
     assert fields["resources"]["wip"]["owner"] == f"work:{item.id}"
     assert fields["resources"]["repository"]["owner"] == f"launch:{item.id}:0"
-    assert fields["resources"]["cleanup"] == {"required_closure_actions": ["merge"],
+    assert fields["resources"]["cleanup"] == {"required_closure_actions": list(ACTIONS),
                                               "candidate_custody_requirements": ["merge"]}
     command = fields["context_command"]
     assert command["argv"][1:] == ["--profile-factory", "alienintent.composition.work_registry:work_context_profile",
@@ -207,6 +221,28 @@ def no_evidence(cx):
     return item
 
 
+def seed_invalid_state_for_defense_in_depth_test(cx, *, dependency=None, reference=None):
+    """Normal admission refuses this state; write the lower-level record directly to test context assembly's
+    own hold. This is not a normal authorized workflow."""
+    if dependency is not None:
+        registered = cx.registry.identities.register("requirement:SF-REQ-99", dependency, "BIU")
+        with sqlite3.connect(cx.root / "work.sqlite") as db:
+            assert db.execute("UPDATE work_item SET id = ? WHERE id = ?", (dependency, registered.id)).rowcount == 1
+        item = cx.admitted(dependencies=[dependency])
+        with sqlite3.connect(cx.root / "work.sqlite") as db:
+            assert db.execute("DELETE FROM work_item WHERE id = ?", (dependency,)).rowcount == 1
+        return item
+    assert reference is not None
+    path = reference.split()[0]
+    commit_file(cx.clone, "main", path, f"fixture-{uuid4().hex}\n".encode())
+    item = cx.admitted(authority_references=[README, reference])
+    blob = git(cx.clone, "rev-parse", f"{item.pointer.commit}:{path}").decode().strip()
+    object_path = cx.clone / ".git" / "objects" / blob[:2] / blob[2:]
+    assert object_path.is_file()
+    object_path.unlink()
+    return item
+
+
 @pytest.mark.parametrize("prepare,reason,refs", [
     (lambda cx: replace(cx.admitted(), id="no-such-item"), "MISSING_RECORD", ("work_item",)),
     (lambda cx: cx.registry.identities.retire(cx.admitted().id), "MISSING_RECORD", ("work_item",)),
@@ -216,11 +252,12 @@ def no_evidence(cx):
     (unauthorized, "MISSING_RECORD", ("release_record",)),
     (no_evidence, "MISSING_RECORD", ("release_record",)),
     (lambda cx: cx.admitted(reserve=False), "MISSING_RECORD", ("resources", "repository")),
-    (lambda cx: cx.admitted(dependencies=["unregistered-dependency"]), "MISSING_RECORD",
+    (lambda cx: seed_invalid_state_for_defense_in_depth_test(cx, dependency="unregistered-dependency"), "MISSING_RECORD",
      ("dependencies", "unregistered-dependency")),
-    (lambda cx: cx.admitted(authority_references=["docs/not-at-the-commit.md"]), "MISSING_RECORD",
+    (lambda cx: seed_invalid_state_for_defense_in_depth_test(cx, reference="docs/not-at-the-commit.md"), "MISSING_RECORD",
      ("design_rules", "docs/not-at-the-commit.md")),
-    (lambda cx: cx.admitted(authority_references=["a vault note, not a path"]), "MISSING_RECORD", ("design_rules",)),
+    (lambda cx: seed_invalid_state_for_defense_in_depth_test(cx, reference="a vault note, not a path"),
+     "MISSING_RECORD", ("design_rules",)),
 ])
 def test_each_missing_fact_is_a_hold_naming_it(cx, prepare, reason, refs):
     item = prepare(cx)

@@ -15,12 +15,14 @@ from pathlib import Path
 import subprocess
 import sys
 import time
+from uuid import uuid4
 
 from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from alienintent.invocation_runtime.domain.runtime import INVOCATION_MARKER, InvocationRole
 
 DIMENSIONS = frozenset({"wall-clock", "cancellation"})
+RUN = uuid4().hex
 DETACHED = "setsid bash -c 'sleep {delay}; echo finished > \"$1\"' _ \"$1\" > /dev/null 2>&1 < /dev/null &\nexit 0\n"
 
 
@@ -34,21 +36,23 @@ def worker(tmp_path: Path, delay: float) -> CliWorkerProvider:
 def test_client_exit_with_detached_owned_work_active_does_not_end_the_invocation(tmp_path: Path) -> None:
     provider = worker(tmp_path, 1)
 
-    result = provider.run("launch:AC08:0", InvocationRole.PRODUCER, tmp_path, 30)
+    marker = f"launch:AC08-{RUN}:0"
+    result = provider.run(marker, InvocationRole.PRODUCER, tmp_path, 30)
 
     assert result.kind == "success" and result.quiescent
     assert (tmp_path / "result.txt").exists(), "the invocation ended while owned background work was still active"
-    assert ProcOwnership().owned_work("launch:AC08:0") == ()
-    assert provider.cancel("launch:AC08:0", "probe").kind == "already-finished"
+    assert ProcOwnership().owned_work(marker) == ()
+    assert provider.cancel(marker, "probe").kind == "already-finished"
 
 
 def test_owned_work_outliving_the_wall_clock_is_stopped_with_the_client(tmp_path: Path) -> None:
     provider = worker(tmp_path, 30)
 
-    result = provider.run("launch:AC08:1", InvocationRole.PRODUCER, tmp_path, 1)
+    marker = f"launch:AC08-{RUN}:1"
+    result = provider.run(marker, InvocationRole.PRODUCER, tmp_path, 1)
 
     assert result.kind == "timeout" and result.quiescent
-    assert ProcOwnership().owned_work("launch:AC08:1") == ()
+    assert ProcOwnership().owned_work(marker) == ()
     assert not (tmp_path / "result.txt").exists()
 
 
@@ -71,17 +75,19 @@ def test_the_owner_identity_distinguishes_a_live_process_from_an_ended_or_reused
 
 
 def test_owned_work_is_found_by_its_marker_even_in_another_session(tmp_path: Path) -> None:
-    survivor = subprocess.Popen(["setsid", "sleep", "30"], env={"PATH": os.environ["PATH"], INVOCATION_MARKER: "launch:AC08:2"})
+    marker = f"launch:AC08-{RUN}:2"
+    nonmatch = f"launch:AC08-{RUN}:20"
+    survivor = subprocess.Popen(["setsid", "sleep", "30"], env={"PATH": os.environ["PATH"], INVOCATION_MARKER: marker})
     try:
         deadline = time.monotonic() + 5
-        while not ProcOwnership().owned_work("launch:AC08:2") and time.monotonic() < deadline:
+        while not ProcOwnership().owned_work(marker) and time.monotonic() < deadline:
             time.sleep(0.05)
-        assert ProcOwnership().owned_work("launch:AC08:2") == (survivor.pid,)
-        assert ProcOwnership().owned_work("launch:AC08:20") == ()
+        assert ProcOwnership().owned_work(marker) == (survivor.pid,)
+        assert ProcOwnership().owned_work(nonmatch) == ()
     finally:
         survivor.kill()
         survivor.wait()
-    assert ProcOwnership().owned_work("launch:AC08:2") == ()
+    assert ProcOwnership().owned_work(marker) == ()
 
 
 def test_another_owners_work_with_the_same_invocation_identity_is_neither_awaited_nor_stopped(tmp_path: Path) -> None:
