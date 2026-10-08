@@ -167,7 +167,7 @@ Main has changed since `883e4c5` only in docs and evidence. By cause (the REVIEW
      `required_capabilities` `["python"]`, `budget_policy`
      `{"maximum_attempts": 1, "hard_wall_clock_seconds": 60, "cancellation_limit": 1}` (the values
      `test_work_registry.py` line 373 uses; the context fields assert `maximum_attempts` 1), `required_closure_actions` `list(ACTIONS)` (from `execution_coordination.domain.closure`,
-     as `test_work_registry.py` line 373 already does), and `release_policy` `explicit-human-off`. `changes` apply last.
+     as `test_work_registry.py` line 374 already does), and `release_policy` `explicit-human-off`. `changes` apply last.
    - `Cx` (`test_work_context.py`) overrides `packet` so that, with no `payload` given, it uses
      `satisfiable_payload(item.id, **changes)`. This covers `admitted`, `ready` and `unauthorized` alike. `Cx.__init__`
      adds to `self.document`, before writing the configuration file, this `github` entry, which sends no request:
@@ -279,6 +279,7 @@ decision of 2026-10-08.
 - The `budget_policy` values are stated (N5).
 - refs9 is described as what it really tests (N6).
 - The satisfiability lines are 38-44, `Fx.second` 65-70 (N7).
+- Final check of `483c9aa`: PASS, with one low correction (`list(ACTIONS)` is at line 374) applied.
 
 **Revision 2 (2026-10-08).** REVIEWER of `9ad902a` (FAIL; F1-F9). The Founder decided F2 on 2026-10-08.
 - F1: check 1's grep is limited to the files this packet changes. The `satisfiable = None` lines in
