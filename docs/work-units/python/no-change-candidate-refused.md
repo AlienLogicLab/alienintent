@@ -1,7 +1,7 @@
 # Work unit: a PRODUCER that changes nothing does not produce a candidate
 
-**Label:** `NO-CHANGE-CANDIDATE-REFUSED` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 5, 2026-10-08, for independent review. Not registered, not approved, not assessed, not released.
+**Label:** `NO-CHANGE-CANDIDATE-REFUSED` (a document label; permanent id `77d48c83-af41-40fa-bd0d-a56e7e67fc30`).
+**Status:** Draft revision 5 (work item `77d48c83-af41-40fa-bd0d-a56e7e67fc30`, at CAPTURE), 2026-10-08. Reviewed (final check PASS). Not approved, not assessed, not released.
 **Position on the path:** a factory repair that must land before BOUNDED-ROUTINE-LAUNCH is retried. Work item
 `3d4e1215-c293-42d9-a112-57eabc289eed` was stopped (`cancelled-by-operator`, version 3). Its PRODUCER returned the
 starting revision `bceea00` unchanged, and the factory admitted it as a successful PRODUCER result with a candidate,
@@ -14,7 +14,7 @@ number below is at `a632147`.
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "77d48c83-af41-40fa-bd0d-a56e7e67fc30",
  "version": "revision-5",
  "intent": "When a PRODUCER's process succeeds but its claimed revision has the same git tree as the starting revision (the same commit, an empty commit, or a commit that is later reverted), the factory publishes no candidate. It records a typed no-change PRODUCER result with a finding, and the work item stays in IMPLEMENT as a rework within its attempt budget. No VERIFIER attempt is used. A descendant commit with a different tree is admitted as today.",
  "satisfied_requirement_ids": [
