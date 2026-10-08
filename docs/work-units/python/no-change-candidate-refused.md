@@ -217,7 +217,7 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-498).
 4. **No VERIFIER attempt is used** (`tests/execution_coordination/test_factory_coordinator.py`, test
    `test_no_change_producer_result_reworks_without_a_verifier`). A subclass of `ScriptedWorker` (line 50) lets a
    PRODUCER step return `WorkerOutcome("no-change", None, findings=(...))`.
-   - After each no-change the record is at stage IMPLEMENT, with outcome `rework`, `rejections` 1, 2, and one finding
+   - After the first and the second no-change the record is at stage IMPLEMENT, with outcome `rework`, `rejections` 1, 2, and one finding
      per no-change whose `source` is `producer`. `implement_cycles` is 1 and `verify_cycles` is 0 after each (the
      first PRODUCER launch sets `implement_cycles` to 1, line 408), the lifecycle version equals the version before the
      first launch, and `candidate` is `None`.
@@ -247,10 +247,10 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-498).
 7. **The suite stays green:** the regression gate's own run at the candidate (as the worker) has no failed and no error
    test case, and `tools/fitness/check_architecture.py --root src/alienintent --check all` passes.
 
-A prototype of 2.1-2.5 and 2.7, with checks 1 (without a handover), 2, 3 and 4, on `a632147` (not the candidate; for
+A prototype of 2.1-2.5 and 2.7, with checks 1 (without a handover), 2, 3 and 4 (final state only), on `a632147` (not the candidate; for
 the REVIEWER and PRODUCER only): `manual/path-to-done/no-change/prototype-rev5-on-a632147.diff`, sha256
 `dc3ccd1a…0726c`. With it, `tests/invocation_runtime`, `tests/composition` and `tests/execution_coordination` gave
-931 passed, and the architecture fitness check passed. M1 failed exactly `empty-commit` and `commit-then-revert`, M2
+932 passed, and the architecture fitness check passed. M1 failed exactly `empty-commit` and `commit-then-revert`, M2
 failed all three hand-over cases, M3 failed the coordinator test, M4 (with the journal of check 1) failed all three
 refusal cases, M5 failed both named tests (and four others), and each passed when reverted.
 
@@ -264,6 +264,8 @@ lines were confirmed at `a632147`, and the six test corrections are exactly the 
 - Check 4 states the counts exactly (S3).
 - Check 5 names its tests; M5 proves them (S4).
 - 2.4 says a backstop refusal is a custody refusal, as today (S5).
+- Final check of `1ad017e`: PASS, with two low wording corrections applied (the prototype covers check 4's final
+  state only; "after the first and the second no-change").
 
 **Revision 4 (2026-10-08).** REVIEWER of `ffdee2b` against main `a632147` (FAIL; R1-R7), and a Founder decision.
 - Founder 2026-10-08: "changed" means a different git tree, checked in `_produce` and in `hand_over`, with tests for
