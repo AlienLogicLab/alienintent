@@ -23,6 +23,14 @@ from director import (  # noqa: E402
     route, resolved_codex_model)
 
 
+@pytest.fixture(autouse=True)
+def isolated_codex_config(tmp_path, monkeypatch):
+    monkeypatch.setenv("HOME", str(tmp_path))
+    config = tmp_path / ".codex" / "config.toml"
+    config.parent.mkdir()
+    config.write_text('model = "gpt-6-astra"\n')
+
+
 # --- Tier 0: never spend intelligence on what tooling settles --------------------
 
 

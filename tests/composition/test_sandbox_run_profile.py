@@ -354,7 +354,7 @@ def test_a_coordinator_correlation_becomes_a_branch_git_accepts(tmp_path: Path) 
     workspace = adapter.allocate("launch:SB-01:0", "SB-01", "HEAD")
 
     assert workspace.branch == "invocation/launch-SB-01-0"
-    assert workspace.path.name == "launch:SB-01:0"
+    assert workspace.path.name == "launch-SB-01-0"
     assert subprocess.run(["git", "check-ref-format", "--branch", workspace.branch], capture_output=True).returncode == 0
 
 

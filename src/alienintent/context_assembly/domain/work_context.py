@@ -13,7 +13,8 @@ import re
 
 from alienintent.context_assembly.domain.reconstruction import canonical
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
-from alienintent.execution_coordination.ports.worker_provider import CLOSURE, PRODUCER, VERIFIER
+
+PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
 
 # Section 1: every role's fields, then what the PRODUCER, the VERIFIER and CLOSURE alone receive. CLOSURE never gets
 # the PRODUCER's transcript or self-review, and no package names a credential, key path or token.
