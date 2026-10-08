@@ -78,6 +78,12 @@ class GitSourceControl(SourceControl):
             raise CandidateUnavailable("candidate revision is not immutable")
         return revision
 
+    def tree(self, workspace: Path, revision: str) -> str:
+        tree = self._git("rev-parse", "--verify", f"{revision}^{{tree}}", cwd=workspace)
+        if len(tree) != 40:
+            raise CandidateUnavailable("tree id is not a full object id")
+        return tree
+
     def read_back_candidate(self, workspace: Path, remote: str, branch: str, revision: str, verifier_workspace: Path) -> CandidateRef:
         remote_url = self._git("remote", "get-url", remote, cwd=workspace)
         return self._read_back(remote_url, branch, revision, verifier_workspace, workspace)
@@ -265,6 +271,12 @@ class IntakeSourceControl(GitSourceControl, SourceControl):
             raise CandidateUnavailable("candidate revision is not immutable")
         return claimed
 
+    def tree(self, workspace: Path, revision: str) -> str:
+        tree = self._as_worker(workspace, "git", "rev-parse", "--verify", f"{revision}^{{tree}}")
+        if not _FULL_SHA.fullmatch(tree):
+            raise CandidateUnavailable("tree id is not a full object id")
+        return tree
+
     def intake_ref(self, correlation: str) -> str:
         return f"refs/intake/{ref_safe(correlation)}"
 
@@ -290,7 +302,9 @@ class IntakeSourceControl(GitSourceControl, SourceControl):
             raise CandidateUnavailable("imported candidate differs from the claim")
         if self._intake_git("merge-base", "--is-ancestor", starting, claimed).returncode:
             raise CandidateUnavailable("candidate does not descend from the starting revision")
-        self._intake_out("rev-parse", "--verify", f"{claimed}^{{tree}}")  # custody facts, read in the intake only
+        tree = self._intake_out("rev-parse", "--verify", f"{claimed}^{{tree}}")
+        if tree == self._intake_out("rev-parse", "--verify", f"{starting}^{{tree}}"):
+            raise CandidateUnavailable("candidate tree equals the starting revision's tree")
         return ref
 
     def _copy_bundle(self, source: Path, target: Path) -> Path:

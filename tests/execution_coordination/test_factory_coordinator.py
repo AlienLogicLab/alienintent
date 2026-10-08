@@ -118,6 +118,43 @@ def _coordinator(tmp_path: Path, items, outcomes):
     return coordinator.FactoryCoordinator(SQLiteOperationalStore(tmp_path / "run.sqlite"), MemoryWorkManagement(items), worker, artifacts, "offline"), worker, artifacts
 
 
+def test_no_change_producer_result_reworks_without_a_verifier(tmp_path: Path) -> None:
+    coordinator_module, custody, _, provider = _api()
+    item = _item("unchanged", 1, 1)
+    contract = replace(item.contract, budget_policy=BudgetPolicy(maximum_attempts=3))
+    item = replace(item, contract=contract, readiness_digest=contract.content_digest)
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+
+    class NoChangeWorker(ScriptedWorker):
+        def start(self, invocation, context, grants, budget):
+            if invocation.role == provider.PRODUCER:
+                self.invocations.append((invocation.work_identity, invocation.role, invocation.correlation_id))
+                outcome = provider.WorkerOutcome(provider.NO_CHANGE, None, findings=("unchanged tree",))
+                self.observed[invocation.correlation_id] = outcome
+                return outcome
+            return super().start(invocation, context, grants, budget)
+
+    worker = NoChangeWorker(artifacts, {"unchanged": []})
+    coordinator = coordinator_module.FactoryCoordinator(SQLiteOperationalStore(tmp_path / "run.sqlite"),
+                                                        MemoryWorkManagement([item]), worker, artifacts, "offline")
+    before = 0
+    for attempt in (1, 2):
+        coordinator.launch("unchanged")
+        state = coordinator.state("unchanged")
+        assert state.stage is LifecycleStage.IMPLEMENT and state.outcome == "rework"
+        assert state.record["rejections"] == attempt
+        assert len(state.record["findings"]) == attempt
+        assert all(finding["source"] == "producer" for finding in state.record["findings"])
+        assert state.implement_cycles == 1 and state.verify_cycles == 0
+        assert state.version == before and state.candidate is None
+        assert all(role == provider.PRODUCER for _, role, _ in worker.invocations)
+    coordinator.launch("unchanged")
+    state = coordinator.state("unchanged")
+    assert state.stage is LifecycleStage.IMPLEMENT and state.outcome == "failure"
+    assert state.record["hold_reason"] == "attempt-budget-exhausted"
+    assert len(worker.invocations) == 3 and all(role == provider.PRODUCER for _, role, _ in worker.invocations)
+
+
 def test_loop_drains_priority_backlog_and_skips_failure_and_timeout(tmp_path: Path) -> None:
     coordinator, worker, _ = _coordinator(tmp_path, [_item("bad", 0, 1), _item("slow", 1, 2), _item("good", 2, 3)], {"bad": ["failure"], "slow": ["timeout"], "good": ["success"]})
     summary = coordinator.start()
