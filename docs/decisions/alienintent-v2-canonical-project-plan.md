@@ -66,6 +66,8 @@ Founder decision, 2026-10-08: Founder approval attaches to an exact revision of 
 
 Inherited authority never extends to a protected path, even inside an obligation's paths, and a plan-derived candidate advances only when every path it actually changed is inside its assessed scope and outside the protected paths: the control plane checks the actual diff before VERIFY and again at CLOSURE before landing. The block below is part of this plan's bytes, so the approved digest covers every obligation, path and limit.
 
+Obligation `VERIFICATION-OUTCOME-INTEGRITY` (Founder decision, 2026-10-09): only an admitted, evidence-backed engineering REJECT may return a Work Item to PRODUCER. Infrastructure failure, malformed verdict, invalid or incomplete verification evidence, or verification-procedure failure preserves the exact candidate and retries VERIFY within bounded policy. Packet-required mutations are a machine-readable specification applied, tested and reverted by a deterministic harness whose evidence the VERIFIER reads; a verdict is admitted only when that evidence is complete and valid for the exact candidate.
+
 ```json alienintent-plan-authority
 {"target_repositories": ["AlienLogicLab/alienintent"],
  "capabilities": ["python", "filesystem", "process-control"],
@@ -93,6 +95,11 @@ Inherited authority never extends to a protected path, even inside an obligation
                      "tests/context_assembly/test_inherited_release.py",
                      "tests/context_assembly/test_work_authorization.py"],
  "obligations": [
+  {"label": "VERIFICATION-OUTCOME-INTEGRITY", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+   "allowed_paths": ["src/alienintent/execution_coordination/", "src/alienintent/invocation_runtime/",
+                     "src/alienintent/context_assembly/", "src/alienintent/composition/",
+                     "tests/execution_coordination/", "tests/invocation_runtime/", "tests/context_assembly/",
+                     "tests/composition/"]},
   {"label": "BOUNDED-ROUTINE-LAUNCH", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
    "allowed_paths": ["src/alienintent/invocation_runtime/", "src/alienintent/execution_coordination/",
                      "src/alienintent/composition/", "src/alienintent/control_plane/", "tests/invocation_runtime/",
