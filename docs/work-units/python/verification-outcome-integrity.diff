@@ -994,10 +994,10 @@ index d0654a5..9d5dad9 100644
  _SESSION = re.compile(r"session[ _]id\"?\s*[:=]\s*\"?([0-9A-Za-z]{8}(?:-[0-9A-Za-z]{4,12}){1,4})", re.I)
 diff --git a/src/alienintent/invocation_runtime/domain/mutation_spec.py b/src/alienintent/invocation_runtime/domain/mutation_spec.py
 new file mode 100644
-index 0000000..9b33f73
+index 0000000..9a1b9f3
 --- /dev/null
 +++ b/src/alienintent/invocation_runtime/domain/mutation_spec.py
-@@ -0,0 +1,131 @@
+@@ -0,0 +1,132 @@
 +"""Mutation spec: the packet's own mutations, which the control plane runs against a candidate before VERIFY. Pure.
 +
 +A packet may hold one block fenced as ```json alienintent-mutations, separate from its contract block (contract fields
@@ -1022,8 +1022,9 @@ index 0000000..9b33f73
 +# The untracked folder of a fresh candidate checkout where the control plane writes a reproducer; no mutation, named
 +# test or text predicate may point into it, so no evidence reads what another evidence item wrote.
 +EVIDENCE_FOLDER = "alienintent-evidence"
-+# A pytest node id names a test file under the checkout; it is never an option and holds no whitespace.
-+_NODE_ID = re.compile(r"[A-Za-z0-9_][^\s\x00]*\.py(::[^\s\x00]+)?")
++# A pytest node id names a test file under the checkout; it is never an option. The path and the test name hold no
++# whitespace; a parametrize id in brackets is pytest's own text and may hold spaces, never a line break.
++_NODE_ID = re.compile(r"[A-Za-z0-9_][^\s\x00]*\.py(::[^\s\x00\[]+(\[[^\x00\n\r]*\])?)?")
 +
 +
 +class MutationSpecInvalid(ValueError):
@@ -1910,10 +1911,10 @@ index 0000000..89c7706
 +    assert checks.standing(INVOCATION, candidate(), BASE, ("tests.test_rule::test_refuses",)) == ()
 diff --git a/tests/invocation_runtime/test_mutation_spec.py b/tests/invocation_runtime/test_mutation_spec.py
 new file mode 100644
-index 0000000..be221ae
+index 0000000..2c248c1
 --- /dev/null
 +++ b/tests/invocation_runtime/test_mutation_spec.py
-@@ -0,0 +1,48 @@
+@@ -0,0 +1,58 @@
 +"""VERIFICATION-OUTCOME-INTEGRITY: the packet's own mutation spec, read by a pure parser. Names are TEST DATA."""
 +from __future__ import annotations
 +
@@ -1942,6 +1943,16 @@ index 0000000..be221ae
 +    assert [(edit.old, edit.new) for edit in mutation.edits] == [("if ok:", "if True:")]
 +    assert spec.digest.startswith("sha256:") and spec.digest == parse_mutations(packet([MUTATION])).digest
 +    assert spec.digest != parse_mutations(packet([MUTATION | {"name": "other"}])).digest
++
++
++def test_a_parametrize_id_may_hold_spaces_but_the_path_and_name_may_not():
++    """Real pytest ids carry their parameters verbatim (`[gate regression]`, `[def f():\\n    x-stands0]`)."""
++    ids = ["tests/test_rule.py::test_refuses[gate regression]", "tests/test_rule.py::test_x[def f():\\n    x-stands0]"]
++    spec = parse_mutations(packet([MUTATION | {"tests": ids}]))
++    assert spec.mutations[0].tests == tuple(ids)
++    for bad in ("tests/test rule.py::test_refuses", "tests/test_rule.py::test refuses", "tests/test_rule.py::t[a\nb]"):
++        with pytest.raises(MutationSpecInvalid):
++            parse_mutations(packet([MUTATION | {"tests": [bad]}]))
 +
 +
 +@pytest.mark.parametrize("text", [

@@ -61,7 +61,7 @@
  ],
  "verification_obligations": [
   "independent VERIFIER on the exact candidate",
-  "the candidate's diff from the starting revision equals the exact bytes of the context package's `design_rules.authority_references` entry with path docs/work-units/python/verification-outcome-integrity.diff (sha256 c8d61aa6a283b514f2ef2675843c2c994cc3b564cea2ef178d2ffb8ec571355d), ignoring only `index` lines",
+  "the candidate's diff from the starting revision equals the exact bytes of the context package's `design_rules.authority_references` entry with path docs/work-units/python/verification-outcome-integrity.diff (sha256 d693531bc63627ff47063a4c031f9e186e5aeac3acfbdf52e13153f74c684b04), ignoring only `index` lines",
   "the VERIFIER applies every mutation of the `alienintent-mutations` block with a script that reads the JSON (never by typing the edits), and records that each makes its named tests fail and that restoring the file makes them pass"
  ],
  "required_evidence": [
@@ -94,7 +94,7 @@
   "workspaces-cleaned"
  ],
  "stop_escalation_conditions": [
-  "the `design_rules.authority_references` entry with path docs/work-units/python/verification-outcome-integrity.diff is absent from the context package, its text's sha256 is not c8d61aa6a283b514f2ef2675843c2c994cc3b564cea2ef178d2ffb8ec571355d, or those bytes do not apply exactly at the starting revision",
+  "the `design_rules.authority_references` entry with path docs/work-units/python/verification-outcome-integrity.diff is absent from the context package, its text's sha256 is not d693531bc63627ff47063a4c031f9e186e5aeac3acfbdf52e13153f74c684b04, or those bytes do not apply exactly at the starting revision",
   "scope outside the authorized files"
  ]
 }
@@ -114,13 +114,13 @@ the evaluation mechanism failed."
   `design_rules.authority_references` list has one entry whose `path` is `docs/work-units/python/verification-outcome-integrity.diff`; that entry's
   `text` field holds the exact diff. (The same package the PRODUCER receives at launch; its `work context` command
   re-prints it.)
-- **SHA-256 of those bytes (UTF-8):** `c8d61aa6a283b514f2ef2675843c2c994cc3b564cea2ef178d2ffb8ec571355d` (136,660 bytes, 13 files, unified diff, `git apply` format).
+- **SHA-256 of those bytes (UTF-8):** `d693531bc63627ff47063a4c031f9e186e5aeac3acfbdf52e13153f74c684b04` (137,465 bytes, 13 files, unified diff, `git apply` format).
 - **Baseline:** main `28df5c3`; the bytes apply with `git apply` at exactly that revision.
 - **Scope:** exactly the 13 files of `authorized_scope`; nothing else changes.
 
 **Do not search the repository for this artifact.** It is not in the worktree and is not on `main`. Read the exact
 reviewed diff from the named context entry, verify its digest, and apply those bytes: write the entry's `text` to a file
-outside the repository with no byte added or dropped, check that its SHA-256 is `c8d61aa6a283b514f2ef2675843c2c994cc3b564cea2ef178d2ffb8ec571355d`, run `git apply` at the
+outside the repository with no byte added or dropped, check that its SHA-256 is `d693531bc63627ff47063a4c031f9e186e5aeac3acfbdf52e13153f74c684b04`, run `git apply` at the
 starting revision, and commit the result. Do not edit, reformat or extend the diff.
 
 **PRODUCER: do not run the whole test suite.** Run only the test files named in section 3; the factory's
@@ -179,9 +179,12 @@ What each file carries:
    `tests/composition/test_work_registry.py`; the existing `tests/execution_coordination/test_factory_coordinator.py`,
    `tests/invocation_runtime/test_real_worker_outcome.py` and `tests/invocation_runtime/test_regression_gate.py` pass
    unchanged.
-3. **Mutations**: the block below. The VERIFIER applies each with a script that reads this JSON (exact strings, each
-   `old` exactly once, all edits of one mutation together), runs its named tests (they must fail), restores the file
-   byte-exact and runs them again (they must pass). Never type an edit by hand.
+3. **Mutations**: the block below. The VERIFIER applies each with a script that reads this JSON, never by typing an
+   edit by hand. The block is the lines between the line that is exactly ```` ```json alienintent-mutations ```` and the
+   next line that is exactly ```` ``` ````. For each mutation: each `old` must occur exactly once in `path`; apply all
+   its edits together; run `python3 -m pytest -q -p no:cacheprovider <node id> ...` with every named node id passed as
+   its own argument (an argv list, never a shell string: ids hold spaces, brackets, colons and backslashes); every
+   named test must fail; restore the file byte-exact; run them again: every one must pass.
 
 ```json alienintent-mutations
 [
@@ -386,6 +389,7 @@ The whole suite at the candidate is proven by the factory's REGRESSION-GATE; the
 - A parametrize id containing `::`, a dotted test folder, or a regression that only shows in suite order is not
   reproduced when rerun alone: it ends in the typed hold, never a rework.
 - This item's own VERIFIER runs on the old code, so it applies the mutations itself (by script, per check 3).
+- A node id's path and test name hold no whitespace; only a parametrize id in brackets may (never a line break).
 
 ## 4. Evidence and review record
 
