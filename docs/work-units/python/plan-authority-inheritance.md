@@ -54,7 +54,7 @@
   "tools/fitness/coupling_register.json"
  ],
  "excluded_scope": [
-  "release.py, release_admission.py (both), regression_gate.py, work_authorization.py and github_work_management.py",
+  "src/alienintent/execution_coordination/domain/release.py", "src/alienintent/execution_coordination/application/release_admission.py", "src/alienintent/execution_coordination/adapters/release_admission.py", "src/alienintent/composition/release_admission.py", "src/alienintent/invocation_runtime/application/regression_gate.py", "src/alienintent/context_assembly/application/work_authorization.py", "src/alienintent/execution_coordination/adapters/github_work_management.py",
   "the worker effect ledger and the card projection outbox",
   "BASE_MOVED revalidation",
   "the runner (BOUNDED-ROUTINE-LAUNCH) and Work Preparation"
@@ -2322,7 +2322,8 @@ index 68f93b2..db3bc74 100644
    re-land re-check), `tests/composition/test_work_registry.py` (plan-derived item assess -> release -> PRODUCER with no
    `work authorize`; an explicit item without a release never dispatched; a new approval stops an item released under
    the old one), `tests/composition/test_worker_launch.py::test_an_item_released_under_one_plan_revision_does_not_land_after_another_is_approved`.
-4. **Mutations, run exactly by the VERIFIER** (each must fail its named tests and pass when reverted):
+4. **Mutations, run exactly by the VERIFIER** (each must fail its named tests and pass when reverted). Every replacement
+   listed for one mutation is applied together, as that one mutation; quote test node ids in the shell (some contain spaces):
 - **M1 raw startswith, no normalization (outside_authority)** (`src/alienintent/execution_coordination/domain/plan_authority.py`): `entries = [(entry, normalized(entry)) for entry in contract.authorized_scope]` -> `entries = [(entry, entry) for entry in contract.authorized_scope]`; `allowed = [normalized(path) for path in obligation.allowed_paths]` -> `allowed = list(obligation.allowed_paths)`; `for entry, path in entries if path is None or not any(under(path, a) for a in allowed)]` -> `for entry, path in entries if path is None or not any(path.startswith(a) for a in allowed)]`; `protected = [normalized(path, fold=True) for path in scope.protected_paths]` -> `protected = list(scope.protected_paths)`; `and any(under(path.casefold(), p) or under(p, path.casefold()) for p in protected)]` -> `and any(path.startswith(p) for p in protected)]` -> must fail: `tests/execution_coordination/domain/test_plan_authority.py::test_each_single_change_is_exactly_one_owner_decision[change15-crosses a protected path: docs/decisions]`, `tests/execution_coordination/domain/test_plan_authority.py::test_each_single_change_is_exactly_one_owner_decision[change16-crosses a protected path: src/alienintent]`, `tests/execution_coordination/domain/test_plan_authority.py::test_each_single_change_is_exactly_one_owner_decision[change17-crosses a protected path: src/alienintent/execution_coordination/domain/Release.py]`, `tests/execution_coordination/domain/test_plan_authority.py::test_each_single_change_is_exactly_one_owner_decision[change20-a/../docs/decisions/x is malformed]`
 - **M2 automatic-on passes with no plan authority** (`src/alienintent/execution_coordination/domain/satisfiability.py`): `reasons.append("release_policy: automatic-on requires an approved plan authority")` -> `pass` -> must fail: `tests/execution_coordination/domain/test_satisfiability.py::test_automatic_on_passes_only_through_an_approved_plan_authority`
 - **M3 work release skips set_evidence(approval)** (`src/alienintent/context_assembly/application/inherited_release.py`): `self.identities.set_evidence(item.id, "approval", reference)` -> `(deleted)` -> must fail: `tests/context_assembly/test_inherited_release.py::test_a_plan_derived_item_is_released_its_card_reads_back_ready_p0_and_its_producer_context_assembles`
@@ -2352,12 +2353,14 @@ The whole suite at the candidate is proven by the factory's REGRESSION-GATE; the
 - Without a worker user, the PRODUCER diff is read in the worker's workspace (CLOSURE's fresh clone is the backstop).
 - Items stopped by a new approval in `start()` get no per-item signal (they are not eligible; `launch()` holds them typed).
 - An approved plan with no protected paths cannot run automatic work (fails closed).
+- Only the registry profile wires the `protected_paths` hook into the PRODUCER; the offline, sandbox and capstone
+  profiles run no containment, which is safe because satisfiability refuses `automatic-on` without a plan authority.
 - The NO-CHANGE tree check still reads the starting tree through the worker (pre-existing).
 
 ## 4. Evidence and review record
 
 The prototype is exactly section 2's diff on `17910f7`:
-`manual/path-to-done/plan-authority/prototype-on-17910f7.diff`, sha256 `35686536…a2b95`. 548 targeted tests
+`~/.local/state/alienintent/manual/path-to-done/plan-authority/prototype-on-17910f7.diff`, sha256 `35686536f9e8dadf239fff0551d6dfe4c512f09009557a16fe3fc2c0d14a2b95`. 548 targeted tests
 pass across 18 files; the fitness check passes; the 17 mutations behave as stated (`mutations.log`, run independently by
 the main session). Reviews: adversarial review FAIL (B1 CLOSURE checked the release-baseline diff, B2 worker-reported
 start, B3 old approvals kept running) -> fixed test-first; follow-up FAIL (BL-1: VERIFY/ACCEPT items under an old
