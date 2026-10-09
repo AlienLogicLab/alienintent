@@ -1,7 +1,7 @@
 # Work unit: the board card follows canonical work state; launch never needs the card READY
 
 **Label:** `CARD-FOLLOWS-STAGE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 1, 2026-10-09, for independent review. Not registered, not assessed, not released.
+**Status:** Draft revision 2, 2026-10-09, for follow-up review. Not registered, not assessed, not released.
 **Position on the path (Founder 2026-10-09, decisions section 10):** VERIFIER-RETRY (done, `2b47f21`) ->
 CARD-FOLLOWS-STAGE -> NO-CHANGE -> PLAN-AUTHORITY-INHERITANCE -> BOUNDED-ROUTINE-LAUNCH -> Work Preparation / READY
 refill -> three-item autonomy proof.
@@ -15,7 +15,7 @@ refill -> three-item autonomy proof.
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-1",
+ "version": "revision-2",
  "intent": "The GitHub Project card of each registry work item shows its canonical stage: IMPLEMENT when its PRODUCER starts, then VERIFY, IMPLEMENT on rework, ACCEPT and DONE, each written to the linked card and read back. A started work item launches from its registry record at any stage, so execution never depends on the card staying READY. A card write that fails or does not read back is a durable diagnostic, never a launch failure. The board reflects canonical Work state; it does not determine canonical Work state.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -53,12 +53,12 @@ refill -> three-item autonomy proof.
  },
  "retry_policy": "verifier rejection returns to the PRODUCER with the findings; at most 3 cycles",
  "completion_criteria": [
-  "acceptance checks 1-4 pass"
+  "acceptance checks 1-5 pass"
  ],
  "verification_obligations": [
   "independent VERIFIER on the exact candidate",
   "the candidate's diff from the starting revision equals section 2's diff",
-  "the VERIFIER runs mutations C1-C5 of check 4 exactly and records that each makes its named test fail and that reverting makes it pass"
+  "the VERIFIER runs mutations C1-C7 of check 5 exactly and records that each makes its named test fail and that reverting makes it pass"
  ],
  "required_evidence": [
   "independent-verifier-accepted"
@@ -116,7 +116,9 @@ The candidate's diff from `2b47f21` is exactly this (`git apply` applies it at t
 - `factory_coordinator.py`: `launch` resolves a started item through `_resolve` at every stage in `ROLE_BY_STAGE`
   (the ACCEPT checks are unchanged); `_resolve` tries the record's `correlation`, then `producer_correlation`; new
   `_with_started` adds every recorded, non-final started item the snapshot does not show, and `start` uses it; a
-  PRODUCER dispatch projects IMPLEMENT just before the worker starts.
+  PRODUCER dispatch projects IMPLEMENT before its effect is committed or claimed, and a stage recorded by `_recover`
+  is projected too, both through `_project_quietly`, which turns any failure into a `projection_diagnostics` entry
+  (never raised into a launch). The projection after a launch's own result keeps today's behaviour.
 - `work_registry.py`: `CARD_STAGES` (IMPLEMENT, VERIFY, ACCEPT, DONE -> Status) and `PROJECTION_DIAGNOSTICS`; the
   registry board view gets `CARD_STAGES` and `projection_write=self._project_card`; `_project_card` writes the Status
   to the work item's linked card through the existing `write_status` (which reads it back) and, when the answer is not
@@ -145,7 +147,7 @@ index 5bc6b5a..8d1d950 100644
                "closure performed and read back candidate-published by re-retrieving the accepted revision into a fresh clone", {"receipts": record.get("receipts"), "closure_clone_head": closure_head}),
          check("L8", "exactly one effect per invocation, each confirmed", [e[0] for e in ledger] == sorted(launches) and all(status == "confirmed" and receipt == f"outcome:{kind}" for (identity, status, receipt), (_, _, kind) in zip(ledger, sorted(observed, key=lambda o: o[1]))),
 diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
-index 6daec18..e9ef905 100644
+index 6daec18..38ebc0b 100644
 --- a/src/alienintent/composition/work_registry.py
 +++ b/src/alienintent/composition/work_registry.py
 @@ -172,6 +172,9 @@ OWNERS = {NO_LINK: WORK_PREPARATION, NOT_ELIGIBLE: WORK_PREPARATION, ASSESSMENT_
@@ -170,7 +172,7 @@ index 6daec18..e9ef905 100644
          Attention items live in the `readiness` store and evidence folder, under the assessment profile."""
          consumer = self.assessment.consumer
          project, profile = configuration.project, consumer.profile
-@@ -814,8 +818,31 @@ class WorkRegistry:
+@@ -814,8 +818,32 @@ class WorkRegistry:
          self._contracts: dict[str, BiuContract] = {}
          self._board_read = False  # Whether the last snapshot read the whole board; only then can a defect clear.
          return GitHubProjectsWorkManagement("registry", configuration.github.repository,
@@ -183,8 +185,9 @@ index 6daec18..e9ef905 100644
 +    def _project_card(self, identity: str, field: str, state: str, revision: int) -> int:
 +        """The work item's card shows its canonical stage: Status `state` written to the card linked to `identity`
 +        and read back (the revision when it reads back `state`, else -1). The board reflects canonical work state; it
-+        does not determine it. Any failure is appended to `launch/projection-diagnostics.jsonl` and answered -1, never
-+        raised into a launch."""
++        does not determine it. Any failure is appended to `launch/projection-diagnostics.jsonl` and answered -1; the
++        adapter turns anything raised here into an unconfirmed receipt, so nothing reaches a launch. One line per failed
++        stage change; the file is not rotated."""
 +        card, error = None, None
 +        try:
 +            record = self.records.show(identity)
@@ -205,7 +208,7 @@ index 6daec18..e9ef905 100644
      def _ready_snapshot(self) -> tuple[dict[str, object], ...]:
          """The READY column of the whole board in the sandbox reader's order (READY-entry time, then card id), one
 diff --git a/src/alienintent/execution_coordination/application/factory_coordinator.py b/src/alienintent/execution_coordination/application/factory_coordinator.py
-index 86b822c..d149504 100644
+index 86b822c..d3ac9b8 100644
 --- a/src/alienintent/execution_coordination/application/factory_coordinator.py
 +++ b/src/alienintent/execution_coordination/application/factory_coordinator.py
 @@ -117,7 +117,7 @@ class FactoryCoordinator:
@@ -260,16 +263,24 @@ index 86b822c..d149504 100644
          if item is None or not self._eligible(item):
              return NOT_ELIGIBLE
          producing = self._role(identity) == PRODUCER
-@@ -423,6 +426,8 @@ class FactoryCoordinator:
+@@ -421,6 +424,8 @@ class FactoryCoordinator:
+             # The invocation's own candidate is retained: a later rework clears
+             # the state's candidate, and recovery must re-ask the same question.
              prepared = self._encode(current) | self._carried(raw) | {"role": role, "invocation_candidate": self._encode_candidate(invocation.candidate)}
++            if role == PRODUCER:  # before any effect is claimed: a slow or failing board never strands a launch
++                self._project_quietly(item.identity, LifecycleStage.IMPLEMENT, current.version)
              self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, prepared, correlation, {"correlation": correlation, "work": item.identity, "role": role})
              self._store.claim_effect(self._profile, correlation)
-+            if role == PRODUCER:
-+                self._work.project_execution_state(item.identity, LifecycleStage.IMPLEMENT, current.version)
              outcome = self._worker.start(invocation, item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
-             if not self._correlated(invocation, outcome):
-                 return StopReason.BLOCKED if self._park_unknown_effect(item, reservation) else StopReason.CAPACITY_UNAVAILABLE
-@@ -725,12 +730,32 @@ class FactoryCoordinator:
+@@ -713,6 +718,7 @@ class FactoryCoordinator:
+             advanced = self._advance(item, current, raw, invocation, outcome)
+             if not self._record_result(item, advanced.state, reservation.owner, advanced.outcome, advanced.fields | {"role": role, "outcome_kind": outcome.kind, "invocation_candidate": given}):
+                 return False
++            self._project_quietly(identity, advanced.state.stage, advanced.state.version)
+             if advanced.state.stage is LifecycleStage.DONE:
+                 self._project(identity)
+             if advanced.outcome == "authority-block":
+@@ -725,12 +731,39 @@ class FactoryCoordinator:
          return True
  
      def _resolve(self, identity: str, items: Iterable[ReadyWorkItem], raw: Mapping[str, object]) -> ReadyWorkItem | None:
@@ -304,6 +315,13 @@ index 86b822c..d149504 100644
 +            if item is not None:
 +                started.append(item)
 +        return (*items, *started)
++
++    def _project_quietly(self, identity: str, stage: LifecycleStage, revision: int) -> None:
++        """The stage projected to work management; any failure is a diagnostic, never raised into a launch."""
++        try:
++            self._work.project_execution_state(identity, stage, revision)
++        except Exception as error:  # noqa: BLE001 - the board reflects canonical state; it never stops a launch
++            self.projection_diagnostics[identity] = f"{identity}: {type(error).__name__}: {error}"
  
      def _project(self, identity: str) -> None:
          """The DONE projection hook; a refusal or error is a diagnostic, never raised into the coordinator."""
@@ -430,10 +448,10 @@ index bb5df85..2d2b0e0 100644
 +    closing.close(item.id)
 +    assert len(closing.fx.runs("CLOSURE")) == sessions + 1
 diff --git a/tests/execution_coordination/test_factory_coordinator.py b/tests/execution_coordination/test_factory_coordinator.py
-index 1b5b895..ce13942 100644
+index 1b5b895..fb44881 100644
 --- a/tests/execution_coordination/test_factory_coordinator.py
 +++ b/tests/execution_coordination/test_factory_coordinator.py
-@@ -152,8 +152,8 @@ def test_projection_type_error_does_not_retry_without_the_execution_revision(tmp
+@@ -152,8 +152,28 @@ def test_projection_type_error_does_not_retry_without_the_execution_revision(tmp
  
      with pytest.raises(TypeError, match="provider implementation fault"):
          coordinator.start()
@@ -441,6 +459,26 @@ index 1b5b895..ce13942 100644
 -    assert work.revisions == [1, 3, 4]
 +    # IMPLEMENT at dispatch (0), VERIFY (1) and ACCEPT (3) project first; the fault at DONE (4) is not retried.
 +    assert work.revisions == [0, 1, 3, 4]
++
++
++def test_a_failing_dispatch_projection_never_stops_the_producer(tmp_path: Path) -> None:
++    """CARD-FOLLOWS-STAGE: the IMPLEMENT projection runs before any effect is claimed and its failure is a diagnostic."""
++    coordinator_module, custody, ports, _ = _api()
++    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
++
++    class FailingDispatchWork(MemoryWorkManagement):
++        def project_execution_state(self, identity: str, state: str, revision: int = 0):
++            if state == "IMPLEMENT":
++                raise RuntimeError("board unreachable")
++            return ports.ProjectionReceipt(identity, revision, True, "confirmed")
++
++    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
++    coordinator = coordinator_module.FactoryCoordinator(
++        store, FailingDispatchWork([_item("dispatched", 0, 1)]),
++        ScriptedWorker(artifacts, {"dispatched": ["success"]}), artifacts, "offline")
++    coordinator.start()
++    assert coordinator.state("dispatched").stage is LifecycleStage.DONE
++    assert "RuntimeError: board unreachable" in coordinator.projection_diagnostics["dispatched"]
  
  
  def test_unavailable_projection_does_not_change_internal_execution_truth(tmp_path: Path) -> None:
@@ -499,16 +537,24 @@ index 08b41c3..8bb393f 100644
 3. **After a decision, a started item launches without a READY card**
    (`test_after_a_decision_a_started_item_launches_without_a_ready_card`): an authority hold at ACCEPT, `work decide`
    authorize (no `correlation` left), and the next launch runs CLOSURE.
-4. **Mutations, run exactly by the VERIFIER** (each must fail its named test in
+4. **A failing IMPLEMENT projection never stops the PRODUCER**
+   (`tests/execution_coordination/test_factory_coordinator.py::test_a_failing_dispatch_projection_never_stops_the_producer`):
+   a work management whose IMPLEMENT projection raises; the item still reaches DONE and the failure is in
+   `projection_diagnostics`.
+5. **Mutations, run exactly by the VERIFIER** (each must fail its named test in
    `tests/composition/test_worker_launch.py` and pass when reverted):
    - **C1:** `if projected is not None and projected.stage in ROLE_BY_STAGE:` (the `started` resolution in `launch`)
      made `... is LifecycleStage.ACCEPT:` -> check 1's test.
    - **C2:** `for correlation in (raw.get("correlation"), raw.get("producer_correlation")):` made
      `for correlation in (raw.get("correlation"),):` -> check 3's test.
-   - **C3:** the two lines `if role == PRODUCER:` / `self._work.project_execution_state(item.identity,
-     LifecycleStage.IMPLEMENT, current.version)` deleted -> check 1's test.
+   - **C3:** the two lines `if role == PRODUCER:` / `self._project_quietly(item.identity, LifecycleStage.IMPLEMENT,
+     current.version)` deleted -> check 1's test.
    - **C4:** in `_project_card`, `if answered != revision:` made `if False:` -> check 2's test.
    - **C5:** `CARD_STAGES,` in `_ready_view` made `{},` -> check 1's test.
+   - **C6:** in `start`, `items = self._with_started(self._work.import_ready_snapshot())` made
+     `items = self._work.import_ready_snapshot()` -> `test_a_failing_landing_runs_closure_once_per_start`.
+   - **C7:** `_project_quietly`'s `try:`/`except` removed (the bare call kept) ->
+     `test_factory_coordinator.py::test_a_failing_dispatch_projection_never_stops_the_producer`.
 
 The whole suite at the candidate has no failed or error test case (proven by the factory's regression gate; Founder:
 no extra whole-suite runs), and `python3 tools/fitness/check_architecture.py --root src/alienintent --check all` passes.
@@ -519,15 +565,22 @@ no extra whole-suite runs), and `python3 tools/fitness/check_architecture.py --r
 - `guard_account`, `_block_dependents` and `record_decision` still read only the READY snapshot: `explain` reports a
   started item as not in the READY snapshot, and a dependent no longer on the READY board is not marked blocked.
 - A card write is not fenced against GitHub beyond the adapter's in-memory revision fence; a failed write is recorded
-  and the next stage change writes again.
+  and the next stage change writes again. `projection-diagnostics.jsonl` is not rotated (one line per failed change).
+- `_with_started` reads the invocation journal once per started item on every `start()` (through `started_item`).
 
 ## 4. Evidence and review record
 
 A prototype that is exactly section 2's diff, on `2b47f21` (not the candidate):
-`manual/path-to-done/card-follows-stage/prototype-on-2b47f21.diff`, sha256 `7cad0a00…022e3`. With it the
+`manual/path-to-done/card-follows-stage/prototype-on-2b47f21.diff`, sha256 `e669be5a…445df`. With it the
 touched test files (`test_work_registry.py`, `test_factory_coordinator.py`, `test_worker_launch.py`,
 `test_role_orchestration.py`, `test_lifecycle_capstone.py`, `test_role_binding.py`) pass, the architecture fitness
-check passes, and C1-C5 each fail their named test and pass when reverted
+check passes, and C1-C7 each fail their named test and pass when reverted
 (`manual/path-to-done/card-follows-stage/mutations.log`). Code map: `.../card-follows-stage/code-map-bc9a9d8.md`.
+
+**Revision 2 (2026-10-09).** REVIEWER of `04be1fe` (PASS with fixes): the IMPLEMENT projection moved before the
+effect is committed and claimed and guarded, so a slow, failing or raising board never strands a launch (1); a stage
+recorded by recovery is projected (2); C6 names `_with_started`'s test, C7 and check 4 prove the guard (3); the
+journal cost and the unrotated diagnostics file are stated limits (4); `_project_card`'s docstring says what contains a
+raise (5).
 
 **Revision 1 (2026-10-09).** First draft, from the Founder's decisions of 2026-10-09 (sections 9-10).
