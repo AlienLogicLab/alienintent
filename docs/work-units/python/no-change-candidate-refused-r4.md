@@ -1,7 +1,7 @@
 # Work unit: a PRODUCER that changes nothing does not produce a candidate
 
-**Label:** `NO-CHANGE-CANDIDATE-REFUSED-R4` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** R4 revision 1, 2026-10-09, for independent review. Not registered, not assessed, not released.
+**Label:** `NO-CHANGE-CANDIDATE-REFUSED-R4` (a document label; permanent id `70fb98d1-c94b-40e4-88f7-d44a8cbc612c`).
+**Status:** R4 revision 1 (work item `70fb98d1-c94b-40e4-88f7-d44a8cbc612c`, at CAPTURE), 2026-10-09. Reviewed (PASS). Not approved, not assessed, not released.
 **Re-issue:** the same approved requirement as NO-CHANGE-CANDIDATE-REFUSED revision 5 (`77d48c83`), R2 (`c15a52f6`) and
 R3 (`fe2db2d3`). R3 is terminal under the old implementation with no engineering verdict (its VERIFIER lost the network
 after the gate passed: 2913 tests, 0 failures). Critical path step 2 (Founder 2026-10-09, decisions section 16): no more
@@ -13,7 +13,7 @@ work on this requirement once it lands.
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "70fb98d1-c94b-40e4-88f7-d44a8cbc612c",
  "version": "r4-revision-1",
  "intent": "When a PRODUCER's process succeeds but its claimed revision has the same git tree as the starting revision (the same commit, an empty commit, or a commit that is later reverted), the factory publishes no candidate. It records a typed no-change PRODUCER result with a finding, and the work item stays in IMPLEMENT as a rework within its attempt budget. No VERIFIER attempt is used. A descendant commit with a different tree is admitted as today.",
  "satisfied_requirement_ids": [
