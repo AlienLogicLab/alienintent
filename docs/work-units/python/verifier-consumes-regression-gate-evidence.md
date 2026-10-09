@@ -1,7 +1,7 @@
 # Work unit: the VERIFIER consumes the regression gate's whole-suite result and never reruns the suite
 
-**Label:** `VERIFIER-CONSUMES-REGRESSION-GATE-EVIDENCE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Revision 2, 2026-10-09. Reviewed (PASS). Not registered, not assessed, not released.
+**Label:** `VERIFIER-CONSUMES-REGRESSION-GATE-EVIDENCE` (a document label; permanent id `5c890f5d-1eb4-4c66-bad3-c5c54fd74951`).
+**Status:** Revision 2 (work item `5c890f5d-1eb4-4c66-bad3-c5c54fd74951`, at CAPTURE), 2026-10-09. Reviewed (PASS). Not approved, not assessed, not released. Not registered, not assessed, not released.
 **Position on the path (Founder 2026-10-09, decisions sections 13 and 15):** VERIFIER-CONSUMES-REGRESSION-GATE-EVIDENCE
 -> NO-CHANGE -> PLAN-AUTHORITY-INHERITANCE -> BOUNDED-ROUTINE-LAUNCH -> terminal board statuses + schema hardening ->
 Work Preparation / READY refill -> three-item autonomy proof.
@@ -14,7 +14,7 @@ Work Preparation / READY refill -> three-item autonomy proof.
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "5c890f5d-1eb4-4c66-bad3-c5c54fd74951",
  "version": "revision-2",
  "intent": "The REGRESSION-GATE is the sole owner of whole-suite execution. When it passes for a VERIFIER invocation, its result (baseline, candidate, no regression, receipt) is added to the VERIFIER session's instructions before the session starts, with the rule not to run the whole suite and to run only the package's acceptance tests and mutations and narrowly targeted tests a finding needs. When the gate produces no result (`feature-regressions-missing`), no session starts and the item takes the typed, bounded VERIFIER infrastructure retry; a missing result is never compensated by a whole-suite run.",
  "satisfied_requirement_ids": [
