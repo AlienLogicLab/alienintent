@@ -27,6 +27,14 @@ from tests.execution_coordination.k2_fixture import CRASH_EXIT, ROOT, WORK, comp
 PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
 
 
+def _retried(fixture, kind: str) -> None:
+    """A VERIFIER that left no valid verdict made no judgment: still VERIFY on the same candidate, no decision request."""
+    state = fixture.state()
+    assert (state.stage, state.outcome, state.record["verifier_failure"]) == (LifecycleStage.VERIFY, "verifier-retry", kind)
+    _, inbox = fixture.store.read_state(fixture.profile.name, "decision-inbox")
+    assert WORK not in (inbox or {}).get("open", {})
+
+
 def _held(fixture, stage: LifecycleStage) -> None:
     state = fixture.state()
     assert state.stage is stage and state.outcome == "authority-block"
@@ -50,7 +58,7 @@ def test_producer_success_advances_only_to_verify(tmp_path: Path) -> None:
     assert state.candidate is not None and state.candidate.independent_read_back_proven
     assert fixture.projections() == ["VERIFY", "VERIFY"]
     assert [(role, kind) for role, _, kind in fixture.invocations()] == [(PRODUCER, "success"), (VERIFIER, "verdict-missing")]
-    _held(fixture, LifecycleStage.VERIFY)
+    _retried(fixture, "verdict-missing")
 
 
 def test_the_full_lifecycle_is_three_distinct_role_invocations_with_exact_custody(tmp_path: Path) -> None:
@@ -221,10 +229,13 @@ def test_missing_duplicate_stale_or_miscorrelated_role_evidence_holds(tmp_path: 
 
     summary = fixture.coordinator.start()
 
-    assert summary.stop_reason.value == "dependencies-or-authority-blocked"
     state = fixture.state()
     assert state.stage is stage and state.completed_closure_actions == frozenset()
     assert all(run["result"] == "success" for run in fixture.process_runs())
+    if fault in {"no-verdict", "stale-verdict"}:  # no valid verdict: an infrastructure retry, not a hold
+        _retried(fixture, "verdict-missing" if fault == "no-verdict" else "verdict-miscorrelated")
+        return
+    assert summary.stop_reason.value == "dependencies-or-authority-blocked"
     _held(fixture, stage)
 
 

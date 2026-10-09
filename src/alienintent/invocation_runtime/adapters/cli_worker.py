@@ -13,6 +13,7 @@ from typing import Callable, Final, Mapping, Sequence
 import uuid
 
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+from alienintent.invocation_runtime.domain.diagnostics import process_diagnostics
 from alienintent.invocation_runtime.domain.runtime import BudgetRecord, FEATURE_REGRESSION_RECEIPT_PATH, INVOCATION_MARKER, INVOCATION_OWNER_MARKER, InvocationRole, ProcessResult, ProviderCapabilities, owner_token, require_eligible
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
 from alienintent.invocation_runtime.ports.worker_process import WorkerProcess
@@ -27,6 +28,11 @@ WorkerCommand = Callable[[str, InvocationRole, Path], tuple[Sequence[str], str]]
 WORKER_PATH = "/usr/bin:/bin"
 _FULL_SHA = re.compile(r"[0-9a-f]{40}")
 _VARIABLE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+
+
+def _decoded(data: bytes | str | None) -> str:
+    """A partial stream as text: `TimeoutExpired` carries it as bytes, or None when nothing was read."""
+    return data.decode(errors="replace") if isinstance(data, bytes) else data or ""
 
 
 def worker_prefix(user: str, environment: Mapping[str, str]) -> list[str]:
@@ -84,6 +90,8 @@ class CliWorkerProvider(WorkerProcess):
         self.capabilities = ProviderCapabilities(provider, dimensions)
         self._executable, self._arguments, self._active, self._completed = executable, arguments, {}, set()
         self.outputs: dict[str, tuple[str, str]] = {}
+        # Per invocation, the bounded diagnostics of its last process (the worker journals them with its outcome).
+        self.diagnostics: dict[str, dict[str, object]] = {}
         self._environment = None if environment is None else dict(environment)
         self._ownership = ProcOwnership() if ownership is None else ownership
         if worker_user is not None and (environment is None or results is None or regression_base is None):
@@ -206,8 +214,11 @@ class CliWorkerProvider(WorkerProcess):
                 else self._worker_feature_regressions(invocation_id, workspace, wall_clock_seconds)
             if regression.kind != "success":
                 self._completed.add(invocation_id)
+                self.diagnostics[invocation_id] = process_diagnostics(self.capabilities.provider, ["feature-regressions"],
+                                                                      regression.kind, regression.exit_status, "", "")
                 return regression
         argv, text = self._command(invocation_id, role, workspace)
+        command = list(argv)  # the provider command alone, before any worker-user prefix and its environment
         environment = self._child_environment(invocation_id, role)
         if self._worker_user is not None:
             # The sudo rule replaces the environment: `env -i` and the allowlisted variables only.
@@ -216,23 +227,32 @@ class CliWorkerProvider(WorkerProcess):
         stdin = None if text is None else subprocess.PIPE
         process = subprocess.Popen(argv, cwd=workspace, stdin=stdin, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=environment, start_new_session=True)
         self._active[invocation_id] = process
+        stdout = stderr = ""
+        result: ProcessResult | None = None
         try:
             try:
                 stdout, stderr = process.communicate(input=text, timeout=wall_clock_seconds)
                 # Diagnostics only (the end of each stream), for a person reading why a worker failed.
                 self.outputs[invocation_id] = (stdout[-OUTPUT_TAIL:], stderr[-OUTPUT_TAIL:])
-            except subprocess.TimeoutExpired:
-                return ProcessResult("timeout", self._stop(invocation_id, process), not self._owned(invocation_id, process), BudgetRecord.unknown())
+            except subprocess.TimeoutExpired as expired:
+                stdout, stderr = _decoded(expired.stdout), _decoded(expired.stderr)  # what it wrote before the deadline
+                result = ProcessResult("timeout", self._stop(invocation_id, process), not self._owned(invocation_id, process), BudgetRecord.unknown())
+                return result
             if not self._await_owned(invocation_id, process, deadline):
                 self._stop(invocation_id, process)
-                return ProcessResult("timeout", process.returncode, not self._owned(invocation_id, process), BudgetRecord.unknown())
-            return ProcessResult("success" if process.returncode == 0 else "failure", process.returncode, True, BudgetRecord.unknown())
+                result = ProcessResult("timeout", process.returncode, not self._owned(invocation_id, process), BudgetRecord.unknown())
+                return result
+            result = ProcessResult("success" if process.returncode == 0 else "failure", process.returncode, True, BudgetRecord.unknown())
+            return result
         except BaseException:
             # An unexpected failure must not leave owned work running unobserved.
             self._stop(invocation_id, process)
             raise
         finally:
             self._active.pop(invocation_id, None)
+            if result is not None:
+                self.diagnostics[invocation_id] = process_diagnostics(self.capabilities.provider, command, result.kind,
+                                                                      result.exit_status, stdout, stderr)
             # Finished only when nothing it owns is still observed; otherwise
             # a later cancel answers unresolved rather than already-finished.
             if not self._owned(invocation_id, process):

@@ -14,6 +14,7 @@ from alienintent.execution_coordination.domain.custody import CandidateKind, Can
 from alienintent.execution_coordination.ports.worker_provider import (
     MISSING_TERMINAL_RESULT, WorkerInvocation, WorkerOutcome, WorkerProvider)
 from alienintent.invocation_runtime.application.regression_gate import RegressionGate, SuiteUnrunnable
+from alienintent.invocation_runtime.domain.diagnostics import cause
 from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
 from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
 from alienintent.invocation_runtime.ports.process_ownership import ProcessOwnership
@@ -265,6 +266,18 @@ class RealWorkerProvider(WorkerProvider):
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
+        try:
+            return self._journaled(invocation, context, grants, budget)
+        finally:
+            self._diagnostics(invocation.correlation_id)  # never left behind, whatever happened
+
+    def _diagnostics(self, correlation: str) -> dict[str, object] | None:
+        """The bounded diagnostics of the invocation's last process, taken from the process adapter (None without)."""
+        kept = getattr(self._process, "diagnostics", None)
+        return kept.pop(correlation, None) if isinstance(kept, dict) else None
+
+    def _journaled(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str],
+                   budget: BudgetPolicy) -> WorkerOutcome:
         if self._journal is None:
             outcome = self._start(invocation, context, grants, budget)
             # Every returned outcome, including an early refusal, must read back.
@@ -281,9 +294,13 @@ class RealWorkerProvider(WorkerProvider):
         self._journal.append({"event": "invocation-started"} | attribution | ({} if owner is None else {"owner": dict(owner)}))
         outcome = self._start(invocation, context, grants, budget)
         retry = self.retry_evidence.get(invocation.correlation_id)
+        # The last process's bounded diagnostics and the cause they show, kept with the outcome so they outlive the
+        # launcher (a process adapter without diagnostics records none; of several attempts, the last).
+        process = self._diagnostics(invocation.correlation_id)
         self._journal.append({"event": "invocation-outcome"} | attribution | {
             "attempt": None if retry is None else retry.attempts, "kind": outcome.kind, "candidate": encode_candidate(outcome.candidate),
             "findings": list(outcome.findings), "receipts": list(outcome.receipts),
+            "process": process, "cause": cause(outcome.kind, process),
         })
         return outcome
 

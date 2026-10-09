@@ -20,16 +20,19 @@ from alienintent.execution_coordination.domain.verdict import EvidenceDefinition
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
 from alienintent.execution_coordination.ports.release_admission import ExecutionAllocation
 from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
-from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, PRODUCER, VERIFIER, WorkerInvocation, WorkerOutcome, WorkerProvider
+from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, PRODUCER, VERIFIER, VERIFIER_INFRASTRUCTURE, WorkerInvocation, WorkerOutcome, WorkerProvider
 from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
 
 # K2: each nonterminal stage is advanced by exactly one canonical role.
 ROLE_BY_STAGE = {LifecycleStage.IMPLEMENT: PRODUCER, LifecycleStage.VERIFY: VERIFIER, LifecycleStage.ACCEPT: CLOSURE}
 # Execution-record fields that survive every later commit of the same aggregate.
 CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict",
-           "closure_retries")
+           "closure_retries", "verifier_retries")
 # A malformed CLOSURE request: the item stays at ACCEPT and the next launch runs a fresh CLOSURE session.
 CLOSURE_RETRY = "closure-retry"
+# A VERIFIER that ended without a valid verdict: the item stays at VERIFY on the same candidate and the next launch runs
+# a fresh VERIFIER, at most VERIFIER_RETRY_LIMIT times in a row; then a typed infrastructure hold.
+VERIFIER_RETRY, VERIFIER_RETRY_LIMIT = "verifier-retry", 2
 # One WIP slot per admitted work item, held until its recorded state is DONE or a final outcome: an outcome the
 # coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
 WIP_SCOPE = "wip"
@@ -119,13 +122,17 @@ class FactoryCoordinator:
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
         dispatched: list[str] = []
         skipped: dict[str, _WipSkip] = {}
-        closed_once: set[str] = set()  # CLOSURE runs at most once per item in one call
+        # CLOSURE runs at most once per item in one call, and a VERIFIER retry waits for the next call: an outage is not
+        # spent in one loop.
+        once: set[str] = set()
         while (item := self._next_item([ready for ready in items if ready.identity not in skipped
-                                        and ready.identity not in closed_once])) is not None:
+                                        and ready.identity not in once])) is not None:
             producing = self._role(item.identity) == PRODUCER
             if self._role(item.identity) == CLOSURE:
-                closed_once.add(item.identity)
+                once.add(item.identity)
             result = self._run(item)
+            if self._outcome(item.identity) == VERIFIER_RETRY:
+                once.add(item.identity)
             if isinstance(result, _WipSkip):
                 skipped[item.identity] = result
                 continue
@@ -499,10 +506,11 @@ class FactoryCoordinator:
             # The custody gate is control-plane enforcement: it always rechecks
             # candidate retrieval rather than trusting a producer-set assertion.
             verified = verify_in_fresh_process(outcome.candidate, self._artifacts.verifier_root)
-            return _Advance(transition(current, current.version, "verify", candidate=verified), "success", {"producer_correlation": invocation.correlation_id})
+            return _Advance(transition(current, current.version, "verify", candidate=verified), "success",
+                            {"producer_correlation": invocation.correlation_id, "verifier_retries": 0})
         if invocation.role == VERIFIER:
-            if outcome.kind in {"failure", "timeout"}:
-                return _Advance(current, outcome.kind, {})
+            if outcome.kind in VERIFIER_INFRASTRUCTURE:
+                return self._retry_verifier(current, prior, outcome.kind)
             producer = prior.get("producer_correlation")
             if (
                 outcome.kind not in {"accept", "reject"}
@@ -565,6 +573,19 @@ class FactoryCoordinator:
     @staticmethod
     def _same_candidate(reported: CandidateRef | None, custodied: CandidateRef | None) -> bool:
         return reported is not None and custodied is not None and (reported.kind, reported.identity, reported.content_digest) == (custodied.kind, custodied.identity, custodied.content_digest)
+
+    @staticmethod
+    def _retry_verifier(state: ExecutionState, prior: dict[str, object], kind: str) -> _Advance:
+        """A VERIFIER that ended without a valid verdict made no engineering judgment: the stage stays VERIFY on the same
+        custodied candidate, so the next launch runs a fresh VERIFIER. No rejection is counted and no PRODUCER cycle is
+        used. After VERIFIER_RETRY_LIMIT retries in a row, a typed infrastructure hold, never a verdict."""
+        retries = int(prior.get("verifier_retries", 0) or 0) + 1
+        fields: dict[str, object] = {"verifier_retries": retries, "verifier_failure": kind}
+        if retries > VERIFIER_RETRY_LIMIT:
+            return _Advance(state, "authority-block", fields | {"hold_reason": f"verifier-infrastructure-exhausted:{kind}"},
+                            f"The VERIFIER ended without a valid verdict {retries} times in a row (last: {kind}); "
+                            "no engineering judgment was made on the candidate.")
+        return _Advance(state, VERIFIER_RETRY, fields)
 
     @staticmethod
     def _retry_closure(item: ReadyWorkItem, state: ExecutionState, prior: dict[str, object], refusal: str,
