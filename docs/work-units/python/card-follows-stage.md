@@ -1,7 +1,7 @@
 # Work unit: the board card follows canonical work state through a durable projection outbox
 
 **Label:** `CARD-FOLLOWS-STAGE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 4, 2026-10-09, for follow-up review. Not registered, not assessed, not released.
+**Status:** Draft revision 5, 2026-10-09, for follow-up review. Not registered, not assessed, not released.
 **Position on the path (Founder 2026-10-09, decisions sections 10 and 12):** VERIFIER-RETRY (done, `2b47f21`) ->
 CARD-FOLLOWS-STAGE -> NO-CHANGE -> PLAN-AUTHORITY-INHERITANCE -> BOUNDED-ROUTINE-LAUNCH -> Work Preparation / READY
 refill -> three-item autonomy proof.
@@ -16,8 +16,8 @@ truth; projection is eventually consistent, revision-fenced and non-blocking.**
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-4",
- "intent": "Each registry work item's GitHub Project card shows its canonical stage through a durable projection outbox: every committed state of a work item's execution aggregate leaves a projection obligation in the same store transaction; a card projector, running beside each launch and on its own (`work project`), projects the item's CURRENT canonical stage to its linked card, reads it back and retires the obligation; a projection overtaken by a newer commit while in flight is owed again, so the card always converges to the current canonical stage. The coordinator never calls GitHub; projection is eventually consistent, revision-fenced and non-blocking. A started work item launches from its registry record at any stage, so execution never depends on the card staying READY. The board reflects canonical Work state; it does not determine canonical Work state.",
+ "version": "revision-5",
+ "intent": "Each registry work item's GitHub Project card shows its canonical stage through a durable projection outbox: every committed state of a work item's execution aggregate leaves a projection obligation in the same store transaction; a card projector, running beside each launch and on its own (`work project`), projects the item's CURRENT canonical stage to its linked card, reads it back and retires the obligation; an attempted projection overtaken by a newer commit while in flight is owed again, so the card converges to the current canonical stage. The coordinator never calls GitHub; projection is eventually consistent, revision-fenced and non-blocking. A started work item launches from its registry record at any stage, so execution never depends on the card staying READY. The board reflects canonical Work state; it does not determine canonical Work state.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
  ],
@@ -62,12 +62,12 @@ truth; projection is eventually consistent, revision-fenced and non-blocking.**
  },
  "retry_policy": "verifier rejection returns to the PRODUCER with the findings; at most 3 cycles",
  "completion_criteria": [
-  "acceptance checks 1-11 pass"
+  "acceptance checks 1-12 pass"
  ],
  "verification_obligations": [
   "independent VERIFIER on the exact candidate",
   "the candidate's diff from the starting revision equals section 2's diff",
-  "the VERIFIER runs mutations P1-P8 of check 11 exactly and records that each makes its named test fail and that reverting makes it pass"
+  "the VERIFIER runs mutations P1-P9 of check 12 exactly and records that each makes its named test fail and that reverting makes it pass"
  ],
  "required_evidence": [
   "independent-verifier-accepted"
@@ -128,13 +128,13 @@ Invariants the diff implements:
    deletes a row only if it is still for the given revision, so a newer commit's obligation stays outstanding.
 3. **Current canonical stage.** An obligation carries no status. `WorkRegistry.project_cards` reads the item's
    current state and projects its current stage (IMPLEMENT, VERIFY, ACCEPT, DONE) at its current revision.
-4. **Converges, never older than canonical.** An obligation is retired only after its card reads back the then-current
-   stage. If the item's canonical revision moved while that write was in flight (another projector may already have
-   written and retired the newer stage), `owe_projection` owes it again (never lowering an outstanding obligation), so
-   the next pass writes the newest stage. A late obligation for an old revision still projects the current stage; a
-   write is repeated safely (the same status again) until its obligation is retired. GitHub has no compare-and-set,
-   so two overlapping projectors can leave an older status on a card for at most one pass; it is always owed and
-   repaired.
+4. **Converges; never projects an older stage it read.** An obligation is retired only after its card reads back the
+   then-current stage. If the item's canonical revision moved while an attempted write was in flight (another projector
+   may already have written and retired the newer stage; the write may have landed although its read-back failed),
+   `owe_projection` owes it again (never lowering an outstanding obligation), so the next pass writes the newest stage.
+   A late obligation for an old revision still projects the current stage; a write is repeated safely (the same status
+   again) until its obligation is retired. GitHub has no compare-and-set: see the stated limits for the one case this
+   cannot repair before the item's next commit.
 5. **Read-back.** `_project_card` writes through the existing `write_status`, which reads the Status back; anything
    else appends one line per distinct failure to `launch/projection-diagnostics.jsonl`: an exception or another status
    read back leaves the obligation outstanding; an item with no linked card is retired (nothing to project).
@@ -174,7 +174,7 @@ index 2a19ee7..3df94f9 100644
      bare = subprocess.run(["git", "-C", str(substrate.remote), "rev-parse", "--is-bare-repository"], capture_output=True, text=True, check=False).stdout.strip() == "true"
      main = substrate.remote_advertises("main")
 diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
-index 6daec18..cee49fa 100644
+index 6daec18..4e1d54e 100644
 --- a/src/alienintent/composition/work_registry.py
 +++ b/src/alienintent/composition/work_registry.py
 @@ -77,6 +77,7 @@ import shutil
@@ -215,7 +215,7 @@ index 6daec18..cee49fa 100644
          self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
              else None
          # Each role's context package (unit 6c-1) over the `readiness` store and evidence folder; its command names
-@@ -570,6 +578,96 @@ class WorkRegistry:
+@@ -570,6 +578,98 @@ class WorkRegistry:
          configuration is read; the model routing file is read by `prepare` at every launch."""
          return self._launch_chain()[0]
  
@@ -223,9 +223,10 @@ index 6daec18..cee49fa 100644
 +        """One pass of the card projector over the outstanding projection obligations only: each work item's card is
 +        set to the item's CURRENT canonical stage (IMPLEMENT, VERIFY, ACCEPT, DONE) and read back, then the obligation
 +        is retired. An obligation carries no status, so a late one never writes an older stage. If a newer commit
-+        landed while the write was in flight (another projector may have written and retired the newer stage first),
-+        the projection is owed again, so the next pass writes the newest stage: the card always converges to canonical
-+        state. A failed write stays outstanding; an item with no linked card is retired after one diagnostic. Stops at
++        landed while an attempted write was in flight (another projector may have written and retired the newer stage
++        first; the write may have landed although its read-back failed), the projection is owed again, so the next pass
++        writes the newest stage. A change GitHub applies only after its answer was lost (a client timeout) and after a
++        newer stage was retired can leave an older status until the item's next commit: GitHub has no compare-and-set. A failed write stays outstanding; an item with no linked card is retired after one diagnostic. Stops at
 +        `deadline` (time.monotonic), leaving the rest outstanding. Never changes canonical state; answers the number
 +        of obligations retired."""
 +        if self.links is None or self.assessment is None:
@@ -239,19 +240,20 @@ index 6daec18..cee49fa 100644
 +            stage = raw.get("stage")
 +            if stage in CARD_STAGES:
 +                written = self._project_card(identity, str(stage), version)
++                now, _ = store.read_state("registry", aggregate)
++                if written is not None and now != version:
++                    store.owe_projection("registry", aggregate, now)  # an attempted write overtaken while in flight
++                    continue
 +                if written is False:
 +                    continue  # outstanding: the next pass writes the then-current stage
-+                now, _ = store.read_state("registry", aggregate)
-+                if written and now != version:
-+                    store.owe_projection("registry", aggregate, now)  # overtaken while in flight
-+                    continue
 +            retired += store.retire_projection("registry", aggregate, revision)
 +        return retired
 +
 +    @contextmanager
 +    def card_projection(self, interval: float = CARD_PROJECTION_SECONDS):
 +        """The card projector around one launch: a pass now, a pass every `interval` seconds while the launch runs (so a
-+        PRODUCER's IMPLEMENT shows while it works), and a bounded pass at the end if the running pass has finished. A
++        PRODUCER's IMPLEMENT shows while it works), and a pass at the end, which stops starting items after CARD_FINAL_PASS_SECONDS, if the running pass has
++        finished (the thread wait and an item already in flight add their own transport timeouts). A
 +        pass that fails is recorded and the next one retries; nothing here reaches the launch."""
 +        stop = threading.Event()
 +
@@ -558,7 +560,7 @@ index 9001613..5354446 100644
              return CheckEvidence.passed()
          raise DoctorFailure("persistence evidence is unavailable")
 diff --git a/tests/composition/test_worker_launch.py b/tests/composition/test_worker_launch.py
-index bb5df85..a37817a 100644
+index bb5df85..b107574 100644
 --- a/tests/composition/test_worker_launch.py
 +++ b/tests/composition/test_worker_launch.py
 @@ -25,6 +25,7 @@ from alienintent.composition import work_registry
@@ -569,7 +571,7 @@ index bb5df85..a37817a 100644
  from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
  from alienintent.execution_coordination.domain.release import ReleaseSource
  from alienintent.invocation_runtime.adapters.git_worktree import ref_safe
-@@ -2126,3 +2127,145 @@ def test_a_new_candidate_starts_with_no_verifier_retries(fx):
+@@ -2126,3 +2127,167 @@ def test_a_new_candidate_starts_with_no_verifier_retries(fx):
          fx.launch(item.id)
          state = fx.loaded().coordinator(None, None).state(item.id)
          assert (state.outcome, state.record["verifier_retries"]) == ("verifier-retry", retries)
@@ -715,6 +717,28 @@ index bb5df85..a37817a 100644
 +    monkeypatch.setattr(work_registry.WorkRegistry, "_project_card", project)
 +    closing.fx.loaded().project_cards()
 +    assert closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
++
++
++def test_an_overtaken_write_whose_read_back_fails_is_still_reowed(closing, monkeypatch):
++    """A's VERIFY change lands after B wrote and retired ACCEPT, then A's read-back fails: A still re-owes."""
++    item = closing.fx.authorized("UNIT", **FIXED)
++    closing.fx.launch(item.id)
++    project = work_registry.WorkRegistry._project_card
++    overtaken = []
++
++    def in_flight(self, identity, stage, revision):
++        if not overtaken:
++            overtaken.append(stage)
++            closing.fx.launch(item.id)  # ACCEPT
++            assert closing.fx.loaded().project_cards() == 1  # projector B
++            project(self, identity, stage, revision)  # A's change lands ...
++            return False  # ... and its read-back fails
++        return project(self, identity, stage, revision)
++    monkeypatch.setattr(work_registry.WorkRegistry, "_project_card", in_flight)
++    closing.fx.loaded().project_cards()
++    assert closing.card(item.id) == "VERIFY" and len(_pending(closing)) == 1
++    closing.fx.loaded().project_cards()
++    assert closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
 diff --git a/tests/control_plane/test_cli.py b/tests/control_plane/test_cli.py
 index 96c71a8..acc63ee 100644
 --- a/tests/control_plane/test_cli.py
@@ -853,10 +877,14 @@ And:
 10. **Overlapping projectors converge** (`tests/composition/test_worker_launch.py::test_a_projector_overtaken_by_a_newer_commit_reowes_and_the_card_converges`):
    projector A's VERIFY write is overtaken by a commit to ACCEPT that projector B writes and retires; A's write lands
    last, A owes the projection again, and the next pass shows ACCEPT.
-11. **Mutations, run exactly by the VERIFIER** (each must fail its named test and pass when reverted):
+11. **An overtaken write whose read-back fails is still owed**
+   (`tests/composition/test_worker_launch.py::test_an_overtaken_write_whose_read_back_fails_is_still_reowed`): as check 10, but A's change lands and its
+   read-back fails; A still owes the projection and the next pass shows ACCEPT.
+12. **Mutations, run exactly by the VERIFIER** (each must fail its named test and pass when reverted):
    - **P1:** in `_commit`, `if aggregate.startswith(PROJECTED):` made `if False:` -> check 2's test.
    - **P2:** `retire_projection`'s `DELETE ... AND revision=?` without the revision condition -> check 5's test.
    - **P3:** in `project_cards`, the `store.owe_projection(...)` line deleted -> check 10's test.
+   - **P9:** `if written is not None and now != version:` made `if written and now != version:` -> check 11's test.
    - **P4:** in the CLI, `with projection() if projection is not None else nullcontext():` made
      `with nullcontext():` -> check 9's test.
    - **P5:** in `launch`, `projected.stage in ROLE_BY_STAGE` made `projected.stage is LifecycleStage.ACCEPT` ->
@@ -876,7 +904,12 @@ no extra whole-suite runs), and `python3 tools/fitness/check_architecture.py --r
   projected (plan authority's item and a later decision).
 - `guard_account`, `_block_dependents` and `record_decision` still read only the READY snapshot.
 - Overlapping projectors (a `work project` beside a launch, a refused second launch) can leave an older status on a
-  card for at most one pass before it is repaired (check 10). CLOSURE's own `board-updated` DONE write stays as it is.
+  card until the next pass (checks 10-11). A change whose answer is lost (a client timeout, 20 s, no retry) and that
+  GitHub applies only after a newer stage was written and retired can leave an older status until the item's next
+  commit; GitHub offers no compare-and-set to prevent it. CLOSURE's own `board-updated` DONE write stays as it is.
+- `work launch` returns after waiting up to `CARD_PROJECTION_SECONDS + 30` s for the projector thread, then a final pass
+  that stops starting items after `CARD_FINAL_PASS_SECONDS` (30 s); an item already in flight can add its transport
+  timeouts (up to 3 x 20 s) while GitHub is down.
 - `projection-diagnostics.jsonl` is not rotated (one line per distinct failure per process); `_with_started` reads
   the invocation journal once per started item on every `start()`.
 - The 2 -> 3 migration owes an obligation to every existing `factory:` aggregate of every profile; only `registry`
@@ -887,10 +920,16 @@ no extra whole-suite runs), and `python3 tools/fitness/check_architecture.py --r
 ## 4. Evidence and review record
 
 A prototype that is exactly section 2's diff, on `2b47f21` (not the candidate):
-`manual/path-to-done/card-follows-stage/prototype-outbox-on-2b47f21.diff`, sha256 `8de29664…cd20c`. With it
+`manual/path-to-done/card-follows-stage/prototype-outbox-on-2b47f21.diff`, sha256 `9f117bb8…c250a`. With it
 the touched test files pass, the architecture fitness check passes, and P1-P8 each fail their named test and pass when
-reverted (`mutations-and-targeted-run.log`). The
+reverted (`mutations-and-targeted-run.log` for revision 4; `mutations-rev5.log` for P1-P9 after the revision 5 fix,
+with the projection tests re-run). The
 superseded synchronous design is kept as `rev2-synchronous-superseded.diff`.
+
+**Revision 5 (2026-10-09).** Follow-up REVIEWER of `30ce7aa` (FAIL; R1-R3). R1: an overtaken write whose read-back
+failed returned before the overtaken check, leaving a stale card with nothing owed; the check now runs for any
+attempted write (check 11, P9). R2: invariant 4 no longer claims "always repaired"; the lost-answer case is a stated
+limit. R3: the real shutdown bound is stated.
 
 **Revision 4 (2026-10-09).** REVIEWER of `172a513` (FAIL; D1-D7). D1: overlapping projectors could leave a card
 behind with nothing owed (the acknowledgement fence did not fence the GitHub write); the acknowledgement record is
