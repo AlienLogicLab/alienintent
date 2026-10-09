@@ -2291,3 +2291,35 @@ def test_an_overtaken_write_whose_read_back_fails_is_still_reowed(closing, monke
     assert closing.card(item.id) == "VERIFY" and len(_pending(closing)) == 1
     closing.fx.loaded().project_cards()
     assert closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
+
+
+# --- VERIFIER-CONSUMES-REGRESSION-GATE-EVIDENCE: the gate is the sole owner of whole-suite execution ----------------
+
+def test_the_verifier_is_told_the_gate_result_and_not_to_run_the_whole_suite(fx):
+    item = fx.authorized("UNIT")
+    baseline = fx.main()
+    fx.launch(item.id)
+    revision = fx.loaded().coordinator(None, None).state(item.id).candidate.locator.rpartition("@")[2]
+    fx.launch(item.id)
+    [session] = fx.runs("VERIFIER")
+    text = session["stdin"]
+    assert "REGRESSION-GATE, control-plane evidence already established for you" in text
+    assert f"at the\nbaseline {baseline} and at this candidate {revision}" in text and "feature-regressions:sha256:" in text
+    assert "Do not run the whole suite." in text
+
+
+def test_a_missing_gate_result_is_typed_infrastructure_never_a_session(fx, monkeypatch):
+    """No whole-suite result: no VERIFIER session starts to compensate; the same candidate waits for a retry."""
+    from alienintent.invocation_runtime.application.regression_gate import RegressionGate, SuiteUnrunnable
+
+    def unrunnable(self, *args):
+        raise SuiteUnrunnable("the suite could not run")
+    monkeypatch.setattr(RegressionGate, "check", unrunnable)
+    item = fx.authorized("UNIT")
+    fx.launch(item.id)
+    before = fx.loaded().coordinator(None, None).state(item.id)
+    fx.launch(item.id)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert (state.stage, state.outcome, state.record["verifier_failure"]) == (
+        LifecycleStage.VERIFY, "verifier-retry", "feature-regressions-missing")
+    assert state.candidate == before.candidate and fx.runs("VERIFIER") == []

@@ -1216,6 +1216,12 @@ nothing there. Read the package and decide which of its closure_actions to reque
 as {{"identity": "<the work item id>", "revision": "<the candidate commit, git rev-parse HEAD>",
 "actions": ["<some of the five names>"], "findings": ["<finding>", ...]}}. The revision is the bare 40-hex commit
 alone, never the package's candidate identity. The control plane performs and checks every effect; nothing else you write is read."""
+GATE_PASSED = """
+
+REGRESSION-GATE, control-plane evidence already established for you: the whole suite (`tests` and `tools`) ran at the
+baseline {baseline} and at this candidate {revision}; no test that passed at the baseline fails here and no new test
+fails ({receipt}). Do not run the whole suite. Run only the acceptance tests and mutations the package names, and
+narrowly targeted tests when a finding needs them."""
 VERIFIER_RESULT = """Your current working directory is a fresh clone of the candidate. Verify it against the package.
 Then write .alienintent/verdict.json in that directory as {{"revision": "<the candidate commit, git rev-parse HEAD>",
 "verdict": "accept" or "reject", "findings": ["<finding>", ...]}}; a reject needs at least one finding."""
@@ -1401,6 +1407,15 @@ class LaunchPreparation:
         except BaseException:
             temporary.unlink(missing_ok=True)
             raise
+
+    def gated(self, invocation: WorkerInvocation, baseline: str, revision: str, receipt: str) -> None:
+        """The REGRESSION-GATE passed for this VERIFIER invocation: its result is added to the session's instructions,
+        which are read when the session starts. The gate owns whole-suite execution; the VERIFIER never reruns it."""
+        kept = self.kept.get(invocation.correlation_id)
+        if kept is not None:
+            route, text = kept
+            self.kept[invocation.correlation_id] = (route, text + GATE_PASSED.format(
+                baseline=baseline, revision=revision, receipt=receipt))
 
     def command(self, invocation_id: str, role: object, workspace: Path) -> tuple[list[str], str]:
         """CliWorkerProvider's per-invocation command: the provider command for the kept route and this workspace,

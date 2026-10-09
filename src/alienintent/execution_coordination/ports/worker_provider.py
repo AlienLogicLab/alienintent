@@ -16,10 +16,14 @@ PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
 # re-dispatched once under the composed replacement allowance.
 MISSING_TERMINAL_RESULT = "missing-terminal-result"
 # VERIFIER outcomes that carry no engineering judgment: the session ended without a valid verdict (its process failed
-# or timed out, or it left no verdict, a malformed one or one for another revision). The coordinator retries the
-# VERIFIER on the same candidate; only a valid REJECT is a rejection. A candidate that cannot be retrieved
-# (`candidate-unavailable`) is a custody refusal, not infrastructure: it still holds.
-VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "verdict-malformed", "verdict-miscorrelated"})
+# or timed out, or it left no verdict, a malformed one or one for another revision), or the feature-regression
+# receipt is absent or invalid (`feature-regressions-missing`: the REGRESSION-GATE produced no whole-suite result, or,
+# in a profile without a gate, the receipt beside the verdict): the gate alone owns whole-suite execution, so a missing
+# result is never compensated by a session running the suite. The coordinator retries the VERIFIER on the same candidate; only
+# a valid REJECT is a rejection. A candidate that cannot be retrieved (`candidate-unavailable`) is a custody refusal,
+# not infrastructure: it still holds.
+VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "verdict-malformed", "verdict-miscorrelated",
+                                     "feature-regressions-missing"})
 
 
 @dataclass(frozen=True)
