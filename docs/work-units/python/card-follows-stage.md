@@ -1,7 +1,7 @@
 # Work unit: the board card follows canonical work state through a durable projection outbox
 
 **Label:** `CARD-FOLLOWS-STAGE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 3, 2026-10-09, for independent review. Not registered, not assessed, not released.
+**Status:** Draft revision 4, 2026-10-09, for follow-up review. Not registered, not assessed, not released.
 **Position on the path (Founder 2026-10-09, decisions sections 10 and 12):** VERIFIER-RETRY (done, `2b47f21`) ->
 CARD-FOLLOWS-STAGE -> NO-CHANGE -> PLAN-AUTHORITY-INHERITANCE -> BOUNDED-ROUTINE-LAUNCH -> Work Preparation / READY
 refill -> three-item autonomy proof.
@@ -16,8 +16,8 @@ truth; projection is eventually consistent, revision-fenced and non-blocking.**
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-3",
- "intent": "Each registry work item's GitHub Project card shows its canonical stage through a durable projection outbox: every committed state of a work item's execution aggregate leaves a projection obligation in the same store transaction; a card projector, running beside each launch and on its own (`work project`), projects the item's CURRENT canonical stage to its linked card, reads it back, acknowledges it under a revision fence and retires the obligation. The coordinator never calls GitHub; projection is eventually consistent, revision-fenced and non-blocking. A started work item launches from its registry record at any stage, so execution never depends on the card staying READY. The board reflects canonical Work state; it does not determine canonical Work state.",
+ "version": "revision-4",
+ "intent": "Each registry work item's GitHub Project card shows its canonical stage through a durable projection outbox: every committed state of a work item's execution aggregate leaves a projection obligation in the same store transaction; a card projector, running beside each launch and on its own (`work project`), projects the item's CURRENT canonical stage to its linked card, reads it back and retires the obligation; a projection overtaken by a newer commit while in flight is owed again, so the card always converges to the current canonical stage. The coordinator never calls GitHub; projection is eventually consistent, revision-fenced and non-blocking. A started work item launches from its registry record at any stage, so execution never depends on the card staying READY. The board reflects canonical Work state; it does not determine canonical Work state.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
  ],
@@ -62,12 +62,12 @@ truth; projection is eventually consistent, revision-fenced and non-blocking.**
  },
  "retry_policy": "verifier rejection returns to the PRODUCER with the findings; at most 3 cycles",
  "completion_criteria": [
-  "acceptance checks 1-10 pass"
+  "acceptance checks 1-11 pass"
  ],
  "verification_obligations": [
   "independent VERIFIER on the exact candidate",
   "the candidate's diff from the starting revision equals section 2's diff",
-  "the VERIFIER runs mutations P1-P8 of check 10 exactly and records that each makes its named test fail and that reverting makes it pass"
+  "the VERIFIER runs mutations P1-P8 of check 11 exactly and records that each makes its named test fail and that reverting makes it pass"
  ],
  "required_evidence": [
   "independent-verifier-accepted"
@@ -128,15 +128,20 @@ Invariants the diff implements:
    deletes a row only if it is still for the given revision, so a newer commit's obligation stays outstanding.
 3. **Current canonical stage.** An obligation carries no status. `WorkRegistry.project_cards` reads the item's
    current state and projects its current stage (IMPLEMENT, VERIFY, ACCEPT, DONE) at its current revision.
-4. **Revision fence.** A card's last acknowledged projection is the aggregate `card:<id>` (revision, stage); no write
-   is made at or below it, and the acknowledgement is a compare-and-set commit. A late or repeated obligation can
-   never move a card backward; a write is repeated safely (the same status again) until acknowledged.
+4. **Converges, never older than canonical.** An obligation is retired only after its card reads back the then-current
+   stage. If the item's canonical revision moved while that write was in flight (another projector may already have
+   written and retired the newer stage), `owe_projection` owes it again (never lowering an outstanding obligation), so
+   the next pass writes the newest stage. A late obligation for an old revision still projects the current stage; a
+   write is repeated safely (the same status again) until its obligation is retired. GitHub has no compare-and-set,
+   so two overlapping projectors can leave an older status on a card for at most one pass; it is always owed and
+   repaired.
 5. **Read-back.** `_project_card` writes through the existing `write_status`, which reads the Status back; anything
-   else (no linked card, an exception, another status read back) appends a line to
-   `launch/projection-diagnostics.jsonl`, and the obligation stays outstanding.
+   else appends one line per distinct failure to `launch/projection-diagnostics.jsonl`: an exception or another status
+   read back leaves the obligation outstanding; an item with no linked card is retired (nothing to project).
 6. **Non-blocking and restartable.** `work launch` runs inside `card_projection`: a pass at once, a pass every
    `CARD_PROJECTION_SECONDS` (5) in a daemon thread while the launch runs (so a first PRODUCER's IMPLEMENT shows while
-   it works), and a pass at the end; a failing pass is a diagnostic. `work project` runs one pass on its own. The
+   it works), and, if that thread has finished, a final pass bounded by `CARD_FINAL_PASS_SECONDS` (30); a failing pass
+   is a diagnostic. `work project` runs one pass on its own. The
    coordinator never calls GitHub.
 7. **Execution never needs the card.** `launch` resolves a started item at every stage through `_resolve`, which tries
    `correlation`, then `producer_correlation`; `start` adds every recorded, non-final started item through
@@ -169,7 +174,7 @@ index 2a19ee7..3df94f9 100644
      bare = subprocess.run(["git", "-C", str(substrate.remote), "rev-parse", "--is-bare-repository"], capture_output=True, text=True, check=False).stdout.strip() == "true"
      main = substrate.remote_advertises("main")
 diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
-index 6daec18..3d8f3a8 100644
+index 6daec18..cee49fa 100644
 --- a/src/alienintent/composition/work_registry.py
 +++ b/src/alienintent/composition/work_registry.py
 @@ -77,6 +77,7 @@ import shutil
@@ -189,16 +194,7 @@ index 6daec18..3d8f3a8 100644
  from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
  from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
  from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
-@@ -133,7 +134,7 @@ from alienintent.execution_coordination.domain.contract import BiuContract
- from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
- from alienintent.execution_coordination.domain.custody import CandidateRef
- from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired
--from alienintent.execution_coordination.ports.operational_store import OperationalStore
-+from alienintent.execution_coordination.ports.operational_store import OperationalStore, VersionConflict
- from alienintent.execution_coordination.ports.project_directory import ProjectItemState
- from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
- from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
-@@ -172,6 +173,11 @@ OWNERS = {NO_LINK: WORK_PREPARATION, NOT_ELIGIBLE: WORK_PREPARATION, ASSESSMENT_
+@@ -172,6 +173,12 @@ OWNERS = {NO_LINK: WORK_PREPARATION, NOT_ELIGIBLE: WORK_PREPARATION, ASSESSMENT_
            CONTRACT_INVALID: WORK_PREPARATION, DISPLAY_DIFFERS: WORK_PREPARATION, ROW_REFUSED: OPERATOR}
  # The shared Factory Director host configuration whose `wipLimit` is the WIP limit (bin/alienintent.mjs reads it too).
  HOST_CONFIGURATION = Path("~/.config/alienintent/factory-director-host.json")
@@ -207,44 +203,56 @@ index 6daec18..3d8f3a8 100644
 +CARD_STAGES = frozenset({"IMPLEMENT", "VERIFY", "ACCEPT", "DONE"})
 +PROJECTION_DIAGNOSTICS = "projection-diagnostics.jsonl"
 +CARD_PROJECTION_SECONDS = 5.0
++CARD_FINAL_PASS_SECONDS = 30.0
  # Every registry token is scoped: `work link`, `work display` and the READY view need these, for the one repository.
  DISPLAY_PERMISSIONS = dict(REQUIRED_PERMISSIONS) | {"metadata": "read"}
  MAX_SAFE_INTEGER = 2 ** 53 - 1  # the Number.isSafeInteger bound of bin/alienintent.mjs; a JSON 1.0 is not an integer here
-@@ -570,6 +576,87 @@ class WorkRegistry:
+@@ -463,6 +470,7 @@ class WorkRegistry:
+         self.authorization = self._authorization(configuration) if self.assessment is not None else None
+         self.completion = self._completion(configuration) if self.assessment is not None else None
+         self.links = self._links(configuration.github, transport) if configuration.github is not None else None
++        self._diagnosed: set[tuple[object, ...]] = set()  # card projection failures already recorded, once each
+         self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
+             else None
+         # Each role's context package (unit 6c-1) over the `readiness` store and evidence folder; its command names
+@@ -570,6 +578,96 @@ class WorkRegistry:
          configuration is read; the model routing file is read by `prepare` at every launch."""
          return self._launch_chain()[0]
  
-+    def project_cards(self) -> int:
-+        """One pass of the card projector: each outstanding projection obligation of a work item's execution state is
-+        projected to its linked card as the item's CURRENT canonical stage, read back, acknowledged, then retired. A
-+        write at or below the card's acknowledged revision is never made, so a late or repeated obligation cannot move a
-+        card backward; a failed write leaves the obligation outstanding for the next pass. Never changes canonical
-+        state; answers the number of obligations retired."""
++    def project_cards(self, deadline: float | None = None) -> int:
++        """One pass of the card projector over the outstanding projection obligations only: each work item's card is
++        set to the item's CURRENT canonical stage (IMPLEMENT, VERIFY, ACCEPT, DONE) and read back, then the obligation
++        is retired. An obligation carries no status, so a late one never writes an older stage. If a newer commit
++        landed while the write was in flight (another projector may have written and retired the newer stage first),
++        the projection is owed again, so the next pass writes the newest stage: the card always converges to canonical
++        state. A failed write stays outstanding; an item with no linked card is retired after one diagnostic. Stops at
++        `deadline` (time.monotonic), leaving the rest outstanding. Never changes canonical state; answers the number
++        of obligations retired."""
 +        if self.links is None or self.assessment is None:
 +            return 0
 +        store, retired = self.store, 0
 +        for aggregate, revision in store.pending_projections("registry"):
++            if deadline is not None and time.monotonic() > deadline:
++                break
 +            identity = aggregate.removeprefix(PROJECTED)
 +            version, raw = store.read_state("registry", aggregate)
 +            stage = raw.get("stage")
 +            if stage in CARD_STAGES:
-+                acked_version, acked = store.read_state("registry", f"card:{identity}")
-+                if int(acked.get("revision", -1)) < version:
-+                    if not self._project_card(identity, str(stage), version):
-+                        continue  # outstanding: the next pass writes the then-current stage
-+                    try:
-+                        store.commit("registry", f"card:{identity}", acked_version,
-+                                     {"identity": identity, "stage": stage, "revision": version})
-+                    except VersionConflict:
-+                        continue  # another projector acknowledged first; the next pass re-reads both
++                written = self._project_card(identity, str(stage), version)
++                if written is False:
++                    continue  # outstanding: the next pass writes the then-current stage
++                now, _ = store.read_state("registry", aggregate)
++                if written and now != version:
++                    store.owe_projection("registry", aggregate, now)  # overtaken while in flight
++                    continue
 +            retired += store.retire_projection("registry", aggregate, revision)
 +        return retired
 +
 +    @contextmanager
 +    def card_projection(self, interval: float = CARD_PROJECTION_SECONDS):
 +        """The card projector around one launch: a pass now, a pass every `interval` seconds while the launch runs (so a
-+        PRODUCER's IMPLEMENT shows while it works), and a pass at the end. A pass that fails is recorded and the next
-+        one retries; nothing here reaches the launch."""
++        PRODUCER's IMPLEMENT shows while it works), and a bounded pass at the end if the running pass has finished. A
++        pass that fails is recorded and the next one retries; nothing here reaches the launch."""
 +        stop = threading.Event()
 +
 +        def passes() -> None:
@@ -259,17 +267,19 @@ index 6daec18..3d8f3a8 100644
 +        finally:
 +            stop.set()
 +            runner.join(interval + 30)
-+            self._card_pass()
++            if not runner.is_alive():
++                self._card_pass(time.monotonic() + CARD_FINAL_PASS_SECONDS)
 +
-+    def _card_pass(self) -> None:
++    def _card_pass(self, deadline: float | None = None) -> None:
 +        try:
-+            self.project_cards()
++            self.project_cards(deadline)
 +        except Exception as error:  # noqa: BLE001 - the board lags canonical state; it never stops a launch
 +            self._projection_diagnostic(None, None, None, None, -1, f"pass failed: {type(error).__name__}: {error}")
 +
-+    def _project_card(self, identity: str, stage: str, revision: int) -> bool:
-+        """`stage` written to the card linked to `identity` and read back by `write_status`; a failure (no linked card,
-+        an exception, another status read back) is appended to `launch/projection-diagnostics.jsonl`."""
++    def _project_card(self, identity: str, stage: str, revision: int) -> bool | None:
++        """`stage` written to the card linked to `identity` and read back by `write_status`: True when it reads back,
++        None when the item has no linked card (nothing to project), False otherwise (an exception, another status read
++        back). Each distinct failure is appended once to `launch/projection-diagnostics.jsonl`."""
 +        card, answered, error = None, -1, None
 +        try:
 +            record = self.records.show(identity)
@@ -282,9 +292,13 @@ index 6daec18..3d8f3a8 100644
 +            return True
 +        self._projection_diagnostic(identity, card, stage, revision, answered, error if error is not None else
 +                                    "no linked card" if card is None else "read back another status")
-+        return False
++        return None if card is None and error is None else False
 +
 +    def _projection_diagnostic(self, identity, card, stage, revision, answered, error) -> None:
++        key = (identity, revision, error)
++        if key in self._diagnosed:
++            return
++        self._diagnosed.add(key)
 +        try:
 +            folder = launch_root(self.configuration)
 +            folder.mkdir(parents=True, exist_ok=True)
@@ -339,7 +353,7 @@ index 60ba489..61a266d 100644
              if args.work_command == "decide":
                  if getattr(registry, "decide", None) is None:
 diff --git a/src/alienintent/execution_coordination/adapters/sqlite_store.py b/src/alienintent/execution_coordination/adapters/sqlite_store.py
-index 061a2bb..113147c 100644
+index 061a2bb..e4cb49a 100644
 --- a/src/alienintent/execution_coordination/adapters/sqlite_store.py
 +++ b/src/alienintent/execution_coordination/adapters/sqlite_store.py
 @@ -21,7 +21,11 @@ from alienintent.execution_coordination.ports.fenced_store import (
@@ -391,12 +405,12 @@ index 061a2bb..113147c 100644
 +        # 2 -> 3 only adds the projection obligations; every existing state is owed one, so a display catches up.
 +        connection.executescript("BEGIN IMMEDIATE;" + to_two + _PROJECTIONS + """
 +            INSERT INTO projections SELECT profile, identity, version FROM aggregates WHERE identity LIKE 'factory:%';
-+            INSERT INTO schema_migrations VALUES (2, 3, 1);
++            INSERT INTO schema_migrations VALUES (2, 3, 0);
 +            UPDATE operational_schema SET version=3;
              COMMIT;
          """)
  
-@@ -194,8 +203,21 @@ class SQLiteOperationalStore(FencedOperationalStore):
+@@ -194,8 +203,26 @@ class SQLiteOperationalStore(FencedOperationalStore):
              raise VersionConflict(f"expected version {expected_version}, found {actual}")
          version = actual + 1
          connection.execute("INSERT INTO aggregates VALUES (?, ?, ?, ?) ON CONFLICT(profile, identity) DO UPDATE SET version=excluded.version, state=excluded.state", (profile, aggregate, version, json.dumps(state, sort_keys=True)))
@@ -409,6 +423,11 @@ index 061a2bb..113147c 100644
 +        with self._read() as connection:
 +            rows = connection.execute("SELECT aggregate, revision FROM projections WHERE profile=? ORDER BY aggregate", (profile,)).fetchall()
 +            return tuple((row["aggregate"], row["revision"]) for row in rows)
++
++    def owe_projection(self, profile: str, aggregate: str, revision: int) -> None:
++        """An obligation owed again (a projection overtaken by a newer commit), never lowering an outstanding one."""
++        with self._transaction() as connection:
++            connection.execute("INSERT INTO projections VALUES (?, ?, ?) ON CONFLICT(profile, aggregate) DO UPDATE SET revision=MAX(revision, excluded.revision)", (profile, aggregate, revision))
 +
 +    def retire_projection(self, profile: str, aggregate: str, revision: int) -> bool:
 +        """Retire the obligation only if it is still for `revision`: a newer commit's obligation stays outstanding."""
@@ -511,14 +530,15 @@ index 86b822c..4e1db88 100644
      def _project(self, identity: str) -> None:
          """The DONE projection hook; a refusal or error is a diagnostic, never raised into the coordinator."""
 diff --git a/src/alienintent/execution_coordination/ports/operational_store.py b/src/alienintent/execution_coordination/ports/operational_store.py
-index 071206b..b9020aa 100644
+index 071206b..e771178 100644
 --- a/src/alienintent/execution_coordination/ports/operational_store.py
 +++ b/src/alienintent/execution_coordination/ports/operational_store.py
-@@ -70,6 +70,8 @@ class OperationalStore(Protocol):
+@@ -70,6 +70,9 @@ class OperationalStore(Protocol):
      def release(self, profile: str, scope: str, key: str, owner: str, fence: int) -> None: ...
      def read_state(self, profile: str, aggregate: str) -> tuple[int, dict[str, object]]: ...
      def list_states(self, profile: str, prefix: str = "") -> tuple[tuple[str, int, dict[str, object]], ...]: ...
 +    def pending_projections(self, profile: str) -> tuple[tuple[str, int], ...]: ...
++    def owe_projection(self, profile: str, aggregate: str, revision: int) -> None: ...
 +    def retire_projection(self, profile: str, aggregate: str, revision: int) -> bool: ...
      def commit_with_effect(self, profile: str, aggregate: str, expected_version: int, state: Mapping[str, object], effect_id: str, payload: Mapping[str, object]) -> int: ...
      def mark_effect_unknown(self, profile: str, effect_id: str) -> None: ...
@@ -538,7 +558,7 @@ index 9001613..5354446 100644
              return CheckEvidence.passed()
          raise DoctorFailure("persistence evidence is unavailable")
 diff --git a/tests/composition/test_worker_launch.py b/tests/composition/test_worker_launch.py
-index bb5df85..bc4b5eb 100644
+index bb5df85..a37817a 100644
 --- a/tests/composition/test_worker_launch.py
 +++ b/tests/composition/test_worker_launch.py
 @@ -25,6 +25,7 @@ from alienintent.composition import work_registry
@@ -549,7 +569,7 @@ index bb5df85..bc4b5eb 100644
  from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
  from alienintent.execution_coordination.domain.release import ReleaseSource
  from alienintent.invocation_runtime.adapters.git_worktree import ref_safe
-@@ -2126,3 +2127,125 @@ def test_a_new_candidate_starts_with_no_verifier_retries(fx):
+@@ -2126,3 +2127,145 @@ def test_a_new_candidate_starts_with_no_verifier_retries(fx):
          fx.launch(item.id)
          state = fx.loaded().coordinator(None, None).state(item.id)
          assert (state.outcome, state.record["verifier_retries"]) == ("verifier-retry", retries)
@@ -608,36 +628,34 @@ index bb5df85..bc4b5eb 100644
 +
 +
 +def test_a_crash_after_the_card_write_and_before_its_acknowledgement_replays_safely(closing, monkeypatch):
++    """The obligation is retired only after the card reads back; a crash in between leaves it outstanding and the
++    next pass writes the same status again."""
 +    item = closing.fx.authorized("UNIT", **FIXED)
 +    closing.fx.launch(item.id)
 +    written = _card_writes(monkeypatch)
-+    commit = SQLiteOperationalStore.commit
++    retire = SQLiteOperationalStore.retire_projection
 +
-+    def crashing(self, profile, aggregate, expected_version, state):
-+        if aggregate.startswith("card:"):
-+            raise RuntimeError("crash before the acknowledgement")
-+        return commit(self, profile, aggregate, expected_version, state)
-+    monkeypatch.setattr(SQLiteOperationalStore, "commit", crashing)
++    def crashing(self, profile, aggregate, revision):
++        raise RuntimeError("crash before the acknowledgement")
++    monkeypatch.setattr(SQLiteOperationalStore, "retire_projection", crashing)
 +    with pytest.raises(RuntimeError):
 +        closing.fx.loaded().project_cards()
 +    assert closing.card(item.id) == "VERIFY" and len(_pending(closing)) == 1  # written, not acknowledged
-+    monkeypatch.setattr(SQLiteOperationalStore, "commit", commit)
++    monkeypatch.setattr(SQLiteOperationalStore, "retire_projection", retire)
 +    assert closing.fx.loaded().project_cards() == 1
 +    assert written == ["VERIFY", "VERIFY"] and closing.card(item.id) == "VERIFY" and _pending(closing) == ()
 +
 +
-+def test_an_obligation_older_than_the_cards_acknowledged_revision_never_moves_the_card(closing, monkeypatch):
-+    item = closing.fx.authorized("UNIT", **FIXED)
-+    closing.fx.launch(item.id)
++def test_a_late_older_obligation_never_moves_the_card_backward(closing, monkeypatch):
++    """An obligation carries no status: a late one for an old revision projects the CURRENT canonical stage."""
++    item = closing.accepted()
 +    closing.fx.loaded().project_cards()
-+    closing.fx.github.fields[closing.fx.registry.records.show(item.id).item.card_id]["Status"] = "ACCEPT"  # newer, elsewhere
-+    version, _ = closing.fx.store.read_state("registry", f"card:{item.id}")
-+    closing.fx.store.commit("registry", f"card:{item.id}", version, {"identity": item.id, "stage": "ACCEPT", "revision": 10 ** 6})
-+    with sqlite3.connect(closing.fx.store.path) as connection:  # a late, older obligation
++    assert closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
++    with sqlite3.connect(closing.fx.store.path) as connection:  # a late obligation for the PRODUCER's revision
 +        connection.execute("INSERT INTO projections VALUES ('registry', ?, 1)", (f"factory:{item.id}",))
 +    written = _card_writes(monkeypatch)
 +    assert closing.fx.loaded().project_cards() == 1
-+    assert written == [] and closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
++    assert written == ["ACCEPT"] and closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
 +
 +
 +def test_a_card_write_that_does_not_read_back_stays_outstanding_with_a_durable_diagnostic(closing):
@@ -675,6 +693,28 @@ index bb5df85..bc4b5eb 100644
 +    assert closing.card(item.id) == "VERIFY"  # not on the READY board any more
 +    closing.fx.loaded(Owners("terminated")).launcher().start()  # VERIFIER, then CLOSURE, in one call
 +    assert closing.state(item.id).stage is LifecycleStage.DONE
++
++
++def test_a_projector_overtaken_by_a_newer_commit_reowes_and_the_card_converges(closing, monkeypatch):
++    """Two projectors overlap: B writes and retires the newer stage while A's older write is still in flight; A's
++    write lands last, so A re-owes the projection and the next pass shows the newest canonical stage."""
++    item = closing.fx.authorized("UNIT", **FIXED)
++    closing.fx.launch(item.id)  # VERIFY, not yet projected
++    project = work_registry.WorkRegistry._project_card
++    overtaken = []
++
++    def in_flight(self, identity, stage, revision):
++        if not overtaken:
++            overtaken.append(stage)
++            closing.fx.launch(item.id)  # a newer commit: ACCEPT
++            assert closing.fx.loaded().project_cards() == 1  # projector B: ACCEPT written, obligation retired
++        return project(self, identity, stage, revision)  # A's VERIFY lands last
++    monkeypatch.setattr(work_registry.WorkRegistry, "_project_card", in_flight)
++    closing.fx.loaded().project_cards()  # projector A
++    assert overtaken == ["VERIFY"] and closing.card(item.id) == "VERIFY" and len(_pending(closing)) == 1
++    monkeypatch.setattr(work_registry.WorkRegistry, "_project_card", project)
++    closing.fx.loaded().project_cards()
++    assert closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
 diff --git a/tests/control_plane/test_cli.py b/tests/control_plane/test_cli.py
 index 96c71a8..acc63ee 100644
 --- a/tests/control_plane/test_cli.py
@@ -713,7 +753,7 @@ index 96c71a8..acc63ee 100644
      """RESTART-CONTINUATION check 0: the loser of a takeover race (its release meets a stale fence) answers
      LAUNCH_IN_PROGRESS and launches nothing; the winner launches once and releases the reservation."""
 diff --git a/tests/execution_coordination/test_operational_store.py b/tests/execution_coordination/test_operational_store.py
-index d0e1f65..3074927 100644
+index d0e1f65..696dc38 100644
 --- a/tests/execution_coordination/test_operational_store.py
 +++ b/tests/execution_coordination/test_operational_store.py
 @@ -223,11 +223,11 @@ def test_v1_schema_is_preflighted_then_migrated_with_durable_evidence(tmp_path:
@@ -727,21 +767,22 @@ index d0e1f65..3074927 100644
 -        assert migrated.execute("SELECT version FROM operational_schema").fetchone() == (2,)
 -        assert migrated.execute("SELECT from_version, to_version, reversible FROM schema_migrations").fetchone() == (1, 2, 0)
 +        assert migrated.execute("SELECT version FROM operational_schema").fetchone() == (3,)
-+        assert migrated.execute("SELECT from_version, to_version, reversible FROM schema_migrations ORDER BY from_version").fetchall() == [(1, 2, 0), (2, 3, 1)]
++        assert migrated.execute("SELECT from_version, to_version, reversible FROM schema_migrations ORDER BY from_version").fetchall() == [(1, 2, 0), (2, 3, 0)]
  
  
  def test_outbox_executor_marks_unknown_before_send_and_confirms_readback(tmp_path: Path) -> None:
-@@ -429,3 +429,23 @@ def test_a_read_only_open_refuses_a_missing_or_other_schema_database(tmp_path: P
+@@ -429,3 +429,24 @@ def test_a_read_only_open_refuses_a_missing_or_other_schema_database(tmp_path: P
      with pytest.raises(SchemaIncompatible):
          SQLiteOperationalStore(empty, read_only=True)
      assert empty.read_bytes() == b""
 +
 +
-+def test_a_crash_before_the_state_and_its_projection_obligation_commit_leaves_neither(tmp_path: Path) -> None:
-+    """CARD-FOLLOWS-STAGE: the obligation is durable together with the state, or neither is."""
++@pytest.mark.parametrize("table", ["projections", "aggregates"])
++def test_a_crash_before_the_state_and_its_projection_obligation_commit_leaves_neither(tmp_path: Path, table) -> None:
++    """CARD-FOLLOWS-STAGE: the obligation is durable together with the state, or neither is (whichever write fails)."""
 +    store = SQLiteOperationalStore(tmp_path / "outbox.sqlite")
 +    with sqlite3.connect(tmp_path / "outbox.sqlite") as connection:
-+        connection.execute("CREATE TRIGGER crash BEFORE INSERT ON projections BEGIN SELECT RAISE(ABORT, 'crash'); END")
++        connection.execute(f"CREATE TRIGGER crash BEFORE INSERT ON {table} BEGIN SELECT RAISE(ABORT, 'crash'); END")
 +    with pytest.raises(Exception):
 +        store.commit("registry", "factory:item", 0, {"stage": "IMPLEMENT"})
 +    assert store.read_state("registry", "factory:item") == (0, {}) and store.pending_projections("registry") == ()
@@ -786,15 +827,16 @@ index 50fcc5d..68f93b2 100644
 
 The Founder's crash proof:
 
-1. **Crash before the state and its obligation commit: neither exists**
+1. **Crash before the state and its obligation commit: neither exists, whichever write fails**
    (`tests/execution_coordination/test_operational_store.py::test_a_crash_before_the_state_and_its_projection_obligation_commit_leaves_neither`).
 2. **Crash after the commit, before any projection: a fresh projector catches up**
    (`tests/composition/test_worker_launch.py::test_a_crash_after_the_commit_and_before_any_projection_is_caught_up`).
 3. **Crash after the card write, before its acknowledgement: safe replay**
    (`tests/composition/test_worker_launch.py::test_a_crash_after_the_card_write_and_before_its_acknowledgement_replays_safely`): the card shows VERIFY,
-   the obligation stays; the next pass writes VERIFY again, acknowledges and retires.
+   the obligation stays; the next pass writes VERIFY again and retires it.
 4. **A late, older obligation never moves the card backward**
-   (`tests/composition/test_worker_launch.py::test_an_obligation_older_than_the_cards_acknowledged_revision_never_moves_the_card`).
+   (`tests/composition/test_worker_launch.py::test_a_late_older_obligation_never_moves_the_card_backward`): the card at ACCEPT, a late obligation for the
+   PRODUCER's revision; the pass writes ACCEPT.
 
 And:
 
@@ -808,10 +850,13 @@ And:
    `tests/composition/test_worker_launch.py::test_after_a_decision_a_started_item_launches_without_a_ready_card`).
 9. **`work launch` runs inside the projector; `work project` runs one pass**
    (`tests/control_plane/test_cli.py::test_work_launch_runs_inside_the_card_projector_and_work_project_runs_one_pass`).
-10. **Mutations, run exactly by the VERIFIER** (each must fail its named test and pass when reverted):
+10. **Overlapping projectors converge** (`tests/composition/test_worker_launch.py::test_a_projector_overtaken_by_a_newer_commit_reowes_and_the_card_converges`):
+   projector A's VERIFY write is overtaken by a commit to ACCEPT that projector B writes and retires; A's write lands
+   last, A owes the projection again, and the next pass shows ACCEPT.
+11. **Mutations, run exactly by the VERIFIER** (each must fail its named test and pass when reverted):
    - **P1:** in `_commit`, `if aggregate.startswith(PROJECTED):` made `if False:` -> check 2's test.
    - **P2:** `retire_projection`'s `DELETE ... AND revision=?` without the revision condition -> check 5's test.
-   - **P3:** in `project_cards`, `if int(acked.get("revision", -1)) < version:` made `if True:` -> check 4's test.
+   - **P3:** in `project_cards`, the `store.owe_projection(...)` line deleted -> check 10's test.
    - **P4:** in the CLI, `with projection() if projection is not None else nullcontext():` made
      `with nullcontext():` -> check 9's test.
    - **P5:** in `launch`, `projected.stage in ROLE_BY_STAGE` made `projected.stage is LifecycleStage.ACCEPT` ->
@@ -830,20 +875,29 @@ no extra whole-suite runs), and `python3 tools/fitness/check_architecture.py --r
 - READY is still read from the board for a work item's first launch and its priority; no READY or HOLD card state is
   projected (plan authority's item and a later decision).
 - `guard_account`, `_block_dependents` and `record_decision` still read only the READY snapshot.
-- Two projectors running at once (two processes) converge through the compare-and-set acknowledgement and the next
-  pass; within one, the passes are sequential. CLOSURE's own `board-updated` DONE write stays as it is.
-- `projection-diagnostics.jsonl` is not rotated; `_with_started` reads the invocation journal once per started item
-  on every `start()`.
+- Overlapping projectors (a `work project` beside a launch, a refused second launch) can leave an older status on a
+  card for at most one pass before it is repaired (check 10). CLOSURE's own `board-updated` DONE write stays as it is.
+- `projection-diagnostics.jsonl` is not rotated (one line per distinct failure per process); `_with_started` reads
+  the invocation journal once per started item on every `start()`.
+- The 2 -> 3 migration owes an obligation to every existing `factory:` aggregate of every profile; only `registry`
+  obligations are consumed (one row per item elsewhere, never growing). The 2 -> 3 migration is not reversible.
 - After landing, the first writable open of the registry store migrates it to schema 3 (a read-only open before that
   refuses the old schema, as today for any schema change).
 
 ## 4. Evidence and review record
 
 A prototype that is exactly section 2's diff, on `2b47f21` (not the candidate):
-`manual/path-to-done/card-follows-stage/prototype-outbox-on-2b47f21.diff`, sha256 `5b07a777…d62b0`. With it
-the touched test files pass (`targeted-run.log`; then the doctor and offline-proof fixes, each re-run), the
-architecture fitness check passes, and P1-P8 each fail their named test and pass when reverted (`mutations.log`). The
+`manual/path-to-done/card-follows-stage/prototype-outbox-on-2b47f21.diff`, sha256 `8de29664…cd20c`. With it
+the touched test files pass, the architecture fitness check passes, and P1-P8 each fail their named test and pass when
+reverted (`mutations-and-targeted-run.log`). The
 superseded synchronous design is kept as `rev2-synchronous-superseded.diff`.
+
+**Revision 4 (2026-10-09).** REVIEWER of `172a513` (FAIL; D1-D7). D1: overlapping projectors could leave a card
+behind with nothing owed (the acknowledgement fence did not fence the GitHub write); the acknowledgement record is
+gone and a projection overtaken while in flight is owed again (check 10, P3). D2: an item with no linked card is
+retired; diagnostics are written once per distinct failure. D3: the final pass is bounded and skipped while the
+thread still runs. D4: check 1 aborts either write. D5: check 4 uses a realistic late obligation. D6: 2 -> 3 is
+recorded not reversible; unconsumed profiles stated. D7: fresh evidence log.
 
 **Revision 3 (2026-10-09).** Rebuilt on the Founder's outbox decision (section 12) after the follow-up review of
 revision 2 (FAIL: a projection before the commit loses a crashed first launch; no placement inside the launch window
