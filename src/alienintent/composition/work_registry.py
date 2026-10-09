@@ -67,8 +67,8 @@ Configuration document (JSON):
 """
 from __future__ import annotations
 
-from collections.abc import Callable, Iterator, Mapping
-from contextlib import contextmanager
+from collections.abc import Callable, Iterator, Mapping, Sequence
+from contextlib import AbstractContextManager, contextmanager
 from dataclasses import asdict, dataclass, replace
 from datetime import UTC, datetime
 from hashlib import sha256
@@ -133,6 +133,7 @@ from alienintent.execution_coordination.adapters.sqlite_store import PROJECTED, 
 from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, MutationSpecInvalid, parse_mutations
 from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH, PlanAuthority, outside_authority
 from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
 from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, SCOPE_VIOLATION, contained
@@ -162,6 +163,7 @@ from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, G
     ref_safe
 from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+from alienintent.invocation_runtime.application.mutation_harness import MutationHarness, MutationResult
 from alienintent.invocation_runtime.application.real_worker import (
     CLOSURE_ORDERED, EFFECT_UNKNOWN, OWNED_WORK_ACTIVE, OWNER_ALIVE, PUBLICATION_STARTED, RealWorkerProvider)
 from alienintent.invocation_runtime.application.regression_gate import (
@@ -406,17 +408,23 @@ class SourceControlRefPublisher(RefPublisher):
 
 
 def suite_runner(user: str | None, environment: Mapping[str, str]) -> Callable[[Path, Path], int]:
-    """REGRESSION-GATE's suite run: `SUITE` in `folder` with the worker's environment (never the control plane's
-    own) and PYTHONDONTWRITEBYTECODE=1, as the worker through the sudo rule (`worker_prefix`), or directly without a
-    worker user; one process group, stopped at SUITE_WALL_CLOCK, which is `SuiteUnrunnable`. Answers the exit
-    code."""
+    """REGRESSION-GATE's suite run: `SUITE` in `folder` through `command_runner`."""
+    run = command_runner(user, environment)
+    return lambda folder, junit: run(folder, suite(junit))
+
+
+def command_runner(user: str | None, environment: Mapping[str, str]) -> Callable[[Path, Sequence[str]], int]:
+    """One control-plane check command (the suite, or a mutation harness run) in `folder` with the worker's
+    environment (never the control plane's own) and PYTHONDONTWRITEBYTECODE=1, as the worker through the sudo rule
+    (`worker_prefix`), or directly without a worker user; one process group, stopped at SUITE_WALL_CLOCK, which is
+    `SuiteUnrunnable`. Answers the exit code."""
     variables = dict(environment) | {"PYTHONDONTWRITEBYTECODE": "1"}
 
-    def run(folder: Path, junit: Path) -> int:
+    def run(folder: Path, command: Sequence[str]) -> int:
         if user is None:
-            argv, child = suite(junit), variables
+            argv, child = list(command), variables
         else:
-            argv, child = [*worker_prefix(user, variables), *suite(junit)], None
+            argv, child = [*worker_prefix(user, variables), *command], None
         process = subprocess.Popen(argv, cwd=folder, env=child, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                    stderr=subprocess.DEVNULL, start_new_session=True)
         try:
@@ -434,8 +442,50 @@ def suite_runner(user: str | None, environment: Mapping[str, str]) -> Callable[[
                     break
                 except subprocess.TimeoutExpired:
                     continue
-            raise SuiteUnrunnable("the suite outran its wall clock") from None
+            raise SuiteUnrunnable("the run outran its wall clock") from None
     return run
+
+
+# The worker read's own answer that the file does not exist; any other failure (sudo, permissions) is not absence.
+_ABSENT = 3
+
+
+def worker_read_file(user: str, environment: Mapping[str, str]) -> Callable[[Path], bytes]:
+    """A checkout file read as the worker: FileNotFoundError only when the worker's shell proves the file absent
+    (exit `_ABSENT`); any other failure is OSError, which the harness reports as no result."""
+    script = f'if [ -e "$1" ]; then exec cat -- "$1"; else exit {_ABSENT}; fi'
+
+    def read(path: Path) -> bytes:
+        result = run_as_worker(user, environment, ["sh", "-c", script, "sh", str(path)])
+        if result.returncode == _ABSENT:
+            raise FileNotFoundError(str(path))
+        if result.returncode:
+            raise OSError(f"the checkout file cannot be read as the worker (exit {result.returncode}): {path}")
+        return result.stdout
+    return read
+
+
+def revision_has(clone: Path, sha: str, path: str) -> bool:
+    """Whether `path` exists at the revision `sha`, answered by the control plane's own git in `clone`; OSError when
+    git cannot answer (the revision itself is not there, or git fails)."""
+    def git(*argv: str) -> int:
+        try:
+            return subprocess.run(["git", "-C", str(clone), *argv], capture_output=True, check=False,
+                                  timeout=60).returncode
+        except subprocess.TimeoutExpired as error:
+            raise OSError("git did not answer") from error
+    if git("cat-file", "-e", f"{sha}^{{commit}}"):
+        raise OSError(f"the starting revision {sha} is not in the packets clone")
+    # Absence must be proven: `ls-tree` answers 0 with an empty listing only when the path is not in that tree; any
+    # other failure is no answer, never "absent".
+    try:
+        listed = subprocess.run(["git", "-C", str(clone), "ls-tree", "--name-only", sha, "--", path],
+                                capture_output=True, check=False, timeout=60)
+    except subprocess.TimeoutExpired as error:
+        raise OSError("git did not answer") from error
+    if listed.returncode != 0:
+        raise OSError(f"git cannot list {path} at {sha}")
+    return bool(listed.stdout.strip())
 
 
 def _read_junit(path: Path) -> bytes:
@@ -839,6 +889,7 @@ class WorkRegistry:
         journal = JsonlInvocationJournal(root / "invocation-journal.jsonl", time.time)
         closure = RegistryClosure(self, root, journal, preparation, self._landing_authority(journal))
         gate = self._regression_gate(root, user, environment, source, workspaces, handover)
+        harness = self._mutation_harness(root, user, environment, source, workspaces, handover, packets.clone)
         worker = RealWorkerProvider(
             process, source, packets.clone, packets.remote,
             lambda invocation: f"candidate/{ref_safe(invocation.correlation_id)}", root / "verifier",
@@ -846,7 +897,8 @@ class WorkRegistry:
             workspaces, ReservationBook(1, 2), now=time.time,
             sleep=time.sleep, journal=journal, ownership=ownership, preparation=preparation,
             recovered_workspace=recovered, closure=closure, handover=handover, regression_gate=gate,
-            regression_base=preparation.starting.get, protected_paths=self.protected_paths)
+            regression_base=preparation.starting.get, protected_paths=self.protected_paths,
+            mutation_harness=harness, mutations=self._packet_mutations)
         closure.worker = worker
         closure.worker_workspaces = None if user is None else workspaces
         guard = RoleBindingGuard(worker, journal, store, "registry", repository, time.time)
@@ -861,7 +913,22 @@ class WorkRegistry:
         `read_result`, from `<results>/<identity>/`; without one from `<launch>/regression-results/<identity>/`, a
         folder the control plane makes); baselines are cached in `<launch>/regression-baselines`."""
         run = self._suite_run if self._suite_run is not None else suite_runner(user, environment)
+        checkout = self._revision_checkout(source, workspaces, handover)
+        if handover is not None:
+            read = lambda path: handover.read_result(path.parent.name, path.name, limit=SUITE_JUNIT_LIMIT)  # noqa: E731
+            return RegressionGate(run, read, checkout, root / "regression-baselines", handover.results)
 
+        def own(folder: Path, junit: Path) -> int:
+            junit.parent.mkdir(parents=True, exist_ok=True)
+            return run(folder, junit)
+        return RegressionGate(own, _read_junit, checkout, root / "regression-baselines", root / "regression-results")
+
+    @staticmethod
+    def _revision_checkout(source, workspaces: GitWorktreeAdapter | WorkerCloneAdapter,
+                           handover) -> Callable[[str, str], AbstractContextManager[Path]]:
+        """A fresh checkout of a revision by SHA by the producer allocator under `identity`, its revision read (as the
+        worker with one) and checked, removed when the block ends (a refusal is "workspace retained" and changes no
+        decision; without a worker user its branch is deleted after a successful cleanup)."""
         @contextmanager
         def checkout(sha: str, identity: str) -> Iterator[Path]:
             workspace = workspaces.allocate(identity, identity, sha)
@@ -875,16 +942,72 @@ class WorkRegistry:
                     if handover is None:
                         workspaces.remove_branch(workspace)
                 except (CandidateUnavailable, OSError):
-                    pass  # workspace retained; the gate's decision does not depend on it
+                    pass  # workspace retained; the decision does not depend on it
+        return checkout
+
+    def _mutation_harness(self, root: Path, user: str | None, environment: Mapping[str, str], source,
+                          workspaces: GitWorktreeAdapter | WorkerCloneAdapter, handover,
+                          clone: Path) -> MutationHarness:
+        """VERIFICATION-OUTCOME-INTEGRITY's harness for the registry profile, composed as the REGRESSION-GATE is: each
+        checkout is a fresh one of the exact candidate under its own identity (with a worker user the hand-over's
+        custody-checked candidate clone, without one a worktree of the packets clone at the candidate's SHA), removed
+        when the block ends; the same-environment control checks out the starting revision as the gate checks out
+        its baseline; commands run through `command_runner`; result files are read as the gate reads its junit; with
+        a worker user the checkout's files are read and written as the worker. Whether a file exists at the starting
+        revision is asked of the control plane's own git in the packets clone (`revision_has`)."""
+        run, revision_checkout = command_runner(user, environment), self._revision_checkout(source, workspaces, handover)
+        exists_at = lambda sha, path: revision_has(clone, sha, path)  # noqa: E731
+
+        @contextmanager
+        def checkout(candidate: CandidateRef, identity: str) -> Iterator[Path]:
+            revision = candidate.locator.rpartition("@")[2]
+            workspace = handover.candidate_clone("verifier", identity, identity, candidate) if handover is not None \
+                else workspaces.allocate(identity, identity, revision)
+            try:
+                yield workspace.path
+            finally:
+                try:
+                    workspaces.cleanup(workspace, None)
+                    if handover is None:
+                        workspaces.remove_branch(workspace)
+                except (CandidateUnavailable, OSError):
+                    pass  # workspace retained; the harness's decision does not depend on it
 
         if handover is not None:
-            read = lambda path: handover.read_result(path.parent.name, path.name, limit=SUITE_JUNIT_LIMIT)  # noqa: E731
-            return RegressionGate(run, read, checkout, root / "regression-baselines", handover.results)
+            read_file = worker_read_file(user, environment)
 
-        def own(folder: Path, junit: Path) -> int:
-            junit.parent.mkdir(parents=True, exist_ok=True)
-            return run(folder, junit)
-        return RegressionGate(own, _read_junit, checkout, root / "regression-baselines", root / "regression-results")
+            def write_file(path: Path, data: bytes) -> None:
+                script = 'mkdir -p -- "$(dirname -- "$1")" && cat > "$1"'
+                result = run_as_worker(user, environment, ["sh", "-c", script, "sh", str(path)], input=data)
+                if result.returncode:
+                    raise OSError(f"the checkout file cannot be written: {path}")
+            read = lambda path: handover.read_result(path.parent.name, path.name, limit=SUITE_JUNIT_LIMIT)  # noqa: E731
+            return MutationHarness(run, read, checkout, handover.results, revision_checkout=revision_checkout,
+                                   exists_at=exists_at, read_file=read_file, write_file=write_file)
+        results = root / "mutation-results"
+
+        def own(folder: Path, command: Sequence[str]) -> int:
+            for argument in command:  # the result files a run writes: their folder is the control plane's to make
+                if Path(argument).is_relative_to(results):
+                    Path(argument).parent.mkdir(parents=True, exist_ok=True)
+            return run(folder, command)
+        return MutationHarness(own, _read_junit, checkout, results, revision_checkout=revision_checkout,
+                               exists_at=exists_at)
+
+    def _packet_mutations(self, invocation: WorkerInvocation) -> MutationSpec | None:
+        """The mutation spec of the work item's packet at its pinned commit (None when it has none);
+        MutationSpecInvalid when malformed, OSError when the packet cannot be read."""
+        try:
+            record = self.records.show(invocation.work_identity)
+        except Exception as error:  # noqa: BLE001 - an unreadable record is no harness result, never a judgment
+            raise OSError(f"the packet cannot be read: {type(error).__name__}") from error
+        packet = None if record is None else record.packet
+        if packet is None:
+            return None
+        try:
+            return parse_mutations(packet.decode("utf-8"))
+        except UnicodeDecodeError as error:
+            raise MutationSpecInvalid("the packet is not UTF-8") from error
 
     def _landing_authority(self, journal: JsonlInvocationJournal) -> LandingAuthority | None:
         """Only with `"landing": true`: its own landing-scoped credentials (never `_links`'), the coordinator record's
@@ -1290,8 +1413,21 @@ GATE_PASSED = """
 
 REGRESSION-GATE, control-plane evidence already established for you: the whole suite (`tests` and `tools`) ran at the
 baseline {baseline} and at this candidate {revision}; no test that passed at the baseline fails here and no new test
-fails ({receipt}). Do not run the whole suite. Run only the acceptance tests and mutations the package names, and
-narrowly targeted tests when a finding needs them."""
+fails ({receipt}). Do not run the whole suite. Run only the acceptance tests the package names, and narrowly
+targeted tests when a finding needs them."""
+MUTATIONS_RUN = """
+
+MUTATIONS, control-plane evidence already established for you: the control plane ran every packet mutation at this
+candidate; with each mutation its named tests failed, and with the file restored they passed ({receipt}):
+{table}
+Do not apply mutations by hand."""
+REJECT_EVIDENCE = """
+A reject's findings are objects {"finding": "<text>", "evidence": <evidence>}, each with exactly one typed evidence
+that the control plane reproduces on a fresh checkout of this candidate: {"type": "pytest", "node_ids": ["<node id>"]}
+(at least one named test fails), {"type": "reproducer", "name": "test_<name>.py", "source": "<a python test file>"}
+(one of its tests fails), {"type": "fitness", "check": "<check name>"} (that fitness check fails) or {"type": "text",
+"path": "<repository path>", "contains": "<exact text>"} (or "absent" instead of "contains"; true of the file).
+Every finding must reproduce: an unreproduced reject is discarded and VERIFY runs again."""
 VERIFIER_RESULT = """Your current working directory is a fresh clone of the candidate. Verify it against the package.
 Then write .alienintent/verdict.json in that directory as {{"revision": "<the candidate commit, git rev-parse HEAD>",
 "verdict": "accept" or "reject", "findings": ["<finding>", ...]}}; a reject needs at least one finding."""
@@ -1470,8 +1606,8 @@ class LaunchPreparation:
         result = PRODUCER_RESULT.format(self_review=self.self_review_path(invocation.correlation_id)) \
             if invocation.role == PRODUCER else CLOSURE_RESULT.format(
                 request=self.closure_request_path(invocation.correlation_id)) \
-            if invocation.role == CLOSURE else VERIFIER_RESULT if self.worker is None \
-            else WORKER_VERIFIER_RESULT.format(verdict=self._result(invocation.correlation_id, VERDICT))
+            if invocation.role == CLOSURE else VERIFIER_RESULT + REJECT_EVIDENCE if self.worker is None \
+            else WORKER_VERIFIER_RESULT.format(verdict=self._result(invocation.correlation_id, VERDICT)) + REJECT_EVIDENCE
         self.kept[invocation.correlation_id] = (dict(route), INSTRUCTIONS.format(
             role=invocation.role, identity=invocation.work_identity, invocation=invocation.correlation_id,
             package=path, result=result, context=CONTEXT_LINE if self.exports is None else EXPORT_CONTEXT_LINE))
@@ -1511,6 +1647,15 @@ class LaunchPreparation:
             route, text = kept
             self.kept[invocation.correlation_id] = (route, text + GATE_PASSED.format(
                 baseline=baseline, revision=revision, receipt=receipt))
+
+    def mutated(self, invocation: WorkerInvocation, results: tuple[MutationResult, ...], receipt: str) -> None:
+        """Every packet mutation was killed by the control plane's harness for this VERIFIER invocation: the table of
+        mutations and results is added to the session's instructions, so the session applies none by hand."""
+        kept = self.kept.get(invocation.correlation_id)
+        if kept is not None:
+            route, text = kept
+            table = "\n".join(f"- {result.name}: {result.result}" for result in results)
+            self.kept[invocation.correlation_id] = (route, text + MUTATIONS_RUN.format(receipt=receipt, table=table))
 
     def command(self, invocation_id: str, role: object, workspace: Path) -> tuple[list[str], str]:
         """CliWorkerProvider's per-invocation command: the provider command for the kept route and this workspace,

@@ -15,7 +15,8 @@ TAIL = 4000  # characters kept from the end of each stream
 ARGUMENT = 200  # characters kept of each command argument
 CAUSES = ("success", "closed", "accept", "reject", "timeout", "network-or-provider", "authentication",
           "launcher-or-runtime", "malformed-verdict", "cancellation", "unknown")
-_RESULTS = frozenset({"success", "closed", "accept", "reject"})
+_RESULTS = frozenset({"success", "closed", "accept", "reject", "verification-evidence-invalid",
+                      "mutation-harness-unavailable"})
 _AUTHENTICATION = re.compile(r"unauthori[sz]ed|forbidden|not logged in|log ?in required|authentication failed|"
                              r"invalid api key|token (?:has )?expired", re.I)
 _SESSION = re.compile(r"session[ _]id\"?\s*[:=]\s*\"?([0-9A-Za-z]{8}(?:-[0-9A-Za-z]{4,12}){1,4})", re.I)
