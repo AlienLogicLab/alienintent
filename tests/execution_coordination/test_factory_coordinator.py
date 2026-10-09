@@ -118,6 +118,40 @@ def _coordinator(tmp_path: Path, items, outcomes):
     return coordinator.FactoryCoordinator(SQLiteOperationalStore(tmp_path / "run.sqlite"), MemoryWorkManagement(items), worker, artifacts, "offline"), worker, artifacts
 
 
+def test_no_change_producer_result_reworks_without_a_verifier(tmp_path: Path) -> None:
+    coordinator_module, custody, _, provider = _api()
+    item = _attempts("unchanged", 0, 0, maximum_attempts=3)
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+
+    class NoChangeWorker(ScriptedWorker):
+        def start(self, invocation, context, grants, budget):
+            assert invocation.role == provider.PRODUCER
+            self.invocations.append((invocation.work_identity, invocation.role, invocation.correlation_id))
+            outcome = provider.WorkerOutcome(provider.NO_CHANGE, findings=("no-change-candidate:unchanged",))
+            self.observed[invocation.correlation_id] = outcome
+            return outcome
+
+    worker = NoChangeWorker(artifacts, {})
+    coordinator = coordinator_module.FactoryCoordinator(
+        SQLiteOperationalStore(tmp_path / "run.sqlite"), MemoryWorkManagement([item]), worker, artifacts, "offline")
+    for count in (1, 2, 3):
+        coordinator.launch(item.identity)
+        state = coordinator.state(item.identity)
+        assert state.stage is LifecycleStage.IMPLEMENT and state.candidate is None
+        assert (state.implement_cycles, state.verify_cycles) == (1, 0)
+        assert state.record["rejections"] == count
+        assert len(state.record["findings"]) == count
+        assert all(entry["source"] == "producer" for entry in state.record["findings"])
+        assert all(role == provider.PRODUCER for _, role, _ in worker.invocations)
+        if count == 1:
+            version = state.version
+        assert state.version == version == 0
+        assert len(worker.invocations) == count
+        assert state.outcome == ("failure" if count == 3 else "rework")
+        if count == 3:
+            assert state.record["hold_reason"] == "attempt-budget-exhausted"
+
+
 def test_loop_drains_priority_backlog_and_skips_failure_and_timeout(tmp_path: Path) -> None:
     coordinator, worker, _ = _coordinator(tmp_path, [_item("bad", 0, 1), _item("slow", 1, 2), _item("good", 2, 3)], {"bad": ["failure"], "slow": ["timeout"], "good": ["success"]})
     summary = coordinator.start()
