@@ -1,7 +1,7 @@
 # Work unit: the VERIFIER consumes the regression gate's whole-suite result and never reruns the suite
 
 **Label:** `VERIFIER-CONSUMES-REGRESSION-GATE-EVIDENCE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 1, 2026-10-09, for independent review. Not registered, not assessed, not released.
+**Status:** Revision 2, 2026-10-09. Reviewed (PASS). Not registered, not assessed, not released.
 **Position on the path (Founder 2026-10-09, decisions sections 13 and 15):** VERIFIER-CONSUMES-REGRESSION-GATE-EVIDENCE
 -> NO-CHANGE -> PLAN-AUTHORITY-INHERITANCE -> BOUNDED-ROUTINE-LAUNCH -> terminal board statuses + schema hardening ->
 Work Preparation / READY refill -> three-item autonomy proof.
@@ -15,7 +15,7 @@ Work Preparation / READY refill -> three-item autonomy proof.
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-1",
+ "version": "revision-2",
  "intent": "The REGRESSION-GATE is the sole owner of whole-suite execution. When it passes for a VERIFIER invocation, its result (baseline, candidate, no regression, receipt) is added to the VERIFIER session's instructions before the session starts, with the rule not to run the whole suite and to run only the package's acceptance tests and mutations and narrowly targeted tests a finding needs. When the gate produces no result (`feature-regressions-missing`), no session starts and the item takes the typed, bounded VERIFIER infrastructure retry; a missing result is never compensated by a whole-suite run.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -108,7 +108,10 @@ untyped "not attributable" hold needing the Founder.
   statement and receipt; "Do not run the whole suite"; what to run instead) to the kept instruction text, which
   `command` hands to the session when it starts.
 - `worker_provider.py`: `feature-regressions-missing` joins `VERIFIER_INFRASTRUCTURE`, so it takes the typed, bounded
-  VERIFIER retry and then the typed hold `verifier-infrastructure-exhausted:feature-regressions-missing`.
+  VERIFIER retry and then the typed hold `verifier-infrastructure-exhausted:feature-regressions-missing`. In the
+  registry it comes only from the gate. In a profile without a gate (sandbox) `read_verdict` also returns it after a
+  session whose receipt beside the verdict is absent or invalid; that case also changes from the hold
+  `verifier-outcome-not-attributable:feature-regressions-missing` to the retry.
 
 ```diff
 diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
@@ -145,10 +148,10 @@ index 7ba7572..08514b7 100644
          """CliWorkerProvider's per-invocation command: the provider command for the kept route and this workspace,
          and the instruction text for standard input."""
 diff --git a/src/alienintent/execution_coordination/ports/worker_provider.py b/src/alienintent/execution_coordination/ports/worker_provider.py
-index aaccd80..bf02c41 100644
+index aaccd80..3d1a824 100644
 --- a/src/alienintent/execution_coordination/ports/worker_provider.py
 +++ b/src/alienintent/execution_coordination/ports/worker_provider.py
-@@ -16,10 +16,13 @@ PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
+@@ -16,10 +16,14 @@ PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
  # re-dispatched once under the composed replacement allowance.
  MISSING_TERMINAL_RESULT = "missing-terminal-result"
  # VERIFIER outcomes that carry no engineering judgment: the session ended without a valid verdict (its process failed
@@ -156,9 +159,10 @@ index aaccd80..bf02c41 100644
 -# VERIFIER on the same candidate; only a valid REJECT is a rejection. A candidate that cannot be retrieved
 -# (`candidate-unavailable`) is a custody refusal, not infrastructure: it still holds.
 -VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "verdict-malformed", "verdict-miscorrelated"})
-+# or timed out, or it left no verdict, a malformed one or one for another revision), or the REGRESSION-GATE produced
-+# no whole-suite result (`feature-regressions-missing`): the gate alone owns whole-suite execution, so a missing result
-+# is never compensated by a session running the suite. The coordinator retries the VERIFIER on the same candidate; only
++# or timed out, or it left no verdict, a malformed one or one for another revision), or the feature-regression
++# receipt is absent or invalid (`feature-regressions-missing`: the REGRESSION-GATE produced no whole-suite result, or,
++# in a profile without a gate, the receipt beside the verdict): the gate alone owns whole-suite execution, so a missing
++# result is never compensated by a session running the suite. The coordinator retries the VERIFIER on the same candidate; only
 +# a valid REJECT is a rejection. A candidate that cannot be retrieved (`candidate-unavailable`) is a custody refusal,
 +# not infrastructure: it still holds.
 +VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "verdict-malformed", "verdict-miscorrelated",
@@ -261,9 +265,12 @@ src/alienintent --check all` passes.
 ## 4. Evidence and review record
 
 A prototype that is exactly section 2's diff, on `b097ee3`: `manual/path-to-done/verifier-gate-evidence/
-prototype-on-b097ee3.diff`, sha256 `ee4ed86a…825fc`. The touched test files (`test_worker_launch.py`,
+prototype-on-b097ee3.diff`, sha256 `cb0959f0…24050`. The touched test files (`test_worker_launch.py`,
 `test_regression_gate.py`, `test_runtime.py`, `test_role_orchestration.py`, `test_factory_coordinator.py`,
 `test_lifecycle_capstone.py`) pass (264), the architecture fitness check passes, and G1-G3 each fail their named test and
 pass when reverted (`mutations-and-targeted-run.log`).
+
+**Revision 2 (2026-10-09).** REVIEWER of `1c0b009` (PASS; low defect 1 fixed: the comment and section 2 name the sandbox
+source of `feature-regressions-missing`). Defects 2-4 informational.
 
 **Revision 1 (2026-10-09).** First draft, from the Founder's decisions (sections 13 and 15).
