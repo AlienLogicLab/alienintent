@@ -1,7 +1,7 @@
 # Work unit: the board card follows canonical work state through a durable projection outbox
 
-**Label:** `CARD-FOLLOWS-STAGE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 5, 2026-10-09, for follow-up review. Not registered, not assessed, not released.
+**Label:** `CARD-FOLLOWS-STAGE` (a document label; permanent id `3e139902-d526-45e6-8187-46be75b5c366`).
+**Status:** Revision 5 (work item `3e139902-d526-45e6-8187-46be75b5c366`, at CAPTURE), 2026-10-09. Reviewed (follow-up check PASS). Not approved, not assessed, not released.
 **Position on the path (Founder 2026-10-09, decisions sections 10 and 12):** VERIFIER-RETRY (done, `2b47f21`) ->
 CARD-FOLLOWS-STAGE -> NO-CHANGE -> PLAN-AUTHORITY-INHERITANCE -> BOUNDED-ROUTINE-LAUNCH -> Work Preparation / READY
 refill -> three-item autonomy proof.
@@ -15,7 +15,7 @@ truth; projection is eventually consistent, revision-fenced and non-blocking.**
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "3e139902-d526-45e6-8187-46be75b5c366",
  "version": "revision-5",
  "intent": "Each registry work item's GitHub Project card shows its canonical stage through a durable projection outbox: every committed state of a work item's execution aggregate leaves a projection obligation in the same store transaction; a card projector, running beside each launch and on its own (`work project`), projects the item's CURRENT canonical stage to its linked card, reads it back and retires the obligation; an attempted projection overtaken by a newer commit while in flight is owed again, so the card converges to the current canonical stage. The coordinator never calls GitHub; projection is eventually consistent, revision-fenced and non-blocking. A started work item launches from its registry record at any stage, so execution never depends on the card staying READY. The board reflects canonical Work state; it does not determine canonical Work state.",
  "satisfied_requirement_ids": [
