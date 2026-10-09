@@ -59,7 +59,7 @@ def test_doctor_rejects_persistence_whose_migration_has_not_settled(tmp_path: Pa
         connection.execute("CREATE TABLE operational_schema (version INTEGER NOT NULL)")
         connection.execute("INSERT INTO operational_schema VALUES (1)")
     observed = _preflight(database)
-    assert (observed.current_version, observed.migration) == (1, (1, 2))
+    assert (observed.current_version, observed.migration) == (1, (1, 3))
 
     report = _doctor(tmp_path, persistence_database=database)
 

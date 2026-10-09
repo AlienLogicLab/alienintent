@@ -77,6 +77,7 @@ import shutil
 import signal
 import subprocess
 import sysconfig
+import threading
 import time
 from types import SimpleNamespace
 from uuid import uuid4
@@ -121,7 +122,7 @@ from alienintent.execution_coordination.adapters.github_repository_api import Gi
 from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
 from alienintent.execution_coordination.adapters.release_admission import (
     GitRevisionResolver, StoredReleaseAuthorizations)
-from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERSION, SQLiteOperationalStore
+from alienintent.execution_coordination.adapters.sqlite_store import PROJECTED, SCHEMA_VERSION, SQLiteOperationalStore
 from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
@@ -172,6 +173,12 @@ OWNERS = {NO_LINK: WORK_PREPARATION, NOT_ELIGIBLE: WORK_PREPARATION, ASSESSMENT_
           CONTRACT_INVALID: WORK_PREPARATION, DISPLAY_DIFFERS: WORK_PREPARATION, ROW_REFUSED: OPERATOR}
 # The shared Factory Director host configuration whose `wipLimit` is the WIP limit (bin/alienintent.mjs reads it too).
 HOST_CONFIGURATION = Path("~/.config/alienintent/factory-director-host.json")
+# The canonical stages a work item's card shows, where a failed card write is recorded, and how often a running launch
+# catches the board up. The board reflects canonical work state; it does not determine it.
+CARD_STAGES = frozenset({"IMPLEMENT", "VERIFY", "ACCEPT", "DONE"})
+PROJECTION_DIAGNOSTICS = "projection-diagnostics.jsonl"
+CARD_PROJECTION_SECONDS = 5.0
+CARD_FINAL_PASS_SECONDS = 30.0
 # Every registry token is scoped: `work link`, `work display` and the READY view need these, for the one repository.
 DISPLAY_PERMISSIONS = dict(REQUIRED_PERMISSIONS) | {"metadata": "read"}
 MAX_SAFE_INTEGER = 2 ** 53 - 1  # the Number.isSafeInteger bound of bin/alienintent.mjs; a JSON 1.0 is not an integer here
@@ -463,6 +470,7 @@ class WorkRegistry:
         self.authorization = self._authorization(configuration) if self.assessment is not None else None
         self.completion = self._completion(configuration) if self.assessment is not None else None
         self.links = self._links(configuration.github, transport) if configuration.github is not None else None
+        self._diagnosed: set[tuple[object, ...]] = set()  # card projection failures already recorded, once each
         self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
             else None
         # Each role's context package (unit 6c-1) over the `readiness` store and evidence folder; its command names
@@ -569,6 +577,99 @@ class WorkRegistry:
         dispatch, then RoleBindingGuard. Its state lives beside the `readiness` database, in `launch/`. No other
         configuration is read; the model routing file is read by `prepare` at every launch."""
         return self._launch_chain()[0]
+
+    def project_cards(self, deadline: float | None = None) -> int:
+        """One pass of the card projector over the outstanding projection obligations only: each work item's card is
+        set to the item's CURRENT canonical stage (IMPLEMENT, VERIFY, ACCEPT, DONE) and read back, then the obligation
+        is retired. An obligation carries no status, so a late one never writes an older stage. If a newer commit
+        landed while an attempted write was in flight (another projector may have written and retired the newer stage
+        first; the write may have landed although its read-back failed), the projection is owed again, so the next pass
+        writes the newest stage. A change GitHub applies only after its answer was lost (a client timeout) and after a
+        newer stage was retired can leave an older status until the item's next commit: GitHub has no compare-and-set.
+        A failed write stays outstanding; an item with no linked card is retired after one diagnostic. Stops at
+        `deadline` (time.monotonic), leaving the rest outstanding. Never changes canonical state; answers the number
+        of obligations retired."""
+        if self.links is None or self.assessment is None:
+            return 0
+        store, retired = self.store, 0
+        for aggregate, revision in store.pending_projections("registry"):
+            if deadline is not None and time.monotonic() > deadline:
+                break
+            identity = aggregate.removeprefix(PROJECTED)
+            version, raw = store.read_state("registry", aggregate)
+            stage = raw.get("stage")
+            if stage in CARD_STAGES:
+                written = self._project_card(identity, str(stage), version)
+                now, _ = store.read_state("registry", aggregate)
+                if written is not None and now != version:
+                    store.owe_projection("registry", aggregate, now)  # an attempted write overtaken while in flight
+                    continue
+                if written is False:
+                    continue  # outstanding: the next pass writes the then-current stage
+            retired += store.retire_projection("registry", aggregate, revision)
+        return retired
+
+    @contextmanager
+    def card_projection(self, interval: float = CARD_PROJECTION_SECONDS):
+        """The card projector around one launch: a pass now, a pass every `interval` seconds while the launch runs (so a
+        PRODUCER's IMPLEMENT shows while it works), and, if the running pass has finished, a pass at the end that stops
+        starting items after CARD_FINAL_PASS_SECONDS (the thread wait and an item already in flight add their own
+        transport timeouts). A pass that fails is recorded and the next one retries; nothing here reaches the launch."""
+        stop = threading.Event()
+
+        def passes() -> None:
+            while True:
+                self._card_pass()
+                if stop.wait(interval):
+                    return
+        runner = threading.Thread(target=passes, name="card-projection", daemon=True)
+        runner.start()
+        try:
+            yield
+        finally:
+            stop.set()
+            runner.join(interval + 30)
+            if not runner.is_alive():
+                self._card_pass(time.monotonic() + CARD_FINAL_PASS_SECONDS)
+
+    def _card_pass(self, deadline: float | None = None) -> None:
+        try:
+            self.project_cards(deadline)
+        except Exception as error:  # noqa: BLE001 - the board lags canonical state; it never stops a launch
+            self._projection_diagnostic(None, None, None, None, -1, f"pass failed: {type(error).__name__}: {error}")
+
+    def _project_card(self, identity: str, stage: str, revision: int) -> bool | None:
+        """`stage` written to the card linked to `identity` and read back by `write_status`: True when it reads back,
+        None when the item has no linked card (nothing to project), False otherwise (an exception, another status read
+        back). Each distinct failure is appended once to `launch/projection-diagnostics.jsonl`."""
+        card, answered, error = None, -1, None
+        try:
+            record = self.records.show(identity)
+            card = None if record is None else record.item.card_id
+            if card is not None:
+                answered = self.links.board.write_status(card, stage, revision)
+        except Exception as raised:  # noqa: BLE001 - a projection failure is a diagnostic, never a launch failure
+            error = f"{type(raised).__name__}: {raised}"
+        if answered == revision:
+            return True
+        self._projection_diagnostic(identity, card, stage, revision, answered, error if error is not None else
+                                    "no linked card" if card is None else "read back another status")
+        return None if card is None and error is None else False
+
+    def _projection_diagnostic(self, identity, card, stage, revision, answered, error) -> None:
+        key = (identity, revision, error)
+        if key in self._diagnosed:
+            return
+        self._diagnosed.add(key)
+        try:
+            folder = launch_root(self.configuration)
+            folder.mkdir(parents=True, exist_ok=True)
+            with (folder / PROJECTION_DIAGNOSTICS).open("a", encoding="utf-8") as log:
+                log.write(json.dumps({"at": datetime.now(UTC).isoformat(), "identity": identity, "card": card,
+                                      "state": stage, "revision": revision, "answered": answered,
+                                      "error": error}) + "\n")
+        except OSError:
+            pass  # a diagnostic that cannot be written is not a launch failure either
 
     @property
     def store(self) -> OperationalStore:

@@ -21,7 +21,11 @@ from alienintent.execution_coordination.ports.fenced_store import (
     ConsumerReceipt, EffectConfirmation, FencedOperationalStore, GuardVector,
 )
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 3
+# The work items' execution aggregates: each committed state of one leaves a projection obligation (its revision) in
+# the same transaction, so a downstream display is caught up from the outstanding obligations alone.
+PROJECTED = "factory:"
+_PROJECTIONS = "CREATE TABLE projections (profile TEXT NOT NULL, aggregate TEXT NOT NULL, revision INTEGER NOT NULL, PRIMARY KEY(profile, aggregate));"
 _FENCED = "__fenced__:"
 
 
@@ -87,7 +91,8 @@ class SQLiteOperationalStore(FencedOperationalStore):
                 CREATE TABLE fences (profile TEXT NOT NULL, scope TEXT NOT NULL, resource_key TEXT NOT NULL, fence INTEGER NOT NULL, PRIMARY KEY(profile, scope, resource_key));
                 CREATE TABLE effects (profile TEXT NOT NULL, identity TEXT NOT NULL, aggregate TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL, receipt TEXT, PRIMARY KEY(profile, identity));
                 CREATE TABLE schema_migrations (from_version INTEGER NOT NULL, to_version INTEGER NOT NULL, reversible INTEGER NOT NULL, PRIMARY KEY(from_version, to_version));
-                INSERT INTO operational_schema VALUES (2);
+                """ + _PROJECTIONS + """
+                INSERT INTO operational_schema VALUES (3);
                 COMMIT;
             """)
 
@@ -113,20 +118,24 @@ class SQLiteOperationalStore(FencedOperationalStore):
             raise SchemaIncompatible(f"database schema {version} is newer than supported {SCHEMA_VERSION}")
         if version == SCHEMA_VERSION:
             return SchemaPreflight(version, None)
-        if version == 1:
-            return SchemaPreflight(version, (1, 2))
+        if version in (1, 2):
+            return SchemaPreflight(version, (version, SCHEMA_VERSION))
         raise SchemaIncompatible(f"database schema {version} has no safe migration to {SCHEMA_VERSION}")
 
     @staticmethod
     def _migrate(connection: sqlite3.Connection, from_version: int, to_version: int) -> None:
-        if (from_version, to_version) != (1, 2):
+        if from_version not in (1, 2) or to_version != 3:
             raise SchemaIncompatible(f"database schema {from_version} has no safe migration to {to_version}")
-        connection.executescript("""
-            BEGIN IMMEDIATE;
+        to_two = """
             ALTER TABLE receipts ADD COLUMN status TEXT NOT NULL DEFAULT 'applied';
             CREATE TABLE schema_migrations (from_version INTEGER NOT NULL, to_version INTEGER NOT NULL, reversible INTEGER NOT NULL, PRIMARY KEY(from_version, to_version));
             INSERT INTO schema_migrations VALUES (1, 2, 0);
-            UPDATE operational_schema SET version=2;
+        """ if from_version == 1 else ""
+        # 2 -> 3 only adds the projection obligations; every existing state is owed one, so a display catches up.
+        connection.executescript("BEGIN IMMEDIATE;" + to_two + _PROJECTIONS + """
+            INSERT INTO projections SELECT profile, identity, version FROM aggregates WHERE identity LIKE 'factory:%';
+            INSERT INTO schema_migrations VALUES (2, 3, 0);
+            UPDATE operational_schema SET version=3;
             COMMIT;
         """)
 
@@ -194,7 +203,25 @@ class SQLiteOperationalStore(FencedOperationalStore):
             raise VersionConflict(f"expected version {expected_version}, found {actual}")
         version = actual + 1
         connection.execute("INSERT INTO aggregates VALUES (?, ?, ?, ?) ON CONFLICT(profile, identity) DO UPDATE SET version=excluded.version, state=excluded.state", (profile, aggregate, version, json.dumps(state, sort_keys=True)))
+        if aggregate.startswith(PROJECTED):  # the projection obligation, durable together with the state
+            connection.execute("INSERT INTO projections VALUES (?, ?, ?) ON CONFLICT(profile, aggregate) DO UPDATE SET revision=excluded.revision", (profile, aggregate, version))
         return version
+
+    def pending_projections(self, profile: str) -> tuple[tuple[str, int], ...]:
+        """The outstanding projection obligations (aggregate, revision), from the obligations alone (no history)."""
+        with self._read() as connection:
+            rows = connection.execute("SELECT aggregate, revision FROM projections WHERE profile=? ORDER BY aggregate", (profile,)).fetchall()
+            return tuple((row["aggregate"], row["revision"]) for row in rows)
+
+    def owe_projection(self, profile: str, aggregate: str, revision: int) -> None:
+        """An obligation owed again (a projection overtaken by a newer commit), never lowering an outstanding one."""
+        with self._transaction() as connection:
+            connection.execute("INSERT INTO projections VALUES (?, ?, ?) ON CONFLICT(profile, aggregate) DO UPDATE SET revision=MAX(revision, excluded.revision)", (profile, aggregate, revision))
+
+    def retire_projection(self, profile: str, aggregate: str, revision: int) -> bool:
+        """Retire the obligation only if it is still for `revision`: a newer commit's obligation stays outstanding."""
+        with self._transaction() as connection:
+            return connection.execute("DELETE FROM projections WHERE profile=? AND aggregate=? AND revision=?", (profile, aggregate, revision)).rowcount == 1
 
     def read_state(self, profile: str, aggregate: str) -> tuple[int, dict[str, object]]:
         with self._read() as connection:

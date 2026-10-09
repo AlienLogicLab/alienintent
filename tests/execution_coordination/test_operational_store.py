@@ -223,11 +223,11 @@ def test_v1_schema_is_preflighted_then_migrated_with_durable_evidence(tmp_path: 
     """)
     connection.close()
 
-    assert SQLiteOperationalStore.preflight(path).migration == (1, 2)
+    assert SQLiteOperationalStore.preflight(path).migration == (1, 3)
     SQLiteOperationalStore(path)
     with sqlite3.connect(path) as migrated:
-        assert migrated.execute("SELECT version FROM operational_schema").fetchone() == (2,)
-        assert migrated.execute("SELECT from_version, to_version, reversible FROM schema_migrations").fetchone() == (1, 2, 0)
+        assert migrated.execute("SELECT version FROM operational_schema").fetchone() == (3,)
+        assert migrated.execute("SELECT from_version, to_version, reversible FROM schema_migrations ORDER BY from_version").fetchall() == [(1, 2, 0), (2, 3, 0)]
 
 
 def test_outbox_executor_marks_unknown_before_send_and_confirms_readback(tmp_path: Path) -> None:
@@ -429,3 +429,24 @@ def test_a_read_only_open_refuses_a_missing_or_other_schema_database(tmp_path: P
     with pytest.raises(SchemaIncompatible):
         SQLiteOperationalStore(empty, read_only=True)
     assert empty.read_bytes() == b""
+
+
+@pytest.mark.parametrize("table", ["projections", "aggregates"])
+def test_a_crash_before_the_state_and_its_projection_obligation_commit_leaves_neither(tmp_path: Path, table) -> None:
+    """CARD-FOLLOWS-STAGE: the obligation is durable together with the state, or neither is (whichever write fails)."""
+    store = SQLiteOperationalStore(tmp_path / "outbox.sqlite")
+    with sqlite3.connect(tmp_path / "outbox.sqlite") as connection:
+        connection.execute(f"CREATE TRIGGER crash BEFORE INSERT ON {table} BEGIN SELECT RAISE(ABORT, 'crash'); END")
+    with pytest.raises(Exception):
+        store.commit("registry", "factory:item", 0, {"stage": "IMPLEMENT"})
+    assert store.read_state("registry", "factory:item") == (0, {}) and store.pending_projections("registry") == ()
+
+
+def test_projection_obligations_are_one_per_work_item_and_retire_only_at_their_revision(tmp_path: Path) -> None:
+    store = SQLiteOperationalStore(tmp_path / "outbox.sqlite")
+    store.commit("registry", "factory:item", 0, {"stage": "IMPLEMENT"})
+    store.commit("registry", "factory:item", 1, {"stage": "VERIFY"})
+    store.commit("registry", "decision-inbox", 0, {"open": {}})
+    assert store.pending_projections("registry") == (("factory:item", 2),)
+    assert store.retire_projection("registry", "factory:item", 1) is False  # a newer commit's obligation stays
+    assert store.retire_projection("registry", "factory:item", 2) is True and store.pending_projections("registry") == ()

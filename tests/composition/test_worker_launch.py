@@ -25,6 +25,7 @@ from alienintent.composition import work_registry
 from alienintent.composition.model_routing import provider_command
 from alienintent.composition.work_registry import WorkRegistry, launch_root, load_project_configuration
 from alienintent.control_plane.application.operator import exclusive_launch_work
+from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.execution_coordination.domain.release import ReleaseSource
 from alienintent.invocation_runtime.adapters.git_worktree import ref_safe
@@ -2126,3 +2127,167 @@ def test_a_new_candidate_starts_with_no_verifier_retries(fx):
         fx.launch(item.id)
         state = fx.loaded().coordinator(None, None).state(item.id)
         assert (state.outcome, state.record["verifier_retries"]) == ("verifier-retry", retries)
+
+
+# --- CARD-FOLLOWS-STAGE: canonical state -> durable obligation -> card projector -> read-back -> retired ----------
+# The board reflects canonical Work state; it does not determine canonical Work state.
+
+def _card_writes(monkeypatch) -> list[str]:
+    written: list[str] = []
+    project = work_registry.WorkRegistry._project_card
+
+    def recording(self, identity, stage, revision):
+        written.append(stage)
+        return project(self, identity, stage, revision)
+    monkeypatch.setattr(work_registry.WorkRegistry, "_project_card", recording)
+    return written
+
+
+def _pending(closing: Closing) -> tuple:
+    return closing.fx.store.pending_projections("registry")
+
+
+def test_the_card_follows_the_canonical_stage_and_launch_never_needs_it_ready(closing, monkeypatch):
+    """IMPLEMENT is projectable while the PRODUCER works (its obligation is committed before the worker starts); the
+    next launches run although the card is no longer READY."""
+    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
+    item = closing.fx.authorized("UNIT", **FIXED)
+    written = _card_writes(monkeypatch)
+    start = RealWorkerProvider.start
+    mid_run = []
+
+    def projected_first(self, invocation, *args, **kwargs):  # the projector's pass while the worker runs
+        if invocation.role == "PRODUCER":
+            closing.fx.loaded().project_cards()
+            mid_run.append(closing.card(item.id))
+        return start(self, invocation, *args, **kwargs)
+    monkeypatch.setattr(RealWorkerProvider, "start", projected_first)
+    with closing.fx.loaded().card_projection(interval=60):
+        closing.fx.launch(item.id)
+    assert mid_run == ["IMPLEMENT"] and closing.card(item.id) == "VERIFY" and _pending(closing) == ()
+    with closing.fx.loaded().card_projection(interval=60):
+        closing.fx.launch(item.id)  # the card says VERIFY: resolved from the registry record
+    assert closing.state(item.id).stage is LifecycleStage.ACCEPT and closing.card(item.id) == "ACCEPT"
+    closing.close(item.id)
+    closing.fx.loaded().project_cards()
+    assert closing.card(item.id) == "DONE" and written == ["IMPLEMENT", "VERIFY", "ACCEPT", "DONE"]
+
+
+def test_a_crash_after_the_commit_and_before_any_projection_is_caught_up(closing):
+    item = closing.fx.authorized("UNIT", **FIXED)
+    closing.fx.launch(item.id)  # no projector ran: the process "crashed" after its commits
+    assert closing.card(item.id) == "READY" and [a for a, _ in _pending(closing)] == [f"factory:{item.id}"]
+    assert closing.fx.loaded().project_cards() == 1  # a fresh projector
+    assert closing.card(item.id) == "VERIFY" and _pending(closing) == ()
+
+
+def test_a_crash_after_the_card_write_and_before_its_acknowledgement_replays_safely(closing, monkeypatch):
+    """The obligation is retired only after the card reads back; a crash in between leaves it outstanding and the
+    next pass writes the same status again."""
+    item = closing.fx.authorized("UNIT", **FIXED)
+    closing.fx.launch(item.id)
+    written = _card_writes(monkeypatch)
+    retire = SQLiteOperationalStore.retire_projection
+
+    def crashing(self, profile, aggregate, revision):
+        raise RuntimeError("crash before the acknowledgement")
+    monkeypatch.setattr(SQLiteOperationalStore, "retire_projection", crashing)
+    with pytest.raises(RuntimeError):
+        closing.fx.loaded().project_cards()
+    assert closing.card(item.id) == "VERIFY" and len(_pending(closing)) == 1  # written, not acknowledged
+    monkeypatch.setattr(SQLiteOperationalStore, "retire_projection", retire)
+    assert closing.fx.loaded().project_cards() == 1
+    assert written == ["VERIFY", "VERIFY"] and closing.card(item.id) == "VERIFY" and _pending(closing) == ()
+
+
+def test_a_late_older_obligation_never_moves_the_card_backward(closing, monkeypatch):
+    """An obligation carries no status: a late one for an old revision projects the CURRENT canonical stage."""
+    item = closing.accepted()
+    closing.fx.loaded().project_cards()
+    assert closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
+    with sqlite3.connect(closing.fx.store.path) as connection:  # a late obligation for the PRODUCER's revision
+        connection.execute("INSERT INTO projections VALUES ('registry', ?, 1)", (f"factory:{item.id}",))
+    written = _card_writes(monkeypatch)
+    assert closing.fx.loaded().project_cards() == 1
+    assert written == ["ACCEPT"] and closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
+
+
+def test_a_card_write_that_does_not_read_back_stays_outstanding_with_a_durable_diagnostic(closing):
+    item = closing.fx.authorized("UNIT", **FIXED)
+    closing.fx.launch(item.id)
+    closing.ignore_status = True  # the board answers the write but keeps its Status
+    assert closing.fx.loaded().project_cards() == 0
+    assert closing.card(item.id) == "READY" and len(_pending(closing)) == 1
+    path = launch_root(closing.fx.loaded().configuration) / "projection-diagnostics.jsonl"
+    [record] = [json.loads(line) for line in path.read_text().splitlines()]
+    assert (record["identity"], record["state"], record["answered"], record["error"]) == (
+        item.id, "VERIFY", -1, "read back another status")
+    closing.ignore_status = False
+    assert closing.fx.loaded().project_cards() == 1 and closing.card(item.id) == "VERIFY"
+
+
+def test_after_a_decision_a_started_item_launches_without_a_ready_card(closing, monkeypatch):
+    """A recorded decision drops the item's `correlation`; it is resolved from its PRODUCER's launch."""
+    item = closing.accepted()
+    monkeypatch.setattr(LandingAuthority, "land", lambda self, order: "refused:fixture")
+    closing.close(item.id)
+    closing.fx.loaded().project_cards()
+    assert closing.state(item.id).outcome == "authority-block" and closing.card(item.id) == "ACCEPT"
+    assert closing.fx.loaded().decide(item.id, "authorize", QUOTE)["answer"] is None
+    assert closing.state(item.id).record.get("correlation") is None
+    sessions = len(closing.fx.runs("CLOSURE"))
+    closing.close(item.id)
+    assert len(closing.fx.runs("CLOSURE")) == sessions + 1
+
+
+def test_start_runs_a_started_item_whose_card_has_moved_on(closing):
+    item = closing.fx.authorized("UNIT", **FIXED)
+    closing.fx.launch(item.id)
+    closing.fx.loaded().project_cards()
+    assert closing.card(item.id) == "VERIFY"  # not on the READY board any more
+    closing.fx.loaded(Owners("terminated")).launcher().start()  # VERIFIER, then CLOSURE, in one call
+    assert closing.state(item.id).stage is LifecycleStage.DONE
+
+
+def test_a_projector_overtaken_by_a_newer_commit_reowes_and_the_card_converges(closing, monkeypatch):
+    """Two projectors overlap: B writes and retires the newer stage while A's older write is still in flight; A's
+    write lands last, so A re-owes the projection and the next pass shows the newest canonical stage."""
+    item = closing.fx.authorized("UNIT", **FIXED)
+    closing.fx.launch(item.id)  # VERIFY, not yet projected
+    project = work_registry.WorkRegistry._project_card
+    overtaken = []
+
+    def in_flight(self, identity, stage, revision):
+        if not overtaken:
+            overtaken.append(stage)
+            closing.fx.launch(item.id)  # a newer commit: ACCEPT
+            assert closing.fx.loaded().project_cards() == 1  # projector B: ACCEPT written, obligation retired
+        return project(self, identity, stage, revision)  # A's VERIFY lands last
+    monkeypatch.setattr(work_registry.WorkRegistry, "_project_card", in_flight)
+    closing.fx.loaded().project_cards()  # projector A
+    assert overtaken == ["VERIFY"] and closing.card(item.id) == "VERIFY" and len(_pending(closing)) == 1
+    monkeypatch.setattr(work_registry.WorkRegistry, "_project_card", project)
+    closing.fx.loaded().project_cards()
+    assert closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
+
+
+def test_an_overtaken_write_whose_read_back_fails_is_still_reowed(closing, monkeypatch):
+    """A's VERIFY change lands after B wrote and retired ACCEPT, then A's read-back fails: A still re-owes."""
+    item = closing.fx.authorized("UNIT", **FIXED)
+    closing.fx.launch(item.id)
+    project = work_registry.WorkRegistry._project_card
+    overtaken = []
+
+    def in_flight(self, identity, stage, revision):
+        if not overtaken:
+            overtaken.append(stage)
+            closing.fx.launch(item.id)  # ACCEPT
+            assert closing.fx.loaded().project_cards() == 1  # projector B
+            project(self, identity, stage, revision)  # A's change lands ...
+            return False  # ... and its read-back fails
+        return project(self, identity, stage, revision)
+    monkeypatch.setattr(work_registry.WorkRegistry, "_project_card", in_flight)
+    closing.fx.loaded().project_cards()
+    assert closing.card(item.id) == "VERIFY" and len(_pending(closing)) == 1
+    closing.fx.loaded().project_cards()
+    assert closing.card(item.id) == "ACCEPT" and _pending(closing) == ()

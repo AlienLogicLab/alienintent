@@ -22,7 +22,7 @@ import time
 from typing import Mapping
 
 from alienintent.composition.offline_profile import OfflineProofSubstrate, ProofManifest, credential_findings, load_manifest
-from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore, SCHEMA_VERSION
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.invocation_runtime.adapters.scripted_worker import SCRIPTED_PROVIDER, ScriptedWorkerProcess, journal_outcome, journal_provider_calls, journal_records
 from alienintent.invocation_runtime.domain.runtime import workspace_folder
@@ -136,7 +136,7 @@ def evaluate(substrate: OfflineProofSubstrate, summary, kernel: dict[str, object
     facts["stages"] = stages
     facts["correlations"] = {identity: None if state is None else substrate.store.read_state(manifest.profile, f"factory:{identity}")[1].get("correlation") for identity, state in states.items()}
     all_done = bool(states) and all(state is not None and state.stage is LifecycleStage.DONE and state.candidate is not None and state.candidate.independent_read_back_proven for state in states.values())
-    checks.append(check("P1", "real temporary SQLite", substrate.database.exists() and preflight.current_version == 2 and all_done, "state.sqlite at schema 2 holds every seeded aggregate at DONE with an independently read-back candidate", {"path": str(substrate.database), "schema_version": preflight.current_version, "stages": stages}))
+    checks.append(check("P1", "real temporary SQLite", substrate.database.exists() and preflight.current_version == SCHEMA_VERSION and all_done, f"state.sqlite at schema {SCHEMA_VERSION} holds every seeded aggregate at DONE with an independently read-back candidate", {"path": str(substrate.database), "schema_version": preflight.current_version, "stages": stages}))
 
     bare = subprocess.run(["git", "-C", str(substrate.remote), "rev-parse", "--is-bare-repository"], capture_output=True, text=True, check=False).stdout.strip() == "true"
     main = substrate.remote_advertises("main")

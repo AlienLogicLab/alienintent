@@ -681,6 +681,32 @@ def test_work_launch_renders_one_step_and_work_context_passes_the_contract_diges
     assert calls == [("launch", "ITEM"), ("launch", "ITEM"), ("assemble", "sha256:abc"), ("assemble", None)]
 
 
+
+def test_work_launch_runs_inside_the_card_projector_and_work_project_runs_one_pass(monkeypatch, capsys, tmp_path) -> None:
+    """CARD-FOLLOWS-STAGE: the launch runs inside `card_projection`; `work project` is the projector on its own."""
+    from contextlib import contextmanager
+    from types import SimpleNamespace
+    from alienintent.control_plane.adapters import cli
+    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+    calls = []
+
+    @contextmanager
+    def card_projection():
+        calls.append("projection-start")
+        yield
+        calls.append("projection-end")
+    launcher = SimpleNamespace(launch=lambda identity: calls.append("launch") or "closure-not-automated")
+    registry = SimpleNamespace(launcher=lambda: launcher, card_projection=card_projection,
+                               project_cards=lambda: calls.append("pass") or 2,
+                               store=SQLiteOperationalStore(tmp_path / "launch.sqlite"), ownership=ProcOwnership())
+    monkeypatch.setattr(cli, "_factory", lambda _: SimpleNamespace(work_registry=registry))
+    assert cli.main(["--json", "--profile-factory", "x:y", "work", "launch", "ITEM"]) == 0
+    assert calls == ["projection-start", "launch", "projection-end"]
+    capsys.readouterr()
+    assert cli.main(["--json", "--profile-factory", "x:y", "work", "project"]) == 0
+    assert json.loads(capsys.readouterr().out) == {"retired": 2} and calls[-1] == "pass"
+
 def test_two_launchers_taking_over_one_stale_launch_reservation_exactly_one_wins(tmp_path) -> None:
     """RESTART-CONTINUATION check 0: the loser of a takeover race (its release meets a stale fence) answers
     LAUNCH_IN_PROGRESS and launches nothing; the winner launches once and releases the reservation."""

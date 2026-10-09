@@ -233,6 +233,7 @@
         "effects",
         "fences",
         "operational_schema",
+        "projections",
         "receipts",
         "reservations",
         "schema_migrations"
