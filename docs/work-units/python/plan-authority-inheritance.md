@@ -1,7 +1,7 @@
 # Work unit: plan-level execution authority, with actual-diff containment
 
-**Label:** `PLAN-AUTHORITY-INHERITANCE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Revision 3, 2026-10-09, for review. Not registered, not assessed, not released.
+**Label:** `PLAN-AUTHORITY-INHERITANCE` (a document label; permanent id `795cefb2-2940-45e3-a34e-f035fb1bbeaa`).
+**Status:** Revision 3, 2026-10-09. Registered; not assessed, not released.
 **Position on the path (Founder 2026-10-09, decisions section 16):** step 3. VERIFIER gate evidence (done) -> NO-CHANGE
 (done) -> PLAN-AUTHORITY-INHERITANCE -> BOUNDED-ROUTINE-LAUNCH -> Work Preparation / READY refill -> three-item proof.
 **Starting revision:** main `17910f7`.
@@ -12,7 +12,7 @@
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "795cefb2-2940-45e3-a34e-f035fb1bbeaa",
  "version": "revision-3",
  "intent": "The Founder approves an exact revision of the canonical plan once (`work approve-plan`); the plan names its obligations (each with allowed paths), its limits and its protected paths. A Work Item that names one of those obligations, stays inside its paths and the plan's limits, is assessed READY and is satisfiable is released by the control plane (`work release`) with no Founder words: release record, card READY with the obligation's priority, read back. Anything outside stops with a typed owner-decision requirement; ad hoc work keeps the explicit Founder release. A plan-derived candidate may advance only when its actual changed paths, read by the control plane from the trusted start to the candidate, are a subset of the exact assessed scope and touch no protected path; the PRODUCER checks before publication and CLOSURE checks the diff that would land, against the CURRENT approved authority, before any landing effect. A new plan approval stops items released under the old one. The canonical plan's section 2.2 states this rule.",
  "satisfied_requirement_ids": [
