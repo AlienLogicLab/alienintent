@@ -1,8 +1,8 @@
 # Work unit: a PRODUCER that changes nothing does not produce a candidate
 
-**Label:** `NO-CHANGE-CANDIDATE-REFUSED-R3` (a document label; permanent id `PENDING-REGISTRATION`).
+**Label:** `NO-CHANGE-CANDIDATE-REFUSED-R3` (a document label; permanent id `fe2db2d3-a35f-4de9-9286-a74d47458deb`).
 **Status:** R3 revision 1, 2026-10-09: R2 revision 2's reviewed text (follow-up check PASS) with only this header, the
-identity and one fixed decision changed. Not registered, not assessed, not released.
+identity and one fixed decision changed. Work item `fe2db2d3-a35f-4de9-9286-a74d47458deb`, at CAPTURE. Not approved, not assessed, not released.
 **Second re-issue:** R2 (work item `c15a52f6-0745-4ed9-972e-fff3e0242bf9`, #167) ended in a terminal `failure` at
 VERIFY: its candidate `76c5795` passed the regression gate (2913 tests, 0 failures), then the VERIFIER process exited
 non-zero before any verdict or findings; cause UNKNOWN (the session output was not kept). `76c5795` is not reused: it
@@ -27,7 +27,7 @@ only `factory_coordinator.py` changed among the scope files; its line numbers be
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "fe2db2d3-a35f-4de9-9286-a74d47458deb",
  "version": "r3-revision-1",
  "intent": "When a PRODUCER's process succeeds but its claimed revision has the same git tree as the starting revision (the same commit, an empty commit, or a commit that is later reverted), the factory publishes no candidate. It records a typed no-change PRODUCER result with a finding, and the work item stays in IMPLEMENT as a rework within its attempt budget. No VERIFIER attempt is used. A descendant commit with a different tree is admitted as today.",
  "satisfied_requirement_ids": [
