@@ -1,4 +1,8 @@
-"""PY-06 composition bridge: a real CLI can yield only custodied source revisions."""
+"""PY-06 composition bridge: a real CLI can yield only custodied source revisions.
+
+The current work item contract has no no-repository-change mode: every successful
+PRODUCER must change the starting revision's git tree.
+"""
 
 from __future__ import annotations
 
@@ -12,7 +16,7 @@ from typing import Protocol
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.ports.worker_provider import (
-    MISSING_TERMINAL_RESULT, WorkerInvocation, WorkerOutcome, WorkerProvider)
+    MISSING_TERMINAL_RESULT, NO_CHANGE, WorkerInvocation, WorkerOutcome, WorkerProvider)
 from alienintent.invocation_runtime.application.regression_gate import RegressionGate, SuiteUnrunnable
 from alienintent.invocation_runtime.domain.diagnostics import cause
 from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
@@ -214,6 +218,8 @@ class CandidateHandover(Protocol):
     results: Path
 
     def revision(self, workspace: Path) -> str: ...
+
+    def tree(self, workspace: Path, revision: str) -> str: ...
 
     def hand_over(self, correlation: str, workspace: Path, claimed: str, starting: str) -> str: ...
 
@@ -547,6 +553,8 @@ class RealWorkerProvider(WorkerProvider):
         self._active_workspaces[invocation.correlation_id] = workspace
         outcome = WorkerOutcome("failure")
         try:
+            reader = self._source if self._handover is None else self._handover
+            starting_tree = reader.tree(workspace.path, reader.revision(workspace.path))
             schedule = RetrySchedule(budget.maximum_attempts, budget.retry_limit, .01, .001)
             attempts, next_eligible = 0, None
             while True:
@@ -563,18 +571,22 @@ class RealWorkerProvider(WorkerProvider):
                 outcome = WorkerOutcome(result.kind)
             else:
                 # With a worker user the claim is the worker's and the candidate comes only from the intake import.
-                revision = (self._source if self._handover is None else self._handover).revision(workspace.path)
-                if self._journal is not None:
-                    self._journal.append({"event": PUBLICATION_STARTED, "correlation_id": invocation.correlation_id,
-                                          "work_identity": invocation.work_identity, "role": invocation.role, "revision": revision})
-                if self._handover is not None:
-                    self._handover.hand_over(invocation.correlation_id, workspace.path, revision, starting_revision)
-                    candidate = self._handover.publish_intake(invocation.correlation_id, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
+                revision = reader.revision(workspace.path)
+                if reader.tree(workspace.path, revision) == starting_tree:
+                    outcome = WorkerOutcome(NO_CHANGE, None, findings=(
+                        f"no-change-candidate:{revision}: the PRODUCER's revision has the starting revision's tree; IMPLEMENT requires a repository change",))
                 else:
-                    candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
-                if self._preparation is not None:
-                    self._preparation.published(invocation, candidate)
-                outcome = WorkerOutcome.success(candidate)
+                    if self._journal is not None:
+                        self._journal.append({"event": PUBLICATION_STARTED, "correlation_id": invocation.correlation_id,
+                                              "work_identity": invocation.work_identity, "role": invocation.role, "revision": revision})
+                    if self._handover is not None:
+                        self._handover.hand_over(invocation.correlation_id, workspace.path, revision, starting_revision)
+                        candidate = self._handover.publish_intake(invocation.correlation_id, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
+                    else:
+                        candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
+                    if self._preparation is not None:
+                        self._preparation.published(invocation, candidate)
+                    outcome = WorkerOutcome.success(candidate)
         finally:
             if outcome.kind in {"success", "authority-block"}:
                 self._finished_workspaces[invocation.correlation_id] = workspace

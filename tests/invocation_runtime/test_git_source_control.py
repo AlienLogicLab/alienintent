@@ -447,6 +447,21 @@ def test_a_candidate_that_does_not_descend_from_the_starting_revision_is_refused
         handover.source.hand_over("c2", workspace, sibling, first)
 
 
+@pytest.mark.parametrize("kind", ["same-sha", "empty-commit", "commit-then-revert"])
+def test_hand_over_refuses_a_candidate_with_the_starting_tree(handover, kind):
+    workspace = handover.workspaces.allocate("c1", "owner", handover.base).path
+    if kind == "empty-commit":
+        git(workspace, *IDENTITY, "commit", "-qm", "empty", "--allow-empty")
+    elif kind == "commit-then-revert":
+        (workspace / "new.txt").write_text("change")
+        git(workspace, "add", "new.txt")
+        git(workspace, *IDENTITY, "commit", "-qm", "change")
+        git(workspace, *IDENTITY, "revert", "--no-edit", "HEAD")
+    claimed = git(workspace, "rev-parse", "HEAD")
+    with pytest.raises(CandidateUnavailable, match="candidate tree equals the starting revision's tree"):
+        handover.source.hand_over("c1", workspace, claimed, handover.base)
+
+
 def test_a_hand_over_file_not_owned_by_the_worker_is_refused(handover, monkeypatch):
     """Check 3: a regular hand-over file whose `fstat` owner is not the worker uid is refused; nothing is imported."""
     workspace, claimed = handover.produce()
