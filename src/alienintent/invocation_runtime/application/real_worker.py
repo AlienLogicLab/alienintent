@@ -194,7 +194,9 @@ class WorkerPreparation(Protocol):
     `prepare` is called first in `_produce` (`clone` None) and in `_evaluate` right after the fresh candidate clone
     is made (`clone` that clone). It returns the PRODUCER's starting revision (ignored for the VERIFIER) or a complete
     refusal outcome, returned unchanged with nothing started. `published` is called after a PRODUCER candidate is
-    published and read back, with that candidate; it must not raise.
+    published and read back, with that candidate; it must not raise. `gated`, when the hook has it, is called in
+    `_evaluate` after the REGRESSION-GATE passed and before the session starts, with the baseline, the candidate
+    revision and the gate's receipt; it must not raise.
     """
 
     def prepare(self, invocation: WorkerInvocation, clone: Path | None) -> str | WorkerOutcome: ...
@@ -366,6 +368,10 @@ class RealWorkerProvider(WorkerProvider):
                 if isinstance(gated, WorkerOutcome):
                     return gated
                 gate_receipt = gated
+                passed = getattr(self._preparation, "gated", None)
+                if passed is not None and self._regression_base is not None:
+                    # The session is told the whole suite is proven, so it never runs it again.
+                    passed(invocation, self._regression_base(invocation.correlation_id), _revision_of(candidate), gated)
             result = self._process.run(invocation.correlation_id, InvocationRole.VERIFIER, workspace, budget.hard_wall_clock_seconds)
             if result.kind != "success":
                 return WorkerOutcome(result.kind)
