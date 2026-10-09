@@ -58,6 +58,7 @@ def test_real_worker_retries_a_failed_process_and_records_next_eligible_event(tm
         def cleanup(self, *_): pass
     class Source:
         def revision(self, _): return "a" * 40
+        def tree(self, _, revision): return "1" * 40
         def publish_and_read_back(self, *_): raise AssertionError("not reached")
 
     process = Process()
@@ -86,7 +87,9 @@ def test_real_worker_retains_an_authority_blocked_workspace_while_releasing_capa
         def __init__(self): self.cleaned = []
         def allocate(self, invocation_id, owner, baseline): return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
         def cleanup(self, workspace, _): self.cleaned.append(workspace.invocation_id)
-    class Source: pass
+    class Source:
+        def revision(self, _): return "0" * 40
+        def tree(self, _, revision): return "1" * 40
 
     spaces, slots = Workspaces(), ReservationBook(1, 1)
     grant = CapabilityGrant("g", "PY-07@1", "p", InvocationRole.PRODUCER, "issue", "target", frozenset({"process-control", "git-write"}), 100)
@@ -115,7 +118,9 @@ def test_real_worker_waits_for_each_exponential_jittered_retry_eligibility(tmp_p
     class Workspaces:
         def allocate(self, invocation_id, owner, baseline): return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
         def cleanup(self, *_): pass
-    class Source: pass
+    class Source:
+        def revision(self, _): return "0" * 40
+        def tree(self, _, revision): return "1" * 40
 
     sleeps: list[float] = []
     grant = CapabilityGrant("g", "PY-06@1", "p", InvocationRole.PRODUCER, "issue", "target", frozenset({"process-control", "git-write"}), 100)
@@ -147,7 +152,9 @@ def test_real_worker_cancel_fences_the_live_process_releases_reservation_and_cle
         def __init__(self): self.cleaned = []
         def allocate(self, invocation_id, owner, baseline): return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
         def cleanup(self, workspace, _): self.cleaned.append(workspace.invocation_id)
-    class Source: pass
+    class Source:
+        def revision(self, _): return "0" * 40
+        def tree(self, _, revision): return "1" * 40
 
     spaces, slots = Workspaces(), ReservationBook(1, 1)
     grant = CapabilityGrant("g", "PY-06@1", "p", InvocationRole.PRODUCER, "issue", "target", frozenset({"process-control", "git-write"}), 100)
@@ -369,7 +376,7 @@ def test_real_worker_returns_only_a_published_independently_read_back_source_can
     subprocess.run(["git", "-C", str(source), "add", "candidate"], check=True)
     subprocess.run(["git", "-C", str(source), "commit", "-m", "candidate"], check=True, capture_output=True)
     subprocess.run(["git", "-C", str(source), "remote", "add", "origin", str(remote)], check=True)
-    cli = CliWorkerProvider("python", sys.executable, ("-c", "pass"), "explicit", frozenset({"wall-clock", "cancellation"}))
+    cli = CliWorkerProvider("python", sys.executable, ("-c", "import pathlib, subprocess; pathlib.Path('change.txt').write_text('c'); subprocess.run(['git', 'add', 'change.txt'], check=True); subprocess.run(['git', 'commit', '-qm', 'c'], check=True)"), "explicit", frozenset({"wall-clock", "cancellation"}))
     grant = CapabilityGrant("grant", "PY-06@1", "producer-1", InvocationRole.PRODUCER, "issue-54", "AlienLogicLab/alienintent", frozenset({"process-control", "git-write"}), int(time.time()) + 100)
     worker = RealWorkerProvider(cli, GitSourceControl(), source, "origin", "candidate/producer-1", tmp_path / "verifier", grant, "AlienLogicLab/alienintent", GitWorktreeAdapter(source, tmp_path / "worktrees"), now=lambda: int(time.time()), sleep=time.sleep)
 
@@ -534,7 +541,11 @@ def _preparing_worker(tmp_path: Path, prepared, *, verifier: bool = False):
             return type("W", (), {"invocation_id": invocation_id, "owner": owner, "path": tmp_path})()
         def cleanup(self, *_): pass
     class Source:
-        def revision(self, _): return "a" * 40
+        calls = 0
+        def revision(self, _):
+            Source.calls += 1
+            return "c" * 40 if Source.calls == 1 else "a" * 40
+        def tree(self, _, revision): return f"tree-of-{revision}"
         def publish_and_read_back(self, *_):
             log.append(("publish",))
             return candidate
