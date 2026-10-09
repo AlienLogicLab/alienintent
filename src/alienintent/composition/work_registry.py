@@ -600,6 +600,9 @@ class WorkRegistry:
             biu_version = request.biu_version
         revision, raw = store.read_state("registry", f"factory:{identity}")
         correlation = raw.get("correlation") if isinstance(raw.get("correlation"), str) else None
+        # The key names the held launch: at ACCEPT the version never moves, so a later hold needs its own decision.
+        key = recorded.event.idempotency_key if request is None \
+            else f"work-decide:{identity}:{biu_version}:{correlation}:{choice}"
         worktree = None if correlation is None else _producer_worktree(
             workspaces, WorkerInvocation(identity, correlation)) if self.configuration.worker_user is None \
             else _producer_worktree(root / "worker", WorkerInvocation(identity, correlation), "producer-")
@@ -618,7 +621,7 @@ class WorkRegistry:
         issuer = contract_block(packet.packet, identity).authority_issuer
         decided = OperatorControlPlane("registry", store, None, _DecisionOnly(coordinator), lambda: True)\
             .decisions_decide(identity, actor=issuer, authority=issuer, target=identity, intent=choice, reason=quote,
-                              expected_version=revision, idempotency_key=f"work-decide:{identity}:{biu_version}:{choice}",
+                              expected_version=revision, idempotency_key=key,
                               biu_version=biu_version, choice=choice)
         if request is not None and choice == "authorize" and parked and retained is not None:
             worker.retained_workspaces[correlation] = retained
@@ -1109,8 +1112,9 @@ change there and commit it. Then write your self-review of the complete diff, as
 CLOSURE_RESULT = """Your current working directory is a fresh read-only clone of the accepted candidate. Change
 nothing there. Read the package and decide which of its closure_actions to request. Then write exactly one JSON file:
 {request}
-as {{"identity": "<the work item id>", "revision": "<the candidate commit>", "actions": ["<some of the five names>"],
-"findings": ["<finding>", ...]}}. The control plane performs and checks every effect; nothing else you write is read."""
+as {{"identity": "<the work item id>", "revision": "<the candidate commit, git rev-parse HEAD>",
+"actions": ["<some of the five names>"], "findings": ["<finding>", ...]}}. The revision is the bare 40-hex commit
+alone, never the package's candidate identity. The control plane performs and checks every effect; nothing else you write is read."""
 VERIFIER_RESULT = """Your current working directory is a fresh clone of the candidate. Verify it against the package.
 Then write .alienintent/verdict.json in that directory as {{"revision": "<the candidate commit, git rev-parse HEAD>",
 "verdict": "accept" or "reject", "findings": ["<finding>", ...]}}; a reject needs at least one finding."""

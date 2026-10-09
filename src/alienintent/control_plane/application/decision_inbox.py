@@ -63,6 +63,8 @@ class DecisionInbox:
                 return existing
             if existing.submission.choice in self._DEFERRED_CHOICES:
                 return existing
+            if self._latest(submission.work_item) != existing:
+                return existing  # A replay of a decision a later hold's decision superseded: no effect.
             self._commit_new(existing)
             self._admission.record_decision(existing)
             self._close_open(submission.work_item)
@@ -91,7 +93,13 @@ class DecisionInbox:
             raise KeyError(key)
         return _decode_record(raw)
 
+    def _latest(self, work_item: str) -> DecisionRecord | None:
+        _, raw = self._store.read_state(self._profile, f"decision:{work_item}")
+        return _decode_record(raw) if raw else None
+
     def _commit_new(self, record: DecisionRecord, *, final: bool = True) -> None:
+        """The key's record and, for a final choice, the work item's latest decision: a later hold's decision (its own
+        key) replaces an earlier one. The latest is written first, so a replay after a crash between the two finds it."""
         payload = _encode_record(record)
         key = f"decision-key:{record.submission.idempotency_key}"
         version, existing = self._store.read_state(self._profile, key)
@@ -100,17 +108,13 @@ class DecisionInbox:
             if prior.submission != record.submission:
                 raise DecisionConflict("idempotency key already records a different decision")
         try:
+            if final:
+                work_key = f"decision:{record.event.work_item}"
+                work_version, work_record = self._store.read_state(self._profile, work_key)
+                if not work_record or _decode_record(work_record) != record:
+                    self._store.commit(self._profile, work_key, work_version, payload)
             if not existing:
                 self._store.commit(self._profile, key, version, payload)
-            if not final:
-                return
-            work_key = f"decision:{record.event.work_item}"
-            work_version, work_record = self._store.read_state(self._profile, work_key)
-            if work_record:
-                if _decode_record(work_record) != record:
-                    raise DecisionConflict("work item already records a different decision")
-            else:
-                self._store.commit(self._profile, work_key, work_version, payload)
         except VersionConflict as error:
             raise DecisionConflict("concurrent decision submission") from error
 

@@ -9,7 +9,8 @@ from typing import Callable, Iterable, Mapping
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore, verify_in_fresh_process
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
 from alienintent.execution_coordination.domain.closure import (
-    ACTIONS, CANDIDATE_PUBLISHED, CLOSURE_HOLD, CLOSURE_REWORK, READY_TO_LAND, is_fixed, parse_finding, parse_receipt)
+    ACTIONS, CANDIDATE_PUBLISHED, CLOSURE_HOLD, CLOSURE_REWORK, READY_TO_LAND, REQUEST_REFUSALS, is_fixed, parse_finding,
+    parse_receipt)
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
 from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired, SupersededDecision
 from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
@@ -25,7 +26,10 @@ from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, 
 # K2: each nonterminal stage is advanced by exactly one canonical role.
 ROLE_BY_STAGE = {LifecycleStage.IMPLEMENT: PRODUCER, LifecycleStage.VERIFY: VERIFIER, LifecycleStage.ACCEPT: CLOSURE}
 # Execution-record fields that survive every later commit of the same aggregate.
-CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict")
+CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict",
+           "closure_retries")
+# A malformed CLOSURE request: the item stays at ACCEPT and the next launch runs a fresh CLOSURE session.
+CLOSURE_RETRY = "closure-retry"
 # One WIP slot per admitted work item, held until its recorded state is DONE or a final outcome: an outcome the
 # coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
 WIP_SCOPE = "wip"
@@ -549,6 +553,8 @@ class FactoryCoordinator:
             if CLOSURE_REWORK in kinds and CLOSURE_HOLD not in kinds:
                 return self._rework(item, current, prior, invocation, "closure", tuple(outcome.findings))
             held = next((parts for kind, parts in control if kind == CLOSURE_HOLD), None)
+            if held is not None and held[0] in REQUEST_REFUSALS:
+                return self._retry_closure(item, current, prior, held[0], exact)
             if held is not None:
                 return _Advance(current, "authority-block", {"hold_reason": f"closure-hold:{held[0]}", "receipts": exact},
                                 f"Closure holds ({held[0]}): {':'.join(held[1:]) or 'no facts'}.")
@@ -559,6 +565,17 @@ class FactoryCoordinator:
     @staticmethod
     def _same_candidate(reported: CandidateRef | None, custodied: CandidateRef | None) -> bool:
         return reported is not None and custodied is not None and (reported.kind, reported.identity, reported.content_digest) == (custodied.kind, custodied.identity, custodied.content_digest)
+
+    @staticmethod
+    def _retry_closure(item: ReadyWorkItem, state: ExecutionState, prior: dict[str, object], refusal: str,
+                       receipts: list[str]) -> _Advance:
+        """A malformed CLOSURE request is a worker failure, never an authority hold: the stage stays ACCEPT, so the next
+        launch runs a fresh CLOSURE session on the same accepted candidate, within the attempt budget."""
+        retries = int(prior.get("closure_retries", 0) or 0) + 1
+        fields: dict[str, object] = {"closure_retries": retries, "closure_refusal": refusal, "receipts": receipts}
+        if retries >= item.contract.budget_policy.maximum_attempts:
+            return _Advance(state, "failure", fields | {"hold_reason": "attempt-budget-exhausted"})
+        return _Advance(state, CLOSURE_RETRY, fields)
 
     def _rework(self, item: ReadyWorkItem, state: ExecutionState, prior: dict[str, object], invocation: WorkerInvocation, source: str, findings: tuple[str, ...]) -> _Advance:
         """Record attributable findings and return to IMPLEMENT within the attempt budget."""

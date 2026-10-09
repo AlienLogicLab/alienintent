@@ -590,6 +590,7 @@ from alienintent.composition.landing_authority import LANDING_PERMISSIONS, Landi
 from alienintent.composition.work_registry import (  # noqa: E402
     DISPLAY_PERMISSIONS, RegistryClosure, landing_record_path, render_landing_record)
 from alienintent.context_assembly.domain.work_identity import GitReadFailed  # noqa: E402
+from alienintent.control_plane.application.decision_inbox import DecisionInbox
 from alienintent.execution_coordination.domain.closure import ACTIONS, receipt  # noqa: E402
 from alienintent.installation.ports.github_transport import TransportResponse  # noqa: E402
 from tests.support.live_github import (  # noqa: E402
@@ -804,29 +805,31 @@ def test_a_failing_landing_runs_closure_once_per_start(closing, monkeypatch):
     assert len(closing.fx.runs("CLOSURE")) == 1 and closing.state(item.id).outcome == "authority-block"
 
 
-@pytest.mark.parametrize(("plan", "landed"), [
-    ({"request": {"actions": ["candidate-published", "merged-to-main", "landing-record", "deploy"]}}, False),
-    ({"request": {"identity": "another-item"}}, False),
-    ({"request": {"revision": "0" * 40}}, False),
-    ({"request": {"extra": 1}}, False),
-    ({"request": {"actions": ["merged-to-main", "merged-to-main"]}}, False),
-    ({"request": {"findings": ["x" * 501]}}, False),
-    ({"no_request": True}, False),
-    ({"request": {"actions": ["candidate-published", "landing-record", "board-updated", "workspaces-cleaned"]}}, False),
-    ({"request": {"actions": ["candidate-published", "merged-to-main", "landing-record"]}}, True),
+@pytest.mark.parametrize(("plan", "landed", "outcome"), [
+    ({"request": {"actions": ["candidate-published", "merged-to-main", "landing-record", "deploy"]}}, False, "failure"),
+    ({"request": {"identity": "another-item"}}, False, "failure"),
+    ({"request": {"revision": "0" * 40}}, False, "failure"),
+    ({"request": {"extra": 1}}, False, "failure"),
+    ({"request": {"actions": ["merged-to-main", "merged-to-main"]}}, False, "failure"),
+    ({"request": {"findings": ["x" * 501]}}, False, "failure"),
+    ({"no_request": True}, False, "failure"),
+    ({"request": {"actions": ["candidate-published", "landing-record", "board-updated", "workspaces-cleaned"]}}, False,
+     "authority-block"),
+    ({"request": {"actions": ["candidate-published", "merged-to-main", "landing-record"]}}, True, "authority-block"),
     ({"request": {"actions": ["candidate-published"], "findings": [
         "ready-to-land:" + "a" * 40, "closure-rework:base-moved:" + "a" * 40 + ":" + "b" * 40,
-        "closure-hold:landing-ambiguous", "merged-to-main:x:" + "a" * 40]}}, False),
+        "closure-hold:landing-ambiguous", "merged-to-main:x:" + "a" * 40]}}, False, "authority-block"),
 ])
-def test_the_bounded_request_alone_steers_nothing(closing, plan, landed):
+def test_the_bounded_request_alone_steers_nothing(closing, plan, landed, outcome):
     """Check 2 (and check 8's request without board-updated): nothing beyond the bounded request is performed and a
-    session finding never changes the outcome."""
+    session finding never changes the outcome. A malformed request is a worker failure within the attempt budget
+    (here one attempt), never an authority hold."""
     item = closing.accepted()
     base, revision = closing.head(), revision_of(closing.state(item.id))
     closing.plan(**plan)
     closing.close(item.id)
     state = closing.state(item.id)
-    assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "authority-block")
+    assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, outcome)
     expected = [receipt("candidate-published", item.id, revision)]
     if landed:
         expected += [receipt(a, item.id, revision) for a in ("merged-to-main", "landing-record")]
@@ -836,6 +839,82 @@ def test_the_bounded_request_alone_steers_nothing(closing, plan, landed):
         if len(finding) <= 500:  # a refused request carries none of its findings
             assert f"closure-finding: {finding}" in closing.fx.journal_findings(item.id)
 
+
+
+RETRYING = {"budget_policy": {"maximum_attempts": 3, "hard_wall_clock_seconds": 120, "cancellation_limit": 1}}
+
+
+def _open_decision(closing: Closing, identity: str) -> bool:
+    return identity in (closing.fx.store.read_state("registry", "decision-inbox")[1] or {}).get("open", {})
+
+
+def test_a_malformed_closure_request_is_retried_on_the_same_candidate_without_a_decision(closing):
+    """The 2026-10-09 failure: the session gave the candidate identity, not the bare commit, as `revision`. The item
+    stays at ACCEPT with no decision request, and the next launch runs a fresh CLOSURE session that lands."""
+    item = closing.accepted(**RETRYING)
+    accepted = closing.state(item.id)
+    base, revision = closing.head(), revision_of(accepted)
+    closing.plan(request={"revision": accepted.candidate.identity})
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "closure-retry")
+    assert (state.record["closure_retries"], state.record["closure_refusal"]) == (1, "request-revision")
+    assert not _open_decision(closing, item.id) and closing.head() == base and closing.pushes == []
+    [session] = closing.fx.runs("CLOSURE")
+    assert "git rev-parse HEAD" in session["package"]["closure_actions"]["request"]["revision"]
+    assert "never the package's candidate identity" in session["stdin"]
+    closing.plan()
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert state.stage is LifecycleStage.DONE and closing.head() != base
+    assert state.record["receipts"] == sorted(receipt(a, item.id, revision) for a in ACTIONS)
+    first, second = closing.fx.runs("CLOSURE")
+    assert first["env"]["ALIENINTENT_INVOCATION_ID"] != second["env"]["ALIENINTENT_INVOCATION_ID"]
+    assert first["head"] == second["head"] == revision
+
+
+def test_malformed_closure_requests_end_in_failure_at_the_attempt_budget_never_a_decision(closing):
+    item = closing.accepted(**RETRYING)
+    base = closing.head()
+    closing.plan(request={"revision": "0" * 40})
+    for attempt in (1, 2):
+        closing.close(item.id)
+        assert (closing.state(item.id).outcome, closing.state(item.id).record["closure_retries"]) == (
+            "closure-retry", attempt)
+    closing.close(item.id)
+    state = closing.state(item.id)
+    assert (state.stage, state.outcome, state.record["hold_reason"]) == (
+        LifecycleStage.ACCEPT, "failure", "attempt-budget-exhausted")
+    assert len(closing.fx.runs("CLOSURE")) == 3 and not _open_decision(closing, item.id) and closing.head() == base
+    assert closing.close(item.id) is not None and len(closing.fx.runs("CLOSURE")) == 3
+
+
+def test_a_second_hold_at_the_same_stage_gets_its_own_decision_and_a_replay_stays_idempotent(closing, monkeypatch):
+    """The 2026-10-09 failure: at ACCEPT the version never moves, so a second hold's `authorize` reused the first
+    decision's key and was taken as a repeat; the request closed and the item stayed blocked with no open decision."""
+    fx = closing.fx
+    item = closing.accepted()
+    original = LandingAuthority.land
+    monkeypatch.setattr(LandingAuthority, "land", lambda self, order: "refused:fixture")
+    keys = []
+    for hold in (1, 2):
+        closing.close(item.id)
+        assert closing.state(item.id).outcome == "authority-block" and _open_decision(closing, item.id), hold
+        assert fx.loaded().decide(item.id, "authorize", QUOTE)["answer"] is None
+        state = closing.state(item.id)
+        assert state.outcome == "decision-recorded" and not _open_decision(closing, item.id), hold
+        keys.append(state.record["decision_key"])
+    assert keys[0] != keys[1]
+    replay = fx.loaded().decide(item.id, "authorize", QUOTE)
+    assert replay["answer"] is None and closing.state(item.id).record == state.record
+    registry = fx.loaded()
+    inbox = DecisionInbox(registry.store, work_registry._DecisionOnly(registry._launch_chain()[0]), "registry")
+    latest = inbox.show(item.id)
+    assert inbox.submit(inbox._record_for_key(keys[0]).submission).submission.idempotency_key == keys[0]
+    assert inbox.show(item.id) == latest and closing.state(item.id).record == state.record
+    monkeypatch.setattr(LandingAuthority, "land", original)
+    closing.close(item.id)
+    assert closing.state(item.id).stage is LifecycleStage.DONE
 
 def _unrelated(closing: Closing, base: str) -> str:
     """A commit on the remote's base that does not contain the candidate."""

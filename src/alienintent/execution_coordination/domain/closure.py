@@ -17,6 +17,10 @@ ACTIONS = (CANDIDATE_PUBLISHED, MERGED_TO_MAIN, LANDING_RECORD, BOARD_UPDATED, W
 SESSION_FINDING = "closure-finding: "
 READY_TO_LAND, CLOSURE_REWORK, CLOSURE_HOLD = "ready-to-land", "closure-rework", "closure-hold"
 REQUEST_KEYS = frozenset({"identity", "revision", "actions", "findings"})
+# `parse_request`'s refusals: the session wrote a malformed request, a worker failure the coordinator retries
+# within the attempt budget, never an authority hold.
+REQUEST_REFUSALS = frozenset({"request-missing", "request-malformed", "request-keys", "request-identity",
+                              "request-revision", "request-actions", "request-findings"})
 MAX_FINDINGS, MAX_FINDING_LENGTH = 20, 500
 REVISION = re.compile(r"[0-9a-f]{40}")
 _FACT = re.compile(r"[0-9a-f]{40}|unreadable")

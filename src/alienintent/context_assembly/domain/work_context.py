@@ -25,8 +25,9 @@ FIELDS = {PRODUCER: frozenset({*COMMON_FIELDS, "assessment"}),
           VERIFIER: frozenset({*COMMON_FIELDS, "candidate", "diff", "producer_self_review"}),
           CLOSURE: frozenset({*COMMON_FIELDS, "candidate", "diff", "verdict", "closure_actions"})}
 # CLOSURE's `closure_actions`: the contract's five fixed closure names and the one request it may write.
-CLOSURE_REQUEST = {"identity": "<work item id>", "revision": "<full candidate revision>",
-                               "actions": ["<some of the five names>"], "findings": ["<finding>"]}
+CLOSURE_REQUEST = {"identity": "<work item id>",
+                   "revision": "<the candidate commit: the bare 40-hex SHA from git rev-parse HEAD>",
+                   "actions": ["<some of the five names>"], "findings": ["<finding>"]}
 # Section 4: the self-review reaches the VERIFIER only under `producer_self_review`, with this fixed label.
 SELF_REVIEW_LABEL = "input to check — not findings and not a verdict"
 SELF_REVIEW = "self-review"
