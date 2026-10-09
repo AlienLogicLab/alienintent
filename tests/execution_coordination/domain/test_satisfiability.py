@@ -55,6 +55,17 @@ def test_each_contract_rule_fails_alone(change, field):
     assert len(answer) == 1 and answer[0].startswith(field + ":")
 
 
+def test_automatic_on_passes_only_through_an_approved_plan_authority():
+    base = valid_contract().canonical_payload()
+    base.update(release_policy="automatic-on")
+    contract = contract_from_payload(base)
+    assert reasons(contract) == ("release_policy: automatic-on requires an approved plan authority",)
+    outside = ("owner-decision-required: one", "owner-decision-required: two")
+    for answer in (outside, ()):
+        assert unsatisfiable(contract, landing=True, present_at_pointer=lambda _: True, registered=lambda _: True,
+                             provider_dimensions=PROVIDER_DIMENSIONS, plan_authority=lambda _: answer) == answer
+
+
 def test_landing_rule_fails_alone():
     assert len(answer := reasons(valid_contract(), landing=False)) == 1
     assert answer[0].startswith("landing:") and "ready-to-land" in answer[0]

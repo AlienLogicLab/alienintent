@@ -16,6 +16,10 @@ card's registered work record, and the view's attention items are kept in the `r
 With `readiness`, `work authorize` (`authorization`) records release records on that store under profile `registry`
 and its evidence in that folder; the starting revision is checked in the pointer repository's configured clone
 against its `default_branch`, the values the release gate for registry items is composed with. With `readiness`,
+`work approve-plan` (`plan_approval`) records the Founder's approval of one exact canonical-plan revision on that store
+and folder, and with the READY view `work release` (`release`) releases a plan-derived item under the current plan
+authority (PLAN-AUTHORITY-INHERITANCE); a launch applies actual-diff containment to its candidates before VERIFY and
+CLOSURE confirms it before landing. With `readiness`,
 `work record-completed` (`completion`) records an existing item's completed work: its evidence in that folder,
 landings checked the same way, and the `registry` coordinator's record read from that store. With the READY view,
 `coordinator(worker, artifacts)` composes the existing FactoryCoordinator over it on the `readiness` store (profile
@@ -90,7 +94,10 @@ from alienintent.composition.sandbox_run_profile import PROVIDER_DIMENSIONS, wor
 from alienintent.composition.sandbox_profile import APP_KEY_REFERENCE
 from alienintent.context_assembly.adapters.work_item_repository import SQLiteWorkItemRepository
 from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
+from alienintent.context_assembly.application.inherited_release import INHERITED_RELEASE, OWNER_DECISION_REQUIRED, \
+    InheritedRelease
 from alienintent.context_assembly.application.packet_assessment import PacketAssessment
+from alienintent.context_assembly.application.plan_approval import PlanApproval
 from alienintent.context_assembly.application.work_authorization import WorkAuthorization
 from alienintent.context_assembly.application.work_completion import WorkCompletion
 from alienintent.context_assembly.application.work_context import EXPORT_FILE, ContextCommand, WorkContext
@@ -126,7 +133,9 @@ from alienintent.execution_coordination.adapters.sqlite_store import PROJECTED, 
 from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
 from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
 from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH, PlanAuthority, outside_authority
 from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
+from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, SCOPE_VIOLATION, contained
 from alienintent.execution_coordination.domain.closure import (
     BOARD_UPDATED, LANDING_RECORD, MERGED_TO_MAIN, WORKSPACES_CLEANED, hold, is_fixed, parse_request, performable,
     ready_to_land, receipt, rework, session_finding)
@@ -147,7 +156,8 @@ from alienintent.installation.domain.project_identity import ProjectAddress
 from alienintent.installation.ports.github_transport import GitHubTransport
 from alienintent.invocation_runtime.adapters.cli_worker import CliWorkerProvider, kill_as_worker, run_as_worker, \
     worker_prefix
-from alienintent.invocation_runtime.adapters.git_source_control import GitSourceControl, IntakeSourceControl
+from alienintent.invocation_runtime.adapters.git_source_control import RAW_DIFF, GitSourceControl, \
+    IntakeSourceControl, raw_changes
 from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, GitWorktreeAdapter, WorkerCloneAdapter, \
     ref_safe
 from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
@@ -469,10 +479,14 @@ class WorkRegistry:
         self.assessment = self._assessment(configuration) if configuration.readiness is not None else None
         self.authorization = self._authorization(configuration) if self.assessment is not None else None
         self.completion = self._completion(configuration) if self.assessment is not None else None
+        # `work approve-plan` and the current plan authority, on the `readiness` store beside the release records.
+        self.plan_approval = self._plan_approval(configuration) if self.assessment is not None else None
         self.links = self._links(configuration.github, transport) if configuration.github is not None else None
         self._diagnosed: set[tuple[object, ...]] = set()  # card projection failures already recorded, once each
         self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
             else None
+        # `work release`: the control plane's release of plan-derived work, with the READY view's attention items.
+        self.release = self._release(configuration) if self.ready_view is not None else None
         # Each role's context package (unit 6c-1) over the `readiness` store and evidence folder; its command names
         # the configuration file, so a configuration not loaded from a file has none.
         self.context = _work_context(configuration, self.records, self.items, self.assessment.consumer) \
@@ -508,11 +522,12 @@ class WorkRegistry:
 
     def coordinator(self, worker: WorkerProvider, artifacts: LocalArtifactStore) -> FactoryCoordinator:
         """The existing FactoryCoordinator over the READY view on the `readiness` store under profile `registry`, with
-        the caller's worker and artifacts. Nothing is released automatically: a work item becomes eligible only through
-        `release_and_start`, and the release gate re-checks its release record against the packets repository's clone
-        and default branch (what `work authorize` checks) before every PRODUCER. The WIP limit is read on every
-        admission. Closure: `landing_enabled` is the `github` entry's `landing` flag, `started_item` builds a started
-        item from its registry record (0.9) and `completed` projects the row after DONE (0.8)."""
+        the caller's worker and artifacts. The release flag follows each contract (`_ContractRelease`): only an
+        `automatic-on` (plan-derived) item is released by policy; an `explicit-human-off` item becomes eligible only
+        through `release_and_start`. The release gate re-checks the release record (`work authorize`'s or `work
+        release`'s) against the packets repository's clone and default branch before every PRODUCER. The WIP limit is
+        read on every admission. Closure: `landing_enabled` is the `github` entry's `landing` flag, `started_item`
+        builds a started item from its registry record (0.9) and `completed` projects the row after DONE (0.8)."""
         if self.ready_view is None:
             raise ConfigurationInvalid("the coordinator needs both the github and readiness entries")
         configuration = self.configuration
@@ -520,8 +535,8 @@ class WorkRegistry:
         gate = ReleasePreconditionGate(StoredReleaseAuthorizations(store, "registry"),
                                        GitRevisionResolver({configuration.github.repository: packets.clone}),
                                        packets.default_branch)
-        return FactoryCoordinator(store, self.ready_view, worker, artifacts, "registry",
-                                  automatic_release=False, release_gate=gate,
+        return FactoryCoordinator(store, _ContractRelease(self.ready_view, self.plan_approval.current), worker, artifacts, "registry",
+                                  automatic_release=True, release_gate=gate,
                                   wip_limit=lambda: wip_limit(self.host_configuration),
                                   recorded_completion=self.completion.recorded,
                                   landing_enabled=lambda: configuration.github.landing,
@@ -547,7 +562,8 @@ class WorkRegistry:
                 return None
             return ReadyWorkItem(item.id, 0, self.configuration.github.repository, "registry", None,
                                  tuple(contract.dependencies), contract, contract.content_digest,
-                                 item.assessment_ref.logical_id, automatic_release=False)
+                                 item.assessment_ref.logical_id,
+                                 automatic_release=automatic(contract, self.plan_approval.current()))
         except Exception:  # noqa: BLE001 - an unusable registry record answers None, as recovery expects
             return None
 
@@ -830,7 +846,7 @@ class WorkRegistry:
             workspaces, ReservationBook(1, 2), now=time.time,
             sleep=time.sleep, journal=journal, ownership=ownership, preparation=preparation,
             recovered_workspace=recovered, closure=closure, handover=handover, regression_gate=gate,
-            regression_base=preparation.starting.get)
+            regression_base=preparation.starting.get, protected_paths=self.protected_paths)
         closure.worker = worker
         closure.worker_workspaces = None if user is None else workspaces
         guard = RoleBindingGuard(worker, journal, store, "registry", repository, time.time)
@@ -1048,9 +1064,63 @@ class WorkRegistry:
             return item is not None and not item.retired
 
         github = self.configuration.github
+        current = None if self.plan_approval is None else self.plan_approval.current()
         return unsatisfiable(contract, landing=github is not None and github.landing,
                              present_at_pointer=present_at_pointer, registered=registered,
-                             provider_dimensions=PROVIDER_DIMENSIONS)
+                             provider_dimensions=PROVIDER_DIMENSIONS,
+                             plan_authority=None if current is None
+                             else lambda contract: outside_authority(contract, current))
+
+    def protected_paths(self) -> tuple[str, ...] | None:
+        """The protected paths of the current approved plan authority, or None without one."""
+        current = None if self.plan_approval is None else self.plan_approval.current()
+        return None if current is None else current.scope.protected_paths
+
+    def _plan_approval(self, configuration: ProjectConfiguration) -> PlanApproval:
+        """`work approve-plan`: the canonical plan read at the commit from the packets repository's clone, the commit
+        checked against its default branch; the evidence in the assessment evidence folder, the plan-authority
+        aggregates on the `readiness` store under profile `registry`."""
+        consumer, name = self.assessment.consumer, configuration.packets_repository
+        packets = configuration.repositories[name]
+        return PlanApproval(consumer.repository, consumer.project, consumer.profile, consumer.store, "registry", name,
+                            GitRevisionResolver({name: packets.clone}), packets.default_branch,
+                            lambda commit: self.items.read_packet(StoredPointer(name, PLAN_PATH, commit)))
+
+    def _release(self, configuration: ProjectConfiguration) -> InheritedRelease:
+        """`work release`: what `work authorize` writes, on the same store and evidence folder, with the composed
+        satisfiability check and the current plan authority, the owner-decision attention item of `_owner_decision`
+        and the card written through `work link`, `work display` and the board's Status and Priority writes."""
+        consumer, repositories = self.assessment.consumer, configuration.repositories
+        return InheritedRelease(self.records, self.identities, consumer, consumer.repository, consumer.project,
+                                consumer.profile, self.assessment.authorizations,
+                                GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
+                                {name: location.default_branch for name, location in repositories.items()},
+                                self._head, self.plan_approval.current, self.satisfiable, self._owner_decision,
+                                self.links)
+
+    def _head(self, repository: str) -> str | None:
+        """The default branch's current head in the repository's configured clone, or None."""
+        location = self.configuration.repositories.get(repository)
+        if location is None:
+            return None
+        result = subprocess.run(["git", "rev-parse", "--verify", "--quiet",
+                                 f"refs/heads/{location.default_branch}^{{commit}}"],
+                                cwd=location.clone, capture_output=True, check=False, timeout=60)
+        head = result.stdout.decode(errors="replace").strip()
+        return head if result.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", head) else None
+
+    def _owner_decision(self, identity: str) -> None:
+        """The durable typed owner-decision requirement of a refused inherited release: one JUDGMENT attention item per
+        work item (owner OPERATOR until a Founder lane exists), its origin the same in every process."""
+        consumer = self.assessment.consumer
+        source = consumer.repository.put(Observation(
+            Header(consumer.repository.project, consumer.repository.profile,
+                   f"{INHERITED_RELEASE}/{OWNER_DECISION_REQUIRED}/{identity}", "1", (self._definition,)),
+            self._definition, INHERITED_RELEASE, INHERITED_RELEASE + "/v1", (),
+            canonical_bytes({"kind": OWNER_DECISION_REQUIRED, "work": identity}).decode(), None, INHERITED_RELEASE,
+            INHERITED_RELEASE))
+        self._attention.ensure(AttentionOrigin(identity, OWNER_DECISION_REQUIRED, "JUDGMENT", INHERITED_RELEASE,
+                                               INHERITED_RELEASE, OPERATOR, INHERITED_RELEASE, source))
 
     def _completion(self, configuration: ProjectConfiguration) -> WorkCompletion:
         """`work record-completed`: the evidence record in the assessment evidence folder, landings checked in each
@@ -1238,6 +1308,31 @@ GRANT_SECONDS = 3600
 # `work decide` answers that write nothing (command answers, not outcome kinds).
 NO_OPEN_DECISION, OWNER_STILL_RUNNING, START_UNPROVEN = "NO_OPEN_DECISION", "OWNER_STILL_RUNNING", "START_UNPROVEN"
 REMOTE_UNVERIFIED, REMOTE_CONFLICT, CANDIDATE_PUBLISHED = "REMOTE_UNVERIFIED", "REMOTE_CONFLICT", "CANDIDATE_PUBLISHED"
+
+
+def automatic(contract: BiuContract, current: PlanAuthority | None) -> bool:
+    """A registry item is released by policy only while its own contract is plan-derived (`automatic-on`) and inside
+    the CURRENT approved plan authority: a later approval of another plan revision stops it."""
+    return contract.release_policy == "automatic-on" and current is not None \
+        and not outside_authority(contract, current)
+
+
+class _ContractRelease:
+    """The READY view as the registry coordinator reads it: each item's release flag follows its own contract and the
+    current plan authority (`automatic`, the authority read once per snapshot), so an `explicit-human-off` item, or
+    one released under a plan revision that is no longer current, is never released by policy. Everything else is
+    the view's."""
+
+    def __init__(self, view: GitHubProjectsWorkManagement, current: Callable[[], PlanAuthority | None]) -> None:
+        self._view, self._current = view, current
+
+    def import_ready_snapshot(self) -> tuple[ReadyWorkItem, ...]:
+        current = self._current()
+        return tuple(replace(item, automatic_release=automatic(item.contract, current))
+                     for item in self._view.import_ready_snapshot())
+
+    def __getattr__(self, name: str):
+        return getattr(self._view, name)
 
 
 class _DecisionOnly:
@@ -1547,10 +1642,46 @@ class RegistryClosure:
         clone = self._clone(invocation.correlation_id)
         return self._settle(invocation, candidate, clone, orders, retry=own, earlier=not own)
 
+    def _scope_violations(self, clone: Path, identity: str, base: str, revision: str) -> tuple[str, ...]:
+        """CLOSURE's confirmation of the same exact-candidate boundary the PRODUCER's containment checked, for an
+        `automatic-on` item: exactly what would land, the candidate's changes from the landing `base` (the default
+        branch's head it is merged onto, not its release baseline: a candidate that merged main could otherwise undo
+        a protected change main made after its release), read in this landing clone, against the registered
+        contract's `authorized_scope` and the current plan authority's protected paths. Release admission guards
+        only the PRODUCER, so this, the one landing gate, also requires the contract to be inside the CURRENT plan
+        authority (read once here): an item released under a plan revision that is no longer current holds with its
+        `owner-decision-required:` reasons and raises the owner-decision attention item. Anything unreadable is a
+        violation."""
+        try:
+            record = self._registry.records.show(identity)
+            contract = contract_block(record.packet, identity)
+            if contract.release_policy != "automatic-on":
+                return ()
+            current = self._registry.plan_approval.current()
+            if current is None:
+                return (NO_PLAN_AUTHORITY,)
+            outside = outside_authority(contract, current)
+            if outside:
+                self._registry._owner_decision(identity)
+                return outside
+            protected = current.scope.protected_paths
+            result = subprocess.run(["git", "-c", "credential.helper=", "-c", "core.hooksPath=/dev/null", *RAW_DIFF,
+                                     base, revision, "--"], cwd=clone, env=git_environment(clone),
+                                    capture_output=True, check=False, timeout=300)
+            if result.returncode:
+                return (f"{SCOPE_VIOLATION} the candidate's changes cannot be read",)
+            return contained(raw_changes(result.stdout.decode(errors="replace")), contract.authorized_scope, protected)
+        except Exception as error:  # noqa: BLE001 - an unreadable record or diff never lands
+            return (f"{SCOPE_VIOLATION} {type(error).__name__}",)
+
     # --- the landing ----------------------------------------------------------------------------------------------
 
     def _order(self, invocation, candidate, clone, base, attempt, actions, digest, findings):
         identity, revision = invocation.work_identity, candidate.locator.rpartition("@")[2]
+        # Every first order and every re-order at a new head: before the merge is built, journaled or landed.
+        violations = self._scope_violations(clone, identity, base, revision)
+        if violations:
+            return (), (*findings, hold("scope-violation", base, revision), *violations)
         built = self._build(clone, invocation, revision, base, actions, digest)
         if isinstance(built, str):
             return (), (*findings, hold(built, base, revision))
@@ -1595,7 +1726,10 @@ class RegistryClosure:
         if head == order["base"]:
             if self._authority is None:
                 return published, (ready_to_land(order["merge"]),)
-            if retry:
+            if retry:  # a re-land of the journaled order passes the same landing gate first
+                violations = self._scope_violations(clone, identity, order["base"], revision)
+                if violations:
+                    return published, (hold("scope-violation", order["base"], revision), *violations)
                 self._authority.land(self._landing_order(last, clone))
                 return self._settle(invocation, candidate, clone, orders, retry=False, earlier=False)
             return published, (hold("landing-refused", order["base"], order["merge"], order["record"]),)

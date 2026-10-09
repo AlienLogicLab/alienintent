@@ -28,6 +28,27 @@ _DISCOVERY = ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE", "G
               "GIT_DISCOVERY_ACROSS_FILESYSTEM", "GIT_CONFIG", "GIT_CONFIG_PARAMETERS")
 
 
+# The one diff form actual-diff containment reads: every changed path with its mode, NUL-separated, no rename pairing.
+RAW_DIFF = ("diff", "--raw", "-z", "--no-renames", "--no-ext-diff", "--no-textconv", "--abbrev=40")
+
+
+def raw_changes(output: str) -> tuple[tuple[str, str], ...]:
+    """`(mode, path)` of each entry of `git diff --raw -z --no-renames`: the new mode of an added or modified path,
+    the old mode of a deleted one. Anything else is CandidateUnavailable."""
+    fields = output.split("\0")
+    if fields and fields[-1] == "":
+        fields.pop()
+    if len(fields) % 2:
+        raise CandidateUnavailable("unreadable raw diff")
+    changes = []
+    for header, path in zip(fields[0::2], fields[1::2]):
+        parts = header.lstrip(":").split()
+        if not header.startswith(":") or len(parts) != 5 or not path:
+            raise CandidateUnavailable("unreadable raw diff")
+        changes.append((parts[0] if parts[4] == "D" else parts[1], path))
+    return tuple(changes)
+
+
 def open_worker_file(path: Path, owner_uid: int) -> int:
     """An open descriptor of `path`, a regular file owned by `owner_uid` (checked by `fstat` on the descriptor), or
     OSError. The caller reads only from this descriptor and closes it."""
@@ -80,6 +101,16 @@ class GitSourceControl(SourceControl):
 
     def tree(self, workspace: Path, revision: str) -> str:
         return self._git("rev-parse", "--verify", f"{revision}^{{tree}}", cwd=workspace)
+
+    def changes(self, workspace: Path, starting: str, revision: str) -> tuple[tuple[str, str], ...]:
+        """Every path the candidate changed from `starting`, with its mode (`raw_changes`), read in the workspace."""
+        if not _FULL_SHA.fullmatch(starting) or not _FULL_SHA.fullmatch(revision):
+            raise CandidateUnavailable("candidate or starting revision is not a full SHA")
+        result = subprocess.run(["git", "-c", "core.hooksPath=/dev/null", *RAW_DIFF, starting, revision, "--"],
+                                cwd=workspace, capture_output=True, check=False)
+        if result.returncode:
+            raise CandidateUnavailable("git operation failed")
+        return raw_changes(result.stdout.decode(errors="replace"))
 
     def read_back_candidate(self, workspace: Path, remote: str, branch: str, revision: str, verifier_workspace: Path) -> CandidateRef:
         remote_url = self._git("remote", "get-url", remote, cwd=workspace)
@@ -273,6 +304,16 @@ class IntakeSourceControl(GitSourceControl, SourceControl):
         if not _FULL_SHA.fullmatch(tree):
             raise CandidateUnavailable("candidate tree is not immutable")
         return tree
+
+    def changes(self, workspace: Path, starting: str, revision: str) -> tuple[tuple[str, str], ...]:
+        """Every path the imported candidate changed from `starting` (`raw_changes`), read in the intake repository
+        only, after `hand_over`; the worker's workspace is never read."""
+        if not _FULL_SHA.fullmatch(starting) or not _FULL_SHA.fullmatch(revision):
+            raise CandidateUnavailable("candidate or starting revision is not a full SHA")
+        result = self._intake_git(*RAW_DIFF, starting, revision, "--")
+        if result.returncode:
+            raise CandidateUnavailable("intake git operation failed")
+        return raw_changes(result.stdout.decode(errors="replace"))
 
     def intake_ref(self, correlation: str) -> str:
         return f"refs/intake/{ref_safe(correlation)}"

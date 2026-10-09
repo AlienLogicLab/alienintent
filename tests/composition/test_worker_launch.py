@@ -720,6 +720,33 @@ def revision_of(state) -> str:
     return state.candidate.locator.rpartition("@")[2]
 
 
+def test_an_item_released_under_one_plan_revision_does_not_land_after_another_is_approved(closing):
+    """PLAN-AUTHORITY-INHERITANCE: released under plan D1 and taken to ACCEPT, then the Founder approves D2. Release
+    admission guards only the PRODUCER, so CLOSURE's landing gate checks the contract against the CURRENT authority:
+    held as a scope violation carrying the owner-decision reason, no order journaled, nothing pushed, and the one
+    owner-decision attention item raised."""
+    from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH
+    from tests.composition.test_work_registry import PLAN_QUOTE, plan_text
+    fx = closing.fx
+    approval = fx.registry.plan_approval
+    first = approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text()), PLAN_QUOTE).content_digest
+    item = closing.accepted(release_policy="automatic-on", authority_issuer="plan-authority:" + first,
+                            authority_references=["README.md", f"{PLAN_PATH} obligation:FIXTURE"],
+                            authorized_scope=["launch-candidate.txt"])
+    git(fx.clone, "push", "-q", "origin", "main")  # the landing base: the release baseline, so nothing else differs
+    assert approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text(note=" revision 2")),
+                            PLAN_QUOTE).answer is None
+
+    closing.close(item.id)
+
+    state = closing.state(item.id)
+    assert (state.stage, state.record["hold_reason"]) == (LifecycleStage.ACCEPT, "closure-hold:scope-violation")
+    [outcome] = [r for r in closing.journal() if r.get("event") == "invocation-outcome" and r["role"] == "CLOSURE"]
+    assert any(finding.startswith("owner-decision-required: authority_issuer") for finding in outcome["findings"])
+    assert closing.orders(item.id) == [] and closing.pushes == []
+    assert len([i for i in fx.registry._attention.list_pending() if i.origin.work_ref == item.id]) == 1
+
+
 def test_closure_lands_through_the_authority_with_five_exact_receipts_and_the_row_projected(closing, monkeypatch):
     """Checks 1, 4, 6, 7, 10, 13 and 14 over one real CLOSURE launch."""
     fx = closing.fx

@@ -143,6 +143,21 @@ class GitHubProjectsV2Directory(ProjectDirectory):
         self._resolve(written["projectV2Item"].get("project"))
         return expected_revision if self.read_status(item_id).status == status else -1
 
+    def write_priority(self, item_id: str, priority: str, expected_revision: int) -> int:
+        """Set the card's Priority, confirmed by independent read-back exactly as `write_status` confirms Status."""
+        option = self.schema().priority_options.get(priority)
+        if option is None:
+            raise ProjectRejected("priority has no configured Priority option")
+        answer = self._graphql(_WRITE_MUTATION, {
+            "project": self._address.project_id, "item": item_id,
+            "field": self._address.field_for("Priority"), "option": option,
+        })
+        written = answer.get("updateProjectV2ItemFieldValue")
+        if not isinstance(written, Mapping) or not isinstance(written.get("projectV2Item"), Mapping):
+            raise ProjectUnavailable("Project refused the priority write")
+        self._resolve(written["projectV2Item"].get("project"))
+        return expected_revision if self.read_status(item_id).priority == priority else -1
+
     # --- transient probe subject --------------------------------------------
 
     def add_draft_item(self, title: str, body: str = "") -> str:
