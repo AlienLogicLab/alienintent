@@ -1,45 +1,54 @@
-# Work unit: the board card follows canonical work state; launch never needs the card READY
+# Work unit: the board card follows canonical work state through a durable projection outbox
 
 **Label:** `CARD-FOLLOWS-STAGE` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 2, 2026-10-09, for follow-up review. Not registered, not assessed, not released.
-**Position on the path (Founder 2026-10-09, decisions section 10):** VERIFIER-RETRY (done, `2b47f21`) ->
+**Status:** Draft revision 3, 2026-10-09, for independent review. Not registered, not assessed, not released.
+**Position on the path (Founder 2026-10-09, decisions sections 10 and 12):** VERIFIER-RETRY (done, `2b47f21`) ->
 CARD-FOLLOWS-STAGE -> NO-CHANGE -> PLAN-AUTHORITY-INHERITANCE -> BOUNDED-ROUTINE-LAUNCH -> Work Preparation / READY
 refill -> three-item autonomy proof.
 **Starting revision:** main `2b47f21`.
 **Roles:** launched by the factory: PRODUCER, a fresh VERIFIER on the exact candidate, CLOSURE through the Landing Authority.
 
-**The board reflects canonical Work state; it does not determine canonical Work state.**
+**The board reflects canonical Work state; it does not determine canonical Work state. Canonical Work state owns
+truth; projection is eventually consistent, revision-fenced and non-blocking.**
 
 ## Contract
 
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-2",
- "intent": "The GitHub Project card of each registry work item shows its canonical stage: IMPLEMENT when its PRODUCER starts, then VERIFY, IMPLEMENT on rework, ACCEPT and DONE, each written to the linked card and read back. A started work item launches from its registry record at any stage, so execution never depends on the card staying READY. A card write that fails or does not read back is a durable diagnostic, never a launch failure. The board reflects canonical Work state; it does not determine canonical Work state.",
+ "version": "revision-3",
+ "intent": "Each registry work item's GitHub Project card shows its canonical stage through a durable projection outbox: every committed state of a work item's execution aggregate leaves a projection obligation in the same store transaction; a card projector, running beside each launch and on its own (`work project`), projects the item's CURRENT canonical stage to its linked card, reads it back, acknowledges it under a revision fence and retires the obligation. The coordinator never calls GitHub; projection is eventually consistent, revision-fenced and non-blocking. A started work item launches from its registry record at any stage, so execution never depends on the card staying READY. The board reflects canonical Work state; it does not determine canonical Work state.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
  ],
  "fixed_decisions": [
   "Founder 2026-10-09: The board reflects canonical Work state; it does not determine canonical Work state.",
-  "Founder 2026-10-09: project IMPLEMENT, VERIFY, ACCEPT, DONE from canonical Work state to the linked card; use the existing started_item path so execution does not depend on the card remaining READY; projection failure becomes a durable diagnostic, never a launch blocker; independent read-back confirms the board state; do not redesign GitHub integration.",
-  "Founder 2026-10-09: READY becomes a projection too once plan authority removes the board as source of truth; until then the READY snapshot still admits a work item's first launch.",
+  "Founder 2026-10-09: canonical state transition -> durable bounded projection obligation (committed with the state) -> asynchronous, idempotent GitHub projection -> independent read-back -> obligation retired. The board may lag canonical Work state, but it must never run ahead of it and must never determine it.",
+  "Founder 2026-10-09: no external broker; a durable local outbox in the existing control-plane store; one outstanding obligation per work item (latest revision); acknowledged obligations are retired without scanning history; stale obligations are fenced by revision; successful projection requires read-back; GitHub failures never block execution.",
+  "Founder 2026-10-09: the projector projects the CURRENT canonical stage at projection time, never a status carried by an obligation; an obligation carries only the work item and a revision.",
+  "Founder 2026-10-09: the projection outbox is separate from the worker effect ledger: worker effects and downstream UI projection have different failure semantics (an unknown effect blocks its aggregate; a pending effect is parked for a decision).",
   "Founder 2026-10-09: while building, run only the affected tests; the factory's regression gate owns the whole-suite run."
  ],
  "authorized_scope": [
+  "src/alienintent/execution_coordination/adapters/sqlite_store.py",
+  "src/alienintent/execution_coordination/ports/operational_store.py",
   "src/alienintent/execution_coordination/application/factory_coordinator.py",
   "src/alienintent/composition/work_registry.py",
-  "src/alienintent/composition/lifecycle_capstone.py",
+  "src/alienintent/control_plane/adapters/cli.py",
+  "src/alienintent/installation/application/doctor.py",
+  "src/alienintent/composition/offline_proof.py",
+  "tools/fitness/coupling_register.json",
+  "tests/execution_coordination/test_operational_store.py",
   "tests/composition/test_worker_launch.py",
-  "tests/composition/test_work_registry.py",
-  "tests/execution_coordination/test_factory_coordinator.py",
-  "tests/execution_coordination/test_role_orchestration.py"
+  "tests/control_plane/test_cli.py",
+  "tests/installation/test_doctor_evidence.py"
  ],
  "excluded_scope": [
   "the GitHub adapters (github_work_management.py, github_projects_v2.py) and any redesign of the GitHub integration",
-  "the READY snapshot as the source of a first launch and of priority (plan authority's item)",
+  "the coordinator's own projection calls (project_execution_state) and the registry board view's projection fields, which stay empty",
+  "the READY snapshot as the source of a first launch and of priority (plan authority's item), and READY/HOLD card states",
   "guard_account, _block_dependents and record_decision, which still read the READY snapshot",
-  "the lifecycle transition rules and the closure actions"
+  "the worker effect ledger (effects table, EffectExecutor) and its recovery semantics"
  ],
  "dependencies": [],
  "required_capabilities": [
@@ -53,19 +62,20 @@ refill -> three-item autonomy proof.
  },
  "retry_policy": "verifier rejection returns to the PRODUCER with the findings; at most 3 cycles",
  "completion_criteria": [
-  "acceptance checks 1-5 pass"
+  "acceptance checks 1-10 pass"
  ],
  "verification_obligations": [
   "independent VERIFIER on the exact candidate",
   "the candidate's diff from the starting revision equals section 2's diff",
-  "the VERIFIER runs mutations C1-C7 of check 5 exactly and records that each makes its named test fail and that reverting makes it pass"
+  "the VERIFIER runs mutations P1-P8 of check 10 exactly and records that each makes its named test fail and that reverting makes it pass"
  ],
  "required_evidence": [
   "independent-verifier-accepted"
  ],
  "non_goals": [
-  "a REVIEW card state (REVIEW is never a recorded stage)",
-  "removing a retired or failed item's card from the board"
+  "a REVIEW, READY or HOLD card state",
+  "removing a retired or failed item's card",
+  "a generic messaging framework"
  ],
  "candidate_custody_requirements": [
   "candidate commit verified exactly, then landed by the Landing Authority preserving its SHA; no pull request"
@@ -99,116 +109,317 @@ refill -> three-item autonomy proof.
 
 ## 1. Why
 
-Founder-reported and live: a registry work item's card stays READY while the item is at IMPLEMENT, VERIFY and ACCEPT
-(#169 showed READY at VERIFY on 2026-10-09). The registry's board view is built with no projection fields and no
-writer (`work_registry.py` `_ready_view`), so every `project_execution_state` call answers "unconfirmed unsupported
-projection"; only READY is read from the board and DONE written by CLOSURE. Making the card truthful has one real
-consequence: `launch` takes an item at IMPLEMENT or VERIFY only from the READY snapshot (cards whose Status is READY),
-and resolves a started item from its registry record (`started_item`) only at ACCEPT; `start` reads only the snapshot.
-So the card can only follow the stage if a started item launches from its registry record at every stage. A recorded
-decision drops the item's `correlation` (it is not carried), so that resolution falls back to the carried
-`producer_correlation`, whose `invocation-started` record always exists.
+Founder-reported and live: a registry work item's card stays READY while the item is at IMPLEMENT, VERIFY and ACCEPT.
+Revisions 1-2 of this item called GitHub synchronously from the coordinator; review proved there is no safe place for
+that inside the launch transaction (before the commit the card leads canonical truth and a crash loses the item;
+between commit and claim, or after the claim, a crash parks a decision for the Founder). Founder decision (section
+12): a durable projection outbox. Separately, `launch` resolved a started item from its registry record only at
+ACCEPT and `start` read only the READY snapshot, so an item whose card left READY could not launch at IMPLEMENT or
+VERIFY; a recorded decision drops the item's `correlation`, so resolution falls back to `producer_correlation`.
 
 ## 2. The change: exactly this diff at `2b47f21`
 
-The candidate's diff from `2b47f21` is exactly this (`git apply` applies it at the starting revision):
+Invariants the diff implements:
 
-- `factory_coordinator.py`: `launch` resolves a started item through `_resolve` at every stage in `ROLE_BY_STAGE`
-  (the ACCEPT checks are unchanged); `_resolve` tries the record's `correlation`, then `producer_correlation`; new
-  `_with_started` adds every recorded, non-final started item the snapshot does not show, and `start` uses it; a
-  PRODUCER dispatch projects IMPLEMENT before its effect is committed or claimed, and a stage recorded by `_recover`
-  is projected too, both through `_project_quietly`, which turns any failure into a `projection_diagnostics` entry
-  (never raised into a launch). The projection after a launch's own result keeps today's behaviour.
-- `work_registry.py`: `CARD_STAGES` (IMPLEMENT, VERIFY, ACCEPT, DONE -> Status) and `PROJECTION_DIAGNOSTICS`; the
-  registry board view gets `CARD_STAGES` and `projection_write=self._project_card`; `_project_card` writes the Status
-  to the work item's linked card through the existing `write_status` (which reads it back) and, when the answer is not
-  the revision (no linked card, an exception, or another status read back), appends one JSON line to
-  `launch/projection-diagnostics.jsonl` and answers -1. It never raises.
-- `lifecycle_capstone.py`: check L6's expected receipts gain IMPLEMENT at each PRODUCER start.
-- Tests that change because the card now tells the truth: the registry view test (projection fields and writer),
-  the coordinator's projected revisions (`[0, 1, 3, 4]`), four orchestration projection lists (IMPLEMENT at
-  dispatch), and four launch assertions where the card is ACCEPT, not READY, at ACCEPT (one of them was DONE: CLOSURE
-  wrote DONE, then cleanup failed, so the item is canonically still ACCEPT and the card now says so). Three new tests.
+1. **Durable together.** `SQLiteOperationalStore._commit` (every state write goes through it) upserts, in the same
+   transaction, one row of the new `projections` table for every `factory:` aggregate: (profile, aggregate,
+   revision). Schema 3; 1 -> 3 and 2 -> 3 migrations (2 -> 3 owes an obligation to every existing work item).
+2. **Outstanding obligations only.** `pending_projections(profile)` reads only that table; `retire_projection`
+   deletes a row only if it is still for the given revision, so a newer commit's obligation stays outstanding.
+3. **Current canonical stage.** An obligation carries no status. `WorkRegistry.project_cards` reads the item's
+   current state and projects its current stage (IMPLEMENT, VERIFY, ACCEPT, DONE) at its current revision.
+4. **Revision fence.** A card's last acknowledged projection is the aggregate `card:<id>` (revision, stage); no write
+   is made at or below it, and the acknowledgement is a compare-and-set commit. A late or repeated obligation can
+   never move a card backward; a write is repeated safely (the same status again) until acknowledged.
+5. **Read-back.** `_project_card` writes through the existing `write_status`, which reads the Status back; anything
+   else (no linked card, an exception, another status read back) appends a line to
+   `launch/projection-diagnostics.jsonl`, and the obligation stays outstanding.
+6. **Non-blocking and restartable.** `work launch` runs inside `card_projection`: a pass at once, a pass every
+   `CARD_PROJECTION_SECONDS` (5) in a daemon thread while the launch runs (so a first PRODUCER's IMPLEMENT shows while
+   it works), and a pass at the end; a failing pass is a diagnostic. `work project` runs one pass on its own. The
+   coordinator never calls GitHub.
+7. **Execution never needs the card.** `launch` resolves a started item at every stage through `_resolve`, which tries
+   `correlation`, then `producer_correlation`; `start` adds every recorded, non-final started item through
+   `_with_started`.
+8. **One schema truth.** The doctor's persistence check and the offline proof's P1 no longer hardcode schema 2: the
+   doctor asks the store's preflight whether anything is left to migrate, P1 compares with `SCHEMA_VERSION`; the
+   coupling register declares the `projections` table.
 
 ```diff
-diff --git a/src/alienintent/composition/lifecycle_capstone.py b/src/alienintent/composition/lifecycle_capstone.py
-index 5bc6b5a..8d1d950 100644
---- a/src/alienintent/composition/lifecycle_capstone.py
-+++ b/src/alienintent/composition/lifecycle_capstone.py
-@@ -387,8 +387,8 @@ def lifecycle(root: Path, document, manifest_path: Path, environment) -> tuple[l
-               "each verifier invocation is distinct from every producer and judged a fresh clone at exactly the candidate it was given", {"verifier_heads": verifier_heads, "judged": [revision_of(v.locator) if v else None for v in verified]}),
-         check("L5", "rejection recorded and reworked into a fresh candidate", record.get("rejections") == 1 and len(findings) == 1 and findings[0].get("source") == "verifier" and findings[0].get("correlation") == verifiers[0][0] and findings[0].get("findings"),
-               "one attributable verifier finding under the rejecting invocation; rejections = 1", {"findings": findings, "rejections": record.get("rejections")}),
--        check("L6", "no success-collapse projection", receipts == [("release-proposed", None), ("execution-state-projected", "VERIFY"), ("execution-state-projected", "IMPLEMENT"), ("release-proposed", None), ("execution-state-projected", "VERIFY"), ("execution-state-projected", "ACCEPT"), ("execution-state-projected", "DONE")],
--              "each producer run passes release admission; the kernel projects VERIFY, IMPLEMENT (rework), VERIFY, ACCEPT and DONE, each after its own role outcome", {"receipts": receipts}),
-+        check("L6", "no success-collapse projection", receipts == [("release-proposed", None), ("execution-state-projected", "IMPLEMENT"), ("execution-state-projected", "VERIFY"), ("execution-state-projected", "IMPLEMENT"), ("release-proposed", None), ("execution-state-projected", "IMPLEMENT"), ("execution-state-projected", "VERIFY"), ("execution-state-projected", "ACCEPT"), ("execution-state-projected", "DONE")],
-+              "each producer run passes release admission and projects IMPLEMENT as it starts; the kernel projects VERIFY, IMPLEMENT (rework), VERIFY, ACCEPT and DONE, each after its own role outcome", {"receipts": receipts}),
-         check("L7", "actual closure receipts", closures and record.get("receipts") == ["candidate-published"] and record.get("closure") == ["candidate-published"] and closure_head == revisions[-1],
-               "closure performed and read back candidate-published by re-retrieving the accepted revision into a fresh clone", {"receipts": record.get("receipts"), "closure_clone_head": closure_head}),
-         check("L8", "exactly one effect per invocation, each confirmed", [e[0] for e in ledger] == sorted(launches) and all(status == "confirmed" and receipt == f"outcome:{kind}" for (identity, status, receipt), (_, _, kind) in zip(ledger, sorted(observed, key=lambda o: o[1]))),
+diff --git a/src/alienintent/composition/offline_proof.py b/src/alienintent/composition/offline_proof.py
+index 2a19ee7..3df94f9 100644
+--- a/src/alienintent/composition/offline_proof.py
++++ b/src/alienintent/composition/offline_proof.py
+@@ -22,7 +22,7 @@ import time
+ from typing import Mapping
+ 
+ from alienintent.composition.offline_profile import OfflineProofSubstrate, ProofManifest, credential_findings, load_manifest
+-from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
++from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore, SCHEMA_VERSION
+ from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
+ from alienintent.invocation_runtime.adapters.scripted_worker import SCRIPTED_PROVIDER, ScriptedWorkerProcess, journal_outcome, journal_provider_calls, journal_records
+ from alienintent.invocation_runtime.domain.runtime import workspace_folder
+@@ -136,7 +136,7 @@ def evaluate(substrate: OfflineProofSubstrate, summary, kernel: dict[str, object
+     facts["stages"] = stages
+     facts["correlations"] = {identity: None if state is None else substrate.store.read_state(manifest.profile, f"factory:{identity}")[1].get("correlation") for identity, state in states.items()}
+     all_done = bool(states) and all(state is not None and state.stage is LifecycleStage.DONE and state.candidate is not None and state.candidate.independent_read_back_proven for state in states.values())
+-    checks.append(check("P1", "real temporary SQLite", substrate.database.exists() and preflight.current_version == 2 and all_done, "state.sqlite at schema 2 holds every seeded aggregate at DONE with an independently read-back candidate", {"path": str(substrate.database), "schema_version": preflight.current_version, "stages": stages}))
++    checks.append(check("P1", "real temporary SQLite", substrate.database.exists() and preflight.current_version == SCHEMA_VERSION and all_done, f"state.sqlite at schema {SCHEMA_VERSION} holds every seeded aggregate at DONE with an independently read-back candidate", {"path": str(substrate.database), "schema_version": preflight.current_version, "stages": stages}))
+ 
+     bare = subprocess.run(["git", "-C", str(substrate.remote), "rev-parse", "--is-bare-repository"], capture_output=True, text=True, check=False).stdout.strip() == "true"
+     main = substrate.remote_advertises("main")
 diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
-index 6daec18..38ebc0b 100644
+index 6daec18..3d8f3a8 100644
 --- a/src/alienintent/composition/work_registry.py
 +++ b/src/alienintent/composition/work_registry.py
-@@ -172,6 +172,9 @@ OWNERS = {NO_LINK: WORK_PREPARATION, NOT_ELIGIBLE: WORK_PREPARATION, ASSESSMENT_
+@@ -77,6 +77,7 @@ import shutil
+ import signal
+ import subprocess
+ import sysconfig
++import threading
+ import time
+ from types import SimpleNamespace
+ from uuid import uuid4
+@@ -121,7 +122,7 @@ from alienintent.execution_coordination.adapters.github_repository_api import Gi
+ from alienintent.execution_coordination.adapters.github_work_management import GitHubProjectsWorkManagement
+ from alienintent.execution_coordination.adapters.release_admission import (
+     GitRevisionResolver, StoredReleaseAuthorizations)
+-from alienintent.execution_coordination.adapters.sqlite_store import SCHEMA_VERSION, SQLiteOperationalStore
++from alienintent.execution_coordination.adapters.sqlite_store import PROJECTED, SCHEMA_VERSION, SQLiteOperationalStore
+ from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
+ from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+ from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+@@ -133,7 +134,7 @@ from alienintent.execution_coordination.domain.contract import BiuContract
+ from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
+ from alienintent.execution_coordination.domain.custody import CandidateRef
+ from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired
+-from alienintent.execution_coordination.ports.operational_store import OperationalStore
++from alienintent.execution_coordination.ports.operational_store import OperationalStore, VersionConflict
+ from alienintent.execution_coordination.ports.project_directory import ProjectItemState
+ from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
+ from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
+@@ -172,6 +173,11 @@ OWNERS = {NO_LINK: WORK_PREPARATION, NOT_ELIGIBLE: WORK_PREPARATION, ASSESSMENT_
            CONTRACT_INVALID: WORK_PREPARATION, DISPLAY_DIFFERS: WORK_PREPARATION, ROW_REFUSED: OPERATOR}
  # The shared Factory Director host configuration whose `wipLimit` is the WIP limit (bin/alienintent.mjs reads it too).
  HOST_CONFIGURATION = Path("~/.config/alienintent/factory-director-host.json")
-+# The canonical stages each work item's card shows (its board Status), and where a failed card write is recorded.
-+CARD_STAGES = {"IMPLEMENT": "Status", "VERIFY": "Status", "ACCEPT": "Status", "DONE": "Status"}
++# The canonical stages a work item's card shows, where a failed card write is recorded, and how often a running launch
++# catches the board up. The board reflects canonical work state; it does not determine it.
++CARD_STAGES = frozenset({"IMPLEMENT", "VERIFY", "ACCEPT", "DONE"})
 +PROJECTION_DIAGNOSTICS = "projection-diagnostics.jsonl"
++CARD_PROJECTION_SECONDS = 5.0
  # Every registry token is scoped: `work link`, `work display` and the READY view need these, for the one repository.
  DISPLAY_PERMISSIONS = dict(REQUIRED_PERMISSIONS) | {"metadata": "read"}
  MAX_SAFE_INTEGER = 2 ** 53 - 1  # the Number.isSafeInteger bound of bin/alienintent.mjs; a JSON 1.0 is not an integer here
-@@ -795,8 +798,9 @@ class WorkRegistry:
-                                 github.repository, packets.default_branch, accepted, ordered)
+@@ -570,6 +576,87 @@ class WorkRegistry:
+         configuration is read; the model routing file is read by `prepare` at every launch."""
+         return self._launch_chain()[0]
  
-     def _ready_view(self, configuration: ProjectConfiguration) -> GitHubProjectsWorkManagement:
--        """The READY view of board #1: profile `registry`, each formal workflow state mapped to itself, no projection
--        fields or writes; rows from `_ready_snapshot` and each row's contract the one that snapshot read for it.
-+        """The READY view of board #1: profile `registry`, each formal workflow state mapped to itself, and each stage
-+        of CARD_STAGES projected to the work item's card by `_project_card`; rows from `_ready_snapshot` and each row's
-+        contract the one that snapshot read for it.
-         Attention items live in the `readiness` store and evidence folder, under the assessment profile."""
-         consumer = self.assessment.consumer
-         project, profile = configuration.project, consumer.profile
-@@ -814,8 +818,32 @@ class WorkRegistry:
-         self._contracts: dict[str, BiuContract] = {}
-         self._board_read = False  # Whether the last snapshot read the whole board; only then can a defect clear.
-         return GitHubProjectsWorkManagement("registry", configuration.github.repository,
--                                            {state: state for state in STATES}, {}, self._ready_snapshot,
--                                            lambda row: self._contracts[str(row["card"])])
-+                                            {state: state for state in STATES}, CARD_STAGES, self._ready_snapshot,
-+                                            lambda row: self._contracts[str(row["card"])],
-+                                            projection_write=self._project_card)
++    def project_cards(self) -> int:
++        """One pass of the card projector: each outstanding projection obligation of a work item's execution state is
++        projected to its linked card as the item's CURRENT canonical stage, read back, acknowledged, then retired. A
++        write at or below the card's acknowledged revision is never made, so a late or repeated obligation cannot move a
++        card backward; a failed write leaves the obligation outstanding for the next pass. Never changes canonical
++        state; answers the number of obligations retired."""
++        if self.links is None or self.assessment is None:
++            return 0
++        store, retired = self.store, 0
++        for aggregate, revision in store.pending_projections("registry"):
++            identity = aggregate.removeprefix(PROJECTED)
++            version, raw = store.read_state("registry", aggregate)
++            stage = raw.get("stage")
++            if stage in CARD_STAGES:
++                acked_version, acked = store.read_state("registry", f"card:{identity}")
++                if int(acked.get("revision", -1)) < version:
++                    if not self._project_card(identity, str(stage), version):
++                        continue  # outstanding: the next pass writes the then-current stage
++                    try:
++                        store.commit("registry", f"card:{identity}", acked_version,
++                                     {"identity": identity, "stage": stage, "revision": version})
++                    except VersionConflict:
++                        continue  # another projector acknowledged first; the next pass re-reads both
++            retired += store.retire_projection("registry", aggregate, revision)
++        return retired
 +
-+    def _project_card(self, identity: str, field: str, state: str, revision: int) -> int:
-+        """The work item's card shows its canonical stage: Status `state` written to the card linked to `identity`
-+        and read back (the revision when it reads back `state`, else -1). The board reflects canonical work state; it
-+        does not determine it. Any failure is appended to `launch/projection-diagnostics.jsonl` and answered -1; the
-+        adapter turns anything raised here into an unconfirmed receipt, so nothing reaches a launch. One line per failed
-+        stage change; the file is not rotated."""
-+        card, error = None, None
++    @contextmanager
++    def card_projection(self, interval: float = CARD_PROJECTION_SECONDS):
++        """The card projector around one launch: a pass now, a pass every `interval` seconds while the launch runs (so a
++        PRODUCER's IMPLEMENT shows while it works), and a pass at the end. A pass that fails is recorded and the next
++        one retries; nothing here reaches the launch."""
++        stop = threading.Event()
++
++        def passes() -> None:
++            while True:
++                self._card_pass()
++                if stop.wait(interval):
++                    return
++        runner = threading.Thread(target=passes, name="card-projection", daemon=True)
++        runner.start()
++        try:
++            yield
++        finally:
++            stop.set()
++            runner.join(interval + 30)
++            self._card_pass()
++
++    def _card_pass(self) -> None:
++        try:
++            self.project_cards()
++        except Exception as error:  # noqa: BLE001 - the board lags canonical state; it never stops a launch
++            self._projection_diagnostic(None, None, None, None, -1, f"pass failed: {type(error).__name__}: {error}")
++
++    def _project_card(self, identity: str, stage: str, revision: int) -> bool:
++        """`stage` written to the card linked to `identity` and read back by `write_status`; a failure (no linked card,
++        an exception, another status read back) is appended to `launch/projection-diagnostics.jsonl`."""
++        card, answered, error = None, -1, None
 +        try:
 +            record = self.records.show(identity)
 +            card = None if record is None else record.item.card_id
-+            answered = -1 if card is None else self.links.board.write_status(card, state, revision)
++            if card is not None:
++                answered = self.links.board.write_status(card, stage, revision)
 +        except Exception as raised:  # noqa: BLE001 - a projection failure is a diagnostic, never a launch failure
-+            answered, error = -1, f"{type(raised).__name__}: {raised}"
-+        if answered != revision:
++            error = f"{type(raised).__name__}: {raised}"
++        if answered == revision:
++            return True
++        self._projection_diagnostic(identity, card, stage, revision, answered, error if error is not None else
++                                    "no linked card" if card is None else "read back another status")
++        return False
++
++    def _projection_diagnostic(self, identity, card, stage, revision, answered, error) -> None:
++        try:
 +            folder = launch_root(self.configuration)
 +            folder.mkdir(parents=True, exist_ok=True)
 +            with (folder / PROJECTION_DIAGNOSTICS).open("a", encoding="utf-8") as log:
 +                log.write(json.dumps({"at": datetime.now(UTC).isoformat(), "identity": identity, "card": card,
-+                                      "state": state, "revision": revision, "answered": answered,
-+                                      "error": error if error is not None else
-+                                      "no linked card" if card is None else "read back another status"}) + "\n")
-+        return answered
++                                      "state": stage, "revision": revision, "answered": answered,
++                                      "error": error}) + "\n")
++        except OSError:
++            pass  # a diagnostic that cannot be written is not a launch failure either
++
+     @property
+     def store(self) -> OperationalStore:
+         """The `readiness` store the `registry` coordinator and the exclusive `work launch` reservation live in."""
+diff --git a/src/alienintent/control_plane/adapters/cli.py b/src/alienintent/control_plane/adapters/cli.py
+index 60ba489..61a266d 100644
+--- a/src/alienintent/control_plane/adapters/cli.py
++++ b/src/alienintent/control_plane/adapters/cli.py
+@@ -1,6 +1,7 @@
+ """Sanitized command-line presentation adapter for the operator control plane."""
+ from __future__ import annotations
  
-     def _ready_snapshot(self) -> tuple[dict[str, object], ...]:
-         """The READY column of the whole board in the sandbox reader's order (READY-entry time, then card id), one
++from contextlib import nullcontext
+ import argparse
+ from datetime import UTC, datetime
+ import importlib
+@@ -120,6 +121,7 @@ def _parser() -> argparse.ArgumentParser:
+     context.add_argument("--correlation"); context.add_argument("--candidate")
+     context.add_argument("--contract-digest")
+     launch = _sanitized(work.add_parser("launch")); launch.add_argument("target")
++    _sanitized(work.add_parser("project"))
+     work_decide = _sanitized(work.add_parser("decide")); work_decide.add_argument("target")
+     work_decide.add_argument("--choice", choices=("authorize", "defer"), required=True)
+     work_decide.add_argument("--quote", required=True)
+@@ -201,8 +203,17 @@ def main(argv: list[str] | None = None) -> int:
+                 if getattr(registry, "launcher", None) is None:
+                     _render({"error": "readiness-not-configured"}, args.json)
+                     return 1
+-                _render(exclusive_launch_work(registry.launcher, args.target, registry.store, registry.ownership),
+-                        args.json)
++                # The card projector runs beside the launch: the board lags canonical state, never leads or blocks it.
++                projection = getattr(registry, "card_projection", None)
++                with projection() if projection is not None else nullcontext():
++                    value = exclusive_launch_work(registry.launcher, args.target, registry.store, registry.ownership)
++                _render(value, args.json)
++                return 0
++            if args.work_command == "project":
++                if getattr(registry, "project_cards", None) is None:
++                    _render({"error": "readiness-not-configured"}, args.json)
++                    return 1
++                _render({"retired": registry.project_cards()}, args.json)
+                 return 0
+             if args.work_command == "decide":
+                 if getattr(registry, "decide", None) is None:
+diff --git a/src/alienintent/execution_coordination/adapters/sqlite_store.py b/src/alienintent/execution_coordination/adapters/sqlite_store.py
+index 061a2bb..113147c 100644
+--- a/src/alienintent/execution_coordination/adapters/sqlite_store.py
++++ b/src/alienintent/execution_coordination/adapters/sqlite_store.py
+@@ -21,7 +21,11 @@ from alienintent.execution_coordination.ports.fenced_store import (
+     ConsumerReceipt, EffectConfirmation, FencedOperationalStore, GuardVector,
+ )
+ 
+-SCHEMA_VERSION = 2
++SCHEMA_VERSION = 3
++# The work items' execution aggregates: each committed state of one leaves a projection obligation (its revision) in
++# the same transaction, so a downstream display is caught up from the outstanding obligations alone.
++PROJECTED = "factory:"
++_PROJECTIONS = "CREATE TABLE projections (profile TEXT NOT NULL, aggregate TEXT NOT NULL, revision INTEGER NOT NULL, PRIMARY KEY(profile, aggregate));"
+ _FENCED = "__fenced__:"
+ 
+ 
+@@ -87,7 +91,8 @@ class SQLiteOperationalStore(FencedOperationalStore):
+                 CREATE TABLE fences (profile TEXT NOT NULL, scope TEXT NOT NULL, resource_key TEXT NOT NULL, fence INTEGER NOT NULL, PRIMARY KEY(profile, scope, resource_key));
+                 CREATE TABLE effects (profile TEXT NOT NULL, identity TEXT NOT NULL, aggregate TEXT NOT NULL, payload TEXT NOT NULL, status TEXT NOT NULL, receipt TEXT, PRIMARY KEY(profile, identity));
+                 CREATE TABLE schema_migrations (from_version INTEGER NOT NULL, to_version INTEGER NOT NULL, reversible INTEGER NOT NULL, PRIMARY KEY(from_version, to_version));
+-                INSERT INTO operational_schema VALUES (2);
++                """ + _PROJECTIONS + """
++                INSERT INTO operational_schema VALUES (3);
+                 COMMIT;
+             """)
+ 
+@@ -113,20 +118,24 @@ class SQLiteOperationalStore(FencedOperationalStore):
+             raise SchemaIncompatible(f"database schema {version} is newer than supported {SCHEMA_VERSION}")
+         if version == SCHEMA_VERSION:
+             return SchemaPreflight(version, None)
+-        if version == 1:
+-            return SchemaPreflight(version, (1, 2))
++        if version in (1, 2):
++            return SchemaPreflight(version, (version, SCHEMA_VERSION))
+         raise SchemaIncompatible(f"database schema {version} has no safe migration to {SCHEMA_VERSION}")
+ 
+     @staticmethod
+     def _migrate(connection: sqlite3.Connection, from_version: int, to_version: int) -> None:
+-        if (from_version, to_version) != (1, 2):
++        if from_version not in (1, 2) or to_version != 3:
+             raise SchemaIncompatible(f"database schema {from_version} has no safe migration to {to_version}")
+-        connection.executescript("""
+-            BEGIN IMMEDIATE;
++        to_two = """
+             ALTER TABLE receipts ADD COLUMN status TEXT NOT NULL DEFAULT 'applied';
+             CREATE TABLE schema_migrations (from_version INTEGER NOT NULL, to_version INTEGER NOT NULL, reversible INTEGER NOT NULL, PRIMARY KEY(from_version, to_version));
+             INSERT INTO schema_migrations VALUES (1, 2, 0);
+-            UPDATE operational_schema SET version=2;
++        """ if from_version == 1 else ""
++        # 2 -> 3 only adds the projection obligations; every existing state is owed one, so a display catches up.
++        connection.executescript("BEGIN IMMEDIATE;" + to_two + _PROJECTIONS + """
++            INSERT INTO projections SELECT profile, identity, version FROM aggregates WHERE identity LIKE 'factory:%';
++            INSERT INTO schema_migrations VALUES (2, 3, 1);
++            UPDATE operational_schema SET version=3;
+             COMMIT;
+         """)
+ 
+@@ -194,8 +203,21 @@ class SQLiteOperationalStore(FencedOperationalStore):
+             raise VersionConflict(f"expected version {expected_version}, found {actual}")
+         version = actual + 1
+         connection.execute("INSERT INTO aggregates VALUES (?, ?, ?, ?) ON CONFLICT(profile, identity) DO UPDATE SET version=excluded.version, state=excluded.state", (profile, aggregate, version, json.dumps(state, sort_keys=True)))
++        if aggregate.startswith(PROJECTED):  # the projection obligation, durable together with the state
++            connection.execute("INSERT INTO projections VALUES (?, ?, ?) ON CONFLICT(profile, aggregate) DO UPDATE SET revision=excluded.revision", (profile, aggregate, version))
+         return version
+ 
++    def pending_projections(self, profile: str) -> tuple[tuple[str, int], ...]:
++        """The outstanding projection obligations (aggregate, revision), from the obligations alone (no history)."""
++        with self._read() as connection:
++            rows = connection.execute("SELECT aggregate, revision FROM projections WHERE profile=? ORDER BY aggregate", (profile,)).fetchall()
++            return tuple((row["aggregate"], row["revision"]) for row in rows)
++
++    def retire_projection(self, profile: str, aggregate: str, revision: int) -> bool:
++        """Retire the obligation only if it is still for `revision`: a newer commit's obligation stays outstanding."""
++        with self._transaction() as connection:
++            return connection.execute("DELETE FROM projections WHERE profile=? AND aggregate=? AND revision=?", (profile, aggregate, revision)).rowcount == 1
++
+     def read_state(self, profile: str, aggregate: str) -> tuple[int, dict[str, object]]:
+         with self._read() as connection:
+             row = connection.execute("SELECT version, state FROM aggregates WHERE profile=? AND identity=?", (profile, aggregate)).fetchone()
 diff --git a/src/alienintent/execution_coordination/application/factory_coordinator.py b/src/alienintent/execution_coordination/application/factory_coordinator.py
-index 86b822c..d3ac9b8 100644
+index 86b822c..4e1db88 100644
 --- a/src/alienintent/execution_coordination/application/factory_coordinator.py
 +++ b/src/alienintent/execution_coordination/application/factory_coordinator.py
 @@ -117,7 +117,7 @@ class FactoryCoordinator:
@@ -220,16 +431,16 @@ index 86b822c..d3ac9b8 100644
          if not self._recover(items):
              return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
          dispatched: list[str] = []
-@@ -160,23 +160,26 @@ class FactoryCoordinator:
+@@ -160,23 +160,25 @@ class FactoryCoordinator:
          """One role step for exactly the named work item: the PRODUCER at IMPLEMENT, the VERIFIER at VERIFY or
          CLOSURE at ACCEPT.
  
 -        At ACCEPT, writing nothing before the last step: the item is resolved from the READY snapshot, or else
 -        `started_item`; a contract whose closure actions are not exactly the five fixed names answers
--        CLOSURE_NOT_AUTOMATED; an item at `ready-to-land` while landing is not enabled answers READY_TO_LAND.
 +        A started item is resolved from the READY snapshot, or else `started_item` at any stage (the board reflects
 +        canonical work state; it does not determine it). At ACCEPT, writing nothing before the last step, a contract
-+        whose closure actions are not exactly the five fixed names answers CLOSURE_NOT_AUTOMATED; an item at `ready-to-land` while landing is not enabled answers READY_TO_LAND.
++        whose closure actions are not exactly the five fixed names answers
+         CLOSURE_NOT_AUTOMATED; an item at `ready-to-land` while landing is not enabled answers READY_TO_LAND.
          Otherwise it writes the explicit human release as `release_and_start` does, runs the existing recovery once
          (which may record already-durable outcomes of other launches and starts no worker), projects every recorded
 -        DONE through `completed`, and, only if the item is in the READY snapshot (or, at ACCEPT, resolved by
@@ -244,8 +455,6 @@ index 86b822c..d3ac9b8 100644
          except KeyError:
              projected = None
 +        if projected is not None and projected.stage in ROLE_BY_STAGE:
-+            # A started item is resolved from its registry record when the board no longer shows it READY: the board
-+            # reflects canonical work state, it does not determine it.
 +            started = self._resolve(identity, self._work.import_ready_snapshot(), projected.record or {})
          if projected is not None and projected.stage is LifecycleStage.ACCEPT:
 -            accepted = self._resolve(identity, self._work.import_ready_snapshot(), projected.record or {})
@@ -254,7 +463,7 @@ index 86b822c..d3ac9b8 100644
                  return CLOSURE_NOT_AUTOMATED
              if projected.outcome == READY_TO_LAND and not self._landing_enabled():
                  return READY_TO_LAND
-@@ -188,7 +191,7 @@ class FactoryCoordinator:
+@@ -188,7 +190,7 @@ class FactoryCoordinator:
          if not self._recover(items):
              return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
          self._project_done()
@@ -263,24 +472,7 @@ index 86b822c..d3ac9b8 100644
          if item is None or not self._eligible(item):
              return NOT_ELIGIBLE
          producing = self._role(identity) == PRODUCER
-@@ -421,6 +424,8 @@ class FactoryCoordinator:
-             # The invocation's own candidate is retained: a later rework clears
-             # the state's candidate, and recovery must re-ask the same question.
-             prepared = self._encode(current) | self._carried(raw) | {"role": role, "invocation_candidate": self._encode_candidate(invocation.candidate)}
-+            if role == PRODUCER:  # before any effect is claimed: a slow or failing board never strands a launch
-+                self._project_quietly(item.identity, LifecycleStage.IMPLEMENT, current.version)
-             self._store.commit_with_effect(self._profile, self._aggregate(item.identity), version, prepared, correlation, {"correlation": correlation, "work": item.identity, "role": role})
-             self._store.claim_effect(self._profile, correlation)
-             outcome = self._worker.start(invocation, item.contract, frozenset(item.contract.required_capabilities), item.contract.budget_policy)
-@@ -713,6 +718,7 @@ class FactoryCoordinator:
-             advanced = self._advance(item, current, raw, invocation, outcome)
-             if not self._record_result(item, advanced.state, reservation.owner, advanced.outcome, advanced.fields | {"role": role, "outcome_kind": outcome.kind, "invocation_candidate": given}):
-                 return False
-+            self._project_quietly(identity, advanced.state.stage, advanced.state.version)
-             if advanced.state.stage is LifecycleStage.DONE:
-                 self._project(identity)
-             if advanced.outcome == "authority-block":
-@@ -725,12 +731,39 @@ class FactoryCoordinator:
+@@ -725,12 +727,32 @@ class FactoryCoordinator:
          return True
  
      def _resolve(self, identity: str, items: Iterable[ReadyWorkItem], raw: Mapping[str, object]) -> ReadyWorkItem | None:
@@ -315,125 +507,151 @@ index 86b822c..d3ac9b8 100644
 +            if item is not None:
 +                started.append(item)
 +        return (*items, *started)
-+
-+    def _project_quietly(self, identity: str, stage: LifecycleStage, revision: int) -> None:
-+        """The stage projected to work management; any failure is a diagnostic, never raised into a launch."""
-+        try:
-+            self._work.project_execution_state(identity, stage, revision)
-+        except Exception as error:  # noqa: BLE001 - the board reflects canonical state; it never stops a launch
-+            self.projection_diagnostics[identity] = f"{identity}: {type(error).__name__}: {error}"
  
      def _project(self, identity: str) -> None:
          """The DONE projection hook; a refusal or error is a diagnostic, never raised into the coordinator."""
-diff --git a/tests/composition/test_work_registry.py b/tests/composition/test_work_registry.py
-index f0eeba2..f181fc5 100644
---- a/tests/composition/test_work_registry.py
-+++ b/tests/composition/test_work_registry.py
-@@ -14,7 +14,7 @@ from pathlib import Path
- import pytest
- 
- from alienintent.composition.work_registry import (
--    ConfigurationInvalid, WorkRegistry, load_project_configuration, project_configuration, read_only_store)
-+    CARD_STAGES, ConfigurationInvalid, WorkRegistry, load_project_configuration, project_configuration, read_only_store)
- from alienintent.evidence_learning.domain.records import ref_from_document
- from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
- from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
-@@ -392,9 +392,11 @@ def test_the_view_exists_only_with_both_the_github_and_readiness_entries(tmp_pat
-     SQLiteOperationalStore(tmp_path / "fx.sqlite")
-     for changes in ({}, {"github": github(tmp_path)}, {"readiness": readiness(tmp_path)}):
-         assert WorkRegistry(project_configuration(entry(tmp_path, **changes), PROJECT)).ready_view is None
--    view = WorkRegistry(project_configuration(entry(tmp_path, github=github(tmp_path), readiness=readiness(tmp_path)),
--                                              PROJECT)).ready_view
--    assert view._profile == "registry" and view._projection_fields == {} and view._projection_write is None
-+    registry = WorkRegistry(project_configuration(entry(tmp_path, github=github(tmp_path), readiness=readiness(tmp_path)),
-+                                                  PROJECT))
-+    view = registry.ready_view
-+    assert view._profile == "registry" and view._projection_fields == CARD_STAGES
-+    assert view._projection_write == registry._project_card
-     assert view._status_mapping["READY"] == "READY" and view._repository == "AlienLogicLab/alienintent-sandbox"
- 
- 
+diff --git a/src/alienintent/execution_coordination/ports/operational_store.py b/src/alienintent/execution_coordination/ports/operational_store.py
+index 071206b..b9020aa 100644
+--- a/src/alienintent/execution_coordination/ports/operational_store.py
++++ b/src/alienintent/execution_coordination/ports/operational_store.py
+@@ -70,6 +70,8 @@ class OperationalStore(Protocol):
+     def release(self, profile: str, scope: str, key: str, owner: str, fence: int) -> None: ...
+     def read_state(self, profile: str, aggregate: str) -> tuple[int, dict[str, object]]: ...
+     def list_states(self, profile: str, prefix: str = "") -> tuple[tuple[str, int, dict[str, object]], ...]: ...
++    def pending_projections(self, profile: str) -> tuple[tuple[str, int], ...]: ...
++    def retire_projection(self, profile: str, aggregate: str, revision: int) -> bool: ...
+     def commit_with_effect(self, profile: str, aggregate: str, expected_version: int, state: Mapping[str, object], effect_id: str, payload: Mapping[str, object]) -> int: ...
+     def mark_effect_unknown(self, profile: str, effect_id: str) -> None: ...
+     def park_unknown_effect(self, profile: str, effect_id: str, expected_version: int, state: Mapping[str, object]) -> int: ...
+diff --git a/src/alienintent/installation/application/doctor.py b/src/alienintent/installation/application/doctor.py
+index 9001613..5354446 100644
+--- a/src/alienintent/installation/application/doctor.py
++++ b/src/alienintent/installation/application/doctor.py
+@@ -195,7 +195,8 @@ class InstallationDoctor:
+                 raise DoctorFailure("persistence location is unavailable")
+             observed = preflight()
+             current_version, migration = getattr(observed, "current_version", None), getattr(observed, "migration", None)
+-            if current_version != 2 or migration is not None:
++            # Settled is the store's own answer: a schema exists and its preflight names no migration to run.
++            if current_version is None or migration is not None:
+                 raise DoctorFailure("persistence schema is incompatible or unsettled")
+             return CheckEvidence.passed()
+         raise DoctorFailure("persistence evidence is unavailable")
 diff --git a/tests/composition/test_worker_launch.py b/tests/composition/test_worker_launch.py
-index bb5df85..2d2b0e0 100644
+index bb5df85..bc4b5eb 100644
 --- a/tests/composition/test_worker_launch.py
 +++ b/tests/composition/test_worker_launch.py
-@@ -794,7 +794,7 @@ def test_without_landing_closure_is_ready_to_land_and_never_blocks_other_work(fx
-     closing.close(item.id)
-     state = closing.state(item.id)
-     assert (state.stage, state.outcome) == (LifecycleStage.ACCEPT, "ready-to-land")
--    assert closing.head() == base and closing.orders(item.id) == [] and closing.card(item.id) == "READY"
-+    assert closing.head() == base and closing.orders(item.id) == [] and closing.card(item.id) == "ACCEPT"
-     [session] = fx.runs("CLOSURE")
-     clone = Path(session["cwd"])
-     assert clone.is_dir() and not fx.wip_held(item.id)
-@@ -853,7 +853,7 @@ def test_the_bounded_request_alone_steers_nothing(closing, plan, landed, outcome
-     if landed:
-         expected += [receipt(a, item.id, revision) for a in ("merged-to-main", "landing-record")]
-     assert state.record["receipts"] == sorted(expected)
--    assert (closing.head() != base) is landed and closing.card(item.id) == "READY"
-+    assert (closing.head() != base) is landed and closing.card(item.id) == "ACCEPT"
-     for finding in plan.get("request", {}).get("findings", []):
-         if len(finding) <= 500:  # a refused request carries none of its findings
-             assert f"closure-finding: {finding}" in closing.fx.journal_findings(item.id)
-@@ -1039,7 +1039,7 @@ def test_a_request_without_board_update_crashing_after_the_push_recovers_without
-     monkeypatch.setattr(LandingAuthority, "land", original)
-     closing.close(other.id)
-     state = closing.state(item.id)
--    assert state.outcome == "authority-block" and closing.card(item.id) == "READY"
-+    assert state.outcome == "authority-block" and closing.card(item.id) == "ACCEPT"
-     assert {r.split(":", 1)[0] for r in state.record["receipts"]} == {
-         "candidate-published", "merged-to-main", "landing-record"}
- 
-@@ -1152,7 +1152,7 @@ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(clo
-             setattr(ownership, "work", (1,)), cleanup(self, invocation))[1])
-     closing.close(item.id, ownership=ownership)
-     state = closing.state(item.id)
--    assert state.outcome == "authority-block" and closing.card(item.id) == "DONE"
-+    assert state.outcome == "authority-block" and closing.card(item.id) == "ACCEPT"  # canonical: not DONE
-     assert receipt("workspaces-cleaned", item.id, revision_of(state)) not in state.record["receipts"]
-     [session] = closing.fx.runs("CLOSURE")
-     verifier_clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch-{workspace_folder(item.id)}-"))
-@@ -2126,3 +2126,53 @@ def test_a_new_candidate_starts_with_no_verifier_retries(fx):
+@@ -25,6 +25,7 @@ from alienintent.composition import work_registry
+ from alienintent.composition.model_routing import provider_command
+ from alienintent.composition.work_registry import WorkRegistry, launch_root, load_project_configuration
+ from alienintent.control_plane.application.operator import exclusive_launch_work
++from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+ from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
+ from alienintent.execution_coordination.domain.release import ReleaseSource
+ from alienintent.invocation_runtime.adapters.git_worktree import ref_safe
+@@ -2126,3 +2127,125 @@ def test_a_new_candidate_starts_with_no_verifier_retries(fx):
          fx.launch(item.id)
          state = fx.loaded().coordinator(None, None).state(item.id)
          assert (state.outcome, state.record["verifier_retries"]) == ("verifier-retry", retries)
 +
 +
-+# --- CARD-FOLLOWS-STAGE: the board reflects canonical work state; it does not determine it -------------------------
++# --- CARD-FOLLOWS-STAGE: canonical state -> durable obligation -> card projector -> read-back -> retired ----------
++# The board reflects canonical Work state; it does not determine canonical Work state.
 +
-+def _card_writes(monkeypatch) -> list[tuple[str, str]]:
-+    written: list[tuple[str, str]] = []
++def _card_writes(monkeypatch) -> list[str]:
++    written: list[str] = []
 +    project = work_registry.WorkRegistry._project_card
 +
-+    def recording(self, identity, field, state, revision):
-+        written.append((identity, state))
-+        return project(self, identity, field, state, revision)
++    def recording(self, identity, stage, revision):
++        written.append(stage)
++        return project(self, identity, stage, revision)
 +    monkeypatch.setattr(work_registry.WorkRegistry, "_project_card", recording)
 +    return written
 +
 +
++def _pending(closing: Closing) -> tuple:
++    return closing.fx.store.pending_projections("registry")
++
++
 +def test_the_card_follows_the_canonical_stage_and_launch_never_needs_it_ready(closing, monkeypatch):
++    """IMPLEMENT is projectable while the PRODUCER works (its obligation is committed before the worker starts); the
++    next launches run although the card is no longer READY."""
++    from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
 +    item = closing.fx.authorized("UNIT", **FIXED)
 +    written = _card_writes(monkeypatch)
-+    assert closing.card(item.id) == "READY"
-+    closing.fx.launch(item.id)
-+    assert written == [(item.id, "IMPLEMENT"), (item.id, "VERIFY")]
-+    assert closing.state(item.id).stage is LifecycleStage.VERIFY and closing.card(item.id) == "VERIFY"
-+    closing.fx.launch(item.id)  # no longer on the READY board: resolved from its registry record
++    start = RealWorkerProvider.start
++    mid_run = []
++
++    def projected_first(self, invocation, *args, **kwargs):  # the projector's pass while the worker runs
++        if invocation.role == "PRODUCER":
++            closing.fx.loaded().project_cards()
++            mid_run.append(closing.card(item.id))
++        return start(self, invocation, *args, **kwargs)
++    monkeypatch.setattr(RealWorkerProvider, "start", projected_first)
++    with closing.fx.loaded().card_projection(interval=60):
++        closing.fx.launch(item.id)
++    assert mid_run == ["IMPLEMENT"] and closing.card(item.id) == "VERIFY" and _pending(closing) == ()
++    with closing.fx.loaded().card_projection(interval=60):
++        closing.fx.launch(item.id)  # the card says VERIFY: resolved from the registry record
 +    assert closing.state(item.id).stage is LifecycleStage.ACCEPT and closing.card(item.id) == "ACCEPT"
 +    closing.close(item.id)
-+    assert closing.state(item.id).stage is LifecycleStage.DONE and closing.card(item.id) == "DONE"
++    closing.fx.loaded().project_cards()
++    assert closing.card(item.id) == "DONE" and written == ["IMPLEMENT", "VERIFY", "ACCEPT", "DONE"]
 +
 +
-+def test_a_card_write_that_does_not_read_back_is_a_durable_diagnostic_never_a_launch_failure(closing):
++def test_a_crash_after_the_commit_and_before_any_projection_is_caught_up(closing):
 +    item = closing.fx.authorized("UNIT", **FIXED)
-+    closing.ignore_status = True  # the board answers the write but keeps its Status
++    closing.fx.launch(item.id)  # no projector ran: the process "crashed" after its commits
++    assert closing.card(item.id) == "READY" and [a for a, _ in _pending(closing)] == [f"factory:{item.id}"]
++    assert closing.fx.loaded().project_cards() == 1  # a fresh projector
++    assert closing.card(item.id) == "VERIFY" and _pending(closing) == ()
++
++
++def test_a_crash_after_the_card_write_and_before_its_acknowledgement_replays_safely(closing, monkeypatch):
++    item = closing.fx.authorized("UNIT", **FIXED)
 +    closing.fx.launch(item.id)
-+    assert closing.state(item.id).stage is LifecycleStage.VERIFY and closing.card(item.id) == "READY"
++    written = _card_writes(monkeypatch)
++    commit = SQLiteOperationalStore.commit
++
++    def crashing(self, profile, aggregate, expected_version, state):
++        if aggregate.startswith("card:"):
++            raise RuntimeError("crash before the acknowledgement")
++        return commit(self, profile, aggregate, expected_version, state)
++    monkeypatch.setattr(SQLiteOperationalStore, "commit", crashing)
++    with pytest.raises(RuntimeError):
++        closing.fx.loaded().project_cards()
++    assert closing.card(item.id) == "VERIFY" and len(_pending(closing)) == 1  # written, not acknowledged
++    monkeypatch.setattr(SQLiteOperationalStore, "commit", commit)
++    assert closing.fx.loaded().project_cards() == 1
++    assert written == ["VERIFY", "VERIFY"] and closing.card(item.id) == "VERIFY" and _pending(closing) == ()
++
++
++def test_an_obligation_older_than_the_cards_acknowledged_revision_never_moves_the_card(closing, monkeypatch):
++    item = closing.fx.authorized("UNIT", **FIXED)
++    closing.fx.launch(item.id)
++    closing.fx.loaded().project_cards()
++    closing.fx.github.fields[closing.fx.registry.records.show(item.id).item.card_id]["Status"] = "ACCEPT"  # newer, elsewhere
++    version, _ = closing.fx.store.read_state("registry", f"card:{item.id}")
++    closing.fx.store.commit("registry", f"card:{item.id}", version, {"identity": item.id, "stage": "ACCEPT", "revision": 10 ** 6})
++    with sqlite3.connect(closing.fx.store.path) as connection:  # a late, older obligation
++        connection.execute("INSERT INTO projections VALUES ('registry', ?, 1)", (f"factory:{item.id}",))
++    written = _card_writes(monkeypatch)
++    assert closing.fx.loaded().project_cards() == 1
++    assert written == [] and closing.card(item.id) == "ACCEPT" and _pending(closing) == ()
++
++
++def test_a_card_write_that_does_not_read_back_stays_outstanding_with_a_durable_diagnostic(closing):
++    item = closing.fx.authorized("UNIT", **FIXED)
++    closing.fx.launch(item.id)
++    closing.ignore_status = True  # the board answers the write but keeps its Status
++    assert closing.fx.loaded().project_cards() == 0
++    assert closing.card(item.id) == "READY" and len(_pending(closing)) == 1
 +    path = launch_root(closing.fx.loaded().configuration) / "projection-diagnostics.jsonl"
-+    records = [json.loads(line) for line in path.read_text().splitlines()]
-+    assert [(r["identity"], r["state"], r["answered"], r["error"]) for r in records] == [
-+        (item.id, "IMPLEMENT", -1, "read back another status"), (item.id, "VERIFY", -1, "read back another status")]
++    [record] = [json.loads(line) for line in path.read_text().splitlines()]
++    assert (record["identity"], record["state"], record["answered"], record["error"]) == (
++        item.id, "VERIFY", -1, "read back another status")
++    closing.ignore_status = False
++    assert closing.fx.loaded().project_cards() == 1 and closing.card(item.id) == "VERIFY"
 +
 +
 +def test_after_a_decision_a_started_item_launches_without_a_ready_card(closing, monkeypatch):
@@ -441,146 +659,197 @@ index bb5df85..2d2b0e0 100644
 +    item = closing.accepted()
 +    monkeypatch.setattr(LandingAuthority, "land", lambda self, order: "refused:fixture")
 +    closing.close(item.id)
++    closing.fx.loaded().project_cards()
 +    assert closing.state(item.id).outcome == "authority-block" and closing.card(item.id) == "ACCEPT"
 +    assert closing.fx.loaded().decide(item.id, "authorize", QUOTE)["answer"] is None
-+    assert "correlation" not in closing.state(item.id).record or closing.state(item.id).record["correlation"] is None
++    assert closing.state(item.id).record.get("correlation") is None
 +    sessions = len(closing.fx.runs("CLOSURE"))
 +    closing.close(item.id)
 +    assert len(closing.fx.runs("CLOSURE")) == sessions + 1
-diff --git a/tests/execution_coordination/test_factory_coordinator.py b/tests/execution_coordination/test_factory_coordinator.py
-index 1b5b895..fb44881 100644
---- a/tests/execution_coordination/test_factory_coordinator.py
-+++ b/tests/execution_coordination/test_factory_coordinator.py
-@@ -152,8 +152,28 @@ def test_projection_type_error_does_not_retry_without_the_execution_revision(tmp
- 
-     with pytest.raises(TypeError, match="provider implementation fault"):
-         coordinator.start()
--    # VERIFY (1) and ACCEPT (3) project first; the fault at DONE (4) is not retried.
--    assert work.revisions == [1, 3, 4]
-+    # IMPLEMENT at dispatch (0), VERIFY (1) and ACCEPT (3) project first; the fault at DONE (4) is not retried.
-+    assert work.revisions == [0, 1, 3, 4]
 +
 +
-+def test_a_failing_dispatch_projection_never_stops_the_producer(tmp_path: Path) -> None:
-+    """CARD-FOLLOWS-STAGE: the IMPLEMENT projection runs before any effect is claimed and its failure is a diagnostic."""
-+    coordinator_module, custody, ports, _ = _api()
-+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
++def test_start_runs_a_started_item_whose_card_has_moved_on(closing):
++    item = closing.fx.authorized("UNIT", **FIXED)
++    closing.fx.launch(item.id)
++    closing.fx.loaded().project_cards()
++    assert closing.card(item.id) == "VERIFY"  # not on the READY board any more
++    closing.fx.loaded(Owners("terminated")).launcher().start()  # VERIFIER, then CLOSURE, in one call
++    assert closing.state(item.id).stage is LifecycleStage.DONE
+diff --git a/tests/control_plane/test_cli.py b/tests/control_plane/test_cli.py
+index 96c71a8..acc63ee 100644
+--- a/tests/control_plane/test_cli.py
++++ b/tests/control_plane/test_cli.py
+@@ -681,6 +681,32 @@ def test_work_launch_renders_one_step_and_work_context_passes_the_contract_diges
+     assert calls == [("launch", "ITEM"), ("launch", "ITEM"), ("assemble", "sha256:abc"), ("assemble", None)]
+ 
+ 
 +
-+    class FailingDispatchWork(MemoryWorkManagement):
-+        def project_execution_state(self, identity: str, state: str, revision: int = 0):
-+            if state == "IMPLEMENT":
-+                raise RuntimeError("board unreachable")
-+            return ports.ProjectionReceipt(identity, revision, True, "confirmed")
++def test_work_launch_runs_inside_the_card_projector_and_work_project_runs_one_pass(monkeypatch, capsys, tmp_path) -> None:
++    """CARD-FOLLOWS-STAGE: the launch runs inside `card_projection`; `work project` is the projector on its own."""
++    from contextlib import contextmanager
++    from types import SimpleNamespace
++    from alienintent.control_plane.adapters import cli
++    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
++    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
++    calls = []
 +
-+    store = SQLiteOperationalStore(tmp_path / "run.sqlite")
-+    coordinator = coordinator_module.FactoryCoordinator(
-+        store, FailingDispatchWork([_item("dispatched", 0, 1)]),
-+        ScriptedWorker(artifacts, {"dispatched": ["success"]}), artifacts, "offline")
-+    coordinator.start()
-+    assert coordinator.state("dispatched").stage is LifecycleStage.DONE
-+    assert "RuntimeError: board unreachable" in coordinator.projection_diagnostics["dispatched"]
++    @contextmanager
++    def card_projection():
++        calls.append("projection-start")
++        yield
++        calls.append("projection-end")
++    launcher = SimpleNamespace(launch=lambda identity: calls.append("launch") or "closure-not-automated")
++    registry = SimpleNamespace(launcher=lambda: launcher, card_projection=card_projection,
++                               project_cards=lambda: calls.append("pass") or 2,
++                               store=SQLiteOperationalStore(tmp_path / "launch.sqlite"), ownership=ProcOwnership())
++    monkeypatch.setattr(cli, "_factory", lambda _: SimpleNamespace(work_registry=registry))
++    assert cli.main(["--json", "--profile-factory", "x:y", "work", "launch", "ITEM"]) == 0
++    assert calls == ["projection-start", "launch", "projection-end"]
++    capsys.readouterr()
++    assert cli.main(["--json", "--profile-factory", "x:y", "work", "project"]) == 0
++    assert json.loads(capsys.readouterr().out) == {"retired": 2} and calls[-1] == "pass"
++
+ def test_two_launchers_taking_over_one_stale_launch_reservation_exactly_one_wins(tmp_path) -> None:
+     """RESTART-CONTINUATION check 0: the loser of a takeover race (its release meets a stale fence) answers
+     LAUNCH_IN_PROGRESS and launches nothing; the winner launches once and releases the reservation."""
+diff --git a/tests/execution_coordination/test_operational_store.py b/tests/execution_coordination/test_operational_store.py
+index d0e1f65..3074927 100644
+--- a/tests/execution_coordination/test_operational_store.py
++++ b/tests/execution_coordination/test_operational_store.py
+@@ -223,11 +223,11 @@ def test_v1_schema_is_preflighted_then_migrated_with_durable_evidence(tmp_path:
+     """)
+     connection.close()
+ 
+-    assert SQLiteOperationalStore.preflight(path).migration == (1, 2)
++    assert SQLiteOperationalStore.preflight(path).migration == (1, 3)
+     SQLiteOperationalStore(path)
+     with sqlite3.connect(path) as migrated:
+-        assert migrated.execute("SELECT version FROM operational_schema").fetchone() == (2,)
+-        assert migrated.execute("SELECT from_version, to_version, reversible FROM schema_migrations").fetchone() == (1, 2, 0)
++        assert migrated.execute("SELECT version FROM operational_schema").fetchone() == (3,)
++        assert migrated.execute("SELECT from_version, to_version, reversible FROM schema_migrations ORDER BY from_version").fetchall() == [(1, 2, 0), (2, 3, 1)]
  
  
- def test_unavailable_projection_does_not_change_internal_execution_truth(tmp_path: Path) -> None:
-diff --git a/tests/execution_coordination/test_role_orchestration.py b/tests/execution_coordination/test_role_orchestration.py
-index 08b41c3..8bb393f 100644
---- a/tests/execution_coordination/test_role_orchestration.py
-+++ b/tests/execution_coordination/test_role_orchestration.py
-@@ -56,7 +56,7 @@ def test_producer_success_advances_only_to_verify(tmp_path: Path) -> None:
-     assert summary.dispatched == (WORK,)
-     assert state.stage is LifecycleStage.VERIFY and not state.accepted and state.completed_closure_actions == frozenset()
-     assert state.candidate is not None and state.candidate.independent_read_back_proven
--    assert fixture.projections() == ["VERIFY", "VERIFY"]
-+    assert fixture.projections() == ["IMPLEMENT", "VERIFY", "VERIFY"]
-     assert [(role, kind) for role, _, kind in fixture.invocations()] == [(PRODUCER, "success"), (VERIFIER, "verdict-missing")]
-     _retried(fixture, "verdict-missing")
+ def test_outbox_executor_marks_unknown_before_send_and_confirms_readback(tmp_path: Path) -> None:
+@@ -429,3 +429,23 @@ def test_a_read_only_open_refuses_a_missing_or_other_schema_database(tmp_path: P
+     with pytest.raises(SchemaIncompatible):
+         SQLiteOperationalStore(empty, read_only=True)
+     assert empty.read_bytes() == b""
++
++
++def test_a_crash_before_the_state_and_its_projection_obligation_commit_leaves_neither(tmp_path: Path) -> None:
++    """CARD-FOLLOWS-STAGE: the obligation is durable together with the state, or neither is."""
++    store = SQLiteOperationalStore(tmp_path / "outbox.sqlite")
++    with sqlite3.connect(tmp_path / "outbox.sqlite") as connection:
++        connection.execute("CREATE TRIGGER crash BEFORE INSERT ON projections BEGIN SELECT RAISE(ABORT, 'crash'); END")
++    with pytest.raises(Exception):
++        store.commit("registry", "factory:item", 0, {"stage": "IMPLEMENT"})
++    assert store.read_state("registry", "factory:item") == (0, {}) and store.pending_projections("registry") == ()
++
++
++def test_projection_obligations_are_one_per_work_item_and_retire_only_at_their_revision(tmp_path: Path) -> None:
++    store = SQLiteOperationalStore(tmp_path / "outbox.sqlite")
++    store.commit("registry", "factory:item", 0, {"stage": "IMPLEMENT"})
++    store.commit("registry", "factory:item", 1, {"stage": "VERIFY"})
++    store.commit("registry", "decision-inbox", 0, {"open": {}})
++    assert store.pending_projections("registry") == (("factory:item", 2),)
++    assert store.retire_projection("registry", "factory:item", 1) is False  # a newer commit's obligation stays
++    assert store.retire_projection("registry", "factory:item", 2) is True and store.pending_projections("registry") == ()
+diff --git a/tests/installation/test_doctor_evidence.py b/tests/installation/test_doctor_evidence.py
+index 0278663..8b31d3d 100644
+--- a/tests/installation/test_doctor_evidence.py
++++ b/tests/installation/test_doctor_evidence.py
+@@ -59,7 +59,7 @@ def test_doctor_rejects_persistence_whose_migration_has_not_settled(tmp_path: Pa
+         connection.execute("CREATE TABLE operational_schema (version INTEGER NOT NULL)")
+         connection.execute("INSERT INTO operational_schema VALUES (1)")
+     observed = _preflight(database)
+-    assert (observed.current_version, observed.migration) == (1, (1, 2))
++    assert (observed.current_version, observed.migration) == (1, (1, 3))
  
-@@ -69,7 +69,7 @@ def test_the_full_lifecycle_is_three_distinct_role_invocations_with_exact_custod
-     state = fixture.state()
-     assert summary.dispatched == (WORK,) and summary.stop_reason.value == "eligible-backlog-exhausted"
-     assert state.stage is LifecycleStage.DONE and state.accepted and state.outcome == "closed"
--    assert fixture.projections() == ["VERIFY", "ACCEPT", "DONE"]
-+    assert fixture.projections() == ["IMPLEMENT", "VERIFY", "ACCEPT", "DONE"]
-     roles = fixture.invocations()
-     assert [(role, kind) for role, _, kind in roles] == [(PRODUCER, "success"), (VERIFIER, "accept"), (CLOSURE, "closed")]
-     correlations = [correlation for _, correlation, _ in roles]
-@@ -106,7 +106,7 @@ def test_verifier_rejection_records_findings_and_repairs_through_implement(tmp_p
-     assert finding["findings"] == [f"{WORK}: scripted rejection under {roles[1][1]}"]
-     # The repair is a new candidate on its own branch; the rejected one is not what was accepted.
-     assert state.candidate.identity != rejected["identity"]
--    assert fixture.projections() == ["VERIFY", "IMPLEMENT", "VERIFY", "ACCEPT", "DONE"]
-+    assert fixture.projections() == ["IMPLEMENT", "VERIFY", "IMPLEMENT", "IMPLEMENT", "VERIFY", "ACCEPT", "DONE"]
+     report = _doctor(tmp_path, persistence_database=database)
  
- 
- def test_rejection_beyond_the_attempt_budget_is_terminal_failure(tmp_path: Path) -> None:
-@@ -146,7 +146,7 @@ def test_closure_records_only_actions_actually_read_back(tmp_path: Path) -> None
-     state = fixture.state()
-     assert state.accepted and state.completed_closure_actions == frozenset()
-     assert state.record["hold_reason"] == "closure-receipts-incomplete" and state.record["receipts"] == ["candidate-published"]
--    assert fixture.projections() == ["VERIFY", "ACCEPT", "ACCEPT"]
-+    assert fixture.projections() == ["IMPLEMENT", "VERIFY", "ACCEPT", "ACCEPT"]
-     _held(fixture, LifecycleStage.ACCEPT)
- 
- 
+diff --git a/tools/fitness/coupling_register.json b/tools/fitness/coupling_register.json
+index 50fcc5d..68f93b2 100644
+--- a/tools/fitness/coupling_register.json
++++ b/tools/fitness/coupling_register.json
+@@ -233,6 +233,7 @@
+         "effects",
+         "fences",
+         "operational_schema",
++        "projections",
+         "receipts",
+         "reservations",
+         "schema_migrations"
 ```
 
 ## 3. Acceptance checks
 
-1. **The card follows the stage, and launch never needs it READY**
-   (`test_the_card_follows_the_canonical_stage_and_launch_never_needs_it_ready`): the first launch writes IMPLEMENT
-   then VERIFY to the card; the second launch runs the VERIFIER although the card is VERIFY; ACCEPT, then DONE after
-   CLOSURE.
-2. **A card write that does not read back is a durable diagnostic, never a launch failure**
-   (`test_a_card_write_that_does_not_read_back_is_a_durable_diagnostic_never_a_launch_failure`): with the board keeping
-   its Status, the launch still reaches VERIFY, and `projection-diagnostics.jsonl` holds IMPLEMENT and VERIFY, each
-   answered -1, "read back another status".
-3. **After a decision, a started item launches without a READY card**
-   (`test_after_a_decision_a_started_item_launches_without_a_ready_card`): an authority hold at ACCEPT, `work decide`
-   authorize (no `correlation` left), and the next launch runs CLOSURE.
-4. **A failing IMPLEMENT projection never stops the PRODUCER**
-   (`tests/execution_coordination/test_factory_coordinator.py::test_a_failing_dispatch_projection_never_stops_the_producer`):
-   a work management whose IMPLEMENT projection raises; the item still reaches DONE and the failure is in
-   `projection_diagnostics`.
-5. **Mutations, run exactly by the VERIFIER** (each must fail its named test in
-   `tests/composition/test_worker_launch.py` and pass when reverted):
-   - **C1:** `if projected is not None and projected.stage in ROLE_BY_STAGE:` (the `started` resolution in `launch`)
-     made `... is LifecycleStage.ACCEPT:` -> check 1's test.
-   - **C2:** `for correlation in (raw.get("correlation"), raw.get("producer_correlation")):` made
-     `for correlation in (raw.get("correlation"),):` -> check 3's test.
-   - **C3:** the two lines `if role == PRODUCER:` / `self._project_quietly(item.identity, LifecycleStage.IMPLEMENT,
-     current.version)` deleted -> check 1's test.
-   - **C4:** in `_project_card`, `if answered != revision:` made `if False:` -> check 2's test.
-   - **C5:** `CARD_STAGES,` in `_ready_view` made `{},` -> check 1's test.
-   - **C6:** in `start`, `items = self._with_started(self._work.import_ready_snapshot())` made
-     `items = self._work.import_ready_snapshot()` -> `test_a_failing_landing_runs_closure_once_per_start`.
-   - **C7:** `_project_quietly`'s `try:`/`except` removed (the bare call kept) ->
-     `test_factory_coordinator.py::test_a_failing_dispatch_projection_never_stops_the_producer`.
+The Founder's crash proof:
+
+1. **Crash before the state and its obligation commit: neither exists**
+   (`tests/execution_coordination/test_operational_store.py::test_a_crash_before_the_state_and_its_projection_obligation_commit_leaves_neither`).
+2. **Crash after the commit, before any projection: a fresh projector catches up**
+   (`tests/composition/test_worker_launch.py::test_a_crash_after_the_commit_and_before_any_projection_is_caught_up`).
+3. **Crash after the card write, before its acknowledgement: safe replay**
+   (`tests/composition/test_worker_launch.py::test_a_crash_after_the_card_write_and_before_its_acknowledgement_replays_safely`): the card shows VERIFY,
+   the obligation stays; the next pass writes VERIFY again, acknowledges and retires.
+4. **A late, older obligation never moves the card backward**
+   (`tests/composition/test_worker_launch.py::test_an_obligation_older_than_the_cards_acknowledged_revision_never_moves_the_card`).
+
+And:
+
+5. **One obligation per work item; retired only at its revision**
+   (`tests/execution_coordination/test_operational_store.py::test_projection_obligations_are_one_per_work_item_and_retire_only_at_their_revision`).
+6. **The card follows the stage; IMPLEMENT shows while the PRODUCER works; launch never needs READY**
+   (`tests/composition/test_worker_launch.py::test_the_card_follows_the_canonical_stage_and_launch_never_needs_it_ready`).
+7. **A write that does not read back stays outstanding with a durable diagnostic**
+   (`tests/composition/test_worker_launch.py::test_a_card_write_that_does_not_read_back_stays_outstanding_with_a_durable_diagnostic`).
+8. **Started items off the READY board run** (`tests/composition/test_worker_launch.py::test_start_runs_a_started_item_whose_card_has_moved_on`,
+   `tests/composition/test_worker_launch.py::test_after_a_decision_a_started_item_launches_without_a_ready_card`).
+9. **`work launch` runs inside the projector; `work project` runs one pass**
+   (`tests/control_plane/test_cli.py::test_work_launch_runs_inside_the_card_projector_and_work_project_runs_one_pass`).
+10. **Mutations, run exactly by the VERIFIER** (each must fail its named test and pass when reverted):
+   - **P1:** in `_commit`, `if aggregate.startswith(PROJECTED):` made `if False:` -> check 2's test.
+   - **P2:** `retire_projection`'s `DELETE ... AND revision=?` without the revision condition -> check 5's test.
+   - **P3:** in `project_cards`, `if int(acked.get("revision", -1)) < version:` made `if True:` -> check 4's test.
+   - **P4:** in the CLI, `with projection() if projection is not None else nullcontext():` made
+     `with nullcontext():` -> check 9's test.
+   - **P5:** in `launch`, `projected.stage in ROLE_BY_STAGE` made `projected.stage is LifecycleStage.ACCEPT` ->
+     check 6's test.
+   - **P6:** `for correlation in (raw.get("correlation"), raw.get("producer_correlation")):` made
+     `for correlation in (raw.get("correlation"),):` -> `test_after_a_decision_a_started_item_launches_without_a_ready_card`.
+   - **P7:** in `start`, `self._with_started(self._work.import_ready_snapshot())` made
+     `self._work.import_ready_snapshot()` -> `test_start_runs_a_started_item_whose_card_has_moved_on`.
+   - **P8:** in `_project_card`, the `self._projection_diagnostic(...)` call replaced by a no-op -> check 7's test.
 
 The whole suite at the candidate has no failed or error test case (proven by the factory's regression gate; Founder:
 no extra whole-suite runs), and `python3 tools/fitness/check_architecture.py --root src/alienintent --check all` passes.
 
 ### Stated limits (not in this item)
 
-- READY is still read from the board for a work item's first launch and its priority, until plan authority.
-- `guard_account`, `_block_dependents` and `record_decision` still read only the READY snapshot: `explain` reports a
-  started item as not in the READY snapshot, and a dependent no longer on the READY board is not marked blocked.
-- A card write is not fenced against GitHub beyond the adapter's in-memory revision fence; a failed write is recorded
-  and the next stage change writes again. `projection-diagnostics.jsonl` is not rotated (one line per failed change).
-- `_with_started` reads the invocation journal once per started item on every `start()` (through `started_item`).
+- READY is still read from the board for a work item's first launch and its priority; no READY or HOLD card state is
+  projected (plan authority's item and a later decision).
+- `guard_account`, `_block_dependents` and `record_decision` still read only the READY snapshot.
+- Two projectors running at once (two processes) converge through the compare-and-set acknowledgement and the next
+  pass; within one, the passes are sequential. CLOSURE's own `board-updated` DONE write stays as it is.
+- `projection-diagnostics.jsonl` is not rotated; `_with_started` reads the invocation journal once per started item
+  on every `start()`.
+- After landing, the first writable open of the registry store migrates it to schema 3 (a read-only open before that
+  refuses the old schema, as today for any schema change).
 
 ## 4. Evidence and review record
 
 A prototype that is exactly section 2's diff, on `2b47f21` (not the candidate):
-`manual/path-to-done/card-follows-stage/prototype-on-2b47f21.diff`, sha256 `e669be5a…445df`. With it the
-touched test files (`test_work_registry.py`, `test_factory_coordinator.py`, `test_worker_launch.py`,
-`test_role_orchestration.py`, `test_lifecycle_capstone.py`, `test_role_binding.py`) pass, the architecture fitness
-check passes, and C1-C7 each fail their named test and pass when reverted
-(`manual/path-to-done/card-follows-stage/mutations.log`). Code map: `.../card-follows-stage/code-map-bc9a9d8.md`.
+`manual/path-to-done/card-follows-stage/prototype-outbox-on-2b47f21.diff`, sha256 `5b07a777…d62b0`. With it
+the touched test files pass (`targeted-run.log`; then the doctor and offline-proof fixes, each re-run), the
+architecture fitness check passes, and P1-P8 each fail their named test and pass when reverted (`mutations.log`). The
+superseded synchronous design is kept as `rev2-synchronous-superseded.diff`.
 
-**Revision 2 (2026-10-09).** REVIEWER of `04be1fe` (PASS with fixes): the IMPLEMENT projection moved before the
-effect is committed and claimed and guarded, so a slow, failing or raising board never strands a launch (1); a stage
-recorded by recovery is projected (2); C6 names `_with_started`'s test, C7 and check 4 prove the guard (3); the
-journal cost and the unrotated diagnostics file are stated limits (4); `_project_card`'s docstring says what contains a
-raise (5).
+**Revision 3 (2026-10-09).** Rebuilt on the Founder's outbox decision (section 12) after the follow-up review of
+revision 2 (FAIL: a projection before the commit loses a crashed first launch; no placement inside the launch window
+is safe). The coordinator no longer projects; the obligation, projector, fence, read-back, CLI wiring and the four
+crash checks are new; two hardcoded schema-2 checks found by the targeted run are fixed at their source.
 
-**Revision 1 (2026-10-09).** First draft, from the Founder's decisions of 2026-10-09 (sections 9-10).
+**Revision 2 (2026-10-09).** Synchronous projection moved before the effect (superseded).
+
+**Revision 1 (2026-10-09).** Synchronous projection from the coordinator (superseded).
