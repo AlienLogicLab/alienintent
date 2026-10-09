@@ -15,6 +15,7 @@ PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
 # verdict, candidate or failure: the stage is unchanged and its role may be
 # re-dispatched once under the composed replacement allowance.
 MISSING_TERMINAL_RESULT = "missing-terminal-result"
+NO_CHANGE = "no-change"
 
 
 @dataclass(frozen=True)

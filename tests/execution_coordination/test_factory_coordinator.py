@@ -904,6 +904,39 @@ def _slots(store) -> dict[str, int]:
     return {r.key: r.fence for r in store.recovery_reservations("offline") if r.scope == "wip" and r.owner == f"work:{r.key}"}
 
 
+def test_no_change_producer_result_reworks_without_a_verifier(tmp_path: Path) -> None:
+    coordinator_module, custody, _, provider = _api()
+    from alienintent.execution_coordination.domain.lifecycle import ExecutionState
+    item = _attempts("unchanged", 0, 0)
+    artifacts = custody.LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+
+    class NoChangeWorker(ScriptedWorker):
+        def start(self, invocation, context, grants, budget):
+            assert invocation.role == provider.PRODUCER
+            self.invocations.append((invocation.work_identity, invocation.role, invocation.correlation_id))
+            outcome = provider.WorkerOutcome(provider.NO_CHANGE, None, findings=("no-change-candidate:unchanged",))
+            self.observed[invocation.correlation_id] = outcome
+            return outcome
+
+    worker = NoChangeWorker(artifacts, {})
+    coordinator = coordinator_module.FactoryCoordinator(
+        SQLiteOperationalStore(tmp_path / "run.sqlite"), MemoryWorkManagement([item]), worker, artifacts, "offline")
+    before = ExecutionState.for_contract(item.contract).version
+    for count in (1, 2):
+        coordinator.launch(item.identity)
+        state = coordinator.state(item.identity)
+        assert state.stage is LifecycleStage.IMPLEMENT and state.outcome == "rework"
+        assert state.record["rejections"] == count and len(state.record["findings"]) == count
+        assert all(finding["source"] == "producer" for finding in state.record["findings"])
+        assert (state.implement_cycles, state.verify_cycles, state.version, state.candidate) == (1, 0, before, None)
+        assert all(role == provider.PRODUCER for _, role, _ in worker.invocations)
+    coordinator.launch(item.identity)
+    state = coordinator.state(item.identity)
+    assert state.stage is LifecycleStage.IMPLEMENT and state.outcome == "failure"
+    assert state.record["hold_reason"] == "attempt-budget-exhausted"
+    assert len(worker.invocations) == 3
+
+
 def test_check1_a_slot_is_a_work_item_kept_from_producer_through_verifier_and_rework(tmp_path: Path) -> None:
     """Limit 1: A keeps one slot PRODUCER -> VERIFIER -> rejected -> PRODUCER; B, released while A is in flight and
     ranked before A, is refused and the run continues A to DONE; the next run admits B."""
