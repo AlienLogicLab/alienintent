@@ -97,7 +97,8 @@ def test_check7_the_canonical_plan_states_the_rule_and_holds_one_block():
     assert headings[headings.index("## 2.2.1 Plan authority") - 1].startswith("## 2.2 ")
     assert headings[headings.index("## 2.2.1 Plan authority") + 1].startswith("## 2.3 One work identity")
     scope = parse_scope(text)
-    assert [o.label for o in scope.obligations] == ["BOUNDED-ROUTINE-LAUNCH", "WORK-PREPARATION-REFILL",
+    assert [o.label for o in scope.obligations] == ["VERIFICATION-OUTCOME-INTEGRITY", "BOUNDED-ROUTINE-LAUNCH",
+                                                    "WORK-PREPARATION-REFILL",
                                                     "TERMINAL-BOARD-STATUSES", "STORE-SCHEMA-HARDENING",
                                                     "AUTONOMY-PROOF"]
     assert {"conftest.py", "pyproject.toml", "config/", "tools/fitness/",
