@@ -68,6 +68,24 @@ else:  # the export mode (worker user): the same call for another correlation
                            capture_output=True, text=True)
 head = subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True).stdout.strip()
 role = os.environ.get("ALIENINTENT_ROLE")
+
+
+def verifier_document():
+    """The next step of `verifier-plan.json` (accept when none): exit (no verdict), malformed, reject or accept."""
+    steps_path = Path({plan!r}).with_name("verifier-plan.json")
+    steps = json.loads(steps_path.read_text()) if steps_path.exists() else []
+    step = steps.pop(0) if steps else "accept"
+    steps_path.write_text(json.dumps(steps))
+    if step == "exit":
+        sys.stderr.write("progress line\n" * 500 + "error sending request for url (https://provider.invalid/)\n")
+        sys.exit(1)
+    if step == "malformed":
+        return {{"revision": head, "verdict": "maybe", "findings": []}}
+    if step == "reject":
+        return {{"revision": head, "verdict": "reject", "findings": ["VERIFIER-REJECT-FINDING"]}}
+    return {{"revision": head, "verdict": "accept", "findings": []}}
+
+
 record = {{"argv": sys.argv, "stdin": text, "env": dict(os.environ), "cwd": os.getcwd(), "head": head,
           "group_leader": os.getpgid(0) == os.getpid(), "package_path": package_path, "package": package,
           "own_context": own.stdout, "other_context": other.stdout}}
@@ -98,10 +116,11 @@ elif role == "CLOSURE":
         subprocess.run(plan["push"], check=True, capture_output=True)
 elif "Then write your verdict as one JSON file, to this file:" in lines:
     verdict = lines[lines.index("Then write your verdict as one JSON file, to this file:") + 1]
-    Path(verdict).write_text(json.dumps({{"revision": head, "verdict": "accept", "findings": []}}))
+    Path(verdict).write_text(json.dumps(verifier_document()))
 else:
+    document = verifier_document()
     Path(".alienintent").mkdir(exist_ok=True)
-    Path(".alienintent/verdict.json").write_text(json.dumps({{"revision": head, "verdict": "accept", "findings": []}}))
+    Path(".alienintent/verdict.json").write_text(json.dumps(document))
 '''
 
 
@@ -2005,3 +2024,105 @@ def test_check_8c1_keeps_a_bounded_redacted_tail_of_a_failed_provider_session(pr
     first = line["invocations"][0]
     assert first["returncode"] == 1 and first["stdout_tail"] == "partial"
     assert "401 Unauthorized" in first["stderr_tail"] and "SECRETSECRET1" not in first["stderr_tail"]
+
+
+# --- VERIFIER-INFRASTRUCTURE-RETRY-AND-DIAGNOSTICS ------------------------------------------------------------------
+
+def _verifier_plan(fx: Launch, *steps: str) -> None:
+    (fx.root / "verifier-plan.json").write_text(json.dumps(list(steps)))
+
+
+def _outcomes(fx: Launch, identity: str, role: str) -> list[dict]:
+    path = launch_root(fx.loaded().configuration) / "invocation-journal.jsonl"
+    records = [json.loads(line) for line in path.read_text().splitlines()]
+    return [r for r in records if r.get("event") == "invocation-outcome" and r.get("work_identity") == identity
+            and r.get("role") == role]
+
+
+def _verified(fx: Launch, *steps: str):
+    """An authorized item launched through its PRODUCER to VERIFY, with the VERIFIER's next steps planned."""
+    item = fx.authorized("UNIT")
+    fx.launch(item.id)
+    _verifier_plan(fx, *steps)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert state.stage is LifecycleStage.VERIFY
+    return item, state
+
+
+def test_a_verifier_that_ends_without_a_verdict_is_retried_on_the_same_candidate(fx):
+    """Checks 1 and 2: a VERIFIER process that exits non-zero with no verdict (here after a network-style error)
+    leaves the item at VERIFY on the same candidate; the next launch runs a fresh VERIFIER that accepts, without a
+    second PRODUCER. The process's bounded diagnostics are in the invocation journal after the launcher exited."""
+    item, before = _verified(fx, "exit")
+    fx.launch(item.id)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert (state.stage, state.outcome) == (LifecycleStage.VERIFY, "verifier-retry")
+    assert state.candidate == before.candidate and state.record["verifier_retries"] == 1
+    assert state.record["verifier_failure"] == "failure" and not state.record.get("rejections")
+    [failed] = _outcomes(fx, item.id, "VERIFIER")
+    process = failed["process"]
+    assert (failed["kind"], failed["cause"], process["exit_status"]) == ("failure", "network-or-provider", 1)
+    assert len(process["stderr_tail"]) == 4000 and process["stderr_tail"].endswith("(https://provider.invalid/)\n")
+    assert process["executable"] == Path(str(fx.codex)).name
+    fx.launch(item.id)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert state.stage is LifecycleStage.ACCEPT and state.candidate == before.candidate
+    assert (len(fx.runs("PRODUCER")), len(fx.runs("VERIFIER"))) == (1, 2)
+    assert [r["cause"] for r in _outcomes(fx, item.id, "VERIFIER")] == ["network-or-provider", "accept"]
+
+
+def test_a_malformed_verdict_is_retried_not_a_rejection(fx):
+    """Check 4."""
+    item, before = _verified(fx, "malformed")
+    fx.launch(item.id)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert (state.stage, state.outcome, state.record["verifier_failure"]) == (
+        LifecycleStage.VERIFY, "verifier-retry", "verdict-malformed")
+    assert state.candidate == before.candidate and not state.record.get("rejections")
+    assert _outcomes(fx, item.id, "VERIFIER")[-1]["cause"] == "malformed-verdict"
+
+
+def test_a_valid_reject_is_still_a_rejection(fx):
+    """Check 3: a valid REJECT takes the normal rework path."""
+    item, _ = _verified(fx, "reject")
+    fx.launch(item.id)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert state.stage is LifecycleStage.IMPLEMENT and state.record["rejections"] == 1
+    assert state.record["findings"][-1]["source"] == "verifier"
+    assert _outcomes(fx, item.id, "VERIFIER")[-1]["cause"] == "reject"
+
+
+def test_verifier_retries_end_in_a_typed_infrastructure_hold(fx):
+    """Check 5: after VERIFIER_RETRY_LIMIT retries in a row, a typed hold naming the infrastructure, never a verdict,
+    a rejection or a PRODUCER cycle."""
+    item, before = _verified(fx, "exit", "exit", "exit")
+    for retries in (1, 2):
+        fx.launch(item.id)
+        assert fx.loaded().coordinator(None, None).state(item.id).outcome == "verifier-retry"
+    fx.launch(item.id)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert (state.stage, state.outcome, state.record["hold_reason"]) == (
+        LifecycleStage.VERIFY, "authority-block", "verifier-infrastructure-exhausted:failure")
+    assert state.candidate == before.candidate and not state.record.get("rejections")
+    assert (len(fx.runs("PRODUCER")), len(fx.runs("VERIFIER"))) == (1, 3)
+    [request] = [r for r in fx.store.read_state("registry", "decision-inbox")[1]["open"].values()
+                 if r["work_item"] == item.id]
+    assert "no engineering judgment" in request["reason"]
+
+
+def test_a_new_candidate_starts_with_no_verifier_retries(fx):
+    """Check 6. The retry count belongs to one candidate: after a rejection and a new PRODUCER candidate it starts
+    again."""
+    item = fx.authorized("UNIT", budget_policy={"maximum_attempts": 3, "hard_wall_clock_seconds": 120, "cancellation_limit": 1})
+    fx.launch(item.id)
+    _verifier_plan(fx, "exit", "reject", "exit", "exit")
+    for _ in range(2):
+        fx.launch(item.id)
+    assert fx.loaded().coordinator(None, None).state(item.id).stage is LifecycleStage.IMPLEMENT
+    fx.launch(item.id)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert state.stage is LifecycleStage.VERIFY and state.record["verifier_retries"] == 0
+    for retries in (1, 2):
+        fx.launch(item.id)
+        state = fx.loaded().coordinator(None, None).state(item.id)
+        assert (state.outcome, state.record["verifier_retries"]) == ("verifier-retry", retries)

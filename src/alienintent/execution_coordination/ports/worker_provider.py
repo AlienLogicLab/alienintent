@@ -15,6 +15,11 @@ PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
 # verdict, candidate or failure: the stage is unchanged and its role may be
 # re-dispatched once under the composed replacement allowance.
 MISSING_TERMINAL_RESULT = "missing-terminal-result"
+# VERIFIER outcomes that carry no engineering judgment: the session ended without a valid verdict (its process failed
+# or timed out, or it left no verdict, a malformed one or one for another revision). The coordinator retries the
+# VERIFIER on the same candidate; only a valid REJECT is a rejection. A candidate that cannot be retrieved
+# (`candidate-unavailable`) is a custody refusal, not infrastructure: it still holds.
+VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "verdict-malformed", "verdict-miscorrelated"})
 
 
 @dataclass(frozen=True)

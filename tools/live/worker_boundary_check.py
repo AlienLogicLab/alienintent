@@ -28,7 +28,6 @@ import json
 import os
 from pathlib import Path
 import pwd
-import re
 import subprocess
 import sys
 import tempfile
@@ -64,19 +63,14 @@ def record(step: str, status: str, **facts: object) -> bool:
 
 
 TAIL_LIMIT = 2000
-_SECRETS = (re.compile(r"(?i)\b(authorization|bearer|token|password|secret|api[_-]?key)\b([\s:=]+)(?:(?:bearer|basic|token)\s+)?\S+"),
-            re.compile(r"\b(sk-[\w-]{8,}|gh[pousr]_\w{16,}|github_pat_\w+|eyJ[\w-]+\.[\w-]+\.[\w-]+)"),
-            re.compile(r"(?=[\w+/=-]{48,})(?![0-9a-f]+\b)[\w+/=-]{48,}"))
 
 
 def _tail(data: bytes | str) -> str:
-    """The last TAIL_LIMIT characters of a command's output, with token-like text replaced by [REDACTED]. Only
-    diagnostics: a 40- or 64-hex object name stays readable."""
+    """The last TAIL_LIMIT characters of a command's output, with token-like text replaced by [REDACTED] (the worker
+    diagnostics' own rule). Only diagnostics: a 40- or 64-hex object name stays readable."""
+    from alienintent.invocation_runtime.domain.diagnostics import redact
     text = data.decode(errors="replace") if isinstance(data, bytes) else data
-    text = _SECRETS[0].sub(lambda match: f"{match.group(1)}{match.group(2)}[REDACTED]", text)
-    for pattern in _SECRETS[1:]:
-        text = pattern.sub("[REDACTED]", text)
-    return text[-TAIL_LIMIT:]
+    return redact(text)[-TAIL_LIMIT:]
 
 
 def _guarded(step: str, check, *arguments) -> bool:
