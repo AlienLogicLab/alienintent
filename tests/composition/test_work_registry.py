@@ -881,3 +881,47 @@ def test_a_new_plan_approval_stops_an_item_released_under_the_old_one(plan_board
     coordinator.launch(item.id)
 
     assert worker.dispatched == []
+
+
+
+# --- VERIFICATION-OUTCOME-INTEGRITY: a worker read of a checkout file says "absent" only when it is proven ---------
+
+@pytest.mark.parametrize("exit_status, error", [(3, FileNotFoundError), (1, OSError), (127, OSError)])
+def test_a_worker_read_failure_is_absence_only_when_proven(monkeypatch, exit_status, error):
+    """The read runs as the worker: only its own "no such file" answer is absence; a sudo or read failure is no
+    result (the harness reports itself unavailable), never a test that does not exist."""
+    import subprocess
+    from alienintent.composition import work_registry as registry
+
+    monkeypatch.setattr(registry, "run_as_worker", lambda user, environment, argv, **kwargs: subprocess.CompletedProcess(
+        argv, exit_status, b"", b"sudo: a password is required"))
+    with pytest.raises(error) as raised:
+        registry.worker_read_file("worker", {})(Path("/clone/tests/test_x.py"))
+    assert (raised.type is FileNotFoundError) is (error is FileNotFoundError)
+
+
+def test_a_path_is_absent_at_a_revision_only_when_git_proves_it(tmp_path, monkeypatch):
+    """`revision_has`: present -> True, proven absent -> False, and a git failure on the path query is no answer
+    (OSError), never "absent" (VERIFICATION-OUTCOME-INTEGRITY: absence at the starting revision must be proven)."""
+    import subprocess
+    from alienintent.composition.work_registry import revision_has
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    git = lambda *argv: subprocess.run(["git", "-C", str(repo), *argv], check=True, capture_output=True, text=True)
+    git("init", "-q")
+    (repo / "tests").mkdir()
+    (repo / "tests" / "test_x.py").write_text("def test_x():\n    pass\n")
+    git("add", ".")
+    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x")
+    sha = git("rev-parse", "HEAD").stdout.strip()
+    assert revision_has(repo, sha, "tests/test_x.py") is True
+    assert revision_has(repo, sha, "tests/test_y.py") is False
+    real = subprocess.run
+
+    def failing(argv, **kwargs):
+        if "cat-file" in argv and f"{sha}:tests/test_x.py" in argv or "ls-tree" in argv:
+            return subprocess.CompletedProcess(argv, 128, b"", b"fatal: transient")
+        return real(argv, **kwargs)
+    monkeypatch.setattr(subprocess, "run", failing)
+    with pytest.raises(OSError):
+        revision_has(repo, sha, "tests/test_x.py")

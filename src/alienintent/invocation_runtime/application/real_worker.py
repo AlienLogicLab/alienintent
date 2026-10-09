@@ -10,14 +10,19 @@ import json
 from hashlib import sha256
 from pathlib import Path
 import re
+import subprocess
 from collections.abc import Callable, Mapping, Sequence
 from typing import Protocol
 
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
+from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, MutationSpecInvalid
+from alienintent.invocation_runtime.domain.verdict_admission import admit, claims, receipt as reject_receipt
 from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, NO_TRUSTED_START, contained
 from alienintent.execution_coordination.ports.worker_provider import (
     MISSING_TERMINAL_RESULT, NO_CHANGE, SCOPE_VIOLATION, WorkerInvocation, WorkerOutcome, WorkerProvider)
+from alienintent.invocation_runtime.application.mutation_harness import (
+    REVERTED_FAILS, SPEC_INVALID, SURVIVED, MutationHarness)
 from alienintent.invocation_runtime.application.regression_gate import RegressionGate, SuiteUnrunnable
 from alienintent.invocation_runtime.domain.diagnostics import cause
 from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
@@ -154,7 +159,8 @@ def _feature_regression_receipt(path: Path, candidate: CandidateRef,
 
 
 def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], bytes] = _read_path, *,
-                 gate_receipt: str | None = None) -> WorkerOutcome:
+                 gate_receipt: str | None = None, receipts: tuple[str, ...] = (),
+                 admission: Callable[[list[object], tuple[str, ...]], WorkerOutcome] | None = None) -> WorkerOutcome:
     """The verdict a verifier process left for exactly ``candidate``.
 
     A missing, malformed or other-revision verdict is not a verdict: it reads
@@ -162,7 +168,10 @@ def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], byt
     verdict and the receipt beside it (with a worker user: through the
     hand-over's checked descriptor, never a worker-chosen path). With
     ``gate_receipt`` (the control plane's own REGRESSION-GATE receipt) no
-    worker-written ``feature-regressions.json`` is read.
+    worker-written ``feature-regressions.json`` is read. ``receipts`` are the
+    control plane's other receipts for the candidate, kept after it. With
+    ``admission`` a reject's findings are its typed findings, handed with the
+    receipts to ``admission``, whose outcome is the verdict's.
     """
     try:
         document = json.loads(read(path).decode("utf-8"))
@@ -172,19 +181,37 @@ def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], byt
         return WorkerOutcome("verdict-malformed")
     if document.get("revision") != _revision_of(candidate):
         return WorkerOutcome("verdict-miscorrelated")
-    findings = _strings(document.get("findings", []))
+    raw = document.get("findings", [])
+    typed = admission is not None and document.get("verdict") == "reject"
+    findings = _strings(raw) if not typed else tuple(raw) if isinstance(raw, list) else None
     if findings is None:
         return WorkerOutcome("verdict-malformed")
     regression_receipt = gate_receipt if gate_receipt is not None \
         else _feature_regression_receipt(path.parent / "feature-regressions.json", candidate, read)
     if regression_receipt is None:
         return WorkerOutcome("feature-regressions-missing")
-    receipts = (regression_receipt,)
+    kept = (regression_receipt, *receipts)
     if document.get("verdict") == "accept":
-        return WorkerOutcome.accept(candidate, findings, receipts)
+        return WorkerOutcome.accept(candidate, findings, kept)
+    if typed and findings:
+        assert admission is not None
+        return admission(list(raw), kept)
     if document.get("verdict") == "reject" and findings:
-        return WorkerOutcome.reject(candidate, findings, receipts)
+        return WorkerOutcome.reject(candidate, findings, kept)
     return WorkerOutcome("verdict-malformed")
+
+
+# A harness run that gave no result: a timeout, a refused or failed workspace (a checkout, a worker command, a leftover
+# results folder) or a junit file that cannot be read. Never a judgment on the candidate.
+# A REGRESSION-GATE finding naming a test that passed at the baseline (`regression_gate.compare`'s format).
+REGRESSION, NEW_TEST_FAILS = "regression:", "new-test-fails:"
+HARNESS_FAILURES = (SuiteUnrunnable, CandidateUnavailable, OSError, subprocess.TimeoutExpired)
+
+
+def _unavailable(stage: str, error: BaseException) -> WorkerOutcome:
+    """`mutation-harness-unavailable`, its one finding naming the stage and the failure."""
+    return WorkerOutcome("mutation-harness-unavailable", findings=(f"{stage} gave no result: {type(error).__name__}: "
+                                                                   f"{str(error)[:300]}",))
 
 
 def _publishes_to(candidate: CandidateRef, branch: str) -> bool:
@@ -201,7 +228,8 @@ class WorkerPreparation(Protocol):
     refusal outcome, returned unchanged with nothing started. `published` is called after a PRODUCER candidate is
     published and read back, with that candidate; it must not raise. `gated`, when the hook has it, is called in
     `_evaluate` after the REGRESSION-GATE passed and before the session starts, with the baseline, the candidate
-    revision and the gate's receipt; it must not raise.
+    revision and the gate's receipt; it must not raise. `mutated`, when the hook has it, is called after every packet
+    mutation was killed and before the session starts, with the harness's results and receipt; it must not raise.
     """
 
     def prepare(self, invocation: WorkerInvocation, clone: Path | None) -> str | WorkerOutcome: ...
@@ -249,7 +277,7 @@ class ClosureActions(Protocol):
 
 
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None, handover: CandidateHandover | None = None, regression_gate: RegressionGate | None = None, regression_base: Callable[[str], str | None] | None = None, protected_paths: Callable[[], tuple[str, ...] | None] | None = None) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None, handover: CandidateHandover | None = None, regression_gate: RegressionGate | None = None, regression_base: Callable[[str], str | None] | None = None, protected_paths: Callable[[], tuple[str, ...] | None] | None = None, mutation_harness: MutationHarness | None = None, mutations: Callable[[WorkerInvocation], MutationSpec | None] | None = None) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -278,6 +306,10 @@ class RealWorkerProvider(WorkerProvider):
         # plan-derived work: the protected paths of its current approved plan authority (answering None or nothing:
         # no authority, so no automatic-on candidate is published). None: a profile with no plan authority.
         self._protected_paths = protected_paths
+        # VERIFICATION-OUTCOME-INTEGRITY, with the REGRESSION-GATE: the packet's mutations (`mutations(invocation)`,
+        # None when the packet has none, MutationSpecInvalid when malformed), run before the session, and the
+        # reproduction of a session REJECT's typed evidence, which alone admits it. None: unchanged.
+        self._mutation_harness, self._mutations = mutation_harness, mutations
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
@@ -375,7 +407,7 @@ class RealWorkerProvider(WorkerProvider):
                 if verdict.exists():
                     # The candidate itself carries a verdict: a producer cannot approve its own work.
                     return WorkerOutcome("verdict-preexisting")
-            gate_receipt = None
+            gate_receipt, receipts = None, ()
             if self._regression_gate is not None:
                 gated = self._gate(invocation, candidate, workspace, verdict)
                 if isinstance(gated, WorkerOutcome):
@@ -385,10 +417,20 @@ class RealWorkerProvider(WorkerProvider):
                 if passed is not None and self._regression_base is not None:
                     # The session is told the whole suite is proven, so it never runs it again.
                     passed(invocation, self._regression_base(invocation.correlation_id), _revision_of(candidate), gated)
+                if self._mutation_harness is not None:
+                    mutated = self._mutate(invocation, candidate, gated)
+                    if isinstance(mutated, WorkerOutcome):
+                        return mutated
+                    if self._verdict_present(invocation, verdict):
+                        return WorkerOutcome("verdict-preexisting")
+                    receipts = () if mutated is None else (mutated,)
             result = self._process.run(invocation.correlation_id, InvocationRole.VERIFIER, workspace, budget.hard_wall_clock_seconds)
             if result.kind != "success":
                 return WorkerOutcome(result.kind)
-            return read_verdict(verdict, candidate, read, gate_receipt=gate_receipt)
+            admission = None if self._mutation_harness is None or gate_receipt is None \
+                else lambda raw, kept: self._admit(invocation, candidate, raw, kept)
+            return read_verdict(verdict, candidate, read, gate_receipt=gate_receipt, receipts=receipts,
+                                admission=admission)
         finally:
             if self._reservations is not None:
                 self._reservations.release(invocation.correlation_id)
@@ -410,19 +452,119 @@ class RealWorkerProvider(WorkerProvider):
             findings, receipt = self._regression_gate.check(invocation.correlation_id, workspace, base, revision)
         except (SuiteUnrunnable, CandidateUnavailable, OSError):
             return WorkerOutcome("feature-regressions-missing")
-        if self._handover is not None:
-            try:
-                self._handover.read_result(invocation.correlation_id, verdict.name)
-                return WorkerOutcome("verdict-preexisting")
-            except FileNotFoundError:
-                pass
-            except OSError:
-                return WorkerOutcome("verdict-preexisting")
-        elif verdict.exists():
+        if self._verdict_present(invocation, verdict):
             return WorkerOutcome("verdict-preexisting")
+        if findings and self._mutation_harness is not None:
+            return self._controlled(invocation, candidate, base, findings, receipt)
         if findings:
             return WorkerOutcome.reject(candidate, findings, (receipt,))
         return receipt
+
+    def _controlled(self, invocation: WorkerInvocation, candidate: CandidateRef, base: str, findings: tuple[str, ...],
+                    receipt: str) -> WorkerOutcome:
+        """The gate's findings under the same-environment control (`mutation_harness.against_candidate`): the test of
+        each `regression:<identity>:passed-><outcome>` and `new-test-fails:<identity>:<outcome>` is rerun now at the
+        candidate and at the starting revision, and the finding stands only by that rule; any other finding is kept
+        as it is. With nothing left the environment decided: `mutation-harness-unavailable`, never a rejection."""
+        assert self._mutation_harness is not None
+        regressions = {finding: finding.removeprefix(REGRESSION).rpartition(":passed->")[0]
+                       for finding in findings if finding.startswith(REGRESSION) and ":passed->" in finding}
+        regressions |= {finding: finding.removeprefix(NEW_TEST_FAILS).rpartition(":")[0]
+                        for finding in findings if finding.startswith(NEW_TEST_FAILS)}
+        regressions = {finding: regressions[finding] for finding in findings if finding in regressions}
+        if regressions:
+            try:
+                proven = frozenset(identity for finding, identity in regressions.items()
+                                   if finding.startswith(REGRESSION))  # the gate proved these passed at the baseline
+                standing = set(self._mutation_harness.standing(invocation.correlation_id, candidate, base,
+                                                               tuple(regressions.values()), proven=proven))
+            except HARNESS_FAILURES as error:
+                return _unavailable("the regression control", error)
+        else:
+            standing = set()
+        kept = tuple(finding for finding in findings if finding not in regressions or regressions[finding] in standing)
+        if not kept:
+            return WorkerOutcome("mutation-harness-unavailable", findings=(
+                "environment: no gate finding stands under the control run (each passes at the candidate now, does "
+                "not pass at the starting revision now either, or is new and fails other than on an assertion): "
+                + ", ".join(regressions.values()),))
+        return WorkerOutcome.reject(candidate, kept, (receipt,))
+
+    def _base(self, invocation: WorkerInvocation) -> str | None:
+        """The starting revision (the REGRESSION-GATE's baseline), for the same-environment control run."""
+        base = None if self._regression_base is None else self._regression_base(invocation.correlation_id)
+        return base if isinstance(base, str) and _FULL_SHA.fullmatch(base) else None
+
+    def _verdict_present(self, invocation: WorkerInvocation, verdict: Path) -> bool:
+        """A verdict exists before the session started (a run of candidate code left one): it is never read."""
+        if self._handover is None:
+            return verdict.exists()
+        try:
+            self._handover.read_result(invocation.correlation_id, verdict.name)
+            return True
+        except FileNotFoundError:
+            return False
+        except OSError:
+            return True
+
+    def _mutate(self, invocation: WorkerInvocation, candidate: CandidateRef, gate_receipt: str) -> str | None | WorkerOutcome:
+        """The packet's mutations, after the REGRESSION-GATE and before the session: the harness receipt when every
+        mutation was killed (None when the packet has no spec), else the outcome.
+
+        A surviving mutation, or one whose named tests fail with the file restored, is a `reject` naming it, with the
+        gate's and the harness's receipts, and no session starts. A malformed spec is `verification-evidence-invalid`
+        and a harness with no result `mutation-harness-unavailable`: neither is a judgment on the candidate.
+        """
+        assert self._mutation_harness is not None
+        revision, base = _revision_of(candidate), self._base(invocation)
+        try:
+            spec = None if self._mutations is None else self._mutations(invocation)
+        except MutationSpecInvalid as error:
+            return WorkerOutcome("verification-evidence-invalid", findings=(f"mutation-spec-invalid: {error}",))
+        except OSError as error:
+            return _unavailable("the packet's mutation spec", error)
+        if spec is None or revision is None or base is None:
+            return None
+        try:
+            found, receipt = self._mutation_harness.run(invocation.correlation_id, candidate, spec, base)
+        except HARNESS_FAILURES as error:
+            return _unavailable("the mutation harness", error)
+        invalid = tuple(f"mutation-spec-invalid:{r.name}: {r.detail}" for r in found if r.result == SPEC_INVALID)
+        if invalid:
+            return WorkerOutcome("verification-evidence-invalid", findings=invalid)
+        failed = tuple(f"mutation-{'survived' if r.result == SURVIVED else 'reverted-fails'}:{r.name}: {r.detail}"
+                       for r in found if r.result in (SURVIVED, REVERTED_FAILS))
+        if failed:
+            return WorkerOutcome.reject(candidate, failed, (gate_receipt, receipt))
+        told = getattr(self._preparation, "mutated", None)
+        if told is not None:
+            told(invocation, found, receipt)  # the session is told every mutation ran, so it applies none by hand
+        return receipt
+
+    def _admit(self, invocation: WorkerInvocation, candidate: CandidateRef, raw: list[object],
+               receipts: tuple[str, ...]) -> WorkerOutcome:
+        """A session REJECT is admitted only when every finding's typed evidence reproduces on a fresh checkout of
+        the exact candidate: then a `reject` with each finding, its evidence and result and a `reject-reproduced`
+        receipt; otherwise `verification-evidence-invalid` naming each finding that was not admitted (the candidate is
+        kept for a fresh VERIFY), or `mutation-harness-unavailable` when reproduction gave no result."""
+        assert self._mutation_harness is not None
+        revision, read = _revision_of(candidate), claims(raw)
+        if revision is None:
+            return WorkerOutcome("verification-evidence-invalid", findings=("not-admitted: the candidate has no revision",))
+        reproductions = (None,) * len(read)
+        base = self._base(invocation)
+        if base is None:
+            return WorkerOutcome("mutation-harness-unavailable", findings=("no starting revision for the control run",))
+        if all(claim.evidence is not None for claim in read):
+            try:
+                reproductions = self._mutation_harness.reproduce(invocation.correlation_id, candidate, read, base)
+            except HARNESS_FAILURES as error:
+                return _unavailable("the evidence reproduction", error)
+        admission = admit(read, reproductions)
+        if not admission.admitted:
+            return WorkerOutcome("verification-evidence-invalid", findings=admission.findings)
+        return WorkerOutcome.reject(candidate, admission.findings,
+                                    (*receipts, reject_receipt(revision, read, reproductions)))
 
     def _close(self, invocation: WorkerInvocation, budget: BudgetPolicy) -> WorkerOutcome:
         """Perform and read back the closure actions this adapter can attest.

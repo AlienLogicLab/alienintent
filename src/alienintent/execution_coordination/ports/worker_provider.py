@@ -25,9 +25,13 @@ SCOPE_VIOLATION = "scope-violation"
 # in a profile without a gate, the receipt beside the verdict): the gate alone owns whole-suite execution, so a missing
 # result is never compensated by a session running the suite. The coordinator retries the VERIFIER on the same candidate; only
 # a valid REJECT is a rejection. A candidate that cannot be retrieved (`candidate-unavailable`) is a custody refusal,
-# not infrastructure: it still holds.
+# not infrastructure: it still holds. VERIFICATION-OUTCOME-INTEGRITY: only an admitted REJECT is a rejection, so
+# verification evidence that is not valid (`verification-evidence-invalid`: a malformed packet mutation spec, or a
+# session REJECT whose findings lack typed evidence or do not reproduce at the candidate) and a mutation harness that
+# gave no result (`mutation-harness-unavailable`) are retried the same way.
 VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "verdict-malformed", "verdict-miscorrelated",
-                                     "feature-regressions-missing"})
+                                     "feature-regressions-missing", "verification-evidence-invalid",
+                                     "mutation-harness-unavailable"})
 
 
 @dataclass(frozen=True)

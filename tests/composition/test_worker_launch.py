@@ -72,7 +72,8 @@ role = os.environ.get("ALIENINTENT_ROLE")
 
 
 def verifier_document():
-    """The next step of `verifier-plan.json` (accept when none): exit (no verdict), malformed, reject or accept."""
+    """The next step of `verifier-plan.json` (accept when none): exit (no verdict), malformed, reject (with typed
+    evidence that holds at the candidate), reject-unproven (a plain finding) or accept."""
     steps_path = Path({plan!r}).with_name("verifier-plan.json")
     steps = json.loads(steps_path.read_text()) if steps_path.exists() else []
     step = steps.pop(0) if steps else "accept"
@@ -83,6 +84,10 @@ def verifier_document():
     if step == "malformed":
         return {{"revision": head, "verdict": "maybe", "findings": []}}
     if step == "reject":
+        evidence = {{"type": "text", "path": "launch-candidate.txt", "contains": "candidate"}}
+        return {{"revision": head, "verdict": "reject",
+                "findings": [{{"finding": "VERIFIER-REJECT-FINDING", "evidence": evidence}}]}}
+    if step == "reject-unproven":
         return {{"revision": head, "verdict": "reject", "findings": ["VERIFIER-REJECT-FINDING"]}}
     return {{"revision": head, "verdict": "accept", "findings": []}}
 
@@ -2111,13 +2116,55 @@ def test_a_malformed_verdict_is_retried_not_a_rejection(fx):
 
 
 def test_a_valid_reject_is_still_a_rejection(fx):
-    """Check 3: a valid REJECT takes the normal rework path."""
+    """Check 3: a valid REJECT, its every finding reproduced at the candidate, takes the normal rework path."""
     item, _ = _verified(fx, "reject")
     fx.launch(item.id)
     state = fx.loaded().coordinator(None, None).state(item.id)
     assert state.stage is LifecycleStage.IMPLEMENT and state.record["rejections"] == 1
     assert state.record["findings"][-1]["source"] == "verifier"
-    assert _outcomes(fx, item.id, "VERIFIER")[-1]["cause"] == "reject"
+    [finding] = state.record["findings"][-1]["findings"]
+    assert finding.startswith("VERIFIER-REJECT-FINDING") and "launch-candidate.txt contains the text" in finding
+    [outcome] = _outcomes(fx, item.id, "VERIFIER")
+    assert outcome["cause"] == "reject" and outcome["receipts"][-1].startswith("reject-reproduced:sha256:")
+
+
+def test_an_unreproduced_reject_is_retried_and_repeated_ones_end_in_a_typed_hold(fx):
+    """VERIFICATION-OUTCOME-INTEGRITY: a REJECT whose finding has no typed evidence is not admitted: the same
+    candidate stays at VERIFY, the invalid verdict is kept in the journal, and after VERIFIER_RETRY_LIMIT retries the
+    hold is the typed verification-evidence hold, never a rejection."""
+    item, before = _verified(fx, "reject-unproven", "reject-unproven", "reject-unproven")
+    for retries in (1, 2):
+        fx.launch(item.id)
+        state = fx.loaded().coordinator(None, None).state(item.id)
+        assert (state.stage, state.outcome, state.record["verifier_failure"]) == (
+            LifecycleStage.VERIFY, "verifier-retry", "verification-evidence-invalid")
+        assert state.candidate == before.candidate and not state.record.get("rejections")
+    fx.launch(item.id)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert (state.stage, state.outcome, state.record["hold_reason"]) == (
+        LifecycleStage.VERIFY, "authority-block", "verifier-infrastructure-exhausted:verification-evidence-invalid")
+    assert not state.record.get("rejections") and len(fx.runs("PRODUCER")) == 1
+    kept = _outcomes(fx, item.id, "VERIFIER")[-1]
+    assert kept["cause"] == "verification-evidence-invalid"
+    assert kept["findings"] == ["not-admitted: VERIFIER-REJECT-FINDING: no typed evidence"]
+
+
+def test_a_malformed_packet_mutation_spec_is_retried_never_a_rejection(fx):
+    """The packet's own mutation names text the candidate does not hold: the harness reports the spec invalid; no
+    session starts and the candidate stays at VERIFY."""
+    packet = fx.packet
+    block = [{"name": "drop-marker", "path": "launch-candidate.txt", "edits": [{"old": "absent text", "new": "x"}],
+              "tests": ["tests/test_marker.py::test_marker"]}]
+    fx.packet = lambda item, **changes: packet(item, **changes) + (
+        "\n```json alienintent-mutations\n" + json.dumps(block) + "\n```\n").encode()
+    item, before = _verified(fx, "accept")
+    fx.launch(item.id)
+    state = fx.loaded().coordinator(None, None).state(item.id)
+    assert (state.stage, state.outcome, state.record["verifier_failure"]) == (
+        LifecycleStage.VERIFY, "verifier-retry", "verification-evidence-invalid")
+    assert state.candidate == before.candidate and fx.runs("VERIFIER") == []
+    assert _outcomes(fx, item.id, "VERIFIER")[-1]["findings"] == [
+        "mutation-spec-invalid:drop-marker: 'absent text' occurs 0 times in launch-candidate.txt"]
 
 
 def test_verifier_retries_end_in_a_typed_infrastructure_hold(fx):
@@ -2333,6 +2380,8 @@ def test_the_verifier_is_told_the_gate_result_and_not_to_run_the_whole_suite(fx)
     assert "REGRESSION-GATE, control-plane evidence already established for you" in text
     assert f"at the\nbaseline {baseline} and at this candidate {revision}" in text and "feature-regressions:sha256:" in text
     assert "Do not run the whole suite." in text
+    assert "Run only the acceptance tests the package names" in text and "mutations the package" not in text
+    assert "an unreproduced reject is discarded" in text
 
 
 def test_a_missing_gate_result_is_typed_infrastructure_never_a_session(fx, monkeypatch):
