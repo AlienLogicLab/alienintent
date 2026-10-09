@@ -1,7 +1,7 @@
 # Work unit: a VERIFIER that ends without a verdict is retried, and every worker process leaves durable diagnostics
 
 **Label:** `VERIFIER-INFRASTRUCTURE-RETRY-AND-DIAGNOSTICS` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 2, 2026-10-09, for follow-up review. Not registered, not assessed, not released.
+**Status:** Draft revision 3, 2026-10-09, for follow-up review. Not registered, not assessed, not released.
 **Position on the path:** first on the autonomy critical path (Founder 2026-10-09): VERIFIER-INFRASTRUCTURE-RETRY-AND-
 DIAGNOSTICS -> NO-CHANGE re-issue -> PLAN-AUTHORITY-INHERITANCE -> remaining autonomy blockers -> three-item proof.
 **Starting revision:** main `bc9a9d8`. Every line number below is at `bc9a9d8`.
@@ -12,7 +12,7 @@ DIAGNOSTICS -> NO-CHANGE re-issue -> PLAN-AUTHORITY-INHERITANCE -> remaining aut
 ```json alienintent-contract
 {
  "identity": "PENDING-REGISTRATION",
- "version": "revision-1",
+ "version": "revision-3",
  "intent": "A VERIFIER whose session ends without a valid verdict (its process fails or times out, or it leaves no verdict, a malformed one or one for another revision) made no engineering judgment: the work item stays at VERIFY on the same custodied candidate and the next launch runs a fresh VERIFIER, at most twice in a row, then a typed infrastructure hold. No rejection is counted and no PRODUCER cycle is used; only a valid REJECT is a rejection. Every worker process's exit status, bounded and redacted output tails (also of a timed-out process), provider, executable, provider session id and command are kept with its outcome in the invocation journal, with the cause they show.",
  "satisfied_requirement_ids": [
   "SF-REQ-002"
@@ -60,7 +60,7 @@ DIAGNOSTICS -> NO-CHANGE re-issue -> PLAN-AUTHORITY-INHERITANCE -> remaining aut
  "verification_obligations": [
   "independent VERIFIER on the exact candidate",
   "each acceptance check fails for its named wrong implementation",
-  "the VERIFIER runs mutations M1-M8 of check 8 exactly and records that each makes its named test fail and that reverting makes it pass"
+  "the VERIFIER runs mutations M1-M10 of check 8 exactly and records that each makes its named test fail and that reverting makes it pass"
  ],
  "required_evidence": [
   "independent-verifier-accepted"
@@ -221,7 +221,7 @@ CAUSES = ("success", "closed", "accept", "reject", "timeout", "network-or-provid
 _RESULTS = frozenset({"success", "closed", "accept", "reject"})
 _AUTHENTICATION = re.compile(r"unauthori[sz]ed|forbidden|not logged in|log ?in required|authentication failed|"
                              r"invalid api key|token (?:has )?expired", re.I)
-_SESSION = re.compile(r"session[ _]id\"?\s*[:=]\s*\"?([0-9A-Za-z-]{8,64})", re.I)
+_SESSION = re.compile(r"session[ _]id\"?\s*[:=]\s*\"?([0-9A-Za-z]{8}(?:-[0-9A-Za-z]{4,12}){1,4})", re.I)
 _NETWORK = re.compile(r"error sending request|timed out|EAI_AGAIN|could not resolve|name resolution|"
                       r"connection (?:refused|reset|closed)|routing discovery failed|reconnecting|rate limit|overloaded|"
                       r"service unavailable|bad gateway|gateway timeout|internal server error", re.I)
@@ -245,7 +245,7 @@ def process_diagnostics(provider: str, command: Sequence[str], kind: str, exit_s
     output names one, its command, its result kind and exit status, and the last TAIL characters of each stream."""
     session = _SESSION.search(f"{stderr}\n{stdout}")
     return {"provider": provider, "executable": Path(command[0]).name if command else None,
-            "session_id": None if session is None else session.group(1),
+            "session_id": None if session is None else redact(session.group(1)),
             "command": [redact(argument)[:ARGUMENT] for argument in command],
             "process_kind": kind, "exit_status": exit_status,
             "stdout_tail": redact(stdout)[-TAIL:], "stderr_tail": redact(stderr)[-TAIL:]}
@@ -265,6 +265,8 @@ def cause(outcome_kind: str, diagnostics: dict[str, object] | None) -> str:
         return "cancellation"
     if outcome_kind in _VERDICT and exit_status == 0:
         return "malformed-verdict"
+    if exit_status == 0:
+        return "unknown"  # the process succeeded: its text says nothing about why the outcome failed
     text = "" if diagnostics is None else f"{diagnostics.get('stdout_tail', '')}\n{diagnostics.get('stderr_tail', '')}"
     if _AUTHENTICATION.search(text):
         return "authentication"
@@ -286,7 +288,7 @@ command's file name (`codex`, `claude`) and `session_id` the id a provider print
 
 1. After the `process_ownership` import (line 15) add
    `from alienintent.invocation_runtime.domain.diagnostics import process_diagnostics`.
-2. After `OUTPUT_TAIL = 4000` (line 23) add, after one blank line:
+2. After `_VARIABLE = re.compile(...)` (line 29) add, after two blank lines:
 
 ```python
 def _decoded(data: bytes | str | None) -> str:
@@ -494,7 +496,7 @@ launched through its PRODUCER to VERIFY, then the plan written):
    is_retried_on_the_same_candidate`, plan `["exit"]`). After one VERIFIER launch: stage VERIFY, outcome
    `verifier-retry`, the same `candidate`, `verifier_retries` 1, `verifier_failure` `failure`, no `rejections`. Its
    journal record has kind `failure`, cause `network-or-provider`, `process.exit_status` 1, `process.stderr_tail` of
-   length exactly 4000 ending with `(https://provider.invalid/)\n`, and `process.provider` the fake codex's file name;
+   length exactly 4000 ending with `(https://provider.invalid/)\n`, and `process.executable` the fake codex's file name;
    it is read from the journal file by a new registry, after the launching one is gone.
 2. **Then a real verdict, without a second PRODUCER** (same test): the next launch reaches ACCEPT on the same
    candidate; `fx.runs`: 1 PRODUCER, 2 VERIFIER; the two VERIFIER causes are `["network-or-provider", "accept"]`.
@@ -524,11 +526,14 @@ New file `tests/invocation_runtime/test_worker_diagnostics.py`:
    - `test_the_diagnostics_are_bounded`: command `["/opt/bin/codex", "y " * 500]` keeps 200 characters of the
      second argument; streams of `"out line\n" * 1200 + "END-OUT"` and the same for err keep exactly 4000 characters,
      ending with `END-OUT` / `END-ERR`.
+   - `test_the_session_id_is_an_id_and_redacted`: a bare word after `session id =` is not an id; a token-like value
+     is never kept as the session id; a provider's UUID `session_id` is.
    - `test_the_kept_text_is_redacted`: the secrets of the existing proof test (Bearer, `token=`, `sk-proj-...`,
      `ghs_...`, a JWT) are absent from both tails and the command, `[REDACTED]` present, and a 40-hex SHA kept.
    - `test_the_cli_worker_records_each_process`: a real `CliWorkerProvider` running `python -c` (print `out`, write
      `"err line\n" * 600 + "LAST"` to standard error, exit 3) as PRODUCER records exit status 3, `process_kind`
-     `failure`, stdout `out`, a 4000-character stderr tail ending `LAST`, and the interpreter's file name as provider.
+     `failure`, stdout `out`, a 4000-character stderr tail ending `LAST`, provider `python` and the interpreter's
+     file name as executable.
    - `test_the_cli_worker_keeps_what_a_timed_out_process_wrote`: a process that prints `partial` and a `session id:`
      line, then sleeps past a 2-second wall clock, records kind `timeout`, stdout `partial` and that session id.
    - `test_the_cli_worker_records_a_verifier_stopped_by_its_feature_regressions`: as VERIFIER, the adapter runs the
@@ -544,7 +549,7 @@ New file `tests/invocation_runtime/test_worker_diagnostics.py`:
      infrastructure_hold`.
    - **M3:** the two `start()` lines `if self._outcome(item.identity) == VERIFIER_RETRY: once.add(item.identity)`
      deleted -> `test_role_orchestration.py::test_producer_success_advances_only_to_verify`.
-   - **M4:** in `start` of `real_worker.py`, `"process": process, "cause": cause(outcome.kind, process),` made
+   - **M4:** in `_journaled` of `real_worker.py`, `"process": process, "cause": cause(outcome.kind, process),` made
      `"process": None, "cause": cause(outcome.kind, None),` -> `test_a_verifier_that_ends_without_a_verdict_is_
      retried_on_the_same_candidate`.
    - **M5:** `"candidate-unavailable"` added to `VERIFIER_INFRASTRUCTURE` -> `tests/composition/test_lifecycle_
@@ -591,7 +596,7 @@ def _verified(fx: Launch, *steps: str):
 
 
 def test_a_verifier_that_ends_without_a_verdict_is_retried_on_the_same_candidate(fx):
-    """Checks 1, 2 and 6: a VERIFIER process that exits non-zero with no verdict (here after a network-style error)
+    """Checks 1 and 2: a VERIFIER process that exits non-zero with no verdict (here after a network-style error)
     leaves the item at VERIFY on the same candidate; the next launch runs a fresh VERIFIER that accepts, without a
     second PRODUCER. The process's bounded diagnostics are in the invocation journal after the launcher exited."""
     item, before = _verified(fx, "exit")
@@ -652,7 +657,8 @@ def test_verifier_retries_end_in_a_typed_infrastructure_hold(fx):
 
 
 def test_a_new_candidate_starts_with_no_verifier_retries(fx):
-    """The retry count belongs to one candidate: after a rejection and a new PRODUCER candidate it starts again."""
+    """Check 6. The retry count belongs to one candidate: after a rejection and a new PRODUCER candidate it starts
+    again."""
     item = fx.authorized("UNIT", budget_policy={"maximum_attempts": 3, "hard_wall_clock_seconds": 120, "cancellation_limit": 1})
     fx.launch(item.id)
     _verifier_plan(fx, "exit", "reject", "exit", "exit")
@@ -707,6 +713,7 @@ def failed(stdout: str = "", stderr: str = "", exit_status: int | None = 1) -> d
     ("verdict-malformed", process_diagnostics("codex", ["codex"], "success", 0, "", ""), "malformed-verdict"),
     ("verdict-missing", process_diagnostics("codex", ["codex"], "success", 0, "", ""), "malformed-verdict"),
     ("failure", failed(stderr="500 passed in 12.0s"), "unknown"),
+    ("candidate-unavailable", failed(stdout="test_x timed out", exit_status=0), "unknown"),
     ("failure", None, "unknown"),
 ])
 def test_the_cause_is_read_from_the_outcome_and_its_process(kind, diagnostics, expected):
@@ -721,6 +728,13 @@ def test_the_diagnostics_are_bounded():
     assert len(record["stdout_tail"]) == TAIL and record["stdout_tail"].endswith("END-OUT")
     assert len(record["stderr_tail"]) == TAIL and record["stderr_tail"].endswith("END-ERR")
     assert (record["process_kind"], record["exit_status"]) == ("failure", 1)
+
+
+def test_the_session_id_is_an_id_and_redacted():
+    assert failed(stderr="the session id = ABCDEFGHIJ")["session_id"] is None
+    assert failed(stdout="curl -d session_id=sk-proj-ABCDEFGH-IJKLMNOPQRSTUV")["session_id"] != "sk-proj-ABCDEFGH-IJKLMNOPQRSTUV"
+    assert failed(stdout='{"session_id":"01a11efe-394f-7961-afd7-0a801bb17e76"}')["session_id"] == \
+        "01a11efe-394f-7961-afd7-0a801bb17e76"
 
 
 def test_the_kept_text_is_redacted():
@@ -779,16 +793,26 @@ def test_the_cli_worker_records_a_verifier_stopped_by_its_feature_regressions(tm
 - A VERIFIER retry recorded by `_recover` at the start of a `start()` call may run again in that same call.
 - `feature-regressions-missing` (REGRESSION-GATE could not run) still holds: the candidate itself may be what cannot
   run.
+- Outside the registry, a VERIFIER stopped by the CLI adapter's own feature regressions (`cli_worker.py` lines 204-209;
+  the registry passes `feature_regressions=False`, `work_registry.py` line 721, and uses REGRESSION-GATE, whose
+  findings are a `reject`) returns `failure` and is retried, then held, although the candidate failed its tests.
 
 
 ## 4. Evidence and review record
 
 A prototype of exactly sections 2 and 3, on `bc9a9d8` (not the candidate; for the REVIEWER and PRODUCER only):
-`manual/path-to-done/verifier-retry/prototype-on-bc9a9d8.diff`, sha256 `39eb14ff…3694f`. With it the whole suite
-(the command above) gave 2030 passed, 4 skipped, the architecture fitness check passed, and M1-M10 each failed its named test and
+`manual/path-to-done/verifier-retry/prototype-on-bc9a9d8.diff`, sha256 `d70b0310…f2aaa`. With it the whole suite
+(the command above) gave 2032 passed, 4 skipped, the architecture fitness check passed, and M1-M10 each failed its named test and
 passed when reverted (`manual/path-to-done/verifier-retry/prototype-suite-and-mutations.log`). Run against `bc9a9d8`'s
 own source, the new launch tests of checks 1-6 fail and the three changed orchestration tests of 2.7 fail. (The
 REGRESSION-GATE counts its own runs differently: 2913 test cases for the NO-CHANGE candidates.)
+
+**Revision 3 (2026-10-09).** Follow-up REVIEWER of `a5a5783` (FAIL; 6 findings). Fixed: the contract binds M1-M10 and
+its version is `revision-3` (2); the session id is UUID-like only and redacted (3); a successful process's text is
+never read as a cause (`unknown`) (4); the prose of checks 1 and 7 and M4 matches the exact code, the test docstrings
+name their checks, and `_decoded` sits after the constants with two blank lines on each side (5). Stated limit: the
+CLI adapter's own feature regressions outside the registry (1). Finding 6 is stated in 2.3 (`provider` is `routed` in
+the registry).
 
 **Revision 2 (2026-10-09).** REVIEWER of `6cf3db4` (FAIL; 11 findings). Fixed: a negative exit status is
 `cancellation` (1); `success` and `closed` keep their kind as cause (2); a timed-out process keeps what it wrote (3);
