@@ -278,7 +278,8 @@ def cause(outcome_kind: str, diagnostics: dict[str, object] | None) -> str:
 ```
 
 The cause is a pattern label over redacted tails, for a person diagnosing; the raw (redacted) tails are always kept
-beside it, and `unknown` is the default. A negative exit status (the process ended by a signal: an operator kill, a
+beside it, and `unknown` is the default; a process that exited 0 has no cause read from its text (`unknown`). A
+negative exit status (the process ended by a signal: an operator kill, a
 shutdown) is `cancellation`; a live process never returns the `cancelled` kind through `run`. `provider` is the
 process adapter's configured provider (`capabilities.provider`; `routed` in the registry), `executable` the
 command's file name (`codex`, `claude`) and `session_id` the id a provider prints as `session id: ...` or
@@ -517,7 +518,7 @@ launched through its PRODUCER to VERIFY, then the plan written):
 New file `tests/invocation_runtime/test_worker_diagnostics.py`:
 
 7. **Bounded, redacted, classified diagnostics**:
-   - `test_the_cause_is_read_from_the_outcome_and_its_process`, parametrized over: accept, reject, timeout,
+   - `test_the_cause_is_read_from_the_outcome_and_its_process`, parametrized over cases including: accept, reject, timeout,
      cancelled -> cancellation; failure with "error sending request for url ...", with
      `{"type":"error","message":"workspace routing discovery failed"}` on stdout, and with "getaddrinfo EAI_AGAIN" ->
      network-or-provider; "HTTP 401 Unauthorized: not logged in" -> authentication; exit 127 "codex: not found" ->
