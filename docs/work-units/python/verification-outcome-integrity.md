@@ -1,7 +1,7 @@
 # Work unit: verification outcome integrity
 
-**Label:** `VERIFICATION-OUTCOME-INTEGRITY` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Revision 1, 2026-10-10. Not registered.
+**Label:** `VERIFICATION-OUTCOME-INTEGRITY` (a document label; permanent id `e73a603e-2cb7-4827-b691-8e0f36d5129a`).
+**Status:** Revision 1, 2026-10-10. Registered.
 **Authority:** derived from the approved canonical plan revision `28df5c3` (`sha256:415231dcd846671f40bbf24fd6429515592d2d920d4d159d599c9aed9a468dff`), obligation
 `VERIFICATION-OUTCOME-INTEGRITY` (P0); released by the control plane (`work release`), no per-item Founder release.
 **Starting revision:** main `28df5c3`.
@@ -11,7 +11,7 @@
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
  "version": "revision-1",
  "intent": "Only an admitted, evidence-backed engineering REJECT returns a Work Item to PRODUCER. Every failure of the verification environment or machinery keeps the exact candidate and retries VERIFY within VERIFIER_RETRY_LIMIT, then a typed hold, never a rejection. Packet mutations are a machine-readable block run by a deterministic control-plane harness; a VERIFIER session REJECT is admitted only when every finding's typed evidence (pytest, reproducer, fitness, text) is independently reproduced on a fresh checkout of the exact candidate; one same-environment control rule decides whether any test result counts against the candidate.",
  "satisfied_requirement_ids": [
