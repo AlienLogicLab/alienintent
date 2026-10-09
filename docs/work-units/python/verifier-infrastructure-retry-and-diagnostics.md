@@ -1,7 +1,7 @@
 # Work unit: a VERIFIER that ends without a verdict is retried, and every worker process leaves durable diagnostics
 
-**Label:** `VERIFIER-INFRASTRUCTURE-RETRY-AND-DIAGNOSTICS` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Draft revision 3, 2026-10-09, for follow-up review. Not registered, not assessed, not released.
+**Label:** `VERIFIER-INFRASTRUCTURE-RETRY-AND-DIAGNOSTICS` (a document label; permanent id `8bbe866f-0c73-4189-82a5-d2029ea86042`).
+**Status:** Revision 3 (work item `8bbe866f-0c73-4189-82a5-d2029ea86042`, at CAPTURE), 2026-10-09. Reviewed (follow-up check PASS). Not approved, not assessed, not released.
 **Position on the path:** first on the autonomy critical path (Founder 2026-10-09): VERIFIER-INFRASTRUCTURE-RETRY-AND-
 DIAGNOSTICS -> NO-CHANGE re-issue -> PLAN-AUTHORITY-INHERITANCE -> remaining autonomy blockers -> three-item proof.
 **Starting revision:** main `bc9a9d8`. Every line number below is at `bc9a9d8`.
@@ -11,7 +11,7 @@ DIAGNOSTICS -> NO-CHANGE re-issue -> PLAN-AUTHORITY-INHERITANCE -> remaining aut
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "8bbe866f-0c73-4189-82a5-d2029ea86042",
  "version": "revision-3",
  "intent": "A VERIFIER whose session ends without a valid verdict (its process fails or times out, or it leaves no verdict, a malformed one or one for another revision) made no engineering judgment: the work item stays at VERIFY on the same custodied candidate and the next launch runs a fresh VERIFIER, at most twice in a row, then a typed infrastructure hold. No rejection is counted and no PRODUCER cycle is used; only a valid REJECT is a rejection. Every worker process's exit status, bounded and redacted output tails (also of a timed-out process), provider, executable, provider session id and command are kept with its outcome in the invocation journal, with the cause they show.",
  "satisfied_requirement_ids": [
