@@ -117,7 +117,7 @@ class FactoryCoordinator:
         self.projection_diagnostics: dict[str, str] = {}
 
     def start(self) -> RunSummary:
-        items = self._work.import_ready_snapshot()
+        items = self._with_started(self._work.import_ready_snapshot())
         if not self._recover(items):
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
         dispatched: list[str] = []
@@ -160,23 +160,25 @@ class FactoryCoordinator:
         """One role step for exactly the named work item: the PRODUCER at IMPLEMENT, the VERIFIER at VERIFY or
         CLOSURE at ACCEPT.
 
-        At ACCEPT, writing nothing before the last step: the item is resolved from the READY snapshot, or else
-        `started_item`; a contract whose closure actions are not exactly the five fixed names answers
+        A started item is resolved from the READY snapshot, or else `started_item` at any stage (the board reflects
+        canonical work state; it does not determine it). At ACCEPT, writing nothing before the last step, a contract
+        whose closure actions are not exactly the five fixed names answers
         CLOSURE_NOT_AUTOMATED; an item at `ready-to-land` while landing is not enabled answers READY_TO_LAND.
         Otherwise it writes the explicit human release as `release_and_start` does, runs the existing recovery once
         (which may record already-durable outcomes of other launches and starts no worker), projects every recorded
-        DONE through `completed`, and, only if the item is in the READY snapshot (or, at ACCEPT, resolved by
+        DONE through `completed`, and, only if the item is in the READY snapshot (or, once started, resolved by
         `started_item`) and `_eligible` admits it, runs `_run` once for it. It never calls `start()`, so no other
         work item runs and the next role waits for the next `launch`.
         """
-        accepted: ReadyWorkItem | None = None
+        started: ReadyWorkItem | None = None
         try:
             projected = self.state(identity)
         except KeyError:
             projected = None
+        if projected is not None and projected.stage in ROLE_BY_STAGE:
+            started = self._resolve(identity, self._work.import_ready_snapshot(), projected.record or {})
         if projected is not None and projected.stage is LifecycleStage.ACCEPT:
-            accepted = self._resolve(identity, self._work.import_ready_snapshot(), projected.record or {})
-            if accepted is None or not is_fixed(accepted.contract.required_closure_actions):
+            if started is None or not is_fixed(started.contract.required_closure_actions):
                 return CLOSURE_NOT_AUTOMATED
             if projected.outcome == READY_TO_LAND and not self._landing_enabled():
                 return READY_TO_LAND
@@ -188,7 +190,7 @@ class FactoryCoordinator:
         if not self._recover(items):
             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
         self._project_done()
-        item = next((ready for ready in items if ready.identity == identity), accepted)
+        item = next((ready for ready in items if ready.identity == identity), started)
         if item is None or not self._eligible(item):
             return NOT_ELIGIBLE
         producing = self._role(identity) == PRODUCER
@@ -725,12 +727,32 @@ class FactoryCoordinator:
         return True
 
     def _resolve(self, identity: str, items: Iterable[ReadyWorkItem], raw: Mapping[str, object]) -> ReadyWorkItem | None:
-        """The READY row of a work item at ACCEPT, else the item built from its registry record (`started_item`)."""
+        """The READY row of a started work item, else the item built from its registry record (`started_item`) for its
+        last launch, or for its PRODUCER's launch when a recorded decision left no `correlation`."""
         item = next((ready for ready in items if ready.identity == identity), None)
-        correlation = raw.get("correlation")
-        if item is None and self._started_item is not None and isinstance(correlation, str):
-            item = self._started_item(identity, correlation)
-        return item
+        if item is not None or self._started_item is None:
+            return item
+        for correlation in (raw.get("correlation"), raw.get("producer_correlation")):
+            if isinstance(correlation, str) and (item := self._started_item(identity, correlation)) is not None:
+                return item
+        return None
+
+    def _with_started(self, items: tuple[ReadyWorkItem, ...]) -> tuple[ReadyWorkItem, ...]:
+        """The READY snapshot plus every started work item it does not show (its card moved on with its state),
+        resolved from the registry: only recorded, non-final items at a stage some role advances."""
+        if self._started_item is None:
+            return items
+        shown = {item.identity for item in items}
+        started = []
+        for aggregate, _, raw in self._store.list_states(self._profile, "factory:"):
+            identity = aggregate.removeprefix("factory:")
+            if identity in shown or raw.get("stage") not in {str(stage) for stage in ROLE_BY_STAGE} \
+                    or raw.get("outcome") in FINAL_OUTCOMES:
+                continue
+            item = self._resolve(identity, (), raw)
+            if item is not None:
+                started.append(item)
+        return (*items, *started)
 
     def _project(self, identity: str) -> None:
         """The DONE projection hook; a refusal or error is a diagnostic, never raised into the coordinator."""

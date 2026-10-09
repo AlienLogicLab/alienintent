@@ -195,7 +195,8 @@ class InstallationDoctor:
                 raise DoctorFailure("persistence location is unavailable")
             observed = preflight()
             current_version, migration = getattr(observed, "current_version", None), getattr(observed, "migration", None)
-            if current_version != 2 or migration is not None:
+            # Settled is the store's own answer: a schema exists and its preflight names no migration to run.
+            if current_version is None or migration is not None:
                 raise DoctorFailure("persistence schema is incompatible or unsettled")
             return CheckEvidence.passed()
         raise DoctorFailure("persistence evidence is unavailable")

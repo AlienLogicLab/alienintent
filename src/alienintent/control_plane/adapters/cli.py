@@ -1,6 +1,7 @@
 """Sanitized command-line presentation adapter for the operator control plane."""
 from __future__ import annotations
 
+from contextlib import nullcontext
 import argparse
 from datetime import UTC, datetime
 import importlib
@@ -120,6 +121,7 @@ def _parser() -> argparse.ArgumentParser:
     context.add_argument("--correlation"); context.add_argument("--candidate")
     context.add_argument("--contract-digest")
     launch = _sanitized(work.add_parser("launch")); launch.add_argument("target")
+    _sanitized(work.add_parser("project"))
     work_decide = _sanitized(work.add_parser("decide")); work_decide.add_argument("target")
     work_decide.add_argument("--choice", choices=("authorize", "defer"), required=True)
     work_decide.add_argument("--quote", required=True)
@@ -201,8 +203,17 @@ def main(argv: list[str] | None = None) -> int:
                 if getattr(registry, "launcher", None) is None:
                     _render({"error": "readiness-not-configured"}, args.json)
                     return 1
-                _render(exclusive_launch_work(registry.launcher, args.target, registry.store, registry.ownership),
-                        args.json)
+                # The card projector runs beside the launch: the board lags canonical state, never leads or blocks it.
+                projection = getattr(registry, "card_projection", None)
+                with projection() if projection is not None else nullcontext():
+                    value = exclusive_launch_work(registry.launcher, args.target, registry.store, registry.ownership)
+                _render(value, args.json)
+                return 0
+            if args.work_command == "project":
+                if getattr(registry, "project_cards", None) is None:
+                    _render({"error": "readiness-not-configured"}, args.json)
+                    return 1
+                _render({"retired": registry.project_cards()}, args.json)
                 return 0
             if args.work_command == "decide":
                 if getattr(registry, "decide", None) is None:
