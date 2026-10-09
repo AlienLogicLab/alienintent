@@ -174,7 +174,7 @@ index 2a19ee7..3df94f9 100644
      bare = subprocess.run(["git", "-C", str(substrate.remote), "rev-parse", "--is-bare-repository"], capture_output=True, text=True, check=False).stdout.strip() == "true"
      main = substrate.remote_advertises("main")
 diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
-index 6daec18..4e1d54e 100644
+index 6daec18..7ba7572 100644
 --- a/src/alienintent/composition/work_registry.py
 +++ b/src/alienintent/composition/work_registry.py
 @@ -77,6 +77,7 @@ import shutil
@@ -215,7 +215,7 @@ index 6daec18..4e1d54e 100644
          self.ready_view = self._ready_view(configuration) if self.links is not None and self.assessment is not None \
              else None
          # Each role's context package (unit 6c-1) over the `readiness` store and evidence folder; its command names
-@@ -570,6 +578,98 @@ class WorkRegistry:
+@@ -570,6 +578,99 @@ class WorkRegistry:
          configuration is read; the model routing file is read by `prepare` at every launch."""
          return self._launch_chain()[0]
  
@@ -226,7 +226,8 @@ index 6daec18..4e1d54e 100644
 +        landed while an attempted write was in flight (another projector may have written and retired the newer stage
 +        first; the write may have landed although its read-back failed), the projection is owed again, so the next pass
 +        writes the newest stage. A change GitHub applies only after its answer was lost (a client timeout) and after a
-+        newer stage was retired can leave an older status until the item's next commit: GitHub has no compare-and-set. A failed write stays outstanding; an item with no linked card is retired after one diagnostic. Stops at
++        newer stage was retired can leave an older status until the item's next commit: GitHub has no compare-and-set.
++        A failed write stays outstanding; an item with no linked card is retired after one diagnostic. Stops at
 +        `deadline` (time.monotonic), leaving the rest outstanding. Never changes canonical state; answers the number
 +        of obligations retired."""
 +        if self.links is None or self.assessment is None:
@@ -252,9 +253,9 @@ index 6daec18..4e1d54e 100644
 +    @contextmanager
 +    def card_projection(self, interval: float = CARD_PROJECTION_SECONDS):
 +        """The card projector around one launch: a pass now, a pass every `interval` seconds while the launch runs (so a
-+        PRODUCER's IMPLEMENT shows while it works), and a pass at the end, which stops starting items after CARD_FINAL_PASS_SECONDS, if the running pass has
-+        finished (the thread wait and an item already in flight add their own transport timeouts). A
-+        pass that fails is recorded and the next one retries; nothing here reaches the launch."""
++        PRODUCER's IMPLEMENT shows while it works), and, if the running pass has finished, a pass at the end that stops
++        starting items after CARD_FINAL_PASS_SECONDS (the thread wait and an item already in flight add their own
++        transport timeouts). A pass that fails is recorded and the next one retries; nothing here reaches the launch."""
 +        stop = threading.Event()
 +
 +        def passes() -> None:
@@ -920,7 +921,7 @@ no extra whole-suite runs), and `python3 tools/fitness/check_architecture.py --r
 ## 4. Evidence and review record
 
 A prototype that is exactly section 2's diff, on `2b47f21` (not the candidate):
-`manual/path-to-done/card-follows-stage/prototype-outbox-on-2b47f21.diff`, sha256 `9f117bb8…c250a`. With it
+`manual/path-to-done/card-follows-stage/prototype-outbox-on-2b47f21.diff`, sha256 `c6618a79…2ff6a`. With it
 the touched test files pass, the architecture fitness check passes, and P1-P8 each fail their named test and pass when
 reverted (`mutations-and-targeted-run.log` for revision 4; `mutations-rev5.log` for P1-P9 after the revision 5 fix,
 with the projection tests re-run). The
