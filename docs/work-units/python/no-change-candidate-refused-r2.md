@@ -119,7 +119,7 @@ descendant commit with the starting tree: an empty commit, or a commit and its r
 
 Work item `3d4e1215` showed the effect. The intake ref `refs/intake/launch-3d4e1215-…-0`, the bundle head and the
 candidate branch all name `bceea00`, which is the release baseline. Yet the coordinator recorded `success` and
-advanced to VERIFY (`factory_coordinator.py` lines 492-498).
+advanced to VERIFY (`factory_coordinator.py` lines 496-502).
 
 ## 2. The change
 
@@ -160,7 +160,7 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-498).
    refusal, handled exactly as today's ancestor refusal (the `CandidateUnavailable` leaves `_produce` as it does now),
    not a no-change result. It is reachable only if the worker-run tree read of 2.3 lies.
 5. **The coordinator sends it to rework** (`factory_coordinator.py`, `_advance`, PRODUCER branch).
-   - Just before `if outcome.kind != "success" or outcome.candidate is None:` (line 497), add:
+   - Just before `if outcome.kind != "success" or outcome.candidate is None:` (line 497), add (with `NO_CHANGE` added to the `worker_provider` import, line 23):
      `if outcome.kind == NO_CHANGE: return self._rework(item, current, prior, invocation, "producer", tuple(outcome.findings))`.
    - In `_rework` (line 580), line 587 becomes
      `reworked = state if source == "producer" else transition(state, state.version, "rework")`. The item is already at
@@ -172,12 +172,13 @@ advanced to VERIFY (`factory_coordinator.py` lines 492-498).
      The recorded finding reaches it through the work context's `history.findings`.
    - **Counts:** a no-change rework leaves `implement_cycles` and the lifecycle version unchanged. The lifecycle
      `rework` transition adds one to each, but this path makes no transition.
-   - **Old records:** the `_cycles` fallback for records without stored counts (lines 847-862) assumes every rejection
+   - **Old records:** the `_cycles` fallback for records without stored counts (lines 863-879) assumes every rejection
      had a VERIFY. Records written after this change always store both counts, so the fallback is never used for them.
 6. **Limit stated in the module docstring of `real_worker.py` (line 1):** the current work item contract has no
    no-repository-change execution mode, so every PRODUCER result must change the repository's tree.
 7. **Existing tests that change: exactly six, all in `tests/invocation_runtime/test_runtime.py`.** These are exactly
-   the tests that fail when the rule is applied to `a632147`. Each fake gains `tree`, and one PRODUCER commits a real
+   the tests that fail when the rule is applied to `a632147`; `real_worker.py`, `git_source_control.py` and
+   `test_runtime.py` are byte-identical at `bc9a9d8`, and the prototype re-run below confirms the set there. Each fake gains `tree`, and one PRODUCER commits a real
    file:
    - `test_real_worker_retries_a_failed_process_and_records_next_eligible_event`: its `Source` (line 59) gains
      `def tree(self, _, revision): return "1" * 40`.
@@ -262,11 +263,20 @@ the REVIEWER and PRODUCER only): `manual/path-to-done/no-change/prototype-rev5-o
 failed all three hand-over cases, M3 failed the coordinator test, M4 (with the journal of check 1) failed all three
 refusal cases, M5 failed both named tests (and four others), and each passed when reverted.
 
+Re-proof at `bc9a9d8` (2026-10-09, for R2): the same prototype (sha256 `dc3ccd1a…0726c`) applies cleanly to
+`bc9a9d8`. The whole suite gave 2011 passed, 4 skipped (the 2003 of `bc9a9d8` plus the prototype's 8 tests), and the
+architecture fitness check passed. M3 and M5, the two mutations in `factory_coordinator.py` (the only scope file
+changed since `a632147`), failed the coordinator test and both named tests respectively, and passed when reverted. M1,
+M2 and M4 mutate files unchanged since `a632147`.
+
 ## 4. Review record
 
 **R2 revision 1 (2026-10-09).** Re-issue of revision 5 against main `bc9a9d8` (see Re-issue above). Changed: label,
-identity, status, starting revision, one fixed decision, and the `factory_coordinator.py` line numbers (408, 493,
-518/523/550, 563, 570, 573 at `a632147` are 412, 497, 522/527/554, 580, 587, 590 at `bc9a9d8`). The requirement,
+identity, status, starting revision, one fixed decision, and the `factory_coordinator.py` line numbers (408,
+492-498, 493, 518/523/550, 563, 570, 573, 847-862 at `a632147` are 412, 496-502, 497, 522/527/554, 580, 587, 590,
+863-879 at `bc9a9d8`); 2.5 names the `NO_CHANGE` import; the prototype proof is re-run at `bc9a9d8`. REVIEWER of
+`5551ad2` (FAIL; D1 lines 492-498, D2 lines 847-862 not updated, D3 the record, D4 proof only at `a632147`, D5 the
+import): all fixed here. The requirement,
 scope, checks and mutations are unchanged. Line numbers of the other scope files are unchanged (no diff since
 `a632147`).
 
