@@ -1,0 +1,2258 @@
+diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
+index 155748e..6228b29 100644
+--- a/src/alienintent/composition/work_registry.py
++++ b/src/alienintent/composition/work_registry.py
+@@ -67,8 +67,8 @@ Configuration document (JSON):
+ """
+ from __future__ import annotations
+ 
+-from collections.abc import Callable, Iterator, Mapping
+-from contextlib import contextmanager
++from collections.abc import Callable, Iterator, Mapping, Sequence
++from contextlib import AbstractContextManager, contextmanager
+ from dataclasses import asdict, dataclass, replace
+ from datetime import UTC, datetime
+ from hashlib import sha256
+@@ -133,6 +133,7 @@ from alienintent.execution_coordination.adapters.sqlite_store import PROJECTED,
+ from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
+ from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+ from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
++from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, MutationSpecInvalid, parse_mutations
+ from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH, PlanAuthority, outside_authority
+ from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
+ from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, SCOPE_VIOLATION, contained
+@@ -162,6 +163,7 @@ from alienintent.invocation_runtime.adapters.git_worktree import GitWorkspace, G
+     ref_safe
+ from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
+ from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
++from alienintent.invocation_runtime.application.mutation_harness import MutationHarness, MutationResult
+ from alienintent.invocation_runtime.application.real_worker import (
+     CLOSURE_ORDERED, EFFECT_UNKNOWN, OWNED_WORK_ACTIVE, OWNER_ALIVE, PUBLICATION_STARTED, RealWorkerProvider)
+ from alienintent.invocation_runtime.application.regression_gate import (
+@@ -406,17 +408,23 @@ class SourceControlRefPublisher(RefPublisher):
+ 
+ 
+ def suite_runner(user: str | None, environment: Mapping[str, str]) -> Callable[[Path, Path], int]:
+-    """REGRESSION-GATE's suite run: `SUITE` in `folder` with the worker's environment (never the control plane's
+-    own) and PYTHONDONTWRITEBYTECODE=1, as the worker through the sudo rule (`worker_prefix`), or directly without a
+-    worker user; one process group, stopped at SUITE_WALL_CLOCK, which is `SuiteUnrunnable`. Answers the exit
+-    code."""
++    """REGRESSION-GATE's suite run: `SUITE` in `folder` through `command_runner`."""
++    run = command_runner(user, environment)
++    return lambda folder, junit: run(folder, suite(junit))
++
++
++def command_runner(user: str | None, environment: Mapping[str, str]) -> Callable[[Path, Sequence[str]], int]:
++    """One control-plane check command (the suite, or a mutation harness run) in `folder` with the worker's
++    environment (never the control plane's own) and PYTHONDONTWRITEBYTECODE=1, as the worker through the sudo rule
++    (`worker_prefix`), or directly without a worker user; one process group, stopped at SUITE_WALL_CLOCK, which is
++    `SuiteUnrunnable`. Answers the exit code."""
+     variables = dict(environment) | {"PYTHONDONTWRITEBYTECODE": "1"}
+ 
+-    def run(folder: Path, junit: Path) -> int:
++    def run(folder: Path, command: Sequence[str]) -> int:
+         if user is None:
+-            argv, child = suite(junit), variables
++            argv, child = list(command), variables
+         else:
+-            argv, child = [*worker_prefix(user, variables), *suite(junit)], None
++            argv, child = [*worker_prefix(user, variables), *command], None
+         process = subprocess.Popen(argv, cwd=folder, env=child, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                    stderr=subprocess.DEVNULL, start_new_session=True)
+         try:
+@@ -434,10 +442,52 @@ def suite_runner(user: str | None, environment: Mapping[str, str]) -> Callable[[
+                     break
+                 except subprocess.TimeoutExpired:
+                     continue
+-            raise SuiteUnrunnable("the suite outran its wall clock") from None
++            raise SuiteUnrunnable("the run outran its wall clock") from None
+     return run
+ 
+ 
++# The worker read's own answer that the file does not exist; any other failure (sudo, permissions) is not absence.
++_ABSENT = 3
++
++
++def worker_read_file(user: str, environment: Mapping[str, str]) -> Callable[[Path], bytes]:
++    """A checkout file read as the worker: FileNotFoundError only when the worker's shell proves the file absent
++    (exit `_ABSENT`); any other failure is OSError, which the harness reports as no result."""
++    script = f'if [ -e "$1" ]; then exec cat -- "$1"; else exit {_ABSENT}; fi'
++
++    def read(path: Path) -> bytes:
++        result = run_as_worker(user, environment, ["sh", "-c", script, "sh", str(path)])
++        if result.returncode == _ABSENT:
++            raise FileNotFoundError(str(path))
++        if result.returncode:
++            raise OSError(f"the checkout file cannot be read as the worker (exit {result.returncode}): {path}")
++        return result.stdout
++    return read
++
++
++def revision_has(clone: Path, sha: str, path: str) -> bool:
++    """Whether `path` exists at the revision `sha`, answered by the control plane's own git in `clone`; OSError when
++    git cannot answer (the revision itself is not there, or git fails)."""
++    def git(*argv: str) -> int:
++        try:
++            return subprocess.run(["git", "-C", str(clone), *argv], capture_output=True, check=False,
++                                  timeout=60).returncode
++        except subprocess.TimeoutExpired as error:
++            raise OSError("git did not answer") from error
++    if git("cat-file", "-e", f"{sha}^{{commit}}"):
++        raise OSError(f"the starting revision {sha} is not in the packets clone")
++    # Absence must be proven: `ls-tree` answers 0 with an empty listing only when the path is not in that tree; any
++    # other failure is no answer, never "absent".
++    try:
++        listed = subprocess.run(["git", "-C", str(clone), "ls-tree", "--name-only", sha, "--", path],
++                                capture_output=True, check=False, timeout=60)
++    except subprocess.TimeoutExpired as error:
++        raise OSError("git did not answer") from error
++    if listed.returncode != 0:
++        raise OSError(f"git cannot list {path} at {sha}")
++    return bool(listed.stdout.strip())
++
++
+ def _read_junit(path: Path) -> bytes:
+     """A control-plane `regression-results` junit file, at most SUITE_JUNIT_LIMIT bytes (OSError beyond)."""
+     with path.open("rb") as stream:
+@@ -839,6 +889,7 @@ class WorkRegistry:
+         journal = JsonlInvocationJournal(root / "invocation-journal.jsonl", time.time)
+         closure = RegistryClosure(self, root, journal, preparation, self._landing_authority(journal))
+         gate = self._regression_gate(root, user, environment, source, workspaces, handover)
++        harness = self._mutation_harness(root, user, environment, source, workspaces, handover, packets.clone)
+         worker = RealWorkerProvider(
+             process, source, packets.clone, packets.remote,
+             lambda invocation: f"candidate/{ref_safe(invocation.correlation_id)}", root / "verifier",
+@@ -846,7 +897,8 @@ class WorkRegistry:
+             workspaces, ReservationBook(1, 2), now=time.time,
+             sleep=time.sleep, journal=journal, ownership=ownership, preparation=preparation,
+             recovered_workspace=recovered, closure=closure, handover=handover, regression_gate=gate,
+-            regression_base=preparation.starting.get, protected_paths=self.protected_paths)
++            regression_base=preparation.starting.get, protected_paths=self.protected_paths,
++            mutation_harness=harness, mutations=self._packet_mutations)
+         closure.worker = worker
+         closure.worker_workspaces = None if user is None else workspaces
+         guard = RoleBindingGuard(worker, journal, store, "registry", repository, time.time)
+@@ -861,7 +913,22 @@ class WorkRegistry:
+         `read_result`, from `<results>/<identity>/`; without one from `<launch>/regression-results/<identity>/`, a
+         folder the control plane makes); baselines are cached in `<launch>/regression-baselines`."""
+         run = self._suite_run if self._suite_run is not None else suite_runner(user, environment)
++        checkout = self._revision_checkout(source, workspaces, handover)
++        if handover is not None:
++            read = lambda path: handover.read_result(path.parent.name, path.name, limit=SUITE_JUNIT_LIMIT)  # noqa: E731
++            return RegressionGate(run, read, checkout, root / "regression-baselines", handover.results)
+ 
++        def own(folder: Path, junit: Path) -> int:
++            junit.parent.mkdir(parents=True, exist_ok=True)
++            return run(folder, junit)
++        return RegressionGate(own, _read_junit, checkout, root / "regression-baselines", root / "regression-results")
++
++    @staticmethod
++    def _revision_checkout(source, workspaces: GitWorktreeAdapter | WorkerCloneAdapter,
++                           handover) -> Callable[[str, str], AbstractContextManager[Path]]:
++        """A fresh checkout of a revision by SHA by the producer allocator under `identity`, its revision read (as the
++        worker with one) and checked, removed when the block ends (a refusal is "workspace retained" and changes no
++        decision; without a worker user its branch is deleted after a successful cleanup)."""
+         @contextmanager
+         def checkout(sha: str, identity: str) -> Iterator[Path]:
+             workspace = workspaces.allocate(identity, identity, sha)
+@@ -875,16 +942,72 @@ class WorkRegistry:
+                     if handover is None:
+                         workspaces.remove_branch(workspace)
+                 except (CandidateUnavailable, OSError):
+-                    pass  # workspace retained; the gate's decision does not depend on it
++                    pass  # workspace retained; the decision does not depend on it
++        return checkout
++
++    def _mutation_harness(self, root: Path, user: str | None, environment: Mapping[str, str], source,
++                          workspaces: GitWorktreeAdapter | WorkerCloneAdapter, handover,
++                          clone: Path) -> MutationHarness:
++        """VERIFICATION-OUTCOME-INTEGRITY's harness for the registry profile, composed as the REGRESSION-GATE is: each
++        checkout is a fresh one of the exact candidate under its own identity (with a worker user the hand-over's
++        custody-checked candidate clone, without one a worktree of the packets clone at the candidate's SHA), removed
++        when the block ends; the same-environment control checks out the starting revision as the gate checks out
++        its baseline; commands run through `command_runner`; result files are read as the gate reads its junit; with
++        a worker user the checkout's files are read and written as the worker. Whether a file exists at the starting
++        revision is asked of the control plane's own git in the packets clone (`revision_has`)."""
++        run, revision_checkout = command_runner(user, environment), self._revision_checkout(source, workspaces, handover)
++        exists_at = lambda sha, path: revision_has(clone, sha, path)  # noqa: E731
++
++        @contextmanager
++        def checkout(candidate: CandidateRef, identity: str) -> Iterator[Path]:
++            revision = candidate.locator.rpartition("@")[2]
++            workspace = handover.candidate_clone("verifier", identity, identity, candidate) if handover is not None \
++                else workspaces.allocate(identity, identity, revision)
++            try:
++                yield workspace.path
++            finally:
++                try:
++                    workspaces.cleanup(workspace, None)
++                    if handover is None:
++                        workspaces.remove_branch(workspace)
++                except (CandidateUnavailable, OSError):
++                    pass  # workspace retained; the harness's decision does not depend on it
+ 
+         if handover is not None:
+-            read = lambda path: handover.read_result(path.parent.name, path.name, limit=SUITE_JUNIT_LIMIT)  # noqa: E731
+-            return RegressionGate(run, read, checkout, root / "regression-baselines", handover.results)
++            read_file = worker_read_file(user, environment)
+ 
+-        def own(folder: Path, junit: Path) -> int:
+-            junit.parent.mkdir(parents=True, exist_ok=True)
+-            return run(folder, junit)
+-        return RegressionGate(own, _read_junit, checkout, root / "regression-baselines", root / "regression-results")
++            def write_file(path: Path, data: bytes) -> None:
++                script = 'mkdir -p -- "$(dirname -- "$1")" && cat > "$1"'
++                result = run_as_worker(user, environment, ["sh", "-c", script, "sh", str(path)], input=data)
++                if result.returncode:
++                    raise OSError(f"the checkout file cannot be written: {path}")
++            read = lambda path: handover.read_result(path.parent.name, path.name, limit=SUITE_JUNIT_LIMIT)  # noqa: E731
++            return MutationHarness(run, read, checkout, handover.results, revision_checkout=revision_checkout,
++                                   exists_at=exists_at, read_file=read_file, write_file=write_file)
++        results = root / "mutation-results"
++
++        def own(folder: Path, command: Sequence[str]) -> int:
++            for argument in command:  # the result files a run writes: their folder is the control plane's to make
++                if Path(argument).is_relative_to(results):
++                    Path(argument).parent.mkdir(parents=True, exist_ok=True)
++            return run(folder, command)
++        return MutationHarness(own, _read_junit, checkout, results, revision_checkout=revision_checkout,
++                               exists_at=exists_at)
++
++    def _packet_mutations(self, invocation: WorkerInvocation) -> MutationSpec | None:
++        """The mutation spec of the work item's packet at its pinned commit (None when it has none);
++        MutationSpecInvalid when malformed, OSError when the packet cannot be read."""
++        try:
++            record = self.records.show(invocation.work_identity)
++        except Exception as error:  # noqa: BLE001 - an unreadable record is no harness result, never a judgment
++            raise OSError(f"the packet cannot be read: {type(error).__name__}") from error
++        packet = None if record is None else record.packet
++        if packet is None:
++            return None
++        try:
++            return parse_mutations(packet.decode("utf-8"))
++        except UnicodeDecodeError as error:
++            raise MutationSpecInvalid("the packet is not UTF-8") from error
+ 
+     def _landing_authority(self, journal: JsonlInvocationJournal) -> LandingAuthority | None:
+         """Only with `"landing": true`: its own landing-scoped credentials (never `_links`'), the coordinator record's
+@@ -1290,8 +1413,21 @@ GATE_PASSED = """
+ 
+ REGRESSION-GATE, control-plane evidence already established for you: the whole suite (`tests` and `tools`) ran at the
+ baseline {baseline} and at this candidate {revision}; no test that passed at the baseline fails here and no new test
+-fails ({receipt}). Do not run the whole suite. Run only the acceptance tests and mutations the package names, and
+-narrowly targeted tests when a finding needs them."""
++fails ({receipt}). Do not run the whole suite. Run only the acceptance tests the package names, and narrowly
++targeted tests when a finding needs them."""
++MUTATIONS_RUN = """
++
++MUTATIONS, control-plane evidence already established for you: the control plane ran every packet mutation at this
++candidate; with each mutation its named tests failed, and with the file restored they passed ({receipt}):
++{table}
++Do not apply mutations by hand."""
++REJECT_EVIDENCE = """
++A reject's findings are objects {"finding": "<text>", "evidence": <evidence>}, each with exactly one typed evidence
++that the control plane reproduces on a fresh checkout of this candidate: {"type": "pytest", "node_ids": ["<node id>"]}
++(at least one named test fails), {"type": "reproducer", "name": "test_<name>.py", "source": "<a python test file>"}
++(one of its tests fails), {"type": "fitness", "check": "<check name>"} (that fitness check fails) or {"type": "text",
++"path": "<repository path>", "contains": "<exact text>"} (or "absent" instead of "contains"; true of the file).
++Every finding must reproduce: an unreproduced reject is discarded and VERIFY runs again."""
+ VERIFIER_RESULT = """Your current working directory is a fresh clone of the candidate. Verify it against the package.
+ Then write .alienintent/verdict.json in that directory as {{"revision": "<the candidate commit, git rev-parse HEAD>",
+ "verdict": "accept" or "reject", "findings": ["<finding>", ...]}}; a reject needs at least one finding."""
+@@ -1470,8 +1606,8 @@ class LaunchPreparation:
+         result = PRODUCER_RESULT.format(self_review=self.self_review_path(invocation.correlation_id)) \
+             if invocation.role == PRODUCER else CLOSURE_RESULT.format(
+                 request=self.closure_request_path(invocation.correlation_id)) \
+-            if invocation.role == CLOSURE else VERIFIER_RESULT if self.worker is None \
+-            else WORKER_VERIFIER_RESULT.format(verdict=self._result(invocation.correlation_id, VERDICT))
++            if invocation.role == CLOSURE else VERIFIER_RESULT + REJECT_EVIDENCE if self.worker is None \
++            else WORKER_VERIFIER_RESULT.format(verdict=self._result(invocation.correlation_id, VERDICT)) + REJECT_EVIDENCE
+         self.kept[invocation.correlation_id] = (dict(route), INSTRUCTIONS.format(
+             role=invocation.role, identity=invocation.work_identity, invocation=invocation.correlation_id,
+             package=path, result=result, context=CONTEXT_LINE if self.exports is None else EXPORT_CONTEXT_LINE))
+@@ -1512,6 +1648,15 @@ class LaunchPreparation:
+             self.kept[invocation.correlation_id] = (route, text + GATE_PASSED.format(
+                 baseline=baseline, revision=revision, receipt=receipt))
+ 
++    def mutated(self, invocation: WorkerInvocation, results: tuple[MutationResult, ...], receipt: str) -> None:
++        """Every packet mutation was killed by the control plane's harness for this VERIFIER invocation: the table of
++        mutations and results is added to the session's instructions, so the session applies none by hand."""
++        kept = self.kept.get(invocation.correlation_id)
++        if kept is not None:
++            route, text = kept
++            table = "\n".join(f"- {result.name}: {result.result}" for result in results)
++            self.kept[invocation.correlation_id] = (route, text + MUTATIONS_RUN.format(receipt=receipt, table=table))
++
+     def command(self, invocation_id: str, role: object, workspace: Path) -> tuple[list[str], str]:
+         """CliWorkerProvider's per-invocation command: the provider command for the kept route and this workspace,
+         and the instruction text for standard input."""
+diff --git a/src/alienintent/execution_coordination/ports/worker_provider.py b/src/alienintent/execution_coordination/ports/worker_provider.py
+index a05e659..0b71918 100644
+--- a/src/alienintent/execution_coordination/ports/worker_provider.py
++++ b/src/alienintent/execution_coordination/ports/worker_provider.py
+@@ -25,9 +25,13 @@ SCOPE_VIOLATION = "scope-violation"
+ # in a profile without a gate, the receipt beside the verdict): the gate alone owns whole-suite execution, so a missing
+ # result is never compensated by a session running the suite. The coordinator retries the VERIFIER on the same candidate; only
+ # a valid REJECT is a rejection. A candidate that cannot be retrieved (`candidate-unavailable`) is a custody refusal,
+-# not infrastructure: it still holds.
++# not infrastructure: it still holds. VERIFICATION-OUTCOME-INTEGRITY: only an admitted REJECT is a rejection, so
++# verification evidence that is not valid (`verification-evidence-invalid`: a malformed packet mutation spec, or a
++# session REJECT whose findings lack typed evidence or do not reproduce at the candidate) and a mutation harness that
++# gave no result (`mutation-harness-unavailable`) are retried the same way.
+ VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "verdict-malformed", "verdict-miscorrelated",
+-                                     "feature-regressions-missing"})
++                                     "feature-regressions-missing", "verification-evidence-invalid",
++                                     "mutation-harness-unavailable"})
+ 
+ 
+ @dataclass(frozen=True)
+diff --git a/src/alienintent/invocation_runtime/application/mutation_harness.py b/src/alienintent/invocation_runtime/application/mutation_harness.py
+new file mode 100644
+index 0000000..ab005a3
+--- /dev/null
++++ b/src/alienintent/invocation_runtime/application/mutation_harness.py
+@@ -0,0 +1,385 @@
++"""VERIFICATION-OUTCOME-INTEGRITY: the packet's mutations and a reject's evidence, run by the control plane.
++
++Modelled on REGRESSION-GATE: every run is in a fresh checkout of the exact candidate SHA (never the VERIFIER's
++clone), the runner and the junit read are injected, and the decision is taken from the bytes read as each run ends.
++
++A mutation is applied exactly as the packet states it: every `old` must occur exactly once, all of its edits are
++applied together, the mutated file must compile, and every named test must be present; otherwise the spec is invalid
++(SPEC_INVALID). With the edits every named test must fail or error (else SURVIVED); without them, in its own fresh
++checkout of the candidate, every one must pass (else REVERTED_FAILS, but only under the same-environment control
++`against_candidate`; otherwise the environment decided and the spec's evidence is unavailable, SPEC_INVALID). A runner
++that gives no result raises `SuiteUnrunnable`. The receipt binds the candidate SHA, the spec digest and every result.
++
++Every judgment the control plane makes about one test goes through `MutationHarness.observe`: exactly that one node
++id, run alone in its own fresh checkout of one exact revision, its junit read strictly, the checkout then torn down;
++nothing one run leaves behind reaches another. The one exception is the mutated run, which runs the mutation's named
++tests together in the mutated checkout (a collection failure there kills the mutation).
++
++A reject's typed evidence (`verdict_admission`) is reproduced the same way, each item in its own fresh checkout of
++the candidate; a reproducer is written into the untracked folder `EVIDENCE_FOLDER` of its checkout, never into the
++candidate, and reproduces only when one of its tests fails on an assertion. A skipped test is never evidence.
++"""
++
++from __future__ import annotations
++
++from collections.abc import Callable, Mapping, Sequence
++from contextlib import AbstractContextManager
++from dataclasses import dataclass
++from hashlib import sha256
++from itertools import count
++import json
++from pathlib import Path
++import re
++from xml.etree import ElementTree
++
++from alienintent.execution_coordination.domain.custody import CandidateRef
++from alienintent.invocation_runtime.domain.mutation_spec import EVIDENCE_FOLDER, Mutation, MutationSpec
++from alienintent.invocation_runtime.domain.verdict_admission import (
++    Claim, Evidence, FitnessEvidence, PytestEvidence, ReproducerEvidence, Reproduction)
++from alienintent.invocation_runtime.application.regression_gate import SuiteUnrunnable, results
++
++Revision = CandidateRef | str  # the exact candidate, or a revision by full SHA (the starting revision)
++
++# The named-tests command, run in a checkout's root; the junit file and the node ids follow it.
++TESTS = ("python3", "-m", "pytest", "-q", "-p", "no:cacheprovider", "--continue-on-collection-errors", "--junitxml")
++# Compiles one file without writing bytecode; the path follows it.
++COMPILE = ("python3", "-c", "import sys; compile(open(sys.argv[1], 'rb').read(), sys.argv[1], 'exec')")
++# The fitness check, its output (both streams) written to the file named last; the check's name precedes it.
++FITNESS = ("sh", "-c", 'python3 tools/fitness/check_architecture.py --root src/alienintent --check "$1" > "$2" 2>&1',
++           "sh")
++KILLED, SURVIVED, REVERTED_FAILS, SPEC_INVALID = "KILLED", "SURVIVED", "REVERTED_FAILS", "SPEC_INVALID"
++# pytest's exit codes for "no such test" and "no tests collected": the named tests are not present.
++_NOT_COLLECTED = (4, 5)
++_FULL_SHA = re.compile(r"[0-9a-f]{40}")
++# pytest's junit `<failure>` message for a failed assert: the rewritten `assert ...` or an explicit AssertionError.
++_ASSERTION = re.compile(r"(?:AssertionError\b|assert\b)")
++# One line of the fitness check's own failure report (`<path>:<line>: <message>`), and a Python crash.
++_VIOLATION = re.compile(r"^\S+:\d+: \S", re.M)
++_TRACEBACK = "Traceback (most recent call last)"
++# A named test's outcome: `asserted` is a `<failure>` for an assertion, `failed` one raised by another exception.
++_RANK = {"passed": 0, "skipped": 1, "missing": 2, "failed": 3, "error": 4, "asserted": 5}
++
++
++@dataclass(frozen=True)
++class MutationResult:
++    name: str
++    result: str
++    detail: str
++
++
++def receipt(candidate_sha: str, spec_digest: str, found: Sequence[MutationResult]) -> str:
++    """`mutation-harness:sha256:` over the canonical JSON of the candidate, the spec digest and every result."""
++    document = {"candidate_sha": candidate_sha, "spec_digest": spec_digest,
++                "results": [{"name": r.name, "result": r.result, "detail": r.detail} for r in found]}
++    encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
++    return "mutation-harness:sha256:" + sha256(encoded).hexdigest()
++
++
++def against_candidate(at_candidate: str, at_start: str | None) -> bool:
++    """The same-environment control, the one rule for every test result the control plane holds against a candidate.
++    A test that exists at the starting revision counts only when it does not pass at the candidate now and passes at
++    the starting revision now (failing at both, even on an assertion, is the environment or known debt). A test
++    absent at the starting revision (`missing` or None: new in the candidate) counts only when it fails on an
++    assertion at the candidate now. A test skipped at the candidate never counts: the environment decided."""
++    if at_candidate == "skipped":
++        return False
++    if at_start is None or at_start == "missing":
++        return at_candidate == "asserted"
++    return at_candidate != "passed" and at_start == "passed"
++
++
++def cases(xml: bytes, exit_code: int) -> dict[str, str]:
++    """Each junit test case's identity and its worst outcome, an assertion failure told apart (`asserted`); the exit
++    code and the document are checked as REGRESSION-GATE checks them."""
++    results(xml, exit_code)  # SuiteUnrunnable for no result
++    found: dict[str, str] = {}
++    for case in ElementTree.fromstring(xml).iter("testcase"):
++        failures = case.findall("failure")
++        outcome = "error" if case.find("error") is not None else "asserted" if any(
++            failure.get("type", "AssertionError") == "AssertionError" and _ASSERTION.match(failure.get("message", ""))
++            for failure in failures) else "failed" if failures else "skipped" if case.find("skipped") is not None \
++            else "passed"
++        identity = f"{case.get('classname', '')}::{case.get('name', '')}"
++        if _RANK[outcome] >= _RANK[found.get(identity, "passed")]:
++            found[identity] = outcome
++    return found
++
++
++def _outcome(node_id: str, found: Mapping[str, str]) -> str:
++    """A node id's worst junit outcome (`missing` when no test case matches it). The junit identity is
++    `<path as dotted module>[.<class>]::<name>`; a parametrized test matches each of its cases."""
++    file, _, rest = node_id.partition("::")
++    module, parts = file[:-3].replace("/", "."), rest.split("::") if rest else []
++    matched = []
++    for identity, outcome in found.items():
++        cls, _, name = identity.rpartition("::")
++        if not parts:
++            hit = cls == module or cls.startswith(module + ".")
++        else:
++            hit = cls == ".".join([module, *parts[:-1]]) and (name == parts[-1] or name.startswith(parts[-1] + "["))
++        if hit:
++            matched.append(outcome)
++    return max(matched, key=_RANK.__getitem__) if matched else "missing"
++
++
++def _read_file(path: Path) -> bytes:
++    return path.read_bytes()
++
++
++def _write_file(path: Path, data: bytes) -> None:
++    path.parent.mkdir(parents=True, exist_ok=True)
++    path.write_bytes(data)
++
++
++class MutationHarness:
++    """The packet's mutations and a reject's evidence, each judged on fresh checkouts of exact revisions.
++
++    `run(folder, argv)` runs one command in `folder` and answers its exit code (`SuiteUnrunnable` on timeout);
++    `read(path)` reads a file a run wrote in `results` (with a worker user through the hand-over's checked
++    descriptor); `checkout(candidate, identity)` is a fresh checkout of exactly that candidate under `identity`, and
++    `revision_checkout(sha, identity)` one of a revision by SHA (the starting revision, for the same-environment
++    control), each cleaned up when the block ends; `exists_at(sha, path)` answers, from the control plane's own git,
++    whether a file exists at a revision (OSError when git cannot answer); `results` is the folder whose
++    `<identity>/` each run writes to; `read_file` and `write_file` read and write one file of a checkout
++    (`read_file` raises FileNotFoundError only for a file proven absent).
++    """
++
++    def __init__(self, run: Callable[[Path, Sequence[str]], int], read: Callable[[Path], bytes],
++                 checkout: Callable[[CandidateRef, str], AbstractContextManager[Path]], results: Path, *,
++                 revision_checkout: Callable[[str, str], AbstractContextManager[Path]],
++                 exists_at: Callable[[str, str], bool],
++                 read_file: Callable[[Path], bytes] = _read_file,
++                 write_file: Callable[[Path, bytes], None] = _write_file) -> None:
++        self._run, self._read, self._checkout, self._results = run, read, checkout, Path(results)
++        self._revision_checkout, self._read_file, self._write_file = revision_checkout, read_file, write_file
++        self._exists_at, self._observations = exists_at, count()
++
++    def observe(self, revision: Revision, node: str, scope: str, *, write: tuple[str, bytes] | None = None) -> str:
++        """The one test `node` at `revision` now, alone, in its own fresh checkout under `<scope>-<n>` (with `write`,
++        one file written into that checkout first): passed, asserted, failed, error, skipped or missing.
++
++        `missing` only when proven: the file is absent at the revision (asked of git for a SHA; of the checkout's own
++        files for the candidate), or the run completed cleanly (exit 0, 1, 4 or 5, its junit written, no collection
++        error) and does not name the node. Any other non-result is `SuiteUnrunnable`."""
++        file, identity = node.split("::")[0], f"{scope}-{next(self._observations)}"
++        if isinstance(revision, str) and not self._exists_at(revision, file):
++            return "missing"
++        opened = self._revision_checkout(revision, identity) if isinstance(revision, str) \
++            else self._checkout(revision, identity)
++        junit = self._results / identity / "junit.xml"
++        with opened as folder:
++            if write is not None:
++                self._write_file(folder / write[0], write[1])
++            if not _inside(folder, folder / file):
++                return "missing"
++            try:
++                self._read_file(folder / file)
++            except FileNotFoundError:
++                return "missing"
++            exit_code = self._run(folder, [*TESTS, str(junit), node])
++            if exit_code not in (0, 1, *_NOT_COLLECTED):
++                raise SuiteUnrunnable(f"the run of {node} exited {exit_code}")
++            xml = self._junit(junit)
++        ran = cases(xml, 1 if exit_code in _NOT_COLLECTED else exit_code)
++        collection = [case for case in ElementTree.fromstring(xml).iter("testcase")
++                      if case.get("classname", "") == "" or any("collection failure" in error.get("message", "")
++                                                                for error in case.findall("error"))]
++        if collection and write is not None and all(case.get("name", "") == write[0][:-3].replace("/", ".")
++                                                    for case in collection):
++            return "error"  # the written file itself (a VERIFIER's reproducer) cannot be collected: no evidence
++        if collection:
++            raise SuiteUnrunnable(f"a collection error in the run of {node}")
++        return _outcome(node, ran)
++
++    def _junit(self, junit: Path) -> bytes:
++        """A junit file's bytes, read strictly: unreadable or unparsable is `SuiteUnrunnable`."""
++        try:
++            xml = self._read(junit)
++            ElementTree.fromstring(xml)
++        except (OSError, ElementTree.ParseError) as error:
++            raise SuiteUnrunnable(f"the junit cannot be read: {type(error).__name__}") from error
++        return xml
++
++    def run(self, invocation_id: str, candidate: CandidateRef, spec: MutationSpec,
++            base: str) -> tuple[tuple[MutationResult, ...], str]:
++        """Each mutation's result, in spec order, and the receipt; `base` is the starting revision."""
++        sha = _revision(candidate)
++        found = tuple(self._mutation(f"mutation-{index}-{invocation_id}", candidate, mutation, base)
++                      for index, mutation in enumerate(spec.mutations))
++        return found, receipt(sha, spec.digest, found)
++
++    def reproduce(self, invocation_id: str, candidate: CandidateRef, read: Sequence[Claim],
++                  base: str) -> tuple[Reproduction | None, ...]:
++        """Each claim's reproduction at the candidate (None for a claim without evidence), in order."""
++        _revision(candidate)
++        return tuple(None if claim.evidence is None else self._reproduce(f"evidence-{index}-{invocation_id}", candidate,
++                                                                          claim.evidence, base)
++                     for index, claim in enumerate(read))
++
++    def standing(self, invocation_id: str, candidate: CandidateRef, base: str, identities: Sequence[str], *,
++                 proven: frozenset[str] = frozenset()) -> tuple[str, ...]:
++        """The REGRESSION-GATE findings' tests (junit identities) that stand under the same-environment control: each
++        observed now at the starting revision and at the candidate. A test is new at the starting revision only when
++        its absence is proven; one in `proven` (a regression: the gate proved it passed at the baseline) not found
++        there now is no result, `SuiteUnrunnable`. One found at neither revision does not stand."""
++        _revision(candidate)
++        standing = []
++        for index, name in enumerate(identities):
++            scope = f"control-gate-{index}-{invocation_id}"
++            node = self._node(name, lambda path: self._exists_at(base, path))
++            start = None if node is None else self.observe(base, node, scope)
++            if name in proven and start in (None, "missing"):
++                raise SuiteUnrunnable(f"{name} passed at the baseline and is not found at the starting revision now")
++            if node is None:
++                with self._checkout(candidate, f"gate-probe-{index}-{invocation_id}") as folder:
++                    node = self._node(name, lambda path: _present(self._read_file, folder, path))
++            if node is not None and against_candidate(
++                    self.observe(candidate, node, f"gate-{index}-{invocation_id}"), start):
++                standing.append(name)
++        return tuple(standing)
++
++    @staticmethod
++    def _node(identity: str, exists: Callable[[str], bool]) -> str | None:
++        """The pytest node id of a junit identity: its longest dotted prefix that is a `.py` file, as `exists` says."""
++        classname, _, name = identity.rpartition("::")
++        parts = classname.split(".")
++        for end in range(len(parts), 0, -1):
++            path = "/".join(parts[:end]) + ".py"
++            if all(parts[:end]) and exists(path):
++                return "::".join([path, *parts[end:], name])
++        return None
++
++    def _held(self, candidate: CandidateRef, base: str, outcomes: Mapping[str, str], scope: str) -> list[str]:
++        """The nodes whose candidate outcome counts against it, each observed again at the starting revision."""
++        return [node for node, outcome in outcomes.items() if outcome != "passed"
++                and against_candidate(outcome, self.observe(base, node, f"control-{scope}"))]
++
++    def _reproduce(self, identity: str, candidate: CandidateRef, evidence: Evidence, base: str) -> Reproduction:
++        """One evidence item at the candidate; tests through `observe`, a fitness check and a text predicate in their
++        own fresh checkout, so nothing one item writes is seen by another."""
++        if isinstance(evidence, PytestEvidence):
++            outcomes = {node: self.observe(candidate, node, identity) for node in evidence.node_ids}
++            if all(outcome == "missing" for outcome in outcomes.values()):
++                return Reproduction(False, f"named tests not present: {', '.join(evidence.node_ids)}")
++            failing = {node: outcome for node, outcome in outcomes.items()
++                       if outcome in ("asserted", "failed", "error")}
++            held = self._held(candidate, base, failing, identity)
++            if held:
++                return Reproduction(True, f"fails at the candidate, against the starting revision now: {', '.join(held)}")
++            return Reproduction(False, "no named test fails against the starting revision now: "
++                                + ", ".join(f"{node}:{outcome}" for node, outcome in outcomes.items()))
++        if isinstance(evidence, ReproducerEvidence):
++            relative = f"{EVIDENCE_FOLDER}/{evidence.name}"
++            outcome = self.observe(candidate, relative, identity, write=(relative, evidence.source.encode()))
++            if outcome == "missing":
++                return Reproduction(False, f"the reproducer {evidence.digest} collected no test")
++            if outcome != "asserted":
++                return Reproduction(False, f"the reproducer {evidence.digest} has no test failing on an assertion "
++                                           f"({outcome})")
++            return Reproduction(True, f"the reproducer {evidence.digest} fails on an assertion")
++        if isinstance(evidence, FitnessEvidence):
++            with self._checkout(candidate, identity) as folder:
++                exit_code, reported = self._fitness(folder, self._results / identity, evidence)
++            if not reported:
++                return Reproduction(False, f"the fitness check {evidence.check} exited {exit_code} without its own "
++                                           "failure report")
++            with self._revision_checkout(base, f"control-{identity}") as folder:
++                started, _ = self._fitness(folder, self._results / f"control-{identity}", evidence)
++            return Reproduction(started == 0, "the fitness check reports a violation at the candidate "
++                                + ("and passes at the starting revision now" if started == 0
++                                   else f"and exits {started} at the starting revision now (environment or debt)"))
++        with self._checkout(candidate, identity) as folder:
++            target = folder / evidence.path
++            try:
++                data = self._read_file(target) if _inside(folder, target) else None
++            except FileNotFoundError:
++                data = None
++        if data is None:
++            return Reproduction(False, f"{evidence.path} is not present at the candidate")
++        holds = (evidence.text.encode() in data) is evidence.present
++        verb = "contains" if evidence.present else "lacks"
++        return Reproduction(holds, f"{evidence.path} {verb} the text" if holds else f"{evidence.path}: predicate false")
++
++    def _mutation(self, identity: str, candidate: CandidateRef, mutation: Mutation, base: str) -> MutationResult:
++        def result(kind: str, detail: str) -> MutationResult:
++            return MutationResult(mutation.name, kind, detail)
++
++        with self._checkout(candidate, identity) as folder:
++            target = folder / mutation.path
++            if not _inside(folder, target):
++                return result(SPEC_INVALID, f"{mutation.path} is not inside the checkout")
++            try:
++                mutated = self._read_file(target)
++            except FileNotFoundError:
++                return result(SPEC_INVALID, f"{mutation.path} is not present at the candidate")
++            for edit in mutation.edits:
++                occurrences = mutated.count(edit.old.encode())
++                if occurrences != 1:
++                    return result(SPEC_INVALID, f"{edit.old!r} occurs {occurrences} times in {mutation.path}")
++                mutated = mutated.replace(edit.old.encode(), edit.new.encode(), 1)
++            self._write_file(target, mutated)
++            if mutation.path.endswith(".py") and self._run(folder, [*COMPILE, mutation.path]) != 0:
++                return result(SPEC_INVALID, f"the mutated {mutation.path} does not compile")
++            # The mutated run: the named tests together in the mutated checkout (the one run outside `observe`).
++            junit = self._results / identity / "mutated-junit.xml"
++            exit_code = self._run(folder, [*TESTS, str(junit), *mutation.tests])
++            under_mutation = {node: "error" for node in mutation.tests} if exit_code in (2, *_NOT_COLLECTED) \
++                else {node: _outcome(node, cases(self._junit(junit), exit_code)) for node in mutation.tests}
++        restored = {node: self.observe(candidate, node, f"restored-{identity}") for node in mutation.tests}
++        absent = [node for node in mutation.tests if restored[node] == "missing"]
++        if absent:
++            return result(SPEC_INVALID, f"named tests not present: {', '.join(absent)}")
++        failing = {node: outcome for node, outcome in restored.items() if outcome != "passed"}
++        if failing:
++            held = self._held(candidate, base, failing, identity)
++            if held:
++                return result(REVERTED_FAILS, "fail with the file restored: "
++                              + ", ".join(f"{node}:{failing[node]}" for node in held))
++            return result(SPEC_INVALID, "environment: with the file restored the named tests do not pass, and not at "
++                                        f"the starting revision now either: {', '.join(failing)}")
++        # A skipped test is no evidence either way: the environment, not the candidate, decided it.
++        skipped = [node for node in mutation.tests if under_mutation[node] == "skipped"]
++        if skipped:
++            return result(SPEC_INVALID, f"named tests skipped: {', '.join(skipped)}")
++        survived = [node for node in mutation.tests if under_mutation[node] == "passed"]
++        if survived:
++            return result(SURVIVED, f"pass with the mutation: {', '.join(survived)}")
++        return result(KILLED, f"every named test fails with the mutation: {', '.join(mutation.tests)}")
++
++    def _fitness(self, folder: Path, results: Path, evidence: FitnessEvidence) -> tuple[int, bool]:
++        """The fitness check's exit code in `folder`, and whether it is the check's own violation report (exit 1, a
++        violation line, no Python traceback)."""
++        output = results / "fitness-output.txt"
++        exit_code = self._run(folder, [*FITNESS, evidence.check, str(output)])
++        try:
++            text = self._read(output).decode("utf-8", "replace")
++        except OSError as error:
++            raise SuiteUnrunnable(f"the fitness output cannot be read: {type(error).__name__}") from error
++        return exit_code, exit_code == 1 and _VIOLATION.search(text) is not None and _TRACEBACK not in text
++
++
++def _present(read_file: Callable[[Path], bytes], folder: Path, path: str) -> bool:
++    """Whether a checkout holds `path` (False only when the read proves it absent)."""
++    if not _inside(folder, folder / path):
++        return False
++    try:
++        read_file(folder / path)
++    except FileNotFoundError:
++        return False
++    return True
++
++
++def _revision(candidate: CandidateRef) -> str:
++    """The candidate's full SHA, the last part of its locator; SuiteUnrunnable when it names none."""
++    revision = candidate.locator.rpartition("@")[2]
++    if not _FULL_SHA.fullmatch(revision):
++        raise SuiteUnrunnable("the candidate names no full SHA")
++    return revision
++
++
++def _inside(folder: Path, target: Path) -> bool:
++    try:
++        target.resolve().relative_to(folder.resolve())
++    except ValueError:
++        return False
++    return True
+diff --git a/src/alienintent/invocation_runtime/application/real_worker.py b/src/alienintent/invocation_runtime/application/real_worker.py
+index e027f94..98a4f2b 100644
+--- a/src/alienintent/invocation_runtime/application/real_worker.py
++++ b/src/alienintent/invocation_runtime/application/real_worker.py
+@@ -10,14 +10,19 @@ import json
+ from hashlib import sha256
+ from pathlib import Path
+ import re
++import subprocess
+ from collections.abc import Callable, Mapping, Sequence
+ from typing import Protocol
+ 
+ from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
+ from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
++from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, MutationSpecInvalid
++from alienintent.invocation_runtime.domain.verdict_admission import admit, claims, receipt as reject_receipt
+ from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, NO_TRUSTED_START, contained
+ from alienintent.execution_coordination.ports.worker_provider import (
+     MISSING_TERMINAL_RESULT, NO_CHANGE, SCOPE_VIOLATION, WorkerInvocation, WorkerOutcome, WorkerProvider)
++from alienintent.invocation_runtime.application.mutation_harness import (
++    REVERTED_FAILS, SPEC_INVALID, SURVIVED, MutationHarness)
+ from alienintent.invocation_runtime.application.regression_gate import RegressionGate, SuiteUnrunnable
+ from alienintent.invocation_runtime.domain.diagnostics import cause
+ from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
+@@ -154,7 +159,8 @@ def _feature_regression_receipt(path: Path, candidate: CandidateRef,
+ 
+ 
+ def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], bytes] = _read_path, *,
+-                 gate_receipt: str | None = None) -> WorkerOutcome:
++                 gate_receipt: str | None = None, receipts: tuple[str, ...] = (),
++                 admission: Callable[[list[object], tuple[str, ...]], WorkerOutcome] | None = None) -> WorkerOutcome:
+     """The verdict a verifier process left for exactly ``candidate``.
+ 
+     A missing, malformed or other-revision verdict is not a verdict: it reads
+@@ -162,7 +168,10 @@ def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], byt
+     verdict and the receipt beside it (with a worker user: through the
+     hand-over's checked descriptor, never a worker-chosen path). With
+     ``gate_receipt`` (the control plane's own REGRESSION-GATE receipt) no
+-    worker-written ``feature-regressions.json`` is read.
++    worker-written ``feature-regressions.json`` is read. ``receipts`` are the
++    control plane's other receipts for the candidate, kept after it. With
++    ``admission`` a reject's findings are its typed findings, handed with the
++    receipts to ``admission``, whose outcome is the verdict's.
+     """
+     try:
+         document = json.loads(read(path).decode("utf-8"))
+@@ -172,21 +181,39 @@ def read_verdict(path: Path, candidate: CandidateRef, read: Callable[[Path], byt
+         return WorkerOutcome("verdict-malformed")
+     if document.get("revision") != _revision_of(candidate):
+         return WorkerOutcome("verdict-miscorrelated")
+-    findings = _strings(document.get("findings", []))
++    raw = document.get("findings", [])
++    typed = admission is not None and document.get("verdict") == "reject"
++    findings = _strings(raw) if not typed else tuple(raw) if isinstance(raw, list) else None
+     if findings is None:
+         return WorkerOutcome("verdict-malformed")
+     regression_receipt = gate_receipt if gate_receipt is not None \
+         else _feature_regression_receipt(path.parent / "feature-regressions.json", candidate, read)
+     if regression_receipt is None:
+         return WorkerOutcome("feature-regressions-missing")
+-    receipts = (regression_receipt,)
++    kept = (regression_receipt, *receipts)
+     if document.get("verdict") == "accept":
+-        return WorkerOutcome.accept(candidate, findings, receipts)
++        return WorkerOutcome.accept(candidate, findings, kept)
++    if typed and findings:
++        assert admission is not None
++        return admission(list(raw), kept)
+     if document.get("verdict") == "reject" and findings:
+-        return WorkerOutcome.reject(candidate, findings, receipts)
++        return WorkerOutcome.reject(candidate, findings, kept)
+     return WorkerOutcome("verdict-malformed")
+ 
+ 
++# A harness run that gave no result: a timeout, a refused or failed workspace (a checkout, a worker command, a leftover
++# results folder) or a junit file that cannot be read. Never a judgment on the candidate.
++# A REGRESSION-GATE finding naming a test that passed at the baseline (`regression_gate.compare`'s format).
++REGRESSION, NEW_TEST_FAILS = "regression:", "new-test-fails:"
++HARNESS_FAILURES = (SuiteUnrunnable, CandidateUnavailable, OSError, subprocess.TimeoutExpired)
++
++
++def _unavailable(stage: str, error: BaseException) -> WorkerOutcome:
++    """`mutation-harness-unavailable`, its one finding naming the stage and the failure."""
++    return WorkerOutcome("mutation-harness-unavailable", findings=(f"{stage} gave no result: {type(error).__name__}: "
++                                                                   f"{str(error)[:300]}",))
++
++
+ def _publishes_to(candidate: CandidateRef, branch: str) -> bool:
+     if candidate.kind is not CandidateKind.SOURCE_REVISION or "#" not in candidate.locator:
+         return False
+@@ -201,7 +228,8 @@ class WorkerPreparation(Protocol):
+     refusal outcome, returned unchanged with nothing started. `published` is called after a PRODUCER candidate is
+     published and read back, with that candidate; it must not raise. `gated`, when the hook has it, is called in
+     `_evaluate` after the REGRESSION-GATE passed and before the session starts, with the baseline, the candidate
+-    revision and the gate's receipt; it must not raise.
++    revision and the gate's receipt; it must not raise. `mutated`, when the hook has it, is called after every packet
++    mutation was killed and before the session starts, with the harness's results and receipt; it must not raise.
+     """
+ 
+     def prepare(self, invocation: WorkerInvocation, clone: Path | None) -> str | WorkerOutcome: ...
+@@ -249,7 +277,7 @@ class ClosureActions(Protocol):
+ 
+ 
+ class RealWorkerProvider(WorkerProvider):
+-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None, handover: CandidateHandover | None = None, regression_gate: RegressionGate | None = None, regression_base: Callable[[str], str | None] | None = None, protected_paths: Callable[[], tuple[str, ...] | None] | None = None) -> None:
++    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None, handover: CandidateHandover | None = None, regression_gate: RegressionGate | None = None, regression_base: Callable[[str], str | None] | None = None, protected_paths: Callable[[], tuple[str, ...] | None] | None = None, mutation_harness: MutationHarness | None = None, mutations: Callable[[WorkerInvocation], MutationSpec | None] | None = None) -> None:
+         self._process, self._source, self._workspace = process, source_control, workspace
+         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
+         self._outcomes: dict[str, WorkerOutcome] = {}
+@@ -278,6 +306,10 @@ class RealWorkerProvider(WorkerProvider):
+         # plan-derived work: the protected paths of its current approved plan authority (answering None or nothing:
+         # no authority, so no automatic-on candidate is published). None: a profile with no plan authority.
+         self._protected_paths = protected_paths
++        # VERIFICATION-OUTCOME-INTEGRITY, with the REGRESSION-GATE: the packet's mutations (`mutations(invocation)`,
++        # None when the packet has none, MutationSpecInvalid when malformed), run before the session, and the
++        # reproduction of a session REJECT's typed evidence, which alone admits it. None: unchanged.
++        self._mutation_harness, self._mutations = mutation_harness, mutations
+ 
+     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
+         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
+@@ -375,7 +407,7 @@ class RealWorkerProvider(WorkerProvider):
+                 if verdict.exists():
+                     # The candidate itself carries a verdict: a producer cannot approve its own work.
+                     return WorkerOutcome("verdict-preexisting")
+-            gate_receipt = None
++            gate_receipt, receipts = None, ()
+             if self._regression_gate is not None:
+                 gated = self._gate(invocation, candidate, workspace, verdict)
+                 if isinstance(gated, WorkerOutcome):
+@@ -385,10 +417,20 @@ class RealWorkerProvider(WorkerProvider):
+                 if passed is not None and self._regression_base is not None:
+                     # The session is told the whole suite is proven, so it never runs it again.
+                     passed(invocation, self._regression_base(invocation.correlation_id), _revision_of(candidate), gated)
++                if self._mutation_harness is not None:
++                    mutated = self._mutate(invocation, candidate, gated)
++                    if isinstance(mutated, WorkerOutcome):
++                        return mutated
++                    if self._verdict_present(invocation, verdict):
++                        return WorkerOutcome("verdict-preexisting")
++                    receipts = () if mutated is None else (mutated,)
+             result = self._process.run(invocation.correlation_id, InvocationRole.VERIFIER, workspace, budget.hard_wall_clock_seconds)
+             if result.kind != "success":
+                 return WorkerOutcome(result.kind)
+-            return read_verdict(verdict, candidate, read, gate_receipt=gate_receipt)
++            admission = None if self._mutation_harness is None or gate_receipt is None \
++                else lambda raw, kept: self._admit(invocation, candidate, raw, kept)
++            return read_verdict(verdict, candidate, read, gate_receipt=gate_receipt, receipts=receipts,
++                                admission=admission)
+         finally:
+             if self._reservations is not None:
+                 self._reservations.release(invocation.correlation_id)
+@@ -410,20 +452,120 @@ class RealWorkerProvider(WorkerProvider):
+             findings, receipt = self._regression_gate.check(invocation.correlation_id, workspace, base, revision)
+         except (SuiteUnrunnable, CandidateUnavailable, OSError):
+             return WorkerOutcome("feature-regressions-missing")
+-        if self._handover is not None:
+-            try:
+-                self._handover.read_result(invocation.correlation_id, verdict.name)
+-                return WorkerOutcome("verdict-preexisting")
+-            except FileNotFoundError:
+-                pass
+-            except OSError:
+-                return WorkerOutcome("verdict-preexisting")
+-        elif verdict.exists():
++        if self._verdict_present(invocation, verdict):
+             return WorkerOutcome("verdict-preexisting")
++        if findings and self._mutation_harness is not None:
++            return self._controlled(invocation, candidate, base, findings, receipt)
+         if findings:
+             return WorkerOutcome.reject(candidate, findings, (receipt,))
+         return receipt
+ 
++    def _controlled(self, invocation: WorkerInvocation, candidate: CandidateRef, base: str, findings: tuple[str, ...],
++                    receipt: str) -> WorkerOutcome:
++        """The gate's findings under the same-environment control (`mutation_harness.against_candidate`): the test of
++        each `regression:<identity>:passed-><outcome>` and `new-test-fails:<identity>:<outcome>` is rerun now at the
++        candidate and at the starting revision, and the finding stands only by that rule; any other finding is kept
++        as it is. With nothing left the environment decided: `mutation-harness-unavailable`, never a rejection."""
++        assert self._mutation_harness is not None
++        regressions = {finding: finding.removeprefix(REGRESSION).rpartition(":passed->")[0]
++                       for finding in findings if finding.startswith(REGRESSION) and ":passed->" in finding}
++        regressions |= {finding: finding.removeprefix(NEW_TEST_FAILS).rpartition(":")[0]
++                        for finding in findings if finding.startswith(NEW_TEST_FAILS)}
++        regressions = {finding: regressions[finding] for finding in findings if finding in regressions}
++        if regressions:
++            try:
++                proven = frozenset(identity for finding, identity in regressions.items()
++                                   if finding.startswith(REGRESSION))  # the gate proved these passed at the baseline
++                standing = set(self._mutation_harness.standing(invocation.correlation_id, candidate, base,
++                                                               tuple(regressions.values()), proven=proven))
++            except HARNESS_FAILURES as error:
++                return _unavailable("the regression control", error)
++        else:
++            standing = set()
++        kept = tuple(finding for finding in findings if finding not in regressions or regressions[finding] in standing)
++        if not kept:
++            return WorkerOutcome("mutation-harness-unavailable", findings=(
++                "environment: no gate finding stands under the control run (each passes at the candidate now, does "
++                "not pass at the starting revision now either, or is new and fails other than on an assertion): "
++                + ", ".join(regressions.values()),))
++        return WorkerOutcome.reject(candidate, kept, (receipt,))
++
++    def _base(self, invocation: WorkerInvocation) -> str | None:
++        """The starting revision (the REGRESSION-GATE's baseline), for the same-environment control run."""
++        base = None if self._regression_base is None else self._regression_base(invocation.correlation_id)
++        return base if isinstance(base, str) and _FULL_SHA.fullmatch(base) else None
++
++    def _verdict_present(self, invocation: WorkerInvocation, verdict: Path) -> bool:
++        """A verdict exists before the session started (a run of candidate code left one): it is never read."""
++        if self._handover is None:
++            return verdict.exists()
++        try:
++            self._handover.read_result(invocation.correlation_id, verdict.name)
++            return True
++        except FileNotFoundError:
++            return False
++        except OSError:
++            return True
++
++    def _mutate(self, invocation: WorkerInvocation, candidate: CandidateRef, gate_receipt: str) -> str | None | WorkerOutcome:
++        """The packet's mutations, after the REGRESSION-GATE and before the session: the harness receipt when every
++        mutation was killed (None when the packet has no spec), else the outcome.
++
++        A surviving mutation, or one whose named tests fail with the file restored, is a `reject` naming it, with the
++        gate's and the harness's receipts, and no session starts. A malformed spec is `verification-evidence-invalid`
++        and a harness with no result `mutation-harness-unavailable`: neither is a judgment on the candidate.
++        """
++        assert self._mutation_harness is not None
++        revision, base = _revision_of(candidate), self._base(invocation)
++        try:
++            spec = None if self._mutations is None else self._mutations(invocation)
++        except MutationSpecInvalid as error:
++            return WorkerOutcome("verification-evidence-invalid", findings=(f"mutation-spec-invalid: {error}",))
++        except OSError as error:
++            return _unavailable("the packet's mutation spec", error)
++        if spec is None or revision is None or base is None:
++            return None
++        try:
++            found, receipt = self._mutation_harness.run(invocation.correlation_id, candidate, spec, base)
++        except HARNESS_FAILURES as error:
++            return _unavailable("the mutation harness", error)
++        invalid = tuple(f"mutation-spec-invalid:{r.name}: {r.detail}" for r in found if r.result == SPEC_INVALID)
++        if invalid:
++            return WorkerOutcome("verification-evidence-invalid", findings=invalid)
++        failed = tuple(f"mutation-{'survived' if r.result == SURVIVED else 'reverted-fails'}:{r.name}: {r.detail}"
++                       for r in found if r.result in (SURVIVED, REVERTED_FAILS))
++        if failed:
++            return WorkerOutcome.reject(candidate, failed, (gate_receipt, receipt))
++        told = getattr(self._preparation, "mutated", None)
++        if told is not None:
++            told(invocation, found, receipt)  # the session is told every mutation ran, so it applies none by hand
++        return receipt
++
++    def _admit(self, invocation: WorkerInvocation, candidate: CandidateRef, raw: list[object],
++               receipts: tuple[str, ...]) -> WorkerOutcome:
++        """A session REJECT is admitted only when every finding's typed evidence reproduces on a fresh checkout of
++        the exact candidate: then a `reject` with each finding, its evidence and result and a `reject-reproduced`
++        receipt; otherwise `verification-evidence-invalid` naming each finding that was not admitted (the candidate is
++        kept for a fresh VERIFY), or `mutation-harness-unavailable` when reproduction gave no result."""
++        assert self._mutation_harness is not None
++        revision, read = _revision_of(candidate), claims(raw)
++        if revision is None:
++            return WorkerOutcome("verification-evidence-invalid", findings=("not-admitted: the candidate has no revision",))
++        reproductions = (None,) * len(read)
++        base = self._base(invocation)
++        if base is None:
++            return WorkerOutcome("mutation-harness-unavailable", findings=("no starting revision for the control run",))
++        if all(claim.evidence is not None for claim in read):
++            try:
++                reproductions = self._mutation_harness.reproduce(invocation.correlation_id, candidate, read, base)
++            except HARNESS_FAILURES as error:
++                return _unavailable("the evidence reproduction", error)
++        admission = admit(read, reproductions)
++        if not admission.admitted:
++            return WorkerOutcome("verification-evidence-invalid", findings=admission.findings)
++        return WorkerOutcome.reject(candidate, admission.findings,
++                                    (*receipts, reject_receipt(revision, read, reproductions)))
++
+     def _close(self, invocation: WorkerInvocation, budget: BudgetPolicy) -> WorkerOutcome:
+         """Perform and read back the closure actions this adapter can attest.
+ 
+diff --git a/src/alienintent/invocation_runtime/domain/diagnostics.py b/src/alienintent/invocation_runtime/domain/diagnostics.py
+index d0654a5..9d5dad9 100644
+--- a/src/alienintent/invocation_runtime/domain/diagnostics.py
++++ b/src/alienintent/invocation_runtime/domain/diagnostics.py
+@@ -15,7 +15,8 @@ TAIL = 4000  # characters kept from the end of each stream
+ ARGUMENT = 200  # characters kept of each command argument
+ CAUSES = ("success", "closed", "accept", "reject", "timeout", "network-or-provider", "authentication",
+           "launcher-or-runtime", "malformed-verdict", "cancellation", "unknown")
+-_RESULTS = frozenset({"success", "closed", "accept", "reject"})
++_RESULTS = frozenset({"success", "closed", "accept", "reject", "verification-evidence-invalid",
++                      "mutation-harness-unavailable"})
+ _AUTHENTICATION = re.compile(r"unauthori[sz]ed|forbidden|not logged in|log ?in required|authentication failed|"
+                              r"invalid api key|token (?:has )?expired", re.I)
+ _SESSION = re.compile(r"session[ _]id\"?\s*[:=]\s*\"?([0-9A-Za-z]{8}(?:-[0-9A-Za-z]{4,12}){1,4})", re.I)
+diff --git a/src/alienintent/invocation_runtime/domain/mutation_spec.py b/src/alienintent/invocation_runtime/domain/mutation_spec.py
+new file mode 100644
+index 0000000..9b33f73
+--- /dev/null
++++ b/src/alienintent/invocation_runtime/domain/mutation_spec.py
+@@ -0,0 +1,131 @@
++"""Mutation spec: the packet's own mutations, which the control plane runs against a candidate before VERIFY. Pure.
++
++A packet may hold one block fenced as ```json alienintent-mutations, separate from its contract block (contract fields
++feed the contract's content digest; the spec does not). The block is a JSON list of mutations, each with exactly
++`name` (distinct), `path` (one normalized relative path, as `plan_authority.normalized` reads it), `edits` (a
++non-empty list of `{"old", "new"}`, `old` non-empty, applied together and in order) and `tests` (a non-empty list of
++distinct pytest node ids that must fail with the edits and pass without them). `MutationSpec.digest` is `sha256:` of
++the spec's canonical JSON.
++"""
++from __future__ import annotations
++
++from dataclasses import dataclass
++from hashlib import sha256
++import json
++import re
++
++from alienintent.execution_coordination.domain.scope_containment import normalized, under
++
++OPEN, CLOSE = "```json alienintent-mutations", "```"
++MUTATION_KEYS = frozenset({"name", "path", "edits", "tests"})
++EDIT_KEYS = frozenset({"old", "new"})
++# The untracked folder of a fresh candidate checkout where the control plane writes a reproducer; no mutation, named
++# test or text predicate may point into it, so no evidence reads what another evidence item wrote.
++EVIDENCE_FOLDER = "alienintent-evidence"
++# A pytest node id names a test file under the checkout; it is never an option and holds no whitespace.
++_NODE_ID = re.compile(r"[A-Za-z0-9_][^\s\x00]*\.py(::[^\s\x00]+)?")
++
++
++class MutationSpecInvalid(ValueError):
++    """The packet holds more than one, or a malformed, mutations block."""
++
++
++@dataclass(frozen=True)
++class Edit:
++    old: str
++    new: str
++
++
++@dataclass(frozen=True)
++class Mutation:
++    name: str
++    path: str
++    edits: tuple[Edit, ...]
++    tests: tuple[str, ...]
++
++
++@dataclass(frozen=True)
++class MutationSpec:
++    mutations: tuple[Mutation, ...]
++
++    def document(self) -> list[dict[str, object]]:
++        """The block's JSON value, as `parse_mutations` reads it back."""
++        return [{"name": m.name, "path": m.path, "edits": [{"old": e.old, "new": e.new} for e in m.edits],
++                 "tests": list(m.tests)} for m in self.mutations]
++
++    @property
++    def digest(self) -> str:
++        encoded = json.dumps(self.document(), sort_keys=True, separators=(",", ":")).encode()
++        return "sha256:" + sha256(encoded).hexdigest()
++
++
++def utf8(text: object) -> bool:
++    """A string that encodes as UTF-8 (JSON can carry a lone surrogate, which does not)."""
++    if not isinstance(text, str):
++        return False
++    try:
++        text.encode("utf-8")
++    except UnicodeEncodeError:
++        return False
++    return True
++
++
++def repository_path(path: object) -> bool:
++    """A normalized relative path of the candidate, outside EVIDENCE_FOLDER."""
++    return utf8(path) and normalized(path) == path and not under(str(path), EVIDENCE_FOLDER)
++
++
++def node_ids(value: object) -> tuple[str, ...] | None:
++    """A non-empty list of distinct pytest node ids, each naming a file under the checkout (never an option), or
++    None."""
++    if not isinstance(value, list) or not value or not all(
++            utf8(entry) and _NODE_ID.fullmatch(entry) and repository_path(entry.split("::")[0])
++            for entry in value) or len(set(value)) != len(value):
++        return None
++    return tuple(value)
++
++
++def parse_mutations(text: str) -> MutationSpec | None:
++    """The packet's one mutations block; None when it has none, MutationSpecInvalid for more than one or a malformed
++    one."""
++    lines = text.split("\n")
++    opens = [index for index, line in enumerate(lines) if line == OPEN]
++    if not opens:
++        return None
++    if len(opens) > 1:
++        raise MutationSpecInvalid("more than one mutations block")
++    close = next((index for index in range(opens[0] + 1, len(lines)) if lines[index] == CLOSE), None)
++    if close is None:
++        raise MutationSpecInvalid("the mutations block is not closed")
++    try:
++        document = json.loads("\n".join(lines[opens[0] + 1:close]))
++    except ValueError as error:
++        raise MutationSpecInvalid(f"the mutations block is not JSON: {error}") from None
++    return spec_from(document)
++
++
++def spec_from(document: object) -> MutationSpec:
++    """A MutationSpec from the block's JSON value."""
++    if not isinstance(document, list) or not document:
++        raise MutationSpecInvalid("the mutations block must be a non-empty list")
++    mutations = tuple(_mutation(entry) for entry in document)
++    if len({mutation.name for mutation in mutations}) != len(mutations):
++        raise MutationSpecInvalid("mutation names must be distinct")
++    return MutationSpec(mutations)
++
++
++def _mutation(entry: object) -> Mutation:
++    if not isinstance(entry, dict) or set(entry) != MUTATION_KEYS:
++        raise MutationSpecInvalid(f"each mutation needs exactly {', '.join(sorted(MUTATION_KEYS))}")
++    name, path, edits, tests = entry["name"], entry["path"], entry["edits"], entry["tests"]
++    if not utf8(name) or not name:
++        raise MutationSpecInvalid("a mutation's name must be a non-empty string")
++    if not repository_path(path):
++        raise MutationSpecInvalid(f"{name}: path must be a normalized relative path outside {EVIDENCE_FOLDER}")
++    if not isinstance(edits, list) or not edits or not all(
++            isinstance(edit, dict) and set(edit) == EDIT_KEYS and utf8(edit["old"]) and edit["old"]
++            and utf8(edit["new"]) for edit in edits):
++        raise MutationSpecInvalid(f"{name}: edits must be a non-empty list of UTF-8 {{old, new}}, old non-empty")
++    if node_ids(tests) is None:
++        raise MutationSpecInvalid(f"{name}: tests must be a non-empty list of distinct pytest node ids")
++    return Mutation(name, path, tuple(Edit(edit["old"], edit["new"]) for edit in edits), tuple(tests))
+diff --git a/src/alienintent/invocation_runtime/domain/verdict_admission.py b/src/alienintent/invocation_runtime/domain/verdict_admission.py
+new file mode 100644
+index 0000000..c13dfbf
+--- /dev/null
++++ b/src/alienintent/invocation_runtime/domain/verdict_admission.py
+@@ -0,0 +1,167 @@
++"""Verdict admission: a VERIFIER session's REJECT changes lifecycle state only when every finding is reproduced. Pure.
++
++The model discovers defects; the control plane proves they exist before the Work Item returns to PRODUCER. A reject
++verdict's `findings` are objects `{"finding": "<text>", "evidence": <typed evidence>}`; the typed evidence is one of
++a closed set:
++- `{"type": "pytest", "node_ids": [...]}`: existing tests, reproduced when every id is present and at least one fails;
++- `{"type": "reproducer", "name": "test_<x>.py", "source": "<python test file>"}`: a VERIFIER-written test, run in an
++  untracked folder of a fresh candidate checkout, reproduced when it is collected and at least one of its tests fails;
++- `{"type": "fitness", "check": "<name>"}`: the architecture fitness check at the candidate, reproduced when it fails;
++- `{"type": "text", "path": "<repo path>", "contains" | "absent": "<exact text>"}`: a predicate on the candidate's
++  file bytes, reproduced when it is true.
++Reproduction itself runs outside this module; `admit` decides from its per-finding results. A reject is admitted only
++when every finding has valid evidence and that evidence reproduced; otherwise it is invalid verification evidence.
++"""
++from __future__ import annotations
++
++from collections.abc import Sequence
++from dataclasses import dataclass
++from hashlib import sha256
++import json
++import re
++
++from alienintent.invocation_runtime.domain.mutation_spec import node_ids, repository_path, utf8
++
++FINDING_KEYS = frozenset({"finding", "evidence"})
++_REPRODUCER_NAME = re.compile(r"test_[A-Za-z0-9_]+\.py")
++_CHECK = re.compile(r"[a-z0-9][a-z0-9_-]*")
++NOT_ADMITTED = "not-admitted"
++
++
++@dataclass(frozen=True)
++class PytestEvidence:
++    node_ids: tuple[str, ...]
++
++
++@dataclass(frozen=True)
++class ReproducerEvidence:
++    name: str
++    source: str
++
++    @property
++    def digest(self) -> str:
++        return "sha256:" + sha256(self.source.encode()).hexdigest()
++
++
++@dataclass(frozen=True)
++class FitnessEvidence:
++    check: str
++
++
++@dataclass(frozen=True)
++class TextEvidence:
++    path: str
++    text: str
++    present: bool  # `contains` when True, `absent` when False
++
++
++Evidence = PytestEvidence | ReproducerEvidence | FitnessEvidence | TextEvidence
++
++
++@dataclass(frozen=True)
++class Claim:
++    """One finding of a reject verdict: its text and its typed evidence, or the problem that left it without."""
++    finding: str
++    evidence: Evidence | None
++    problem: str | None = None
++
++
++@dataclass(frozen=True)
++class Reproduction:
++    """The control plane's result of reproducing one finding's evidence on a fresh checkout of the candidate."""
++    reproduced: bool
++    detail: str
++
++
++@dataclass(frozen=True)
++class Admission:
++    admitted: bool
++    findings: tuple[str, ...]
++
++
++def claims(findings: Sequence[object]) -> tuple[Claim, ...]:
++    """Each reject finding read as a Claim; a finding without valid typed evidence names its problem."""
++    return tuple(_claim(entry) for entry in findings)
++
++
++def _claim(entry: object) -> Claim:
++    if isinstance(entry, str):
++        return Claim(entry, None, "no typed evidence")
++    if not isinstance(entry, dict) or set(entry) != FINDING_KEYS:
++        return Claim(_text(entry), None, f"a finding needs exactly {', '.join(sorted(FINDING_KEYS))}")
++    finding = entry["finding"]
++    if not utf8(finding) or not finding:
++        return Claim(_text(entry), None, "the finding text must be a non-empty string")
++    try:
++        return Claim(finding, evidence(entry["evidence"]))
++    except ValueError as error:
++        return Claim(finding, None, f"invalid evidence: {error}")
++
++
++def evidence(value: object) -> Evidence:
++    """One typed evidence value; ValueError names why it is not one."""
++    kind = value.get("type") if isinstance(value, dict) else None
++    keys = set(value) if isinstance(value, dict) else set()
++    if kind == "pytest" and keys == {"type", "node_ids"}:
++        ids = node_ids(value["node_ids"])
++        if ids is None:
++            raise ValueError("node_ids must be a non-empty list of distinct pytest node ids")
++        return PytestEvidence(ids)
++    if kind == "reproducer" and keys == {"type", "name", "source"}:
++        if not isinstance(value["name"], str) or not _REPRODUCER_NAME.fullmatch(value["name"]):
++            raise ValueError("a reproducer's name must be test_<name>.py")
++        if not utf8(value["source"]) or not value["source"].strip():
++            raise ValueError("a reproducer's source must be a non-empty python test file")
++        return ReproducerEvidence(value["name"], value["source"])
++    if kind == "fitness" and keys == {"type", "check"}:
++        if not isinstance(value["check"], str) or not _CHECK.fullmatch(value["check"]):
++            raise ValueError("a fitness check must be named")
++        return FitnessEvidence(value["check"])
++    if kind == "text" and len(keys) == 3 and {"type", "path"} < keys and keys - {"type", "path"} <= {"contains", "absent"}:
++        [predicate] = keys - {"type", "path"}
++        if not repository_path(value["path"]) or not utf8(value[predicate]) or not value[predicate]:
++            raise ValueError("a text predicate needs a normalized path outside the evidence folder and non-empty text")
++        return TextEvidence(value["path"], value[predicate], predicate == "contains")
++    raise ValueError("the evidence must be one of pytest, reproducer, fitness or text, with exactly its keys")
++
++
++def describe(item: Evidence) -> dict[str, object]:
++    """The evidence as recorded with the finding (a reproducer with its source and its sha256)."""
++    if isinstance(item, PytestEvidence):
++        return {"type": "pytest", "node_ids": list(item.node_ids)}
++    if isinstance(item, ReproducerEvidence):
++        return {"type": "reproducer", "name": item.name, "sha256": item.digest, "source": item.source}
++    if isinstance(item, FitnessEvidence):
++        return {"type": "fitness", "check": item.check}
++    return {"type": "text", "path": item.path, "contains" if item.present else "absent": item.text}
++
++
++def admit(read: Sequence[Claim], reproductions: Sequence[Reproduction | None]) -> Admission:
++    """Admitted only when every claim has evidence and its reproduction (same position) reproduced: then each finding
++    with its evidence and result; otherwise each finding that was not admitted, with why."""
++    refused = []
++    for claim, reproduction in zip(read, reproductions, strict=True):
++        if claim.evidence is None:
++            refused.append(f"{NOT_ADMITTED}: {claim.finding}: {claim.problem}")
++        elif reproduction is None or not reproduction.reproduced:
++            why = "not reproduced" if reproduction is None else f"not reproduced: {reproduction.detail}"
++            refused.append(f"{NOT_ADMITTED}: {claim.finding}: {why}")
++    if refused or not read:
++        return Admission(False, tuple(refused) or (f"{NOT_ADMITTED}: a reject needs at least one finding",))
++    return Admission(True, tuple(
++        f"{claim.finding} [evidence {json.dumps(describe(claim.evidence), sort_keys=True)}: {reproduction.detail}]"
++        for claim, reproduction in zip(read, reproductions, strict=True)))
++
++
++def receipt(candidate_sha: str, read: Sequence[Claim], reproductions: Sequence[Reproduction]) -> str:
++    """`reject-reproduced:sha256:` over the canonical JSON of the candidate, each finding, its evidence and result."""
++    document = {"candidate_sha": candidate_sha, "findings": [
++        {"finding": claim.finding, "evidence": None if claim.evidence is None else describe(claim.evidence),
++         "reproduced": reproduction.reproduced, "detail": reproduction.detail}
++        for claim, reproduction in zip(read, reproductions, strict=True)]}
++    encoded = json.dumps(document, sort_keys=True, separators=(",", ":")).encode()
++    return "reject-reproduced:sha256:" + sha256(encoded).hexdigest()
++
++
++def _text(entry: object) -> str:
++    return json.dumps(entry, sort_keys=True, default=str)[:200]
+diff --git a/tests/composition/test_work_registry.py b/tests/composition/test_work_registry.py
+index 3942e1a..1665efd 100644
+--- a/tests/composition/test_work_registry.py
++++ b/tests/composition/test_work_registry.py
+@@ -881,3 +881,47 @@ def test_a_new_plan_approval_stops_an_item_released_under_the_old_one(plan_board
+     coordinator.launch(item.id)
+ 
+     assert worker.dispatched == []
++
++
++
++# --- VERIFICATION-OUTCOME-INTEGRITY: a worker read of a checkout file says "absent" only when it is proven ---------
++
++@pytest.mark.parametrize("exit_status, error", [(3, FileNotFoundError), (1, OSError), (127, OSError)])
++def test_a_worker_read_failure_is_absence_only_when_proven(monkeypatch, exit_status, error):
++    """The read runs as the worker: only its own "no such file" answer is absence; a sudo or read failure is no
++    result (the harness reports itself unavailable), never a test that does not exist."""
++    import subprocess
++    from alienintent.composition import work_registry as registry
++
++    monkeypatch.setattr(registry, "run_as_worker", lambda user, environment, argv, **kwargs: subprocess.CompletedProcess(
++        argv, exit_status, b"", b"sudo: a password is required"))
++    with pytest.raises(error) as raised:
++        registry.worker_read_file("worker", {})(Path("/clone/tests/test_x.py"))
++    assert (raised.type is FileNotFoundError) is (error is FileNotFoundError)
++
++
++def test_a_path_is_absent_at_a_revision_only_when_git_proves_it(tmp_path, monkeypatch):
++    """`revision_has`: present -> True, proven absent -> False, and a git failure on the path query is no answer
++    (OSError), never "absent" (VERIFICATION-OUTCOME-INTEGRITY: absence at the starting revision must be proven)."""
++    import subprocess
++    from alienintent.composition.work_registry import revision_has
++    repo = tmp_path / "repo"
++    repo.mkdir()
++    git = lambda *argv: subprocess.run(["git", "-C", str(repo), *argv], check=True, capture_output=True, text=True)
++    git("init", "-q")
++    (repo / "tests").mkdir()
++    (repo / "tests" / "test_x.py").write_text("def test_x():\n    pass\n")
++    git("add", ".")
++    git("-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x")
++    sha = git("rev-parse", "HEAD").stdout.strip()
++    assert revision_has(repo, sha, "tests/test_x.py") is True
++    assert revision_has(repo, sha, "tests/test_y.py") is False
++    real = subprocess.run
++
++    def failing(argv, **kwargs):
++        if "cat-file" in argv and f"{sha}:tests/test_x.py" in argv or "ls-tree" in argv:
++            return subprocess.CompletedProcess(argv, 128, b"", b"fatal: transient")
++        return real(argv, **kwargs)
++    monkeypatch.setattr(subprocess, "run", failing)
++    with pytest.raises(OSError):
++        revision_has(repo, sha, "tests/test_x.py")
+diff --git a/tests/composition/test_worker_launch.py b/tests/composition/test_worker_launch.py
+index cded158..2c2f67a 100644
+--- a/tests/composition/test_worker_launch.py
++++ b/tests/composition/test_worker_launch.py
+@@ -72,7 +72,8 @@ role = os.environ.get("ALIENINTENT_ROLE")
+ 
+ 
+ def verifier_document():
+-    """The next step of `verifier-plan.json` (accept when none): exit (no verdict), malformed, reject or accept."""
++    """The next step of `verifier-plan.json` (accept when none): exit (no verdict), malformed, reject (with typed
++    evidence that holds at the candidate), reject-unproven (a plain finding) or accept."""
+     steps_path = Path({plan!r}).with_name("verifier-plan.json")
+     steps = json.loads(steps_path.read_text()) if steps_path.exists() else []
+     step = steps.pop(0) if steps else "accept"
+@@ -83,6 +84,10 @@ def verifier_document():
+     if step == "malformed":
+         return {{"revision": head, "verdict": "maybe", "findings": []}}
+     if step == "reject":
++        evidence = {{"type": "text", "path": "launch-candidate.txt", "contains": "candidate"}}
++        return {{"revision": head, "verdict": "reject",
++                "findings": [{{"finding": "VERIFIER-REJECT-FINDING", "evidence": evidence}}]}}
++    if step == "reject-unproven":
+         return {{"revision": head, "verdict": "reject", "findings": ["VERIFIER-REJECT-FINDING"]}}
+     return {{"revision": head, "verdict": "accept", "findings": []}}
+ 
+@@ -2111,13 +2116,55 @@ def test_a_malformed_verdict_is_retried_not_a_rejection(fx):
+ 
+ 
+ def test_a_valid_reject_is_still_a_rejection(fx):
+-    """Check 3: a valid REJECT takes the normal rework path."""
++    """Check 3: a valid REJECT, its every finding reproduced at the candidate, takes the normal rework path."""
+     item, _ = _verified(fx, "reject")
+     fx.launch(item.id)
+     state = fx.loaded().coordinator(None, None).state(item.id)
+     assert state.stage is LifecycleStage.IMPLEMENT and state.record["rejections"] == 1
+     assert state.record["findings"][-1]["source"] == "verifier"
+-    assert _outcomes(fx, item.id, "VERIFIER")[-1]["cause"] == "reject"
++    [finding] = state.record["findings"][-1]["findings"]
++    assert finding.startswith("VERIFIER-REJECT-FINDING") and "launch-candidate.txt contains the text" in finding
++    [outcome] = _outcomes(fx, item.id, "VERIFIER")
++    assert outcome["cause"] == "reject" and outcome["receipts"][-1].startswith("reject-reproduced:sha256:")
++
++
++def test_an_unreproduced_reject_is_retried_and_repeated_ones_end_in_a_typed_hold(fx):
++    """VERIFICATION-OUTCOME-INTEGRITY: a REJECT whose finding has no typed evidence is not admitted: the same
++    candidate stays at VERIFY, the invalid verdict is kept in the journal, and after VERIFIER_RETRY_LIMIT retries the
++    hold is the typed verification-evidence hold, never a rejection."""
++    item, before = _verified(fx, "reject-unproven", "reject-unproven", "reject-unproven")
++    for retries in (1, 2):
++        fx.launch(item.id)
++        state = fx.loaded().coordinator(None, None).state(item.id)
++        assert (state.stage, state.outcome, state.record["verifier_failure"]) == (
++            LifecycleStage.VERIFY, "verifier-retry", "verification-evidence-invalid")
++        assert state.candidate == before.candidate and not state.record.get("rejections")
++    fx.launch(item.id)
++    state = fx.loaded().coordinator(None, None).state(item.id)
++    assert (state.stage, state.outcome, state.record["hold_reason"]) == (
++        LifecycleStage.VERIFY, "authority-block", "verifier-infrastructure-exhausted:verification-evidence-invalid")
++    assert not state.record.get("rejections") and len(fx.runs("PRODUCER")) == 1
++    kept = _outcomes(fx, item.id, "VERIFIER")[-1]
++    assert kept["cause"] == "verification-evidence-invalid"
++    assert kept["findings"] == ["not-admitted: VERIFIER-REJECT-FINDING: no typed evidence"]
++
++
++def test_a_malformed_packet_mutation_spec_is_retried_never_a_rejection(fx):
++    """The packet's own mutation names text the candidate does not hold: the harness reports the spec invalid; no
++    session starts and the candidate stays at VERIFY."""
++    packet = fx.packet
++    block = [{"name": "drop-marker", "path": "launch-candidate.txt", "edits": [{"old": "absent text", "new": "x"}],
++              "tests": ["tests/test_marker.py::test_marker"]}]
++    fx.packet = lambda item, **changes: packet(item, **changes) + (
++        "\n```json alienintent-mutations\n" + json.dumps(block) + "\n```\n").encode()
++    item, before = _verified(fx, "accept")
++    fx.launch(item.id)
++    state = fx.loaded().coordinator(None, None).state(item.id)
++    assert (state.stage, state.outcome, state.record["verifier_failure"]) == (
++        LifecycleStage.VERIFY, "verifier-retry", "verification-evidence-invalid")
++    assert state.candidate == before.candidate and fx.runs("VERIFIER") == []
++    assert _outcomes(fx, item.id, "VERIFIER")[-1]["findings"] == [
++        "mutation-spec-invalid:drop-marker: 'absent text' occurs 0 times in launch-candidate.txt"]
+ 
+ 
+ def test_verifier_retries_end_in_a_typed_infrastructure_hold(fx):
+@@ -2333,6 +2380,8 @@ def test_the_verifier_is_told_the_gate_result_and_not_to_run_the_whole_suite(fx)
+     assert "REGRESSION-GATE, control-plane evidence already established for you" in text
+     assert f"at the\nbaseline {baseline} and at this candidate {revision}" in text and "feature-regressions:sha256:" in text
+     assert "Do not run the whole suite." in text
++    assert "Run only the acceptance tests the package names" in text and "mutations the package" not in text
++    assert "an unreproduced reject is discarded" in text
+ 
+ 
+ def test_a_missing_gate_result_is_typed_infrastructure_never_a_session(fx, monkeypatch):
+diff --git a/tests/invocation_runtime/test_mutation_harness.py b/tests/invocation_runtime/test_mutation_harness.py
+new file mode 100644
+index 0000000..89c7706
+--- /dev/null
++++ b/tests/invocation_runtime/test_mutation_harness.py
+@@ -0,0 +1,456 @@
++"""VERIFICATION-OUTCOME-INTEGRITY: the control plane's mutation harness and its reproduction of reject evidence.
++
++Every run is in a fresh checkout of the exact candidate (here a copy of a tiny repository); the runner is a fake that
++answers from the checkout's bytes, except in the one end-to-end test, which runs real pytest. Names are TEST DATA.
++"""
++from __future__ import annotations
++
++from contextlib import contextmanager
++from hashlib import sha256
++import json
++from pathlib import Path
++import shutil
++import subprocess
++import sys
++
++import pytest
++
++from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
++from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, parse_mutations
++from alienintent.invocation_runtime.domain.verdict_admission import claims
++from alienintent.invocation_runtime.application.mutation_harness import (
++    KILLED, REVERTED_FAILS, SPEC_INVALID, SURVIVED, MutationHarness)
++from alienintent.invocation_runtime.application.regression_gate import SuiteUnrunnable
++
++SHA, OTHER, BASE = "c" * 40, "d" * 40, "a" * 40
++INVOCATION = "launch:WORK:2"
++RULE = "def admitted(ok):\n    if ok:\n        return True\n    return False\n"
++TEST = ("from src.rule import admitted\n\n\ndef test_refuses():\n    assert admitted(False) is False\n\n\n"
++        "def test_admits():\n    assert admitted(True) is True\n")
++REFUSES, ADMITS = "tests/test_rule.py::test_refuses", "tests/test_rule.py::test_admits"
++NEW = "tests/test_new.py::test_new"
++
++
++def candidate(sha: str = SHA) -> CandidateRef:
++    digest = "sha256:" + sha256(sha.encode()).hexdigest()
++    return CandidateRef(CandidateKind.SOURCE_REVISION, digest, digest, f"git:origin#candidate/c@{sha}", "test")
++
++
++def junit(*cases: tuple[str, str]) -> bytes:
++    """A junit document with one test case per (identity, outcome)."""
++    child = {"passed": "", "failed": "<failure message='assert 1 == 2'/>", "error": "<error message='x'/>",
++             "skipped": "<skipped message='x'/>", "raised": "<failure message='NameError: name x is not defined'/>"}
++    body = "".join(f'<testcase classname="{i.split("::")[0]}" name="{i.split("::")[1]}">{child[o]}</testcase>'
++                   for i, o in cases)
++    return f'<?xml version="1.0"?><testsuites><testsuite name="pytest">{body}</testsuite></testsuites>'.encode()
++
++
++def mutation(old: str = "if ok:", new: str = "if True:", tests: tuple[str, ...] = (REFUSES,), path="src/rule.py"):
++    return [{"name": "drop-check", "path": path, "edits": [{"old": old, "new": new}], "tests": list(tests)}]
++
++
++def spec(*mutations: list) -> MutationSpec:
++    return parse_mutations("```json alienintent-mutations\n" + json.dumps([m for ms in mutations for m in ms])
++                           + "\n```\n")
++
++
++def repository(root: Path) -> Path:
++    source = root / "candidate"
++    (source / "src").mkdir(parents=True)
++    (source / "tests").mkdir()
++    (source / "src" / "rule.py").write_text(RULE)
++    (source / "tests" / "test_rule.py").write_text(TEST)
++    return source
++
++
++def harness(root: Path, run, candidate_files: dict | None = None,
++            base_files: dict | None = None) -> tuple[MutationHarness, list[str]]:
++    """A harness whose every checkout is a fresh copy of the candidate (or, by SHA, of the starting revision);
++    `opened` names each checkout; whether a file exists at the starting revision is asked of that revision's files
++    (git's answer); a `base_files` value of None removes the file there."""
++    source, opened = repository(root), []
++    base = root / "starting"
++    shutil.copytree(source, base)
++    for folder, files in ((source, candidate_files), (base, base_files)):
++        for name, text in (files or {}).items():
++            if text is None:
++                (folder / name).unlink()
++            else:
++                (folder / name).write_text(text)
++
++    def copy(origin: Path, identity: str):
++        opened.append(identity)
++        folder = root / "checkouts" / identity
++        shutil.copytree(origin, folder)
++        try:
++            yield folder
++        finally:
++            shutil.rmtree(folder)
++    return MutationHarness(run, Path.read_bytes, contextmanager(lambda given, identity: copy(source, identity)),
++                           root / "results", revision_checkout=contextmanager(lambda sha, identity: copy(base, identity)),
++                           exists_at=lambda sha, path: (base / path).is_file()), opened
++
++
++def fake(always_fails: frozenset[str] = frozenset(), skipped: str | None = None):
++    """The runner: compiles in process; `tests/test_rule.py::test_refuses` fails on an assertion when the check is
++    gone; with `skipped` it is skipped instead, under the mutation only (`mutated`) or always (`always`); in a
++    checkout holding a file BROKEN it fails on a ConnectionError instead (the environment, not the code), in one
++    holding ASSERTS on an assertion; `tests/test_new.py::test_new` exists only where its file does, and fails on a
++    ConnectionError when its file says so, else on an assertion."""
++    def run(folder: Path, argv: list[str]) -> int:
++        if argv[:2] == ["python3", "-c"]:
++            try:
++                compile((folder / argv[-1]).read_bytes(), argv[-1], "exec")
++                return 0
++            except SyntaxError:
++                return 1
++        path = Path(argv[argv.index("--junitxml") + 1])
++        path.parent.mkdir(parents=True, exist_ok=True)
++        ids = argv[argv.index("--junitxml") + 2:]
++        if (folder / "COLLECTION_ERROR").exists():  # a conftest that cannot be imported in this environment
++            path.write_bytes(b'<?xml version="1.0"?><testsuites><testsuite name="pytest"><testcase classname="" '
++                             b'name="tests.test_rule"><error message="collection failure"/></testcase>'
++                             b'</testsuite></testsuites>')
++            return 1
++        def present(node: str) -> bool:
++            file = folder / node.split("::")[0]
++            return file.exists() and f"def {node.split('::')[1]}(" in file.read_text()
++        if not all(map(present, ids)):  # as real pytest: a valid junit with no test case, and exit 4
++            path.write_bytes(junit())
++            return 4
++        checked = "if ok:" in (folder / "src/rule.py").read_text()
++        node_skips = skipped == "always" or (skipped == "mutated" and not checked)
++        cases = [(f"{node.split('::')[0][:-3].replace('/', '.')}::{node.split('::')[1]}",
++                  ("raised" if "ConnectionError" in (folder / "tests/test_new.py").read_text() else "failed")
++                  if node == NEW else "failed" if node not in (REFUSES, ADMITS) else
++                  "skipped" if node == REFUSES and node_skips else
++                  "raised" if node == REFUSES and (folder / "BROKEN").exists() else
++                  "failed" if node == REFUSES and (folder / "ASSERTS").exists() else
++                  "failed" if node in always_fails or (node == REFUSES and not checked) else "passed") for node in ids]
++        path.write_bytes(junit(*cases))
++        return int(any(outcome != "passed" for _, outcome in cases))
++    return run
++
++
++def test_a_killing_mutation_is_applied_exactly_and_its_reverted_run_passes(tmp_path):
++    checks, opened = harness(tmp_path, fake())
++    results, receipt = checks.run(INVOCATION, candidate(), spec(mutation()), BASE)
++    assert [(r.name, r.result) for r in results] == [("drop-check", KILLED)]
++    assert opened[0] == f"mutation-0-{INVOCATION}" and opened[1].startswith(f"restored-mutation-0-{INVOCATION}")
++    assert receipt.startswith("mutation-harness:sha256:")
++    other, _ = harness(tmp_path / "other", fake())
++    assert other.run(INVOCATION, candidate(OTHER), spec(mutation()), BASE)[1] != receipt  # the receipt binds the candidate
++
++
++def test_a_surviving_mutation_and_a_failing_reverted_run_are_the_candidates(tmp_path):
++    checks, _ = harness(tmp_path, fake())
++    [survived], _ = checks.run(INVOCATION, candidate(), spec(mutation(tests=(ADMITS,))), BASE)
++    assert survived.result == SURVIVED and ADMITS in survived.detail
++    checks, _ = harness(tmp_path / "asserts", fake(), candidate_files={"ASSERTS": ""})
++    [reverted], _ = checks.run(INVOCATION, candidate(), spec(mutation()), BASE)
++    assert reverted.result == REVERTED_FAILS
++
++
++@pytest.mark.parametrize("change", [
++    {"old": "return"},                            # occurs more than once
++    {"old": "if not ok:"},                        # does not occur
++    {"new": "if True"},                           # the mutated file does not compile
++    {"tests": ("tests/test_rule.py::test_unknown",)},
++    {"path": "src/missing.py"},
++])
++def test_a_malformed_mutation_is_spec_invalid(tmp_path, change):
++    checks, _ = harness(tmp_path, fake())
++    [result], _ = checks.run(INVOCATION, candidate(), spec(mutation(**change)), BASE)
++    assert result.result == SPEC_INVALID
++
++
++def test_a_runner_failure_is_no_result(tmp_path):
++    def unrunnable(folder, argv):
++        if argv[:2] == ["python3", "-c"]:
++            return 0
++        raise SuiteUnrunnable("the run outran its wall clock")
++    checks, _ = harness(tmp_path, unrunnable)
++    with pytest.raises(SuiteUnrunnable):
++        checks.run(INVOCATION, candidate(), spec(mutation()), BASE)
++
++
++def finding(evidence: dict) -> dict:
++    return {"finding": "a defect", "evidence": evidence}
++
++
++@pytest.mark.parametrize("evidence, reproduced", [
++    ({"type": "pytest", "node_ids": [REFUSES]}, False),
++    ({"type": "pytest", "node_ids": ["tests/test_rule.py::test_unknown"]}, False),
++    ({"type": "text", "path": "src/rule.py", "contains": "if ok:"}, True),
++    ({"type": "text", "path": "src/rule.py", "absent": "if ok:"}, False),
++    ({"type": "text", "path": "src/missing.py", "absent": "x"}, False),
++])
++def test_evidence_is_reproduced_only_when_it_holds_at_the_candidate(tmp_path, evidence, reproduced):
++    checks, opened = harness(tmp_path, fake())
++    [result] = checks.reproduce(INVOCATION, candidate(), claims([finding(evidence)]), BASE)
++    assert result.reproduced is reproduced and opened[0].startswith(f"evidence-0-{INVOCATION}")
++
++
++@pytest.mark.parametrize("code, output, reproduced", [
++    (1, "invocation_runtime/application/x.py:3: unclassified cross-module domain import a.b.domain.c\n", True),
++    (1, "Traceback (most recent call last):\n  File \"x.py\", line 1\nKeyError: 'domain_imports'\n", False),
++    (1, "coupling register unavailable: missing\n", False),
++    (0, "PASS: layers architecture fitness checks\n", False),
++    (2, "usage: check_architecture.py: error: argument --check: invalid choice\n", False),
++])
++def test_a_fitness_finding_reproduces_only_on_the_checks_own_failure_report(tmp_path, code, output, reproduced):
++    """A crash or a usage error of the fitness tool is not the candidate's failure (the starting revision passes)."""
++    def run(folder, argv):
++        Path(argv[-1]).parent.mkdir(parents=True, exist_ok=True)
++        control = folder.name.startswith("control-")
++        Path(argv[-1]).write_text("PASS: layers architecture fitness checks\n" if control else output)
++        return 0 if control else code
++    checks, _ = harness(tmp_path, run)
++    [result] = checks.reproduce(INVOCATION, candidate(), claims([finding({"type": "fitness", "check": "layers"})]), BASE)
++    assert result.reproduced is reproduced
++
++
++def test_end_to_end_a_real_mutation_and_real_reproducers_under_real_pytest(tmp_path):
++    """One real run: the harness edits the file, real pytest kills the mutation, the restored file passes; a
++    reproducer that asserts falsely reproduces and one that fails to import does not."""
++    def run(folder: Path, argv: list[str]) -> int:
++        if "--junitxml" in argv:
++            Path(argv[argv.index("--junitxml") + 1]).parent.mkdir(parents=True, exist_ok=True)
++        argv = [sys.executable, *argv[1:]] if argv[0] == "python3" else argv
++        return subprocess.run(argv, cwd=folder, capture_output=True, timeout=120).returncode
++
++    checks, _ = harness(tmp_path, run)
++    [result], _ = checks.run(INVOCATION, candidate(), spec(mutation()), BASE)
++    assert result.result == KILLED, result.detail
++    asserting = {"type": "reproducer", "name": "test_refusal.py",
++                 "source": "from src.rule import admitted\n\n\ndef test_admits_everything():\n"
++                           "    assert admitted(False) is True\n"}
++    importing = {"type": "reproducer", "name": "test_import.py",
++                 "source": "import no_such_module\n\n\ndef test_x():\n    assert False\n"}
++    first, second = checks.reproduce(INVOCATION, candidate(), claims([finding(asserting), finding(importing)]), BASE)
++    assert (first.reproduced, second.reproduced) == (True, False), (first, second)
++    assert not (tmp_path / "candidate" / "alienintent-evidence").exists()  # never written into the candidate
++
++
++def test_a_pytest_finding_reproduces_when_a_named_test_fails_at_the_candidate(tmp_path):
++    checks, _ = harness(tmp_path, fake(), candidate_files={"ASSERTS": ""})
++    [result] = checks.reproduce(INVOCATION, candidate(), claims([finding({"type": "pytest", "node_ids": [REFUSES, ADMITS]})]), BASE)
++    assert result.reproduced and REFUSES in result.detail
++
++
++@pytest.mark.parametrize("skipped", ["mutated", "always"])
++def test_a_skipped_named_test_is_spec_invalid_never_the_candidates(tmp_path, skipped):
++    """A skipped test is no evidence: skipped under the mutation it did not survive, skipped restored it did not
++    fail; either way the evidence is unavailable."""
++    checks, _ = harness(tmp_path, fake(skipped=skipped))
++    [result], _ = checks.run(INVOCATION, candidate(), spec(mutation()), BASE)
++    assert result.result == SPEC_INVALID
++
++
++def test_each_evidence_item_has_its_own_fresh_checkout(tmp_path):
++    """A reproducer that rewrites a candidate file changes nothing later evidence sees."""
++    def run(folder: Path, argv: list[str]) -> int:
++        (folder / "src/rule.py").write_text("changed by a reproducer\n")
++        path = Path(argv[argv.index("--junitxml") + 1])
++        path.parent.mkdir(parents=True, exist_ok=True)
++        path.write_bytes(junit(("alienintent-evidence.test_x::test_x", "failed")))
++        return 1
++    checks, opened = harness(tmp_path, run)
++    reproducer = {"type": "reproducer", "name": "test_x.py", "source": "def test_x():\n    assert False\n"}
++    text = {"type": "text", "path": "src/rule.py", "contains": "if ok:"}
++    first, second = checks.reproduce(INVOCATION, candidate(), claims([finding(reproducer), finding(text)]), BASE)
++    assert first.reproduced and second.reproduced
++    assert len(opened) == 2 and opened[0].startswith(f"evidence-0-{INVOCATION}") \
++        and opened[1].startswith(f"evidence-1-{INVOCATION}")
++
++
++@pytest.mark.parametrize("outcome, reproduced", [("failed", True), ("raised", False), ("error", False)])
++def test_a_reproducer_reproduces_only_with_an_assertion_failure(tmp_path, outcome, reproduced):
++    def run(folder: Path, argv: list[str]) -> int:
++        path = Path(argv[argv.index("--junitxml") + 1])
++        path.parent.mkdir(parents=True, exist_ok=True)
++        path.write_bytes(junit(("alienintent-evidence.test_x::test_x", outcome)))
++        return 1
++    checks, _ = harness(tmp_path, run)
++    reproducer = {"type": "reproducer", "name": "test_x.py", "source": "def test_x():\n    assert False\n"}
++    [result] = checks.reproduce(INVOCATION, candidate(), claims([finding(reproducer)]), BASE)
++    assert result.reproduced is reproduced
++
++
++
++@pytest.mark.parametrize("base_files, result", [({"BROKEN": ""}, SPEC_INVALID), ({}, REVERTED_FAILS)])
++def test_a_restored_run_that_is_not_an_assertion_counts_only_against_a_passing_starting_revision(
++        tmp_path, base_files, result):
++    """The restored test fails on a ConnectionError: when it also fails at the starting revision now, the
++    environment decided (SPEC_INVALID); when the starting revision passes now, the candidate did."""
++    checks, opened = harness(tmp_path, fake(), candidate_files={"BROKEN": ""}, base_files=base_files)
++    [found], _ = checks.run(INVOCATION, candidate(), spec(mutation()), BASE)
++    assert found.result == result and any(name.startswith(f"control-mutation-0-{INVOCATION}") for name in opened)
++    assert ("environment" in found.detail) is (result == SPEC_INVALID)
++
++
++@pytest.mark.parametrize("base_files, reproduced", [({"BROKEN": ""}, False), ({}, True)])
++def test_a_pytest_finding_that_is_not_an_assertion_reproduces_only_against_a_passing_starting_revision(
++        tmp_path, base_files, reproduced):
++    checks, _ = harness(tmp_path, fake(), candidate_files={"BROKEN": ""}, base_files=base_files)
++    [result] = checks.reproduce(INVOCATION, candidate(), claims([finding({"type": "pytest", "node_ids": [REFUSES]})]),
++                                BASE)
++    assert result.reproduced is reproduced
++
++
++@pytest.mark.parametrize("base_files, stands", [({"BROKEN": ""}, ()), ({}, ("tests.test_rule::test_refuses",))])
++def test_a_gate_regression_stands_only_against_a_passing_starting_revision(tmp_path, base_files, stands):
++    """The candidate errors on a ConnectionError now: with the environment failing at both revisions the regression
++    does not stand; with the starting revision passing now it does."""
++    checks, _ = harness(tmp_path, fake(), candidate_files={"BROKEN": ""}, base_files=base_files)
++    assert checks.standing(INVOCATION, candidate(), BASE, ("tests.test_rule::test_refuses",)) == stands
++
++
++
++@pytest.mark.parametrize("where", ["restored run", "pytest evidence", "gate regression"])
++def test_an_assertion_failing_at_both_revisions_is_never_the_candidates(tmp_path, where):
++    """The test fails on an assertion at the candidate and at the starting revision now: known debt or the
++    environment, never the candidate."""
++    checks, _ = harness(tmp_path, fake(), candidate_files={"ASSERTS": ""}, base_files={"ASSERTS": ""})
++    if where == "restored run":
++        [found], _ = checks.run(INVOCATION, candidate(), spec(mutation()), BASE)
++        assert found.result == SPEC_INVALID and "environment" in found.detail
++    elif where == "pytest evidence":
++        [result] = checks.reproduce(INVOCATION, candidate(), claims([finding({"type": "pytest", "node_ids": [REFUSES]})]),
++                                    BASE)
++        assert not result.reproduced
++    else:
++        assert checks.standing(INVOCATION, candidate(), BASE, ("tests.test_rule::test_refuses",)) == ()
++
++
++@pytest.mark.parametrize("source, stands", [("def test_new():\n    raise ConnectionError\n", ()),
++                                            ("def test_new():\n    assert False\n", ("tests.test_new::test_new",))])
++def test_a_new_test_counts_only_when_it_fails_on_an_assertion(tmp_path, source, stands):
++    """A test absent at the starting revision: an environment-style error keeps the candidate, an assertion
++    failure stands."""
++    checks, _ = harness(tmp_path, fake(), candidate_files={"tests/test_new.py": source})
++    assert checks.standing(INVOCATION, candidate(), BASE, ("tests.test_new::test_new",)) == stands
++
++
++@pytest.mark.parametrize("base_files, reproduced", [({"VIOLATES": ""}, False), ({}, True)])
++def test_a_fitness_violation_reproduces_only_when_the_starting_revision_passes(tmp_path, base_files, reproduced):
++    def run(folder, argv):
++        Path(argv[-1]).parent.mkdir(parents=True, exist_ok=True)
++        violates = (folder / "VIOLATES").exists()
++        Path(argv[-1]).write_text("execution_coordination/x.py:3: a layer is crossed\n" if violates
++                                  else "PASS: layers architecture fitness checks\n")
++        return int(violates)
++    checks, _ = harness(tmp_path, run, candidate_files={"VIOLATES": ""}, base_files=base_files)
++    [result] = checks.reproduce(INVOCATION, candidate(), claims([finding({"type": "fitness", "check": "layers"})]), BASE)
++    assert result.reproduced is reproduced
++
++
++
++@pytest.mark.parametrize("where", ["restored run", "pytest evidence", "gate regression"])
++def test_a_collection_error_at_the_starting_revision_is_no_result_never_an_absent_test(tmp_path, where):
++    """The test asserts at the candidate, and at the starting revision its module cannot be collected: absence there
++    is not proven, so the run gives no result and the candidate is kept."""
++    checks, _ = harness(tmp_path, fake(), candidate_files={"ASSERTS": ""}, base_files={"COLLECTION_ERROR": ""})
++    with pytest.raises(SuiteUnrunnable):
++        if where == "restored run":
++            checks.run(INVOCATION, candidate(), spec(mutation()), BASE)
++        elif where == "pytest evidence":
++            checks.reproduce(INVOCATION, candidate(), claims([finding({"type": "pytest", "node_ids": [REFUSES]})]),
++                             BASE)
++        else:
++            checks.standing(INVOCATION, candidate(), BASE, ("tests.test_rule::test_refuses",))
++
++
++def test_a_gate_regression_whose_test_is_missing_at_the_starting_revision_is_no_result(tmp_path):
++    """The gate proved the test passed at the baseline; not finding it there now is the machinery's failure."""
++    checks, _ = harness(tmp_path, fake(), candidate_files={"ASSERTS": ""}, base_files={"tests/test_rule.py": None})
++    with pytest.raises(SuiteUnrunnable):
++        checks.standing(INVOCATION, candidate(), BASE, ("tests.test_rule::test_refuses",),
++                        proven=frozenset({"tests.test_rule::test_refuses"}))
++
++
++
++def test_a_test_absent_at_the_start_does_not_hide_one_that_exists(tmp_path):
++    """Two named tests at the starting revision, one absent there: the existing one, asserting at both revisions,
++    does not count against the candidate; the absent one is new and asserts at the candidate, so it does."""
++    extra = "tests/test_rule.py::test_extra"
++    checks, _ = harness(tmp_path, fake(), candidate_files={"ASSERTS": "", "tests/test_rule.py": TEST + (
++        "\n\ndef test_extra():\n    assert False\n")}, base_files={"ASSERTS": ""})
++    [result] = checks.reproduce(INVOCATION, candidate(), claims([finding({"type": "pytest", "node_ids": [REFUSES, extra]})]),
++                                BASE)
++    assert result.reproduced and extra in result.detail and REFUSES not in result.detail
++
++
++def test_state_the_mutated_run_leaves_behind_never_reaches_the_restored_run(tmp_path):
++    """The mutated code writes a file that makes the test fail on an assertion; the restored run is in its own fresh
++    checkout of the candidate, so the mutation is simply killed, never REVERTED_FAILS."""
++    inner = fake()
++
++    def run(folder: Path, argv: list[str]) -> int:
++        if "--junitxml" in argv and "if ok:" not in (folder / "src/rule.py").read_text():
++            (folder / "ASSERTS").write_text("")  # state the mutated code left behind
++        return inner(folder, argv)
++    checks, _ = harness(tmp_path, run)
++    [found], _ = checks.run(INVOCATION, candidate(), spec(mutation()), BASE)
++    assert found.result == KILLED, found.detail
++
++
++def test_an_absent_id_does_not_hide_an_existing_failing_test_at_the_candidate(tmp_path):
++    """Real pytest runs nothing when one named test is not found: each named test runs on its own."""
++    checks, _ = harness(tmp_path, fake(), candidate_files={"ASSERTS": ""})
++    [result] = checks.reproduce(INVOCATION, candidate(), claims([finding(
++        {"type": "pytest", "node_ids": [REFUSES, "tests/test_rule.py::test_gone"]})]), BASE)
++    assert result.reproduced and REFUSES in result.detail
++
++
++
++def test_a_test_whose_left_over_file_breaks_another_never_stands(tmp_path):
++    """test_refuses leaves a file behind; test_admits fails on an assertion when it finds it. Alone each passes, so
++    no finding stands: every judged test runs alone in its own fresh checkout."""
++    inner = fake()
++
++    def run(folder: Path, argv: list[str]) -> int:
++        if "--junitxml" in argv and (folder / "state.flag").exists():
++            (folder / "ASSERTS").write_text("")  # stand-in: test_admits asserts the flag is absent
++        if "--junitxml" in argv and REFUSES in argv:
++            (folder / "state.flag").write_text("")
++        return inner(folder, argv)
++    checks, _ = harness(tmp_path, run)
++    assert checks.standing(INVOCATION, candidate(), BASE, ("tests.test_rule::test_refuses", "tests.test_rule::test_admits"),
++                           proven=frozenset({"tests.test_rule::test_refuses", "tests.test_rule::test_admits"})) == ()
++    [result] = checks.reproduce(INVOCATION, candidate(), claims([finding(
++        {"type": "pytest", "node_ids": [REFUSES, ADMITS]})]), BASE)
++    assert not result.reproduced
++
++
++def test_every_judged_test_run_goes_through_observe():
++    """Wiring: the named-tests command is used only by `observe` and by the mutated run; nothing else runs a test
++    the control plane judges."""
++    import ast
++    import inspect
++    from alienintent.invocation_runtime.application import mutation_harness
++
++    tree = ast.parse(inspect.getsource(mutation_harness))
++    users = {function.name for function in ast.walk(tree) if isinstance(function, ast.FunctionDef)
++             for name in ast.walk(function) if isinstance(name, ast.Name) and name.id == "TESTS"}
++    assert users == {"observe", "_mutation"}
++    runners = {function.name for function in ast.walk(tree) if isinstance(function, ast.FunctionDef)
++               for call in ast.walk(function) if isinstance(call, ast.Call)
++               and isinstance(call.func, ast.Attribute) and call.func.attr == "_run"}
++    assert runners == {"observe", "_mutation", "_fitness"}
++
++
++def test_a_test_skipped_at_the_candidate_is_never_against_it(tmp_path):
++    """Skipped at the candidate while passing at the starting revision: the environment decided."""
++    inner = fake()
++
++    def run(folder: Path, argv: list[str]) -> int:
++        if "--junitxml" in argv and (folder / "SKIP").exists():
++            path = Path(argv[argv.index("--junitxml") + 1])
++            path.parent.mkdir(parents=True, exist_ok=True)
++            path.write_bytes(junit(("tests.test_rule::test_refuses", "skipped")))
++            return 0
++        return inner(folder, argv)
++    checks, _ = harness(tmp_path, run, candidate_files={"SKIP": ""})
++    assert checks.observe(BASE, REFUSES, "probe") == "passed"
++    assert checks.standing(INVOCATION, candidate(), BASE, ("tests.test_rule::test_refuses",)) == ()
+diff --git a/tests/invocation_runtime/test_mutation_spec.py b/tests/invocation_runtime/test_mutation_spec.py
+new file mode 100644
+index 0000000..be221ae
+--- /dev/null
++++ b/tests/invocation_runtime/test_mutation_spec.py
+@@ -0,0 +1,48 @@
++"""VERIFICATION-OUTCOME-INTEGRITY: the packet's own mutation spec, read by a pure parser. Names are TEST DATA."""
++from __future__ import annotations
++
++import json
++
++import pytest
++
++from alienintent.invocation_runtime.domain.mutation_spec import MutationSpecInvalid, parse_mutations
++
++
++def packet(*blocks: object) -> str:
++    fenced = "".join(f"```json alienintent-mutations\n{json.dumps(block)}\n```\n\n" for block in blocks)
++    return f"# Packet\n\nSome prose.\n\n{fenced}The end.\n"
++
++
++MUTATION = {"name": "drop-check", "path": "src/pkg/rule.py", "edits": [{"old": "if ok:", "new": "if True:"}],
++            "tests": ["tests/test_rule.py::test_refuses"]}
++
++
++def test_a_packet_without_a_block_has_no_spec_and_a_valid_block_is_read_exactly():
++    assert parse_mutations(packet()) is None
++    spec = parse_mutations(packet([MUTATION]))
++    [mutation] = spec.mutations
++    assert (mutation.name, mutation.path, mutation.tests) == ("drop-check", "src/pkg/rule.py",
++                                                               ("tests/test_rule.py::test_refuses",))
++    assert [(edit.old, edit.new) for edit in mutation.edits] == [("if ok:", "if True:")]
++    assert spec.digest.startswith("sha256:") and spec.digest == parse_mutations(packet([MUTATION])).digest
++    assert spec.digest != parse_mutations(packet([MUTATION | {"name": "other"}])).digest
++
++
++@pytest.mark.parametrize("text", [
++    packet([MUTATION], [MUTATION]),                                    # more than one block
++    "```json alienintent-mutations\n[\n",                               # not closed
++    "```json alienintent-mutations\nnot json\n```\n",                  # not JSON
++    packet([]),                                                         # no mutation
++    packet([MUTATION, MUTATION]),                                       # names not distinct
++    packet([MUTATION | {"edits": [{"old": "", "new": "x"}]}]),          # empty old
++    packet([MUTATION | {"edits": []}]),                                 # no edit
++    packet([MUTATION | {"tests": []}]),                                 # no test
++    packet([MUTATION | {"tests": ["--collect-only"]}]),                 # an option, not a node id
++    packet([MUTATION | {"path": "../outside.py"}]),                     # path not normalized
++    packet([MUTATION | {"path": "alienintent-evidence/test_x.py"}]),  # the evidence folder
++    packet([MUTATION | {"edits": [{"old": "if ok:", "new": "\ud800"}]}]),  # not encodable as UTF-8
++    packet([MUTATION | {"extra": 1}]),                                  # unknown key
++])
++def test_a_malformed_spec_is_invalid(text):
++    with pytest.raises(MutationSpecInvalid):
++        parse_mutations(text)
+diff --git a/tests/invocation_runtime/test_verdict_admission.py b/tests/invocation_runtime/test_verdict_admission.py
+new file mode 100644
+index 0000000..ab730b9
+--- /dev/null
++++ b/tests/invocation_runtime/test_verdict_admission.py
+@@ -0,0 +1,61 @@
++"""VERIFICATION-OUTCOME-INTEGRITY: a session REJECT is admitted only when every finding's typed evidence reproduces.
++
++The rule is pure: it reads the findings and decides from per-finding reproduction results. Texts are TEST DATA.
++"""
++from __future__ import annotations
++
++import pytest
++
++from alienintent.invocation_runtime.domain.verdict_admission import (
++    PytestEvidence, Reproduction, ReproducerEvidence, admit, claims)
++
++PYTEST = {"finding": "the refusal is missing", "evidence": {"type": "pytest", "node_ids": ["tests/t.py::test_a"]}}
++TEXT = {"finding": "the old name remains", "evidence": {"type": "text", "path": "src/a.py", "contains": "old_name"}}
++REPRODUCER = {"finding": "an empty list is accepted", "evidence": {
++    "type": "reproducer", "name": "test_empty.py", "source": "def test_empty():\n    assert False\n"}}
++FITNESS = {"finding": "a layer is crossed", "evidence": {"type": "fitness", "check": "layers"}}
++
++
++def test_each_typed_evidence_is_read():
++    read = claims([PYTEST, TEXT, REPRODUCER, FITNESS])
++    assert [claim.problem for claim in read] == [None] * 4
++    assert read[0].evidence == PytestEvidence(("tests/t.py::test_a",))
++    assert isinstance(read[2].evidence, ReproducerEvidence) and read[2].evidence.digest.startswith("sha256:")
++
++
++@pytest.mark.parametrize("finding", [
++    "a plain text finding",
++    {"finding": "no evidence"},
++    {"finding": "unknown type", "evidence": {"type": "opinion"}},
++    {"finding": "no ids", "evidence": {"type": "pytest", "node_ids": []}},
++    {"finding": "bad name", "evidence": {"type": "reproducer", "name": "../x.py", "source": "x"}},
++    {"finding": "both", "evidence": {"type": "text", "path": "a.py", "contains": "x", "absent": "y"}},
++    {"finding": "", "evidence": PYTEST["evidence"]},
++    {"finding": "not UTF-8", "evidence": {"type": "reproducer", "name": "test_x.py", "source": "x = '\ud800'\n"}},
++    {"finding": "not UTF-8", "evidence": {"type": "text", "path": "src/a.py", "contains": "\ud800"}},
++    {"finding": "in the evidence folder", "evidence": {"type": "pytest", "node_ids": ["alienintent-evidence/test_x.py"]}},
++    {"finding": "in the evidence folder", "evidence": {"type": "text", "path": "alienintent-evidence/test_x.py",
++                                                       "contains": "x"}},
++])
++def test_a_finding_without_valid_typed_evidence_is_not_admitted(finding):
++    read = claims([PYTEST, finding])
++    assert read[1].evidence is None and read[1].problem
++    admission = admit(read, [Reproduction(True, "1 failed"), None])
++    assert not admission.admitted
++    assert len(admission.findings) == 1 and admission.findings[0].startswith("not-admitted:")
++
++
++def test_a_reject_is_admitted_only_when_every_finding_reproduces():
++    read = claims([PYTEST, TEXT])
++    admitted = admit(read, [Reproduction(True, "test_a failed"), Reproduction(True, "the text is present")])
++    assert admitted.admitted and len(admitted.findings) == 2
++    assert admitted.findings[0].startswith("the refusal is missing") and "test_a failed" in admitted.findings[0]
++    refused = admit(read, [Reproduction(True, "test_a failed"), Reproduction(False, "the text is not present")])
++    assert not refused.admitted
++    assert refused.findings == ("not-admitted: the old name remains: not reproduced: the text is not present",)
++
++
++def test_the_reproducer_source_reaches_the_producer():
++    [claim] = claims([REPRODUCER])
++    [finding] = admit([claim], [Reproduction(True, "test_empty failed")]).findings
++    assert "def test_empty():" in finding and claim.evidence.digest in finding
+diff --git a/tests/invocation_runtime/test_verification_outcome.py b/tests/invocation_runtime/test_verification_outcome.py
+new file mode 100644
+index 0000000..81dae58
+--- /dev/null
++++ b/tests/invocation_runtime/test_verification_outcome.py
+@@ -0,0 +1,221 @@
++"""VERIFICATION-OUTCOME-INTEGRITY: where the mutation harness and verdict admission run in a VERIFIER invocation.
++
++Only an admitted REJECT (the gate's, the harness's or a session's whose every finding reproduced) is a `reject`; every
++failure of the verification machinery is a VERIFIER_INFRASTRUCTURE kind, which keeps the candidate at VERIFY. The
++gate, the harness and the session are fakes that record the order they ran in. Names are TEST DATA.
++"""
++from __future__ import annotations
++
++from hashlib import sha256
++import json
++from pathlib import Path
++import subprocess
++
++import pytest
++
++from alienintent.execution_coordination.domain.contract import BudgetPolicy
++from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
++from alienintent.invocation_runtime.domain.mutation_spec import MutationSpecInvalid, parse_mutations
++from alienintent.invocation_runtime.domain.verdict_admission import Reproduction
++from alienintent.execution_coordination.ports.worker_provider import VERIFIER_INFRASTRUCTURE, WorkerInvocation
++from alienintent.invocation_runtime.application.mutation_harness import (
++    KILLED, SPEC_INVALID, SURVIVED, MutationResult)
++from alienintent.invocation_runtime.application.real_worker import RealWorkerProvider
++from alienintent.invocation_runtime.application.regression_gate import SuiteUnrunnable
++from alienintent.invocation_runtime.domain.diagnostics import cause
++from alienintent.invocation_runtime.domain.runtime import (
++    BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, ProcessResult, ProviderCapabilities)
++
++BASE, HEAD = "a" * 40, "b" * 40
++INVOCATION = "launch:WORK:3"
++GATE_RECEIPT, HARNESS_RECEIPT = "feature-regressions:sha256:" + "1" * 64, "mutation-harness:sha256:" + "2" * 64
++SPEC = parse_mutations('```json alienintent-mutations\n[{"name": "drop-check", "path": "src/rule.py", '
++                       '"edits": [{"old": "if ok:", "new": "if True:"}], "tests": ["tests/t.py::test_a"]}]\n```\n')
++TYPED = {"finding": "the refusal is missing", "evidence": {"type": "pytest", "node_ids": ["tests/t.py::test_a"]}}
++
++
++class Fixture:
++    """The gate, the harness, the session and the preparation hook, each recording into `ran`."""
++
++    def __init__(self, root: Path, verdict: dict | None = None, mutated=None, reproduced=(), spec=SPEC) -> None:
++        self.ran, self.results, self.verdict, self.spec = [], root / "results", verdict, spec
++        self.mutated = mutated or (MutationResult("drop-check", KILLED, "test_a fails"),)
++        self.reproduced, self.told = tuple(reproduced), []
++
++    # the REGRESSION-GATE
++    gate_findings: tuple[str, ...] = ()
++    stands: tuple[str, ...] = ()
++
++    def check(self, invocation_id, workspace, baseline_sha, candidate_sha):
++        self.ran.append("gate")
++        return self.gate_findings, GATE_RECEIPT
++
++    def standing(self, invocation_id, candidate, base, identities, *, proven=frozenset()):
++        self.ran.append("control")
++        assert base == BASE and list(identities) == ["t::n", "t::a", "t::b"] and proven == {"t::a", "t::b"}
++        return self.stands
++
++    # the mutation harness
++    def run(self, invocation_id, candidate, spec, base):
++        self.ran.append("mutations")
++        if isinstance(self.mutated, Exception):
++            raise self.mutated
++        return self.mutated, HARNESS_RECEIPT
++
++    def reproduce(self, invocation_id, candidate, claims, base):
++        self.ran.append("reproduce")
++        assert candidate.locator.endswith(f"@{HEAD}")
++        return self.reproduced
++
++    def mutations(self, invocation):
++        if isinstance(self.spec, Exception):
++            raise self.spec
++        return self.spec
++
++    # the hand-over, the preparation hook and the session
++    def candidate_clone(self, prefix, invocation_id, owner, candidate):
++        path = self.results.parent / "worker" / prefix
++        path.mkdir(parents=True)
++        (self.results / invocation_id).mkdir(parents=True)
++        return type("Clone", (), {"path": path})()
++
++    def read_result(self, invocation_id, name, limit=1 << 20):
++        return (self.results / invocation_id / name).read_bytes()
++
++    def prepare(self, invocation, clone):
++        return BASE
++
++    def gated(self, invocation, baseline, revision, receipt):
++        self.told.append(("gated", receipt))
++
++    def mutations_run(self, invocation, results, receipt):
++        self.told.append(("mutations", tuple(r.result for r in results), receipt))
++
++    capabilities = ProviderCapabilities("fake", frozenset({"wall-clock", "cancellation"}))
++
++    def run_session(self, invocation_id, role, workspace, wall_clock_seconds):
++        self.ran.append("session")
++        if self.verdict is not None:
++            (self.results / invocation_id / "verdict.json").write_text(json.dumps({"revision": HEAD} | self.verdict))
++        return ProcessResult("success", 0, True, BudgetRecord.unknown())
++
++
++class Session:
++    def __init__(self, fixture: Fixture) -> None:
++        self.capabilities, self.run = fixture.capabilities, fixture.run_session
++
++
++def evaluate(fixture: Fixture):
++    grant = CapabilityGrant("g", "1", INVOCATION, InvocationRole.VERIFIER, "test", "T", frozenset({"process-control"}),
++                            10 ** 12)
++    preparation = type("Preparation", (), {"prepare": fixture.prepare, "gated": fixture.gated,
++                                           "mutated": fixture.mutations_run})()
++    worker = RealWorkerProvider(Session(fixture), None, fixture.results.parent, "origin", "b",
++                                fixture.results.parent / "verifier", grant, "T", None, now=lambda: 0,
++                                sleep=lambda _: None, handover=fixture, regression_gate=fixture,
++                                regression_base=lambda invocation: BASE, preparation=preparation,
++                                mutation_harness=fixture, mutations=fixture.mutations)
++    digest = "sha256:" + sha256(HEAD.encode()).hexdigest()
++    candidate = CandidateRef(CandidateKind.SOURCE_REVISION, digest, digest, f"git:origin#candidate/c@{HEAD}", "test")
++    invocation = WorkerInvocation("WORK", INVOCATION, role="VERIFIER", candidate=candidate)
++    return worker.start(invocation, None, frozenset(), BudgetPolicy(hard_wall_clock_seconds=60))
++
++
++def test_the_harness_runs_after_the_gate_and_before_the_session_and_an_accept_carries_both_receipts(tmp_path):
++    fixture = Fixture(tmp_path, {"verdict": "accept", "findings": []})
++    outcome = evaluate(fixture)
++    assert fixture.ran == ["gate", "mutations", "session"]
++    assert (outcome.kind, outcome.receipts) == ("accept", (GATE_RECEIPT, HARNESS_RECEIPT))
++    assert fixture.told == [("gated", GATE_RECEIPT), ("mutations", (KILLED,), HARNESS_RECEIPT)]
++    # A packet without a spec runs no harness.
++    fixture = Fixture(tmp_path / "no-spec", {"verdict": "accept", "findings": []}, spec=None)
++    assert evaluate(fixture).receipts == (GATE_RECEIPT,) and fixture.ran == ["gate", "session"]
++
++
++def test_a_surviving_mutation_is_a_control_plane_reject_with_the_harness_receipt_and_no_session(tmp_path):
++    fixture = Fixture(tmp_path, mutated=(MutationResult("drop-check", SURVIVED, "pass with the mutation: x"),))
++    outcome = evaluate(fixture)
++    assert outcome.kind == "reject" and fixture.ran == ["gate", "mutations"]
++    assert outcome.receipts == (GATE_RECEIPT, HARNESS_RECEIPT)
++    assert outcome.findings == ("mutation-survived:drop-check: pass with the mutation: x",)
++
++
++@pytest.mark.parametrize("spec, mutated, kind", [
++    (MutationSpecInvalid("more than one mutations block"), None, "verification-evidence-invalid"),
++    (SPEC, (MutationResult("drop-check", SPEC_INVALID, "'if ok:' occurs 2 times"),), "verification-evidence-invalid"),
++    (SPEC, SuiteUnrunnable("the run outran its wall clock"), "mutation-harness-unavailable"),
++])
++def test_a_harness_that_cannot_judge_keeps_the_candidate_for_a_fresh_verify(tmp_path, spec, mutated, kind):
++    fixture = Fixture(tmp_path, spec=spec, mutated=mutated)
++    outcome = evaluate(fixture)
++    assert (outcome.kind, outcome.candidate) == (kind, None) and "session" not in fixture.ran
++    assert kind in VERIFIER_INFRASTRUCTURE and cause(kind, None) == kind
++
++
++@pytest.mark.parametrize("findings, reproduced", [
++    (["a plain finding"], [None]),
++    ([TYPED], [Reproduction(False, "no named test fails")]),
++    ([TYPED, "a plain finding"], [Reproduction(True, "failed: tests/t.py::test_a"), None]),
++])
++def test_a_session_reject_that_is_not_reproduced_is_not_admitted(tmp_path, findings, reproduced):
++    fixture = Fixture(tmp_path, {"verdict": "reject", "findings": findings}, reproduced=reproduced)
++    outcome = evaluate(fixture)
++    assert (outcome.kind, outcome.candidate) == ("verification-evidence-invalid", None)
++    assert outcome.findings and all(text.startswith("not-admitted:") for text in outcome.findings)
++
++
++def test_a_session_reject_whose_every_finding_reproduces_is_admitted(tmp_path):
++    fixture = Fixture(tmp_path, {"verdict": "reject", "findings": [TYPED]},
++                      reproduced=[Reproduction(True, "failed: tests/t.py::test_a")])
++    outcome = evaluate(fixture)
++    assert outcome.kind == "reject" and fixture.ran == ["gate", "mutations", "session", "reproduce"]
++    [finding] = outcome.findings
++    assert finding.startswith("the refusal is missing") and "failed: tests/t.py::test_a" in finding
++    assert outcome.receipts[:2] == (GATE_RECEIPT, HARNESS_RECEIPT)
++    assert outcome.receipts[2].startswith("reject-reproduced:sha256:")
++
++
++def test_a_reproduction_that_cannot_run_is_no_result_never_a_rejection(tmp_path):
++    fixture = Fixture(tmp_path, {"verdict": "reject", "findings": [TYPED]})
++    fixture.reproduce = lambda *args: (_ for _ in ()).throw(SuiteUnrunnable("the run outran its wall clock"))
++    assert evaluate(fixture).kind == "mutation-harness-unavailable"
++
++
++@pytest.mark.parametrize("failure", [subprocess.TimeoutExpired(["sudo"], 300), CandidateUnavailable("worker workspace "
++                                     "operation failed"), OSError("the results folder exists")])
++@pytest.mark.parametrize("stage", ["mutations", "reproduce"])
++def test_a_harness_timeout_or_workspace_failure_is_unavailable_with_its_cause(tmp_path, failure, stage):
++    """Never an escaping exception and never a judgment on the candidate: the typed outcome names what failed."""
++    fixture = Fixture(tmp_path, {"verdict": "reject", "findings": [TYPED]})
++
++    def fails(*args):
++        raise failure
++    setattr(fixture, "run" if stage == "mutations" else "reproduce", fails)
++    outcome = evaluate(fixture)
++    assert (outcome.kind, outcome.candidate) == ("mutation-harness-unavailable", None)
++    assert outcome.findings and type(failure).__name__ in outcome.findings[0]
++
++
++GATE_FINDINGS = ("new-test-fails:t::n:failed", "regression:t::a:passed->error", "regression:t::b:passed->skipped")
++
++
++@pytest.mark.parametrize("standing, findings", [
++    (("t::a",), ("regression:t::a:passed->error",)),
++    (("t::n", "t::b"), ("new-test-fails:t::n:failed", "regression:t::b:passed->skipped")),
++])
++def test_a_gate_regression_is_a_reject_only_where_the_control_run_stands(tmp_path, standing, findings):
++    """Gate regressions and failing new tests are rerun now at the candidate and the starting revision; the ones the
++    control does not stand are dropped (a new test that errors from the environment keeps the candidate)."""
++    fixture = Fixture(tmp_path)
++    fixture.gate_findings, fixture.stands = GATE_FINDINGS, standing
++    outcome = evaluate(fixture)
++    assert (outcome.kind, outcome.findings, outcome.receipts) == ("reject", findings, (GATE_RECEIPT,))
++    assert fixture.ran == ["gate", "control"]
++
++
++def test_gate_regressions_the_environment_decided_keep_the_candidate(tmp_path):
++    fixture = Fixture(tmp_path)
++    fixture.gate_findings = GATE_FINDINGS
++    outcome = evaluate(fixture)
++    assert (outcome.kind, outcome.candidate) == ("mutation-harness-unavailable", None)
++    assert "environment" in outcome.findings[0] and "session" not in fixture.ran
