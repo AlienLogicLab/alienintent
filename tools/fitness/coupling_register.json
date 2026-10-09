@@ -99,6 +99,13 @@
     },
     {
       "consumer": "context_assembly",
+      "target": "alienintent.execution_coordination.domain.plan_authority",
+      "owner": "execution_coordination",
+      "classification": "PORT_CONTRACT",
+      "basis": "PlanAuthority and parse_scope are the plan-authority rule's values: work approve-plan records an approved plan revision with them and work release reads the current one (docs/work-units/python/plan-authority-inheritance.md revision 3, sections 2.2, 2.4 and 2.5)."
+    },
+    {
+      "consumer": "context_assembly",
       "target": "alienintent.execution_coordination.domain.readiness",
       "owner": "execution_coordination",
       "classification": "PORT_CONTRACT",
@@ -222,6 +229,13 @@
       "owner": "execution_coordination",
       "classification": "DOMAIN_LEAKAGE_HELD",
       "basis": "No pinned Phase 9 shared contract names this as a deliberately shared value or port contract. Held as possible domain leakage pending bounded-context ownership review; present at baseline, not refactored (no broad refactor is authorized)."
+    },
+    {
+      "consumer": "invocation_runtime",
+      "target": "alienintent.execution_coordination.domain.scope_containment",
+      "owner": "execution_coordination",
+      "classification": "PORT_CONTRACT",
+      "basis": "contained is the control plane's actual-diff containment rule, the same rule CLOSURE re-checks: RealWorkerProvider applies it to an automatic-on PRODUCER candidate before publication (Founder decision 6, 2026-10-08; plan-authority-inheritance.md revision 3, change 3)."
     }
   ],
   "persistence": [

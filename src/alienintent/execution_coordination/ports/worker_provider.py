@@ -16,6 +16,9 @@ PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
 # re-dispatched once under the composed replacement allowance.
 MISSING_TERMINAL_RESULT = "missing-terminal-result"
 NO_CHANGE = "no-change"
+# A plan-derived PRODUCER candidate whose actual diff leaves its assessed scope or touches a protected path: nothing
+# was published, and the coordinator reworks it exactly like NO_CHANGE, using no VERIFIER attempt.
+SCOPE_VIOLATION = "scope-violation"
 # VERIFIER outcomes that carry no engineering judgment: the session ended without a valid verdict (its process failed
 # or timed out, or it left no verdict, a malformed one or one for another revision), or the feature-regression
 # receipt is absent or invalid (`feature-regressions-missing`: the REGRESSION-GATE produced no whole-suite result, or,

@@ -625,7 +625,7 @@ def test_check7_a_released_registry_item_passes_the_gate_on_the_registry_store(b
     """The release gate reads the release record from the readiness store (profile `registry`) and checks the starting
     revision in the packets repository's clone against its default branch; WIP admission and the launch follow."""
     registry, coordinator, worker, summary, item = _registry_run(board, tmp_path, "RV-OK", record={})
-    assert (coordinator._profile, coordinator._automatic_release) == ("registry", False)
+    assert (coordinator._profile, coordinator._automatic_release) == ("registry", True)
     assert coordinator._store is registry.assessment.consumer.store and worker.dispatched == [item.id]
     state = coordinator.state(item.id)
     # contract_payload allows one attempt and requires evidence no verifier gives: REVIEW reworks into `failure`.
@@ -745,3 +745,139 @@ def test_the_launcher_needs_the_ready_view_and_a_configuration_file(board, tmp_p
     path.write_text(json.dumps(entry(tmp_path, readiness=readiness(tmp_path))))
     with pytest.raises(ConfigurationInvalid):
         WorkRegistry(load_project_configuration(path, PROJECT)).launcher()
+
+
+# --- PLAN-AUTHORITY-INHERITANCE: plan-derived work through the coordinator (check 6) ---------------------------------
+
+from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH  # noqa: E402
+from tests.context_assembly.test_work_contract import satisfiable_payload  # noqa: E402
+from tests.support.live_github import PRIORITY_OPTIONS, STATUS_OPTIONS  # noqa: E402
+
+PLAN_QUOTE = "I approve this exact plan revision."  # TEST DATA
+PLAN_SCOPE = {"target_repositories": ["AlienLogicLab/alienintent"], "capabilities": ["python", "filesystem",
+                                                                                    "process-control"],
+              "budget_caps": {"maximum_attempts": 3, "hard_wall_clock_seconds": 3600, "cancellation_limit": 1,
+                              "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
+              "protected_paths": ["docs/decisions/", "src/alienintent/execution_coordination/domain/release.py"],
+              "obligations": [{"label": "FIXTURE", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+                               "allowed_paths": ["src/", "tests/", "launch-candidate.txt"]}]}
+
+
+def plan_text(scope: dict | None = None, note: str = "") -> bytes:
+    """A fixture canonical plan holding one plan-authority block (TEST DATA)."""
+    return (f"# Fixture plan{note}\n\n```json alienintent-plan-authority\n{json.dumps(scope or PLAN_SCOPE, indent=1)}"
+            "\n```\n").encode()
+
+
+class FieldBoard(Board):
+    """The READY-view board that also answers the schema read and keeps each card's Status and Priority as written
+    through `updateProjectV2ItemFieldValue`, read back through the card read."""
+
+    def _board(self, query: str, variables: dict) -> object:
+        project = {"id": SANDBOX_PROJECT, "number": 2}
+        if "fields(first:50)" in query:
+            return {"data": {"node": project | {"title": "board", "fields": {"nodes": [
+                {"id": STATUS_FIELD, "name": "Status", "options": STATUS_OPTIONS},
+                {"id": PRIORITY_FIELD, "name": "Priority", "options": PRIORITY_OPTIONS}]}}}}
+        if "updateProjectV2ItemFieldValue" in query:
+            name = "Status" if variables["field"] == STATUS_FIELD else "Priority"
+            options = STATUS_OPTIONS if name == "Status" else PRIORITY_OPTIONS
+            self.log.append(f"write-{name}")
+            self.fields.setdefault(variables["item"], {})[name] = next(
+                o["name"] for o in options if o["id"] == variables["option"])
+            return {"data": {"updateProjectV2ItemFieldValue": {"projectV2Item": {"id": variables["item"],
+                                                                                 "project": project}}}}
+        answer = super()._board(query, variables)
+        node = (answer.get("data") or {}).get("node") if isinstance(answer, dict) else None
+        if "ProjectV2Item { id project" in query and isinstance(node, dict):
+            fields = self.fields.get(variables["item"], {})
+            node["fieldValues"] = {"nodes": [{"name": fields[name], "field": {"id": field, "name": name}}
+                                             for name, field in (("Status", STATUS_FIELD), ("Priority", PRIORITY_FIELD))
+                                             if fields.get(name)]}
+        return answer
+
+
+class PlanBoard(ReadyBoard):
+    """The READY-view fixture with landing enabled, its configuration in a file (so the registry has `work context`),
+    the composed satisfiability check on and a fixture canonical plan on `main` to approve."""
+
+    def __init__(self, root: Path) -> None:
+        super().__init__(root)
+        self.root, self.github = root, FieldBoard()
+        self.document["projects"][PROJECT]["github"]["landing"] = True
+        self.configuration_file = root / "project.json"
+        self.configuration_file.write_text(json.dumps(self.document))
+        self.registry = self.loaded()
+        self.links = self.registry.links
+
+    def loaded(self, host: Path | None = None) -> WorkRegistry:
+        """A registry as a command builds it in its own process: every check composed."""
+        return WorkRegistry(load_project_configuration(self.configuration_file, PROJECT), transport=self.github,
+                            suite_run=passing_suite, **({} if host is None else {"host_configuration": host}))
+
+    def approve(self, plan: bytes | None = None) -> str:
+        """Commit `plan` as the canonical plan on `main` and approve it; answers its content digest."""
+        commit = commit_file(self.clone, "main", PLAN_PATH, plan or plan_text())
+        result = self.registry.plan_approval.approve(commit, PLAN_QUOTE)
+        assert result.answer is None, result
+        return result.content_digest
+
+    def derived(self, label: str, digest: str, **changes):
+        """A plan-derived item naming the FIXTURE obligation, assessed READY and not linked to any card."""
+        return self.ready(label, at="2026-10-09T10:00:00Z", link=False, payload=lambda item: satisfiable_payload(
+            item.id, **({"release_policy": "automatic-on", "authority_issuer": "plan-authority:" + digest,
+                         "authority_references": [f"{PLAN_PATH} obligation:FIXTURE"],
+                         "authorized_scope": ["src/alienintent/composition/fixture.py"]} | changes)))
+
+
+@pytest.fixture
+def plan_board(tmp_path) -> PlanBoard:
+    return PlanBoard(tmp_path / "fx")
+
+
+def test_check6_a_plan_derived_item_reaches_its_producer_with_no_authorize_and_no_card_write_by_the_test(
+        plan_board, tmp_path):
+    from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+    from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
+    item = plan_board.derived("PD-RUN", plan_board.approve())
+    assert plan_board.registry.release.release(item.id).answer is None
+    host = tmp_path / "factory-director-host.json"
+    host.write_text(json.dumps({"wipLimit": 1}))
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    worker = ScriptedWorker(artifacts, {item.id: ["success"]})
+
+    plan_board.loaded(host).coordinator(worker, artifacts).launch(item.id)
+
+    assert worker.dispatched == [item.id]
+    released = plan_board.registry.assessment.authorizations.release_authorization(item.id)
+    assert released.text.startswith("inherited from plan authority")
+
+
+def test_check6_an_explicit_item_with_a_ready_card_and_no_release_record_is_never_dispatched(board, tmp_path):
+    registry, coordinator, worker, summary, item = _registry_run(board, tmp_path, "RV-NONE", record=None,
+                                                                 release=False)
+    assert worker.invocations == [] and summary.authority_blocked == ()
+    with pytest.raises(KeyError):
+        coordinator.state(item.id)
+    assert not registry.assessment.consumer.store.read_state("registry", "decision-inbox")[1].get("open")
+    assert [i for i in registry._attention.list_pending() if i.origin.work_ref in (item.id, item.card_id)] == []
+
+
+def test_a_new_plan_approval_stops_an_item_released_under_the_old_one(plan_board, tmp_path):
+    """Released under plan D1, then the Founder approves D2: the item's issuer no longer names the current authority,
+    so it is not released by policy and neither `start()` nor `launch()` dispatches it."""
+    from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+    from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
+    item = plan_board.derived("PD-OLD", plan_board.approve())
+    assert plan_board.registry.release.release(item.id).answer is None
+    plan_board.approve(plan_text(note=" revision 2"))
+    host = tmp_path / "factory-director-host.json"
+    host.write_text(json.dumps({"wipLimit": 1}))
+    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+    worker = ScriptedWorker(artifacts, {item.id: ["success"]})
+    coordinator = plan_board.loaded(host).coordinator(worker, artifacts)
+
+    coordinator.start()
+    coordinator.launch(item.id)
+
+    assert worker.dispatched == []

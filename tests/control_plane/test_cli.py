@@ -621,6 +621,8 @@ def test_work_context_runs_with_only_the_worker_environment(tmp_path: Path) -> N
 @pytest.mark.parametrize("argv", [
     ["work", "assess", "UNIT"],
     ["work", "authorize", "UNIT", "--commit", "c", "--attempt", "a", "--baseline", "b", "--quote", "q"],
+    ["work", "approve-plan", "--commit", "c", "--quote", "q"],
+    ["work", "release", "UNIT"],
     ["work", "record-completed", "UNIT", "--candidate", "c", "--landing", "l", "--record", "r", "--verification", "v",
      "--approval", "a", "--quote", "q"],
     ["work", "link", "UNIT"],

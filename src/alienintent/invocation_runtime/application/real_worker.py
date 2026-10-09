@@ -15,8 +15,9 @@ from typing import Protocol
 
 from alienintent.execution_coordination.domain.contract import BiuContract, BudgetPolicy
 from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
+from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, NO_TRUSTED_START, contained
 from alienintent.execution_coordination.ports.worker_provider import (
-    MISSING_TERMINAL_RESULT, NO_CHANGE, WorkerInvocation, WorkerOutcome, WorkerProvider)
+    MISSING_TERMINAL_RESULT, NO_CHANGE, SCOPE_VIOLATION, WorkerInvocation, WorkerOutcome, WorkerProvider)
 from alienintent.invocation_runtime.application.regression_gate import RegressionGate, SuiteUnrunnable
 from alienintent.invocation_runtime.domain.diagnostics import cause
 from alienintent.invocation_runtime.domain.runtime import FEATURE_REGRESSION_RECEIPT_PATH, VERDICT_PATH, BudgetIneligible, BudgetRecord, CandidateUnavailable, CapabilityGrant, InvocationRole, JournalUnreadable, ProcessResult, ReservationBook, RetryEvidence, RetrySchedule, VerifierIndependence, owner_token, require_eligible, workspace_folder
@@ -221,6 +222,8 @@ class CandidateHandover(Protocol):
 
     def tree(self, workspace: Path, revision: str) -> str: ...
 
+    def changes(self, workspace: Path, starting: str, revision: str) -> tuple[tuple[str, str], ...]: ...
+
     def hand_over(self, correlation: str, workspace: Path, claimed: str, starting: str) -> str: ...
 
     def publish_intake(self, correlation: str, branch: str, revision: str, verifier_workspace: Path) -> CandidateRef: ...
@@ -246,7 +249,7 @@ class ClosureActions(Protocol):
 
 
 class RealWorkerProvider(WorkerProvider):
-    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None, handover: CandidateHandover | None = None, regression_gate: RegressionGate | None = None, regression_base: Callable[[str], str | None] | None = None) -> None:
+    def __init__(self, process: WorkerProcess, source_control: SourceControl, workspace: Path, remote: str, branch: str | Callable[[WorkerInvocation], str], verifier_root: Path, grant: CapabilityGrant | Callable[[WorkerInvocation], CapabilityGrant], target: str, workspaces: WorkspaceManager | None, reservations: ReservationBook | None = None, *, now: Callable[[], float], sleep: Callable[[float], None], journal: InvocationJournal | None = None, ownership: ProcessOwnership | None = None, preparation: WorkerPreparation | None = None, recovered_workspace: Callable[[WorkerInvocation], Workspace | None] | None = None, closure: ClosureActions | None = None, handover: CandidateHandover | None = None, regression_gate: RegressionGate | None = None, regression_base: Callable[[str], str | None] | None = None, protected_paths: Callable[[], tuple[str, ...] | None] | None = None) -> None:
         self._process, self._source, self._workspace = process, source_control, workspace
         self._remote, self._branch, self._verifier_root, self._grant, self._target, self._workspaces = remote, branch, verifier_root, grant, target, workspaces
         self._outcomes: dict[str, WorkerOutcome] = {}
@@ -271,6 +274,10 @@ class RealWorkerProvider(WorkerProvider):
         # REGRESSION-GATE: the control plane's whole-suite comparison before each VERIFIER session, against the
         # baseline `regression_base(invocation id)` (the release record's starting revision). None: unchanged.
         self._regression_gate, self._regression_base = regression_gate, regression_base
+        # Actual-diff containment of an automatic-on PRODUCER candidate, composed by a profile that releases
+        # plan-derived work: the protected paths of its current approved plan authority (answering None or nothing:
+        # no authority, so no automatic-on candidate is published). None: a profile with no plan authority.
+        self._protected_paths = protected_paths
 
     def start(self, invocation: WorkerInvocation, context: BiuContract | None, grants: frozenset[str], budget: BudgetPolicy) -> WorkerOutcome:
         """Run one role invocation; with a journal, retain its attributable outcome durably first."""
@@ -576,17 +583,22 @@ class RealWorkerProvider(WorkerProvider):
                     outcome = WorkerOutcome(NO_CHANGE, None, findings=(
                         f"no-change-candidate:{revision}: the PRODUCER's revision has the starting revision's tree; IMPLEMENT requires a repository change",))
                 else:
-                    if self._journal is not None:
-                        self._journal.append({"event": PUBLICATION_STARTED, "correlation_id": invocation.correlation_id,
-                                              "work_identity": invocation.work_identity, "role": invocation.role, "revision": revision})
-                    if self._handover is not None:
+                    if self._handover is not None:  # imported first: containment reads only the control plane's copy
                         self._handover.hand_over(invocation.correlation_id, workspace.path, revision, starting_revision)
-                        candidate = self._handover.publish_intake(invocation.correlation_id, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
+                    violations = self._scope_violations(context, reader, workspace.path, starting_revision, revision)
+                    if violations:
+                        outcome = WorkerOutcome(SCOPE_VIOLATION, None, findings=violations)
                     else:
-                        candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
-                    if self._preparation is not None:
-                        self._preparation.published(invocation, candidate)
-                    outcome = WorkerOutcome.success(candidate)
+                        if self._journal is not None:
+                            self._journal.append({"event": PUBLICATION_STARTED, "correlation_id": invocation.correlation_id,
+                                                  "work_identity": invocation.work_identity, "role": invocation.role, "revision": revision})
+                        if self._handover is not None:
+                            candidate = self._handover.publish_intake(invocation.correlation_id, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
+                        else:
+                            candidate = self._source.publish_and_read_back(workspace.path, self._remote, self._candidate_branch(invocation), revision, self._producer_read_back(invocation))
+                        if self._preparation is not None:
+                            self._preparation.published(invocation, candidate)
+                        outcome = WorkerOutcome.success(candidate)
         finally:
             if outcome.kind in {"success", "authority-block"}:
                 self._finished_workspaces[invocation.correlation_id] = workspace
@@ -600,6 +612,23 @@ class RealWorkerProvider(WorkerProvider):
             self._active_workspaces.pop(invocation.correlation_id, None)
         self._outcomes[invocation.correlation_id] = outcome
         return outcome
+
+    def _scope_violations(self, context: BiuContract | None, reader, workspace: Path, starting: str,
+                          revision: str) -> tuple[str, ...]:
+        """Actual-diff containment (Founder decision 6), for an `automatic-on` contract only: every path the candidate
+        changed from `starting`, the control plane's own starting revision (the release baseline the preparation
+        named, never one the worker reports), as the control plane reads it (the intake import with a worker user,
+        the workspace without one), must be under the coordinator's contract `authorized_scope` and outside the
+        current plan authority's protected paths. Without a plan authority or an exact starting revision every such
+        candidate is refused."""
+        if self._protected_paths is None or context is None or context.release_policy != "automatic-on":
+            return ()
+        protected = self._protected_paths()
+        if not protected:
+            return (NO_PLAN_AUTHORITY,)
+        if not _FULL_SHA.fullmatch(starting):
+            return (NO_TRUSTED_START,)
+        return contained(reader.changes(workspace, starting, revision), context.authorized_scope, protected)
 
     @property
     def journal(self) -> InvocationJournal | None:

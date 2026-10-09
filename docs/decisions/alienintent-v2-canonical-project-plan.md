@@ -52,13 +52,64 @@ Finish the current accepted work through a separate CLOSURE instance. Then prepa
 
 The Director must read checked current Python work state. Its existing input adapter reads the previous runtime's state, so starting that unchanged adapter does not satisfy this requirement. The existing host's episode-completion behavior is useful code to connect, not a reason to rebuild supervision.
 
-Give the next bounded packet a complete description and independent adversarial review before Agent Ready assessment and Founder inspection. No unapproved candidate is automatically released. After the Founder approves a queue item, ordinary advancement needs no additional prompt or repeated approval.
+Give the next bounded packet a complete description and independent adversarial review before Agent Ready assessment and Founder inspection. No unapproved candidate is automatically released. After the Founder approves canonical product intent/plan authority, derived Work Items advance without additional Founder approval unless they cross a new owner-decision boundary.
 
 A temporary inexpensive monitor may report completion and wake the responsible coordinator while the application connection is built. Its scope, owner, expiry and replacement are explicit. The full CLM-8B and Qwen3.5-9B evaluation and adaptive routing program remains later work; the minimum current-state interface and automatic continuation needed for this proof move onto the immediate path.
 
 The existing reliable-facts design is the model-facing connection described in formal-design sections 25, 33 and 35, with V2-501 as its planned implementation owner. The recently added section 33.6 clarifies the same design, not a competing interface. Sections 35.5 and 35.6 name the model/router parts and the immediate execution proof.
 
 After this proof, connect preparation of new work from requirements to establish complete self-building. Do not describe a manually prepared queue as proof that the factory prepares its own work.
+
+## 2.2.1 Plan authority
+
+Founder decision, 2026-10-08: Founder approval attaches to an exact revision of this plan, never to its mutable path. `work approve-plan --commit <sha>` records that approval once, with the Founder's words, the plan's commit and the `sha256:` content digest of its bytes; if the plan changes, the old approval does not authorize the new content. A Work Item inherits execution authority from the approved revision only when it names one of the obligations below (`authority_issuer` `plan-authority:<digest>`, one `authority_references` entry `docs/decisions/alienintent-v2-canonical-project-plan.md obligation:<LABEL>`, `release_policy` `automatic-on`), stays inside that obligation's paths and the limits below, is assessed READY and is satisfiable. The control plane then releases it (`work release`) with no Founder words and no manual board change. Anything outside stops with a typed owner-decision requirement. Work not derived from an approved plan keeps the explicit Founder release.
+
+Inherited authority never extends to a protected path, even inside an obligation's paths, and a plan-derived candidate advances only when every path it actually changed is inside its assessed scope and outside the protected paths: the control plane checks the actual diff before VERIFY and again at CLOSURE before landing. The block below is part of this plan's bytes, so the approved digest covers every obligation, path and limit.
+
+```json alienintent-plan-authority
+{"target_repositories": ["AlienLogicLab/alienintent"],
+ "capabilities": ["python", "filesystem", "process-control"],
+ "budget_caps": {"maximum_attempts": 3, "hard_wall_clock_seconds": 3600, "cancellation_limit": 1,
+                 "retry_limit": 1, "concurrency_limit": 1,
+                 "hard_required_dimensions": ["wall-clock", "attempts", "retries", "concurrency", "cancellation"]},
+ "protected_paths": ["docs/decisions/", "docs/architecture/", ".github/", ".claude/", "AGENTS.md", "CLAUDE.md",
+                     "tools/fitness/", "conftest.py", "tests/conftest.py", "pyproject.toml", "setup.cfg", "config/",
+                     "src/alienintent/execution_coordination/domain/release.py",
+                     "src/alienintent/execution_coordination/domain/satisfiability.py",
+                     "src/alienintent/execution_coordination/domain/plan_authority.py",
+                     "src/alienintent/execution_coordination/domain/scope_containment.py",
+                     "src/alienintent/execution_coordination/application/release_admission.py",
+                     "src/alienintent/execution_coordination/adapters/release_admission.py",
+                     "src/alienintent/context_assembly/application/work_authorization.py",
+                     "src/alienintent/context_assembly/application/plan_approval.py",
+                     "src/alienintent/context_assembly/application/inherited_release.py",
+                     "src/alienintent/invocation_runtime/application/regression_gate.py",
+                     "src/alienintent/composition/landing_authority.py",
+                     "tests/execution_coordination/domain/test_plan_authority.py",
+                     "tests/execution_coordination/domain/test_satisfiability.py",
+                     "tests/execution_coordination/domain/test_scope_containment.py",
+                     "tests/execution_coordination/test_containment_wiring.py",
+                     "tests/context_assembly/test_plan_approval.py",
+                     "tests/context_assembly/test_inherited_release.py",
+                     "tests/context_assembly/test_work_authorization.py"],
+ "obligations": [
+  {"label": "BOUNDED-ROUTINE-LAUNCH", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+   "allowed_paths": ["src/alienintent/invocation_runtime/", "src/alienintent/execution_coordination/",
+                     "src/alienintent/composition/", "src/alienintent/control_plane/", "tests/invocation_runtime/",
+                     "tests/execution_coordination/", "tests/composition/", "tests/control_plane/"]},
+  {"label": "WORK-PREPARATION-REFILL", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+   "allowed_paths": ["src/alienintent/context_assembly/", "src/alienintent/composition/",
+                     "src/alienintent/control_plane/", "tests/context_assembly/", "tests/composition/",
+                     "tests/control_plane/"]},
+  {"label": "TERMINAL-BOARD-STATUSES", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+   "allowed_paths": ["src/alienintent/composition/", "src/alienintent/execution_coordination/adapters/",
+                     "tests/composition/", "tests/execution_coordination/"]},
+  {"label": "STORE-SCHEMA-HARDENING", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+   "allowed_paths": ["src/alienintent/composition/", "src/alienintent/execution_coordination/adapters/",
+                     "tests/composition/", "tests/execution_coordination/"]},
+  {"label": "AUTONOMY-PROOF", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+   "allowed_paths": ["docs/evidence/", "tests/", "tools/"]}]}
+```
 
 ## 2.3 One work identity and project-lifetime traceability
 

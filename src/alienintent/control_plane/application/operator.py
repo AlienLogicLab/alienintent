@@ -108,6 +108,31 @@ def authorize_work(authorization: WorkAuthorizations, id_or_label: str, commit: 
     return asdict(authorization.authorize(id_or_label, commit, attempt, baseline, quote))
 
 
+class PlanApprovals(Protocol):
+    """The project's plan approval as `work approve-plan` uses it (bound by the profile's composition)."""
+
+    def approve(self, commit: str, quote: str) -> Any: ...
+
+
+def approve_plan_work(approval: PlanApprovals, commit: str, quote: str) -> dict[str, object]:
+    """`work approve-plan`: the approved plan revision's digest and evidence reference, now the current plan
+    authority, or a refusal returned as the read answer naming its code. It records the Founder's approval of one exact
+    plan revision; it does not grant it."""
+    return asdict(approval.approve(commit, quote))
+
+
+class InheritedReleases(Protocol):
+    """The project's inherited release as `work release` uses it (bound by the profile's composition)."""
+
+    def release(self, id_or_label: str) -> Any: ...
+
+
+def release_work(release: InheritedReleases, id_or_label: str) -> dict[str, object]:
+    """`work release`: the plan-derived item's evidence reference, release record and card, or a refusal returned as
+    the read answer naming its code. No Founder words: the authority is the current approved plan's."""
+    return asdict(release.release(id_or_label))
+
+
 class WorkCompletions(Protocol):
     """The project's completed-work recording as `work record-completed` uses it (bound by the profile's
     composition)."""

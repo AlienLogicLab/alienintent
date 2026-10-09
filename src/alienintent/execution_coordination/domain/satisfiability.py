@@ -14,13 +14,20 @@ BASE_CAPABILITIES = frozenset({"python", "filesystem", "process-control"})
 
 
 def unsatisfiable(contract: BiuContract, *, landing: bool, present_at_pointer: Callable[[str], bool],
-                  registered: Callable[[str], bool], provider_dimensions: frozenset[str]) -> tuple[str, ...]:
-    """Return one reason per failing deterministic lifecycle rule, in gate order."""
+                  registered: Callable[[str], bool], provider_dimensions: frozenset[str],
+                  plan_authority: Callable[[BiuContract], tuple[str, ...]] | None = None) -> tuple[str, ...]:
+    """Return one reason per failing deterministic lifecycle rule, in gate order. `automatic-on` passes only through
+    `plan_authority` (the current approved plan authority's `outside_authority`), adding its reasons."""
     reasons: list[str] = []
     unknown_evidence = sorted(set(contract.required_evidence) - OBSERVABLE_EVIDENCE)
     if unknown_evidence:
         reasons.append(f"required_evidence: unobservable evidence ids: {', '.join(unknown_evidence)}")
-    if contract.release_policy != "explicit-human-off":
+    if contract.release_policy == "automatic-on":
+        if plan_authority is None:
+            reasons.append("release_policy: automatic-on requires an approved plan authority")
+        else:
+            reasons.extend(plan_authority(contract))
+    elif contract.release_policy != "explicit-human-off":
         reasons.append("release_policy: registry releases require explicit-human-off")
     unavailable = sorted(set(contract.required_capabilities) - BASE_CAPABILITIES)
     if unavailable:
