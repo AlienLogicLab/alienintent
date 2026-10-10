@@ -1175,12 +1175,13 @@ def test_main_already_holding_the_candidate_is_ambiguous_not_rework(closing, mon
 @pytest.mark.parametrize("case", ["marked-child", "owner-alive"])
 def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(closing, monkeypatch, case):
     """Check 14: a marked process of the running CLOSURE correlation keeps its clone; an earlier correlation whose
-    owner is alive (this test process) keeps its clone; another item's workspace is never touched; no receipt."""
+    owner is alive (this test process) and is not the process running CLOSURE keeps its clone; another item's
+    workspace is never touched; no receipt."""
     item = closing.accepted()
     verifier = launch_root(closing.fx.loaded().configuration) / "verifier"
     foreign = verifier / f"verifier-{workspace_folder('launch:another-item:1')}"
     foreign.mkdir()
-    ownership = Owners("terminated") if case == "marked-child" else ProcOwnership()
+    ownership = Owners("terminated") if case == "marked-child" else Elsewhere()
     if case == "marked-child":  # a marked process of the running correlation outlives the session
         cleanup = RegistryClosure._cleanup
         monkeypatch.setattr(RegistryClosure, "_cleanup", lambda self, invocation: (
@@ -1193,6 +1194,14 @@ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(clo
     verifier_clone = next(p for p in verifier.iterdir() if p.name.startswith(f"verifier-launch-{workspace_folder(item.id)}-"))
     assert foreign.is_dir() and verifier_clone.is_dir()
     assert Path(session["cwd"]).is_dir() is (case == "marked-child")
+
+
+class Elsewhere(ProcOwnership):
+    """The real ownership observed from another process: CLOSURE runs in a process that is not the earlier roles'
+    owner (this test process, alive)."""
+
+    def current(self):
+        return dead_owner()
 
 
 def test_the_landing_token_reaches_only_the_authoritys_one_push_process(closing, monkeypatch):

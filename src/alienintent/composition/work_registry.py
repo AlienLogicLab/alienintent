@@ -1994,7 +1994,11 @@ class RegistryClosure:
 
     def _cleanup(self, invocation: WorkerInvocation) -> bool:
         """Every workspace owned by a journaled correlation of this work item, under the ownership checks; the
-        running correlation's landing clone last. Anything kept is named in `cleanup_diagnostics`."""
+        running correlation's landing clone last. Anything kept is named in `cleanup_diagnostics`.
+
+        One process runs its roles in turn (`work run`), so an earlier correlation whose owner is this very process has
+        returned: this process being alive is not that role still owning its workspace (Founder 2026-10-10, decisions
+        section 34). Only its marked processes can still hold it."""
         try:
             started = [entry for entry in self._journal.records(work=invocation.work_identity)
                        if entry.get("event") == "invocation-started"]
@@ -2002,6 +2006,11 @@ class RegistryClosure:
             self.cleanup_diagnostics[invocation.correlation_id] = "journal unreadable"
             return False
         ownership, verifier, kept, last = self._registry.ownership, self._root / "verifier", False, None
+        try:
+            this = ownership.current()
+            this = None if this is None else owner_token(this)
+        except Exception:  # noqa: BLE001 - an unreadable self-observation counts no earlier owner as this process
+            this = None
         for entry in started:
             correlation = str(entry.get("correlation_id"))
             if not correlation or any(part in correlation for part in ("/", "\\", "..", "\x00")):
@@ -2013,7 +2022,7 @@ class RegistryClosure:
                 reason = "no journaled owner"
             else:
                 try:
-                    if not running and ownership.owner_state(owner) != "terminated":
+                    if not running and owner_token(owner) != this and ownership.owner_state(owner) != "terminated":
                         reason = "owner alive"
                     elif ownership.owned_work(correlation, owner_token(owner)) != ():
                         reason = "marked process alive"
