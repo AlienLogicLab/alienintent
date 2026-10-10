@@ -1,0 +1,2275 @@
+diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
+index 465fa3e..ab21d85 100644
+--- a/src/alienintent/composition/work_registry.py
++++ b/src/alienintent/composition/work_registry.py
+@@ -96,7 +96,7 @@ from alienintent.context_assembly.adapters.work_item_repository import SQLiteWor
+ from alienintent.context_assembly.application.initial_compilation_service import PacketLocation, WorkRegistration
+ from alienintent.context_assembly.application.inherited_release import INHERITED_RELEASE, OWNER_DECISION_REQUIRED, \
+     InheritedRelease
+-from alienintent.context_assembly.application.packet_assessment import PacketAssessment
++from alienintent.context_assembly.application.packet_assessment import UNAVAILABLE_REASON, PacketAssessment
+ from alienintent.context_assembly.application.plan_approval import PlanApproval
+ from alienintent.context_assembly.application.work_authorization import WorkAuthorization
+ from alienintent.context_assembly.application.work_completion import WorkCompletion
+@@ -104,7 +104,10 @@ from alienintent.context_assembly.application.work_context import EXPORT_FILE, C
+ from alienintent.context_assembly.application.work_identity_service import WorkIdentityService
+ from alienintent.context_assembly.application.work_link import WorkLink
+ from alienintent.context_assembly.application.work_registration import WorkRecordService
++from alienintent.context_assembly.domain.baseline_revalidation import (
++    ADVANCED, BEHIND, DIVERGED, REPREPARE, BaselineDecision, reference_paths, revalidate)
+ from alienintent.context_assembly.domain.packet_assessment import fingerprint
++from alienintent.context_assembly.domain.proof_set import ProofSetInvalid, parse_proof
+ from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason
+ from alienintent.context_assembly.application.work_completion import LANDING_UNVERIFIED, landing_check
+ from alienintent.context_assembly.domain.work_context import CLOSURE, PRODUCER, VERIFIER
+@@ -139,8 +142,8 @@ from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH,
+ from alienintent.execution_coordination.domain.satisfiability import unsatisfiable
+ from alienintent.execution_coordination.domain.scope_containment import NO_PLAN_AUTHORITY, SCOPE_VIOLATION, contained
+ from alienintent.execution_coordination.domain.closure import (
+-    BOARD_UPDATED, LANDING_RECORD, MERGED_TO_MAIN, WORKSPACES_CLEANED, hold, is_fixed, parse_request, performable,
+-    ready_to_land, receipt, rework, session_finding)
++    BOARD_UPDATED, LANDING_RECORD, MERGED_TO_MAIN, REMOTE_UNREADABLE, WORKSPACES_CLEANED, hold, is_fixed, parse_request,
++    performable, ready_to_land, receipt, rework, session_finding)
+ from alienintent.execution_coordination.domain.contract import BiuContract
+ from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
+ from alienintent.execution_coordination.domain.custody import CandidateRef
+@@ -148,7 +151,8 @@ from alienintent.execution_coordination.domain.escalation import DecisionRecord,
+ from alienintent.execution_coordination.ports.operational_store import OperationalStore
+ from alienintent.execution_coordination.ports.project_directory import ProjectItemState
+ from alienintent.execution_coordination.ports.work_management import ReadyWorkItem
+-from alienintent.execution_coordination.ports.worker_provider import WorkerInvocation, WorkerOutcome, WorkerProvider
++from alienintent.execution_coordination.ports.worker_provider import (
++    CANONICAL_MAIN_UNAVAILABLE, WorkerInvocation, WorkerOutcome, WorkerProvider)
+ from alienintent.installation.adapters.app_jwt import app_assertion
+ from alienintent.installation.adapters.protected_local_file_secret import ProtectedLocalFileSecretProvider
+ from alienintent.installation.adapters.urllib_github_transport import UrllibGitHubTransport
+@@ -576,17 +580,19 @@ class WorkRegistry:
+         the caller's worker and artifacts. The release flag follows each contract (`_ContractRelease`): only an
+         `automatic-on` (plan-derived) item is released by policy; an `explicit-human-off` item becomes eligible only
+         through `release_and_start`. The release gate re-checks the release record (`work authorize`'s or `work
+-        release`'s) against the packets repository's clone and default branch before every PRODUCER. The WIP limit is
++        release`'s) against canonical main as fetched into the packets repository's clone (refreshed when the
++        coordinator is built) before every PRODUCER. The WIP limit is
+         read on every admission. Closure: `landing_enabled` is the `github` entry's `landing` flag, `started_item`
+         builds a started item from its registry record (0.9) and `completed` projects the row after DONE (0.8)."""
+         if self.ready_view is None:
+             raise ConfigurationInvalid("the coordinator needs both the github and readiness entries")
+         configuration = self.configuration
+         packets, store = configuration.repositories[configuration.packets_repository], self.assessment.consumer.store
++        self._canonical_main(configuration.packets_repository)  # the gate reads canonical main as fetched: refresh it
+         gate = ReleasePreconditionGate(StoredReleaseAuthorizations(store, "registry"),
+                                        GitRevisionResolver({configuration.github.repository: packets.clone}),
+-                                       packets.default_branch)
+-        return FactoryCoordinator(store, _ContractRelease(self.ready_view, self.plan_approval.current), worker, artifacts, "registry",
++                                       canonical_ref(packets))
++        return FactoryCoordinator(store, _ContractRelease(self.ready_view, self._fetched_authority), worker, artifacts, "registry",
+                                   automatic_release=True, release_gate=gate,
+                                   wip_limit=lambda: wip_limit(self.host_configuration),
+                                   recorded_completion=self.completion.recorded,
+@@ -616,7 +622,7 @@ class WorkRegistry:
+             return ReadyWorkItem(item.id, 0, self.configuration.github.repository, "registry", None,
+                                  tuple(contract.dependencies), contract, contract.content_digest,
+                                  item.assessment_ref.logical_id,
+-                                 automatic_release=automatic(contract, self.plan_approval.current()))
++                                 automatic_release=automatic(contract, self._fetched_authority()))
+         except Exception:  # noqa: BLE001 - an unusable registry record answers None, as recovery expects
+             return None
+ 
+@@ -869,7 +875,8 @@ class WorkRegistry:
+         if user is None:
+             source, workspaces, handover, preparation = GitSourceControl(), \
+                 GitWorktreeAdapter(packets.clone, root / "workspaces"), None, \
+-                LaunchPreparation(self.context, root / "context", repository)
++                LaunchPreparation(self.context, root / "context", repository, baseline=self._revalidate,
++                                  on_main=self._on_canonical_main)
+             recovered = lambda invocation: _producer_worktree(root / "workspaces", invocation)  # noqa: E731
+         else:
+             worker_root = root / "worker"
+@@ -885,7 +892,8 @@ class WorkRegistry:
+                                                     environment, os.environ, workspaces)
+             preparation = LaunchPreparation(self.context, root / "context", repository, worker=handover, user=user,
+                                             environment=environment, packets_clone=packets.clone,
+-                                            exports=root / "exports")
++                                            exports=root / "exports", baseline=self._revalidate,
++                                            on_main=self._on_canonical_main)
+             recovered = lambda invocation: _producer_worktree(worker_root, invocation, "producer-")  # noqa: E731
+         ownership = self.ownership
+         process = CliWorkerProvider("routed", preparation.command, (), "explicit", PROVIDER_DIMENSIONS,
+@@ -1199,8 +1207,13 @@ class WorkRegistry:
+             return item is not None and not item.retired
+ 
+         github = self.configuration.github
+-        current = authority if authority is not None else \
+-            None if self.plan_approval is None else self.plan_approval.current()
++        current = authority
++        if current is None and self.plan_approval is not None:
++            # One fetch of canonical main: an unknown tip is not "no plan", so the plan check is never skipped.
++            main = self._canonical_main(self.configuration.packets_repository)
++            if main is None:
++                return (UNAVAILABLE_REASON,)
++            current = self._plan_approval(self.configuration, tip=main).current()
+         return unsatisfiable(contract, landing=github is not None and github.landing,
+                              present_at_pointer=present_at_pointer, registered=registered,
+                              provider_dimensions=PROVIDER_DIMENSIONS,
+@@ -1208,20 +1221,106 @@ class WorkRegistry:
+                              else lambda contract: outside_authority(contract, current))
+ 
+     def protected_paths(self) -> tuple[str, ...] | None:
+-        """The protected paths of the live plan authority (the plan at main's tip), or None without one."""
+-        current = None if self.plan_approval is None else self.plan_approval.current()
++        """The protected paths PRODUCER containment judges a candidate by: the plan at the last fetched canonical main
++        (refreshed by the PRODUCER's own revalidation just before), a local read that a network failure cannot turn
++        into a false NO_PLAN_AUTHORITY rejection; fetched once if nothing was ever fetched. CLOSURE re-checks the live
++        authority before any landing. None without a plan authority."""
++        current = self._fetched_authority()
++        if current is None and self.plan_approval is not None and \
++                self._fetched_main(self.configuration.packets_repository) is None:
++            current = self.plan_approval.current()  # nothing was ever fetched: fetch once
+         return None if current is None else current.scope.protected_paths
+ 
+-    def _plan_approval(self, configuration: ProjectConfiguration) -> PlanApproval:
++    def _fetched_authority(self) -> PlanAuthority | None:
++        """The plan authority at the last fetched canonical main: a local read that cannot fail transiently, for
++        eligibility only (the READY snapshot, a started item). Nothing it answers releases, starts or lands work: a
++        release, each PRODUCER (revalidation) and each landing (CLOSURE's gate) read canonical main fresh."""
++        if self.plan_approval is None:
++            return None
++        main = self._fetched_main(self.configuration.packets_repository)
++        return None if main is None else self._plan_approval(self.configuration, tip=main).current()
++
++    def _fetched_main(self, repository: str) -> str | None:
++        """The last fetched canonical main (the remote-tracking ref, no fetch), or None."""
++        location = self.configuration.repositories.get(repository)
++        if location is None:
++            return None
++        try:
++            result = subprocess.run(["git", "rev-parse", "--verify", "--quiet",
++                                     f"{canonical_ref(location)}^{{commit}}"],
++                                    cwd=location.clone, capture_output=True, check=False, timeout=60)
++        except (OSError, subprocess.SubprocessError):
++            return None
++        head = result.stdout.decode(errors="replace").strip()
++        return head if result.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", head) else None
++
++    def _plan_approval(self, configuration: ProjectConfiguration, tip: str | None = None) -> PlanApproval:
+         """`work approve-plan`: the canonical plan read at the commit from the packets repository's clone, the commit
+         checked against its default branch; the evidence in the assessment evidence folder, the plan-authority
+-        aggregates on the `readiness` store under profile `registry`."""
++        aggregates on the `readiness` store under profile `registry`. With `tip` its live authority is the plan at
++        that one pinned commit instead of current canonical main (one revalidation snapshot)."""
+         consumer, name = self.assessment.consumer, configuration.packets_repository
+         packets = configuration.repositories[name]
+         return PlanApproval(consumer.repository, consumer.project, consumer.profile, consumer.store, "registry", name,
+                             GitRevisionResolver({name: packets.clone}), packets.default_branch,
+                             lambda commit: self.items.read_packet(StoredPointer(name, PLAN_PATH, commit)),
+-                            lambda: self._head(name))
++                            (lambda: self._head(name)) if tip is None else (lambda: tip))
++
++    def _revalidate(self, identity: str) -> tuple[str, BaselineDecision] | None:
++        """Baseline revalidation of a PRODUCER attempt (WORK-PREPARATION-REFILL R2; Founder decisions sections 39 and
++        43): its release baseline and the decision against current canonical main, fetched ONCE; the plan authority,
++        the changed paths and the resulting starting revision all use that one SHA. Guarded: the contract's authorized
++        scope, the packet's declared proof files, its mutation paths and test files, and its authority reference paths
++        other than the canonical plan, which the authority check judges by content: a plan-derived (`automatic-on`)
++        contract must be inside the plan authority at that SHA. None when canonical main or its changed paths cannot
++        be read."""
++        name = self.configuration.packets_repository
++        record = self.records.show(identity)
++        release = self.context.releases.release_authorization(identity)
++        if record is None or record.packet is None or release is None or not release.baseline:
++            raise ValueError("no packet or release baseline to revalidate")
++        main = self._canonical_main(name)
++        if main is None:
++            return None
++        baseline, clone = str(release.baseline), self.configuration.repositories[name].clone
++
++        if not _has_commit(clone, baseline):  # pruned after main moved past it: off canonical history, not a failure
++            return baseline, revalidate(baseline, main, DIVERGED, (), (), (), True)
++        behind, advanced = _is_ancestor(clone, main, baseline), _is_ancestor(clone, baseline, main)
++        if behind is None or advanced is None:  # git could not answer: infrastructure, never "diverged"
++            return None
++        relation = BEHIND if behind else ADVANCED if advanced else DIVERGED
++        if relation != ADVANCED:
++            return baseline, revalidate(baseline, main, relation, (), (), (), True)
++        text = record.packet.decode("utf-8", errors="replace")
++        contract = contract_block(record.packet, identity)
++        errors, proof, mutations = [], None, None
++        try:
++            proof = parse_proof(text)
++        except ProofSetInvalid as error:
++            errors.append(f"proof: {error}")
++        try:
++            mutations = parse_mutations(text)
++        except MutationSpecInvalid as error:
++            errors.append(f"mutations: {error}")
++        guarded = [*contract.authorized_scope, *(proof.targeted_tests if proof else ()),
++                   *reference_paths(contract.authority_references, PLAN_PATH)]
++        for mutation in mutations.mutations if mutations else ():
++            guarded += [mutation.path, *(test.split("::")[0] for test in mutation.tests)]
++        reasons: tuple[str, ...] = ()
++        if contract.release_policy == "automatic-on":
++            authority = self._plan_approval(self.configuration, tip=main).current()
++            reasons = ("no readable plan authority at canonical main",) if authority is None \
++                else tuple(outside_authority(contract, authority))
++        try:
++            result = subprocess.run(["git", "diff", "--name-only", "--no-renames", "-z", baseline, main, "--"],
++                                    cwd=clone, capture_output=True, check=False, timeout=120)
++        except (OSError, subprocess.SubprocessError):
++            return None
++        if result.returncode:
++            return None
++        changed = [path for path in result.stdout.decode(errors="replace").split("\0") if path]
++        return baseline, revalidate(baseline, main, relation, changed, guarded, reasons, proof is not None, errors)
+ 
+     def _release(self, configuration: ProjectConfiguration) -> InheritedRelease:
+         """`work release`: what `work authorize` writes, on the same store and evidence folder, with the composed
+@@ -1231,20 +1330,45 @@ class WorkRegistry:
+         return InheritedRelease(self.records, self.identities, consumer, consumer.repository, consumer.project,
+                                 consumer.profile, self.assessment.authorizations,
+                                 GitRevisionResolver({name: location.clone for name, location in repositories.items()}),
+-                                {name: location.default_branch for name, location in repositories.items()},
+-                                self._head, self.plan_approval.current, self.satisfiable, self._owner_decision,
++                                {name: canonical_ref(location) for name, location in repositories.items()},
++                                self._head,
++                                lambda commit: self._plan_approval(self.configuration, tip=commit).current(),
++                                self.satisfiable, self._owner_decision,
+                                 self.links)
+ 
+     def _head(self, repository: str) -> str | None:
+-        """The default branch's current head in the repository's configured clone, or None."""
+-        location = self.configuration.repositories.get(repository)
+-        if location is None:
++        """Current canonical main of the repository (`_canonical_main`), or None."""
++        return self._canonical_main(repository)
++
++    def _canonical_main(self, repository: str) -> str | None:
++        """Current canonical main: the default branch as fetched from the repository's remote into its configured
++        clone (`_fetch`), never the clone's local branch, which moves only when someone pulls (WORK-PREPARATION-REFILL
++        R2). None when the repository is not configured or the fetch or the read fails; `canonical_main_unreadable`
++        then says whether this read's fetch failed, so a caller tells infrastructure from a plan fault without a second
++        read."""
++        self.canonical_main_unreadable = False
++        if self.configuration.repositories.get(repository) is None:
+             return None
+-        result = subprocess.run(["git", "rev-parse", "--verify", "--quiet",
+-                                 f"refs/heads/{location.default_branch}^{{commit}}"],
+-                                cwd=location.clone, capture_output=True, check=False, timeout=60)
+-        head = result.stdout.decode(errors="replace").strip()
+-        return head if result.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", head) else None
++        try:
++            self._fetch(repository)
++            main = self._fetched_main(repository)
++        except (GitReadFailed, OSError, subprocess.SubprocessError):
++            main = None
++        self.canonical_main_unreadable = main is None  # this read's answer: canonical main could not be fetched
++        return main
++
++    def _on_canonical_main(self, revision: str) -> bool | None:
++        """Whether `revision` is current canonical main or one of its ancestors (fetched now); None when canonical main
++        cannot be read. A re-prepared PRODUCER attempt keeps its recorded execution baseline only when True, never
++        running ahead of canonical main."""
++        name = self.configuration.packets_repository
++        main = self._canonical_main(name)
++        if main is None:
++            return None
++        clone = self.configuration.repositories[name].clone
++        if main == revision:
++            return True
++        return _is_ancestor(clone, revision, main) if _has_commit(clone, revision) else False
+ 
+     def _owner_decision(self, identity: str) -> None:
+         """The durable typed owner-decision requirement of a refused inherited release: one JUDGMENT attention item per
+@@ -1273,14 +1397,49 @@ class WorkRegistry:
+                               releases=StoredReleaseAuthorizations(consumer.store, "registry"), fetch=self._fetch)
+ 
+     def _fetch(self, repository: str) -> str:
+-        """`git fetch <remote> <default branch>` in the repository's configured clone (only the remote-tracking ref
+-        changes); answers that ref."""
++        """`git fetch <remote> <default branch>` in the repository's configured clone; answers the remote-tracking
++        ref. The same fetch also moves the local branch CANONICAL_MAIN, never checked out: a worker's clone (`git clone
++        --no-local` of this clone) carries local branches only, so canonical main's objects reach it that way
++        (WORK-PREPARATION-REFILL R2)."""
+         location = self.configuration.repositories[repository]
+-        result = subprocess.run(["git", "fetch", "--quiet", location.remote, location.default_branch],
++        branch = location.default_branch
++        result = subprocess.run(["git", "fetch", "--quiet", location.remote,
++                                 f"+refs/heads/{branch}:refs/remotes/{location.remote}/{branch}",
++                                 f"+refs/heads/{branch}:refs/heads/{CANONICAL_MAIN}"],
+                                 cwd=location.clone, capture_output=True, check=False, timeout=300)
+         if result.returncode:
+             raise GitReadFailed("git fetch", str(location.clone), result.stderr.decode(errors="replace")[:200])
+-        return f"refs/remotes/{location.remote}/{location.default_branch}"
++        return canonical_ref(location)
++
++
++def _has_commit(clone: Path, revision: str) -> bool:
++    """Whether the clone holds `revision` as a commit (after a fetch, a missing one is gone from canonical history)."""
++    try:
++        return subprocess.run(["git", "cat-file", "-e", f"{revision}^{{commit}}"], cwd=clone, capture_output=True,
++                              check=False, timeout=60).returncode == 0
++    except (OSError, subprocess.SubprocessError):
++        return True  # unknown: let the ancestry question answer "unavailable"
++
++
++def _is_ancestor(clone: Path, older: str, newer: str) -> bool | None:
++    """`git merge-base --is-ancestor`: True or False, or None when git cannot answer (an error or a timeout)."""
++    try:
++        code = subprocess.run(["git", "merge-base", "--is-ancestor", older, newer], cwd=clone, capture_output=True,
++                              check=False, timeout=60).returncode
++    except (OSError, subprocess.SubprocessError):
++        return None
++    return {0: True, 1: False}.get(code)
++
++
++# The configured clone's local copy of fetched canonical main (`_fetch`), so worker clones receive its objects.
++CANONICAL_MAIN = "alienintent/canonical-main"
++
++
++def canonical_ref(location: RepositoryLocation) -> str:
++    """Canonical main as last fetched into the configured clone: the remote-tracking ref of its default branch. Every
++    check that a release baseline or a plan commit is on canonical main reads it, never the local branch, which no
++    factory step moves (WORK-PREPARATION-REFILL R2)."""
++    return f"refs/remotes/{location.remote}/{location.default_branch}"
+ 
+ 
+ def _consumer(configuration: ProjectConfiguration, store: OperationalStore) -> RetainedAssessmentConsumer:
+@@ -1469,9 +1628,9 @@ def automatic(contract: BiuContract, current: PlanAuthority | None) -> bool:
+ 
+ class _ContractRelease:
+     """The READY view as the registry coordinator reads it: each item's release flag follows its own contract and the
+-    live plan authority (`automatic`, the authority read once per snapshot), so an `explicit-human-off` item, or one
+-    the tip's plan no longer grants, is never released by policy. Everything else is
+-    the view's."""
++    plan authority at the last fetched canonical main (`automatic`, read once per snapshot, a local read), so an
++    `explicit-human-off` item, or one that plan no longer grants, is never released by policy; each PRODUCER and each
++    landing re-read canonical main fresh. Everything else is the view's."""
+ 
+     def __init__(self, view: GitHubProjectsWorkManagement, current: Callable[[], PlanAuthority | None]) -> None:
+         self._view, self._current = view, current
+@@ -1545,8 +1704,12 @@ class LaunchPreparation:
+     def __init__(self, context: WorkContext, context_root: Path, repository: str,
+                  route: Callable[[str], dict[str, str]] = resolve_route, *, worker=None, user: str | None = None,
+                  environment: Mapping[str, str] | None = None, packets_clone: Path | None = None,
+-                 exports: Path | None = None) -> None:
++                 exports: Path | None = None,
++                 baseline: Callable[[str], tuple[str, BaselineDecision] | None] | None = None,
++                 on_main: Callable[[str], bool | None] | None = None) -> None:
+         self.context, self.context_root, self.repository, self.route = context, Path(context_root), repository, route
++        # Baseline revalidation of each new PRODUCER attempt (WORK-PREPARATION-REFILL R2); None: the release baseline.
++        self.baseline, self.on_main = baseline, on_main
+         self.kept: dict[str, tuple[dict[str, str], str]] = {}
+         # Each invocation's starting revision from its package: the VERIFIER's regression base with a worker user.
+         self.starting: dict[str, str] = {}
+@@ -1589,6 +1752,10 @@ class LaunchPreparation:
+                                              "budget_policy states no hard_wall_clock_seconds or cancellation_limit")
+         if role == CLOSURE and not self._fixed(identity):
+             return WorkerOutcome("ineligible")  # A guard only: `launch` answers closure-not-automated first.
++        if role == PRODUCER and self.baseline is not None:
++            held = self._revalidated(invocation)
++            if held is not None:
++                return held
+         package = self.context.assemble(identity, role, invocation.correlation_id, invocation.contract_digest,
+                                         invocation.candidate if role in (VERIFIER, CLOSURE) else None, clone)
+         if isinstance(package, ContextHold):
+@@ -1679,7 +1846,53 @@ class LaunchPreparation:
+             prepare_worker_session(self.user, self.environment, self.packets_clone, self.worker.intake)
+         return provider_command(route, workspace), text
+ 
++    def _revalidated(self, invocation: WorkerInvocation) -> WorkerOutcome | None:
++        """Record this PRODUCER attempt's execution baseline once (None), or the outcome instead of a session:
++        CANONICAL_MAIN_UNAVAILABLE when canonical main cannot be fetched, a typed infrastructure outcome the coordinator
++        retries and never an authority hold or a Founder decision (Founder decisions section 44); else the authority
++        block `baseline-revalidation-required` naming the failed checks (the item goes back through Work Preparation
++        and Agent Ready; it is never silently retargeted). A re-prepared attempt keeps its record only while that
++        revision is still on canonical main."""
++        unavailable = WorkerOutcome(CANONICAL_MAIN_UNAVAILABLE, findings=(
++            f"{CANONICAL_MAIN_UNAVAILABLE}: current canonical main could not be fetched; retried",))
++        identity, correlation = invocation.work_identity, invocation.correlation_id
++        try:
++            recorded = self.context.execution_baseline(identity, correlation)
++            if recorded is not None:
++                on_main = None if self.on_main is None else self.on_main(str(recorded["execution_baseline"]))
++                if on_main is None and self.on_main is not None:
++                    return unavailable
++                if on_main is False:
++                    return self._refusal(invocation, (
++                        f"{HoldReason.VERSION_DRIFT}: starting_revision: baseline-revalidation-required: "
++                        "baseline-on-main: the recorded execution baseline is no longer on canonical main"))
++                return None
++            answered = self.baseline(identity)
++            if answered is None:
++                return unavailable
++            release, decision = answered
++            if decision.kind == REPREPARE:
++                failed = "; ".join(f"{name}: {detail}" for name, passed, detail in decision.checks if not passed)
++                return self._refusal(invocation, f"{HoldReason.VERSION_DRIFT}: starting_revision: "
++                                                 f"baseline-revalidation-required: {failed}")
++            self.context.record_execution_baseline(identity, correlation, {
++                "release_baseline": release, "execution_baseline": decision.revision, "kind": decision.kind,
++                "checks": [list(check) for check in decision.checks]})
++        except Exception as error:  # noqa: BLE001 - no revalidation is no starting revision, never the stale one
++            return self._refusal(invocation, f"{HoldReason.MISSING_RECORD}: starting_revision: "
++                                             f"{type(error).__name__}: {error}")
++        return None
++
+     def published(self, invocation: WorkerInvocation, candidate: CandidateRef) -> None:
++        """The candidate's execution baseline (its PRODUCER attempt's, Founder decisions section 43), then the
++        self-review; a record that cannot be written holds the VERIFIER's launch MISSING_RECORD instead."""
++        try:
++            identity = invocation.work_identity
++            release = self.context.releases.release_authorization(identity).baseline
++            self.context.record_execution_baseline(identity, candidate.content_digest, self.context.attempt_baseline(
++                identity, invocation.correlation_id, release))
++        except Exception:  # noqa: BLE001 - nothing is recorded; the VERIFIER's launch is held MISSING_RECORD
++            pass
+         try:
+             text = self.read(self.self_review_path(invocation.correlation_id)).decode("utf-8")
+             if text.strip():
+@@ -1782,9 +1995,11 @@ class RegistryClosure:
+         clone = self._clone(invocation.correlation_id)
+         head = self._fetch(clone, candidate)
+         if head is None:
+-            return (), (*findings, hold("remote-unreadable"))
++            return (), (*findings, hold(REMOTE_UNREADABLE))
+         if self._reachable(clone, revision, head):
+             return (), (*findings, hold("landing-ambiguous", head, revision))
++        if not self._present(clone, revision) and self._candidate_unreadable(clone, candidate):
++            return (), (*findings, hold(REMOTE_UNREADABLE))  # main fetched, the candidate's remote not: retried
+         if not self._ancestor(clone, head, revision):
+             return (), (*findings, rework(self._merge_base(clone, head, revision), head))
+         digest = sha256(document).hexdigest()
+@@ -1817,8 +2032,9 @@ class RegistryClosure:
+             if contract.release_policy != "automatic-on":
+                 return ()
+             current = self._registry.plan_approval.current()
+-            if current is None:
+-                return (NO_PLAN_AUTHORITY,)
++            if current is None:  # that one read's fetch failed: infrastructure (retried), never "no plan authority"
++                return (REMOTE_UNREADABLE,) if getattr(self._registry, "canonical_main_unreadable", False) \
++                    else (NO_PLAN_AUTHORITY,)
+             outside = outside_authority(contract, current)
+             if outside:
+                 self._registry._owner_decision(identity)
+@@ -1839,6 +2055,8 @@ class RegistryClosure:
+         identity, revision = invocation.work_identity, candidate.locator.rpartition("@")[2]
+         # Every first order and every re-order at a new head: before the merge is built, journaled or landed.
+         violations = self._scope_violations(clone, identity, base, revision)
++        if violations == (REMOTE_UNREADABLE,):
++            return (), (*findings, hold(REMOTE_UNREADABLE))
+         if violations:
+             return (), (*findings, hold("scope-violation", base, revision), *violations)
+         built = self._build(clone, invocation, revision, base, actions, digest)
+@@ -1871,8 +2089,8 @@ class RegistryClosure:
+         last = orders[-1]
+         order = last["order"]
+         head = self._fetch(clone, candidate)
+-        if head is None:
+-            return (), (hold("landing-ambiguous", order["base"], order["merge"], order["record"], "unreadable"),)
++        if head is None:  # infrastructure, retried: the next CLOSURE re-settles this order from the journal first
++            return (), (hold(REMOTE_UNREADABLE),)
+         published = (receipt("candidate-published", identity, revision),) \
+             if self._present(clone, revision) else ()
+         landed = next((entry for entry in reversed(orders) if self._reachable(clone, entry["order"]["record"], head)),
+@@ -1888,12 +2106,16 @@ class RegistryClosure:
+                 return published, (ready_to_land(order["merge"]),)
+             if retry:  # a re-land of the journaled order passes the same landing gate first
+                 violations = self._scope_violations(clone, identity, order["base"], revision)
++                if violations == (REMOTE_UNREADABLE,):
++                    return published, (hold(REMOTE_UNREADABLE),)
+                 if violations:
+                     return published, (hold("scope-violation", order["base"], revision), *violations)
+                 self._authority.land(self._landing_order(last, clone))
+                 return self._settle(invocation, candidate, clone, orders, retry=False, earlier=False)
+             return published, (hold("landing-refused", order["base"], order["merge"], order["record"]),)
+         # Main moved and our order did not land (the push is fast-forward only).
++        if not self._present(clone, revision) and self._candidate_unreadable(clone, candidate):
++            return published, (hold(REMOTE_UNREADABLE),)  # the candidate's remote could not answer: retried
+         if not self._ancestor(clone, head, revision):
+             return published, (rework(order["base"], head),)
+         if int(order["attempt"]) >= MAX_ORDERS:
+@@ -2100,6 +2322,21 @@ class RegistryClosure:
+         head = self._git(clone, "rev-parse", self._tracking)
+         return head or None
+ 
++    def _candidate_unreadable(self, clone: Path, candidate: CandidateRef) -> bool:
++        """Whether an absent candidate is infrastructure: the remote cannot be asked for its branch (`git ls-remote`
++        fails), or still advertises it at exactly the candidate (the fetch failed part way). A remote that answers
++        without it (the branch deleted or rewritten) is not: the absent candidate is then judged as before, never
++        retried forever (WORK-PREPARATION-REFILL R2)."""
++        reference, revision = candidate.locator.rpartition("#")[2].rpartition("@")[::2]
++        url = self._url()
++        if not reference:
++            return False
++        # One question: a reachable remote always advertises HEAD, so an empty answer means it could not be asked.
++        answer = self._git(clone, "ls-remote", url, "HEAD", f"refs/heads/{reference}") if url else ""
++        if not answer:
++            return True
++        return f"{revision}\trefs/heads/{reference}" in answer.splitlines()
++
+     def _present(self, clone: Path, revision: str) -> bool:
+         return self._git(clone, "cat-file", "-e", f"{revision}^{{commit}}", check=True)
+ 
+diff --git a/src/alienintent/context_assembly/application/inherited_release.py b/src/alienintent/context_assembly/application/inherited_release.py
+index 876763e..3f4330d 100644
+--- a/src/alienintent/context_assembly/application/inherited_release.py
++++ b/src/alienintent/context_assembly/application/inherited_release.py
+@@ -13,6 +13,11 @@ point: create only, read back, its baseline the default branch's current head) a
+ the card: linked if the item has none (`work link`), its text written (`work display`), Status READY and Priority
+ the obligation's written and each read back. A rerun after an unconfirmed card writes only the card.
+ The release precondition gate is unchanged and re-checks the record before every PRODUCER.
++
++Current canonical main is fetched once (`head`) and the plan authority is read at exactly that commit
++(WORK-PREPARATION-REFILL R2). When it cannot be fetched the answer is CANONICAL_MAIN_UNAVAILABLE: typed infrastructure,
++retried by the caller, nothing written and never an owner decision ("Infrastructure failure is not an owner decision",
++Founder decisions section 44); no last-known tip ever grants a release.
+ """
+ from __future__ import annotations
+ 
+@@ -41,6 +46,8 @@ from alienintent.execution_coordination.ports.release_admission import RevisionR
+ NOT_RELEASABLE, ASSESSMENT_MISSING, NOT_PLAN_DERIVED = "NOT_RELEASABLE", "ASSESSMENT_MISSING", "NOT_PLAN_DERIVED"
+ OWNER_DECISION_REQUIRED, GATE_WOULD_REFUSE, CARD_UNCONFIRMED = \
+     "OWNER_DECISION_REQUIRED", "GATE_WOULD_REFUSE", "CARD_UNCONFIRMED"
++# Current canonical main could not be fetched: retry; nothing was written and no owner decision was raised.
++CANONICAL_MAIN_UNAVAILABLE = "CANONICAL_MAIN_UNAVAILABLE"
+ INHERITED_RELEASE = "inherited-release"
+ INHERITED = "inherited from plan authority"
+ 
+@@ -78,11 +85,12 @@ class InheritedRelease:
+     def __init__(self, records: WorkRecordService, identities: WorkIdentityService, consumer: AssessmentConsumer,
+                  evidence: EvidenceRepository, project: str, profile: str, releases: ReleaseRecords,
+                  revisions: RevisionResolver, release_points: Mapping[str, str], head: Callable[[str], str | None],
+-                 authority: Callable[[], PlanAuthority | None],
++                 authority: Callable[[str], PlanAuthority | None],
+                  satisfiable: Callable[[bytes, str, str, PlanAuthority], tuple[str, ...]], owner_decision: Callable[[str], None],
+                  links: Links) -> None:
+-        """`head(repository)` answers the default branch's current head in its configured clone; `authority` the
+-        current plan authority; `satisfiable` the composed check with it; `owner_decision(identity)` ensures the
++        """`head(repository)` answers current canonical main, fetched now, or None when it cannot be fetched;
++        `authority(commit)` the plan authority at that commit; `satisfiable` the composed check with it;
++        `owner_decision(identity)` ensures the
+         item's owner-decision attention item."""
+         self.records, self.identities, self.consumer, self.evidence = records, identities, consumer, evidence
+         self.releases, self.revisions, self.release_points, self.head = releases, revisions, dict(release_points), head
+@@ -117,7 +125,12 @@ class InheritedRelease:
+             return ReleaseResult(item.id, CONTRACT_INVALID, detail=str(error))
+         if contract.release_policy != "automatic-on":
+             return ReleaseResult(item.id, NOT_PLAN_DERIVED, detail=f"release_policy {contract.release_policy}")
+-        authority = self.authority()
++        repo = item.pointer.repo
++        baseline = self.head(repo)  # current canonical main, fetched once: the authority and the baseline
++        if baseline is None:
++            return ReleaseResult(item.id, CANONICAL_MAIN_UNAVAILABLE,
++                                 detail="current canonical main could not be fetched; retry")
++        authority = self.authority(baseline)
+         reasons = ("no readable plan authority at the tip of main",) if authority is None \
+             else self.satisfiable(record.packet, item.pointer.commit, item.id, authority)  # checked against this read
+         if reasons:
+@@ -127,10 +140,9 @@ class InheritedRelease:
+         if existing is not None:  # This release was recorded; only its card was unconfirmed.
+             return self._card(item.id, priority, ReleaseResult(item.id, None, asdict(item.approval_ref),
+                                                                asdict(existing), repeated=True))
+-        repo = item.pointer.repo
+         prepared = contract.authority_issuer.removeprefix("plan-authority:")  # the revision it was prepared from
+-        release_point, baseline = self.release_points.get(repo), self.head(repo)
+-        resolves = release_point is not None and baseline is not None and self.revisions.resolves(repo, baseline)
++        release_point = self.release_points.get(repo)
++        resolves = release_point is not None and self.revisions.resolves(repo, baseline)
+         reachable = resolves and self.revisions.is_reachable(repo, baseline, release_point)
+         evidence = Observation(
+             Header(self.definition.project, self.definition.profile, f"{INHERITED_RELEASE}/{item.id}", "1",
+diff --git a/src/alienintent/context_assembly/application/packet_assessment.py b/src/alienintent/context_assembly/application/packet_assessment.py
+index 0dd828d..dce6ded 100644
+--- a/src/alienintent/context_assembly/application/packet_assessment.py
++++ b/src/alienintent/context_assembly/application/packet_assessment.py
+@@ -30,6 +30,10 @@ from alienintent.execution_coordination.ports.readiness import AssessmentConsume
+ 
+ # The worker runtime's answer for an owner process that has conclusively ended.
+ TERMINATED = "terminated"
++# The satisfiability reason when current canonical main cannot be fetched, so its plan authority cannot be checked,
++# and the hold it gives: typed infrastructure, retried, never CONTRACT_UNSATISFIABLE (WORK-PREPARATION-REFILL R2,
++# Founder decisions section 44).
++UNAVAILABLE_REASON, CANONICAL_MAIN_UNAVAILABLE = "canonical-main-unavailable", "CANONICAL_MAIN_UNAVAILABLE"
+ 
+ 
+ class ProcessOwnership(Protocol):
+@@ -90,7 +94,8 @@ class PacketAssessment:
+         if self.satisfiable is not None:
+             reasons = self.satisfiable(record.packet, item.pointer.commit, item.id)
+             if reasons:
+-                return Hold(CONTRACT_UNSATISFIABLE, item.id, None, "; ".join(reasons))
++                code = CANONICAL_MAIN_UNAVAILABLE if UNAVAILABLE_REASON in reasons else CONTRACT_UNSATISFIABLE
++                return Hold(code, item.id, None, "; ".join(reasons))
+         text = instructions_text(record.packet)
+         current, input_sha256 = fingerprint(item.id, item.pointer), digest(text)
+         history = self.consumer.history(item.id)
+diff --git a/src/alienintent/context_assembly/application/work_context.py b/src/alienintent/context_assembly/application/work_context.py
+index 740f845..bcffddb 100644
+--- a/src/alienintent/context_assembly/application/work_context.py
++++ b/src/alienintent/context_assembly/application/work_context.py
+@@ -23,9 +23,9 @@ from alienintent.context_assembly.application.work_registration import WorkRecor
+ from alienintent.context_assembly.domain.packet_assessment import fingerprint
+ from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason, canonical
+ from alienintent.context_assembly.domain.work_context import (
+-    CLOSURE, CLOSURE_REQUEST, FIELDS, PRODUCER, SELF_REVIEW, SELF_REVIEW_EXISTS, SELF_REVIEW_LABEL, VERIFIER,
+-    ContextPackage,
+-    candidate_document, candidate_revision, content, self_review_aggregate)
++    CLOSURE, CLOSURE_REQUEST, EXECUTION_BASELINE_KEYS, FIELDS, PRODUCER, SELF_REVIEW, SELF_REVIEW_EXISTS,
++    SELF_REVIEW_LABEL, VERIFIER, ContextPackage,
++    candidate_document, candidate_revision, content, execution_baseline_aggregate, self_review_aggregate)
+ from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
+ from alienintent.context_assembly.domain.work_identity import (
+     RegistryBusy, RegistryUnavailable, StoredPointer, WorkIdentityRefused, valid_path)
+@@ -49,6 +49,10 @@ EXPORT_FILE = "context.json"
+ RELEASE_EVIDENCE = ("pointer", "attempt_id", "assessment_ref", "contract_digest", "baseline", "approver", "quote")
+ 
+ 
++class ExecutionBaselineExists(VersionConflict):
++    """Another execution baseline is already recorded under the same key."""
++
++
+ class SelfReviewExists(VersionConflict):
+     """SELF_REVIEW_EXISTS: another self-review is already recorded for this work item and candidate."""
+     code = SELF_REVIEW_EXISTS
+@@ -190,6 +194,8 @@ class WorkContext:
+             "release_record": {**asdict(release), "evidence_ref": asdict(item.approval_ref),
+                                "evidence": {name: approval.get(name) for name in RELEASE_EVIDENCE}},
+             "starting_revision": release.baseline,
++            "execution_baseline": self.attempt_baseline(item.id, correlation, release.baseline) if role == PRODUCER
++            else None,
+             "allowed_scope": {"authorized_scope": contract.authorized_scope,
+                               "excluded_scope": contract.excluded_scope},
+             "required_evidence": {"verification_obligations": contract.verification_obligations,
+@@ -210,6 +216,7 @@ class WorkContext:
+                                       "candidate_custody_requirements": contract.candidate_custody_requirements}},
+         }
+         if role == PRODUCER:
++            fields["starting_revision"] = fields["execution_baseline"]["execution_baseline"]
+             fields["assessment"] = {"assessment_ref": asdict(item.assessment_ref), "attempt_id": entry["attempt_id"],
+                                     "input_fingerprint": entry["input_fingerprint"]}
+             fields["context_command"] = self.command.document(item.id, role, correlation, None, contract_digest)
+@@ -228,18 +235,71 @@ class WorkContext:
+                                              "request": CLOSURE_REQUEST}
+             else:
+                 fields["producer_self_review"] = {"label": SELF_REVIEW_LABEL, **self._self_review(item.id, held)}
++            fields["execution_baseline"] = self._candidate_baseline(item.id, held, release.baseline)
++            fields["starting_revision"] = fields["execution_baseline"]["execution_baseline"]
+             revision = candidate_revision(held)
+             if revision is None:
+                 raise _hold(MISSING, "diff", detail="the candidate is not a source revision git:<remote>#<branch>@<sha>")
+             try:
+-                diff = self.diff(clone, release.baseline, revision)
++                diff = self.diff(clone, fields["starting_revision"], revision)
+             except WorkIdentityRefused as error:
+                 raise _hold(MISSING, "diff", detail=str(error)) from None
+-            fields["diff"] = {"base": release.baseline, "revision": revision, **content(diff)}
++            fields["diff"] = {"base": fields["starting_revision"], "revision": revision, **content(diff)}
+             fields["context_command"] = self.command.document(item.id, role, correlation, held.locator,
+                                                               contract_digest)
+         return ContextPackage(role, json.loads(canonical(fields)))
+ 
++    def execution_baseline(self, identity: str, key: str) -> dict[str, object] | None:
++        """The recorded execution baseline under `key` as stored, or None."""
++        _, stored = self.store.read_state(self.store_profile, execution_baseline_aggregate(identity, key))
++        return dict(stored) if stored else None
++
++    def attempt_baseline(self, identity: str, correlation: str, release_baseline: str) -> dict[str, object]:
++        """The PRODUCER attempt's recorded execution baseline (WORK-PREPARATION-REFILL R2); with none recorded (no
++        revalidation wired) the release baseline, proceeded unchanged."""
++        recorded = self._baseline_record(identity, correlation, release_baseline)
++        return recorded if recorded is not None else {"release_baseline": release_baseline,
++                                                      "execution_baseline": release_baseline, "kind": "proceed",
++                                                      "checks": []}
++
++    def _candidate_baseline(self, identity: str, candidate: CandidateRef, release_baseline: str) -> dict[str, object]:
++        """The execution baseline recorded for this exact candidate when its PRODUCER published it: the VERIFIER's
++        and CLOSURE's starting revision and diff base, hence the regression gate's and the mutation control run's
++        baseline. Never the release baseline by default (Founder decisions section 43)."""
++        recorded = self._baseline_record(identity, candidate.content_digest, release_baseline)
++        if recorded is None:
++            raise _hold(MISSING, "execution_baseline", detail="no execution baseline recorded for this candidate")
++        return recorded
++
++    def _baseline_record(self, identity: str, key: str, release_baseline: str) -> dict[str, object] | None:
++        _, stored = self._read("execution_baseline", lambda: self.store.read_state(
++            self.store_profile, execution_baseline_aggregate(identity, key)))
++        if not stored:
++            return None
++        if set(stored) != EXECUTION_BASELINE_KEYS or not all(
++                isinstance(stored[name], str) and re.fullmatch(r"[0-9a-f]{40}", stored[name])
++                for name in ("release_baseline", "execution_baseline")):
++            raise _hold(MALFORMED, "execution_baseline", detail="the execution baseline record is malformed")
++        if stored["release_baseline"] != release_baseline:
++            raise _hold(MISMATCH, "execution_baseline", detail="recorded against another release baseline")
++        return dict(stored)
++
++    def record_execution_baseline(self, identity: str, key: str, document: Mapping[str, object]) -> None:
++        """One create-only store record of an execution baseline (`key`: a PRODUCER correlation or a candidate
++        digest); the same document again is a repeat, another is ExecutionBaselineExists."""
++        if set(document) != EXECUTION_BASELINE_KEYS:
++            raise ValueError("an execution baseline record holds exactly " + ", ".join(sorted(EXECUTION_BASELINE_KEYS)))
++        aggregate, expected = execution_baseline_aggregate(identity, key), json.loads(canonical(dict(document)))
++        _, existing = self.store.read_state(self.store_profile, aggregate)
++        if not existing:
++            try:
++                self.store.commit(self.store_profile, aggregate, 0, expected)
++                return
++            except VersionConflict:  # Another run recorded first: a repeat only if its record equals this one.
++                _, existing = self.store.read_state(self.store_profile, aggregate)
++        if existing != expected:
++            raise ExecutionBaselineExists(aggregate)
++
+     def _attempt(self, identity: str, correlation: str, version: int) -> int:
+         """Step 5's attempt check: `launch:<identity>:<v>` is current when it names this work item and either the
+         store version of `factory:<identity>` is v (the launch is not yet saved) or it is v + 1 and the store's effect
+diff --git a/src/alienintent/context_assembly/domain/baseline_revalidation.py b/src/alienintent/context_assembly/domain/baseline_revalidation.py
+new file mode 100644
+index 0000000..198b3c6
+--- /dev/null
++++ b/src/alienintent/context_assembly/domain/baseline_revalidation.py
+@@ -0,0 +1,67 @@
++"""Baseline revalidation: whether an assessed Work Item still holds at current canonical main. Pure.
++
++"Never silently retarget an assessed Work Item onto changed code. Revalidate it first." (Founder, decisions section
++39; WORK-PREPARATION-REFILL spec 3.8.) Main unchanged: proceed at the assessed baseline. Main no longer containing
++the baseline (moved backward, or rewritten): back to preparation, never execution from a revision ahead of canonical
++main, which would carry commits main no longer has (Founder, 2026-10-11). Main advanced past the baseline: retarget
++to main only when every check passes, in order: the contract is inside the plan authority at that main; the packet
++declares its targeted proof set (decisions section 43); its proof and mutations blocks read; and every guarded entry
++(authorized scope, proof files, mutation paths and tests, authority references) is a path, none of which a path main
++changed equals, lies under or lies over. An entry that is not a path (prose or anything with whitespace, a glob)
++cannot be guarded, so it holds. Anything else goes back through Work Preparation and Agent Ready at the assessed
++baseline. Every fact is read by the caller at one main SHA.
++"""
++from __future__ import annotations
++
++from collections.abc import Collection, Sequence
++from dataclasses import dataclass
++
++from alienintent.execution_coordination.domain.plan_authority import normalized, under
++
++PROCEED, RETARGET, REPREPARE = "proceed", "retarget", "reprepare"
++# How canonical main relates to the assessed baseline in the commit graph, as the caller read it.
++BEHIND, ADVANCED, DIVERGED = "behind", "advanced", "diverged"
++
++
++def reference_paths(references: Sequence[str], plan_path: str) -> tuple[str, ...]:
++    """The guarded entries of a contract's authority references: `<path> obligation:<label>` guards its path; any
++    other reference is guarded whole, so prose cannot be guarded and holds. The canonical plan is left out: the plan
++    authority check judges it by content."""
++    entries = []
++    for reference in references:
++        parts = reference.split()
++        entry = parts[0] if len(parts) == 2 and parts[1].startswith("obligation:") else reference
++        if parts and entry != plan_path:
++            entries.append(entry)
++    return tuple(entries)
++
++
++@dataclass(frozen=True)
++class BaselineDecision:
++    kind: str  # PROCEED | RETARGET | REPREPARE
++    revision: str  # the starting revision: main for a retarget, else the assessed baseline
++    checks: tuple[tuple[str, bool, str], ...]  # (check, passed, detail), in order; empty for PROCEED
++
++
++def revalidate(baseline: str, main: str, relation: str, changed: Collection[str], guarded: Collection[str],
++               authority_reasons: Sequence[str], proof_declared: bool,
++               packet_errors: Sequence[str] = ()) -> BaselineDecision:
++    """The decision for an item assessed at `baseline` when canonical main is `main` (`relation`: BEHIND, ADVANCED
++    or DIVERGED), from the paths `changed` between them, the item's `guarded` paths, its `outside_authority` reasons
++    at `main`, whether its packet declares a proof set and why its proof or mutations block cannot be read."""
++    if baseline == main:
++        return BaselineDecision(PROCEED, baseline, ())
++    if relation != ADVANCED:
++        return BaselineDecision(REPREPARE, baseline, (("baseline-on-main", False, f"canonical main {relation}"),))
++    paths = {entry: None if any(c.isspace() for c in str(entry)) else normalized(entry) for entry in guarded}
++    unguardable = sorted(entry for entry, path in paths.items() if path is None)
++    readable = [path for path in paths.values() if path is not None]
++    touched = sorted(path for path in changed if any(under(path, entry) or under(entry, path) for entry in readable))
++    checks = (("plan-authority", not authority_reasons, "; ".join(authority_reasons)),
++              ("proof-declared", proof_declared, "" if proof_declared else "the packet declares no proof set"),
++              ("packet-readable", not packet_errors, "; ".join(packet_errors)),
++              ("scope-proof-references-untouched", not touched and not unguardable,
++               ", ".join([*touched, *(f"not a path: {entry}" for entry in unguardable)])))
++    if all(passed for _, passed, _ in checks):
++        return BaselineDecision(RETARGET, main, checks)
++    return BaselineDecision(REPREPARE, baseline, checks)
+diff --git a/src/alienintent/context_assembly/domain/proof_set.py b/src/alienintent/context_assembly/domain/proof_set.py
+new file mode 100644
+index 0000000..f1e8fa5
+--- /dev/null
++++ b/src/alienintent/context_assembly/domain/proof_set.py
+@@ -0,0 +1,52 @@
++"""Proof set: the exact targeted test files of a Work Item, as Agent Ready assessed them in its packet. Pure.
++
++A packet may hold one block fenced as ```json alienintent-proof, beside its contract and mutations blocks: an object
++with exactly `targeted_tests`, a non-empty list of distinct normalized relative paths of Python files under `tests/` or
++`tools/`. Baseline revalidation guards these files (WORK-PREPARATION-REFILL R2, Founder decisions section 43): the
++proof set is declared, never inferred from mutations or scope.
++"""
++from __future__ import annotations
++
++from dataclasses import dataclass
++import json
++
++from alienintent.execution_coordination.domain.plan_authority import normalized, under
++
++OPEN, CLOSE = "```json alienintent-proof", "```"
++PROOF_KEYS = frozenset({"targeted_tests"})
++PROOF_ROOTS = ("tests", "tools")
++
++
++class ProofSetInvalid(ValueError):
++    """The packet holds more than one, or a malformed, proof block."""
++
++
++@dataclass(frozen=True)
++class ProofSet:
++    targeted_tests: tuple[str, ...]
++
++
++def parse_proof(text: str) -> ProofSet | None:
++    """The packet's one proof block; None when it has none, ProofSetInvalid for more than one or a malformed one."""
++    lines = text.split("\n")
++    opens = [index for index, line in enumerate(lines) if line == OPEN]
++    if not opens:
++        return None
++    if len(opens) > 1:
++        raise ProofSetInvalid("more than one proof block")
++    close = next((index for index in range(opens[0] + 1, len(lines)) if lines[index] == CLOSE), None)
++    if close is None:
++        raise ProofSetInvalid("the proof block is not closed")
++    try:
++        document = json.loads("\n".join(lines[opens[0] + 1:close]))
++    except ValueError as error:
++        raise ProofSetInvalid(f"the proof block is not JSON: {error}") from None
++    if not isinstance(document, dict) or set(document) != PROOF_KEYS:
++        raise ProofSetInvalid("the proof block needs exactly targeted_tests")
++    tests = document["targeted_tests"]
++    if not isinstance(tests, list) or not tests or len(set(map(str, tests))) != len(tests) or not all(
++            isinstance(path, str) and normalized(path) == path and path.endswith(".py")
++            and any(under(path, root) for root in PROOF_ROOTS) for path in tests):
++        raise ProofSetInvalid("targeted_tests must be distinct normalized paths of Python files under tests/ or "
++                              "tools/")
++    return ProofSet(tuple(tests))
+diff --git a/src/alienintent/context_assembly/domain/work_context.py b/src/alienintent/context_assembly/domain/work_context.py
+index 9b622c4..fc8a439 100644
+--- a/src/alienintent/context_assembly/domain/work_context.py
++++ b/src/alienintent/context_assembly/domain/work_context.py
+@@ -20,7 +20,7 @@ PRODUCER, VERIFIER, CLOSURE = "PRODUCER", "VERIFIER", "CLOSURE"
+ # the PRODUCER's transcript or self-review, and no package names a credential, key path or token.
+ COMMON_FIELDS = ("identity", "label", "role", "attempt", "goal", "instructions", "contract", "release_record",
+                  "starting_revision", "allowed_scope", "required_evidence", "stop_condition", "escalation_condition",
+-                 "dependencies", "design_rules", "history", "resources", "context_command")
++                 "dependencies", "design_rules", "history", "resources", "context_command", "execution_baseline")
+ FIELDS = {PRODUCER: frozenset({*COMMON_FIELDS, "assessment"}),
+           VERIFIER: frozenset({*COMMON_FIELDS, "candidate", "diff", "producer_self_review"}),
+           CLOSURE: frozenset({*COMMON_FIELDS, "candidate", "diff", "verdict", "closure_actions"})}
+@@ -32,6 +32,11 @@ CLOSURE_REQUEST = {"identity": "<work item id>",
+ SELF_REVIEW_LABEL = "input to check — not findings and not a verdict"
+ SELF_REVIEW = "self-review"
+ SELF_REVIEW_EXISTS = "SELF_REVIEW_EXISTS"
++# The execution baseline (WORK-PREPARATION-REFILL R2, Founder decisions section 43): the exact canonical main a PRODUCER
++# attempt was revalidated at and built on, recorded per attempt (`<identity>:<correlation>`) and then per candidate
++# (`<identity>:<candidate digest>`); the release baseline stays the authorization anchor.
++EXECUTION_BASELINE = "execution-baseline"
++EXECUTION_BASELINE_KEYS = frozenset({"release_baseline", "execution_baseline", "kind", "checks"})
+ # The coordinator's source-revision locator: git:<remote>#<branch>@<revision>.
+ SOURCE_REVISION = re.compile(r"git:.+#.+@([0-9a-f]{40})")
+ 
+@@ -58,6 +63,11 @@ def self_review_aggregate(identity: str, candidate: CandidateRef) -> str:
+     return f"{SELF_REVIEW}:{identity}:{candidate.content_digest}"
+ 
+ 
++def execution_baseline_aggregate(identity: str, key: str) -> str:
++    """The create-only store record of an execution baseline: `key` is a PRODUCER correlation or a candidate digest."""
++    return f"{EXECUTION_BASELINE}:{identity}:{key}"
++
++
+ def candidate_document(candidate: CandidateRef) -> dict[str, object]:
+     """The candidate exactly as the coordinator encodes it in its state."""
+     return {"kind": str(candidate.kind), "identity": candidate.identity, "content_digest": candidate.content_digest,
+diff --git a/src/alienintent/execution_coordination/application/factory_coordinator.py b/src/alienintent/execution_coordination/application/factory_coordinator.py
+index 3b88d4f..71e7fc4 100644
+--- a/src/alienintent/execution_coordination/application/factory_coordinator.py
++++ b/src/alienintent/execution_coordination/application/factory_coordinator.py
+@@ -9,8 +9,8 @@ from typing import Callable, Iterable, Mapping
+ from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore, verify_in_fresh_process
+ from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+ from alienintent.execution_coordination.domain.closure import (
+-    ACTIONS, CANDIDATE_PUBLISHED, CLOSURE_HOLD, CLOSURE_REWORK, READY_TO_LAND, REQUEST_REFUSALS, is_fixed, parse_finding,
+-    parse_receipt)
++    ACTIONS, CANDIDATE_PUBLISHED, CLOSURE_HOLD, CLOSURE_INFRASTRUCTURE, CLOSURE_REWORK, READY_TO_LAND, REQUEST_REFUSALS,
++    is_fixed, parse_finding, parse_receipt)
+ from alienintent.execution_coordination.domain.custody import CandidateKind, CandidateRef
+ from alienintent.execution_coordination.domain.escalation import DecisionRecord, HumanDecisionRequired, SupersededDecision
+ from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage, transition
+@@ -20,25 +20,31 @@ from alienintent.execution_coordination.domain.verdict import EvidenceDefinition
+ from alienintent.execution_coordination.ports.operational_store import OperationalStore, ReservationRejected, VersionConflict
+ from alienintent.execution_coordination.ports.release_admission import ExecutionAllocation
+ from alienintent.execution_coordination.ports.work_management import ReadyWorkItem, WorkManagement
+-from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, NO_CHANGE, PRODUCER, SCOPE_VIOLATION, VERIFIER, VERIFIER_INFRASTRUCTURE, WorkerInvocation, WorkerOutcome, WorkerProvider
++from alienintent.execution_coordination.ports.worker_provider import CLOSURE, MISSING_TERMINAL_RESULT, NO_CHANGE, PRODUCER, PRODUCER_INFRASTRUCTURE, SCOPE_VIOLATION, VERIFIER, VERIFIER_INFRASTRUCTURE, WorkerInvocation, WorkerOutcome, WorkerProvider
+ from alienintent.control_plane.ports.decision_notifier import DecisionNotifier, DeliveryHealth
+ 
+ # K2: each nonterminal stage is advanced by exactly one canonical role.
+ ROLE_BY_STAGE = {LifecycleStage.IMPLEMENT: PRODUCER, LifecycleStage.VERIFY: VERIFIER, LifecycleStage.ACCEPT: CLOSURE}
+ # Execution-record fields that survive every later commit of the same aggregate.
+ CARRIED = ("decision_key", "decision_choice", "producer_correlation", "rejections", "findings", "verdict",
+-           "closure_retries", "verifier_retries")
++           "closure_retries", "verifier_retries", "producer_retries", "closure_infrastructure_retries")
+ # A malformed CLOSURE request: the item stays at ACCEPT and the next launch runs a fresh CLOSURE session.
+ CLOSURE_RETRY = "closure-retry"
+ # A VERIFIER that ended without a valid verdict: the item stays at VERIFY on the same candidate and the next launch runs
+ # a fresh VERIFIER, at most VERIFIER_RETRY_LIMIT times in a row; then a typed infrastructure hold.
+ VERIFIER_RETRY, VERIFIER_RETRY_LIMIT = "verifier-retry", 2
++# A PRODUCER that could not start for infrastructure (PRODUCER_INFRASTRUCTURE: canonical main unreadable) did no work:
++# the item stays at IMPLEMENT and a later pass retries, within the same bound; then INFRASTRUCTURE_HOLD, a typed hold
++# that is neither an authority block nor a Founder decision (Founder decisions section 44) and that the next run of
++# the factory (a new coordinator) retries with a fresh count.
++PRODUCER_RETRY, INFRASTRUCTURE_HOLD = "producer-retry", "infrastructure-hold"
++INFRASTRUCTURE_COUNTERS = {PRODUCER: "producer_retries", CLOSURE: "closure_infrastructure_retries"}
+ # One WIP slot per admitted work item, held until its recorded state is DONE or a final outcome: an outcome the
+ # coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
+ WIP_SCOPE = "wip"
+ FINAL_OUTCOMES = frozenset({"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"})
+ # Outcomes a later pass retries on the same stage; `run` pauses before that pass so a short outage is not spent at once.
+-RETRY_OUTCOMES = frozenset({VERIFIER_RETRY, CLOSURE_RETRY, MISSING_TERMINAL_RESULT})
++RETRY_OUTCOMES = frozenset({VERIFIER_RETRY, PRODUCER_RETRY, CLOSURE_RETRY, MISSING_TERMINAL_RESULT})
+ # `launch` answers that launch nothing.
+ CLOSURE_NOT_AUTOMATED, NOT_ELIGIBLE = "closure-not-automated", "not-eligible"
+ # The one registry-wide `work launch` reservation (an ordinary store reservation). Only `work launch` takes and releases
+@@ -86,6 +92,8 @@ class RunSummary:
+     failed: tuple[str, ...] = ()
+     # Every work item a role ran for, once per role run, in order.
+     ran: tuple[str, ...] = ()
++    # Work items held as typed infrastructure (INFRASTRUCTURE_HOLD): no decision is needed; the next run retries them.
++    infrastructure_held: tuple[str, ...] = ()
+ 
+ 
+ @dataclass(frozen=True)
+@@ -124,6 +132,8 @@ class FactoryCoordinator:
+         # (when the READY view no longer lists it) and the DONE projection hook, which never raises into this class.
+         self._landing_enabled, self._started_item, self._completed = landing_enabled, started_item, completed
+         self.projection_diagnostics: dict[str, str] = {}
++        # Work items this coordinator held as INFRASTRUCTURE_HOLD: not run again by it; the next coordinator retries.
++        self._infrastructure_held: set[str] = set()
+ 
+     def start(self) -> RunSummary:
+         items = self._with_started(self._work.import_ready_snapshot())
+@@ -141,7 +151,7 @@ class FactoryCoordinator:
+             if self._role(item.identity) == CLOSURE:
+                 once.add(item.identity)
+             result = self._run(item)
+-            if self._outcome(item.identity) == VERIFIER_RETRY:
++            if self._outcome(item.identity) in {VERIFIER_RETRY, PRODUCER_RETRY}:
+                 once.add(item.identity)
+             if isinstance(result, _WipSkip):
+                 skipped[item.identity] = result
+@@ -160,6 +170,7 @@ class FactoryCoordinator:
+             tuple(item.identity for item in items if self._outcome(item.identity) == "authority-block"),
+             tuple(item.identity for item in items if self._outcome(item.identity) in {"failure", "timeout"}),
+             tuple(ran),
++            tuple(item.identity for item in items if self._outcome(item.identity) == INFRASTRUCTURE_HOLD),
+         )
+ 
+     def run(self, pause: Callable[[], None] = lambda: None) -> RunSummary:
+@@ -230,7 +241,8 @@ class FactoryCoordinator:
+         outcome = self._outcome(identity)
+         return RunSummary(result or self._stop_reason((item,)), (identity,) if result is None and producing else (),
+                           (identity,) if outcome == "authority-block" else (),
+-                          (identity,) if outcome in {"failure", "timeout"} else ())
++                          (identity,) if outcome in {"failure", "timeout"} else (),
++                          infrastructure_held=(identity,) if outcome == INFRASTRUCTURE_HOLD else ())
+ 
+     def state(self, identity: str) -> ProjectedState:
+         _, raw = self._store.read_state(self._profile, self._aggregate(identity))
+@@ -257,6 +269,8 @@ class FactoryCoordinator:
+             reason = "terminal"
+         elif outcome in {"authority-block", "blocked-by-authority"}:
+             reason = "authority-block"
++        elif outcome == INFRASTRUCTURE_HOLD and identity in self._infrastructure_held:
++            reason = INFRASTRUCTURE_HOLD
+         elif item is None:
+             reason = "not-in-upstream-ready-snapshot"
+         elif not all(self._dependency_done(dependency) for dependency in item.dependencies):
+@@ -380,6 +394,8 @@ class FactoryCoordinator:
+             projected = self.state(item.identity)
+             if projected.stage is LifecycleStage.DONE or projected.outcome in {"authority-block", "blocked-by-authority", "cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"}:
+                 return False
++            if projected.outcome == INFRASTRUCTURE_HOLD and item.identity in self._infrastructure_held:
++                return False
+             if projected.stage not in ROLE_BY_STAGE:
+                 return False
+             if projected.stage is LifecycleStage.ACCEPT and projected.outcome == READY_TO_LAND \
+@@ -409,12 +425,12 @@ class FactoryCoordinator:
+                     capabilities.update(item.contract.required_capabilities)
+                 admit_release({}, ReleaseRequest(item.identity, item.contract, item.readiness_digest, frozenset(item.dependencies), frozenset(capabilities), self._available_budget(item, raw), "offline-profile", source))
+             except ReleasePreconditionRefused as refusal:
+-                self._record_result(item, current, "release", "authority-block", {"hold_reason": f"release-precondition:{refusal.check}"})
++                self._record_result(item, current, "release", "authority-block", {"hold_reason": f"release-precondition:{refusal.check}", "producer_retries": 0})
+                 self._register_escalation(self._authority_request(item, current.version, f"Release precondition refused: {refusal}."))
+                 self._block_dependents(item, self._work.import_ready_snapshot())
+                 return StopReason.BLOCKED
+             except ValueError:
+-                self._record_result(item, current, "release", "authority-block")
++                self._record_result(item, current, "release", "authority-block", {"producer_retries": 0})
+                 self._register_escalation(self._authority_request(item, current.version, "Release admission requires authority not present in this profile."))
+                 self._block_dependents(item, self._work.import_ready_snapshot())
+                 return StopReason.BLOCKED
+@@ -465,7 +481,8 @@ class FactoryCoordinator:
+             advanced = self._advance(item, current, prepared, invocation, outcome)
+             unresolved = self._has_unresolved_effect(item.identity)
+             if unresolved:
+-                self._record_result(item, current, correlation, "authority-block")
++                self._record_result(item, current, correlation, "authority-block",
++                                    {INFRASTRUCTURE_COUNTERS[role]: 0} if role in INFRASTRUCTURE_COUNTERS else {})
+                 self._register_escalation(self._authority_request(item, current.version, "The external effect outcome is unknown and requires reconciliation authority."))
+                 self._block_dependents(item, self._work.import_ready_snapshot())
+                 self._store.release(self._profile, "repository", item.repository, correlation, reservation.fence)
+@@ -519,6 +536,15 @@ class FactoryCoordinator:
+         return outcome.kind, outcome.candidate, tuple(outcome.findings), tuple(outcome.receipts)
+ 
+     def _advance(self, item: ReadyWorkItem, current: ExecutionState, prior: dict[str, object], invocation: WorkerInvocation, outcome: WorkerOutcome) -> _Advance:
++        """`_advance_role`, with the role's infrastructure retry count reset by any outcome that is not infrastructure,
++        so the bound counts failures in a row."""
++        advanced = self._advance_role(item, current, prior, invocation, outcome)
++        counter = INFRASTRUCTURE_COUNTERS.get(invocation.role)
++        if counter is not None and counter not in advanced.fields:
++            advanced = replace(advanced, fields=advanced.fields | {counter: 0})
++        return advanced
++
++    def _advance_role(self, item: ReadyWorkItem, current: ExecutionState, prior: dict[str, object], invocation: WorkerInvocation, outcome: WorkerOutcome) -> _Advance:
+         """The canonical lifecycle consequence of one correlated role outcome.
+ 
+         Producer success advances only to VERIFY. Only a distinct verifier's
+@@ -533,6 +559,8 @@ class FactoryCoordinator:
+             # own role on the same custodied candidate, bounded at launch.
+             return _Advance(current, outcome.kind, {})
+         if invocation.role == PRODUCER:
++            if outcome.kind in PRODUCER_INFRASTRUCTURE:
++                return self._retry_producer(item, current, prior, outcome.kind)
+             if outcome.kind in {NO_CHANGE, SCOPE_VIOLATION}:
+                 return self._rework(item, current, prior, invocation, "producer", tuple(outcome.findings))
+             if outcome.kind != "success" or outcome.candidate is None:
+@@ -541,7 +569,8 @@ class FactoryCoordinator:
+             # candidate retrieval rather than trusting a producer-set assertion.
+             verified = verify_in_fresh_process(outcome.candidate, self._artifacts.verifier_root)
+             return _Advance(transition(current, current.version, "verify", candidate=verified), "success",
+-                            {"producer_correlation": invocation.correlation_id, "verifier_retries": 0})
++                            {"producer_correlation": invocation.correlation_id, "verifier_retries": 0,
++                             "producer_retries": 0})
+         if invocation.role == VERIFIER:
+             if outcome.kind in VERIFIER_INFRASTRUCTURE:
+                 return self._retry_verifier(current, prior, outcome.kind)
+@@ -595,6 +624,10 @@ class FactoryCoordinator:
+             if CLOSURE_REWORK in kinds and CLOSURE_HOLD not in kinds:
+                 return self._rework(item, current, prior, invocation, "closure", tuple(outcome.findings))
+             held = next((parts for kind, parts in control if kind == CLOSURE_HOLD), None)
++            if held is not None and held[0] in CLOSURE_INFRASTRUCTURE:
++                return self._retry_infrastructure(item, state=current, prior=prior, kind=held[0],
++                                                  counter="closure_infrastructure_retries", retry=CLOSURE_RETRY,
++                                                  role="closure", fields={"receipts": exact})
+             if held is not None and held[0] in REQUEST_REFUSALS:
+                 return self._retry_closure(item, current, prior, held[0], exact)
+             if held is not None:
+@@ -621,6 +654,26 @@ class FactoryCoordinator:
+                             "no engineering judgment was made on the candidate.")
+         return _Advance(state, VERIFIER_RETRY, fields)
+ 
++    def _retry_producer(self, item: ReadyWorkItem, state: ExecutionState, prior: dict[str, object],
++                        kind: str) -> _Advance:
++        """A PRODUCER that could not start for infrastructure made no change and no engineering judgment: the stage
++        stays IMPLEMENT, no rejection is counted and no attempt is used."""
++        return self._retry_infrastructure(item, state=state, prior=prior, kind=kind, counter="producer_retries",
++                                          retry=PRODUCER_RETRY, role="producer", fields={})
++
++    def _retry_infrastructure(self, item: ReadyWorkItem, *, state: ExecutionState, prior: dict[str, object], kind: str,
++                              counter: str, retry: str, role: str, fields: dict[str, object]) -> _Advance:
++        """Infrastructure, never judgment (Founder decisions section 44): the stage stays, a later pass retries, at
++        most VERIFIER_RETRY_LIMIT times in a row; then INFRASTRUCTURE_HOLD, typed, never an authority block or a
++        Founder decision. This coordinator leaves a held item; the next one retries it with a fresh count."""
++        retries = int(prior.get(counter, 0) or 0) + 1
++        fields = fields | {counter: retries, f"{role}_failure": kind}
++        if retries > VERIFIER_RETRY_LIMIT:
++            self._infrastructure_held.add(item.identity)
++            return _Advance(state, INFRASTRUCTURE_HOLD, fields | {
++                counter: 0, "hold_reason": f"{role}-infrastructure-exhausted:{kind}"})
++        return _Advance(state, retry, fields)
++
+     @staticmethod
+     def _retry_closure(item: ReadyWorkItem, state: ExecutionState, prior: dict[str, object], refusal: str,
+                        receipts: list[str]) -> _Advance:
+@@ -835,7 +888,8 @@ class FactoryCoordinator:
+         """Turn an unreadable FD-05 effect into a scoped, durable authority block."""
+         version, raw = self._store.read_state(self._profile, self._aggregate(item.identity))
+         current = replace(self.decode(raw), contract=item.contract) if raw else ExecutionState.for_contract(item.contract)
+-        blocked = self._encode(current) | self._carried(raw) | {"correlation": reservation.owner, "outcome": "authority-block"}
++        blocked = self._encode(current) | self._carried(raw) | {"correlation": reservation.owner, "outcome": "authority-block"} \
++            | dict.fromkeys(INFRASTRUCTURE_COUNTERS.values(), 0)  # an authority block breaks any infrastructure row
+         try:
+             self._store.park_unknown_effect(self._profile, reservation.owner, version, blocked)
+             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+diff --git a/src/alienintent/execution_coordination/domain/closure.py b/src/alienintent/execution_coordination/domain/closure.py
+index a4bd288..377d1d2 100644
+--- a/src/alienintent/execution_coordination/domain/closure.py
++++ b/src/alienintent/execution_coordination/domain/closure.py
+@@ -21,6 +21,12 @@ REQUEST_KEYS = frozenset({"identity", "revision", "actions", "findings"})
+ # within the attempt budget, never an authority hold.
+ REQUEST_REFUSALS = frozenset({"request-missing", "request-malformed", "request-keys", "request-identity",
+                               "request-revision", "request-actions", "request-findings"})
++# Control-plane holds that are infrastructure, not judgment: canonical main (the landing remote, or the live plan
++# authority at its tip) could not be fetched. The coordinator retries CLOSURE on the same candidate within a bound, then
++# holds it as typed infrastructure, never an authority hold or a Founder decision (WORK-PREPARATION-REFILL R2, Founder
++# decisions section 44).
++REMOTE_UNREADABLE = "remote-unreadable"
++CLOSURE_INFRASTRUCTURE = frozenset({REMOTE_UNREADABLE})
+ MAX_FINDINGS, MAX_FINDING_LENGTH = 20, 500
+ REVISION = re.compile(r"[0-9a-f]{40}")
+ _FACT = re.compile(r"[0-9a-f]{40}|unreadable")
+diff --git a/src/alienintent/execution_coordination/ports/worker_provider.py b/src/alienintent/execution_coordination/ports/worker_provider.py
+index 0b71918..1b309ea 100644
+--- a/src/alienintent/execution_coordination/ports/worker_provider.py
++++ b/src/alienintent/execution_coordination/ports/worker_provider.py
+@@ -32,6 +32,11 @@ SCOPE_VIOLATION = "scope-violation"
+ VERIFIER_INFRASTRUCTURE = frozenset({"failure", "timeout", "verdict-missing", "verdict-malformed", "verdict-miscorrelated",
+                                      "feature-regressions-missing", "verification-evidence-invalid",
+                                      "mutation-harness-unavailable"})
++# A PRODUCER that could not start because current canonical main could not be fetched (WORK-PREPARATION-REFILL R2,
++# Founder decisions section 44: "Infrastructure failure is not an owner decision"): no work happened, so the coordinator
++# keeps the stage and retries on a later pass, never an authority hold.
++CANONICAL_MAIN_UNAVAILABLE = "canonical-main-unavailable"
++PRODUCER_INFRASTRUCTURE = frozenset({CANONICAL_MAIN_UNAVAILABLE})
+ 
+ 
+ @dataclass(frozen=True)
+diff --git a/tests/composition/test_bounded_routine_launch.py b/tests/composition/test_bounded_routine_launch.py
+index e147d3d..b73f959 100644
+--- a/tests/composition/test_bounded_routine_launch.py
++++ b/tests/composition/test_bounded_routine_launch.py
+@@ -13,6 +13,7 @@ import json
+ import pytest
+ 
+ from alienintent.composition import work_registry
++from alienintent.context_assembly.domain.work_identity import GitReadFailed
+ from alienintent.control_plane.application.operator import LAUNCH_IN_PROGRESS, exclusive_run_work
+ from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+ from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator, LAUNCH_KEY, LAUNCH_SCOPE
+@@ -38,15 +39,20 @@ def closing(tmp_path, monkeypatch) -> Closing:
+     return Closing(fx, monkeypatch)
+ 
+ 
+-def planned(closing: Closing, *labels: str):
+-    """Plan-derived items under one approved fixture plan, READY in the order given; main pushed as the landing base."""
++def planned(closing: Closing, *labels: str, scopes: dict[str, str] | None = None):
++    """Plan-derived items under one approved fixture plan, READY in the order given, each scoped to its `scopes` file
++    (by default launch-candidate.txt for the first, `src/<label>-candidate.txt` for the others, so later landings never
++    touch them) and declaring its targeted proof file; main pushed as the landing base."""
+     fx = closing.fx
++    fx.proof = ["tests/test_launch_proof.py"]
+     digest = fx.registry.plan_approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text()),
+                                                PLAN_QUOTE).content_digest
+     items = [fx.authorized(label, False, **FIXED, release_policy="automatic-on",
+                            authority_issuer="plan-authority:" + digest,
+                            authority_references=["README.md", f"{PLAN_PATH} obligation:FIXTURE"],
+-                           authorized_scope=["launch-candidate.txt"]) for label in labels]
++                           authorized_scope=[(scopes or {}).get(label, "launch-candidate.txt" if index == 0
++                                                                else f"src/{label.lower()}-candidate.txt")])
++             for index, label in enumerate(labels)]
+     for item in items:  # every release baseline is the same main, after every packet
+         [entry] = [a for a in fx.registry.assessment.consumer.history(item.id)
+                    if a["raw_ref"] == asdict(item.assessment_ref)]
+@@ -76,8 +82,8 @@ def row_done(closing: Closing, identity: str) -> bool:
+ def test_one_run_takes_the_first_item_to_done_then_runs_the_next_with_no_launch_per_role(closing):
+     """The first VERIFIER ends without a verdict, so the run pauses and retries it on the next pass; meanwhile the
+     second item cannot take the one WIP slot. The first lands; the run then admits the second and runs each of its
+-    roles. (Its CLOSURE answers base-moved: a PRODUCER starts from its release baseline, which the first landing moved
+-    on; that is WORK-PREPARATION-REFILL's to change, so only that the second item's roles ran is checked here.)"""
++    roles. The first landing moved main past the second's release baseline; its scope is disjoint, so its PRODUCER is
++    revalidated onto the new main (WORK-PREPARATION-REFILL R2) and it lands too."""
+     first, second = planned(closing, "FIRST", "SECOND")
+     verifier_plan(closing, ["exit"])
+     base, pauses = closing.head(), []
+@@ -92,6 +98,249 @@ def test_one_run_takes_the_first_item_to_done_then_runs_the_next_with_no_launch_
+     assert summary["stop_reason"] == "eligible-backlog-exhausted" and "projection_diagnostics" not in summary
+     assert not closing.fx.wip_held(first.id) and not closing.fx.wip_held(second.id)
+     assert first.id in git(closing.remote, "log", "--format=%s", f"{base}..main").decode()
++    assert closing.state(second.id).stage is DONE and row_done(closing, second.id)
++    assert second.id in git(closing.remote, "log", "--format=%s", f"{base}..main").decode()
++
++
++def test_a_retargeted_candidate_is_built_and_verified_on_its_execution_baseline_and_keeps_its_release_baseline(
++        closing):
++    """WORK-PREPARATION-REFILL R2 (Founder decisions section 43): after FIRST lands, SECOND (disjoint scope, declared
++    proof) is revalidated onto the new main. Its candidate's parent, its VERIFIER's starting revision and diff base and
++    the regression gate's baseline are that recorded execution revision; its release baseline is unchanged."""
++    first, second = planned(closing, "FIRST", "SECOND")
++    release = closing.fx.loaded().context.releases.release_authorization(second.id).baseline
++
++    work_run(closing)
++
++    assert closing.state(second.id).stage is DONE
++    producer, verifier = [run for run in closing.fx.runs() if run["package"]["identity"] == second.id][:2]
++    execution = producer["package"]["execution_baseline"]
++    assert (execution["release_baseline"], execution["kind"]) == (release, "retarget")
++    moved = execution["execution_baseline"]
++    assert moved != release and producer["package"]["starting_revision"] == moved
++    assert git(closing.remote, "rev-parse", f"{verifier['head']}^").decode().strip() == moved
++    assert verifier["package"]["starting_revision"] == verifier["package"]["diff"]["base"] == moved
++    assert verifier["package"]["execution_baseline"] == execution
++    assert verifier["package"]["release_record"]["baseline"] == release
++    assert (launch_root(closing.fx.loaded().configuration) / "regression-baselines" / f"{moved}.json").exists()
++
++
++def test_an_item_whose_scope_main_changed_is_held_for_re_preparation_not_retargeted(closing):
++    """FIRST lands a change to the one file SECOND is scoped to: SECOND's PRODUCER is never started on the new main;
++    it is held `baseline-revalidation-required` and nothing is published for it."""
++    first, second = planned(closing, "FIRST", "SECOND", scopes={"SECOND": "launch-candidate.txt"})
++
++    summary = work_run(closing)
++
++    assert closing.state(first.id).stage is DONE
++    assert [run["package"]["identity"] for run in closing.fx.runs("PRODUCER")] == [first.id]
++    assert second.id in summary["authority_blocked"]
++    assert closing.state(second.id).outcome == "authority-block"
++    assert "baseline-revalidation-required: scope-proof-references-untouched: launch-candidate.txt" in json.dumps(
++        closing.fx.store.read_state("registry", "decision-inbox")[1]["open"][second.id])
++    assert second.id not in git(closing.remote, "for-each-ref", "--format=%(refname)", "refs/heads/").decode()
++
++
++def _flaky_revalidation(monkeypatch, failures: int | None) -> list[str]:
++    """Baseline revalidation that cannot fetch canonical main for its first `failures` calls (None: every call)."""
++    calls: list[str] = []
++    real = work_registry.WorkRegistry._revalidate
++
++    def flaky(self, identity):
++        calls.append(identity)
++        return None if failures is None or len(calls) <= failures else real(self, identity)
++    monkeypatch.setattr(work_registry.WorkRegistry, "_revalidate", flaky)
++    return calls
++
++
++def test_a_producer_that_cannot_fetch_canonical_main_is_retried_and_lands_with_no_founder_decision(
++        closing, monkeypatch):
++    """WORK-PREPARATION-REFILL R2 (Founder decisions section 44): canonical main cannot be fetched at the first
++    PRODUCER revalidation. The same work item gets no Founder decision and uses no attempt; the run retries it after
++    its pause and, canonical main reachable again, takes it to DONE."""
++    [item] = planned(closing, "ONLY")
++    calls = _flaky_revalidation(monkeypatch, 1)
++    pauses = []
++
++    summary = work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
++
++    assert pauses == ["producer-retry"] and calls == [item.id, item.id]
++    assert closing.state(item.id).stage is DONE and summary["authority_blocked"] == ()
++    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
++    assert closing.state(item.id).record.get("rejections", 0) == 0
++
++
++def test_canonical_main_unreachable_past_the_retries_holds_as_infrastructure_and_the_next_run_lands_it(
++        closing, monkeypatch):
++    """Past the bounded retries: a typed infrastructure hold, no Decision Inbox item, no authority block; the next
++    `work run`, canonical main reachable, takes the same work item to DONE."""
++    [item] = planned(closing, "ONLY")
++    real = work_registry.WorkRegistry._revalidate
++    _flaky_revalidation(monkeypatch, None)
++
++    summary = work_run(closing)
++
++    state = closing.state(item.id)
++    assert (state.outcome, state.record["hold_reason"]) == (
++        "infrastructure-hold", "producer-infrastructure-exhausted:canonical-main-unavailable")
++    assert summary["authority_blocked"] == () and roles(closing) == []
++    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
++    monkeypatch.setattr(work_registry.WorkRegistry, "_revalidate", real)  # canonical main reachable again
++    work_run(closing)
++    assert closing.state(item.id).stage is DONE
++
++
++def test_a_closure_that_cannot_fetch_canonical_main_is_retried_and_lands_with_no_founder_decision(
++        closing, monkeypatch):
++    """CLOSURE cannot fetch the landing remote, then cannot fetch the live plan authority (WORK-PREPARATION-REFILL R2,
++    Founder decisions section 44): each is typed infrastructure on the same accepted candidate, retried after a pause
++    with no Founder decision; once canonical main is reachable it lands, still under the live authority."""
++    [item] = planned(closing, "ONLY")
++    fetch, canonical = work_registry.RegistryClosure._fetch, work_registry.WorkRegistry._fetch
++    gate = work_registry.RegistryClosure._scope_violations
++    failures, inside = {"landing": 1, "authority": 1}, []
++
++    def landing_fetch(self, clone, candidate):
++        if failures["landing"]:
++            failures["landing"] -= 1
++            return None
++        return fetch(self, clone, candidate)
++
++    def live_main(self, repository):
++        if inside and inside[-1]:  # the landing gate's fetch of the live authority, in one outage
++            raise GitReadFailed("git fetch", repository, "network unreachable")
++        return canonical(self, repository)
++
++    def landing_gate(self, *args):
++        inside.append(bool(failures["authority"]))
++        try:
++            return gate(self, *args)
++        finally:
++            if inside.pop():
++                failures["authority"] -= 1
++    monkeypatch.setattr(work_registry.RegistryClosure, "_fetch", landing_fetch)
++    monkeypatch.setattr(work_registry.RegistryClosure, "_scope_violations", landing_gate)
++    monkeypatch.setattr(work_registry.WorkRegistry, "_fetch", live_main)
++    pauses = []
++
++    summary = work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
++
++    assert pauses == ["closure-retry", "closure-retry"] and failures == {"landing": 0, "authority": 0}
++    assert closing.state(item.id).stage is DONE and summary["authority_blocked"] == ()
++    assert closing.state(item.id).record["closure_infrastructure_retries"] == 0  # "in a row": reset by the landing
++    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
++
++
++def test_a_candidate_fetch_failure_at_closure_is_retried_never_reworked(closing, monkeypatch):
++    """CLOSURE fetches main, but the remote cannot be reached for the candidate branch (its fetch and the remote's
++    answer both fail): infrastructure (`remote-unreadable`), retried on the same accepted candidate; never a rework, so
++    no rejection and no attempt is used."""
++    [item] = planned(closing, "ONLY")
++    git_call, failing = work_registry.RegistryClosure._git, {"candidate-fetch": 1, "ls-remote": 1}
++
++    def flaky(clone, *args, check=False):
++        kind = "ls-remote" if "ls-remote" in args else \
++            "candidate-fetch" if any("refs/remotes/landing/candidate" in arg for arg in args) else None
++        if kind and failing[kind]:
++            failing[kind] -= 1
++            return False if check else ""
++        return git_call(clone, *args, check=check)
++    monkeypatch.setattr(work_registry.RegistryClosure, "_git", staticmethod(flaky))
++    pauses = []
++
++    work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
++
++    assert failing == {"candidate-fetch": 0, "ls-remote": 0}
++    assert pauses == ["closure-retry"] and closing.state(item.id).stage is DONE
++    assert closing.state(item.id).record.get("rejections", 0) == 0
++
++
++def test_a_candidate_the_remote_still_advertises_but_that_did_not_arrive_is_retried(closing, monkeypatch):
++    """The candidate fetch fails part way but the remote still advertises the branch at exactly the candidate:
++    infrastructure, retried; never a rework."""
++    [item] = planned(closing, "ONLY")
++    git_call, failing = work_registry.RegistryClosure._git, [1]
++
++    def partial(clone, *args, check=False):
++        if failing and any("refs/remotes/landing/candidate" in arg for arg in args):
++            failing.pop()
++            return False if check else ""
++        return git_call(clone, *args, check=check)
++    monkeypatch.setattr(work_registry.RegistryClosure, "_git", staticmethod(partial))
++    pauses = []
++
++    work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
++
++    assert not failing and pauses == ["closure-retry"] and closing.state(item.id).stage is DONE
++    assert closing.state(item.id).record.get("rejections", 0) == 0
++
++
++def test_one_remote_answer_decides_an_absent_candidate(closing, monkeypatch):
++    """The candidate fetch fails and the remote then answers exactly one question before it drops: that one answer
++    (the branch still at the candidate) decides; a second question, going unanswered, could otherwise read as
++    "answered without the candidate" and turn a transient failure into a rework."""
++    [item] = planned(closing, "ONLY")
++    git_call, calls = work_registry.RegistryClosure._git, []
++
++    def fetch_fails_then_remote_drops(clone, *args, check=False):
++        if any("refs/remotes/landing/candidate" in arg for arg in args) and not calls:
++            calls.append("fetch")
++            return False if check else ""
++        if "ls-remote" in args and calls and calls[0] == "fetch" and len(calls) < 3:
++            calls.append("ls-remote")
++            if len(calls) == 3:  # the second question in this CLOSURE: the remote has dropped
++                return False if check else ""
++        return git_call(clone, *args, check=check)
++    monkeypatch.setattr(work_registry.RegistryClosure, "_git", staticmethod(fetch_fails_then_remote_drops))
++    pauses = []
++
++    work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
++
++    assert calls[:2] == ["fetch", "ls-remote"] and pauses == ["closure-retry"]
++    assert closing.state(item.id).stage is DONE and closing.state(item.id).record.get("rejections", 0) == 0
++
++
++def test_a_candidate_branch_the_remote_no_longer_has_is_judged_never_retried_as_infrastructure(closing, monkeypatch):
++    """The remote answers but no longer has the candidate branch: not infrastructure, so no `remote-unreadable` loop;
++    CLOSURE reworks as before (this contract allows one attempt, so the rework ends it as a judged failure)."""
++    [item] = planned(closing, "ONLY")
++    fetch, deleted = work_registry.RegistryClosure._fetch, []
++
++    def branch_gone(self, clone, candidate):
++        if not deleted:
++            reference = candidate.locator.rpartition("#")[2].rpartition("@")[0]
++            git(closing.remote, "update-ref", "-d", f"refs/heads/{reference}")
++            deleted.append(reference)
++        return fetch(self, clone, candidate)
++    monkeypatch.setattr(work_registry.RegistryClosure, "_fetch", branch_gone)
++    pauses = []
++
++    work_run(closing, pause=lambda: pauses.append(closing.state(item.id).outcome))
++
++    state = closing.state(item.id)
++    assert deleted and "closure-retry" not in pauses
++    assert (state.outcome, state.record["hold_reason"], state.record["rejections"]) == (
++        "failure", "attempt-budget-exhausted", 1)  # judged: reworked, and this contract allows one attempt
++
++
++def test_a_closure_whose_remote_stays_unreadable_holds_as_infrastructure_visibly_and_never_for_the_founder(
++        closing, monkeypatch):
++    """Past the bounded CLOSURE retries: INFRASTRUCTURE_HOLD on the same accepted candidate, named by the run summary,
++    no Decision Inbox item; the next run, the remote readable again, lands it."""
++    [item] = planned(closing, "ONLY")
++    fetch = work_registry.RegistryClosure._fetch
++    monkeypatch.setattr(work_registry.RegistryClosure, "_fetch", lambda self, clone, candidate: None)
++
++    summary = work_run(closing)
++
++    state = closing.state(item.id)
++    assert (state.stage.value, state.outcome, state.record["hold_reason"]) == (
++        "ACCEPT", "infrastructure-hold", "closure-infrastructure-exhausted:remote-unreadable")
++    assert summary["authority_blocked"] == () and summary["infrastructure_held"] == (item.id,)
++    assert not closing.fx.store.read_state("registry", "decision-inbox")[1].get("open")
++    monkeypatch.setattr(work_registry.RegistryClosure, "_fetch", fetch)
++    work_run(closing)
++    assert closing.state(item.id).stage is DONE
+ 
+ 
+ class Crash(BaseException):
+diff --git a/tests/composition/test_work_registry.py b/tests/composition/test_work_registry.py
+index cfc0869..ff06957 100644
+--- a/tests/composition/test_work_registry.py
++++ b/tests/composition/test_work_registry.py
+@@ -19,8 +19,9 @@ from alienintent.evidence_learning.domain.records import ref_from_document
+ from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+ from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+ from alienintent.invocation_runtime.domain.runtime import owner_token
+-from tests.context_assembly.test_initial_compilation import PROJECT, REPO, Harness, Project, project_clone
++from tests.context_assembly.test_initial_compilation import PROJECT, REPO, Harness, Project, git, project_clone
+ from tests.context_assembly.test_readiness_consumer import fixture_package
++from alienintent.context_assembly.domain.work_identity import GitReadFailed
+ from tests.context_assembly.test_work_identity_service import commit_file
+ 
+ 
+@@ -330,10 +331,13 @@ class ReadyBoard(Linked):
+         return registry
+ 
+     def packet(self, item, *, payload: dict | None = None, raw: str | None = None) -> bytes:
++        """The packet; with `proof` set, also its targeted proof block (WORK-PREPARATION-REFILL R2)."""
+         payload = payload(item) if callable(payload) else payload
+         text = raw if raw is not None else json.dumps(payload or contract_payload(item.id), indent=1)
++        proof = getattr(self, "proof", None)
++        block = "" if proof is None else f"\n```json alienintent-proof\n{json.dumps({'targeted_tests': proof})}\n```\n"
+         return (f"# Work unit: {item.label}\n\nidentity: not-this-one\n\n```json alienintent-contract\n{text}\n```\n"
+-                .encode())
++                f"{block}".encode())
+ 
+     def ready(self, label: str, *, at: str, priority: str | None = "P1", payload=None, raw: str | None = None,
+               assess: bool = True, link: bool = True):
+@@ -614,6 +618,8 @@ def _registry_run(board, tmp_path, label: str, *, record: dict | None, release:
+     host.write_text(json.dumps({"wipLimit": 1}))
+     registry = WorkRegistry(project_configuration(board.document, PROJECT), transport=board.github,
+                             host_configuration=host)
++    git(board.clone, "push", "-q", "origin", "main")  # the packet commit is the baseline: on canonical main (WPR R2)
++    assert registry._canonical_main(REPO) == item.pointer.commit
+     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
+     worker = ScriptedWorker(artifacts, {item.id: ["success"]})
+     coordinator = registry.coordinator(worker, artifacts)
+@@ -810,6 +816,12 @@ class PlanBoard(ReadyBoard):
+         self.document["projects"][PROJECT]["github"]["landing"] = True
+         self.configuration_file = root / "project.json"
+         self.configuration_file.write_text(json.dumps(self.document))
++        # Canonical main is the remote's (WORK-PREPARATION-REFILL R2): every commit on `main` is pushed, as a landing.
++        hook = self.clone / ".git" / "hooks" / "post-commit"
++        hook.parent.mkdir(exist_ok=True)
++        hook.write_text('#!/bin/sh\n'
++                        '[ "$(git rev-parse --abbrev-ref HEAD)" = main ] && git push -q origin main\nexit 0\n')
++        hook.chmod(0o755)
+         self.registry = self.loaded()
+         self.links = self.registry.links
+ 
+@@ -889,6 +901,237 @@ def test_a_new_plan_approval_stops_an_item_released_under_the_old_one(plan_board
+ 
+ 
+ 
++def test_one_baseline_revalidation_reads_canonical_main_once_and_judges_every_fact_at_that_sha(plan_board,
++                                                                                                monkeypatch):
++    """WORK-PREPARATION-REFILL R2 (Founder decisions section 43): canonical main moves during one revalidation, first to
++    an unrelated commit, then to a plan that no longer grants the item. One fetched SHA serves the plan authority, the
++    changed paths and the resulting starting revision: the item is retargeted to the first; judged at the second it
++    goes back to preparation."""
++    plan_board.proof = ["tests/composition/test_fixture.py"]
++    item = plan_board.derived("PD-SNAP", plan_board.approve())
++    assert plan_board.registry.release.release(item.id).answer is None
++    baseline = plan_board.registry.context.releases.release_authorization(item.id).baseline
++    first = commit_file(plan_board.clone, "main", "docs/unrelated.md", b"unrelated\n")
++    second = commit_file(plan_board.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
++        dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))
++    registry, reads = plan_board.loaded(), iter([first, second])
++    calls = []
++    monkeypatch.setattr(registry, "_canonical_main", lambda repository: calls.append(repository) or next(reads))
++    release, decision = registry._revalidate(item.id)
++    assert (calls, release, decision.kind, decision.revision) == ([REPO], baseline, "retarget", first)
++    later = plan_board.loaded()
++    monkeypatch.setattr(later, "_canonical_main", lambda repository: second)
++    release, decision = later._revalidate(item.id)
++    assert (decision.kind, decision.revision) == ("reprepare", baseline)
++    assert [name for name, passed, _ in decision.checks if not passed] == ["plan-authority"]
++
++
++def test_the_live_authority_is_canonical_main_fetched_from_the_remote_not_the_local_branch(plan_board):
++    """Current canonical main is the default branch as fetched from the remote (WORK-PREPARATION-REFILL R2): a plan
++    on the remote and not in the clone's local `main` is the authority; a commit only on local `main` is not."""
++    pushed = commit_file(plan_board.clone, "main", PLAN_PATH, plan_text())
++    git(plan_board.clone, "reset", "-q", "--hard", "HEAD~1")
++    assert plan_board.loaded().plan_approval.current().commit == pushed
++    (plan_board.clone / PLAN_PATH).parent.mkdir(parents=True, exist_ok=True)
++    (plan_board.clone / PLAN_PATH).write_bytes(plan_text(note=" local only"))
++    git(plan_board.clone, "add", PLAN_PATH)
++    git(plan_board.clone, "-c", "core.hooksPath=/dev/null", "-c", "user.name=F", "-c", "user.email=f@example.invalid",
++        "commit", "-qm", "local only")
++    assert plan_board.loaded().plan_approval.current().commit == pushed
++
++
++def test_a_landing_that_only_the_remote_has_never_blocks_the_next_release_or_its_dispatch(plan_board, tmp_path):
++    """WORK-PREPARATION-REFILL R2: after a landing the remote's main is ahead of the clone's local branch, which no
++    factory step moves. The next inherited release takes that canonical main as its baseline and checks it against
++    canonical main, and the dispatch gate admits it; nothing has to pull the clone."""
++    from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
++    from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
++    item = plan_board.derived("PD-AHEAD", plan_board.approve())
++    other = tmp_path / "elsewhere"
++    git(tmp_path, "clone", "-q", str(plan_board.root / "remote.git"), str(other))
++    landed = commit_file(other, "main", "docs/landed.md", b"landed\n")
++    git(other, "push", "-q", "origin", "main")
++    registry = plan_board.loaded()
++    assert registry.release.release(item.id).answer is None
++    assert registry.context.releases.release_authorization(item.id).baseline == landed
++    host = tmp_path / "factory-director-host.json"
++    host.write_text(json.dumps({"wipLimit": 1}))
++    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
++    worker = ScriptedWorker(artifacts, {item.id: ["success"]})
++    plan_board.loaded(host).coordinator(worker, artifacts).launch(item.id)
++    assert worker.dispatched == [item.id]
++
++
++def test_an_assessment_never_skips_the_plan_check_on_an_unknown_tip_and_runs_once_main_is_reachable(
++        plan_board, monkeypatch):
++    """A failed fetch of canonical main is not "no plan": assessment holds as typed infrastructure, calls no Agent
++    Ready and writes nothing, never skipping the plan-authority check (Founder decisions section 44); once canonical
++    main is reachable the same item is assessed READY."""
++    from alienintent.composition.work_registry import WorkRegistry
++    from alienintent.context_assembly.application.packet_assessment import CANONICAL_MAIN_UNAVAILABLE
++    digest = plan_board.approve()
++    changes = {"release_policy": "automatic-on", "authority_issuer": "plan-authority:" + digest,
++               "authority_references": [f"{PLAN_PATH} obligation:FIXTURE"],
++               "authorized_scope": ["src/alienintent/composition/x.py"]}
++    item = plan_board.ready("PD-ASSESS", at="2026-10-09T10:00:00Z", link=False, assess=False,
++                            payload=lambda i: satisfiable_payload(i.id, **changes))
++    record = plan_board.registry.records.show(item.id)
++    fetch = WorkRegistry._fetch
++
++    def unreachable(self, repository):
++        raise GitReadFailed("git fetch", repository, "network unreachable")
++    monkeypatch.setattr(WorkRegistry, "_fetch", unreachable)
++    held = plan_board.loaded().assessment.assess(item.id, (record.packet, item.pointer.commit))
++    assert held.reason_code == CANONICAL_MAIN_UNAVAILABLE
++    assert not plan_board.registry.assessment.consumer.history(item.id)
++    monkeypatch.setattr(WorkRegistry, "_fetch", fetch)
++    plan_board.loaded().assessment.assess(item.id, (record.packet, item.pointer.commit))
++    [entry] = plan_board.registry.assessment.consumer.history(item.id)
++    assert entry["outcome"]["disposition"] == "READY"
++
++
++def test_an_outage_never_makes_a_released_plan_derived_item_ineligible(plan_board, tmp_path, monkeypatch):
++    """Eligibility reads the plan at the last fetched canonical main, a local read: a fetch failure during a run never
++    turns a released plan-derived item into "not released" (each PRODUCER and landing re-read canonical main fresh)."""
++    from alienintent.composition.work_registry import WorkRegistry
++    from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
++    from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
++    item = plan_board.derived("PD-OUTAGE", plan_board.approve())
++    assert plan_board.registry.release.release(item.id).answer is None
++
++    def unreachable(self, repository):
++        raise GitReadFailed("git fetch", repository, "network unreachable")
++    monkeypatch.setattr(WorkRegistry, "_fetch", unreachable)
++    host = tmp_path / "factory-director-host.json"
++    host.write_text(json.dumps({"wipLimit": 1}))
++    artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")
++    worker = ScriptedWorker(artifacts, {item.id: ["success"]})
++    plan_board.loaded(host).coordinator(worker, artifacts).start()
++    assert worker.dispatched == [item.id]
++
++
++def test_git_that_cannot_answer_an_ancestry_question_is_unknown_never_diverged(plan_board):
++    from alienintent.composition.work_registry import _is_ancestor
++    head = git(plan_board.clone, "rev-parse", "HEAD").decode().strip()
++    assert (_is_ancestor(plan_board.clone, head, head), _is_ancestor(plan_board.clone, "0" * 40, head)) == (True, None)
++
++
++def test_a_baseline_commit_canonical_main_no_longer_has_is_off_history_never_unavailable(plan_board, monkeypatch):
++    """A release or execution baseline whose object is gone from the clone (force-push, then gc) is not
++    infrastructure: revalidation holds it for preparation and a re-prepared attempt is off canonical main."""
++    from dataclasses import replace as replaced
++    plan_board.proof = ["tests/composition/test_fixture.py"]
++    item = plan_board.derived("PD-GONE", plan_board.approve())
++    assert plan_board.registry.release.release(item.id).answer is None
++    registry = plan_board.loaded()
++    real = registry.context.releases.release_authorization
++    monkeypatch.setattr(registry.context.releases, "release_authorization",
++                        lambda identity: replaced(real(identity), baseline="f" * 40))
++    release, decision = registry._revalidate(item.id)
++    assert (decision.kind, [name for name, passed, _ in decision.checks if not passed]) == (
++        "reprepare", ["baseline-on-main"])
++    assert registry._on_canonical_main("f" * 40) is False
++
++
++def test_containment_reads_the_last_fetched_main_never_a_newer_tip(plan_board, monkeypatch):
++    """PRODUCER containment judges protected paths at the last fetched canonical main; a plan that lands later is
++    seen by the next fetch (CLOSURE's live gate re-checks before any landing), never mid-attempt."""
++    from alienintent.composition.work_registry import WorkRegistry
++    plan_board.approve()
++    registry = plan_board.loaded()
++    assert registry._canonical_main(REPO) is not None
++    fetches = []
++    monkeypatch.setattr(WorkRegistry, "_fetch", lambda self, repository: fetches.append(repository))
++    assert registry.protected_paths() == tuple(PLAN_SCOPE["protected_paths"]) and fetches == []
++
++
++def test_a_local_git_failure_reading_the_last_fetched_main_is_no_answer_never_a_crash(plan_board, monkeypatch):
++    """The last fetched main is a local read: a git timeout there answers None, never an exception escaping into
++    containment or the READY snapshot."""
++    import subprocess
++    from alienintent.composition import work_registry as module
++    registry = plan_board.loaded()
++    real = module.subprocess.run
++
++    def slow(args, *rest, **options):
++        if list(args[:2]) == ["git", "rev-parse"]:
++            raise subprocess.TimeoutExpired(args, 60)
++        return real(args, *rest, **options)
++    monkeypatch.setattr(module.subprocess, "run", slow)
++    assert registry._fetched_main(REPO) is None and registry._fetched_authority() is None
++
++
++def test_a_fetched_canonical_main_reaches_a_clone_of_the_clone(plan_board, tmp_path):
++    """A worker's clone is `git clone --no-local` of the configured clone, which carries local branches only: the
++    fetched canonical main is kept on the local branch `alienintent/canonical-main` too, so a worker can check it out
++    (WORK-PREPARATION-REFILL R2)."""
++    other = tmp_path / "elsewhere"
++    git(tmp_path, "clone", "-q", str(plan_board.root / "remote.git"), str(other))
++    moved = commit_file(other, "main", "docs/elsewhere.md", b"elsewhere\n")
++    git(other, "push", "-q", "origin", "main")
++    assert plan_board.loaded()._canonical_main(REPO) == moved
++    worker = tmp_path / "worker"
++    git(tmp_path, "clone", "-q", "--no-local", str(plan_board.clone), str(worker))
++    git(worker, "checkout", "-q", "--detach", moved)
++
++
++def test_protected_paths_survive_a_failed_fetch_at_the_last_fetched_canonical_main(plan_board, monkeypatch):
++    """A transient fetch failure never turns a candidate's containment into NO_PLAN_AUTHORITY (a false rejection):
++    the protected paths are read at the last fetched canonical main; no plan was ever fetched -> None."""
++    from alienintent.composition.work_registry import WorkRegistry
++    plan_board.approve()
++    registry = plan_board.loaded()
++    assert registry.protected_paths() == tuple(PLAN_SCOPE["protected_paths"])
++
++    def unreachable(self, repository):
++        raise GitReadFailed("git fetch", repository, "network unreachable")
++    monkeypatch.setattr(WorkRegistry, "_fetch", unreachable)
++    assert plan_board.loaded().plan_approval.current() is None
++    assert plan_board.loaded().protected_paths() == tuple(PLAN_SCOPE["protected_paths"])
++
++
++def test_a_re_prepared_attempt_keeps_its_recorded_baseline_only_while_it_is_on_canonical_main(plan_board, tmp_path):
++    """A PRODUCER attempt re-prepared after a crash reuses its recorded execution baseline only while canonical main
++    still contains it; after a rewrite it is held, never run ahead of canonical main (WORK-PREPARATION-REFILL R2)."""
++    from types import SimpleNamespace
++    from alienintent.composition.work_registry import LaunchPreparation
++    registry = plan_board.loaded()
++    recorded = commit_file(plan_board.clone, "main", "docs/recorded.md", b"recorded\n")  # pushed: canonical main
++    context = SimpleNamespace(execution_baseline=lambda identity, key: {"execution_baseline": recorded},
++                              store=SimpleNamespace(read_state=lambda profile, key: (0, {})), store_profile="registry")
++    preparation = LaunchPreparation(context, tmp_path, REPO, baseline=lambda identity: None,
++                                    on_main=registry._on_canonical_main)
++    invocation = SimpleNamespace(work_identity="w", correlation_id="launch:w:0")
++    assert preparation._revalidated(invocation) is None
++    git(plan_board.clone, "checkout", "-q", "-b", "rewrite", f"{recorded}~1")
++    rewritten = commit_file(plan_board.clone, "rewrite", "docs/rewrite.md", b"rewrite\n")
++    git(plan_board.clone, "push", "-q", "--force", "origin", f"{rewritten}:refs/heads/main")
++    held = preparation._revalidated(invocation)
++    assert held.kind == "authority-block" and "baseline-revalidation-required: baseline-on-main" in held.findings[0]
++    unreadable = LaunchPreparation(context, tmp_path, REPO, baseline=lambda identity: None, on_main=lambda sha: None)
++    # Infrastructure, never an authority hold or a Founder decision (Founder decisions section 44).
++    assert unreadable._revalidated(invocation).kind == "canonical-main-unavailable"
++
++
++@pytest.mark.parametrize("move", ["backward", "rewritten"])
++def test_an_item_whose_baseline_canonical_main_no_longer_contains_is_never_run_from_that_baseline(plan_board, move):
++    """WORK-PREPARATION-REFILL R2 (Founder, 2026-10-11): canonical main moved back to an ancestor of the release
++    baseline, or was rewritten past it. Running from the baseline would carry commits main no longer has, so the item
++    goes back to preparation."""
++    plan_board.proof = ["tests/composition/test_fixture.py"]
++    item = plan_board.derived("PD-BACK", plan_board.approve())
++    assert plan_board.registry.release.release(item.id).answer is None
++    baseline = plan_board.registry.context.releases.release_authorization(item.id).baseline
++    target = f"{baseline}~1"
++    if move == "rewritten":
++        git(plan_board.clone, "checkout", "-q", "-b", "rewrite", target)
++        target = commit_file(plan_board.clone, "rewrite", "docs/rewrite.md", b"rewrite\n")
++    git(plan_board.clone, "push", "-q", "--force", "origin", f"{target}:refs/heads/main")
++    release, decision = plan_board.loaded()._revalidate(item.id)
++    assert (release, decision.kind, decision.revision) == (baseline, "reprepare", baseline)
++    assert [name for name, passed, _ in decision.checks if not passed] == ["baseline-on-main"]
++
++
+ # --- VERIFICATION-OUTCOME-INTEGRITY: a worker read of a checkout file says "absent" only when it is proven ---------
+ 
+ @pytest.mark.parametrize("exit_status, error", [(3, FileNotFoundError), (1, OSError), (127, OSError)])
+diff --git a/tests/composition/test_worker_launch.py b/tests/composition/test_worker_launch.py
+index 86f7288..e2bea53 100644
+--- a/tests/composition/test_worker_launch.py
++++ b/tests/composition/test_worker_launch.py
+@@ -97,9 +97,12 @@ record = {{"argv": sys.argv, "stdin": text, "env": dict(os.environ), "cwd": os.g
+           "own_context": own.stdout, "other_context": other.stdout}}
+ records.mkdir(exist_ok=True)
+ (records / f"{{role}}-{{len(list(records.iterdir()))}}.json").write_text(json.dumps(record))
+-if role == "PRODUCER":
+-    Path("launch-candidate.txt").write_text(f"candidate {{package['identity']}}\n")
+-    subprocess.run(["git", "add", "launch-candidate.txt"], check=True)
++if role == "PRODUCER":  # the first `*-candidate.txt` of its scope, else launch-candidate.txt
++    target = next((path for path in package["allowed_scope"]["authorized_scope"] if path.endswith("-candidate.txt")),
++                  "launch-candidate.txt")
++    Path(target).parent.mkdir(parents=True, exist_ok=True)
++    Path(target).write_text(f"candidate {{package['identity']}}\n")
++    subprocess.run(["git", "add", target], check=True)
+     subprocess.run(["git", "-c", "commit.gpgsign=false", "commit", "-qm", "candidate"], check=True)
+     review = lines[next(i for i, line in enumerate(lines) if line.endswith("to this file:")) + 1]
+     if not (mode.exists() and mode.read_text() == "no-review"):
+@@ -151,10 +154,12 @@ class Launch(ReadyBoard):
+     def __init__(self, root: Path, monkeypatch) -> None:
+         super().__init__(root)
+         self.root = root
++        self.proof = ["tests/test_launch_proof.py"]  # every packet declares its targeted proof (WPR R2)
+         seed_verification_runner(self.clone)
+         git(self.clone, "add", *VERIFICATION)
+         git(self.clone, "-c", "user.name=Fixture", "-c", "user.email=fixture@example.invalid", "-c",
+             "commit.gpgsign=false", "commit", "-qm", "feature-regression runner")
++        git(self.clone, "push", "-q", "origin", "main")  # canonical main holds the runner
+         self.configuration_file = root / "project.json"
+         self.configuration_file.write_text(json.dumps(self.document))
+         self.host = root / "factory-director-host.json"
+@@ -202,9 +207,13 @@ class Launch(ReadyBoard):
+             [entry] = [a for a in self.registry.assessment.consumer.history(item.id)
+                        if a["raw_ref"] == asdict(item.assessment_ref)]
+             assert self.registry.authorization.authorize(item.id, item.pointer.commit, entry["attempt_id"],
+-                                                         self.main(), QUOTE).answer is None
++                                                         self.canonical(), QUOTE).answer is None
+         return self.stored(label)
+ 
++    def canonical(self) -> str:
++        """Current canonical main: the remote's main, the baseline a release records (WPR R2)."""
++        return git(self.root / "remote.git", "rev-parse", "main").decode().strip()
++
+     def main(self) -> str:
+         return git(self.clone, "rev-parse", "main").decode().strip()
+ 
+@@ -248,7 +257,7 @@ def held(answer: str, reason: str, *refs: str) -> None:
+ def test_one_step_per_launch_each_role_gets_its_package_model_and_starting_revision(fx):
+     """Checks 1-4 and 6-8 over a PRODUCER launch, a VERIFIER launch and a launch at ACCEPT."""
+     item = fx.authorized("UNIT")
+-    baseline = fx.main()  # the release record's starting revision
++    baseline = fx.canonical()  # the release record's starting revision: canonical main
+     other = fx.authorized("OTHER")  # Released too, eligible and never run by `work launch UNIT`.
+     fx.store.commit("registry", f"release:{other.id}", 0, {"identity": other.id, "source": ReleaseSource.EXPLICIT_HUMAN})
+     later = commit_file(fx.clone, "main", "docs/later.md", b"a commit added after the release record\n")
+@@ -269,7 +278,8 @@ def test_one_step_per_launch_each_role_gets_its_package_model_and_starting_revis
+         str(fx.codex), "exec", "--ephemeral", "--json", "--sandbox", "danger-full-access", "-C", str(workspace),
+         "--model", "model-a", "-"]
+     assert producer["stdin"].startswith(f"You are the PRODUCER for AlienIntent work item {item.id}")
+-    # Check 3: the worktree starts at the release record's baseline; the later default-branch commit is not in it.
++    # Check 3: the worktree starts at the release record's baseline; the later commit on the clone's local main, which
++    # canonical (remote) main lacks, is never a starting revision (WORK-PREPARATION-REFILL R2).
+     assert producer["head"] == baseline != later == fx.main()
+     # Check 1: the package at the stated path, outside the worktree, is the PRODUCER's for this attempt.
+     package = producer["package"]
+@@ -725,23 +735,27 @@ def revision_of(state) -> str:
+     return state.candidate.locator.rpartition("@")[2]
+ 
+ 
+-def test_an_item_released_under_one_plan_revision_does_not_land_after_another_is_approved(closing):
++def test_an_item_released_under_one_plan_revision_does_not_land_after_another_is_approved(closing, monkeypatch):
+     """PLAN-AUTHORITY-INHERITANCE / PLAN-TIP-AUTHORITY-RUNTIME-FIX: released under plan D1 and taken to ACCEPT, then
+     the Founder's plan D2, which no longer grants obligation FIXTURE, lands on main's tip and is approved. Release admission guards only the PRODUCER, so
+     CLOSURE's landing gate checks the contract against the LIVE authority:
+     held as a scope violation carrying the owner-decision reason, no order journaled, nothing pushed, and the one
+-    owner-decision attention item raised."""
++    owner-decision attention item raised. D2 lands after CLOSURE read its landing base (the race the gate exists for):
++    only the authority read sees it."""
+     from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH
+     from tests.composition.test_work_registry import PLAN_QUOTE, PLAN_SCOPE, plan_text
+     fx = closing.fx
+     approval = fx.registry.plan_approval
+     first = approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text()), PLAN_QUOTE).content_digest
++    git(fx.clone, "push", "-q", "origin", "main")  # the live authority is canonical main's plan
+     item = closing.accepted(release_policy="automatic-on", authority_issuer="plan-authority:" + first,
+                             authority_references=["README.md", f"{PLAN_PATH} obligation:FIXTURE"],
+                             authorized_scope=["launch-candidate.txt"])
+-    git(fx.clone, "push", "-q", "origin", "main")  # the landing base: the release baseline, so nothing else differs
+-    assert approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
+-        dict(PLAN_SCOPE["obligations"][0], label="OTHER")]))), PLAN_QUOTE).answer is None
++    # The landing base is the release baseline (canonical main), so nothing else differs.
++    second = commit_file(fx.clone, "main", PLAN_PATH, plan_text(dict(PLAN_SCOPE, obligations=[
++        dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))
++    assert approval.approve(second, PLAN_QUOTE).answer is None
++    monkeypatch.setattr(work_registry.WorkRegistry, "_canonical_main", lambda self, repository: second)
+ 
+     closing.close(item.id)
+ 
+@@ -1081,8 +1095,10 @@ def test_a_request_without_board_update_crashing_after_the_push_recovers_without
+ 
+ @pytest.mark.parametrize("ambiguity", ["fast-forwarded", "unreadable"])
+ def test_an_ambiguous_landing_holds_with_facts_and_is_settled_before_any_later_session(closing, monkeypatch, ambiguity):
+-    """Check 8: the candidate already in the remote head, or an unreadable remote: a hold naming the facts, no push;
+-    after `authorize`, the next launch settles the earlier order before any session."""
++    """Check 8: the candidate already in the remote head: a hold naming the facts, no push; after `authorize`, the
++    next launch settles the earlier order before any session. An unreadable remote is infrastructure, not ambiguity
++    (WORK-PREPARATION-REFILL R2, Founder decisions section 44): no hold for the Founder and no push; once the remote
++    is readable the next launch settles the earlier order and lands, with no decision."""
+     fx = closing.fx
+     item = closing.accepted()
+     other = fx.authorized("OTHER")
+@@ -1099,18 +1115,25 @@ def test_an_ambiguous_landing_holds_with_facts_and_is_settled_before_any_later_s
+     closing.close(other.id)
+     state = closing.state(item.id)
+     [order] = closing.orders(item.id)
++    if ambiguity == "unreadable":
++        assert (state.outcome, state.record["closure_failure"]) == ("closure-retry", "remote-unreadable")
++        assert closing.pushes == []
++        assert item.id not in (fx.store.read_state("registry", "decision-inbox")[1].get("open") or {})
++        monkeypatch.setattr(RegistryClosure, "_url", url)
++        sessions = len(fx.runs("CLOSURE"))
++        closing.close(item.id)  # the earlier order is settled before the one new session
++        assert len(fx.runs("CLOSURE")) == sessions + 1
++        assert closing.pushes == ["pushed"] and closing.state(item.id).stage is LifecycleStage.DONE
++        return
+     assert (state.outcome, state.record["hold_reason"]) == ("authority-block", "closure-hold:landing-ambiguous")
+     assert closing.pushes == []
+     facts = [order["order"][k] for k in ("base", "merge", "record")]
+     escalation = json.dumps(fx.store.read_state("registry", "decision-inbox")[1]["open"][item.id])
+     assert all(fact in escalation for fact in facts)
+-    if ambiguity == "unreadable":
+-        monkeypatch.setattr(RegistryClosure, "_url", url)
+     assert fx.loaded().decide(item.id, "authorize", QUOTE)["answer"] is None
+     sessions = len(fx.runs("CLOSURE"))
+     closing.close(item.id)
+-    assert len(fx.runs("CLOSURE")) == sessions + (0 if ambiguity == "fast-forwarded" else 1)
+-    assert closing.pushes == ([] if ambiguity == "fast-forwarded" else ["pushed"])
++    assert len(fx.runs("CLOSURE")) == sessions and closing.pushes == []
+ 
+ 
+ def _ancestors(closing: Closing, base: str, revision: str) -> list[str]:
+@@ -1121,9 +1144,12 @@ def _ancestors(closing: Closing, base: str, revision: str) -> list[str]:
+ @pytest.mark.parametrize("moves", [1, 3])
+ def test_main_moving_to_an_ancestor_rebuilds_the_order_at_most_three_times(closing, monkeypatch, moves):
+     """Check 12: each move to a proper ancestor of the candidate journals a new order; a third move holds."""
++    start = closing.head()
+     for index in range(3):
+         commit_file(closing.fx.clone, "main", f"docs/history-{index}.md", b"history\n")
++    git(closing.fx.clone, "push", "-q", "origin", "main")  # the candidate is built on canonical main (WPR R2)
+     item = closing.accepted()
++    git(closing.remote, "update-ref", "refs/heads/main", start)  # the landing base: before that history
+     base, revision = closing.head(), revision_of(closing.state(item.id))
+     steps = iter(_ancestors(closing, base, revision)[:moves])
+     original = LandingAuthority.land
+@@ -2382,7 +2408,7 @@ def test_an_overtaken_write_whose_read_back_fails_is_still_reowed(closing, monke
+ 
+ def test_the_verifier_is_told_the_gate_result_and_not_to_run_the_whole_suite(fx):
+     item = fx.authorized("UNIT")
+-    baseline = fx.main()
++    baseline = fx.canonical()  # the release baseline: canonical main
+     fx.launch(item.id)
+     revision = fx.loaded().coordinator(None, None).state(item.id).candidate.locator.rpartition("@")[2]
+     fx.launch(item.id)
+diff --git a/tests/context_assembly/test_baseline_revalidation.py b/tests/context_assembly/test_baseline_revalidation.py
+new file mode 100644
+index 0000000..ed1df93
+--- /dev/null
++++ b/tests/context_assembly/test_baseline_revalidation.py
+@@ -0,0 +1,73 @@
++"""Baseline revalidation (WORK-PREPARATION-REFILL R2, spec 3.8; Founder decisions sections 39 and 43): "Never silently
++retarget an assessed Work Item onto changed code. Revalidate it first." Commits and paths are TEST DATA."""
++from __future__ import annotations
++
++import pytest
++
++from alienintent.context_assembly.domain.baseline_revalidation import (
++    ADVANCED, BEHIND, DIVERGED, PROCEED, REPREPARE, RETARGET, BaselineDecision, reference_paths, revalidate)
++
++BASE, MAIN = "a" * 40, "b" * 40
++GUARDED = ("src/pkg/module.py", "src/pkg/folder", "tests/pkg/test_module.py")
++
++
++def decide(changed=("src/other.py",), guarded=GUARDED, reasons=(), proof=True, main=MAIN,
++           relation=ADVANCED, errors=()) -> BaselineDecision:
++    return revalidate(BASE, main, relation, changed, guarded, reasons, proof, errors)
++
++
++def test_unchanged_main_proceeds_at_the_assessed_baseline_with_no_checks():
++    assert decide(main=BASE) == BaselineDecision(PROCEED, BASE, ())
++
++
++@pytest.mark.parametrize("relation", [BEHIND, DIVERGED])
++def test_main_that_no_longer_contains_the_baseline_goes_back_to_preparation_and_never_runs_ahead_of_main(relation):
++    """Main moved backward (an ancestor of the baseline) or was rewritten: the baseline holds commits canonical main no
++    longer has, so it is never executed from (Founder, 2026-10-11)."""
++    decision = decide(relation=relation, changed=())
++    assert (decision.kind, decision.revision) == (REPREPARE, BASE)
++    assert [(name, passed) for name, passed, _ in decision.checks] == [("baseline-on-main", False)]
++
++
++def test_advanced_main_that_touches_nothing_guarded_is_retargeted_with_its_checks_recorded():
++    decision = decide()
++    assert (decision.kind, decision.revision) == (RETARGET, MAIN)
++    assert [(name, passed) for name, passed, _ in decision.checks] == [
++        ("plan-authority", True), ("proof-declared", True), ("packet-readable", True),
++        ("scope-proof-references-untouched", True)]
++
++
++@pytest.mark.parametrize("change", [
++    pytest.param({"changed": ("src/pkg/module.py",)}, id="scope-file"),
++    pytest.param({"changed": ("tests/pkg/test_module.py",)}, id="proof-file"),
++    pytest.param({"changed": ("src/pkg/folder/inner.py",)}, id="under-a-directory-entry"),
++    pytest.param({"changed": ("src/pkg",)}, id="over-a-guarded-entry"),
++    pytest.param({"reasons": ("owner-decision-required: outside obligation FIXTURE",)}, id="outside-authority"),
++    pytest.param({"proof": False}, id="no-proof-set"),
++    pytest.param({"changed": ("src/pkg/folder/inner.py",), "guarded": ("src/pkg/folder/",)},
++                 id="directory-entry-slash"),
++    pytest.param({"changed": ("docs/x.md",), "guarded": ("./docs/x.md",)}, id="dotted-entry"),
++    pytest.param({"guarded": ("the launch module",)}, id="entry-not-a-path"),
++    pytest.param({"guarded": ("src/*.py",)}, id="entry-a-glob"),
++    pytest.param({"errors": ("mutations: each mutation needs exactly edits, name, path, tests",)},
++                 id="packet-unreadable"),
++])
++def test_anything_that_cannot_be_revalidated_goes_back_to_preparation_at_the_assessed_baseline(change):
++    decision = decide(**change)
++    assert (decision.kind, decision.revision) == (REPREPARE, BASE)
++    assert not all(passed for _, passed, _ in decision.checks)
++
++
++def test_a_sibling_path_with_a_shared_prefix_is_not_guarded():
++    assert decide(changed=("src/pkg/module.pyc", "src/pkg/folder2/x.py")).kind == RETARGET
++
++
++def test_a_reference_guards_its_path_and_prose_is_kept_whole_so_it_holds():
++    """`<path> obligation:<label>` guards the path; the canonical plan is judged by the authority check instead; prose
++    is kept whole, is not a path and holds (never truncated to its first word)."""
++    plan = "docs/plan.md"
++    references = (f"{plan} obligation:FIXTURE", "docs/x.diff", "src/a.py obligation:OTHER",
++                  "SF-REQ-013 amendment 2026-09-22")
++    assert reference_paths(references, plan) == ("docs/x.diff", "src/a.py", "SF-REQ-013 amendment 2026-09-22")
++    decision = decide(changed=(), guarded=reference_paths(references, plan))
++    assert decision.kind == REPREPARE and "not a path: SF-REQ-013 amendment 2026-09-22" in decision.checks[-1][2]
+diff --git a/tests/context_assembly/test_inherited_release.py b/tests/context_assembly/test_inherited_release.py
+index f36950a..beb0c4b 100644
+--- a/tests/context_assembly/test_inherited_release.py
++++ b/tests/context_assembly/test_inherited_release.py
+@@ -77,6 +77,30 @@ def test_an_item_prepared_under_an_older_plan_revision_is_revalidated_and_releas
+     assert package_evidence["plan"] == {"commit": tip, "content_digest": live, "prepared_from": older}
+ 
+ 
++def test_a_fetch_failure_writes_nothing_raises_no_owner_decision_and_the_same_item_is_released_on_retry(
++        fx, monkeypatch):
++    """WORK-PREPARATION-REFILL R2 (Founder decisions section 44: "Infrastructure failure is not an owner decision"):
++    canonical main cannot be fetched, twice; each answer is typed infrastructure, nothing is written, no owner decision
++    is raised and no last-known tip is used. Once canonical main is reachable the same work item is released."""
++    from alienintent.composition.work_registry import WorkRegistry
++    from alienintent.context_assembly.application.inherited_release import CANONICAL_MAIN_UNAVAILABLE
++    from alienintent.context_assembly.domain.work_identity import GitReadFailed
++    item = fx.derived("PD-FETCH", fx.approve())
++    fetch = WorkRegistry._fetch
++
++    def unreachable(self, repository):
++        raise GitReadFailed("git fetch", repository, "network unreachable")
++    monkeypatch.setattr(WorkRegistry, "_fetch", unreachable)
++    before = state(fx, item.id)
++    for _ in range(2):
++        result = fx.loaded().release.release(item.id)
++        assert (result.answer, result.evidence_ref) == (CANONICAL_MAIN_UNAVAILABLE, None)
++    assert state(fx, item.id) == before and owner_decisions(fx, item.id) == []
++    monkeypatch.setattr(WorkRegistry, "_fetch", fetch)
++    assert fx.loaded().release.release(item.id).answer is None
++    assert state(fx, item.id)[0] is not None and owner_decisions(fx, item.id) == []
++
++
+ @pytest.mark.parametrize("case", ["released", "held", "explicit", "older-plan"])
+ def test_each_refusal_answers_its_code_and_writes_nothing(fx, case):
+     digest = fx.approve()
+diff --git a/tests/context_assembly/test_proof_set.py b/tests/context_assembly/test_proof_set.py
+new file mode 100644
+index 0000000..5999d65
+--- /dev/null
++++ b/tests/context_assembly/test_proof_set.py
+@@ -0,0 +1,49 @@
++"""The packet's targeted proof set (WORK-PREPARATION-REFILL R2, Founder decisions section 43): the exact test files
++Agent Ready assessed, read from one ```json alienintent-proof block. Packets are TEST DATA."""
++from __future__ import annotations
++
++import json
++
++import pytest
++
++from alienintent.context_assembly.domain.proof_set import ProofSet, ProofSetInvalid, parse_proof
++
++
++def packet(*blocks: object) -> str:
++    body = "".join(f"\n```json alienintent-proof\n{json.dumps(block)}\n```\n" for block in blocks)
++    return f"# Work unit\n\n```json alienintent-contract\n{{}}\n```\n{body}"
++
++
++def test_a_packet_without_a_proof_block_declares_no_proof_set():
++    assert parse_proof(packet()) is None
++
++
++def test_the_proof_block_names_the_exact_targeted_test_files():
++    proof = parse_proof(packet({"targeted_tests": ["tests/a/test_one.py", "tools/test_two.py"]}))
++    assert proof == ProofSet(("tests/a/test_one.py", "tools/test_two.py"))
++
++
++@pytest.mark.parametrize("block", [
++    pytest.param([], id="not-an-object"),
++    pytest.param({}, id="no-targeted-tests"),
++    pytest.param({"targeted_tests": [], "extra": 1}, id="extra-key"),
++    pytest.param({"targeted_tests": []}, id="empty"),
++    pytest.param({"targeted_tests": ["tests/a.py", "tests/a.py"]}, id="repeated"),
++    pytest.param({"targeted_tests": ["tests/../src/a.py"]}, id="not-normalized"),
++    pytest.param({"targeted_tests": ["/tests/a.py"]}, id="absolute"),
++    pytest.param({"targeted_tests": ["src/a.py"]}, id="outside-tests-and-tools"),
++    pytest.param({"targeted_tests": ["tests/data.json"]}, id="not-a-python-file"),
++    pytest.param({"targeted_tests": [3]}, id="not-a-string"),
++])
++def test_a_malformed_proof_block_is_refused(block):
++    with pytest.raises(ProofSetInvalid):
++        parse_proof(packet(block))
++
++
++def test_two_proof_blocks_or_an_unclosed_one_are_refused():
++    with pytest.raises(ProofSetInvalid):
++        parse_proof(packet({"targeted_tests": ["tests/a.py"]}, {"targeted_tests": ["tests/b.py"]}))
++    with pytest.raises(ProofSetInvalid):
++        parse_proof("```json alienintent-proof\n{\"targeted_tests\": [\"tests/a.py\"]}\n")
++    with pytest.raises(ProofSetInvalid):
++        parse_proof("```json alienintent-proof\nnot json\n```\n")
+diff --git a/tests/context_assembly/test_work_context.py b/tests/context_assembly/test_work_context.py
+index d52be03..c30083d 100644
+--- a/tests/context_assembly/test_work_context.py
++++ b/tests/context_assembly/test_work_context.py
+@@ -80,10 +80,11 @@ class Cx(Fx):
+     def digest(self, item) -> str:
+         return contract_block(self.registry.records.show(item.id).packet, item.id).content_digest
+ 
+-    def produced(self, item, review: str | None = REVIEW):
+-        """The item at VERIFY on a published source-revision candidate, a fresh VERIFIER clone and (with `review`)
+-        the PRODUCER's recorded self-review; MARKER is planted in every PRODUCER-only record. Returns the VERIFIER's
+-        correlation, candidate and clone."""
++    def produced(self, item, review: str | None = REVIEW, baseline: str | None = "release"):
++        """The item at VERIFY on a published source-revision candidate, a fresh VERIFIER clone, (with `review`) the
++        PRODUCER's recorded self-review and (with `baseline`) the candidate's recorded execution baseline: the release
++        baseline, or the given main it was retargeted to; MARKER is planted in every PRODUCER-only record. Returns the
++        VERIFIER's correlation, candidate and clone."""
+         branch = f"producer/{item.label}"
+         revision = commit_file(self.clone, branch, "src/candidate.py", b"print('candidate')\n")
+         git(self.clone, "push", "-q", "origin", branch)
+@@ -114,6 +115,11 @@ class Cx(Fx):
+                                             "producer", "producer"))
+         if review is not None:
+             self.context.record_self_review(item.id, candidate, review)
++        if baseline is not None:
++            release = self.releases().release_authorization(item.id).baseline
++            self.context.record_execution_baseline(item.id, candidate.content_digest, {
++                "release_baseline": release, "execution_baseline": release if baseline == "release" else baseline,
++                "kind": "proceed" if baseline == "release" else "retarget", "checks": []})
+         correlation = f"launch:{item.id}:1"
+         self.reserve(item, correlation)
+         return correlation, candidate, clone
+@@ -197,6 +203,40 @@ def test_the_verifier_gets_its_fields_and_never_the_producers_output(cx):
+     assert cx.context.assemble(item.id, VERIFIER, correlation, cx.digest(item), candidate, clone) == package
+ 
+ 
++# --- the execution baseline (WORK-PREPARATION-REFILL R2, Founder decisions section 43) --------------------------------
++
++
++def test_a_producer_attempt_starts_at_its_recorded_execution_baseline_and_keeps_its_release_baseline(cx):
++    item = cx.admitted()
++    release = cx.releases().release_authorization(item.id).baseline
++    moved = commit_file(cx.clone, "main", "docs/elsewhere.md", b"elsewhere\n")
++    record = {"release_baseline": release, "execution_baseline": moved, "kind": "retarget",
++              "checks": [["plan-authority", True, ""]]}
++    cx.context.record_execution_baseline(item.id, f"launch:{item.id}:0", record)
++    fields = cx.context.assemble(item.id, PRODUCER, f"launch:{item.id}:0", cx.digest(item)).fields
++    assert (fields["starting_revision"], fields["execution_baseline"]) == (moved, record)
++    assert fields["release_record"]["baseline"] == release != moved
++
++
++def test_a_retargeted_candidate_is_verified_against_its_execution_baseline_not_its_release_baseline(cx):
++    item = cx.admitted()
++    release = cx.releases().release_authorization(item.id).baseline
++    moved = commit_file(cx.clone, "main", "docs/elsewhere.md", b"elsewhere\n")
++    correlation, candidate, clone = cx.produced(item, baseline=moved)
++    fields = cx.context.assemble(item.id, VERIFIER, correlation, cx.digest(item), candidate.locator, clone).fields
++    assert fields["starting_revision"] == fields["diff"]["base"] == fields["execution_baseline"]["execution_baseline"] \
++        == moved
++    assert fields["release_record"]["baseline"] == release != moved
++    assert "src/candidate.py" in fields["diff"]["text"] and "docs/elsewhere.md" not in fields["diff"]["text"]
++
++
++def test_a_candidate_with_no_recorded_execution_baseline_is_never_verified_against_the_release_baseline(cx):
++    item = cx.admitted()
++    correlation, candidate, clone = cx.produced(item, baseline=None)
++    hold(cx.context.assemble(item.id, VERIFIER, correlation, cx.digest(item), candidate.locator, clone),
++         "MISSING_RECORD", "execution_baseline")
++
++
+ # --- checks 2 and 4: missing facts prevent launch --------------------------------------------------------------------
+ 
+ 
+diff --git a/tests/control_plane/test_cli.py b/tests/control_plane/test_cli.py
+index 565c8be..dcc60da 100644
+--- a/tests/control_plane/test_cli.py
++++ b/tests/control_plane/test_cli.py
+@@ -676,7 +676,7 @@ def test_work_launch_renders_one_step_and_work_context_passes_the_contract_diges
+     assert cli.main(["--json", "--profile-factory", "x:y", "work", "launch", "ITEM"]) == 0
+     assert json.loads(capsys.readouterr().out) == {"identity": "ITEM", "stop_reason": "dependencies-or-authority-blocked",
+                                                    "dispatched": ["ITEM"], "authority_blocked": [], "failed": [],
+-                                                   "ran": []}
++                                                   "ran": [], "infrastructure_held": []}
+     for extra, digest in ((["--contract-digest", "sha256:abc"], "sha256:abc"), ([], None)):
+         assert cli.main(["--json", "--profile-factory", "x:y", "work", "context", "ITEM", "--role", "PRODUCER",
+                          "--correlation", "launch:ITEM:0", *extra]) == 0
+@@ -716,7 +716,7 @@ def test_work_run_renders_the_run_summary_inside_the_card_projector(monkeypatch,
+     assert cli.main(["--json", "--profile-factory", "x:y", "work", "run"]) == 0
+     assert json.loads(capsys.readouterr().out) == {
+         "stop_reason": "eligible-backlog-exhausted", "dispatched": ["A"], "authority_blocked": [], "failed": [],
+-        "ran": ["A", "A", "A"], "projection_diagnostics": {"A": "A: RuntimeError: x"}}
++        "ran": ["A", "A", "A"], "infrastructure_held": [], "projection_diagnostics": {"A": "A: RuntimeError: x"}}
+     assert events == ["projector on", ("run", ["launch"]), ("sleep", operator.RETRY_PAUSE_SECONDS), "projector off"]
+     assert store.recovery_reservations("registry") == ()
+ 
+diff --git a/tests/execution_coordination/test_factory_coordinator.py b/tests/execution_coordination/test_factory_coordinator.py
+index 9ee72e3..ddeb7bb 100644
+--- a/tests/execution_coordination/test_factory_coordinator.py
++++ b/tests/execution_coordination/test_factory_coordinator.py
+@@ -14,7 +14,7 @@ import pytest
+ 
+ from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+ from alienintent.execution_coordination.domain.contract import BudgetPolicy
+-from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
++from alienintent.execution_coordination.domain.lifecycle import ExecutionState, LifecycleStage
+ from alienintent.execution_coordination.domain.release import EXPLICIT_HUMAN_OFF
+ from .domain.test_contract import valid_contract
+ 
+@@ -1036,6 +1036,100 @@ def test_check6_retries_reworks_and_resumable_results_keep_the_slot_until_done(t
+     assert coordinator.state("H").stage is LifecycleStage.DONE and _slots(store) == {}
+ 
+ 
++def _founder_decisions(store) -> dict:
++    return store.read_state("offline", "decision-inbox")[1].get("open") or {}
++
++
++def test_a_producer_that_cannot_read_canonical_main_is_retried_with_no_founder_decision(tmp_path: Path) -> None:
++    """WORK-PREPARATION-REFILL R2 (Founder decisions section 44: "Infrastructure failure is not an owner decision"):
++    the fetch of canonical main fails, then succeeds. The same work item keeps its stage and slot, uses no attempt,
++    raises no Founder decision, is retried on the next pass and reaches DONE."""
++    _, _, _, provider = _api()
++    coordinator, worker, store = _wip(tmp_path, [_item("F", 0, 1)],
++                                      {"F": [provider.CANONICAL_MAIN_UNAVAILABLE, "success"]}, Limit(1),
++                                      verdicts={"F": ["accept"]})
++    coordinator.start()
++    state = coordinator.state("F")
++    assert (state.stage, state.outcome, state.record["producer_retries"]) == (
++        LifecycleStage.IMPLEMENT, "producer-retry", 1)
++    assert worker.dispatched == ["F"] and _founder_decisions(store) == {} and list(_slots(store)) == ["F"]
++    pauses = []
++    coordinator.run(pause=lambda: pauses.append(True))
++    assert coordinator.state("F").stage is LifecycleStage.DONE and worker.dispatched == ["F", "F"]
++    assert coordinator.state("F").record.get("rejections", 0) == 0 and _founder_decisions(store) == {}
++
++
++def test_canonical_main_unreachable_past_the_retry_limit_is_a_typed_infrastructure_hold_never_a_founder_decision(
++        tmp_path: Path) -> None:
++    """Past the bounded retries the work item holds as typed infrastructure (no Decision Inbox item, no authority block,
++    slot kept); the next run of the factory retries it and, with canonical main reachable, takes it to DONE."""
++    _, _, _, provider = _api()
++    unavailable = [provider.CANONICAL_MAIN_UNAVAILABLE] * 3
++    coordinator, worker, store = _wip(tmp_path, [_item("X", 0, 1)], {"X": unavailable}, Limit(1))
++    summary = coordinator.run()
++    state = coordinator.state("X")
++    assert (state.outcome, state.record["hold_reason"]) == (
++        "infrastructure-hold", "producer-infrastructure-exhausted:canonical-main-unavailable")
++    assert worker.dispatched == ["X"] * 3 and summary.authority_blocked == () and _founder_decisions(store) == {}
++    assert list(_slots(store)) == ["X"] and state.stage is LifecycleStage.IMPLEMENT
++    restarted, restarted_worker, _ = _wip(tmp_path, [_item("X", 0, 1)], {"X": ["success"]}, Limit(1),
++                                          verdicts={"X": ["accept"]},
++                                          store=SQLiteOperationalStore(tmp_path / "run.sqlite"))
++    restarted.run()
++    assert restarted.state("X").stage is LifecycleStage.DONE and restarted_worker.dispatched == ["X"]
++    assert _founder_decisions(store) == {}
++
++
++def test_infrastructure_retries_count_failures_in_a_row_and_any_other_outcome_resets_them(tmp_path: Path) -> None:
++    """A rework between canonical-main failures breaks the row: two more failures after it are retried, not held."""
++    _, _, _, provider = _api()
++    unavailable = provider.CANONICAL_MAIN_UNAVAILABLE
++    coordinator, worker, store = _wip(tmp_path, [_attempts("R", 0, 1, maximum_attempts=5)],
++                                      {"R": [unavailable, provider.NO_CHANGE, unavailable, unavailable, "success"]},
++                                      Limit(1), verdicts={"R": ["accept"]})
++    coordinator.run()
++    assert coordinator.state("R").stage is LifecycleStage.DONE and len(worker.dispatched) == 5
++    assert _founder_decisions(store) == {}
++
++
++def test_a_release_gate_refusal_between_canonical_main_failures_resets_the_streak(tmp_path: Path) -> None:
++    """An authority block recorded at release breaks the row of PRODUCER infrastructure failures."""
++    from alienintent.execution_coordination.domain.release import ReleasePreconditionRefused
++    _, _, _, provider = _api()
++    checks = []
++
++    class Gate:
++        def check(self, item):
++            checks.append(item.identity)
++            if len(checks) == 3:
++                raise ReleasePreconditionRefused("baseline-reachable", "test data")
++    coordinator, worker, store = _wip(tmp_path, [_item("G", 0, 1)], {"G": [provider.CANONICAL_MAIN_UNAVAILABLE] * 2},
++                                      Limit(1))
++    coordinator._release_gate = Gate()
++    coordinator.run()
++    state = coordinator.state("G")
++    assert (state.outcome, state.record["producer_retries"]) == ("authority-block", 0)
++
++
++def test_a_closure_outcome_that_is_not_infrastructure_resets_the_closure_streak(tmp_path: Path) -> None:
++    _, _, _, provider = _api()
++    coordinator, _, _ = _wip(tmp_path, [_item("C", 0, 1)], {"C": []}, Limit(1))
++    item = _item("C", 0, 1)
++    invocation = provider.WorkerInvocation("C", "launch:C:3", item.contract.content_digest, provider.CLOSURE, None)
++    advanced = coordinator._advance(item, ExecutionState(), {"closure_infrastructure_retries": 2}, invocation,
++                                    provider.WorkerOutcome("authority-block"))
++    assert advanced.fields["closure_infrastructure_retries"] == 0
++
++
++def test_work_launch_names_an_infrastructure_hold_in_its_summary(tmp_path: Path) -> None:
++    _, _, _, provider = _api()
++    coordinator, worker, store = _wip(tmp_path, [_item("L", 0, 1)], {"L": [provider.CANONICAL_MAIN_UNAVAILABLE] * 3},
++                                      Limit(1))
++    summaries = [coordinator.launch("L") for _ in range(3)]
++    assert [s.infrastructure_held for s in summaries] == [(), (), ("L",)]
++    assert summaries[-1].authority_blocked == () and _founder_decisions(store) == {}
++
++
+ def test_check6_final_outcomes_release_the_slot_and_authority_holds_keep_it(tmp_path: Path) -> None:
+     from alienintent.execution_coordination.domain.escalation import DecisionRecord, DecisionRecorded, DecisionSubmission
+     items = [_item("failed", 0, 1), _item("timed", 1, 2), _attempts("exhausted", 2, 3, maximum_attempts=1),
