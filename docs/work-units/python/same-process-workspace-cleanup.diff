@@ -1,0 +1,134 @@
+diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
+index 988e56f..465fa3e 100644
+--- a/src/alienintent/composition/work_registry.py
++++ b/src/alienintent/composition/work_registry.py
+@@ -1994,7 +1994,11 @@ class RegistryClosure:
+ 
+     def _cleanup(self, invocation: WorkerInvocation) -> bool:
+         """Every workspace owned by a journaled correlation of this work item, under the ownership checks; the
+-        running correlation's landing clone last. Anything kept is named in `cleanup_diagnostics`."""
++        running correlation's landing clone last. Anything kept is named in `cleanup_diagnostics`.
++
++        One process runs its roles in turn (`work run`), so an earlier correlation whose owner is this very process has
++        returned: this process being alive is not that role still owning its workspace (Founder 2026-10-10, decisions
++        section 34). Only its marked processes can still hold it."""
+         try:
+             started = [entry for entry in self._journal.records(work=invocation.work_identity)
+                        if entry.get("event") == "invocation-started"]
+@@ -2002,6 +2006,11 @@ class RegistryClosure:
+             self.cleanup_diagnostics[invocation.correlation_id] = "journal unreadable"
+             return False
+         ownership, verifier, kept, last = self._registry.ownership, self._root / "verifier", False, None
++        try:
++            this = ownership.current()
++            this = None if this is None else owner_token(this)
++        except Exception:  # noqa: BLE001 - an unreadable self-observation counts no earlier owner as this process
++            this = None
+         for entry in started:
+             correlation = str(entry.get("correlation_id"))
+             if not correlation or any(part in correlation for part in ("/", "\\", "..", "\x00")):
+@@ -2013,7 +2022,7 @@ class RegistryClosure:
+                 reason = "no journaled owner"
+             else:
+                 try:
+-                    if not running and ownership.owner_state(owner) != "terminated":
++                    if not running and owner_token(owner) != this and ownership.owner_state(owner) != "terminated":
+                         reason = "owner alive"
+                     elif ownership.owned_work(correlation, owner_token(owner)) != ():
+                         reason = "marked process alive"
+diff --git a/tests/composition/test_bounded_routine_launch.py b/tests/composition/test_bounded_routine_launch.py
+index b2a7d3c..e147d3d 100644
+--- a/tests/composition/test_bounded_routine_launch.py
++++ b/tests/composition/test_bounded_routine_launch.py
+@@ -16,6 +16,7 @@ from alienintent.composition import work_registry
+ from alienintent.control_plane.application.operator import LAUNCH_IN_PROGRESS, exclusive_run_work
+ from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
+ from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator, LAUNCH_KEY, LAUNCH_SCOPE
++from alienintent.execution_coordination.domain.closure import receipt
+ from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
+ from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH
+ from alienintent.composition.work_registry import launch_root
+@@ -23,7 +24,7 @@ from alienintent.invocation_runtime.adapters import invocation_journal
+ from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
+ from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
+ from tests.composition.test_work_registry import PLAN_QUOTE, plan_text
+-from tests.composition.test_worker_launch import FIXED, QUOTE, Closing, Launch, Owners
++from tests.composition.test_worker_launch import FIXED, QUOTE, Closing, Launch, Owners, revision_of
+ from tests.context_assembly.test_initial_compilation import git
+ from tests.context_assembly.test_work_identity_service import commit_file
+ 
+@@ -236,3 +237,39 @@ def test_a_run_never_overlaps_a_live_launch(closing):
+ 
+     assert work_run(closing, Owners("alive")) == {"answer": LAUNCH_IN_PROGRESS, "owner_state": "alive"}
+     assert closing.fx.runs() == []
++
++
++def test_one_run_cleans_the_workspaces_of_its_own_earlier_roles_and_settles_done(closing):
++    """Founder 2026-10-10 (decisions section 34): one long-lived `work run` process runs PRODUCER, VERIFIER and CLOSURE
++    in turn, so every earlier role's journaled owner is this live process. That process being alive is not an earlier
++    role still owning its workspace: CLOSURE removes the VERIFIER clone, reads back `workspaces-cleaned` and the item
++    settles DONE. Over the real process ownership: this test process is the run's owner and is alive."""
++    [item] = planned(closing, "ONLY")
++    verifier = launch_root(closing.fx.loaded().configuration) / "verifier"
++
++    work_run(closing, ownership=Owners())
++
++    state = closing.state(item.id)
++    assert state.stage is DONE and row_done(closing, item.id), state.record.get("hold_reason")
++    assert receipt("workspaces-cleaned", item.id, revision_of(state)) in state.record["receipts"]
++    assert [p.name for p in verifier.iterdir() if p.name.startswith("verifier-")] == []
++
++
++def test_an_earlier_role_of_the_same_run_whose_marked_process_is_alive_keeps_its_workspace(closing, monkeypatch):
++    """The other half of the section 34 invariant: the run process being its owner does not free an earlier role's
++    workspace while a marked process of that role is still alive (stated here for the cleanup only): the VERIFIER
++    clone is kept, no `workspaces-cleaned` reads back and the item is not DONE."""
++    [item] = planned(closing, "ONLY")
++    verifier = launch_root(closing.fx.loaded().configuration) / "verifier"
++    ownership = Owners()
++    cleanup = work_registry.RegistryClosure._cleanup
++    monkeypatch.setattr(work_registry.RegistryClosure, "_cleanup", lambda self, invocation: (
++        setattr(ownership, "work", (1,)), cleanup(self, invocation))[1])
++
++    work_run(closing, ownership=ownership)
++
++    state = closing.state(item.id)
++    assert (state.stage, state.record.get("hold_reason")) == (LifecycleStage.ACCEPT, "closure-receipts-incomplete")
++    assert receipt("workspaces-cleaned", item.id, revision_of(state)) not in state.record["receipts"]
++    assert [p.name for p in verifier.iterdir() if p.name.startswith("verifier-launch-")] != []
++
+diff --git a/tests/composition/test_worker_launch.py b/tests/composition/test_worker_launch.py
+index 2dfb76b..86f7288 100644
+--- a/tests/composition/test_worker_launch.py
++++ b/tests/composition/test_worker_launch.py
+@@ -1175,12 +1175,13 @@ def test_main_already_holding_the_candidate_is_ambiguous_not_rework(closing, mon
+ @pytest.mark.parametrize("case", ["marked-child", "owner-alive"])
+ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(closing, monkeypatch, case):
+     """Check 14: a marked process of the running CLOSURE correlation keeps its clone; an earlier correlation whose
+-    owner is alive (this test process) keeps its clone; another item's workspace is never touched; no receipt."""
++    owner is alive (this test process) and is not the process running CLOSURE keeps its clone; another item's
++    workspace is never touched; no receipt."""
+     item = closing.accepted()
+     verifier = launch_root(closing.fx.loaded().configuration) / "verifier"
+     foreign = verifier / f"verifier-{workspace_folder('launch:another-item:1')}"
+     foreign.mkdir()
+-    ownership = Owners("terminated") if case == "marked-child" else ProcOwnership()
++    ownership = Owners("terminated") if case == "marked-child" else Elsewhere()
+     if case == "marked-child":  # a marked process of the running correlation outlives the session
+         cleanup = RegistryClosure._cleanup
+         monkeypatch.setattr(RegistryClosure, "_cleanup", lambda self, invocation: (
+@@ -1195,6 +1196,14 @@ def test_cleanup_keeps_live_or_foreign_workspaces_and_then_issues_no_receipt(clo
+     assert Path(session["cwd"]).is_dir() is (case == "marked-child")
+ 
+ 
++class Elsewhere(ProcOwnership):
++    """The real ownership observed from another process: CLOSURE runs in a process that is not the earlier roles'
++    owner (this test process, alive)."""
++
++    def current(self):
++        return dead_owner()
++
++
+ def test_the_landing_token_reaches_only_the_authoritys_one_push_process(closing, monkeypatch):
+     """Check 7: the landing token marker (raw or in its Basic header) is in the environment of exactly one child
+     process, the Authority's push; never in the merge or record commit commands, the fetch, or a worker."""
