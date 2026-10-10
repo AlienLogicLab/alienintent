@@ -1,7 +1,7 @@
 # Work unit: same-process workspace cleanup
 
-**Label:** `SAME-PROCESS-WORKSPACE-CLEANUP` (a document label; permanent id `PENDING-REGISTRATION`).
-**Status:** Revision 1, 2026-10-10. Not registered.
+**Label:** `SAME-PROCESS-WORKSPACE-CLEANUP` (a document label; permanent id `3e004d5d-2023-4659-9b38-59d465524d6b`).
+**Status:** Revision 1, 2026-10-10. Registered 3e004d5d-2023-4659-9b38-59d465524d6b.
 **Authority:** plan-derived: obligation BOUNDED-ROUTINE-LAUNCH of the canonical plan at main's tip
 (`sha256:58e0991a00f8273275ae6d00d3a05d1341518260f1903c32ea03ea49413dc532`), released by `work release`.
 **Starting revision:** main `c6540de`.
@@ -11,7 +11,7 @@
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "3e004d5d-2023-4659-9b38-59d465524d6b",
  "version": "revision-1",
  "intent": "CLOSURE's workspace cleanup treats an earlier role whose journaled owner is the process running CLOSURE as finished (one `work run` process runs its roles in turn), so the completed earlier-role workspaces are removed, `workspaces-cleaned` reads back and the item settles DONE; an alive owner that is another process, and any marked live process, still keep their workspaces.",
  "satisfied_requirement_ids": [
