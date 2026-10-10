@@ -16,6 +16,7 @@ from alienintent.composition import work_registry
 from alienintent.control_plane.application.operator import LAUNCH_IN_PROGRESS, exclusive_run_work
 from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
 from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator, LAUNCH_KEY, LAUNCH_SCOPE
+from alienintent.execution_coordination.domain.closure import receipt
 from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
 from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH
 from alienintent.composition.work_registry import launch_root
@@ -23,7 +24,7 @@ from alienintent.invocation_runtime.adapters import invocation_journal
 from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
 from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
 from tests.composition.test_work_registry import PLAN_QUOTE, plan_text
-from tests.composition.test_worker_launch import FIXED, QUOTE, Closing, Launch, Owners
+from tests.composition.test_worker_launch import FIXED, QUOTE, Closing, Launch, Owners, revision_of
 from tests.context_assembly.test_initial_compilation import git
 from tests.context_assembly.test_work_identity_service import commit_file
 
@@ -236,3 +237,39 @@ def test_a_run_never_overlaps_a_live_launch(closing):
 
     assert work_run(closing, Owners("alive")) == {"answer": LAUNCH_IN_PROGRESS, "owner_state": "alive"}
     assert closing.fx.runs() == []
+
+
+def test_one_run_cleans_the_workspaces_of_its_own_earlier_roles_and_settles_done(closing):
+    """Founder 2026-10-10 (decisions section 34): one long-lived `work run` process runs PRODUCER, VERIFIER and CLOSURE
+    in turn, so every earlier role's journaled owner is this live process. That process being alive is not an earlier
+    role still owning its workspace: CLOSURE removes the VERIFIER clone, reads back `workspaces-cleaned` and the item
+    settles DONE. Over the real process ownership: this test process is the run's owner and is alive."""
+    [item] = planned(closing, "ONLY")
+    verifier = launch_root(closing.fx.loaded().configuration) / "verifier"
+
+    work_run(closing, ownership=Owners())
+
+    state = closing.state(item.id)
+    assert state.stage is DONE and row_done(closing, item.id), state.record.get("hold_reason")
+    assert receipt("workspaces-cleaned", item.id, revision_of(state)) in state.record["receipts"]
+    assert [p.name for p in verifier.iterdir() if p.name.startswith("verifier-")] == []
+
+
+def test_an_earlier_role_of_the_same_run_whose_marked_process_is_alive_keeps_its_workspace(closing, monkeypatch):
+    """The other half of the section 34 invariant: the run process being its owner does not free an earlier role's
+    workspace while a marked process of that role is still alive (stated here for the cleanup only): the VERIFIER
+    clone is kept, no `workspaces-cleaned` reads back and the item is not DONE."""
+    [item] = planned(closing, "ONLY")
+    verifier = launch_root(closing.fx.loaded().configuration) / "verifier"
+    ownership = Owners()
+    cleanup = work_registry.RegistryClosure._cleanup
+    monkeypatch.setattr(work_registry.RegistryClosure, "_cleanup", lambda self, invocation: (
+        setattr(ownership, "work", (1,)), cleanup(self, invocation))[1])
+
+    work_run(closing, ownership=ownership)
+
+    state = closing.state(item.id)
+    assert (state.stage, state.record.get("hold_reason")) == (LifecycleStage.ACCEPT, "closure-receipts-incomplete")
+    assert receipt("workspaces-cleaned", item.id, revision_of(state)) not in state.record["receipts"]
+    assert [p.name for p in verifier.iterdir() if p.name.startswith("verifier-launch-")] != []
+
