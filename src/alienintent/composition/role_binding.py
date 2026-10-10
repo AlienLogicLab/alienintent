@@ -144,7 +144,7 @@ class RoleBindingGuard(WorkerProvider):
         if not self._bound():
             return "durable-outcome-binding-disconnected"
         try:
-            records = self._journal.records()
+            records = self._journal.records(work=invocation.work_identity)
         except JournalUnreadable:
             return "durable-outcome-binding-unreadable"
         if any(record.get("correlation_id") == invocation.correlation_id for record in records):
@@ -241,7 +241,7 @@ class RoleBindingGuard(WorkerProvider):
         """Retain a conclusively missing terminal result against the original invocation."""
         assert self._journal is not None
         try:
-            records = self._journal.records()
+            records = self._journal.records(work=invocation.work_identity)
         except JournalUnreadable:
             return None
         # A begun publication is not a terminal record; whether its effect

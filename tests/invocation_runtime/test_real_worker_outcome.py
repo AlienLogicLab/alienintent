@@ -61,8 +61,8 @@ class DropOutcome:
             return dict(record)
         return self._inner.append(record)
 
-    def records(self):
-        return self._inner.records()
+    def records(self, work=None):
+        return self._inner.records(work)
 
 
 def _assert_held(fixture) -> None:
@@ -110,8 +110,8 @@ class Miscorrelate:
                     return inner.append(record)
                 return inner.append(_rewrite(dict(record), field))
 
-            def records(self):
-                return inner.records()
+            def records(self, work=None):
+                return inner.records(work)
 
         return Journal()
 

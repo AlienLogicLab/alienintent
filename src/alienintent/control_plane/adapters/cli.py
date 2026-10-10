@@ -8,13 +8,15 @@ import importlib
 import json
 from pathlib import Path
 import sys
+import time
 from dataclasses import asdict, is_dataclass
 from typing import Any
 
 from alienintent.control_plane.application.operator import (
-    NOT_AVAILABLE_IN_WORKER_PROFILE, NOT_IN_EXPORT, OperatorControlPlane, OperatorDenied, approve_plan_work,
-    assess_work, authorize_work, context_work,
-    decide_work, display_work, exclusive_launch_work, import_work, link_work, migrate_work, record_completed_work,
+    NOT_AVAILABLE_IN_WORKER_PROFILE, NOT_IN_EXPORT, RETRY_PAUSE_SECONDS, OperatorControlPlane, OperatorDenied,
+    approve_plan_work, assess_work, authorize_work, context_work,
+    decide_work, display_work, exclusive_launch_work, exclusive_run_work, import_work, link_work, migrate_work,
+    record_completed_work, watch_work,
     register_work, release_work, show_work)
 from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
 from alienintent.execution_coordination.domain.escalation import SupersededDecision
@@ -125,6 +127,7 @@ def _parser() -> argparse.ArgumentParser:
     context.add_argument("--correlation"); context.add_argument("--candidate")
     context.add_argument("--contract-digest")
     launch = _sanitized(work.add_parser("launch")); launch.add_argument("target")
+    work_run = _sanitized(work.add_parser("run")); work_run.add_argument("--wait", type=float)
     _sanitized(work.add_parser("project"))
     work_decide = _sanitized(work.add_parser("decide")); work_decide.add_argument("target")
     work_decide.add_argument("--choice", choices=("authorize", "defer"), required=True)
@@ -211,6 +214,19 @@ def main(argv: list[str] | None = None) -> int:
                 projection = getattr(registry, "card_projection", None)
                 with projection() if projection is not None else nullcontext():
                     value = exclusive_launch_work(registry.launcher, args.target, registry.store, registry.ownership)
+                _render(value, args.json)
+                return 0
+            if args.work_command == "run":
+                if getattr(registry, "launcher", None) is None:
+                    _render({"error": "readiness-not-configured"}, args.json)
+                    return 1
+                projection = getattr(registry, "card_projection", None)
+                with projection() if projection is not None else nullcontext():
+                    if args.wait is not None:  # runs until the service stops it
+                        watch_work(registry.launcher, registry.store, registry.ownership, args.wait,
+                                   lambda value: _render(value, args.json), time.sleep)
+                    value = exclusive_run_work(registry.launcher, registry.store, registry.ownership,
+                                               pause=lambda: time.sleep(RETRY_PAUSE_SECONDS))
                 _render(value, args.json)
                 return 0
             if args.work_command == "project":
