@@ -1,8 +1,8 @@
 # Work unit: bounded routine launch (R2)
 
-**Label:** `BOUNDED-ROUTINE-LAUNCH-R2` (a document label; permanent id `PENDING-REGISTRATION`; parent `3d4e1215`, the
+**Label:** `BOUNDED-ROUTINE-LAUNCH-R2` (a document label; permanent id `034b92ca-7d60-482c-a6de-61c3f19e9678`; parent `3d4e1215`, the
 revision-4 draft whose launch was cancelled).
-**Status:** Revision 5, 2026-10-10. Not registered.
+**Status:** Revision 5, 2026-10-10. Registered (CAPTURE).
 **Authority:** derived from the approved canonical plan revision `28df5c3` (`sha256:415231dcd846671f40bbf24fd6429515592d2d920d4d159d599c9aed9a468dff`), obligation
 `BOUNDED-ROUTINE-LAUNCH` (P0); released by the control plane (`work release`), no per-item Founder release.
 **Starting revision:** main `e3e1551`.
@@ -12,7 +12,7 @@ revision-4 draft whose launch was cancelled).
 
 ```json alienintent-contract
 {
- "identity": "PENDING-REGISTRATION",
+ "identity": "034b92ca-7d60-482c-a6de-61c3f19e9678",
  "version": "revision-5",
  "intent": "One `work run` starts the factory and keeps advancing READY work through PRODUCER, VERIFIER and CLOSURE to DONE and the next eligible item with no launch per role, reusing the existing `FactoryCoordinator.start()` loop under the existing exclusive launch reservation; retries resume without a human (`--wait` service mode); a crash resumes from durable reservations; routine operation reads open work and one work item's journal records only, never the whole history.",
  "satisfied_requirement_ids": [
