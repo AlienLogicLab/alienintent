@@ -1,0 +1,1570 @@
+diff --git a/src/alienintent/composition/role_binding.py b/src/alienintent/composition/role_binding.py
+index 20ecfa4..4db5e52 100644
+--- a/src/alienintent/composition/role_binding.py
++++ b/src/alienintent/composition/role_binding.py
+@@ -44,6 +44,8 @@ and writes only the one retained record, through the existing journal port.
+ 
+ from __future__ import annotations
+ 
++import json
++
+ from typing import Callable, Mapping
+ 
+ from alienintent.execution_coordination.application.factory_coordinator import ROLE_BY_STAGE
+@@ -144,7 +146,7 @@ class RoleBindingGuard(WorkerProvider):
+         if not self._bound():
+             return "durable-outcome-binding-disconnected"
+         try:
+-            records = self._journal.records()
++            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
+         except JournalUnreadable:
+             return "durable-outcome-binding-unreadable"
+         if any(record.get("correlation_id") == invocation.correlation_id for record in records):
+@@ -198,6 +200,11 @@ class RoleBindingGuard(WorkerProvider):
+         if not isinstance(producer, str) or producer == invocation.correlation_id or not callable(branch):
+             return "candidate-custody-unattributable"
+         published = WorkerInvocation(invocation.work_identity, producer, invocation.contract_digest)
++        try:  # the PRODUCER's own correlation: every record naming it, whatever work item it is filed under
++            records = (*records, *self._journal.records(work=invocation.work_identity, correlation=producer))
++        except JournalUnreadable:
++            return "candidate-custody-unattributable"
++        records = tuple({json.dumps(record, sort_keys=True): record for record in records}.values())
+         outcome = correlated_outcome(records, published, branch(published))
+         if outcome is None or outcome.kind != "success" or not _same_candidate(outcome.candidate, candidate):
+             return "candidate-custody-unattributable"
+@@ -241,7 +248,7 @@ class RoleBindingGuard(WorkerProvider):
+         """Retain a conclusively missing terminal result against the original invocation."""
+         assert self._journal is not None
+         try:
+-            records = self._journal.records()
++            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
+         except JournalUnreadable:
+             return None
+         # A begun publication is not a terminal record; whether its effect
+diff --git a/src/alienintent/composition/work_registry.py b/src/alienintent/composition/work_registry.py
+index 6228b29..af59423 100644
+--- a/src/alienintent/composition/work_registry.py
++++ b/src/alienintent/composition/work_registry.py
+@@ -106,7 +106,7 @@ from alienintent.context_assembly.application.work_link import WorkLink
+ from alienintent.context_assembly.application.work_registration import WorkRecordService
+ from alienintent.context_assembly.domain.packet_assessment import fingerprint
+ from alienintent.context_assembly.domain.reconstruction import ContextHold, HoldReason
+-from alienintent.context_assembly.application.work_completion import landing_check
++from alienintent.context_assembly.application.work_completion import LANDING_UNVERIFIED, landing_check
+ from alienintent.context_assembly.domain.work_context import CLOSURE, PRODUCER, VERIFIER
+ from alienintent.context_assembly.domain.work_contract import ContractInvalid, contract_block
+ from alienintent.context_assembly.domain.work_identity import DONE, STATES, GitReadFailed, StoredPointer, \
+@@ -130,7 +130,8 @@ from alienintent.execution_coordination.adapters.github_work_management import G
+ from alienintent.execution_coordination.adapters.release_admission import (
+     GitRevisionResolver, StoredReleaseAuthorizations)
+ from alienintent.execution_coordination.adapters.sqlite_store import PROJECTED, SCHEMA_VERSION, SQLiteOperationalStore
+-from alienintent.execution_coordination.application.factory_coordinator import NEVER_STARTED, FactoryCoordinator
++from alienintent.execution_coordination.application.factory_coordinator import (NEVER_STARTED, FactoryCoordinator,
++                                                                                  ProjectionRefused)
+ from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
+ from alienintent.execution_coordination.application.release_admission import ReleasePreconditionGate
+ from alienintent.invocation_runtime.domain.mutation_spec import MutationSpec, MutationSpecInvalid, parse_mutations
+@@ -592,8 +593,9 @@ class WorkRegistry:
+                                   landing_enabled=lambda: configuration.github.landing,
+                                   started_item=self._started_item, completed=self._project_completed)
+ 
+-    def _journal_records(self) -> tuple[dict[str, object], ...]:
+-        return JsonlInvocationJournal(launch_root(self.configuration) / "invocation-journal.jsonl", time.time).records()
++    def _journal_records(self, work: str, correlation: str | None = None) -> tuple[dict[str, object], ...]:
++        return JsonlInvocationJournal(launch_root(self.configuration) / "invocation-journal.jsonl",
++                                      time.time).records(work=work, correlation=correlation)
+ 
+     def _started_item(self, identity: str, correlation: str) -> ReadyWorkItem | None:
+         """A started work item built from its registry record alone (not the board): the row (not retired, with a
+@@ -606,7 +608,8 @@ class WorkRegistry:
+                     or item.assessment_ref is None:
+                 return None
+             contract = contract_block(record.packet, item.id)
+-            started = [entry for entry in self._journal_records() if entry.get("event") == "invocation-started"
++            started = [entry for entry in self._journal_records(item.id, correlation)
++                       if entry.get("event") == "invocation-started"
+                        and entry.get("correlation_id") == correlation and entry.get("work_identity") == item.id]
+             if len(started) != 1 or started[0].get("contract_digest") != contract.content_digest:
+                 return None
+@@ -620,20 +623,24 @@ class WorkRegistry:
+     def _project_completed(self, identity: str) -> None:
+         """The coordinator's `completed` hook: nothing when the row is already DONE, otherwise
+         `record_coordinated` with the last journaled `closure-ordered` event of this item and its custodied
+-        candidate (of any correlation). A refusal raises, which the coordinator records as a diagnostic."""
++        candidate (of any correlation). A refusal raises, which the coordinator records as a diagnostic: only
++        LANDING_UNVERIFIED (the landing could not be read yet) may change on a retry; every other refusal is permanent
++        (ProjectionRefused) and settles the DONE."""
+         item = self.identities.find(identity)
+         if item is None:
+-            raise LookupError("no work item")
++            raise ProjectionRefused("no work item")
+         if item.state == DONE:
+             return
+         _, raw = self.store.read_state("registry", f"factory:{identity}")
+         held = raw.get("candidate")
+         revision = str(held.get("locator", "")).rpartition("@")[2] if isinstance(held, dict) else None
+-        orders = [entry for entry in self._journal_records() if entry.get("event") == CLOSURE_ORDERED
++        orders = [entry for entry in self._journal_records(identity) if entry.get("event") == CLOSURE_ORDERED
+                   and entry.get("work_identity") == identity and entry.get("candidate") == revision]
+         result = self.completion.record_coordinated(identity, orders[-1] if orders else None)
+-        if result.answer is not None:
++        if result.answer == LANDING_UNVERIFIED:
+             raise RuntimeError(f"{result.answer}: {result.detail}")
++        if result.answer is not None:
++            raise ProjectionRefused(f"{result.answer}: {result.detail}")
+ 
+     def launcher(self) -> FactoryCoordinator:
+         """`work launch` (unit 6c-2): `coordinator(worker, artifacts)` with the existing worker chain of
+@@ -805,7 +812,8 @@ class WorkRegistry:
+         if attested in {OWNER_ALIVE, OWNED_WORK_ACTIVE}:
+             return {"answer": OWNER_STILL_RUNNING, "attestation": attested}
+         try:
+-            records = [record for record in worker.journal.records() if record.get("correlation_id") == correlation]
++            records = [record for record in worker.journal.records(work=identity, correlation=correlation)
++                       if record.get("correlation_id") == correlation]
+         except JournalUnreadable:
+             return {"answer": START_UNPROVEN, "missing": "a readable invocation journal"}
+         if not records:
+@@ -1026,7 +1034,8 @@ class WorkRegistry:
+             return str(held.get("locator", "")).rpartition("@")[2]
+ 
+         def ordered(correlation: str) -> Mapping[str, object] | None:
+-            found = [entry for entry in journal.records() if entry.get("event") == CLOSURE_ORDERED
++            found = [entry for entry in journal.records(correlation=correlation)
++                     if entry.get("event") == CLOSURE_ORDERED
+                      and entry.get("correlation_id") == correlation]
+             return found[-1] if found else None
+ 
+@@ -1839,14 +1848,15 @@ class RegistryClosure:
+                            "actions": list(actions), "request_sha256": digest}}
+         try:
+             self._journal.append(event)
+-            journaled = [entry for entry in self._journal.records() if entry.get("event") == CLOSURE_ORDERED
++            journaled = [entry for entry in self._journal.records(work=identity, correlation=invocation.correlation_id)
++                         if entry.get("event") == CLOSURE_ORDERED
+                          and entry.get("correlation_id") == invocation.correlation_id]
+         except (JournalUnreadable, OSError):
+             journaled = []
+         if not journaled or {key: journaled[-1].get(key) for key in event} != event:
+             return (), (*findings, hold("order-unrecorded", base, merge, record))
+         self._authority.land(self._landing_order(journaled[-1], clone))  # Trusted in neither answer.
+-        orders = tuple(entry for entry in self._journal.records() if entry.get("event") == CLOSURE_ORDERED
++        orders = tuple(entry for entry in self._journal.records(work=identity) if entry.get("event") == CLOSURE_ORDERED
+                        and entry.get("work_identity") == identity and entry.get("candidate") == revision)
+         receipts, settled = self._settle(invocation, candidate, clone, orders, retry=False, earlier=False)
+         return receipts, (*findings, *settled)
+@@ -1981,8 +1991,8 @@ class RegistryClosure:
+         """Every workspace owned by a journaled correlation of this work item, under the ownership checks; the
+         running correlation's landing clone last. Anything kept is named in `cleanup_diagnostics`."""
+         try:
+-            started = [entry for entry in self._journal.records() if entry.get("event") == "invocation-started"
+-                       and entry.get("work_identity") == invocation.work_identity]
++            started = [entry for entry in self._journal.records(work=invocation.work_identity)
++                       if entry.get("event") == "invocation-started"]
+         except JournalUnreadable:
+             self.cleanup_diagnostics[invocation.correlation_id] = "journal unreadable"
+             return False
+diff --git a/src/alienintent/control_plane/adapters/cli.py b/src/alienintent/control_plane/adapters/cli.py
+index 9443307..98e669b 100644
+--- a/src/alienintent/control_plane/adapters/cli.py
++++ b/src/alienintent/control_plane/adapters/cli.py
+@@ -8,13 +8,15 @@ import importlib
+ import json
+ from pathlib import Path
+ import sys
++import time
+ from dataclasses import asdict, is_dataclass
+ from typing import Any
+ 
+ from alienintent.control_plane.application.operator import (
+-    NOT_AVAILABLE_IN_WORKER_PROFILE, NOT_IN_EXPORT, OperatorControlPlane, OperatorDenied, approve_plan_work,
+-    assess_work, authorize_work, context_work,
+-    decide_work, display_work, exclusive_launch_work, import_work, link_work, migrate_work, record_completed_work,
++    NOT_AVAILABLE_IN_WORKER_PROFILE, NOT_IN_EXPORT, RETRY_PAUSE_SECONDS, OperatorControlPlane, OperatorDenied,
++    approve_plan_work, assess_work, authorize_work, context_work,
++    decide_work, display_work, exclusive_launch_work, exclusive_run_work, import_work, link_work, migrate_work,
++    record_completed_work, watch_work,
+     register_work, release_work, show_work)
+ from alienintent.execution_coordination.application.factory_coordinator import TerminalWork
+ from alienintent.execution_coordination.domain.escalation import SupersededDecision
+@@ -125,6 +127,7 @@ def _parser() -> argparse.ArgumentParser:
+     context.add_argument("--correlation"); context.add_argument("--candidate")
+     context.add_argument("--contract-digest")
+     launch = _sanitized(work.add_parser("launch")); launch.add_argument("target")
++    work_run = _sanitized(work.add_parser("run")); work_run.add_argument("--wait", type=float)
+     _sanitized(work.add_parser("project"))
+     work_decide = _sanitized(work.add_parser("decide")); work_decide.add_argument("target")
+     work_decide.add_argument("--choice", choices=("authorize", "defer"), required=True)
+@@ -213,6 +216,19 @@ def main(argv: list[str] | None = None) -> int:
+                     value = exclusive_launch_work(registry.launcher, args.target, registry.store, registry.ownership)
+                 _render(value, args.json)
+                 return 0
++            if args.work_command == "run":
++                if getattr(registry, "launcher", None) is None:
++                    _render({"error": "readiness-not-configured"}, args.json)
++                    return 1
++                projection = getattr(registry, "card_projection", None)
++                with projection() if projection is not None else nullcontext():
++                    if args.wait is not None:  # runs until the service stops it
++                        watch_work(registry.launcher, registry.store, registry.ownership, args.wait,
++                                   lambda value: _render(value, args.json), time.sleep)
++                    value = exclusive_run_work(registry.launcher, registry.store, registry.ownership,
++                                               pause=lambda: time.sleep(RETRY_PAUSE_SECONDS))
++                _render(value, args.json)
++                return 0
+             if args.work_command == "project":
+                 if getattr(registry, "project_cards", None) is None:
+                     _render({"error": "readiness-not-configured"}, args.json)
+diff --git a/src/alienintent/control_plane/application/operator.py b/src/alienintent/control_plane/application/operator.py
+index 6a8eaa4..cc0d74a 100644
+--- a/src/alienintent/control_plane/application/operator.py
++++ b/src/alienintent/control_plane/application/operator.py
+@@ -251,6 +251,8 @@ class WorkLaunches(Protocol):
+ 
+     def launch(self, identity: str) -> Any: ...
+ 
++    def run(self, pause: Callable[[], None]) -> Any: ...
++
+ 
+ def launch_work(coordinator: WorkLaunches, identity: str) -> dict[str, object]:
+     """`work launch`: one role step (PRODUCER at IMPLEMENT or VERIFIER at VERIFY) for exactly the named work item,
+@@ -279,9 +281,50 @@ def exclusive_launch_work(launcher: Callable[[], WorkLaunches], identity: str, s
+     `acquire`, scope `launch`, key `registry`, owner `launcher:<this process as canonical JSON>`), released with its
+     owner and fence afterwards. A held reservation is taken over only when its owner has `terminated`; while it is
+     `alive` or `unknown`, or when another process took it over first, the answer is LAUNCH_IN_PROGRESS."""
++    return _exclusively(store, ownership, profile, {"identity": identity}, lambda: launch_work(launcher(), identity))
++
++
++# `work run`: the pause before a pass that retries a work item, and the wait after an idle run with `--wait`.
++RETRY_PAUSE_SECONDS = 120
++
++
++def exclusive_run_work(launcher: Callable[[], WorkLaunches], store: Any, ownership: LaunchOwnership,
++                       profile: str = "registry", pause: Callable[[], None] = lambda: None) -> dict[str, object]:
++    """`work run` (BOUNDED-ROUTINE-LAUNCH): the coordinator's `run(pause)` inside the same exclusive reservation as
++    `work launch`, so a run and a launch never overlap; its summary, with any DONE still owed its projection."""
++    def run() -> dict[str, object]:
++        coordinator = launcher()
++        summary = asdict(coordinator.run(pause))
++        diagnostics = dict(getattr(coordinator, "projection_diagnostics", {}) or {})
++        return summary | ({"projection_diagnostics": diagnostics} if diagnostics else {})
++    return _exclusively(store, ownership, profile, {}, run)
++
++
++def watch_work(launcher: Callable[[], WorkLaunches], store: Any, ownership: LaunchOwnership, wait: float,
++               report: Callable[[dict[str, object]], None], sleep: Callable[[float], None],
++               profile: str = "registry") -> None:
++    """`work run --wait`: `exclusive_run_work` again and again, never returning (the service stops it). After a run
++    that ran no role (idle, held, or another launch in progress) it waits `wait` seconds; before a pass that retries
++    a work item it pauses RETRY_PAUSE_SECONDS. A run that raises (the board unreadable, a store or git error) is
++    reported as `error` and waited out like an idle run: one transient failure never ends the service. Every run that
++    ran a role or answered something is reported."""
++    while True:
++        try:
++            value = exclusive_run_work(launcher, store, ownership, profile, lambda: sleep(RETRY_PAUSE_SECONDS))
++        except Exception as error:  # noqa: BLE001 - the reservation is released; the next run recovers
++            value = {"error": type(error).__name__, "detail": str(error)}
++        if value.get("ran") or "answer" in value or "error" in value or "projection_diagnostics" in value:
++            report(value)
++        if not value.get("ran"):
++            sleep(wait)
++
++
++def _exclusively(store: Any, ownership: LaunchOwnership, profile: str, answered: Mapping[str, object],
++                 action: Callable[[], dict[str, object]]) -> dict[str, object]:
++    """`action` inside the one exclusive registry-wide launch reservation, or `answered` with the reason it is not."""
+     current = ownership.current()
+     if current is None:
+-        return {"identity": identity, "answer": LAUNCH_OWNER_UNAVAILABLE}
++        return {**answered, "answer": LAUNCH_OWNER_UNAVAILABLE}
+     owner = "launcher:" + json.dumps(dict(current), sort_keys=True, separators=(",", ":"))
+     try:
+         reservation = store.acquire(profile, LAUNCH_SCOPE, LAUNCH_KEY, owner)
+@@ -296,14 +339,14 @@ def exclusive_launch_work(launcher: Callable[[], WorkLaunches], identity: str, s
+                 recorded = None
+             state = ownership.owner_state(recorded) if isinstance(recorded, dict) else "unknown"
+         if held is None or state != "terminated":
+-            return {"identity": identity, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
++            return {**answered, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
+         try:
+             store.release(profile, held.scope, held.key, held.owner, held.fence)  # StaleFence: taken over first
+             reservation = store.acquire(profile, LAUNCH_SCOPE, LAUNCH_KEY, owner)
+         except ReservationRejected:
+-            return {"identity": identity, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
++            return {**answered, "answer": LAUNCH_IN_PROGRESS, "owner_state": state}
+     try:
+-        return launch_work(launcher(), identity)
++        return action()
+     finally:
+         store.release(profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+ 
+diff --git a/src/alienintent/execution_coordination/application/factory_coordinator.py b/src/alienintent/execution_coordination/application/factory_coordinator.py
+index b12095e..3b88d4f 100644
+--- a/src/alienintent/execution_coordination/application/factory_coordinator.py
++++ b/src/alienintent/execution_coordination/application/factory_coordinator.py
+@@ -37,6 +37,8 @@ VERIFIER_RETRY, VERIFIER_RETRY_LIMIT = "verifier-retry", 2
+ # coordinator records as ending the work item with nothing able to resume it (authority holds are resumable).
+ WIP_SCOPE = "wip"
+ FINAL_OUTCOMES = frozenset({"cancelled-by-operator", "cancelled-by-decision", "failure", "timeout"})
++# Outcomes a later pass retries on the same stage; `run` pauses before that pass so a short outage is not spent at once.
++RETRY_OUTCOMES = frozenset({VERIFIER_RETRY, CLOSURE_RETRY, MISSING_TERMINAL_RESULT})
+ # `launch` answers that launch nothing.
+ CLOSURE_NOT_AUTOMATED, NOT_ELIGIBLE = "closure-not-automated", "not-eligible"
+ # The one registry-wide `work launch` reservation (an ordinary store reservation). Only `work launch` takes and releases
+@@ -67,6 +69,11 @@ class _WipSkip(StrEnum):
+     UNAVAILABLE = "wip-limit-unavailable"
+ 
+ 
++class ProjectionRefused(Exception):
++    """The `completed` hook's permanent refusal of a DONE (one no retry can change): the DONE is settled, its WIP slot
++    released, with the refusal as its diagnostic. Any other exception from the hook is transient and keeps the slot."""
++
++
+ class TerminalWork(ValueError):
+     """A normal domain refusal to alter terminal or accepted work."""
+ 
+@@ -77,6 +84,8 @@ class RunSummary:
+     dispatched: tuple[str, ...]
+     authority_blocked: tuple[str, ...] = ()
+     failed: tuple[str, ...] = ()
++    # Every work item a role ran for, once per role run, in order.
++    ran: tuple[str, ...] = ()
+ 
+ 
+ @dataclass(frozen=True)
+@@ -121,6 +130,7 @@ class FactoryCoordinator:
+         if not self._recover(items):
+             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
+         dispatched: list[str] = []
++        ran: list[str] = []
+         skipped: dict[str, _WipSkip] = {}
+         # CLOSURE runs at most once per item in one call, and a VERIFIER retry waits for the next call: an outage is not
+         # spent in one loop.
+@@ -137,9 +147,11 @@ class FactoryCoordinator:
+                 skipped[item.identity] = result
+                 continue
+             if result is StopReason.CAPACITY_UNAVAILABLE:
+-                return RunSummary(result, tuple(dispatched))
+-            if result is None and producing:
+-                dispatched.append(item.identity)
++                return RunSummary(result, tuple(dispatched), ran=tuple(ran))
++            if result is None:
++                ran.append(item.identity)
++                if producing:
++                    dispatched.append(item.identity)
+         stop_reason = self._stop_reason(items)
+         if skipped:
+             stop_reason = StopReason.WIP_LIMIT_UNAVAILABLE if _WipSkip.UNAVAILABLE in skipped.values() else StopReason.CAPACITY_UNAVAILABLE
+@@ -147,8 +159,27 @@ class FactoryCoordinator:
+             stop_reason, tuple(dispatched),
+             tuple(item.identity for item in items if self._outcome(item.identity) == "authority-block"),
+             tuple(item.identity for item in items if self._outcome(item.identity) in {"failure", "timeout"}),
++            tuple(ran),
+         )
+ 
++    def run(self, pause: Callable[[], None] = lambda: None) -> RunSummary:
++        """BOUNDED-ROUTINE-LAUNCH: `start()` again and again until a pass runs no role, so every eligible work item is
++        taken through PRODUCER, VERIFIER and CLOSURE to DONE and the next one is admitted, with no launch per role. A
++        work item a pass could not admit (the WIP slot taken) is tried again by the next pass. The run ends because
++        every role run changes recorded state and every retry is bounded by its recorded count: attempts, VERIFIER
++        retries, CLOSURE retries and one replacement per lost phase. Before a pass that retries a work item `pause`
++        is called. Answers the last pass's summary (why the work stopped) with every pass's `dispatched` and `ran`."""
++        dispatched: list[str] = []
++        ran: list[str] = []
++        while True:
++            summary = self.start()
++            dispatched.extend(summary.dispatched)
++            ran.extend(summary.ran)
++            if not summary.ran:
++                return replace(summary, dispatched=tuple(dispatched), ran=tuple(ran))
++            if any(self._outcome(identity) in RETRY_OUTCOMES for identity in dict.fromkeys(summary.ran)):
++                pause()
++
+     def release_and_start(self, identity: str) -> RunSummary:
+         version, existing = self._store.read_state(self._profile, self._release_aggregate(identity))
+         if not existing:
+@@ -165,8 +196,8 @@ class FactoryCoordinator:
+         whose closure actions are not exactly the five fixed names answers
+         CLOSURE_NOT_AUTOMATED; an item at `ready-to-land` while landing is not enabled answers READY_TO_LAND.
+         Otherwise it writes the explicit human release as `release_and_start` does, runs the existing recovery once
+-        (which may record already-durable outcomes of other launches and starts no worker), projects every recorded
+-        DONE through `completed`, and, only if the item is in the READY snapshot (or, once started, resolved by
++        (which may record already-durable outcomes of other launches, projects a DONE still holding its WIP slot
++        through `completed` and starts no worker), and, only if the item is in the READY snapshot (or, once started, resolved by
+         `started_item`) and `_eligible` admits it, runs `_run` once for it. It never calls `start()`, so no other
+         work item runs and the next role waits for the next `launch`.
+         """
+@@ -189,7 +220,6 @@ class FactoryCoordinator:
+         items = self._work.import_ready_snapshot()
+         if not self._recover(items):
+             return RunSummary(StopReason.CAPACITY_UNAVAILABLE, ())
+-        self._project_done()
+         item = next((ready for ready in items if ready.identity == identity), started)
+         if item is None or not self._eligible(item):
+             return NOT_ELIGIBLE
+@@ -640,13 +670,18 @@ class FactoryCoordinator:
+     def _holds_wip(self, identity: str) -> bool:
+         return bool(self._wip_reservations(identity))
+ 
+-    def _release_ended_wip(self, identity: str) -> None:
+-        """Release the work item's WIP slot once its recorded state reads back as DONE or a final outcome.
++    def _release_ended_wip(self, identity: str, *, projected: bool = False) -> None:
++        """Release the work item's WIP slot once its recorded state reads back as DONE or a final outcome. With a
++        `completed` hook a DONE is settled, and its slot released, only once `completed` succeeded (`projected`): until
++        then the slot is the durable record that the projection is still owed.
+ 
+         Every other state (authority holds, reworks, retries, unknown effects) keeps the slot.
+         """
+         _, raw = self._store.read_state(self._profile, self._aggregate(identity))
+-        if raw.get("stage") != LifecycleStage.DONE.value and raw.get("outcome") not in FINAL_OUTCOMES | {READY_TO_LAND}:
++        done = raw.get("stage") == LifecycleStage.DONE.value
++        if not done and raw.get("outcome") not in FINAL_OUTCOMES | {READY_TO_LAND}:
++            return
++        if done and self._completed is not None and not projected:
+             return
+         for reservation in self._wip_reservations(identity):
+             self._store.release(self._profile, reservation.scope, reservation.key, reservation.owner, reservation.fence)
+@@ -655,10 +690,14 @@ class FactoryCoordinator:
+         by_identity = {item.identity: item for item in items}
+         reservations = self._store.recovery_reservations(self._profile)
+         # WIP slots first, from the recorded work item state alone (not the READY snapshot): a crash between the
+-        # recorded DONE or final outcome and its release is completed here; every other slot is kept.
++        # recorded DONE or final outcome and its release is completed here, a DONE through `completed` first; every
++        # other slot is kept.
+         for reservation in reservations:
+             if reservation.scope == WIP_SCOPE:
+-                self._release_ended_wip(reservation.key)
++                if self._is_done(reservation.key) and self._completed is not None:
++                    self._project(reservation.key)
++                else:
++                    self._release_ended_wip(reservation.key)
+         for reservation in reservations:
+             if reservation.scope == WIP_SCOPE or (reservation.scope, reservation.key) == (LAUNCH_SCOPE, LAUNCH_KEY):
+                 continue
+@@ -741,13 +780,16 @@ class FactoryCoordinator:
+ 
+     def _with_started(self, items: tuple[ReadyWorkItem, ...]) -> tuple[ReadyWorkItem, ...]:
+         """The READY snapshot plus every started work item it does not show (its card moved on with its state),
+-        resolved from the registry: only recorded, non-final items at a stage some role advances."""
++        resolved from the registry: only recorded, non-final items at a stage some role advances. A started item is
++        found by its WIP slot, held from its first PRODUCER admission until it is settled, so this reads the open work
++        only, never the whole history."""
+         if self._started_item is None:
+             return items
+         shown = {item.identity for item in items}
+         started = []
+-        for aggregate, _, raw in self._store.list_states(self._profile, "factory:"):
+-            identity = aggregate.removeprefix("factory:")
++        for identity in dict.fromkeys(reservation.key for reservation in self._store.recovery_reservations(self._profile)
++                                      if reservation.scope == WIP_SCOPE):
++            _, raw = self._store.read_state(self._profile, self._aggregate(identity))
+             if identity in shown or raw.get("stage") not in {str(stage) for stage in ROLE_BY_STAGE} \
+                     or raw.get("outcome") in FINAL_OUTCOMES:
+                 continue
+@@ -757,27 +799,21 @@ class FactoryCoordinator:
+         return (*items, *started)
+ 
+     def _project(self, identity: str) -> None:
+-        """The DONE projection hook; a refusal or error is a diagnostic, never raised into the coordinator."""
++        """The DONE projection hook, then the WIP slot released; a refusal or error is a diagnostic, never raised into
++        the coordinator. A permanent refusal (ProjectionRefused) still settles the DONE; on any other error the slot
++        stays held so the next recovery projects again."""
+         if self._completed is None:
+             return
+         try:
+             self._completed(identity)
+-            self.projection_diagnostics.pop(identity, None)
++        except ProjectionRefused as refusal:
++            self.projection_diagnostics[identity] = f"{identity}: refused: {refusal}"
+         except Exception as error:  # noqa: BLE001 - the row stays unchanged and the next launch retries
+             self.projection_diagnostics[identity] = f"{identity}: {type(error).__name__}: {error}"
+-
+-    def _project_done(self) -> None:
+-        """Every recorded DONE is projected again, whatever its board status, so any crash is repaired."""
+-        if self._completed is None:
+             return
+-        try:
+-            states = self._store.list_states(self._profile, "factory:")
+-        except Exception as error:  # noqa: BLE001 - an unreadable store is a diagnostic; the launch continues
+-            self.projection_diagnostics["*"] = f"list_states: {type(error).__name__}"
+-            return
+-        for aggregate, _, raw in states:
+-            if raw.get("stage") == LifecycleStage.DONE.value:
+-                self._project(aggregate.removeprefix("factory:"))
++        else:
++            self.projection_diagnostics.pop(identity, None)
++        self._release_ended_wip(identity, projected=True)
+ 
+     def _restore_authority_block(self, item: ReadyWorkItem, state: ExecutionState, outcome: WorkerOutcome, correlation: str, items: Iterable[ReadyWorkItem], role: str = PRODUCER, hold: str | None = None) -> None:
+         self._register_escalation(outcome.escalation or self._authority_request(
+diff --git a/src/alienintent/invocation_runtime/adapters/invocation_journal.py b/src/alienintent/invocation_runtime/adapters/invocation_journal.py
+index 9dac46e..05ed832 100644
+--- a/src/alienintent/invocation_runtime/adapters/invocation_journal.py
++++ b/src/alienintent/invocation_runtime/adapters/invocation_journal.py
+@@ -2,41 +2,225 @@
+ 
+ Records are fsynced and read back identically before an append returns, so a
+ reported record survives a restart of the process that wrote it.
++
++BOUNDED-ROUTINE-LAUNCH: the journal stays the one canonical, append-only history. Beside it, `<journal>.by-work/` is
++disposable acceleration state: a copy of each record under its `work_identity` and under its `correlation_id` (one
++file per work item and one per correlation, so a record naming this correlation under another work item still reaches
++the readers that check correlation), and
++`covered`, how far into the journal the copies reach (byte offset, the journal's size, modification time and inode
++when last read, and the SHA-256 of the last covered line). A routine reader asks for one work item's records (`work=`):
++A routine reader asks for one work item's and one correlation's records (`work=`, `correlation=`):
++under an exclusive lock the index first copies the journal lines past `covered` (a crash between a journal line and
++its copy loses nothing), then those files are read, in journal order (a copy doubled by a crash is read once).
++The index is rebuilt from position 0 whenever it cannot prove it still describes the journal: no index, an unreadable
++`covered` or work file, `covered` past the journal's end or no longer ending at the same line, or a journal changed
++other than by appending (replaced, or modified at the same size). So the cost of a routine read follows that item's
++own history, and an index crash, omission, corruption or absence never hides a journal record. Appends and reads
++take the same exclusive lock (`<journal>.lock`, outside the index), so sequences stay distinct across processes and no read sees a
++copy being rebuilt; an append reads only the journal's last line, and an index failure after its line is durable does
++not fail it (the next read catches up). Only an identical line is read once; two different records always both are.
++Only this module writes the index; a single work file deleted by hand is not detected.
+ """
+ 
+ from __future__ import annotations
+ 
++from contextlib import contextmanager
++import fcntl
++from hashlib import sha256
+ import json
+ import os
+ from pathlib import Path
+-from typing import Callable, Mapping
++from typing import Callable, Iterator, Mapping
+ 
+ from alienintent.invocation_runtime.domain.runtime import JournalUnreadable
+ from alienintent.invocation_runtime.ports.invocation_journal import InvocationJournal
+ 
+ 
+-def journal_records(path: Path) -> tuple[dict[str, object], ...]:
+-    """Every record of the durable JSONL worker journal at ``path``."""
++def journal_records(path: Path, work: str | None = None,
++                    correlation: str | None = None) -> tuple[dict[str, object], ...]:
++    """Every record of the durable JSONL worker journal at ``path``, or with ``work`` and/or ``correlation`` only the
++    records naming that work item or that correlation, in journal order."""
++    if work is None and correlation is None:
++        if not path.exists():
++            return ()
++        return tuple(json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
+     if not path.exists():
+         return ()
+-    return tuple(json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip())
++    keys = [key for key in (_key("work", work), _key("correlation", correlation)) if key is not None]
++    with _locked(path):
++        _sync_index(path)
++        try:
++            lines = [line for key in keys for line in _work_lines(path, key)]
++        except ValueError:  # an unreadable copy: the index is rebuilt from the journal and read again
++            _sync_index(path, rebuild=True)
++            lines = [line for key in keys for line in _work_lines(path, key)]
++    records = [json.loads(line) for line in dict.fromkeys(lines)]  # a crash-doubled copy is the identical line
++    return tuple(sorted(records, key=lambda record: record.get("sequence", -1)))  # stable: file order on a tie
++
++
++def _key(kind: str, value: object) -> str | None:
++    return f"{kind}:{value}" if isinstance(value, str) and value else None
++
++
++def _work_lines(path: Path, work: str) -> list[str]:
++    """That work item's copied lines, each checked to parse; none when it has no file."""
++    try:
++        lines = [line for line in _work_file(path, work).read_text(encoding="utf-8").splitlines() if line.strip()]
++    except FileNotFoundError:
++        return []
++    for line in lines:
++        json.loads(line)
++    return lines
+ 
+ 
+ def journal_append(path: Path, clock: Callable[[], float], record: Mapping[str, object]) -> dict[str, object]:
+     """Append one record and read it back before reporting it; the journal is append-only."""
+     path.parent.mkdir(parents=True, exist_ok=True)
+-    entry = dict(record) | {"sequence": len(journal_records(path)), "at": clock()}
+-    line = json.dumps(entry, sort_keys=True)
+-    with path.open("a", encoding="utf-8") as sink:
+-        sink.write(line + "\n")
+-        sink.flush()
+-        os.fsync(sink.fileno())
+-    read_back = journal_records(path)
+-    if not read_back or read_back[-1] != json.loads(line):
+-        raise JournalUnreadable("journal append did not read back identically")
++    with _locked(path):
++        try:  # first notice any change made since the last sync, before this line moves the journal's size
++            _sync_index(path)
++        except (OSError, ValueError):
++            pass  # the index is caught up by the next read
++        last = _last_record(path)
++        entry = dict(record) | {"sequence": 0 if last is None else int(last["sequence"]) + 1, "at": clock()}
++        line = json.dumps(entry, sort_keys=True)
++        with path.open("a", encoding="utf-8") as sink:
++            sink.write(line + "\n")
++            sink.flush()
++            os.fsync(sink.fileno())
++        if _last_record(path) != json.loads(line):
++            raise JournalUnreadable("journal append did not read back identically")
++        try:
++            _sync_index(path)
++        except (OSError, ValueError):
++            pass  # the record is durable; the next read catches the index up
+     return entry
+ 
+ 
++@contextmanager
++def _locked(path: Path) -> Iterator[None]:
++    """The journal's one exclusive lock (`<journal>.lock`, outside the disposable index), held by every append and
++    every work read."""
++    _index(path).mkdir(exist_ok=True)
++    with path.with_name(path.name + ".lock").open("a") as lock:
++        fcntl.flock(lock, fcntl.LOCK_EX)
++        yield
++
++
++# The index layout; an index written in any other layout is rebuilt from position 0.
++INDEX_FORMAT = 2
++
++
++def _index(path: Path) -> Path:
++    return path.with_name(path.name + ".by-work")
++
++
++def _work_file(path: Path, work: str) -> Path:
++    return _index(path) / (sha256(work.encode("utf-8")).hexdigest() + ".jsonl")
++
++
++def _last_record(path: Path) -> dict[str, object] | None:
++    """The journal's last record, read from its end only."""
++    try:
++        handle = path.open("rb")
++    except FileNotFoundError:
++        return None
++    with handle:
++        size = handle.seek(0, os.SEEK_END)
++        if size == 0:
++            return None
++        chunk = 4096
++        while True:
++            start = max(0, size - chunk)
++            handle.seek(start)
++            tail = handle.read(size - start).rstrip(b"\n")
++            if b"\n" in tail or start == 0:
++                return json.loads(tail.rpartition(b"\n")[2].decode("utf-8"))
++            chunk *= 2
++
++
++def _sync_index(path: Path, rebuild: bool = False) -> None:
++    """Copy every journal line past `covered` into its work item's file and move `covered` to the last complete line;
++    rebuild from position 0 when asked or when the index cannot prove it still describes the journal. Called only
++    under `_locked`."""
++    index = _index(path)
++    with path.open("rb") as journal:
++        seen = os.fstat(journal.fileno())
++        state = _covered(index)
++        if rebuild or state is None or not _describes(journal, seen, state):
++            _clear(index)
++            state = {"offset": 0, "last": None}
++        offset = int(state["offset"])
++        journal.seek(offset)
++        new = journal.read(seen.st_size - offset)
++    end = new.rfind(b"\n") + 1  # a line still being written is copied by a later sync
++    by_work: dict[str, list[bytes]] = {}
++    for line in new[:end].splitlines():
++        if line.strip():
++            record = json.loads(line)
++            for key in {_key("work", record.get("work_identity")), _key("correlation", record.get("correlation_id"))}:
++                if key is not None:
++                    by_work.setdefault(key, []).append(line + b"\n")
++    for work, copied in by_work.items():
++        with _work_file(path, work).open("ab") as sink:
++            sink.write(b"".join(copied))
++            sink.flush()
++            os.fsync(sink.fileno())
++    last = state["last"] if end == 0 else sha256(new[:end - 1].rpartition(b"\n")[2]).hexdigest()
++    temporary = index / "covered.tmp"
++    temporary.write_text(json.dumps({"format": INDEX_FORMAT, "offset": offset + end, "size": seen.st_size, "mtime_ns": seen.st_mtime_ns,
++                                     "inode": seen.st_ino, "last": last}))
++    os.replace(temporary, index / "covered")
++
++
++def _covered(index: Path) -> dict[str, object] | None:
++    """The recorded `covered` state, or None when there is none or it cannot be read."""
++    try:
++        state = json.loads((index / "covered").read_text())
++    except (OSError, ValueError):
++        return None
++    if not isinstance(state, dict) or state.get("format") != INDEX_FORMAT or type(state.get("offset")) is not int \
++            or state["offset"] < 0:
++        return None  # an index in another format is rebuilt
++    return state
++
++
++def _describes(journal, seen: os.stat_result, state: Mapping[str, object]) -> bool:
++    """Whether the index still describes this journal: the same file, never shorter, unchanged when its size is
++    unchanged, and its covered prefix still ending, at `offset`, with the same last line."""
++    offset = int(state["offset"])
++    if state.get("inode") != seen.st_ino or seen.st_size < offset or seen.st_size < int(state.get("size") or 0):
++        return False
++    if seen.st_size == state.get("size") and seen.st_mtime_ns != state.get("mtime_ns"):
++        return False
++    if offset == 0:
++        return state.get("last") is None
++    journal.seek(offset - 1)
++    if journal.read(1) != b"\n":
++        return False
++    return state.get("last") == sha256(_line_before(journal, offset - 1)).hexdigest()
++
++
++def _line_before(journal, end: int) -> bytes:
++    """The bytes of the line that ends at `end` (its newline excluded), read backwards from there only."""
++    chunk = 4096
++    while True:
++        start = max(0, end - chunk)
++        journal.seek(start)
++        block = journal.read(end - start)
++        if b"\n" in block or start == 0:
++            return block.rpartition(b"\n")[2]
++        chunk *= 2
++
++
++def _clear(index: Path) -> None:
++    """`covered` removed first (so an interrupted clear never vouches for removed copies), then every copy: the index
++    is rebuilt from position 0."""
++    (index / "covered").unlink(missing_ok=True)
++    for stale in index.glob("*.jsonl"):
++        stale.unlink()
++
++
+ class JsonlInvocationJournal(InvocationJournal):
+     def __init__(self, path: Path, clock: Callable[[], float]) -> None:
+         self.path, self._clock = Path(path), clock
+@@ -44,8 +228,9 @@ class JsonlInvocationJournal(InvocationJournal):
+     def append(self, record: Mapping[str, object]) -> dict[str, object]:
+         return journal_append(self.path, self._clock, record)
+ 
+-    def records(self) -> tuple[dict[str, object], ...]:
++    def records(self, work: str | None = None, correlation: str | None = None) -> tuple[dict[str, object], ...]:
++        """Every record, or with `work` and/or `correlation` only the records naming them (the routine read)."""
+         try:
+-            return journal_records(self.path)
++            return journal_records(self.path, work, correlation)
+         except (OSError, ValueError) as error:
+             raise JournalUnreadable("journal cannot be read back") from error
+diff --git a/src/alienintent/invocation_runtime/application/real_worker.py b/src/alienintent/invocation_runtime/application/real_worker.py
+index 98a4f2b..6462e09 100644
+--- a/src/alienintent/invocation_runtime/application/real_worker.py
++++ b/src/alienintent/invocation_runtime/application/real_worker.py
+@@ -632,7 +632,7 @@ class RealWorkerProvider(WorkerProvider):
+         """The journaled `closure-ordered` events of this work item and candidate, in journal order."""
+         if records is None:
+             try:
+-                records = self._journal.records() if self._journal is not None else ()
++                records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id) if self._journal is not None else ()
+             except JournalUnreadable:
+                 records = ()
+         return tuple(record for record in records if record.get("event") == CLOSURE_ORDERED
+@@ -649,7 +649,7 @@ class RealWorkerProvider(WorkerProvider):
+                 or invocation.candidate is None:
+             return None
+         try:
+-            records = self._journal.records()
++            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
+         except JournalUnreadable:
+             return None
+         own = [record for record in records if record.get("correlation_id") == invocation.correlation_id]
+@@ -854,7 +854,7 @@ class RealWorkerProvider(WorkerProvider):
+         """Why a recovered worktree the coordinator keeps is kept, from this correlation's journal: a journaled
+         `missing-terminal-result` outcome, else (no outcome) a parked launch."""
+         try:
+-            records = self._journal.records() if self._journal is not None else []
++            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id) if self._journal is not None else []
+         except JournalUnreadable:
+             records = []
+         missing = any(record.get("event") == "invocation-outcome" and record.get("kind") == MISSING_TERMINAL_RESULT
+@@ -864,7 +864,7 @@ class RealWorkerProvider(WorkerProvider):
+     def _owner_pid(self, invocation: WorkerInvocation) -> int | None:
+         """The owner process id of the correlation's one `invocation-started` record."""
+         try:
+-            records = self._journal.records() if self._journal is not None else []
++            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id) if self._journal is not None else []
+         except JournalUnreadable:
+             records = []
+         started = [record for record in records if record.get("event") == "invocation-started"
+@@ -887,7 +887,7 @@ class RealWorkerProvider(WorkerProvider):
+         if self._journal is None:
+             return self._outcomes.get(invocation.correlation_id)
+         try:
+-            records = self._journal.records()
++            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
+         except JournalUnreadable:
+             return None
+         return correlated_outcome(records, invocation, self._candidate_branch(invocation))
+@@ -910,7 +910,7 @@ class RealWorkerProvider(WorkerProvider):
+         if self._journal is None or self._ownership is None:
+             return answer(OWNER_UNATTESTED)
+         try:
+-            records = self._journal.records()
++            records = self._journal.records(work=invocation.work_identity, correlation=invocation.correlation_id)
+         except JournalUnreadable:
+             return answer(OWNER_UNATTESTED)
+         own = [record for record in records if record.get("correlation_id") == invocation.correlation_id]
+diff --git a/src/alienintent/invocation_runtime/ports/invocation_journal.py b/src/alienintent/invocation_runtime/ports/invocation_journal.py
+index 4fc4e7e..7d0aad9 100644
+--- a/src/alienintent/invocation_runtime/ports/invocation_journal.py
++++ b/src/alienintent/invocation_runtime/ports/invocation_journal.py
+@@ -5,4 +5,7 @@ from typing import Mapping, Protocol
+ 
+ class InvocationJournal(Protocol):
+     def append(self, record: Mapping[str, object]) -> dict[str, object]: ...
+-    def records(self) -> tuple[dict[str, object], ...]: ...
++    def records(self, work: str | None = None, correlation: str | None = None) -> tuple[dict[str, object], ...]:
++        """Every record, or with `work` and/or `correlation` only the records naming that work item or correlation:
++        the routine read, whose cost follows that item's own history, never the whole journal."""
++        ...
+diff --git a/tests/composition/test_bounded_routine_launch.py b/tests/composition/test_bounded_routine_launch.py
+new file mode 100644
+index 0000000..b2a7d3c
+--- /dev/null
++++ b/tests/composition/test_bounded_routine_launch.py
+@@ -0,0 +1,238 @@
++"""BOUNDED-ROUTINE-LAUNCH: one `work run` takes every eligible READY work item through PRODUCER, VERIFIER and CLOSURE to
++DONE and admits the next, with no launch per role; it resumes after a crash from recorded state; a DONE is settled
++(its WIP slot released) only once its registry row is projected; and it reads open work only, never the history.
++
++Over the launch fixture of test_worker_launch (fake providers, a local bare remote, the Landing Authority), with a WIP
++limit of 1 and plan-derived (`automatic-on`) items. Labels are TEST DATA.
++"""
++from __future__ import annotations
++
++from dataclasses import asdict
++import json
++
++import pytest
++
++from alienintent.composition import work_registry
++from alienintent.control_plane.application.operator import LAUNCH_IN_PROGRESS, exclusive_run_work
++from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
++from alienintent.execution_coordination.application.factory_coordinator import FactoryCoordinator, LAUNCH_KEY, LAUNCH_SCOPE
++from alienintent.execution_coordination.domain.lifecycle import LifecycleStage
++from alienintent.execution_coordination.domain.plan_authority import PLAN_PATH
++from alienintent.composition.work_registry import launch_root
++from alienintent.invocation_runtime.adapters import invocation_journal
++from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
++from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
++from tests.composition.test_work_registry import PLAN_QUOTE, plan_text
++from tests.composition.test_worker_launch import FIXED, QUOTE, Closing, Launch, Owners
++from tests.context_assembly.test_initial_compilation import git
++from tests.context_assembly.test_work_identity_service import commit_file
++
++DONE = LifecycleStage.DONE
++
++
++@pytest.fixture
++def closing(tmp_path, monkeypatch) -> Closing:
++    fx = Launch(tmp_path / "fx", monkeypatch)
++    fx.host.write_text(json.dumps({"wipLimit": 1}))
++    return Closing(fx, monkeypatch)
++
++
++def planned(closing: Closing, *labels: str):
++    """Plan-derived items under one approved fixture plan, READY in the order given; main pushed as the landing base."""
++    fx = closing.fx
++    digest = fx.registry.plan_approval.approve(commit_file(fx.clone, "main", PLAN_PATH, plan_text()),
++                                               PLAN_QUOTE).content_digest
++    items = [fx.authorized(label, False, **FIXED, release_policy="automatic-on",
++                           authority_issuer="plan-authority:" + digest,
++                           authority_references=["README.md", f"{PLAN_PATH} obligation:FIXTURE"],
++                           authorized_scope=["launch-candidate.txt"]) for label in labels]
++    for item in items:  # every release baseline is the same main, after every packet
++        [entry] = [a for a in fx.registry.assessment.consumer.history(item.id)
++                   if a["raw_ref"] == asdict(item.assessment_ref)]
++        assert fx.registry.authorization.authorize(item.id, item.pointer.commit, entry["attempt_id"], fx.main(),
++                                                   QUOTE).answer is None
++    git(fx.clone, "push", "-q", "origin", "main")  # the landing base: the release baseline
++    return [fx.stored(label) for label in labels]
++
++
++def work_run(closing: Closing, ownership=None, pause=lambda: None) -> dict:
++    registry = closing.fx.loaded(ownership if ownership is not None else Owners("terminated"))
++    return exclusive_run_work(registry.launcher, registry.store, registry.ownership, pause=pause)
++
++
++def roles(closing: Closing) -> list[str]:
++    return [run["env"]["ALIENINTENT_ROLE"] for run in closing.fx.runs()]
++
++
++def verifier_plan(closing: Closing, steps: list[str]) -> None:
++    closing.fx.plan.with_name("verifier-plan.json").write_text(json.dumps(steps))
++
++
++def row_done(closing: Closing, identity: str) -> bool:
++    return closing.fx.loaded().identities.find(identity).state == work_registry.DONE
++
++
++def test_one_run_takes_the_first_item_to_done_then_runs_the_next_with_no_launch_per_role(closing):
++    """The first VERIFIER ends without a verdict, so the run pauses and retries it on the next pass; meanwhile the
++    second item cannot take the one WIP slot. The first lands; the run then admits the second and runs each of its
++    roles. (Its CLOSURE answers base-moved: a PRODUCER starts from its release baseline, which the first landing moved
++    on; that is WORK-PREPARATION-REFILL's to change, so only that the second item's roles ran is checked here.)"""
++    first, second = planned(closing, "FIRST", "SECOND")
++    verifier_plan(closing, ["exit"])
++    base, pauses = closing.head(), []
++
++    summary = work_run(closing, pause=lambda: pauses.append(closing.state(first.id).outcome))
++
++    assert pauses == ["verifier-retry"]
++    assert closing.state(first.id).stage is DONE and row_done(closing, first.id)
++    assert roles(closing) == ["PRODUCER", "VERIFIER", "VERIFIER", "CLOSURE", "PRODUCER", "VERIFIER", "CLOSURE"]
++    assert list(summary["ran"]) == [first.id] * 4 + [second.id] * 3
++    assert list(summary["dispatched"]) == [first.id, second.id]
++    assert summary["stop_reason"] == "eligible-backlog-exhausted" and "projection_diagnostics" not in summary
++    assert not closing.fx.wip_held(first.id) and not closing.fx.wip_held(second.id)
++    assert first.id in git(closing.remote, "log", "--format=%s", f"{base}..main").decode()
++
++
++class Crash(BaseException):
++    """The process dying: nothing after it runs, and no `except Exception` catches it."""
++
++
++def test_a_run_that_crashed_mid_verify_resumes_from_recorded_state_on_the_next_run(closing, monkeypatch):
++    """The VERIFIER's outcome is durable but the process dies before it is recorded. The next run recovers that
++    outcome (no second VERIFIER), finds the started item by its WIP slot although its card has moved on, and
++    continues to DONE and to the next item."""
++    first, second = planned(closing, "FIRST", "SECOND")
++    advance = FactoryCoordinator._advance
++
++    def dies(self, item, current, prior, invocation, outcome):
++        if invocation.role == "VERIFIER":
++            raise Crash()
++        return advance(self, item, current, prior, invocation, outcome)
++    monkeypatch.setattr(FactoryCoordinator, "_advance", dies)
++    with pytest.raises(Crash):
++        work_run(closing)
++    monkeypatch.setattr(FactoryCoordinator, "_advance", advance)
++    assert closing.state(first.id).stage is LifecycleStage.VERIFY and closing.fx.wip_held(first.id)
++    closing.fx.loaded().project_cards()
++    assert closing.card(first.id) == "VERIFY"  # not on the READY board any more
++
++    summary = work_run(closing)
++
++    assert closing.state(first.id).stage is DONE
++    assert roles(closing) == ["PRODUCER", "VERIFIER", "CLOSURE", "PRODUCER", "VERIFIER", "CLOSURE"]
++    assert list(summary["ran"]) == [first.id] + [second.id] * 3
++
++
++def test_a_done_is_settled_only_once_its_row_is_projected_and_the_next_run_repairs_it(closing, monkeypatch):
++    """Projecting the first DONE fails: the item keeps its WIP slot, so the second is not admitted and the run stops,
++    naming the projection still owed. The next run projects it from the slot, then runs the second item."""
++    first, second = planned(closing, "FIRST", "SECOND")
++    project = work_registry.WorkRegistry._project_completed
++
++    def refused(self, identity):
++        raise RuntimeError("fixture refusal")
++    monkeypatch.setattr(work_registry.WorkRegistry, "_project_completed", refused)
++
++    summary = work_run(closing)
++
++    assert closing.state(first.id).stage is DONE and not row_done(closing, first.id)
++    assert closing.fx.wip_held(first.id) and roles(closing) == ["PRODUCER", "VERIFIER", "CLOSURE"]
++    assert summary["stop_reason"] == "capacity-unavailable"
++    assert list(summary["projection_diagnostics"]) == [first.id]
++
++    monkeypatch.setattr(work_registry.WorkRegistry, "_project_completed", project)
++    work_run(closing)
++
++    assert row_done(closing, first.id) and not closing.fx.wip_held(first.id)
++    assert roles(closing) == ["PRODUCER", "VERIFIER", "CLOSURE"] * 2
++
++
++@pytest.mark.parametrize(("answer", "settled"), [("NOT_RECORDABLE", True), ("LANDING_UNVERIFIED", False)])
++def test_a_permanent_projection_refusal_settles_the_done_and_a_transient_one_keeps_its_slot(
++        closing, monkeypatch, answer, settled):
++    """The registry row refuses the first DONE: a permanent refusal (here NOT_RECORDABLE, a retired row) settles it
++    with the refusal named, so the next item runs; a transient one (the remote unreadable) keeps the slot for a retry."""
++    from alienintent.context_assembly.application.work_completion import CompletionResult, WorkCompletion
++    first, second = planned(closing, "FIRST", "SECOND")
++    monkeypatch.setattr(WorkCompletion, "record_coordinated",
++                        lambda self, identity, order: CompletionResult(identity, answer, detail="fixture"))
++
++    summary = work_run(closing)
++
++    assert closing.state(first.id).stage is DONE and not row_done(closing, first.id)
++    assert closing.fx.wip_held(first.id) is not settled
++    assert roles(closing) == ["PRODUCER", "VERIFIER", "CLOSURE"] * (2 if settled else 1)
++    assert summary["projection_diagnostics"][first.id].startswith(f"{first.id}: " + ("refused: " if settled else ""))
++    assert answer in summary["projection_diagnostics"][first.id]
++
++
++def test_a_done_whose_work_item_is_unknown_is_settled_with_the_refusal_named(closing, monkeypatch):
++    """No registry identity for the DONE: permanent, so the slot is released and the next item runs."""
++    first, second = planned(closing, "FIRST", "SECOND")
++    identities = type(closing.fx.loaded().identities)
++    find, project, projecting = identities.find, work_registry.WorkRegistry._project_completed, []
++
++    def projected(self, identity):
++        projecting.append(identity)
++        try:
++            return project(self, identity)
++        finally:
++            projecting.pop()
++    monkeypatch.setattr(work_registry.WorkRegistry, "_project_completed", projected)
++    monkeypatch.setattr(identities, "find",  # the identity is unknown only to the DONE projection
++                        lambda self, identity: None if projecting and identity == first.id else find(self, identity))
++
++    summary = work_run(closing)
++
++    assert closing.state(first.id).stage is DONE and not closing.fx.wip_held(first.id)
++    assert roles(closing) == ["PRODUCER", "VERIFIER", "CLOSURE"] * 2
++    assert summary["projection_diagnostics"][first.id] == f"{first.id}: refused: no work item"
++
++
++@pytest.mark.parametrize("history", [10, 100, 1000])
++def test_a_run_reads_open_work_only_whatever_the_history(closing, monkeypatch, history):
++    """`history` earlier DONE work items are recorded and journaled; a run reads none of their records, lists no work
++    item records and never reads the whole journal."""
++    path = launch_root(closing.fx.loaded().configuration) / "invocation-journal.jsonl"
++    journal = JsonlInvocationJournal(path, lambda: 1.0)
++    for number in range(history):
++        closing.fx.store.commit("registry", f"factory:history-{number}", 0, {
++            "stage": "DONE", "version": 4, "accepted": True, "closure": [], "candidate": None})
++        journal.append({"event": "invocation-started", "work_identity": f"history-{number}",
++                        "correlation_id": f"launch:history-{number}:0"})
++    [item] = planned(closing, "ONLY")
++    listed, read = [], []
++    list_states, read_state = SQLiteOperationalStore.list_states, SQLiteOperationalStore.read_state
++
++    def listing(self, profile, prefix=""):
++        listed.append(prefix)
++        return list_states(self, profile, prefix)
++
++    def reading(self, profile, aggregate):
++        read.append(aggregate)
++        return read_state(self, profile, aggregate)
++    whole = invocation_journal.Path.read_text
++
++    def journal_read(self, *args, **kwargs):
++        assert self != path, "the whole journal was read"
++        return whole(self, *args, **kwargs)
++    monkeypatch.setattr(SQLiteOperationalStore, "list_states", listing)
++    monkeypatch.setattr(SQLiteOperationalStore, "read_state", reading)
++    monkeypatch.setattr(invocation_journal.Path, "read_text", journal_read)
++
++    work_run(closing)
++
++    assert closing.state(item.id).stage is DONE
++    assert not [prefix for prefix in listed if "factory:".startswith(prefix)]
++    assert not [aggregate for aggregate in read if aggregate.startswith("factory:history-")]
++
++
++def test_a_run_never_overlaps_a_live_launch(closing):
++    """The one registry-wide launch reservation, held by a live process: the run answers LAUNCH_IN_PROGRESS and
++    starts nothing."""
++    planned(closing, "ONLY")
++    owner = "launcher:" + json.dumps(dict(ProcOwnership().current()), sort_keys=True, separators=(",", ":"))
++    closing.fx.store.acquire("registry", LAUNCH_SCOPE, LAUNCH_KEY, owner)
++
++    assert work_run(closing, Owners("alive")) == {"answer": LAUNCH_IN_PROGRESS, "owner_state": "alive"}
++    assert closing.fx.runs() == []
+diff --git a/tests/composition/test_role_binding.py b/tests/composition/test_role_binding.py
+index 67f1009..402053e 100644
+--- a/tests/composition/test_role_binding.py
++++ b/tests/composition/test_role_binding.py
+@@ -89,6 +89,29 @@ def test_sandbox_profile_refuses_a_verifier_given_a_candidate_the_producer_never
+     assert runs(tmp_path) == [("PRODUCER", PRODUCER_0)]
+ 
+ 
++def test_a_second_producer_outcome_under_another_work_item_makes_custody_unattributable(tmp_path: Path) -> None:
++    """BOUNDED-ROUTINE-LAUNCH: the guard reads the PRODUCER's correlation itself, so a durable outcome on that
++    correlation filed under another work item still makes the published candidate unattributable."""
++    profile = sandbox(tmp_path)
++    project = profile.work.project_execution_state
++
++    def miscorrelate_at_verify(identity, stage, revision=0):
++        if stage == LifecycleStage.VERIFY:
++            [outcome] = [r for r in journaled(profile.journal.path, "invocation-outcome") if r["correlation_id"] == PRODUCER_0]
++            profile.journal.append({k: v for k, v in outcome.items() if k not in ("sequence", "at")}
++                                   | {"work_identity": "ANOTHER-WORK-ITEM"})
++        return project(identity, stage, revision)
++
++    profile.work.project_execution_state = miscorrelate_at_verify  # type: ignore[method-assign]
++    profile.coordinator.start()
++
++    state = profile.coordinator.state(SANDBOX_WORK)
++    [verifier] = list(profile.worker.refusals)
++    assert state.stage is LifecycleStage.VERIFY
++    _held_before_launch(state, profile.worker.refusals, verifier, "candidate-custody-unattributable")
++    assert runs(tmp_path) == [("PRODUCER", PRODUCER_0)]
++
++
+ @pytest.mark.parametrize("binding", ["missing", "disconnected"])
+ def test_github_profile_refuses_an_unbound_or_disconnected_worker_before_launch(tmp_path: Path, binding: str) -> None:
+     composed = github(tmp_path, binding=binding)
+diff --git a/tests/composition/test_worker_launch.py b/tests/composition/test_worker_launch.py
+index 2c2f67a..aabbf11 100644
+--- a/tests/composition/test_worker_launch.py
++++ b/tests/composition/test_worker_launch.py
+@@ -98,7 +98,7 @@ record = {{"argv": sys.argv, "stdin": text, "env": dict(os.environ), "cwd": os.g
+ records.mkdir(exist_ok=True)
+ (records / f"{{role}}-{{len(list(records.iterdir()))}}.json").write_text(json.dumps(record))
+ if role == "PRODUCER":
+-    Path("launch-candidate.txt").write_text("candidate\n")
++    Path("launch-candidate.txt").write_text(f"candidate {{package['identity']}}\n")
+     subprocess.run(["git", "add", "launch-candidate.txt"], check=True)
+     subprocess.run(["git", "-c", "commit.gpgsign=false", "commit", "-qm", "candidate"], check=True)
+     review = lines[next(i for i, line in enumerate(lines) if line.endswith("to this file:")) + 1]
+diff --git a/tests/control_plane/test_cli.py b/tests/control_plane/test_cli.py
+index ae5daf2..565c8be 100644
+--- a/tests/control_plane/test_cli.py
++++ b/tests/control_plane/test_cli.py
+@@ -675,7 +675,8 @@ def test_work_launch_renders_one_step_and_work_context_passes_the_contract_diges
+     assert json.loads(capsys.readouterr().out) == {"identity": "ITEM", "answer": "closure-not-automated"}
+     assert cli.main(["--json", "--profile-factory", "x:y", "work", "launch", "ITEM"]) == 0
+     assert json.loads(capsys.readouterr().out) == {"identity": "ITEM", "stop_reason": "dependencies-or-authority-blocked",
+-                                                   "dispatched": ["ITEM"], "authority_blocked": [], "failed": []}
++                                                   "dispatched": ["ITEM"], "authority_blocked": [], "failed": [],
++                                                   "ran": []}
+     for extra, digest in ((["--contract-digest", "sha256:abc"], "sha256:abc"), ([], None)):
+         assert cli.main(["--json", "--profile-factory", "x:y", "work", "context", "ITEM", "--role", "PRODUCER",
+                          "--correlation", "launch:ITEM:0", *extra]) == 0
+@@ -684,6 +685,108 @@ def test_work_launch_renders_one_step_and_work_context_passes_the_contract_diges
+ 
+ 
+ 
++def test_work_run_renders_the_run_summary_inside_the_card_projector(monkeypatch, capsys, tmp_path) -> None:
++    """BOUNDED-ROUTINE-LAUNCH: `work run` calls the launcher's `run` once, inside the card projector and the launch
++    reservation, with the retry pause, and renders its summary with any projection still owed."""
++    from contextlib import contextmanager
++    from types import SimpleNamespace
++    from alienintent.control_plane.adapters import cli
++    from alienintent.control_plane.application import operator
++    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
++    from alienintent.execution_coordination.application.factory_coordinator import RunSummary, StopReason
++    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
++    events, store = [], SQLiteOperationalStore(tmp_path / "launch.sqlite")
++
++    def run(pause):
++        events.append(("run", [r.scope for r in store.recovery_reservations("registry")]))
++        pause()
++        return RunSummary(StopReason.EXHAUSTED, ("A",), ran=("A", "A", "A"))
++
++    @contextmanager
++    def projection():
++        events.append("projector on")
++        yield
++        events.append("projector off")
++    launcher = SimpleNamespace(run=run, projection_diagnostics={"A": "A: RuntimeError: x"})
++    registry = SimpleNamespace(launcher=lambda: launcher, store=store, ownership=ProcOwnership(),
++                               card_projection=projection)
++    monkeypatch.setattr(cli, "_factory", lambda _: SimpleNamespace(work_registry=registry))
++    monkeypatch.setattr(cli.time, "sleep", lambda seconds: events.append(("sleep", seconds)))
++
++    assert cli.main(["--json", "--profile-factory", "x:y", "work", "run"]) == 0
++    assert json.loads(capsys.readouterr().out) == {
++        "stop_reason": "eligible-backlog-exhausted", "dispatched": ["A"], "authority_blocked": [], "failed": [],
++        "ran": ["A", "A", "A"], "projection_diagnostics": {"A": "A: RuntimeError: x"}}
++    assert events == ["projector on", ("run", ["launch"]), ("sleep", operator.RETRY_PAUSE_SECONDS), "projector off"]
++    assert store.recovery_reservations("registry") == ()
++
++
++def test_work_run_wait_runs_again_after_each_idle_run_with_no_one_invoking_it(tmp_path) -> None:
++    """`work run --wait`: an idle run (nothing ran, or another launch holds the reservation) waits, then runs again;
++    a run that ran a role is reported and followed at once by the next run."""
++    from types import SimpleNamespace
++    from alienintent.control_plane.application.operator import LAUNCH_IN_PROGRESS, watch_work
++    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
++    from alienintent.execution_coordination.application.factory_coordinator import (
++        LAUNCH_KEY, LAUNCH_SCOPE, RunSummary, StopReason)
++    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
++    store, ownership = SQLiteOperationalStore(tmp_path / "launch.sqlite"), ProcOwnership()
++    owner = "launcher:" + json.dumps(dict(ownership.current()), sort_keys=True, separators=(",", ":"))
++    held = store.acquire("registry", LAUNCH_SCOPE, LAUNCH_KEY, owner)  # a live launch holds it at first
++    runs = iter([RunSummary(StopReason.EXHAUSTED, ()), RunSummary(StopReason.EXHAUSTED, (), ran=("B",)),
++                 RunSummary(StopReason.EXHAUSTED, ())])
++    reports, events = [], []
++
++    class Stop(Exception):
++        pass
++
++    def sleep(seconds):
++        events.append(("sleep", seconds))
++        if len([event for event in events if event[0] == "sleep"]) == 1:
++            store.release("registry", held.scope, held.key, held.owner, held.fence)
++        if len([event for event in events if event[0] == "sleep"]) == 3:
++            raise Stop()
++
++    def run(pause):
++        events.append(("run",))
++        return next(runs)
++    launcher = SimpleNamespace(run=run, projection_diagnostics={})
++    with pytest.raises(Stop):
++        watch_work(lambda: launcher, store, ownership, 30, reports.append, sleep)
++    assert [report.get("answer") or list(report["ran"]) for report in reports] == [LAUNCH_IN_PROGRESS, ["B"]]
++    assert events == [("sleep", 30), ("run",), ("sleep", 30), ("run",), ("run",), ("sleep", 30)]
++
++
++def test_work_run_wait_survives_a_failed_run_and_runs_again(tmp_path) -> None:
++    """A run that raises (the board unreadable, a store or git error) is reported, waited out and run again: one
++    transient failure never ends the service. The launch reservation is released."""
++    from types import SimpleNamespace
++    from alienintent.control_plane.application.operator import watch_work
++    from alienintent.execution_coordination.adapters.sqlite_store import SQLiteOperationalStore
++    from alienintent.execution_coordination.application.factory_coordinator import RunSummary, StopReason
++    from alienintent.invocation_runtime.adapters.process_ownership import ProcOwnership
++    store = SQLiteOperationalStore(tmp_path / "launch.sqlite")
++    answers = iter([OSError("board unreadable"), RunSummary(StopReason.EXHAUSTED, (), ran=("B",))])
++    reports, waits = [], []
++
++    class Stop(BaseException):
++        pass
++
++    def run(pause):
++        answer = next(answers, None)
++        if answer is None:
++            raise Stop()
++        if isinstance(answer, Exception):
++            raise answer
++        return answer
++    with pytest.raises(Stop):
++        watch_work(lambda: SimpleNamespace(run=run, projection_diagnostics={}), store, ProcOwnership(), 30,
++                   reports.append, waits.append)
++    assert reports[0] == {"error": "OSError", "detail": "board unreadable"} and list(reports[1]["ran"]) == ["B"]
++    assert waits == [30]
++    assert store.recovery_reservations("registry") == ()
++
++
+ def test_work_launch_runs_inside_the_card_projector_and_work_project_runs_one_pass(monkeypatch, capsys, tmp_path) -> None:
+     """CARD-FOLLOWS-STAGE: the launch runs inside `card_projection`; `work project` is the projector on its own."""
+     from contextlib import contextmanager
+diff --git a/tests/execution_coordination/k2_fixture.py b/tests/execution_coordination/k2_fixture.py
+index 9bd7074..76ce654 100644
+--- a/tests/execution_coordination/k2_fixture.py
++++ b/tests/execution_coordination/k2_fixture.py
+@@ -173,8 +173,8 @@ class CrashAfterVerifierOutcome:
+             os._exit(CRASH_EXIT)
+         return entry
+ 
+-    def records(self):
+-        return self._inner.records()
++    def records(self, work=None, correlation=None):
++        return self._inner.records(work, correlation)
+ 
+ 
+ def main() -> int:
+diff --git a/tests/execution_coordination/test_role_orchestration.py b/tests/execution_coordination/test_role_orchestration.py
+index 08b41c3..cd8ff25 100644
+--- a/tests/execution_coordination/test_role_orchestration.py
++++ b/tests/execution_coordination/test_role_orchestration.py
+@@ -191,8 +191,8 @@ class JournalFault:
+                     return inner.append(record | {"receipts": [*record["receipts"], "merged-to-baseline"]})
+                 raise AssertionError(fault)
+ 
+-            def records(self):
+-                return inner.records()
++            def records(self, work=None, correlation=None):
++                return inner.records(work, correlation)
+ 
+         return Journal()
+ 
+diff --git a/tests/invocation_runtime/k1_fixture.py b/tests/invocation_runtime/k1_fixture.py
+index 7ff4849..681a00d 100644
+--- a/tests/invocation_runtime/k1_fixture.py
++++ b/tests/invocation_runtime/k1_fixture.py
+@@ -182,8 +182,8 @@ class CrashAfterOutcome:
+             os._exit(CRASH_EXIT)
+         return entry
+ 
+-    def records(self):
+-        return self._inner.records()
++    def records(self, work=None, correlation=None):
++        return self._inner.records(work, correlation)
+ 
+ 
+ def main() -> int:
+diff --git a/tests/invocation_runtime/test_invocation_journal_index.py b/tests/invocation_runtime/test_invocation_journal_index.py
+new file mode 100644
+index 0000000..2856bf0
+--- /dev/null
++++ b/tests/invocation_runtime/test_invocation_journal_index.py
+@@ -0,0 +1,241 @@
++"""BOUNDED-ROUTINE-LAUNCH: the invocation journal's per-work-item read. The journal stays canonical; the index is
++disposable acceleration state: its crash, omission, corruption or absence never makes a valid journal record disappear
++from a read. Identities and fields are TEST DATA."""
++from __future__ import annotations
++
++import json
++from pathlib import Path
++
++import pytest
++
++from alienintent.invocation_runtime.adapters import invocation_journal
++from alienintent.invocation_runtime.adapters.invocation_journal import JsonlInvocationJournal
++
++
++def journal(tmp_path) -> JsonlInvocationJournal:
++    return JsonlInvocationJournal(tmp_path / "invocation-journal.jsonl", lambda: 1.0)
++
++
++def test_a_work_read_answers_that_items_records_in_order_and_sequences_follow_the_journal(tmp_path):
++    log = journal(tmp_path)
++    for number in range(6):
++        log.append({"event": "invocation-started", "work_identity": "AB"[number % 2], "n": number})
++    log.append({"event": "process-cancel", "invocation_id": "x"})  # names no work item: the full read only
++    log.append({"event": "x", "work_identity": "A", "big": "y" * 20_000})  # longer than one tail read
++
++    assert [r["sequence"] for r in log.records()] == list(range(8))
++    assert [r["n"] for r in log.records(work="A")[:3]] == [0, 2, 4]
++    assert [r["sequence"] for r in log.records(work="A")] == [0, 2, 4, 7]
++    assert log.records(work="A")[-1]["big"] == "y" * 20_000
++    assert [r["sequence"] for r in log.records(work="B")] == [1, 3, 5]
++    assert log.records(work="C") == ()
++    assert log.append({"event": "x", "work_identity": "B"})["sequence"] == 8
++
++
++def test_a_line_whose_copy_was_lost_or_doubled_by_a_crash_is_read_exactly_once(tmp_path):
++    """A crash after the journal line and before its copy: the next work read copies the lines past `covered`. A crash
++    after copying and before `covered` moved: the doubled copy (the identical line) is read once."""
++    log = journal(tmp_path)
++    log.append({"event": "a", "work_identity": "A"})
++    line = json.dumps({"event": "b", "work_identity": "A", "sequence": 1, "at": 1.0}, sort_keys=True) + "\n"
++    with log.path.open("a") as sink:
++        sink.write(line)  # the journal line, never copied
++    work_file = next(index_of(log).glob("*.jsonl"))
++    with work_file.open("a") as sink:
++        sink.write(line)  # copied, but `covered` not moved
++    assert [r["event"] for r in log.records(work="A")] == ["a", "b"]
++    assert work_file.read_text().count(line) == 2  # the doubled copy is still there, read once
++
++
++def test_two_records_with_the_same_sequence_are_both_read(tmp_path):
++    """A journal written by two unlocked appenders may hold two different records with one sequence: both are real."""
++    log = journal(tmp_path)
++    log.path.write_text("".join(json.dumps(record, sort_keys=True) + "\n" for record in (
++        {"event": "a", "work_identity": "A", "sequence": 0, "at": 1.0},
++        {"event": "b", "work_identity": "A", "sequence": 0, "at": 1.0})))
++    assert [r["event"] for r in log.records(work="A")] == ["a", "b"]
++
++
++def test_concurrent_appends_from_two_processes_take_distinct_sequences(tmp_path):
++    import multiprocessing
++    path = tmp_path / "invocation-journal.jsonl"
++    context = multiprocessing.get_context("fork")
++    workers = [context.Process(target=_append_many, args=(path, name)) for name in ("A", "B")]
++    for worker in workers:
++        worker.start()
++    for worker in workers:
++        worker.join(60)
++    records = JsonlInvocationJournal(path, lambda: 1.0).records()
++    assert sorted(r["sequence"] for r in records) == list(range(40))
++    assert len(JsonlInvocationJournal(path, lambda: 1.0).records(work="A")) == 20
++
++
++def _append_many(path, name):
++    log = JsonlInvocationJournal(path, lambda: 1.0)
++    for _ in range(20):
++        log.append({"event": "x", "work_identity": name})
++
++
++def test_an_index_failure_after_the_line_is_durable_does_not_fail_the_append(tmp_path, monkeypatch):
++    log = journal(tmp_path)
++
++    def broken(path, rebuild=False):
++        raise OSError("index disk full")
++    monkeypatch.setattr(invocation_journal, "_sync_index", broken)
++    assert log.append({"event": "a", "work_identity": "A"})["sequence"] == 0
++    monkeypatch.undo()
++    assert [r["event"] for r in log.records(work="A")] == ["a"]
++
++
++def test_a_rebuild_interrupted_after_removing_copies_is_finished_by_the_next_read(tmp_path, monkeypatch):
++    """`covered` goes first, so a crash part way through clearing never leaves a `covered` that vouches for removed
++    copies."""
++    log = journal(tmp_path)
++    for name in ("A", "B"):
++        log.append({"event": "a", "work_identity": name})
++    unlink = Path.unlink
++    removed = []
++
++    def dies(self, *args, **kwargs):
++        unlink(self, *args, **kwargs)
++        removed.append(self.name)
++        if self.suffix == ".jsonl":
++            raise KeyboardInterrupt("the process died")
++    monkeypatch.setattr(Path, "unlink", dies)
++    with pytest.raises(KeyboardInterrupt):
++        invocation_journal._clear(index_of(log))
++    monkeypatch.undo()
++    assert removed[0] == "covered"
++    assert [r["work_identity"] for r in log.records(work="A") + log.records(work="B")] == ["A", "B"]
++
++
++def test_a_work_read_reads_the_journal_only_past_what_is_covered(tmp_path, monkeypatch):
++    """Whatever the history, a routine read reads that item's file and no journal byte already copied."""
++    log = journal(tmp_path)
++    for number in range(1000):
++        log.append({"event": "invocation-started", "work_identity": f"history-{number}"})
++    log.append({"event": "invocation-started", "work_identity": "NOW"})
++    size = log.path.stat().st_size
++    reads = []
++    opened = invocation_journal.Path.open
++
++    def watching(self, mode="r", *args, **kwargs):
++        handle = opened(self, mode, *args, **kwargs)
++        if self == log.path and "b" in mode:
++            seek = handle.seek
++
++            def recorded(offset, whence=0):
++                position = seek(offset, whence)
++                reads.append(position)
++                return position
++            handle.seek = recorded
++        return handle
++    read_text = invocation_journal.Path.read_text
++
++    def whole(self, *args, **kwargs):
++        assert self != log.path, "the whole journal was read"
++        return read_text(self, *args, **kwargs)
++    monkeypatch.setattr(invocation_journal.Path, "open", watching)
++    monkeypatch.setattr(invocation_journal.Path, "read_text", whole)
++
++    assert [r["work_identity"] for r in log.records(work="NOW")] == ["NOW"]
++    log.append({"event": "invocation-outcome", "work_identity": "NOW"})
++    assert len(log.records(work="NOW")) == 2
++    assert reads and min(reads) >= size - 8192  # the end of the journal only: its last line, nothing before
++
++
++def index_of(log: JsonlInvocationJournal):
++    return log.path.with_name(log.path.name + ".by-work")
++
++
++def lines(*records: dict) -> str:
++    return "".join(json.dumps(record | {"sequence": number, "at": 1.0}, sort_keys=True) + "\n"
++                   for number, record in enumerate(records))
++
++
++def test_a_journal_written_before_the_index_existed_is_caught_up_from_its_start(tmp_path):
++    log = journal(tmp_path)
++    log.path.write_text(lines({"event": "a", "work_identity": "A"}, {"event": "b", "work_identity": "B"},
++                              {"event": "c", "work_identity": "A"}))
++    assert not index_of(log).exists()
++    assert [r["event"] for r in log.records(work="A")] == ["a", "c"]
++    assert log.append({"event": "d", "work_identity": "A"})["sequence"] == 3
++    assert [r["event"] for r in log.records(work="A")] == ["a", "c", "d"]
++
++
++def test_a_crash_after_the_journal_line_and_before_the_index_loses_nothing(tmp_path, monkeypatch):
++    log = journal(tmp_path)
++    log.append({"event": "a", "work_identity": "A"})
++    sync = invocation_journal._sync_index
++
++    def crash(path, rebuild=False):
++        if '"event": "b"' in path.read_text():  # only once the journal line is durable
++            raise KeyboardInterrupt("the process died")
++        return sync(path, rebuild)
++    monkeypatch.setattr(invocation_journal, "_sync_index", crash)
++    with pytest.raises(KeyboardInterrupt):
++        log.append({"event": "b", "work_identity": "A"})
++    monkeypatch.setattr(invocation_journal, "_sync_index", sync)
++    assert [r["event"] for r in journal(tmp_path).records(work="A")] == ["a", "b"]  # a fresh process
++
++
++@pytest.mark.parametrize("then_append", [False, True], ids=["read next", "append then read"])
++@pytest.mark.parametrize("damage", ["covered past the end", "covered unreadable", "index removed",
++                                    "work file unreadable", "rewritten at the same size", "rewritten shorter",
++                                    "rewritten longer", "replaced"])
++def test_a_damaged_or_stale_index_is_rebuilt_from_the_journal_start(tmp_path, damage, then_append):
++    """Each damage to the index, or a journal changed other than by an append, is detected on the next read, which
++    rebuilds the index from position 0 and answers exactly the journal's records."""
++    log = journal(tmp_path)
++    for event in ("a", "b", "c"):
++        log.append({"event": event, "work_identity": "A", "role": "PRODUCER"})
++    assert len(log.records(work="A")) == 3
++    index, text = index_of(log), log.path.read_text()
++    if damage == "covered past the end":
++        state = json.loads((index / "covered").read_text())
++        (index / "covered").write_text(json.dumps(state | {"offset": state["offset"] + 10}))
++    elif damage == "covered unreadable":
++        (index / "covered").write_text("not json")
++    elif damage == "work file unreadable":
++        next(index.glob("*.jsonl")).write_text("not json\n")
++    elif damage == "index removed":
++        for path in index.iterdir():
++            path.unlink()
++        index.rmdir()
++    elif damage == "rewritten at the same size":
++        log.path.write_text(text.replace('"role": "PRODUCER"', '"role": "VERIFIER"', 1))
++    elif damage == "rewritten shorter":
++        log.path.write_text(text.replace('"role": "PRODUCER"', '"role": "P"', 1))
++    elif damage == "rewritten longer":
++        log.path.write_text(text.replace('"role": "PRODUCER"', '"role": "PRODUCER-AND-MORE"', 1))
++    else:
++        replacement = log.path.with_name("replacement.jsonl")
++        replacement.write_text(text.replace('"role": "PRODUCER"', '"role": "VERIFIER"', 1))
++        replacement.replace(log.path)
++    if then_append:  # an append before the next read must notice the change too
++        log.append({"event": "d", "work_identity": "A", "role": "PRODUCER"})
++    expected = [record for record in log.records() if record.get("work_identity") == "A"]
++    assert list(log.records(work="A")) == expected
++
++
++def test_the_append_lock_lives_outside_the_disposable_index(tmp_path):
++    """Removing the index never removes the lock that keeps sequences distinct."""
++    log = journal(tmp_path)
++    log.append({"event": "a", "work_identity": "A"})
++    assert log.path.with_name(log.path.name + ".lock").exists()
++    assert not (index_of(log) / "lock").exists()
++
++
++def test_a_record_naming_this_correlation_under_another_work_item_is_still_read(tmp_path):
++    """A miscorrelated record (this invocation's correlation, another work item's identity) must reach the readers that
++    check correlation; a read by work item and correlation answers both, in journal order, each record once."""
++    log = journal(tmp_path)
++    log.append({"event": "invocation-started", "work_identity": "A", "correlation_id": "launch:A:0"})
++    log.append({"event": "invocation-outcome", "work_identity": "OTHER", "correlation_id": "launch:A:0"})
++    log.append({"event": "invocation-started", "work_identity": "A", "correlation_id": "launch:A:1"})
++    log.append({"event": "x", "work_identity": "B", "correlation_id": "launch:B:0"})
++    both = log.records(work="A", correlation="launch:A:0")
++    assert [(r["event"], r["sequence"]) for r in both] == [
++        ("invocation-started", 0), ("invocation-outcome", 1), ("invocation-started", 2)]
++    assert [r["sequence"] for r in log.records(correlation="launch:A:0")] == [0, 1]
++    assert [r["sequence"] for r in log.records(work="A")] == [0, 2]
+diff --git a/tests/invocation_runtime/test_real_worker_outcome.py b/tests/invocation_runtime/test_real_worker_outcome.py
+index c9c611a..42dd7d8 100644
+--- a/tests/invocation_runtime/test_real_worker_outcome.py
++++ b/tests/invocation_runtime/test_real_worker_outcome.py
+@@ -61,8 +61,8 @@ class DropOutcome:
+             return dict(record)
+         return self._inner.append(record)
+ 
+-    def records(self):
+-        return self._inner.records()
++    def records(self, work=None, correlation=None):
++        return self._inner.records(work, correlation)
+ 
+ 
+ def _assert_held(fixture) -> None:
+@@ -110,8 +110,8 @@ class Miscorrelate:
+                     return inner.append(record)
+                 return inner.append(_rewrite(dict(record), field))
+ 
+-            def records(self):
+-                return inner.records()
++            def records(self, work=None, correlation=None):
++                return inner.records(work, correlation)
+ 
+         return Journal()
+ 
+diff --git a/tests/invocation_runtime/test_workspace_folder.py b/tests/invocation_runtime/test_workspace_folder.py
+index f97aa4f..087d243 100644
+--- a/tests/invocation_runtime/test_workspace_folder.py
++++ b/tests/invocation_runtime/test_workspace_folder.py
+@@ -87,7 +87,7 @@ def test_every_site_names_the_folder_without_a_colon(tmp_path, monkeypatch):
+                 "owner": {"pid": 1, "start": 1, "boot": "b", "pidns": "n"}}
+                for role, c in (("producer", CORRELATION), *roles.items())]
+     closure._registry, closure._root, closure.worker = SimpleNamespace(ownership=ownership), handover.launch, None
+-    closure._journal = SimpleNamespace(records=lambda: started)
++    closure._journal = SimpleNamespace(records=lambda **_: started)
+     closure.worker_workspaces, closure.cleanup_diagnostics = handover.workspaces, {}
+     closure._git = lambda *args: ""
+     landing = closure._clone(roles["closure"])
