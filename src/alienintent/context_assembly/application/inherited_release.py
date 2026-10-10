@@ -1,11 +1,14 @@
 """InheritedRelease: the control plane's release of a plan-derived work item (`work release`, no quote).
 
-A work item inherits execution authority from the current approved plan authority only when it is at CAPTURE with a
+A work item inherits execution authority from the live plan authority (the canonical plan at the tip of main,
+PLAN-TIP-AUTHORITY-RUNTIME-FIX) only when it is at CAPTURE with a
 pointer and no release record, its retained assessment of that pointer is READY, its contract is `automatic-on`, and
 the composed satisfiability check with that authority gives no reasons. Otherwise it answers the named refusal and
 writes nothing; OWNER_DECISION_REQUIRED also ensures the one durable owner-decision attention item (`owner_decision`).
 Then, as `work authorize` does (its file is not changed): the evidence record with the same fields (approver the
-contract's `authority_issuer`, quote the plan approval record's revision digest), the release record (the commit
+contract's `authority_issuer`, quote the live plan's reference, and `plan`: the exact tip commit and content digest
+it is released under and the digest it was prepared from; an item prepared from an older revision has been
+revalidated against the tip by the satisfiability check and its release text says so), the release record (the commit
 point: create only, read back, its baseline the default branch's current head) and the row's `approval_ref`. Then
 the card: linked if the item has none (`work link`), its text written (`work display`), Status READY and Priority
 the obligation's written and each read back. A rerun after an unconfirmed card writes only the card.
@@ -76,7 +79,7 @@ class InheritedRelease:
                  evidence: EvidenceRepository, project: str, profile: str, releases: ReleaseRecords,
                  revisions: RevisionResolver, release_points: Mapping[str, str], head: Callable[[str], str | None],
                  authority: Callable[[], PlanAuthority | None],
-                 satisfiable: Callable[[bytes, str, str], tuple[str, ...]], owner_decision: Callable[[str], None],
+                 satisfiable: Callable[[bytes, str, str, PlanAuthority], tuple[str, ...]], owner_decision: Callable[[str], None],
                  links: Links) -> None:
         """`head(repository)` answers the default branch's current head in its configured clone; `authority` the
         current plan authority; `satisfiable` the composed check with it; `owner_decision(identity)` ensures the
@@ -115,8 +118,8 @@ class InheritedRelease:
         if contract.release_policy != "automatic-on":
             return ReleaseResult(item.id, NOT_PLAN_DERIVED, detail=f"release_policy {contract.release_policy}")
         authority = self.authority()
-        reasons = ("no approved plan authority",) if authority is None \
-            else self.satisfiable(record.packet, item.pointer.commit, item.id)
+        reasons = ("no readable plan authority at the tip of main",) if authority is None \
+            else self.satisfiable(record.packet, item.pointer.commit, item.id, authority)  # checked against this read
         if reasons:
             self.owner_decision(item.id)
             return ReleaseResult(item.id, OWNER_DECISION_REQUIRED, detail="; ".join(reasons))
@@ -125,6 +128,7 @@ class InheritedRelease:
             return self._card(item.id, priority, ReleaseResult(item.id, None, asdict(item.approval_ref),
                                                                asdict(existing), repeated=True))
         repo = item.pointer.repo
+        prepared = contract.authority_issuer.removeprefix("plan-authority:")  # the revision it was prepared from
         release_point, baseline = self.release_points.get(repo), self.head(repo)
         resolves = release_point is not None and baseline is not None and self.revisions.resolves(repo, baseline)
         reachable = resolves and self.revisions.is_reachable(repo, baseline, release_point)
@@ -136,11 +140,15 @@ class InheritedRelease:
                              "pointer": {"repo": repo, "path": item.pointer.path, "commit": item.pointer.commit},
                              "attempt_id": entry["attempt_id"], "assessment_ref": entry["raw_ref"],
                              "contract_digest": contract.content_digest, "baseline": baseline,
-                             "approver": contract.authority_issuer, "quote": authority.record_ref}).decode(),
+                             "approver": contract.authority_issuer, "quote": authority.record_ref,
+                             "plan": {"commit": authority.commit, "content_digest": authority.content_digest,
+                                      "prepared_from": prepared}}).decode(),
             None, INHERITED_RELEASE, INHERITED_RELEASE)
         reference = record_ref(evidence)
+        revalidated = "" if prepared == authority.content_digest else f"; revalidated from {prepared}"
         authorization = ReleaseAuthorization(item.id, reference.revision_digest, True, baseline,
-                                             f"{INHERITED} {authority.content_digest} ({authority.record_ref})")
+                                             f"{INHERITED} {authority.content_digest} ({authority.record_ref})"
+                                             f"{revalidated}")
         try:  # The release gate's own check, over the wording it checks at launch (as `work authorize`).
             admit_release_preconditions(item.id, authorization, BaselineEvidence(str(release_point), resolves,
                                                                                  reachable),

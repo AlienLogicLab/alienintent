@@ -864,13 +864,15 @@ def test_check6_an_explicit_item_with_a_ready_card_and_no_release_record_is_neve
 
 
 def test_a_new_plan_approval_stops_an_item_released_under_the_old_one(plan_board, tmp_path):
-    """Released under plan D1, then the Founder approves D2: the item's issuer no longer names the current authority,
-    so it is not released by policy and neither `start()` nor `launch()` dispatches it."""
+    """Released under plan D1, then the Founder's plan D2, which no longer grants obligation FIXTURE, lands on main's
+    tip and is approved: the item is no longer inside the live plan (the tip), so it is not released by policy and
+    neither `start()` nor `launch()` dispatches it."""
     from alienintent.execution_coordination.application.local_artifact_custody import LocalArtifactStore
     from tests.execution_coordination.test_factory_coordinator import ScriptedWorker
     item = plan_board.derived("PD-OLD", plan_board.approve())
     assert plan_board.registry.release.release(item.id).answer is None
-    plan_board.approve(plan_text(note=" revision 2"))
+    plan_board.approve(plan_text(dict(PLAN_SCOPE, obligations=[
+        dict(PLAN_SCOPE["obligations"][0], label="OTHER")])))
     host = tmp_path / "factory-director-host.json"
     host.write_text(json.dumps({"wipLimit": 1}))
     artifacts = LocalArtifactStore(tmp_path / "producer", tmp_path / "verifier")

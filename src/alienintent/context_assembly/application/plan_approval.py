@@ -5,10 +5,12 @@ from the packets repository's clone, only when that commit is reachable from the
 plan-authority block. One evidence record binds the plan path, the commit, the content digest (`sha256:` of the file's
 bytes), the parsed scope, the approver and the Founder's words; the store aggregate `plan-authority:<digest>` (create
 only) names that record, so the same bytes approved again are a repeat and write no second record. The aggregate
-`plan-authority:current`, written with the store's expected version, names the one current approval: each approval,
-a re-approval of an older digest included, makes its digest current. Nothing else is current, so an item issued under
-another digest fails the issuer rule and stops as owner-decision-required. Nothing here releases, launches or writes
-to GitHub.
+`plan-authority:current`, written with the store's expected version, names the last approval recorded.
+
+PLAN-TIP-AUTHORITY-RUNTIME-FIX (Founder 2026-10-10): an approval is a record, never an activation switch. The live
+authority (`current`) is the canonical plan at the tip of the default branch, read and parsed from the clone at every
+call, with its exact commit and content digest; when the tip moves, the authority moves with it. Nothing here
+releases, launches or writes to GitHub.
 """
 from __future__ import annotations
 
@@ -18,15 +20,16 @@ from hashlib import sha256
 import json
 import re
 
-from alienintent.evidence_learning.domain.records import Header, Observation, canonical_bytes, record_ref, \
-    ref_from_document
+from alienintent.evidence_learning.domain.records import Header, Observation, canonical_bytes, record_ref
 from alienintent.evidence_learning.domain.refs import Ref
 from alienintent.evidence_learning.ports.evidence_repository import EvidenceRepository
 from alienintent.execution_coordination.domain.plan_authority import (
-    PLAN_PATH, PlanAuthority, PlanScopeInvalid, parse_scope, scope_from)
+    PLAN_PATH, PlanAuthority, PlanScopeInvalid, parse_scope)
 from alienintent.execution_coordination.ports.operational_store import OperationalStore, VersionConflict
 from alienintent.execution_coordination.ports.release_admission import RevisionResolver
 
+# Who the live authority's approver is: the protected plan tip itself, not a recorded approval.
+TIP_APPROVER = "canonical main tip"
 # Answers `work approve-plan` returns instead of writing.
 PLAN_NOT_ON_MAIN, PLAN_SCOPE_INVALID = "PLAN_NOT_ON_MAIN", "PLAN_SCOPE_INVALID"
 PLAN_AUTHORITY, CURRENT = "plan-authority", "plan-authority:current"
@@ -49,11 +52,13 @@ class PlanApprovalResult:
 class PlanApproval:
     def __init__(self, evidence: EvidenceRepository, project: str, profile: str, store: OperationalStore,
                  store_profile: str, repository: str, revisions: RevisionResolver, release_point: str,
-                 read: Callable[[str], bytes]) -> None:
+                 read: Callable[[str], bytes], tip: Callable[[], str | None]) -> None:
         """`read(commit)` answers the plan file's bytes at `commit` from the packets repository's clone;
-        `repository` and `release_point` are that clone's name and default branch."""
+        `repository` and `release_point` are that clone's name and default branch; `tip()` answers that branch's
+        current commit (None when it cannot be read)."""
         self.evidence, self.store, self.store_profile = evidence, store, store_profile
         self.repository, self.revisions, self.release_point, self.read = repository, revisions, release_point, read
+        self.tip = tip
         self.definition = Ref(project, profile, PLAN_AUTHORITY + "/definition",
                               "sha256:" + sha256(b"alienintent.context_assembly.application.plan_approval:"
                                                  b"plan-authority").hexdigest(),
@@ -102,18 +107,16 @@ class PlanApproval:
         return PlanApprovalResult(commit, None, digest, dict(recorded["record_ref"]), bool(existing))
 
     def current(self) -> PlanAuthority | None:
-        """The current approved plan authority, rebuilt from its evidence record; None when none is current or its
-        record cannot be read back exactly (no authority is inherited from an unreadable record)."""
-        _, current = self.store.read_state(self.store_profile, CURRENT)
-        if not current:
-            return None
+        """The live plan authority: the canonical plan at the tip of the default branch, its exact commit and the
+        `sha256:` digest of its bytes; None when the tip, its plan or its plan-authority block cannot be read (no
+        authority is inherited from an unreadable or invalid plan). Writes nothing."""
         try:
-            reference = ref_from_document(current["record_ref"])
-            values = json.loads(self.evidence.get(reference, frozenset({"private"})).value)
-            if values["content_digest"] != current["content_digest"]:
+            commit = self.tip()
+            if commit is None or COMMIT.fullmatch(commit) is None:
                 return None
-            return PlanAuthority(values["plan_path"], values["commit"], values["content_digest"],
-                                 reference.revision_digest, values["approver"], values["quote"],
-                                 scope_from(values["scope"]))
-        except Exception:  # noqa: BLE001 - an unreadable record is no authority
+            data = self.read(commit)
+            scope = parse_scope(data.decode("utf-8"))
+        except Exception:  # noqa: BLE001 - an unreadable plan is no authority
             return None
+        return PlanAuthority(PLAN_PATH, commit, "sha256:" + sha256(data).hexdigest(), f"git:{commit}:{PLAN_PATH}",
+                             TIP_APPROVER, "", scope)

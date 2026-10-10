@@ -45,11 +45,21 @@ def test_a_contract_inside_its_obligation_inherits():
     assert outside_authority(contract(), AUTHORITY) == ()
 
 
+def test_a_contract_prepared_under_an_older_plan_revision_is_revalidated_against_the_live_one():
+    """PLAN-TIP-AUTHORITY-RUNTIME-FIX: the issuer digest records where the item was prepared (provenance); authority is
+    the live plan, so an item from an older revision inherits exactly when it is inside the live plan's scope."""
+    older = contract(authority_issuer="plan-authority:sha256:" + "f" * 64)
+    assert outside_authority(older, AUTHORITY) == ()
+    [reason] = outside_authority(contract(authority_issuer="plan-authority:sha256:" + "f" * 64,
+                                          authority_references=[f"{PLAN_PATH} obligation:OTHER"]), AUTHORITY)
+    assert "obligation OTHER is not in the approved plan" in reason
+
+
 BUDGET = {"maximum_attempts": 1, "hard_wall_clock_seconds": 60, "cancellation_limit": 1}
 
 
 @pytest.mark.parametrize(("change", "words"), [
-    ({"authority_issuer": "plan-authority:sha256:" + "f" * 64}, "authority_issuer: not the approved"),
+    ({"authority_issuer": "plan-authority:sha256:" + "f" * 63}, "authority_issuer: not the approved"),
     ({"authority_references": ["README.md"]}, "exactly one"),
     ({"authority_references": [f"{PLAN_PATH} obligation:SAMPLE", f"{PLAN_PATH} obligation:SAMPLE"]}, "exactly one"),
     ({"authority_references": [f"{PLAN_PATH} obligation:OTHER"]}, "obligation OTHER is not in the approved plan"),
@@ -72,6 +82,7 @@ BUDGET = {"maximum_attempts": 1, "hard_wall_clock_seconds": 60, "cancellation_li
     ({"authorized_scope": ["src/*.py"]}, "src/*.py is malformed"),
     ({"authorized_scope": ["a/../docs/decisions/x"]}, "a/../docs/decisions/x is malformed"),
     ({"authorized_scope": ["/src/x.py"]}, "/src/x.py is malformed"),
+    ({"authority_issuer": "Founder"}, "authority_issuer: not the approved form"),
 ], ids=lambda value: value if isinstance(value, str) else None)
 def test_each_single_change_is_exactly_one_owner_decision(change, words):
     [reason] = outside_authority(contract(**change), AUTHORITY)
@@ -104,3 +115,13 @@ def test_check7_the_canonical_plan_states_the_rule_and_holds_one_block():
     assert {"conftest.py", "pyproject.toml", "config/", "tools/fitness/",
             "src/alienintent/execution_coordination/domain/scope_containment.py",
             "tests/execution_coordination/test_containment_wiring.py"} <= set(scope.protected_paths)
+
+
+def test_the_plan_itself_is_protected_whatever_the_live_block_says():
+    """PLAN-TIP-AUTHORITY-RUNTIME-FIX: with the tip as the live authority, a derived item that changed the plan would
+    widen every later item's authority, so the canonical plan is a protected path even when the block omits it."""
+    scope = dict(SCOPE, protected_paths=["config/"],
+                 obligations=[dict(SCOPE["obligations"][0], allowed_paths=["docs/", "src/"])])
+    authority = PlanAuthority(PLAN_PATH, "c" * 40, DIGEST, "git:x", "canonical main tip", "", parse_scope(plan(scope)))
+    [reason] = outside_authority(contract(authorized_scope=[PLAN_PATH]), authority)
+    assert f"crosses a protected path: {PLAN_PATH}" in reason
