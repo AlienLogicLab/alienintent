@@ -1,0 +1,929 @@
+diff --git a/docs/decisions/alienintent-v2-canonical-project-plan.md b/docs/decisions/alienintent-v2-canonical-project-plan.md
+index 27b11c4..2b4218e 100644
+--- a/docs/decisions/alienintent-v2-canonical-project-plan.md
++++ b/docs/decisions/alienintent-v2-canonical-project-plan.md
+@@ -66,58 +66,380 @@ Founder decision, 2026-10-10: the canonical project plan at the tip of canonical
+ 
+ Every derived Work Item records the exact plan commit and `sha256:` digest from which it inherited authority, so provenance, reproducibility and stale-work detection remain exact even though authority follows the live plan tip. A Work Item inherits execution authority only when it names one of the current plan's obligations below, stays inside that obligation's paths and limits, is assessed READY and is satisfiable. The control plane then releases it with no Founder words and no manual board change. If the plan advances after a Work Item was prepared, the control plane must compare the Work Item's recorded plan revision with the current canonical tip and either prove the existing authority remains valid or revalidate/reprepare the Work Item; it must not silently treat stale plan authority as current. Work not derived from canonical plan authority keeps its explicit release boundary.
+ 
+-Inherited authority never extends to a protected path, even inside an obligation's paths, and a plan-derived candidate advances only when every path it actually changed is inside its assessed scope and outside the protected paths: the control plane checks the actual diff before VERIFY and again at CLOSURE before landing. The block below remains part of the canonical plan bytes; its commit and digest identify the exact authority revision governing each derived Work Item, but they are provenance evidence rather than a recurring Founder activation switch.
++Inherited authority never extends to a protected path, even inside an obligation's paths, and a plan-derived candidate advances only when every path it actually changed is inside its assessed scope and outside the protected paths: the control plane checks the actual diff before VERIFY and again at CLOSURE before landing. The block below remains part of the canonical plan bytes; its commit and digest identify the exact authority revision governing each derived Work Item, but they are provenance evidence rather than a recurring Founder activation switch. Each obligation states its intent, its acceptance ids, the obligations it depends on, and any acceptance ids already satisfied by landed work with their evidence (Founder, 2026-10-10); an obligation is finished only when every acceptance id is satisfied, and new acceptance is never proven retroactively by an earlier Work Item's DONE alone.
+ 
+ Obligation `VERIFICATION-OUTCOME-INTEGRITY` (Founder decision, 2026-10-09): only an admitted, evidence-backed engineering REJECT may return a Work Item to PRODUCER. Infrastructure failure, malformed verdict, invalid or incomplete verification evidence, or verification-procedure failure preserves the exact candidate and retries VERIFY within bounded policy. Packet-required mutations are a machine-readable specification applied, tested and reverted by a deterministic harness whose evidence the VERIFIER reads; a verdict is admitted only when that evidence is complete and valid for the exact candidate.
+ 
+ ```json alienintent-plan-authority
+-{"target_repositories": ["AlienLogicLab/alienintent"],
+- "capabilities": ["python", "filesystem", "process-control"],
+- "budget_caps": {"maximum_attempts": 3, "hard_wall_clock_seconds": 3600, "cancellation_limit": 1,
+-                 "retry_limit": 1, "concurrency_limit": 1,
+-                 "hard_required_dimensions": ["wall-clock", "attempts", "retries", "concurrency", "cancellation"]},
+- "protected_paths": ["docs/decisions/", "docs/architecture/", ".github/", ".claude/", "AGENTS.md", "CLAUDE.md",
+-                     "tools/fitness/", "conftest.py", "tests/conftest.py", "pyproject.toml", "setup.cfg", "config/",
+-                     "src/alienintent/execution_coordination/domain/release.py",
+-                     "src/alienintent/execution_coordination/domain/satisfiability.py",
+-                     "src/alienintent/execution_coordination/domain/plan_authority.py",
+-                     "src/alienintent/execution_coordination/domain/scope_containment.py",
+-                     "src/alienintent/execution_coordination/application/release_admission.py",
+-                     "src/alienintent/execution_coordination/adapters/release_admission.py",
+-                     "src/alienintent/context_assembly/application/work_authorization.py",
+-                     "src/alienintent/context_assembly/application/plan_approval.py",
+-                     "src/alienintent/context_assembly/application/inherited_release.py",
+-                     "src/alienintent/invocation_runtime/application/regression_gate.py",
+-                     "src/alienintent/composition/landing_authority.py",
+-                     "tests/execution_coordination/domain/test_plan_authority.py",
+-                     "tests/execution_coordination/domain/test_satisfiability.py",
+-                     "tests/execution_coordination/domain/test_scope_containment.py",
+-                     "tests/execution_coordination/test_containment_wiring.py",
+-                     "tests/context_assembly/test_plan_approval.py",
+-                     "tests/context_assembly/test_inherited_release.py",
+-                     "tests/context_assembly/test_work_authorization.py"],
++{
++ "target_repositories": [
++  "AlienLogicLab/alienintent"
++ ],
++ "capabilities": [
++  "python",
++  "filesystem",
++  "process-control"
++ ],
++ "budget_caps": {
++  "maximum_attempts": 3,
++  "hard_wall_clock_seconds": 3600,
++  "cancellation_limit": 1,
++  "retry_limit": 1,
++  "concurrency_limit": 1,
++  "hard_required_dimensions": [
++   "wall-clock",
++   "attempts",
++   "retries",
++   "concurrency",
++   "cancellation"
++  ]
++ },
++ "protected_paths": [
++  "docs/decisions/",
++  "docs/architecture/",
++  ".github/",
++  ".claude/",
++  "AGENTS.md",
++  "CLAUDE.md",
++  "tools/fitness/",
++  "conftest.py",
++  "tests/conftest.py",
++  "pyproject.toml",
++  "setup.cfg",
++  "config/",
++  "src/alienintent/execution_coordination/domain/release.py",
++  "src/alienintent/execution_coordination/domain/satisfiability.py",
++  "src/alienintent/execution_coordination/domain/plan_authority.py",
++  "src/alienintent/execution_coordination/domain/scope_containment.py",
++  "src/alienintent/execution_coordination/application/release_admission.py",
++  "src/alienintent/execution_coordination/adapters/release_admission.py",
++  "src/alienintent/context_assembly/application/work_authorization.py",
++  "src/alienintent/context_assembly/application/plan_approval.py",
++  "src/alienintent/context_assembly/application/inherited_release.py",
++  "src/alienintent/invocation_runtime/application/regression_gate.py",
++  "src/alienintent/composition/landing_authority.py",
++  "tests/execution_coordination/domain/test_plan_authority.py",
++  "tests/execution_coordination/domain/test_satisfiability.py",
++  "tests/execution_coordination/domain/test_scope_containment.py",
++  "tests/execution_coordination/test_containment_wiring.py",
++  "tests/context_assembly/test_plan_approval.py",
++  "tests/context_assembly/test_inherited_release.py",
++  "tests/context_assembly/test_work_authorization.py"
++ ],
+  "obligations": [
+-  {"label": "VERIFICATION-OUTCOME-INTEGRITY", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+-   "allowed_paths": ["src/alienintent/execution_coordination/", "src/alienintent/invocation_runtime/",
+-                     "src/alienintent/context_assembly/", "src/alienintent/composition/",
+-                     "tests/execution_coordination/", "tests/invocation_runtime/", "tests/context_assembly/",
+-                     "tests/composition/"]},
+-  {"label": "BOUNDED-ROUTINE-LAUNCH", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+-   "allowed_paths": ["src/alienintent/invocation_runtime/", "src/alienintent/execution_coordination/",
+-                     "src/alienintent/composition/", "src/alienintent/control_plane/", "tests/invocation_runtime/",
+-                     "tests/execution_coordination/", "tests/composition/", "tests/control_plane/"]},
+-  {"label": "WORK-PREPARATION-REFILL", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+-   "allowed_paths": ["src/alienintent/context_assembly/", "src/alienintent/composition/",
+-                     "src/alienintent/control_plane/", "tests/context_assembly/", "tests/composition/",
+-                     "tests/control_plane/"]},
+-  {"label": "TERMINAL-BOARD-STATUSES", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+-   "allowed_paths": ["src/alienintent/composition/", "src/alienintent/execution_coordination/adapters/",
+-                     "tests/composition/", "tests/execution_coordination/"]},
+-  {"label": "STORE-SCHEMA-HARDENING", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+-   "allowed_paths": ["src/alienintent/composition/", "src/alienintent/execution_coordination/adapters/",
+-                     "tests/composition/", "tests/execution_coordination/"]},
+-  {"label": "AUTONOMY-PROOF", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+-   "allowed_paths": ["docs/evidence/", "tests/", "tools/"]}]}
++  {
++   "label": "VERIFICATION-OUTCOME-INTEGRITY",
++   "priority": "P0",
++   "satisfied_requirement_ids": [
++    "SF-REQ-002"
++   ],
++   "allowed_paths": [
++    "src/alienintent/execution_coordination/",
++    "src/alienintent/invocation_runtime/",
++    "src/alienintent/context_assembly/",
++    "src/alienintent/composition/",
++    "tests/execution_coordination/",
++    "tests/invocation_runtime/",
++    "tests/context_assembly/",
++    "tests/composition/"
++   ],
++   "intent": "Separate engineering verdicts from verification-process failures, so only an admitted, evidence-backed engineering REJECT can return a Work Item to the PRODUCER.",
++   "acceptance": [
++    {
++     "id": "VOI-A1",
++     "text": "Infrastructure failure, invalid or incomplete evidence, malformed verdict and procedure failure retry VERIFY on the same candidate within a bounded policy; exhaustion is a typed VERIFY hold, never a rejection."
++    },
++    {
++     "id": "VOI-A2",
++     "text": "The exact candidate is preserved until the verdict is admitted."
++    },
++    {
++     "id": "VOI-A3",
++     "text": "A verdict is admitted only with complete, valid deterministic evidence for the exact candidate (gate evidence, every acceptance check, every required mutation with harness evidence)."
++    },
++    {
++     "id": "VOI-A4",
++     "text": "Packet mutations are a machine-readable specification applied, tested and reverted by a deterministic harness whose evidence the VERIFIER reads."
++    }
++   ],
++   "depends_on": [],
++   "satisfied_by": [
++    {
++     "acceptance_id": "VOI-A1",
++     "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
++     "landed_commit": "2ac6d0c3b9865f64791ca90ad3ed92a0544891fc",
++     "evidence": "docs/evidence/verification-outcome-integrity-landing-0146594.md"
++    },
++    {
++     "acceptance_id": "VOI-A2",
++     "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
++     "landed_commit": "2ac6d0c3b9865f64791ca90ad3ed92a0544891fc",
++     "evidence": "docs/evidence/verification-outcome-integrity-landing-0146594.md"
++    },
++    {
++     "acceptance_id": "VOI-A3",
++     "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
++     "landed_commit": "2ac6d0c3b9865f64791ca90ad3ed92a0544891fc",
++     "evidence": "docs/evidence/verification-outcome-integrity-landing-0146594.md"
++    },
++    {
++     "acceptance_id": "VOI-A4",
++     "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
++     "landed_commit": "2ac6d0c3b9865f64791ca90ad3ed92a0544891fc",
++     "evidence": "docs/evidence/verification-outcome-integrity-landing-0146594.md"
++    }
++   ]
++  },
++  {
++   "label": "BOUNDED-ROUTINE-LAUNCH",
++   "priority": "P0",
++   "satisfied_requirement_ids": [
++    "SF-REQ-002"
++   ],
++   "allowed_paths": [
++    "src/alienintent/invocation_runtime/",
++    "src/alienintent/execution_coordination/",
++    "src/alienintent/composition/",
++    "src/alienintent/control_plane/",
++    "tests/invocation_runtime/",
++    "tests/execution_coordination/",
++    "tests/composition/",
++    "tests/control_plane/"
++   ],
++   "intent": "One `work run` starts the factory and keeps advancing eligible READY work through PRODUCER, VERIFIER and CLOSURE to DONE and the next item, with no launch per role.",
++   "acceptance": [
++    {
++     "id": "BRL-A1",
++     "text": "One `work run` takes an item to DONE and admits the next eligible item with no per-role launch."
++    },
++    {
++     "id": "BRL-A2",
++     "text": "Retries resume without human action (`work run --wait`)."
++    },
++    {
++     "id": "BRL-A3",
++     "text": "A crash or restart resumes from durable state."
++    },
++    {
++     "id": "BRL-A4",
++     "text": "Routine execution reads open work and one item's journal records, never the whole history; the journal is canonical and its index disposable and rebuildable."
++    },
++    {
++     "id": "BRL-A5",
++     "text": "A DONE releases its WIP slot only after cleanup and projection; the workspaces of earlier roles in the same run process are reclaimed before DONE."
++    }
++   ],
++   "depends_on": [],
++   "satisfied_by": [
++    {
++     "acceptance_id": "BRL-A1",
++     "work_item": "e05f787d-e1bc-4e5c-af72-d8ade392fbde",
++     "landed_commit": "9282fb2d4e05395e1caa438b4ec32575d33bbf47",
++     "evidence": "docs/evidence/bounded-routine-launch-r4-landing-a4fcb73.md"
++    },
++    {
++     "acceptance_id": "BRL-A2",
++     "work_item": "e05f787d-e1bc-4e5c-af72-d8ade392fbde",
++     "landed_commit": "9282fb2d4e05395e1caa438b4ec32575d33bbf47",
++     "evidence": "docs/evidence/bounded-routine-launch-r4-landing-a4fcb73.md"
++    },
++    {
++     "acceptance_id": "BRL-A3",
++     "work_item": "e05f787d-e1bc-4e5c-af72-d8ade392fbde",
++     "landed_commit": "9282fb2d4e05395e1caa438b4ec32575d33bbf47",
++     "evidence": "docs/evidence/bounded-routine-launch-r4-landing-a4fcb73.md"
++    },
++    {
++     "acceptance_id": "BRL-A4",
++     "work_item": "e05f787d-e1bc-4e5c-af72-d8ade392fbde",
++     "landed_commit": "9282fb2d4e05395e1caa438b4ec32575d33bbf47",
++     "evidence": "docs/evidence/bounded-routine-launch-r4-landing-a4fcb73.md"
++    },
++    {
++     "acceptance_id": "BRL-A5",
++     "work_item": "3e004d5d-2023-4659-9b38-59d465524d6b",
++     "landed_commit": "1ec3e9649416cfdaa3b44ca07a1b776fbe52ce29",
++     "evidence": "docs/evidence/same-process-workspace-cleanup-landing-cec8839.md"
++    }
++   ]
++  },
++  {
++   "label": "WORK-PREPARATION-REFILL",
++   "priority": "P0",
++   "satisfied_requirement_ids": [
++    "SF-REQ-002"
++   ],
++   "allowed_paths": [
++    "src/alienintent/context_assembly/",
++    "src/alienintent/composition/",
++    "src/alienintent/control_plane/",
++    "tests/context_assembly/",
++    "tests/composition/",
++    "tests/control_plane/"
++   ],
++   "intent": "From the live canonical plan tip, AlienIntent maintains dependency-correct, assessed, prioritized READY supply without the Founder, or Claude acting as the Founder's proxy, preparing and feeding each next Work Item.",
++   "acceptance": [
++    {
++     "id": "WPR-A1",
++     "text": "Every new PRODUCER attempt starts from current main only after deterministic baseline revalidation; work that cannot be revalidated goes back through Work Preparation and Agent Ready, never silently retargeted."
++    },
++    {
++     "id": "WPR-A2",
++     "text": "A PREPARER derives the next bounded Work Item for the next eligible obligation from the plan tip, with provenance; the control plane refuses any packet outside the obligation's authority before anything is written."
++    },
++    {
++     "id": "WPR-A3",
++     "text": "Agent Ready assesses each prepared item automatically; READY, CLARIFY, SPLIT and HOLD follow the typed path; a SPLIT conserves every obligation, including combined verification."
++    },
++    {
++     "id": "WPR-A4",
++     "text": "A READY plan-derived item is released inside the run loop with no manual `work release`, and `work run --wait` picks it up with no other command."
++    },
++    {
++     "id": "WPR-A5",
++     "text": "One bounded budget per obligation revision covers preparation and re-issues; exhaustion is a typed fault."
++    },
++    {
++     "id": "WPR-A6",
++     "text": "If unfinished, dependency-eligible authorized plan work exists and the factory has neither an in-progress Work Item nor the required READY reserve, it exposes a typed READY-supply health fault rather than silently waiting for human preparation."
++    }
++   ],
++   "depends_on": [
++    "VERIFICATION-OUTCOME-INTEGRITY",
++    "BOUNDED-ROUTINE-LAUNCH"
++   ],
++   "satisfied_by": []
++  },
++  {
++   "label": "TERMINAL-BOARD-STATUSES",
++   "priority": "P0",
++   "satisfied_requirement_ids": [
++    "SF-REQ-002"
++   ],
++   "allowed_paths": [
++    "src/alienintent/composition/",
++    "src/alienintent/execution_coordination/adapters/",
++    "tests/composition/",
++    "tests/execution_coordination/"
++   ],
++   "intent": "Every terminal canonical Work outcome has an explicit terminal board projection; historical cards stay visible and never imply active work.",
++   "acceptance": [
++    {
++     "id": "TBS-A1",
++     "text": "Success projects DONE, cancelled projects CANCELLED, failed projects FAILED."
++    },
++    {
++     "id": "TBS-A2",
++     "text": "Retired items stay visible and are never shown as active; nothing is archived."
++    },
++    {
++     "id": "TBS-A3",
++     "text": "Every existing card of a terminal item is re-projected to its terminal status, so IMPLEMENT, VERIFY and ACCEPT hold only live work."
++    }
++   ],
++   "depends_on": [
++    "BOUNDED-ROUTINE-LAUNCH"
++   ],
++   "satisfied_by": []
++  },
++  {
++   "label": "STORE-SCHEMA-HARDENING",
++   "priority": "P0",
++   "satisfied_requirement_ids": [
++    "SF-REQ-002"
++   ],
++   "allowed_paths": [
++    "src/alienintent/composition/",
++    "src/alienintent/execution_coordination/adapters/",
++    "tests/composition/",
++    "tests/execution_coordination/"
++   ],
++   "intent": "A read-only database open accepts any schema version it can safely read and never requires exact equality with the current writable schema version.",
++   "acceptance": [
++    {
++     "id": "SSH-A1",
++     "text": "An older database the reader can read is read; a database newer than the reader fails closed."
++    },
++    {
++     "id": "SSH-A2",
++     "text": "The writable open still owns migration."
++    },
++    {
++     "id": "SSH-A3",
++     "text": "A regression test reproduces the schema-2 sandbox / schema-3 registry case."
++    }
++   ],
++   "depends_on": [],
++   "satisfied_by": []
++  },
++  {
++   "label": "EVENT-TRIGGERED-CONTINUATION",
++   "priority": "P0",
++   "satisfied_requirement_ids": [
++    "SF-REQ-002"
++   ],
++   "allowed_paths": [
++    "src/alienintent/invocation_runtime/",
++    "src/alienintent/execution_coordination/",
++    "src/alienintent/composition/",
++    "src/alienintent/control_plane/",
++    "tests/invocation_runtime/",
++    "tests/execution_coordination/",
++    "tests/composition/",
++    "tests/control_plane/"
++   ],
++   "intent": "Completion triggers continuation: a completion event or durable terminal receipt wakes the runner; periodic polling is not the normal scheduling mechanism.",
++   "acceptance": [
++    {
++     "id": "ETC-A1",
++     "text": "A completed worker/provider invocation, a retry becoming eligible and a newly released READY item each wake `work run --wait` from a durable event or receipt."
++    },
++    {
++     "id": "ETC-A2",
++     "text": "Routine polling is not normal scheduling; a timeout remains only a recovery backstop."
++    },
++    {
++     "id": "ETC-A3",
++     "text": "No manual wakeup is needed for any of those continuations."
++    }
++   ],
++   "depends_on": [
++    "BOUNDED-ROUTINE-LAUNCH"
++   ],
++   "satisfied_by": []
++  },
++  {
++   "label": "AUTONOMY-PROOF",
++   "priority": "P0",
++   "satisfied_requirement_ids": [
++    "SF-REQ-002"
++   ],
++   "allowed_paths": [
++    "docs/evidence/",
++    "tests/",
++    "tools/"
++   ],
++   "intent": "Prove that, starting from the live canonical plan tip and no prepared next Work Item, AlienIntent prepares and completes at least three dependency-correct Work Items through DONE with no routine human action.",
++   "acceptance": [
++    {
++     "id": "AUP-A1",
++     "text": "A deterministic check (`tools/`) reads the registry and journal and proves at least three consecutive plan-derived Work Items were prepared by the PREPARER, assessed, released, executed and DONE, dependency-correct, resources cleaned, with no human action except genuine owner decisions."
++    },
++    {
++     "id": "AUP-A2",
++     "text": "An evidence record in `docs/evidence/` names those items, their plan provenance and the check's result."
++    }
++   ],
++   "depends_on": [
++    "WORK-PREPARATION-REFILL",
++    "TERMINAL-BOARD-STATUSES",
++    "STORE-SCHEMA-HARDENING",
++    "EVENT-TRIGGERED-CONTINUATION"
++   ],
++   "satisfied_by": []
++  }
++ ]
++}
+ ```
+ 
+ ## 2.3 One work identity and project-lifetime traceability
+diff --git a/src/alienintent/context_assembly/domain/obligation_state.py b/src/alienintent/context_assembly/domain/obligation_state.py
+new file mode 100644
+index 0000000..a46384c
+--- /dev/null
++++ b/src/alienintent/context_assembly/domain/obligation_state.py
+@@ -0,0 +1,74 @@
++"""Obligation state: which canonical plan obligations are finished, in progress, stopped, eligible or waiting, and
++which one Work Preparation prepares next (WORK-PREPARATION-REFILL spec 3.2). Pure.
++
++An acceptance id is satisfied only by a plan `satisfied_by` entry the caller verifies (`mapping_holds`: its work item is
++DONE with that landed commit on main) or by a DONE Work Item derived from the same obligation that names the id. New
++acceptance is never proven retroactively by DONE alone: a DONE item naming no id satisfies nothing (Founder, decisions
++section 39). The next obligation is the eligible one with the lowest numeric priority, then plan order (section 41).
++"""
++from __future__ import annotations
++
++from collections.abc import Callable, Collection, Iterable, Sequence
++from dataclasses import dataclass
++
++from alienintent.execution_coordination.domain.plan_authority import PlanScope, Satisfaction, priority_rank
++
++DONE = "DONE"
++FINISHED, IN_PROGRESS, STOPPED, ELIGIBLE, WAITING = "finished", "in-progress", "stopped", "eligible", "waiting"
++
++
++@dataclass(frozen=True)
++class DerivedItem:
++    """A Work Item derived from plan obligation `obligation`: `final` is None while it is live, else DONE or its final
++    outcome; `satisfies` the acceptance ids its contract names."""
++    obligation: str
++    identity: str
++    final: str | None
++    satisfies: tuple[str, ...]
++
++
++@dataclass(frozen=True)
++class ObligationState:
++    label: str
++    status: str
++    satisfied: tuple[str, ...]  # acceptance ids satisfied, in plan order
++    missing: tuple[str, ...]  # acceptance ids not yet satisfied, in plan order
++
++
++def obligation_states(scope: PlanScope, items: Iterable[DerivedItem], mapping_holds: Callable[[Satisfaction], bool],
++                      stopped: Collection[str]) -> tuple[ObligationState, ...]:
++    """Every obligation's state, in plan order."""
++    items = tuple(items)
++    satisfied: dict[str, set[str]] = {}
++    for obligation in scope.obligations:
++        ids = {entry.acceptance_id for entry in obligation.satisfied_by if mapping_holds(entry)}
++        ids |= {identity for item in items if item.obligation == obligation.label and item.final == DONE
++                for identity in item.satisfies}
++        satisfied[obligation.label] = ids
++    finished = {obligation.label for obligation in scope.obligations
++                if all(acceptance.id in satisfied[obligation.label] for acceptance in obligation.acceptance)}
++    states = []
++    for obligation in scope.obligations:
++        label = obligation.label
++        if label in finished:
++            status = FINISHED
++        elif any(item.obligation == label and item.final is None for item in items):
++            status = IN_PROGRESS
++        elif label in stopped:
++            status = STOPPED
++        elif all(dependency in finished for dependency in obligation.depends_on):
++            status = ELIGIBLE
++        else:
++            status = WAITING
++        states.append(ObligationState(label, status,
++                                      tuple(a.id for a in obligation.acceptance if a.id in satisfied[label]),
++                                      tuple(a.id for a in obligation.acceptance if a.id not in satisfied[label])))
++    return tuple(states)
++
++
++def next_obligation(scope: PlanScope, states: Sequence[ObligationState]) -> str | None:
++    """The eligible obligation with the lowest numeric priority, then plan order; None when none is eligible."""
++    eligible = {state.label for state in states if state.status == ELIGIBLE}
++    ranked = [(priority_rank(obligation.priority), index, obligation.label)
++              for index, obligation in enumerate(scope.obligations) if obligation.label in eligible]
++    return min(ranked)[2] if ranked else None
+diff --git a/src/alienintent/execution_coordination/domain/plan_authority.py b/src/alienintent/execution_coordination/domain/plan_authority.py
+index 36db5ec..3b2af0b 100644
+--- a/src/alienintent/execution_coordination/domain/plan_authority.py
++++ b/src/alienintent/execution_coordination/domain/plan_authority.py
+@@ -7,7 +7,9 @@ is revalidated against the live one by the same rules, never by its recorded dig
+ 
+ The canonical plan holds exactly one block fenced as ```json alienintent-plan-authority: the target repositories,
+ capabilities and budget caps derived work may use, the protected paths no derived work may touch, and the obligations,
+-each with its priority, the requirement ids it satisfies and the paths it may change. The block is part of the plan's
++each with its priority, the requirement ids it satisfies and the paths it may change, and (Founder,
++2026-10-10) its intent, its acceptance ids, the obligations it depends on and the acceptance ids landed work is recorded
++to satisfy, with evidence. The block is part of the plan's
+ bytes, so the approved content digest covers every limit. A plan-derived contract has `release_policy` automatic-on,
+ `authority_issuer` `plan-authority:sha256:<64 hex>` and exactly one `authority_references` entry
+ `<plan path> obligation:<LABEL>`; `outside_authority` answers one `owner-decision-required:` reason per rule it fails.
+@@ -32,7 +34,14 @@ OWNER_DECISION = "owner-decision-required: "
+ SCOPE_KEYS = frozenset({"target_repositories", "capabilities", "budget_caps", "protected_paths", "obligations"})
+ CAP_KEYS = frozenset({"maximum_attempts", "hard_wall_clock_seconds", "cancellation_limit", "retry_limit",
+                       "concurrency_limit", "hard_required_dimensions"})
+-OBLIGATION_KEYS = frozenset({"label", "priority", "satisfied_requirement_ids", "allowed_paths"})
++OBLIGATION_KEYS = frozenset({"label", "priority", "satisfied_requirement_ids", "allowed_paths", "intent",
++                             "acceptance", "depends_on", "satisfied_by"})
++SATISFACTION_KEYS = frozenset({"acceptance_id", "work_item", "landed_commit", "evidence"})
++ACCEPTANCE_ID = re.compile(r"[A-Z][A-Z0-9]*-A[1-9][0-9]*")
++COMMIT = re.compile(r"[0-9a-f]{40}")
++# The priorities an obligation may carry: exactly the scheduler's board set, read as P<n> -> n
++# (github_work_management.py), so the plan and the scheduler mean the same thing (Founder, decisions section 41).
++PRIORITIES = ("P0", "P1", "P2", "P3", "P4", "P5")
+ # The budget fields capped by the plan, in the order their reasons are named.
+ CAPPED = ("maximum_attempts", "hard_wall_clock_seconds", "cancellation_limit", "retry_limit", "concurrency_limit")
+ 
+@@ -41,12 +50,41 @@ class PlanScopeInvalid(ValueError):
+     """The plan holds no, more than one, or a malformed plan-authority block."""
+ 
+ 
++def priority_rank(priority: str) -> int:
++    """The numeric priority, lower first: `P<n>` -> n over exactly `PRIORITIES`, as the scheduler reads the board."""
++    if priority not in PRIORITIES:
++        raise ValueError(f"priority {priority!r} is not one of {', '.join(PRIORITIES)}")
++    return int(priority[1:])
++
++
++@dataclass(frozen=True)
++class Acceptance:
++    id: str
++    text: str
++
++
++@dataclass(frozen=True)
++class Satisfaction:
++    """An acceptance id recorded as satisfied by an earlier landed Work Item, with its evidence: new acceptance is never
++    proven retroactively by DONE alone (Founder, decisions section 39)."""
++    acceptance_id: str
++    work_item: str
++    landed_commit: str
++    evidence: str
++
++
+ @dataclass(frozen=True)
+ class Obligation:
++    """One plan obligation: its authority (priority, requirement ids, allowed paths) and its semantics (what it must
++    achieve, the acceptance ids that finish it, the obligations it depends on, and the ids landed work satisfies)."""
+     label: str
+     priority: str
+     satisfied_requirement_ids: tuple[str, ...]
+     allowed_paths: tuple[str, ...]
++    intent: str
++    acceptance: tuple[Acceptance, ...]
++    depends_on: tuple[str, ...]
++    satisfied_by: tuple[Satisfaction, ...]
+ 
+ 
+ @dataclass(frozen=True)
+@@ -71,7 +109,12 @@ class PlanScope:
+                 "protected_paths": list(self.protected_paths),
+                 "obligations": [{"label": o.label, "priority": o.priority,
+                                  "satisfied_requirement_ids": list(o.satisfied_requirement_ids),
+-                                 "allowed_paths": list(o.allowed_paths)} for o in self.obligations]}
++                                 "allowed_paths": list(o.allowed_paths), "intent": o.intent,
++                                 "acceptance": [{"id": a.id, "text": a.text} for a in o.acceptance],
++                                 "depends_on": list(o.depends_on),
++                                 "satisfied_by": [{"acceptance_id": s.acceptance_id, "work_item": s.work_item,
++                                                   "landed_commit": s.landed_commit, "evidence": s.evidence}
++                                                  for s in o.satisfied_by]} for o in self.obligations]}
+ 
+ 
+ @dataclass(frozen=True)
+@@ -128,6 +171,57 @@ def _strings(value: object, name: str, *, paths: bool = False) -> tuple[str, ...
+     return tuple(value)
+ 
+ 
++def _acceptance(value: object, label: str) -> tuple[Acceptance, ...]:
++    if not isinstance(value, list) or not value or not all(
++            isinstance(a, dict) and set(a) == {"id", "text"} and isinstance(a["id"], str)
++            and ACCEPTANCE_ID.fullmatch(a["id"]) and isinstance(a["text"], str) and a["text"].strip() for a in value):
++        raise PlanScopeInvalid(f"{label}: acceptance must be a non-empty list of {{id: <LABEL>-A<n>, text}}")
++    return tuple(Acceptance(a["id"], a["text"]) for a in value)
++
++
++def _depends(value: object, label: str) -> tuple[str, ...]:
++    if not isinstance(value, list) or not all(isinstance(entry, str) and entry for entry in value) \
++            or len(set(value)) != len(value):
++        raise PlanScopeInvalid(f"{label}: depends_on must be a list of distinct labels")
++    return tuple(value)
++
++
++def _satisfied(value: object, label: str, ids: set[str]) -> tuple[Satisfaction, ...]:
++    if not isinstance(value, list) or not all(
++            isinstance(s, dict) and set(s) == SATISFACTION_KEYS
++            and isinstance(s["acceptance_id"], str) and s["acceptance_id"] in ids
++            and isinstance(s["work_item"], str) and s["work_item"].strip()
++            and isinstance(s["landed_commit"], str) and COMMIT.fullmatch(s["landed_commit"])
++            and isinstance(s["evidence"], str) and s["evidence"].strip() for s in value) \
++            or len({s["acceptance_id"] for s in value}) != len(value):
++        raise PlanScopeInvalid(f"{label}: satisfied_by must map each of its own acceptance ids at most once, with a "
++                               "work item, a 40-hex landed commit and evidence")
++    return tuple(Satisfaction(s["acceptance_id"], s["work_item"], s["landed_commit"], s["evidence"]) for s in value)
++
++
++def _acyclic(obligations: list[Obligation]) -> None:
++    """PlanScopeInvalid when `depends_on` names an unknown label or the obligation itself, or closes a cycle."""
++    edges = {obligation.label: obligation.depends_on for obligation in obligations}
++    for label, dependencies in edges.items():
++        if any(dependency == label or dependency not in edges for dependency in dependencies):
++            raise PlanScopeInvalid(f"{label}: depends_on names itself or an obligation not in the block")
++    finished: set[str] = set()
++    active: set[str] = set()
++
++    def visit(label: str) -> None:
++        if label in active:
++            raise PlanScopeInvalid(f"depends_on has a cycle through {label}")
++        if label in finished:
++            return
++        active.add(label)
++        for dependency in edges[label]:
++            visit(dependency)
++        active.discard(label)
++        finished.add(label)
++    for label in edges:
++        visit(label)
++
++
+ def scope_from(document: object) -> PlanScope:
+     """A PlanScope from the block's JSON value, with exactly the keys of the block."""
+     if not isinstance(document, dict) or set(document) != SCOPE_KEYS:
+@@ -143,13 +237,25 @@ def scope_from(document: object) -> PlanScope:
+     obligations = []
+     for entry in listed:
+         if not isinstance(entry, dict) or set(entry) != OBLIGATION_KEYS or not isinstance(entry["label"], str) \
+-                or not entry["label"] or not isinstance(entry["priority"], str) or not entry["priority"]:
++                or not entry["label"]:
+             raise PlanScopeInvalid(f"each obligation needs exactly {', '.join(sorted(OBLIGATION_KEYS))}")
+-        obligations.append(Obligation(entry["label"], entry["priority"],
++        label = entry["label"]
++        if entry["priority"] not in PRIORITIES:
++            raise PlanScopeInvalid(f"{label}: priority must be one of {', '.join(PRIORITIES)}")
++        if not isinstance(entry["intent"], str) or not entry["intent"].strip():
++            raise PlanScopeInvalid(f"{label}: intent must be a non-empty string")
++        acceptance = _acceptance(entry["acceptance"], label)
++        obligations.append(Obligation(label, entry["priority"],
+                                       _strings(entry["satisfied_requirement_ids"], "satisfied_requirement_ids"),
+-                                      _strings(entry["allowed_paths"], "allowed_paths", paths=True)))
++                                      _strings(entry["allowed_paths"], "allowed_paths", paths=True),
++                                      entry["intent"], acceptance, _depends(entry["depends_on"], label),
++                                      _satisfied(entry["satisfied_by"], label, {a.id for a in acceptance})))
+     if len({obligation.label for obligation in obligations}) != len(obligations):
+         raise PlanScopeInvalid("obligation labels must be distinct")
++    ids = [acceptance.id for obligation in obligations for acceptance in obligation.acceptance]
++    if len(set(ids)) != len(ids):
++        raise PlanScopeInvalid("acceptance ids must be distinct across the block")
++    _acyclic(obligations)
+     return PlanScope(_strings(document["target_repositories"], "target_repositories"),
+                      _strings(document["capabilities"], "capabilities"),
+                      tuple((name, dimensions if name == "hard_required_dimensions" else caps[name])
+diff --git a/tests/composition/test_work_registry.py b/tests/composition/test_work_registry.py
+index 6c3e985..cfc0869 100644
+--- a/tests/composition/test_work_registry.py
++++ b/tests/composition/test_work_registry.py
+@@ -760,7 +760,10 @@ PLAN_SCOPE = {"target_repositories": ["AlienLogicLab/alienintent"], "capabilitie
+                               "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
+               "protected_paths": ["docs/decisions/", "src/alienintent/execution_coordination/domain/release.py"],
+               "obligations": [{"label": "FIXTURE", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+-                               "allowed_paths": ["src/", "tests/", "launch-candidate.txt"]}]}
++                               "allowed_paths": ["src/", "tests/", "launch-candidate.txt"],
++                               "intent": "Fixture intent.",
++                               "acceptance": [{"id": "FIXTURE-A1", "text": "The fixture works."}],
++                               "depends_on": [], "satisfied_by": []}]}
+ 
+ 
+ def plan_text(scope: dict | None = None, note: str = "") -> bytes:
+diff --git a/tests/context_assembly/test_obligation_state.py b/tests/context_assembly/test_obligation_state.py
+new file mode 100644
+index 0000000..995296e
+--- /dev/null
++++ b/tests/context_assembly/test_obligation_state.py
+@@ -0,0 +1,76 @@
++"""WORK-PREPARATION-REFILL R1 (spec 3.2, decisions sections 39-41): obligation state from plain data. An acceptance id
++is satisfied only by a verified satisfied_by mapping or a DONE item naming it; an unmapped legacy DONE satisfies nothing;
++dependencies need finished obligations; the next obligation is eligible by numeric priority, then plan order. Labels and
++items are TEST DATA."""
++from __future__ import annotations
++
++from alienintent.context_assembly.domain.obligation_state import DerivedItem, next_obligation, obligation_states
++from alienintent.execution_coordination.domain.plan_authority import scope_from
++
++
++def ob(label, ids, depends=(), mapped=(), priority="P0"):
++    return {"label": label, "priority": priority, "satisfied_requirement_ids": ["SF-REQ-002"],
++            "allowed_paths": ["src/"], "intent": label, "depends_on": list(depends),
++            "acceptance": [{"id": f"{label}-A{n}", "text": "t"} for n in ids],
++            "satisfied_by": [{"acceptance_id": f"{label}-A{n}", "work_item": "w", "landed_commit": "a" * 40,
++                              "evidence": "e"} for n in mapped]}
++
++
++def scope(*obligations):
++    return scope_from({"target_repositories": ["r"], "capabilities": ["python"],
++                       "budget_caps": {"maximum_attempts": 3, "hard_wall_clock_seconds": 3600,
++                                       "cancellation_limit": 1, "retry_limit": 1, "concurrency_limit": 1,
++                                       "hard_required_dimensions": ["wall-clock"]},
++                       "protected_paths": ["docs/decisions/"], "obligations": list(obligations)})
++
++
++def status(states):
++    return {state.label: state.status for state in states}
++
++
++PLAN = scope(ob("A", [1, 2], mapped=[1, 2]), ob("B", [1, 2], depends=["A"]), ob("C", [1], depends=["B"]),
++             ob("D", [1]))
++
++
++def test_a_mapped_obligation_is_finished_only_when_its_mappings_hold():
++    assert status(obligation_states(PLAN, [], lambda s: True, ()))["A"] == "finished"
++    states = obligation_states(PLAN, [], lambda s: s.acceptance_id != "A-A2", ())
++    assert status(states)["A"] == "eligible" and (states[0].satisfied, states[0].missing) == (("A-A1",), ("A-A2",))
++    assert status(states)["B"] == "waiting"
++
++
++def test_an_unmapped_legacy_done_item_satisfies_nothing():
++    assert status(obligation_states(PLAN, [DerivedItem("D", "x", "DONE", ())], lambda s: True, ()))["D"] == "eligible"
++
++
++def test_done_items_cover_ids_and_finish_the_obligation_together():
++    one = DerivedItem("B", "x", "DONE", ("B-A1",))
++    assert status(obligation_states(PLAN, [one], lambda s: True, ()))["B"] == "eligible"
++    both = [one, DerivedItem("B", "y", "DONE", ("B-A2",))]
++    assert status(obligation_states(PLAN, both, lambda s: True, ())) == {
++        "A": "finished", "B": "finished", "C": "eligible", "D": "eligible"}
++
++
++def test_an_item_of_another_obligation_or_a_failed_item_covers_nothing():
++    items = [DerivedItem("D", "x", "DONE", ("B-A1", "B-A2")), DerivedItem("B", "y", "failure", ("B-A1", "B-A2"))]
++    assert status(obligation_states(PLAN, items, lambda s: True, ()))["B"] == "eligible"
++
++
++def test_a_live_item_is_in_progress_and_a_stopped_label_is_stopped():
++    items = [DerivedItem("B", "x", None, ("B-A1",)), DerivedItem("D", "y", "failure", ("D-A1",))]
++    states = status(obligation_states(PLAN, items, lambda s: True, {"D"}))
++    assert (states["B"], states["D"]) == ("in-progress", "stopped")
++
++
++def test_the_next_obligation_is_eligible_by_numeric_priority_then_plan_order():
++    plan = scope(ob("A", [1], priority="P2"), ob("B", [1], priority="P1"), ob("C", [1], priority="P1"))
++    assert next_obligation(plan, obligation_states(plan, [], lambda s: True, ())) == "B"
++    done = [DerivedItem("B", "x", "DONE", ("B-A1",))]
++    assert next_obligation(plan, obligation_states(plan, done, lambda s: True, ())) == "C"
++    everything = done + [DerivedItem("C", "y", "DONE", ("C-A1",)), DerivedItem("A", "z", "DONE", ("A-A1",))]
++    assert next_obligation(plan, obligation_states(plan, everything, lambda s: True, ())) is None
++
++
++def test_a_dependency_finished_only_by_a_failing_mapping_keeps_its_dependent_waiting():
++    states = obligation_states(PLAN, [], lambda s: False, ())
++    assert status(states)["B"] == "waiting" and next_obligation(PLAN, states) == "A"
+diff --git a/tests/execution_coordination/domain/test_plan_authority.py b/tests/execution_coordination/domain/test_plan_authority.py
+index b4fcfa8..9107d7e 100644
+--- a/tests/execution_coordination/domain/test_plan_authority.py
++++ b/tests/execution_coordination/domain/test_plan_authority.py
+@@ -13,7 +13,8 @@ import pytest
+ 
+ from alienintent.context_assembly.domain.compilation import contract_from_payload
+ from alienintent.execution_coordination.domain.plan_authority import (
+-    PLAN_PATH, PlanAuthority, PlanScopeInvalid, outside_authority, parse_scope)
++    PLAN_PATH, Acceptance, PlanAuthority, PlanScopeInvalid, Satisfaction, outside_authority, parse_scope,
++    priority_rank, scope_from)
+ from tests.context_assembly.test_work_contract import satisfiable_payload
+ 
+ ROOT = Path(__file__).resolve().parents[3]
+@@ -23,7 +24,9 @@ SCOPE = {"target_repositories": ["AlienLogicLab/alienintent"], "capabilities": [
+                          "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
+          "protected_paths": ["docs/decisions/", "src/alienintent/execution_coordination/domain/release.py"],
+          "obligations": [{"label": "SAMPLE", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+-                          "allowed_paths": ["docs/", "src/", "tests/"]}]}
++                          "allowed_paths": ["docs/", "src/", "tests/"], "intent": "Sample intent.",
++                          "acceptance": [{"id": "SAMPLE-A1", "text": "It works."}], "depends_on": [],
++                          "satisfied_by": []}]}
+ 
+ 
+ def plan(scope: object = SCOPE, blocks: int = 1) -> str:
+@@ -111,7 +114,20 @@ def test_check7_the_canonical_plan_states_the_rule_and_holds_one_block():
+     assert [o.label for o in scope.obligations] == ["VERIFICATION-OUTCOME-INTEGRITY", "BOUNDED-ROUTINE-LAUNCH",
+                                                     "WORK-PREPARATION-REFILL",
+                                                     "TERMINAL-BOARD-STATUSES", "STORE-SCHEMA-HARDENING",
+-                                                    "AUTONOMY-PROOF"]
++                                                    "EVENT-TRIGGERED-CONTINUATION", "AUTONOMY-PROOF"]
++    # REFILL R1 (decisions section 40): the approved dependencies, and only VOI and BRL mapped to landed work.
++    assert {o.label: o.depends_on for o in scope.obligations} == {
++        "VERIFICATION-OUTCOME-INTEGRITY": (), "BOUNDED-ROUTINE-LAUNCH": (),
++        "WORK-PREPARATION-REFILL": ("VERIFICATION-OUTCOME-INTEGRITY", "BOUNDED-ROUTINE-LAUNCH"),
++        "TERMINAL-BOARD-STATUSES": ("BOUNDED-ROUTINE-LAUNCH",), "STORE-SCHEMA-HARDENING": (),
++        "EVENT-TRIGGERED-CONTINUATION": ("BOUNDED-ROUTINE-LAUNCH",),
++        "AUTONOMY-PROOF": ("WORK-PREPARATION-REFILL", "TERMINAL-BOARD-STATUSES", "STORE-SCHEMA-HARDENING",
++                           "EVENT-TRIGGERED-CONTINUATION")}
++    mapped = {o.label: {s.acceptance_id for s in o.satisfied_by} for o in scope.obligations}
++    assert {label: ids for label, ids in mapped.items() if ids} == {
++        "VERIFICATION-OUTCOME-INTEGRITY": {"VOI-A1", "VOI-A2", "VOI-A3", "VOI-A4"},
++        "BOUNDED-ROUTINE-LAUNCH": {"BRL-A1", "BRL-A2", "BRL-A3", "BRL-A4", "BRL-A5"}}
++    assert all((ROOT / s.evidence).is_file() for o in scope.obligations for s in o.satisfied_by)
+     assert {"conftest.py", "pyproject.toml", "config/", "tools/fitness/",
+             "src/alienintent/execution_coordination/domain/scope_containment.py",
+             "tests/execution_coordination/test_containment_wiring.py"} <= set(scope.protected_paths)
+@@ -125,3 +141,82 @@ def test_the_plan_itself_is_protected_whatever_the_live_block_says():
+     authority = PlanAuthority(PLAN_PATH, "c" * 40, DIGEST, "git:x", "canonical main tip", "", parse_scope(plan(scope)))
+     [reason] = outside_authority(contract(authorized_scope=[PLAN_PATH]), authority)
+     assert f"crosses a protected path: {PLAN_PATH}" in reason
++
++
++def two(*changes):
++    """SCOPE with a second obligation OTHER, each (index, change) merged into obligation `index` (TEST DATA)."""
++    other = {"label": "OTHER", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
++             "allowed_paths": ["docs/"], "intent": "Other.", "acceptance": [{"id": "OTHER-A1", "text": "x"}],
++             "depends_on": [], "satisfied_by": []}
++    obligations = [dict(SCOPE["obligations"][0]), other]
++    for index, change in changes:
++        obligations[index] |= change
++    return dict(SCOPE, obligations=obligations)
++
++
++SATISFIED = {"acceptance_id": "SAMPLE-A1", "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
++             "landed_commit": "2ac6d0c" + "0" * 33, "evidence": "docs/evidence/x.md"}
++
++
++@pytest.mark.parametrize("scope", [
++    two((0, {"intent": ""})),
++    two((0, {"acceptance": []})),
++    two((0, {"acceptance": [{"id": "SAMPLE-A1"}]})),
++    two((0, {"acceptance": [{"id": "sample-1", "text": "x"}]})),
++    two((0, {"acceptance": [{"id": "SAMPLE-A1", "text": "x"}, {"id": "SAMPLE-A1", "text": "y"}]})),
++    two((1, {"acceptance": [{"id": "SAMPLE-A1", "text": "x"}]})),
++    two((0, {"depends_on": ["MISSING"]})),
++    two((0, {"depends_on": ["SAMPLE"]})),
++    two((0, {"depends_on": ["OTHER"]}), (1, {"depends_on": ["SAMPLE"]})),
++    two((0, {"depends_on": ["OTHER", "OTHER"]})),
++    two((0, {"satisfied_by": [dict(SATISFIED, acceptance_id="OTHER-A1")]})),
++    two((0, {"satisfied_by": [SATISFIED, SATISFIED]})),
++    two((0, {"satisfied_by": [dict(SATISFIED, landed_commit="2ac6d0c")]})),
++    two((0, {"satisfied_by": [dict(SATISFIED, evidence="")]})),
++    two((0, {"satisfied_by": [dict(SATISFIED, extra=1)]})),
++    two((0, {"priority": "p0"})),
++    two((0, {"priority": "P01"})),
++    two((0, {"priority": "P6"})),
++    two((0, {"priority": "high"})),
++    two((0, {"satisfied_by": [dict(SATISFIED, acceptance_id=["SAMPLE-A1"])]})),
++    two((0, {"satisfied_by": [dict(SATISFIED, work_item="  ")]})),
++], ids=["empty-intent", "no-acceptance", "acceptance-keys", "acceptance-id-form", "duplicate-id",
++        "id-across-obligations", "unknown-dependency", "self-dependency", "two-cycle", "duplicate-dependency",
++        "mapping-other-obligation", "mapping-twice", "mapping-short-commit", "mapping-no-evidence",
++        "mapping-extra-key", "priority-lowercase", "priority-leading-zero", "priority-off-board", "priority-word",
++        "mapping-unhashable-id", "mapping-blank-work-item"])
++def test_the_obligation_semantics_are_validated(scope):
++    """REFILL R1 (decisions sections 39-41): intent, acceptance (ids LABEL-A<n>, distinct across the block),
++    depends_on (known labels, acyclic), the explicit satisfied_by mapping and a priority of the scheduler's set are
++    validated; any defect leaves no plan authority."""
++    with pytest.raises(PlanScopeInvalid):
++        scope_from(scope)
++
++
++def test_a_three_obligation_dependency_cycle_is_refused():
++    third = {"label": "THIRD", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"], "allowed_paths": ["x/"],
++             "intent": "t", "acceptance": [{"id": "THIRD-A1", "text": "t"}], "depends_on": ["SAMPLE"],
++             "satisfied_by": []}
++    scope = two((0, {"depends_on": ["OTHER"]}), (1, {"depends_on": ["THIRD"]}))
++    scope["obligations"].append(third)
++    with pytest.raises(PlanScopeInvalid, match="cycle"):
++        scope_from(scope)
++
++
++def test_the_obligation_semantics_round_trip_through_the_document():
++    scope = scope_from(two((0, {"depends_on": ["OTHER"], "satisfied_by": [SATISFIED]})))
++    sample = scope.obligation("SAMPLE")
++    assert (sample.intent, sample.acceptance, sample.depends_on) == (
++        "Sample intent.", (Acceptance("SAMPLE-A1", "It works."),), ("OTHER",))
++    assert sample.satisfied_by == (Satisfaction("SAMPLE-A1", SATISFIED["work_item"], SATISFIED["landed_commit"],
++                                                "docs/evidence/x.md"),)
++    assert scope_from(scope.document()) == scope
++
++
++def test_a_priority_is_its_number_as_the_scheduler_reads_it():
++    """Founder (decisions section 41): P<n> -> n over exactly the board set P0-P5, never compared as text."""
++    assert [priority_rank(p) for p in ("P0", "P1", "P5")] == [0, 1, 5]
++    for malformed in ("P6", "P01", "p1", "P", "high"):
++        with pytest.raises(ValueError):
++            priority_rank(malformed)
++
+diff --git a/tests/execution_coordination/test_containment_wiring.py b/tests/execution_coordination/test_containment_wiring.py
+index 0c6cc37..4753386 100644
+--- a/tests/execution_coordination/test_containment_wiring.py
++++ b/tests/execution_coordination/test_containment_wiring.py
+@@ -47,7 +47,9 @@ def plan_at(digest: str, label: str = "FIXTURE") -> PlanAuthority:
+                              "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
+              "protected_paths": list(PROTECTED),
+              "obligations": [{"label": label, "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+-                              "allowed_paths": ["src/"]}]}
++                              "allowed_paths": ["src/"], "intent": "Fixture intent.",
++                              "acceptance": [{"id": f"{label}-A1", "text": "The fixture works."}],
++                              "depends_on": [], "satisfied_by": []}]}
+     text = f"```json alienintent-plan-authority\n{json.dumps(scope)}\n```\n"
+     return PlanAuthority(PLAN_PATH, "c" * 40, digest, "sha256:" + "b" * 64, "Founder", "approved", parse_scope(text))
+ 
