@@ -7,7 +7,9 @@ is revalidated against the live one by the same rules, never by its recorded dig
 
 The canonical plan holds exactly one block fenced as ```json alienintent-plan-authority: the target repositories,
 capabilities and budget caps derived work may use, the protected paths no derived work may touch, and the obligations,
-each with its priority, the requirement ids it satisfies and the paths it may change. The block is part of the plan's
+each with its priority, the requirement ids it satisfies and the paths it may change, and (Founder,
+2026-10-10) its intent, its acceptance ids, the obligations it depends on and the acceptance ids landed work is recorded
+to satisfy, with evidence. The block is part of the plan's
 bytes, so the approved content digest covers every limit. A plan-derived contract has `release_policy` automatic-on,
 `authority_issuer` `plan-authority:sha256:<64 hex>` and exactly one `authority_references` entry
 `<plan path> obligation:<LABEL>`; `outside_authority` answers one `owner-decision-required:` reason per rule it fails.
@@ -32,7 +34,14 @@ OWNER_DECISION = "owner-decision-required: "
 SCOPE_KEYS = frozenset({"target_repositories", "capabilities", "budget_caps", "protected_paths", "obligations"})
 CAP_KEYS = frozenset({"maximum_attempts", "hard_wall_clock_seconds", "cancellation_limit", "retry_limit",
                       "concurrency_limit", "hard_required_dimensions"})
-OBLIGATION_KEYS = frozenset({"label", "priority", "satisfied_requirement_ids", "allowed_paths"})
+OBLIGATION_KEYS = frozenset({"label", "priority", "satisfied_requirement_ids", "allowed_paths", "intent",
+                             "acceptance", "depends_on", "satisfied_by"})
+SATISFACTION_KEYS = frozenset({"acceptance_id", "work_item", "landed_commit", "evidence"})
+ACCEPTANCE_ID = re.compile(r"[A-Z][A-Z0-9]*-A[1-9][0-9]*")
+COMMIT = re.compile(r"[0-9a-f]{40}")
+# The priorities an obligation may carry: exactly the scheduler's board set, read as P<n> -> n
+# (github_work_management.py), so the plan and the scheduler mean the same thing (Founder, decisions section 41).
+PRIORITIES = ("P0", "P1", "P2", "P3", "P4", "P5")
 # The budget fields capped by the plan, in the order their reasons are named.
 CAPPED = ("maximum_attempts", "hard_wall_clock_seconds", "cancellation_limit", "retry_limit", "concurrency_limit")
 
@@ -41,12 +50,41 @@ class PlanScopeInvalid(ValueError):
     """The plan holds no, more than one, or a malformed plan-authority block."""
 
 
+def priority_rank(priority: str) -> int:
+    """The numeric priority, lower first: `P<n>` -> n over exactly `PRIORITIES`, as the scheduler reads the board."""
+    if priority not in PRIORITIES:
+        raise ValueError(f"priority {priority!r} is not one of {', '.join(PRIORITIES)}")
+    return int(priority[1:])
+
+
+@dataclass(frozen=True)
+class Acceptance:
+    id: str
+    text: str
+
+
+@dataclass(frozen=True)
+class Satisfaction:
+    """An acceptance id recorded as satisfied by an earlier landed Work Item, with its evidence: new acceptance is never
+    proven retroactively by DONE alone (Founder, decisions section 39)."""
+    acceptance_id: str
+    work_item: str
+    landed_commit: str
+    evidence: str
+
+
 @dataclass(frozen=True)
 class Obligation:
+    """One plan obligation: its authority (priority, requirement ids, allowed paths) and its semantics (what it must
+    achieve, the acceptance ids that finish it, the obligations it depends on, and the ids landed work satisfies)."""
     label: str
     priority: str
     satisfied_requirement_ids: tuple[str, ...]
     allowed_paths: tuple[str, ...]
+    intent: str
+    acceptance: tuple[Acceptance, ...]
+    depends_on: tuple[str, ...]
+    satisfied_by: tuple[Satisfaction, ...]
 
 
 @dataclass(frozen=True)
@@ -71,7 +109,12 @@ class PlanScope:
                 "protected_paths": list(self.protected_paths),
                 "obligations": [{"label": o.label, "priority": o.priority,
                                  "satisfied_requirement_ids": list(o.satisfied_requirement_ids),
-                                 "allowed_paths": list(o.allowed_paths)} for o in self.obligations]}
+                                 "allowed_paths": list(o.allowed_paths), "intent": o.intent,
+                                 "acceptance": [{"id": a.id, "text": a.text} for a in o.acceptance],
+                                 "depends_on": list(o.depends_on),
+                                 "satisfied_by": [{"acceptance_id": s.acceptance_id, "work_item": s.work_item,
+                                                   "landed_commit": s.landed_commit, "evidence": s.evidence}
+                                                  for s in o.satisfied_by]} for o in self.obligations]}
 
 
 @dataclass(frozen=True)
@@ -128,6 +171,57 @@ def _strings(value: object, name: str, *, paths: bool = False) -> tuple[str, ...
     return tuple(value)
 
 
+def _acceptance(value: object, label: str) -> tuple[Acceptance, ...]:
+    if not isinstance(value, list) or not value or not all(
+            isinstance(a, dict) and set(a) == {"id", "text"} and isinstance(a["id"], str)
+            and ACCEPTANCE_ID.fullmatch(a["id"]) and isinstance(a["text"], str) and a["text"].strip() for a in value):
+        raise PlanScopeInvalid(f"{label}: acceptance must be a non-empty list of {{id: <LABEL>-A<n>, text}}")
+    return tuple(Acceptance(a["id"], a["text"]) for a in value)
+
+
+def _depends(value: object, label: str) -> tuple[str, ...]:
+    if not isinstance(value, list) or not all(isinstance(entry, str) and entry for entry in value) \
+            or len(set(value)) != len(value):
+        raise PlanScopeInvalid(f"{label}: depends_on must be a list of distinct labels")
+    return tuple(value)
+
+
+def _satisfied(value: object, label: str, ids: set[str]) -> tuple[Satisfaction, ...]:
+    if not isinstance(value, list) or not all(
+            isinstance(s, dict) and set(s) == SATISFACTION_KEYS
+            and isinstance(s["acceptance_id"], str) and s["acceptance_id"] in ids
+            and isinstance(s["work_item"], str) and s["work_item"].strip()
+            and isinstance(s["landed_commit"], str) and COMMIT.fullmatch(s["landed_commit"])
+            and isinstance(s["evidence"], str) and s["evidence"].strip() for s in value) \
+            or len({s["acceptance_id"] for s in value}) != len(value):
+        raise PlanScopeInvalid(f"{label}: satisfied_by must map each of its own acceptance ids at most once, with a "
+                               "work item, a 40-hex landed commit and evidence")
+    return tuple(Satisfaction(s["acceptance_id"], s["work_item"], s["landed_commit"], s["evidence"]) for s in value)
+
+
+def _acyclic(obligations: list[Obligation]) -> None:
+    """PlanScopeInvalid when `depends_on` names an unknown label or the obligation itself, or closes a cycle."""
+    edges = {obligation.label: obligation.depends_on for obligation in obligations}
+    for label, dependencies in edges.items():
+        if any(dependency == label or dependency not in edges for dependency in dependencies):
+            raise PlanScopeInvalid(f"{label}: depends_on names itself or an obligation not in the block")
+    finished: set[str] = set()
+    active: set[str] = set()
+
+    def visit(label: str) -> None:
+        if label in active:
+            raise PlanScopeInvalid(f"depends_on has a cycle through {label}")
+        if label in finished:
+            return
+        active.add(label)
+        for dependency in edges[label]:
+            visit(dependency)
+        active.discard(label)
+        finished.add(label)
+    for label in edges:
+        visit(label)
+
+
 def scope_from(document: object) -> PlanScope:
     """A PlanScope from the block's JSON value, with exactly the keys of the block."""
     if not isinstance(document, dict) or set(document) != SCOPE_KEYS:
@@ -143,13 +237,25 @@ def scope_from(document: object) -> PlanScope:
     obligations = []
     for entry in listed:
         if not isinstance(entry, dict) or set(entry) != OBLIGATION_KEYS or not isinstance(entry["label"], str) \
-                or not entry["label"] or not isinstance(entry["priority"], str) or not entry["priority"]:
+                or not entry["label"]:
             raise PlanScopeInvalid(f"each obligation needs exactly {', '.join(sorted(OBLIGATION_KEYS))}")
-        obligations.append(Obligation(entry["label"], entry["priority"],
+        label = entry["label"]
+        if entry["priority"] not in PRIORITIES:
+            raise PlanScopeInvalid(f"{label}: priority must be one of {', '.join(PRIORITIES)}")
+        if not isinstance(entry["intent"], str) or not entry["intent"].strip():
+            raise PlanScopeInvalid(f"{label}: intent must be a non-empty string")
+        acceptance = _acceptance(entry["acceptance"], label)
+        obligations.append(Obligation(label, entry["priority"],
                                       _strings(entry["satisfied_requirement_ids"], "satisfied_requirement_ids"),
-                                      _strings(entry["allowed_paths"], "allowed_paths", paths=True)))
+                                      _strings(entry["allowed_paths"], "allowed_paths", paths=True),
+                                      entry["intent"], acceptance, _depends(entry["depends_on"], label),
+                                      _satisfied(entry["satisfied_by"], label, {a.id for a in acceptance})))
     if len({obligation.label for obligation in obligations}) != len(obligations):
         raise PlanScopeInvalid("obligation labels must be distinct")
+    ids = [acceptance.id for obligation in obligations for acceptance in obligation.acceptance]
+    if len(set(ids)) != len(ids):
+        raise PlanScopeInvalid("acceptance ids must be distinct across the block")
+    _acyclic(obligations)
     return PlanScope(_strings(document["target_repositories"], "target_repositories"),
                      _strings(document["capabilities"], "capabilities"),
                      tuple((name, dimensions if name == "hard_required_dimensions" else caps[name])

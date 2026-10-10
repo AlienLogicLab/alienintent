@@ -66,58 +66,380 @@ Founder decision, 2026-10-10: the canonical project plan at the tip of canonical
 
 Every derived Work Item records the exact plan commit and `sha256:` digest from which it inherited authority, so provenance, reproducibility and stale-work detection remain exact even though authority follows the live plan tip. A Work Item inherits execution authority only when it names one of the current plan's obligations below, stays inside that obligation's paths and limits, is assessed READY and is satisfiable. The control plane then releases it with no Founder words and no manual board change. If the plan advances after a Work Item was prepared, the control plane must compare the Work Item's recorded plan revision with the current canonical tip and either prove the existing authority remains valid or revalidate/reprepare the Work Item; it must not silently treat stale plan authority as current. Work not derived from canonical plan authority keeps its explicit release boundary.
 
-Inherited authority never extends to a protected path, even inside an obligation's paths, and a plan-derived candidate advances only when every path it actually changed is inside its assessed scope and outside the protected paths: the control plane checks the actual diff before VERIFY and again at CLOSURE before landing. The block below remains part of the canonical plan bytes; its commit and digest identify the exact authority revision governing each derived Work Item, but they are provenance evidence rather than a recurring Founder activation switch.
+Inherited authority never extends to a protected path, even inside an obligation's paths, and a plan-derived candidate advances only when every path it actually changed is inside its assessed scope and outside the protected paths: the control plane checks the actual diff before VERIFY and again at CLOSURE before landing. The block below remains part of the canonical plan bytes; its commit and digest identify the exact authority revision governing each derived Work Item, but they are provenance evidence rather than a recurring Founder activation switch. Each obligation states its intent, its acceptance ids, the obligations it depends on, and any acceptance ids already satisfied by landed work with their evidence (Founder, 2026-10-10); an obligation is finished only when every acceptance id is satisfied, and new acceptance is never proven retroactively by an earlier Work Item's DONE alone.
 
 Obligation `VERIFICATION-OUTCOME-INTEGRITY` (Founder decision, 2026-10-09): only an admitted, evidence-backed engineering REJECT may return a Work Item to PRODUCER. Infrastructure failure, malformed verdict, invalid or incomplete verification evidence, or verification-procedure failure preserves the exact candidate and retries VERIFY within bounded policy. Packet-required mutations are a machine-readable specification applied, tested and reverted by a deterministic harness whose evidence the VERIFIER reads; a verdict is admitted only when that evidence is complete and valid for the exact candidate.
 
 ```json alienintent-plan-authority
-{"target_repositories": ["AlienLogicLab/alienintent"],
- "capabilities": ["python", "filesystem", "process-control"],
- "budget_caps": {"maximum_attempts": 3, "hard_wall_clock_seconds": 3600, "cancellation_limit": 1,
-                 "retry_limit": 1, "concurrency_limit": 1,
-                 "hard_required_dimensions": ["wall-clock", "attempts", "retries", "concurrency", "cancellation"]},
- "protected_paths": ["docs/decisions/", "docs/architecture/", ".github/", ".claude/", "AGENTS.md", "CLAUDE.md",
-                     "tools/fitness/", "conftest.py", "tests/conftest.py", "pyproject.toml", "setup.cfg", "config/",
-                     "src/alienintent/execution_coordination/domain/release.py",
-                     "src/alienintent/execution_coordination/domain/satisfiability.py",
-                     "src/alienintent/execution_coordination/domain/plan_authority.py",
-                     "src/alienintent/execution_coordination/domain/scope_containment.py",
-                     "src/alienintent/execution_coordination/application/release_admission.py",
-                     "src/alienintent/execution_coordination/adapters/release_admission.py",
-                     "src/alienintent/context_assembly/application/work_authorization.py",
-                     "src/alienintent/context_assembly/application/plan_approval.py",
-                     "src/alienintent/context_assembly/application/inherited_release.py",
-                     "src/alienintent/invocation_runtime/application/regression_gate.py",
-                     "src/alienintent/composition/landing_authority.py",
-                     "tests/execution_coordination/domain/test_plan_authority.py",
-                     "tests/execution_coordination/domain/test_satisfiability.py",
-                     "tests/execution_coordination/domain/test_scope_containment.py",
-                     "tests/execution_coordination/test_containment_wiring.py",
-                     "tests/context_assembly/test_plan_approval.py",
-                     "tests/context_assembly/test_inherited_release.py",
-                     "tests/context_assembly/test_work_authorization.py"],
+{
+ "target_repositories": [
+  "AlienLogicLab/alienintent"
+ ],
+ "capabilities": [
+  "python",
+  "filesystem",
+  "process-control"
+ ],
+ "budget_caps": {
+  "maximum_attempts": 3,
+  "hard_wall_clock_seconds": 3600,
+  "cancellation_limit": 1,
+  "retry_limit": 1,
+  "concurrency_limit": 1,
+  "hard_required_dimensions": [
+   "wall-clock",
+   "attempts",
+   "retries",
+   "concurrency",
+   "cancellation"
+  ]
+ },
+ "protected_paths": [
+  "docs/decisions/",
+  "docs/architecture/",
+  ".github/",
+  ".claude/",
+  "AGENTS.md",
+  "CLAUDE.md",
+  "tools/fitness/",
+  "conftest.py",
+  "tests/conftest.py",
+  "pyproject.toml",
+  "setup.cfg",
+  "config/",
+  "src/alienintent/execution_coordination/domain/release.py",
+  "src/alienintent/execution_coordination/domain/satisfiability.py",
+  "src/alienintent/execution_coordination/domain/plan_authority.py",
+  "src/alienintent/execution_coordination/domain/scope_containment.py",
+  "src/alienintent/execution_coordination/application/release_admission.py",
+  "src/alienintent/execution_coordination/adapters/release_admission.py",
+  "src/alienintent/context_assembly/application/work_authorization.py",
+  "src/alienintent/context_assembly/application/plan_approval.py",
+  "src/alienintent/context_assembly/application/inherited_release.py",
+  "src/alienintent/invocation_runtime/application/regression_gate.py",
+  "src/alienintent/composition/landing_authority.py",
+  "tests/execution_coordination/domain/test_plan_authority.py",
+  "tests/execution_coordination/domain/test_satisfiability.py",
+  "tests/execution_coordination/domain/test_scope_containment.py",
+  "tests/execution_coordination/test_containment_wiring.py",
+  "tests/context_assembly/test_plan_approval.py",
+  "tests/context_assembly/test_inherited_release.py",
+  "tests/context_assembly/test_work_authorization.py"
+ ],
  "obligations": [
-  {"label": "VERIFICATION-OUTCOME-INTEGRITY", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
-   "allowed_paths": ["src/alienintent/execution_coordination/", "src/alienintent/invocation_runtime/",
-                     "src/alienintent/context_assembly/", "src/alienintent/composition/",
-                     "tests/execution_coordination/", "tests/invocation_runtime/", "tests/context_assembly/",
-                     "tests/composition/"]},
-  {"label": "BOUNDED-ROUTINE-LAUNCH", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
-   "allowed_paths": ["src/alienintent/invocation_runtime/", "src/alienintent/execution_coordination/",
-                     "src/alienintent/composition/", "src/alienintent/control_plane/", "tests/invocation_runtime/",
-                     "tests/execution_coordination/", "tests/composition/", "tests/control_plane/"]},
-  {"label": "WORK-PREPARATION-REFILL", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
-   "allowed_paths": ["src/alienintent/context_assembly/", "src/alienintent/composition/",
-                     "src/alienintent/control_plane/", "tests/context_assembly/", "tests/composition/",
-                     "tests/control_plane/"]},
-  {"label": "TERMINAL-BOARD-STATUSES", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
-   "allowed_paths": ["src/alienintent/composition/", "src/alienintent/execution_coordination/adapters/",
-                     "tests/composition/", "tests/execution_coordination/"]},
-  {"label": "STORE-SCHEMA-HARDENING", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
-   "allowed_paths": ["src/alienintent/composition/", "src/alienintent/execution_coordination/adapters/",
-                     "tests/composition/", "tests/execution_coordination/"]},
-  {"label": "AUTONOMY-PROOF", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
-   "allowed_paths": ["docs/evidence/", "tests/", "tools/"]}]}
+  {
+   "label": "VERIFICATION-OUTCOME-INTEGRITY",
+   "priority": "P0",
+   "satisfied_requirement_ids": [
+    "SF-REQ-002"
+   ],
+   "allowed_paths": [
+    "src/alienintent/execution_coordination/",
+    "src/alienintent/invocation_runtime/",
+    "src/alienintent/context_assembly/",
+    "src/alienintent/composition/",
+    "tests/execution_coordination/",
+    "tests/invocation_runtime/",
+    "tests/context_assembly/",
+    "tests/composition/"
+   ],
+   "intent": "Separate engineering verdicts from verification-process failures, so only an admitted, evidence-backed engineering REJECT can return a Work Item to the PRODUCER.",
+   "acceptance": [
+    {
+     "id": "VOI-A1",
+     "text": "Infrastructure failure, invalid or incomplete evidence, malformed verdict and procedure failure retry VERIFY on the same candidate within a bounded policy; exhaustion is a typed VERIFY hold, never a rejection."
+    },
+    {
+     "id": "VOI-A2",
+     "text": "The exact candidate is preserved until the verdict is admitted."
+    },
+    {
+     "id": "VOI-A3",
+     "text": "A verdict is admitted only with complete, valid deterministic evidence for the exact candidate (gate evidence, every acceptance check, every required mutation with harness evidence)."
+    },
+    {
+     "id": "VOI-A4",
+     "text": "Packet mutations are a machine-readable specification applied, tested and reverted by a deterministic harness whose evidence the VERIFIER reads."
+    }
+   ],
+   "depends_on": [],
+   "satisfied_by": [
+    {
+     "acceptance_id": "VOI-A1",
+     "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
+     "landed_commit": "2ac6d0c3b9865f64791ca90ad3ed92a0544891fc",
+     "evidence": "docs/evidence/verification-outcome-integrity-landing-0146594.md"
+    },
+    {
+     "acceptance_id": "VOI-A2",
+     "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
+     "landed_commit": "2ac6d0c3b9865f64791ca90ad3ed92a0544891fc",
+     "evidence": "docs/evidence/verification-outcome-integrity-landing-0146594.md"
+    },
+    {
+     "acceptance_id": "VOI-A3",
+     "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
+     "landed_commit": "2ac6d0c3b9865f64791ca90ad3ed92a0544891fc",
+     "evidence": "docs/evidence/verification-outcome-integrity-landing-0146594.md"
+    },
+    {
+     "acceptance_id": "VOI-A4",
+     "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
+     "landed_commit": "2ac6d0c3b9865f64791ca90ad3ed92a0544891fc",
+     "evidence": "docs/evidence/verification-outcome-integrity-landing-0146594.md"
+    }
+   ]
+  },
+  {
+   "label": "BOUNDED-ROUTINE-LAUNCH",
+   "priority": "P0",
+   "satisfied_requirement_ids": [
+    "SF-REQ-002"
+   ],
+   "allowed_paths": [
+    "src/alienintent/invocation_runtime/",
+    "src/alienintent/execution_coordination/",
+    "src/alienintent/composition/",
+    "src/alienintent/control_plane/",
+    "tests/invocation_runtime/",
+    "tests/execution_coordination/",
+    "tests/composition/",
+    "tests/control_plane/"
+   ],
+   "intent": "One `work run` starts the factory and keeps advancing eligible READY work through PRODUCER, VERIFIER and CLOSURE to DONE and the next item, with no launch per role.",
+   "acceptance": [
+    {
+     "id": "BRL-A1",
+     "text": "One `work run` takes an item to DONE and admits the next eligible item with no per-role launch."
+    },
+    {
+     "id": "BRL-A2",
+     "text": "Retries resume without human action (`work run --wait`)."
+    },
+    {
+     "id": "BRL-A3",
+     "text": "A crash or restart resumes from durable state."
+    },
+    {
+     "id": "BRL-A4",
+     "text": "Routine execution reads open work and one item's journal records, never the whole history; the journal is canonical and its index disposable and rebuildable."
+    },
+    {
+     "id": "BRL-A5",
+     "text": "A DONE releases its WIP slot only after cleanup and projection; the workspaces of earlier roles in the same run process are reclaimed before DONE."
+    }
+   ],
+   "depends_on": [],
+   "satisfied_by": [
+    {
+     "acceptance_id": "BRL-A1",
+     "work_item": "e05f787d-e1bc-4e5c-af72-d8ade392fbde",
+     "landed_commit": "9282fb2d4e05395e1caa438b4ec32575d33bbf47",
+     "evidence": "docs/evidence/bounded-routine-launch-r4-landing-a4fcb73.md"
+    },
+    {
+     "acceptance_id": "BRL-A2",
+     "work_item": "e05f787d-e1bc-4e5c-af72-d8ade392fbde",
+     "landed_commit": "9282fb2d4e05395e1caa438b4ec32575d33bbf47",
+     "evidence": "docs/evidence/bounded-routine-launch-r4-landing-a4fcb73.md"
+    },
+    {
+     "acceptance_id": "BRL-A3",
+     "work_item": "e05f787d-e1bc-4e5c-af72-d8ade392fbde",
+     "landed_commit": "9282fb2d4e05395e1caa438b4ec32575d33bbf47",
+     "evidence": "docs/evidence/bounded-routine-launch-r4-landing-a4fcb73.md"
+    },
+    {
+     "acceptance_id": "BRL-A4",
+     "work_item": "e05f787d-e1bc-4e5c-af72-d8ade392fbde",
+     "landed_commit": "9282fb2d4e05395e1caa438b4ec32575d33bbf47",
+     "evidence": "docs/evidence/bounded-routine-launch-r4-landing-a4fcb73.md"
+    },
+    {
+     "acceptance_id": "BRL-A5",
+     "work_item": "3e004d5d-2023-4659-9b38-59d465524d6b",
+     "landed_commit": "1ec3e9649416cfdaa3b44ca07a1b776fbe52ce29",
+     "evidence": "docs/evidence/same-process-workspace-cleanup-landing-cec8839.md"
+    }
+   ]
+  },
+  {
+   "label": "WORK-PREPARATION-REFILL",
+   "priority": "P0",
+   "satisfied_requirement_ids": [
+    "SF-REQ-002"
+   ],
+   "allowed_paths": [
+    "src/alienintent/context_assembly/",
+    "src/alienintent/composition/",
+    "src/alienintent/control_plane/",
+    "tests/context_assembly/",
+    "tests/composition/",
+    "tests/control_plane/"
+   ],
+   "intent": "From the live canonical plan tip, AlienIntent maintains dependency-correct, assessed, prioritized READY supply without the Founder, or Claude acting as the Founder's proxy, preparing and feeding each next Work Item.",
+   "acceptance": [
+    {
+     "id": "WPR-A1",
+     "text": "Every new PRODUCER attempt starts from current main only after deterministic baseline revalidation; work that cannot be revalidated goes back through Work Preparation and Agent Ready, never silently retargeted."
+    },
+    {
+     "id": "WPR-A2",
+     "text": "A PREPARER derives the next bounded Work Item for the next eligible obligation from the plan tip, with provenance; the control plane refuses any packet outside the obligation's authority before anything is written."
+    },
+    {
+     "id": "WPR-A3",
+     "text": "Agent Ready assesses each prepared item automatically; READY, CLARIFY, SPLIT and HOLD follow the typed path; a SPLIT conserves every obligation, including combined verification."
+    },
+    {
+     "id": "WPR-A4",
+     "text": "A READY plan-derived item is released inside the run loop with no manual `work release`, and `work run --wait` picks it up with no other command."
+    },
+    {
+     "id": "WPR-A5",
+     "text": "One bounded budget per obligation revision covers preparation and re-issues; exhaustion is a typed fault."
+    },
+    {
+     "id": "WPR-A6",
+     "text": "If unfinished, dependency-eligible authorized plan work exists and the factory has neither an in-progress Work Item nor the required READY reserve, it exposes a typed READY-supply health fault rather than silently waiting for human preparation."
+    }
+   ],
+   "depends_on": [
+    "VERIFICATION-OUTCOME-INTEGRITY",
+    "BOUNDED-ROUTINE-LAUNCH"
+   ],
+   "satisfied_by": []
+  },
+  {
+   "label": "TERMINAL-BOARD-STATUSES",
+   "priority": "P0",
+   "satisfied_requirement_ids": [
+    "SF-REQ-002"
+   ],
+   "allowed_paths": [
+    "src/alienintent/composition/",
+    "src/alienintent/execution_coordination/adapters/",
+    "tests/composition/",
+    "tests/execution_coordination/"
+   ],
+   "intent": "Every terminal canonical Work outcome has an explicit terminal board projection; historical cards stay visible and never imply active work.",
+   "acceptance": [
+    {
+     "id": "TBS-A1",
+     "text": "Success projects DONE, cancelled projects CANCELLED, failed projects FAILED."
+    },
+    {
+     "id": "TBS-A2",
+     "text": "Retired items stay visible and are never shown as active; nothing is archived."
+    },
+    {
+     "id": "TBS-A3",
+     "text": "Every existing card of a terminal item is re-projected to its terminal status, so IMPLEMENT, VERIFY and ACCEPT hold only live work."
+    }
+   ],
+   "depends_on": [
+    "BOUNDED-ROUTINE-LAUNCH"
+   ],
+   "satisfied_by": []
+  },
+  {
+   "label": "STORE-SCHEMA-HARDENING",
+   "priority": "P0",
+   "satisfied_requirement_ids": [
+    "SF-REQ-002"
+   ],
+   "allowed_paths": [
+    "src/alienintent/composition/",
+    "src/alienintent/execution_coordination/adapters/",
+    "tests/composition/",
+    "tests/execution_coordination/"
+   ],
+   "intent": "A read-only database open accepts any schema version it can safely read and never requires exact equality with the current writable schema version.",
+   "acceptance": [
+    {
+     "id": "SSH-A1",
+     "text": "An older database the reader can read is read; a database newer than the reader fails closed."
+    },
+    {
+     "id": "SSH-A2",
+     "text": "The writable open still owns migration."
+    },
+    {
+     "id": "SSH-A3",
+     "text": "A regression test reproduces the schema-2 sandbox / schema-3 registry case."
+    }
+   ],
+   "depends_on": [],
+   "satisfied_by": []
+  },
+  {
+   "label": "EVENT-TRIGGERED-CONTINUATION",
+   "priority": "P0",
+   "satisfied_requirement_ids": [
+    "SF-REQ-002"
+   ],
+   "allowed_paths": [
+    "src/alienintent/invocation_runtime/",
+    "src/alienintent/execution_coordination/",
+    "src/alienintent/composition/",
+    "src/alienintent/control_plane/",
+    "tests/invocation_runtime/",
+    "tests/execution_coordination/",
+    "tests/composition/",
+    "tests/control_plane/"
+   ],
+   "intent": "Completion triggers continuation: a completion event or durable terminal receipt wakes the runner; periodic polling is not the normal scheduling mechanism.",
+   "acceptance": [
+    {
+     "id": "ETC-A1",
+     "text": "A completed worker/provider invocation, a retry becoming eligible and a newly released READY item each wake `work run --wait` from a durable event or receipt."
+    },
+    {
+     "id": "ETC-A2",
+     "text": "Routine polling is not normal scheduling; a timeout remains only a recovery backstop."
+    },
+    {
+     "id": "ETC-A3",
+     "text": "No manual wakeup is needed for any of those continuations."
+    }
+   ],
+   "depends_on": [
+    "BOUNDED-ROUTINE-LAUNCH"
+   ],
+   "satisfied_by": []
+  },
+  {
+   "label": "AUTONOMY-PROOF",
+   "priority": "P0",
+   "satisfied_requirement_ids": [
+    "SF-REQ-002"
+   ],
+   "allowed_paths": [
+    "docs/evidence/",
+    "tests/",
+    "tools/"
+   ],
+   "intent": "Prove that, starting from the live canonical plan tip and no prepared next Work Item, AlienIntent prepares and completes at least three dependency-correct Work Items through DONE with no routine human action.",
+   "acceptance": [
+    {
+     "id": "AUP-A1",
+     "text": "A deterministic check (`tools/`) reads the registry and journal and proves at least three consecutive plan-derived Work Items were prepared by the PREPARER, assessed, released, executed and DONE, dependency-correct, resources cleaned, with no human action except genuine owner decisions."
+    },
+    {
+     "id": "AUP-A2",
+     "text": "An evidence record in `docs/evidence/` names those items, their plan provenance and the check's result."
+    }
+   ],
+   "depends_on": [
+    "WORK-PREPARATION-REFILL",
+    "TERMINAL-BOARD-STATUSES",
+    "STORE-SCHEMA-HARDENING",
+    "EVENT-TRIGGERED-CONTINUATION"
+   ],
+   "satisfied_by": []
+  }
+ ]
+}
 ```
 
 ## 2.3 One work identity and project-lifetime traceability

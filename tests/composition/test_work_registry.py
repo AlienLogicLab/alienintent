@@ -760,7 +760,10 @@ PLAN_SCOPE = {"target_repositories": ["AlienLogicLab/alienintent"], "capabilitie
                               "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
               "protected_paths": ["docs/decisions/", "src/alienintent/execution_coordination/domain/release.py"],
               "obligations": [{"label": "FIXTURE", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
-                               "allowed_paths": ["src/", "tests/", "launch-candidate.txt"]}]}
+                               "allowed_paths": ["src/", "tests/", "launch-candidate.txt"],
+                               "intent": "Fixture intent.",
+                               "acceptance": [{"id": "FIXTURE-A1", "text": "The fixture works."}],
+                               "depends_on": [], "satisfied_by": []}]}
 
 
 def plan_text(scope: dict | None = None, note: str = "") -> bytes:

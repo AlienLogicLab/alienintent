@@ -13,7 +13,8 @@ import pytest
 
 from alienintent.context_assembly.domain.compilation import contract_from_payload
 from alienintent.execution_coordination.domain.plan_authority import (
-    PLAN_PATH, PlanAuthority, PlanScopeInvalid, outside_authority, parse_scope)
+    PLAN_PATH, Acceptance, PlanAuthority, PlanScopeInvalid, Satisfaction, outside_authority, parse_scope,
+    priority_rank, scope_from)
 from tests.context_assembly.test_work_contract import satisfiable_payload
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -23,7 +24,9 @@ SCOPE = {"target_repositories": ["AlienLogicLab/alienintent"], "capabilities": [
                          "retry_limit": 1, "concurrency_limit": 1, "hard_required_dimensions": ["wall-clock"]},
          "protected_paths": ["docs/decisions/", "src/alienintent/execution_coordination/domain/release.py"],
          "obligations": [{"label": "SAMPLE", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
-                          "allowed_paths": ["docs/", "src/", "tests/"]}]}
+                          "allowed_paths": ["docs/", "src/", "tests/"], "intent": "Sample intent.",
+                          "acceptance": [{"id": "SAMPLE-A1", "text": "It works."}], "depends_on": [],
+                          "satisfied_by": []}]}
 
 
 def plan(scope: object = SCOPE, blocks: int = 1) -> str:
@@ -111,7 +114,20 @@ def test_check7_the_canonical_plan_states_the_rule_and_holds_one_block():
     assert [o.label for o in scope.obligations] == ["VERIFICATION-OUTCOME-INTEGRITY", "BOUNDED-ROUTINE-LAUNCH",
                                                     "WORK-PREPARATION-REFILL",
                                                     "TERMINAL-BOARD-STATUSES", "STORE-SCHEMA-HARDENING",
-                                                    "AUTONOMY-PROOF"]
+                                                    "EVENT-TRIGGERED-CONTINUATION", "AUTONOMY-PROOF"]
+    # REFILL R1 (decisions section 40): the approved dependencies, and only VOI and BRL mapped to landed work.
+    assert {o.label: o.depends_on for o in scope.obligations} == {
+        "VERIFICATION-OUTCOME-INTEGRITY": (), "BOUNDED-ROUTINE-LAUNCH": (),
+        "WORK-PREPARATION-REFILL": ("VERIFICATION-OUTCOME-INTEGRITY", "BOUNDED-ROUTINE-LAUNCH"),
+        "TERMINAL-BOARD-STATUSES": ("BOUNDED-ROUTINE-LAUNCH",), "STORE-SCHEMA-HARDENING": (),
+        "EVENT-TRIGGERED-CONTINUATION": ("BOUNDED-ROUTINE-LAUNCH",),
+        "AUTONOMY-PROOF": ("WORK-PREPARATION-REFILL", "TERMINAL-BOARD-STATUSES", "STORE-SCHEMA-HARDENING",
+                           "EVENT-TRIGGERED-CONTINUATION")}
+    mapped = {o.label: {s.acceptance_id for s in o.satisfied_by} for o in scope.obligations}
+    assert {label: ids for label, ids in mapped.items() if ids} == {
+        "VERIFICATION-OUTCOME-INTEGRITY": {"VOI-A1", "VOI-A2", "VOI-A3", "VOI-A4"},
+        "BOUNDED-ROUTINE-LAUNCH": {"BRL-A1", "BRL-A2", "BRL-A3", "BRL-A4", "BRL-A5"}}
+    assert all((ROOT / s.evidence).is_file() for o in scope.obligations for s in o.satisfied_by)
     assert {"conftest.py", "pyproject.toml", "config/", "tools/fitness/",
             "src/alienintent/execution_coordination/domain/scope_containment.py",
             "tests/execution_coordination/test_containment_wiring.py"} <= set(scope.protected_paths)
@@ -125,3 +141,82 @@ def test_the_plan_itself_is_protected_whatever_the_live_block_says():
     authority = PlanAuthority(PLAN_PATH, "c" * 40, DIGEST, "git:x", "canonical main tip", "", parse_scope(plan(scope)))
     [reason] = outside_authority(contract(authorized_scope=[PLAN_PATH]), authority)
     assert f"crosses a protected path: {PLAN_PATH}" in reason
+
+
+def two(*changes):
+    """SCOPE with a second obligation OTHER, each (index, change) merged into obligation `index` (TEST DATA)."""
+    other = {"label": "OTHER", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"],
+             "allowed_paths": ["docs/"], "intent": "Other.", "acceptance": [{"id": "OTHER-A1", "text": "x"}],
+             "depends_on": [], "satisfied_by": []}
+    obligations = [dict(SCOPE["obligations"][0]), other]
+    for index, change in changes:
+        obligations[index] |= change
+    return dict(SCOPE, obligations=obligations)
+
+
+SATISFIED = {"acceptance_id": "SAMPLE-A1", "work_item": "e73a603e-2cb7-4827-b691-8e0f36d5129a",
+             "landed_commit": "2ac6d0c" + "0" * 33, "evidence": "docs/evidence/x.md"}
+
+
+@pytest.mark.parametrize("scope", [
+    two((0, {"intent": ""})),
+    two((0, {"acceptance": []})),
+    two((0, {"acceptance": [{"id": "SAMPLE-A1"}]})),
+    two((0, {"acceptance": [{"id": "sample-1", "text": "x"}]})),
+    two((0, {"acceptance": [{"id": "SAMPLE-A1", "text": "x"}, {"id": "SAMPLE-A1", "text": "y"}]})),
+    two((1, {"acceptance": [{"id": "SAMPLE-A1", "text": "x"}]})),
+    two((0, {"depends_on": ["MISSING"]})),
+    two((0, {"depends_on": ["SAMPLE"]})),
+    two((0, {"depends_on": ["OTHER"]}), (1, {"depends_on": ["SAMPLE"]})),
+    two((0, {"depends_on": ["OTHER", "OTHER"]})),
+    two((0, {"satisfied_by": [dict(SATISFIED, acceptance_id="OTHER-A1")]})),
+    two((0, {"satisfied_by": [SATISFIED, SATISFIED]})),
+    two((0, {"satisfied_by": [dict(SATISFIED, landed_commit="2ac6d0c")]})),
+    two((0, {"satisfied_by": [dict(SATISFIED, evidence="")]})),
+    two((0, {"satisfied_by": [dict(SATISFIED, extra=1)]})),
+    two((0, {"priority": "p0"})),
+    two((0, {"priority": "P01"})),
+    two((0, {"priority": "P6"})),
+    two((0, {"priority": "high"})),
+    two((0, {"satisfied_by": [dict(SATISFIED, acceptance_id=["SAMPLE-A1"])]})),
+    two((0, {"satisfied_by": [dict(SATISFIED, work_item="  ")]})),
+], ids=["empty-intent", "no-acceptance", "acceptance-keys", "acceptance-id-form", "duplicate-id",
+        "id-across-obligations", "unknown-dependency", "self-dependency", "two-cycle", "duplicate-dependency",
+        "mapping-other-obligation", "mapping-twice", "mapping-short-commit", "mapping-no-evidence",
+        "mapping-extra-key", "priority-lowercase", "priority-leading-zero", "priority-off-board", "priority-word",
+        "mapping-unhashable-id", "mapping-blank-work-item"])
+def test_the_obligation_semantics_are_validated(scope):
+    """REFILL R1 (decisions sections 39-41): intent, acceptance (ids LABEL-A<n>, distinct across the block),
+    depends_on (known labels, acyclic), the explicit satisfied_by mapping and a priority of the scheduler's set are
+    validated; any defect leaves no plan authority."""
+    with pytest.raises(PlanScopeInvalid):
+        scope_from(scope)
+
+
+def test_a_three_obligation_dependency_cycle_is_refused():
+    third = {"label": "THIRD", "priority": "P0", "satisfied_requirement_ids": ["SF-REQ-002"], "allowed_paths": ["x/"],
+             "intent": "t", "acceptance": [{"id": "THIRD-A1", "text": "t"}], "depends_on": ["SAMPLE"],
+             "satisfied_by": []}
+    scope = two((0, {"depends_on": ["OTHER"]}), (1, {"depends_on": ["THIRD"]}))
+    scope["obligations"].append(third)
+    with pytest.raises(PlanScopeInvalid, match="cycle"):
+        scope_from(scope)
+
+
+def test_the_obligation_semantics_round_trip_through_the_document():
+    scope = scope_from(two((0, {"depends_on": ["OTHER"], "satisfied_by": [SATISFIED]})))
+    sample = scope.obligation("SAMPLE")
+    assert (sample.intent, sample.acceptance, sample.depends_on) == (
+        "Sample intent.", (Acceptance("SAMPLE-A1", "It works."),), ("OTHER",))
+    assert sample.satisfied_by == (Satisfaction("SAMPLE-A1", SATISFIED["work_item"], SATISFIED["landed_commit"],
+                                                "docs/evidence/x.md"),)
+    assert scope_from(scope.document()) == scope
+
+
+def test_a_priority_is_its_number_as_the_scheduler_reads_it():
+    """Founder (decisions section 41): P<n> -> n over exactly the board set P0-P5, never compared as text."""
+    assert [priority_rank(p) for p in ("P0", "P1", "P5")] == [0, 1, 5]
+    for malformed in ("P6", "P01", "p1", "P", "high"):
+        with pytest.raises(ValueError):
+            priority_rank(malformed)
+
