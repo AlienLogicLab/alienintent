@@ -1173,7 +1173,10 @@ class WorkRegistry:
                                  {name: location.default_branch for name, location in repositories.items()},
                                  self.satisfiable)
 
-    def _satisfiable(self, packet: bytes, commit: str, identity: str) -> tuple[str, ...]:
+    def _satisfiable(self, packet: bytes, commit: str, identity: str,
+                     authority: PlanAuthority | None = None) -> tuple[str, ...]:
+        """The composed satisfiability check; with `authority` (a release's one read of the live plan), checked against
+        exactly that authority, otherwise against a fresh read of the tip."""
         try:
             contract = contract_block(packet, identity)
         except ContractInvalid as error:
@@ -1196,7 +1199,8 @@ class WorkRegistry:
             return item is not None and not item.retired
 
         github = self.configuration.github
-        current = None if self.plan_approval is None else self.plan_approval.current()
+        current = authority if authority is not None else \
+            None if self.plan_approval is None else self.plan_approval.current()
         return unsatisfiable(contract, landing=github is not None and github.landing,
                              present_at_pointer=present_at_pointer, registered=registered,
                              provider_dimensions=PROVIDER_DIMENSIONS,
@@ -1204,7 +1208,7 @@ class WorkRegistry:
                              else lambda contract: outside_authority(contract, current))
 
     def protected_paths(self) -> tuple[str, ...] | None:
-        """The protected paths of the current approved plan authority, or None without one."""
+        """The protected paths of the live plan authority (the plan at main's tip), or None without one."""
         current = None if self.plan_approval is None else self.plan_approval.current()
         return None if current is None else current.scope.protected_paths
 
@@ -1216,7 +1220,8 @@ class WorkRegistry:
         packets = configuration.repositories[name]
         return PlanApproval(consumer.repository, consumer.project, consumer.profile, consumer.store, "registry", name,
                             GitRevisionResolver({name: packets.clone}), packets.default_branch,
-                            lambda commit: self.items.read_packet(StoredPointer(name, PLAN_PATH, commit)))
+                            lambda commit: self.items.read_packet(StoredPointer(name, PLAN_PATH, commit)),
+                            lambda: self._head(name))
 
     def _release(self, configuration: ProjectConfiguration) -> InheritedRelease:
         """`work release`: what `work authorize` writes, on the same store and evidence folder, with the composed
@@ -1457,15 +1462,15 @@ REMOTE_UNVERIFIED, REMOTE_CONFLICT, CANDIDATE_PUBLISHED = "REMOTE_UNVERIFIED", "
 
 def automatic(contract: BiuContract, current: PlanAuthority | None) -> bool:
     """A registry item is released by policy only while its own contract is plan-derived (`automatic-on`) and inside
-    the CURRENT approved plan authority: a later approval of another plan revision stops it."""
+    the live plan authority (the plan at main's tip): a tip that no longer grants it stops it."""
     return contract.release_policy == "automatic-on" and current is not None \
         and not outside_authority(contract, current)
 
 
 class _ContractRelease:
     """The READY view as the registry coordinator reads it: each item's release flag follows its own contract and the
-    current plan authority (`automatic`, the authority read once per snapshot), so an `explicit-human-off` item, or
-    one released under a plan revision that is no longer current, is never released by policy. Everything else is
+    live plan authority (`automatic`, the authority read once per snapshot), so an `explicit-human-off` item, or one
+    the tip's plan no longer grants, is never released by policy. Everything else is
     the view's."""
 
     def __init__(self, view: GitHubProjectsWorkManagement, current: Callable[[], PlanAuthority | None]) -> None:
@@ -1803,7 +1808,7 @@ class RegistryClosure:
         a protected change main made after its release), read in this landing clone, against the registered
         contract's `authorized_scope` and the current plan authority's protected paths. Release admission guards
         only the PRODUCER, so this, the one landing gate, also requires the contract to be inside the CURRENT plan
-        authority (read once here): an item released under a plan revision that is no longer current holds with its
+        authority (the plan at main's tip, read once here): an item the tip no longer grants holds with its
         `owner-decision-required:` reasons and raises the owner-decision attention item. Anything unreadable is a
         violation."""
         try:
